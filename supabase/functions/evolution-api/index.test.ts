@@ -644,135 +644,225 @@ Deno.test("TRA-002/#18: instância PADRÃO sem token no Vault mantém o fallback
   }
 });
 
-/** Fake que responde qualquer método com o payload dado por path e registra cada requisição. */
-function createInstanceReadFake(payload: (path: string) => unknown) {
-  const gets: string[] = [];
-  const requests: Array<{ method: string; path: string }> = [];
-  const server = Deno.serve({ hostname: "127.0.0.1", port: 0, onListen() {} }, (req) => {
-    const path = new URL(req.url).pathname;
-    requests.push({ method: req.method, path });
-    if (req.method === "GET") gets.push(path);
-    return new Response(JSON.stringify(payload(path)), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
-  });
-  const addr = server.addr;
-  if (addr.transport !== "tcp") throw new Error("fake: listener não TCP");
-  return { url: `http://127.0.0.1:${addr.port}`, gets, requests, stop: () => server.shutdown() };
+// ─── Config da instância (get-settings / set-settings) ─────────────────────────
+// GO_GAPS §Sem equivalente: a GO não tem /settings/set|find; o equivalente é
+// /instance/advanced-settings (rota de INSTÂNCIA — o GO resolve a instância pelo
+// token). O v2 mantém as rotas clássicas. RED: as actions passavam intactas →
+// GO 404; a leitura voltava vazia e a tela desligava todos os interruptores.
+
+interface SettingsRequest {
+  path: string;
+  method: string;
+  apikey: string | null;
+  body: unknown;
 }
 
-// ─── T-25a0a972: 'Reconfigurar' por contrato/flavor + leitura de config por flavor ──
-// "Reconfigurar" do painel manda `{ instanceName, webhook: { url, events } }`
-// (ANINHADO); o handler lia `body.url`/`body.events` PLANOS e mandava url
-// `undefined` ao provedor. E a rota era sempre a da v2 (`/webhook/set`), mesmo
-// com a produção no GO. Aqui: (1) o aninhado chega completo; (2) o GO usa
-// `/instance/connect` (WebhookURL + subscribe) — rota nativa do GO.
+/** Fake que registra path + método + credencial + corpo de cada request. */
+function createSettingsFake(respond: (req: SettingsRequest) => Response) {
+  const requests: SettingsRequest[] = [];
+  const server = Deno.serve({ hostname: "127.0.0.1", port: 0, onListen() {} }, async (req) => {
+    const record: SettingsRequest = {
+      path: new URL(req.url).pathname,
+      method: req.method,
+      apikey: req.headers.get("apikey"),
+      body: req.method === "POST" ? await req.json().catch(() => null) : null,
+    };
+    requests.push(record);
+    return respond(record);
+  });
+  const addr = server.addr;
+  if (addr.transport !== "tcp") throw new Error("settings-fake: esperava listener TCP");
+  return { url: `http://127.0.0.1:${addr.port}`, requests, stop: () => server.shutdown() };
+}
 
-Deno.test("MON-WEBHOOK (v2): set-webhook aceita o contrato ANINHADO e envia url/events", async () => {
-  const fake = createFakeEvolution();
+async function chamarSettings(
+  action: string,
+  instanceName: string,
+  fake: ReturnType<typeof createSettingsFake>,
+  opts: { flavor?: string; token?: string | null; admin?: boolean; fields?: Record<string, unknown> } = {},
+) {
   Deno.env.set("EVOLUTION_API_URL", fake.url);
-  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  Deno.env.set("EVOLUTION_API_FLAVOR", opts.flavor ?? "go");
   resetInstanceTokenCache();
-  try {
-    const res = await handleEvolutionApi(
-      controlRequest("set-webhook", {
-        instanceName: "PRINCIPAL",
-        webhook: { url: "https://x/functions/v1/evolution-webhook", events: ["MESSAGES_UPSERT", "CONNECTION_UPDATE"] },
-      }),
-      { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase: makeServiceClient() },
-    );
-    assertEquals(res.status, 200);
-    const post = fake.posts.find((p) => p.path.startsWith("/webhook/set/"));
-    assert(!!post, "v2 deve configurar em /webhook/set/{instance}");
-    assertEquals(post!.path, "/webhook/set/PRINCIPAL");
-    const webhook = post!.body.webhook as Record<string, unknown>;
-    assertEquals(webhook.url, "https://x/functions/v1/evolution-webhook", "url aninhado não pode ser perdido");
-    assertEquals(webhook.events, ["MESSAGES_UPSERT", "CONNECTION_UPDATE"], "events aninhados não podem virar a lista default");
-  } finally {
-    await fake.stop();
-  }
-});
-
-Deno.test("MON-WEBHOOK (GO): set-webhook usa /instance/connect com webhookUrl e subscribe ALL", async () => {
-  const fake = createFakeEvolution();
-  Deno.env.set("EVOLUTION_API_URL", fake.url);
-  Deno.env.set("EVOLUTION_API_FLAVOR", "go");
-  resetInstanceTokenCache();
-  try {
-    const res = await handleEvolutionApi(
-      controlRequest("set-webhook", {
-        instanceName: "PRINCIPAL",
-        webhook: { url: "https://x/functions/v1/evolution-webhook", events: ["MESSAGES_UPSERT"] },
-      }),
-      { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase: makeServiceClient() },
-    );
-    assertEquals(res.status, 200);
-    const post = fake.posts.find((p) => p.path === "/instance/connect");
-    assert(!!post, "GO deve configurar por /instance/connect (rota nativa)");
-    assertEquals(post!.body.webhookUrl, "https://x/functions/v1/evolution-webhook");
-    assertEquals(post!.body.subscribe, ["ALL"], "GO assina ALL (os nomes de evento do GO diferem dos do v2)");
-    assertEquals(fake.posts.some((p) => p.path.startsWith("/webhook/set/")), false, "não pode bater na rota v2 no GO");
-  } finally {
-    await fake.stop();
-  }
-});
-
-Deno.test("MON-WEBHOOK (GO): set-webhook com corpo PLANO segue funcionando (compatibilidade)", async () => {
-  const fake = createFakeEvolution();
-  Deno.env.set("EVOLUTION_API_URL", fake.url);
-  Deno.env.set("EVOLUTION_API_FLAVOR", "go");
-  resetInstanceTokenCache();
-  try {
-    await handleEvolutionApi(
-      controlRequest("set-webhook", { instanceName: "PRINCIPAL", url: "https://x/f1" }),
-      { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase: makeServiceClient() },
-    );
-    const post = fake.posts.find((p) => p.path === "/instance/connect");
-    assertEquals(post!.body.webhookUrl, "https://x/f1");
-  } finally {
-    await fake.stop();
-  }
-});
-
-Deno.test("MON-WEBHOOK (GO): get-webhook lê a config de /instance/fetchInstances", async () => {
-  const fake = createInstanceReadFake((path) =>
-    path === "/instance/all"
-      ? { data: [{ name: "PRINCIPAL", webhook: "https://x/functions/v1/evolution-webhook", events: "Message,ReadReceipt" }] }
-      : {}
+  const supabase: any = {
+    from: () => makeQuery(),
+    rpc: (fn: string) => fn === "get_instance_token"
+      ? Promise.resolve({ data: opts.token === undefined ? "token-da-instancia" : opts.token, error: null })
+      : Promise.resolve({ data: null, error: null }),
+  };
+  const res = await handleEvolutionApi(
+    controlRequest(action, { instanceName, ...(opts.fields ?? {}) }),
+    { callerClient: makeCallerClient({ isAdminOrSupervisor: opts.admin ?? true }), supabase },
   );
+  return { res, requests: fake.requests, stop: () => fake.stop() };
+}
+
+const SETTINGS_OK = {
+  rejectCall: true,
+  msgCall: "mensagem",
+  groupsIgnore: false,
+  alwaysOnline: false,
+  readMessages: true,
+  readStatus: false,
+  syncFullHistory: true,
+};
+
+Deno.test("GO: get-settings lê /instance/advanced-settings com o token DA conexão e devolve os campos no topo", async () => {
+  const fake = createSettingsFake(() =>
+    new Response(JSON.stringify(SETTINGS_OK), { status: 200, headers: { "Content-Type": "application/json" } }));
+  const c = await chamarSettings("get-settings", "CONN_B", fake, { token: "token-da-CONN_B" });
+  try {
+    assertEquals(c.requests.length, 1);
+    assertEquals(c.requests[0].method, "GET");
+    assertEquals(c.requests[0].path, "/instance/advanced-settings");
+    assertEquals(c.requests[0].apikey, "token-da-CONN_B");
+    assertEquals(c.res.status, 200);
+    assertEquals(await c.res.json(), SETTINGS_OK);
+  } finally {
+    await c.stop();
+  }
+});
+
+Deno.test("GO: get-settings desembrulha `data` da GO para o topo (a tela lê no topo)", async () => {
+  const fake = createSettingsFake(() =>
+    new Response(JSON.stringify({ data: { rejectCall: true, readMessages: true } }), {
+      status: 200, headers: { "Content-Type": "application/json" },
+    }));
+  const c = await chamarSettings("get-settings", "CONN_B", fake, { token: "token-da-CONN_B" });
+  try {
+    assertEquals(c.res.status, 200);
+    assertEquals(await c.res.json(), { rejectCall: true, readMessages: true });
+  } finally {
+    await c.stop();
+  }
+});
+
+Deno.test("GO: get-settings com 2xx SEM campos conhecidos FALHA — nunca objeto vazio", async () => {
+  // Fail-closed (espelha R2-API-014): corpo vazio viraria interruptores desligados.
+  const fake = createSettingsFake(() =>
+    new Response(JSON.stringify({ status: "success" }), { status: 200, headers: { "Content-Type": "application/json" } }));
+  const c = await chamarSettings("get-settings", "CONN_B", fake, { token: "token-da-CONN_B" });
+  try {
+    const json = await c.res.json();
+    assertEquals(c.res.status, 200, "convenção do proxy: HTTP 200 + { error:true }");
+    assertEquals(json?.error, true);
+    assert(Number(json?.status) >= 500, `corpo deve trazer status >= 500 (veio ${json?.status})`);
+  } finally {
+    await c.stop();
+  }
+});
+
+Deno.test("GO: get-settings com corpo não-JSON FALHA (não engole o parse)", async () => {
+  const fake = createSettingsFake(() =>
+    new Response("<html>boom</html>", { status: 200, headers: { "Content-Type": "text/html" } }));
+  const c = await chamarSettings("get-settings", "CONN_B", fake, { token: "token-da-CONN_B" });
+  try {
+    const json = await c.res.json();
+    assertEquals(c.res.status, 200);
+    assertEquals(json?.error, true);
+    assert(Number(json?.status) >= 500, `corpo deve trazer status >= 500 (veio ${json?.status})`);
+  } finally {
+    await c.stop();
+  }
+});
+
+Deno.test("GO: get-settings propaga erro do provedor (HTTP 500 da GO)", async () => {
+  const fake = createSettingsFake(() =>
+    new Response(JSON.stringify({ message: "instance offline" }), { status: 500, headers: { "Content-Type": "application/json" } }));
+  const c = await chamarSettings("get-settings", "CONN_B", fake, { token: "token-da-CONN_B" });
+  try {
+    const json = await c.res.json();
+    assertEquals(c.res.status, 200);
+    assertEquals(json?.error, true);
+    assertEquals(json?.status, 500);
+    assert(String(json?.message).includes("instance offline"), `mensagem do provedor deve aparecer: ${json?.message}`);
+  } finally {
+    await c.stop();
+  }
+});
+
+Deno.test("GO: set-settings grava /instance/advanced-settings com os campos e o token DA conexão", async () => {
+  const fake = createSettingsFake(() =>
+    new Response(JSON.stringify({ status: "success" }), { status: 200, headers: { "Content-Type": "application/json" } }));
   Deno.env.set("EVOLUTION_API_URL", fake.url);
   Deno.env.set("EVOLUTION_API_FLAVOR", "go");
   resetInstanceTokenCache();
+  const supabase: any = {
+    from: () => makeQuery(),
+    rpc: (fn: string) => fn === "get_instance_token"
+      ? Promise.resolve({ data: "token-da-CONN_B", error: null })
+      : Promise.resolve({ data: null, error: null }),
+  };
   try {
     const res = await handleEvolutionApi(
-      controlRequest("get-webhook", { instanceName: "PRINCIPAL" }),
-      { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase: makeServiceClient() },
+      controlRequest("set-settings", { instanceName: "CONN_B", ...SETTINGS_OK }),
+      { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase },
     );
-    assertEquals(res.status, 200);
-    assert(fake.gets.includes("/instance/all"), "GO deve ler a listagem admin (/instance/all, traduzida de /instance/fetchInstances)");
-    assert(!fake.gets.some((p) => p.startsWith("/webhook/find/")), "GO não tem /webhook/find");
     const json = await res.json();
-    assertEquals(json.webhook.url, "https://x/functions/v1/evolution-webhook");
-    assertEquals(json.webhook.events, ["Message", "ReadReceipt"]);
+    assertEquals(res.status, 200, `gravação deve ser sucesso: ${JSON.stringify(json)}`);
+    assertEquals(fake.requests.length, 1);
+    assertEquals(fake.requests[0].method, "POST");
+    assertEquals(fake.requests[0].path, "/instance/advanced-settings");
+    assertEquals(fake.requests[0].apikey, "token-da-CONN_B");
+    assertEquals(fake.requests[0].body, SETTINGS_OK);
   } finally {
     await fake.stop();
   }
 });
 
-Deno.test("MON-WEBHOOK (v2): get-webhook usa /webhook/find/{instance}", async () => {
-  const fake = createInstanceReadFake(() => ({ webhook: { url: "https://x/f1", events: ["MESSAGES_UPSERT"] } }));
-  Deno.env.set("EVOLUTION_API_URL", fake.url);
-  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
-  resetInstanceTokenCache();
+Deno.test("GO: set-settings de OUTRA conexão sem token no Vault nega e não chega ao provedor", async () => {
+  const fake = createSettingsFake(() =>
+    new Response(JSON.stringify({ status: "success" }), { status: 200, headers: { "Content-Type": "application/json" } }));
   try {
-    const res = await handleEvolutionApi(
-      controlRequest("get-webhook", { instanceName: "PRINCIPAL" }),
-      { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase: makeServiceClient() },
-    );
+    const res = await (async () => {
+      Deno.env.set("EVOLUTION_API_URL", fake.url);
+      Deno.env.set("EVOLUTION_API_FLAVOR", "go");
+      resetInstanceTokenCache();
+      const supabase: any = {
+        from: () => makeQuery(),
+        rpc: (fn: string) => fn === "get_instance_token"
+          ? Promise.resolve({ data: null, error: null })
+          : Promise.resolve({ data: null, error: null }),
+      };
+      return await handleEvolutionApi(
+        controlRequest("set-settings", { instanceName: "CONN_B", ...SETTINGS_OK }),
+        { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase },
+      );
+    })();
+    assertEquals(fake.requests.length, 0, "sem token da conexão não pode haver I/O no provedor");
     assertEquals(res.status, 200);
-    assert(fake.gets.includes("/webhook/find/PRINCIPAL"), "v2 deve ler em /webhook/find/{instance}");
+    assertEquals((await res.json())?.error, true);
   } finally {
     await fake.stop();
+  }
+});
+
+Deno.test("v2: get-settings mantém GET /settings/find/{instance} com a chave global", async () => {
+  const fake = createSettingsFake(() =>
+    new Response(JSON.stringify(SETTINGS_OK), { status: 200, headers: { "Content-Type": "application/json" } }));
+  const c = await chamarSettings("get-settings", "PRINCIPAL", fake, { flavor: "v2" });
+  try {
+    assertEquals(c.requests.length, 1);
+    assertEquals(c.requests[0].method, "GET");
+    assertEquals(c.requests[0].path, "/settings/find/PRINCIPAL");
+    assertEquals(c.requests[0].apikey, "test-evolution-key");
+    assertEquals(c.res.status, 200);
+  } finally {
+    await c.stop();
+  }
+});
+
+Deno.test("v2: set-settings mantém POST /settings/set/{instance} com a chave global", async () => {
+  const fake = createSettingsFake(() =>
+    new Response(JSON.stringify({ status: "success" }), { status: 200, headers: { "Content-Type": "application/json" } }));
+  const c = await chamarSettings("set-settings", "PRINCIPAL", fake, { flavor: "v2", fields: SETTINGS_OK });
+  try {
+    assertEquals(c.requests.length, 1);
+    assertEquals(c.requests[0].method, "POST");
+    assertEquals(c.requests[0].path, "/settings/set/PRINCIPAL");
+    assertEquals(c.requests[0].apikey, "test-evolution-key");
+    assertEquals(c.requests[0].body, SETTINGS_OK);
+  } finally {
+    await c.stop();
   }
 });
