@@ -4,7 +4,7 @@ Mapa das Edge Functions do Zapp Web V2: **quem chama cada edge** e o que está l
 de verdade no código da ponta do dia. Complementa `docs/architecture/edge-functions.md`
 (que descreve *o que* cada edge faz); aqui a pergunta é *quem a dispara*.
 
-Base: `dia/2026-10-11`. 81 edges com `index.ts` em `supabase/functions/`.
+Base: `dia/2026-10-11`. 82 edges com `index.ts` em `supabase/functions/`.
 
 ## Como manter
 
@@ -40,9 +40,9 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | A | 54 |
 | B | 1 |
 | C | 3 |
-| D | 6 |
+| D | 7 |
 | E | 17 |
-| **total** | **81** |
+| **total** | **82** |
 
 ## Tabela
 
@@ -55,10 +55,10 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `ai-conversation-summary` | A | `src/components/inbox/ConversationSummary.tsx:91` |
 | `ai-enhance-message` | A | `src/components/inbox/chat/AIEnhanceButton.tsx:62` · `src/components/inbox/chat/AIRewriteButton.tsx:50` |
 | `ai-jobs-worker` | C | `supabase/migrations/20261002371230_ia045_ia046_ai_jobs_durabilidade_e_estados.sql:533` |
-| `ai-kb-ingest` | A | `src/hooks/integrations/useKnowledgeBase.ts:99` |
+| `ai-kb-ingest` | A | `src/hooks/integrations/useKnowledgeBase.ts:126` |
 | `ai-proxy` | A | `src/hooks/ui/useUniversityHelp.ts:130` · `src/hooks/inbox/useObjectionDetector.ts:90` · `src/hooks/inbox/useObjectionDetector.ts:164` · `src/components/settings/ai-providers/useAIProviders.ts:121` · `src/components/admin/SupervisorCopilot.tsx:89` · `supabase/functions/talkx-ai/index.ts:589` |
 | `ai-suggest-reply` | A | `src/components/inbox/AISuggestions.tsx:101` |
-| `ai-transcribe-audio` | A | `src/components/inbox/AudioMessagePlayer.tsx:62` · `supabase/functions/_shared/evolution-webhook-messages.ts:734` |
+| `ai-transcribe-audio` | A | `src/components/inbox/AudioMessagePlayer.tsx:62` · `supabase/functions/_shared/evolution-webhook-messages.ts:983` |
 | `approve-password-reset` | A | `src/components/security/PasswordResetRequestsPanel.tsx:53` · `src/components/security/PasswordResetRequestsPanel.tsx:65` |
 | `auth-login` | A | `src/lib/serverLogin.ts:72` · `supabase/config.toml:39` |
 | `auto-close-conversations` | E | — sem chamador no repositório — |
@@ -128,6 +128,7 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `voice-copilot-action` | E | — sem chamador no repositório — |
 | `webauthn` | A | `src/hooks/auth/useWebAuthn.ts:51` · `src/hooks/auth/useWebAuthn.ts:83` · `src/hooks/auth/useWebAuthn.ts:106` · `src/hooks/auth/useWebAuthn.ts:136` |
 | `webhook-diagnostic` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:78` |
+| `webhook-hmac-selftest` | D | `supabase/config.toml:90` |
 | `whatsapp-webhook` | D | `supabase/config.toml:11` |
 
 ## Órfãs (17) — GATE B

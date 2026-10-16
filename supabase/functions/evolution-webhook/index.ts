@@ -212,6 +212,18 @@ export async function handleEvolutionWebhook(req: Request): Promise<Response> {
 
     console.log('Evolution webhook received:', payload.event, '->', event, instance);
 
+    if (event === 'selftest') {
+      // Evento RESERVADO do autoteste de assinatura (webhook-hmac-selftest). Só
+      // chega aqui depois do gate de autenticidade acima (HMAC válido ou
+      // instanceToken aceito) — é justamente esse gate que o autoteste mede.
+      // Responde ANTES de qualquer handler/escrita: nenhum efeito em banco,
+      // provedor ou log de conteúdo. Nunca ecoa o corpo recebido.
+      return new Response(
+        JSON.stringify({ success: true, selftest: true }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
     if (event === 'connection.update') await handleConnectionUpdate(db, instance, baseData);
 
     if (event === 'qrcode.updated') {
