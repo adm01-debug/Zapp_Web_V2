@@ -1,16 +1,32 @@
--- N-118 isolada ([refazer 1] t_85000f2a): sobe APENAS a janela Talk X ja corrigida.
--- Rollback: dropa a funcao nova e as duas colunas da janela (funcao e colunas sao novas: nada anterior a recriar).
+-- N-118 isolada ([refazer 2] t_8f7e8008): sobe APENAS a janela Talk X ja corrigida,
+-- no contrato BOOLEAN que o motor consome.
+-- Rollback: dropa a funcao BOOLEAN criada aqui; as colunas da janela FICAM (ver abaixo).
 -- Rollback (SQL executável, na ordem):
 --   drop function if exists public.talkx_campaign_window_open(uuid, timestamptz);
+-- -- O que este rollback desfaz: apenas a funcao BOOLEAN criada aqui. As colunas
+-- -- send_weekdays e respect_dnd nao sao dropadas: num alvo que ja recebeu a migration
+-- -- 20261011000003 as duas sao dela, e dropa-las apagaria dado daquela migration.
+-- -- Esta migration so as cria por contingencia (ADD COLUMN IF NOT EXISTS) para a
+-- -- funcao ter o que ler. Num alvo em que SO esta migration as criou, o rollback
+-- -- total e (apaga os dados das duas colunas, por isso nao e o caminho padrao):
 --   alter table public.talkx_campaigns drop column if exists send_weekdays;
 --   alter table public.talkx_campaigns drop column if exists respect_dnd;
+-- -- Para voltar ao contrato TABLE anterior (migration 20261011000003): o DROP acima
+-- -- remove o obstaculo (42P13) e reexecutar aquela migration recria a funcao TABLE
+-- -- sem tocar nas colunas.
+-- Troca de contrato: a versao anterior da funcao tem a MESMA assinatura de entrada
+-- (p_campaign_id uuid, p_at timestamptz) e retorno TABLE(allowed boolean, reason text,
+-- next_window timestamptz) — por isso o DROP FUNCTION antes do CREATE OR REPLACE:
+-- sem o DROP, o CREATE OR REPLACE falha com 42P13 (cannot change return type of
+-- existing function). O teste versionado prova os dois lados.
 -- Direto em public.talkx_campaigns (sem _legacy, sem reescrever save/update).
 -- Contrato BOOLEAN: TRUE = janela aberta. O motor (talkx-scheduler) consome
 -- `windowOpen !== true` como fora-da-janela, entao FALSE e erro fecham (skip).
 -- Colunas irrelevantes (status etc.) sao ignoradas: so as janelas decidem.
 -- Origens lidas aqui (faltavam no DDL avulso): talkx_settings.dnd_hours e
 -- talkx_settings.business_hours. Cast jsonb por conversao NULL-explicita
--- (nunca cast direto do valor bruto); days invalido = erro 22023, nunca
+-- (nunca cast direto do valor bruto); days invalido = erro 22023
+-- (invalid_business_hours), nunca 22P02/42846.
 -- Ramos TRUE: send_window com start=end (open 24h) e campanha sem restricao
 -- (so existir/active) — ambos TRUE.
 
@@ -20,6 +36,11 @@ ALTER TABLE public.talkx_campaigns
   ADD COLUMN IF NOT EXISTS respect_dnd boolean NOT NULL DEFAULT true;
 
 -- 2) Janela de envio por campanha (fuso dela; DND so com opt-in; BH no fuso proprio).
+-- O contrato anterior da MESMA assinatura era TABLE(allowed, reason, next_window)
+-- (migration 20261011000003): sem o DROP da linha seguinte, o CREATE OR REPLACE
+-- falha com 42P13 (cannot change return type of existing function). A assinatura de
+-- entrada e a mesma, entao nada mais depende dela.
+DROP FUNCTION IF EXISTS public.talkx_campaign_window_open(uuid, timestamptz);
 CREATE OR REPLACE FUNCTION public.talkx_campaign_window_open(
   p_campaign_id uuid,
   p_at timestamptz DEFAULT now()

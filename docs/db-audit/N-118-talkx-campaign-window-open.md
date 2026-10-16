@@ -1,6 +1,6 @@
 # N-118 — talkx_campaign_window_open (janela Talk X) — contrato BOOLEAN
 
-Cartão: [refazer 1] talkx-campaign-window-cast-jsonb (t_85000f2a).
+Cartão: [refazer 2] talkx-campaign-window-cast-jsonb (t_8f7e8008).
 Migration isolada: `supabase/migrations/*talkx_campaign_window_open_isolada.sql`.
 Espelho do CI: `scripts/db-audit/talkx-campaign-window-open.test.sh`.
 
@@ -17,6 +17,17 @@ Espelho do CI: `scripts/db-audit/talkx-campaign-window-open.test.sh`.
   e registra a mensagem — nunca vaza `22P02`/`42846` de cast direto.
 - O motor (`talkx-scheduler`) consome `windowOpen !== true` como fora-da-janela,
   por isso FALSE e erro fecham do mesmo jeito.
+
+## Troca de contrato (TABLE -> BOOLEAN)
+
+A versao anterior da funcao (`20261011000003`) tem a **mesma assinatura de
+entrada** (`uuid, timestamptz`) e retorno `TABLE(allowed, reason, next_window)`.
+Por isso a migration faz `DROP FUNCTION IF EXISTS …(uuid, timestamptz)` antes do
+`CREATE OR REPLACE`: com outro tipo de retorno, o `CREATE OR REPLACE` falha com
+`42P13` (`cannot change return type of existing function`) — e é o erro que o
+teste reproduz sem o `DROP`. O teste versionado prova os
+dois lados: aplica sobre o contrato `TABLE` anterior e, sem o `DROP`, falha com
+`42P13`.
 
 ## O que a funcão lê (e so isso)
 
@@ -59,5 +70,16 @@ Por isso a função não lê `auth.uid()`: o isolamento é o grant.
 
 ## Rollback
 
-`DROP FUNCTION …; ALTER TABLE … DROP COLUMN send_weekdays/respect_dnd;`
-(linha `-- Rollback:` da migration — executável, sem recriar nada alheio).
+`DROP FUNCTION IF EXISTS public.talkx_campaign_window_open(uuid, timestamptz);`
+(linha `-- Rollback:` da migration) — desfaz **só** a função BOOLEAN criada aqui.
+
+As colunas `send_weekdays`/`respect_dnd` **não** são dropadas: num alvo que já
+recebeu a migration `20261011000003` elas são dela, e dropá-las apagaria dado
+daquela migration. Esta migration só as cria por contingência
+(`ADD COLUMN IF NOT EXISTS`) para a função ter o que ler; num alvo em que só ela
+as criou, o rollback total (com `DROP COLUMN`, que apaga os dados) fica listado no
+cabeçalho da migration.
+
+Para voltar ao contrato `TABLE` anterior: o `DROP` do rollback remove o obstáculo
+`42P13` e reexecutar a `20261011000003` recria a função `TABLE(allowed, reason,
+next_window)` sem tocar nas colunas.

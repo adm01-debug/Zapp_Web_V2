@@ -1,11 +1,16 @@
 #!/usr/bin/env bash
-# N-118 isolada ([refazer 1] t_85000f2a): prova SQL de talkx_campaign_window_open
+# N-118 isolada ([refazer 2] t_8f7e8008): prova SQL de talkx_campaign_window_open
 # no contrato BOOLEAN (TRUE = janela aberta), como o motor consome
 # (`windowOpen !== true` = fora-da-janela no talkx-scheduler).
 #
 # Roda contra a MIGRATION REAL (*talkx_campaign_window_open_isolada.sql) num
 # PostgreSQL 17 descartavel, no formato dos testes irmaos de banco. Prova, sob
 # o papel real (service_role executa; anon/authenticated sem EXECUTE):
+#   (0) troca de contrato: o contrato ANTERIOR da mesma assinatura —
+#       TABLE(allowed boolean, reason text, next_window timestamptz), como na
+#       migration 20261011000003 — esta na frente antes de aplicar a migration;
+#       ela aplica sobre ele (o DROP FUNCTION do cabecalho tira o obstaculo) e o
+#       MESMO arquivo SEM o DROP falha com 42P13 (prova de mutacao);
 #   (1) fuso da campanha: hora/dia saem do schedule_timezone (default
 #       America/Sao_Paulo quando ausente) e fuso invalido fecha (false);
 #   (2) DND que vira a meia-noite cobre os dois lados, com fim exclusivo, e so
@@ -106,6 +111,34 @@ CREATE TABLE public.talkx_campaigns (
 GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
 SQL
 
+# ---------------------------------------------------------------------------
+# (0) Contrato ANTERIOR da funcao, exatamente como o da migration 20261011000003:
+#     mesma assinatura de entrada (uuid, timestamptz) e retorno
+#     TABLE(allowed boolean, reason text, next_window timestamptz). A 20261011000003
+#     nao esta na arvore desta branch — o defeito da revisao e justamente a troca de
+#     contrato sobre um alvo que a tem —, entao o teste reproduz aqui o contrato dela
+#     (assinatura e retorno; o corpo nao importa para o 42P13). Sem essa funcao na
+#     frente, o CREATE OR REPLACE da migration nova passaria por acidente.
+# ---------------------------------------------------------------------------
+psql_test >/dev/null <<'SQL'
+CREATE FUNCTION public.talkx_campaign_window_open(
+  p_campaign_id uuid,
+  p_at timestamptz DEFAULT now()
+)
+RETURNS TABLE (allowed boolean, reason text, next_window timestamptz)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $legacy$
+BEGIN
+  RETURN QUERY SELECT true, 'legacy'::text, p_at;
+END;
+$legacy$;
+SQL
+legacy_result="$(psql_q "SELECT pg_get_function_result('public.talkx_campaign_window_open(uuid, timestamptz)'::regprocedure)")"
+[[ "$legacy_result" == TABLE* ]] || fail "(0) contrato anterior nao ficou TABLE(...): '$legacy_result'"
+pass '(0) contrato TABLE anterior (como em 20261011000003) aplicado antes da migration'
+
 [[ -n "$migration" && -f "$migration" ]] || fail "migration isolada ausente: $migration"
 psql_test < "$migration" >/dev/null
 # Replayavel: uma segunda aplicacao nao pode falhar.
@@ -116,6 +149,12 @@ pass 'migration isolada aplica e e replayavel'
 [[ "$(psql_q "SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND table_name='talkx_campaigns' AND column_name IN ('send_weekdays','respect_dnd')")" == '2' ]] \
   || fail 'migration nao criou send_weekdays/respect_dnd em talkx_campaigns'
 pass 'migration cria send_weekdays e respect_dnd'
+
+# A migration trocou o contrato: a mesma assinatura agora devolve boolean.
+window_result="$(psql_q "SELECT pg_get_function_result('public.talkx_campaign_window_open(uuid, timestamptz)'::regprocedure)")"
+[[ "$window_result" == 'boolean' ]] \
+  || fail "(0) migration nao trocou o retorno para boolean sobre o contrato TABLE anterior: '$window_result'"
+pass '(0) migration troca o contrato TABLE anterior por boolean'
 
 # DND que vira a meia-noite; campanhas de fuso/teste ficam com respect_dnd=false
 # para isolar o caso em prova.
@@ -251,4 +290,41 @@ check '(6) sem restricao (scheduled, DND off) abre igual — status irrelevante'
 expect_error '(7) campanha inexistente -> P0002' 'talkx_campaign_not_found' 'P0002' \
   "$svc_session SELECT public.talkx_campaign_window_open('b1000000-0000-0000-0000-0000000000ff', '2026-10-02T12:00:00Z');"
 
-printf 'PASS: N-118 isolada talkx_campaign_window_open (BOOLEAN) — fuso, DND, business_hours com days, 22023, grant service_role, ramos TRUE\\n'
+# ---------------------------------------------------------------------------
+# (0b) Prova de mutacao: o MESMO arquivo sem a linha do DROP FUNCTION falha com
+#      42P13 quando o contrato TABLE anterior esta na frente — e o defeito que a
+#      revisao apontou (CREATE OR REPLACE nao troca o tipo de retorno).
+# ---------------------------------------------------------------------------
+psql_test >/dev/null <<'SQL'
+DROP FUNCTION public.talkx_campaign_window_open(uuid, timestamptz);
+CREATE FUNCTION public.talkx_campaign_window_open(
+  p_campaign_id uuid,
+  p_at timestamptz DEFAULT now()
+)
+RETURNS TABLE (allowed boolean, reason text, next_window timestamptz)
+LANGUAGE plpgsql
+AS $legacy$
+BEGIN
+  RETURN QUERY SELECT true, 'legacy'::text, p_at;
+END;
+$legacy$;
+SQL
+grep -q '^DROP FUNCTION IF EXISTS public.talkx_campaign_window_open' "$migration" \
+  || fail '(0b) a migration nao tem o DROP FUNCTION antes do CREATE'
+no_drop_migration="$(mktemp "${TMPDIR:-/tmp}/talkx-window-open-sem-drop-XXXXXX.sql")"
+grep -v '^DROP FUNCTION IF EXISTS public.talkx_campaign_window_open' "$migration" > "$no_drop_migration"
+set +e
+out_no_drop="$(psql_test -v VERBOSITY=verbose < "$no_drop_migration" 2>&1)"
+status_no_drop=$?
+set -e
+rm -f "$no_drop_migration"
+(( status_no_drop != 0 )) || { printf '%s\n' "$out_no_drop" >&2; fail '(0b) sem o DROP a migration deveria falhar com 42P13, mas passou'; }
+[[ "$out_no_drop" == *'cannot change return type'* ]] || { printf '%s\n' "$out_no_drop" >&2; fail '(0b) esperava "cannot change return type" ao aplicar sem o DROP'; }
+[[ "$out_no_drop" == *'42P13'* ]] || { printf '%s\n' "$out_no_drop" >&2; fail '(0b) esperava o SQLSTATE 42P13 ao aplicar sem o DROP'; }
+pass '(0b) sem o DROP FUNCTION -> 42P13; com o DROP -> aplica'
+
+# A migration (que tem o DROP) reaplica e o banco volta ao contrato BOOLEAN.
+psql_test < "$migration" >/dev/null
+check '(0b) reaplicada sobre o contrato TABLE anterior, a janela volta a decidir (09:00 SP abre)' "$svc_session" 'a1000000-0000-0000-0000-000000000001' '2026-10-02T12:00:00Z' 't'
+
+printf 'PASS: N-118 isolada talkx_campaign_window_open (BOOLEAN) — troca de contrato (42P13 sem o DROP), fuso, DND, business_hours com days, 22023, grant service_role, ramos TRUE\n'
