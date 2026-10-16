@@ -18,11 +18,18 @@ const getAudioContext = () => {
   return audioContext;
 };
 
+/**
+ * Devolve `true` quando o som foi AGENDADO e `false` quando o navegador recusou (sem WebAudio,
+ * áudio bloqueado pelo navegador). Quem chama por um clique do usuário — o teste de som do
+ * painel, via `previewSound` — pode usar o retorno para não deixar a pessoa achando que a
+ * preferência foi salva quando nada tocou. O aviso automático de mensagem ignora o retorno:
+ * ali não há ninguém esperando confirmação.
+ */
 export const playNotificationSound = (
   notificationType: NotificationType,
   soundType: SoundType = 'chime',
   volume: number = 70
-) => {
+): boolean => {
   try {
     const ctx = getAudioContext();
     if (ctx.state === 'suspended') void ctx.resume();
@@ -55,14 +62,20 @@ export const playNotificationSound = (
         oscillator.stop(ctx.currentTime + duration);
       }, config.delays[index] * 1000);
     });
+    return true;
   } catch (error) {
     log.warn('Could not play notification sound:', error);
+    return false;
   }
 };
 
-export const previewSound = (soundType: SoundType, volume: number = 70) => {
+/**
+ * Prévia do painel de som. Devolve `false` quando o navegador RECUSOU tocar (sem `AudioContext`,
+ * áudio bloqueado, estouro dentro do player) — contrato que o painel de notificações lê para
+ * avisar na tela em vez de deixar o clique parecendo bem-sucedido.
+ */
+export const previewSound = (soundType: SoundType, volume: number = 70): boolean =>
   playNotificationSound('message', soundType, volume);
-};
 
 export const requestNotificationPermission = async (): Promise<boolean> => {
   if (!('Notification' in window)) { log.warn('Notifications not supported'); return false; }

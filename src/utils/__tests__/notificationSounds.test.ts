@@ -38,6 +38,7 @@ vi.stubGlobal('AudioContext', FakeAudioContext);
 
 import {
   playNotificationSound,
+  previewSound,
 } from '@/utils/notificationSounds';
 
 describe('notificationSounds', () => {
@@ -116,6 +117,34 @@ describe('notificationSounds', () => {
         expect(criarOscilador).toHaveBeenCalled();
       } finally {
         vi.useRealTimers();
+      }
+    });
+  });
+
+  // O painel de notificações ("Testar som") lê o retorno para AVISAR quando o navegador recusa
+  // tocar. Sem estes casos o contrato booleano escorrega de novo — a base ficou sem ele — e a
+  // tela volta a parecer que o som tocou.
+  describe('previewSound — retorno que o painel de som lê', () => {
+    it('devolve true quando o navegador deixou tocar', () => {
+      vi.useFakeTimers();
+      try {
+        expect(previewSound('chime', 60)).toBe(true);
+        vi.runAllTimers();
+        expect(criarOscilador).toHaveBeenCalled();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('devolve false quando o navegador recusa (sem AudioContext utilizável)', async () => {
+      // Módulo fresco: o cache interno do AudioContext sobrevive entre casos deste arquivo.
+      vi.resetModules();
+      vi.stubGlobal('AudioContext', undefined);
+      try {
+        const { previewSound: previewFresco } = await import('@/utils/notificationSounds');
+        expect(previewFresco('chime', 60)).toBe(false);
+      } finally {
+        vi.stubGlobal('AudioContext', FakeAudioContext);
       }
     });
   });
