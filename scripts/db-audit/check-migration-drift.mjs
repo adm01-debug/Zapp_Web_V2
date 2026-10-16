@@ -425,7 +425,7 @@ function compare(migrations, records, exceptionsByVersion) {
 
   for (const record of records) {
     const { version } = record;
-    if (!FILE_NAME_RE.test(record.name ?? '')) {
+    if (record.name != null && !/^[a-z0-9][a-z0-9_-]*$/.test(record.name)) {
       errors.push(`name malformado no ledger para ${record.version}`);
     }
   }
