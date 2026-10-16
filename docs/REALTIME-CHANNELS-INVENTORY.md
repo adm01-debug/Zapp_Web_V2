@@ -84,6 +84,7 @@ canal (o corte por linha é a RLS da tabela); `usuário`/`contato`/`conversa`/`m
 | `multiplix-mon-{dispatchId}` | `multiplix_dispatches`, `multiplix_recipients` | `id=eq.{dispatchId}` / `dispatch_id=eq.{dispatchId}` | disparo | `src/components/multiplix/MultiplixMonitor.tsx:232` |
 | `termino-remoto-{callId}` | `calls` | `id=eq.{callId}` | chamada | `src/hooks/calls/useTerminoRemoto.ts:39` |
 | `calls-kpi-realtime` | `calls` | — | global | `src/hooks/calls/useCallsKpi.ts:112` |
+| `copilot-insights:{sessionId}` | `copilot_insights` | `session_id=eq.{sessionId}` | sessão | `src/hooks/copilot/useCopilotInsights.ts` (a criar em CV-041) |
 
 ## 3. Presença e broadcast (sem tabela — nome fixo obrigatório)
 
@@ -120,6 +121,7 @@ colocou (ou repôs) cada uma:
 | `talkx_campaign_events` | `20260927570000_talkx_e27_realtime_campaign_events.sql` |
 | `multiplix_recipients` | `20260927210000_multiplix_rls_hardening_realtime_pii.sql` |
 | `multiplix_dispatches` | `20260929620000_multiplix_realtime_column_scope.sql` |
+| `copilot_insights` | `20261016193100_copilot_insights.sql` (a aplicar via db-migrate.yml) |
 
 `multiplix_*`, `talkx_recipients` e parte das demais entram com **lista explícita de colunas**
 (`ADD TABLE public.x (col, col, ...)`), decisão de PII: só as colunas publicadas viajam no evento.
@@ -142,3 +144,24 @@ Só três assinaturas passam `onReconnect` ao núcleo: `global-messages-realtime
 `fetchConversations`) e `messages:{contactId}` (`src/hooks/chat/useMessages.ts:343`,
 `recoverAfterReconnect`). Nas demais, o núcleo ainda usa `online`/`visibilitychange` para acordar o
 canal, mas sem refetch extra.
+
+---
+
+## copilot_insights — painel ao vivo do RADAR (CV-018)
+
+| Campo | Valor |
+|---|---|
+| Tabela | `public.copilot_insights` |
+| Canal | `copilot-insights:{sessionId}` |
+| Filtro | `session_id=eq.<id_da_sessao>` |
+| Eventos | `INSERT` |
+| Hook front | `useCopilotInsights` (a criar em CV-041) |
+| RLS | Vendedor só recebe insights de suas sessões |
+| Latência alvo | < 1 s (local) |
+| Criado em | CV-018 / migration `20261016193100_copilot_insights.sql` |
+
+## Regras gerais (desde CV-018)
+
+1. Todo canal exige filtro — nunca `*`.
+2. Registrar aqui com channel name, tabela, filtro, hook e migration.
+3. Marcar como `[DEPRECIADO]` em vez de remover, com data e motivo.
