@@ -314,6 +314,9 @@ export function BusinessHoursDialog({
                 </div>
                 <Switch
                   id="envio-automatico-ausencia"
+                  // O interruptor nao edita `is_enabled`: ele só controla
+                  // `enabled` (coluna do PL-04). Sem a coluna, fica
+                  // desabilitado e `is_enabled` segue como foi lido.
                   checked={envioAutomatico}
                   disabled={!envioDisponivel}
                   onCheckedChange={(checked) => setEnvioRascunho(checked)}
