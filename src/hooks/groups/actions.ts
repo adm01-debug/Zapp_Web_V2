@@ -148,7 +148,19 @@ export function useGroupActions({ connections, groups, selectedGroups, setGroups
     toast.success('Categoria atualizada');
     const group = groups.find(g => g.id === groupId);
     if (group) {
-      await supabase.from('contacts').update({ group_category: category }).like('phone', `%${group.group_id.replace('@g.us', '')}%`);
+      // O JID do grupo (`12345-67890@g.us`) é guardado em `contacts.phone` sem o
+      // sufixo (R2-INB-055); a propagação casa por phone EXATO. Um LIKE
+      // `%12345-67890%` podia atingir contato de outro grupo. Falha aqui não
+      // derruba a troca de categoria do grupo: a fonte de verdade é
+      // `whatsapp_groups`, já gravada nesta altura.
+      const phone = group.group_id.replace('@g.us', '');
+      const { error: catError } = await supabase
+        .from('contacts')
+        .update({ group_category: category })
+        .eq('phone', phone);
+      if (catError) log.warn('Falha ao propagar a categoria aos contatos do grupo', {
+        groupId, phone, error: catError.message,
+      });
     }
     setGroups(prev => prev.map(g => g.id === groupId ? { ...g, category } : g));
   }, [groups, setGroups]);
