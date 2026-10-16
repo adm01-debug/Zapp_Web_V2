@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
 
 import { Button, MotionButton } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -18,14 +18,18 @@ describe('primitivos de UI com texto longo (120 caracteres)', () => {
     expect(TEXTO_120).toHaveLength(120);
   });
 
-  it('Badge: min-w-0 + truncate seguram o rótulo e o title guarda o texto inteiro', () => {
+  it('Badge: o filho interno retém com truncate + min-w-0 e o title guarda o texto inteiro', () => {
     render(<Badge title={TEXTO_120}>{TEXTO_120}</Badge>);
 
-    const pilula = screen.getByText(TEXTO_120);
-    expect(pilula.tagName).toBe('DIV');
-    for (const classe of ['min-w-0', 'max-w-full', 'truncate']) {
-      expect(pilula.className).toContain(classe);
-    }
+    // Quem corta de verdade é o `span` interno: `truncate` no `inline-flex` do pai
+    // sozinho não gera reticências (o item flex precisa de `min-w-0` no filho).
+    const interno = screen.getByText(TEXTO_120);
+    expect(interno.tagName).toBe('SPAN');
+    expect(interno.className).toContain('truncate');
+    expect(interno.className).toContain('min-w-0');
+
+    const pilula = interno.closest('div');
+    expect(pilula).not.toBeNull();
     expect(pilula).toHaveAttribute('title', TEXTO_120);
   });
 
@@ -38,7 +42,7 @@ describe('primitivos de UI com texto longo (120 caracteres)', () => {
     expect(classesCurto).toContain('truncate');
   });
 
-  it('TabsTrigger: min-w-0 + truncate seguram a aba e o title guarda o texto inteiro', () => {
+  it('TabsTrigger: o filho interno retém com truncate + min-w-0 e o title guarda o texto inteiro', () => {
     render(
       <Tabs defaultValue="a">
         <TabsList>
@@ -51,9 +55,11 @@ describe('primitivos de UI com texto longo (120 caracteres)', () => {
     );
 
     const aba = screen.getByRole('tab', { name: TEXTO_120 });
-    for (const classe of ['min-w-0', 'truncate']) {
-      expect(aba.className).toContain(classe);
-    }
+    const interno = aba.querySelector('span');
+    expect(interno).not.toBeNull();
+    expect(interno?.textContent).toBe(TEXTO_120);
+    expect(interno?.className).toContain('truncate');
+    expect(interno?.className).toContain('min-w-0');
     expect(aba).toHaveAttribute('title', TEXTO_120);
   });
 
@@ -79,6 +85,14 @@ describe('primitivos de UI com texto longo (120 caracteres)', () => {
       expect(no.className).toContain('break-words');
       expect(no.textContent).toBe(TEXTO_120);
     }
+  });
+
+  it('CardTitle: usa leading-tight (não leading-none) para não colar as linhas', () => {
+    render(<CardTitle data-testid="titulo">Linha um de um título longo</CardTitle>);
+
+    const titulo = screen.getByTestId('titulo');
+    expect(titulo.className).toContain('leading-tight');
+    expect(titulo.className).not.toContain('leading-none');
   });
 
   it('Label: usa leading-snug, não leading-none', () => {
@@ -193,5 +207,68 @@ describe('Button em carregamento anuncia o estado sem perder foco nem largura', 
     expect(botao).toHaveAttribute('aria-disabled', 'true');
     expect(botao).toBeEnabled();
     expect(screen.getByText('Gerar relatório').className).toContain('opacity-0');
+  });
+
+  it('isLoading barra o onClick sem desabilitar o botão', () => {
+    const aoClicar = vi.fn();
+    render(
+      <Button isLoading onClick={aoClicar}>
+        Salvar cliente
+      </Button>,
+    );
+
+    const botao = screen.getByRole('button', { name: 'Salvar cliente' });
+    fireEvent.click(botao);
+    expect(aoClicar).not.toHaveBeenCalled();
+    expect(botao).toBeEnabled();
+    expect(botao).not.toHaveAttribute('disabled');
+  });
+
+  it('isLoading barra o envio do form (type=submit) sem desabilitar', () => {
+    const aoEnviar = vi.fn((e: { preventDefault(): void }) => e.preventDefault());
+    render(
+      <form onSubmit={aoEnviar}>
+        <Button isLoading type="submit">
+          Salvar cliente
+        </Button>
+      </form>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar cliente' }));
+    expect(aoEnviar).not.toHaveBeenCalled();
+  });
+
+  it('isLoading barra o onClick também com asChild', () => {
+    const aoClicar = vi.fn();
+    render(
+      <Button asChild isLoading onClick={aoClicar}>
+        <a href="/clientes">Ver clientes</a>
+      </Button>,
+    );
+
+    fireEvent.click(screen.getByRole('link', { name: 'Ver clientes' }));
+    expect(aoClicar).not.toHaveBeenCalled();
+  });
+
+  it('MotionButton com isLoading também barra o onClick sem desabilitar', () => {
+    const aoClicar = vi.fn();
+    render(
+      <MotionButton isLoading onClick={aoClicar}>
+        Gerar relatório
+      </MotionButton>,
+    );
+
+    const botao = screen.getByRole('button', { name: 'Gerar relatório' });
+    fireEvent.click(botao);
+    expect(aoClicar).not.toHaveBeenCalled();
+    expect(botao).toBeEnabled();
+  });
+
+  it('sem isLoading o onClick continua funcionando', () => {
+    const aoClicar = vi.fn();
+    render(<Button onClick={aoClicar}>Salvar cliente</Button>);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar cliente' }));
+    expect(aoClicar).toHaveBeenCalledTimes(1);
   });
 });

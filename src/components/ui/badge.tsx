@@ -3,8 +3,9 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 
-// `max-w-full min-w-0` impedem a pílula de estourar a caixa do pai e `truncate` corta o
-// rótulo longo com reticências; o texto inteiro continua vindo de quem usa o componente,
+// `truncate` sozinho no `inline-flex` do pai não corta (o item flex não encolhe sem
+// um filho com `min-w-0`): quem retém de verdade é o `span` interno
+// (`truncate min-w-0`); o texto inteiro continua vindo de quem usa o componente,
 // pelo `title` (o `...props` repassa o atributo para o DOM).
 const badgeVariants = cva(
   "inline-flex items-center max-w-full min-w-0 truncate rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
@@ -29,8 +30,12 @@ const badgeVariants = cva(
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof badgeVariants> {}
 
-const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(({ className, variant, ...props }, ref) => {
-  return <div ref={ref} className={cn(badgeVariants({ variant }), className)} {...props} />;
+const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(({ className, variant, children, ...props }, ref) => {
+  return (
+    <div ref={ref} className={cn(badgeVariants({ variant }), className)} {...props}>
+      <span className="truncate min-w-0">{children}</span>
+    </div>
+  );
 });
 
 Badge.displayName = "Badge";

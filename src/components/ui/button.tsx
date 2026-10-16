@@ -70,11 +70,21 @@ const ConteudoCarregando = ({ loadingText, children }: { loadingText?: string; c
 );
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, isLoading = false, loadingText, children, disabled, ...props }, ref) => {
+  ({ className, variant, size, asChild = false, isLoading = false, loadingText, children, disabled, onClick, ...props }, ref) => {
     const Comp = asChild ? Slot : "button";
     // `asChild` entrega os filhos ao `Slot`, que exige UM filho: sem o par
     // indicador/rótulo nesse caso (só o estado ocupado anunciado).
     const carregando = isLoading && !asChild;
+    // Carregando não é `disabled` (o botão segue focável): o clique é barrado aqui —
+    // `preventDefault` sem chamar o `onClick` de quem usa — o que também impede o
+    // envio quando o botão é `type="submit"` dentro de um `<form>`.
+    const aoClicar = (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (isLoading) {
+        e.preventDefault();
+        return;
+      }
+      onClick?.(e);
+    };
 
     return (
       <Comp
@@ -83,6 +93,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         disabled={disabled}
         aria-busy={isLoading || undefined}
         aria-disabled={isLoading || undefined}
+        onClick={aoClicar}
         {...props}
       >
         {carregando ? <ConteudoCarregando loadingText={loadingText}>{children}</ConteudoCarregando> : children}
@@ -110,7 +121,14 @@ interface MotionButtonProps
 }
 
 const MotionButton = React.forwardRef<HTMLButtonElement, MotionButtonProps>(
-  ({ className, variant, size, isLoading = false, loadingText, children, disabled, ...props }, ref) => {
+  ({ className, variant, size, isLoading = false, loadingText, children, disabled, onClick, ...props }, ref) => {
+    const aoClicar = (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (isLoading) {
+        e.preventDefault();
+        return;
+      }
+      onClick?.(e);
+    };
     return (
       <button
         ref={ref}
@@ -118,6 +136,7 @@ const MotionButton = React.forwardRef<HTMLButtonElement, MotionButtonProps>(
         disabled={disabled}
         aria-busy={isLoading || undefined}
         aria-disabled={isLoading || undefined}
+        onClick={aoClicar}
         {...props}
       >
         {isLoading ? <ConteudoCarregando loadingText={loadingText}>{children}</ConteudoCarregando> : children}

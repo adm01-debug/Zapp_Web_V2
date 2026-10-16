@@ -20,13 +20,13 @@ const TabsList = React.forwardRef<
 ));
 TabsList.displayName = TabsPrimitive.List.displayName;
 
-// `min-w-0` deixa o gatilho encolher dentro da faixa e `truncate` corta o rótulo longo
-// com reticências em vez de estourar a aba; o texto inteiro continua vindo de quem usa
+// `truncate` sozinho no `inline-flex` do gatilho não corta: quem retém de verdade é
+// o `span` interno (`truncate min-w-0`); o texto inteiro continua vindo de quem usa
 // o componente, pelo `title` (o `...props` repassa o atributo para o DOM).
 const TabsTrigger = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>
->(({ className, ...props }, ref) => (
+>(({ className, children, ...props }, ref) => (
   <TabsPrimitive.Trigger
     ref={ref}
     className={cn(
@@ -34,7 +34,9 @@ const TabsTrigger = React.forwardRef<
       className,
     )}
     {...props}
-  />
+  >
+    <span className="truncate min-w-0">{children}</span>
+  </TabsPrimitive.Trigger>
 ));
 TabsTrigger.displayName = TabsPrimitive.Trigger.displayName;
 
