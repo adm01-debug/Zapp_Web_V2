@@ -27,6 +27,7 @@ import {
   handleElevenLabsSts,
   MAX_STS_AUDIO_BYTES,
   sniffStsAudioFormat,
+  STS_TIMEOUT_MS,
   validateStsUpload,
 } from "./index.ts";
 import { ELEVENLABS_VOICE_IDS } from "../_shared/schemas.ts";
@@ -36,9 +37,14 @@ function assert(condition: unknown, message: string): asserts condition {
 }
 
 const USER_ID = "20000000-0000-0000-0000-00000000000c";
+// Segundo usuário sintético: o limiter in-memory permite 10 chamadas por
+// usuário/minuto no mesmo isolado `deno test`; os cenários novos usam outra
+// chave para não disputar o orçamento dos cenários antigos.
+const USER_ID_2 = "20000000-0000-0000-0000-00000000000e";
 const VOZ_FORA_DA_LISTA = "voz-clonada-fora-da-lista";
+const VOICE_FLAG_KEY = "ai.capability.voice";
 
-type Route = { match: string; make: () => Response };
+type Route = { match: string; make: (init?: RequestInit) => Response | Promise<Response> };
 type Call = { url: string; init?: RequestInit };
 
 function jsonResp(body: unknown, status = 200): Response {
@@ -69,7 +75,7 @@ function withFetch(routes: Route[]) {
     }
     const route = routes.find((r) => url.includes(r.match));
     if (!route) return Promise.resolve(new Response("nao stubado", { status: 599 }));
-    return Promise.resolve(route.make());
+    return Promise.resolve(route.make(init));
   }) as typeof fetch;
   return { calls, restore: () => { globalThis.fetch = original; } };
 }
@@ -81,6 +87,13 @@ const ROTA_AUTH: Route = {
   match: "/auth/v1/user",
   make: () => jsonResp({ id: USER_ID, aud: "authenticated" }),
 };
+// Segunda identidade sintética (ver USER_ID_2): orçamento próprio no limiter.
+function rotaAuth(userId: string): Route {
+  return {
+    match: "/auth/v1/user",
+    make: () => jsonResp({ id: userId, aud: "authenticated" }),
+  };
+}
 const ROTA_RATE_LIMIT: Route = {
   match: "/rest/v1/rpc/consume_rate_limit",
   make: () => jsonResp([{ allowed: true, remaining: 9 }]),
@@ -93,12 +106,20 @@ const ROTA_AUDIO: Route = {
       headers: { "content-type": "audio/mpeg" },
     }),
 };
-/** A flag de voz LIGADA — caminho feliz do kill switch de voz (t_1266b773). */
 const ROTA_FLAG_ON: Route = {
   match: "/rest/v1/feature_flags",
-  make: () => jsonResp({ enabled: true }),
+  make: () =>
+    Response.json([{ key: VOICE_FLAG_KEY, enabled: true }], {
+      headers: { "content-range": "0-0/1" },
+    }),
 };
-
+const ROTA_FLAG_OFF: Route = {
+  match: "/rest/v1/feature_flags",
+  make: () =>
+    Response.json([{ key: VOICE_FLAG_KEY, enabled: false }], {
+      headers: { "content-range": "0-0/1" },
+    }),
+};
 const ROTAS_OK = [ROTA_AUTH, ROTA_RATE_LIMIT, ROTA_AUDIO, ROTA_FLAG_ON];
 
 const ENV_KEYS = [
@@ -428,31 +449,163 @@ Deno.test("SL-008 (B4): sem bearer continua 401 e não toca o provedor (caminho 
   });
 });
 
-Deno.test("IA-009: flag de voz desligada -> 503 AI_DISABLED e ZERO chamada ao provedor pago", async () => {
+// ---------------------------------------------------------------------------
+// G5 — teto de tempo na chamada PAGA ao provedor (speech-to-speech).
+//
+// Sem prazo, um provedor pendurado prendia o handler para sempre. Também aqui o
+// prazo vale só até os CABEÇALHOS: `AbortSignal.timeout` continuaria armado
+// durante a leitura do CORPO e cortaria conversões longas no meio. Por isso o
+// teste "corpo lento" prova que um áudio que demora MAIS que o prazo, mas cujos
+// cabeçalhos chegaram a tempo, sai inteiro (200).
+// ---------------------------------------------------------------------------
+
+/** Linhas do ledger de consumo (`ai_usage_logs`) realmente enviadas ao PostgREST. */
+function ledgerRows(calls: Call[]): Array<Record<string, unknown>> {
+  return calls
+    .filter((c) => c.url.includes("/rest/v1/ai_usage_logs") && (c.init?.method ?? "GET") === "POST")
+    .map((c) => JSON.parse(String(c.init?.body)) as Record<string, unknown>);
+}
+/**
+ * Corpo de áudio que chega em DOIS pedaços separados por atrasos.
+ *
+ * O `fetch` real amarra o CORPO ao `signal`: abortar rejeita a leitura do corpo.
+ * A emulação reproduz isso (`controller.error(signal.reason)`), senão o teste do
+ * prazo não provaria nada — o `Response` sintético não enxergaria o abort.
+ */
+function slowAudioBody(totalMs: number, signal?: AbortSignal | null): ReadableStream<Uint8Array> {
+  return new ReadableStream<Uint8Array>({
+    async start(controller) {
+      if (signal) {
+        signal.addEventListener("abort", () => controller.error(signal.reason), { once: true });
+      }
+      const meio = Math.floor(totalMs / 2);
+      await new Promise((r) => setTimeout(r, meio));
+      controller.enqueue(new Uint8Array([7, 8]));
+      await new Promise((r) => setTimeout(r, meio));
+      controller.enqueue(new Uint8Array([9, 10]));
+      controller.close();
+    },
+  });
+}
+
+Deno.test("G5: prazo de produção declarado é o teto acordado (60 s)", () => {
+  assert(STS_TIMEOUT_MS === 60_000, `prazo de produção esperado 60 s, é ${STS_TIMEOUT_MS}`);
+});
+
+Deno.test("G5: provedor pendurado estoura o prazo -> 504 e linha no ledger", async () => {
   await withEnv(ENV_OK, async () => {
     const stub = withFetch([
       ROTA_AUTH,
       ROTA_RATE_LIMIT,
-      ROTA_AUDIO,
-      { match: "/rest/v1/feature_flags", make: () => jsonResp({ enabled: false }) },
+      ROTA_FLAG_ON,
+      // O provedor NUNCA resolve: prova o teto de tempo (o wrapper de abort
+      // rejeita de fora mesmo que a implementação ignore o `signal`).
+      { match: PROVIDER, make: () => new Promise<Response>(() => {}) },
     ]);
     try {
-      const res = await handleElevenLabsSts(makeRequest(audioFormData(ELEVENLABS_VOICE_IDS[0])));
+      const res = await handleElevenLabsSts(
+        makeRequest(audioFormData(ELEVENLABS_VOICE_IDS[0])),
+        { stsTimeoutMs: 25 },
+      );
 
+      assert(res.status === 504, `esperado 504 no estouro de prazo, veio ${res.status}`);
+      const row = ledgerRows(stub.calls).find((r) => r.function_name === "elevenlabs-sts");
+      assert(row !== undefined, "a tentativa abortada tem de deixar linha no ledger");
+      assert(row.status === "error", `status esperado error, veio ${String(row.status)}`);
+      assert(
+        row.error_message === "provider_timeout",
+        `error_message esperado provider_timeout, veio ${String(row.error_message)}`,
+      );
+      const meta = row.metadata as Record<string, unknown>;
+      assert(meta.http_status === null, "tentativa sem resposta tem http_status nulo");
+      assert(meta.billing_unit === "second", "unidade cobrada é segundo de áudio");
+    } finally {
+      stub.restore();
+    }
+  });
+});
+
+Deno.test("G5: cabeçalhos a tempo + corpo LENTO (> prazo) -> áudio completo (o prazo só cobre os cabeçalhos)", async () => {
+  await withEnv(ENV_OK, async () => {
+    const stub = withFetch([
+      ROTA_AUTH,
+      ROTA_RATE_LIMIT,
+      ROTA_FLAG_ON,
+      {
+        match: PROVIDER,
+        make: (init) =>
+          new Response(slowAudioBody(60, init?.signal), {
+            status: 200,
+            headers: { "content-type": "audio/mpeg" },
+          }),
+      },
+    ]);
+    try {
+      const inicio = Date.now();
+      const res = await handleElevenLabsSts(
+        makeRequest(audioFormData(ELEVENLABS_VOICE_IDS[0])),
+        { stsTimeoutMs: 25 },
+      );
+      const decorrido = Date.now() - inicio;
+
+      assert(res.status === 200, `esperado 200, veio ${res.status}`);
+      assert(
+        decorrido >= 50,
+        `o corpo tinha de levar mais que o prazo (25 ms) sem cortar; levou ${decorrido} ms`,
+      );
+      const bytes = new Uint8Array(await res.arrayBuffer());
+      assert(bytes.byteLength === 4, `áudio completo esperado (4 bytes), veio ${bytes.byteLength}`);
+    } finally {
+      stub.restore();
+    }
+  });
+});
+
+Deno.test("IA-009/SL-010b: voz desligada na flag nega sem tocar o provedor", async () => {
+  await withEnv(ENV_OK, async () => {
+    const stub = withFetch([rotaAuth(USER_ID_2), ROTA_RATE_LIMIT, ROTA_FLAG_OFF, ROTA_AUDIO]);
+    try {
+      const res = await handleElevenLabsSts(
+        makeRequest(audioFormData(ELEVENLABS_VOICE_IDS[0])),
+      );
       assert(res.status === 503, `esperado 503, veio ${res.status}`);
-      const body = await res.json() as { error?: { code?: string; message?: string } };
-      assert(body.error?.code === "AI_DISABLED", `codigo esperado AI_DISABLED, veio ${body.error?.code}`);
+      const body = await res.json() as { error?: { code?: string } };
+      assert(body.error?.code === "AI_DISABLED", `code esperado AI_DISABLED, veio ${String(body.error?.code)}`);
+      assert(callsTo(stub.calls, PROVIDER).length === 0, "flag desligada não pode tocar o provedor pago");
+    } finally {
+      stub.restore();
+    }
+  });
+});
 
-      assert(
-        callsTo(stub.calls, PROVIDER).length === 0,
-        "flag de voz desligada não pode gerar POST a api.elevenlabs.io",
+Deno.test("STS: 500 do provedor vira 500 genérico sem vazar detalhe interno", async () => {
+  await withEnv(ENV_OK, async () => {
+    const stub = withFetch([
+      rotaAuth(USER_ID_2),
+      ROTA_RATE_LIMIT,
+      ROTA_FLAG_ON,
+      {
+        match: PROVIDER,
+        make: () =>
+          new Response("engine crashed on voice XYZ", {
+            status: 500,
+            headers: { "content-type": "text/plain" },
+          }),
+      },
+    ]);
+    try {
+      const res = await handleElevenLabsSts(
+        makeRequest(audioFormData(ELEVENLABS_VOICE_IDS[0])),
       );
-      const consulta = callsTo(stub.calls, "/rest/v1/feature_flags");
-      assert(consulta.length === 1, `esperada 1 leitura de feature_flags, houve ${consulta.length}`);
-      assert(
-        consulta[0].url.includes("ai.capability.voice"),
-        `a leitura deve pedir a chave ai.capability.voice: ${consulta[0].url}`,
-      );
+      // Comportamento real da implementação: o 500 do provedor cai no catch e
+      // sai como 500 genérico (`internalErrorResponse`) — o detalhe interno
+      // ("engine crashed...", nome da voz) não pode vazar no corpo.
+      assert(res.status === 500, `esperado 500 genérico, veio ${res.status}`);
+      const text = await res.text();
+      assert(!text.includes("engine crashed"), "detalhe interno do 500 não pode vazar");
+      assert(!text.includes("XYZ"), "detalhe interno do 500 não pode vazar");
+      assert(!text.includes("ElevenLabs STS error"), "mensagem interna não pode vazar");
+      assert(text.includes("Internal server error"), `corpo genérico esperado, veio ${text}`);
     } finally {
       stub.restore();
     }
