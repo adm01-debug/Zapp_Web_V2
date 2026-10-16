@@ -1,19 +1,19 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: hugo
 
 ## O que mudou e por quê
-- src/components/talkx/__tests__/RuleValueInput.test.tsx: `afterEach(() => window.history.replaceState(null, '', '/'))` no describe — o `window.location` do jsdom é COMPARTILHADO por todos os testes do arquivo; o teste do lead_score abre o construtor e não publica, deixando `?mode=new` no endereço, e o teste seguinte monta já no construtor, onde o botão "Novo segmento" não existe. Mesmo idioma dos irmãos do módulo (`TalkXSegments.route.test.tsx:102`).
-- mesma linha: `vi.setConfig({ testTimeout: 20000 })` + `ESPERA_MOUNT = { timeout: 15000 }` nas esperas do mount — sob pico da fábrica (load >2× CPUs) a montagem da árvore TalkX inteira pode passar do teto de 5 s do `findBy` (`asyncUtilTimeout`, src/test/setup.ts:152). Nenhuma asserção mudou.
+- `src/hooks/dashboard/useDailyMetricsKpis.ts` (novo): hook `useDailyMetricsKpis(days = 7)` sobre a RPC `dashboard_daily_series` — React Query com chave estável `['dashboard', 'daily-metrics-kpis', days]` (trocar o período refaz a consulta) e `staleTime` de 120s. Tipos (`DailyMetricRow`, `DAILY_KPIS_PERIODS` 7/30/90, `DAILY_KPIS_DEFAULT_DAYS`). A consulta só é habilitada para staff: `enabled: isStaff === true` a partir de `useCRMAdminAccess` (is_admin_or_supervisor, o mesmo predicado que a RPC usa no servidor). `isStaff` volta no retorno porque `false` (sem permissão) e `null` (papel ainda sendo conferido) pedem estados diferentes na tela. Erro da RPC sobe como erro da query (não vira série vazia silenciosa) e `normalizeDailyMetricRows` converte a mediana `numeric` (que o PostgREST devolve como string) em número, mantém `null` sem amostra, reafirma a ordem crescente por dia e trata resposta nula/fora do formato como lista vazia.
+- `src/hooks/dashboard/__tests__/useDailyMetricsKpis.test.tsx` (novo): 9 testes — 4 da normalização (string→número, null, ordem, formato inválido) e 5 do hook real com `renderHook` + QueryClientProvider, mockando `supabase.rpc` e `useCRMAdminAccess` (staff consulta com p_days do período; não-staff e papel ainda nulo NÃO consultam; troca de período refaz a consulta; erro → `isError`).
+
+## Dependência (cartão pai t_d4a0a146)
+A RPC não estava no meu workspace: trouxe a faixa inteira com `git cherry-pick` (commits `5fca12fa`, `6df803f3`, `8df2863d`, `05382c64`), que entram no diff junto com o meu commit: a migration aditiva `20261012235745_dashboard_daily_series.sql`, o harness `scripts/db-audit/dashboard-daily-series.test.sh` e a entrada no `.github/workflows/db-guard.yml`. Esses 3 arquivos são do cartão pai (lá aplicados no banco LOCAL e provados com papéis reais); não são do meu escopo e não os alterei. O `git cherry-pick --empty=drop` do enunciado foi recusado pelo git 2.43 (opção não existe nesta versão) — usei `git cherry-pick <sha>...`, sem conflito.
 
 ## Prova
-- vermelho antes (base dia/2026-10-13, sem a mudança): `npx vitest run src/components/talkx/__tests__/RuleValueInput.test.tsx` -> `Test Files 1 failed (1)` / `Tests 1 failed | 4 passed (5)`, erro `Unable to find role="button" and name "Novo segmento"` em `RuleValueInput.test.tsx:207`.
-- verde depois: mesmo comando -> `Test Files 1 passed (1)` / `Tests 5 passed (5)`, 3 execuções seguidas.
-- A asserção de negócio (Lead score e Risco de churn desabilitados) segue exercitada no mesmo caminho real da tela; só o isolamento de rota e a folga de tempo mudaram.
-
-## Causa (diagnóstico prévio, t_cfbe9aca)
-- NÃO é tempo nem "render pesado": é poluição de estado entre testes — a hipótese escrita no cartão foi REFUTADA pela tarefa de diagnóstico (branch v2/diagnostico-rulevalueinput-instavel-2610130340d4b0: 7/7 vermelho na ordem do arquivo vs 4/4 verde sozinho). Contudo, sob carga extrema (load ~51 em 24 CPUs) o teto de 5 s do `findBy` ainda cortou uma execução; por isso a folga de tempo do passo 2 do cartão entrou JUNTO com o isolamento.
-
-## Outros testes do mesmo risco (passo 4 do cartão)
-- Levantados na auditoria irmã (t_b6d4802b): 12 de risco ALTO na pasta `src/components/talkx/__tests__/` (mount pesado + teto padrão), só 1 com timeout explícito. Nenhum foi alterado aqui: não é correção de 1 linha e não pertence a este cartão.
+- vermelho antes: `npx vitest run src/hooks/dashboard/__tests__/useDailyMetricsKpis.test.tsx` → `Failed to resolve import "../useDailyMetricsKpis"` (módulo ainda não criado)
+- verde depois: `npx vitest run src/hooks/dashboard/__tests__/useDailyMetricsKpis.test.tsx` → `Test Files 1 passed (1); Tests 9 passed (9)`
+- sem regressão na área: `npx vitest run src/hooks/dashboard` → `Test Files 7 passed (7); Tests 47 passed (47)`
+- `zapp-verify . --rapido` → VERDE (db_guard OK, tipos OK, lint OK, migrations OK)
 
 ## O que NÃO fiz e por quê
-- Não mockei a árvore TalkX, nem usei skip/only, nem toquei em produção do código: o cartão proíbe afrouxar a asserção e o caminho real é o que ela prova. Diff só no arquivo de teste citado.
+- Não toquei `types.ts` nem `src/hooks/dashboard/index.ts`: o cartão lista só o hook novo e os testes, e o tipo da RPC entra pelo types-sync (o pai decidiu o mesmo).
+- Não recriei a view `evolution_daily_metrics` da V3: a V2 calcula a mesma série direto das tabelas operacionais na RPC.
+- Não rodei a prova de banco do cartão pai (harness de SQL): é prova dele; aqui o cartão só pede o hook e a verificação.
