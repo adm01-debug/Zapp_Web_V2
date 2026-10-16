@@ -352,7 +352,10 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
       if (prev.some((m) => m.id === message.id)) {
         return prev;
       }
-      return [...prev, message];
+      // #411: a mensagem otimista do envio (o id da resposta ja esta em maos no
+      // momento do envio) resolve a citada contra a lista carregada NA HORA — sem
+      // esperar o INSERT do servidor, que e quem trazia o `replyTo` ate agora.
+      return withResolvedReplies([...prev, message]);
     });
   }, [writeOverlay]);
 
