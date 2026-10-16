@@ -51,7 +51,7 @@ de onde cada número vem e o que ainda não está certo.
 | Satisfação do agente | `agent_stats.customer_satisfaction_score` (`:114`) | **débito PB-13** — coluna sem escritor: cai para 0 |
 | Online / ocupado | presença em tempo real (`presence`), não o cadastro | ok (atualiza sem refetch) |
 
-Decisão e referência dos cartões: `docs/adr/ADR-009-paridade-batch1-batch2.md`.
+Decisão e referência dos cartões: `docs/adr/ADR-011-paridade-batch1-batch2.md`.
 
 ## Padrão de RLS/RPC do módulo
 
