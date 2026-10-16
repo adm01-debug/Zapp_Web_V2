@@ -29,23 +29,39 @@ interface ConnectionInfo {
 export function NumberReputationMonitor() {
   const [reputations, setReputations] = useState<(ReputationData & { connection?: ConnectionInfo })[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   const loadData = useCallback(async () => {
     setLoading(true);
-    const { data: reps } = await supabase
+    setError(false);
+
+    const { data: reps, error: repsError } = await supabase
       .from('number_reputation')
       .select('*');
+
+    // Erro de leitura não é "sem dados": fica visível com ação de tentar de novo.
+    if (repsError) {
+      setReputations([]);
+      setError(true);
+      setLoading(false);
+      return;
+    }
+
+    // Nada de reputação registrado: o painel inteiro se oculta (não busca conexões à toa).
+    if (!reps || reps.length === 0) {
+      setReputations([]);
+      setLoading(false);
+      return;
+    }
 
     const { data: connections } = await supabase
       .from('whatsapp_connections')
       .select('id, instance_id, phone_number');
 
-    if (reps && connections) {
-      setReputations(reps.map(r => ({
-        ...r,
-        connection: connections.find(c => c.id === r.whatsapp_connection_id) as ConnectionInfo | undefined,
-      })));
-    }
+    setReputations(reps.map(r => ({
+      ...r,
+      connection: (connections ?? []).find(c => c.id === r.whatsapp_connection_id) as ConnectionInfo | undefined,
+    })));
     setLoading(false);
   }, []);
 
@@ -89,6 +105,27 @@ export function NumberReputationMonitor() {
     paused: 'Pausado',
   };
 
+  if (loading) return null;
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertTitle>Não foi possível carregar a saúde dos números</AlertTitle>
+        <AlertDescription className="flex flex-col items-start gap-3">
+          <span>
+            A leitura de reputação falhou. As conexões continuam funcionando; apenas este painel
+            não pôde ser exibido agora.
+          </span>
+          <Button variant="outline" size="sm" onClick={loadData}>Tentar de novo</Button>
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  // Sem dado de reputação: o painel não aparece (a V2 não deve devolver o aviso ocupando espaço).
+  if (reputations.length === 0) return null;
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -112,19 +149,7 @@ export function NumberReputationMonitor() {
         </AlertDescription>
       </Alert>
 
-      {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1,2,3].map(i => <div key={i} className="h-40 bg-muted/20 rounded-xl animate-pulse" />)}
-        </div>
-      ) : reputations.length === 0 ? (
-        <Card>
-          <CardContent className="p-8 text-center text-muted-foreground">
-            <Shield className="w-8 h-8 mx-auto mb-2 text-muted-foreground/30" />
-            <p>Nenhum dado de reputação registrado.</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {reputations.map((rep, idx) => (
             <motion.div key={rep.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.1 }}>
               <Card className="hover:shadow-md transition-shadow">
@@ -192,7 +217,6 @@ export function NumberReputationMonitor() {
             </motion.div>
           ))}
         </div>
-      )}
     </div>
   );
 }

@@ -82,4 +82,38 @@ describe('NumberReputationMonitor', () => {
     expect(await screen.findByText(/sem execução automática/i)).toBeInTheDocument();
     expect(screen.queryByText(/populados automaticamente/i)).not.toBeInTheDocument();
   });
+
+  it('oculta o painel inteiro quando não há dado de reputação', async () => {
+    mockSelectReputations.mockResolvedValueOnce({ data: [], error: null });
+
+    const { container } = render(<NumberReputationMonitor />);
+
+    await waitFor(() => expect(mockSelectReputations).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(container).toBeEmptyDOMElement());
+
+    expect(screen.queryByText(/Reputação de Números/i)).not.toBeInTheDocument();
+    expect(mockSelectConnections).not.toHaveBeenCalled();
+  });
+
+  it('mostra o erro de leitura com ação de tentar de novo', async () => {
+    mockSelectReputations.mockResolvedValueOnce({ data: null, error: { message: 'permission denied' } });
+
+    render(<NumberReputationMonitor />);
+
+    expect(await screen.findByRole('button', { name: /tentar de novo/i })).toBeInTheDocument();
+    expect(screen.getByText(/não foi possível carregar/i)).toBeInTheDocument();
+  });
+
+  it('recarrega ao tentar de novo e passa a mostrar os dados', async () => {
+    mockSelectReputations
+      .mockResolvedValueOnce({ data: null, error: { message: 'permission denied' } })
+      .mockResolvedValueOnce({ data: [repRow], error: null });
+
+    render(<NumberReputationMonitor />);
+
+    fireEvent.click(await screen.findByRole('button', { name: /tentar de novo/i }));
+
+    expect(await screen.findByText(/Reputação de Números/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /tentar de novo/i })).not.toBeInTheDocument();
+  });
 });
