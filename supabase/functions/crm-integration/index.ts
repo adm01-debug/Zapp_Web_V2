@@ -13,6 +13,8 @@ const TIMEOUT_MS = 12_000;
 const MAX_REQUEST_BYTES = 64 * 1024;
 const MAX_RESPONSE_BYTES = 512_000;
 const MAX_BATCH_SIZE = 10;
+/** Teto das sugestões de nome (empresa/cargo) do formulário de contato. */
+export const MAX_NAME_SUGGESTIONS = 500;
 
 /**
  * Sentimento no domínio do CRM EXTERNO (inglês): a documentação do CRM 360°
@@ -334,6 +336,37 @@ function nonEmptyText(value: unknown): string | null {
 
 function objectValue(value: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
+}
+
+/**
+ * Projeção estreita das sugestões de nome: recebe as linhas do CRM externo,
+ * extrai o texto, descarta vazio, deduplica e ordena. A saída é SEMPRE uma
+ * lista de strings — nenhuma coluna da linha de origem (id, telefone, nome do
+ * contato) sobrevive à projeção. O teto evita que a ação vire um exportador
+ * da base do CRM.
+ */
+export function distinctNameSuggestions(
+  rows: unknown,
+  pick: (row: Record<string, unknown>) => unknown,
+  max: number = MAX_NAME_SUGGESTIONS,
+): string[] {
+  const seen = new Set<string>();
+  for (const raw of Array.isArray(rows) ? rows : []) {
+    const record = objectValue(raw);
+    if (!record) continue;
+    const name = nonEmptyText(pick(record));
+    if (name) seen.add(name);
+  }
+  return [...seen].sort((a, b) => a.localeCompare(b, 'pt-BR')).slice(0, Math.max(0, max));
+}
+
+/** Nome da empresa pela mesma prioridade do contexto de Email (fantasia → CRM → razão). */
+export function distinctCompanyNames(rows: unknown, max: number = MAX_NAME_SUGGESTIONS): string[] {
+  return distinctNameSuggestions(
+    rows,
+    (row) => nonEmptyText(row.nome_fantasia) || nonEmptyText(row.nome_crm) || nonEmptyText(row.razao_social),
+    max,
+  );
 }
 
 function normalizeEmail(value: unknown): string | null {
@@ -846,6 +879,34 @@ export async function handleCRMIntegrationRequest(req: Request): Promise<Respons
       data = result.data || [];
       const duration = Math.round(performance.now() - started);
       return jsonResponse({ data, meta: { record_count: result.count ?? (data as unknown[]).length, duration_ms: duration, severity: duration > 3000 ? 'slow' : 'ok' } }, 200, req);
+    } else if (action === 'companyNames' || action === 'roleNames') {
+      // Sugestões do formulário de contato (empresa/cargo). Antes o front chamava
+      // `rpc`→`search_contacts_advanced` (admin-only) e rebaixava LINHAS de
+      // contato (nome, telefone) a uma lista de texto: o atendente recebia 403 e
+      // o supervisor pagava até 5×200 linhas. Aqui a leitura é estreita — só o
+      // texto pedido, nunca a linha de contato — sob o MESMO papel do
+      // `safeRolesLookup` (`view_contacts`), com teto.
+      //
+      // O CARGO vem de `contacts.cargo` (o cargo do CONTATO), não de
+      // `salespeople.role` (o papel do vendedor interno): são coisas diferentes e
+      // a tabela de vendedores não é a mesma base do formulário. A coluna é lida
+      // pelo service role do CRM externo, que enxerga a tabela onde a RLS do
+      // navegador (anon) barra o `contacts.cargo`.
+      if (isServiceRequest || isCronRequest) return errorResponse('Name suggestions are not available to this credential', 400, req);
+      if (body.table !== undefined || body.select !== undefined || body.filters !== undefined ||
+        body.order !== undefined || body.countMode !== undefined || body.limit !== undefined) {
+        return errorResponse('Name suggestion parameters are not allowed', 400, req);
+      }
+      if (!await userHasPermission('view_contacts')) return errorResponse('Forbidden', 403, req);
+      const companyNames = action === 'companyNames';
+      const result = await withTimeout(externalClient.from(companyNames ? 'companies' : 'contacts')
+        .select(companyNames ? 'nome_fantasia,nome_crm,razao_social' : 'cargo')
+        .order(companyNames ? 'nome_fantasia' : 'cargo', { ascending: true, nullsFirst: false })
+        .limit(MAX_NAME_SUGGESTIONS));
+      if (result.error) throw new Error(`CRM_NAMES:${result.error.code || 'unknown'}`);
+      data = companyNames
+        ? distinctCompanyNames(result.data)
+        : distinctNameSuggestions(result.data, (row) => row.cargo);
     } else if (action === 'mutate') {
       const mutationAction = body.mutationAction;
       const validation = validateMutation(body.table, mutationAction, body.data, body.match);
