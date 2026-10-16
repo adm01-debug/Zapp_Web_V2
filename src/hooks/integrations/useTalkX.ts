@@ -5,6 +5,7 @@ import { fromTable } from '@/lib/supabaseHelpers';
 import { toast } from 'sonner';
 import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
 import { TALKX_OVERVIEW_STATS_KEY } from './useTalkXOverviewStats';
+import { fetchAllTalkXPages } from '@/hooks/talkx/paginacao';
 
 // A função é introduzida pela migration desta mesma mudança. O types-sync gera
 // a assinatura canônica somente depois que o banco canônico receber a migration.
@@ -226,38 +227,19 @@ export function useTalkX() {
     queryKey: ['talkx-recipients', selectedCampaignId],
     queryFn: async () => {
       if (!selectedCampaignId) return [];
-      const { data, error } = await supabase
+      // HZ2-012 — sem `.range()` o PostgREST devolvia só a primeira fatia (teto
+      // de linhas do projeto) e a tela mostrava uma campanha com menos
+      // destinatários do que ela tem. Ordem com desempate (`id`) porque a fatia
+      // é calculada sobre a lista ordenada.
+      return fetchAllTalkXPages<TalkXRecipient>((from, to) => supabase
         .from('talkx_recipients')
         .select('*, contacts:contact_id(name, nickname, phone, company, avatar_url)')
         .eq('campaign_id', selectedCampaignId)
-        .order('created_at');
-      if (error) throw error;
-      return (data ?? []) as unknown as TalkXRecipient[];
+        .order('created_at', { ascending: true })
+        .order('id', { ascending: true })
+        .range(from, to));
     },
     enabled: !!selectedCampaignId,
-  });
-
-  const createCampaign = useMutation({
-    mutationFn: async (campaign: CampaignPayload) => {
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('id')
-        .single();
-      if (profileError) throw profileError;
-      if (!profile?.id) throw new Error('Perfil ativo não encontrado para criar a campanha.');
-
-      const { data, error } = await fromTable('talkx_campaigns')
-        .insert({ ...campaign, created_by: profile.id })
-        .select()
-        .single();
-      if (error) throw error;
-      return data as unknown as TalkXCampaign;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
-      toast.success('Campanha Talk X criada!');
-    },
-    onError: (e: Error) => toast.error(`Erro: ${e.message}`),
   });
 
   const updateCampaign = useMutation({
@@ -389,6 +371,9 @@ export function useTalkX() {
       queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
       toast.success('Audiência atualizada!');
     },
+    // HZ2-012 — o hook antigo engolia a falha: a tela dizia "Audiência
+    // atualizada!" só no caminho de sucesso, mas o erro subia sem aviso nenhum.
+    onError: (e: Error) => toast.error(`Erro ao atualizar a audiência: ${e.message}`),
   });
 
   /**
@@ -415,6 +400,8 @@ export function useTalkX() {
       queryClient.invalidateQueries({ queryKey: ['talkx-recipients'] });
       queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
     },
+    // HZ2-012 — sem `onError` a RPC que recusa (campanha já em envio) falhava muda.
+    onError: (e: Error) => toast.error(`Erro ao substituir a audiência: ${e.message}`),
   });
 
   /**
@@ -501,7 +488,6 @@ export function useTalkX() {
     recipientsLoading: recipientsQuery.isLoading,
     selectedCampaignId,
     setSelectedCampaignId,
-    createCampaign,
     updateCampaign,
     updateCampaignLimits,
     saveDraftCampaign,

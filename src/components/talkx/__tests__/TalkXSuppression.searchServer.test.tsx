@@ -71,6 +71,8 @@ vi.mock('@/integrations/supabase/client', () => {
     chain.select = (fields?: string) => { rec.select = fields ?? ''; return chain; };
     chain.is = () => chain;
     chain.order = () => chain;
+    // HZ2-013: a lista fecha a consulta com `.range()` (fatia do PostgREST).
+    chain.range = () => chain;
     chain.or = (filter: string, opts?: { referencedTable?: string }) => {
       rec.or.push(filter);
       rec.orTable.push(opts?.referencedTable);

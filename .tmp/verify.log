@@ -1,8 +1,14 @@
-OK      db_guard        0s
-FALHOU  tipos         226s  (ver /home/joaquim_ataides/.local/state/zapp-verify/8222d8d64738/tipos.log)
-zapp-sem: esperando vaga no pool 'pesado' (3 em uso) há 60s
-/home/joaquim_ataides/arquitetura-v2/typecheck-rapido/tc-rapido.sh: line 21: 3447415 Killed                  node node_modules/typescript/bin/tsc -p tsconfig.$p.json --noEmit --incremental --tsBuildIn
-tc-rapido: tsc saiu 137 em app (falha de execução, NÃO é aprovação)
-tipos.sh: typecheck rápido falhou na EXECUÇÃO; refazendo com o ratchet completo
-ERRO no typecheck ratchet: tsc -b falhou com exit null: 
-VERIFY: VERMELHO em tipos (227s)
+# Prova do critério 2 — `zapp-verify . --rapido` na branch v2/supressao-paginada-recipients-onerror-2610160028a08a
+# Comando: zapp-verify . --rapido
+# Saída (copiada de /home/joaquim_ataides/.local/state/zapp-verify/ab8d4d2bb275/resultado.txt, gerada pela própria ferramenta)
+OK      db_guard        1s
+OK      tipos         283s
+OK      lint           13s
+OK      migrations      1s
+AVISO   banco_local  NÃO VERIFICADO: sem nome de conjunto (passe o nome como terceiro argumento)
+VERIFY: VERDE SEM BANCO (298s) — o banco NÃO foi verificado; registros em /home/joaquim_ataides/.local/state/zapp-verify/ab8d4d2bb275
+
+# Testes alterados neste cartão, rodados no commit 337805828a (arquivo .tmp/vitest-fechar.log):
+#   Test Files  14 passed (14) / Tests  146 passed (146)
+# Conjunto da área (src/components/talkx + src/hooks/talkx + src/hooks/integrations):
+#   Test Files  170 passed (170) / Tests  1480 passed | 5 expected fail (1485)

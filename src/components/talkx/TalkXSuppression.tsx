@@ -30,6 +30,7 @@ import {
   type SuppressionActivityAction, type SuppressionActivityEventType, type SuppressionActivityItem,
   type TalkXSuppressionStat,
 } from '@/hooks/integrations/useTalkXSuppression';
+import { fetchAllTalkXPages } from '@/hooks/talkx/paginacao';
 import { ProtectionGauge } from './suppression/ProtectionGauge';
 import { PRESETS_DO_MOCK } from './kit/dialogPresets';
 
@@ -309,16 +310,19 @@ export function TalkXSuppression({ onOpenContact, onOpenCampaign }: {
   const { data: blacklist = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ['talkx-blacklist', search],
     queryFn: async () => {
+      // HZ2-013 — sem `.range()` o PostgREST devolvia só a primeira fatia (teto
+      // de linhas do projeto): a lista de supressão parava em 1000 linhas sem
+      // avisar. A ordem desempata por `id` para a fatia não repetir/perder linha
+      // entre páginas quando duas supressões têm o mesmo `created_at`.
       const base = (embed: string) => supabase
         .from('talkx_blacklist')
         .select(`*, ${embed}(name, phone, company, avatar_url)`)
         .is('removed_at', null)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .order('id', { ascending: false });
       const q = search.trim().toLowerCase();
       if (!q) {
-        const { data, error } = await base('contacts');
-        if (error) throw error;
-        return (data ?? []) as unknown as BlacklistEntry[];
+        return fetchAllTalkXPages<BlacklistEntry>((from, to) => base('contacts').range(from, to));
       }
       // Um `.or()` não mistura colunas da supressão com colunas do contato:
       // duas consultas filtradas no servidor, cada uma com o seu grupo, unidas por id.
@@ -331,13 +335,13 @@ export function TalkXSuppression({ onOpenContact, onOpenCampaign }: {
         ? `reason.ilike.${term},phone.ilike.${escapeOrFilterValue(`%${qDigits}%`)}`
         : `reason.ilike.${term}`;
       const [own, joined] = await Promise.all([
-        base('contacts').or(ownFilter),
-        base('contacts!inner').or(`name.ilike.${term},phone.ilike.${term}`, { referencedTable: 'contacts' }),
+        fetchAllTalkXPages<BlacklistEntry>((from, to) => base('contacts').or(ownFilter).range(from, to)),
+        fetchAllTalkXPages<BlacklistEntry>((from, to) => base('contacts!inner')
+          .or(`name.ilike.${term},phone.ilike.${term}`, { referencedTable: 'contacts' })
+          .range(from, to)),
       ]);
-      if (own.error) throw own.error;
-      if (joined.error) throw joined.error;
       const byId = new Map<string, BlacklistEntry>();
-      for (const row of [...(own.data ?? []), ...(joined.data ?? [])] as unknown as BlacklistEntry[]) byId.set(row.id, row);
+      for (const row of [...own, ...joined]) byId.set(row.id, row);
       return [...byId.values()].sort((x, y) => y.created_at.localeCompare(x.created_at));
     },
   });

@@ -68,6 +68,9 @@ vi.mock('@/integrations/supabase/client', () => {
     self.eq = () => self;
     self.or = (filter: string, opts?: { referencedTable?: string }) => { ors.push({ filter, table: opts?.referencedTable }); return self; };
     self.order = () => self;
+    // HZ2-013: a lista fecha a consulta com `.range()`; sem isso a cadeia emulada
+    // quebra e a tela fica sem linhas.
+    self.range = () => self;
     self.limit = () => Promise.resolve({ data: [], error: null });
     self.then = (resolve: (v: unknown) => unknown, reject?: (e: unknown) => unknown) => {
       let out = rows;

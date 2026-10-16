@@ -123,7 +123,15 @@ vi.mock('@/integrations/supabase/client', () => {
   chain.select = () => chain;
   chain.is = () => chain;
   chain.not = () => chain;
-  chain.order = () => Promise.resolve({ data: dados.blacklist, error: null });
+  chain.order = () => {
+    // HZ2-013: a lista encadeia `.order()` duas vezes (desempate por `id`) e fecha
+    // com `.range()`; a cadeia emulada segue thenable com as MESMAS linhas.
+    const done = Object.assign(Promise.resolve({ data: dados.blacklist, error: null }), {
+      order: () => done,
+      range: () => done,
+    });
+    return done;
+  };
   return { supabase: { from: () => chain } };
 });
 

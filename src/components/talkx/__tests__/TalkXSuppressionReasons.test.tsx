@@ -64,6 +64,7 @@ vi.mock('@/integrations/supabase/client', () => {
     self.is = () => self;
     self.or = () => self;
     self.order = () => self;
+    self.range = () => self;
     self.limit = () => Promise.resolve({ data, error: null });
     self.then = (resolve: unknown, reject: unknown) =>
       Promise.resolve({ data, error: null }).then(resolve as (v: unknown) => unknown, reject as (e: unknown) => unknown);
