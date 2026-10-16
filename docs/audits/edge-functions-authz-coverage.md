@@ -6,6 +6,7 @@ Régua N217: a cobertura de linhas agregada dos 5 helpers abaixo não pode ficar
 |---|---|---|---|
 | ai-auth.ts | 27 | 59 | 45.8% |
 | ai-audio-authz.ts | 37 | 54 | 68.5% |
+<<<<<<< ours
 | cron-secret-auth.ts | 29 | 30 | 96.7% |
 <<<<<<< ours
 <<<<<<< ours
@@ -33,6 +34,12 @@ Régua N217: a cobertura de linhas agregada dos 5 helpers abaixo não pode ficar
 | evolution-control-authz.ts | 133 | 133 | 100.0% |
 | voice-copilot-authz.ts | 25 | 25 | 100.0% |
 | **Total** | **251** | **301** | **83.4%** |
+>>>>>>> theirs
+=======
+| cron-secret-auth.ts | 48 | 51 | 94.1% |
+| evolution-control-authz.ts | 137 | 137 | 100.0% |
+| voice-copilot-authz.ts | 25 | 25 | 100.0% |
+| **Total** | **274** | **326** | **84.0%** |
 >>>>>>> theirs
 
 Testes medidos (só estes entram no `deno test` da régua):
