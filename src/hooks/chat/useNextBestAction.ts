@@ -31,6 +31,11 @@ export interface NextAction {
  */
 export const OPEN_TASK_STATUSES: WorkItemStatus[] = ['backlog', 'todo', 'doing', 'waiting'];
 
+/** Chave de query para invalidação via useConversationPanelInvalidation. */
+export function nextBestActionKey(contactId: string) {
+  return ['next-best-action', contactId] as const;
+}
+
 /** Motor de sugestão da "Próxima melhor ação" — extraído de NextBestActionEngine
  * para ser reutilizável na aba IA (§2.7) e na aba CRM 360° (§2.5) sem duplicar a lógica. */
 export function useNextBestAction(contactId: string, contactName: string) {
