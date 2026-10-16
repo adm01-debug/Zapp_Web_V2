@@ -52,11 +52,7 @@ async function refreshAccessToken(refreshToken: string, clientId: string, client
   return response.json();
 }
 
-/**
- * Registra o watch de push do Gmail: o Google passa a avisar cada e-mail novo
- * (INBOX) no tópico Pub/Sub indicado. Devolve o vencimento do watch para o
- * cron de renovação. Sem tópico configurado NÃO é chamado (fica o polling).
- */
+/** Registra o watch de push (INBOX) no tópico Pub/Sub; devolve o vencimento. */
 async function registerGmailWatch(accessToken: string, topicName: string): Promise<{ expiration: string | null }> {
   const response = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/watch", {
     method: "POST",
@@ -110,9 +106,9 @@ export interface GmailOAuthDeps {
     refreshToken: (refreshToken: string) => Promise<TokenResponse>;
     fetchProfile: (accessToken: string) => Promise<{ emailAddress: string }>;
     revoke: (token: string) => Promise<Response>;
-    /** Tópico Pub/Sub do push (vem do ambiente; injetável para teste). */
+    /** Tópico Pub/Sub do push (ambiente GMAIL_PUBSUB_TOPIC; injetável). */
     topicName?: string | null;
-    /** Registro do watch no Google (injetável: o teste prova os dois ramos). */
+    /** Registro do watch no Google (injetável para teste). */
     setupWatch?: (accessToken: string, topicName: string) => Promise<{ expiration: string | null }>;
   };
 }
@@ -189,8 +185,7 @@ export async function handleGmailOAuth(req: Request, deps: GmailOAuthDeps): Prom
             token_expires_at: expiresAt,
             is_active: true,
             sync_status: "pending",
-            // vencimento do watch anterior é descartado: só volta a ter valor
-            // se o watch for registrado de novo (ver o bloco abaixo).
+            // Vencimento do watch anterior é descartado (só volta se registrado abaixo).
             watch_expiration: null,
           }, { onConflict: "email_address" })
           .select()
@@ -201,11 +196,8 @@ export async function handleGmailOAuth(req: Request, deps: GmailOAuthDeps): Prom
         // Store tokens encrypted
         await storeTokens(supabase, account.id, tokens.access_token, tokens.refresh_token || "");
 
-        // Push do Gmail (aviso de e-mail novo) só é ligado se o tópico Pub/Sub
-        // estiver configurado na Edge (`GMAIL_PUBSUB_TOPIC`, resolvido na borda em
-        // `import.meta.main` e injetado aqui). Sem tópico NÃO inventamos destino:
-        // a conta fica com watch_expiration null (limpo no upsert acima) e o
-        // e-mail novo continua chegando pelo polling de 5 min.
+        // Push (aviso de e-mail novo): só com tópico configurado. Sem tópico,
+        // watch_expiration fica null (limpo no upsert) e o polling cobre.
         const topicName = deps.google.topicName ?? "";
         if (topicName) {
           try {
@@ -216,8 +208,7 @@ export async function handleGmailOAuth(req: Request, deps: GmailOAuthDeps): Prom
               .eq("id", account.id);
             if (watchError) throw watchError;
           } catch (watchError) {
-            // O watch é acessório à conexão (que já foi concluída): a falha não
-            // derruba o login e o polling cobre. O motivo sai no log, nunca mudo.
+            // Watch acessório: a falha não derruba a conexão; o motivo sai no log.
             log.error("Falha ao registrar o watch do Gmail; o polling cobre", {
               error: watchError instanceof Error ? watchError.message : String(watchError),
             });

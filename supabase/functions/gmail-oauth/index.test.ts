@@ -74,6 +74,7 @@ function fakeAdmin(opts: {
   const stateRows: StateRow[] = [];
   const rpcCalls: Array<{ fn: string; args: Record<string, unknown> }> = [];
   const updateCalls: Array<Record<string, unknown>> = [];
+  const upsertCalls: Array<Record<string, unknown>> = [];
   const updateResults = [...(opts.updateResults ?? [])];
   const account = opts.account === undefined ? ACCOUNT : opts.account;
 
@@ -81,6 +82,7 @@ function fakeAdmin(opts: {
     stateRows,
     rpcCalls,
     updateCalls,
+    upsertCalls,
     rpc(fn: string, args: Record<string, unknown>) {
       rpcCalls.push({ fn, args });
       if (fn === "consume_gmail_oauth_state") {
@@ -126,6 +128,11 @@ function fakeAdmin(opts: {
           updateCalls.push(row);
           return fakeChain({ default: updateResults.shift() ?? { data: [{ id: "acc-1" }], error: null } });
         };
+        const innerUpsert = builder.upsert as (row: unknown, opts?: unknown) => unknown;
+        builder.upsert = (row: Record<string, unknown>, opts?: unknown) => {
+          upsertCalls.push(row);
+          return innerUpsert(row, opts);
+        };
         return builder;
       }
       return fakeChain({ default: { data: null, error: null } });
@@ -145,10 +152,16 @@ function newCalls(): Calls {
   return { exchange: [], profile: [], refresh: [], revoke: [], watch: [] };
 }
 
+/** Stub do push: tópico Pub/Sub + registro do watch (passado ao google falso). */
+type WatchStub = {
+  topicName?: string | null;
+  setupWatch?: (token: string, topic: string) => Promise<{ expiration: string | null }>;
+};
+
 function fakeGoogle(
   calls: Calls,
   revokeImpl?: (token: string) => Promise<Response>,
-  watch?: { topicName?: string | null; setupWatch?: (token: string, topic: string) => Promise<{ expiration: string | null }> },
+  watch?: WatchStub,
 ) {
   return {
     clientId: "cid",
@@ -184,7 +197,7 @@ function makeDeps(
   admin: ReturnType<typeof fakeAdmin>,
   calls: Calls,
   revokeImpl?: (token: string) => Promise<Response>,
-  watch?: { topicName?: string | null; setupWatch?: (token: string, topic: string) => Promise<{ expiration: string | null }> },
+  watch?: WatchStub,
 ): GmailOAuthDeps {
   return {
     supabase: admin,
@@ -474,60 +487,45 @@ Deno.test("disconnect: zera os tokens cifrados por UPDATE direta e nunca chama s
   assertEquals(admin.rpcCalls.some((c) => c.fn === "get_gmail_tokens"), true);
 });
 
-// ── Watch do Gmail (push) no retorno do OAuth ────────────────────────────────
-// O tópico Pub/Sub vive no ambiente (GMAIL_PUBSUB_TOPIC). Com tópico, a conexão
-// registra o watch e grava o vencimento; SEM tópico nada quebra: não se inventa
-// destino, o watch_expiration fica null e o polling de 5 min cobre.
+// Watch (push): com tópico registra e grava o vencimento; sem tópico não chama;
+// a falha do watch não derruba a conexão (success:true).
 
-Deno.test("exchange-code COM tópico Pub/Sub registra o watch e grava watch_expiration", async () => {
+/** Roda get-auth-url + exchange-code com o stub de push dado. */
+async function exchangeCodeWithWatch(watch?: WatchStub) {
   const admin = fakeAdmin();
   const calls = newCalls();
-  const deps = makeDeps("user-1", admin, calls, undefined, { topicName: "projects/p/topics/gmail-push" });
-
+  const deps = makeDeps("user-1", admin, calls, undefined, watch);
   await handleGmailOAuth(post({ action: "get-auth-url", state: STATE }), deps);
   const res = await handleGmailOAuth(post({ action: "exchange-code", code: "code-1", state: STATE }), deps);
-
   assertEquals(res.status, 200);
-  // o watch foi registrado no Google com o token recém-trocado e o tópico certo
-  assertEquals(calls.watch, [{ token: "ya29.test", topic: "projects/p/topics/gmail-push" }]);
-  // e o vencimento devolvido pelo Google foi gravado na conta
+  return { admin, calls, res };
+}
+
+const TOPIC = "projects/p/topics/gmail-push";
+const EXPIRATION = "2026-10-21T00:00:00.000Z";
+
+Deno.test("exchange-code COM tópico: registra o watch e grava watch_expiration", async () => {
+  const { admin, calls } = await exchangeCodeWithWatch({ topicName: TOPIC });
+  assertEquals(calls.watch, [{ token: "ya29.test", topic: TOPIC }]);
   const watchUpdate = admin.updateCalls.find((u) => "watch_expiration" in u && u.watch_expiration !== null);
-  assertEquals(watchUpdate?.watch_expiration, "2026-10-21T00:00:00.000Z");
-  // a reconexão também limpa o vencimento antigo no upsert (só volta a valer se renovado)
-  assertEquals(admin.upsertCalls[0].row.watch_expiration, null);
+  assertEquals(watchUpdate?.watch_expiration, EXPIRATION);
+  assertEquals(admin.upsertCalls[0].watch_expiration, null);
 });
 
-Deno.test("exchange-code SEM tópico Pub/Sub não registra watch nem quebra (watch_expiration null)", async () => {
-  const admin = fakeAdmin();
-  const calls = newCalls();
-  const deps = makeDeps("user-1", admin, calls, undefined, { topicName: null });
-
-  await handleGmailOAuth(post({ action: "get-auth-url", state: STATE }), deps);
-  const res = await handleGmailOAuth(post({ action: "exchange-code", code: "code-1", state: STATE }), deps);
-
-  assertEquals(res.status, 200);
-  const body = await res.json();
-  assertEquals(body.success, true);
-  // nenhuma chamada de watch ao Google e nenhum UPDATE de watch_expiration
+Deno.test("exchange-code SEM tópico: não registra watch nem quebra (watch_expiration null)", async () => {
+  const { admin, calls } = await exchangeCodeWithWatch({ topicName: null });
   assertEquals(calls.watch, []);
   assertEquals(admin.updateCalls.some((u) => "watch_expiration" in u), false);
-  // a conta nasce com watch_expiration null (limpo no upsert)
-  assertEquals(admin.upsertCalls[0].row.watch_expiration, null);
+  assertEquals(admin.upsertCalls[0].watch_expiration, null);
 });
 
-Deno.test("falha ao registrar o watch NÃO derruba a conexão (200 e log), gravando null", async () => {
-  const admin = fakeAdmin();
-  const calls = newCalls();
-  const deps = makeDeps("user-1", admin, calls, undefined, {
-    topicName: "projects/p/topics/gmail-push",
+Deno.test("watch FALHANDO: conexão conclui com success:true e sem expiration", async () => {
+  const { admin, calls, res } = await exchangeCodeWithWatch({
+    topicName: TOPIC,
     setupWatch: () => Promise.reject(new Error("watch indisponível")),
   });
-
-  await handleGmailOAuth(post({ action: "get-auth-url", state: STATE }), deps);
-  const res = await handleGmailOAuth(post({ action: "exchange-code", code: "code-1", state: STATE }), deps);
-
-  // a conexão conclui (o Google já autorizou); o push fica para a próxima renovação
-  assertEquals(res.status, 200);
   assertEquals(calls.watch.length, 1);
+  assertEquals((await res.json()).success, true);
   assertEquals(admin.updateCalls.some((u) => "watch_expiration" in u), false);
+  assertEquals(admin.upsertCalls[0].watch_expiration, null);
 });
