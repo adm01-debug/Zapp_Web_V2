@@ -124,6 +124,14 @@ const ALLOWLIST = new Set([
   // real e que a linha `-- Rollback:` da migration restaura — Postgres 17
   // descartável (docker). Passo de YAML a promover em db-guard.yml pelo dono do workflow.
   'scripts/db-audit/e44-whatsapp-connections-anon-grants.test.sh',
+  // #471 (DELTA-CRON-ANUAL): prova em Postgres 17 descartavel (docker, container proprio)
+  // que a migration 20261006202215 tira da agenda o job residual `vacuum-messages-post-expurgo`,
+  // deixa os outros 11 jobs intactos, reescreve apply_pg_cron_escalonamento() sem a linha dele e
+  // executa o proprio `-- Rollback:` da migration. Inicia container proprio (imagem padrao
+  // `postgres:17-alpine`, a mesma de POSTGRES_TEST_IMAGE) e conversa com ele por `docker exec`;
+  // o passo de uma linha no db-guard.yml pede SKIP_DOCKER_SHIM="1", como os passos do bloco E50
+  // deste repositorio, e e do dono do workflow (agente nao edita workflow).
+  'scripts/db-audit/cron-remocao-vacuum-messages.test.sh',
 ]);
 
 // Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em
