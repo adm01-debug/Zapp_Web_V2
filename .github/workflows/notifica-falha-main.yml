@@ -1,110 +1,72 @@
 # docs:
-#   gatilho: workflow_run dos 5 workflows criticos da main (e2e-logado, db-live-guard, deploy-functions, db-migrate, settings-guard)
-#   prova: n/a (notificacao, nao guarda)
-#   falha: mensagem WhatsApp via N8N nao enviada se N8N_WEBHOOK_FALHA_MAIN ausente
-#   avisa: WhatsApp Evolution GO PRINCIPAL quando qualquer workflow critico falha na main (W97)
-name: Notificação de Falha na Main (WhatsApp)
+#   gatilho: workflow_run (conclusao dos workflows principais na main)
+#   prova: abre issue quando qualquer workflow critico falha na main
+#   workflows monitorados: ci, deploy-functions, db-migrate, db-live-guard, types-sync
 
-# W97: dispara após qualquer run de workflow critico na main concluir com falha.
-# Envia mensagem WhatsApp via N8N → Evolution GO PRINCIPAL.
-# Dedupe por hora: 1 notificacao por workflow por hora (evita spam em falha recorrente).
+name: Notifica falha na main
 
 on:
-  workflow_run:  # zizmor: ignore[dangerous-triggers]
+  workflow_run:
     workflows:
-      - 'E2E logado'
-      - 'DB Live Guard'
-      - 'Deploy Edge Functions'
-      - 'DB Migrate (production)'
-      - 'Settings Guard'
-      - 'CI/CD Pipeline'
-      - 'types-sync'
+      - CI/CD Pipeline
+      - Deploy Edge Functions
+      - DB Migrate
+      - DB Live Guard
+      - Types Sync
     branches: [main]
     types: [completed]
-  workflow_dispatch:
-    inputs:
-      test_message:
-        description: 'Mensagem de teste (opcional)'
-        required: false
-
-concurrency:
-  # Uma notificacao por workflow por hora -- chave inclui hora UTC (AAAAMMDDHH).
-  group: notifica-falha-${{ github.event.workflow_run.name || 'manual' }}-${{ github.event.workflow_run.head_sha || github.sha }}
-  cancel-in-progress: false
-
-permissions:
-  actions: read
 
 defaults:
   run:
     shell: bash --noprofile --norc -euo pipefail {0}
 
+permissions: {}
+
 jobs:
   notificar:
-    name: Enviar alerta WhatsApp
+    name: 🔔 Notificar falha
     runs-on: ubuntu-24.04
-    timeout-minutes: 3
-    # Pular se nao e' falha real (so workflow_run; workflow_dispatch e' sempre manual/teste).
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      github.event.workflow_run.conclusion == 'failure'
+    timeout-minutes: 5
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    permissions:
+      issues: write
     steps:
-      - name: ✋ Verificar deduplicacao por hora (W97)
-        id: dedupe
-        env:
-          WORKFLOW_NAME: ${{ github.event.workflow_run.name || 'manual' }}
-          RUN_ID: ${{ github.event.workflow_run.id || github.run_id }}
-        run: |
-          # Chave de dedupe: workflow + hora UTC. Uma falha por hora por workflow.
-          hora_utc="$(date -u '+%Y%m%d%H')"
-          chave="notifica-${WORKFLOW_NAME// /-}-${hora_utc}"
-          echo "chave=${chave}" >> "$GITHUB_OUTPUT"
-          echo "Chave de dedupe: ${chave}"
-
-      - name: 🔑 Verificar cache de dedupe
-        id: cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      - name: 🔔 Abrir ou atualizar issue de falha
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         with:
-          path: /tmp/notifica-dedupe
-          key: ${{ steps.dedupe.outputs.chave }}
+          script: |
+            const wf = context.payload.workflow_run;
+            const titulo = `[falha-main] ${wf.name} falhou na main`;
+            const corpo = [
+              `**Workflow:** ${wf.name}`,
+              `**Branch:** ${wf.head_branch}`,
+              `**Commit:** ${wf.head_sha.slice(0, 7)}`,
+              `**Run:** ${wf.html_url}`,
+              `**Quando:** ${wf.updated_at}`,
+            ].join('\n');
 
-      - name: ✋ Pular se ja notificado nesta hora
-        if: steps.cache.outputs.cache-hit == 'true'
-        env:
-          WF_NAME: ${{ github.event.workflow_run.name }}
-        run: |
-          echo "Dedupe ativo: ja notificado nesta hora para $WF_NAME."
-          exit 0
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'falha-main',
+            });
 
-      - name: 📨 Enviar notificação WhatsApp via N8N
-        if: steps.cache.outputs.cache-hit != 'true'
-        env:
-          N8N_WEBHOOK_URL: ${{ secrets.N8N_WEBHOOK_FALHA_MAIN }}
-          WORKFLOW_NAME: ${{ github.event.workflow_run.name || inputs.test_message || 'teste manual' }}
-          RUN_URL: ${{ github.event.workflow_run.html_url || github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          CONCLUSION: ${{ github.event.workflow_run.conclusion || 'manual' }}
-          HEAD_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
-        run: |
-          if [ -z "$N8N_WEBHOOK_URL" ]; then
-            echo "::warning::N8N_WEBHOOK_FALHA_MAIN nao configurado — notificacao pulada."
-            exit 0
-          fi
-          MENSAGEM="❌ *Falha na main*: \`${WORKFLOW_NAME}\`
-          Conclusao: ${CONCLUSION}
-          Commit: \`${HEAD_SHA:0:7}\`
-          ${RUN_URL}"
-          PAYLOAD="$(printf '{"mensagem":"%s","workflow":"%s","run_url":"%s","head_sha":"%s"}' \
-            "$(echo "$MENSAGEM" | python3 -c "import sys,json; print(json.dumps(sys.stdin.read())[1:-1])")" \
-            "$WORKFLOW_NAME" "$RUN_URL" "$HEAD_SHA")"
-          HTTP_CODE="$(curl --proto '=https' --tlsv1.2 \
-            --max-time 15 -s -o /dev/null -w '%{http_code}' \
-            -X POST "$N8N_WEBHOOK_URL" \
-            -H 'Content-Type: application/json' \
-            -d "$PAYLOAD")"
-          if [[ "$HTTP_CODE" =~ ^2 ]]; then
-            echo "Notificacao enviada (HTTP ${HTTP_CODE})."
-            mkdir -p /tmp/notifica-dedupe
-            touch /tmp/notifica-dedupe/sent
-          else
-            echo "::warning::N8N respondeu HTTP ${HTTP_CODE}; notificacao nao entregue."
-          fi
+            const existente = issues.find(i => i.title.startsWith(`[falha-main] ${wf.name}`));
+
+            if (existente) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existente.number,
+                body: corpo,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: titulo,
+                body: corpo,
+                labels: ['falha-main'],
+              });
+            }

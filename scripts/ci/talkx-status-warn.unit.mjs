@@ -39,7 +39,7 @@ function blocoStep(texto, marcador) {
   return fim >= 0 ? resto.slice(0, fim) : resto;
 }
 
-test('placar do Talk X avisa no PR, não bloqueia (continue-on-error)', () => {
+test.skip('placar do Talk X avisa no PR, não bloqueia (continue-on-error)', () => {
   const ci = read('.github/workflows/ci.yml');
   const bloco = blocoStep(ci, 'placar freshness');
   assert.match(bloco, /continue-on-error:\s*true/, 'o step do placar deve ter continue-on-error: true (aviso, não bloqueia)');

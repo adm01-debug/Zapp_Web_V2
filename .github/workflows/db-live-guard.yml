@@ -1,5 +1,5 @@
 # docs:
-#   gatilho: push na main, agendado e dispatch sobre main
+#   gatilho: agendado (semanal, segunda) e dispatch sobre main
 #   prova: o contrato do banco de PRODUCAO (drift, paridade, runtime config)
 #   falha: issue aberta ou comentada com a causa; o guarda vivo nao passa em silencio
 #   avisa: issue de guardas vivos
@@ -15,26 +15,10 @@
 name: DB Live Guard
 
 on:
-  push:
-    branches: [main]
-    # E13: antes disparava em QUALQUER push na main. E41: `supabase/**` foi
-    # refinado para excluir `supabase/functions/**` — merge apenas de edge
-    # nao deve abrir conexao com o banco (o guarda nao verifica funcoes).
-    # schedule e workflow_dispatch continuam sem filtro (cobrem drift indireto).
-    paths:
-      - 'supabase/migrations/**'
-      - 'supabase/config.toml'
-      - 'supabase/schema-*.json'
-      - 'supabase/deployment-manifest.json' # rastrea funcoes deployadas; relevante ao contrato DB
-      - 'scripts/db-audit/**'
-      - 'src/integrations/supabase/types.ts'
-      - '.github/workflows/db-live-guard.yml'
+  # 16/10/2026 (decisao do Joaquim, CI minimo): sem gatilho de push; roda 1x por
+  # semana (segunda 06:13 UTC) e por dispatch manual.
   schedule:
-    # Diario as 06:13 UTC (03:13 em Curitiba), nao mais so segunda (E14): DDL
-    # fora do fluxo podia passar quase 7 dias sem deteccao entre um domingo e
-    # a proxima segunda. Fora do minuto 0 (fila do GitHub) e depois do
-    # types-sync (05:49), que gera os artefatos que este guarda compara.
-    - cron: '13 6 * * *'
+    - cron: '13 6 * * 1'
   workflow_dispatch:
 
 defaults:

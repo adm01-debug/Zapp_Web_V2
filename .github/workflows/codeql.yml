@@ -1,10 +1,8 @@
 # docs:
-#   gatilho: pull_request e agendado
+#   gatilho: agendado (semanal) e dispatch
 #   prova: analise estatica de seguranca (SAST) de src, scripts, functions e dos workflows
 #   falha: alerta aparece em Security -> Code scanning
-#   avisa: aba Security e revisores do PR
-# nao-e-bug:
-#   - CodeQL e required desde W84: o check `CodeQL` da branch protection e publicado pelo app `github-advanced-security`, nao pelo job `analyze` deste arquivo (que e so informativo, ~3 min).
+#   avisa: aba Security
 # =================================================
 # CodeQL — analise estatica de seguranca (SAST)
 # =================================================
@@ -16,28 +14,8 @@
 name: CodeQL
 
 on:
-  # F-09 (auditoria 2026-09-27): removido gatilho push/main. A action
-  # github/codeql-action/init cria uma entrada de cache com {run_id} na chave
-  # (~231 MB cada), que nunca e reusada entre runs diferentes. Com 46+ pushes
-  # num dia, o limite de 10 GB era atingido em <3 h, ativando evicção dos
-  # outros workflows. pull_request cobre cada PR contra main sem cache churn
-  # dos merge commits; schedule cobre a varredura semanal completa.
-  # NOTA: merge_group e inerte neste repo (conta User, nao Organization) —
-  # ver CLAUDE.md:230-241. Os gatilhos merge_group ja existentes em ci.yml,
-  # db-guard.yml e codeql.yml ficam presentes mas nao disparam (sem custo).
-  # W50: dispatch manual para reexecutar varredura completa apos triagem de alertas.
+  # 16/10/2026 (decisao do Joaquim, CI minimo): saiu do PR; varredura semanal + dispatch.
   workflow_dispatch:
-
-  pull_request:
-    branches: [main]
-    # W84 (docs/ci/DECISOES_PENDENTES_2026-10-15.md): o paths-ignore de E78 (docs/**,
-    # **/*.md, supabase/migrations/**) foi removido. Ele economizava runner em PR que
-    # so mexia nesses caminhos, mas como o check NAO era required isso nunca travava
-    # merge -- e travaria assim que virasse required: uma PR so de docs ou so de
-    # migration ficaria para sempre em "Expected — Waiting for status", e a fila (que
-    # so roda 1 PR por vez — R1 de docs/ci/ARQUITETURA_SEM_DESPERDICIO.md) pararia.
-    # Pre-requisito para tornar o check `CodeQL` obrigatorio; o `schedule` semanal
-    # continua cobrindo o repositorio inteiro sem filtro.
   schedule:
     - cron: '30 9 * * 1' # segunda 06:30 BRT
 
