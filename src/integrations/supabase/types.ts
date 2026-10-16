@@ -9206,6 +9206,7 @@ export type Database = {
           mention_sound_type: string | null
           message_sound_type: string | null
           new_message_sound_enabled: boolean | null
+          onboarding_completed: boolean
           quiet_hours_enabled: boolean | null
           quiet_hours_end: string | null
           quiet_hours_start: string | null
@@ -9246,6 +9247,7 @@ export type Database = {
           mention_sound_type?: string | null
           message_sound_type?: string | null
           new_message_sound_enabled?: boolean | null
+          onboarding_completed?: boolean
           quiet_hours_enabled?: boolean | null
           quiet_hours_end?: string | null
           quiet_hours_start?: string | null
@@ -9286,6 +9288,7 @@ export type Database = {
           mention_sound_type?: string | null
           message_sound_type?: string | null
           new_message_sound_enabled?: boolean | null
+          onboarding_completed?: boolean
           quiet_hours_enabled?: boolean | null
           quiet_hours_end?: string | null
           quiet_hours_start?: string | null
