@@ -44,7 +44,7 @@ permissions:
 jobs:
   regen:
     runs-on: ubuntu-24.04
-    permissions:
+    permissions:  # zizmor: ignore[excessive-permissions]
       contents: write
       # Obrigatorio para o create-pull-request criar o PR: sem esta permissao o
       # GITHUB_TOKEN devolve "Resource not accessible by integration -

@@ -152,6 +152,9 @@ jobs:
         # no campo de senha. Quem usa E2E_TEST_* nao pode publicar esse artifact.
         run: node scripts/ci/check-e2e-artifact-secrets.mjs
 
+      - name: 🔐 Verify CLAUDE.md integridade
+        run: node scripts/ci/check-claude-md-integrity.mjs
+
       - name: 📋 Verify Talk X PR body (definição de pronto)
         if: github.event_name == 'pull_request'
         run: node scripts/ci/check-talkx-pr-body.mjs

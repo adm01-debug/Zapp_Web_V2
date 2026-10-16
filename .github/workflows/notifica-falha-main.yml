@@ -12,11 +12,13 @@ name: Notificação de Falha na Main (WhatsApp)
 on:
   workflow_run:  # zizmor: ignore[dangerous-triggers]
     workflows:
-      - 'E2E Tests (Logado)'
-      - 'Contrato DB vivo'
+      - 'E2E logado'
+      - 'DB Live Guard'
       - 'Deploy Edge Functions'
-      - 'Database Migration'
+      - 'DB Migrate (production)'
       - 'Settings Guard'
+      - 'CI/CD Pipeline'
+      - 'types-sync'
     branches: [main]
     types: [completed]
   workflow_dispatch:

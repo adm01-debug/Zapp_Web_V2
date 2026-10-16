@@ -2224,6 +2224,7 @@
         "delete_contacts",
         "delete_talkx_campaign",
         "duplicate_talkx_campaign",
+        "e2e_cleanup",
         "effective_role",
         "encrypt_gmail_token",
         "enqueue_ai_job",
@@ -2422,7 +2423,7 @@
         "upsert_my_call",
         "user_has_permission"
     ],
-    "generated_at": "2026-10-09",
+    "generated_at": "2026-10-16",
     "format_version": 2,
     "check_constraints": [
         "agent_presence.agent_presence_status_check:CHECK ((status = ANY (ARRAY['online'::text, 'away'::text, 'offline'::text])))",
@@ -2728,6 +2729,7 @@
         "delete_contacts(p_ids uuid[])->integer|kind=f",
         "delete_talkx_campaign(p_campaign_id uuid)->uuid|kind=f",
         "duplicate_talkx_campaign(p_campaign_id uuid)->talkx_campaigns|kind=f",
+        "e2e_cleanup()->void|kind=f",
         "effective_role(_user_id uuid)->app_role|kind=f",
         "encrypt_gmail_token(p_token text)->bytea|kind=f",
         "enqueue_ai_job(p_idempotency_key text, p_kind text, p_function_name text, p_user_id uuid, p_payload jsonb, p_priority integer, p_available_at timestamp with time zone, p_expires_at timestamp with time zone, p_max_attempts integer)->uuid|kind=f",
