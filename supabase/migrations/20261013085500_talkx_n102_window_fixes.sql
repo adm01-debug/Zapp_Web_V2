@@ -1,7 +1,8 @@
 -- Talk X (N-102, fatia "acesso"): restringe o EXECUTE de public.talkx_campaign_window_open.
 --
 -- Rollback: desfaz esta migration, restaurando a ACL anterior (EXECUTE para authenticated).
--- Rollback (SQL executável, na ordem):
+-- Rollback (SQL executável, na ordem; rode apenas se a função existir — quando o fix foi
+-- no-op por base ausente não há ACL para desfazer):
 --   REVOKE EXECUTE ON FUNCTION public.talkx_campaign_window_open(uuid, timestamptz) FROM service_role;
 --   GRANT EXECUTE ON FUNCTION public.talkx_campaign_window_open(uuid, timestamptz) TO authenticated;
 --
@@ -25,8 +26,23 @@
 --
 -- Não edita a base 20261009203548 nem o corpo da função (as fatias de cast e de fuso cuidam
 -- disso em separado). Sem BEGIN/COMMIT (o ledger aplica cada migration em transação própria).
+--
+-- Empilhamento ([refazer 1] t_d5dd005b, achado do limpador 11/10): a base 20261009203548 ainda
+-- não está em nenhuma branch dia/, então esta migration é órfã quando empilhada sozinha sobre a
+-- dia/ (o REVOKE falhava com "function does not exist"). A guarda abaixo aplica a ACL só quando
+-- a função existe; 20261009203548 < 20261013085500 na ordem do ledger, então quando a base entrar
+-- a função já existe neste ponto e a ACL é aplicada normalmente. Sem a base não há função nem
+-- superfície de acesso — o NOTICE registra o no-op.
 
-REVOKE ALL ON FUNCTION public.talkx_campaign_window_open(uuid, timestamptz)
-  FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.talkx_campaign_window_open(uuid, timestamptz)
-  TO service_role;
+DO $$
+BEGIN
+  IF to_regprocedure('public.talkx_campaign_window_open(uuid, timestamptz)') IS NOT NULL THEN
+    REVOKE ALL ON FUNCTION public.talkx_campaign_window_open(uuid, timestamptz)
+      FROM PUBLIC, anon, authenticated;
+    GRANT EXECUTE ON FUNCTION public.talkx_campaign_window_open(uuid, timestamptz)
+      TO service_role;
+  ELSE
+    RAISE NOTICE 'n102_window_fixes: funcao public.talkx_campaign_window_open(uuid, timestamptz) ausente (base 20261009203548 nao aplicada); ACL nao alterada';
+  END IF;
+END;
+$$;
