@@ -56,7 +56,7 @@ export function GlobalSearch({ open, onOpenChange, onSelectResult, onNewConversa
     allTags, tagSuggestions, selectedTags, activeTypes, dateFilter, setDateFilter,
     mediaTypeFilter, setMediaTypeFilter, showFilters, setShowFilters,
     history, removeFromHistory, clearHistory,
-    toggleType, handleSearch, handleTagSelect, removeTag, resetFilters,
+    toggleType, handleSearch, handleTagSelect, removeTag, resetFilters, registerResultClick,
   } = useGlobalSearchData(open);
 
   const quickActions: QuickAction[] = useMemo(() => {
@@ -82,11 +82,14 @@ export function GlobalSearch({ open, onOpenChange, onSelectResult, onNewConversa
   }, [search, quickActions]);
 
   const handleSelect = useCallback((result: SearchResult) => {
+    // Mouse e teclado (Enter) passam por aqui: o clique é registrado com o
+    // TIPO do resultado, antes de a busca ser limpa.
+    registerResultClick(result);
     onSelectResult(result);
     onOpenChange(false);
     handleSearch('');
     setResults([]);
-  }, [onSelectResult, onOpenChange, handleSearch, setResults]);
+  }, [registerResultClick, onSelectResult, onOpenChange, handleSearch, setResults]);
 
   const handleHistorySelect = useCallback((query: string) => {
     handleSearch(query);

@@ -29,6 +29,37 @@ export type MediaTypeFilter = 'all' | 'text' | 'image' | 'video' | 'audio' | 'do
 
 export interface TagSuggestion { id: string; name: string; color: string; }
 
+/** Evento de uso da busca gravado em `search_events` — sem texto livre. */
+export interface SearchEventInput {
+  /** Comprimento do termo digitado. O termo em si NUNCA entra aqui. */
+  termLength: number;
+  /** A busca devolveu algum resultado? */
+  hadResults: boolean;
+  /** Tipo do resultado clicado; ausente = ainda não houve clique. */
+  resultKind?: SearchResult['type'];
+}
+
+interface SearchEventsTable {
+  insert(row: {
+    user_id: string;
+    term_length: number;
+    had_results: boolean;
+    clicked: boolean;
+    result_kind: SearchResult['type'] | null;
+  }): PromiseLike<{ error: { message?: string } | null }>;
+}
+
+/**
+ * `search_events` nasce numa migration desta trilha e ainda NÃO está em
+ * `src/integrations/supabase/types.ts` (arquivo GERADO pelo types-sync). O
+ * cliente tipado recusaria o nome da tabela, então o INSERT passa por este
+ * facade estreito — em vez de editar à mão o arquivo gerado.
+ */
+function searchEventsFrom(): SearchEventsTable {
+  return (supabase as unknown as { from: (table: 'search_events') => SearchEventsTable })
+    .from('search_events');
+}
+
 function getDateFilterStart(filter: DateFilter): Date | null {
   const now = new Date();
   switch (filter) {
@@ -56,6 +87,50 @@ export function useGlobalSearchData(open: boolean) {
   const [showFilters, setShowFilters] = useState(false);
 
   const { history, addToHistory, removeFromHistory, clearHistory } = useSearchHistory();
+  /** Comprimento do último termo buscado — o clique carrega o termo da busca que o gerou. */
+  const lastSearchTermLength = useRef(0);
+
+  /**
+   * Grava UM evento de uso da busca. O termo digitado NUNCA é enviado: só o
+   * comprimento (`term_length`). Evento fora da faixa válida da tabela
+   * (`1..200`: `0` = busca só por tag, `>200` = entrada inválida) não é gravado.
+   *
+   * Falha de telemetria não pode derrubar a busca: o erro é verificado, vai
+   * para o log e o resultado já carregado permanece na tela.
+   */
+  const registerSearchEvent = useCallback(async (event: SearchEventInput) => {
+    const termLength = Math.trunc(event.termLength);
+    if (termLength < 1 || termLength > 200) return;
+    try {
+      const { data: authData, error: authError } = await supabase.auth.getUser();
+      if (authError) throw authError;
+      const userId = authData?.user?.id;
+      if (!userId) return;
+      const resultKind = event.resultKind ?? null;
+      const { error } = await searchEventsFrom().insert({
+        user_id: userId,
+        term_length: termLength,
+        had_results: event.hadResults,
+        clicked: resultKind !== null,
+        result_kind: resultKind,
+      });
+      if (error) throw error;
+    } catch (error) {
+      log.error('Register search event error:', error);
+    }
+  }, []);
+
+  /**
+   * Clique num resultado — mouse ou teclado passam pelo mesmo funil do host
+   * (`GlobalSearch.handleSelect`), então o clique por Enter conta igual.
+   */
+  const registerResultClick = useCallback((result: SearchResult) => {
+    void registerSearchEvent({
+      termLength: lastSearchTermLength.current,
+      hadResults: true,
+      resultKind: result.type,
+    });
+  }, [registerSearchEvent]);
 
   useEffect(() => {
     if (open) {
@@ -243,13 +318,20 @@ export function useGlobalSearchData(open: boolean) {
       if (requestId !== searchRequestId.current) return;
       setResults(searchResults);
       if (cleanQuery.length >= 2) addToHistory(cleanQuery, searchResults.length);
+      // Telemetria da trilha de busca: só o comprimento do termo + se houve
+      // resultado. Fora do caminho crítico (`void`): o resultado já está na tela.
+      lastSearchTermLength.current = cleanQuery.length;
+      void registerSearchEvent({
+        termLength: cleanQuery.length,
+        hadResults: searchResults.length > 0,
+      });
     } catch (error) {
       log.error('Search error:', error);
       if (requestId === searchRequestId.current) setResults([]);
     } finally {
       if (requestId === searchRequestId.current) setIsLoading(false);
     }
-  }, [addToHistory, crmIntegrationEnabled, isSupervisor]);
+  }, [addToHistory, crmIntegrationEnabled, isSupervisor, registerSearchEvent]);
 
   const handleSearch = useCallback((query: string) => {
     searchRequestId.current += 1;
@@ -296,5 +378,6 @@ export function useGlobalSearchData(open: boolean) {
     mediaTypeFilter, setMediaTypeFilter, showFilters, setShowFilters,
     history, removeFromHistory, clearHistory,
     toggleType, handleSearch, handleTagSelect, removeTag, performSearch, resetFilters,
+    registerResultClick,
   };
 }
