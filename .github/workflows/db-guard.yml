@@ -1488,3 +1488,16 @@ jobs:
           BUCKETS_CHAT_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/buckets-stickers-team-chat-files.test.sh
+      # t_d3c1981f (auditoria de paridade V3->V2, achado chat-2): RLS de
+      # scheduled_messages/whisper_messages nao olhava a visibilidade do contato nem a
+      # permissao de envio. O teste aplica a migration real num PostgreSQL 17 descartavel,
+      # prova a brecha (RED) antes, a recusa (contato invisivel, sem send_messages,
+      # contact_id/created_by trocados) e o passe do supervisor depois, com anon sem ver
+      # nada e as linhas existentes intactas. Inicia container proprio e roda CREATE ROLE
+      # anon/authenticated/service_role — roles sao globais ao cluster, entao
+      # SKIP_DOCKER_SHIM evita a colisao do docker-shim do E47.
+      - name: Provar RLS de agendamento e sussurro por contato visível e permissão (t_d3c1981f)
+        env:
+          SCHEDULED_WHISPER_RLS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/scheduled-whisper-visibility-rls.test.sh
