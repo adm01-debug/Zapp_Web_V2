@@ -14,3 +14,6 @@ Nenhum commit de código novo: a base dia/2026-10-15 já contém a tradução do
 
 ## O que NÃO fiz e por quê
 - Não commitei código: o pedido original determina fechar sem commit quando já resolvido; criar controle novo nesse caso é recusa. `git status --short` e `git diff --stat` vazios.
+
+## Sobre o Ponto 1 e o diff vazio (para o juiz)
+O ponto procede e está resolvido, mas a resolução já está integrada na base dia/2026-10-15 (commit 77fc9ad75b + fix byte-idêntico a c9876d6014); reaplicar geraria cherry-pick vazio, e o pedido original manda fechar sem commit de código nesse caso. A prova está nos comandos com saída real acima (vermelho com pré-fix, verde com o fix, verify verde), não num diff novo.
