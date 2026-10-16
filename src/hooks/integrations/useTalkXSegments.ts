@@ -172,13 +172,12 @@ export function splitRules(rules: SegmentRules | null | undefined): { complete: 
         // (isRuleComplete/describeRule dizem a verdade), mas a coluna nunca é
         // calculada — então fica fora da estimativa/PostgREST e barra a
         // publicação via validateSegment, sem quebrar o catálogo v2.
-        // Ponte Singu (t_124005a8): real_sector/real_uf vivem em
-        // companies.ramo_atividade / company_addresses.estado (is_primary),
-        // nunca em public.contacts — a RPC talkx_resolve_audience rejeita
-        // (invalid_talkx_audience_field) e o PostgREST não tem a coluna.
-        // Ficam no catálogo (RULE_FIELDS) mas fora da execução, como os "em breve".
+        // real_sector/real_uf NÃO são tratados aqui: continuam regras
+        // completas e chegam ao payload, onde a resolução falha fechada
+        // (audienceRulesPayload). Descartá-los aqui encolheria a regra e
+        // alargaria a audiência — o defeito recusado na rodada anterior.
         const def = RULE_FIELDS.find((f) => f.value === rule.field);
-        if (def?.comingSoon || def?.value === 'real_sector' || def?.value === 'real_uf') {
+        if (def?.comingSoon) {
           incompleteCount += 1;
           return false;
         }
@@ -276,13 +275,37 @@ export function rulesToPostgrest(rules: SegmentRules | null | undefined): string
   return parts.length === 1 ? parts[0] : parts.join(',');
 }
 
-/** Formato aceito pela RPC talkx_resolve_audience (X016): { groups: [...], join }. */
-function audienceRulesPayload(rules: SegmentRules | null | undefined): { groups: SegmentRuleGroup[]; join: SegmentJoin } {
-  // t_124005a8 ponto 2: nunca repassa o cru (incompleta, "em breve" e real_*
-  // a RPC rejeita com invalid_talkx_audience_*). Passa pela mesma separação do
-  // splitRules e completa com o join do segmento.
-  const { complete } = splitRules(rules);
-  return { groups: complete.groups, join: rulesJoin(rules) };
+/**
+ * Campos que só a ponte Singu conhece: o setor de atividade REAL
+ * (companies.ramo_atividade) e a UF REAL (company_addresses.estado com
+ * is_primary = true). Não são colunas de public.contacts.
+ */
+const BRIDGE_ONLY_RULE_FIELDS: readonly RuleField[] = ['real_sector', 'real_uf'];
+
+/** Formato aceito pela RPC talkx_resolve_audience (X016): { groups: [...] }. */
+function audienceRulesPayload(rules: SegmentRules | null | undefined): { groups: SegmentRuleGroup[] } {
+  // t_124005a8 (refazer 2): real_* não vão em p_rules — quem os resolve é a
+  // ponte Singu, que devolve os contact_ids das empresas do ramo/UF e os manda
+  // em p_contact_ids. Sem essa pré-resolução, tirar a regra do payload alarga a
+  // audiência: um grupo 'and' perderia a condição de setor/UF e um grupo só com
+  // real_* sairia como groups: [] — que o motor lê como base inteira, não como
+  // vazio. Então a resolução FALHA FECHADA: erro explícito, nunca payload
+  // parcial (o motor não pode receber uma audiência maior do que a pedida).
+  const bridgeOnly = (rules?.groups ?? [])
+    .flatMap((group) => group.rules ?? [])
+    .filter((rule) => BRIDGE_ONLY_RULE_FIELDS.includes(rule.field))
+    .map((rule) => rule.field);
+  if (bridgeOnly.length > 0) {
+    throw new Error(
+      `Setor/UF real (${Array.from(new Set(bridgeOnly)).join(', ')}) é resolvido pela ponte Singu: `
+      + 'a audiência precisa dos contact_ids pré-resolvidos (p_contact_ids), não da regra.',
+    );
+  }
+  // Nada mais é descartado em silêncio: condição em branco e campo desconhecido
+  // seguem para a RPC, que os rejeita (invalid_talkx_audience_rule_value/field,
+  // 22023) — exatamente como antes desta tarefa. Era o descarte silencioso
+  // (splitRules aqui dentro) que alargava a audiência.
+  return { groups: rules?.groups ?? [] };
 }
 
 type TalkXAudienceRpc = (name: string, args: Record<string, unknown>) => Promise<{
