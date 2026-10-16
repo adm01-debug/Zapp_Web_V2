@@ -52,6 +52,8 @@ export interface Message extends Partial<Omit<MessageRow, 'id' | 'content' | 'se
   isEdited?: boolean;
   replyTo?: { messageId: string; content: string; sender: 'agent' | 'contact'; type?: string } | null;
   buttonResponse?: { buttonId: string; buttonTitle: string; title?: string } | null;
+  /** Resposta do cliente a um item de lista (título da seção + título da linha tocada). */
+  listResponse?: { sectionTitle: string; itemTitle: string } | null;
   interactive?: InteractiveMessage | null;
   location?: LocationMessage | null;
   transcriptionStatus?: string | null;
