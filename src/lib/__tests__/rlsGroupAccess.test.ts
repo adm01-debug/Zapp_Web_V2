@@ -37,6 +37,13 @@ function checaManifest(policies: EffectivePolicy[], tabela: string): void {
 
 const ADMIN_OU_SUPERVISOR = /is_admin_or_supervisor\(\s*auth\.uid\(\)\s*\)/;
 
+/**
+ * CX0 (12/10/2026): excluir conexão é destrutivo e exige SÓ admin
+ * (migration 20261012113232 trocou o USING do DELETE para is_admin).
+ * O regex abaixo casa `is_admin(` mas NÃO `is_admin_or_supervisor(`.
+ */
+const SOMENTE_ADMIN = /is_admin\(\s*auth\.uid\(\)\s*\)/;
+
 /** Comandos de escrita — `FOR ALL` e avaliado contra cada um deles. */
 const ESCRITA: ComandoRls[] = ['INSERT', 'UPDATE', 'DELETE'];
 
@@ -113,15 +120,26 @@ describe('RLS real: whatsapp_connections (schema resolvido das migrations)', () 
     }
   });
 
-  it('INSERT/UPDATE/DELETE exigem admin ou supervisor', () => {
-    // FOR ALL cobre os quatro comandos: cada comando de escrita precisa de
-    // ao menos uma policy cobridora, toda ela com predicado de admin.
-    for (const comando of ESCRITA) {
+  it('INSERT/UPDATE exigem admin ou supervisor; DELETE exige só admin', () => {
+    // CX0 (12/10/2026): excluir conexão é destrutivo — a policy de DELETE
+    // ("Admins can delete connections") passou a exigir is_admin ESTRITO
+    // (migration 20261012113232). INSERT e UPDATE continuam com
+    // admin/supervisor. Se uma migration futura devolver o DELETE ao
+    // supervisor, a asserção `DELETE ainda aceita supervisor` fica vermelha.
+    for (const comando of ['INSERT', 'UPDATE'] as ComandoRls[]) {
       expect(
         comandoProtegido(policies, comando, ADMIN_OU_SUPERVISOR),
         `${comando} sem cobertura admin/supervisor`,
       ).toBe(true);
     }
+    expect(
+      comandoProtegido(policies, 'DELETE', SOMENTE_ADMIN),
+      'DELETE sem cobertura só-admin',
+    ).toBe(true);
+    expect(
+      comandoProtegido(policies, 'DELETE', ADMIN_OU_SUPERVISOR),
+      'DELETE ainda aceita supervisor',
+    ).toBe(false);
     const escrita = policies.filter((p) => ESCRITA.some((c) => cobreComando(p, c)));
     for (const p of escrita) {
       expect(p.roles).toContain('authenticated');
