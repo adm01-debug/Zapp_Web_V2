@@ -1,30 +1,23 @@
 Especialista: Íris (area-front-componentes)
 
-Nota sobre o aviso do juiz (arquivos fora da lista do cartão): os arquivos `src/hooks/system/useUserSettings.ts`, `src/hooks/__tests__/useUserSettings*.test.tsx` e `src/i18n/index.ts` vêm do commit de dependência que o PRÓPRIO CARTÃO manda trazer para a base (`759126a11`, seção DEPENDÊNCIA), trazido por `git cherry-pick` como o cartão determina. Não é alteração minha; o meu diff é só `src/components/settings/**` (5 arquivos).
-
 ## O que mudou e por quê
-- `src/components/settings/AppearanceSettings.tsx`: os `<Select>` de Tema e Idioma agora mostram o valor EM VIGOR — tema normalizado para `light|dark|system` (valor legado/desconhecido cai em `system`, nunca num seletor vazio) e idioma normalizado com `normalizeLanguage` (o mesmo helper que o hook usa na leitura), para o código legado `pt-BR` do banco continuar exibindo "Português (Brasil)". O idioma passou a ter os valores `pt|en|es` com rótulos em pt-BR e grava na coluna o código que ela já usa (`pt-BR|en-US|es`), então o valor exibido e o salvo não divergem. O botão "Salvar preferências" veio para dentro da aba (antes era o "Salvar Alterações" global), com estados de salvando (spinner + botão desabilitado) e de erro na tela (`role="alert"`).
-- `src/components/settings/SettingsView.tsx`: removido o "Salvar Alterações" do cabeçalho global — ele prometia gravar as abas de operação, que gravam pelo próprio painel canônico (`useNotificationSettings`, `ScheduleSettings` etc.); as preferências desta aba passam a ser gravadas por um botão dentro dela, alimentado pelo mesmo hook (`isSaving`/`onSave`), um só dono da escrita.
-- `src/components/settings/__tests__/AppearanceSettings.tema-idioma.test.tsx` (novo): renderiza o componente real e prova o valor mostrado (tema escuro/claro e cada idioma, inclusive o código legado `pt-BR`), o que o seletor grava, e os estados salvando/erro.
-- `src/components/settings/__tests__/AppearanceSettings.a11y.test.tsx`: só recebeu as duas props novas (`isSaving`/`onSave`) no objeto base; as asserções de acessibilidade seguem as mesmas.
-- `src/components/settings/__tests__/SettingsView.test.tsx`: teste novo que trava a remoção do salvar global (`queryByRole('button', {name:/Salvar Alterações/})` ausente).
+Cartão pedia enxertar na ponta viva (`dia/2026-10-14`) o commit revisado de `v2/t-0f01df80-2610090332235c` ("linhas com dado real e Editar que leva ao passo", TL-146) e **resolver os conflitos preservando o que já entrou na ponta**. Fiz o cherry-pick de `4716556cb4` e resolvi os 3 arquivos que conflitaram:
+
+- `src/components/talkx/TalkXWizardDelivery.tsx` (conflito em 5 pontos): mantive da ponta a revisão rica (X135 previsões, `templatePreviewInteractive`/CTA do template, `TalkXPreviewInteractive`, `TalkXNoData`) e trouxe do commit revisado o que a ponta não tinha: assinatura `onEditStep?: (step: 1 | 2 | 3, returnTo: 4) => void` (o botão "Editar" navega pela rota com o destino de volta e o passo aberto vira "Voltar à revisão"), o relativo do agendamento (`formatScheduleRelative` → "Hoje, 16:12 (tz)" + "Em 5 minutos") e a linha de Conformidade com o resultado real das checagens (supressão + consentimento). A linha "Segmentos selecionados" ficou com o **nome de cada segmento** e o sub **"N segmentos | X contatos"** (exigência do título) **mais** o total da união e a contagem por segmento que a ponta já mostrava — os nomes vêm de `ed.selectedSegments` (o wizard da ponta aceita mais de um segmento).
+- `src/components/talkx/kit/constants.ts`: conflito de comentário/ordem no catálogo `OBJECTIVES`; mantive o lado da ponta (mesmas descrições que já estavam vivas).
+- `src/components/talkx/__tests__/TalkXView.route.test.tsx`: o teste do commit revisado preenchia `selectedSegment` (singular, campo que a ponta não tem mais) — atualizei o fixture para `selectedSegments: [...]` do modelo vivo **mantendo a asserção idêntica** (`VIP` e `1 segmento | 1.200 contatos`).
+- `src/components/talkx/TalkXView.tsx` e `src/components/talkx/TalkXCampaignWizard.tsx`: auto-mesclados sem conflito — o `TalkXView` passa a rotear pelo passo de volta e o `TalkXCampaignWizard` é quem transforma o "Editar" em rota (com `return=4`) e troca o botão principal do passo aberto por "Voltar à revisão"; os dois vieram do commit revisado porque a ponta não os alterou nessas linhas.
+- `src/components/talkx/talkxWizardRoute.ts`: auto-mesclado sem conflito — é ele que passa a carregar o parâmetro `return` da rota (destino do "Voltar à revisão"), junto de `useCampaignEditor.ts` (que ganhou `formatScheduleRelative`, usado na linha de Agendamento) e do teste `__tests__/talkxWizardRoute.test.ts` (cobre o `return` na rota). Os três vieram inteiros do commit revisado porque a ponta não os alterou.
+- `src/components/talkx/__tests__/TalkXView.revisaoVolta.test.tsx`: o mock do editor do teste revisado não trazia `selectedSegments` (o wizard da ponta usa) e a revisão da ponta consome `useTalkXInsights`; acrescentei `selectedSegments: []` no mock e o mock de `useTalkXInsights` (mesma forma do `TalkXView.route.test.tsx`) — nenhuma asserção alterada.
+
+Conferi os demais consumidores: `TalkXMultiSegmentos.test.tsx` (união + contagem por segmento) e `TalkXWizardReview.resumo.test.tsx` continuam passando — nada foi afrouxado.
 
 ## Prova
-- vermelho antes: `npx vitest run src/components/settings/__tests__/AppearanceSettings.tema-idioma.test.tsx` com o `AppearanceSettings.tsx` da base (`git show HEAD^:...`) → `Test Files 1 failed (1); Tests 6 failed | 2 passed (8)` (falham: 3 de idioma, os 2 de gravação e o de erro; passam só os 2 de tema, que já exibiam certo).
-- verde depois: `npx vitest run .../AppearanceSettings.tema-idioma.test.tsx .../AppearanceSettings.a11y.test.tsx .../SettingsView.test.tsx` → `Test Files 3 passed (3); Tests 22 passed (22)`.
-- `npx eslint` nos 5 arquivos do diff → saída vazia, exit 0.
+- vermelho antes (`npx vitest run .../TalkXView.route.test.tsx` com a árvore ainda em conflito): `Transform failed ... [PARSE_ERROR] Encountered diff marker ... TalkXWizardDelivery.tsx:213:1` e depois `TypeError: Cannot read properties of undefined (reading 'length')` em `TalkXCampaignWizard.tsx:713`.
+- verde depois (`npx vitest run src/components/talkx`): `Test Files 111 passed (111); Tests 958 passed (958)`.
 
-## Consumidores do valor mudado (idioma)
-- O código escolhido no `<Select>` (`pt|en|es`) é o que a tela exibe; o que vai para `updateSettings` é o código que a coluna já usa (`pt-BR|en-US|es`).
-- Único leitor de `user_settings.language`: `src/hooks/system/useUserSettings.ts` → `changeAppLanguage` → `normalizeLanguage` (aceita os dois formatos). Confirmado por `git grep -n "user_settings" -- src` e `git grep -n "language" -- src/hooks`.
-- Tema: valores `light|dark|system` são os que `useTheme` entende; nenhum outro consumidor da coluna.
-
-## Estados e tokens
-- Estados da aba conferidos: salvando (`Salvando...` + botão desabilitado), erro na tela (alerta com texto), e o valor sem correspondência (normalizado, sem seletor vazio).
-- Nada de token/classe nova: `text-destructive` e `border-border` já existem no projeto; o spinner usa `motion-safe:animate-spin` (respeita reduzir-movimento).
+FAIXA DO PAI: commit 4716556cb4 do cartão t-0f01df80 (branch v2/t-0f01df80-2610090332235c) — trazido por cherry-pick porque ESTE cartão manda enxertá-lo na ponta.
 
 ## O que NÃO fiz e por quê
-- Os arquivos de `src/hooks/**` e `src/i18n/index.ts` listados no aviso do juiz são do commit de dependência do cartão (nota no topo deste relato); não foram tocados por mim.
-- Não implementei captura de tela no navegador: não houve mudança de CSS/token (só props e handlers), então a prova é o teste do componente real nos dois temas.
-
-CONCLUÍ: a aba Aparência mostra e grava o Tema e o Idioma em vigor, e o botão de salvar vive dentro da aba, com estado de salvando e erro na tela.
+- Não mexi nas telas citadas na evidência (`TalkXCampaignScheduled.tsx`, `TalkXCampaignWizard.tsx`) além do que o próprio commit revisado já trazia: a `TalkXCampaignWizard.tsx` foi auto-mesclada e é ela que já implementa o "Voltar à revisão"; não havia conflito nela.
+- Não alterei valores, tetos nem escalas — a união/contagem por segmento veio da ponta e só ganhou o prefixo "N segmentos | X contatos" pedido no título.

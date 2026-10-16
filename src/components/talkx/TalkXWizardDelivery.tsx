@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
-  CalendarDays, Clock, Gauge, ShieldCheck, Users, MessageSquare, Target, Bookmark, Ban, FileText,
+  CalendarDays, Clock, Gauge, ShieldCheck, Users, Send, MessageSquare, Target, Bookmark, Ban, FileText,
   Sliders, Smartphone, ShieldAlert, Check, Rocket, Pencil, AlertTriangle,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -13,13 +13,24 @@ import { PrimaryButton, Pill } from '@/components/dashboard/overview/DashboardCa
 import { cn } from '@/lib/utils';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import type { WizardState } from './TalkXCampaignWizard';
-import { TalkXLifecycleDialog, useTalkXLifecycle } from './useTalkXLifecycle';
-import { IconTile, WhatsAppBubble, RailCard, MetaRow, InsightCard, OBJECTIVES, SPEED_PROFILES, fmtInt, fmtPct, fmtDateTime, fmtDurationShort, personalizePreview, extractVariables, TalkXWhatsAppDisconnectedState } from './talkxShared';
+import { IconTile, WhatsAppBubble, RailCard, MetaRow, InsightCard, OBJECTIVES, SPEED_PROFILES, fmtInt, fmtPct, fmtDateTime, fmtDurationShort, personalizePreview, extractVariables, TalkXWhatsAppDisconnectedState, TalkXConfirmDialog } from './talkxShared';
 import type { TalkXPreviewInteractive } from './TalkXMessagePreview';
 import { TalkXNoData } from './kit/states';
 import { useTalkXInsights } from '@/hooks/integrations/useTalkXInsights';
+import { formatScheduleRelative } from './useCampaignEditor';
 import { useContactCustomFields } from '@/hooks/crm/useContactCustomFields';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
+
+/**
+ * X136 — as três confirmações do disparo, com o texto do mock 09.
+ * Ficam DENTRO do modal do kit (`TalkXConfirmDialog`), que só libera
+ * "Confirmar lançamento" quando as três estão marcadas.
+ */
+const LAUNCH_CONFIRMATIONS: { id: string; label: string }[] = [
+  { id: 'consent', label: 'Confirmo que possuo o consentimento dos contatos.' },
+  { id: 'content', label: 'Revisei e estou de acordo com o conteúdo da mensagem.' },
+  { id: 'suppression', label: 'A lista de supressão foi aplicada corretamente.' },
+];
 
 function formatLocalSchedule(localDateTime: string, timezone: string): string {
   const [date = '', time = ''] = localDateTime.split('T');
@@ -187,7 +198,7 @@ function templatePreviewInteractive(template: unknown): TalkXPreviewInteractive 
   return { ...(labels.length > 0 ? { buttons: labels } : {}), ...(pollPreview ? { poll: pollPreview } : {}) };
 }
 
-const Row = ({ icon, label, value, sub, ok, step, onEditStep }: { icon: React.ElementType; label: string; value: React.ReactNode; sub?: React.ReactNode; ok?: boolean; step: 1 | 2 | 3; onEditStep?: (step: 1 | 2 | 3) => void }) => (
+const Row = ({ icon, label, value, sub, ok, step, onEditStep }: { icon: React.ElementType; label: string; value: React.ReactNode; sub?: React.ReactNode; ok?: boolean; step: 1 | 2 | 3; onEditStep?: (step: 1 | 2 | 3, returnTo: 4) => void }) => (
     <div className="flex items-center gap-3 py-3 border-b border-border/50 last:border-0">
       <IconTile icon={icon as never} size={36} color={ok === false ? 'red' : 'blue'} />
       <div className="min-w-0 flex-1">
@@ -195,7 +206,7 @@ const Row = ({ icon, label, value, sub, ok, step, onEditStep }: { icon: React.El
         <p className="text-[13px] font-semibold text-foreground truncate">{value}</p>
         {sub && <p className={cn('text-2xs', ok === false ? 'text-dash-red' : ok ? 'text-dash-green' : 'text-muted-foreground')}>{sub}</p>}
       </div>
-      <button type="button" onClick={() => onEditStep?.(step)} className="h-8 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium text-foreground-secondary hover:bg-muted/50 flex items-center gap-1.5 shrink-0"><Pencil className="w-3 h-3" />Editar</button>
+      <button type="button" onClick={() => onEditStep?.(step, 4)} className="h-8 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium text-foreground-secondary hover:bg-muted/50 flex items-center gap-1.5 shrink-0"><Pencil className="w-3 h-3" />Editar</button>
     </div>
   );
 
@@ -235,12 +246,9 @@ function ForecastRow({ icon: Icon, label }: { icon: React.ElementType; label: st
   );
 }
 
-export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed: WizardState; campaign: TalkXCampaign | null; onLaunched: (id: string, status: 'scheduled' | 'sending') => void; onEditStep?: (step: 1 | 2 | 3 | 4) => void }) {
-  // X051: a revisão não tem mais modal de confirmação próprio — quem confirma o
-  // disparo é o diálogo único do ciclo de vida (`useTalkXLifecycle`), com o
-  // executor do wizard abaixo no lugar da `startCampaign` (que pularia o
-  // salvamento do rascunho e o snapshot de destinatários).
-  const lifecycle = useTalkXLifecycle();
+export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed: WizardState; campaign: TalkXCampaign | null; onLaunched: (id: string, status: 'scheduled' | 'sending') => void; onEditStep?: (step: 1 | 2 | 3, returnTo: 4) => void }) {
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const sample = ed.contacts?.[0];
   // Review da PR #909: sem os campos customizados reais do contato de
   // exemplo, o preview sempre mostrava "[variavel]" mesmo quando o envio
@@ -266,7 +274,31 @@ export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed
   // ("Gerar mais vendas e conversões"); a descrição livre da campanha continua
   // visível na mesma linha, para não sumir do resumo.
   const objectiveSub = [objectiveEntry?.description, ed.description].filter(Boolean).join(' · ') || undefined;
+  // T09-018 — "N segmentos | X contatos": a contagem usa o número de segmentos
+  // selecionados (o wizard passou a aceitar mais de um) e os elegíveis reais.
+  const audienceIsSegment = ed.audienceSource === 'segment';
+  const segmentCount = audienceIsSegment ? ed.selectedSegments.length : 0;
   const connection = (ed.connections ?? []).find((c) => c.id === ed.connectionId);
+  // X134/T09-018: relativo calculado no fuso da campanha, uma vez por render.
+  const schedule = ed.isScheduled && ed.scheduledAt
+    ? formatScheduleRelative(ed.scheduledAt, ed.scheduleTimezone)
+    : null;
+  const scheduleWindow = ed.sendWindowEnabled
+    ? `Janela ${ed.sendWindowStart}–${ed.sendWindowEnd}${ed.businessHoursOnly ? ` · horário comercial (${ed.scheduleTimezone})` : ''}`
+    : ed.businessHoursOnly
+      ? `Somente horário comercial (${ed.scheduleTimezone})`
+      : 'Sem janela de envio';
+  // X134/T09-020: a linha lista o resultado das duas checagens reais do
+  // operador (supressão e consentimento), em vez de um texto fixo.
+  const suppressionOk = ed.respectSuppression;
+  const consentOk = ed.confirmConsent;
+  const complianceOk = suppressionOk && consentOk;
+  const complianceSub = complianceOk
+    ? 'Supressão aplicada · Consentimento confirmado'
+    : [
+        !suppressionOk && 'Pendente: lista de supressão desativada',
+        !consentOk && 'Pendente: consentimento dos contatos',
+      ].filter(Boolean).join(' · ');
   const waOk = !!connection;
   const audienceOk = ed.eligibleCount > 0 || !!campaign;
   const allGood = waOk && audienceOk && (ed.messageTemplate.trim().length > 0 || (ed.hasMedia && ed.mediaUrl.trim().length > 0));
@@ -279,26 +311,18 @@ export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed
   const timingInsight = insights?.find((insight) => insight.id === 'best-hour') ?? null;
   const templateInsight = insights?.find((insight) => insight.id === 'best-template') ?? null;
 
-  // O disparo do wizard salva o rascunho e gera o snapshot de destinatários
-  // antes de iniciar (`ed.handleSave` faz os dois): por isso o diálogo único
-  // recebe este `run` e NÃO chama `startCampaign` direto.
-  const requestLaunch = () => {
+  const launch = async () => {
     if (!launchAllowed) return;
-    lifecycle.request({
-      kind: 'start',
-      target: { id: campaign?.id ?? 'new', name: ed.name, total_recipients: ed.eligibleCount },
-      details: [
-        { label: 'Segmento', value: ed.audienceSource === 'segment' ? (ed.selectedSegments.length > 0 ? ed.selectedSegments.map((s) => s.name).join(', ') : '—') : 'Contatos ZAPP' },
-        { label: 'Destinatários', value: `${fmtInt(ed.eligibleCount)} contatos` },
-        { label: 'Envio', value: ed.isScheduled && ed.scheduledAt ? formatLocalSchedule(ed.scheduledAt, ed.scheduleTimezone) : 'Imediato' },
-      ],
-      run: async () => {
-        const id = await ed.handleSave(ed.isScheduled && ed.scheduledAt ? 'schedule' : 'launch');
-        if (!id) return false;
+    setError(null);
+    try {
+      const id = await ed.handleSave(ed.isScheduled && ed.scheduledAt ? 'schedule' : 'launch');
+      if (id) {
+        setConfirmOpen(false);
         onLaunched(id, ed.isScheduled && ed.scheduledAt ? 'scheduled' : 'sending');
-        return true;
-      },
-    });
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Falha ao lançar a campanha');
+    }
   };
 
 
@@ -307,14 +331,14 @@ export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed
       <Section icon={FileText} title="Resumo da campanha" subtitle="Verifique se todas as informações estão corretas.">
         <Row icon={FileText} label="Nome da campanha" value={ed.name || '—'} step={1} onEditStep={onEditStep} />
         <Row icon={Target} label="Objetivo" value={objective} sub={objectiveSub} step={1} onEditStep={onEditStep} />
-        <Row icon={ed.audienceSource === 'segment' ? Bookmark : Users} label={ed.audienceSource === 'segment' ? 'Segmentos selecionados' : 'Público selecionado'} value={ed.audienceSource === 'segment' ? (ed.selectedSegments.length > 0 ? ed.selectedSegments.map((s) => s.name).join(', ') : '—') : `${fmtInt(ed.selectedContacts.length)} contatos`} sub={ed.audienceSource === 'segment' ? (ed.selectedSegments.length > 0 ? `${fmtInt(ed.audienceTotal)} contatos na união · ${ed.selectedSegments.map((s) => `${s.name} (${fmtInt(ed.segmentEstimates?.[s.id] ?? s.estimated_count ?? 0)})`).join(' · ')}` : `${fmtInt(ed.audienceTotal)} contatos na união`) : `${fmtInt(ed.eligibleCount)} contatos elegíveis`} ok={audienceOk} step={1} onEditStep={onEditStep} />
+        <Row icon={audienceIsSegment ? Bookmark : Users} label={audienceIsSegment ? 'Segmentos selecionados' : 'Público selecionado'} value={audienceIsSegment ? (ed.selectedSegments.length > 0 ? ed.selectedSegments.map((s) => s.name).join(', ') : '—') : `${fmtInt(ed.selectedContacts.length)} contatos`} sub={audienceIsSegment ? <><span>{`${fmtInt(segmentCount)} ${segmentCount === 1 ? 'segmento' : 'segmentos'} | ${fmtInt(ed.eligibleCount)} contatos`}</span>{ed.selectedSegments.length > 0 && <>{' · '}<span>{`${fmtInt(ed.audienceTotal)} contatos na união · ${ed.selectedSegments.map((s) => `${s.name} (${fmtInt(ed.segmentEstimates?.[s.id] ?? s.estimated_count ?? 0)})`).join(' · ')}`}</span></>}</> : `${fmtInt(ed.eligibleCount)} contatos elegíveis`} ok={audienceOk} step={1} onEditStep={onEditStep} />
         <Row icon={Ban} label="Exclusões / Supressão" value={ed.respectSuppression ? 'Lista de supressão ativa' : 'Supressão desativada'} sub={ed.respectSuppression ? `${fmtInt(ed.suppressedCount)} contatos excluídos` : 'Atenção: opt-outs ainda são pulados no envio'} ok={ed.respectSuppression} step={3} onEditStep={onEditStep} />
         <Row icon={MessageSquare} label="Template de mensagem" value={ed.selectedTemplate?.name ?? 'Mensagem personalizada'} sub={ed.selectedTemplate ? (ed.selectedTemplate.status === 'approved' ? 'Template aprovado' : 'Template em revisão') : `${ed.messageTemplate.length} caracteres`} ok={ed.selectedTemplate ? ed.selectedTemplate.status === 'approved' : undefined} step={2} onEditStep={onEditStep} />
         <Row icon={Sliders} label="Variáveis de personalização" value={variables.length > 0 ? variables.join(', ') : 'Nenhuma'} sub={`${variables.length} variáveis configuradas`} step={2} onEditStep={onEditStep} />
         <Row icon={Gauge} label="Velocidade de entrega" value={SPEED_PROFILES.find((p) => p.value === ed.speedProfile)?.label ?? ed.speedProfile} sub={`~${ed.messagesPerMinute} mensagens/min`} step={3} onEditStep={onEditStep} />
-        <Row icon={CalendarDays} label="Agendamento" value={ed.isScheduled && ed.scheduledAt ? formatLocalSchedule(ed.scheduledAt, ed.scheduleTimezone) : 'Imediato ao lançar'} sub={ed.sendWindowEnabled ? `Janela ${ed.sendWindowStart}–${ed.sendWindowEnd}${ed.businessHoursOnly ? ` · horário comercial (${ed.scheduleTimezone})` : ''}` : ed.businessHoursOnly ? `Somente horário comercial (${ed.scheduleTimezone})` : 'Sem janela de envio'} step={3} onEditStep={onEditStep} />
+        <Row icon={CalendarDays} label="Agendamento" value={schedule ? `${schedule.when} (${ed.scheduleTimezone})` : 'Imediato ao lançar'} sub={[schedule?.relative, scheduleWindow].filter(Boolean).join(' · ')} step={3} onEditStep={onEditStep} />
         <Row icon={Smartphone} label="Conexão WhatsApp" value={connection ? `${connection.name} (${connection.phone_number || 'sem número'})` : 'Nenhuma conexão'} sub={connection ? 'Conectada e pronta' : 'Selecione uma conexão ativa'} ok={waOk} step={1} onEditStep={onEditStep} />
-        <Row icon={ShieldCheck} label="Conformidade" value="LGPD e políticas do WhatsApp" sub={ed.respectSuppression && ed.confirmConsent ? 'Verificações confirmadas' : 'Confirme as verificações abaixo'} ok={ed.respectSuppression && ed.confirmConsent} step={3} onEditStep={onEditStep} />
+        <Row icon={ShieldCheck} label="Conformidade" value="LGPD e políticas do WhatsApp" sub={complianceSub} ok={complianceOk} step={3} onEditStep={onEditStep} />
       </Section>
 
       <Section icon={Smartphone} color="green" title="Prévia no WhatsApp" subtitle="Veja como sua mensagem será exibida para o contato.">
@@ -364,13 +388,38 @@ export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed
           </div>
         </div>
 
-        <PrimaryButton size="lg" icon={Rocket} className="w-full justify-center h-12 text-base" disabled={!launchAllowed} onClick={requestLaunch}>
+        <PrimaryButton size="lg" icon={Rocket} className="w-full justify-center h-12 text-base" disabled={!launchAllowed} onClick={() => setConfirmOpen(true)}>
           {ed.isScheduled && ed.scheduledAt ? 'Agendar campanha' : 'Lançar campanha'}
         </PrimaryButton>
+        {error && <p className="text-xs text-dash-red">{error}</p>}
       </div>
 
-      {/* X051: diálogo único do ciclo de vida — o disparo não tem mais modal próprio. */}
-      <TalkXLifecycleDialog controller={lifecycle} />
+      {/* X136 — o disparo confirma pelo modal do kit (`TalkXConfirmDialog`):
+          as 3 caixas ficam DENTRO do modal e "Confirmar lançamento" só
+          habilita com as três marcadas. Antes era um `Dialog` próprio, com as
+          confirmações num cartão de fora repetidas dentro do modal como texto. */}
+      <TalkXConfirmDialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={() => { void launch(); }}
+        icon={Send}
+        iconColor="blue"
+        title="Confirmar disparo?"
+        description={ed.isScheduled && ed.scheduledAt
+          ? `A campanha ficará agendada para ${formatLocalSchedule(ed.scheduledAt, ed.scheduleTimezone)} e será enviada para ${fmtInt(ed.eligibleCount)} contatos. Esta ação não pode ser desfeita.`
+          : `A campanha será enviada para ${fmtInt(ed.eligibleCount)} contatos. Esta ação não pode ser desfeita.`}
+        details={[
+          { label: 'Campanha', value: ed.name || '—' },
+          { label: 'Público', value: ed.audienceSource === 'segment' ? (ed.selectedSegments.length > 0 ? ed.selectedSegments.map((s) => s.name).join(', ') : '—') : 'Contatos ZAPP' },
+          { label: 'Destinatários', value: `${fmtInt(ed.eligibleCount)} contatos` },
+          { label: 'Duração estimada', value: ed.estimatedTime ?? '—' },
+          { label: 'Envio', value: ed.isScheduled && ed.scheduledAt ? 'Agendado' : 'Imediato' },
+        ]}
+        checks={LAUNCH_CONFIRMATIONS}
+        confirmLabel={ed.isScheduled && ed.scheduledAt ? 'Confirmar agendamento' : 'Confirmar lançamento'}
+        cancelLabel="Cancelar"
+        loading={ed.saving}
+      />
     </div>
   );
 }
