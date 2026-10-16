@@ -132,8 +132,11 @@ Deno.test("N-118: rechecagem antes do envio enxerga send_weekdays e pausa o dia 
     evolutionKey: Deno.env.get("EVOLUTION_API_KEY") ?? "",
     supabaseUrl: "https://supabase-test.example",
     workerId: "worker-n118",
-    trackingUrlFor: () => undefined,
-    linksByLabelFor: () => ({}),
+    // 15/10: só o TIPO mudou — trackingUrlFor/linksByLabelFor passaram a devolver Promise porque
+    // a URL rastreável agora carrega o token opaco (resolução assíncrona). Mesmos stubs, mesmas
+    // asserções deste teste; nada do comportamento do N118 foi tocado.
+    trackingUrlFor: () => Promise.resolve(undefined),
+    linksByLabelFor: () => Promise.resolve({}),
     customFieldsByContact: new Map(),
     log: new Logger("talkx-send"),
     correlationId: "corr-n118",
@@ -301,8 +304,11 @@ Deno.test("N-118: beforeSend com respect_dnd ausente e feriado hoje barra sem PO
     evolutionKey: Deno.env.get("EVOLUTION_API_KEY") ?? "",
     supabaseUrl: "https://supabase-test.example",
     workerId: "worker-n118-dnd",
-    trackingUrlFor: () => undefined,
-    linksByLabelFor: () => ({}),
+    // 15/10: só o TIPO mudou — trackingUrlFor/linksByLabelFor passaram a devolver Promise porque
+    // a URL rastreável agora carrega o token opaco (resolução assíncrona). Mesmos stubs, mesmas
+    // asserções deste teste; nada do comportamento do N118 foi tocado.
+    trackingUrlFor: () => Promise.resolve(undefined),
+    linksByLabelFor: () => Promise.resolve({}),
     customFieldsByContact: new Map(),
     log: new Logger("talkx-send"),
     correlationId: "corr-n118-dnd",
