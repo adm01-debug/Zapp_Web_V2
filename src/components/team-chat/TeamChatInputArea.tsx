@@ -31,7 +31,9 @@ interface TeamChatInputAreaProps {
   onSend: () => void;
   onCancelReply: () => void;
   onRecordToggle: () => void;
-  onAudioSend: (blob: Blob) => void;
+  /** Caminho do áudio gravado (bucket privado): o VoiceChangerPicker entrega o
+      áudio transformado por aqui e devolve `false` quando o envio falha. */
+  onAudioSend: (blob: Blob) => void | boolean | Promise<void | boolean>;
   onSendSticker: (url: string) => void;
   onSendAudioMeme: (url: string) => void;
   onSendCustomEmoji: (url: string) => void;
@@ -83,7 +85,7 @@ export function TeamChatInputArea({
       <AIRewriteButton inputValue={text} onRewrite={(newText) => setText(newText)} />
       <StickerPicker onSendSticker={onSendSticker} />
       <AudioMemePicker onSendAudio={onSendAudioMeme} />
-      <VoiceChangerPicker onSendAudio={onSendAudioMeme} />
+      <VoiceChangerPicker onSendAudioBlob={onAudioSend} />
       <CustomEmojiPicker onSendEmoji={onSendCustomEmoji} />
       <RichTextToggle active={showRichToolbar} onToggle={() => setShowRichToolbar(!showRichToolbar)} />
       <VoiceDictationButton onTranscript={handleVoiceDictation} disabled={isRecordingAudio} />

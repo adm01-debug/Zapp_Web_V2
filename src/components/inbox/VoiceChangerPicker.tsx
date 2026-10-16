@@ -43,14 +43,30 @@ const VOICE_PRESETS = [
   { id: 'reindeer', emoji: '🦌', label: 'Rena', cat: 'theme' },
 ] as const;
 
+/** Resultado do envio: `false` (ou rejeição) conta como falha e preserva a prévia. */
+type ResultadoEnvioVoz = void | boolean;
+
 interface VoiceChangerPickerProps {
-  /** Pode ser síncrono ou assíncrono: o popover só fecha depois que o envio da
-      mensagem confirma o sucesso. */
-  onSendAudio: (audioUrl: string) => void | Promise<void>;
+  /**
+   * Entrega o áudio JÁ transformado como `Blob` para o MESMO caminho do áudio
+   * gravado — bucket privado (`audio-messages` no inbox, `team-chat-files` no
+   * chat interno) na pasta do contato/conversa, com locator assinado na
+   * leitura.
+   *
+   * Antes o picker subia o mp3 em `audio-memes/voice-changer/<ts>_<uuid>.mp3`
+   * (bucket público, cache de um ano): a policy de INSERT de `audio-memes` só
+   * aceita a pasta `auth.uid()` ou admin/supervisor, então atendente comum
+   * levava "Erro ao enviar áudio", e quando passava o áudio do cliente ficava
+   * com URL pública permanente.
+   *
+   * Pode ser síncrono ou assíncrono; devolver `false` ou rejeitar conta como
+   * falha e preserva a prévia (regressão #350).
+   */
+  onSendAudioBlob: (blob: Blob) => ResultadoEnvioVoz | Promise<ResultadoEnvioVoz>;
   disabled?: boolean;
 }
 
-export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPickerProps) {
+export function VoiceChangerPicker({ onSendAudioBlob, disabled }: VoiceChangerPickerProps) {
   const [open, setOpen] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [selectedVoice, setSelectedVoice] = useState('grave');
@@ -248,17 +264,14 @@ export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPicker
     try {
       const response = await fetch(transformedUrl);
       const blob = await response.blob();
-      const path = `voice-changer/${Date.now()}_${crypto.randomUUID()}.mp3`;
-      const { error: uploadError } = await supabase.storage
-        .from('audio-memes')
-        .upload(path, blob, { contentType: 'audio/mpeg', cacheControl: '31536000' });
-      if (uploadError) throw uploadError;
-
-      const { data: urlData } = supabase.storage.from('audio-memes').getPublicUrl(path);
-      // O envio da mensagem pode ser síncrono ou assíncrono e pode falhar. Só
-      // fecha o popover e limpa a prévia DEPOIS da confirmação de sucesso —
-      // assim uma falha preserva `transformedUrl` para o usuário tentar de novo.
-      await onSendAudio(urlData.publicUrl);
+      // O upload é do caminho do áudio gravado (bucket privado, pasta do
+      // contato/conversa) e fica com quem conhece essa pasta — o picker só
+      // entrega o Blob. O envio da mensagem pode ser síncrono ou assíncrono e
+      // pode falhar (`false` ou rejeição). Só fecha o popover e limpa a prévia
+      // DEPOIS da confirmação de sucesso — assim uma falha preserva
+      // `transformedUrl` para o usuário tentar de novo (#350).
+      const resultado = await onSendAudioBlob(blob);
+      if (resultado === false) throw new Error('Envio de áudio não confirmado');
       setOpen(false);
       cleanup();
       toast.success('Áudio enviado! 🎤');
@@ -267,7 +280,7 @@ export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPicker
     } finally {
       setIsSending(false);
     }
-  }, [transformedUrl, isSending, onSendAudio, cleanup]);
+  }, [transformedUrl, isSending, onSendAudioBlob, cleanup]);
 
   return (
     <Tooltip>
