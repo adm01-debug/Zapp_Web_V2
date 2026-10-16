@@ -6,6 +6,15 @@ import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
 import { getLogger } from '@/lib/logger';
 import type { Achievement, AgentStats } from './types';
 
+/**
+ * Refazer de c26046478 (t_8e0d9185): a entrega original assinava
+ * `agent_achievements` no Realtime e quebrava o ESPELHO DO CI
+ * ("no unresolved or dead Realtime subscriptions"), porque essa tabela não
+ * está na publicação `supabase_realtime`. Aqui a única assinatura é
+ * `agent_stats` (publicada); a conquista chega pelo aumento de
+ * `achievements_count`, gravado na mesma transação do insert no servidor.
+ */
+
 const log = getLogger('AgentCelebrations');
 
 /** Tópico exclusivo por instância: dois consumidores ao vivo não dividem canal. */

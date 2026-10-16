@@ -6,6 +6,7 @@
  *
  * Este módulo só LÊ e agrupa: nada aqui altera o que está gravado nas tabelas.
  */
+import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
 
 /**
  * Dia no fuso local, como `yyyy-MM-dd`.
@@ -256,4 +257,37 @@ export function appMonthEnd(now: Date = new Date()): Date {
   const [ano, mes] = appDayKey(now).split('-').map(Number);
   const ultimoDia = new Date(Date.UTC(ano, mes, 0)).getUTCDate();
   return appDayEndOfKey(`${ano}-${String(mes).padStart(2, '0')}-${String(ultimoDia).padStart(2, '0')}`);
+}
+
+/** Período de meta como a tela do painel o chama: hoje, semana, mês. */
+export type GoalPeriodKey = 'today' | 'week' | 'month';
+
+/**
+ * **A** janela de um período de meta — o painel (`useGoalsDashboard`) e o aviso de conquista
+ * (`useGoalNotifications`) usam esta função, para não contarem recortes diferentes.
+ *
+ * - `today`  — o dia local inteiro do relógio do usuário (00:00 → 23:59:59.999);
+ * - `week`   — a semana de **segunda a domingo** (`weekStartsOn: 1`), o MESMO começo de semana
+ *              da SLA do produto (`useSLAMetrics`) — não o domingo do `startOfWeek` sem opção;
+ * - `month`  — o mês corrente;
+ * - qualquer outro valor cai no dia de hoje (o desconhecido não estoura nem conta vazio).
+ *
+ * O recorte é no fuso do **navegador**, que é como o painel já lia as datas — não é o recorte
+ * ancorado no fuso do app (`appWeekStart`); este serve só a metas pessoais de quem está olhando.
+ */
+export function goalPeriodRange(
+  period: GoalPeriodKey | string,
+  now: Date = new Date(),
+): { from: Date; to: Date } {
+  switch (period) {
+    case 'week':
+      return {
+        from: startOfWeek(now, { weekStartsOn: 1 }),
+        to: endOfWeek(now, { weekStartsOn: 1 }),
+      };
+    case 'month':
+      return { from: startOfMonth(now), to: endOfMonth(now) };
+    default:
+      return { from: startOfDay(now), to: endOfDay(now) };
+  }
 }

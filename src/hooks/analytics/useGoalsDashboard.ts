@@ -2,8 +2,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { startOfDay, endOfDay, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { goalPeriodRange } from '@/lib/localDay';
 import { MessageSquare, Users, CheckCircle2 } from 'lucide-react';
 
 export interface Goal {
@@ -16,18 +15,11 @@ export interface Goal {
   icon: React.ElementType;
   color: string;
   priority: 'high' | 'medium' | 'low';
-  /**
-   * `false` quando a meta é percentual e não há denominador no período (ex.: a
-   * Taxa de Resolução sem nenhum atendimento). Nesse caso `current` fica em 0
-   * apenas para exibição: a meta não entra na média do progresso geral e não
-   * conta como cumprida — um dado que não existe não é "0% feito".
-   */
-  hasData: boolean;
 }
 
 export const PERIOD_OPTIONS = [
   { value: 'today', label: 'Hoje' },
-  { value: 'week', label: 'Esta Semana' },
+  { value: 'week', label: 'Esta Semana (seg a dom)' },
   { value: 'month', label: 'Este Mês' },
 ];
 
@@ -36,16 +28,6 @@ const DEFAULT_GOALS = {
   contacts_handled: { daily: 10, weekly: 50, monthly: 200 },
   resolution_rate: { daily: 80, weekly: 80, monthly: 85 },
 };
-
-function getDateRange(period: string) {
-  const now = new Date();
-  switch (period) {
-    case 'today': return { from: startOfDay(now), to: endOfDay(now) };
-    case 'week': return { from: startOfWeek(now, { locale: ptBR }), to: endOfWeek(now, { locale: ptBR }) };
-    case 'month': return { from: startOfMonth(now), to: endOfMonth(now) };
-    default: return { from: startOfDay(now), to: endOfDay(now) };
-  }
-}
 
 function getGoalTarget(
   goalType: string, period: string,
@@ -93,7 +75,9 @@ export function useGoalsDashboard() {
   const previousOverallComplete = useRef(false);
   const { user } = useAuth();
 
-  const dateRange = useMemo(() => getDateRange(period), [period]);
+  // A MESMA janela de período do aviso de conquista (useGoalNotifications), inclusive a
+  // semana de segunda a domingo — as duas telas não podem contar recortes diferentes.
+  const dateRange = useMemo(() => goalPeriodRange(period), [period]);
 
   const { data: profile } = useQuery({
     queryKey: ['my-profile', user?.id],
@@ -106,26 +90,45 @@ export function useGoalsDashboard() {
     enabled: !!user?.id,
   });
 
-  const { data: messagesData, isLoading: loadingMessages } = useQuery({
+  // Contagem vinda do SERVIDOR (`count: exact, head: true`), sem baixar linha: o PostgREST
+  // corta a resposta em 1.000 linhas, então contar no cliente travava a meta em 1.000 e uma
+  // meta mensal de 1.500 nunca fechava.
+  const { data: messagesCount, isLoading: loadingMessages } = useQuery({
     queryKey: ['goals-messages', period, profile?.id],
     queryFn: async () => {
-      if (!profile?.id) return [];
-      const { data, error } = await supabase.from('messages').select('id, sender, created_at')
-        .eq('agent_id', profile.id).gte('created_at', dateRange.from.toISOString()).lte('created_at', dateRange.to.toISOString());
+      if (!profile?.id) return 0;
+      const { count, error } = await supabase.from('messages').select('id', { count: 'exact', head: true })
+        .eq('agent_id', profile.id).eq('sender', 'agent')
+        .gte('created_at', dateRange.from.toISOString()).lte('created_at', dateRange.to.toISOString());
       if (error) throw error;
-      return data || [];
+      return count ?? 0;
     },
     enabled: !!profile?.id,
   });
 
-  const { data: contactsData, isLoading: loadingContacts } = useQuery({
+  const { data: contactsCount, isLoading: loadingContacts } = useQuery({
     queryKey: ['goals-contacts', period, profile?.id],
     queryFn: async () => {
-      if (!profile?.id) return [];
-      const { data, error } = await supabase.from('contacts').select('id, created_at, conversation_status')
+      if (!profile?.id) return 0;
+      const { count, error } = await supabase.from('contacts').select('id', { count: 'exact', head: true })
         .eq('assigned_to', profile.id).gte('created_at', dateRange.from.toISOString()).lte('created_at', dateRange.to.toISOString());
       if (error) throw error;
-      return data || [];
+      return count ?? 0;
+    },
+    enabled: !!profile?.id,
+  });
+
+  const { data: analysesCounts, isLoading: loadingAnalyses } = useQuery({
+    queryKey: ['goals-analyses', period, profile?.id],
+    queryFn: async () => {
+      if (!profile?.id) return { total: 0, resolved: 0 };
+      const base = () => supabase.from('conversation_analyses').select('id', { count: 'exact', head: true })
+        .eq('analyzed_by', profile.id).gte('created_at', dateRange.from.toISOString()).lte('created_at', dateRange.to.toISOString());
+      const { count: total, error: totalError } = await base();
+      if (totalError) throw totalError;
+      const { count: resolved, error: resolvedError } = await base().eq('status', 'resolvido');
+      if (resolvedError) throw resolvedError;
+      return { total: total ?? 0, resolved: resolved ?? 0 };
     },
     enabled: !!profile?.id,
   });
@@ -142,19 +145,11 @@ export function useGoalsDashboard() {
   });
 
   const goals = useMemo((): Goal[] => {
-    const messagesSent = messagesData?.filter(m => m.sender === 'agent').length || 0;
-    const contactsHandled = contactsData?.length || 0;
-    // Taxa de Resolução: conversas encerradas / conversas atendidas no período,
-    // pelo campo canônico `contacts.conversation_status` (o mesmo usado por
-    // useQueueAnalytics/useWarRoomData). NÃO sai de `conversation_analyses`:
-    // aquele status é o parecer da análise de IA, que só existe para as
-    // conversas analisadas — contar por ali divergia do painel.
-    const resolvedContacts = contactsData?.filter(c => c.conversation_status === 'resolved').length || 0;
-    const resolutionRate = contactsHandled > 0 ? Math.round((resolvedContacts / contactsHandled) * 100) : 0;
-    // 0/0 não é 0%: sem atendimento no período não há taxa a medir. Guardamos o
-    // valor 0 só para exibição e marcamos `hasData:false` para não pesar no
-    // progresso geral.
-    const hasResolutionData = contactsHandled > 0;
+    const messagesSent = messagesCount ?? 0;
+    const contactsHandled = contactsCount ?? 0;
+    const totalAnalyses = analysesCounts?.total ?? 0;
+    const resolvedAnalyses = analysesCounts?.resolved ?? 0;
+    const resolutionRate = totalAnalyses > 0 ? Math.round((resolvedAnalyses / totalAnalyses) * 100) : 0;
 
     // E42: bug de precedência — `!x === false` avalia (!x) === false, então
     // "sem config" (x undefined) virava SEMPRE inativo em vez de "usar
@@ -168,32 +163,28 @@ export function useGoalsDashboard() {
     if (isMessageGoalActive) {
       allGoals.push({ id: 'messages-sent', label: 'Mensagens Enviadas', description: 'Total de mensagens enviadas no período',
         target: getGoalTarget('messages_sent', period, customGoals), current: messagesSent, unit: 'mensagens',
-        icon: MessageSquare, color: 'hsl(var(--primary))', priority: 'high', hasData: true });
+        icon: MessageSquare, color: 'hsl(var(--primary))', priority: 'high' });
     }
     if (isContactGoalActive) {
       allGoals.push({ id: 'contacts-handled', label: 'Contatos Atendidos', description: 'Novos contatos atribuídos a você',
         target: getGoalTarget('contacts_handled', period, customGoals), current: contactsHandled, unit: 'contatos',
-        icon: Users, color: 'hsl(var(--chart-2))', priority: 'high', hasData: true });
+        icon: Users, color: 'hsl(var(--chart-2))', priority: 'high' });
     }
     if (isResolutionGoalActive) {
       allGoals.push({ id: 'resolution-rate', label: 'Taxa de Resolução', description: 'Percentual de conversas resolvidas',
         target: getGoalTarget('resolution_rate', period, customGoals), current: resolutionRate, unit: '%',
-        icon: CheckCircle2, color: 'hsl(var(--chart-3))', priority: 'medium', hasData: hasResolutionData });
+        icon: CheckCircle2, color: 'hsl(var(--chart-3))', priority: 'medium' });
     }
     return allGoals;
-  }, [messagesData, contactsData, period, customGoals]);
+  }, [messagesCount, contactsCount, analysesCounts, period, customGoals]);
 
   const overallProgress = useMemo(() => {
-    // Metas sem dado no período (ex.: Taxa de Resolução sem atendimento) ficam
-    // FORA da média: contá-las como 0% derrubava o progresso geral por um dado
-    // que simplesmente não existe.
-    const mensuraveis = goals.filter(g => g.hasData);
-    if (mensuraveis.length === 0) return 0;
-    return Math.round(mensuraveis.reduce((acc, g) => acc + Math.min((g.current / g.target) * 100, 100), 0) / mensuraveis.length);
+    if (goals.length === 0) return 0;
+    return Math.round(goals.reduce((acc, g) => acc + Math.min((g.current / g.target) * 100, 100), 0) / goals.length);
   }, [goals]);
 
-  const completedGoals = useMemo(() => goals.filter(g => g.hasData && g.current >= g.target).length, [goals]);
-  const isLoading = loadingMessages || loadingContacts;
+  const completedGoals = useMemo(() => goals.filter(g => g.current >= g.target).length, [goals]);
+  const isLoading = loadingMessages || loadingContacts || loadingAnalyses;
 
   useEffect(() => {
     if (isLoading || goals.length === 0) return;
@@ -204,7 +195,7 @@ export function useGoalsDashboard() {
       previousOverallComplete.current = true;
     } else if (!allGoalsCompleted) { previousOverallComplete.current = false; }
 
-    const currentCompletedIds = new Set(goals.filter(g => g.hasData && g.current >= g.target).map(g => g.id));
+    const currentCompletedIds = new Set(goals.filter(g => g.current >= g.target).map(g => g.id));
     currentCompletedIds.forEach(id => {
       if (!previousCompletedGoals.current.has(id)) {
         const goal = goals.find(g => g.id === id);

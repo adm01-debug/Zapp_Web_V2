@@ -4,7 +4,7 @@ Mapa das Edge Functions do Zapp Web V2: **quem chama cada edge** e o que está l
 de verdade no código da ponta do dia. Complementa `docs/architecture/edge-functions.md`
 (que descreve *o que* cada edge faz); aqui a pergunta é *quem a dispara*.
 
-Base: `dia/2026-10-11`. 81 edges com `index.ts` em `supabase/functions/`.
+Base: `dia/2026-10-15`. 81 edges com `index.ts` em `supabase/functions/`.
 
 ## Como manter
 
@@ -23,7 +23,7 @@ Ou seja: mudou o código, o teste vermelho obriga a atualizar este arquivo.
 
 | Grupo | Significado |
 |---|---|
-| A | front (`invoke`/rota em `src/`) |
+| A | front (`invoke`/`invokeEdge`/rota em `src/`) |
 | B | outra edge (`supabase/functions/`) |
 | C | agendador `pg_cron`/`pg_net` (migration) |
 | D | entrada externa (declarada em `supabase/config.toml`) |
@@ -37,11 +37,11 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 
 | Grupo | Edges |
 |---|---|
-| A | 54 |
+| A | 55 |
 | B | 0 |
 | C | 3 |
 | D | 6 |
-| E | 18 |
+| E | 17 |
 | **total** | **81** |
 
 ## Tabela
@@ -58,7 +58,7 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `ai-kb-ingest` | A | `src/hooks/integrations/useKnowledgeBase.ts:126` · `src/hooks/integrations/useKnowledgeBase.ts:197` |
 | `ai-proxy` | A | `src/hooks/ui/useUniversityHelp.ts:130` · `src/hooks/inbox/useObjectionDetector.ts:90` · `src/hooks/inbox/useObjectionDetector.ts:164` · `src/components/settings/ai-providers/useAIProviders.ts:121` · `src/components/admin/SupervisorCopilot.tsx:89` · `supabase/functions/talkx-ai/index.ts:589` |
 | `ai-suggest-reply` | A | `src/components/inbox/AISuggestions.tsx:101` |
-| `ai-transcribe-audio` | A | `src/components/inbox/AudioMessagePlayer.tsx:62` · `supabase/functions/_shared/evolution-webhook-messages.ts:983` |
+| `ai-transcribe-audio` | A | `src/components/inbox/AudioMessagePlayer.tsx:66` · `supabase/functions/_shared/evolution-webhook-messages.ts:983` |
 | `approve-password-reset` | A | `src/components/security/PasswordResetRequestsPanel.tsx:54` · `src/components/security/PasswordResetRequestsPanel.tsx:66` |
 | `auth-login` | A | `src/lib/serverLogin.ts:87` · `supabase/config.toml:39` |
 | `auto-close-conversations` | E | — sem chamador no repositório — |
@@ -70,7 +70,7 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `classify-sticker` | A | `src/hooks/sticker-picker/useStickerPicker.ts:148` · `src/components/inbox/chat/MessageBubble.tsx:325` · `supabase/functions/_shared/evolution-webhook-messages.ts:960` |
 | `cleanup-rate-limit-logs` | E | — sem chamador no repositório — |
 | `connection-health-check` | A | `src/hooks/system/useDiagnosticsData.ts:244` · `src/components/monitoring/hooks/useMonitoringActions.ts:17` · `src/components/diagnostics/ConnectionHealthPanel.tsx:78` · `src/components/connections/ConnectionsView.tsx:100` · `supabase/migrations/20260924100800_schedule_connection_health_check_cron.sql:16` · `supabase/migrations/20260930250000_reschedule_cron_secrets_l5.sql:56` · `supabase/migrations/20260930390000_endurece_l5_contrato_e_jobs.sql:87` · `supabase/migrations/20260930430000_cron_sem_dml_direto_v2.sql:116` · `supabase/config.toml:23` |
-| `create-user` | E | — sem chamador no repositório — |
+| `create-user` | A | `src/components/admin/useAdminData.ts:334` · `src/components/admin/useAdminData.ts:341` |
 | `crm-integration` | A | `src/lib/crmIntegration.ts:20` · `supabase/config.toml:55` |
 | `csp-report` | D | `supabase/config.toml:58` |
 | `detect-new-device` | A | `src/lib/avisoDispositivo.ts:130` |
@@ -130,10 +130,10 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `webhook-diagnostic` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:78` |
 | `whatsapp-webhook` | D | `supabase/config.toml:11` |
 
-## Órfãs (18) — GATE B
+## Órfãs (17) — GATE B
 
 Edge que existe em `supabase/functions/`, mas nenhum ponto do repositório a dispara: não há
-`invoke`/`/functions/v1` em `src/`, nem chamada de outra edge, nem agendador em
+`invoke`/`invokeEdge`/`/functions/v1` em `src/`, nem chamada de outra edge, nem agendador em
 `supabase/migrations/`, nem entrada em `supabase/config.toml`. Isso não quer dizer "morta" — o chamador pode ser externo
 (N8N, cron do provedor, operação manual) — quer dizer **não comprovada no repositório**.
 As auditorias de migração de 2026-08 já apontavam parte destes nomes; a guarda agora
@@ -141,7 +141,6 @@ mantém a lista honesta.
 
 - `auto-close-conversations`
 - `cleanup-rate-limit-logs`
-- `create-user`
 - `elevenlabs-agent-token`
 - `external-db-bridge`
 - `gmail-send`
