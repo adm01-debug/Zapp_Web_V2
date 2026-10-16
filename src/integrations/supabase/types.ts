@@ -11550,6 +11550,17 @@ export type Database = {
           outcome: string
         }[]
       }
+      instance_auth_event_series: {
+        Args: { p_window?: string }
+        Returns: {
+          auth_failures: number
+          bucket: string
+          disconnected: number
+          errors: number
+          instance: string
+          total: number
+        }[]
+      }
       is_account_locked: {
         Args: { check_email: string }
         Returns: {
