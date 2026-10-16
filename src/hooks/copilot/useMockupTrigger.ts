@@ -1,69 +1,49 @@
 /**
- * CV-090 — Detecção de upload de logo e sugestão de mockup.
+ * CV-090 — Detecta anexos de imagem e sugere mockup de brinde.
  *
- * Detecta anexos de imagem (JPEG/PNG/SVG) que podem ser logos enviados pelo
- * cliente e aciona a sugestão: "Quer ver como fica com o logo de vocês?"
+ * CV-090: quando o cliente envia JPEG/PNG/SVG no chat, open a sugestão
+ *   para criar um mockup do brinde com a logo dele.
  */
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 
-export type MessageAttachmentType = 'image' | 'document' | 'audio' | 'video';
+export type MessageAttachmentType = 'image/jpeg' | 'image/jpg' | 'image/png' | 'image/svg+xml';
 
 export interface IncomingAttachment {
   id: string;
-  type: MessageAttachmentType;
+  name: string;
   mimeType: string;
-  filename?: string;
+  url?: string;
 }
 
 export interface UseMockupTriggerOptions {
-  latestAttachments?: IncomingAttachment[];
-  onLogoDetected?: (attachment: IncomingAttachment) => void;
+  attachments?: IncomingAttachment[];
 }
 
-export interface UseMockupTriggerReturn {
-  shouldSuggestMockup: boolean;
-  logoAttachment: IncomingAttachment | null;
-  dismiss: () => void;
-}
-
-const LOGO_MIME_TYPES = new Set([
+const IMAGE_MIME_TYPES: MessageAttachmentType[] = [
   'image/jpeg',
   'image/jpg',
   'image/png',
   'image/svg+xml',
-]);
+];
 
-function isLogoCandidate(attachment: IncomingAttachment): boolean {
-  if (attachment.type !== 'image') return false;
-  if (!LOGO_MIME_TYPES.has(attachment.mimeType.toLowerCase())) return false;
-  return true;
-}
-
-export function useMockupTrigger(
-  options: UseMockupTriggerOptions = {},
-): UseMockupTriggerReturn {
-  const { latestAttachments = [], onLogoDetected } = options;
+export function useMockupTrigger(options: UseMockupTriggerOptions = {}) {
+  const { attachments = [] } = options;
   const [dismissed, setDismissed] = useState(false);
-  const [logoAttachment, setLogoAttachment] = useState<IncomingAttachment | null>(null);
 
-  useEffect(() => {
-    const logo = latestAttachments.find(isLogoCandidate) ?? null;
-    if (logo && logo.id !== logoAttachment?.id) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setDismissed(false);
-      setLogoAttachment(logo);
-      onLogoDetected?.(logo);
-    } else if (!logo) {
-      setLogoAttachment(null);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [latestAttachments]);
+  const logoAttachment =
+    attachments.find((a) =>
+      IMAGE_MIME_TYPES.includes(a.mimeType as MessageAttachmentType),
+    ) ?? null;
+
+  const shouldSuggestMockup = logoAttachment !== null && !dismissed;
 
   const dismiss = useCallback(() => {
     setDismissed(true);
   }, []);
 
-  const shouldSuggestMockup = logoAttachment !== null && !dismissed;
+  const reset = useCallback(() => {
+    setDismissed(false);
+  }, []);
 
-  return { shouldSuggestMockup, logoAttachment, dismiss };
+  return { shouldSuggestMockup, logoAttachment, dismiss, reset };
 }

@@ -1,12 +1,14 @@
 /**
- * CV-083, CV-084, CV-085 — Calculadora de prazo reverso.
+ * CV-083, CV-084, CV-085 — Calculador de prazo reverso em dias úteis.
  *
- * CV-083: dado o evento no campo D do BRINDE, calcula a data limite de pedido
- *   subtraindo as fases em dias úteis (seg–sex), respeitando feriados.
- * CV-084: sinaliza urgência quando restam ≤ 3 dias úteis.
- * CV-085: quando a data é impossível, sugere alternativa de entrega rápida.
+ * CV-083: dada a data do evento, calcula a data máxima de pedido
+ *   subtraindo as fases de produção em dias úteis.
+ * CV-084: sinaliza urgência quando o prazo limite estiver a 3 ou menos dias
+ *   úteis (daysRemaining <= 3).
+ * CV-085: quando a data do evento não comporta o prazo de produção,
+ *   retorna `isPossible: false` e uma alternativa para o vendedor.
  */
-import { useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 
 export interface DeadlinePhase {
   name: string;
@@ -20,158 +22,118 @@ export const DEFAULT_PHASES: DeadlinePhase[] = [
   { name: 'Frete', daysRequired: 3 },
 ];
 
-const TOTAL_DEFAULT_DAYS = DEFAULT_PHASES.reduce((s, p) => s + p.daysRequired, 0);
+export const TOTAL_DEFAULT_DAYS = DEFAULT_PHASES.reduce((s, p) => s + p.daysRequired, 0);
+
+export interface PhaseBreakdownItem {
+  phase: string;
+  startDate: Date;
+  endDate: Date;
+  daysRequired: number;
+}
 
 export interface DeadlineResult {
-  eventDate: Date;
   latestOrderDate: Date;
   daysRemaining: number;
   isPossible: boolean;
   isUrgent: boolean;
   urgencyMessage?: string;
   impossibleAlternative?: string;
-  phaseBreakdown: Array<{ phase: string; startDate: Date; endDate: Date }>;
+  phaseBreakdown: PhaseBreakdownItem[];
 }
 
 export interface UseReverseDeadlineOptions {
-  eventDate?: Date | null;
+  eventDate?: Date;
   phases?: DeadlinePhase[];
-  holidays?: Date[];
 }
 
-/** Returns true if `d` is Saturday(6) or Sunday(0). */
-function isWeekend(d: Date): boolean {
-  const day = d.getDay();
-  return day === 0 || day === 6;
-}
-
-/** Returns true if `d` matches any holiday (compare by day only). */
-function isHoliday(d: Date, holidays: Date[]): boolean {
-  return holidays.some(
-    (h) =>
-      h.getFullYear() === d.getFullYear() &&
-      h.getMonth() === d.getMonth() &&
-      h.getDate() === d.getDate(),
-  );
-}
-
-/** Adds `businessDays` working days to `from`. */
-function addBusinessDays(from: Date, businessDays: number, holidays: Date[]): Date {
-  let current = new Date(from);
-  let remaining = businessDays;
-  while (remaining > 0) {
-    current = new Date(current.getTime() + 86_400_000);
-    if (!isWeekend(current) && !isHoliday(current, holidays)) {
-      remaining--;
-    }
-  }
-  return current;
-}
-
-/** Subtracts `businessDays` working days from `from`. */
-function subtractBusinessDays(from: Date, businessDays: number, holidays: Date[]): Date {
-  let current = new Date(from);
-  let remaining = businessDays;
-  while (remaining > 0) {
-    current = new Date(current.getTime() - 86_400_000);
-    if (!isWeekend(current) && !isHoliday(current, holidays)) {
-      remaining--;
-    }
-  }
-  return current;
-}
-
-/** Count business days between two dates (from is earlier). */
-function countBusinessDays(from: Date, to: Date, holidays: Date[]): number {
+/** Add `n` business days to `fromDate` (skips Sat/Sun). */
+function addBusinessDays(fromDate: Date, n: number): Date {
+  let d = new Date(fromDate);
   let count = 0;
-  let current = new Date(from);
-  while (current < to) {
-    current = new Date(current.getTime() + 86_400_000);
-    if (!isWeekend(current) && !isHoliday(current, holidays)) {
-      count++;
-    }
+  while (count < n) {
+    d = new Date(d.getTime() + 86_400_000);
+    if (d.getDay() !== 0 && d.getDay() !== 6) count++;
+  }
+  return d;
+}
+
+/** Subtract `n` business days from `fromDate` (skips Sat/Sun). */
+function subtractBusinessDays(fromDate: Date, n: number): Date {
+  let d = new Date(fromDate);
+  let count = 0;
+  while (count < n) {
+    d = new Date(d.getTime() - 86_400_000);
+    if (d.getDay() !== 0 && d.getDay() !== 6) count++;
+  }
+  return d;
+}
+
+/** Count business days between two dates (exclusive of start, inclusive of end). */
+function countBusinessDays(fromDate: Date, toDate: Date): number {
+  if (toDate <= fromDate) return 0;
+  let d = new Date(fromDate);
+  let count = 0;
+  while (d < toDate) {
+    d = new Date(d.getTime() + 86_400_000);
+    if (d.getDay() !== 0 && d.getDay() !== 6) count++;
   }
   return count;
-}
-
-function startOfDay(d: Date): Date {
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
 
 function calculateDeadline(
   eventDate: Date,
   phases: DeadlinePhase[],
-  holidays: Date[],
 ): DeadlineResult {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
   const totalDays = phases.reduce((s, p) => s + p.daysRequired, 0);
-  const latestOrderDate = subtractBusinessDays(startOfDay(eventDate), totalDays, holidays);
-  const today = startOfDay(new Date());
-  const daysRemaining = countBusinessDays(today, latestOrderDate, holidays);
+  const latestOrderDate = subtractBusinessDays(eventDate, totalDays);
+
   const isPossible = latestOrderDate >= today;
+  const daysRemaining = countBusinessDays(today, latestOrderDate);
   const isUrgent = isPossible && daysRemaining <= 3;
 
-  // Build phase breakdown (forward from latestOrderDate)
-  const phaseBreakdown: Array<{ phase: string; startDate: Date; endDate: Date }> = [];
-  let cursor = new Date(latestOrderDate);
-  for (const phase of phases) {
-    const start = new Date(cursor);
-    const end = addBusinessDays(cursor, phase.daysRequired, holidays);
-    phaseBreakdown.push({ phase: phase.name, startDate: start, endDate: end });
-    cursor = end;
+  // Build phase breakdown by walking backward from the event date
+  const phaseBreakdown: PhaseBreakdownItem[] = [];
+  let cursor = new Date(eventDate);
+  for (let i = phases.length - 1; i >= 0; i--) {
+    const phase = phases[i];
+    const endDate = new Date(cursor);
+    const startDate = subtractBusinessDays(cursor, phase.daysRequired);
+    phaseBreakdown.unshift({
+      phase: phase.name,
+      startDate,
+      endDate,
+      daysRequired: phase.daysRequired,
+    });
+    cursor = startDate;
   }
 
-  const urgencyMessage = isUrgent
-    ? `Atenção: restam apenas ${daysRemaining} dia${daysRemaining === 1 ? '' : 's'} útil${daysRemaining === 1 ? '' : 'eis'} para fechar o pedido!`
-    : undefined;
-
-  const impossibleAlternative = !isPossible
-    ? 'Considere produtos com entrega expressa (3–5 dias úteis) ou kits prontos sem personalização.'
-    : undefined;
+  const localeOpts: Intl.DateTimeFormatOptions = { day: '2-digit', month: '2-digit', year: 'numeric' };
 
   return {
-    eventDate,
     latestOrderDate,
-    daysRemaining: Math.max(0, daysRemaining),
+    daysRemaining,
     isPossible,
     isUrgent,
-    urgencyMessage,
-    impossibleAlternative,
+    urgencyMessage: isUrgent
+      ? `Atenção: pedido deve ser feito até ${latestOrderDate.toLocaleDateString('pt-BR', localeOpts)}!`
+      : undefined,
+    impossibleAlternative: !isPossible
+      ? 'Sugera produto pronto ou entrega parcial para reduzir prazo de produção.'
+      : undefined,
     phaseBreakdown,
   };
 }
 
-export interface UseReverseDeadlineReturn {
-  deadline: DeadlineResult | null;
-  calculate: (eventDate: Date) => DeadlineResult;
-  totalProductionDays: number;
-}
+export function useReverseDeadline(options: UseReverseDeadlineOptions) {
+  const { eventDate, phases = DEFAULT_PHASES } = options;
 
-export function useReverseDeadline(
-  options: UseReverseDeadlineOptions = {},
-): UseReverseDeadlineReturn {
-  const {
-    eventDate = null,
-    phases = DEFAULT_PHASES,
-    holidays = [],
-  } = options;
-
-  const totalProductionDays = useMemo(
-    () => phases.reduce((s, p) => s + p.daysRequired, 0),
-    [phases],
-  );
-
-  const calculate = useCallback(
-    (date: Date): DeadlineResult => calculateDeadline(date, phases, holidays),
-    [phases, holidays],
-  );
-
-  const deadline = useMemo<DeadlineResult | null>(() => {
+  const deadline = useMemo(() => {
     if (!eventDate) return null;
-    return calculateDeadline(eventDate, phases, holidays);
-  }, [eventDate, phases, holidays]);
+    return calculateDeadline(eventDate, phases);
+  }, [eventDate, phases]);
 
-  return { deadline, calculate, totalProductionDays };
+  return { deadline };
 }
-
-// Re-export for convenience
-export { TOTAL_DEFAULT_DAYS };

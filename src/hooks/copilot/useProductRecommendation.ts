@@ -53,51 +53,34 @@ export function useProductRecommendation(
 
   const [recommendations, setRecommendations] = useState<ProductRecommendation[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const lastCallRef = useRef<number>(0);
+  const lastFetchRef = useRef<number>(0);
 
-  const fetchRecommendations = useCallback(async (): Promise<void> => {
+  const refresh = useCallback(async () => {
     const now = Date.now();
-    if (now - lastCallRef.current < COOLDOWN_MS) {
-      log.info('Cooldown ativo — ignorando requisição');
+    if (now - lastFetchRef.current < COOLDOWN_MS) {
+      log.debug('Cooldown ativo, pulando requisicao');
       return;
     }
-    lastCallRef.current = now;
     setIsLoading(true);
-
     try {
-      const payload = {
-        conversationId,
-        budget: brindeMeter.budget,
-        quantity: brindeMeter.quantity,
-        occasion: brindeMeter.occasion,
-        eventDate: brindeMeter.eventDate?.toISOString(),
-        maxResults: MAX_RECOMMENDATIONS,
-      };
-
       const data = await invokeEdge<{ products: ProductRecommendation[] }>(
         'ai-suggest-products',
-        payload,
+        { conversationId, brindeMeter },
       );
-
-      const top = (data.products ?? []).slice(0, MAX_RECOMMENDATIONS);
-      setRecommendations(top);
-      onRecommendation?.(top);
+      const top3 = (data?.products ?? []).slice(0, MAX_RECOMMENDATIONS);
+      setRecommendations(top3);
+      lastFetchRef.current = now;
+      onRecommendation?.(top3);
     } catch (err) {
-      log.error('Erro ao buscar recomendações', err);
+      log.error('Erro ao buscar recomendacoes', err);
     } finally {
       setIsLoading(false);
     }
   }, [conversationId, brindeMeter, onRecommendation]);
 
-  const stockAlert =
-    recommendations.find(
-      (p) => p.stock === 'out_of_stock' || p.stock === 'low',
-    ) ?? null;
+  const stockAlert = recommendations.find(
+    (r) => r.stock === 'low' || r.stock === 'out_of_stock',
+  ) ?? null;
 
-  return {
-    recommendations,
-    isLoading,
-    refresh: fetchRecommendations,
-    stockAlert,
-  };
+  return { recommendations, isLoading, refresh, stockAlert };
 }

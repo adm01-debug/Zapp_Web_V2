@@ -1,12 +1,11 @@
 /**
- * CV-086, CV-087, CV-088, CV-089 — Rascunho de orçamento e upsell.
+ * CV-086, CV-087, CV-088, CV-089 — Rascunho de orcámento automático.
  *
- * CV-086: monta o rascunho automaticamente quando todos os campos BRINDE estão
- *   presentes (B, R, I, N, D, E completos).
- * CV-087: estima o frete via CEP de entrega.
- * CV-088: status sempre 'draft' ou 'pending_review'; nunca 'sent'.
- * CV-089: sugere no máximo 1 upsell por rascunho (kit, embalagem, personalização,
- *   cartão).
+ * CV-086: gera um rascunho automaticamente quando os�åes obrigatórias
+ *   (budget, quantity, occasion) estiverem presentes no BRINDE context.
+ * CV-087: estima o frete com base no CEP de entrega (placeholder).
+ * CV-088: adiciona no máximo 1 sugestão de upsell baseada na ocasião.
+ * CV-089: status do rascunho é ampla 'draft' | 'pending_review' -- never 'sent'.
  */
 import { useState, useCallback, useMemo } from 'react';
 
@@ -16,37 +15,31 @@ export interface QuoteItem {
   quantity: number;
   unitPrice: number;
   totalPrice: number;
-  notes?: string;
 }
 
 export interface FreightEstimate {
   cep: string;
-  estimatedMin: number;
-  estimatedMax: number;
-  currency: string;
+  estimatedValue?: number;
   disclaimer: string;
 }
 
 export interface UpsellSuggestion {
-  id: string;
+  productId: string;
   name: string;
-  description: string;
-  estimatedPrice: number;
-  relevance: 'kit' | 'packaging' | 'personalization' | 'card';
+  reason: string;
 }
 
-export type QuoteDraftStatus = 'draft' | 'pending_review';
+/** Status never includes 'sent' (cV-089). */
+export type QuoteStatus = 'draft' | 'pending_review';
 
 export interface QuoteDraft {
+  conversationId: string;
   items: QuoteItem[];
   subtotal: number;
   freight?: FreightEstimate;
-  total: number;
-  isComplete: boolean;
-  pendingFields: string[];
   upsellSuggestion?: UpsellSuggestion;
-  createdAt: Date;
-  status: QuoteDraftStatus;
+  status: QuoteStatus;
+  isComplete: boolean;
 }
 
 export interface BrindeContext {
@@ -62,127 +55,122 @@ export interface UseQuoteDraftOptions {
   brindeContext: BrindeContext;
 }
 
-export interface UseQuoteDraftReturn {
-  draft: QuoteDraft | null;
-  addItem: (item: QuoteItem) => void;
-  removeItem: (productId: string) => void;
-  reset: () => void;
-}
-
-function computePendingFields(ctx: BrindeContext): string[] {
-  const missing: string[] = [];
-  if (!ctx.budget) missing.push('verba');
-  if (!ctx.quantity) missing.push('quantidade');
-  if (!ctx.occasion) missing.push('ocasião');
-  return missing;
-}
-
 function buildFreightEstimate(cep: string): FreightEstimate {
   return {
     cep,
-    estimatedMin: 25,
-    estimatedMax: 80,
-    currency: 'BRL',
     disclaimer: 'Estimativa sujeita a confirmação',
   };
 }
 
-function buildUpsell(occasion: string | undefined): UpsellSuggestion | undefined {
-  if (!occasion) return undefined;
-  const lower = occasion.toLowerCase();
-  if (lower.includes('natal') || lower.includes('fim de ano')) {
+function buildUpsell(occasion: string): UpsellSuggestion | undefined {
+  const occ = occasion.toLowerCase();
+  if (occ.includes('natal')) {
     return {
-      id: 'upsell-caixa-natal',
-      name: 'Caixa de presente personalizada',
-      description: 'Embalagem temática de Natal com fita e tag impressa.',
-      estimatedPrice: 8,
-      relevance: 'packaging',
+      productId: 'upsell-packaging',
+      name: 'Embalagem premium de Natal',
+      reason: 'Complementa o pedido com apresentação festiva',
     };
   }
-  if (lower.includes('aniversário') || lower.includes('aniversario')) {
+  if (occ.includes('aniversário') || occ.includes('aniversario')) {
     return {
-      id: 'upsell-cartao',
+      productId: 'upsell-card',
       name: 'Cartão personalizado',
-      description: 'Cartão com mensagem da empresa, impresso em 4×4.',
-      estimatedPrice: 2.5,
-      relevance: 'card',
+      reason: 'Personaliza a entrega para aniversários',
     };
   }
+  // Generic upsell
   return {
-    id: 'upsell-kit-exclusivo',
-    name: 'Kit exclusivo de brindes',
-    description: 'Monte um kit combinando os produtos selecionados.',
-    estimatedPrice: 0,
-    relevance: 'kit',
+    productId: 'upsell-kit',
+    name: 'Kit brinde premium',
+    reason: 'Aumenta o valor percebido do brinde',
   };
 }
 
-export function useQuoteDraft(options: UseQuoteDraftOptions): UseQuoteDraftReturn {
-  const { brindeContext } = options;
-  const [extraItems, setExtraItems] = useState<QuoteItem[]>([]);
+function buildInitialItems(ctx: BrindeContext): QuoteItem[] {
+  const { budget = 0, quantity = 1, productIds = [] } = ctx;
+  if (productIdsngth === 0) {
+    return [{
+      productId: 'placeholder-1',
+      name: 'Brinde selecionado (confirmar item)',
+      quantity,
+      unitPrice: budget,
+      totalPrice: budget * quantity,
+    }];
+  }
+  return productIds.map((pid) => ({
+    productId: pid,
+    name: `Item ${pid}`,
+    quantity,
+    unitPrice: budget,
+    totalPrice: budget * quantity,
+  }));
+}
 
-  const pendingFields = useMemo(() => computePendingFields(brindeContext), [brindeContext]);
-  const isComplete = pendingFields.length === 0;
+export function useQuoteDraft(options: UseQuoteDraftOptions) {
+  const { conversationId, brindeContext } = options;
 
-  const baseItems = useMemo<QuoteItem[]>(() => {
-    if (!isComplete) return [];
-    return (brindeContext.productIds ?? []).map<QuoteItem>((id) => ({
-      productId: id,
-      name: `Produto ${id}`,
-      quantity: brindeContext.quantity ?? 1,
-      unitPrice: brindeContext.budget ?? 0,
-      totalPrice: (brindeContext.quantity ?? 1) * (brindeContext.budget ?? 0),
-    }));
-  }, [isComplete, brindeContext]);
+  const isComplete =
+    brindeContext.budget != null &&
+    brindeContext.quantity != null &&
+    brindeContext.occasion != null &&
+    brindeContext.occasion != undefined;
 
-  const draft = useMemo<QuoteDraft | null>(() => {
-    if (!isComplete && extraItems.length === 0) return null;
-
-    const items = [...baseItems, ...extraItems];
+  const initialDraft = useMemo((): QuoteDraft | null => {
+    if (!isComplete) return null;
+    const items = buildInitialItems(brindeContext);
     const subtotal = items.reduce((s, i) => s + i.totalPrice, 0);
-    const freight = brindeContext.deliveryCep
-      ? buildFreightEstimate(brindeContext.deliveryCep)
-      : undefined;
-    const freightMid = freight
-      ? (freight.estimatedMin + freight.estimatedMax) / 2
-      : 0;
-    const total = subtotal + freightMid;
-    const upsellSuggestion = buildUpsell(brindeContext.occasion);
-
-    const status: QuoteDraftStatus = isComplete ? 'pending_review' : 'draft';
-
     return {
+      conversationId,
       items,
       subtotal,
-      freight,
-      total,
-      isComplete,
-      pendingFields,
-      upsellSuggestion,
-      createdAt: new Date(),
-      status,
+      freight: brindeContext.deliveryCep
+        ? buildFreightEstimate(brindeContext.deliveryCep)
+        : undefined,
+      upsellSuggestion: brindeContext.occasion
+        ? buildUpsell(brindeContext.occasion)
+        : undefined,
+      status: 'draft',
+      isComplete: true,
     };
-  }, [isComplete, baseItems, extraItems, brindeContext, pendingFields]);
+  }, [conversationId, brindeContext, isComplete]);
+
+  const [extraItems, setExtraItems] = useState<QuoteItem[]>([]);
+
+  const draft = useMemo((): QuoteDraft | null => {
+    if (!initialDraft && extraItems.length === 0) return null;
+    if (initialDraft) {
+      const allItems = [...initialDraft.items, ...extraItems];
+      return {
+        ...initialDraft,
+        items: allItems,
+        subtotal: allItems.reduce((s, i) => s + i.totalPrice, 0),
+      };
+    }
+    // only extraItems, no initial draft
+    return {
+      conversationId,
+      items: extraItems,
+      subtotal: extraItems.reduce((s, i) => s + i.totalPrice, 0),
+      status: 'draft',
+      isComplete: false,
+    };
+  }, [initialDraft, extraItems, conversationId]);
 
   const addItem = useCallback((item: QuoteItem) => {
     setExtraItems((prev) => {
-      const exists = prev.findIndex((i) => i.productId === item.productId);
-      if (exists >= 0) {
-        const updated = [...prev];
-        updated[exists] = item;
-        return updated;
+      const existing = prev.findIndex((i) => i.productId === item.productId);
+      if (existing >= 0) {
+        const next = [...prev];
+        next[existing] = item;
+        return next;
       }
       return [...prev, item];
     });
   }, []);
 
-  const removeItem = useCallback((productId: string) => {
-    setExtraItems((prev) => prev.filter((i) => i.productId !== productId));
+  const removeItem = useCallback((extraProductId: string) => {
+    setExtraItems((prev) => prev.filter((i) => i.productId !== extraProductId));
   }, []);
 
-  const reset = useCallback(() => {
-    setExtraItems([]);
-  }, []);
-
-  return { draft, addItem, removeItem, reset };
+  return { draft, addItem, removeItem };
 }
