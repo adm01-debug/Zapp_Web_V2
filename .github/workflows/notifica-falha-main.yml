@@ -1,7 +1,7 @@
 # docs:
 #   gatilho: workflow_run (conclusao dos workflows principais na main)
 #   prova: abre issue quando qualquer workflow critico falha na main
-#   workflows monitorados: ci, deploy-functions, db-migrate, db-live-guard, types-sync
+#   workflows monitorados: ci, deploy-functions, db-migrate, db-live-guard, types-sync, e2e-logado, db-guard
 
 name: Notifica falha na main
 
@@ -10,9 +10,11 @@ on:
     workflows:
       - CI/CD Pipeline
       - Deploy Edge Functions
-      - DB Migrate
+      - DB Migrate (production)
       - DB Live Guard
-      - Types Sync
+      - types-sync
+      - E2E logado
+      - DB Guard (offline)
     branches: [main]
     types: [completed]
 
