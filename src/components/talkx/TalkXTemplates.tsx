@@ -3,17 +3,22 @@ import { toast } from 'sonner';
 import { TalkXTemplateEditor } from './TalkXTemplateEditor';
 import {
   Plus, FileText, Star, Pencil, Trash2, Copy, Image, Video, Music, Check, ChevronRight, BarChart3,
+  Sparkles, TrendingUp, Lightbulb,
 } from 'lucide-react';
 import { PrimaryButton, Pill } from '@/components/dashboard/overview/DashboardCard';
 import { cn } from '@/lib/utils';
 import { useTalkXTemplates, type TalkXTemplate } from '@/hooks/integrations/useTalkXTemplates';
 import { useTalkXTemplateLibraryStats, pointsDelta } from '@/hooks/integrations/useTalkXTemplateStats';
-import { RailCard, RailAction, TalkXEmptyState, TalkXFilteredEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, TEMPLATE_CATEGORIES, TEMPLATE_STATUS, extractVariables, fmtInt, fmtDateTime, fmtTime, TalkXConfirmDialog } from './talkxShared';
+import { RailCard, RailAction, HeroCard, TalkXEmptyState, TalkXFilteredEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, TEMPLATE_CATEGORIES, TEMPLATE_STATUS, extractVariables, fmtInt, fmtDateTime, fmtTime, TalkXConfirmDialog } from './talkxShared';
 import { useTalkXFilterState } from './kit/useFilterState';
 import { TalkXQueryBoundary } from './kit/states';
 import { KpiCard } from './kit/kpi';
 import { PRESETS_DO_PRODUTO } from './kit/dialogPresets';
 import { parseTalkXTemplateRoute, pushTalkXTemplateRoute, replaceTalkXTemplateRoute, type TalkXTemplateRoute } from './talkxTemplateRoute';
+import { SUGGESTION_MIN_SENT, type TalkXTemplateConversion, type TalkXTemplateConversionState } from '@/hooks/integrations/useTalkXTemplatesConversion';
+
+/** Estado do ranking quando o consumidor do hook não o fornece (ex.: mock de teste). */
+const EMPTY_CONVERSION: TalkXTemplateConversionState = { ranking: null, isLoading: false, isError: false, error: null };
 
 interface Props {
   onUseTemplate: (templateId: string) => void;
@@ -26,6 +31,13 @@ interface Props {
 }
 
 const MEDIA_ICONS = { image: Image, video: Video, document: FileText, audio: Music } as const;
+
+/** T04-044 — "↑ 32,4% de resposta": ponto percentual com vírgula, como no mock. */
+const formatReplyRate = (pct: number) => `${pct.toFixed(1).replace('.', ',')}%`;
+
+/** Dias inteiros desde uma data ISO (o relógio fica fora do render — regra de pureza). */
+const REVIEW_STALE_DAYS = 3;
+const daysSinceISO = (iso: string) => Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
 
 type ViewMode = 'list' | 'edit';
 
@@ -64,7 +76,7 @@ function resumoVariaveis(content: string): string | null {
 }
 
 export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled, onOpenMonitor }: Props) {
-  const { templates, isLoading, isError, error, refetch, createTemplate, updateTemplate, deleteTemplate, duplicateTemplate } = useTalkXTemplates();
+  const { templates, isLoading, isError, error, refetch, createTemplate, updateTemplate, deleteTemplate, duplicateTemplate, conversion: conversionFromHook } = useTalkXTemplates();
   // X091 — os 4 KPIs da tela 04 saem da RPC de métricas da biblioteca (X086),
   // não de contagem no navegador: total, aprovações do período (com variação),
   // mais usado por mensagens enviadas e taxa média de resposta. Sem resposta da
@@ -87,6 +99,8 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled, onO
   const [deleting, setDeleting] = useState<TalkXTemplate | null>(null);
   const [selected, setSelected] = useState<TalkXTemplate | null>(null);
   const [galleryMode, setGalleryMode] = useState<GalleryMode>(lerModoGaleria);
+  /** T04-040: galeria ordenada por taxa de resposta (aberta pelo "Ver todos"). */
+  const [orderByReply, setOrderByReply] = useState(false);
 
   const trocarModo = (modo: GalleryMode) => { setGalleryMode(modo); salvarModoGaleria(modo); };
 
@@ -127,7 +141,7 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled, onO
   }, [onStartNewHandled]);
 
   const openNew = () => { setEditing(null); setMode('edit'); openEditorAt({ templateId: 'new', ttab: 'conteudo' }); };
-  const openEdit = (t: TalkXTemplate) => { setEditing(t); setMode('edit'); openEditorAt({ templateId: t.id, ttab: 'conteudo' }); };
+  const openEdit = (t: TalkXTemplate, opts?: { variants?: boolean }) => { setEditing(t); setMode('edit'); openEditorAt({ templateId: t.id, ttab: opts?.variants ? 'ab' : 'conteudo' }); };
 
   const syncFromBrowserHistory = useCallback(() => {
     const parsed = parseTalkXTemplateRoute(window.location.search);
@@ -182,13 +196,70 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled, onO
     { key: 'st', label: 'Todos os status', allLabel: 'Todos os status', options: Object.entries(TEMPLATE_STATUS).map(([v, m]) => ({ value: v, label: m.label })) },
   ], []);
 
+
+  // ── X092 · painel lateral da tela 04 ─────────────────────────────────────────────
+  // T04-039: "Mais convertidos" é ranking por TAXA DE RESPOSTA com a base mínima A9,
+  // lido da view `talkx_campaign_metrics`. NUNCA é `use_count` sob este título.
+  const conversion: TalkXTemplateConversionState = conversionFromHook ?? EMPTY_CONVERSION;
+  const conversionByTemplate = useMemo(
+    () => new Map((conversion.ranking?.items ?? []).map((item) => [item.templateId, item])),
+    [conversion.ranking],
+  );
+  const topConverted = useMemo(
+    () => (conversion.ranking?.items ?? [])
+      .slice(0, 3)
+      .map((item) => ({ item, template: templates.find((t) => t.id === item.templateId) }))
+      .filter((row): row is { item: TalkXTemplateConversion; template: TalkXTemplate } => !!row.template),
+    [conversion.ranking, templates],
+  );
+  const [showAllSuggestions, setShowAllSuggestions] = useState(false);
+
+  // T04-046..049: "Sugestões" — regras sobre o mesmo dado do ranking (A/B abaixo da
+  // média) e sobre o estado real do template (em revisão há mais de 3 dias).
+  const suggestions = useMemo(() => {
+    const list: Array<{ id: string; templateId: string; text: string; opensVariants: boolean }> = [];
+    const withBase = conversion.ranking?.items ?? [];
+    const average = withBase.length > 0
+      ? withBase.reduce((sum, item) => sum + item.replyRatePct, 0) / withBase.length
+      : 0;
+    for (const item of withBase) {
+      if (item.sent < SUGGESTION_MIN_SENT || item.replyRatePct >= average) continue;
+      const template = templates.find((t) => t.id === item.templateId);
+      if (!template) continue;
+      list.push({
+        id: `ab-${item.templateId}`,
+        templateId: item.templateId,
+        opensVariants: true,
+        text: `Teste uma variação A/B em "${template.name}": ${formatReplyRate(item.replyRatePct)} de resposta, abaixo da média da biblioteca.`,
+      });
+    }
+    for (const template of templates) {
+      if (template.status !== 'review') continue;
+      const days = daysSinceISO(template.updated_at);
+      if (days < REVIEW_STALE_DAYS) continue;
+      list.push({
+        id: `review-${template.id}`,
+        templateId: template.id,
+        opensVariants: false,
+        text: `"${template.name}" está em revisão há ${days} dias.`,
+      });
+    }
+    return list;
+  }, [conversion.ranking, templates]);
+  const visibleSuggestions = showAllSuggestions ? suggestions : suggestions.slice(0, 2);
+
+  // T04-040: "Ver todos" passa a galeria para lista, ordenada por taxa de resposta.
+  const orderByReplyRate = useMemo(() => {
+    if (!orderByReply) return filtered;
+    const rateOf = (t: TalkXTemplate) => conversionByTemplate.get(t.id)?.replyRatePct ?? -1;
+    return [...filtered].sort((a, b) => rateOf(b) - rateOf(a) || a.name.localeCompare(b.name));
+  }, [filtered, orderByReply, conversionByTemplate]);
+
   // X089 — o `page` nunca aponta para uma página vazia: excluir/filtrar pode encurtar a
   // lista abaixo da página atual (antes a tela mostrava "nenhum resultado" com itens na 1ª).
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const totalPages = Math.max(1, Math.ceil(orderByReplyRate.length / pageSize));
   const safePage = Math.min(page, totalPages);
-  const paged = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
-
-  const most = useMemo(() => [...templates].sort((a, b) => b.use_count - a.use_count).slice(0, 3), [templates]);
+  const paged = orderByReplyRate.slice((safePage - 1) * pageSize, safePage * pageSize);
 
   const limparFiltros = () => { clearFilters(); setPage(1); };
 
@@ -226,7 +297,7 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled, onO
 
     return (
     <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_300px] gap-4 min-w-0">
-      <div className="min-w-0 space-y-4">
+      <div className="min-w-0 space-y-4" data-testid="talkx-templates-gallery">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <KpiCard icon={FileText} color="blue" index={0} label="Total de templates" value={libStats?.total ?? null} bars={libStats?.created_series ?? null} hint="Templates criados (série do período)" />
           <KpiCard icon={Check} color="green" index={1} label="Aprovados" value={libStats?.approved_period ?? null} bars={libStats?.approved_series ?? null} comparison={{ previous: libStats?.approved_previous_period ?? null, kind: 'relative' }} hint="Aprovações no período vs. o período anterior" />
@@ -270,19 +341,78 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled, onO
       </div>
 
       <div className="space-y-4 min-w-0">
-        <RailCard icon={Star} color="amber" title="Biblioteca inteligente" subtitle="Os templates mais usados na sua base.">
-          <p className="text-xs font-semibold text-foreground mb-2">Mais usados</p>
-          {most.map((t, i) => (
-            <button key={t.id} type="button" onClick={() => onUseTemplate(t.id)} className="w-full flex items-center gap-2.5 py-2.5 border-b border-border/50 last:border-0 hover:bg-muted/20 text-left rounded-xl px-1">
-              <span className="w-6 h-6 rounded-full bg-primary/15 text-[hsl(var(--primary-text))] text-xs font-bold flex items-center justify-center shrink-0">{i + 1}</span>
-              <div className="min-w-0 flex-1"><p className="text-[13px] font-semibold text-foreground truncate">{t.name}</p><p className="text-2xs text-foreground-secondary">{fmtInt(t.use_count)} usos</p></div>
-              <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
-            </button>
-          ))}
+        {/* T04-038 — HeroCard "Biblioteca inteligente" com o texto do mock (kit `SH:701`). */}
+        <HeroCard
+          icon={Sparkles}
+          title="Biblioteca inteligente"
+          subtitle="Templates que convertem, recomendações sob medida para o seu negócio."
+        />
+
+        {/* T04-039/040/042/043/044 — "Mais convertidos": os 3 primeiros por TAXA DE
+            RESPOSTA (base mínima A9), com miniatura e "↑ N% de resposta". Sem base, o
+            painel diz "sem dados ainda" — nunca mostra "mais usados" sob este título. */}
+        <RailCard
+          icon={TrendingUp}
+          color="green"
+          title="Mais convertidos"
+          subtitle="Templates com melhor taxa de resposta."
+          right={<button type="button" onClick={() => { setOrderByReply(true); setGalleryMode('list'); setPage(1); }} className="h-7 px-2 rounded-md text-2xs font-medium border border-border/60 bg-input/40 hover:bg-muted/50 shrink-0">Ver todos</button>}
+        >
+          {conversion.isLoading ? (
+            <TalkXSkeletonRows rows={3} />
+          ) : conversion.isError ? (
+            <p className="text-xs text-foreground-secondary">Não foi possível carregar o ranking de resposta.</p>
+          ) : topConverted.length === 0 ? (
+            <p className="text-xs text-foreground-secondary">sem dados ainda</p>
+          ) : (
+            topConverted.map(({ item, template }, i) => (
+              <button key={template.id} type="button" onClick={() => onUseTemplate(template.id)} className="w-full flex items-center gap-2.5 py-2.5 border-b border-border/50 last:border-0 hover:bg-muted/20 text-left rounded-xl px-1">
+                <span className="w-6 h-6 rounded-full bg-primary/15 text-primary-glow text-xs font-bold flex items-center justify-center shrink-0">{i + 1}</span>
+                {template.media_url ? (
+                  <img src={template.media_url} alt="" className="w-8 h-8 rounded-lg object-cover border border-border/60 shrink-0" />
+                ) : (
+                  <span className="w-8 h-8 rounded-lg bg-muted/40 border border-border/60 flex items-center justify-center shrink-0"><FileText className="w-3.5 h-3.5 text-muted-foreground" /></span>
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="text-[13px] font-semibold text-foreground truncate">{template.name}</p>
+                  <p className="text-2xs text-success">↑ {formatReplyRate(item.replyRatePct)} de resposta</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+              </button>
+            ))
+          )}
         </RailCard>
+
+        {/* T04-046..049 — "Sugestões": regras sobre o resultado real (variação A/B abaixo
+            da média) e sobre o estado do template (em revisão há mais de 3 dias). */}
+        <RailCard
+          icon={Lightbulb}
+          color="amber"
+          title="Sugestões"
+          subtitle="O que fazer a seguir, a partir dos seus resultados."
+          right={suggestions.length > 2 ? <button type="button" onClick={() => setShowAllSuggestions((v) => !v)} className="h-7 px-2 rounded-md text-2xs font-medium border border-border/60 bg-input/40 hover:bg-muted/50 shrink-0">{showAllSuggestions ? 'Ver menos' : 'Ver todas'}</button> : undefined}
+        >
+          {conversion.isLoading ? (
+            <TalkXSkeletonRows rows={2} />
+          ) : conversion.isError ? (
+            <p className="text-xs text-foreground-secondary">Não foi possível carregar as sugestões.</p>
+          ) : visibleSuggestions.length === 0 ? (
+            <p className="text-xs text-foreground-secondary">Nenhuma sugestão no momento.</p>
+          ) : (
+            <div className="space-y-2">
+              {visibleSuggestions.map((s) => (
+                <button key={s.id} type="button" onClick={() => { const t = templates.find((x) => x.id === s.templateId); if (t) openEdit(t, { variants: s.opensVariants }); }} className="w-full flex items-start gap-2.5 p-2.5 rounded-xl border border-border/60 bg-muted/20 hover:bg-muted/50 text-left">
+                  <Lightbulb className="w-3.5 h-3.5 text-warning shrink-0 mt-0.5" />
+                  <span className="text-xs text-foreground leading-snug">{s.text}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </RailCard>
+
         <RailCard icon={FileText} title="Ações rápidas">
           <div className="space-y-2">
-            <RailAction icon={Plus} title="Criar template" subtitle="Do zero ou com IA" onClick={openNew} />
+            <RailAction icon={Plus} title="Criar template" subtitle="Do zero" onClick={openNew} />
             <RailAction icon={Copy} color="violet" title="Duplicar template" subtitle="Baseado em um existente" onClick={() => selected ? duplicateTemplate.mutate(selected) : openNew()} />
 
           </div>
