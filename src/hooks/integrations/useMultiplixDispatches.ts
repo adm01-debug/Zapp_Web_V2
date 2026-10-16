@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 // `createMultiplixDraft` NAO entra: a criacao usa `invokeMultiplixDispatch`
 // (abaixo, F44) — o import morto do cartao original foi removido no rebase.
 import { MultiplixOverLimitError, type MultiplixResolvedRecipient, type MultiplixSearchFilters } from './useMultiplixAudience';
+import { EDGE_ERROR_NETWORK, EDGE_ERROR_UNKNOWN, parseEdgeError } from '@/lib/invokeEdge';
 
 export interface MultiplixDispatch {
   id: string;
@@ -93,27 +94,25 @@ export class MultiplixDispatchEdgeError extends Error {
 }
 
 async function toMultiplixDispatchError(error: unknown): Promise<Error> {
-  const fallback = (error as { message?: string })?.message ?? 'Falha ao chamar multiplix-dispatch';
-  const context = (error as { context?: Response })?.context;
-  if (!context || typeof context.clone !== 'function') return new Error(fallback);
-  try {
-    const body = await context.clone().json() as {
-      error?: string; message?: string; count?: number; limit?: number;
-    };
-    // F17: `draft.create` responde o teto de destinatarios como erro NOMEADO com
-    // o numero real (`{error, count, limit}`). Traduzir para o erro que o
-    // composer ja captura mantem a confirmacao explicita funcionando — sem este
-    // ramo, o usuario veria so "Disparo acima do teto..." sem o valor real nem o
-    // botao de confirmar.
-    if (body?.error === 'multiplix_over_recipient_limit') {
-      return new MultiplixOverLimitError(body.count ?? 0, body.limit ?? null, body.message);
-    }
-    const code = body?.error ?? body?.message;
-    if (code) return new MultiplixDispatchEdgeError(code, body?.message ?? code);
-  } catch {
-    // corpo sem JSON (timeout/proxy): fica a mensagem padrao
+  // A leitura do corpo de `error.context` e a extracao de codigo/mensagem sao
+  // centralizadas em `parseEdgeError` (@/lib/invokeEdge) — era o mesmo parser
+  // copiado em 4 arquivos. Aqui fica so a traducao para os erros de dominio.
+  const parsed = await parseEdgeError(error, 'Falha ao chamar multiplix-dispatch');
+  const raw = (parsed.raw && typeof parsed.raw === 'object' ? parsed.raw : {}) as {
+    count?: number; limit?: number; message?: string;
+  };
+  // F17: `draft.create` responde o teto de destinatarios como erro NOMEADO com
+  // o numero real (`{error, count, limit}`). Traduzir para o erro que o
+  // composer ja captura mantem a confirmacao explicita funcionando — sem este
+  // ramo, o usuario veria so "Disparo acima do teto..." sem o valor real nem o
+  // botao de confirmar.
+  if (parsed.code === 'multiplix_over_recipient_limit') {
+    return new MultiplixOverLimitError(raw.count ?? 0, raw.limit ?? null, raw.message);
   }
-  return new Error(fallback);
+  if (parsed.code !== EDGE_ERROR_UNKNOWN && parsed.code !== EDGE_ERROR_NETWORK) {
+    return new MultiplixDispatchEdgeError(parsed.code, parsed.message);
+  }
+  return new Error(parsed.message);
 }
 
 /**

@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { LogOut, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { parseEdgeError } from '@/lib/invokeEdge';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -39,7 +40,13 @@ export function ForceLogoutButton({ userId, userName }: ForceLogoutButtonProps) 
       const { error } = await supabase.functions.invoke('revoke-auth-sessions', {
         body: { scope: 'global', target_user_id: userId },
       });
-      if (error) throw error;
+      if (error) {
+        // Lê o corpo de `error.context` pelo único parser do front: mostra a
+        // causa real em vez do genérico "non-2xx" que o SDK entrega.
+        const parsed = await parseEdgeError(error, 'Erro ao revogar sessões');
+        toast.error(parsed.message);
+        return;
+      }
       toast.success(
         `Sessões de ${userName} revogadas. Um token de acesso já emitido pode continuar válido até expirar.`
       );

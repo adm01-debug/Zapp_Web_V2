@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { invokeEdge } from '@/lib/invokeEdge';
 import { crossTabSendDedupe } from '@/lib/crossTabSendDedupe';
 import {
   drainOfflineQueueOnOpen,
@@ -452,7 +453,7 @@ async function dispatchQueuedMessage(
   queuedStatus: string | null,
   queuedExternalId: string | null,
 ): Promise<OutboundMessageDeliveryResult> {
-  const { data: deliveryData, error: deliveryError } = await supabase.functions.invoke('message-delivery', {
+  const { data: deliveryData, error: deliveryError } = await invokeEdge('message-delivery', {
     body: { messageId },
   });
   if (deliveryError) throw deliveryError;
