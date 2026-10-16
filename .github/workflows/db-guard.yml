@@ -592,6 +592,8 @@ jobs:
 
       - name: Simular benchmarks por período com nomes (X075 / N-123)
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-benchmarks-period-names.test.sh
+      - name: Simular dicas por regra no servidor (X075 / N-124)
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-insights-rules.test.sh
 
       - name: Simular retry manual de destinatário terminal (V19)
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-v19-retry-recipient.test.sh
