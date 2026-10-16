@@ -6,9 +6,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 /**
  * CA-1/CA-2 — conquista e nível chegam ao vivo pelo `useAgentCelebrations`.
  *
- * Só `agent_stats` é assinado, porque é a única tabela de gamificação publicada
- * em `supabase_realtime` (a guarda do CI recusa assinatura fora da publicação —
- * e lá ela seria morta, sem evento nenhum). A conquista nova chega pelo aumento
+ * Refazer de c26046478 (entrega t_8e0d9185, f037b539b), recusada no ESPELHO DO
+ * CI porque assinava `agent_achievements` — tabela fora da publicação
+ * `supabase_realtime`, logo assinatura morta. Aqui só `agent_stats` é assinado
+ * (a guarda do CI recusa assinatura fora da publicação — lá ela seria morta,
+ * sem evento nenhum). A conquista nova chega pelo aumento
  * de `achievements_count`, gravado na mesma transação do insert da conquista
  * no servidor: o hook relê a janela e celebra só o id novo.
  * Nível chega direto pelo evento de `agent_stats`, num tópico exclusivo por
