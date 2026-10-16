@@ -428,6 +428,23 @@ export async function handleConnectionHealthCheck(
     const results: Array<{ instance_id: string; status: string; response_time_ms: number; error: string | null; reason: string | null }> = [];
     const alertsToCreate: AlertToCreate[] = [];
 
+    // Paridade V3 → V2 (CX0b/CA2): a trilha de auditoria de UMA conexão
+    // (ConnectionAuditDialog) lê `audit_logs` filtrando por `details.instance_id`.
+    // A transição AUTOMÁTICA de status feita pelo monitor não gravava nada ali —
+    // só o `connection_health_logs` — então o diálogo mostrava tela vazia para
+    // uma queda real detectada pela sonda. Cada transição confirmada pelo CAS
+    // (nunca estado transitório) entra nesta lista e vira uma linha da trilha,
+    // no mesmo formato do helper compartilhado dos cartões de conexão: conexão,
+    // status anterior e novo e a origem 'health-check'. NUNCA telefone, token ou
+    // payload bruto do provedor.
+    const statusAuditEvents: Array<{
+      id: string;
+      instanceId: string;
+      action: string;
+      previousStatus: string | null;
+      newStatus: string;
+    }> = [];
+
     // A rota de SESSÃO desta sonda (e a credencial que ela exige) sai do MESMO
     // resolvedor do ciclo de sessão do `evolution-api` (R2-API-015): no GO a rota
     // de status e de INSTÂNCIA (a instância vem na credencial), no v2 e global.
@@ -589,8 +606,19 @@ export async function handleConnectionHealthCheck(
                     ? 'status.is.null'
                     : `status.eq.${conn.status}`)
                   .select('id');
-                if (updated?.length && dbStatus === 'disconnected' && conn.status === 'connected') {
-                  alertsToCreate.push({ connection_id: conn.id, instance_id: conn.instance_id, phone: conn.phone_number, kind: 'disconnected', reason: openReason });
+                if (updated?.length) {
+                  // Trilha de auditoria: só quando o CAS CONFIRMOU a transição —
+                  // é isso que o diálogo de auditoria (CA2) lê por instance_id.
+                  statusAuditEvents.push({
+                    id: conn.id,
+                    instanceId: conn.instance_id,
+                    action: dbStatus === 'connected' ? 'connection_connected' : 'connection_disconnected',
+                    previousStatus: conn.status ?? null,
+                    newStatus: dbStatus,
+                  });
+                  if (dbStatus === 'disconnected' && conn.status === 'connected') {
+                    alertsToCreate.push({ connection_id: conn.id, instance_id: conn.instance_id, phone: conn.phone_number });
+                  }
                 }
               }
               // Degradação pelo socket (webhook parado): entra no funil de alerta
@@ -627,23 +655,38 @@ export async function handleConnectionHealthCheck(
       results[index] = { instance_id: conn.instance_id, status: healthStatus, response_time_ms: responseTime, error: errorMessage, reason: openReason };
     };
 
-    // Sem alvo: concorrência LIMITADA (3 por vez) — paraleliza sem abrir uma
-    // dezena de sockets simultâneos ao provedor. Com alvo único, `connections`
-    // tem 1 linha e a mesma função roda uma vez só (não varre as outras).
-    // `results[index]` mantém a ordem da consulta mesmo com conclusões fora de
-    // ordem.
-    await runWithConcurrency(connections, HEALTH_CHECK_CONCURRENCY, checkConnection);
+    // Trilha de auditoria das transições automáticas de status. Mesmo formato do
+    // helper compartilhado dos cartões de conexão (`writeConnectionAuditLog`):
+    // entity_type 'connection', uuid da linha em `entity_id`, instance_id textual
+    // em `details`. `user_id` fica nulo — foi o monitor, não um usuário — e a tela
+    // mostra "Sistema". Sem telefone, token, QR nem payload bruto do provedor.
+    // Falha da TRILHA não derruba a sonda: a transição já está gravada no banco e
+    // devolver 500 faria parecer que a checagem falhou (mesma regra do helper) —
+    // mas o erro é logado, nunca engolido.
+    for (const event of statusAuditEvents) {
+      const { error: auditError } = await supabase.from('audit_logs').insert({
+        user_id: null,
+        action: event.action,
+        entity_type: 'connection',
+        entity_id: event.id,
+        details: {
+          instance_id: event.instanceId,
+          previous_status: event.previousStatus,
+          status: event.newStatus,
+          source: 'health-check',
+        },
+      });
+      if (auditError) {
+        log.warn("Falha ao gravar trilha de auditoria da transicao de status", {
+          action: event.action, error: auditError.message,
+        });
+      }
+    }
 
-    // Dedupe dos alertas por episódio: a mesma queda detectada de novo não grava
-    // outra linha nem re-notifica (a transição do CAS já aconteceu).
-    const newAlerts = dedupeAlerts(alertsToCreate);
-    for (const alert of newAlerts) {
-      const title = alert.kind === 'disconnected'
-        ? `🔴 Conexao ${alert.instance_id} desconectada`
-        : `Conexão ${alert.instance_id} — ${REASON_LABEL[alert.reason ?? ''] ?? 'degradada'}`;
-      const message = alert.kind === 'disconnected'
-        ? `A instancia ${alert.instance_id}${alert.phone ? ` (${alert.phone})` : ''} perdeu conexao com o WhatsApp. Reconecte para evitar perda de mensagens.`
-        : `A instância ${alert.instance_id}${alert.phone ? ` (${alert.phone})` : ''}: ${REASON_LABEL[alert.reason ?? ''] ?? 'conexão degradada'}.`;
+    for (const alert of alertsToCreate) {
+      // Schema real de warroom_alerts: alert_type/title/message/source
+      // (severity/description/metadata nao existem — o insert antigo falhava
+      // com PGRST204 e o alerta critico nunca era gravado).
       await supabase.from('warroom_alerts').insert({
         alert_type: alert.kind === 'disconnected' ? 'critical' : 'warning',
         title,
