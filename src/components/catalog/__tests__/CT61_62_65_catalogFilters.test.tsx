@@ -63,8 +63,6 @@ vi.mock('@/hooks/integrations/useCatalogRecentSends', () => ({
 const mockSendHistory = vi.fn();
 vi.mock('@/hooks/integrations/useCatalogSendHistory', () => ({
   useCatalogSendHistory: () => mockSendHistory(),
-  buildSendHistoryCsv: vi.fn(() => ''),
-  sendHistoryFilename: vi.fn(() => 'catalogo_enviados.csv'),
 }));
 
 const mockFetchContactPreset = vi.fn();

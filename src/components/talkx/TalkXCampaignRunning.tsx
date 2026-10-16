@@ -4,23 +4,33 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer } from 'recharts';
 import { CHART_TICK_FONT_SIZE, CHART_TOOLTIP_FONT_SIZE } from '@/lib/chart-theme';
 import {
-  Zap, Users, ChevronLeft,
-  Pause, Square, Eye, RefreshCw, Activity, Settings2, Mail, Send,
+  ChevronLeft, RefreshCw, Activity, Send, Search,
 } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
   AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { useTalkX, type TalkXCampaign } from '@/hooks/integrations/useTalkX';
-import { IconTile, RailCard, MetaRow, fmtInt, fmtDateTime, TalkXQueryBoundary, TalkXSkeletonRows, type TalkXQueryLike } from './talkxShared';
-import { msToSeconds, secondsToMs, intervalForProfile, isValidIntervalSeconds, LIMITS_MIN_S, LIMITS_MAX_S } from './talkxLimits';
+import { useTalkXResumeChecklist, type TalkXResumeChecklistItemKey } from '@/hooks/integrations/useTalkXResumeChecklist';
+import { TalkXResumeChecklist } from './tracking/TalkXResumeChecklist';
+import { IconTile, RailCard, MetaRow, fmtInt, fmtDateTime, InsightCard, TalkXQueryBoundary, TalkXSkeletonRows, type TalkXQueryLike } from './talkxShared';
+import { msToSeconds } from './talkxLimits';
 import { TalkXLiveKpiRow } from './tracking/TalkXLiveKpiRow';
 import { fromTable } from '@/lib/supabaseHelpers';
-import { supabase, invokeEdge } from '@/lib/supabaseHelpers';
+import { supabase } from '@/lib/supabaseHelpers';
 import { talkXMessageSnapshotDisplay } from './talkxMessageSnapshot';
-import { recentMinuteSeries, averageRatePerMinute, estimateMinutesToFinish } from './talkxRunningHistory';
+import { recentMinuteSeries, averageRatePerMinute, estimateMinutesToFinish, type MinuteBucket } from './talkxRunningHistory';
+import { TalkXCampaignActionsCard } from './tracking/TalkXCampaignActionsCard';
+import { TalkXLimitsDialog } from './tracking/TalkXLimitsDialog';
+import { TalkXRecipientsTable } from './tracking/TalkXRecipientsTable';
+import {
+  EMPTY_LIMITS_DRAFT, formatSendDays, limitsDraftFromCampaign,
+  type TalkXCampaignWithRules, type TalkXLimitsDraft, type TalkXLimitsPayload,
+} from './tracking/talkxCampaignRules';
 
 // ─── Sub-tab type ──────────────────────────────────────────────────────────────
 type RunTab = 'overview' | 'recipients' | 'messages' | 'config' | 'results' | 'logs';
@@ -86,10 +96,31 @@ function DonutChart({ sent, delivered, failed, outcomeUnknown, total }: { sent: 
   );
 }
 
+// Pico de Respostas — heurística simples e explícita: compara as RESPOSTAS recebidas nos
+// últimos 10 min com as dos 10 min anteriores. Só vira card quando o aumento é relevante
+// (limiar abaixo). Sem respostas no período anterior não existe % honesto → null (o card
+// não aparece; nunca se inventa número).
+const INSIGHT_REPLY_GROWTH_MIN = 30;
+function replyGrowthPct(replyTimes: string[], now: number): number | null {
+  const recentFloor = now - 10 * 60_000;
+  const previousFloor = now - 20 * 60_000;
+  let recent = 0;
+  let previous = 0;
+  for (const ts of replyTimes) {
+    const t = new Date(ts).getTime();
+    if (Number.isNaN(t)) continue;
+    if (t > recentFloor && t <= now) recent++;
+    else if (t > previousFloor && t <= recentFloor) previous++;
+  }
+  if (previous <= 0) return null;
+  return Math.round(((recent - previous) / previous) * 100);
+}
+
 // ─── Tab: Visão Geral ──────────────────────────────────────────────────────────
-function TabOverview({ c, chartData, historyQuery, onRetryHistory }: {
+function TabOverview({ c, chartData, replyGrowthPct, historyQuery, onRetryHistory }: {
   c: TalkXCampaign;
   chartData: { time: string; Enviadas: number; Entregues: number }[];
+  replyGrowthPct: number | null;
   historyQuery: TalkXQueryLike;
   onRetryHistory: () => void;
 }) {
@@ -116,6 +147,17 @@ function TabOverview({ c, chartData, historyQuery, onRetryHistory }: {
           },
         }}
       />
+      {/* Pico de Respostas — heurística explícita (mesmo padrão "Heurístico" do kit):
+          só aparece quando as respostas dos últimos 10 min crescem de forma relevante
+          sobre os 10 min anteriores. O % é o calculado; sem base anterior, não aparece. */}
+      {replyGrowthPct !== null && replyGrowthPct > INSIGHT_REPLY_GROWTH_MIN && (
+        <InsightCard
+          type="reactivation"
+          title="Pico de Respostas"
+          description={`+${fmtInt(replyGrowthPct)}% nas respostas nos últimos 10 min vs. os 10 min anteriores.`}
+          priority="high"
+        />
+      )}
       {/* Donut */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <RailCard title="Progresso da Campanha" subtitle={`${fmtInt(processed)} de ${fmtInt(c.total_recipients)} processados`} color="blue" icon={Activity}>
@@ -167,85 +209,68 @@ function TabOverview({ c, chartData, historyQuery, onRetryHistory }: {
 }
 
 // ─── Tab: Configurações ────────────────────────────────────────────────────────
-function TabConfig({ c }: { c: TalkXCampaign }) {
+// X154: a conexão aparece pelo NOME e número (nunca o UUID), e o resumo ganha fuso e
+// dias de envio. Cada linha só renderiza quando a campanha traz o dado (A9).
+type TalkXConnectionRef = { name: string | null; phone_number: string | null };
+
+function connectionLabel(connection: TalkXConnectionRef | null): string {
+  if (!connection?.name) return '—';
+  return connection.phone_number ? `${connection.name} · ${connection.phone_number}` : connection.name;
+}
+
+function TabConfig({ c, connection }: { c: TalkXCampaignWithRules; connection: TalkXConnectionRef | null }) {
+  const daysLabel = formatSendDays(c.send_days);
   return (
     <RailCard title="Configurações da Campanha" color="amber" icon={Activity}>
       <div className="pt-1 space-y-0.5">
+        <MetaRow label="Conexão" value={connectionLabel(connection)} />
         <MetaRow label="Velocidade" value={SPEED_LABEL[c.speed_profile ?? ''] ?? c.speed_profile ?? '—'} />
         <MetaRow label="Intervalo entre msgs" value={`${msToSeconds(c.send_interval_min)}s – ${msToSeconds(c.send_interval_max)}s`} />
         <MetaRow label="Delay de digitação" value={`${c.typing_delay_min}s – ${c.typing_delay_max}s`} />
         <MetaRow label="Janela de envio" value={c.send_window_start ? `${c.send_window_start?.slice(0, 5)} – ${c.send_window_end?.slice(0, 5)}` : 'Sem restrição'} />
         <MetaRow label="Horário comercial" value={c.business_hours_only ? 'Sim' : 'Não'} />
+        {daysLabel !== null && <MetaRow label="Dias de envio" value={daysLabel} />}
+        {c.schedule_timezone ? <MetaRow label="Fuso horário" value={c.schedule_timezone} /> : null}
         <MetaRow label="Iniciada em" value={fmtDateTime(c.started_at) ?? '—'} />
-        <MetaRow label="Canal WhatsApp" value={c.whatsapp_connection_id ?? '—'} />
       </div>
     </RailCard>
   );
 }
 
 
-// ─── Tab: Destinatários ────────────────────────────────────────────────────────────────
-type RecipRow = { status: string; sent_at: string | null; delivered_at: string | null; error_message: string | null; contacts: { name: string; phone: string } | null };
 const STATUS_TONE: Record<string, string> = { sent: 'text-dash-green', failed: 'text-dash-red', pending: 'text-foreground-secondary', outcome_unknown: 'text-dash-amber' };
 const STATUS_LABEL: Record<string, string> = { sent: 'Enviado', failed: 'Falha', pending: 'Pendente', delivered: 'Entregue', outcome_unknown: 'Confirmação pendente' };
+/** Opções do filtro de status dos destinatários (mesma ordem do rótulo da coluna). */
+const RECIPIENT_STATUS_OPTIONS: { value: string; label: string }[] = ['pending', 'sent', 'delivered', 'failed', 'outcome_unknown']
+  .map((value) => ({ value, label: STATUS_LABEL[value] }));
 
-function TabRecipients({ campaignId }: { campaignId: string }) {
-  const { data: recips, isLoading, isFetching, isError, error, refetch } = useQuery({
-    queryKey: ['talkx-running-recipients', campaignId],
-    queryFn: async () => {
-      const { data, error } = await fromTable('talkx_recipients')
-        .select('status, sent_at, delivered_at, error_message, contacts:contact_id(name, phone)')
-        .eq('campaign_id', campaignId).order('updated_at', { ascending: false }).limit(200);
-      // X047: sem isto a falha virava lista vazia (o `data ?? []` engolia o erro).
-      if (error) throw error;
-      return (data ?? []) as RecipRow[];
-    },
-    refetchInterval: 15_000,
-    staleTime: 10_000,
-  });
+type SegmentNameResolver = (id: string | null) => string | null;
 
+function ListFilters({ search, onSearch, status, onStatus, options = RECIPIENT_STATUS_OPTIONS }: {
+  search: string; onSearch: (v: string) => void; status: string; onStatus: (v: string) => void;
+  options?: { value: string; label: string }[];
+}) {
   return (
-    <div className="rounded-2xl bg-card border border-border/70 overflow-hidden">
-      {/* X047: carregando -> erro -> vazio -> conteúdo (cabeçalho e lista juntos) */}
-      <TalkXQueryBoundary
-        query={{ isLoading, isFetching, isError, error }}
-        entity="informações dos destinatários"
-        onRetry={() => { void refetch(); }}
-        skeleton={<div className="p-4"><TalkXSkeletonRows rows={5} /></div>}
-        isEmpty={(recips?.length ?? 0) === 0}
-        empty={(
-          <div className="p-8 text-center">
-            <Users className="w-7 h-7 mx-auto text-muted-foreground mb-2" />
-            <p className="text-xs font-semibold text-foreground">Nenhum destinatário nesta campanha.</p>
-          </div>
-        )}
-      >
-        <div className="px-4 py-3 border-b border-border/40 flex items-center justify-between">
-          <p className="text-[13px] font-bold text-foreground">Destinatários</p>
-          <p className="text-xs text-foreground-secondary">{`Mostrando ${recips?.length ?? 0} recentes`}</p>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[540px] border-collapse">
-            <thead><tr>
-              {['Contato', 'Telefone', 'Status', 'Enviada em', 'Entregue em'].map((h) => (
-                <th key={h} className="text-left text-2xs font-semibold text-foreground-secondary px-4 py-2">{h}</th>
-              ))}
-            </tr></thead>
-            <tbody>
-              {(recips ?? []).map((r, i) => (
-                <tr key={i} className="border-t border-border/40 hover:bg-muted/10">
-                  <td className="px-4 py-2.5 text-xs font-medium text-foreground truncate max-w-[180px]">{r.contacts?.name ?? '—'}</td>
-                  <td className="px-4 py-2.5 text-xs text-foreground-secondary font-mono">{r.contacts?.phone ?? '—'}</td>
-                  <td className={`px-4 py-2.5 text-xs font-semibold ${STATUS_TONE[r.status] ?? 'text-foreground-secondary'}`}>{STATUS_LABEL[r.status] ?? r.status}</td>
-                  <td className="px-4 py-2.5 text-2xs text-muted-foreground">{r.sent_at ? new Date(r.sent_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '—'}</td>
-                  <td className="px-4 py-2.5 text-2xs text-muted-foreground">{r.delivered_at ? new Date(r.delivered_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '—'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {(recips?.length ?? 0) >= 200 && <p className="text-2xs text-muted-foreground text-center p-3">Mostrando 200 mais recentes.</p>}
-        </div>
-      </TalkXQueryBoundary>
+    <div className="flex flex-wrap items-center gap-2">
+      <div className="relative">
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+        <Input
+          value={search}
+          onChange={(e) => onSearch(e.target.value)}
+          placeholder="Buscar por nome ou telefone"
+          aria-label="Buscar por nome ou telefone"
+          className="h-9 pl-8 pr-3 w-56 text-xs bg-input/40 border-border/70 rounded-lg"
+        />
+      </div>
+      <Select value={status} onValueChange={onStatus}>
+        <SelectTrigger aria-label="Filtrar por status" className="h-9 w-auto bg-input/40 border-border/70 text-xs min-w-[150px]">
+          <SelectValue placeholder="Todos os status" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Todos os status</SelectItem>
+          {options.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+        </SelectContent>
+      </Select>
     </div>
   );
 }
@@ -359,13 +384,18 @@ function TabMessages({ campaignId }: { campaignId: string }) {
 
 
 // ─── Tab: Logs em Tempo Real (E80) ──────────────────────────────────────
-type LogEvent = { id: string; contact: string; phone: string; status: string; ts: string; error?: string | null };
+type LogEvent = { id: string; contact: string; phone: string; segmentId: string | null; status: string; ts: string; error?: string | null };
 const LOG_TONE: Record<string, string> = { sent: 'text-dash-green', failed: 'text-dash-red', skipped: 'text-foreground-secondary', delivered: 'text-primary' };
 const LOG_ICON: Record<string, string> = { sent: '✔', failed: '✘', skipped: '‒', delivered: '✔✔' };
+/** Status possíveis nos logs (a consulta exclui só `pending`). */
+const LOG_STATUS_OPTIONS: { value: string; label: string }[] = ['sent', 'delivered', 'failed', 'outcome_unknown', 'skipped']
+  .map((value) => ({ value, label: STATUS_LABEL[value] ?? value }));
 
-function TabLogs({ campaignId, active }: { campaignId: string; active: boolean }) {
+function TabLogs({ campaignId, active, segmentName }: { campaignId: string; active: boolean; segmentName: SegmentNameResolver }) {
   const queryClient = useQueryClient();
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [search, setSearch] = useState('');
 
   // X047: a carga inicial dos logs engolia o erro (`if (data)`) — uma falha virava
   // "Aguardando eventos de envio…". Agora é uma consulta de verdade, com
@@ -374,7 +404,7 @@ function TabLogs({ campaignId, active }: { campaignId: string; active: boolean }
     queryKey: ['talkx-running-logs', campaignId],
     queryFn: async () => {
       const { data: rows, error: queryError } = await fromTable('talkx_recipients')
-        .select('id, status, updated_at, error_message, contacts:contact_id(name, phone)')
+        .select('id, segment_id, status, updated_at, error_message, contacts:contact_id(name, phone)')
         .eq('campaign_id', campaignId)
         .not('status', 'eq', 'pending')
         .order('updated_at', { ascending: false })
@@ -384,6 +414,7 @@ function TabLogs({ campaignId, active }: { campaignId: string; active: boolean }
         id: r.id as string,
         contact: (r.contacts as { name: string } | null)?.name ?? '—',
         phone: (r.contacts as { phone: string } | null)?.phone ?? '—',
+        segmentId: (r.segment_id as string | null) ?? null,
         status: r.status as string,
         ts: r.updated_at as string,
         error: r.error_message as string | null,
@@ -392,7 +423,16 @@ function TabLogs({ campaignId, active }: { campaignId: string; active: boolean }
     enabled: active && !!campaignId,
   });
 
-  const events = data ?? [];
+  const events = useMemo<LogEvent[]>(() => data ?? [], [data]);
+
+  const filtered = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    return events.filter((ev) => {
+      if (statusFilter !== 'all' && ev.status !== statusFilter) return false;
+      if (!term) return true;
+      return ev.contact.toLowerCase().includes(term) || ev.phone.toLowerCase().includes(term);
+    });
+  }, [events, statusFilter, search]);
 
   useEffect(() => {
     if (!active || !campaignId) return;
@@ -412,6 +452,7 @@ function TabLogs({ campaignId, active }: { campaignId: string; active: boolean }
           id: r.id as string,
           contact: '—', // sem join em realtime; enriquece se ja temos o contato
           phone: '—',
+          segmentId: (r.segment_id as string | null) ?? null,
           status: r.status as string,
           ts: r.updated_at as string,
           error: r.error_message as string | null,
@@ -437,19 +478,26 @@ function TabLogs({ campaignId, active }: { campaignId: string; active: boolean }
         isEmpty={events.length === 0}
         empty={<p className="text-xs text-muted-foreground text-center p-8">Aguardando eventos de envio…</p>}
       >
-        <div className="px-4 py-3 border-b border-border/40 flex items-center justify-between">
+        <div className="px-4 py-3 border-b border-border/40 flex flex-wrap items-center justify-between gap-2">
           <p className="text-[13px] font-bold text-foreground">Logs em Tempo Real</p>
-          <span className="inline-flex items-center gap-1.5 text-2xs font-medium text-dash-green">
-            <span className="w-2 h-2 rounded-full bg-dash-green animate-pulse" />Ao vivo
-          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <ListFilters search={search} onSearch={setSearch} status={statusFilter} onStatus={setStatusFilter} options={LOG_STATUS_OPTIONS} />
+            <span className="inline-flex items-center gap-1.5 text-2xs font-medium text-dash-green">
+              <span className="w-2 h-2 rounded-full bg-dash-green motion-safe:animate-pulse" />Ao vivo
+            </span>
+          </div>
         </div>
         <div className="divide-y divide-border/30 max-h-[480px] overflow-y-auto">
-          {events.map((ev) => (
+          {filtered.length === 0 && (
+            <p className="text-xs text-muted-foreground text-center p-8">Nenhum evento para os filtros aplicados.</p>
+          )}
+          {filtered.map((ev) => (
             <div key={`${ev.id}-${ev.ts}`} className="flex items-start gap-3 px-4 py-2.5 hover:bg-muted/10">
               <span className={`text-[15px] leading-none mt-0.5 ${LOG_TONE[ev.status] ?? 'text-muted-foreground'}`}>{LOG_ICON[ev.status] ?? '●'}</span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <p className="text-xs font-medium text-foreground truncate">{ev.contact} <span className="text-muted-foreground font-normal">{ev.phone}</span></p>
+                  <span className="text-2xs text-foreground-secondary truncate shrink-0 max-w-[130px]">{segmentName(ev.segmentId) ?? '—'}</span>
                   <span className={`text-2xs font-semibold ml-auto shrink-0 ${LOG_TONE[ev.status] ?? 'text-foreground-secondary'}`}>{ev.status}</span>
                 </div>
                 {ev.error && <p className="text-2xs text-dash-red mt-0.5 truncate">{ev.error}</p>}
@@ -570,25 +618,20 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
   const [pauseReason, setPauseReason] = useState('');
   const [cancelOpen, setCancelOpen] = useState(false);
   const [limitsOpen, setLimitsOpen] = useState(false);
-  // E78: limites editaveis
-  const [lSpeed, setLSpeed] = useState<string>('');
-  const [lIntMin, setLIntMin] = useState<number>(0);
-  const [lIntMax, setLIntMax] = useState<number>(0);
-  const [lWinStart, setLWinStart] = useState<string>('');
-  const [lWinEnd, setLWinEnd] = useState<string>('');
-  const [lBizHours, setLBizHours] = useState<boolean>(false);
+  // E78/X154: limites editaveis — o rascunho do formulario vive aqui e o modal
+  // (tracking/TalkXLimitsDialog) so desenha e monta o payload.
+  const [limitsDraft, setLimitsDraft] = useState<TalkXLimitsDraft>(EMPTY_LIMITS_DRAFT);
   const [lSaving, setLSaving] = useState(false);
   const [resuming, setResuming] = useState(false);
 
-  // X006: o select de velocidade mostra "Personalizado" quando o intervalo
-  // digitado à mão difere do intervalo do perfil escolhido (o perfil é mantido).
-  const intervaloCustomizado = useMemo(() => {
-    const [pMin, pMax] = intervalForProfile(lSpeed);
-    return lIntMin !== msToSeconds(pMin) || lIntMax !== msToSeconds(pMax);
-  }, [lSpeed, lIntMin, lIntMax]);
-
   // P2: deriva somente de campanhas ativas; sai da view quando concluir/cancelar
   const campaign = useMemo(() => sending.find((c) => c.id === selectedId) ?? null, [sending, selectedId]);
+  // X159: o "Checklist para retomar" só monta os 5 itens quando a campanha está pausada.
+  const resumeChecklist = useTalkXResumeChecklist(campaign);
+  // X159: o atalho de cada item leva à aba onde ele se resolve nesta tela.
+  const handleChecklistNavigate = useCallback((key: TalkXResumeChecklistItemKey) => {
+    setActiveTab(key === 'templates' ? 'messages' : key === 'segments' ? 'recipients' : 'config');
+  }, []);
   // Auto-navegar de volta quando a campanha sair de sending/paused.
   // Transição em UM efeito só: o estado anterior é lido ANTES de a referência ser
   // atualizada. Com dois efeitos separados a limpeza ficava morta — o primeiro gravava
@@ -614,29 +657,45 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
   // Histórico de envios para gráfico AreaChart (últimos 20 pontos por minuto)
   const { data: sentHistory, isLoading: historyLoading, isFetching: historyFetching, isError: historyIsError, error: historyError, refetch: refetchHistory } = useQuery({
     queryKey: ['talkx-running-history', selectedId],
-    queryFn: async () => {
-      if (!selectedId) return [];
+    queryFn: async (): Promise<{ buckets: MinuteBucket[]; replyGrowthPct: number | null }> => {
+      if (!selectedId) return { buckets: [], replyGrowthPct: null };
       // Ordem decrescente: o teto de 2000 guarda os envios MAIS RECENTES. Com ordem
       // crescente, o envio 2001+ ficava de fora e a série congelava no passado.
       const { data, error } = await fromTable('talkx_recipients')
-        .select('sent_at, delivered_at')
+        .select('sent_at, delivered_at, replied_at')
         .eq('campaign_id', selectedId)
         .not('sent_at', 'is', null)
         .order('sent_at', { ascending: false })
         .limit(2000);
-      // X047: sem isto a falha virava "sem envios" (o `if (!data?.length) return []` engolia o erro).
+      // X047: sem isto a falha virava "sem envios" (o `if (!data?.length)` curto engolia o erro).
       if (error) throw error;
-      if (!data?.length) return [];
+      if (!data?.length) return { buckets: [], replyGrowthPct: null };
+      const rows = data as { sent_at: string; delivered_at: string | null; replied_at: string | null }[];
       // Buckets de minuto consecutivos (zeros incluídos), terminando no minuto atual.
-      return recentMinuteSeries(
-        data as { sent_at: string; delivered_at: string | null }[],
-        { minutes: 20 },
-      );
+      const buckets = recentMinuteSeries(rows, { minutes: 20 });
+      // Pico de Respostas: heurística explícita sobre as respostas do período —
+      // últimos 10 min vs. os 10 min anteriores (ver replyGrowthPct).
+      const replyTimes = rows.map((r) => r.replied_at).filter((t): t is string => !!t);
+      return { buckets, replyGrowthPct: replyGrowthPct(replyTimes, Date.now()) };
     },
     enabled: !!selectedId,
     refetchInterval: 30_000,
     staleTime: 20_000,
   });
+
+  // Nome dos segmentos para a coluna "Segmento" (Destinatários/Logs). talkx_recipients.segment_id
+  // não tem FK no banco, então não dá para embutir no select — busca-se o mapa id->nome aqui.
+  const { data: segments } = useQuery({
+    queryKey: ['talkx-running-segments'],
+    queryFn: async () => {
+      const { data, error } = await fromTable('talkx_segments').select('id, name');
+      if (error) throw error;
+      return (data ?? []) as { id: string; name: string }[];
+    },
+    staleTime: 5 * 60_000,
+  });
+  const segmentNames = useMemo(() => new Map((segments ?? []).map((s) => [s.id, s.name])), [segments]);
+  const segmentName = useCallback((id: string | null) => (id ? segmentNames.get(id) ?? null : null), [segmentNames]);
 
   const historyQuery: TalkXQueryLike = {
     isLoading: historyLoading,
@@ -646,36 +705,42 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
   };
   const handleRetryHistory = useCallback(() => { void refetchHistory(); }, [refetchHistory]);
 
+  // X154: a aba Configurações mostra a conexão pelo nome e número. A leitura é da
+  // própria tabela de conexões (a campanha só guarda o id) e o mesmo dado alimenta a
+  // linha "Conexão" — nunca o UUID.
+  const connectionId = campaign?.whatsapp_connection_id ?? null;
+  const { data: connection } = useQuery({
+    queryKey: ['talkx-campaign-connection', connectionId],
+    enabled: !!connectionId,
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const { data, error } = await fromTable('whatsapp_connections')
+        .select('name, phone_number')
+        .eq('id', connectionId as string)
+        .maybeSingle();
+      if (error) throw error;
+      return (data ?? null) as TalkXConnectionRef | null;
+    },
+  });
+
   const handleOpenLimits = useCallback(() => {
     if (!campaign) return;
-    setLSpeed(campaign.speed_profile ?? 'moderate');
-    setLIntMin(msToSeconds(campaign.send_interval_min));
-    setLIntMax(msToSeconds(campaign.send_interval_max));
-    setLWinStart(campaign.send_window_start?.slice(0, 5) ?? '');
-    setLWinEnd(campaign.send_window_end?.slice(0, 5) ?? '');
-    setLBizHours(campaign.business_hours_only ?? false);
+    setLimitsDraft(limitsDraftFromCampaign(campaign));
     setLimitsOpen(true);
   }, [campaign]);
 
-  const handleSaveLimits = useCallback(async () => {
+  const handleChangeLimits = useCallback((patch: Partial<TalkXLimitsDraft>) => {
+    setLimitsDraft((current) => ({ ...current, ...patch }));
+  }, []);
+
+  const handleSaveLimits = useCallback(async (limits: TalkXLimitsPayload) => {
     if (!campaign) return;
-    if (!isValidIntervalSeconds(lIntMin) || !isValidIntervalSeconds(lIntMax)) {
-      toast.error(`Intervalos devem ser inteiros entre ${LIMITS_MIN_S}s e ${LIMITS_MAX_S}s.`);
-      return;
-    }
     setLSaving(true);
     try {
       await updateCampaignLimits.mutateAsync({
         id: campaign.id,
         expectedRevision: campaign.revision ?? null,
-        limits: {
-          speed_profile: lSpeed,
-          send_interval_min: secondsToMs(lIntMin),
-          send_interval_max: secondsToMs(Math.max(lIntMin, lIntMax)),
-          send_window_start: lWinStart ? `${lWinStart}:00` : null,
-          send_window_end: lWinEnd ? `${lWinEnd}:00` : null,
-          business_hours_only: lBizHours,
-        },
+        limits,
       });
       setLimitsOpen(false);
       toast.success('Limites atualizados. Vale a partir do próximo envio.');
@@ -687,7 +752,7 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
     } finally {
       setLSaving(false);
     }
-  }, [campaign, updateCampaignLimits, lSpeed, lIntMin, lIntMax, lWinStart, lWinEnd, lBizHours]);
+  }, [campaign, updateCampaignLimits]);
 
   const handlePause = useCallback(async () => {
     if (!campaign) return;
@@ -712,6 +777,17 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
       toast.error('Erro ao cancelar a campanha.');
     }
   }, [campaign, cancelCampaign, onBack]);
+
+  const handleResume = useCallback(async () => {
+    if (!campaign) return;
+    setResuming(true);
+    try {
+      // startCampaign aguarda o invoke e mostra toasts internamente
+      await startCampaign(campaign.id);
+    } catch {
+      toast.error('Erro ao retomar campanha.');
+    } finally { setResuming(false); }
+  }, [campaign, startCampaign]);
 
   return (
     <div className="min-h-full bg-background p-3 md:p-4 lg:p-6 space-y-4">
@@ -784,135 +860,49 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
             {/* Conteúdo das sub-tabs */}
             <div>
               {activeTab === 'overview' && (
-                <TabOverview c={campaign} chartData={sentHistory ?? []} historyQuery={historyQuery} onRetryHistory={handleRetryHistory} />
+                <>
+                  {campaign.status === 'paused' && (
+                    <TalkXResumeChecklist
+                      items={resumeChecklist.items}
+                      onToggle={resumeChecklist.toggle}
+                      onNavigate={handleChecklistNavigate}
+                      className="mb-4"
+                    />
+                  )}
+                  <TabOverview c={campaign} chartData={sentHistory?.buckets ?? []} replyGrowthPct={sentHistory?.replyGrowthPct ?? null} historyQuery={historyQuery} onRetryHistory={handleRetryHistory} />
+                </>
               )}
-              {activeTab === 'config' && <TabConfig c={campaign} />}
-              {activeTab === 'recipients' && <TabRecipients campaignId={campaign.id} />}
+              {activeTab === 'config' && <TabConfig c={campaign} connection={connection ?? null} />}
+              {activeTab === 'recipients' && <TalkXRecipientsTable campaignId={campaign.id} segmentName={segmentName} />}
               {activeTab === 'messages' && <TabMessages campaignId={campaign.id} />}
-              {activeTab === 'results' && <TabResults c={campaign} sentHistory={sentHistory ?? []} historyQuery={historyQuery} onRetryHistory={handleRetryHistory} />}
-              {activeTab === 'logs' && <TabLogs campaignId={campaign.id} active={activeTab === 'logs'} />}
+              {activeTab === 'results' && <TabResults c={campaign} sentHistory={sentHistory?.buckets ?? []} historyQuery={historyQuery} onRetryHistory={handleRetryHistory} />}
+              {activeTab === 'logs' && <TabLogs campaignId={campaign.id} active={activeTab === 'logs'} segmentName={segmentName} />}
             </div>
 
-            {/* Card Ações */}
-            <div className="rounded-2xl bg-card border border-border/70 p-4">
-              <p className="text-[13px] font-bold text-foreground mb-3">Ações da Campanha</p>
-              <div className="flex flex-wrap gap-2">
-                {campaign.status === 'sending' && (
-                  <button type="button" onClick={() => setPauseOpen(true)}
-                    className="h-9 px-4 rounded-lg border border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-semibold flex items-center gap-2 hover:bg-amber-500/20">
-                    <Pause className="w-4 h-4" />Pausar
-                  </button>
-                )}
-                {campaign.status === 'paused' && (
-                  <button type="button" disabled={resuming} onClick={async () => {
-                    setResuming(true);
-                    try {
-                      // startCampaign aguarda o invoke e mostra toasts internamente
-                      await startCampaign(campaign.id);
-                    } catch {
-                      toast.error('Erro ao retomar campanha.');
-                    } finally { setResuming(false); }
-                  }}
-                    className="h-9 px-4 rounded-lg border border-primary/40 bg-primary/10 text-primary text-xs font-semibold flex items-center gap-2 hover:bg-primary/20 disabled:opacity-50">
-                    <Zap className="w-4 h-4" />{resuming ? 'Retomando…' : 'Retomar'}
-                  </button>
-                )}
-                <button type="button" onClick={handleOpenLimits}
-                  className="h-9 px-4 rounded-lg border border-border/70 bg-input/40 text-xs font-semibold flex items-center gap-2 hover:bg-muted/50">
-                  <Settings2 className="w-4 h-4" />Editar Limites
-                </button>
-                <button type="button" onClick={() => onViewMonitor(campaign.id)}
-                  className="h-9 px-4 rounded-lg border border-border/70 bg-input/40 text-xs font-semibold flex items-center gap-2 hover:bg-muted/50">
-                  <Eye className="w-4 h-4" />Ver Monitor
-                </button>
-                {(campaign.status === 'completed' || campaign.status === 'paused') && (
-                  <button type="button" onClick={async () => {
-                    try {
-                      await invokeEdge('talkx-report', { campaignId: campaign.id });
-                      toast.success('Relatório enviado por e-mail!');
-                    } catch {
-                      toast.error('Erro ao enviar relatório.');
-                    }
-                  }}
-                    className="h-9 px-4 rounded-lg border border-primary/40 bg-primary/10 text-primary text-xs font-semibold flex items-center gap-2 hover:bg-primary/20">
-                    <Mail className="w-4 h-4" />Enviar Relatório
-                  </button>
-                )}
-                <button type="button" onClick={() => setCancelOpen(true)}
-                  className="h-9 px-4 rounded-lg border border-red-500/30 bg-red-500/8 text-red-600 dark:text-red-400 text-xs font-semibold flex items-center gap-2 hover:bg-red-500/15 ml-auto">
-                  <Square className="w-4 h-4" />Cancelar campanha
-                </button>
-              </div>
-            </div>
+            {/* Card Ações + Configurações Atuais (X154) */}
+            <TalkXCampaignActionsCard
+              campaign={campaign}
+              onPause={() => setPauseOpen(true)}
+              onResume={() => { void handleResume(); }}
+              onCancel={() => setCancelOpen(true)}
+              onEditLimits={handleOpenLimits}
+              onViewMonitor={() => onViewMonitor(campaign.id)}
+              resuming={resuming}
+            />
           </>
         ) : null}
       </TalkXQueryBoundary>
 
 
-      {/* Modal: Editar Limites (E78) */}
-      <AlertDialog open={limitsOpen} onOpenChange={setLimitsOpen}>
-        <AlertDialogContent className="max-w-md">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Editar Limites de Envio</AlertDialogTitle>
-            <AlertDialogDescription>Vale a partir do próximo envio.</AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-foreground">Velocidade</label>
-              <select value={intervaloCustomizado ? 'personalizado' : lSpeed}
-                onChange={(e) => {
-                  const p = e.target.value;
-                  if (p === 'personalizado') return;
-                  setLSpeed(p);
-                  const [minMs, maxMs] = intervalForProfile(p);
-                  setLIntMin(msToSeconds(minMs));
-                  setLIntMax(msToSeconds(maxMs));
-                }}
-                className="w-full h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-xs focus:outline-none focus:ring-1 focus:ring-primary">
-                <option value="slow">Lento (seguro)</option>
-                <option value="moderate">Moderado</option>
-                <option value="fast">Rápido</option>
-                {intervaloCustomizado && <option value="personalizado">Personalizado</option>}
-              </select>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-foreground">Intervalo mínimo (s)</label>
-                <input type="number" min={LIMITS_MIN_S} max={LIMITS_MAX_S} value={lIntMin} onChange={(e) => setLIntMin(Number(e.target.value))}
-                  className="w-full h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-xs focus:outline-none focus:ring-1 focus:ring-primary" />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-foreground">Intervalo máximo (s)</label>
-                <input type="number" min={LIMITS_MIN_S} max={LIMITS_MAX_S} value={lIntMax} onChange={(e) => setLIntMax(Number(e.target.value))}
-                  className="w-full h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-xs focus:outline-none focus:ring-1 focus:ring-primary" />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-foreground">Janela início</label>
-                <input type="time" value={lWinStart} onChange={(e) => setLWinStart(e.target.value)}
-                  className="w-full h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-xs focus:outline-none focus:ring-1 focus:ring-primary" />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-foreground">Janela fim</label>
-                <input type="time" value={lWinEnd} onChange={(e) => setLWinEnd(e.target.value)}
-                  className="w-full h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-xs focus:outline-none focus:ring-1 focus:ring-primary" />
-              </div>
-            </div>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" checked={lBizHours} onChange={(e) => setLBizHours(e.target.checked)} className="rounded" />
-              <span className="text-xs text-foreground">Apenas horário comercial (seg–sex 8h–18h)</span>
-            </label>
-          </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleSaveLimits} disabled={lSaving}
-              className="bg-primary text-primary-foreground hover:bg-primary/90">
-              {lSaving ? 'Salvando…' : 'Salvar Limites'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Modal: Editar Limites (E78/X154) */}
+      <TalkXLimitsDialog
+        open={limitsOpen}
+        onOpenChange={setLimitsOpen}
+        draft={limitsDraft}
+        onChange={handleChangeLimits}
+        onSave={handleSaveLimits}
+        saving={lSaving}
+      />
 
       {/* Modal: Pausar */}
       <AlertDialog open={pauseOpen} onOpenChange={setPauseOpen}>

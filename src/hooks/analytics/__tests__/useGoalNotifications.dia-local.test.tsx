@@ -24,7 +24,7 @@ vi.mock('@/lib/localDay', async (importOriginal) => {
   const real = await importOriginal<typeof import('@/lib/localDay')>();
   return { ...real, localDayKey: vi.fn(real.localDayKey) };
 });
-import { localDayKey } from '@/lib/localDay';
+import { localDayKey, goalPeriodRange } from '@/lib/localDay';
 
 vi.mock('@/hooks/auth/useAuth', () => ({
   useAuth: () => ({ user: { id: 'u1' }, loading: false }),
@@ -63,13 +63,15 @@ vi.mock('@/lib/logger', () => ({
 // ---------------------------------------------------------------------------
 const PERFIL = 'perfil-1';
 
-type Notificacao = { title?: string; message?: string; type?: string };
+type Notificacao = { title?: string; message?: string; type?: string; dedupe_key?: string };
 
 const notificacoesEnviadas: Notificacao[] = [];
 let metas: Array<Record<string, unknown>> = [];
 let contagem = 0;
 
 type Chamada = { metodo: string; args: unknown[] };
+/** Cada consulta feita a uma tabela, com os métodos chamados nela (para provar filtros). */
+const consultas: Array<{ table: string; chamadas: Chamada[] }> = [];
 
 function resultadoQuery(table: string) {
   if (table === 'profiles') return { data: { id: PERFIL }, error: null };
@@ -81,6 +83,7 @@ function resultadoQuery(table: string) {
 
 function makeBuilder(table: string) {
   const chamadas: Chamada[] = [];
+  consultas.push({ table, chamadas });
   const builder: Record<string, unknown> = {};
   for (const metodo of [
     'select',
@@ -147,6 +150,7 @@ describe('useGoalNotifications — chave de conquista pelo dia local', () => {
     vi.setSystemTime(AGORA);
     vi.clearAllMocks();
     notificacoesEnviadas.length = 0;
+    consultas.length = 0;
     metas = [metaDiaria];
     contagem = 3; // == daily_target
   });
@@ -200,5 +204,35 @@ describe('useGoalNotifications — chave de conquista pelo dia local', () => {
     });
 
     expect(notificacoesEnviadas).toHaveLength(0);
+  });
+
+  it('a meta semanal usa a MESMA semana de segunda do painel (goalPeriodRange)', async () => {
+    metas = [{ ...metaDiaria, daily_target: 0, weekly_target: 3 }];
+
+    renderHook(() => useGoalNotifications());
+    await waitFor(() => expect(notificacoesEnviadas).toHaveLength(1));
+
+    // 30/09/2026 é quarta: o início da semana (segunda) é 28/09 — a mesma janela
+    // que useGoalsDashboard usa, e não o domingo do startOfWeek sem opção.
+    const segunda = goalPeriodRange('week', AGORA).from;
+    expect(segunda.getDay()).toBe(1);
+    expect(localDayKey(segunda)).toBe('2026-09-28');
+    expect(notificacoesEnviadas[0].dedupe_key).toBe('goal:v1:meta-1:weekly:2026-09-28');
+  });
+
+  it('conversations_resolved conta só as conversas resolvidas do atendente (escopo pelo contato)', async () => {
+    metas = [{ ...metaDiaria, goal_type: 'conversations_resolved', daily_target: 1 }];
+
+    renderHook(() => useGoalNotifications());
+    await waitFor(() => expect(notificacoesEnviadas).toHaveLength(1));
+
+    const consulta = consultas.find((c) => c.table === 'conversation_sla');
+    expect(consulta).toBeDefined();
+    const select = consulta?.chamadas.find((c) => c.metodo === 'select');
+    // Sem o `!inner` no contato, o PostgREST contaria a organização inteira.
+    expect(String(select?.args[0])).toContain('contacts!inner(assigned_to)');
+    expect(consulta?.chamadas).toEqual(
+      expect.arrayContaining([{ metodo: 'eq', args: ['contacts.assigned_to', PERFIL] }]),
+    );
   });
 });

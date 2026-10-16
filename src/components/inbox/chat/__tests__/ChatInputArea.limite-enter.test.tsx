@@ -43,6 +43,13 @@ vi.mock('@/integrations/supabase/client', () => ({
 }));
 vi.mock('@/lib/logger', () => ({
   log: { error: vi.fn(), debug: vi.fn(), warn: vi.fn(), info: vi.fn() },
+  getLogger: () => ({ error: vi.fn(), debug: vi.fn(), warn: vi.fn(), info: vi.fn() }),
+}));
+// A identidade do agente vem do `useAuth` (o `useMessageSignature` deixou de chamar
+// `auth.getUser()` na rede — paridade V3). Aqui a fronteira é só a identidade já
+// resolvida; o resto do `useAuth` não participa deste teste.
+vi.mock('@/hooks/auth/useAuth', () => ({
+  useAuth: () => ({ user: { id: 'agente-1' }, session: null, profile: null, loading: false }),
 }));
 vi.mock('@/lib/undoToast', () => ({ undoToast: (...args: unknown[]) => mocks.undoToast(...args) }));
 vi.mock('@/lib/ai-vocabulary', () => ({ normalizeOperationalPriority: () => ({ value: null }) }));

@@ -12,11 +12,13 @@ import {
   CAMPAIGN_STATUS, FilterBarV2, TalkXPagination, Th, Td, StatusPill, RailCard, RailAction, IconTile,
   TalkXEmptyState, TalkXFilteredEmptyState, TalkXSkeletonRows, KpiCard, KpiCardSkeleton, HeroCard, RecentList, TipCard,
   InsightCard, TalkXQueryBoundary,
-  fmtInt, fmtPct, pct, fmtDateTime, fmtAgo, barsByDay, OBJECTIVES, TALKX_CHANNELS,
+  fmtInt, fmtPct, pct, fmtDateTime, fmtAgo, OBJECTIVES, TALKX_CHANNELS,
 } from './talkxShared';
 import type { TalkXPeriodRange } from './kit/periods';
 import { useTalkXInsights } from '@/hooks/integrations/useTalkXInsights';
+import { useTalkXOverviewStats } from '@/hooks/integrations/useTalkXOverviewStats';
 import { useCampaignRowActions } from './useCampaignRowActions';
+import { useTalkXLifecycle, TalkXLifecycleDialog } from './useTalkXLifecycle';
 
 const STORAGE_KEY = 'talkx.overview.filters';
 const LAYOUT_KEY = 'talkx.overview.layout';
@@ -55,19 +57,26 @@ interface Props {
   onViewScheduled?: (c: TalkXCampaign) => void;
   onViewRunning?: (c: TalkXCampaign) => void;
   onDuplicate: (c: TalkXCampaign) => void;
-  onStart: (id: string) => void;
-  /** O motivo é obrigatório na pausa e vai junto com a ação para o servidor. */
-  onPause: (id: string, reason: string) => void;
-  onCancel: (id: string) => void;
+  /**
+   * X051 — iniciar/pausar/retomar/cancelar NÃO passam mais por aqui: a tela
+   * resolve o ciclo de vida pelo controlador único (`useTalkXLifecycle`). As
+   * props seguem opcionais só para mocks/chamadores antigos.
+   */
+  onStart?: (id: string) => void;
+  onPause?: (id: string, reason: string) => void;
+  onCancel?: (id: string) => void;
   onDelete: (id: string) => void;
   onGoTab: (tab: string) => void;
 }
 
 const OBJ_COLOR: Record<string, 'blue' | 'green' | 'red' | 'violet' | 'amber'> = { vendas: 'green', engajamento: 'blue', reativacao: 'amber', relacionamento: 'violet', pesquisa: 'blue', institucional: 'red' };
 
-export function TalkXOverview({ campaigns, segments, creators, isLoading, isError, error, onRetry, onNew, onEdit, onView, onViewScheduled, onViewRunning, onDuplicate, onStart, onPause, onCancel, onDelete, onGoTab }: Props) {
+export function TalkXOverview({ campaigns, segments, creators, isLoading, isError, error, onRetry, onNew, onEdit, onView, onViewScheduled, onViewRunning, onDuplicate, onDelete, onGoTab }: Props) {
   const saved = useMemo(() => loadFilters(), []);
   const { data: insights } = useTalkXInsights();
+  // X051 — UM controlador para iniciar/pausar/retomar/cancelar: a Visão geral
+  // usa a matriz de ações atual, mas delega ciclo de vida ao hook único.
+  const lifecycle = useTalkXLifecycle();
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<string>(() => saved?.status ?? 'all');
   const [objective, setObjective] = useState<string>(() => saved?.objective ?? 'all');
@@ -86,7 +95,18 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
   // mudam o estado da campanha) ficam em um lugar só e servem a tabela, a grade
   // e as "Últimas campanhas".
   const rowActions = useCampaignRowActions({
-    onView, onViewScheduled, onViewRunning, onEdit, onStart, onPause, onCancel, onDelete, onDuplicate,
+    onView,
+    onViewScheduled,
+    onViewRunning,
+    onEdit,
+    // Compatibilidade interna do hook de ações: a Visão geral nunca chama estas
+    // props para ciclo de vida quando `onLifecycle` está presente.
+    onStart: () => undefined,
+    onPause: () => undefined,
+    onCancel: () => undefined,
+    onDelete,
+    onDuplicate,
+    onLifecycle: (kind, campaign) => lifecycle.request({ kind, target: campaign }),
   });
 
   React.useEffect(() => {
@@ -170,19 +190,15 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
 
   const pageItems = filtered.slice((page - 1) * pageSize, page * pageSize);
 
-  const totals = useMemo(() => {
-    const sent = noPeriodo.reduce((a, c) => a + c.sent_count, 0);
-    const failed = noPeriodo.reduce((a, c) => a + c.failed_count, 0);
-    return {
-      total: noPeriodo.length,
-      active: noPeriodo.filter((c) => c.status === 'sending' || c.status === 'paused').length,
-      completed: noPeriodo.filter((c) => c.status === 'completed').length,
-      successRate: sent + failed > 0 ? Math.round((sent / (sent + failed)) * 1000) / 10 : null,
-      reached: sent,
-      bars: barsByDay(noPeriodo.map((c) => c.created_at)),
-      barsCompleted: barsByDay(noPeriodo.filter((c) => c.status === 'completed').map((c) => c.completed_at)),
-    };
-  }, [noPeriodo]);
+  // X077 — os cinco números do topo saem da RPC `talkx_overview_stats` para o período da
+  // barra (padrão: 30 dias); nenhum KPI é calculado aqui. Campo ausente = "Sem dados ainda".
+  const { data: stats } = useTalkXOverviewStats(period, periodRange);
+  const cur = stats?.current;
+  const prev = stats?.previous ?? null;
+  const rate = cur?.deliveryRatePct ?? null;
+  const rateLabel = rate === null ? null : `${rate.toLocaleString('pt-BR')}%`;
+  // Comparativo da taxa só com base: o período anterior precisa de pelo menos 50 enviados.
+  const prevRate = prev && (prev.sent ?? 0) >= 50 ? prev.deliveryRatePct : null;
 
   // X081 — o recorte de data vale para a lista, para os KPIs e para o rail
   // ("Últimas campanhas"): um filtro que só vale em uma parte da tela mostra
@@ -216,11 +232,11 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
       <div className="min-w-0 space-y-4">
         {/* KPIs */}
           <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-4">
-            <KpiCard icon={Users}         color="blue"   index={0} label="Total de campanhas"   value={fmtInt(totals.total)}    bars={totals.bars} />
-            <KpiCard icon={Play}          color="blue"   index={1} label="Em andamento"          value={fmtInt(totals.active)} />
-            <KpiCard icon={CheckCircle2}  color="green"  index={2} label="Concluídas"            value={fmtInt(totals.completed)} bars={totals.barsCompleted} />
-            <KpiCard icon={Target}        color="green"  index={3} label="Taxa de sucesso"       value={totals.successRate===null?'—':`${totals.successRate}%`} />
-            <KpiCard icon={Send}          color="violet" index={4} label="Contatos alcançados"   value={fmtInt(totals.reached)} />
+            <KpiCard icon={Users}         color="blue"   index={0} label="Total de campanhas"   value={cur?.campaignsSent} comparison={{ previous: prev?.campaignsSent, kind: 'relative' }} />
+            <KpiCard icon={Play}          color="blue"   index={1} label="Em andamento"          value={stats?.active} />
+            <KpiCard icon={CheckCircle2}  color="green"  index={2} label="Concluídas"            value={cur?.completed} comparison={{ previous: prev?.completed, kind: 'relative' }} />
+            <KpiCard icon={Target}        color="green"  index={3} label="Taxa de sucesso"       value={rate} suffix="%" comparison={{ previous: prevRate, kind: 'points' }} />
+            <KpiCard icon={Send}          color="violet" index={4} label="Contatos alcançados"   value={cur?.contactsReached} comparison={{ previous: prev?.contactsReached, kind: 'relative' }} bars={stats?.dailySent} />
           </div>
 
         {/* Filtros */}
@@ -258,7 +274,11 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
                         <p className="text-2xs text-muted-foreground">{fmtAgo(c.updated_at)}</p>
                       </div>
                     </div>
-                    <button type="button" onClick={() => onEdit(c)} className="h-8 px-3 rounded-lg text-xs font-medium border border-dash-amber/40 bg-dash-amber/10 text-dash-amber hover:bg-dash-amber/20 shrink-0 flex items-center gap-1.5">
+                    {/* TL-175A: âmbar de PREENCHIMENTO como TEXTO sobre a própria tinta media
+                        1,67:1 no tema claro (axe color-contrast, sério). O par de texto do
+                        sistema — o mesmo que o PriorityChip usa no "alta" — fecha 5,09:1 no
+                        claro e 8,21:1 no escuro sobre `bg-dash-amber/10`. */}
+                    <button type="button" onClick={() => onEdit(c)} className="h-8 px-3 rounded-lg text-xs font-medium border border-dash-amber/40 bg-dash-amber/10 text-[hsl(var(--warning-text))] hover:bg-dash-amber/20 shrink-0 flex items-center gap-1.5">
                       <Pencil className="w-3.5 h-3.5" />Retomar
                     </button>
                   </div>
@@ -321,7 +341,7 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
                           <button type="button" onClick={() => onView(c)} className="flex items-center gap-3 text-left min-w-0 group">
                             <IconTile icon={objectiveIcon(c.objective)} color={OBJ_COLOR[c.objective ?? 'engajamento'] ?? 'blue'} size={40} />
                             <span className="min-w-0">
-                              <span className="block text-sm font-semibold text-foreground truncate group-hover:text-primary-glow">{c.name}</span>
+                              <span className="block text-sm font-semibold text-foreground truncate group-hover:text-[hsl(var(--primary-text))]">{c.name}</span>
                               <span className="block text-2xs text-foreground-secondary truncate max-w-[260px]">{c.description || c.message_template}</span>
                             </span>
                           </button>
@@ -383,8 +403,8 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
           icon={Zap} title="Talk X"
           subtitle="Campanhas que geram conversas e resultados."
           metrics={[
-            { label: 'Mensagens enviadas', value: fmtInt(totals.reached) },
-            { label: 'Taxa de sucesso', value: totals.successRate === null ? '—' : `${totals.successRate}%` },
+            { label: 'Mensagens enviadas', value: cur?.sent == null ? '—' : fmtInt(cur.sent) },
+            { label: 'Taxa de sucesso', value: rateLabel ?? '—' },
             { label: 'Segmentos salvos', value: fmtInt(segments.length) },
           ]}
         />
@@ -406,8 +426,9 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
         <TipCard tip="Segmentar por ramo ajuda a direcionar a mensagem ao público certo." />
       </div>
 
-      {/* X080 — modais de confirmação das ações de linha (um lugar só) */}
+      {/* X080 — duplicar/excluir seguem nas confirmações de linha; X051 — ciclo de vida usa um diálogo único. */}
       {rowActions.dialogs}
+      <TalkXLifecycleDialog controller={lifecycle} />
     </div>
     </TalkXQueryBoundary>
   );

@@ -2,6 +2,7 @@ import { useState, useEffect, useLayoutEffect, useCallback, useRef } from 'react
 import { log } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/ui/use-toast';
+import { avisarCopia, copiarTexto } from '@/lib/clipboard';
 import { useEvolutionApi } from '@/hooks/integrations/useEvolutionApi';
 
 export interface WhatsAppConnection {
@@ -46,6 +47,10 @@ export function useConnectionsManager() {
   const [qrCodeDialog, setQrCodeDialog] = useState<QrCodeDialogState>(INITIAL_QR_STATE);
   const [newConnection, setNewConnection] = useState({ name: '', phone_number: '' });
   const [isCreating, setIsCreating] = useState(false);
+  // Mensagem de erro da última tentativa de criar conexão, exibida DENTRO do
+  // diálogo (role=alert) além do toast — paridade V3→V2 (UI-07). Sem isso o
+  // diálogo só avisava por toast, fora do formulário.
+  const [addConnectionError, setAddConnectionError] = useState<string | null>(null);
   const [syncingHistory, setSyncingHistory] = useState<string | null>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const qrTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -142,7 +147,7 @@ export function useConnectionsManager() {
     setLoading(true);
     const { data, error } = await supabase
       .from('whatsapp_connections')
-      .select('*')
+      .select('id, name, phone_number, instance_id, status, is_default, created_at, battery_level, is_plugged, retry_count, max_retries, health_status, health_response_ms, last_health_check')
       .order('created_at', { ascending: false });
     if (!isMountedRef.current) return;
     if (!error && data) setConnections(data as WhatsAppConnection[]);
@@ -153,9 +158,23 @@ export function useConnectionsManager() {
     name.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').slice(0, 30) +
     '_' + Date.now().toString().slice(-6);
 
+  // [refazer 1] P2: o erro da tentativa anterior ficava velho entre
+  // aberturas do diálogo. O diálogo limpa ao fechar, ao reabrir e ao editar
+  // nome/telefone chamando esta função.
+  const clearAddConnectionError = useCallback(() => {
+    setAddConnectionError(null);
+  }, []);
+
   const handleAddConnection = async () => {
-    if (!newConnection.name || !newConnection.phone_number) {
-      toast({ title: 'Erro', description: 'Preencha o nome e o número do telefone.', variant: 'destructive' });
+    setAddConnectionError(null);
+    // [refazer 1] P1: só o DDI ('+55'/dígitos '55') não é número válido — a
+    // checagem antiga (!phone_number) passava com o pré-preenchimento do
+    // foco. Rejeita sem dígitos além do DDI, com a mensagem original.
+    const phoneDigits = newConnection.phone_number.replace(/\D/g, '');
+    if (!newConnection.name || phoneDigits.length <= 2) {
+      const message = 'Preencha o nome e o número do telefone.';
+      setAddConnectionError(message);
+      toast({ title: 'Erro', description: message, variant: 'destructive' });
       return;
     }
     setIsCreating(true);
@@ -172,12 +191,14 @@ export function useConnectionsManager() {
         is_default: connections.length === 0,
       });
       toast({ title: 'Conexão criada!', description: 'Agora conecte escaneando o QR Code.' });
+      setAddConnectionError(null);
       setIsAddDialogOpen(false);
       setNewConnection({ name: '', phone_number: '' });
       if (result?.connection) void handleShowQrCode(result.connection as unknown as WhatsAppConnection);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
       log.error('Error creating connection:', error);
+      setAddConnectionError(errorMessage);
       toast({ title: 'Erro ao criar conexão', description: errorMessage, variant: 'destructive' });
     } finally {
       setIsCreating(false);
@@ -280,21 +301,40 @@ export function useConnectionsManager() {
     }
   };
 
-  const handleCopyId = (id: string) => {
-    void navigator.clipboard.writeText(id);
-    toast({ title: 'ID copiado!', description: 'O ID da conexão foi copiado para a área de transferência.' });
+  const handleCopyId = async (id: string) => {
+    avisarCopia(await copiarTexto(id));
   };
 
   const handleReconnect = (connection: WhatsAppConnection) => handleShowQrCode(connection);
 
-  const handleDisconnect = async (connection: WhatsAppConnection) => {
-    if (!connection.instance_id) return;
+  // t_cce2f0f7: o resultado era engolido e a falha era anunciada DUAS vezes (o
+  // sonner do `withToast` dentro do `disconnectInstance` + o `use-toast` daqui),
+  // enquanto a tela fechava o diálogo como sucesso. Agora: uma única origem de
+  // aviso (o sonner da Evolution) e um retorno booleano — `false` significa que a
+  // sessão NÃO caiu, e o diálogo continua aberto com o motivo.
+  const handleDisconnect = async (connection: WhatsAppConnection): Promise<boolean> => {
+    if (!connection.instance_id) return false;
+
     try {
       await disconnectInstance(connection.instance_id);
-      await supabase.from('whatsapp_connections').update({ status: 'disconnected', qr_code: null }).eq('id', connection.id);
     } catch (error: unknown) {
-      toast({ title: 'Erro ao desconectar', description: error instanceof Error ? error.message : 'Erro desconhecido', variant: 'destructive' });
+      log.error('Error disconnecting connection:', error);
+      return false;
     }
+
+    const { error } = await supabase
+      .from('whatsapp_connections')
+      .update({ status: 'disconnected', qr_code: null })
+      .eq('id', connection.id);
+
+    if (error) {
+      log.error('Error marking connection as disconnected:', error);
+      // O estado real é o que está no banco: re-sincroniza em vez de mentir.
+      await fetchConnections();
+      return false;
+    }
+
+    return true;
   };
 
   // A troca de padrão é atômica no banco (RPC de t_ae0a55a6): uma chamada só
@@ -379,6 +419,7 @@ export function useConnectionsManager() {
     qrCodeDialog,
     newConnection, setNewConnection,
     isCreating,
+    addConnectionError, clearAddConnectionError,
     syncingHistory, setSyncingHistory,
     evolutionLoading,
     handleAddConnection,

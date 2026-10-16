@@ -22,6 +22,7 @@ vi.mock('@/lib/logger', () => ({
 }));
 
 import { useAudioRecorder } from '@/hooks/communication/useAudioRecorder';
+import { MAX_PTT_DURATION_SEC } from '@/lib/audio/pttLimits';
 
 // MediaRecorder fake com a mesma semantica de evento do real: start() grava e
 // stop() dispara onstop. As instancias ficam acessiveis para o teste inspecionar.
@@ -185,6 +186,34 @@ describe('useAudioRecorder — ciclo de vida da captura (R2-INB-008)', () => {
     expect(track.stop).toHaveBeenCalledTimes(1);
     expect(onRecordingComplete).not.toHaveBeenCalled();
     expect(vi.getTimerCount()).toBe(0);
+    expect(result.current.isRecording).toBe(false);
+  });
+
+  // PE-24 — o teto de gravação do WhatsApp é 16 min: o padrão do hook vinha de um
+  // número solto (300 s) e cortava a gravação na metade do limite real.
+  it('usa o teto de PTT do WhatsApp (16 min) quando nenhum maxDuration é passado', async () => {
+    const { stream } = makeMediaStream();
+    getUserMedia.mockResolvedValue(stream);
+
+    const { result } = renderHook(() => useAudioRecorder());
+    await act(async () => {
+      await result.current.startRecording();
+    });
+
+    const recorder = FakeMediaRecorder.instances[0];
+
+    // 5 min e 1 s: o teto antigo (300 s) já teria cortado aqui.
+    act(() => {
+      vi.advanceTimersByTime(301_000);
+    });
+    expect(recorder.stop).not.toHaveBeenCalled();
+    expect(result.current.isRecording).toBe(true);
+
+    // Até o corte real, no teto de PTT do WhatsApp.
+    act(() => {
+      vi.advanceTimersByTime(1000 * (MAX_PTT_DURATION_SEC + 1 - 301));
+    });
+    expect(recorder.stop).toHaveBeenCalledTimes(1);
     expect(result.current.isRecording).toBe(false);
   });
 });

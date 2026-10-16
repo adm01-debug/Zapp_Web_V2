@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { getLogger } from '@/lib/logger';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -8,6 +9,8 @@ import { Eye, Edit3 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useAuth } from '@/hooks/auth/useAuth';
+
+const log = getLogger('ViewersIndicator');
 
 interface Viewer {
   id: string;
@@ -46,23 +49,36 @@ export function useConversationViewers(contactId: string) {
         });
         setViewers(presentViewers);
       })
-      .subscribe(async (status) => {
+      .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          const { data: profile } = await supabase
+          // Sem handler, uma falha de rede no select (ou no track) vira
+          // unhandled promise rejection e some — o canal fica sem a presença
+          // do próprio agente sem nenhum aviso.
+          void supabase
             .from('profiles')
             .select('name, avatar_url')
             .eq('user_id', user.id)
-            .maybeSingle();
-          await channel.track({
-            name: profile?.name || 'Agente',
-            avatar_url: profile?.avatar_url || null,
-            is_typing: false,
-            online_at: new Date().toISOString(),
-          });
+            .maybeSingle()
+            .then(({ data: profile }) =>
+              channel.track({
+                name: profile?.name || 'Agente',
+                avatar_url: profile?.avatar_url || null,
+                is_typing: false,
+                online_at: new Date().toISOString(),
+              })
+            )
+            .then(undefined, (err: unknown) => {
+              log.warn('[ViewersIndicator] Falha ao registrar presença do viewer:', err);
+            });
         }
       });
 
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      // Fecha a inscrição antes de remover o canal: sem o unsubscribe o
+      // socket pode continuar recebendo eventos do canal já removido.
+      void channel.unsubscribe();
+      void supabase.removeChannel(channel).catch(() => {});
+    };
   }, [contactId, user?.id]);
 
   return viewers;

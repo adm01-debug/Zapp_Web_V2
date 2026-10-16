@@ -276,16 +276,27 @@ test("proxyToEvolution: erro não expõe corpo bruto da GO via campo 'details'",
   );
 });
 
-test("rotas de historico sem equivalente na GO tem guarda de flavor", () => {
-  for (const action of ["find-messages", "find-status-messages"]) {
-    const at = apiSrc.indexOf(`if (action === '${action}')`);
-    assert.notEqual(at, -1, `action ${action} sumiu`);
-    const block = apiSrc.slice(at, at + 600);
-    const guard = block.indexOf(`goHistoryNotSupported('${action}'`);
-    const call = block.indexOf("/chat/findMessages/");
-    assert.notEqual(guard, -1, `${action} precisa devolver goHistoryNotSupported no flavor GO`);
-    assert.ok(guard < call, `a guarda de ${action} tem que vir antes de chamar /chat/findMessages`);
-    assert.match(block.slice(0, guard), /if \(isGoFlavor\)/);
+test("rotas sem equivalente na GO foram removidas do handler (SL-075 E43)", () => {
+  // E43: as rotas sem equivalente na GO sairam do handler (404 antes de I/O).
+  for (const action of [
+    "find-messages", "find-status-messages", "find-chats", "set-presence",
+    "set-settings", "get-settings", "get-webhook", "send-template",
+    "mark-unread", "invite-info", "toggle-ephemeral", "offer-call",
+    "set-chatwoot", "get-chatwoot", "delete-chatwoot", "set-typebot",
+    "get-typebot", "delete-typebot", "typebot-sessions",
+    "typebot-change-status", "start-typebot", "set-openai", "get-openai",
+    "delete-openai", "set-dify", "get-dify", "delete-dify", "set-flowise",
+    "get-flowise", "delete-flowise", "set-evolution-bot", "get-evolution-bot",
+    "delete-evolution-bot", "set-rabbitmq", "get-rabbitmq", "set-sqs",
+    "get-sqs", "create-template", "find-templates", "delete-template",
+    "get-catalog", "get-collections", "set-proxy", "get-proxy", "set-evoai",
+    "get-evoai", "delete-evoai", "set-n8n", "get-n8n", "delete-n8n",
+    "set-kafka", "get-kafka", "set-nats", "get-nats", "set-pusher",
+    "get-pusher",
+  ]) {
+    assert.equal(
+      apiSrc.indexOf(`if (action === '${action}')`), -1,
+      `action ${action} devia ter sido removida (a GO nao tem a rota)`,
+    );
   }
-  assert.match(apiSrc, /import \{ goHistoryNotSupported \} from "\.\.\/\_shared\/evolution-sync-actions\.ts";/);
 });

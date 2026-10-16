@@ -8,6 +8,7 @@ import { ErrorBoundaryWithRetry } from '@/components/ui/error-boundary-retry';
 import { ViewLoadingFallback } from '@/components/layout/ViewLoadingFallback';
 import { ViewContainer } from '@/components/layout/ViewContainer';
 import { NavigationService } from '@/services/navigation.service';
+import { TALKX_KIT_VIEW_ID, isTalkXKitEnabled } from '@/components/talkx/kit/forcedState';
 import { useUserRole } from '@/hooks/system/useUserRole';
 import { ShieldAlert } from 'lucide-react';
 
@@ -53,24 +54,22 @@ const VIEW_MAP: Record<string, React.LazyExoticComponent<React.ComponentType<Rec
   'catalog': Views.ProductManagement,
   'transcriptions': Views.TranscriptionsHistoryView,
   'admin': Views.AdminView,
+  'supervisao': Views.SupervisaoView,
 'sentiment': Views.SentimentAlertsDashboard,
   'reports': Views.AdvancedReportsView,
   'security': Views.SecurityView,
   'settings': Views.SettingsView,
   'docs': Views.SystemFeaturesView,
-  'campaigns': Views.CampaignsView,
   'chatbot': Views.ChatbotFlowsView,
   'automations': Views.AutomationsManager,
   'integrations': Views.IntegrationsHub,
   'privacy': Views.LGPDComplianceView,
   'tasks': Views.TasksModule as unknown as React.LazyExoticComponent<React.ComponentType<Record<string, never>>>,
   'knowledge': Views.KnowledgeBaseView,
-  'payments': Views.PaymentLinksView,
   'wa-flows': Views.WhatsAppFlowsBuilder,
   'meta-capi': Views.MetaCAPIView,
   'diagnostics': Views.DiagnosticsView,
   'voip': Views.TelefoniaView,
-  'auto-export': Views.AutoExportManager,
   'google-calendar': Views.GoogleCalendarIntegration,
   'themes': Views.ThemeCustomizer,
   'schedule': Views.ScheduleCalendarView,
@@ -92,8 +91,11 @@ const VIEW_MAP: Record<string, React.LazyExoticComponent<React.ComponentType<Rec
   'media-migration': Views.MediaMigrationTool,
   'crm360': Views.CRM360ExplorerView,
   'ai-usage': Views.AIUsageDashboard,
+  'search-insights': Views.SearchInsightsView,
   'sla': Views.SLADashboardView,
   'talkx': Views.TalkXView,
+  // X055 — prancha de referência (sem entrada em menu; o gate abaixo decide).
+  'talkx-kit': Views.TalkXKitView,
   'multiplix': Views.MultiplixView,
   'evolution-monitor': Views.EvolutionMonitoringDashboard,
 };
@@ -123,7 +125,12 @@ export function ViewRouter({ currentView, userId, canGoBack, canGoForward, onGoB
   // Bloqueio real de rota: esconder do menu nao impede ?view= digitado a mao,
   // deep link ou favorito antigo. Nega por padrao ate os papeis E as permissoes
   // nomeadas carregarem — evita flash da tela restrita (mesmo padrao do ProtectedRoute).
-  const authorized = !accessLoading && NavigationService.canAccess(currentView, roles, permissions);
+  // X055 — a prancha não está no menu e o NavigationService a negaria como
+  // view desconhecida. Com a trava aberta (DEV ou VITE_TALKX_KIT=1) ela rende a
+  // prancha; com a trava fechada cai no bloqueio padrão, como qualquer view
+  // desconhecida — nenhuma permissão é afrouxada.
+  const kitOpen = currentView === TALKX_KIT_VIEW_ID && isTalkXKitEnabled();
+  const authorized = kitOpen || (!accessLoading && NavigationService.canAccess(currentView, roles, permissions));
 
   const content = useMemo(() => {
     if (accessLoading) {

@@ -52,4 +52,16 @@ describe('CallHistoryTabs (T44)', () => {
     expect(abas.filter((a) => a.getAttribute('aria-checked') === 'true')).toHaveLength(1);
     expect(abas.every((a) => a.getAttribute('role') === 'radio')).toBe(true);
   });
+
+  it('tem altura minima de 44px no celular (h-11) e 40px no desktop (md:h-10)', () => {
+    render(<CallHistoryTabs canal="whatsapp" onCanalChange={() => {}} />);
+    const grupo = screen.getByRole('radiogroup', { name: 'Canal das ligações' });
+    expect(grupo.className).toContain('h-11');
+    expect(grupo.className).toContain('md:h-10');
+    const abas = screen.getAllByTestId('tel-channel-tab');
+    abas.forEach((aba) => {
+      expect(aba.className).toContain('h-11');
+      expect(aba.className).toContain('md:h-10');
+    });
+  });
 });

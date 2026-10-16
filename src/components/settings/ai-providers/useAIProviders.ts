@@ -63,7 +63,7 @@ export function useAIProviders() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('ai_providers')
-        .select('*')
+        .select('id, name, description, provider_type, api_endpoint, model, system_prompt, config, is_active, is_default, use_for, created_at')
         .order('is_default', { ascending: false })
         .order('created_at', { ascending: true });
       if (error) throw error;

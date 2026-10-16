@@ -195,4 +195,35 @@ describe('ChatPanel — atalhos de busca do composer (R2-INB-017)', () => {
 
     expect(await screen.findByPlaceholderText('Buscar na conversa...')).toBeInTheDocument();
   });
+
+  // t_15c578b9 — o atalho compare por `e.key.toLowerCase()` (Caps Lock devolve 'F')
+  // e não age por baixo de um diálogo/menu Radix aberto.
+  it('Ctrl+F com Caps Lock (e.key "F") abre a busca da conversa', async () => {
+    renderPainel();
+
+    act(() => {
+      fireEvent.keyDown(document.body, { key: 'F', ctrlKey: true });
+    });
+
+    expect(await screen.findByPlaceholderText('Buscar na conversa...')).toBeInTheDocument();
+  });
+
+  it('com diálogo aberto o Ctrl+F não abre a busca da conversa', async () => {
+    renderPainel();
+
+    const dialog = document.createElement('div');
+    dialog.setAttribute('role', 'dialog');
+    dialog.setAttribute('data-state', 'open');
+    document.body.appendChild(dialog);
+
+    try {
+      act(() => {
+        fireEvent.keyDown(document.body, { key: 'f', ctrlKey: true });
+      });
+
+      expect(screen.queryByPlaceholderText('Buscar na conversa...')).not.toBeInTheDocument();
+    } finally {
+      dialog.remove();
+    }
+  });
 });

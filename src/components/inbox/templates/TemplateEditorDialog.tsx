@@ -51,8 +51,8 @@ function VariableInserter({ onInsert, className }: { onInsert: (variable: string
   );
 }
 
-function TemplatePreview({ content, contactData, className }: { content: string; contactData?: { name?: string; company?: string; job_title?: string }; className?: string }) {
-  const previewContent = replaceVariables(content, contactData);
+function TemplatePreview({ content, contactData, agentName, className }: { content: string; contactData?: { name?: string; company?: string; job_title?: string }; agentName?: string; className?: string }) {
+  const previewContent = replaceVariables(content, contactData, undefined, agentName);
   return (
     <div className={cn('p-3 rounded-lg bg-muted/50 border text-sm', className)}>
       <div className="flex items-center gap-2 mb-2 text-xs text-muted-foreground"><Eye className="w-3 h-3" />Preview com dados do contato</div>
@@ -66,9 +66,11 @@ interface TemplateEditorDialogProps {
   onOpenChange: (open: boolean) => void;
   template?: Template | null;
   onSave: (data: Partial<Template>) => Promise<void>;
+  /** Nome do atendente logado (profiles.name): preenche `{{atendente}}` no preview. */
+  agentName?: string;
 }
 
-export function TemplateEditorDialog({ open, onOpenChange, template, onSave }: TemplateEditorDialogProps) {
+export function TemplateEditorDialog({ open, onOpenChange, template, onSave, agentName }: TemplateEditorDialogProps) {
   const [title, setTitle] = useState(template?.title || '');
   const [content, setContent] = useState(template?.content || '');
   const [category, setCategory] = useState(template?.category || 'geral');
@@ -145,7 +147,7 @@ export function TemplateEditorDialog({ open, onOpenChange, template, onSave }: T
           {content && (
             <div className="space-y-2">
               <Label>Preview</Label>
-              <TemplatePreview content={content} contactData={{ name: 'João Silva', company: 'Tech Corp', job_title: 'Gerente Comercial' }} />
+              <TemplatePreview content={content} contactData={{ name: 'João Silva', company: 'Tech Corp', job_title: 'Gerente Comercial' }} agentName={agentName} />
             </div>
           )}
         </div>

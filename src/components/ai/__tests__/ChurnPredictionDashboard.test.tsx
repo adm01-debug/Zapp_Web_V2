@@ -157,6 +157,8 @@ describe('ChurnPredictionDashboard', () => {
   });
 
   // ===== RISK COLOR MAPPING =====
+  // PRE-EXISTENTE e tautologico: testa uma tabela local, nao o componente. Mantido
+  // para nao remover teste existente; a prova real do cartao e o bloco logo abaixo.
   describe('Risk color mapping', () => {
     const getRiskColor = (level: string) => {
       switch (level) {
@@ -173,6 +175,50 @@ describe('ChurnPredictionDashboard', () => {
     it('medium is yellow', () => expect(getRiskColor('medium')).toContain('yellow'));
     it('low is green', () => expect(getRiskColor('low')).toContain('green'));
     it('unknown defaults to muted', () => expect(getRiskColor('unknown')).toContain('muted'));
+  });
+
+  // ===== MAPA DE CORES DO RISCO (prova na SAIDA RENDERIZADA) =====
+  // PROVA AUTORITATIVA do cartao: renderiza o componente e injeta os QUATRO niveis
+  // pelo caminho canonico da tela (a analise de IA), conferindo no DOM que badge e
+  // barra da MESMA linha usam a cor da severidade; o "baixo" usa o verde (success),
+  // o padrao de severidade minima do sistema (AutoTicketClassifier). O badge ainda
+  // carrega o bg-primary do variant default do Badge; a classe da severidade e
+  // anexada depois e vence (success/warning/accent/destructive vem depois de primary
+  // no config do Tailwind). Follow-up: worker (testes) pode substituir o bloco
+  // tautologico acima.
+  describe('Cor do risco por severidade (badge e barra na saida renderizada)', () => {
+    it('badge e barra usam a cor da severidade; risco baixo = verde (success)', async () => {
+      const niveis = [
+        { contactId: 'c1', riskScore: 90, riskLevel: 'critical', classe: 'bg-destructive' },
+        { contactId: 'c2', riskScore: 70, riskLevel: 'high', classe: 'bg-warning' },
+        { contactId: 'c3', riskScore: 45, riskLevel: 'medium', classe: 'bg-accent' },
+        { contactId: 'c4', riskScore: 25, riskLevel: 'low', classe: 'bg-success' },
+      ];
+      vi.mocked(supabase.functions.invoke).mockResolvedValueOnce({
+        data: {
+          results: niveis.map(({ contactId, riskScore, riskLevel }) => ({
+            contactId, riskScore, riskLevel, daysSinceLastMessage: 10, totalMessageCount: 2, reasons: ['Engajamento regular'],
+          })),
+        },
+        error: null,
+      });
+
+      render(<ChurnPredictionDashboard />);
+      await screen.findByText('80%');
+      fireEvent.click(screen.getByText('Análise IA'));
+
+      for (const { riskScore, classe } of niveis) {
+        const badge = await screen.findByText(`${riskScore}%`);
+        const linha = badge.closest('div.flex');
+        expect(linha).not.toBeNull();
+        const barra = linha!.querySelector('[role="progressbar"]') as HTMLElement;
+        expect(barra).not.toBeNull();
+        expect(badge.className).toContain(classe);
+        // A barra (Progress) so recebe cor pela classe getRiskProgressColor.
+        expect(barra.className).toContain(classe);
+        expect(barra.className).not.toContain('bg-primary');
+      }
+    });
   });
 
   // ===== AI ANALYSIS =====

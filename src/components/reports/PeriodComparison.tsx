@@ -106,7 +106,7 @@ export function PeriodComparison() {
             Comparativo entre Períodos
           </CardTitle>
           <Select value={period} onValueChange={setPeriod}>
-            <SelectTrigger className="w-32 h-7 text-xs"><SelectValue /></SelectTrigger>
+            <SelectTrigger aria-label="Período" className="w-32 h-7 text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="week">Semanal</SelectItem>
               <SelectItem value="month">Mensal</SelectItem>

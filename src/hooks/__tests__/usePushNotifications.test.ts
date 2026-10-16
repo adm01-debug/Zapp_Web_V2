@@ -86,7 +86,7 @@ describe('usePushNotifications', () => {
 
     await act(async () => {
       await expect(result.current.requestPermission()).resolves.toBe(false);
-      await expect(result.current.subscribe()).resolves.toBeNull();
+      await expect(result.current.subscribe()).resolves.toBe(false);
       await expect(result.current.unsubscribe()).resolves.toBe(false);
       await expect(result.current.showNotification({ title: 'test', body: 'test' }))
         .resolves.toBe(false);

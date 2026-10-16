@@ -10,7 +10,7 @@ import { HelpMarkdown } from './talkxHelpMarkdown';
 const LEVEL_TONE: Record<TalkXHelpLevel, string> = {
   Iniciante: 'border-success/30 bg-success/12 text-success',
   'Intermediário': 'border-info/30 bg-info/12 text-info',
-  Avançado: 'border-violet-500/30 bg-violet-500/12 text-violet-400',
+  Avançado: 'border-violeta/30 bg-violeta/12 text-[hsl(var(--violeta-text))]',
 };
 
 export interface TalkXHelpArticleProps {

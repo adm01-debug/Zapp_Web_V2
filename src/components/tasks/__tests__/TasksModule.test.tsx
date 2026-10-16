@@ -18,6 +18,7 @@ import {
   makeWrapper,
   resetSupabaseMock,
   setSelectResult,
+  setWriteResult,
 } from '@/test/mocks/tarefas';
 
 import { TasksModule } from '@/components/tasks/TasksModule';
@@ -103,17 +104,108 @@ describe('TasksModule — etapa 45 (barra de filtros)', () => {
     });
   });
 
-  it('traz os 5 controles e só mostra "Limpar" quando um filtro sai do padrão', async () => {
+  it('traz o toggle de concluídas na linha de captura e deixa a barra sem duplicar', async () => {
     localStorage.setItem(MODE_STORAGE_KEY, 'board');
     renderModule();
 
+    const captura = await screen.findByTestId('tasks-capture-row');
+    expect(within(captura).getByTestId('quick-add')).toBeTruthy();
+    expect(within(captura).getByRole('switch', { name: 'Mostrar concluídas' })).toBeTruthy();
+
     const barra = await screen.findByTestId('tasks-filter-bar');
     expect(within(barra).getByRole('searchbox', { name: 'Buscar tarefa' })).toBeTruthy();
-    expect(within(barra).getByLabelText('Prioridade')).toBeTruthy();
-    expect(within(barra).getByLabelText('Contato')).toBeTruthy();
+    // Etapa 044 (refazer 2): no QUADRO os dois controles entram no popover
+    // "Filtros" (imagem 05) — a barra fica com busca, Filtros, alarme e Limpar.
+    expect(within(barra).queryByLabelText('Prioridade')).toBeNull();
+    expect(within(barra).queryByLabelText('Contato')).toBeNull();
+    expect(within(barra).getByTestId('tasks-filter-popover')).toBeTruthy();
     expect(within(barra).getByRole('switch', { name: 'Com alarme' })).toBeTruthy();
-    expect(within(barra).getByRole('switch', { name: 'Mostrar concluídas' })).toBeTruthy();
+    expect(within(barra).queryByRole('switch', { name: 'Mostrar concluídas' })).toBeNull();
     expect(within(barra).queryByRole('button', { name: /Limpar/ })).toBeNull();
+  });
+
+  it('Etapa 044 (refazer 2): modos à esquerda e barra de filtros à direita, na mesma linha', async () => {
+    localStorage.setItem(MODE_STORAGE_KEY, 'list');
+    renderModule();
+
+    const modos = await screen.findByTestId('tasks-mode');
+    const slot  = await screen.findByTestId('tasks-filter-bar-slot');
+
+    // A ORDEM no DOM: os modos vêm antes, e o slot da barra fecha a linha.
+    expect(modos.compareDocumentPosition(slot) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(slot.parentElement?.lastElementChild).toBe(slot);
+    expect(slot.parentElement).toBe(modos.parentElement);
+    // Quem empurra o grupo para a direita é o `ml-auto` (jsdom não tem layout,
+    // então o contrato provado aqui é a classe — a mesma convenção do teste de KPI).
+    expect(slot.className.split(/\s+/)).toContain('ml-auto');
+    expect(within(slot).getByTestId('tasks-filter-bar')).toBeTruthy();
+  });
+
+  it('Etapa 044 (refazer 2): no Quadro, Prioridade e Contato abrem dentro do popover "Filtros"', async () => {
+    localStorage.setItem(MODE_STORAGE_KEY, 'board');
+    renderModule();
+
+    const barra   = await screen.findByTestId('tasks-filter-bar');
+    const filtros = within(barra).getByTestId('tasks-filter-popover');
+
+    // fechado: os dois controles não existem soltos na barra
+    expect(within(barra).queryByLabelText('Prioridade')).toBeNull();
+    expect(within(barra).queryByLabelText('Contato')).toBeNull();
+    expect(filtros.getAttribute('aria-haspopup')).toBe('dialog');
+    expect(filtros.getAttribute('aria-expanded')).toBe('false');
+
+    // aberto: os dois aparecem DENTRO do popover
+    fireEvent.pointerDown(filtros, { button: 0 });
+    fireEvent.click(filtros);
+    const dentro = await screen.findByTestId('tasks-filter-popover-content');
+    expect(within(dentro).getByLabelText('Prioridade')).toBeTruthy();
+    expect(within(dentro).getByLabelText('Contato')).toBeTruthy();
+  });
+
+  it('Etapa 044 (refazer 2): em tela estreita (até 1024 px) os dois também vão para o "Filtros"', async () => {
+    const original = window.matchMedia;
+    window.matchMedia = ((query: string) => ({
+      matches: query.includes('1024px'), media: query, onchange: null,
+      addListener: () => {}, removeListener: () => {},
+      addEventListener: () => {}, removeEventListener: () => {},
+      dispatchEvent: () => false,
+    })) as unknown as typeof window.matchMedia;
+    try {
+      localStorage.setItem(MODE_STORAGE_KEY, 'list');
+      renderModule();
+
+      const barra = await screen.findByTestId('tasks-filter-bar');
+      expect(within(barra).queryByLabelText('Prioridade')).toBeNull();
+      expect(within(barra).queryByLabelText('Contato')).toBeNull();
+      expect(within(barra).getByTestId('tasks-filter-popover')).toBeTruthy();
+    } finally {
+      window.matchMedia = original;
+    }
+  });
+
+  it('Etapa 043 (refazer 2): o item criado na captura entra com realce e o realce sai por volta de 1,2 s', async () => {
+    localStorage.setItem(MODE_STORAGE_KEY, 'list');
+    // O INSERT devolve o id da tarefa nova (é o que o realce usa para saber QUAL
+    // cartão pintar) e a leitura já traz essa linha, como acontece depois da
+    // invalidação da query no app.
+    setWriteResult({ data: { id: 'a' }, error: null });
+    renderModule();
+
+    const campo = await screen.findByTestId('quick-add-input');
+    fireEvent.change(campo, { target: { value: 'Recém-criada' } });
+
+    const t0 = Date.now();
+    fireEvent.keyDown(campo, { key: 'Enter' });
+
+    expect(await screen.findByTestId('work-item-realce')).toBeTruthy();
+    expect(h.insert).toHaveBeenCalledTimes(1);
+
+    await waitFor(() => expect(screen.queryByTestId('work-item-realce')).toBeNull(), { timeout: 3000 });
+    const durou = Date.now() - t0;
+
+    // some sozinho, e a janela é a contratada (1,2 s) — não "na hora" nem preso
+    expect(durou).toBeGreaterThanOrEqual(1000);
+    expect(durou).toBeLessThan(2500);
   });
 
   it('esconder as concluídas recorta o Quadro, escreve done=0 e o "Limpar" desfaz', async () => {
@@ -126,7 +218,7 @@ describe('TasksModule — etapa 45 (barra de filtros)', () => {
     await waitFor(() => expect(screen.queryByText('Feita')).toBeNull());
     // a coluna vazia do Quadro entra no lugar (etapa 46); Fase F: asserção EXATA —
     // 4 das 5 colunas ficam vazias (backlog, fazendo, aguardando e concluído)
-    expect(screen.getAllByText('Coluna vazia')).toHaveLength(4);
+    expect(screen.getAllByTestId('board-column-empty')).toHaveLength(4);
     expect(window.location.search).toContain('done=0');
 
     fireEvent.click(screen.getByRole('button', { name: /Limpar/ }));
@@ -141,7 +233,7 @@ describe('TasksModule — etapa 45 (barra de filtros)', () => {
     window.history.replaceState(null, '', '/?prio=urgent');
     renderModule();
 
-    expect(await screen.findByText('Nenhuma tarefa com esse filtro')).toBeTruthy();
+    expect(await screen.findByText('Nenhum resultado')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Limpar filtros' })).toBeTruthy();
   });
 
@@ -155,7 +247,7 @@ describe('TasksModule — etapa 45 (barra de filtros)', () => {
     expect(screen.queryByText(/0 abertas/)).toBeNull();
   });
 
-  it('a busca anda no campo na hora e vira filtro depois do debounce, já na URL', async () => {
+  it('a busca anda no campo na hora e vira filtro depois do debounce, fora da URL', async () => {
     localStorage.setItem(MODE_STORAGE_KEY, 'board');
     renderModule();
     expect(await screen.findByText('Ligar')).toBeTruthy();
@@ -163,13 +255,14 @@ describe('TasksModule — etapa 45 (barra de filtros)', () => {
     const campo = screen.getByRole('searchbox', { name: 'Buscar tarefa' });
     fireEvent.change(campo, { target: { value: 'liga' } });
 
-    // o valor do campo é imediato; o recorte (e a URL) vêm com o debounce
+    // o valor do campo é imediato; o recorte (e a escrita da URL) vêm com o debounce
     expect((campo as HTMLInputElement).value).toBe('liga');
     // combina as duas asserções para garantir que o debounce (200ms) disparou
     // antes de checar window.location.search
     await waitFor(() => {
       expect(screen.queryByText('Feita')).toBeNull();
-      expect(window.location.search).toContain('q=liga');
+      // N-084: o texto da busca não viaja na URL — o recorte é o sinal do debounce.
+      expect(window.location.search).not.toContain('q=');
     });
   });
 });
@@ -281,7 +374,9 @@ describe('TasksModule — etapa 43 (subtítulo com contagens reais)', () => {
     renderModule();
 
     // 4 nao concluidas (a, b, c, d) e 1 delas vence hoje; a concluida nao conta
-    await waitFor(() => expect(screen.getByText('4 abertas · 1 para hoje')).toBeTruthy());
+    await waitFor(() =>
+      expect(screen.getByText('Seu espaço de execução · 4 abertas · 1 para hoje')).toBeTruthy(),
+    );
   });
 
   it('usa singular com uma única tarefa aberta', async () => {
@@ -292,7 +387,9 @@ describe('TasksModule — etapa 43 (subtítulo com contagens reais)', () => {
 
     renderModule();
 
-    await waitFor(() => expect(screen.getByText('1 aberta · 1 para hoje')).toBeTruthy());
+    await waitFor(() =>
+      expect(screen.getByText('Seu espaço de execução · 1 aberta · 1 para hoje')).toBeTruthy(),
+    );
   });
 
   it('formata milhar em pt-BR (1.234, não 1234)', async () => {
@@ -303,7 +400,9 @@ describe('TasksModule — etapa 43 (subtítulo com contagens reais)', () => {
 
     renderModule();
 
-    await waitFor(() => expect(screen.getByText('1.234 abertas · 0 para hoje')).toBeTruthy());
+    await waitFor(() =>
+      expect(screen.getByText('Seu espaço de execução · 1.234 abertas · 0 para hoje')).toBeTruthy(),
+    );
   });
 });
 
@@ -350,18 +449,34 @@ describe('TasksModule — etapa 44 (KPIs no padrão ContactKpiCard)', () => {
     expect(tiles).toHaveLength(5);
     for (const tile of tiles) expect(tile.className).toContain('h-11 w-11');
 
-    // valor 700 + tabular (o tamanho fica no token da escala: text-2xl)
+    // valor 700 + tabular, no token da escala: 24px (text-2xl) nos quatro
+    // contadores e 20px (text-xl) no Tempo médio — o "1,4 dias" é o único com
+    // unidade e estoura a coluna em 360px (etapa 022).
+    const strip = within(screen.getByTestId('tasks-kpi-strip'));
+    const valorDe = (label: string) =>
+      strip.getByText(label).closest('[data-testid="kpi-card"]')
+        ?.querySelector('[data-testid="kpi-value"]')?.className ?? '';
+
     for (const valor of screen.getAllByTestId('kpi-value')) {
       expect(valor.className).toContain('font-bold');
       expect(valor.className).toContain('tabular-nums');
-      expect(valor.className).toContain('text-2xl');
+    }
+    for (const label of ['Atrasadas', 'Para hoje', 'Fazendo', 'Concluídas · 7 dias']) {
+      expect(valorDe(label)).toContain('text-2xl');
+    }
+    expect(valorDe('Tempo médio')).toContain('text-xl');
+
+    // todo card tem subtítulo (etapas 017–022)
+    for (const sub of screen.getAllByTestId('kpi-subtitle')) {
+      expect(sub.textContent?.length ?? 0).toBeGreaterThan(0);
     }
   });
 
   it('pinta os tiles por tipo e mostra o WIP "n/3" no Fazendo', async () => {
     renderComKpis();
-    // os 5 cards existem desde o primeiro render (vazio): espera os numeros
-    // reais chegarem antes de olhar as cores
+    // etapa 027: no primeiro render (carregando) o topo é o ESQUELETO — os 5
+    // cards entram quando o dado chega (antes eram 5 zeros já montados).
+    await waitFor(() => expect(screen.queryByTestId('tasks-kpi-strip-skeleton')).toBeNull());
     const strip = within(screen.getByTestId('tasks-kpi-strip'));
     await waitFor(() => expect(strip.getByText('Fazendo').closest('[data-testid="kpi-card"]')
       ?.querySelector('[data-testid="kpi-value"]')?.textContent).toBe('2/3'));
@@ -373,17 +488,32 @@ describe('TasksModule — etapa 44 (KPIs no padrão ContactKpiCard)', () => {
       strip.getByText(label).closest('[data-testid="kpi-card"]')
         ?.querySelector('[data-testid="kpi-value"]')?.textContent ?? '';
 
-    // com 1 atrasada o tile vira o de alerta; sem atrasadas seria o amarelo
+    // etapa 017: com 1 atrasada o tile vira o de alerta; sem atrasadas seria o
+    // neutro ("Tudo em dia", §3.1 linha 41 + etapa 017).
     expect(tileDe('Atrasadas')).toContain('bg-destructive/15');
-    expect(tileDe('Para hoje')).toContain('bg-kpi-blue');
-    expect(tileDe('Fazendo')).toContain('bg-kpi-purple');
-    expect(tileDe('Concluídas (7d)')).toContain('bg-kpi-green');
+    // etapas 018/019/020: âmbar no dia, anel azul no limite, verde no concluído.
+    expect(tileDe('Para hoje')).toContain('bg-kpi-yellow');
+    expect(tileDe('Fazendo')).toContain('bg-kpi-blue');
+    expect(tileDe('Concluídas · 7 dias')).toContain('bg-kpi-green');
     expect(tileDe('Tempo médio')).toContain('bg-muted');
 
     expect(valorDe('Fazendo')).toBe('2/3');
     expect(valorDe('Atrasadas')).toBe('1');
     expect(valorDe('Para hoje')).toBe('1');
-    expect(valorDe('Concluídas (7d)')).toBe('1');
+    expect(valorDe('Concluídas · 7 dias')).toBe('1');
+
+    // os subtítulos das etapas 017–020 vêm com o estado
+    const subtituloDe = (label: string) =>
+      strip.getByText(label).closest('[data-testid="kpi-card"]')
+        ?.querySelector('[data-testid="kpi-subtitle"]')?.textContent ?? '';
+    expect(subtituloDe('Atrasadas')).toBe('Requer atenção');
+    expect(subtituloDe('Para hoje')).toBe('Vencem hoje');
+    expect(subtituloDe('Fazendo')).toBe('Em andamento');
+    expect(subtituloDe('Concluídas · 7 dias')).toBe('Últimos 7 dias');
+
+    // etapa 019: o anel do limite é um SVG no tile do Fazendo
+    expect(strip.getByText('Fazendo').closest('[data-testid="kpi-card"]')
+      ?.querySelector('[data-testid="kpi-ring"]')).toBeTruthy();
   });
 
   it('o grid tem os 3 breakpoints (2 / 3 / 5 colunas)', async () => {
@@ -438,14 +568,20 @@ describe('TasksModule — etapas 77/78 (atalhos do registry + aria-live)', () =>
     expect(regiao.textContent).toBe('');
   });
 
-  it('N foca o QuickAdd', async () => {
+  it('N abre o modal de criação pelo contexto (etapa 014)', async () => {
     setSelectResult({ data: [makeTaskRow()], error: null });
     renderModule();
     await screen.findByTestId('work-item-card');
 
+    const botao = screen.getByRole('button', { name: /Nova tarefa/ });
+    expect(botao.getAttribute('aria-expanded')).toBe('false');
+
     comandar('tasks-focus-quickadd');
 
-    expect(document.activeElement).toBe(screen.getByTestId('quick-add-input'));
+    // O mesmo estado que o modal (T35) consumirá: o botão que o abre sabe que
+    // está aberto, e o foco não sobra no QuickAdd (que ficaria atrás do modal).
+    await waitFor(() => expect(botao.getAttribute('aria-expanded')).toBe('true'));
+    expect(document.activeElement).not.toBe(screen.getByTestId('quick-add-input'));
   });
 
   it('o atalho único de modo responde a 1, 2 e 3', async () => {
@@ -638,16 +774,109 @@ describe('TasksModule — etapa 86 (modo padrão, deep-link e atalho N)', () => 
     expect(screen.queryByTestId('work-item-sheet')).toBeNull();
   });
 
-  it('o atalho N na Agenda leva o foco ao QuickAdd do dia (único da tela)', async () => {
+  it('o atalho N abre o modal também na Agenda (o cabeçalho não muda com a visão)', async () => {
     localStorage.setItem(MODE_STORAGE_KEY, 'agenda');
     renderModule();
     await screen.findAllByTestId('agenda-day-dots');
+
+    const botao = screen.getByRole('button', { name: /Nova tarefa/ });
 
     act(() => {
       document.dispatchEvent(new CustomEvent('tasks-shortcut', { detail: { id: 'tasks-focus-quickadd' } }));
     });
 
+    await waitFor(() => expect(botao.getAttribute('aria-expanded')).toBe('true'));
+    // o QuickAdd do dia continua sendo o único da tela (nada de campo paralelo)
     expect(screen.getAllByTestId('quick-add')).toHaveLength(1);
-    expect(document.activeElement).toBe(screen.getByTestId('quick-add-input'));
+  });
+});
+
+/**
+ * Etapas 023 e 027 (cartão T13, 11/10/2026) — o KPI como ATALHO do recorte de
+ * prazo, fechado de ponta a ponta: o clique escreve no MESMO filtro da barra
+ * (nenhum estado paralelo na tela), a Lista recorta, a URL espelha e clicar de
+ * novo devolve o recorte pela ação de limpar. A etapa 027 entra por aqui
+ * também: enquanto o dado não chega o topo é o ESQUELETO, não 5 zeros.
+ */
+describe('TasksModule — etapas 023/027 (KPI aplica o recorte de prazo)', () => {
+  beforeEach(() => {
+    cleanup();
+    resetSupabaseMock();
+    localStorage.clear();
+    window.history.replaceState(null, '', '/');
+    const ontem = new Date(Date.now() - 86_400_000).toISOString();
+    setSelectResult({
+      data: [
+        makeTaskRow({ id: 'o1', status: 'todo', due_date: ontem }),
+        makeTaskRow({ id: 'h1', status: 'todo', due_date: hojeFimDoDia() }),
+        makeTaskRow({ id: 'f1', status: 'doing' }),
+      ],
+      error: null,
+    });
+  });
+  afterEach(() => {
+    window.history.replaceState(null, '', '/');
+    cleanup();
+  });
+
+  const kpi = (label: string): HTMLElement =>
+    within(screen.getByTestId('tasks-kpi-strip'))
+      .getByText(label)
+      .closest('[data-testid="kpi-card"]') as HTMLElement;
+
+  it('027: no primeiro render o topo é o esqueleto; os cards entram junto com o dado', async () => {
+    renderModule();
+
+    // antes do dado: esqueleto (mesma grade), NENHUM valor de mentira na tela
+    expect(screen.getByTestId('tasks-kpi-strip-skeleton')).toBeTruthy();
+    expect(screen.queryByTestId('tasks-kpi-strip')).toBeNull();
+    expect(screen.queryAllByTestId('kpi-value')).toHaveLength(0);
+
+    await waitFor(() => expect(screen.queryByTestId('tasks-kpi-strip-skeleton')).toBeNull());
+    expect(screen.getAllByTestId('kpi-card')).toHaveLength(5);
+  });
+
+  it('023: clicar em Atrasadas recorta a Lista, escreve due=overdue e o segundo clique desfaz', async () => {
+    renderModule();
+    await waitFor(() => expect(screen.getAllByTestId('work-item-card')).toHaveLength(3));
+
+    const acao = () => within(kpi('Atrasadas')).getByTestId('kpi-acao');
+    expect(acao().getAttribute('aria-pressed')).toBe('false');
+    expect(screen.queryByRole('button', { name: /Limpar/ })).toBeNull();
+
+    fireEvent.click(acao());
+
+    // 1) o recorte vale para a TELA: a Lista mostra só a atrasada
+    await waitFor(() => expect(screen.getAllByTestId('work-item-card')).toHaveLength(1));
+    // 2) o MESMO estado espelha na URL — é o filtro da barra, não um paralelo
+    await waitFor(() => expect(window.location.search).toContain('due=overdue'));
+    // 3) o card se diz pressionado, ganha o selo e a barra passa a oferecer o Limpar
+    await waitFor(() => expect(acao().getAttribute('aria-pressed')).toBe('true'));
+    expect(within(kpi('Atrasadas')).getByTestId('kpi-chip')).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Limpar/ })).toBeTruthy();
+
+    fireEvent.click(acao());
+
+    // clicar DE NOVO devolve o recorte: Lista inteira de volta, URL sem `due=`
+    await waitFor(() => expect(screen.getAllByTestId('work-item-card')).toHaveLength(3));
+    expect(window.location.search).not.toContain('due=');
+    await waitFor(() => expect(acao().getAttribute('aria-pressed')).toBe('false'));
+    expect(within(kpi('Atrasadas')).queryByTestId('kpi-chip')).toBeNull();
+  });
+
+  it('023: "Para hoje" aplica o outro recorte e troca o card ativo (um recorte por vez)', async () => {
+    renderModule();
+    await waitFor(() => expect(screen.getAllByTestId('work-item-card')).toHaveLength(3));
+
+    fireEvent.click(within(kpi('Atrasadas')).getByTestId('kpi-acao'));
+    await waitFor(() => expect(window.location.search).toContain('due=overdue'));
+
+    fireEvent.click(within(kpi('Para hoje')).getByTestId('kpi-acao'));
+
+    await waitFor(() => expect(window.location.search).toContain('due=today'));
+    await waitFor(() => expect(within(kpi('Para hoje')).getByTestId('kpi-acao').getAttribute('aria-pressed')).toBe('true'));
+    // o recorte anterior saiu: só um selo na faixa
+    expect(within(kpi('Atrasadas')).queryByTestId('kpi-chip')).toBeNull();
+    expect(screen.getAllByTestId('kpi-chip')).toHaveLength(1);
   });
 });

@@ -29,7 +29,14 @@ export async function provisionarSip(): Promise<SipProvisioning | null> {
     const isMissingSecret = error ? ctx?.status === 503 || ctx?.code === 'SIP_NOT_CONFIGURED' : !password;
     // Sem erro e sem os campos = função ainda antiga (janela entre o deploy do
     // front, imediato, e o da Edge): avisa em vez de conectar com valor velho.
-    toast.error(isMissingSecret ? 'Senha SIP não configurada. Adicione o segredo SIP_PASSWORD no Supabase.' : error ? 'Erro ao conectar ao servidor SIP. Verifique sua sessão e tente novamente.' : 'Provisionamento SIP indisponível (função desatualizada). Tente novamente após a publicação.');
+    if (isMissingSecret) {
+      console.warn('[sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.');
+      toast.error('Senha SIP não configurada. Fale com o administrador do sistema.');
+    } else if (error) {
+      toast.error('Erro ao conectar ao servidor SIP. Verifique sua sessão e tente novamente.');
+    } else {
+      toast.error('Provisionamento SIP indisponível (função desatualizada). Tente novamente após a publicação.');
+    }
     return null;
   }
   return { server, user, password, wsPort };

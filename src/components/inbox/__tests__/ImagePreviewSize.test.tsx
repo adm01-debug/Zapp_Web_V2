@@ -82,7 +82,8 @@ describe('ImagePreview - tamanho do modal (PR #818, 35% de redução)', () => {
     const onClose = vi.fn();
     render(<ImagePreview src="https://example.com/img.jpg" alt="Foto" onClose={onClose} />);
 
-    fireEvent.keyDown(window, { key: 'Escape' });
+    // Esc é tratado NO diálogo (não em listener de `window`).
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
@@ -90,8 +91,8 @@ describe('ImagePreview - tamanho do modal (PR #818, 35% de redução)', () => {
     const onClose = vi.fn();
     render(<ImagePreview src="https://example.com/img.jpg" alt="Foto" onClose={onClose} />);
 
-    fireEvent.keyDown(window, { key: 'Enter' });
-    fireEvent.keyDown(window, { key: 'a' });
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Enter' });
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'a' });
     expect(onClose).not.toHaveBeenCalled();
   });
 

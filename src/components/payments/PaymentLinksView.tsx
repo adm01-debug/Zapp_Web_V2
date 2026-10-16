@@ -12,14 +12,26 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
-  Plus, DollarSign, Link2, Copy, Trash2, CheckCircle, Clock, XCircle,
+  Plus, DollarSign, Link2, Trash2, CheckCircle, Clock, XCircle,
   CreditCard, QrCode, ExternalLink, Send, FlaskConical
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePaymentLinks } from '@/hooks/payments/usePaymentLinks';
 
+interface PaymentLink {
+  id: string;
+  title: string;
+  status: 'active' | 'paid' | 'expired' | 'cancelled';
+  amount: number;
+  payment_method: string;
+  created_at: string;
+  description?: string;
+  expires_at?: string | null;
+}
+
 export function PaymentLinksView() {
-  const { links, isLoading: loading, isError, createLink, deleteLink } = usePaymentLinks();
+  const { links: _links, isLoading: loading, isError, createLink, deleteLink } = usePaymentLinks();
+  const links = (_links ?? []) as PaymentLink[];
   const [showDialog, setShowDialog] = useState(false);
 
   // Form
@@ -56,19 +68,6 @@ export function PaymentLinksView() {
     toast({ title: 'Link de pagamento criado!' });
     setShowDialog(false);
     setFormTitle(''); setFormDescription(''); setFormAmount(''); setFormMethod('pix');
-  };
-
-  const copyLink = async (url: string) => {
-    try {
-      await navigator.clipboard.writeText(url);
-      toast({ title: 'Link copiado!' });
-    } catch {
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível copiar o link.',
-        variant: 'destructive',
-      });
-    }
   };
 
   const handleDeleteLink = async (id: string) => {
@@ -187,12 +186,7 @@ export function PaymentLinksView() {
                       </p>
                     </div>
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {link.payment_url && (
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => void copyLink(link.payment_url!)}>
-                          <Copy className="w-3.5 h-3.5" />
-                        </Button>
-                      )}
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => void handleDeleteLink(link.id)}>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => void handleDeleteLink(link.id)} aria-label="Excluir link de pagamento">
                         <Trash2 className="w-3.5 h-3.5" />
                       </Button>
                     </div>
@@ -233,9 +227,9 @@ export function PaymentLinksView() {
                 <Input type="number" value={formAmount} onChange={(e) => setFormAmount(e.target.value)} placeholder="0,00" />
               </div>
               <div>
-                <Label>Método</Label>
+                <Label htmlFor="payment-method-filter">Método</Label>
                 <Select value={formMethod} onValueChange={setFormMethod}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger id="payment-method-filter"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="pix">PIX</SelectItem>
                     <SelectItem value="card">Cartão</SelectItem>

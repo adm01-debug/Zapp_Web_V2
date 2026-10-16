@@ -67,7 +67,9 @@ export function SentimentTab({ analysis, sentimentScore, currentSentiment, analy
               Desempenho do Atendente
             </h4>
             <div className="space-y-3">
-              {(Object.entries(analysis.agentPerformance) as [string, number][]).map(([key, value]) => {
+              {Object.entries(analysis.agentPerformance)
+                .filter((entry): entry is [string, number] => typeof entry[1] === 'number' && Number.isFinite(entry[1]))
+                .map(([key, value]) => {
                 const config = performanceLabels[key];
                 if (!config) return null;
                 const Icon = config.icon;
@@ -117,9 +119,9 @@ export function SentimentTab({ analysis, sentimentScore, currentSentiment, analy
                       style={{
                         height: `${Math.max(item.sentiment_score, 5)}%`,
                         backgroundColor:
-                          item.sentiment === 'positivo' ? 'rgb(34 197 94 / 0.6)'
-                            : item.sentiment === 'negativo' || item.sentiment === 'critico' ? 'rgb(239 68 68 / 0.6)'
-                              : 'rgb(156 163 175 / 0.4)',
+                          item.sentiment === 'positivo' ? 'hsl(var(--success) / 0.6)'
+                            : item.sentiment === 'negativo' || item.sentiment === 'critico' ? 'hsl(var(--destructive) / 0.6)'
+                              : 'hsl(var(--muted-foreground) / 0.4)',
                       }}
                     />
                   </TooltipTrigger>

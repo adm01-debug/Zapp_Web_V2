@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { useSLARules, SLARule, SLARuleScope } from '@/hooks/sla/useSLARules';
+import { useSLAScopeNames } from '@/hooks/sla/useSLAScopeNames';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -19,46 +18,18 @@ export function ScopeRulesList({ scope }: ScopeRulesListProps) {
   const [showDialog, setShowDialog] = useState(false);
   const [editingRule, setEditingRule] = useState<SLARule | null>(null);
 
-  // Resolve human-readable names for UUID-based scopes
+  // Resolve human-readable names for UUID-based scopes (hook extraído: filtra
+  // ids inválidos antes do `.in()` e só consulta o escopo ativo).
   const contactIds = rules.filter(r => r.contact_id).map(r => r.contact_id!);
   const queueIds = rules.filter(r => r.queue_id).map(r => r.queue_id!);
   const agentIds = rules.filter(r => r.agent_id).map(r => r.agent_id!);
 
-  const { data: contactNames = {} } = useQuery({
-    queryKey: ['sla-contact-names', contactIds],
-    queryFn: async () => {
-      if (contactIds.length === 0) return {};
-      const { data } = await supabase.from('contacts').select('id, name, phone').in('id', contactIds);
-      const map: Record<string, string> = {};
-      (data || []).forEach(c => { map[c.id] = `${c.name} (${c.phone})`; });
-      return map;
-    },
-    enabled: scope === 'contact' && contactIds.length > 0,
-  });
-
-  const { data: queueNames = {} } = useQuery({
-    queryKey: ['sla-queue-names', queueIds],
-    queryFn: async () => {
-      if (queueIds.length === 0) return {};
-      const { data } = await supabase.from('queues').select('id, name').in('id', queueIds);
-      const map: Record<string, string> = {};
-      (data || []).forEach(q => { map[q.id] = q.name; });
-      return map;
-    },
-    enabled: scope === 'queue' && queueIds.length > 0,
-  });
-
-  const { data: agentNames = {} } = useQuery({
-    queryKey: ['sla-agent-names', agentIds],
-    queryFn: async () => {
-      if (agentIds.length === 0) return {};
-      const { data } = await supabase.from('profiles').select('id, name').in('id', agentIds);
-      const map: Record<string, string> = {};
-      (data || []).forEach(a => { map[a.id] = a.name; });
-      return map;
-    },
-    enabled: scope === 'agent' && agentIds.length > 0,
-  });
+  const { contactNames, queueNames, agentNames } = useSLAScopeNames(
+    scope,
+    contactIds,
+    queueIds,
+    agentIds
+  );
 
   const getScopeLabel = (rule: SLARule): string | undefined => {
     if (scope === 'contact' && rule.contact_id) return contactNames[rule.contact_id];

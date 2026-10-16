@@ -10,9 +10,12 @@ import {
   pickBestTemplate,
   countLowClickCampaigns,
   buildInsights,
+  estimateLiftPct,
   fetchInsightData,
   CLICK_SAMPLE_LIMIT,
   HOUR_MIN_SAMPLE,
+  LIFT_MAX,
+  LIFT_MIN_FINISHED_CAMPAIGNS,
   METRIC_MIN_SENT,
   TALKX_COMPLETED_STATUS,
   type InsightRaw,
@@ -90,7 +93,7 @@ describe('countLowClickCampaigns (IA-168)', () => {
 describe('buildInsights (rótulos correspondem ao cálculo)', () => {
   const base: InsightRaw = {
     bestHour: null, bestTemplate: null, inactiveContactPct: null,
-    lowClickCampaigns: 0, finishedCampaigns: 0, avgClickRate: 0,
+    lowClickCampaigns: 0, finishedCampaigns: 0, avgClickRate: 0, avgReplyRate: 0,
     clicksTruncated: false, clickError: false, campaignsTruncated: false,
   };
 
@@ -313,5 +316,96 @@ describe('fetchInsightData — conjunto coerente (cartão #223)', () => {
     mockQueries({ talkx_campaigns: [{ data: null, error: { message: 'permission denied' } }] });
 
     await expect(fetchInsightData()).rejects.toThrow(/concluídas/);
+  });
+});
+
+// ─── TL-173 (X188): ação de cada recomendação, janela da tela e Resumo ────────
+// Antes: `applyLabel` vinha sem ação (o botão nunca aparecia na tela) e não havia
+// Resumo. Aqui o hook declara a AÇÃO de cada regra e o ganho estimado condicionado.
+const okRaw: InsightRaw = {
+  bestHour: { hour: 9, replyRate: 0.2, sample: 50 },
+  bestTemplate: { name: 'Taxa', replyRate: 0.4, campaignId: 'c1', sent: 20, replied: 8 },
+  inactiveContactPct: 0.3,
+  lowClickCampaigns: 4,
+  finishedCampaigns: 12,
+  avgClickRate: 0.01,
+  avgReplyRate: 0.1,
+  clicksTruncated: false,
+  clickError: false,
+  campaignsTruncated: false,
+};
+
+describe('buildInsights — ação de cada recomendação (TL-173)', () => {
+  it('toda recomendação traz rótulo E destino do botão', () => {
+    const out = buildInsights(okRaw);
+    expect(out.map((i) => [i.id, i.applyLabel, i.action])).toEqual([
+      ['best-hour', 'Aplicar sugestão', 'new-campaign'],
+      ['best-template', 'Ver templates', 'templates'],
+      ['inactive-contacts', 'Criar campanha de reativação', 'new-campaign'],
+      ['low-clicks', 'Ver campanhas', 'campaigns'],
+    ]);
+  });
+
+  it('o texto usa a janela pedida (período da tela), não um valor fixo', () => {
+    const out = buildInsights(okRaw, 30);
+    expect(out.find((i) => i.id === 'best-hour')?.description).toContain('Nos últimos 30 dias');
+    expect(out.find((i) => i.id === 'low-clicks')?.description).toContain('últimos 30 dias');
+  });
+
+  it('sem o período informado, mantém a janela padrão do módulo', () => {
+    const out = buildInsights(okRaw);
+    expect(out.find((i) => i.id === 'best-hour')?.description).toContain('Nos últimos 90 dias');
+  });
+});
+
+describe('estimateLiftPct — estimativa condicionada (TL-173)', () => {
+  it('exige o piso de campanhas concluídas na janela', () => {
+    const raw = { ...okRaw, finishedCampaigns: LIFT_MIN_FINISHED_CAMPAIGNS - 1 };
+    expect(estimateLiftPct(raw)).toBeNull();
+  });
+
+  it('sem taxa de resposta média medida não publica percentual', () => {
+    expect(estimateLiftPct({ ...okRaw, avgReplyRate: 0 })).toBeNull();
+  });
+
+  it('sem recomendação acima da média não publica percentual', () => {
+    const raw = { ...okRaw, bestHour: { hour: 9, replyRate: 0.05, sample: 50 }, bestTemplate: null };
+    expect(estimateLiftPct(raw)).toBeNull();
+  });
+
+  it('publica o maior ganho medido, limitado ao teto', () => {
+    // hora: 0.2 contra 0.1 → +100% (corta no teto de 50%).
+    expect(estimateLiftPct(okRaw)).toBe(LIFT_MAX);
+    // template: 0.13 contra 0.1 → +30%.
+    expect(estimateLiftPct({ ...okRaw, bestHour: null, bestTemplate: { name: 'T', replyRate: 0.13, campaignId: 'c1', sent: 20, replied: 3 } })).toBeCloseTo(0.3, 10);
+  });
+});
+
+describe('fetchInsightData — janela da tela (TL-173)', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('a janela pedida define o corte das consultas', async () => {
+    const calls: Array<[string, unknown[]]> = [];
+    const recording = (res: Res) => {
+      const b: Record<string, unknown> = {};
+      for (const m of ['select', 'not', 'gte', 'order', 'limit', 'lt', 'eq', 'in']) {
+        b[m] = (...args: unknown[]) => { calls.push([m, args]); return b; };
+      }
+      b.then = (onOk: (v: Res) => unknown, onErr?: (e: unknown) => unknown) => Promise.resolve(res).then(onOk, onErr);
+      return b;
+    };
+    fromMock.mockImplementation(() => recording({ data: [], count: 0, error: null }));
+    fromTableMock.mockImplementation(() => recording({ data: [], count: 0, error: null }));
+
+    await fetchInsightData(7);
+
+    const sents = calls
+      .filter(([m, a]) => m === 'gte' && a[0] === 'sent_at')
+      .map(([, a]) => String(a[1]));
+    const seteDiasAtras = new Date(Date.now() - 7 * 86_400_000).toISOString().slice(0, 10);
+    const noventaDiasAtras = new Date(Date.now() - 90 * 86_400_000).toISOString().slice(0, 10);
+    expect(sents.length).toBeGreaterThan(0);
+    expect(sents.every((iso) => iso.startsWith(seteDiasAtras))).toBe(true);
+    expect(sents.some((iso) => iso.startsWith(noventaDiasAtras))).toBe(false);
   });
 });

@@ -207,6 +207,9 @@ describe('WelcomeModal', () => {
 
   it('calls onStartTour when tour button is clicked', () => {
     const onStartTour = vi.fn();
+    // Y18-3: o botão só existe onde há alvo de tour no DOM (o casco do celular não
+    // monta o Sidebar e não tem passo nenhum para mostrar).
+    render(<div data-tour="inbox" />);
     render(
       <WelcomeModal isOpen={true} onClose={vi.fn()} onStartTour={onStartTour} />
     );

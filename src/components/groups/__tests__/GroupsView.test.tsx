@@ -1,9 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { axe } from 'vitest-axe';
 
 const mockOrder = vi.hoisted(() => vi.fn());
 const mockInvoke = vi.hoisted(() => vi.fn());
 const mockUpsert = vi.hoisted(() => vi.fn());
+const mockRpc = vi.hoisted(() => vi.fn());
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
@@ -13,6 +15,7 @@ vi.mock('@/integrations/supabase/client', () => ({
       delete: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) }),
       upsert: mockUpsert,
     })),
+    rpc: mockRpc,
     functions: { invoke: mockInvoke },
     channel: vi.fn().mockReturnValue({ on: vi.fn().mockReturnThis(), subscribe: vi.fn() }),
     removeChannel: vi.fn(),
@@ -31,6 +34,10 @@ vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn(), warning: v
 vi.mock('framer-motion', () => ({
   motion: { div: ({ children, ...props }: { children?: import("react").ReactNode } & Record<string, unknown>) => <div {...props}>{children}</div> },
   AnimatePresence: ({ children }: { children?: import("react").ReactNode }) => children,
+  // Grupos passou a usar o movimento reduzido do sistema (MotionConfig + useReducedMotion);
+  // sem a preferência nada muda na tela sob teste.
+  MotionConfig: ({ children }: { children?: import("react").ReactNode }) => children,
+  useReducedMotion: () => false,
 }));
 vi.mock('@/components/effects/AuroraBorealis', () => ({ AuroraBorealis: () => null }));
 vi.mock('@/components/dashboard/FloatingParticles', () => ({ FloatingParticles: () => null }));
@@ -70,7 +77,7 @@ const GRUPO_A = grupo({ id: 'g1', group_id: '1@g.us', name: 'Meu Grupo' });
 const GRUPO_B = grupo({ id: 'g2', group_id: '2@g.us', name: 'Grupo B' });
 
 describe('GroupsView', () => {
-  beforeEach(() => { vi.clearAllMocks(); mockOrder.mockResolvedValue({ data: [], error: null }); mockUpsert.mockResolvedValue({ error: null }); });
+  beforeEach(() => { vi.clearAllMocks(); mockOrder.mockResolvedValue({ data: [], error: null }); mockUpsert.mockResolvedValue({ error: null }); mockRpc.mockReset(); mockRpc.mockResolvedValue({ data: { id: 'msg-1' }, error: null }); });
 
   it('renders the page title', async () => { render(<GroupsView />); expect(screen.getByText('Grupos WhatsApp')).toBeInTheDocument(); });
 
@@ -170,13 +177,14 @@ describe('GroupsView', () => {
     expect(toast.success).not.toHaveBeenCalled();
   });
 
-  it('envio em massa trata erro lógico da Evolution (data.error) como falha', async () => {
+  it('envio em massa trata a recusa da fila (erro da RPC) como falha e mantém a tentativa', async () => {
     const grupo = { id: 'g1', group_id: '1@g.us', name: 'Grupo Alvo', description: null, participant_count: 5, avatar_url: null, is_admin: false, whatsapp_connection_id: 'c1', created_at: '2025-01-01', updated_at: '2025-01-01' };
     mockOrder
       .mockResolvedValueOnce({ data: [grupo], error: null })
       .mockResolvedValueOnce({ data: [{ id: 'c1', name: 'WPP', phone_number: '5511', instance_id: 'inst-1' }], error: null });
     mockOrder.mockResolvedValue({ data: [grupo], error: null });
-    mockInvoke.mockResolvedValue({ data: { error: 'falha' }, error: null });
+    // A fila recusa: o grupo não ganha registro nenhum.
+    mockRpc.mockResolvedValue({ data: null, error: { message: 'sem conexão de WhatsApp' } });
     render(<GroupsView />);
     await waitFor(() => expect(screen.getByText('Grupo Alvo')).toBeInTheDocument());
     fireEvent.click(screen.getByText('Grupo Alvo'));
@@ -185,9 +193,11 @@ describe('GroupsView', () => {
     const campo = await screen.findByPlaceholderText('Digite a mensagem para enviar a todos os grupos selecionados...');
     fireEvent.change(campo, { target: { value: 'Olá' } });
     fireEvent.click(screen.getByText('Enviar'));
-    await waitFor(() => { expect(toast.warning).toHaveBeenCalledWith('Nenhum envio deu certo (1 falha(s)) — mensagem e seleção mantidas'); });
+    await waitFor(() => { expect(toast.warning).toHaveBeenCalledWith('Nenhum grupo entrou na fila (1 falha(s)) — mensagem e seleção mantidas'); });
     expect(toast.warning).toHaveBeenCalledTimes(1);
     expect(toast.success).not.toHaveBeenCalled();
+    // A aba não chama mais a Evolution para o envio em massa: quem entrega é a fila.
+    expect(mockInvoke).not.toHaveBeenCalled();
   });
 
   // Regressão R2-API-061 (#233): o item "Enviar mensagem" do menu do card
@@ -224,5 +234,30 @@ describe('GroupsView', () => {
     const dialog = await screen.findByRole('dialog');
     expect(within(dialog).getByText('2', { selector: 'strong' })).toBeInTheDocument();
     expect(within(dialog).getByText('Meu Grupo, Grupo B')).toBeInTheDocument();
+  });
+
+  // N-194: menu do grupo e seletores têm aria-label acessível
+  it('menu de ações e 4 seletores têm aria-label nomeado; axe zerado', async () => {
+    mockOrder.mockResolvedValueOnce({ data: [GRUPO_A], error: null }).mockResolvedValueOnce({ data: [], error: null });
+    render(<GroupsView />);
+    await waitFor(() => expect(screen.getByText('Meu Grupo')).toBeInTheDocument());
+
+    // Seletor de filtro de categoria (visível imediatamente)
+    expect(screen.getByLabelText('Filtrar por categoria')).toBeInTheDocument();
+
+    // Menu de ações do grupo: nome acessível exato do critério, por papel e nome
+    expect(screen.getByRole('button', { name: 'Ações do grupo Meu Grupo' })).toBeInTheDocument();
+
+    // Seletor de categoria por grupo (dentro do card)
+    expect(screen.getByLabelText('Categoria de Meu Grupo')).toBeInTheDocument();
+
+    // Abre o dialog de adicionar grupo e verifica os 2 seletores restantes
+    fireEvent.click(screen.getByText('Adicionar Grupo'));
+    expect(screen.getByLabelText('Conexão WhatsApp')).toBeInTheDocument();
+    expect(screen.getByLabelText('Categoria do grupo')).toBeInTheDocument();
+
+    // axe zerado
+    const resultado = await axe(document.body);
+    expect(resultado).toHaveNoViolations();
   });
 });

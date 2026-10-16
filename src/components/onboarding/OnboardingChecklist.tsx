@@ -71,8 +71,8 @@ export function OnboardingChecklist({ onNavigate, onDismiss, compact = false }: 
             <div><p className="font-medium text-sm">Configure sua conta</p><p className="text-xs text-muted-foreground">{completedSteps.length}/{CHECKLIST_STEPS.length} passos concluídos</p></div>
           </div>
           <div className="flex items-center gap-2">
-            <Progress value={progress} className="w-24 h-2" />
-            <Button size="sm" variant="ghost" onClick={handleDismiss}><X className="w-4 h-4" /></Button>
+            <Progress value={progress} className="w-24 h-2" aria-label="Progresso do onboarding" />
+            <Button size="sm" variant="ghost" onClick={handleDismiss} aria-label="Dispensar checklist"><X className="w-4 h-4" /></Button>
           </div>
         </div>
       </motion.div>
@@ -94,11 +94,11 @@ export function OnboardingChecklist({ onNavigate, onDismiss, compact = false }: 
               <div><CardTitle className="text-lg">Configure sua conta</CardTitle><p className="text-sm text-muted-foreground">{completedSteps.length} de {CHECKLIST_STEPS.length} passos concluídos</p></div>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" onClick={() => setIsExpanded(!isExpanded)} className="h-8 w-8">{isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</Button>
-              <Button variant="ghost" size="icon" onClick={handleDismiss} className="h-8 w-8"><X className="w-4 h-4" /></Button>
+              <Button variant="ghost" size="icon" onClick={() => setIsExpanded(!isExpanded)} className="h-8 w-8" aria-label={isExpanded ? 'Recolher checklist' : 'Expandir checklist'}>{isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</Button>
+              <Button variant="ghost" size="icon" onClick={handleDismiss} className="h-8 w-8" aria-label="Dispensar checklist"><X className="w-4 h-4" /></Button>
             </div>
           </div>
-          <div className="mt-4"><Progress value={progress} className="h-2" /></div>
+          <div className="mt-4"><Progress value={progress} className="h-2" aria-label="Progresso do onboarding" /></div>
         </CardHeader>
         <AnimatePresence>
           {isExpanded && (

@@ -79,6 +79,12 @@ curl -X POST "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/" \
 
 ## 💬 INCIDENTE: WhatsApp Não Conecta (SEV-2)
 
+> **Bloqueio/suspensão do número pela Meta é outro incidente.** Se o sintoma for instância em
+> `Reconnecting` persistente e/ou mensagem oficial de bloqueio no app da Meta, siga
+> `docs/runbooks/bloqueio-meta.md` **antes** de tentar qualquer ação desta seção: reconectar em
+> loop, logout/reconectar e "recriar instância" (tabela abaixo) estendem o bloqueio e ficam
+> barrados pela janela de manutenção (`global_settings.whatsapp_maintenance_until`).
+
 ### Sintomas
 - Status "Disconnected" no painel
 - QR Code não aparece

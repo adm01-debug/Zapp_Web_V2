@@ -13,8 +13,11 @@ export interface LeaderboardAgent {
   streak: number;
   messagesHandled: number;
   conversationsResolved: number;
-  avgResponseTime: number;
-  satisfaction: number;
+  // null = o agente nao tem amostra no periodo (nenhuma 1a resposta medida / nenhuma
+  // avaliacao CSAT). Nao confundir com 0: quem consome mostra "—" e deixa o agente
+  // FORA das medias da equipe (nao puxa o numero da equipe para baixo).
+  avgResponseTime: number | null;
+  satisfaction: number | null;
   rank: number;
   previousRank: number;
   achievements: string[];
@@ -40,11 +43,28 @@ interface LeaderboardRpcRow {
   rank: number;
 }
 
+/**
+ * Teto da leitura do ranking. Os KPIs do topo da aba Equipe sao calculados sobre
+ * TODA a equipe, entao p_limit=10 (que so servia para a tabela) deixava os totais
+ * parciais e escondia os demais agentes. A RPC nao pagina (devolve um unico json
+ * ordenado), portanto pedimos um teto alto de uma vez; se o retorno encostar no
+ * teto, registramos aviso de que a leitura foi truncada (o servidor precisaria
+ * expor o total da equipe -- pedido registrado ao worker sql).
+ */
+export const TEAM_FETCH_LIMIT = 500;
+
+/** Agentes exibidos na TABELA de ranking; os KPIs usam a lista completa. */
+export const RANKING_TABLE_LIMIT = 10;
+
 export function useLeaderboard() {
   const [timeRange, setTimeRange] = useState<'today' | 'week' | 'month'>('week');
   const [agents, setAgents] = useState<LeaderboardAgent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  // Mensagem da ultima leitura que falhou (null = leitura atual bem-sucedida). Sem este
+  // sinal, quem consome nao distingue "a leitura falhou" de "o ranking esta vazio" -- o
+  // catch antigo so registrava no log e a tela mostrava o vazio nos dois casos.
+  const [error, setError] = useState<string | null>(null);
   // Geração da requisição: só a requisição ATUAL escreve no estado. A resposta de um
   // período que já não é o atual (chegou depois da nova) é descartada, em vez de
   // voltar com a tela para o recorte anterior.
@@ -61,14 +81,22 @@ export function useLeaderboard() {
       // cast temporario: types.ts gerado ainda nao tem dashboard_leaderboard (RPC nova) -- sync automatico (PR #791) traz o tipo real em breve.
       const { data, error } = await (supabase as any).rpc('dashboard_leaderboard', { // eslint-disable-line @typescript-eslint/no-explicit-any -- cast temporario ate sync de types
         p_period: period,
-        p_limit: 10,
+        p_limit: TEAM_FETCH_LIMIT,
       });
 
       // Resposta superada pelo período novo: descarta sem tocar no estado.
       if (requisicao !== requisicaoRef.current) return;
       if (error) throw error;
+      // A leitura ATUAL deu certo: some com o erro da anterior (o descarte por geração
+      // acima já saiu antes, então uma resposta obsoleta nunca limpa o erro da atual).
+      setError(null);
       const rows = (data || []) as unknown as LeaderboardRpcRow[];
       if (rows.length === 0) { setAgents([]); return; }
+      // Encostou no teto: a equipe pode ser maior que o retorno. Sem um total vindo
+      // do servidor nao da para afirmar que estes sao todos, entao fica o aviso.
+      if (rows.length >= TEAM_FETCH_LIMIT) {
+        log.warn(`Ranking da equipe truncado em ${TEAM_FETCH_LIMIT} agentes; total real desconhecido.`);
+      }
 
       const profileIds = rows.map(r => r.profile_id);
       const { data: achievements } = await supabase
@@ -93,8 +121,10 @@ export function useLeaderboard() {
         xp: row.xp, level: row.level, streak: row.streak,
         messagesHandled: row.messages_handled,
         conversationsResolved: row.conversations_resolved,
-        avgResponseTime: row.avg_response_time,
-        satisfaction: row.satisfaction,
+        // A RPC devolve 0 quando NAO ha amostra no periodo (nao distingue de um 0
+        // real); 0 vira null para a tela mostrar "—" e deixar o agente fora das medias.
+        avgResponseTime: row.avg_response_time > 0 ? row.avg_response_time : null,
+        satisfaction: row.satisfaction > 0 ? row.satisfaction : null,
         rank: row.rank, previousRank: row.rank,
         achievements: (achievementsByProfile[row.profile_id] || []).slice(0, 5),
         achievementsCount: row.achievements_count,
@@ -102,6 +132,11 @@ export function useLeaderboard() {
       })));
     } catch (error) {
       log.error('Error fetching leaderboard:', error);
+      // Só a leitura ATUAL publica o erro: uma resposta antiga que falhou depois da troca
+      // de período não pode marcar erro na tela que já mostra o recorte novo.
+      if (requisicao === requisicaoRef.current) {
+        setError(error instanceof Error ? error.message : 'Falha ao ler o ranking');
+      }
     } finally {
       // Só a requisição atual encerra o carregamento; a obsoleta não mexe na tela.
       if (requisicao === requisicaoRef.current) {
@@ -129,5 +164,5 @@ export function useLeaderboard() {
     fetchLeaderboard(timeRange);
   }, [fetchLeaderboard, timeRange]);
 
-  return { agents, isLoading, isRefreshing, timeRange, setTimeRange, handleRefresh };
+  return { agents, isLoading, isRefreshing, error, timeRange, setTimeRange, handleRefresh };
 }

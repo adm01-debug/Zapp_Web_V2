@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useGlobalSettings } from '@/hooks/system/useGlobalSettings';
+import { useUserRole } from '@/hooks/system/useUserRole';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -7,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Plug, Eye, EyeOff, Save, Info, AlertCircle } from 'lucide-react';
+import { Plug, Save, Info, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface KeyField {
@@ -26,15 +27,20 @@ const INTEGRATION_KEYS: KeyField[] = [
   },
 ];
 
+// Data em que a chave foi registrada, para confirmar a substituição sem expor o
+// valor. Retorna null quando não há data utilizável (a tela mostra só "Configurada").
+function dataRegistradaEm(iso: string | null | undefined): string | null {
+  if (!iso) return null;
+  const data = new Date(iso);
+  if (Number.isNaN(data.getTime())) return null;
+  return data.toLocaleDateString('pt-BR');
+}
+
 export function IntegrationKeysSection() {
-  const { isLoading, getSetting, addSetting } = useGlobalSettings();
-  const [visibleKeys, setVisibleKeys] = useState<Record<string, boolean>>({});
+  const { isAdmin, loading: roleLoading } = useUserRole();
+  const { settings, isLoading, getSetting, addSetting } = useGlobalSettings();
   const [editValues, setEditValues] = useState<Record<string, string>>({});
   const [savingKey, setSavingKey] = useState<string | null>(null);
-
-  const toggleVisibility = (key: string) => {
-    setVisibleKeys(prev => ({ ...prev, [key]: !prev[key] }));
-  };
 
   const handleChange = (key: string, value: string) => {
     setEditValues(prev => ({ ...prev, [key]: value }));
@@ -58,7 +64,7 @@ export function IntegrationKeysSection() {
     }
   };
 
-  if (isLoading) {
+  if (roleLoading || isLoading) {
     return (
       <Card className="border border-secondary/20 bg-card">
         <CardHeader>
@@ -70,6 +76,12 @@ export function IntegrationKeysSection() {
         </CardContent>
       </Card>
     );
+  }
+
+  // Chave secreta: só o admin vê e substitui. Supervisor não recebe a linha no
+  // banco (policy de global_settings) e não renderiza a seção aqui.
+  if (!isAdmin) {
+    return null;
   }
 
   return (
@@ -98,8 +110,10 @@ export function IntegrationKeysSection() {
         {INTEGRATION_KEYS.map(({ key, label, description, placeholder }) => {
           const currentValue = getSetting(key);
           const isConfigured = !!currentValue && currentValue.trim() !== '';
+          const registradaEm = dataRegistradaEm(
+            settings.find(s => s.key === key)?.updated_at,
+          );
           const editValue = editValues[key] ?? '';
-          const isVisible = visibleKeys[key];
           const isSaving = savingKey === key;
 
           return (
@@ -123,22 +137,9 @@ export function IntegrationKeysSection() {
               <p className="text-xs text-muted-foreground">{description}</p>
 
               {isConfigured && (
-                <div className="flex items-center gap-2">
-                  <Input
-                    type={isVisible ? 'text' : 'password'}
-                    value={currentValue}
-                    readOnly
-                    className="h-8 text-sm font-mono bg-muted/30"
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 shrink-0"
-                    onClick={() => toggleVisibility(key)}
-                  >
-                    {isVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </Button>
-                </div>
+                <p className="text-xs text-muted-foreground" data-testid={`chave-${key}-registrada`}>
+                  {registradaEm ? `Configurada em ${registradaEm}` : 'Configurada'}
+                </p>
               )}
 
               <div className="flex items-center gap-2">
@@ -148,6 +149,7 @@ export function IntegrationKeysSection() {
                   onChange={e => handleChange(key, e.target.value)}
                   placeholder={isConfigured ? 'Nova chave para substituir...' : placeholder}
                   className="h-8 text-sm"
+                  aria-label={`Nova chave para ${label}`}
                 />
                 <Button
                   size="sm"

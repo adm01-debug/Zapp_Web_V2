@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Sparkles, Copy, Check, RefreshCw, Loader2, Send } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
+import { avisarCopia, copiarTexto } from '@/lib/clipboard';
 
 interface AIResponseCardProps {
   response: string;
@@ -21,10 +22,11 @@ export const AIResponseCard = memo(function AIResponseCard({
 
   const wordCount = useMemo(() => response.trim().split(/\s+/).filter(Boolean).length, [response]);
 
-  const handleCopy = () => {
-    void navigator.clipboard.writeText(response);
+  const handleCopy = async () => {
+    const ok = await copiarTexto(response);
+    avisarCopia(ok);
+    if (!ok) return;
     setCopied(true);
-    toast.success('Copiado!');
     setTimeout(() => setCopied(false), 2000);
   };
 

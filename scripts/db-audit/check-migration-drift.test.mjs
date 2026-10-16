@@ -83,7 +83,6 @@ function pinnedEvidence({
     reason,
     related_migration,
     justification: JUSTIFICATION,
-    'sql-sha256': statementsHash(statements),
     ...overrides,
   };
 }
@@ -133,7 +132,6 @@ function runGuard({
   psqlFailCount = 0,
   psqlFailMessage = 'connection refused (fake)',
   retryDelaysMs = null,
-  args = [],
 } = {}) {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'migration-drift-test-'));
   const migrationsDir = path.join(tmp, 'migrations');
@@ -182,7 +180,7 @@ function runGuard({
   else delete env.DESTINO_URL;
 
   try {
-    return spawnSync(process.execPath, [SCRIPT, ...args], {
+    return spawnSync(process.execPath, [SCRIPT], {
       cwd: ROOT,
       encoding: 'utf8',
       env,
@@ -1092,7 +1090,7 @@ test('queryLedger desiste apos esgotar tentativas de falha transitoria', () => {
     psqlFailMessage: 'timeout expired',
     retryDelaysMs: '10,10',
   });
-  assert.equal(result.status, 1);
+  assert.equal(result.status, 2);
   assert.match(result.stderr, /AVISO: falha transitoria de conexao.*tentativa 1\/3/);
   assert.match(result.stderr, /AVISO: falha transitoria de conexao.*tentativa 2\/3/);
   assert.match(result.stderr, /FALHA: falha ao consultar schema_migrations via psql: timeout expired/);
@@ -1104,7 +1102,7 @@ test('queryLedger nao tenta novamente para erro nao-transitorio', () => {
     psqlFailMessage: 'ERROR:  syntax error at or near "SELEC"',
     retryDelaysMs: '10,10',
   });
-  assert.equal(result.status, 1);
+  assert.equal(result.status, 2);
   assert.doesNotMatch(result.stderr, /AVISO: falha transitoria/);
   assert.match(result.stderr, /FALHA: falha ao consultar schema_migrations via psql: ERROR:  syntax error/);
 });
@@ -1118,83 +1116,115 @@ test('LEDGER_RETRY_DELAYS_MS vazio desliga o retry do ledger', () => {
     psqlFailMessage: 'connection to server ... port 5432 failed: timeout expired',
     retryDelaysMs: '',
   });
-  assert.equal(result.status, 1);
+  assert.equal(result.status, 2);
   assert.doesNotMatch(result.stderr, /AVISO: falha transitoria/);
   assert.match(result.stderr, /FALHA: falha ao consultar schema_migrations via psql: connection to server/);
 });
 
-// W21: --classificar separa "apply pendente" (esperado entre o merge do lote e o
-// db-migrate) de drift real. Exit 2 = so apply pendente; exit 1 = drift real.
-const PENDENTE_FILE = '20260829060000_create_pendente.sql';
+// Formato unico de divergencia: "versao | disco | ledger | motivo", para o
+// operador escanear o log sem separar secao por secao.
+function divergenceRegex(version, disk, ledger, reason) {
+  const escape = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(
+    `^${escape(version)} \\| ${escape(disk)} \\| ${escape(ledger)} \\| ${escape(reason)}$`,
+    'm',
+  );
+}
 
-test('W21: apply pendente sem --classificar continua sendo drift (exit 1, retrocompat)', () => {
-  const result = runGuard({ files: { [FILE]: SQL, [PENDENTE_FILE]: SQL } });
+test('linha de divergencia: arquivo sem registro no banco mostra disco e nenhum ledger', () => {
+  const result = runGuard({ ledger: [] });
   assert.equal(result.status, 1);
-  assert.match(result.stderr, /20260829060000/);
-  assert.match(result.stderr, /Use --classificar/);
+  assert.match(result.stderr, divergenceRegex(VERSION, FILE, '(nenhum)', 'arquivo sem registro no banco'));
 });
 
-test('W21: apply pendente com --classificar sai com 2 e lista a version aguardando apply', () => {
-  const result = runGuard({ files: { [FILE]: SQL, [PENDENTE_FILE]: SQL }, args: ['--classificar'] });
-  assert.equal(result.status, 2, result.stderr);
-  assert.match(result.stderr, /aguardando apply/);
-  assert.match(result.stderr, /20260829060000\s+20260829060000_create_pendente\.sql/);
-  assert.doesNotMatch(result.stderr, /FALHA/);
-});
-
-test('W21: ledger sem arquivo e drift real mesmo com --classificar (exit 1)', () => {
+test('linha de divergencia: registro sem arquivo mostra nenhum disco e o ledger normalizado', () => {
+  const extraVersion = '20260829050100';
   const result = runGuard({
-    ledger: [ledgerRecord(), ledgerRecord({ version: '20260829070000', name: 'so_no_banco' })],
-    args: ['--classificar'],
-  });
-  assert.equal(result.status, 1);
-  assert.match(result.stderr, /20260829070000/);
-});
-
-test('W21: drift real prevalece sobre apply pendente quando os dois ocorrem (exit 1, nunca 2)', () => {
-  const result = runGuard({
-    files: { [FILE]: OTHER_SQL, [PENDENTE_FILE]: SQL },
-    args: ['--classificar'],
+    ledger: [
+      ledgerRecord(),
+      { version: extraVersion, name: `${extraVersion}_db_only.sql`, statements: [] },
+    ],
   });
   assert.equal(result.status, 1);
-  assert.match(result.stderr, /aguardando apply/);
-  assert.match(result.stderr, /FALHA: drift de migrations detectado/);
+  // ledger normalizado, sem aspas (basename, sem .sql, sem prefixo de versao)
+  assert.match(result.stderr, divergenceRegex(extraVersion, '(nenhum)', 'db_only', 'registro no banco sem arquivo no repo'));
 });
 
-test('W21: --classificar sem pendencia nem drift sai com 0', () => {
-  const result = runGuard({ args: ['--classificar'] });
-  assert.equal(result.status, 0, result.stderr);
+test('linha de divergencia: nome divergente usa o arquivo do disco como coluna de disco', () => {
+  const result = runGuard({ ledger: [ledgerRecord({ name: 'outro_nome' })] });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, divergenceRegex(VERSION, FILE, 'outro_nome', 'nome divergente'));
 });
 
-// P1: verificacao offline de file_sha256 para pinned-replay e name-and-file-pinned
-
-test('P1: pinned-replay com file_sha256 errado falha no modo offline', () => {
+test('linha de divergencia: fonte divergente cita a fonte do ledger', () => {
   const result = runGuard({
-    destino: false,
-    evidence: [pinnedEvidence({ overrides: { file_sha256: '0'.repeat(64) } })],
+    ledger: [ledgerRecord({ name: 'outro_nome', statements: ['-- source 20260829050000_outro.sql'] })],
   });
-  assert.equal(result.status, 1, result.stderr);
-  assert.match(result.stderr, /file_sha256 divergente do manifesto/);
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, divergenceRegex(VERSION, FILE, '20260829050000_outro.sql', 'fonte divergente'));
 });
 
-test('P1: name-and-file-pinned com file_sha256 errado falha no modo offline', () => {
+test('linha de divergencia: hash de arquivo divergente', () => {
   const result = runGuard({
-    destino: false,
-    files: { [FILE]: SQL },
-    evidence: [nameOnlyEvidence(SQL, { file_sha256: '0'.repeat(64) })],
+    ledger: [ledgerRecord({ statements: [`-- file-sha256: ${'0'.repeat(64)}`] })],
   });
-  assert.equal(result.status, 1, result.stderr);
-  assert.match(result.stderr, /file_sha256 divergente do manifesto/);
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, divergenceRegex(VERSION, FILE, 'create_demo', 'hash de arquivo divergente'));
 });
 
-// P2: ledger statement que comeca com comentario mas contem SQL executavel deve ser detectado
-
-test('P2: name-and-file-pinned rejeita ledger com SQL executavel precedido de comentario', () => {
-  const stmtWithComment = `-- resumo\n${SQL.trim()}`;
+test('linha de divergencia: hash SQL divergente', () => {
   const result = runGuard({
-    ledger: [ledgerRecord({ statements: [stmtWithComment] })],
-    evidence: [nameOnlyEvidence()],
+    ledger: [ledgerRecord({ statements: [`-- sql-sha256: ${'0'.repeat(64)}`] })],
   });
-  assert.equal(result.status, 1, result.stderr);
-  assert.match(result.stderr, /exige ledger sem SQL\/hash historico/);
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, divergenceRegex(VERSION, FILE, 'create_demo', 'hash SQL divergente'));
 });
+
+test('linha de divergencia: conteudo SQL divergente', () => {
+  const result = runGuard({
+    ledger: [ledgerRecord({ statements: ['CREATE TABLE public.other (id integer)'] })],
+  });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, divergenceRegex(VERSION, FILE, 'create_demo', 'conteudo SQL divergente'));
+});
+
+test('linha de divergencia: statements em prosa pura', () => {
+  const result = runGuard({
+    ledger: [ledgerRecord({ statements: ['isto e prosa, nao SQL'] })],
+  });
+  assert.equal(result.status, 1);
+  assert.match(
+    result.stderr,
+    divergenceRegex(VERSION, FILE, 'create_demo', 'statements no ledger sao prosa pura sem hash verificavel'),
+  );
+});
+
+test('linha de divergencia: nome com pipe nao quebra as 4 colunas', () => {
+  const result = runGuard({ ledger: [ledgerRecord({ name: 'a|b' })] });
+  assert.equal(result.status, 1);
+  // '|' no nome sai escapado como '\|' e a linha continua com exatamente 3 separadores
+  assert.match(result.stderr, divergenceRegex(VERSION, FILE, 'a\\|b', 'nome divergente'));
+  const line = result.stderr.split('\n').find((entry) => entry.startsWith(`${VERSION} |`));
+  assert.ok(line, 'linha de divergencia ausente');
+  assert.equal(line.split(' | ').length, 4, line);
+});
+
+// Ponto (c) do refazer: a coluna ledger sai no MESMO formato normalizado
+// (basename, sem .sql, sem prefixo da versao) em todos os ramos do laco por
+// migration, nao so no ramo withoutFile. Um nome em formato de arquivo completo
+// ('<versao>_nome.sql') expoe a diferenca entre record.name cru e ledgerName
+// normalizado; com 'create_demo' (igual cru e normalizado) a divergencia
+// ficava invisivel.
+for (const [reason, name, statements, expectedLedger] of [
+  ['nome divergente', `${VERSION}_outro_nome.sql`, null, 'outro_nome'],
+  ['hash de arquivo divergente', `${VERSION}_create_demo.sql`, [`-- file-sha256: ${'0'.repeat(64)}`], 'create_demo'],
+  ['hash SQL divergente', `${VERSION}_create_demo.sql`, [`-- sql-sha256: ${'0'.repeat(64)}`], 'create_demo'],
+  ['conteudo SQL divergente', `${VERSION}_create_demo.sql`, ['CREATE TABLE public.other (id integer)'], 'create_demo'],
+  ['statements no ledger sao prosa pura sem hash verificavel', `${VERSION}_create_demo.sql`, ['isto e prosa, nao SQL'], 'create_demo'],
+]) {
+  test(`linha de divergencia: coluna ledger normalizada em '${reason}'`, () => {
+    const result = runGuard({ ledger: [ledgerRecord({ name, statements })] });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, divergenceRegex(VERSION, FILE, expectedLedger, reason));
+  });
+}

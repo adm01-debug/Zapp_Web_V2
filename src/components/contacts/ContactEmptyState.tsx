@@ -72,7 +72,7 @@ export function ContactEmptyState({
 
       {type === 'no-results' && (
         <>
-          <h3 className="text-lg font-bold text-foreground mb-2">
+          <h3 className="text-lg font-semibold text-foreground mb-2">
             Nenhum resultado encontrado
           </h3>
           <p className="text-sm text-muted-foreground text-center max-w-sm mb-5 leading-relaxed">
@@ -99,7 +99,7 @@ export function ContactEmptyState({
 
       {type === 'filtered-empty' && (
         <>
-          <h3 className="text-lg font-bold text-foreground mb-2">
+          <h3 className="text-lg font-semibold text-foreground mb-2">
             Sem contatos neste filtro
           </h3>
           <p className="text-sm text-muted-foreground text-center max-w-sm mb-5 leading-relaxed">

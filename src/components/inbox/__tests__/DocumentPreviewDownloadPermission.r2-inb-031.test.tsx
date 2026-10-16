@@ -97,7 +97,7 @@ describe('DocumentPreview — permissão de download (R2-INB-031)', () => {
   it('com can_download=false não faz fetch nem cria anchor.download e informa o bloqueio', async () => {
     renderDocumento();
 
-    fireEvent.click(screen.getByRole('button'));
+    fireEvent.click(screen.getByRole('button', { name: /bloquead/i }));
 
     await waitFor(() => expect(mockToastError).toHaveBeenCalled());
     expect(fetchSpy).not.toHaveBeenCalled();
