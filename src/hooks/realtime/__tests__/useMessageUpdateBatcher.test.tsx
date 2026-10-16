@@ -202,18 +202,18 @@ describe('useMessageUpdateBatcher — `played` não espera a janela do lote', ()
   });
 
   it('segundo parcial sem os campos do primeiro não apaga o que já estava pendente', () => {
-    const contexto = setup([conversaCom(msg({ id: 'm1', status: 'sent' }))]);
+    const contexto = setup([conversaCom(msg({ id: 'm1', content: 'texto antigo', status: 'sent' }))]);
 
     act(() => {
-      // Primeiro UPDATE traz caption/media vindos do banco; o segundo traz
+      // Primeiro UPDATE traz content/media vindos do banco; o segundo traz
       // só o status (TOAST). Sem mesclar pendência, o segundo sobrescreve
-      // o primeiro e caption/media voltam a null.
+      // o primeiro e o content novo se perde.
       contexto.result.current.handleMessageUpdate({
         new: {
           id: 'm1',
           contact_id: 'c1',
           status: 'delivered',
-          caption: 'legenda do áudio',
+          content: 'conteúdo novo do banco',
           media_url: 'https://cdn.exemplo/a.ogg',
         } as unknown as RealtimeMessage,
       } as never);
@@ -225,7 +225,7 @@ describe('useMessageUpdateBatcher — `played` não espera a janela do lote', ()
 
     const atual = contexto.conversationsRef.current[0].messages[0];
     expect(atual.status).toBe('read');
-    expect(atual.caption).toBe('legenda do áudio');
+    expect(atual.content).toBe('conteúdo novo do banco');
     expect(atual.media_url).toBe('https://cdn.exemplo/a.ogg');
   });
 
