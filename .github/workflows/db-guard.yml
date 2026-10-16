@@ -1448,3 +1448,12 @@ jobs:
         env:
           STICKERS_MEMES_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/storage-limits-stickers-audio-memes.test.sh
+      # N-135 (Talk X): talkx_help_views + talkx_help_top_topics.
+      # Prova em Postgres descartável: RED (tabela/RPC não existem), GREEN
+      # (migration aplica, ranking agrega sem user_id, RLS isola,
+      # reaplicar é no-op), rollback executável e reexecutável.
+      - name: Provar talkx_help_views + ranking dos mais vistos (N-135)
+        env:
+          TALKX_HELP_TOP_TOPICS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-help-top-topics.test.sh
