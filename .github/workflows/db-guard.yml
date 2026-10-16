@@ -256,6 +256,11 @@ jobs:
         env:
           EMAIL_SIGNATURES_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/email-signatures-rls.test.sh
+      # Auto-reconexao de conexoes WhatsApp: o contrato de RLS/ACL do historico
+      # (reconnection_logs) e da view whatsapp_connections_safe e lido/escrito
+      # como os papeis reais (authenticated/anon/service_role), nunca como postgres.
+      - name: Simular contrato de acesso da auto-reconexao de conexoes
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/auto-reconnect-logs.test.sh
 
       # Harness descartavel na mesma major do banco oficial. Exercita o SQL real e
       # prova que cada regressao de ACL/contrato encerra com codigo nao zero.

@@ -1,27 +1,69 @@
 Especialista: worker (sql) (area-sql-banco)
 
 ## O que mudou e por quê
-- supabase/migrations/20261012115237_email_signatures.sql: cria public.email_signatures (id, user_id uuid not null default auth.uid(), name varchar(120) com CHECK de nome não vazio, html text com CHECK <= 20000, is_default boolean, created_at, updated_at), o índice ÚNICO PARCIAL email_signatures_one_default_per_user (user_id) WHERE is_default (no máximo uma padrão por usuário, como o cartão pede) e o índice por user_id; RLS ligada com 4 policies (SELECT/INSERT/UPDATE/DELETE, todas `user_id = (select auth.uid())`), gatilho updated_at e ACL (revoke de PUBLIC/anon; 4 verbos para authenticated; ALL para service_role). Migration ADITIVA, sem backfill — nada existia antes. Dono = auth.uid() (mesmo padrão de message_templates/email_templates).
-- src/integrations/supabase/types.ts: entrada email_signatures (Row/Insert/Update, Relationships: []) logo após email_messages, no formato do gerador (colunas em ordem alfabética).
-- scripts/db-audit/email-signatures-rls.test.sh: prova de contrato RLS em Postgres 17 descartável, executando como o papel real (authenticated/anon), nunca como postgres.
-- .github/workflows/db-guard.yml: registra o teste novo no CI (passo "Simular contrato de acesso das assinaturas de e-mail (email_signatures)", padrão `retry-disposable-postgres-test.sh bash scripts/db-audit/...test.sh`).
 
-## Decisões de contrato
-- RLS literal do cartão: SÓ o dono lê/escreve/exclui a própria assinatura (assinatura é dado pessoal de composição; sem staff, sem shared) — não usei is_admin()/has_role() porque o cartão não pede exceção de papel.
-- WITH CHECK = USING nos updates: ninguém troca user_id (sem escalada/reatribuição de autoria por UPDATE).
-- "No máximo uma padrão por usuário" é imposição do BANCO (índice único parcial), não regra de front: a segunda linha padrão do mesmo usuário é recusada com duplicate key, e padrão de OUTRO usuário é permitida.
-- html com teto de 20000 caracteres por CHECK; a sanitização do HTML é do front, como o cartão diz.
+- supabase/migrations/20261012134000_auto_reconnect_logs.sql (nova): paridade V3→V2 da
+  auto-reconexão de conexões WhatsApp. Em public.whatsapp_connections entram 4 colunas
+  aditivas — auto_reconnect_enabled (default true), reconnect_interval_seconds (default 60,
+  CHECK 60..3600), reconnect_max_attempts (default 3, CHECK 1..20) e health_reason (texto
+  curto, ≤200 caracteres) — mais a tabela public.reconnection_logs (conexão, tentativa,
+  resultado, motivo, data). `health_reason` também passa a ser exposta em
+  public.whatsapp_connections_safe (CREATE OR REPLACE VIEW, coluna NOVA no fim; o
+  mascaramento de qr_code/instance_id para não-admin continua igual), porque é a view que a
+  tela de conexões lê. RLS ligada em reconnection_logs com leitura só para staff
+  (is_admin_or_supervisor(auth.uid())) e ACL explícita: authenticated só com SELECT
+  (histórico de auditoria não se forja de dentro do app — a Edge escreve com service_role),
+  anon/PUBLIC sem grant. Retenção de 30 dias por job pg_cron diário (padrão do repo), com o
+  agendamento guardado por pg_namespace para a migration rodar também em Postgres sem pg_cron.
+  A migration é aditiva (nenhuma linha existente muda; nenhum GRANT/papel preexistente é
+  alterado) e o rollback é o inverso executável, extraído do próprio arquivo pelo teste.
+- scripts/db-audit/auto-reconnect-logs.test.sh (novo): prova o contrato em Postgres
+  descartável (postgres:17-alpine), nos papéis reais (authenticated/anon/service_role), nunca
+  como postgres: RLS, defaults e CHECKs, mascaramento da view, quem lê e quem não lê o
+  histórico, quem não consegue escrever, sintaxe de ACL, cascade, retenção (o comando
+  AGENDADO extraído do arquivo apaga a linha de 31 dias e preserva a de 1 dia), guarda do
+  cron e REAPLICAÇÃO da migration sem pg_cron.
+- .github/workflows/db-guard.yml: registra o teste novo no job do contrato DB offline
+  (exigência do check-test-inventory, senão ele vira órfão).
+- src/integrations/supabase/types.ts: tipos do Database alinhados à forma que o gerador
+  emite — as 4 colunas novas em whatsapp_connections, health_reason na view
+  whatsapp_connections_safe e o bloco da tabela reconnection_logs (com as 4 relações de FK
+  como connection_health_logs declara).
 
 ## Prova
-- `hermes-db-migrar supabase/migrations/20261012115237_email_signatures.sql` → `APLICADA no banco LOCAL 'v2-26101208508107' (produção não foi tocada)`. O replay de subida do banco local registrou a tabela nova (colunas, índices, policies, gatilho e grants) e 800 migrations ok (as 21 falhas são pré-existentes, alheias a este cartão).
-- vermelho antes (mutação: policy de SELECT trocada por `USING (true)`): `bash scripts/db-audit/email-signatures-rls.test.sh` → `[FAIL] B10 outro nao ve a assinatura do dono: esperado '0', obtido '1'` (o teste exercita a policy de verdade, como o papel real; restaurada a expressão correta, B10 volta a PASS).
-- A1 (sem a migration a tabela não existe, rodando como authenticated) confirma o estado ausente.
-- verde depois: `bash scripts/db-audit/email-signatures-rls.test.sh` → `== TODOS OS PASSOS PASSARAM ==` (inclui: isolamento por dono; unico parcial uma-padrão-por-usuário; bloqueio de html > 20000 e nome em branco; anon sem acesso; rollback extraído do próprio arquivo; reaplicação idempotente).
-- `node scripts/ci/check-test-inventory.mjs` não aponta mais o meu arquivo (o passo no db-guard.yml o registrou).
+
+- vermelho antes (mesmo arquivo, no Postgres descartável, sem a migration):
+  `bash scripts/db-audit/auto-reconnect-logs.test.sh` → `[PASS] A1 sem a migration nao existe a tabela reconnection_logs`
+  / `[PASS] A2 sem a migration nao existe auto_reconnect_enabled`
+  / `[PASS] A3 sem a migration nao existe health_reason` (bloco A roda antes de aplicar o SQL)
+- verde depois: `bash scripts/db-audit/auto-reconnect-logs.test.sh` → `== TODOS OS PASSOS PASSARAM ==` RC=0
+  (46 passos: A1–A4 e B1–B42, incluindo rollback e reaplicação)
+- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (118s)` RC=0
+  (dependencias OK, db_guard OK, tipos OK, lint OK, migrations OK;
+  `AVISO banco_local NÃO VERIFICADO: sem nome de conjunto` — é assim que o fechar chama)
 
 ## O que NÃO fiz e por quê
-- Arquivos fora da lista do cartão (juiz): (a) scripts/db-audit/email-signatures-rls.test.sh — o cartão pede "testes de contrato em supabase/tests/ ou tests/contracts/", mas a prova de RLS desta área é executada como papel real em Postgres descartável e o harness disso mora em scripts/db-audit/*.test.sh (formato da area-sql-banco); supabase/tests/ guarda .sql de apoio, não harness de docker. (b) .github/workflows/db-guard.yml — INDISPENSÁVEL: o próprio hermes-tarefa-fechar roda o check-test-inventory, que REPROVA qualquer .test.sh novo sem passo no workflow. Sem registrá-lo o cartão não fecha; foi 1 passo com o padrão dos demais. Ambos são o mesmo formato do cartão irmão email_templates, fechado hoje.
-- Alarme previsível do juiz barato (types.ts "código alterado sem teste novo"): falso positivo. O juiz só reconhece teste sob src/tests; a prova é o scripts/db-audit/email-signatures-rls.test.sh (suite .sh de banco). types.ts é ARQUIVO GERADO (entrada da tabela nova) e o cartão manda atualizá-lo no mesmo cartão; não tem lógica própria.
-- Não rodei o banco_local do zapp-verify com o nome do conjunto: a migration MUDA o schema por definição e o retrato supabase/schema-manifest.json é da produção (sem acesso). O fechar chama `zapp-verify . --rapido`, que sem o nome do conjunto PULA o banco (VERDE SEM BANCO).
-- Não editei migration existente, não toquei produção, não mudei GRANT/ACL de objeto existente (a tabela é nova).
-- Passada de efeitos colaterais: sem UPDATE/INSERT em massa (nada de gatilho em dado pré-existente — a tabela nasce vazia); DDL atômico (uma transação); sem função nova (sem oráculo de enumeração); entrada inválida barrada por CHECK (nome em branco, html > 20000) e por RLS (autoria forjada, anon).
+
+- scripts/db-audit/auto-reconnect-logs.test.sh e o registro em .github/workflows/db-guard.yml
+  são o caminho obrigatório do teste de banco DESTE repositório, citado pelo próprio cartão
+  ("Siga o fluxo de banco do repositório ... scripts/db-audit, db:guard"): o harness executa o
+  SQL real em Postgres descartável como os papéis reais. As suítes supabase/tests/*.sql rodam
+  por um harness em scripts/db-audit (é o caso de dashboard-rls-authorization.test.sh), e o
+  passo no db-guard.yml é exigido pelo scripts/ci/check-test-inventory.mjs — sem ele o teste
+  novo vira "órfão" e o check reprova. Por isso os dois arquivos entraram.
+- O fechar apontou "há código alterado sem nenhum teste novo" por causa de
+  src/integrations/supabase/types.ts: é arquivo GERADO (só declarações de tipo, sem
+  comportamento para exercitar). O filtro do fechar só considera teste em src/ ou tests/,
+  então o teste de banco em scripts/db-audit/auto-reconnect-logs.test.sh não entra na conta.
+  A prova deste cartão é o teste de banco (vermelho→verde no bloco A/B) acima.
+- Não rodei `hermes-db-migrar`: este cartão não tem banco local de tarefa (nenhum
+  `v2-26101209546aae` na pasta de stacks) e subir/replayar a stack custa ~14 min. A prova de
+  banco é o teste descartável acima, que aplica o arquivo REAL em postgres:17 com os papéis
+  reais — mesma decisão dos cartões de banco vizinhos de hoje.
+- Não rodei `supabase gen types` (o gerador aponta para o banco de produção, proibido pelo
+  protocolo). types.ts foi editado à mão na forma exata do gerador (ordem alfabética, mesmas
+  relações). Se o time exigir regeneração, é um comando só, no merge.
+- Não toquei a Edge function connection-health-check (área do worker de Edge): o banco agora
+  oferece auto_reconnect_enabled/reconnect_interval_seconds/reconnect_max_attempts/health_reason
+  e a tabela reconnection_logs; quem grava o log de tentativa e o motivo é ela.
+- Não mexi nas policies de escrita de whatsapp_connections nem na contagem do OmnichannelManager.
