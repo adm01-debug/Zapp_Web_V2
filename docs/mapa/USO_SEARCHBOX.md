@@ -121,14 +121,13 @@ suspectar de índice ou de token.
 
 | Item | Valor |
 |---|---|
-| Job do cron | **`searchbox-budget-alert`** (`cron.schedule`, idempotente por nome); o comando do job é `SELECT public.searchbox_budget_alert_tick()` |
+| Job do cron | **`searchbox-budget-alert`** (`cron.schedule`, idempotente por nome) |
 | Frequência | **1×/dia** às **12:00 UTC** (09:00 em São Paulo) |
 | Limiar | **400** sessões no mês (das 500 grátis; o guarda do client degrada em 450) |
 | Canal 1 — app | `public.notify_searchbox_budget()` → `INSERT` em `notifications` para `role IN ('admin','supervisor')`, no padrão do `notify_due_tasks` |
-| Canal 2 — e-mail | edge **`searchbox-budget-alert`**, chamada pelo `net.http_post` do `searchbox_budget_alert_tick()` **só na 1ª vez do mês acima do limiar**; envia via Resend |
-| Idempotência | **1 alerta por mês**, cada canal com o seu próprio ledger: app por `type='searchbox_budget_alert'` + `metadata->>'mes'`; e-mail por `public.searchbox_budget_alert_emails` (**PK = mês**, decisão atômica antes do envio) |
-| Estados do ledger de e-mail | `pending` (tentativa feita, sem confirmação — **não reenvia**: resultado incerto exige conciliação), `sent`, `failed` (falha confirmada — a próxima execução retenta), `uncertain` (conciliação manual) |
-| Migrations | `20261002601230_searchbox_budget_alert_cron.sql` (canal app + job, classe **contrato**) e `20261006235031_searchbox_budget_alert_email_ledger.sql` (ledger próprio e tick do canal de e-mail) |
+| Canal 2 — e-mail | edge **`searchbox-budget-alert`** (`net.http_post` do cron), que envia via Resend |
+| Idempotência | **1 alerta por mês**: checada por `type='searchbox_budget_alert'` + `metadata->>'mes'` |
+| Migration | `supabase/migrations/20261002601230_searchbox_budget_alert_cron.sql` (classe **contrato**) |
 
 ### Por que isto existe: o aviso anterior não avisava
 

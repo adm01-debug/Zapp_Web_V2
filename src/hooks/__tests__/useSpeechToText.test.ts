@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { useSpeechToText, mapSpeechErrorCode } from '@/hooks/communication/useSpeechToText';
+import { useSpeechToText } from '@/hooks/communication/useSpeechToText';
 
 // Mock SpeechRecognition
 class MockSpeechRecognition {
@@ -127,19 +127,5 @@ describe('useSpeechToText', () => {
 
     // Should not throw on unmount
     expect(() => unmount()).not.toThrow();
-  });
-});
-
-describe('mapSpeechErrorCode', () => {
-  it('traduz os códigos do navegador para o vocabulário do app', () => {
-    expect(mapSpeechErrorCode('not-allowed')).toBe('permission');
-    expect(mapSpeechErrorCode('service-not-allowed')).toBe('permission');
-    expect(mapSpeechErrorCode('audio-capture')).toBe('device');
-    expect(mapSpeechErrorCode('no-speech')).toBe('no-speech');
-    expect(mapSpeechErrorCode('network')).toBe('network');
-  });
-
-  it('código desconhecido não vira sucesso silencioso', () => {
-    expect(mapSpeechErrorCode('algum-erro-novo')).toBe('unknown');
   });
 });

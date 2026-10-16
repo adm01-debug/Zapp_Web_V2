@@ -1,13 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { DragDropContext, type DropResult } from '@hello-pangea/dnd';
 import { toast } from 'sonner';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { BoardColumn }      from './BoardColumn';
 import type { WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
 import type { WorkItemInput, MoveOpts } from '@/hooks/tasks/useMyWorkItems';
 import { KANBAN_COLUMNS } from '@/hooks/tasks/workItem.types';
-import { resolveDragEnd, type DragEndResolution } from './resolveDragEnd';
-import { BOARD_ORDER, colunaVizinha, resolverMoverPorTeclado, bordasDeRolagem } from './boardInteracao';
-import { useNarrowViewport, usePointerCoarse, usePressaoLonga } from '../shared/pointerMedia';
+import { resolveDragEnd } from './resolveDragEnd';
+import { useNarrowViewport, usePointerCoarse } from '../shared/pointerMedia';
 import type { WorkItemCardActions } from '../shared/cardActions';
 
 interface Props extends WorkItemCardActions {
@@ -31,17 +31,12 @@ interface Props extends WorkItemCardActions {
   onCreate: (input: WorkItemInput) => Promise<void>;
 }
 
-// Etapa 094: as colunas do trilho na ordem — a mesma fonte do `boardInteracao`.
-const BOARD_COLUMNS: WorkItemStatus[] = BOARD_ORDER;
+const BOARD_COLUMNS: WorkItemStatus[] = ['backlog','todo','doing','waiting','done'];
 
-/** Etapa 099: rótulo CURTO — é o texto da aba na tela estreita. */
-function rotuloCurtoDaColuna(status: WorkItemStatus): string {
-  return KANBAN_COLUMNS.find(c => c.status === status)?.shortLabel ?? status;
+/** Rótulo da coluna na faixa de navegação (mesma fonte das colunas). */
+function rotuloDaColuna(status: WorkItemStatus): string {
+  return KANBAN_COLUMNS.find(c => c.status === status)?.label ?? status;
 }
-
-/** Ids da relação ABA (`tab`) → painel (`tabpanel`) da tela estreita. */
-const ID_PAINEL_ABAS = 'board-tabpanel';
-const idDaAba = (status: WorkItemStatus) => `board-tab-${status}`;
 
 
 export function TasksBoardMode({
@@ -52,91 +47,48 @@ export function TasksBoardMode({
   // Etapa 52 (B8): guarda de onde o arrasto COMECOU — sem isso a coluna "Fazendo"
   // cheia bloqueia ate a reorganizacao dela mesma.
   const [dragSourceStatus, setDragSourceStatus] = useState<WorkItemStatus | null>(null);
-  // Etapa 83: coluna que levou o tranco do último drop recusado por limite cheio.
-  const [colunaTremendo, setColunaTremendo] = useState<WorkItemStatus | null>(null);
-  const tremorTimer = useRef<number | null>(null);
-  useEffect(() => () => {
-    if (tremorTimer.current !== null) window.clearTimeout(tremorTimer.current);
-  }, []);
-
-  /** Dá o tranco curto na coluna de destino e o desfaz sozinho (o drop não move nada). */
-  const tremerColuna = useCallback((alvo: WorkItemStatus) => {
-    setColunaTremendo(alvo);
-    if (tremorTimer.current !== null) window.clearTimeout(tremorTimer.current);
-    tremorTimer.current = window.setTimeout(() => setColunaTremendo(null), 600);
-  }, []);
   // Etapa 81: no ponteiro grosso o arrasto sai de cena e o `MoveToMenu` do card
-  // assume; na tela estreita (etapa 099) as ABAS no topo conduzem as colunas.
+  // assume; na tela estreita as setas e os dots conduzem a faixa de colunas.
   const dragDesligado = usePointerCoarse();
   const telaEstreita  = useNarrowViewport();
-  const pressaoArrasto = usePressaoLonga();
-  // Etapa 093: o toggle "Concluídas" mostra/oculta a COLUNA Concluído do Quadro
-  // (o switch "Mostrar concluídas" da barra de filtros corta os ITENS, não a
-  // coluna). Nasce ligado — o Quadro sempre mostrou as cinco colunas.
-  const [mostrarConcluidas, setMostrarConcluidas] = useState(true);
-  const colunasVisiveis = mostrarConcluidas
-    ? BOARD_COLUMNS
-    : BOARD_COLUMNS.filter(s => s !== 'done');
   const trilhoRef     = useRef<HTMLDivElement>(null);
-  const abasRef       = useRef<HTMLDivElement>(null);
   const [colunaVisivel, setColunaVisivel] = useState(0);
-  // Etapa 098: sombras das bordas — só onde ainda há conteúdo escondido.
-  const [bordas, setBordas] = useState({ esq: false, dir: false });
 
-  /** Mede as sombras de borda sem depender de um scroll do usuário. */
-  const atualizarBordas = useCallback(() => {
+  /** Qual coluna está encostada à esquerda da faixa (o snap alinha por ali). */
+  const aoRolar = useCallback(() => {
     const trilho = trilhoRef.current;
     if (!trilho) return;
-    setBordas(bordasDeRolagem(trilho));
-  }, []);
-
-  useEffect(() => {
-    atualizarBordas();
-    const trilho = trilhoRef.current;
-    const aoRedimensionar = () => atualizarBordas();
-    window.addEventListener('resize', aoRedimensionar);
-    const Observador = typeof ResizeObserver === 'undefined' ? null : ResizeObserver;
-    const observador = trilho && Observador ? new Observador(aoRedimensionar) : null;
-    if (trilho && observador) observador.observe(trilho);
-    return () => {
-      window.removeEventListener('resize', aoRedimensionar);
-      observador?.disconnect();
-    };
-  }, [atualizarBordas]);
-
-  /**
-   * Etapa 099: troca a coluna à vista na tela estreita (clique/teclado nas
-   * abas). Não é mais rolagem: o trilho deixa de ser carrossel, então a aba
-   * ativa É a coluna montada. O foco segue a aba escolhida (roving tabIndex).
-   */
-  const irParaColuna = useCallback((indice: number) => {
+    const base = trilho.getBoundingClientRect().left;
+    let indice = 0;
+    let menorDistancia = Number.POSITIVE_INFINITY;
+    Array.from(trilho.children).forEach((coluna, i) => {
+      const distancia = Math.abs(coluna.getBoundingClientRect().left - base);
+      if (distancia < menorDistancia) {
+        menorDistancia = distancia;
+        indice = i;
+      }
+    });
     setColunaVisivel(indice);
-    abasRef.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[indice]?.focus();
   }, []);
 
-  /**
-   * Etapa 099: setas/Home/End andam entre as abas — o padrão de `tablist`
-   * (a aba ativa é a única parada do Tab; andar é pela seta).
-   */
-  const aoTecladoDasAbas = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
-    const total = colunasVisiveis.length;
-    const atual = Math.min(colunaVisivel, total - 1);
-    let destino: number | null = null;
-    if (e.key === 'ArrowRight') destino = (atual + 1) % total;
-    else if (e.key === 'ArrowLeft') destino = (atual - 1 + total) % total;
-    else if (e.key === 'Home') destino = 0;
-    else if (e.key === 'End') destino = total - 1;
-    if (destino === null) return;
-    e.preventDefault();
-    irParaColuna(destino);
-  }, [colunaVisivel, colunasVisiveis.length, irParaColuna]);
+  /** Leva a faixa até a coluna pedida (setas e dots). */
+  const irParaColuna = useCallback((indice: number) => {
+    const trilho = trilhoRef.current;
+    if (!trilho) return;
+    const alvo = trilho.children[indice] as HTMLElement | undefined;
+    if (!alvo) return;
+    const deslocamento = alvo.getBoundingClientRect().left - trilho.getBoundingClientRect().left;
+    const destino = trilho.scrollLeft + deslocamento;
+    // `scrollTo` anima no navegador; ambientes sem ele (jsdom) não podem quebrar o clique.
+    if (typeof trilho.scrollTo === 'function') trilho.scrollTo({ left: destino, behavior: 'smooth' });
+    else trilho.scrollLeft = destino;
+  }, []);
 
   // Etapa 87: a decisão do arrasto (portão do Aguardando + trava de WIP 3/3) saiu
   // daqui para `resolveDragEnd` (função pura, em .ts); este handler só interpreta.
-  //
-  // Etapa 097: o teclado (Alt+←/→) passa pela MESMA decisão — `aplicarDecisao` é o
-  // único lugar que interpreta, então teclado e arrasto não podem divergir.
-  const aplicarDecisao = useCallback((decisao: DragEndResolution | null, alvoTranco?: WorkItemStatus) => {
+  const handleDragEnd = useCallback((result: DropResult) => {
+    setDragSourceStatus(null);
+    const decisao = resolveDragEnd(result, byStatus, doingCount, byStatusFull);
     if (!decisao) return;
     switch (decisao.action) {
       case 'reorder':
@@ -148,92 +100,17 @@ export function TasksBoardMode({
         onRequestWaitingReason?.(decisao.item);
         return;
       case 'blocked':
-        if (decisao.reason === 'wip_full') {
-          // Etapa 83: o card volta à origem (a lib cancela o drop) e a coluna de
-          // destino leva o tranco curto — a borda avisa mesmo sem animação.
+        if (decisao.reason === 'wip_full')
           toast.error('Fazendo está cheio (máx. 3). Conclua um item antes.');
-          if (alvoTranco) tremerColuna(alvoTranco);
-        }
         return;
       case 'move':
         // etapa 15: leva o indice de destino para persistir a ordem das duas colunas
         onMove(decisao.item, decisao.to, decisao.opts);
         return;
     }
-  }, [onMove, onRequestWaitingReason, onReorder, tremerColuna]);
+  }, [byStatus, byStatusFull, doingCount, onMove, onRequestWaitingReason, onReorder]);
 
-  const handleDragEnd = useCallback((result: DropResult) => {
-    setDragSourceStatus(null);
-    aplicarDecisao(
-      resolveDragEnd(result, byStatus, doingCount, byStatusFull),
-      result.destination?.droppableId as WorkItemStatus | undefined,
-    );
-  }, [aplicarDecisao, byStatus, byStatusFull, doingCount]);
-
-  /**
-   * Etapa 097 — teclado do Quadro. Com o foco num cartão: ←/→ andam entre
-   * colunas (pulando as vazias), ↑/↓ andam entre os cartões da coluna,
-   * Alt+←/→ movem o cartão pela decisão de sempre e Enter é do próprio card
-   * (`WorkItemCard` já abre no Enter). Com um arrasto em curso quem conduz as
-   * setas é a própria lib de DnD, então aqui o handler se retira.
-   */
-  const handleTeclado = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
-    const trilho = trilhoRef.current;
-    if (!trilho || dragSourceStatus) return;
-    const foco = e.target as HTMLElement;
-    const cartao = foco.closest?.('[data-item-id]') as HTMLElement | null;
-    // só o próprio cartão conduz: seta dentro do kebab/checkbox é daquele controle
-    if (!cartao || cartao !== foco) return;
-    const status = cartao.closest('[data-board-column]')?.getAttribute('data-board-column') as WorkItemStatus | null;
-    if (!status) return;
-    const daColuna = (s: WorkItemStatus) =>
-      Array.from(trilho.querySelectorAll<HTMLElement>(`[data-board-column="${s}"] [data-item-id]`));
-    const cartoes = daColuna(status);
-    const indice = cartoes.indexOf(cartao);
-    const passo: -1 | 1 | 0 = e.key === 'ArrowLeft' ? -1 : e.key === 'ArrowRight' ? 1 : 0;
-
-    if (passo !== 0 && e.altKey) {
-      const vizinha = colunaVizinha(status, passo);
-      if (!vizinha) return;
-      e.preventDefault();
-      const item = (byStatus[status] ?? []).find(it => it.id === cartao.getAttribute('data-item-id'));
-      if (!item) return;
-      aplicarDecisao(
-        resolverMoverPorTeclado(item, vizinha, byStatus, doingCount, byStatusFull),
-        vizinha,
-      );
-      return;
-    }
-
-    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-      const destino = cartoes[indice + (e.key === 'ArrowDown' ? 1 : -1)];
-      if (!destino) return;
-      e.preventDefault();
-      destino.focus();
-      return;
-    }
-
-    if (passo !== 0) {
-      let s = colunaVizinha(status, passo);
-      while (s) {
-        const alvo = daColuna(s);
-        if (alvo.length) {
-          e.preventDefault();
-          alvo[Math.min(indice, alvo.length - 1)].focus();
-          return;
-        }
-        s = colunaVizinha(s, passo);
-      }
-    }
-  }, [aplicarDecisao, byStatus, byStatusFull, doingCount, dragSourceStatus]);
-
-  const ultimaColuna = colunasVisiveis.length - 1;
-  // Etapa 099: com o toggle "Concluídas" desligado a faixa encurta — a coluna à
-  // vista nunca pode passar da última aba.
-  const colunaAtiva = Math.min(colunaVisivel, ultimaColuna);
-  // Na tela estreita o trilho monta UMA coluna — a da aba ativa. Daí para cima
-  // valem as cinco: quem decide quantas caem por linha é a grade (md/lg/xl).
-  const colunasNoTrilho = telaEstreita ? [colunasVisiveis[colunaAtiva]] : colunasVisiveis;
+  const ultimaColuna = BOARD_COLUMNS.length - 1;
 
   return (
     <DragDropContext
@@ -242,98 +119,41 @@ export function TasksBoardMode({
       dragHandleUsageInstructions="Pressione espaço para pegar a tarefa, use as setas para movê-la e espaço de novo para soltar. Esc cancela o movimento."
     >
       <div className="flex w-full min-w-0 flex-col h-full min-h-0 gap-2">
-        {/* Etapas 092/093: o toggle "Concluídas" do Quadro. Ligado (padrão) a
-            coluna Concluído aparece; desligado ela sai do trilho. É diferente do
-            switch "Mostrar concluídas" da barra de filtros, que corta os ITENS da
-            consulta — aqui o que muda é a COLUNA. Sem "ordenar coluna": a posição
-            manual e a ordem por data de conclusão são as decisões de
-            docs/design/TAREFAS_QUADRO_STATUS.md. */}
-        <div className="flex w-full min-w-0 items-center justify-end gap-2" data-testid="board-toolbar">
-          <button
-            type="button"
-            data-testid="board-done-toggle"
-            aria-pressed={mostrarConcluidas}
-            onClick={() => { setMostrarConcluidas(v => !v); setColunaVisivel(0); }}
-            className={`min-h-10 min-w-10 shrink-0 rounded-lg border px-3 text-xs font-medium transition-colors ${
-              mostrarConcluidas
-                ? 'border-primary/40 bg-primary/10 text-foreground'
-                : 'border-border/70 text-muted-foreground hover:bg-muted'
-            }`}
-          >
-            Concluídas
-          </button>
-        </div>
-
-        {/* Etapa 099: abaixo de 768px as cinco colunas viram UMA coluna por vez e
-            a troca é por estas abas (D1: Quadro por estado). `flex-wrap` é de
-            propósito: a faixa quebra linha em vez de ganhar rolagem lateral, e é
-            ela quem substitui as antigas setas e os dots do carrossel. */}
+        {/* Etapa 81: setas ‹ › — só na tela estreita, onde as 5 colunas não cabem */}
         {telaEstreita && (
-          <div
-            ref={abasRef}
-            role="tablist"
-            aria-label="Estados do Quadro"
-            data-testid="board-tabs"
-            onKeyDown={aoTecladoDasAbas}
-            className="flex w-full min-w-0 flex-wrap items-center gap-1"
-          >
-            {colunasVisiveis.map((status, i) => {
-              const ativa = i === colunaAtiva;
-              return (
-                <button
-                  key={status}
-                  type="button"
-                  role="tab"
-                  id={idDaAba(status)}
-                  aria-selected={ativa}
-                  aria-controls={ID_PAINEL_ABAS}
-                  tabIndex={ativa ? 0 : -1}
-                  onClick={() => irParaColuna(i)}
-                  className={`min-h-9 shrink-0 rounded-lg border px-3 text-xs font-medium transition-colors ${
-                    ativa
-                      ? 'border-primary/40 bg-primary/10 text-foreground'
-                      : 'border-border/70 text-muted-foreground hover:bg-muted'
-                  }`}
-                >
-                  {rotuloCurtoDaColuna(status)}
-                </button>
-              );
-            })}
+          <div className="flex w-full min-w-0 items-center gap-2" data-testid="board-nav">
+            <button
+              type="button"
+              data-testid="board-prev"
+              aria-label="Coluna anterior"
+              disabled={colunaVisivel === 0}
+              onClick={() => irParaColuna(colunaVisivel - 1)}
+              className="h-8 w-8 shrink-0 rounded-lg border border-border/70 flex items-center justify-center transition-colors hover:bg-muted disabled:opacity-40 disabled:hover:bg-transparent"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <span className="flex-1 min-w-0 truncate text-center text-[13px] font-semibold text-foreground">
+              {rotuloDaColuna(BOARD_COLUMNS[colunaVisivel])}
+            </span>
+            <button
+              type="button"
+              data-testid="board-next"
+              aria-label="Próxima coluna"
+              disabled={colunaVisivel === ultimaColuna}
+              onClick={() => irParaColuna(colunaVisivel + 1)}
+              className="h-8 w-8 shrink-0 rounded-lg border border-border/70 flex items-center justify-center transition-colors hover:bg-muted disabled:opacity-40 disabled:hover:bg-transparent"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
           </div>
         )}
 
-        {/* Etapa 098: o trilho embrulhado pelas sombras de borda — elas marcam onde
-            ainda ha coluna escondida. Etapa 099: o trilho deixou de ser carrossel
-            (`overflow-x-auto`/snap saíram) e virou GRELHA — 1 coluna por vez na
-            tela estreita e, de 768px para cima, 2/3/5 faixas que quebram linha em
-            vez de rolar de lado. As sombras seguem medidas como rede de
-            segurança: só aparecem se algo voltar a transbordar na horizontal. */}
-        <div className="relative flex-1 min-h-0 flex w-full min-w-0">
-          {bordas.esq && (
-            <div
-              data-testid="board-scroll-shadow-left"
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-y-0 left-0 z-10 w-6 bg-gradient-to-r from-background to-transparent"
-            />
-          )}
-          {bordas.dir && (
-            <div
-              data-testid="board-scroll-shadow-right"
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-y-0 right-0 z-10 w-6 bg-gradient-to-l from-background to-transparent"
-            />
-          )}
-          <div
-            ref={trilhoRef}
-            onScroll={atualizarBordas}
-            onKeyDown={handleTeclado}
-            data-testid="board-track"
-            id={telaEstreita ? ID_PAINEL_ABAS : undefined}
-            role={telaEstreita ? 'tabpanel' : undefined}
-            aria-labelledby={telaEstreita ? idDaAba(colunasVisiveis[colunaAtiva]) : undefined}
-            className="grid w-full min-w-0 flex-1 gap-3 h-full min-h-0 pb-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 md:content-start md:overflow-y-auto"
-          >
-          {colunasNoTrilho.map(status => (
+        <div
+          ref={trilhoRef}
+          onScroll={aoRolar}
+          className="flex w-full min-w-0 gap-3 flex-1 min-h-0 overflow-x-auto snap-x snap-mandatory pb-4"
+        >
+          {BOARD_COLUMNS.map(status => (
             <BoardColumn
               key={status}
               status={status}
@@ -342,8 +162,6 @@ export function TasksBoardMode({
               doingCount={doingTotal}
               dragSourceStatus={dragSourceStatus}
               dragDisabled={dragDesligado}
-              pressaoArrasto={pressaoArrasto}
-              shake={colunaTremendo === status}
               onOpen={onOpen}
               onMoveTo={(it, to) => (onMoveTo ?? onMove)(it, to)}
               onDelete={onDelete}
@@ -357,8 +175,26 @@ export function TasksBoardMode({
               onOpenReminder={onOpenReminder}
             />
           ))}
-          </div>
         </div>
+
+        {/* Etapa 81: 5 dots — indicador de página (só na tela estreita) */}
+        {telaEstreita && (
+          <div className="flex w-full items-center justify-center gap-1.5" data-testid="board-dots">
+            {BOARD_COLUMNS.map((status, i) => (
+              <button
+                key={status}
+                type="button"
+                data-testid={`board-dot-${i}`}
+                aria-label={`Ir para ${rotuloDaColuna(status)}`}
+                aria-current={colunaVisivel === i ? 'true' : undefined}
+                onClick={() => irParaColuna(i)}
+                className={`h-1.5 rounded-full transition-all ${
+                  colunaVisivel === i ? 'w-4 bg-primary' : 'w-1.5 bg-muted-foreground/40 hover:bg-muted-foreground/70'
+                }`}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </DragDropContext>
   );

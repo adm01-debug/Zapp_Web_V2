@@ -2,8 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
-import { startOfDay, endOfDay, startOfMonth, endOfMonth } from 'date-fns';
-import { goalPeriodRange } from '@/lib/localDay';
+import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 /**
  * Y07 — metas do Dashboard (`useGoalsDashboard`). O stub de cada tabela FILTRA
@@ -18,11 +18,7 @@ interface TableState { rows: Row[]; error: { message: string; code?: string } | 
 const h = vi.hoisted(() => ({
   user: { id: 'user-1' } as { id: string } | null,
   tables: {} as Record<string, TableState>,
-  queries: [] as Array<{
-    table: string;
-    filters: Array<{ op: string; col: string; val: unknown }>;
-    select?: { cols?: unknown; opts?: unknown };
-  }>,
+  queries: [] as Array<{ table: string; filters: Array<{ op: string; col: string; val: unknown }> }>,
   held: {} as Record<string, { release: () => void } | undefined>,
 }));
 
@@ -43,12 +39,7 @@ vi.mock('@/integrations/supabase/client', () => {
   const builder = (table: string) => {
     const cfg: TableState = h.tables[table] ?? { rows: [], error: null };
     const filters: Array<{ op: string; col: string; val: unknown }> = [];
-    const query = { table, filters } as {
-      table: string;
-      filters: Array<{ op: string; col: string; val: unknown }>;
-      select?: { cols?: unknown; opts?: unknown };
-    };
-    h.queries.push(query);
+    h.queries.push({ table, filters });
 
     const matching = () =>
       cfg.rows.filter((row) =>
@@ -61,15 +52,11 @@ vi.mock('@/integrations/supabase/client', () => {
         }),
       );
 
-    // `head: true` devolve só a contagem (PostgREST corta a resposta em 1.000 linhas);
-    // sem `count` no resultado o hook não teria como contar no servidor.
     const result = () =>
-      cfg.error
-        ? { data: null, count: null, error: cfg.error }
-        : { data: matching(), count: matching().length, error: null };
+      cfg.error ? { data: null, error: cfg.error } : { data: matching(), error: null };
 
     const b: Construtor = {
-      select: (cols?: unknown, opts?: unknown) => { query.select = { cols, opts }; return b; },
+      select: () => b,
       eq: (col: string, val: unknown) => { filters.push({ op: 'eq', col, val }); return b; },
       gte: (col: string, val: unknown) => { filters.push({ op: 'gte', col, val }); return b; },
       lte: (col: string, val: unknown) => { filters.push({ op: 'lte', col, val }); return b; },
@@ -218,10 +205,8 @@ describe('useGoalsDashboard — recorte e leituras', () => {
     await waitFor(() => expect(h.queries.filter((x) => x.table === 'messages').length).toBeGreaterThan(1));
 
     const d = agora();
-    // Semana de SEGUNDA a domingo, a mesma janela compartilhada com o aviso de conquista.
-    expect(result.current.dateRange.from.toISOString()).toBe(goalPeriodRange('week', d).from.toISOString());
-    expect(result.current.dateRange.to.toISOString()).toBe(goalPeriodRange('week', d).to.toISOString());
-    expect(result.current.dateRange.from.getDay()).toBe(1);
+    expect(result.current.dateRange.from.toISOString()).toBe(startOfWeek(d, { locale: ptBR }).toISOString());
+    expect(result.current.dateRange.to.toISOString()).toBe(endOfWeek(d, { locale: ptBR }).toISOString());
 
     await act(async () => result.current.setPeriod('month'));
     await waitFor(() => expect(result.current.dateRange.to.toISOString()).toBe(endOfMonth(agora()).toISOString()));
@@ -253,34 +238,6 @@ describe('useGoalsDashboard — recorte e leituras', () => {
     expect(metaPorId(result.current.goals, 'messages-sent')?.current).toBe(2);
   });
 
-  it('conta as mensagens no SERVIDOR (`count: exact, head: true`) sem baixar linha', async () => {
-    await esperarMetas();
-
-    const q = h.queries.find((x) => x.table === 'messages');
-    expect(q?.select?.opts).toEqual({ count: 'exact', head: true });
-    expect(q?.filters).toEqual(expect.arrayContaining([{ op: 'eq', col: 'sender', val: 'agent' }]));
-  });
-
-  it('meta mensal de 1.500 fecha com a contagem do servidor, acima do corte de 1.000 linhas', async () => {
-    const d = agora();
-    const mensagens = Array.from({ length: 1500 }, (_, i) => ({
-      id: `m${i}`, agent_id: PERFIL, sender: 'agent', created_at: horaAPartirDe(d),
-    }));
-    tabelas({
-      messages: mensagens,
-      goals_configurations: [metaPorPeriodo('messages_sent', 0, 0, 1500)],
-    });
-
-    const { result } = await esperarMetas();
-    await act(async () => result.current.setPeriod('month'));
-    await waitFor(() => expect(result.current.period).toBe('month'));
-
-    const metaMensal = metaPorId(result.current.goals, 'messages-sent');
-    expect(metaMensal?.target).toBe(1500);
-    expect(metaMensal?.current).toBe(1500);
-    expect(metaMensal!.current).toBeGreaterThanOrEqual(metaMensal!.target);
-  });
-
   it('não conta mensagem de outro agente (o recorte é do perfil logado)', async () => {
     const d = agora();
     tabelas({
@@ -304,31 +261,28 @@ describe('useGoalsDashboard — recorte e leituras', () => {
     expect(metaPorId(result.current.goals, 'messages-sent')?.current).toBe(0);
   });
 
-  it('conta os contatos atribuídos e tira a taxa dos desfechos, não das análises de IA', async () => {
+  it('conta os contatos atribuídos e arredonda a taxa de resolução só de "resolvido"', async () => {
     const d = agora();
     tabelas({
       contacts: [
-        { id: 'c1', assigned_to: PERFIL, created_at: horaAPartirDe(d), conversation_status: 'resolved' },
-        { id: 'c2', assigned_to: PERFIL, created_at: horaAPartirDe(d), conversation_status: 'open' },
+        { id: 'c1', assigned_to: PERFIL, created_at: horaAPartirDe(d) },
+        { id: 'c2', assigned_to: PERFIL, created_at: horaAPartirDe(d) },
       ],
-      // Análises de IA não entram na conta: nem todas as conversas são analisadas.
       conversation_analyses: [
         { id: 'a1', analyzed_by: PERFIL, status: 'resolvido', created_at: horaAPartirDe(d) },
+        { id: 'a2', analyzed_by: PERFIL, status: 'resolvido', created_at: horaAPartirDe(d) },
+        { id: 'a3', analyzed_by: PERFIL, status: 'pendente', created_at: horaAPartirDe(d) },
       ],
     });
 
     const { result } = await esperarMetas();
     expect(metaPorId(result.current.goals, 'contacts-handled')?.current).toBe(2);
-    const taxa = metaPorId(result.current.goals, 'resolution-rate');
-    expect(taxa?.current).toBe(50);
-    expect(taxa?.hasData).toBe(true);
+    expect(metaPorId(result.current.goals, 'resolution-rate')?.current).toBe(67);
   });
 
-  it('sem atendimento no período a taxa fica sem dado (0, não NaN)', async () => {
+  it('sem nenhuma análise a taxa de resolução fica em 0 (não vira NaN)', async () => {
     const { result } = await esperarMetas();
-    const taxa = metaPorId(result.current.goals, 'resolution-rate');
-    expect(taxa?.current).toBe(0);
-    expect(taxa?.hasData).toBe(false);
+    expect(metaPorId(result.current.goals, 'resolution-rate')?.current).toBe(0);
   });
 
   it('usuário deslogado: nenhuma leitura é disparada e as metas ficam zeradas', async () => {
@@ -464,25 +418,12 @@ describe('useGoalsDashboard — progresso e celebração', () => {
     expect(result.current.completedGoals).toBe(1);
   });
 
-  it('meta percentual sem denominador sai da média (não derruba o progresso)', async () => {
-    const d = agora();
-    tabelas({
-      messages: [{ id: 'm1', agent_id: PERFIL, sender: 'agent', created_at: horaAPartirDe(d) }],
-      goals_configurations: [meta('messages_sent', 1), meta('contacts_handled', 1), meta('resolution_rate', 80)],
-    });
-
-    const { result } = await esperarMetas();
-    expect(metaPorId(result.current.goals, 'resolution-rate')?.hasData).toBe(false);
-    // (100 + 0) / 2 = 50 — a taxa sem atendimento não entra como 0%.
-    expect(result.current.overallProgress).toBe(50);
-    expect(result.current.completedGoals).toBe(1);
-  });
-
   it('celebra quando todas as metas do período são alcançadas', async () => {
     const d = agora();
     tabelas({
       messages: [{ id: 'm1', agent_id: PERFIL, sender: 'agent', created_at: horaAPartirDe(d) }],
-      contacts: [{ id: 'c1', assigned_to: PERFIL, created_at: horaAPartirDe(d), conversation_status: 'resolved' }],
+      contacts: [{ id: 'c1', assigned_to: PERFIL, created_at: horaAPartirDe(d) }],
+      conversation_analyses: [{ id: 'a1', analyzed_by: PERFIL, status: 'resolvido', created_at: horaAPartirDe(d) }],
       goals_configurations: [meta('messages_sent', 1), meta('contacts_handled', 1), meta('resolution_rate', 80)],
     });
 

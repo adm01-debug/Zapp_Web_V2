@@ -8,12 +8,6 @@ import {
   parseSupabaseStorageObjectUrl,
   PRIVATE_MEDIA_BUCKETS,
 } from '@/lib/storage_object_reference';
-import {
-  pauseExclusiveAudio,
-  playExclusiveAudio,
-  registerExclusiveAudio,
-} from '@/hooks/chat/useExclusiveAudio';
-import { readAudioState, saveAudioState } from '@/lib/audioPlayerState';
 
 interface UseAudioPlayerOptions {
   audioUrl: string;
@@ -75,26 +69,9 @@ export function useAudioPlayer({ audioUrl, messageId }: UseAudioPlayerOptions) {
   const [playbackState, setPlaybackState] = useState<AudioPlaybackState>(() =>
     createInitialPlaybackState(audioUrl)
   );
-  /**
-   * A velocidade sobrevive ao desmonte do balão (lista virtualizada do chat): quem guarda é
-   * `src/lib/audioPlayerState.ts`, por `messageId`, então remontar devolve o 1,5x escolhido
-   * em vez de recomeçar em 1x.
-   */
-  const [playbackRate, setPlaybackRate] = useState(
-    () => readAudioState(messageId)?.playbackRate ?? 1.0
-  );
+  const [playbackRate, setPlaybackRate] = useState(1.0);
   const audioRef = useRef<HTMLAudioElement>(null);
   const resolvedAtRef = useRef({ source: '', timestamp: 0 });
-  /** Espelho da velocidade para os listeners do elemento não dependerem do render. A
-   * sincronização é por efeito: escrever ref durante o render é violação do lint ratchet. */
-  const playbackRateRef = useRef(playbackRate);
-  useEffect(() => {
-    playbackRateRef.current = playbackRate;
-  }, [playbackRate]);
-  /** Ponto guardado, reaplicado UMA vez, quando os metadados do áudio chegam. */
-  const pendingRestoreRef = useRef(0);
-  const restoredRef = useRef(false);
-  const mountedRef = useRef(true);
 
   // E11 — volume é global (D2/E12): não entra no `playbackState` da mensagem, então
   // trocar de áudio no balão não zera nem recria o valor escolhido pelo atendente.
@@ -177,29 +154,17 @@ export function useAudioPlayer({ audioUrl, messageId }: UseAudioPlayerOptions) {
     return () => { active = false; };
   }, [audioUrl, resolveAudioUrl, updatePlaybackState]);
 
-  /** Instância do `<audio>` que o React não solta: o `ref` do JSX fica `null` antes das
-   * limpezas de efeito, então desmontar/exclusividade precisam do elemento capturado aqui. */
-  const elementRef = useRef<HTMLAudioElement | null>(null);
-
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
-    elementRef.current = audio;
 
     const handleLoadedMetadata = () => {
       const d = audio.duration;
-      const known = isFinite(d) && !isNaN(d) ? d : 0;
-      updatePlaybackState({ duration: known, isLoading: false, hasError: false });
-
-      // Remontou com o mesmo `messageId`: devolve a velocidade e o ponto onde parou. A
-      // reaplicação acontece UMA vez por elemento — `load()` (renovação da URL assinada)
-      // dispara `loadedmetadata` de novo e não pode saltar a reprodução para trás.
-      audio.playbackRate = playbackRateRef.current;
-      if (!restoredRef.current && pendingRestoreRef.current > 0) {
-        const limit = known > 0 ? known : pendingRestoreRef.current;
-        audio.currentTime = Math.min(pendingRestoreRef.current, limit);
-      }
-      restoredRef.current = true;
+      updatePlaybackState({
+        duration: isFinite(d) && !isNaN(d) ? d : 0,
+        isLoading: false,
+        hasError: false,
+      });
     };
     const handleTimeUpdate = () => {
       updatePlaybackState({
@@ -208,31 +173,8 @@ export function useAudioPlayer({ audioUrl, messageId }: UseAudioPlayerOptions) {
           ? { progress: (audio.currentTime / audio.duration) * 100 }
           : {}),
       });
-      if (audio.currentTime > 0) saveAudioState(messageId, { currentTime: audio.currentTime });
     };
-    // `play`/`pause` do PRÓPRIO elemento: é assim que o botão acompanha uma pausa que não
-    // veio dele (o store de exclusividade, os controles do sistema, outro player).
-    const handlePlay = () => {
-      playExclusiveAudio(messageId);
-      updatePlaybackState({ isPlaying: true, isLoading: false, hasError: false });
-    };
-    const handlePause = () => updatePlaybackState({ isPlaying: false });
-    // `ratechange` NÃO adota a velocidade do elemento: o `load()` (renovação da URL assinada)
-    // reinicia para 1x e dispara o evento. Quem manda é a escolha do atendente, então o
-    // listener reafirma o valor guardado — sem isso a velocidade voltaria a 1x sozinha.
-    const handleRateChange = () => {
-      const escolhida = playbackRateRef.current;
-      if (audio.playbackRate !== escolhida) audio.playbackRate = escolhida;
-      // Grava só em sessão de escuta (`currentTime > 0`): velocidade escolhida antes de o
-      // áudio começar não vira memória, e o teto de entradas fica para quem foi ouvido.
-      if (audio.currentTime > 0) saveAudioState(messageId, { playbackRate: escolhida });
-    };
-    const handleEnded = () => {
-      // Fim do áudio: solta a exclusividade e o ponto volta ao começo (não retomar no fim).
-      pauseExclusiveAudio(messageId);
-      saveAudioState(messageId, { currentTime: 0, paused: true });
-      updatePlaybackState({ isPlaying: false, progress: 0, currentTime: 0 });
-    };
+    const handleEnded = () => updatePlaybackState({ isPlaying: false, progress: 0, currentTime: 0 });
     const handleError = () => {
       log.error('Audio error:', messageId);
       updatePlaybackState({ isPlaying: false, isLoading: false, hasError: true });
@@ -246,9 +188,6 @@ export function useAudioPlayer({ audioUrl, messageId }: UseAudioPlayerOptions) {
     audio.addEventListener('error', handleError);
     audio.addEventListener('waiting', handleWaiting);
     audio.addEventListener('canplay', handleCanPlay);
-    audio.addEventListener('play', handlePlay);
-    audio.addEventListener('pause', handlePause);
-    audio.addEventListener('ratechange', handleRateChange);
 
     return () => {
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
@@ -257,54 +196,8 @@ export function useAudioPlayer({ audioUrl, messageId }: UseAudioPlayerOptions) {
       audio.removeEventListener('error', handleError);
       audio.removeEventListener('waiting', handleWaiting);
       audio.removeEventListener('canplay', handleCanPlay);
-      audio.removeEventListener('play', handlePlay);
-      audio.removeEventListener('pause', handlePause);
-      audio.removeEventListener('ratechange', handleRateChange);
     };
   }, [resolvedUrl, messageId, updatePlaybackState]);
-
-  /**
-   * A01/D02 no balão da conversa: o MESMO store da aba Arquivos. Tocar este áudio assume a
-   * exclusividade (pausando quem tocava) e um áudio de outro cartão pausa este — uma conversa
-   * com vários balões (e a aba Arquivos aberta) nunca toca dois sons ao mesmo tempo.
-   *
-   * A limpeza do registro PAUSA o elemento e libera o dono do áudio: desmontar (rolar o balão
-   * para fora da janela virtualizada, trocar de conversa) não deixa som fantasma. Antes de
-   * soltar, a posição e a velocidade vão para o store — a remontagem devolve o ponto perdido.
-   */
-  useEffect(() => {
-    mountedRef.current = true;
-    const saved = readAudioState(messageId);
-    if (saved && saved.currentTime > 0) pendingRestoreRef.current = saved.currentTime;
-
-    const persist = () => {
-      const audio = elementRef.current ?? audioRef.current;
-      if (!audio) return;
-      // Só sessão de ESCUTA vira memória: balão que apenas apareceu na lista (a virtualização
-      // monta e desmonta dezenas ao rolar) não ganha entrada — senão o teto de 200 entradas
-      // seria gasto com áudios que ninguém ouviu, expulsando os que estavam sendo ouvidos.
-      if (audio.currentTime <= 0) return;
-      saveAudioState(messageId, {
-        currentTime: audio.currentTime,
-        playbackRate: audio.playbackRate,
-        paused: audio.paused,
-      });
-    };
-
-    const unregister = registerExclusiveAudio(messageId, {
-      pause: () => {
-        (elementRef.current ?? audioRef.current)?.pause();
-        persist();
-        if (mountedRef.current) updatePlaybackState({ isPlaying: false });
-      },
-    });
-
-    return () => {
-      mountedRef.current = false;
-      persist();
-      unregister();
-    };
-  }, [messageId, updatePlaybackState]);
 
   const togglePlay = useCallback(async () => {
     const audio = audioRef.current;
@@ -312,9 +205,6 @@ export function useAudioPlayer({ audioUrl, messageId }: UseAudioPlayerOptions) {
 
     if (isPlaying) {
       audio.pause();
-      saveAudioState(messageId, { currentTime: audio.currentTime, paused: true });
-      // Clique de pausa do atendente: solta a exclusividade para outro áudio poder tocar.
-      pauseExclusiveAudio(messageId);
       updatePlaybackState({ isPlaying: false });
       return;
     }
@@ -333,9 +223,6 @@ export function useAudioPlayer({ audioUrl, messageId }: UseAudioPlayerOptions) {
           : await resolveAudioUrl(audioUrl);
         audio.src = freshUrl;
         audio.load();
-        // `load()` reinicia o elemento: a velocidade escolhida volta nele (o `loadedmetadata`
-        // também reaplica, mas ele pode não chegar antes do `play()`).
-        audio.playbackRate = playbackRateRef.current;
         refreshedBeforePlay = true;
       } catch (error) {
         log.error('Failed to refresh audio before playback:', error);
@@ -348,7 +235,6 @@ export function useAudioPlayer({ audioUrl, messageId }: UseAudioPlayerOptions) {
     updatePlaybackState({ isLoading: true });
     try {
       await audio.play();
-      playExclusiveAudio(messageId);
       updatePlaybackState({ isPlaying: true, isLoading: false, hasError: false });
     } catch (playError) {
       updatePlaybackState({ isPlaying: false });
@@ -356,9 +242,7 @@ export function useAudioPlayer({ audioUrl, messageId }: UseAudioPlayerOptions) {
         if (isPrivateStorageObject && !refreshedBeforePlay) {
           const freshUrl = await refreshPrivateSource();
           audio.src = freshUrl; audio.load();
-          audio.playbackRate = playbackRateRef.current;
           await audio.play();
-          playExclusiveAudio(messageId);
           updatePlaybackState({ isPlaying: true, isLoading: false, hasError: false });
         } else {
           log.error('Audio playback failed after source resolution:', playError);
@@ -374,7 +258,6 @@ export function useAudioPlayer({ audioUrl, messageId }: UseAudioPlayerOptions) {
     isPlaying,
     hasError,
     audioUrl,
-    messageId,
     resolvedUrl,
     resolveAudioUrl,
     refreshPrivateSource,
@@ -393,15 +276,8 @@ export function useAudioPlayer({ audioUrl, messageId }: UseAudioPlayerOptions) {
     const nextIndex = (speeds.indexOf(playbackRate) + 1) % speeds.length;
     const newRate = speeds[nextIndex];
     setPlaybackRate(newRate);
-    playbackRateRef.current = newRate;
     if (audioRef.current) audioRef.current.playbackRate = newRate;
-    // A velocidade vai para o store aqui também: o `ratechange` do elemento não é garantido
-    // em todo navegador, e é ela que a remontagem precisa devolver. Mesma regra da escrita:
-    // só em sessão de escuta (o balão precisa ter posição para virar memória).
-    if ((elementRef.current?.currentTime ?? 0) > 0) {
-      saveAudioState(messageId, { playbackRate: newRate });
-    }
-  }, [playbackRate, messageId]);
+  }, [playbackRate]);
 
   const formatTime = (seconds: number) => {
     if (!isFinite(seconds) || isNaN(seconds) || seconds < 0) return '0:00';

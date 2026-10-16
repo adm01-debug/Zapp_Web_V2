@@ -80,23 +80,13 @@ export function ContactAnalyticsDashboard({ contacts, className }: ContactAnalyt
     <div className={cn("space-y-4", className)}>
       <div data-testid="contact-analytics-header" className="flex items-center gap-2 mb-1">
         <BarChart3 className="w-5 h-5 text-primary" />
-        <h2 className="font-display text-lg font-bold text-foreground">Analytics de Contatos</h2>
+        <h2 className="text-lg font-bold text-foreground">Analytics de Contatos</h2>
         <Badge variant="secondary" className="text-xs">{contacts.length} nesta página</Badge>
       </div>
       <p role="note" className="text-2xs text-muted-foreground mb-2">
         Contagem e agregados (tipos, empresas, tags e novos) consideram somente os contatos da página atual.
       </p>
 
-      {contacts.length === 0 ? (
-        <div
-          data-testid="contact-analytics-empty"
-          className="flex flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-border/60 bg-card/40 py-12 px-6 text-center"
-        >
-          <BarChart3 className="w-6 h-6 text-muted-foreground" aria-hidden="true" />
-          <p className="text-sm font-semibold text-foreground">Sem dados</p>
-          <p className="text-caption max-w-xs">Nenhum contato nesta página para resumir em gráficos.</p>
-        </div>
-      ) : (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {/* Type Distribution */}
         <Card className="border-border/40">
@@ -154,15 +144,15 @@ export function ContactAnalyticsDashboard({ contacts, className }: ContactAnalyt
                   className="flex-1 rounded-t bg-primary/50 hover:bg-primary/70 transition-colors relative group cursor-default"
                   title={`${day.date}: ${day.count} contatos`}
                 >
-                  <div className="absolute -top-5 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-2xs font-mono text-foreground bg-popover border border-border rounded px-1 py-0.5 whitespace-nowrap z-10 pointer-events-none">
+                  <div className="absolute -top-5 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-[9px] font-mono text-foreground bg-popover border border-border rounded px-1 py-0.5 whitespace-nowrap z-10 pointer-events-none">
                     {day.count}
                   </div>
                 </motion.div>
               ))}
             </div>
             <div className="flex justify-between mt-1.5">
-              <span className="text-2xs text-muted-foreground">{analytics.dailyGrowth[0]?.date}</span>
-              <span className="text-2xs text-muted-foreground">{analytics.dailyGrowth[analytics.dailyGrowth.length - 1]?.date}</span>
+              <span className="text-[9px] text-muted-foreground">{analytics.dailyGrowth[0]?.date}</span>
+              <span className="text-[9px] text-muted-foreground">{analytics.dailyGrowth[analytics.dailyGrowth.length - 1]?.date}</span>
             </div>
           </CardContent>
         </Card>
@@ -214,7 +204,6 @@ export function ContactAnalyticsDashboard({ contacts, className }: ContactAnalyt
           </CardContent>
         </Card>
       </div>
-      )}
     </div>
   );
 }

@@ -133,13 +133,6 @@
 .message-bubble.sent { @apply bg-[hsl(var(--chat-bubble-sent))] text-[hsl(var(--chat-bubble-sent-foreground))] rounded-br-md; }
 .message-bubble.received { @apply bg-[hsl(var(--chat-bubble-received))] text-[hsl(var(--chat-bubble-received-foreground))] rounded-bl-md; }
 
-/* Tamanho do texto das bolhas do chat. `--chat-font-size` é escrito no <html> pelo
-   controle da aba Aparência (ChatTextSize.tsx); sem a variável vale o mesmo 0.875rem
-   do `text-sm` de antes, então a tela não muda para quem nunca escolheu. O modo
-   "Texto Grande" do alto contraste segue vencendo porque lá a regra usa `!important`
-   (accessibility.css), e esta aqui não. */
-.chat-message-text { font-size: var(--chat-font-size, 0.875rem); }
-
 /* ===== STATUS DOT ===== */
 .status-dot { @apply w-2.5 h-2.5 rounded-full; }
 .status-dot.online { @apply bg-[hsl(var(--online))]; }
@@ -214,14 +207,14 @@
 /* Gradientes por cor (sem tokens de fundo novos — só accent/status) */
 .talkx-tile--blue   { background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow))); box-shadow: var(--glow-primary-sm); }
 .talkx-tile--green  { background: linear-gradient(135deg, hsl(var(--success)), hsl(142 75% 55%)); }
-.talkx-tile--violet { background: linear-gradient(135deg, hsl(var(--violeta)), hsl(var(--violeta-text))); }
+.talkx-tile--violet { background: linear-gradient(135deg, hsl(262 83% 58%), hsl(270 80% 65%)); }
 .talkx-tile--amber  { background: linear-gradient(135deg, hsl(var(--warning)), hsl(45 95% 65%)); }
 .talkx-tile--red    { background: linear-gradient(135deg, hsl(var(--destructive)), hsl(358 95% 72%)); }
 
 /* Variante soft (linhas de tabela sem mídia) */
 .talkx-tile--soft-blue   { background: hsl(var(--primary) / 0.12); }
 .talkx-tile--soft-green  { background: hsl(var(--success) / 0.12); }
-.talkx-tile--soft-violet { background: hsl(var(--violeta) / 0.12); }
+.talkx-tile--soft-violet { background: hsl(262 83% 58% / 0.12); }
 .talkx-tile--soft-amber  { background: hsl(var(--warning) / 0.12); }
 .talkx-tile--soft-red    { background: hsl(var(--destructive) / 0.12); }
 
@@ -361,7 +354,7 @@
 }
 .catalog-badge--instock { background: hsl(var(--success) / 0.15); color: hsl(var(--success)); }
 .catalog-badge--bestseller { background: hsl(var(--primary) / 0.15); color: hsl(var(--primary)); }
-.catalog-badge--new { background: hsl(var(--violeta) / 0.15); color: hsl(var(--violeta-text)); }
+.catalog-badge--new { background: hsl(268 83% 63% / 0.15); color: hsl(268 83% 70%); }
 .catalog-badge--featured { background: hsl(var(--warning) / 0.15); color: hsl(var(--warning)); }
 .catalog-badge--out { background: hsl(var(--destructive) / 0.15); color: hsl(var(--destructive)); }
 

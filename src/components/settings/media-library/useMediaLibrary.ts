@@ -3,7 +3,6 @@ import { getLogger } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { fetchAllRows } from '@/lib/fetchAllRows';
 import { toast } from 'sonner';
-import { audioMemeCategoryEmojis } from '@/lib/audioMemeCategories';
 
 const log = getLogger('useMediaLibrary');
 
@@ -38,8 +37,10 @@ export const STICKER_CATEGORIES: Record<string, string> = {
   animais: '🐱', comida: '🍕', esportes: '⚽', trabalho: '💼', outros: '📦',
 };
 
-/** Categorias de áudio-meme: fonte única em `@/lib/audioMemeCategories`. */
-export const AUDIO_CATEGORIES: Record<string, string> = audioMemeCategoryEmojis();
+export const AUDIO_CATEGORIES: Record<string, string> = {
+  risadas: '😂', bordões: '🎤', efeitos: '💥', músicas: '🎵',
+  memes: '🤣', narração: '📢', animais: '🐶', outros: '📦',
+};
 
 export const EMOJI_CATEGORIES: Record<string, string> = {
   custom: '⭐', team: '👥', brand: '🏢', fun: '🎮', outros: '📦',
@@ -231,19 +232,9 @@ export function useMediaLibrary(type: MediaType) {
         // invoke com { data: null, error } em vez de lançar. Sem ler o `error`,
         // a falha some (contava como "sem mudança") e a seleção era limpa.
         if (error) { errors++; failed.add(item.id); continue; }
-        // IA-132: o classificador devolve, além de `category`, o ESTADO da
-        // classificação. Estado diferente de 'ok' NÃO é conclusão — provedor fora
-        // do ar, entrada vazia, imagem recusada ou categoria fora da lista — e
-        // gravar `outros` aí seria tomar falha técnica por categoria concluída.
-        // O item conta como erro e continua selecionado para nova tentativa.
-        // Resposta SEM o campo `state` (ex.: `classify-audio-meme`) mantém o
-        // comportamento seguro anterior.
-        const resposta = data as { category?: string; state?: string } | null;
-        if (resposta?.state !== undefined && resposta.state !== 'ok') { errors++; failed.add(item.id); continue; }
-        const categoria = resposta?.category;
-        if (categoria && categoria !== item.category) {
-          const { error: updateError } = await supabase.from(type).update({ category: categoria }).eq('id', item.id);
-          if (!updateError) { setItems(prev => prev.map(i => i.id === item.id ? { ...i, category: categoria } : i)); updated++; }
+        if (data?.category && data.category !== item.category) {
+          const { error: updateError } = await supabase.from(type).update({ category: data.category }).eq('id', item.id);
+          if (!updateError) { setItems(prev => prev.map(i => i.id === item.id ? { ...i, category: data.category } : i)); updated++; }
           else { errors++; failed.add(item.id); }
         }
       } catch { errors++; failed.add(item.id); }

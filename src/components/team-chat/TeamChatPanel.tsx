@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { TeamConversation } from '@/hooks/chat/useTeamChat';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { AlertCircle, ArrowDown, Loader2, Lock, Search, X } from 'lucide-react';
+import { ArrowDown, Loader2, Lock, Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -100,7 +100,6 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
     <div className="flex flex-col h-full w-full relative">
       <TeamChatHeader conversation={conversation} showDetails={showDetails} voiceId={s.tts.voiceId} speed={s.tts.speed}
         showSearch={s.showSearch} isMuted={s.isMuted} onBack={onBack} onToggleDetails={onToggleDetails}
-        canTransferDepartment={s.canTransferDepartment}
         onToggleSearch={() => { s.setShowSearch(!s.showSearch); if (s.showSearch) s.setSearchQuery(''); }}
         onAddMembers={() => s.setShowAddMembers(true)} onVoiceChange={s.tts.setVoiceId} onSpeedChange={s.tts.setSpeed}
         onToggleMute={() => s.muteMutation.mutate({ conversationId: conversation.id, muted: !s.isMuted })} />
@@ -113,8 +112,8 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
               <Input ref={s.searchInputRef} value={s.searchQuery} onChange={e => s.setSearchQuery(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Escape') { s.setShowSearch(false); s.setSearchQuery(''); } }}
                 placeholder="Buscar nas mensagens..." className="h-8 text-sm" />
-              {s.searchQuery && !s.isSearching && !s.searchError && <span className="text-xs text-muted-foreground whitespace-nowrap">{s.filteredMessages.length} resultado{s.filteredMessages.length !== 1 ? 's' : ''}</span>}
-              <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => { s.setShowSearch(false); s.setSearchQuery(''); }} aria-label="Fechar busca"><X className="w-3.5 h-3.5" /></Button>
+              {s.searchQuery && <span className="text-xs text-muted-foreground whitespace-nowrap">{s.filteredMessages.length} resultado{s.filteredMessages.length !== 1 ? 's' : ''}</span>}
+              <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => { s.setShowSearch(false); s.setSearchQuery(''); }}><X className="w-3.5 h-3.5" /></Button>
             </div>
           </motion.div>
         )}
@@ -123,14 +122,6 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
       <div ref={s.scrollRef} className="flex-1 overflow-auto p-4 space-y-1 bg-muted/5" onScroll={handleScroll} role="log" aria-label="Mensagens da conversa" aria-live="polite">
         {s.isLoading ? (
           <div className="space-y-3">{Array.from({ length: 4 }).map((_, i) => <div key={i} className={cn("flex", i % 2 === 0 ? "justify-start" : "justify-end")}><Skeleton className="h-10 rounded-2xl" style={{ width: 120 + (i % 3) * 60 }} /></div>)}</div>
-        ) : s.searchError ? (
-          <div role="alert" className="flex items-center justify-center gap-2 py-12 text-sm text-destructive">
-            <AlertCircle className="w-4 h-4" aria-hidden /> {s.searchError}
-          </div>
-        ) : s.isSearching ? (
-          <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
-            <Loader2 className="w-4 h-4 motion-safe:animate-spin" aria-hidden /> Buscando mensagens…
-          </div>
         ) : s.filteredMessages.length === 0 ? (
           <div className="text-center text-muted-foreground text-sm py-12">{s.searchQuery ? 'Nenhuma mensagem encontrada' : 'Envie a primeira mensagem!'}</div>
         ) : (
@@ -138,7 +129,7 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
             {s.hasOlderMessages && !s.searchQuery && (
               <div className="flex justify-center py-2">
                 <Button variant="ghost" size="sm" className="gap-2 text-xs text-muted-foreground" disabled={s.isFetchingOlder} onClick={() => { void s.fetchOlderMessages(); }}>
-                  {s.isFetchingOlder && <Loader2 className="w-3.5 h-3.5 motion-safe:animate-spin" aria-hidden />}
+                  {s.isFetchingOlder && <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden />}
                   Carregar mensagens anteriores
                 </Button>
               </div>
@@ -180,7 +171,7 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
         )}
       </div>
 
-      {s.showScrollDown && <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-10"><Button size="icon" variant="secondary" className="rounded-full shadow-lg h-8 w-8" onClick={s.scrollToBottom} aria-label="Voltar ao final"><ArrowDown className="w-4 h-4" /></Button></div>}
+      {s.showScrollDown && <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-10"><Button size="icon" variant="secondary" className="rounded-full shadow-lg h-8 w-8" onClick={s.scrollToBottom}><ArrowDown className="w-4 h-4" /></Button></div>}
 
       <TeamChatInputArea conversationId={conversation.id} text={s.text} setText={s.setText} replyTo={s.replyTo}
         isRecordingAudio={s.isRecordingAudio} isPending={s.sendMutation.isPending} onSend={s.handleSend}

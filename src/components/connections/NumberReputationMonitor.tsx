@@ -4,10 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Shield, TrendingUp, TrendingDown, AlertTriangle, Flame, Thermometer, BarChart3, Info, AlertCircle } from 'lucide-react';
+import { Shield, TrendingUp, TrendingDown, AlertTriangle, Flame, Thermometer, BarChart3, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
-import { useUserRole } from '@/hooks/system/useUserRole';
 
 interface ReputationData {
   id: string;
@@ -30,37 +29,23 @@ interface ConnectionInfo {
 export function NumberReputationMonitor() {
   const [reputations, setReputations] = useState<(ReputationData & { connection?: ConnectionInfo })[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState(false);
-
-  // A policy de UPDATE de number_reputation é só de admin/supervisor
-  // (migration 20260409190343, "Admins can update reputation"). Sem a guarda,
-  // o atendente clicava e a RLS devolvia 0 linhas sem erro.
-  const { isAdmin, isSupervisor } = useUserRole();
-  const canStartWarmup = isAdmin || isSupervisor;
 
   const loadData = useCallback(async () => {
     setLoading(true);
-    const { data: reps, error: repsError } = await supabase
+    const { data: reps } = await supabase
       .from('number_reputation')
       .select('*');
 
-    const { data: connections, error: connectionsError } = await supabase
+    const { data: connections } = await supabase
       .from('whatsapp_connections')
       .select('id, instance_id, phone_number');
 
-    // Falha de leitura não é "sem dados": o aviso de erro é outro.
-    if (repsError || connectionsError) {
-      setLoadError(true);
-      setReputations([]);
-      setLoading(false);
-      return;
+    if (reps && connections) {
+      setReputations(reps.map(r => ({
+        ...r,
+        connection: connections.find(c => c.id === r.whatsapp_connection_id) as ConnectionInfo | undefined,
+      })));
     }
-
-    setLoadError(false);
-    setReputations((reps ?? []).map(r => ({
-      ...r,
-      connection: (connections ?? []).find(c => c.id === r.whatsapp_connection_id) as ConnectionInfo | undefined,
-    })));
     setLoading(false);
   }, []);
 
@@ -70,15 +55,13 @@ export function NumberReputationMonitor() {
   }, [loadData]);
 
   const startWarmup = async (id: string) => {
-    // .select() para saber quantas linhas a RLS deixou gravar: 0 linhas sem
-    // erro é o caso do atendente e não pode virar "Aquecimento iniciado".
-    const { data, error } = await supabase.from('number_reputation').update({
+    const { error } = await supabase.from('number_reputation').update({
       warmup_status: 'active',
       warmup_day: 1,
       daily_limit: 20,
-    }).eq('id', id).select('id');
+    }).eq('id', id);
 
-    if (error || !data || data.length === 0) {
+    if (error) {
       toast.error('Não foi possível iniciar o aquecimento');
       return;
     }
@@ -105,12 +88,6 @@ export function NumberReputationMonitor() {
     completed: 'Aquecido',
     paused: 'Pausado',
   };
-
-  // Sem nenhuma linha gravada (e sem gravador no sistema, nenhuma migration faz
-  // INSERT em number_reputation) o cartão fica vazio para sempre — melhor não
-  // existir na tela. O componente não é apagado: volta a aparecer quando houver
-  // dado, e erro de leitura tem aviso próprio.
-  if (!loading && !loadError && reputations.length === 0) return null;
 
   return (
     <div className="space-y-4">
@@ -139,11 +116,11 @@ export function NumberReputationMonitor() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1,2,3].map(i => <div key={i} className="h-40 bg-muted/20 rounded-xl animate-pulse" />)}
         </div>
-      ) : loadError ? (
+      ) : reputations.length === 0 ? (
         <Card>
-          <CardContent className="p-8 text-center">
-            <AlertCircle className="w-8 h-8 mx-auto mb-2 text-destructive" />
-            <p className="text-sm text-destructive">Não foi possível carregar a reputação dos números.</p>
+          <CardContent className="p-8 text-center text-muted-foreground">
+            <Shield className="w-8 h-8 mx-auto mb-2 text-muted-foreground/30" />
+            <p>Nenhum dado de reputação registrado.</p>
           </CardContent>
         </Card>
       ) : (
@@ -185,7 +162,7 @@ export function NumberReputationMonitor() {
                         {rep.warmup_day ? ` (Dia ${rep.warmup_day})` : ''}
                       </Badge>
                     </div>
-                    {rep.warmup_status === 'none' && canStartWarmup && (
+                    {rep.warmup_status === 'none' && (
                       <Button variant="outline" size="sm" className="h-6 text-3xs" onClick={() => startWarmup(rep.id)}>
                         <Flame className="w-3 h-3 mr-1" />
                         Aquecer

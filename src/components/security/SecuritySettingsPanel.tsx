@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   Shield, 
@@ -30,7 +29,6 @@ interface SecuritySettingsPanelProps {
 
 export function SecuritySettingsPanel({ onSwitchTab }: SecuritySettingsPanelProps) {
   const { user } = useAuth();
-  const navigate = useNavigate();
   // Mesma fonte compartilhada do overview: a instância própria de useMFA nunca
   // buscava os fatores e exibia 2FA como desativado mesmo com TOTP verificado.
   const { data: factors, isLoading: mfaLoading, isError: mfaError } = useMfaFactors(!!user);
@@ -74,10 +72,7 @@ export function SecuritySettingsPanel({ onSwitchTab }: SecuritySettingsPanelProp
       status: 'action',
       action: () => {
         requireReauth('change_password', async () => {
-          // Navegação do router (não `window.location.href`): a tela de troca de
-          // senha lê o nível de garantia (2º fator) da sessão atual e, ao final,
-          // encerra as outras sessões — o reload duro perdia esse estado.
-          navigate('/reset-password');
+          window.location.href = '/reset-password';
         });
       },
     },

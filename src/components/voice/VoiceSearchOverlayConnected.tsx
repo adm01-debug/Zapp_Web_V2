@@ -19,8 +19,6 @@ function VoiceSearchOverlayConnected({ isOpen, onClose, onAction, onError }: Pro
       finalTranscript={voice.finalTranscript}
       agentResponse={voice.agentResponse}
       error={voice.error}
-      ttsIssue={voice.ttsIssue}
-      onRetrySpeak={() => { void voice.replayResponse(); }}
       onClose={() => { onClose(); voice.reset(); }}
       onStartListening={voice.startListening}
       onStopListening={voice.stopListening}

@@ -15,9 +15,7 @@ import {
 import { Calendar } from '@/components/ui/calendar';
 import {
   Calendar as CalendarIcon,
-  Filter,
   RefreshCw,
-  X,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import {
@@ -38,7 +36,6 @@ import { cn } from '@/lib/utils';
 import { useQueues } from '@/hooks/business/useQueues';
 import { useAgents } from '@/hooks/crm/useAgents';
 import type { DashboardFiltersState } from './dashboardFilterDefaults';
-import { getDefaultFilters } from './dashboardFilterDefaults';
 
 interface DashboardFiltersProps {
   filters: DashboardFiltersState;
@@ -141,18 +138,6 @@ export function DashboardFilters({
     });
   };
 
-  // Limpar volta ao recorte padrão do dashboard ("hoje" no fuso do app) e zera fila e agente.
-  const clearFilters = () => {
-    onFiltersChange(getDefaultFilters());
-  };
-
-  // Conta só o que está de fato aplicado. Fila/agente só contam quando o filtro de time é exibido:
-  // para agent/special_agent ele não aparece e os dois ficam sempre vazios (não há o que limpar).
-  const activeFiltersCount =
-    (filters.period !== 'today' ? 1 : 0) +
-    (showTeamFilters && filters.queueId !== null ? 1 : 0) +
-    (showTeamFilters && filters.agentId !== null ? 1 : 0);
-
   const periodLabel = PERIOD_OPTIONS.find(o => o.value === filters.period)?.label ?? 'Personalizado';
   // O rótulo segue o dia de calendário do recorte (fuso do app), não o fuso do processo: com o
   // recorte de hoje ancorado em America/Sao_Paulo, `isSameDay` no fuso do processo diria que
@@ -222,7 +207,7 @@ export function DashboardFilters({
         <>
         {/* Fila */}
         <Select value={filters.queueId || 'all'} onValueChange={handleQueueChange}>
-          <SelectTrigger aria-label="Filtrar por fila" data-testid="filter-queue" className="h-[34px] w-[135px] rounded-lg bg-input border-border text-[13px] font-medium shrink-0">
+          <SelectTrigger data-testid="filter-queue" className="h-[34px] w-[135px] rounded-lg bg-input border-border text-[13px] font-medium shrink-0">
             <SelectValue placeholder="Todas as filas" />
           </SelectTrigger>
           <SelectContent>
@@ -243,7 +228,7 @@ export function DashboardFilters({
 
         {/* Agente */}
         <Select value={filters.agentId || 'all'} onValueChange={handleAgentChange}>
-          <SelectTrigger aria-label="Filtrar por agente" data-testid="filter-agent" className="h-[34px] w-[158px] rounded-lg bg-input border-border text-[13px] font-medium shrink-0">
+          <SelectTrigger data-testid="filter-agent" className="h-[34px] w-[158px] rounded-lg bg-input border-border text-[13px] font-medium shrink-0">
             <SelectValue placeholder="Todos os agentes" />
           </SelectTrigger>
           <SelectContent>
@@ -258,21 +243,6 @@ export function DashboardFilters({
 
 
         </>
-      )}
-
-      {/* Filtros ativos: mostra quantos estão aplicados e limpa tudo em um clique */}
-      {activeFiltersCount > 0 && (
-        <button
-          type="button"
-          data-testid="filter-clear"
-          onClick={clearFilters}
-          aria-label={`Limpar filtros (${activeFiltersCount} ativo${activeFiltersCount > 1 ? 's' : ''})`}
-          className="h-[34px] rounded-lg bg-primary/15 border border-primary/30 px-3 flex items-center gap-1.5 text-xs font-medium text-primary hover:bg-primary/25 transition-colors shrink-0"
-        >
-          <Filter className="w-3.5 h-3.5" />
-          {activeFiltersCount} filtro{activeFiltersCount > 1 ? 's' : ''}
-          <X className="w-3.5 h-3.5 opacity-70" />
-        </button>
       )}
 
       {/* Atualizar */}

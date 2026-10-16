@@ -7,14 +7,12 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { MessageSquare, Send, Loader2, AlertCircle } from 'lucide-react';
+import { MessageSquare, Send, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { contactNotesKey } from '@/hooks/crm/useContactNotes';
-import { conversationTabCountsKey } from '@/hooks/chat/useConversationTabCounts';
 import { MentionInput } from './MentionInput';
 
 export function InternalNotesPanel({ contactId }: { contactId: string }) {
@@ -22,7 +20,7 @@ export function InternalNotesPanel({ contactId }: { contactId: string }) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  const { data: notes, isLoading, error, refetch } = useQuery({
+  const { data: notes, isLoading } = useQuery({
     queryKey: ['internal-notes', contactId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -48,11 +46,6 @@ export function InternalNotesPanel({ contactId }: { contactId: string }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['internal-notes', contactId] });
-      // O painel grava `contact_notes` direto: sem invalidar as chaves dos
-      // outros consumidores, a aba de notas do contato e a contagem das abas
-      // ficam velhas até um refetch manual.
-      queryClient.invalidateQueries({ queryKey: contactNotesKey(contactId, user?.id) });
-      queryClient.invalidateQueries({ queryKey: conversationTabCountsKey(contactId) });
       setNewNote('');
       toast.success('Nota adicionada!');
     },
@@ -83,14 +76,6 @@ export function InternalNotesPanel({ contactId }: { contactId: string }) {
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : error ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <AlertCircle className="w-8 h-8 mx-auto mb-2 text-destructive" />
-              <p className="text-sm">Não foi possível carregar as notas</p>
-              <Button variant="outline" size="sm" className="mt-3" onClick={() => void refetch()}>
-                Tentar novamente
-              </Button>
             </div>
           ) : notes?.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">

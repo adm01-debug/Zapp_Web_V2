@@ -2,13 +2,12 @@ import { useState, type ReactNode } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
-  Sparkles, FileText, Lightbulb, XCircle, Handshake, Clock, BarChart3, Trash2, CheckSquare, AlertTriangle, RefreshCw, type LucideIcon,
+  Sparkles, FileText, Lightbulb, XCircle, Handshake, Clock, BarChart3, Trash2, CheckSquare, type LucideIcon,
 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { calendarDayKey, parseDayKey } from '@/lib/localDay';
-import { toast } from '@/hooks/ui/use-toast';
 import { useContactNotes, type ContactNote, type ContactNoteCategory } from '@/hooks/crm/useContactNotes';
 import { useMyWorkItems } from '@/hooks/tasks/useMyWorkItems';
 import { useContactSummaryNote } from '@/hooks/crm/useContactSummaryNote';
@@ -84,14 +83,10 @@ interface NoteCategoryCardProps {
   currentProfileId?: string;
   onAdd: (content: string, category: ContactNoteCategory, dueDate?: string | null) => Promise<unknown> | void;
   onDelete: (id: string) => void;
-  /** Nome acessível da lixeira (botão só com ícone). */
-  deleteLabel: string;
-  isLoading?: boolean;
-  hasError?: boolean;
   renderItem?: (note: ContactNote) => ReactNode;
 }
 
-function NoteCategoryCard({ icon, title, tone, notes, category, placeholder, withDueDate, currentProfileId, deleteLabel, isLoading, hasError, onAdd, onDelete, renderItem }: NoteCategoryCardProps) {
+function NoteCategoryCard({ icon, title, tone, notes, category, placeholder, withDueDate, currentProfileId, onAdd, onDelete, renderItem }: NoteCategoryCardProps) {
   const [adding, setAdding] = useState(false);
 
   return (
@@ -113,43 +108,33 @@ function NoteCategoryCard({ icon, title, tone, notes, category, placeholder, wit
         />
       )}
 
-      {isLoading ? (
-        <div className="space-y-2" aria-busy="true" data-testid="notes-skeleton">
-          <div className="h-12 rounded-lg bg-muted/40 motion-safe:animate-pulse" />
-          <div className="h-12 rounded-lg bg-muted/40 motion-safe:animate-pulse" />
-        </div>
-      ) : (
-        <>
-          {notes.length === 0 && !adding && !hasError && <p className="text-sm text-muted-foreground py-2">Nenhum registro ainda</p>}
-          {hasError && notes.length === 0 && <p className="text-sm text-muted-foreground py-2">Não foi possível carregar.</p>}
-          <ul aria-live="polite" className="space-y-2 max-h-[240px] overflow-y-auto scrollbar-thin">
-            {notes.map((note) => (
-              <li key={note.id} data-testid="note-card" className="group rounded-lg border border-border bg-muted/20 p-2.5">
-                {renderItem ? renderItem(note) : (
-                  <>
-                    <p className="text-sm text-foreground">{note.content}</p>
-                    <div className="flex items-center justify-between mt-1.5">
-                      <p className="text-xs text-muted-foreground">
-                        {format(new Date(note.created_at), "dd MMM yyyy · HH:mm", { locale: ptBR })} · Por: {note.author?.name ?? 'Você'}
-                      </p>
-                      {note.author_id === currentProfileId && (
-                        <button type="button" aria-label={deleteLabel} onClick={() => onDelete(note.id)} className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 text-destructive shrink-0">
-                          <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
-                        </button>
-                      )}
-                    </div>
-                  </>
-                )}
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
+      <ul className="space-y-2 max-h-[240px] overflow-y-auto scrollbar-thin">
+        {notes.length === 0 && !adding && <p className="text-sm text-muted-foreground py-2">Nenhum registro ainda</p>}
+        {notes.map((note) => (
+          <li key={note.id} data-testid="note-card" className="group rounded-lg border border-border bg-muted/20 p-2.5">
+            {renderItem ? renderItem(note) : (
+              <>
+                <p className="text-sm text-foreground">{note.content}</p>
+                <div className="flex items-center justify-between mt-1.5">
+                  <p className="text-xs text-muted-foreground">
+                    {format(new Date(note.created_at), "dd MMM yyyy · HH:mm", { locale: ptBR })} · Por: {note.author?.name ?? 'Você'}
+                  </p>
+                  {note.author_id === currentProfileId && (
+                    <button type="button" onClick={() => onDelete(note.id)} className="opacity-0 group-hover:opacity-100 text-destructive shrink-0">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
+          </li>
+        ))}
+      </ul>
     </SectionCard>
   );
 }
 
-function ObjectionItem({ note, onDelete, canDelete, deleteLabel }: { note: ContactNote; onDelete: (id: string) => void; canDelete: boolean; deleteLabel: string }) {
+function ObjectionItem({ note, onDelete, canDelete }: { note: ContactNote; onDelete: (id: string) => void; canDelete: boolean }) {
   const match = note.content.match(/^\[(.+?)\]\s*(.*)$/);
   const tag = match?.[1];
   const text = match ? match[2] : note.content;
@@ -162,8 +147,8 @@ function ObjectionItem({ note, onDelete, canDelete, deleteLabel }: { note: Conta
       <div className="flex items-center justify-between mt-1.5">
         <p className="text-xs text-muted-foreground">{format(new Date(note.created_at), "dd MMM yyyy · HH:mm", { locale: ptBR })}</p>
         {canDelete && (
-          <button type="button" aria-label={deleteLabel} onClick={() => onDelete(note.id)} className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 text-destructive shrink-0">
-            <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+          <button type="button" onClick={() => onDelete(note.id)} className="opacity-0 group-hover:opacity-100 text-destructive shrink-0">
+            <Trash2 className="w-3.5 h-3.5" />
           </button>
         )}
       </div>
@@ -181,10 +166,10 @@ function noteDueLabel(dueDate: string): string {
   return date ? format(date, 'dd/MM/yyyy', { locale: ptBR }) : '';
 }
 
-function PromiseItem({ note, onToggle, onDelete, canDelete, deleteLabel }: { note: ContactNote; onToggle: (note: ContactNote) => void; onDelete: (id: string) => void; canDelete: boolean; deleteLabel: string }) {
+function PromiseItem({ note, onToggle, onDelete, canDelete }: { note: ContactNote; onToggle: (note: ContactNote) => void; onDelete: (id: string) => void; canDelete: boolean }) {
   return (
     <div className="flex items-start gap-2">
-      <input type="checkbox" checked={note.is_done} onChange={() => onToggle(note)} aria-label={note.is_done ? 'Desmarcar promessa como concluída' : 'Marcar promessa como concluída'} className="mt-0.5 shrink-0" />
+      <input type="checkbox" checked={note.is_done} onChange={() => onToggle(note)} className="mt-0.5 shrink-0" />
       <div className="min-w-0 flex-1">
         <p className={cn('text-sm text-foreground', note.is_done && 'line-through text-muted-foreground')}>{note.content}</p>
         <div className="flex items-center justify-between mt-1">
@@ -192,8 +177,8 @@ function PromiseItem({ note, onToggle, onDelete, canDelete, deleteLabel }: { not
             <p className="text-xs text-muted-foreground">{noteDueLabel(note.due_date)}</p>
           ) : <span />}
           {canDelete && (
-            <button type="button" aria-label={deleteLabel} onClick={() => onDelete(note.id)} className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 text-destructive shrink-0">
-              <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+            <button type="button" onClick={() => onDelete(note.id)} className="opacity-0 group-hover:opacity-100 text-destructive shrink-0">
+              <Trash2 className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
@@ -204,7 +189,7 @@ function PromiseItem({ note, onToggle, onDelete, canDelete, deleteLabel }: { not
 
 /** Aba Notas (2.8) — 6 cards de CRUD por categoria + pendências (tarefas) + resumo comercial (contacts.notes). */
 export function NotesTab({ contactId, onTabChange }: NotesTabProps) {
-  const { allNotes, addNote, deleteNote, toggleNoteDone, currentProfileId, isLoading, error, refetch } = useContactNotes(contactId);
+  const { allNotes, addNote, deleteNote, toggleNoteDone, currentProfileId } = useContactNotes(contactId);
   const { byDue, create: createTask } = useMyWorkItems({ contactId });
   const openTasks = [...byDue.overdue, ...byDue.today, ...byDue.tomorrow, ...byDue.upcoming, ...byDue.noDue];
   const summaryNote = useContactSummaryNote(contactId);
@@ -225,46 +210,31 @@ export function NotesTab({ contactId, onTabChange }: NotesTabProps) {
         </div>
       </div>
 
-      {error && (
-        <div
-          role="alert"
-          data-testid="notes-query-error"
-          className="flex items-center gap-3 rounded-xl border border-destructive/40 bg-destructive/5 px-3 py-2"
-        >
-          <AlertTriangle className="h-4 w-4 shrink-0 text-destructive" aria-hidden="true" />
-          <p className="text-sm text-foreground">Não foi possível carregar as notas deste contato.</p>
-          <Button variant="outline" size="sm" className="ml-auto h-8 gap-1.5" onClick={() => { void refetch(); }}>
-            <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
-            Tentar novamente
-          </Button>
-        </div>
-      )}
-
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         <NoteCategoryCard
           icon={FileText} title="Notas privadas" tone="blue" category="note" placeholder="Escreva uma nota privada..."
-          notes={byCategory('note')} currentProfileId={currentProfileId} deleteLabel="Remover nota" isLoading={isLoading} hasError={!!error}
+          notes={byCategory('note')} currentProfileId={currentProfileId}
           onAdd={(content, category) => addNote(content, category)} onDelete={deleteNote}
         />
 
         <NoteCategoryCard
           icon={Lightbulb} title="Fatos relevantes" tone="yellow" category="fact" placeholder="Ex.: Cliente prefere contato por WhatsApp após 18h"
-          notes={byCategory('fact')} currentProfileId={currentProfileId} deleteLabel="Remover fato" isLoading={isLoading} hasError={!!error}
+          notes={byCategory('fact')} currentProfileId={currentProfileId}
           onAdd={(content, category) => addNote(content, category)} onDelete={deleteNote}
         />
 
         <NoteCategoryCard
           icon={XCircle} title="Objeções" tone="red" category="objection" placeholder="Ex.: [Preço] Acha o valor alto"
-          notes={byCategory('objection')} currentProfileId={currentProfileId} deleteLabel="Remover objeção" isLoading={isLoading} hasError={!!error}
+          notes={byCategory('objection')} currentProfileId={currentProfileId}
           onAdd={(content, category) => addNote(content, category)} onDelete={deleteNote}
-          renderItem={(note) => <ObjectionItem note={note} onDelete={deleteNote} canDelete={note.author_id === currentProfileId} deleteLabel="Remover objeção" />}
+          renderItem={(note) => <ObjectionItem note={note} onDelete={deleteNote} canDelete={note.author_id === currentProfileId} />}
         />
 
         <NoteCategoryCard
           icon={Handshake} title="Promessas feitas" tone="green" category="promise" placeholder="Ex.: Enviar catálogo atualizado" withDueDate
-          notes={byCategory('promise')} currentProfileId={currentProfileId} deleteLabel="Remover promessa" isLoading={isLoading} hasError={!!error}
+          notes={byCategory('promise')} currentProfileId={currentProfileId}
           onAdd={(content, category, dueDate) => addNote(content, category, dueDate)} onDelete={deleteNote}
-          renderItem={(note) => <PromiseItem note={note} onToggle={toggleNoteDone} onDelete={deleteNote} canDelete={note.author_id === currentProfileId} deleteLabel="Remover promessa" />}
+          renderItem={(note) => <PromiseItem note={note} onToggle={toggleNoteDone} onDelete={deleteNote} canDelete={note.author_id === currentProfileId} />}
         />
 
         <SectionCard icon={Clock} title="Pendências" tone="blue" count={openTasks.length}>
@@ -296,20 +266,7 @@ export function NotesTab({ contactId, onTabChange }: NotesTabProps) {
               <Textarea value={summaryDraft} onChange={(e) => setSummaryDraft(e.target.value)} rows={4} className="text-sm resize-none" autoFocus />
               <div className="flex justify-end gap-2">
                 <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setEditingSummary(false)}>Cancelar</Button>
-                <Button size="sm" className="h-7 text-xs" disabled={summaryNote.isSaving} onClick={async () => {
-                  try {
-                    await summaryNote.save(summaryDraft);
-                    // Só depois da gravação confirmada o editor é fechado.
-                    setEditingSummary(false);
-                  } catch {
-                    // Falhou: mantém o formulário aberto com o texto para o usuário tentar de novo.
-                    toast({
-                      title: 'Erro ao salvar o resumo comercial',
-                      description: 'Não foi possível gravar o resumo. O texto foi mantido para você tentar de novo.',
-                      variant: 'destructive',
-                    });
-                  }
-                }}>Salvar</Button>
+                <Button size="sm" className="h-7 text-xs" disabled={summaryNote.isSaving} onClick={async () => { await summaryNote.save(summaryDraft); setEditingSummary(false); }}>Salvar</Button>
               </div>
             </div>
           ) : (

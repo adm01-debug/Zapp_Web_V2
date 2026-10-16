@@ -1,4 +1,3 @@
-import { MotionConfig } from "framer-motion";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { AuthProvider } from "@/hooks/auth/useAuth";
@@ -19,51 +18,6 @@ const log = getLogger('AppProviders');
 const MAX_RETRIES = 3;
 
 
-/**
- * Tela minima de erro do nivel mais externo.
- *
- * DE PROPOSITO sem contexto nenhum (sem tema, sem i18n, sem tooltip, sem
- * framer-motion): este boundary fica ACIMA do AppProviders (montado em
- * src/main.tsx), entao quando o proprio provider (AuthProvider, QueryClient,
- * CallSession...) quebra nao ha contexto para consumir — usar um componente
- * que dependa de provider aqui reintroduziria o crash que ela existe para
- * cobrir. Estilo por classe utilitaria (CSS puro), sem js em runtime alem do
- * "Recarregar".
- */
-function TelaMinimaDeErro() {
-  return (
-    <div
-      className="min-h-screen flex items-center justify-center bg-background p-4 text-center"
-      role="alert"
-    >
-      <div className="max-w-md space-y-4">
-        <h1 className="text-xl font-bold text-foreground">Nao foi possivel carregar o Zapp</h1>
-        <p className="text-muted-foreground">
-          Um erro inesperado interrompeu o aplicativo. Recarregue para tentar de novo.
-        </p>
-        <button
-          onClick={() => window.location.reload()}
-          className="px-6 py-2 bg-primary text-primary-foreground rounded-md font-medium min-h-11"
-        >
-          Recarregar
-        </button>
-      </div>
-    </div>
-  );
-}
-
-/**
- * Boundary mais externo do app (montado em src/main.tsx, acima do
- * `AppProviders`). Existe para o caso que o boundary interno do AppProviders
- * nao alcanca: erro no proprio provider (AuthProvider e cia.) durante o
- * primeiro render, que sem isto virava tela branca. Sem `resetKey`: erro
- * aqui nao tem recuperacao automatica confiavel — a saida e recarregar.
- */
-export function AppErrorBoundary({ children }: { children: React.ReactNode }) {
-  return <ErrorBoundary fallback={<TelaMinimaDeErro />}>{children}</ErrorBoundary>;
-}
-
-
 export function AppProviders({ children }: { children: React.ReactNode }) {
   const [errorKey, setErrorKey] = useState(0);
   const [failed, setFailed] = useState(false);
@@ -79,14 +33,6 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       log.error('Max retries reached. Manual intervention required.');
       setFailed(true);
     }
-  };
-
-  // Toda recuperacao (o boundary voltou ao normal) zera o contador: o orcamento
-  // de 3 tentativas e por falha CONSECUTIVA, nao por sessao. Sem isto, tres
-  // erros recuperados em qualquer momento do dia somavam ate o 4o derrubar o
-  // app em "Falha Critica na Inicializacao".
-  const handleReset = () => {
-    retryCountRef.current = 0;
   };
 
   if (failed) {
@@ -121,16 +67,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <ErrorBoundary resetKey={errorKey} onError={handleError} onReset={handleReset}>
-      {/*
-        A11Y: configura o framer-motion do app inteiro de uma vez so. Com
-        `reducedMotion="user"`, quem pede `prefers-reduced-motion: reduce` no
-        sistema deixa de receber animacao de transform/layout em TODOS os
-        consumidores de `motion.*` (antes cada tela ligava seu proprio
-        MotionConfig ou nenhum). O caso de `pathLength` das ilustracoes, que o
-        reducedMotion nao cobre, tem portao proprio em empty-state-illustration-art.
-      */}
-      <MotionConfig reducedMotion="user">
+    <ErrorBoundary resetKey={errorKey} onError={handleError}>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <HighContrastProvider>
@@ -148,7 +85,6 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
           </HighContrastProvider>
         </AuthProvider>
       </QueryClientProvider>
-      </MotionConfig>
     </ErrorBoundary>
   );
 }

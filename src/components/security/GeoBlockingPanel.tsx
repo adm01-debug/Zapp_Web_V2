@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Globe, Plus, Trash2, Search, MapPin, AlertTriangle, Shield, ShieldOff, ShieldCheck, Loader2 } from 'lucide-react';
+import { Globe, Plus, Trash2, Search, MapPin, AlertTriangle, Shield, ShieldOff, ShieldCheck } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,16 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useGeoBlocking } from '@/hooks/system/useGeoBlocking';
-import { useMyNetworkStatus } from '@/hooks/system/useMyNetworkStatus';
 import { useState } from 'react';
-
-type ModoDeBloqueio = 'disabled' | 'whitelist' | 'blacklist';
-
-const ROTULO_DO_MODO: Record<ModoDeBloqueio, string> = {
-  disabled: 'Desativado',
-  whitelist: 'Whitelist',
-  blacklist: 'Blacklist',
-};
 
 const COUNTRIES = [
   { code: 'AF', name: 'Afeganistão' }, { code: 'AL', name: 'Albânia' }, { code: 'DZ', name: 'Argélia' },
@@ -51,41 +42,13 @@ const COUNTRIES = [
 ];
 
 export function GeoBlockingPanel() {
-  // O país detectado para o PRÓPRIO acesso vem da RPC `my_network_status()`: é o que a
-  // política de rede enxerga. Falha de leitura não vira "sem país" — fica visível na tela.
-  const { status: statusDeRede, loading: carregandoPais, erro: erroDoPais } = useMyNetworkStatus();
   const {
     settings, allowedCountries, blockedCountries, loading,
     dialogOpen, setDialogOpen, selectedCountry, setSelectedCountry,
     countryToRemove, setCountryToRemove, activeTab, setActiveTab,
-    avaliarModo, handleModeChange, handleAddCountry, handleRemoveCountry,
-  } = useGeoBlocking({ country: statusDeRede?.country ?? null });
+    handleModeChange, handleAddCountry, handleRemoveCountry,
+  } = useGeoBlocking();
   const [search, setSearch] = useState('');
-  // Troca de modo pendente de confirmação: enquanto o diálogo está aberto, NADA foi gravado.
-  const [modoPendente, setModoPendente] = useState<ModoDeBloqueio | null>(null);
-  const [aplicandoModo, setAplicandoModo] = useState(false);
-
-  const codigoDoPais = statusDeRede?.country ?? null;
-  const nomeDoPais = codigoDoPais ? COUNTRIES.find(c => c.code === codigoDoPais)?.name ?? null : null;
-  const paisDetectado = codigoDoPais ? (nomeDoPais ? `${nomeDoPais} (${codigoDoPais})` : codigoDoPais) : null;
-  // Avaliação do hook para o modo que está esperando confirmação (é ela que desabilita o botão).
-  const avaliacaoPendente = modoPendente ? avaliarModo(modoPendente) : null;
-
-  const pedirConfirmacao = (modo: ModoDeBloqueio) => {
-    if (settings?.mode === modo) return; // já é o modo atual: não há troca a confirmar
-    setModoPendente(modo);
-  };
-
-  const confirmarTroca = async () => {
-    const modo = modoPendente;
-    if (!modo || !avaliacaoPendente?.permitido) return; // recusa do hook não chega a escrever
-    setAplicandoModo(true);
-    // A escrita e o retorno (toast de sucesso/erro) são do hook; aqui só fechamos o diálogo
-    // depois que a tentativa terminou, para a tela não anunciar antes.
-    await handleModeChange(modo);
-    setAplicandoModo(false);
-    setModoPendente(null);
-  };
 
   const currentList = activeTab === 'whitelist' ? allowedCountries : blockedCountries;
   const filteredCountries = currentList.filter(c => c.country_name.toLowerCase().includes(search.toLowerCase()) || c.country_code.toLowerCase().includes(search.toLowerCase()));
@@ -94,34 +57,6 @@ export function GeoBlockingPanel() {
   const getModeIcon = () => settings?.mode === 'whitelist' ? <ShieldCheck className="w-5 h-5 text-success" /> : settings?.mode === 'blacklist' ? <Shield className="w-5 h-5 text-destructive" /> : <ShieldOff className="w-5 h-5 text-muted-foreground" />;
   const getModeLabel = () => settings?.mode === 'whitelist' ? 'Whitelist Ativa' : settings?.mode === 'blacklist' ? 'Blacklist Ativa' : 'Desativado';
   const getModeDescription = () => settings?.mode === 'whitelist' ? 'Apenas países na whitelist podem acessar' : settings?.mode === 'blacklist' ? 'Países na blacklist são bloqueados' : 'Todos os países podem acessar';
-
-  // A lista de países + a busca servem às duas abas: cada uma leva este painel dentro do
-  // seu TabsContent (whitelist/blacklist). A busca continua na tela e funcional nas duas.
-  const listaDePaises = (
-    <>
-      <div className="relative mb-4"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" /><Input placeholder="Buscar país..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" /></div>
-      {loading ? <div className="text-center py-8 text-muted-foreground">Carregando...</div> :
-       filteredCountries.length === 0 ? (
-        <div className="text-center py-8"><Globe className="w-12 h-12 mx-auto text-muted-foreground/50 mb-3" /><p className="text-muted-foreground">{search ? 'Nenhum país encontrado' : `Nenhum país na ${activeTab}`}</p>
-          {activeTab === 'whitelist' && settings?.mode === 'whitelist' && allowedCountries.length === 0 && <p className="text-xs text-warning mt-2">⚠️ Atenção: com whitelist ativa e vazia, ninguém poderá acessar!</p>}
-        </div>
-      ) : (
-        <div className="space-y-2">
-          <AnimatePresence mode="popLayout">
-            {filteredCountries.map((country) => (
-              <motion.div key={country.id} initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -10 }} className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/5 transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${activeTab === 'whitelist' ? 'bg-success/10' : 'bg-destructive/10'}`}><MapPin className={`w-4 h-4 ${activeTab === 'whitelist' ? 'text-success' : 'text-destructive'}`} /></div>
-                  <div><div className="flex items-center gap-2"><span className="font-medium">{country.country_name}</span><Badge variant="outline" className="text-xs">{country.country_code}</Badge></div><p className="text-xs text-muted-foreground">Adicionado {formatDistanceToNow(new Date(country.created_at), { addSuffix: true, locale: ptBR })}</p></div>
-                </div>
-                <Button variant="ghost" size="icon" aria-label="Remover país" className="text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => setCountryToRemove(country)}><Trash2 className="w-4 h-4" /></Button>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
-      )}
-    </>
-  );
 
   return (
     <div className="space-y-6">
@@ -136,22 +71,11 @@ export function GeoBlockingPanel() {
           </div>
         </CardHeader>
         <CardContent>
-          {carregandoPais ? (
-            <p className="mb-3 text-xs text-muted-foreground">Verificando o país do seu acesso...</p>
-          ) : erroDoPais ? (
-            <p role="alert" data-testid="geo-pais-erro" className="mb-3 flex items-start gap-2 rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-xs text-destructive">
-              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" /><span>{erroDoPais}</span>
-            </p>
-          ) : (
-            <p data-testid="geo-pais-detectado" className="mb-3 text-xs text-muted-foreground">
-              Seu país detectado: <span className="font-medium text-foreground">{paisDetectado ?? 'não detectado'}</span>
-            </p>
-          )}
           <div className="grid grid-cols-3 gap-3">
             {(['disabled', 'whitelist', 'blacklist'] as const).map(mode => (
-              <Button key={mode} variant={settings?.mode === mode ? 'default' : 'outline'} className="flex-col h-auto py-4 gap-2" onClick={() => pedirConfirmacao(mode)}>
+              <Button key={mode} variant={settings?.mode === mode ? 'default' : 'outline'} className="flex-col h-auto py-4 gap-2" onClick={() => handleModeChange(mode)}>
                 {mode === 'disabled' ? <ShieldOff className="w-5 h-5" /> : mode === 'whitelist' ? <ShieldCheck className="w-5 h-5" /> : <Shield className="w-5 h-5" />}
-                <span className="text-xs">{ROTULO_DO_MODO[mode]}</span>
+                <span className="text-xs">{mode === 'disabled' ? 'Desativado' : mode === 'whitelist' ? 'Whitelist' : 'Blacklist'}</span>
               </Button>
             ))}
           </div>
@@ -195,8 +119,29 @@ export function GeoBlockingPanel() {
               <TabsTrigger value="whitelist" className="gap-2"><ShieldCheck className="w-4 h-4" />Whitelist ({allowedCountries.length})</TabsTrigger>
               <TabsTrigger value="blacklist" className="gap-2"><Shield className="w-4 h-4" />Blacklist ({blockedCountries.length})</TabsTrigger>
             </TabsList>
-            <TabsContent value="whitelist" className="mt-4">{listaDePaises}</TabsContent>
-            <TabsContent value="blacklist" className="mt-4">{listaDePaises}</TabsContent>
+            <div className="mt-4">
+              <div className="relative mb-4"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" /><Input placeholder="Buscar país..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" /></div>
+              {loading ? <div className="text-center py-8 text-muted-foreground">Carregando...</div> :
+               filteredCountries.length === 0 ? (
+                <div className="text-center py-8"><Globe className="w-12 h-12 mx-auto text-muted-foreground/50 mb-3" /><p className="text-muted-foreground">{search ? 'Nenhum país encontrado' : `Nenhum país na ${activeTab}`}</p>
+                  {activeTab === 'whitelist' && settings?.mode === 'whitelist' && allowedCountries.length === 0 && <p className="text-xs text-warning mt-2">⚠️ Atenção: com whitelist ativa e vazia, ninguém poderá acessar!</p>}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <AnimatePresence mode="popLayout">
+                    {filteredCountries.map((country) => (
+                      <motion.div key={country.id} initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -10 }} className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/5 transition-colors">
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2 rounded-lg ${activeTab === 'whitelist' ? 'bg-success/10' : 'bg-destructive/10'}`}><MapPin className={`w-4 h-4 ${activeTab === 'whitelist' ? 'text-success' : 'text-destructive'}`} /></div>
+                          <div><div className="flex items-center gap-2"><span className="font-medium">{country.country_name}</span><Badge variant="outline" className="text-xs">{country.country_code}</Badge></div><p className="text-xs text-muted-foreground">Adicionado {formatDistanceToNow(new Date(country.created_at), { addSuffix: true, locale: ptBR })}</p></div>
+                        </div>
+                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => setCountryToRemove(country)}><Trash2 className="w-4 h-4" /></Button>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
+              )}
+            </div>
           </Tabs>
         </CardContent>
       </Card>
@@ -205,36 +150,6 @@ export function GeoBlockingPanel() {
         <AlertDialogContent>
           <AlertDialogHeader><AlertDialogTitle>Remover {countryToRemove?.country_name}?</AlertDialogTitle><AlertDialogDescription>Esta ação removerá o país da {activeTab}. Você pode adicioná-lo novamente a qualquer momento.</AlertDialogDescription></AlertDialogHeader>
           <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={handleRemoveCountry} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Remover</AlertDialogAction></AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-      <AlertDialog open={!!modoPendente} onOpenChange={(open) => { if (!open && !aplicandoModo) setModoPendente(null); }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {modoPendente === 'disabled' ? 'Desativar o bloqueio geográfico?' : `Ativar o modo ${modoPendente ? ROTULO_DO_MODO[modoPendente] : ''}?`}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              Seu país detectado: {paisDetectado ?? 'não detectado'}. Ativar um modo que deixe o seu próprio acesso
-              fora da política tranca você fora do sistema, sem aviso.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          {avaliacaoPendente && !avaliacaoPendente.permitido && (
-            <p data-testid="geo-motivo-recusa" className="flex items-start gap-2 rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
-              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" /><span>{avaliacaoPendente.mensagem}</span>
-            </p>
-          )}
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={aplicandoModo}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              data-testid="geo-confirmar-modo"
-              onClick={(event) => { event.preventDefault(); void confirmarTroca(); }}
-              disabled={aplicandoModo || !avaliacaoPendente?.permitido}
-              className={modoPendente === 'blacklist' ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : undefined}
-            >
-              {aplicandoModo && <Loader2 className="w-4 h-4 motion-safe:animate-spin mr-2" />}
-              {modoPendente === 'disabled' ? 'Desativar' : 'Ativar mesmo assim'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>

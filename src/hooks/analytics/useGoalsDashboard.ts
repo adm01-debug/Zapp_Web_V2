@@ -2,7 +2,8 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { goalPeriodRange } from '@/lib/localDay';
+import { startOfDay, endOfDay, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { MessageSquare, Users, CheckCircle2 } from 'lucide-react';
 
 export interface Goal {
@@ -19,7 +20,7 @@ export interface Goal {
 
 export const PERIOD_OPTIONS = [
   { value: 'today', label: 'Hoje' },
-  { value: 'week', label: 'Esta Semana (seg a dom)' },
+  { value: 'week', label: 'Esta Semana' },
   { value: 'month', label: 'Este Mês' },
 ];
 
@@ -28,6 +29,16 @@ const DEFAULT_GOALS = {
   contacts_handled: { daily: 10, weekly: 50, monthly: 200 },
   resolution_rate: { daily: 80, weekly: 80, monthly: 85 },
 };
+
+function getDateRange(period: string) {
+  const now = new Date();
+  switch (period) {
+    case 'today': return { from: startOfDay(now), to: endOfDay(now) };
+    case 'week': return { from: startOfWeek(now, { locale: ptBR }), to: endOfWeek(now, { locale: ptBR }) };
+    case 'month': return { from: startOfMonth(now), to: endOfMonth(now) };
+    default: return { from: startOfDay(now), to: endOfDay(now) };
+  }
+}
 
 function getGoalTarget(
   goalType: string, period: string,
@@ -75,9 +86,7 @@ export function useGoalsDashboard() {
   const previousOverallComplete = useRef(false);
   const { user } = useAuth();
 
-  // A MESMA janela de período do aviso de conquista (useGoalNotifications), inclusive a
-  // semana de segunda a domingo — as duas telas não podem contar recortes diferentes.
-  const dateRange = useMemo(() => goalPeriodRange(period), [period]);
+  const dateRange = useMemo(() => getDateRange(period), [period]);
 
   const { data: profile } = useQuery({
     queryKey: ['my-profile', user?.id],
@@ -90,45 +99,38 @@ export function useGoalsDashboard() {
     enabled: !!user?.id,
   });
 
-  // Contagem vinda do SERVIDOR (`count: exact, head: true`), sem baixar linha: o PostgREST
-  // corta a resposta em 1.000 linhas, então contar no cliente travava a meta em 1.000 e uma
-  // meta mensal de 1.500 nunca fechava.
-  const { data: messagesCount, isLoading: loadingMessages } = useQuery({
+  const { data: messagesData, isLoading: loadingMessages } = useQuery({
     queryKey: ['goals-messages', period, profile?.id],
     queryFn: async () => {
-      if (!profile?.id) return 0;
-      const { count, error } = await supabase.from('messages').select('id', { count: 'exact', head: true })
-        .eq('agent_id', profile.id).eq('sender', 'agent')
-        .gte('created_at', dateRange.from.toISOString()).lte('created_at', dateRange.to.toISOString());
+      if (!profile?.id) return [];
+      const { data, error } = await supabase.from('messages').select('id, sender, created_at')
+        .eq('agent_id', profile.id).gte('created_at', dateRange.from.toISOString()).lte('created_at', dateRange.to.toISOString());
       if (error) throw error;
-      return count ?? 0;
+      return data || [];
     },
     enabled: !!profile?.id,
   });
 
-  const { data: contactsCount, isLoading: loadingContacts } = useQuery({
+  const { data: contactsData, isLoading: loadingContacts } = useQuery({
     queryKey: ['goals-contacts', period, profile?.id],
     queryFn: async () => {
-      if (!profile?.id) return 0;
-      const { count, error } = await supabase.from('contacts').select('id', { count: 'exact', head: true })
+      if (!profile?.id) return [];
+      const { data, error } = await supabase.from('contacts').select('id, created_at')
         .eq('assigned_to', profile.id).gte('created_at', dateRange.from.toISOString()).lte('created_at', dateRange.to.toISOString());
       if (error) throw error;
-      return count ?? 0;
+      return data || [];
     },
     enabled: !!profile?.id,
   });
 
-  const { data: analysesCounts, isLoading: loadingAnalyses } = useQuery({
+  const { data: analysesData, isLoading: loadingAnalyses } = useQuery({
     queryKey: ['goals-analyses', period, profile?.id],
     queryFn: async () => {
-      if (!profile?.id) return { total: 0, resolved: 0 };
-      const base = () => supabase.from('conversation_analyses').select('id', { count: 'exact', head: true })
+      if (!profile?.id) return [];
+      const { data, error } = await supabase.from('conversation_analyses').select('id, status, created_at')
         .eq('analyzed_by', profile.id).gte('created_at', dateRange.from.toISOString()).lte('created_at', dateRange.to.toISOString());
-      const { count: total, error: totalError } = await base();
-      if (totalError) throw totalError;
-      const { count: resolved, error: resolvedError } = await base().eq('status', 'resolvido');
-      if (resolvedError) throw resolvedError;
-      return { total: total ?? 0, resolved: resolved ?? 0 };
+      if (error) throw error;
+      return data || [];
     },
     enabled: !!profile?.id,
   });
@@ -145,10 +147,10 @@ export function useGoalsDashboard() {
   });
 
   const goals = useMemo((): Goal[] => {
-    const messagesSent = messagesCount ?? 0;
-    const contactsHandled = contactsCount ?? 0;
-    const totalAnalyses = analysesCounts?.total ?? 0;
-    const resolvedAnalyses = analysesCounts?.resolved ?? 0;
+    const messagesSent = messagesData?.filter(m => m.sender === 'agent').length || 0;
+    const contactsHandled = contactsData?.length || 0;
+    const totalAnalyses = analysesData?.length || 0;
+    const resolvedAnalyses = analysesData?.filter(a => a.status === 'resolvido').length || 0;
     const resolutionRate = totalAnalyses > 0 ? Math.round((resolvedAnalyses / totalAnalyses) * 100) : 0;
 
     // E42: bug de precedência — `!x === false` avalia (!x) === false, então
@@ -176,7 +178,7 @@ export function useGoalsDashboard() {
         icon: CheckCircle2, color: 'hsl(var(--chart-3))', priority: 'medium' });
     }
     return allGoals;
-  }, [messagesCount, contactsCount, analysesCounts, period, customGoals]);
+  }, [messagesData, contactsData, analysesData, period, customGoals]);
 
   const overallProgress = useMemo(() => {
     if (goals.length === 0) return 0;

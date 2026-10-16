@@ -42,15 +42,13 @@ interface ContactContentAreaProps {
   onClearSearch?: () => void;
   onClearFilters?: () => void;
   getCRMData: (phone: string) => CRMBatchResult | null;
-  /** Total do filtro atual — pode ser maior que `contacts` (recorte carregado). */
-  totalCount?: number;
 }
 
 export function ContactContentArea({
   loading, contacts, viewMode, gridColumns, groupByCompany,
   selectedIds, search, activeFiltersCount,
   onToggleSelect, onContactClick, onOpenChat, onEdit, onDelete, onSelectIds,
-  onAddContact, onClearSearch, onClearFilters, getCRMData, totalCount,
+  onAddContact, onClearSearch, onClearFilters, getCRMData,
 }: ContactContentAreaProps) {
   // Cards entram com fade+slide só na primeira pintura da página — paginar/filtrar não re-anima.
   const [isFirstMount, setIsFirstMount] = useState(true);
@@ -127,7 +125,7 @@ export function ContactContentArea({
   } else if (viewMode === 'kanban') {
     content = <ContactKanbanView contacts={contacts} onContactClick={onContactClick} />;
   } else if (viewMode === 'map') {
-    content = <ContactMapView contacts={contacts} onContactClick={onContactClick} totalCount={totalCount} />;
+    content = <ContactMapView contacts={contacts} onContactClick={onContactClick} />;
   } else if (viewMode === 'analytics') {
     content = <ContactAnalyticsDashboard contacts={contacts} />;
   } else {

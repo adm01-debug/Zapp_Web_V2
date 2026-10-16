@@ -27,14 +27,11 @@ interface SecondaryToolbarProps {
   onToggleRichToolbar: () => void;
   isRecordingAudio: boolean;
   onSendSticker: (url: string) => void;
-  /** Pode ser assíncrono e falhar por rejeição: o AudioMemePicker usa isso para
-      só descartar a figurinha de áudio depois do sucesso (#350). */
+  /** Pode ser assíncrono e falhar por rejeição: o VoiceChangerPicker usa isso
+      para só descartar a prévia da voz transformada depois do sucesso (#350). */
   onSendAudioMeme: (url: string) => void | Promise<void>;
   onOpenCatalog?: () => void;
-  /** Caminho do áudio gravado: sobe o Blob no bucket privado, na pasta do
-      contato, e devolve `false` quando o envio falha. O VoiceChangerPicker
-      entrega o áudio transformado por aqui (não usa mais o bucket público). */
-  onAudioSend: (blob: Blob) => void | boolean | Promise<void | boolean>;
+  onAudioSend: (blob: Blob) => void;
   contactName?: string;
   onVoiceDictation: (text: string) => void;
 }
@@ -62,7 +59,7 @@ export function SecondaryToolbar({
       <AIRewriteButton inputValue={inputValue} onRewrite={handleRewrite} contactName={contactName} />
       <StickerPicker onSendSticker={onSendSticker} />
       <AudioMemePicker onSendAudio={onSendAudioMeme} />
-      <VoiceChangerPicker onSendAudioBlob={onAudioSend} />
+      <VoiceChangerPicker onSendAudio={onSendAudioMeme} />
       {onOpenCatalog && (
         <Tooltip>
           <TooltipTrigger asChild>

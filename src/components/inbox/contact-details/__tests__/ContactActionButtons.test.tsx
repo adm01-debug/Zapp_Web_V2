@@ -1,19 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import type { ReactNode } from 'react';
 import { ContactActionButtons } from '../ContactActionButtons';
 
 vi.mock('sonner', () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), warning: vi.fn() },
-}));
-// U04 — o selo de e-mails não lidos vem do hook U02; mockado aqui para o teste
-// controlar a contagem e para nenhum teste falar com o Supabase real.
-const unreadEmailsMock = vi.hoisted(() => ({ count: 0, status: 'ok' as 'ok' | 'erro' | 'idle' | 'loading', lastContactId: null as string | null }));
-vi.mock('@/hooks/gmail/useContactUnreadEmails', () => ({
-  useContactUnreadEmails: (contactId: string | null) => {
-    unreadEmailsMock.lastContactId = contactId;
-    return unreadEmailsMock;
-  },
 }));
 vi.mock('@/hooks/system/useCRMIntegrationEnabled', () => ({ useCRMIntegrationEnabled: () => false }));
 vi.mock('@/hooks/integrations/useSyncToCRM', () => ({
@@ -23,12 +13,6 @@ const navigateToView = vi.fn();
 let videoCallFlag = false;
 vi.mock('@/hooks/system/useFeatureFlag', () => ({ useFeatureFlag: (key: string, fallback = false) => (key === 'video_call' ? videoCallFlag : fallback) }));
 vi.mock('@/hooks/system/useNavigationHistory', () => ({ navigateToView: (...args: unknown[]) => navigateToView(...args) }));
-vi.mock('@/components/ui/tooltip', () => ({
-  TooltipProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
-  Tooltip: ({ children }: { children: ReactNode }) => <>{children}</>,
-  TooltipTrigger: ({ children }: { children: ReactNode }) => <>{children}</>,
-  TooltipContent: ({ children }: { children: ReactNode }) => <span data-testid="contact-action-tooltip">{children}</span>,
-}));
 
 const baseContact = { id: 'c1', name: 'Maria Silva', phone: '+5511999999999', email: 'maria@test.com' };
 const baseContactComAvatar = { ...baseContact, avatar: 'https://cdn.exemplo/maria.png' };
@@ -42,16 +26,10 @@ function openViaPointer(el: Element) {
   fireEvent.click(el);
 }
 
-/** Localiza o Tile de e-mail pelo ícone (o <button> real que carrega o selo U04). */
-function emailTile() {
-  return screen.getAllByTestId('contact-action-tile').find(t => t.querySelector('svg.lucide-mail'))!;
-}
-
 describe('ContactActionButtons', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     videoCallFlag = false;
-    unreadEmailsMock.count = 0;
   });
 
   it('abre o dropdown de "Ligar" com as opções de chamada', () => {
@@ -81,27 +59,6 @@ describe('ContactActionButtons', () => {
     expect(emailTile).toBeDisabled();
     fireEvent.click(emailTile!);
     expect(navigateToView).not.toHaveBeenCalled();
-  });
-
-  it('usa tooltip contextual no e-mail: Sem e-mail quando desabilitado e Abrir e-mail quando habilitado', () => {
-    const { rerender } = render(<ContactActionButtons contact={{ ...baseContact, email: undefined }} onStartCall={onStartCall} />);
-    expect(screen.getByText('Sem e-mail')).toBeInTheDocument();
-
-    rerender(<ContactActionButtons contact={baseContact} onStartCall={onStartCall} />);
-    expect(screen.getByText('Abrir e-mail')).toBeInTheDocument();
-    expect(screen.queryByText('Abrir email')).not.toBeInTheDocument();
-  });
-
-  it('e-mail vazio ("") conta como sem e-mail, e os outros Tiles mostram o próprio texto de tooltip', () => {
-    render(<ContactActionButtons contact={{ ...baseContact, email: '' }} onStartCall={onStartCall} />);
-    const emailTile = screen.getAllByTestId('contact-action-tile').find(t => t.querySelector('svg.lucide-mail'))!;
-    expect(emailTile).toBeDisabled();
-    const tooltips = screen.getAllByTestId('contact-action-tooltip').map((t) => t.textContent);
-    expect(tooltips).toContain('Sem e-mail');
-    // Cada Tile declara o texto do tooltip em `title`; o rótulo curto fica só no aria-label.
-    expect(tooltips).toContain('Opções de chamada');
-    expect(tooltips).toContain('Mais ações');
-    expect(tooltips).not.toContain('E-mail');
   });
 
   it('clicar no e-mail abre o módulo de E-mail levando o contato (id + e-mail)', () => {
@@ -200,58 +157,5 @@ describe('ContactActionButtons', () => {
     render(<ContactActionButtons contact={baseContact} onStartCall={onStartCall} />);
     const tiles = screen.getAllByTestId('contact-action-tile');
     expect(tiles.find(t => t.querySelector('svg.lucide-video'))).toBeDefined();
-  });
-
-  // ===== U04 — selo de e-mails não lidos no ícone de E-mail (D02/D03) =====
-  it('U04 — mostra o selo com a contagem e o nome acessível com o número', () => {
-    unreadEmailsMock.count = 3;
-    render(<ContactActionButtons contact={baseContact} onStartCall={onStartCall} />);
-    expect(screen.getByTestId('contact-email-unread-badge')).toHaveTextContent('3');
-    expect(emailTile()).toHaveAttribute('aria-label', 'E-mail, 3 não lidos');
-    expect(emailTile()).toHaveAccessibleName('E-mail, 3 não lidos');
-  });
-
-  it('U04 — sem e-mails não lidos (count 0) o selo some e o nome acessível volta a "E-mail"', () => {
-    unreadEmailsMock.count = 0;
-    render(<ContactActionButtons contact={baseContact} onStartCall={onStartCall} />);
-    expect(screen.queryByTestId('contact-email-unread-badge')).not.toBeInTheDocument();
-    expect(emailTile()).toHaveAttribute('aria-label', 'E-mail');
-  });
-
-  it('U04 — acima de 99 o selo mostra "99+" mas o nome acessível leva o número real', () => {
-    unreadEmailsMock.count = 150;
-    render(<ContactActionButtons contact={baseContact} onStartCall={onStartCall} />);
-    expect(screen.getByTestId('contact-email-unread-badge')).toHaveTextContent('99+');
-    expect(emailTile()).toHaveAccessibleName('E-mail, 150 não lidos');
-  });
-
-  it('U04 — o selo aparece só no ícone de E-mail, não nos outros tiles', () => {
-    unreadEmailsMock.count = 2;
-    render(<ContactActionButtons contact={baseContact} onStartCall={onStartCall} />);
-    expect(screen.getAllByTestId('contact-email-unread-badge')).toHaveLength(1);
-    expect(emailTile().querySelector('[data-testid="contact-email-unread-badge"]')).not.toBeNull();
-  });
-
-  // Cartão do CRM: sem CRM configurado o item do menu não podia sumir sem
-  // explicação (`ContactActionButtons.tsx`: `if (!isConfigured) return null`).
-  it('sem CRM configurado o item do menu explica ("CRM não configurado") em vez de sumir', () => {
-    const conversation = { id: 'conv-1', status: 'open', contact: { id: 'c1', name: 'Maria Silva' } } as never;
-    render(<ContactActionButtons contact={baseContact} conversation={conversation} onStartCall={onStartCall} />);
-
-    const maisTile = screen.getAllByTestId('contact-action-tile').find(t => t.querySelector('svg.lucide-ellipsis'))!;
-    openViaPointer(maisTile);
-
-    const item = screen.getByText('CRM não configurado').closest('[role="menuitem"]');
-    expect(item).not.toBeNull();
-    expect(item).toHaveAttribute('aria-disabled', 'true');
-    expect(screen.queryByText('Sincronizar CRM')).not.toBeInTheDocument();
-  });
-
-  it('U04 — contato sem e-mail cadastrado: hook ocioso (contactId null) e nenhum selo', () => {
-    unreadEmailsMock.count = 4;
-    render(<ContactActionButtons contact={{ ...baseContact, email: undefined }} onStartCall={onStartCall} />);
-    expect(unreadEmailsMock.lastContactId).toBeNull();
-    expect(screen.queryByTestId('contact-email-unread-badge')).not.toBeInTheDocument();
-    expect(emailTile()).toHaveAttribute('aria-label', 'E-mail');
   });
 });

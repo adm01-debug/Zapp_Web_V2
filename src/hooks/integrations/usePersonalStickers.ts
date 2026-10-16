@@ -34,12 +34,7 @@ export function usePersonalStickers() {
         .maybeSingle();
       if (error) throw error;
       if (!data) throw new Error('Perfil do usuário não encontrado');
-      // R2-API-051 (item 225, continuação): as policies do bucket e da tabela
-      // `stickers` comparam com `auth.uid()` — NÃO com `profiles.id`. Como os dois
-      // são UUIDs distintos, a escrita do atendente comum (não-admin) era recusada
-      // pela RLS. Carregamos o `auth.uid()` junto do perfil para usar o valor certo
-      // no caminho do arquivo e em `uploaded_by`.
-      return { ...data, authUserId: user.id as string };
+      return data;
     },
   });
 
@@ -55,11 +50,7 @@ export function usePersonalStickers() {
   });
 
   const handleUpload = useCallback(async (files: FileList | null) => {
-    const ownerId = profile?.id;
-    // `auth.uid()` é quem a RLS do bucket/tabela compara; vem da identidade
-    // resolvida (profile.authUserId), não de `profiles.id`.
-    const authUserId = profile?.authUserId;
-    if (!files || files.length === 0 || !ownerId || !authUserId) return;
+    if (!files || files.length === 0 || !profile?.id) return;
     setUploading(true);
     let uploadedCount = 0;
     try {
@@ -75,16 +66,12 @@ export function usePersonalStickers() {
           if (arquivo === file) log.warn('[PersonalStickers] Conversão para WebP não aplicada; subindo o arquivo original:', file.type);
         }
         const ext = getFileExtensionWithDefault(arquivo.name, 'png');
-        // R2-API-051 (item 225): o primeiro segmento do caminho é `auth.uid()`
-        // porque a policy de INSERT/DELETE do bucket compara
-        // `(storage.foldername(name))[1] = auth.uid()::text`. Com o prefixo
-        // `pessoal/<profiles.id>/...` a gravação do atendente comum era recusada.
-        const path = `${authUserId}/${crypto.randomUUID()}.${ext}`;
+        const path = `pessoal/${profile.id}/${crypto.randomUUID()}.${ext}`;
         const { error: uploadError } = await supabase.storage.from('stickers').upload(path, arquivo, { contentType: arquivo.type });
         if (uploadError) { toast.error(`Erro ao enviar ${file.name}: ${uploadError.message}`); continue; }
         const { data: urlData } = supabase.storage.from('stickers').getPublicUrl(path);
         const stickerName = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
-        const { error: insertError } = await supabase.from('stickers').insert({ name: stickerName, image_url: urlData.publicUrl, category: 'pessoal', owner_id: ownerId, uploaded_by: authUserId });
+        const { error: insertError } = await supabase.from('stickers').insert({ name: stickerName, image_url: urlData.publicUrl, category: 'pessoal', owner_id: profile.id, uploaded_by: profile.id });
         if (insertError) { toast.error(`Erro ao salvar ${file.name}`); continue; }
         uploadedCount++;
       }
@@ -94,7 +81,7 @@ export function usePersonalStickers() {
       }
     } catch { toast.error('Erro inesperado ao enviar'); }
     finally { setUploading(false); if (fileInputRef.current) fileInputRef.current.value = ''; }
-  }, [profile?.id, profile?.authUserId, queryClient]);
+  }, [profile?.id, queryClient]);
 
   const toggleFavorite = useMutation({
     mutationFn: async (sticker: StickerItem) => {

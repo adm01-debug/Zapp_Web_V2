@@ -6,10 +6,8 @@ import { useMessages } from '@/hooks/chat/useMessages';
 import type { Database } from '@/integrations/supabase/types';
 import { Conversation, Message } from '@/types/chat';
 import { log } from '@/lib/logger';
-import { createStorageObjectId } from '@/lib/storage_object_upload';
 import { normalizeOperationalPriority } from '@/lib/ai-vocabulary';
 import { toast } from '@/hooks/ui/use-toast';
-import { formatDocumentTitle } from '@/lib/productName';
 
 type ContactRow = Database['public']['Tables']['contacts']['Row'];
 import { Skeleton } from '@/components/ui/skeleton';
@@ -76,11 +74,6 @@ export default function ChatPopup() {
   const [contact, setContact] = useState<ContactRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [isMaximized, setIsMaximized] = useState(false);
-  // N-043: o minimizar da janela avulsa só encolhia a janela (440x48) e não
-  // oferecia volta. Com `isMinimized`, o mesmo botão anuncia e executa a ação
-  // inversa ("Restaurar conversa"). O maximizar/restaurar da janela cheia segue
-  // em `isMaximized` — os dois controles não se misturam.
-  const [isMinimized, setIsMinimized] = useState(false);
   // R2-INB-004: o contrato de paginação do hook (histórico antigo) tem de chegar
   // ao controle da área de mensagens — sem ele o popup fica preso na 1ª página.
   // R2-INB-024: `error`/`refetch` do MESMO hook também são necessários — sem eles a
@@ -117,9 +110,7 @@ export default function ChatPopup() {
         .single();
       if (data) {
         setContact(data);
-        // Mesmo nome de produto do resto da aplicação (não repita o literal):
-        // antes a janela destoava do `index.html`, que já dizia "ZAPP WEB".
-        document.title = formatDocumentTitle(`Chat — ${data.name}`);
+        document.title = `Chat — ${data.name}`;
       }
       setLoading(false);
     })();
@@ -145,6 +136,7 @@ export default function ChatPopup() {
         status: 'open',
         lastMessage: undefined,
         unreadCount: 0,
+        tags: contact.tags || [],
         priority: popupPriority,
         createdAt: new Date(contact.created_at),
         updatedAt: new Date(contact.updated_at),
@@ -174,7 +166,7 @@ export default function ChatPopup() {
     async (blob: Blob): Promise<boolean> => {
       if (!contactId) return false;
       try {
-        const fileName = `${contactId}/audio_${createStorageObjectId()}.webm`;
+        const fileName = `${contactId}/audio_${Date.now()}.webm`;
         const { error: uploadError } = await supabase.storage
           .from('whatsapp-media')
           .upload(fileName, blob, { contentType: blob.type || 'audio/webm' });
@@ -207,17 +199,6 @@ export default function ChatPopup() {
       window.resizeTo(screen.availWidth, screen.availHeight);
       window.moveTo(0, 0);
       setIsMaximized(true);
-    }
-  };
-
-  // N-043: mesma regra de antes (minimizar = 440x48), agora reversível.
-  const handleToggleMinimize = () => {
-    if (isMinimized) {
-      window.resizeTo(440, 680);
-      setIsMinimized(false);
-    } else {
-      window.resizeTo(440, 48);
-      setIsMinimized(true);
     }
   };
 
@@ -288,14 +269,13 @@ export default function ChatPopup() {
                   variant="ghost"
                   size="icon"
                   className="w-6 h-6 text-muted-foreground hover:text-foreground rounded"
-                  aria-label={isMinimized ? 'Restaurar conversa' : 'Minimizar'}
-                  onClick={handleToggleMinimize}
+                  onClick={() => window.resizeTo(440, 48)}
                 >
                   <Minus className="w-3 h-3" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom" className="text-xs">
-                {isMinimized ? 'Restaurar conversa' : 'Minimizar'}
+                Minimizar
               </TooltipContent>
             </Tooltip>
 
@@ -305,7 +285,6 @@ export default function ChatPopup() {
                   variant="ghost"
                   size="icon"
                   className="w-6 h-6 text-muted-foreground hover:text-foreground rounded"
-                  aria-label={isMaximized ? 'Minimizar' : 'Maximizar'}
                   onClick={handleToggleMaximize}
                 >
                   {isMaximized ? (
@@ -326,7 +305,6 @@ export default function ChatPopup() {
                   variant="ghost"
                   size="icon"
                   className="w-6 h-6 text-muted-foreground hover:text-destructive rounded"
-                  aria-label="Fechar"
                   onClick={handleClose}
                 >
                   <X className="w-3 h-3" />

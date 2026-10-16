@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from '@testing-library/react';
 import { axe } from 'vitest-axe';
 import { EvolutionDisconnectBanner } from '../EvolutionDisconnectBanner';
-import { TestQueryWrapper } from '@/test/mocks/queryClient';
 
 /**
  * A faixa de conexões desconectadas é renderizada como irmã do <AppShell> (src/pages/Index.tsx),
@@ -12,27 +11,15 @@ import { TestQueryWrapper } from '@/test/mocks/queryClient';
  *
  * Corrigido com `role="region"` + `aria-label` (landmark nomeado) e `aria-live="polite"` para o
  * aviso ser anunciado quando aparece.
- *
- * PD-38: a faixa agora consulte a preferência (`alert_on_disconnected`) via React Query + useAuth,
- * então os testes montam o banner com o mesmo par de provedores do app.
  */
-const h = vi.hoisted(() => ({ rows: [] as unknown[], preferencias: null as unknown }));
+const h = vi.hoisted(() => ({ rows: [] as unknown[] }));
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    from: (table: string) => ({
-      select: () =>
-        table === 'connection_alert_preferences'
-          ? { maybeSingle: async () => ({ data: h.preferencias, error: null }) }
-          : { eq: async () => ({ data: h.rows }) },
-    }),
+    from: () => ({ select: () => ({ eq: async () => ({ data: h.rows }) }) }),
     channel: () => ({ on: () => ({ subscribe: () => ({}) }) }),
     removeChannel: () => undefined,
   },
-}));
-
-vi.mock('@/hooks/auth/useAuth', () => ({
-  useAuth: () => ({ user: { id: 'user-1' }, session: null, profile: null, loading: false }),
 }));
 
 const desconectada = { id: 'c1', instance_id: 'PRINCIPAL', phone_number: null, status: 'disconnected' };
@@ -43,7 +30,7 @@ describe('a11y: faixa de conexões desconectadas (landmark)', () => {
   });
 
   it('a faixa é um landmark nomeado e o aviso fica DENTRO dele', async () => {
-    const { container, findByText } = render(<EvolutionDisconnectBanner />, { wrapper: TestQueryWrapper });
+    const { container, findByText } = render(<EvolutionDisconnectBanner />);
     await findByText(/está desconectada/i);
 
     const faixa = container.querySelector('[role="region"]');
@@ -55,7 +42,7 @@ describe('a11y: faixa de conexões desconectadas (landmark)', () => {
   });
 
   it('axe não acusa conteúdo fora de landmark (regra region)', async () => {
-    const { container, findByText } = render(<EvolutionDisconnectBanner />, { wrapper: TestQueryWrapper });
+    const { container, findByText } = render(<EvolutionDisconnectBanner />);
     await findByText(/está desconectada/i);
 
     // jsdom não tem layout: contraste fica fora (declarado); `region` é estrutural e é o alvo aqui.
@@ -66,7 +53,7 @@ describe('a11y: faixa de conexões desconectadas (landmark)', () => {
 
   it('sem conexão desconectada a faixa não renderiza nada', async () => {
     h.rows = [];
-    const { container } = render(<EvolutionDisconnectBanner />, { wrapper: TestQueryWrapper });
+    const { container } = render(<EvolutionDisconnectBanner />);
     await new Promise((r) => setTimeout(r, 0));
     expect(container.querySelector('[role="region"]')).toBeNull();
   });

@@ -47,24 +47,6 @@ export function sanitizeStorageFileName(fileName: string): string {
 }
 
 /**
- * Caminho de objeto dentro da pasta do usuário: `<auth.uid()>/<arquivo>`.
- *
- * Os buckets de mídia da biblioteca (`audio-memes`, `stickers`, `emojis`) e o
- * temporário do trocador de voz (`voice-changer-tmp`) têm policy por pasta: o
- * atendente comum só grava onde `(storage.foldername(name))[1] = auth.uid()`
- * (PK-16). Sem o prefixo, o Storage recusa o upload (42501) e o objeto nasce sem
- * dono para o RLS.
- */
-export function requireUserStoragePath(userId: string | null | undefined, objectName: string): string {
-  const userFolder = typeof userId === 'string' ? userId.trim() : '';
-  if (!userFolder) {
-    throw new Error('Sessão sem usuário: não é possível gravar o arquivo na pasta do usuário');
-  }
-
-  return `${userFolder}/${objectName}`;
-}
-
-/**
  * Remove um objeto do Storage sem deixar falha de limpeza virar erro fatal do fluxo.
  * Recebe o bucket explicito porque o encaminhamento opera em `whatsapp-media` ou
  * `audio-messages`, enquanto o upload usa sempre `whatsapp-media`.

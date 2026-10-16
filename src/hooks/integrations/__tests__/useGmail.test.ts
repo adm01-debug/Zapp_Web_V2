@@ -8,13 +8,6 @@ import { callGmailFunction } from '@/hooks/gmail/gmailApi';
 import { supabase } from '@/integrations/supabase/client';
 import { createGmailOAuthState, storeGmailOAuthReturnContext } from '@/lib/gmailOAuth';
 
-
-// Y29 — o useGmail lê `profiles.can_download` (useDownloadPermission); aqui a
-// permissão é concedida para o teste observar o caminho de sempre.
-vi.mock('@/hooks/system/useDownloadPermission', () => ({
-  useDownloadPermission: () => ({ canDownload: true, isLoading: false }),
-}));
-
 vi.mock('@/hooks/gmail/gmailApi');
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
@@ -24,7 +17,7 @@ vi.mock('@/integrations/supabase/client', () => ({
     removeChannel: vi.fn(),
   },
 }));
-vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn() } }));
+vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 vi.mock('@/lib/gmailOAuth', () => ({
   createGmailOAuthState: vi.fn(() => 'state-abc'),
   storeGmailOAuthReturnContext: vi.fn(),
@@ -34,15 +27,13 @@ vi.mock('@/hooks/system/useNavigationHistory', () => ({
 }));
 
 import { useGmail } from '../useGmail';
-import { formatLastSyncLabel } from '../useGmail';
-import { toast } from 'sonner';
 
 const MOCK_ACCOUNT = {
   id: 'acc1',
   email_address: 'user@example.com',
   is_active: true,
   sync_status: 'synced' as const,
-  last_sync_at: null as string | null,
+  last_sync_at: null,
   last_error: null,
   created_at: '2024-01-01T00:00:00Z',
 };
@@ -292,229 +283,6 @@ describe('useGmail', () => {
       await act(() => result.current.connectGmail.mutateAsync());
 
       expect(createGmailOAuthState).toHaveBeenCalledWith({ view: 'integrations', integrationView: 'gmail' });
-    });
-  });
-
-  describe('ação que falha avisa (e desconexão parcial não mente)', () => {
-    function mockActions(handler: (action: string, opts: Record<string, unknown>) => unknown) {
-      vi.mocked(callGmailFunction).mockImplementation(async (fn: string, opts: Record<string, unknown>) => {
-        if (fn === 'gmail-oauth' && opts.action === 'list-accounts') return { accounts: [MOCK_ACCOUNT] };
-        return handler(String(opts.action ?? fn), opts);
-      });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      vi.mocked(supabase.from).mockImplementation(() => makeFromChain() as any);
-    }
-
-    async function renderReady() {
-      const view = renderHook(() => useGmail(), { wrapper: createWrapper() });
-      await waitFor(() => expect(view.result.current.accountsLoading).toBe(false));
-      return view;
-    }
-
-    it('desconectar avisa sucesso quando o Google confirma a revogação', async () => {
-      mockActions(() => ({ success: true, disconnected: true, revoked: true }));
-      const { result, unmount } = await renderReady();
-
-      await act(() => result.current.disconnectGmail.mutateAsync('acc1'));
-
-      expect(toast.success).toHaveBeenCalledWith('Gmail desconectado');
-      expect(toast.warning).not.toHaveBeenCalled();
-      unmount();
-    });
-
-    it('desconectar avisa que o Google não confirmou a revogação (revoked:false/partial)', async () => {
-      // Payload 200 da gmail-oauth quando a conta sai daqui mas o Google recusa a
-      // revogação (supabase/functions/gmail-oauth/index.ts:259-271).
-      mockActions(() => ({
-        success: true, disconnected: true, revoked: false, partial: true, warning: 'Google recusou a revogação',
-      }));
-      const { result, unmount } = await renderReady();
-
-      await act(() => result.current.disconnectGmail.mutateAsync('acc1'));
-
-      expect(toast.success).not.toHaveBeenCalled();
-      expect(toast.warning).toHaveBeenCalledTimes(1);
-      const [title, options] = vi.mocked(toast.warning).mock.calls[0] as [string, { description?: string }];
-      expect(title).toBe('Gmail desconectado aqui');
-      expect(String(options.description)).toContain('myaccount.google.com/permissions');
-      unmount();
-    });
-
-    it('marcar como lida: o 207 (success:false) avisa e refaz só os ids recusados', async () => {
-      let markReadCalls = 0;
-      mockActions((action, opts) => {
-        if (action !== 'mark-read') return {};
-        markReadCalls += 1;
-        // 1ª chamada: o Gmail aceita m1 e recusa m2/m3 (207 -> error: null).
-        if (markReadCalls === 1) return { success: false, updated_ids: ['m1'], failed_ids: ['m2', 'm3'] };
-        return { success: true, updated_ids: opts.message_ids, failed_ids: [] };
-      });
-      const { result, unmount } = await renderReady();
-
-      await act(() => result.current.markAsRead.mutateAsync(['m1', 'm2', 'm3']));
-
-      expect(toast.error).not.toHaveBeenCalled();
-      expect(toast.warning).toHaveBeenCalledTimes(1);
-      const [title, options] = vi.mocked(toast.warning).mock.calls[0] as [
-        string,
-        { description?: string; action?: { label: string; onClick: () => void } },
-      ];
-      expect(title).toContain('marcar como lida');
-      expect(String(options.description)).toContain('2 de 3');
-
-      await act(async () => { options.action?.onClick(); });
-      await waitFor(() => expect(markReadCalls).toBe(2));
-      const retryCalls = vi.mocked(callGmailFunction).mock.calls;
-      const retryBody = retryCalls[retryCalls.length - 1][1] as { action: string; message_ids: string[] };
-      expect(retryBody.action).toBe('mark-read');
-      expect(retryBody.message_ids).toEqual(['m2', 'm3']);
-      unmount();
-    });
-
-    it('marcar como lida: sucesso completo não avisa nada', async () => {
-      mockActions(() => ({ success: true, updated_ids: ['m1'], failed_ids: [] }));
-      const { result, unmount } = await renderReady();
-
-      await act(() => result.current.markAsRead.mutateAsync(['m1']));
-
-      expect(toast.warning).not.toHaveBeenCalled();
-      expect(toast.error).not.toHaveBeenCalled();
-      unmount();
-    });
-
-    const ACOES: Array<[string, (h: ReturnType<typeof useGmail>) => Promise<unknown>, RegExp]> = [
-      ['desconectar o Gmail', h => h.disconnectGmail.mutateAsync('acc1'), /desconectar o Gmail/],
-      ['sincronizar os marcadores', h => h.syncLabels.mutateAsync(), /sincronizar os marcadores/],
-      ['marcar como lida', h => h.markAsRead.mutateAsync(['m1']), /marcar como lida/],
-      ['mover o e-mail para a lixeira', h => h.trashMessage.mutateAsync('m1'), /mover o e-mail para a lixeira/],
-      ['mover a conversa para a lixeira', h => h.trashThread.mutateAsync('t1'), /mover a conversa para a lixeira/],
-      ['atualizar os marcadores da mensagem', h => h.modifyLabels.mutateAsync({ message_id: 'm1', add_labels: ['STARRED'] }), /atualizar os marcadores da mensagem/],
-      ['salvar o rascunho', h => h.saveDraft.mutateAsync({ to: 'dest@example.com' }), /salvar o rascunho/],
-      ['apagar o rascunho', h => h.deleteDraft.mutateAsync('d1'), /apagar o rascunho/],
-    ];
-
-    it.each(ACOES)('%s: erro 403 avisa com o texto por tipo, sem "undefined"', async (_label, call, titlePattern) => {
-      mockActions(() => {
-        const error = new Error('Forbidden') as Error & { context?: { status: number } };
-        error.context = { status: 403 };
-        throw error;
-      });
-      const { result, unmount } = await renderReady();
-
-      await act(async () => {
-        await expect(call(result.current)).rejects.toBeDefined();
-      });
-
-      const calls = vi.mocked(toast.error).mock.calls;
-      expect(calls.length).toBeGreaterThan(0);
-      const [title, options] = calls[0] as [string, { description?: string }];
-      expect(String(title)).toMatch(titlePattern);
-      expect(String(options.description)).toContain('permissão');
-      expect(String(options.description)).not.toContain('undefined');
-      unmount();
-    });
-  });
-
-  describe('faixa de reconexão aparece sozinha e o cabeçalho mostra a última sincronização', () => {
-    // O queryClient de produção (src/lib/queryClient.ts) roda com staleTime de
-    // 5 min, refetchOnWindowFocus:false e refetchOnMount:false — os mesmos
-    // padrões aqui, para o intervalo de 60 s ser provado contra a config real.
-    function createProductionLikeWrapper() {
-      const qc = new QueryClient({
-        defaultOptions: {
-          queries: {
-            retry: false,
-            staleTime: 1000 * 60 * 5,
-            refetchOnWindowFocus: false,
-            refetchOnMount: false,
-          },
-          mutations: { retry: false },
-        },
-      });
-      return ({ children }: { children: ReactNode }) =>
-        createElement(QueryClientProvider, { client: qc }, children);
-    }
-
-    const REAUTH_ACCOUNT = {
-      ...MOCK_ACCOUNT,
-      sync_status: 'reauth_required' as const,
-      last_sync_at: '2026-10-15T12:00:00Z',
-      last_error: 'Token expirado',
-    };
-
-    it('a faixa aparece sem ação do usuário: a consulta se repete e traz reauth_required', async () => {
-      vi.useFakeTimers();
-      try {
-        let chamadas = 0;
-        vi.mocked(callGmailFunction).mockImplementation(async (fn: string, opts: Record<string, unknown>) => {
-          if (fn === 'gmail-oauth' && opts.action === 'list-accounts') {
-            chamadas += 1;
-            // 1ª carga: conta saudável. Depois: o cron marcou reauth_required.
-            return { accounts: [chamadas === 1 ? MOCK_ACCOUNT : REAUTH_ACCOUNT] };
-          }
-          if (fn === 'gmail-sync') return { synced: 0 };
-          return {};
-        });
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        vi.mocked(supabase.from).mockImplementation(() => makeFromChain([]) as any);
-
-        const { result } = renderHook(() => useGmail(), { wrapper: createProductionLikeWrapper() });
-
-        await act(async () => { await vi.advanceTimersByTimeAsync(0); });
-        expect(result.current.accountsLoading).toBe(false);
-        expect(result.current.needsReconnect).toBe(false);
-        expect(chamadas).toBe(1);
-
-        // Nenhuma ação do usuário: só o intervalo de 60 s.
-        await act(async () => { await vi.advanceTimersByTimeAsync(60_000); });
-
-        expect(chamadas).toBe(2);
-        expect(result.current.syncStatus).toBe('reauth_required');
-        expect(result.current.needsReconnect).toBe(true);
-      } finally {
-        vi.useRealTimers();
-      }
-    });
-
-    it('lastSyncLabel diz há quanto tempo sincronizou e envelhece sozinho, sem consulta nova', async () => {
-      vi.useFakeTimers();
-      try {
-        const sincronizada = { ...MOCK_ACCOUNT, last_sync_at: new Date(Date.now() - 2 * 60_000 - 30_000).toISOString() };
-        setupDefaultMocks([sincronizada], []);
-        const { result } = renderHook(() => useGmail(), { wrapper: createProductionLikeWrapper() });
-
-        await act(async () => { await vi.advanceTimersByTimeAsync(0); });
-        expect(result.current.lastSyncedAt).toBe(sincronizada.last_sync_at);
-        expect(result.current.lastSyncLabel).toBe('sincronizado há 2 min');
-
-        const consultasAteAqui = vi.mocked(callGmailFunction).mock.calls.length;
-        await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
-
-        expect(result.current.lastSyncLabel).toBe('sincronizado há 3 min');
-        // O relógio é local: o rótulo não pediu nenhuma consulta além das do setup.
-        expect(vi.mocked(callGmailFunction).mock.calls.length).toBe(consultasAteAqui);
-      } finally {
-        vi.useRealTimers();
-      }
-    });
-
-    it('lastSyncLabel devolve null quando a conta nunca sincronizou', async () => {
-      setupDefaultMocks([MOCK_ACCOUNT], []);
-      const { result } = renderHook(() => useGmail(), { wrapper: createProductionLikeWrapper() });
-      await waitFor(() => expect(result.current.accountsLoading).toBe(false));
-      expect(result.current.lastSyncedAt).toBeNull();
-      expect(result.current.lastSyncLabel).toBeNull();
-    });
-
-    it('formatLastSyncLabel cobre agora/minutos/horas/dias e não inventa texto', () => {
-      const base = Date.parse('2026-10-15T12:00:00Z');
-      expect(formatLastSyncLabel(null, base)).toBeNull();
-      expect(formatLastSyncLabel('', base)).toBeNull();
-      expect(formatLastSyncLabel('nao-e-data', base)).toBeNull();
-      expect(formatLastSyncLabel('2026-10-15T12:05:00Z', base)).toBe('sincronizado agora');
-      expect(formatLastSyncLabel('2026-10-15T11:57:00Z', base)).toBe('sincronizado há 3 min');
-      expect(formatLastSyncLabel('2026-10-15T09:00:00Z', base)).toBe('sincronizado há 3 h');
-      expect(formatLastSyncLabel('2026-10-12T12:00:00Z', base)).toBe('sincronizado há 3 d');
     });
   });
 });

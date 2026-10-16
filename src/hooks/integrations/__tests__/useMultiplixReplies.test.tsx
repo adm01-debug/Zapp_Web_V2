@@ -27,12 +27,6 @@ const functionsInvoke = vi.fn();
 const fromMock = vi.fn();
 const contactsOrder = vi.fn();
 
-/**
- * Instrumentacao da tabela `contacts`: quantas consultas sairam e quantas
- * ficaram em voo ao mesmo tempo (para provar o lote e o teto de simultaneas).
- */
-const contactsStats = { queries: 0, inFlight: 0, maxInFlight: 0 };
-
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     auth: { getSession: (...args: unknown[]) => authGetSession(...args) },
@@ -57,7 +51,7 @@ interface ContactsBuilder {
   select: () => ContactsBuilder;
   or: (filter: string) => ContactsBuilder;
   order: (column: string) => ContactsBuilder;
-  limit: (max?: number) => Promise<{ data: ContactRow[]; error: { message: string } | null }>;
+  limit: () => Promise<{ data: ContactRow[]; error: { message: string } | null }>;
 }
 
 /**
@@ -80,17 +74,10 @@ function mockContactsTable(rows: ContactRow[], error: { message: string } | null
         contactsOrder(column);
         return builder;
       },
-      limit: async (max?: number) => {
-        contactsStats.queries += 1;
-        contactsStats.inFlight += 1;
-        contactsStats.maxInFlight = Math.max(contactsStats.maxInFlight, contactsStats.inFlight);
-        // Cede o turno: sem isso os lotes resolveriam na mesma pilha e o pico de
-        // consultas simultaneas (teto de 3) nao apareceria.
-        await new Promise((resolve) => setTimeout(resolve, 0));
-        contactsStats.inFlight -= 1;
-        const matched = rows.filter((row) => row.phone !== null && wanted.includes(row.phone));
-        return { data: typeof max === 'number' ? matched.slice(0, max) : matched, error };
-      },
+      limit: () => Promise.resolve({
+        data: rows.filter((row) => row.phone !== null && wanted.includes(row.phone)),
+        error,
+      }),
     };
     return builder;
   });
@@ -119,9 +106,6 @@ function recipientRow(overrides: Record<string, unknown> = {}) {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  contactsStats.queries = 0;
-  contactsStats.inFlight = 0;
-  contactsStats.maxInFlight = 0;
   authGetSession.mockResolvedValue({ data: { session: { access_token: 'tok-123' } } });
 });
 
@@ -357,70 +341,5 @@ describe('useMultiplixReplies — retornos de um disparo Multiplix', () => {
     expect(result.current.isRefreshing).toBe(false);
     expect(result.current.replies).toHaveLength(1);
     expect(result.current.replies[0]?.contact_id).toBe('c-alfa');
-  });
-
-  /** Telefone E.164 unico por indice (+55 + DDD 11 + 9 + 8 digitos). */
-  function phoneAt(index: number): string {
-    return `+5511${900000000 + index}`;
-  }
-
-  it('resolve centenas de telefones em poucas consultas, com no maximo 3 lotes em voo', async () => {
-    const TOTAL = 250; // 5 lotes de 50 — nunca 250 consultas
-    functionsInvoke.mockResolvedValue(statusResponse(
-      Array.from({ length: TOTAL }, (_, i) => recipientRow({
-        recipient_id: `r${i}`,
-        destino_e164: phoneAt(i),
-        replied: 1,
-        replied_at: '2026-10-01T10:05:00Z',
-        reply_attribution: 'linked',
-      })),
-    ));
-    mockContactsTable(Array.from({ length: TOTAL }, (_, i) => ({ id: `c${i}`, phone: phoneAt(i) })));
-
-    const { result } = renderHook(() => useMultiplixReplies('d1'), { wrapper: createWrapper() });
-
-    await waitFor(() => expect(result.current.status).toBe('ready'));
-    expect(result.current.replies).toHaveLength(TOTAL);
-    // Uma consulta por lote de 50: 250 telefones = 5 consultas.
-    expect(contactsStats.queries).toBe(5);
-    // E no maximo 3 em voo ao mesmo tempo (nem 1, nem 5).
-    expect(contactsStats.maxInFlight).toBe(3);
-    expect(result.current.replies.every((reply) => reply.contact_id !== null)).toBe(true);
-  });
-
-  it('lote com pagina cheia nao vincula contato a nenhum telefone dele', async () => {
-    // 50 telefones com 5 grafias cada = 250 linhas = teto do lote: o conjunto
-    // pode ter sido cortado, entao o lote inteiro fica sem contato (a mesma
-    // regra da pagina cheia por telefone).
-    const TOTAL = 50;
-    functionsInvoke.mockResolvedValue(statusResponse(
-      Array.from({ length: TOTAL }, (_, i) => recipientRow({
-        recipient_id: `r${i}`,
-        destino_e164: phoneAt(i),
-        replied: 1,
-        replied_at: '2026-10-01T10:05:00Z',
-        reply_attribution: 'inferred',
-      })),
-    ));
-    const rows: ContactRow[] = [];
-    for (let i = 0; i < TOTAL; i += 1) {
-      const e164 = phoneAt(i);
-      const local = e164.slice(3); // DDD + 9 + assinante
-      rows.push(
-        { id: `a${i}`, phone: e164 },
-        { id: `b${i}`, phone: e164.slice(1) },
-        { id: `c${i}`, phone: local },
-        { id: `d${i}`, phone: `${local.slice(0, 2)}${local.slice(3)}` },
-        { id: `e${i}`, phone: `0${local}` },
-      );
-    }
-    mockContactsTable(rows);
-
-    const { result } = renderHook(() => useMultiplixReplies('d1'), { wrapper: createWrapper() });
-
-    await waitFor(() => expect(result.current.status).toBe('ready'));
-    expect(contactsStats.queries).toBe(1);
-    expect(result.current.replies).toHaveLength(TOTAL);
-    expect(result.current.replies.every((reply) => reply.contact_id === null)).toBe(true);
   });
 });

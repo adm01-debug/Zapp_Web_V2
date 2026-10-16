@@ -1,6 +1,6 @@
 import { SUPABASE_URL } from '@/integrations/supabase/client';
 import { edgeAuthHeaders } from '@/lib/edgeAuthHeaders';
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -29,14 +29,8 @@ export function TextToAudioButton({ inputValue, onAudioReady, disabled }: TextTo
   const [isPlaying, setIsPlaying] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  // G6 — a geração é paga e a resposta pode chegar DEPOIS de o popover fechar ou
-  // de o operador trocar de voz. Sem abortar, o áudio antigo tocava por baixo do
-  // novo. Cada geração tem o seu controller; o anterior é sempre abortado.
-  const abortRef = useRef<AbortController | null>(null);
 
   const cleanup = useCallback(() => {
-    abortRef.current?.abort();
-    abortRef.current = null;
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
@@ -50,12 +44,6 @@ export function TextToAudioButton({ inputValue, onAudioReady, disabled }: TextTo
     setSelectedVoice(null);
   }, [convertedUrl]);
 
-  // Desmontar o botão também cancela a geração em voo.
-  useEffect(() => () => {
-    abortRef.current?.abort();
-    abortRef.current = null;
-  }, []);
-
   const handleConvert = async (voice: ElevenLabsVoice) => {
     if (!inputValue.trim()) {
       toast.error('Digite uma mensagem primeiro');
@@ -63,9 +51,6 @@ export function TextToAudioButton({ inputValue, onAudioReady, disabled }: TextTo
     }
 
     // Cleanup previous
-    abortRef.current?.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
     if (audioRef.current) {
       audioRef.current.pause();
     }
@@ -88,11 +73,8 @@ export function TextToAudioButton({ inputValue, onAudioReady, disabled }: TextTo
             text: inputValue.trim(),
             voiceId: voice.id,
           }),
-          signal: controller.signal,
         }
       );
-
-      if (controller.signal.aborted) return;
 
       if (!response.ok) {
         const err = await response.json().catch(() => ({ error: 'Erro desconhecido' }));
@@ -100,8 +82,6 @@ export function TextToAudioButton({ inputValue, onAudioReady, disabled }: TextTo
       }
 
       const blob = await response.blob();
-      // A resposta chegou depois do cancelamento: nada de tocar por baixo.
-      if (controller.signal.aborted) return;
       const url = URL.createObjectURL(blob);
       setConvertedBlob(blob);
       setConvertedUrl(url);
@@ -122,16 +102,11 @@ export function TextToAudioButton({ inputValue, onAudioReady, disabled }: TextTo
 
       toast.success(`Áudio gerado com a voz ${voice.name}!`);
     } catch (error) {
-      // Cancelamento (troca de voz ou popover fechado) não é falha: silêncio.
-      if (controller.signal.aborted) return;
       const msg = error instanceof Error ? error.message : 'Erro desconhecido';
       toast.error(`Erro ao gerar áudio: ${msg}`);
       setSelectedVoice(null);
     } finally {
-      const aindaAtual = abortRef.current === controller;
-      if (aindaAtual) abortRef.current = null;
-      // Não resetar quando OUTRA geração já assumiu o lugar desta.
-      if (aindaAtual || abortRef.current === null) setIsConverting(false);
+      setIsConverting(false);
     }
   };
 

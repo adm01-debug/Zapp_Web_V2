@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, ShieldCheck, ShieldOff, Trash2, Plus, Loader2, AlertTriangle, RotateCw } from 'lucide-react';
+import { Shield, ShieldCheck, ShieldOff, Trash2, Plus, Loader2, AlertTriangle } from 'lucide-react';
 import { useMFA } from '@/hooks/auth/useMFA';
 import { MFAEnroll } from './MFAEnroll';
 import { Button } from '@/components/ui/button';
@@ -23,31 +23,14 @@ import {
 } from '@/components/ui/dialog';
 
 export function MFASettings() {
-  const { factors, fetchFactors, unenroll, loading, isMFAEnabled, cancelEnroll } = useMFA();
+  const { factors, fetchFactors, unenroll, loading, isMFAEnabled } = useMFA();
   const [showEnrollDialog, setShowEnrollDialog] = useState(false);
   const [factorToRemove, setFactorToRemove] = useState<string | null>(null);
   const [removing, setRemoving] = useState(false);
-  const [loadError, setLoadError] = useState(false);
-
-  // fetchFactors passou a relançar (PH-07): erro de leitura não pode virar
-  // "Inativo" — ausência de dado não é dado.
-  const carregarFatores = useCallback(() => {
-    void fetchFactors()
-      .then(() => setLoadError(false))
-      .catch(() => setLoadError(true));
-  }, [fetchFactors]);
 
   useEffect(() => {
-    carregarFatores();
-  }, [carregarFatores]);
-
-  // Fechar o cadastro (Cancelar, Esc ou clique fora) precisa remover o fator
-  // pendente no servidor: sem isso a conta fica com um fator 'unverified' e o
-  // próximo enroll cai em mfa_factor_name_conflict.
-  const encerrarCadastro = useCallback(() => {
-    setShowEnrollDialog(false);
-    void cancelEnroll().catch(() => undefined);
-  }, [cancelEnroll]);
+    fetchFactors();
+  }, [fetchFactors]);
 
   const handleRemove = async () => {
     if (!factorToRemove) return;
@@ -68,11 +51,9 @@ export function MFASettings() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                isMFAEnabled && !loadError ? 'bg-success/10 dark:bg-success/20/30' : 'bg-muted'
+                isMFAEnabled ? 'bg-success/10 dark:bg-success/20/30' : 'bg-muted'
               }`}>
-                {loadError ? (
-                  <ShieldOff className="w-5 h-5 text-destructive" />
-                ) : isMFAEnabled ? (
+                {isMFAEnabled ? (
                   <ShieldCheck className="w-5 h-5 text-success dark:text-success" />
                 ) : (
                   <ShieldOff className="w-5 h-5 text-muted-foreground" />
@@ -81,22 +62,20 @@ export function MFASettings() {
               <div>
                 <CardTitle className="text-lg">Autenticação de Dois Fatores (2FA)</CardTitle>
                 <CardDescription>
-                  {loadError
-                    ? 'Não foi possível carregar o status do 2FA'
-                    : isMFAEnabled
-                      ? 'Sua conta está protegida com 2FA'
-                      : 'Adicione uma camada extra de segurança'}
+                  {isMFAEnabled 
+                    ? 'Sua conta está protegida com 2FA' 
+                    : 'Adicione uma camada extra de segurança'}
                 </CardDescription>
               </div>
             </div>
-            <Badge variant={loadError ? 'destructive' : isMFAEnabled ? 'default' : 'secondary'}>
-              {loadError ? 'Indisponível' : isMFAEnabled ? 'Ativo' : 'Inativo'}
+            <Badge variant={isMFAEnabled ? 'default' : 'secondary'}>
+              {isMFAEnabled ? 'Ativo' : 'Inativo'}
             </Badge>
           </div>
         </CardHeader>
 
         <CardContent className="space-y-4">
-          {!loadError && !isMFAEnabled && (
+          {!isMFAEnabled && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -117,16 +96,6 @@ export function MFASettings() {
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : loadError ? (
-            <div className="space-y-3 text-center">
-              <p className="text-sm text-destructive">
-                Não foi possível ler os seus métodos de 2FA.
-              </p>
-              <Button variant="outline" className="w-full" onClick={carregarFatores}>
-                <RotateCw className="w-4 h-4 mr-2" />
-                Tentar de novo
-              </Button>
             </div>
           ) : (
             <div className="space-y-3">
@@ -154,7 +123,6 @@ export function MFASettings() {
                       variant="ghost"
                       size="sm"
                       onClick={() => setFactorToRemove(factor.id)}
-                      aria-label={`Remover ${factor.friendly_name || 'App Autenticador'}`}
                       className="text-destructive hover:text-destructive hover:bg-destructive/10"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -177,24 +145,15 @@ export function MFASettings() {
       </Card>
 
       {/* Enroll Dialog */}
-      <Dialog
-        open={showEnrollDialog}
-        onOpenChange={(aberto) => {
-          if (aberto) {
-            setShowEnrollDialog(true);
-          } else {
-            encerrarCadastro();
-          }
-        }}
-      >
+      <Dialog open={showEnrollDialog} onOpenChange={setShowEnrollDialog}>
         <DialogContent aria-describedby={undefined} className="sm:max-w-md p-0">
           <DialogTitle className="sr-only">Configurar autenticação de dois fatores</DialogTitle>
           <MFAEnroll
             onSuccess={() => {
               setShowEnrollDialog(false);
-              carregarFatores();
+              fetchFactors();
             }}
-            onCancel={encerrarCadastro}
+            onCancel={() => setShowEnrollDialog(false)}
           />
         </DialogContent>
       </Dialog>

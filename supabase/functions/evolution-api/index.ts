@@ -2,9 +2,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { Logger, checkRateLimit, getClientIP, getCorsHeaders, handleCors } from "../_shared/validation.ts";
 import { proxyToEvolution, resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
-import { resolveInstanceToken } from "../_shared/evolution-instance-token.ts";
 import { goHistoryNotSupported } from "../_shared/evolution-sync-actions.ts";
-import { classifyEvolutionAction, decideControlAuthz, decideSendAuthz, sanitizeStatusPayload, type EvolutionAuthzDecision } from "../_shared/evolution-control-authz.ts";
+import { classifyEvolutionAction, decideControlAuthz, decideSendAuthz, type EvolutionAuthzDecision } from "../_shared/evolution-control-authz.ts";
 // E45 (SL-050): o corpo passa por schema (ação conhecida + instância alvo).
 import { EvolutionApiRequestSchema, evolutionApiRequiresInstance, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 // R2-API-015: rotas de ciclo de sessão (connect/status/disconnect) por flavor.
@@ -177,14 +176,8 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     }
 
     // E22: chave do circuit breaker por instância — '__admin' para list-instances.
-    // E16/TRA-002 (#18): toda ação de instância envia o token DELA (Vault via
-    // get_instance_token, cacheado por isolate) — nunca a credencial da padrão
-    // nem a key global. Sem token resolvido, o proxy falha fechado (exceto a
-    // instância padrão, que ainda pode cair no fallback de transição
-    // EVOLUTION_INSTANCE_TOKEN, dentro do proxy).
-    const proxy = async (path: string, method = 'POST', body?: unknown) =>
-      proxyToEvolution(evolutionApiUrl, evolutionApiKey, corsHeaders, path, method, body, undefined, instance || '__admin',
-        instance ? (await resolveInstanceToken(supabase, instance)) ?? undefined : undefined);
+    const proxy = (path: string, method = 'POST', body?: unknown) =>
+      proxyToEvolution(evolutionApiUrl, evolutionApiKey, corsHeaders, path, method, body, undefined, instance || '__admin');
 
     // ─── 0. Janela de manutenção (proteção contra bloqueio da Meta) ───
     // Enquanto whatsapp_maintenance_until estiver no futuro, ações que fazem a
@@ -242,37 +235,18 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
 
     // Definido aqui (escopo de módulo) para que connect/status/disconnect/delete-instance
     // possam usar sem depender de criar-connection ter rodado antes.
-    const TOKEN_KEYS = ['token', 'Token', 'apikey', 'apiKey', 'hash'];
+    const TOKEN_KEYS = ['token', 'Token', 'apikey', 'apiKey'];
     const TOKEN_CONTAINER_KEYS = ['data', 'hash', 'instance'];
     const stripInstanceToken = (value: unknown): unknown => {
-      // Listas de instância (ex.: GET /instance/fetchInstances devolve array de
-      // objetos) precisam ser percorridas — sem isso o token do item escaparia.
-      if (Array.isArray(value)) return value.map(stripInstanceToken);
-      if (!value || typeof value !== 'object') return value;
+      if (!value || typeof value !== 'object' || Array.isArray(value)) return value;
       const clone: Record<string, unknown> = { ...(value as Record<string, unknown>) };
       for (const key of TOKEN_KEYS) delete clone[key];
       for (const key of TOKEN_CONTAINER_KEYS) {
-        if (clone[key] !== undefined) clone[key] = stripInstanceToken(clone[key]);
+        if (clone[key] && typeof clone[key] === 'object' && !Array.isArray(clone[key])) {
+          clone[key] = stripInstanceToken(clone[key]);
+        }
       }
       return clone;
-    };
-
-    // R2EXT-AGENDA: higieniza o corpo de leitura de instância (instance-info /
-    // list-instances) em QUALQUER variante (GO e v2). O proxy só limpa a rota
-    // GO /instance/all; a variante v2 e a rota /instance/info passariam o
-    // token/hash adiante (com ele + a URL pública da GO se opera a instância
-    // fora do app). Resposta não-JSON é devolvida intacta.
-    const sanitizeInstanceResponse = async (response: Response): Promise<Response> => {
-      let body: unknown;
-      try {
-        body = await response.json();
-      } catch {
-        return response;
-      }
-      return new Response(JSON.stringify(stripInstanceToken(body)), {
-        status: response.status,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
     };
 
     // ─── E10: backfill do token da PRINCIPAL (secret global → Vault) ───
@@ -481,11 +455,12 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       }
 
       // Webhook na criação (best-effort): falhar aqui não desfaz a conexão já
-      // criada e com token guardado. Desde o TRA-002 (#18) a action 'connect'
-      // resolve o token DA instância no Vault; esta chamada segue usando o
-      // instanceToken recém-gerado (ainda não está no Vault neste ponto do
-      // fluxo) e o reparo pela action 'connect' também funciona para uma
-      // instância não-default.
+      // criada e com token guardado. A action 'connect' NÃO resolve token
+      // por instância ainda (usa só EVOLUTION_INSTANCE_TOKEN/o global — E16
+      // e E23 seguem pendentes no plano multi-conexão), então hoje ela não é
+      // um reparo funcional para uma instância não-default; o reparo real
+      // por ora é repetir este create-connection ou reconectar manualmente
+      // pela GO com o instanceToken salvo no Vault desta conexão.
       try {
         await fetch(`${evolutionApiUrl}/instance/connect`, {
           method: 'POST',
@@ -504,7 +479,7 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       });
     }
 
-    if (action === 'list-instances') return await sanitizeInstanceResponse(await proxy(`/instance/fetchInstances${body.instanceName ? `?instanceName=${body.instanceName}` : ''}`, 'GET'));
+    if (action === 'list-instances') return await proxy(`/instance/fetchInstances${body.instanceName ? `?instanceName=${body.instanceName}` : ''}`, 'GET');
 
     if (action === 'connect') {
       // R2-API-015: o ciclo de sessão escolhe rota, método e credencial pelo
@@ -542,14 +517,7 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
         // error/message; um 409 cru cairia no ramo de erro de rede).
         return new Response(JSON.stringify({ error: true, status: 409, message: 'A Evolution API v2 respondeu ao connect sem QR Code e sem sessão aberta. Verifique a instância e tente novamente.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
-      // TRA-002 / #18: o token DA instância vem do Vault (get_instance_token);
-      // a GO seleciona a instância pela CREDENCIAL — autenticar o connect de
-      // outra conexão com a da padrão parearia a instância errada. Sem token
-      // resolvido, nega (nunca cai na key global).
-      const instToken = await resolveInstanceToken(supabase, instance);
-      if (!instToken) {
-        return new Response(JSON.stringify({ error: true, message: `Credencial da instância '${instance}' não encontrada — recrie a conexão ou grave o token no Vault.` }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-      }
+      const instToken = Deno.env.get('EVOLUTION_INSTANCE_TOKEN') ?? evolutionApiKey;
       // NUNCA body vazio: o GO persiste webhook/subscribe do body — {} apagaria
       // o webhook da instância e derrubaria a entrega de eventos (o guard
       // instance.Webhook != "" bloqueia até o WEBHOOK_URL global). Reafirmar a
@@ -683,8 +651,10 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
         } catch { /* GO indisponível: cai no 409 abaixo */ }
       }
       if (goOrphan) {
-        // instToken já foi resolvido acima (Vault ou fallback da padrão) — a
-        // recriação usa o MESMO token da instância, preservando a credencial.
+        if (!Deno.env.get('EVOLUTION_INSTANCE_TOKEN')) {
+          new Logger('evolution-api').error('connect: EVOLUTION_INSTANCE_TOKEN não configurado — recriação de instância órfã abortada', { instance });
+          return new Response(JSON.stringify({ error: true, status: 503, message: 'A recriação automática da instância exige que o secret EVOLUTION_INSTANCE_TOKEN esteja configurado na Edge Function. Configure o secret e tente novamente.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
         new Logger('evolution-api').warn('connect: sessão órfã na GO — recriando instância para forçar QR novo', { instance, goId: goOrphan.id });
         // Security: sanitizar o id para evitar path traversal — só alfanumérico e hífen.
         const safeGoId = goOrphan.id.replace(/[^a-zA-Z0-9\-_]/g, '');
@@ -742,21 +712,9 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       // (/instance/connectionState/{instance}), autenticado pela chave global.
       const flavor = resolveEvolutionFlavor(Deno.env.get('EVOLUTION_API_FLAVOR'));
       const route = resolveSessionRoute(flavor, 'status', instance);
-      let sessionKey = evolutionApiKey;
-      if (route.auth === 'instance') {
-        // TRA-002 / #18: rota de instância (GO) só autentica com o token DELA;
-        // sem ele, nega em vez de consultar outra conexão com a credencial da
-        // padrão. O v2 (route.auth === 'global') identifica a instância pelo
-        // nome no path e segue com a key global.
-        const token = await resolveInstanceToken(supabase, instance);
-        if (!token) {
-          return new Response(JSON.stringify({ error: true, message: `Credencial da instância '${instance}' não encontrada — recrie a conexão ou grave o token no Vault.` }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-        }
-        sessionKey = token;
-      }
       const response = await fetch(`${evolutionApiUrl}${route.path}`, {
         method: route.method,
-        headers: { 'apikey': sessionKey },
+        headers: { 'apikey': resolveSessionApiKey(route, Deno.env.get('EVOLUTION_INSTANCE_TOKEN'), evolutionApiKey) },
       });
       // Resposta de /instance/status. A GO manda `data` aninhado e nem sempre concorda
       // entre loggedIn/connected/State; o DTO mantém o índice aberto porque o payload varia.
@@ -807,9 +765,9 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       if (isGoFlavor) {
         const goId = await resolveGoInstanceId(instance);
         if (!goId) return new Response(JSON.stringify({ error: true, status: 404, message: 'Instância não encontrada na Evolution GO.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-        return await sanitizeInstanceResponse(await proxy(`/instance/info/${goId}`, 'GET'));
+        return await proxy(`/instance/info/${goId}`, 'GET');
       }
-      return await sanitizeInstanceResponse(await proxy(`/instance/info/${instance}`, 'GET'));
+      return await proxy(`/instance/info/${instance}`, 'GET');
     }
     if (action === 'restart-instance') return await proxy(`/instance/restart/${instance}`, 'PUT');
 
@@ -818,18 +776,9 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       // credencial) com o token da instância; v2 em /instance/logout/{instance}
       // com a chave global.
       const route = resolveSessionRoute(resolveEvolutionFlavor(Deno.env.get('EVOLUTION_API_FLAVOR')), 'disconnect', instance);
-      let disconnectKey = evolutionApiKey;
-      if (route.auth === 'instance') {
-        // TRA-002 / #18: logout da instância (GO) só com o token DELA.
-        const token = await resolveInstanceToken(supabase, instance);
-        if (!token) {
-          return new Response(JSON.stringify({ error: true, message: `Credencial da instância '${instance}' não encontrada — recrie a conexão ou grave o token no Vault.` }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-        }
-        disconnectKey = token;
-      }
       const response = await fetch(`${evolutionApiUrl}${route.path}`, {
         method: route.method,
-        headers: { 'apikey': disconnectKey },
+        headers: { 'apikey': resolveSessionApiKey(route, Deno.env.get('EVOLUTION_INSTANCE_TOKEN'), evolutionApiKey) },
       });
       let data: { message?: unknown; [k: string]: unknown } = {};
       try { const _t = await response.text(); data = JSON.parse(_t); } catch { /* non-JSON from GO */ }
@@ -864,70 +813,8 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     if (action === 'get-settings') return await proxy(`/settings/find/${instance}`, 'GET');
 
     // ─── 3. Webhook ───
-    if (action === 'set-webhook') {
-      // Dois contratos em uso: o painel de monitoramento manda `{ instanceName,
-      // webhook: { url, events, ... } }` (ANINHADO); o plano/legado manda os campos
-      // PLANOS no corpo. Antes só o plano era lido (`body.url`/`body.events`), então
-      // o aninhado chegava ao provedor com `url` undefined e a lista default de
-      // eventos — cada "Reconfigurar" sobrescrevia o webhook com URL vazia.
-      const nested = body.webhook;
-      const wh: Record<string, unknown> = (nested && typeof nested === 'object' && !Array.isArray(nested))
-        ? (nested as Record<string, unknown>)
-        : body;
-      const webhookByEvents = wh.webhookByEvents ?? true;
-      const webhookBase64 = wh.webhookBase64 ?? false;
-      if (isGoFlavor) {
-        // A GO configura o webhook da instância por `/instance/connect` (WebhookURL
-        // + subscribe); `/webhook/set/{instance}` é rota da v2 e responde 404 no GO.
-        // Mesmo corpo/credencial do fluxo de connect (R2-API-015): o token DA
-        // instância vem do Vault e, sem ele, NEGA — a GO seleciona a instância pela
-        // credencial, então a key global ou a da padrão parearia outra conexão.
-        const instToken = await resolveInstanceToken(supabase, instance);
-        if (!instToken) {
-          return new Response(JSON.stringify({ error: true, message: `Credencial da instância '${instance}' não encontrada — recrie a conexão ou grave o token no Vault.` }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-        }
-        const route = resolveSessionRoute('go', 'connect', instance);
-        const response = await fetch(`${evolutionApiUrl}${route.path}`, {
-          method: route.method,
-          headers: { 'apikey': resolveSessionApiKey(route, instToken, evolutionApiKey), 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            webhookUrl: wh.url,
-            webhookByEvents,
-            webhookBase64,
-            subscribe: ['ALL'],
-            immediate: true,
-          }),
-        });
-        let data: Record<string, unknown> = {};
-        try { data = JSON.parse(await response.text()); } catch { /* GO pode responder non-JSON */ }
-        return new Response(JSON.stringify(data), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-      }
-      return await proxy(`/webhook/set/${instance}`, 'POST', { webhook: { enabled: wh.enabled ?? true, url: wh.url, webhookByEvents, webhookBase64, events: wh.events || ['APPLICATION_STARTUP','QRCODE_UPDATED','CONNECTION_UPDATE','MESSAGES_SET','MESSAGES_UPSERT','MESSAGES_UPDATE','MESSAGES_DELETE','MESSAGES_EDITED','SEND_MESSAGE','SEND_MESSAGE_UPDATE','CONTACTS_SET','CONTACTS_UPSERT','CONTACTS_UPDATE','PRESENCE_UPDATE','CHATS_SET','CHATS_UPSERT','CHATS_UPDATE','CHATS_DELETE','GROUPS_UPSERT','GROUP_UPDATE','GROUP_PARTICIPANTS_UPDATE','TYPEBOT_START','TYPEBOT_CHANGE_STATUS','LABELS_EDIT','LABELS_ASSOCIATION','CALL'] } });
-    }
-    if (action === 'get-webhook') {
-      // `/webhook/find` é rota da v2. No GO a leitura da configuração corrente vem do
-      // registro da instância na listagem admin (`/instance/fetchInstances`, traduzida
-      // para `/instance/all`) — a mesma fonte que o webhook-diagnostic usa. Assim o
-      // painel lê a config real por flavor em vez de bater numa rota inexistente no GO.
-      if (!isGoFlavor) return await proxy(`/webhook/find/${instance}`, 'GET');
-      try {
-        const allRes = await proxy('/instance/fetchInstances', 'GET');
-        const allData = await allRes.json().catch(() => null);
-        const records: Record<string, unknown>[] = Array.isArray(allData?.data) ? allData.data : Array.isArray(allData) ? allData : [];
-        const rec = records.find((r) => r?.name === instance || r?.Name === instance) ?? {};
-        const evRaw = rec.events ?? rec.Events;
-        const events = Array.isArray(evRaw)
-          ? evRaw
-          : typeof evRaw === 'string' && evRaw ? evRaw.split(',').map((s) => s.trim()).filter(Boolean) : [];
-        const url = typeof rec.webhook === 'string' ? rec.webhook : typeof rec.Webhook === 'string' ? rec.Webhook : '';
-        return new Response(JSON.stringify({
-          webhook: { enabled: !!url, url, events, webhookByEvents: true, webhookBase64: false },
-          ...(url ? {} : { goEnvManaged: true }),
-        }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-      } catch (_err) {
-        return new Response(JSON.stringify({ error: true, message: 'Falha ao ler a configuração de webhook da instância no GO.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-      }
-    }
+    if (action === 'set-webhook') return await proxy(`/webhook/set/${instance}`, 'POST', { webhook: { enabled: body.enabled ?? true, url: body.url, webhookByEvents: body.webhookByEvents ?? true, webhookBase64: body.webhookBase64 ?? false, events: body.events || ['APPLICATION_STARTUP','QRCODE_UPDATED','CONNECTION_UPDATE','MESSAGES_SET','MESSAGES_UPSERT','MESSAGES_UPDATE','MESSAGES_DELETE','MESSAGES_EDITED','SEND_MESSAGE','SEND_MESSAGE_UPDATE','CONTACTS_SET','CONTACTS_UPSERT','CONTACTS_UPDATE','PRESENCE_UPDATE','CHATS_SET','CHATS_UPSERT','CHATS_UPDATE','CHATS_DELETE','GROUPS_UPSERT','GROUP_UPDATE','GROUP_PARTICIPANTS_UPDATE','TYPEBOT_START','TYPEBOT_CHANGE_STATUS','LABELS_EDIT','LABELS_ASSOCIATION','CALL'] } });
+    if (action === 'get-webhook') return await proxy(`/webhook/find/${instance}`, 'GET');
 
     // ─── 4. Messaging ───
     if (action === 'send-text') return await proxy(`/message/sendText/${instance}`, 'POST', { number: body.number, text: body.text, delay: body.delay, quoted: body.quoted, mentionsEveryOne: body.mentionsEveryOne, mentioned: body.mentioned });
@@ -973,52 +860,7 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     if (action === 'send-poll') return await proxy(`/message/sendPoll/${instance}`, 'POST', { number: body.number, name: body.name || body.question, selectableCount: body.selectableCount || 1, values: body.values || body.options });
     if (action === 'send-list') return await proxy(`/message/sendList/${instance}`, 'POST', { number: body.number, title: body.title, description: body.description, footer: body.footer, buttonText: body.buttonText, sections: body.sections });
     if (action === 'send-buttons') return await proxy(`/message/sendButtons/${instance}`, 'POST', { number: body.number, title: body.title, description: body.description, footer: body.footer, buttons: body.buttons });
-    if (action === 'send-status') {
-      // R2EXT-STATUS: publicar Status/Story é ação de CONTROLE (gate
-      // admin/supervisor acima). O corpo deixa de ir inteiro ao provedor: passa
-      // pela allowlist (tipo, texto, mídia, cor), o texto ganha teto e a lista
-      // de destinatários é reduzida aos contatos da empresa. A trilha grava ator
-      // e tipo, nunca o conteúdo nem telefone — e falha fechada: sem trilha, o
-      // status não é publicado.
-      const { data: statusConn } = await supabase
-        .from('whatsapp_connections').select('id').eq('instance_id', instance).maybeSingle();
-      const companyJids = new Set<string>();
-      if (statusConn?.id) {
-        const { data: contactRows } = await supabase
-          .from('contacts').select('phone').eq('whatsapp_connection_id', statusConn.id).limit(5000);
-        for (const row of (contactRows ?? []) as { phone?: string | null }[]) {
-          const digits = jidToDigits(row.phone);
-          if (digits) companyJids.add(digits);
-        }
-      }
-      const sanitized = sanitizeStatusPayload(body, companyJids);
-      if (sanitized.emptyTargetList) {
-        return new Response(JSON.stringify({ error: true, message: 'A lista de destinatários do status não pertence a esta empresa.' }), {
-          status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      const { error: auditError } = await supabase.from('audit_logs').insert({
-        user_id: callerUserId,
-        action: 'evolution_status_published',
-        entity_type: 'whatsapp_connection',
-        entity_id: statusConn?.id ?? null,
-        details: {
-          instance,
-          type: typeof sanitized.payload.type === 'string' ? sanitized.payload.type : null,
-          has_media: typeof sanitized.payload.media === 'string' && sanitized.payload.media.length > 0,
-          recipients: Array.isArray(sanitized.payload.statusJidList) ? sanitized.payload.statusJidList.length : 0,
-          dropped_fields: sanitized.droppedFields,
-          dropped_jids: sanitized.droppedJids,
-        },
-      });
-      if (auditError) {
-        new Logger('evolution-api').error('send-status: falha ao registrar a auditoria', { error: auditError.message, instance });
-        return new Response(JSON.stringify({ error: true, message: 'Falha ao registrar a auditoria do status.' }), {
-          status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      return await proxy(`/message/sendStatus/${instance}`, 'POST', sanitized.payload);
-    }
+    if (action === 'send-status') return await proxy(`/message/sendStatus/${instance}`, 'POST', body);
     if (action === 'send-template') return await proxy(`/message/sendTemplate/${instance}`, 'POST', { number: body.number, template: body.template });
     if (action === 'mark-read') return await proxy(`/chat/markMessageAsRead/${instance}`, 'POST', { readMessages: body.readMessages || [body.key] });
     if (action === 'mark-unread') return await proxy(`/chat/markMessageAsUnread/${instance}`, 'POST', { readMessages: body.readMessages || [body.key] });
@@ -1093,12 +935,7 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       // que useEvolutionApiCore lê para mostrar o toast; um status cru não-2xx
       // perderia a mensagem e o operador veria só "non-2xx status code".
       if (isGoFlavor) {
-        // TRA-002 / #18: a leitura e a escrita da privacidade são da conexão
-        // alvo — token DELA; sem token, nega antes de qualquer I/O.
-        const instToken = await resolveInstanceToken(supabase, instance);
-        if (!instToken) {
-          return new Response(JSON.stringify({ error: true, message: `Credencial da instância '${instance}' não encontrada — recrie a conexão ou grave o token no Vault.` }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-        }
+        const instToken = Deno.env.get('EVOLUTION_INSTANCE_TOKEN') ?? evolutionApiKey;
         const denyPrivacy = () => new Response(JSON.stringify({
           error: true,
           status: 502,

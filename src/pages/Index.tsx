@@ -14,16 +14,15 @@ import { useTranscriptionNotifications } from '@/hooks/communication/useTranscri
 import { logAudit } from '@/lib/audit';
 import { useKeyboardNavigation } from '@/hooks/ui/useKeyboardNavigation';
 import { useGmailOAuth } from '@/hooks/integrations/useGmailOAuth';
-import { useInboxUnreadTotal } from '@/hooks/inbox/useInboxUnreadTotal';
 import { Sparkles } from 'lucide-react';
 import { AppShell } from '@/components/layout/AppShell';
 import { toast } from 'sonner';
 
 // Lazy load non-critical secondary components
+const CommandPalette = lazy(() => import('@/components/CommandPalette').then(m => ({ default: m.CommandPalette })));
 const WelcomeModal = lazy(() => import('@/components/onboarding/WelcomeModal').then(m => ({ default: m.WelcomeModal })));
 const OfflineIndicator = lazy(() => import('@/components/ui/offline-indicator').then(m => ({ default: m.OfflineIndicator })));
 const ConnectionToast = lazy(() => import('@/components/ui/offline-indicator').then(m => ({ default: m.ConnectionToast })));
-const SupabaseConnectivityBanner = lazy(() => import('@/components/ui/supabase-connectivity-banner').then(m => ({ default: m.SupabaseConnectivityBanner })));
 const EvolutionDisconnectBanner = lazy(() => import('@/components/alerts/EvolutionDisconnectBanner').then(m => ({ default: m.EvolutionDisconnectBanner })));
 const MfaAdminNudge = lazy(() => import('@/components/security/MfaAdminNudge').then(m => ({ default: m.MfaAdminNudge })));
 // E35 — pré-carrega em tempo ocioso os chunks das views quentes (Chat/Teams/Email/Dashboard).
@@ -97,12 +96,6 @@ const IndexContent = forwardRef<HTMLDivElement>(function IndexContent(_props, _r
  
    useGmailOAuth(user, false, setCurrentView);
 
-  // PE-30/31 — o shell recebia `unreadNotifications={0}` fixo: nem o selo do Chat
-  // nem o do Teams existiam. Uma única instância do hook alimenta as duas barras
-  // (lateral e do celular) e o título da aba; sem sessão ele não consulta nem
-  // abre canal (`enabled`).
-  const unreadTotal = useInboxUnreadTotal(!!user);
-
   useEffect(() => {
     if (!loadingOnboarding && hasCompletedOnboarding === false && user) {
       setShowWelcome(true);
@@ -127,15 +120,14 @@ const IndexContent = forwardRef<HTMLDivElement>(function IndexContent(_props, _r
           profile={profile}
           userEmail={user.email || ''}
           signOut={signOut}
-          unreadNotifications={unreadTotal.count}
-          teamsUnread={unreadTotal.teams}
+          unreadNotifications={0}
           showChecklist={showChecklist}
           loading={false}
         />
 
         <Suspense fallback={null}>
+          <CommandPalette onNavigate={setCurrentView} />
           <OfflineIndicator />
-          <SupabaseConnectivityBanner />
           <ConnectionToast />
           <EvolutionDisconnectBanner />
           <MfaAdminNudge onNavigate={setCurrentView} />

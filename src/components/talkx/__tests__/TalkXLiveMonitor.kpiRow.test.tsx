@@ -57,7 +57,7 @@ vi.mock('@/integrations/supabase/client', () => {
   return {
     supabase: {
       from: (table: string) => makeChain(table),
-      channel: () => { const ch: Record<string, unknown> = {}; ch.on = () => ch; ch.subscribe = () => ch; return ch; },
+      channel: () => ({ on: () => ({ on: () => ({ subscribe: () => ({}) }) }) }),
       removeChannel: () => {},
     },
   };

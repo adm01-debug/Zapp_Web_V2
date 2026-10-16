@@ -3,22 +3,23 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Cake, Shield, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
+import { format, differenceInYears, isSameDay, addYears } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { TeamConversation } from '@/hooks/chat/useTeamChat';
 import type { MemberProfile } from '@/hooks/team-chat/useTeamMemberDetails';
-import type { MemberBirthday } from '@/lib/birthday';
-import { getBirthdayInfo } from '@/lib/birthday';
 
 export type { MemberProfile };
 
-/**
- * HZ-28: o front so recebe dia e mes (a RPC segura nao devolve o ano). Este e o texto do
- * cartao do colega — "20 de outubro", sem ano e sem idade em lugar nenhum.
- */
-function birthdayLabel(birthday: MemberBirthday | null): string | null {
-  const info = getBirthdayInfo(birthday);
-  return info ? format(info.date, "dd 'de' MMMM", { locale: ptBR }) : null;
+export function getBirthdayInfo(birthday: string | null) {
+  if (!birthday) return null;
+  const date = new Date(birthday);
+  const today = new Date();
+  const age = differenceInYears(today, date);
+  let nextBirthday = new Date(today.getFullYear(), date.getMonth(), date.getDate());
+  if (nextBirthday < today && !isSameDay(nextBirthday, today)) nextBirthday = addYears(nextBirthday, 1);
+  const isToday = isSameDay(nextBirthday, today);
+  const daysUntil = Math.ceil((nextBirthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  return { date, age, isToday, daysUntil };
 }
 
 export function getRoleBadge(role: string | null) {
@@ -86,10 +87,10 @@ export function DirectProfileHeader({ memberProfile, isLoading }: DirectProfileH
           <div className="flex items-center justify-center gap-1.5 text-xs">
             <Cake className="w-3.5 h-3.5" />
             {birthdayInfo.isToday ? (
-              <span className="font-semibold text-chart-4">🎉 Aniversário hoje!</span>
+              <span className="font-semibold text-chart-4">🎉 Aniversário hoje! {birthdayInfo.age} anos</span>
             ) : (
               <span className="text-muted-foreground">
-                {birthdayLabel(memberProfile.birthday)}
+                {format(birthdayInfo.date, "dd 'de' MMMM", { locale: ptBR })} ({birthdayInfo.age} anos)
                 {birthdayInfo.daysUntil <= 30 && birthdayInfo.daysUntil > 0 && <span className="text-chart-4 ml-1">• em {birthdayInfo.daysUntil} dias</span>}
               </span>
             )}

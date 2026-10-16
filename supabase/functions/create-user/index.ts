@@ -1,12 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { z } from "https://esm.sh/zod@3.23.8";
-import { handleCors, errorResponse, internalErrorResponse, jsonResponse, requireEnv, Logger, sanitizeString, enforceRateLimit, getClientIP } from "../_shared/validation.ts";
-
-// ── Seams de injeção (R2-AUTH-016) ──────────────────────────────────────────
-// O handler exportado recebe o que faz efeito (client admin service_role, client
-// do chamador, rate limit e leitura de env) para o teste provar, sem tocar banco
-// nem GoTrue, que a falha de QUALQUER escrita dependente (role, perfil, contas
-// auxiliares) derruba o sucesso e dispara a compensação (auth.admin.deleteUser).
+import { handleCors, errorResponse, internalErrorResponse, jsonResponse, requireEnv, Logger, sanitizeString, checkRateLimit, getClientIP } from "../_shared/validation.ts";
 
 export interface CreateUserCallerClient {
   auth: {
@@ -22,8 +16,7 @@ export interface CreateUserAdminClient {
         password: string;
         email_confirm: boolean;
         user_metadata: Record<string, unknown>;
-      }) => PromiseLike<{ data: { user: { id: string } | null }; error: { message?: string } | null }>;
-      deleteUser: (id: string) => PromiseLike<{ data?: unknown; error: { message?: string } | null }>;
+      }) => PromiseLike<{ data: { user: { id: string } | null }; error: { message: string } | null }>;
     };
   };
   // deno-lint-ignore no-explicit-any
@@ -33,9 +26,7 @@ export interface CreateUserAdminClient {
 
 export interface CreateUserDeps {
   env?: (name: string) => string;
-  // Rate limit persistente (edge_rate_limits) em vez do contador em memoria, que
-  // zera a cada cold start (achado cubic P1). Mesmo seam do teste.
-  enforceRateLimit?: (key: string, maxRequests: number, windowMs: number) => PromiseLike<{ allowed: boolean }>;
+  checkRateLimit?: (key: string, maxRequests: number, windowMs: number) => { allowed: boolean };
   caller?: CreateUserCallerClient;
   admin?: CreateUserAdminClient;
 }
@@ -46,11 +37,10 @@ export async function handleCreateUserRequest(req: Request, deps: CreateUserDeps
 
   const log = new Logger("create-user");
   const env = deps.env ?? requireEnv;
-  const rateLimit = deps.enforceRateLimit ?? enforceRateLimit;
+  const rateLimit = deps.checkRateLimit ?? checkRateLimit;
 
-  // Pre-auth: protege a funcao de quem ainda nao se autenticou (chave por IP).
   const ip = getClientIP(req);
-  const rl = await rateLimit(`create-user:${ip}`, 5, 60_000);
+  const rl = rateLimit(`create-user:${ip}`, 5, 60_000);
   if (!rl.allowed) return errorResponse('Rate limit exceeded', 429, req);
 
   try {
@@ -70,44 +60,21 @@ export async function handleCreateUserRequest(req: Request, deps: CreateUserDeps
       return errorResponse("Não autorizado", 401, req);
     }
 
-    // Pos-auth: chave por USUARIO. O limite por IP sozinho nao segura uma conta
-    // admin comprometida que troca de IP; o contador por usuario e persistente.
-    const userRl = await rateLimit(`create-user:user:${caller.id}`, 5, 60_000);
-    if (!userRl.allowed) return errorResponse('Rate limit exceeded', 429, req);
-
     const adminClient: CreateUserAdminClient = deps.admin ?? createClient(env("SUPABASE_URL"), env("SUPABASE_SERVICE_ROLE_KEY"));
-    // R2-AUTH-016b: um admin pode acumular mais de um papel (ex.: agent + admin).
-    // Com `.single()` o PostgREST devolve erro quando a linha é ambígua (mais de
-    // uma), então um admin legítimo recebia 403. Filtra pelo papel 'admin'
-    // (UNIQUE(user_id, role) garante no máximo uma linha) e usa limit(1): nunca
-    // depende de o chamador ter um único papel.
-    const { data: adminRows } = await adminClient
+    const { data: roleData } = await adminClient
       .from("user_roles")
       .select("role")
       .eq("user_id", caller.id)
-      .eq("role", "admin")
-      .limit(1);
+      .single();
 
-    if (!adminRows || adminRows.length === 0) {
+    if (!roleData || roleData.role !== "admin") {
       log.warn("Non-admin attempted user creation", { callerId: caller.id });
       return errorResponse("Apenas administradores podem criar usuários", 403, req);
     }
 
     const bodySchema = z.object({
       email: z.string().email("Email inválido").max(255),
-      // R2-AUTH-016c: a política de senha do app (ResetPassword.tsx /
-      // useAuthForm.ts) é min 8 + maiúscula + minúscula + número + especial.
-      // Antes o servidor só exigia 8 caracteres, então a tela aprovava e a Edge
-      // criava conta com senha fora da política. Mesmas mensagens pt-BR do app,
-      // na mesma ordem das regras.
-      password: z
-        .string()
-        .min(8, "Mínimo 8 caracteres")
-        .max(128)
-        .regex(/[A-Z]/, "Deve conter letra maiúscula")
-        .regex(/[a-z]/, "Deve conter letra minúscula")
-        .regex(/[0-9]/, "Deve conter número")
-        .regex(/[^A-Za-z0-9]/, "Deve conter caractere especial"),
+      password: z.string().min(8, "Senha deve ter no mínimo 8 caracteres").max(128),
       name: z.string().min(1, "Nome é obrigatório").max(255),
       nickname: z.string().max(100).optional(),
       signature: z.string().max(500).optional(),
@@ -121,19 +88,8 @@ export async function handleCreateUserRequest(req: Request, deps: CreateUserDeps
 
     const parsed = bodySchema.safeParse(await req.json());
     if (!parsed.success) {
-      // R2-AUTH-016c: uma mensagem por campo, no formato Record<field, message>
-      // que o PF-11 consome (mesma forma do fieldErrors do useAuthForm: o
-      // primeiro issue de cada campo define a mensagem). O `error` continua
-      // trazendo o texto completo para quem só lê o toast.
-      const fieldErrors: Record<string, string> = {};
-      for (const issue of parsed.error.issues) {
-        const field = issue.path[0];
-        if (typeof field === "string" && !(field in fieldErrors)) {
-          fieldErrors[field] = issue.message;
-        }
-      }
-      const error = parsed.error.issues.map((issue) => issue.message).join("; ");
-      return jsonResponse({ error, fieldErrors }, 400, req);
+      const errors = parsed.error.flatten().fieldErrors;
+      return errorResponse(Object.values(errors).flat().join("; "), 400, req);
     }
 
     const { email, password, name, nickname, signature, job_title, avatar_url, role, gmail_email, google_services, dropbox_email } = parsed.data;
@@ -147,95 +103,49 @@ export async function handleCreateUserRequest(req: Request, deps: CreateUserDeps
     });
 
     if (createError) {
-      // R2-AUTH-016b: a mensagem do provedor/banco não vai ao cliente (pode
-      // revelar detalhe interno, ex.: usuário já registrado ou erro de SQL).
-      // A causa real fica só no log.
       log.error("User creation failed", { error: createError.message });
-      return errorResponse("Não foi possível criar o usuário", 400, req);
+      return errorResponse(createError.message, 400, req);
     }
 
-    const createdUserId = newUser.user?.id;
-    if (!createdUserId) {
-      log.error("GoTrue não devolveu o usuário criado");
-      return errorResponse("Falha ao criar usuário", 500, req);
+    if (role && role !== "agent" && newUser.user) {
+      await adminClient
+        .from("user_roles")
+        .update({ role })
+        .eq("user_id", newUser.user.id);
     }
 
-    // R2-AUTH-016: o usuário já existe no GoTrue. Se QUALQUER escrita dependente
-    // falhar, a resposta não pode ser sucesso — compensa apagando o usuário e
-    // responde 500. Falha da própria compensação é logada e ainda responde erro.
-    // Só a conta Gmail criada NESTA requisição precisa ser removida antes do deleteUser
-    // (as demais tabelas cascateiam). Sem ela criada, não há o que desfazer.
-    let gmailAccountCreated = false;
+    if (newUser.user) {
+      const profileUpdate: Record<string, unknown> = {};
+      if (nickname) profileUpdate.nickname = nickname;
+      if (signature) profileUpdate.signature = signature;
+      if (job_title) profileUpdate.job_title = job_title;
+      if (avatar_url) profileUpdate.avatar_url = avatar_url;
 
-    const failAndCompensate = async (msg: string, err: { message?: string } | null): Promise<Response> => {
-      log.error(msg, { error: err?.message ?? String(err), userId: createdUserId });
-      try {
-        // gmail_accounts_user_id_fkey e ON DELETE RESTRICT (migration 20260926240000):
-        // sem apagar a linha criada NESTA requisicao, o deleteUser do GoTrue falha com
-        // violacao de FK e o usuario fica orfao. A conta e recem-criada (sem threads,
-        // mensagens ou labels encadeados), entao remover essa linha nao perde dado.
-        const { error: gmailUndoError } = gmailAccountCreated
-          ? await adminClient
-            .from("gmail_accounts")
-            .delete()
-            .eq("user_id", createdUserId)
-          : { error: null };
-        if (gmailUndoError) {
-          log.error("Compensacao: falha ao remover a conta Gmail criada", { error: gmailUndoError.message, userId: createdUserId });
-        }
-        const { error: delError } = await adminClient.auth.admin.deleteUser(createdUserId);
-        if (delError) {
-          log.error("Compensação falhou: usuário órfão no GoTrue", { error: delError.message, userId: createdUserId });
-        }
-      } catch (delErr) {
-        log.error("Compensação falhou: usuário órfão no GoTrue", {
-          error: delErr instanceof Error ? delErr.message : String(delErr),
-          userId: createdUserId,
-        });
+      if (Object.keys(profileUpdate).length > 0) {
+        await adminClient
+          .from("profiles")
+          .update(profileUpdate)
+          .eq("user_id", newUser.user.id);
       }
-      return errorResponse(msg, 500, req);
-    };
-
-    // R2-AUTH-016b: o papel vem SEMPRE por upsert, inclusive 'agent'. O trigger
-    // handle_new_user_role() só auto-provisiona 'agent' para domínio confiável
-    // (promobrindes.com.br, migration 20260925140000); com e-mail de outro
-    // domínio a conta nascia sem papel e a tela caía no fallback "Atendente".
-    // UNIQUE(user_id, role) torna o upsert idempotente em relação ao que o
-    // trigger já tenha gravado — nunca cria uma linha duplicada.
-    const { error: roleError } = await adminClient
-      .from("user_roles")
-      .upsert({ user_id: createdUserId, role }, { onConflict: "user_id,role" });
-    if (roleError) return failAndCompensate("Falha ao definir o papel do usuário", roleError);
-
-    const profileUpdate: Record<string, unknown> = {};
-    if (nickname) profileUpdate.nickname = nickname;
-    if (signature) profileUpdate.signature = signature;
-    if (job_title) profileUpdate.job_title = job_title;
-    if (avatar_url) profileUpdate.avatar_url = avatar_url;
-
-    if (Object.keys(profileUpdate).length > 0) {
-      const { error: profileError } = await adminClient
-        .from("profiles")
-        .update(profileUpdate)
-        .eq("user_id", createdUserId);
-      if (profileError) return failAndCompensate("Falha ao atualizar o perfil do usuário", profileError);
     }
 
-    if (gmail_email) {
+    if (gmail_email && newUser.user) {
       const { error: gmailError } = await adminClient
         .from("gmail_accounts")
         .insert({
-          user_id: createdUserId,
+          user_id: newUser.user.id,
           email_address: gmail_email,
           is_active: true,
           sync_status: "pending",
         });
-      if (gmailError) return failAndCompensate("Falha ao vincular a conta Gmail", gmailError);
-      gmailAccountCreated = true;
+
+      if (gmailError) {
+        log.error("Gmail account creation failed", { error: gmailError.message });
+      }
 
       if (google_services && google_services.length > 0) {
         const serviceRows = google_services.map((svc: string) => ({
-          user_id: createdUserId,
+          user_id: newUser.user!.id,
           service_type: svc,
           account_email: gmail_email,
           is_active: true,
@@ -244,37 +154,30 @@ export async function handleCreateUserRequest(req: Request, deps: CreateUserDeps
         const { error: svcError } = await adminClient
           .from("user_service_accounts")
           .insert(serviceRows);
-        if (svcError) return failAndCompensate("Falha ao vincular os serviços Google", svcError);
+
+        if (svcError) {
+          log.error("Service accounts creation failed", { error: svcError.message });
+        }
       }
     }
 
-    if (dropbox_email) {
+    if (dropbox_email && newUser.user) {
       const { error: dropboxError } = await adminClient
         .from("user_service_accounts")
         .insert({
-          user_id: createdUserId,
+          user_id: newUser.user.id,
           service_type: "dropbox",
           account_email: dropbox_email,
           is_active: true,
         });
-      if (dropboxError) return failAndCompensate("Falha ao vincular a conta Dropbox", dropboxError);
+
+      if (dropboxError) {
+        log.error("Dropbox account creation failed", { error: dropboxError.message });
+      }
     }
 
-    // R2-AUTH-016b: trilha de auditoria (service role) — quem criou (ator), a
-    // ação e o usuário criado. `audit_logs` bloqueia INSERT direto de
-    // `authenticated` (migration 20260402214625), por isso a service role.
-    // Sem e-mail nem senha em `details`.
-    const { error: auditError } = await adminClient.from("audit_logs").insert({
-      user_id: caller.id,
-      action: "user_created",
-      entity_type: "auth.users",
-      entity_id: createdUserId,
-      details: { role },
-    });
-    if (auditError) return failAndCompensate("Falha ao registrar a auditoria da criação", auditError);
-
-    log.done(200, { userId: createdUserId });
-    return jsonResponse({ success: true, user_id: createdUserId }, 200, req);
+    log.done(200, { userId: newUser.user?.id });
+    return jsonResponse({ success: true, user_id: newUser.user?.id }, 200, req);
   } catch (err: unknown) {
     log.error("Unhandled error", { error: err instanceof Error ? err.message : String(err) });
     return internalErrorResponse(err, req);

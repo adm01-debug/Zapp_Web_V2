@@ -5,12 +5,12 @@
  * A aba "Enviados" monta a tabela sobre o que `useCatalogSendHistory` carrega;
  * com o `limit(500)` do hook, tudo além do 500º envio mais recente era
  * invisível: a busca respondia "Nenhum envio com esses filtros" para um envio
- * que existe.
+ * que existe e o CSV saía só com o lote truncado.
  *
  * Aqui a TELA REAL (`ExternalProductManagement`) roda com o hook REAL e o
  * cliente Supabase falso servindo 501 eventos em páginas de 1000 — o 501º é o
  * mais antigo e não cabe no lote de 500 do comportamento antigo. O teste prova
- * que ele é localizável pela busca e que a tabela segue na tela.
+ * que ele é localizável pela busca E que o CSV exportado o contém.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
@@ -63,6 +63,13 @@ vi.mock('@/hooks/integrations/useCatalogContactPreset', () => ({
 
 vi.mock('../SendProductDialog', () => ({ SendProductDialog: () => <div data-testid="send-dialog" /> }));
 vi.mock('../ExternalProductCard', () => ({ ExternalProductCard: () => <div data-testid="product-card" /> }));
+
+// O download do CSV é interceptado: o alvo é o TEXTO exportado (o recorte).
+const triggerCsvDownload = vi.fn();
+vi.mock('../catalogExport', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../catalogExport')>();
+  return { ...actual, triggerCsvDownload: (...args: unknown[]) => triggerCsvDownload(...args) };
+});
 
 // ─── Tabela falsa de `catalog_send_events`: 501 eventos, o mais antigo é o 501º ───
 type Linha = Record<string, unknown>;
@@ -127,6 +134,7 @@ function renderManagement() {
 beforeEach(() => {
   reduceMotion.value = false;
   rangeCalls.length = 0;
+  triggerCsvDownload.mockReset();
   window.history.replaceState(null, '', '/?tab=enviados');
 
   mockUseAuth.mockReset();
@@ -174,13 +182,14 @@ describe('CT-57 — histórico de envios além dos 500 mais recentes (R2-MOD-042
     expect(screen.queryByText('Nenhum envio com esses filtros.')).not.toBeInTheDocument();
   });
 
-  it('a aba "Enviados" não oferece exportação — a tabela continua na tela', async () => {
+  it('o CSV exportado cobre o recorte inteiro (inclui o 501º envio)', async () => {
     renderManagement();
 
     await waitFor(() => expect(screen.getByText(/de 501 envio/)).toBeInTheDocument());
-    // Sem botão de exportação (regra do dono: nenhuma informação sai do sistema).
-    expect(screen.queryByRole('button', { name: /Exportar/ })).toBeNull();
-    // A tabela segue no ar, com o recorte inteiro na paginação.
-    expect(screen.getByText('Produto 1')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Exportar CSV/ }));
+
+    expect(triggerCsvDownload).toHaveBeenCalledTimes(1);
+    const csv = String(triggerCsvDownload.mock.calls[0][0]);
+    expect(csv).toContain('Produto 501');
   });
 });

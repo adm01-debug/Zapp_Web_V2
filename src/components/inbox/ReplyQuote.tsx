@@ -65,7 +65,7 @@ export function ReplyPreview({ message, onCancel }: ReplyPreviewProps) {
           {thumbnailUrl && (message.type === 'image' || message.message_type === 'image') && (
             <img
               src={thumbnailUrl}
-              alt="Pré-visualização da imagem respondida"
+              alt="Preview"
               className="mt-1.5 w-12 h-12 rounded object-cover"
             />
           )}

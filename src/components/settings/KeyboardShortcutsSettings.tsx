@@ -6,7 +6,6 @@ import { Badge } from '@/components/ui/badge';
 import { Keyboard, RotateCcw, AlertTriangle, Check, X, MessageSquare, Navigation, Zap, MousePointerClick } from 'lucide-react';
 import { useCustomShortcuts, type ShortcutBinding } from '@/hooks/ui/useCustomShortcuts';
 import { aplicarRotulos } from '@/hooks/shortcuts/shortcutLabels';
-import { listarAtalhosEditaveis } from '@/hooks/shortcuts/defaultShortcuts';
 import { TASK_SHORTCUT_LABELS } from '@/hooks/shortcuts/taskShortcutLabels';
 import { toast } from 'sonner';
 
@@ -121,7 +120,6 @@ function ShortcutRow({ shortcut }: { shortcut: ShortcutBinding }) {
                 className="h-8 w-8 text-success hover:text-success hover:bg-success/10"
                 onClick={handleConfirm}
                 disabled={!pendingShortcut}
-                aria-label={`Confirmar atalho ${shortcut.name}`}
               >
                 <Check className="w-4 h-4" />
               </Button>
@@ -130,7 +128,6 @@ function ShortcutRow({ shortcut }: { shortcut: ShortcutBinding }) {
                 variant="ghost"
                 className="h-8 w-8 text-destructive hover:bg-destructive/10"
                 onClick={cancelRecording}
-                aria-label={`Cancelar gravação do atalho ${shortcut.name}`}
               >
                 <X className="w-4 h-4" />
               </Button>
@@ -161,7 +158,6 @@ function ShortcutRow({ shortcut }: { shortcut: ShortcutBinding }) {
                     resetShortcut(shortcut.id);
                     toast.success('Atalho restaurado ao padrão');
                   }}
-                  aria-label={`Restaurar atalho ${shortcut.name} ao padrão`}
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                 </Button>
@@ -177,9 +173,6 @@ function ShortcutRow({ shortcut }: { shortcut: ShortcutBinding }) {
 function ShortcutCategory({ category, shortcuts }: { category: keyof typeof categoryConfig; shortcuts: ShortcutBinding[] }) {
   const config = categoryConfig[category];
   const Icon = config.icon;
-
-  // Categoria sem atalho com executor não vira cartão vazio (t_3d996237).
-  if (shortcuts.length === 0) return null;
 
   return (
     <div className="space-y-2">
@@ -203,10 +196,7 @@ export function KeyboardShortcutsSettings() {
   // Etapa 84: esta tela é uma rota lazy de Configurações; os rótulos dos 7
   // atalhos de Tarefas entram no mesmo chunk, de `taskShortcutLabels`, e nunca
   // no grafo de entrada.
-  const rotulados = useMemo(
-    () => aplicarRotulos(listarAtalhosEditaveis(shortcuts), TASK_SHORTCUT_LABELS),
-    [shortcuts],
-  );
+  const rotulados = useMemo(() => aplicarRotulos(shortcuts, TASK_SHORTCUT_LABELS), [shortcuts]);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   const groupedShortcuts = {
@@ -216,7 +206,7 @@ export function KeyboardShortcutsSettings() {
     selection: rotulados.filter(s => s.category === 'selection'),
   };
 
-  const customizedCount = rotulados.filter(s => s.customKey).length;
+  const customizedCount = shortcuts.filter(s => s.customKey).length;
 
   return (
     <Card className="border border-secondary/20 bg-card hover:border-secondary/30 transition-all">

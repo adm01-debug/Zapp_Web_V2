@@ -108,8 +108,7 @@ export function CatalogBulkSendDialog({ products, open, onOpenChange, onSent }: 
 
   const {
     contactSearch, setContactSearch,
-    contactResults, searchingContacts, contactSearchError,
-    retryContactSearch,
+    contactResults, searchingContacts,
     selectedContact, setSelectedContact,
     resetContactSelection,
   } = useContactSearch(step === 'selectContact' ? 'selectContact' : 'configure');
@@ -238,8 +237,6 @@ export function CatalogBulkSendDialog({ products, open, onOpenChange, onSent }: 
             onContactSearchChange={setContactSearch}
             contactResults={contactResults}
             searchingContacts={searchingContacts}
-            contactSearchError={contactSearchError}
-            onRetryContactSearch={retryContactSearch}
             selectedContact={selectedContact}
             onSelectContact={setSelectedContact}
             isSending={isSendingFlag}
@@ -265,7 +262,7 @@ export function CatalogBulkSendDialog({ products, open, onOpenChange, onSent }: 
                 </p>
               )}
             </div>
-            <Progress value={progress} className="w-full" aria-label="Envio em massa" />
+            <Progress value={progress} className="w-full" />
             <p className="text-xs text-muted-foreground tabular-nums">{progress}%</p>
           </div>
         )}

@@ -24,24 +24,8 @@
 #
 # Parametro opcional: caminho da migration a ensaiar (default = a do repo).
 #
-# SEGUNDO ENSAIO (ONB-1..ONB-4, acrescentado em 15/10): a migration ADITIVA
-#   20261015221428_user_settings_onboarding_completed.sql
-# (coluna onboarding_completed boolean NOT NULL DEFAULT false; backfill true para quem ja tinha
-# linha; RLS intacta). Bloco proprio, em container proprio, com o estado anterior minimo
-# reproduzido: tabela + gatilho update_user_settings_updated_at + as 3 policies REAIS extraidas
-# VERBATIM de 20260317222728. As assercoes rodam como PAPEL REAL (SET ROLE authenticated/anon,
-# sem BYPASSRLS), nunca como postgres:
-#   ONB-1: ANTES a coluna nao existe; as 3 policies estao aplicadas;
-#   ONB-2: DEPOIS a coluna existe, NOT NULL, DEFAULT false; as linhas pre-existentes viram true;
-#          o updated_at delas e PRESERVADO (o gatilho e desligado so no backfill e religado);
-#          linha nova nasce false; RLS segue ligado;
-#   ONB-3: permissao com papel real — dono le/atualiza a propria linha, NAO alcanca a de outro
-#          usuario; anon nao le nem atualiza nada; e a reversao (DROP COLUMN) executa;
-#   ONB-4: MUTACAO prova que o ensaio pega o defeito — sem o desligamento do gatilho o backfill
-#          reescreve updated_at e a assercao de ONB-2 fica VERMELHA.
-#
-# Roda no CI: .github/workflows/db-guard.yml chama este arquivo por nome (linha do passo
-# "user-settings-sound-integrity-contract"), via retry-disposable-postgres-test.sh.
+# NAO entra no CI: .github/workflows/db-guard.yml e territorio do Joaquim (mesma
+# decisao do ai-block03-vocabulary-contract.test.sh, deste mesmo dia).
 
 set -Eeuo pipefail
 
@@ -52,8 +36,6 @@ postgres_image="${SOUND_INTEGRITY_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 main_container="zapp-v2-soundint-main-test-$$"
 mut_a_container="zapp-v2-soundint-muta-test-$$"
 mut_b_container="zapp-v2-soundint-mutb-test-$$"
-onb_container="zapp-v2-soundint-onb-test-$$"
-mut_onb_container="zapp-v2-soundint-onbmut-test-$$"
 target_container=""
 
 remove_container() {
@@ -67,8 +49,6 @@ cleanup() {
   remove_container "$main_container"
   remove_container "$mut_a_container"
   remove_container "$mut_b_container"
-  remove_container "$onb_container"
-  remove_container "$mut_onb_container"
 }
 trap cleanup EXIT INT TERM
 
@@ -332,121 +312,5 @@ sha_after="$(sha256sum "$migration" | cut -d' ' -f1)"
 [[ "$sha_after" == "$sha_before" ]] || fail 'MUTACAO (c): o arquivo do repo foi alterado'
 cmp -s "$tmp_dir/original.sql" "$migration" || fail 'MUTACAO (c): copia pristina difere do repo'
 printf '[PASS] MUTACAO (c): arquivo do repo intacto (sha256 %s)\n' "$sha_after"
-
-echo
-echo '── ONB-1/ONB-2: onboarding_completed — coluna + backfill sem reescrever updated_at ──'
-onb_migration="$repo_root/supabase/migrations/20261015221428_user_settings_onboarding_completed.sql"
-onb_origin="$repo_root/supabase/migrations/20260317222728_b1aba63c-0318-4b63-913b-67da91c1a290.sql"
-[[ -f "$onb_migration" ]] || fail "migration de onboarding nao encontrada: $onb_migration"
-[[ -f "$onb_origin" ]] || fail "migration de origem das policies nao encontrada: $onb_origin"
-onb_sha_before="$(sha256sum "$onb_migration" | cut -d' ' -f1)"
-
-cat > "$tmp_dir/onb_pre.sql" <<'SQL'
-create schema if not exists auth;
-create or replace function auth.uid() returns uuid language sql stable as $fn$
-  select nullif(current_setting('request.jwt.claims', true)::json->>'sub', '')::uuid
-$fn$;
-create role anon nologin noinherit;
-create role authenticated nologin noinherit;
-create table public.user_settings (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null unique,
-  sound_volume integer default 70,
-  updated_at timestamptz not null default now()
-);
-create or replace function public.update_updated_at_column() returns trigger language plpgsql as $fn$
-begin new.updated_at = now(); return new; end $fn$;
-create trigger update_user_settings_updated_at before update on public.user_settings
-  for each row execute function public.update_updated_at_column();
-alter table public.user_settings enable row level security;
-grant usage on schema public to anon, authenticated;
-grant select, insert, update on public.user_settings to anon, authenticated;
-SQL
-# As 3 policies REAIS, extraidas verbatim do arquivo de origem (linhas 274-288) — nada
-# reescrito de memoria. Vigencia conferida: nenhuma migration posterior a 20260317222728
-# cria, altera ou dropa policy ou RLS de public.user_settings.
-sed -n '274,288p' "$onb_origin" >> "$tmp_dir/onb_pre.sql"
-grep -q 'Users can update their own settings' "$tmp_dir/onb_pre.sql" \
-  || fail 'extracao das policies reais de user_settings falhou'
-
-cat > "$tmp_dir/onb_seed.sql" <<'SQL'
-insert into public.user_settings (user_id, updated_at) values
-  ('11111111-1111-1111-1111-111111111111', '2026-01-01 00:00:00+00'),
-  ('22222222-2222-2222-2222-222222222222', '2026-01-01 00:00:00+00');
-SQL
-
-start_container "$onb_container"
-target_container="$onb_container"
-psql_file "$tmp_dir/onb_pre.sql" || fail 'estado anterior de onboarding nao montou'
-psql_file "$tmp_dir/onb_seed.sql" || fail 'seed de onboarding nao entrou'
-
-expect_value 'ANTES: a coluna onboarding_completed NAO existe' '0' \
-  "SELECT count(*) FROM pg_attribute WHERE attrelid = 'public.user_settings'::regclass AND attname = 'onboarding_completed'"
-expect_value 'ANTES: as 3 policies reais estao aplicadas' '3' \
-  "SELECT count(*) FROM pg_policies WHERE schemaname = 'public' AND tablename = 'user_settings'"
-
-psql_file "$onb_migration" || fail 'a migration de onboarding nao aplicou'
-printf '[PASS] migration aplicada: %s\n' "$(basename "$onb_migration")"
-
-expect_value 'DEPOIS: a coluna existe e e NOT NULL (attnotnull = t)' 't' \
-  "SELECT attnotnull FROM pg_attribute WHERE attrelid = 'public.user_settings'::regclass AND attname = 'onboarding_completed'"
-expect_value 'DEPOIS: o DEFAULT e false' 'false' \
-  "SELECT pg_get_expr(d.adbin, d.adrelid) FROM pg_attrdef d JOIN pg_attribute a ON a.attrelid = d.adrelid AND a.attnum = d.adnum WHERE d.adrelid = 'public.user_settings'::regclass AND a.attname = 'onboarding_completed'"
-expect_value 'DEPOIS: as 2 linhas pre-existentes viraram true (backfill)' '2' \
-  "SELECT count(*) FROM public.user_settings WHERE onboarding_completed"
-expect_value 'DEPOIS: updated_at das 2 linhas foi PRESERVADO (gatilho desligado no backfill)' '2' \
-  "SELECT count(*) FROM public.user_settings WHERE updated_at = '2026-01-01 00:00:00+00'"
-expect_value 'DEPOIS: o gatilho update_user_settings_updated_at voltou LIGADO' 'O' \
-  "SELECT tgenabled FROM pg_trigger WHERE tgrelid = 'public.user_settings'::regclass AND tgname = 'update_user_settings_updated_at' AND NOT tgisinternal"
-expect_value 'DEPOIS: linha NOVA nasce com onboarding_completed = false' 'f' \
-  "INSERT INTO public.user_settings (user_id) VALUES ('33333333-3333-3333-3333-333333333333') RETURNING onboarding_completed"
-expect_value 'DEPOIS: RLS continua ligado na tabela' 't' \
-  "SELECT relrowsecurity FROM pg_class WHERE oid = 'public.user_settings'::regclass"
-
-echo
-echo '── ONB-3: onboarding_completed — permissao com PAPEL REAL (dono, outro, anon) ────'
-u1='11111111-1111-1111-1111-111111111111'
-u2='22222222-2222-2222-2222-222222222222'
-cl1="SET request.jwt.claims = '{\"sub\":\"$u1\"}'"
-expect_value 'authenticated DONO le a propria linha (1)' '1' \
-  "SET ROLE authenticated; $cl1; SELECT count(*) FROM public.user_settings WHERE user_id = '$u1'"
-expect_value 'authenticated DONO NAO le a linha de OUTRO usuario (0)' '0' \
-  "SET ROLE authenticated; $cl1; SELECT count(*) FROM public.user_settings WHERE user_id = '$u2'"
-expect_value 'authenticated DONO atualiza a propria linha (1)' '1' \
-  "SET ROLE authenticated; $cl1; WITH u AS (UPDATE public.user_settings SET onboarding_completed = false WHERE user_id = '$u1' RETURNING 1) SELECT count(*) FROM u"
-expect_value 'authenticated DONO NAO atualiza a linha de OUTRO usuario (0)' '0' \
-  "SET ROLE authenticated; $cl1; WITH u AS (UPDATE public.user_settings SET onboarding_completed = false WHERE user_id = '$u2' RETURNING 1) SELECT count(*) FROM u"
-expect_value 'anon NAO le nenhuma linha (0)' '0' \
-  "SET ROLE anon; $cl1; SELECT count(*) FROM public.user_settings"
-expect_value 'anon NAO atualiza nenhuma linha (0)' '0' \
-  "SET ROLE anon; WITH u AS (UPDATE public.user_settings SET onboarding_completed = true RETURNING 1) SELECT count(*) FROM u"
-
-echo
-echo '── ONB-3 (cont.): a migration e REVERSIVEL — a linha -- Rollback executa ─────────'
-expect_ok 'REVERSAO: ALTER TABLE ... DROP COLUMN IF EXISTS executa' \
-  "ALTER TABLE public.user_settings DROP COLUMN IF EXISTS onboarding_completed"
-expect_value 'REVERSAO: a coluna nao existe mais' '0' \
-  "SELECT count(*) FROM pg_attribute WHERE attrelid = 'public.user_settings'::regclass AND attname = 'onboarding_completed'"
-expect_value 'REVERSAO: as 3 linhas seguem intactas (nada criado ou removido)' '3' \
-  "SELECT count(*) FROM public.user_settings"
-
-echo
-echo '── ONB-4: MUTACAO — sem desligar o gatilho o backfill reescreve updated_at ───────'
-onb_mut="$tmp_dir/onb_sem_desligar_gatilho.sql"
-sed "s|execute 'alter table public.user_settings disable trigger update_user_settings_updated_at';|execute 'select 1';|" \
-  "$onb_migration" > "$onb_mut"
-grep -q "execute 'select 1';" "$onb_mut" || fail 'MUTACAO: o desligamento do gatilho nao foi trocado'
-grep -q 'disable trigger' "$onb_mut" && fail 'MUTACAO: sobrou um disable trigger no arquivo mutado'
-
-start_container "$mut_onb_container"
-target_container="$mut_onb_container"
-psql_file "$tmp_dir/onb_pre.sql" || fail 'MUTACAO: estado anterior nao montou'
-psql_file "$tmp_dir/onb_seed.sql" || fail 'MUTACAO: seed nao entrou'
-psql_file "$onb_mut" || fail 'MUTACAO: migration mutada nao aplicou'
-expect_value 'MUTACAO: sem desligar o gatilho, updated_at das linhas FOI reescrito (a assercao de ONB-2 fica VERMELHA)' '0' \
-  "SELECT count(*) FROM public.user_settings WHERE updated_at = '2026-01-01 00:00:00+00'"
-
-onb_sha_after="$(sha256sum "$onb_migration" | cut -d' ' -f1)"
-[[ "$onb_sha_after" == "$onb_sha_before" ]] || fail 'MUTACAO: o arquivo de onboarding do repo foi alterado'
 
 printf '\n[OK] contrato de integridade de som em user_settings verificado: a migration EXECUTA, faz o que promete e e reversivel\n'

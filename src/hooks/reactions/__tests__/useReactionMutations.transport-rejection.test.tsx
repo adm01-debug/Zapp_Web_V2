@@ -68,7 +68,7 @@ vi.mock('@/integrations/supabase/client', () => {
         if (!jaExiste) mocks.rows.push({ ...payload });
         const chain: Record<string, unknown> = {};
         chain.select = () => chain;
-        chain.maybeSingle = () => Promise.resolve({ data: payload, error: null });
+        chain.single = () => Promise.resolve({ data: payload, error: null });
         return chain;
       },
       delete: () => {

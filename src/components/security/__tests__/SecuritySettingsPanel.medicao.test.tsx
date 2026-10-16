@@ -1,5 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import { MemoryRouter, useLocation } from 'react-router-dom';
+import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // R2-AUTH-024 (mesma falha, segundo consumidor apontado pela auditoria):
@@ -49,11 +48,7 @@ describe('SecuritySettingsPanel — medição válida de MFA (R2-AUTH-024)', () 
       isError: false,
     };
 
-    render(
-      <MemoryRouter>
-        <SecuritySettingsPanel />
-      </MemoryRouter>,
-    );
+    render(<SecuritySettingsPanel />);
 
     expect(screen.getByText('Alto')).toBeInTheDocument();
     expect(screen.getByText('1 método(s) configurado(s)')).toBeInTheDocument();
@@ -63,11 +58,7 @@ describe('SecuritySettingsPanel — medição válida de MFA (R2-AUTH-024)', () 
   it('enquanto carrega não afirma nível nem "Desativado"', () => {
     mfaState.current = { data: undefined, isLoading: true, isError: false };
 
-    render(
-      <MemoryRouter>
-        <SecuritySettingsPanel />
-      </MemoryRouter>,
-    );
+    render(<SecuritySettingsPanel />);
 
     expect(screen.getByText('Verificando…')).toBeInTheDocument();
     expect(screen.getByText('Verificando os métodos configurados…')).toBeInTheDocument();
@@ -78,11 +69,7 @@ describe('SecuritySettingsPanel — medição válida de MFA (R2-AUTH-024)', () 
   it('erro na leitura mostra indisponível em vez de desativado', () => {
     mfaState.current = { data: undefined, isLoading: false, isError: true };
 
-    render(
-      <MemoryRouter>
-        <SecuritySettingsPanel />
-      </MemoryRouter>,
-    );
+    render(<SecuritySettingsPanel />);
 
     expect(screen.getByText('Indisponível')).toBeInTheDocument();
     expect(
@@ -90,31 +77,5 @@ describe('SecuritySettingsPanel — medição válida de MFA (R2-AUTH-024)', () 
     ).toBeInTheDocument();
     expect(screen.queryByText('Desativado')).toBeNull();
     expect(screen.queryByText('Médio')).toBeNull();
-  });
-});
-
-// t_c3262e42 — o fluxo de troca de senha LOGADO (`change_password`) tem de cair
-// na mesma tela que exige o 2º fator e encerra as outras sessões. A navegação
-// passou a ser do router: no modo antigo a página inteira recarregava e a tela
-// perdia o estado da sessão que ela mesma usa para ler o nível de garantia.
-function SondaDaRota() {
-  const { pathname } = useLocation();
-  return <div>{pathname}</div>;
-}
-
-describe('SecuritySettingsPanel — troca de senha logado (change_password)', () => {
-  it('leva à tela de troca de senha pela rota', async () => {
-    mfaState.current = { data: [], isLoading: false, isError: false };
-
-    render(
-      <MemoryRouter initialEntries={['/seguranca']}>
-        <SecuritySettingsPanel />
-        <SondaDaRota />
-      </MemoryRouter>,
-    );
-
-    fireEvent.click(screen.getByText('Alterar Senha'));
-
-    expect(await screen.findByText('/reset-password')).toBeTruthy();
   });
 });

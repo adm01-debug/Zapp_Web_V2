@@ -1,6 +1,6 @@
 /**
- * SL-198 — itens 061-062 do inventário: linha do tempo de envio POR MENSAGEM e a contagem de
- * fila/falha de uma conversa.
+ * SL-198 — itens 061-062 do inventário: linha do tempo de envio POR MENSAGEM e a barra de
+ * falhas/progresso de fila da conversa.
  *
  * O defeito: `MessageStatus.tsx` e o `MessageStatusIcon` (`chat/messageUtils.tsx`) mostram só o
  * ÚLTIMO estado — não existia `MessageAttemptsTimeline` nem `MessageSendHistorySheet`, então
@@ -10,7 +10,7 @@
  * deixam (`enqueue_outbound_message` → 'sending'; `claim_outbound_message` → +1 tentativa e o
  * claim; `complete_outbound_message` → sent/delivered/read; `fail_outbound_message` → 'failed' ou
  * de volta a 'sending' quando `p_retryable`), verifica o cálculo passo a passo e depois renderiza
- * os componentes de verdade (`MessageSendHistorySheet`, `MessageAttemptsTimeline`).
+ * os componentes de verdade (`MessageSendHistorySheet`, `MessageAttemptsTimeline`, `ChatQueueProgress`).
  * O cálculo está em `../messageSendTimeline` (a regra da casa `react-refresh/only-export-components`
  * não deixa um arquivo exportar componente E função pura).
  *
@@ -20,7 +20,11 @@ import { describe, expect, it, vi } from 'vitest';
 import { format } from 'date-fns';
 import { render, screen } from '@testing-library/react';
 import { Message } from '@/types/chat';
-import { MessageAttemptsTimeline, MessageSendHistorySheet } from '../MessageSendHistorySheet';
+import {
+  ChatQueueProgress,
+  MessageAttemptsTimeline,
+  MessageSendHistorySheet,
+} from '../MessageSendHistorySheet';
 import { buildMessageSendTimeline, summarizeDeliveryProgress } from '../messageSendTimeline';
 
 /** Linha de `public.messages` como as RPCs de entrega a deixam (só as colunas que importam aqui). */
@@ -161,7 +165,7 @@ describe('SL-198 / 061 — a timeline renderiza o que a linha do banco diz', () 
   });
 });
 
-describe('SL-198 / 062 — contagem de fila/falha usada na conversa', () => {
+describe('SL-198 / 062 — barra de falhas e progresso de fila da conversa', () => {
   const conversa: Message[] = [
     linha({ id: 'a', status: 'sending', delivery_attempt_count: 0 }),
     linha({ id: 'b', status: 'sending', delivery_attempt_count: 1, delivery_claimed_at: '2026-10-09T12:02:10.000Z', delivery_claim_expires_at: '2026-10-09T12:02:40.000Z', delivery_last_claim_token: '77777777-7777-7777-7777-777777777777' }),
@@ -179,5 +183,23 @@ describe('SL-198 / 062 — contagem de fila/falha usada na conversa', () => {
       failed: 1,
       confirmed: 2,
     });
+  });
+
+  it('sem nada na fila nem falha, a barra não aparece (nada de toast/banner repetido)', () => {
+    const { container } = render(
+      <ChatQueueProgress messages={[linha({ status: 'delivered', delivery_attempt_count: 1, delivery_last_claim_token: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb' })]} />,
+    );
+    expect(container.innerHTML).toBe('');
+  });
+
+  it('com fila e falha, anuncia os quatro números', () => {
+    render(<ChatQueueProgress messages={conversa} />);
+
+    expect(screen.getByRole('progressbar').getAttribute('aria-valuenow')).toBe('2');
+    expect(screen.getByRole('progressbar').getAttribute('aria-valuemax')).toBe('5');
+    expect(screen.getByText(/1 na fila/)).toBeTruthy();
+    expect(screen.getByText(/1 em envio/)).toBeTruthy();
+    expect(screen.getByText(/1 falha/)).toBeTruthy();
+    expect(screen.getByText(/2 confirmadas/)).toBeTruthy();
   });
 });

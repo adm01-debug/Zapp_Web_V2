@@ -5,7 +5,7 @@ import { Switch } from '@/components/ui/switch';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Activity, Wifi, Webhook, RefreshCw, Stethoscope, Timer, Bell, BellOff, CalendarDays, BarChart3, Clock, Volume2, VolumeX, AlertTriangle } from 'lucide-react';
+import { Activity, Wifi, Webhook, RefreshCw, Stethoscope, Timer, Bell, BellOff, CalendarDays, BarChart3, Clock, Volume2, VolumeX } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useEvolutionMonitoring } from './hooks/useEvolutionMonitoring';
 import type { TimePeriod } from './hooks/useEvolutionMonitoring';
@@ -18,7 +18,6 @@ import { MonitoringDiagnosticPanel } from './MonitoringDiagnosticPanel';
 import { MonitoringEventTimeline } from './MonitoringEventTimeline';
 import { MonitoringAvailabilityHeatmap } from './MonitoringAvailabilityHeatmap';
 import { MonitoringSLAPanel } from './MonitoringSLAPanel';
-import { MonitoringIncidents } from './MonitoringIncidents';
 import { DashboardSkeleton } from './MonitoringSkeletons';
 
 const PERIODS: { value: TimePeriod; label: string }[] = [
@@ -48,22 +47,16 @@ function StatusSemaphore({ connections }: { connections: { status: string }[] })
   );
 }
 
-function LastUpdatedBadge({ updatedAt }: { updatedAt: Date | null }) {
-  const [now, setNow] = useState(() => Date.now());
+function LastUpdatedBadge() {
+  const [now, setNow] = useState(new Date());
   useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 1000);
+    const t = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
-  // "Atualizado há X": diz a idade do dado exibido, não a hora do relógio.
-  const segundos = updatedAt ? Math.max(0, Math.round((now - updatedAt.getTime()) / 1000)) : null;
   return (
     <span className="text-3xs text-muted-foreground tabular-nums hidden md:inline-flex items-center gap-1">
       <Clock className="w-3 h-3" />
-      {segundos === null
-        ? 'Aguardando primeira leitura'
-        : segundos < 60
-          ? `Atualizado há ${segundos}s`
-          : `Atualizado há ${Math.floor(segundos / 60)}min`}
+      {now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
     </span>
   );
 }
@@ -75,7 +68,7 @@ export function EvolutionMonitoringDashboard() {
     sparklines, instanceUptimes, notificationsEnabled, soundEnabled, setSoundEnabled, requestNotifications,
     period, changePeriod, autoRefresh, setAutoRefresh, countdown,
     runHealthCheck, testWebhookDelivery, checkWebhookConfig, reconfigureWebhook,
-    runDiagnostic, errors, lastUpdatedAt, refetch,
+    runDiagnostic,
   } = useEvolutionMonitoring();
 
   // Keyboard shortcuts
@@ -98,7 +91,6 @@ export function EvolutionMonitoringDashboard() {
 
   const activeConns = connections.filter(c => c.status === 'connected').length;
   const errLogs = healthLogs.filter(l => !['connected', 'healthy'].includes(l.status)).length;
-  const falhasLeitura = [errors.connections, errors.logs, errors.messages].filter((m): m is string => !!m);
 
   return (
     <div className="space-y-5 w-full min-w-0" role="main" aria-label="Painel de monitoramento Evolution API">
@@ -112,7 +104,7 @@ export function EvolutionMonitoringDashboard() {
             <div className="flex items-center gap-2">
               <h1 className="text-xl sm:text-2xl font-bold">Monitor Evolution</h1>
               <StatusSemaphore connections={connections} />
-              <LastUpdatedBadge updatedAt={lastUpdatedAt} />
+              <LastUpdatedBadge />
             </div>
             <p className="text-sm text-muted-foreground">
               Status, webhook e health checks em tempo real
@@ -201,33 +193,6 @@ export function EvolutionMonitoringDashboard() {
         </div>
       </div>
 
-      {/* Leitura falhou: diz QUAL fonte e o motivo, em vez de exibir estado antigo como medição */}
-      {falhasLeitura.length > 0 && (
-        <div
-          role="alert"
-          className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
-        >
-          <div className="flex items-start gap-2 min-w-0">
-            <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
-            <div className="min-w-0">
-              <p className="font-medium">Não foi possível atualizar o monitoramento</p>
-              <ul className="text-xs mt-0.5 space-y-0.5">
-                {falhasLeitura.map(f => <li key={f}>{f}</li>)}
-              </ul>
-              <p className="text-3xs mt-1">Os valores exibidos podem estar desatualizados.</p>
-            </div>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7 text-xs shrink-0"
-            onClick={() => { void refetch(); }}
-          >
-            <RefreshCw className="w-3 h-3 mr-1" />Tentar de novo
-          </Button>
-        </div>
-      )}
-
       <MonitoringStatsCards connections={connections} messageStats={messageStats} uptime={uptime} sparklines={sparklines} />
 
       {/* Chart + Timeline */}
@@ -281,9 +246,6 @@ export function EvolutionMonitoringDashboard() {
             >
               {uptime.percentage === null ? '—' : `${uptime.percentage}%`}
             </Badge>
-          </TabsTrigger>
-          <TabsTrigger value="incidents" className="gap-1.5">
-            <AlertTriangle className="w-4 h-4" />Incidentes
           </TabsTrigger>
           <TabsTrigger value="heatmap" className="gap-1.5">
             <CalendarDays className="w-4 h-4" />Heatmap
@@ -357,17 +319,6 @@ export function EvolutionMonitoringDashboard() {
               transition={{ duration: 0.2 }}
             >
               <MonitoringSLAPanel uptime={uptime} instanceUptimes={instanceUptimes} truncated={healthLogsTruncated} />
-            </motion.div>
-          </TabsContent>
-
-          <TabsContent value="incidents" key="incidents">
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-            >
-              <MonitoringIncidents />
             </motion.div>
           </TabsContent>
 

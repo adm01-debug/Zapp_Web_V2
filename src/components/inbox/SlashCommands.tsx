@@ -125,10 +125,7 @@ export function SlashCommands({ inputValue, onSelectCommand, onClose, isOpen }: 
                             </div>
                             <p className="text-xs text-muted-foreground truncate">{cmd.description}</p>
                           </div>
-                          {/* L8: só o atalho REAL do registro vai para o hover. A letra
-                              de catálogo (`shortcut`) não é um atalho de teclado e não
-                              pode mais ser anunciada como `⌘X`. */}
-                          {cmd.shortcutLabel && <kbd className="px-2 py-1 text-xs font-medium bg-muted rounded text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">{cmd.shortcutLabel}</kbd>}
+                          {cmd.shortcut && <kbd className="px-2 py-1 text-xs font-medium bg-muted rounded text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">⌘{cmd.shortcut}</kbd>}
                           {cmd.subCommands && <ArrowRight className="w-4 h-4 text-muted-foreground" />}
                         </motion.button>
                       );

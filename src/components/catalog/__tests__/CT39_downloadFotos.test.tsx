@@ -6,13 +6,6 @@ import { SendProductDialog } from '../SendProductDialog';
 import type { ExternalProduct, ExternalProductVariant } from '@/hooks/integrations/useExternalCatalog';
 
 const mockToast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn(), warning: vi.fn() }));
-
-// Y29 — o componente lê `profiles.can_download` (useDownloadPermission); aqui a
-// permissão é concedida para o teste observar o caminho de sempre.
-vi.mock('@/hooks/system/useDownloadPermission', () => ({
-  useDownloadPermission: () => ({ canDownload: true, isLoading: false }),
-}));
-
 vi.mock('sonner', () => ({ toast: mockToast }));
 
 vi.mock('@/hooks/auth/useAuth', () => ({
@@ -39,7 +32,6 @@ vi.mock('@/hooks/integrations/useCatalogContactSearch', () => ({
   fetchCatalogContactResults: vi.fn().mockResolvedValue([]),
   logCatalogSendEvent: vi.fn().mockResolvedValue(undefined),
   CONTACT_SEARCH_MIN_CHARS: 2,
-  CONTACT_SEARCH_ERROR_MESSAGE: 'Não foi possível buscar contatos. Tente de novo.',
 }));
 vi.mock('@/services/outbound-message.service', () => ({ sendOutboundMessage: vi.fn() }));
 vi.mock('@/hooks/system/useNavigationHistory', () => ({ navigateToView: vi.fn() }));
@@ -129,9 +121,8 @@ describe('CT-39 — download das fotos selecionadas', () => {
     });
     expect(mockDownload).toHaveBeenCalledTimes(2);
     // O nome do arquivo sai do nome do produto, sem espaços (a ordem das fotos
-    // vem do Set de seleção, então a URL é conferida sem ordenação fixa). O 3º
-    // argumento é o gate do Y29 (`profiles.can_download`), aqui concedido.
-    expect(mockDownload).toHaveBeenCalledWith(expect.any(String), 'Caneta_Bambu_1.jpg', true);
+    // vem do Set de seleção, então a URL é conferida sem ordenação fixa).
+    expect(mockDownload).toHaveBeenCalledWith(expect.any(String), 'Caneta_Bambu_1.jpg');
     expect(mockDownload.mock.calls.map((c) => c[0]).sort()).toEqual(['https://x/a.jpg', 'https://x/b.jpg']);
   });
 

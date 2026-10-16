@@ -1,48 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import {
-  errorResponse,
-  requireEnv,
-  checkRateLimit,
-  getClientIP,
-  getCorsHeaders,
-  Logger,
-} from "../_shared/validation.ts";
-
-// Os cabecalhos CORS desta Edge vem do padrao do projeto `getCorsHeaders(req)`
-// (allowlist de origem validada em _shared/validation.ts) — nao ha mais copia
-// local da allowlist nem "Access-Control-Allow-Origin: *". A unica diferenca
-// intencional do endpoint de audio: origem fora da allowlist nao recebe
-// Access-Control-Allow-Origin nenhum (o padrao cai no endereco canonico; aqui
-// preferimos nao emitir o cabecalho). E o player de audio usa `range`, que nao
-// esta na lista do padrao, entao ele e acrescentado.
-const AUDIO_ALLOW_HEADERS = "range";
-
-function corsDoAudio(req: Request): Record<string, string> {
-  const h = getCorsHeaders(req);
-  const origin = req.headers.get("origin");
-  if (!origin || h["Access-Control-Allow-Origin"] !== origin) {
-    delete h["Access-Control-Allow-Origin"];
-  }
-  const liberados = h["Access-Control-Allow-Headers"] ?? "";
-  const jaLiberado = liberados
-    .toLowerCase()
-    .split(",")
-    .map((s) => s.trim())
-    .includes(AUDIO_ALLOW_HEADERS);
-  if (!jaLiberado) {
-    h["Access-Control-Allow-Headers"] = liberados
-      ? `${liberados}, ${AUDIO_ALLOW_HEADERS}`
-      : AUDIO_ALLOW_HEADERS;
-  }
-  return h;
-}
-
-function preflightCors(req: Request): Response | null {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsDoAudio(req) });
-  }
-  return null;
-}
+import { handleCors, errorResponse, requireEnv, checkRateLimit, getClientIP, Logger } from "../_shared/validation.ts";
 
 /**
  * T73 / item 62 — entrega a gravacao da chamada SEM expor a URL.
@@ -112,6 +69,8 @@ export const depsReais: GetCallRecordingDeps = {
   buscarOrigem: (url, range) => fetch(url, { headers: range ? { Range: range } : {} }),
 };
 
+const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, content-type, range" };
+
 export async function handleGetCallRecording(
   req: Request,
   deps: GetCallRecordingDeps = depsReais,
@@ -119,7 +78,7 @@ export async function handleGetCallRecording(
   // (o Deno.serve fica no fim, sob import.meta.main: importar este modulo num teste
   //  nao pode subir um servidor na porta 8000.)
   const logger = new Logger("get-call-recording");
-  const preflight = preflightCors(req);
+  const preflight = handleCors(req);
   if (preflight) return preflight;
 
   if (req.method !== "GET" && req.method !== "POST") {
@@ -175,7 +134,7 @@ export async function handleGetCallRecording(
       tamanho: upstream.headers.get("Content-Length"),
       faixa: upstream.headers.get("Content-Range"),
       aceita: upstream.headers.get("Accept-Ranges"),
-    }, corsDoAudio(req));
+    }, cors);
 
     return new Response(upstream.body, { status: upstream.status, headers });
   } catch (erro) {

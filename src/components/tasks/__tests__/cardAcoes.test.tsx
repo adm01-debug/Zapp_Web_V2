@@ -11,7 +11,7 @@
  *  - 33: MoveToMenu só existe em ponteiro grosso.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, cleanup, fireEvent, waitFor, within } from '@testing-library/react';
+import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import {
@@ -366,9 +366,7 @@ describe('FASE C2 — integração com o TasksModule (28/29/32)', () => {
     void kebab;
 
     // O caminho do kebab é o mesmo portão do DnD; aqui ele é acionado pelo menu do card.
-    // (escopo no CARD: o cabeçalho do módulo também tem um botão "Mais opções…",
-    //  e uma busca global pegaria o menu errado antes deste.)
-    const botoes = within(card).getAllByRole('button', { name: /mais ações|opções|menu/i });
+    const botoes = await screen.findAllByRole('button', { name: /mais ações|opções|menu/i });
     await abrirMenu(botoes[0]);
     const mover = screen.getByRole('menuitem', { name: /Mover para/ });
     mover.focus();

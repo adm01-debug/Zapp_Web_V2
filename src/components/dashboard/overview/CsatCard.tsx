@@ -35,7 +35,6 @@ export function CsatCard({ period, onPeriodChange }: CsatCardProps) {
         right={(
           <CardSelect
             testid="csat-select"
-            name="Período CSAT"
             value={period}
             onValueChange={(v) => onPeriodChange(v as 'today' | 'week' | 'month')}
             options={[{ value: 'today', label: 'Hoje' }, { value: 'week', label: 'Esta semana' }, { value: 'month', label: 'Últimos 30 dias' }]}

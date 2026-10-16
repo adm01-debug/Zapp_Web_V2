@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeAll } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { axe } from 'vitest-axe';
-import { MemoryRouter } from 'react-router-dom';
 
 /**
  * Y18-1 / SHELL-01 — abas de Segurança sem nome acessível abaixo de 640 px.
@@ -35,7 +34,6 @@ vi.mock('../RateLimitRealtimeAlerts', () => ({ RateLimitRealtimeAlerts: () => <d
 vi.mock('../RateLimitConfigPanel', () => ({ RateLimitConfigPanel: () => <div /> }));
 vi.mock('../AuditLogDashboard', () => ({ AuditLogDashboard: () => <div /> }));
 vi.mock('../QuarantinePanel', () => ({ QuarantinePanel: () => <div /> }));
-vi.mock('../AclAlertsPanel', () => ({ AclAlertsPanel: () => <div /> }));
 vi.mock('@/hooks/system/useUserRole', () => ({ useUserRole: () => ({ hasRole: () => true }) }));
 vi.mock('@/hooks/system/useSecurityPushNotifications', () => ({
   useSecurityPushNotifications: () => undefined,
@@ -60,7 +58,7 @@ const ROTULOS = [
 
 describe('a11y: abas da Central de Segurança (SHELL-01)', () => {
   it('todas as 11 abas têm nome acessível mesmo com o rótulo escondido no celular', () => {
-    render(<MemoryRouter><SecurityView /></MemoryRouter>);
+    render(<SecurityView />);
 
     expect(screen.getAllByRole('tab')).toHaveLength(ROTULOS.length);
     for (const rotulo of ROTULOS) {
@@ -71,7 +69,7 @@ describe('a11y: abas da Central de Segurança (SHELL-01)', () => {
   });
 
   it('axe não acusa aba sem nome (regra button-name)', async () => {
-    render(<MemoryRouter><SecurityView /></MemoryRouter>);
+    render(<SecurityView />);
 
     // jsdom não tem layout: `color-contrast` fica fora (declarado); `button-name` é o alvo aqui.
     const results = await axe(document.body, { rules: { 'color-contrast': { enabled: false } } });

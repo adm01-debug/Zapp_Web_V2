@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Trophy, Medal, Star, MessageSquare, Clock, Heart, User, Users, PieChart as PieIcon, Target, Quote } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { cn } from '@/lib/utils';
-import { useLeaderboard, RANKING_TABLE_LIMIT, type LeaderboardAgent } from '@/hooks/gamification/useLeaderboard';
+import { useLeaderboard, type LeaderboardAgent } from '@/hooks/gamification/useLeaderboard';
 import { useSLAMetrics } from '@/hooks/sla/useSLAMetrics';
 import { DashboardCard, SectionHeader, VerTodasButton, CardSelect, InitialsAvatar, Pill, ProgressBar, PrimaryButton } from './overview/DashboardCard';
 import { DashboardKpiCard } from './overview/DashboardKpiCard';
@@ -68,35 +68,17 @@ export function AgentPerformancePanel({ onNavigateTab }: { onNavigateTab?: (tab:
     const by: Record<SortKey, (a: LeaderboardAgent, b: LeaderboardAgent) => number> = {
       resolved: (a, b) => b.conversationsResolved - a.conversationsResolved,
       messages: (a, b) => b.messagesHandled - a.messagesHandled,
-      // Sem amostra (null) vai para o fim, em qualquer direção de ordenação.
-      response: (a, b) => {
-        if (a.avgResponseTime === null && b.avgResponseTime === null) return 0;
-        if (a.avgResponseTime === null) return 1;
-        if (b.avgResponseTime === null) return -1;
-        return a.avgResponseTime - b.avgResponseTime;
-      },
+      response: (a, b) => a.avgResponseTime - b.avgResponseTime,
       xp: (a, b) => b.xp - a.xp,
     };
     return list.sort(by[sortKey]);
   }, [agents, sortKey]);
 
-  // A tabela mostra o top-N; os KPIs abaixo usam a lista COMPLETA da equipe.
-  const visibleRows = sorted.slice(0, RANKING_TABLE_LIMIT);
   const onlineCount = agents.filter((a) => a.isOnline).length;
   const offlineCount = agents.length - onlineCount;
   const totalResolved = agents.reduce((s, a) => s + a.conversationsResolved, 0);
-  // Satisfação = % de avaliações com nota >= 4 (mesma unidade da RPC e da aba
-  // Satisfação), NÃO uma nota de 0 a 5. A média é feita só sobre quem tem
-  // avaliação no período; quem não tem amostra mostra "—" e não entra na conta.
-  const comSatisfacao = agents.filter((a) => a.satisfaction !== null);
-  const avgSat = comSatisfacao.length > 0
-    ? `${Math.round(comSatisfacao.reduce((s, a) => s + (a.satisfaction ?? 0), 0) / comSatisfacao.length)}%`
-    : '—';
-  // Mesma regra para o tempo de resposta: só entra na média quem teve 1ª resposta medida.
-  const comResposta = agents.filter((a) => a.avgResponseTime !== null);
-  const avgResp = comResposta.length > 0
-    ? formatShortDuration(comResposta.reduce((s, a) => s + (a.avgResponseTime ?? 0), 0) / comResposta.length)
-    : '—';
+  const avgSat = agents.length > 0 ? (agents.reduce((s, a) => s + a.satisfaction, 0) / agents.length / 100).toFixed(1) : '—';
+  const avgResp = agents.length > 0 ? formatShortDuration(agents.reduce((s, a) => s + a.avgResponseTime, 0) / agents.length) : '—';
   const top = sorted[0];
   const topSla = top ? slaByAgent(top) : null;
 
@@ -115,19 +97,19 @@ export function AgentPerformancePanel({ onNavigateTab }: { onNavigateTab?: (tab:
           delta={null} tile="blue" icon={MessageSquare} bars={null} barsColor="blue" />
         <DashboardKpiCard index={2} size="hero" chart="line" label="Tempo médio de resposta" value={avgResp}
           delta={null} tile="violet" icon={Clock} bars={null} barsColor="violet" />
-        <DashboardKpiCard index={3} size="hero" chart="line" label="Satisfação (notas ≥ 4)" value={avgSat}
+        <DashboardKpiCard index={3} size="hero" chart="line" label="Satisfação média" value={`${avgSat}/5`}
           delta={null} tile="green" icon={Heart} bars={null} barsColor="green" />
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-[2fr_1fr] gap-4">
         <DashboardCard testid="team-ranking-card" variant="comfortable">
-          <SectionHeader icon={Trophy} title="Ranking de Performance" subtitle={`Desempenho da equipe em tempo real · top ${RANKING_TABLE_LIMIT} do período`} tileSize={44} size="lg"
+          <SectionHeader icon={Trophy} title="Ranking de Performance" subtitle="Desempenho da equipe em tempo real" tileSize={44} size="lg"
             right={(
               <div className="flex items-center gap-2 shrink-0">
-                <CardSelect name="Período do ranking de performance" value={timeRange} onValueChange={(v) => setTimeRange(v as typeof timeRange)} options={TIME_OPTIONS.map((o) => ({ value: o.value, label: o.label }))} />
+                <CardSelect value={timeRange} onValueChange={(v) => setTimeRange(v as typeof timeRange)} options={TIME_OPTIONS.map((o) => ({ value: o.value, label: o.label }))} />
                 <div className="hidden md:flex items-center h-9 rounded-lg border border-border/70 bg-input/40 pl-3 text-[13px] text-muted-foreground">
                   <span className="mr-1">Ordenar por</span>
-                  <CardSelect name="Ordenar ranking de performance" value={sortKey} onValueChange={(v) => setSortKey(v as SortKey)} options={SORT_OPTIONS.map((o) => ({ value: o.value, label: o.label }))} />
+                  <CardSelect value={sortKey} onValueChange={(v) => setSortKey(v as SortKey)} options={SORT_OPTIONS.map((o) => ({ value: o.value, label: o.label }))} />
                 </div>
               </div>
             )}
@@ -155,7 +137,7 @@ export function AgentPerformancePanel({ onNavigateTab }: { onNavigateTab?: (tab:
                   </tr>
                 </thead>
                 <tbody>
-                  {visibleRows.map((a, i) => {
+                  {sorted.map((a, i) => {
                     const isTop3 = i < 3;
                     const sla = slaByAgent(a);
                     const slaTone = sla === null ? null : getSLARateTone(sla);
@@ -181,7 +163,7 @@ export function AgentPerformancePanel({ onNavigateTab }: { onNavigateTab?: (tab:
                           <span className="text-[15px] font-bold text-foreground tabular-nums">{a.conversationsResolved.toLocaleString('pt-BR')}</span>
                         </td>
                         <td className={cn('px-2 border-y text-foreground-secondary tabular-nums', isTop3 ? RANK_ROW_CLASS[i] : 'border-transparent')}>{a.messagesHandled.toLocaleString('pt-BR')}</td>
-                        <td className={cn('px-2 border-y text-foreground-secondary tabular-nums', isTop3 ? RANK_ROW_CLASS[i] : 'border-transparent')}>{a.avgResponseTime === null ? '—' : formatShortDuration(a.avgResponseTime)}</td>
+                        <td className={cn('px-2 border-y text-foreground-secondary tabular-nums', isTop3 ? RANK_ROW_CLASS[i] : 'border-transparent')}>{formatShortDuration(a.avgResponseTime)}</td>
                         <td className={cn('px-2 border-y', isTop3 ? RANK_ROW_CLASS[i] : 'border-transparent')}>
                           {sla === null ? <span className="text-muted-foreground">—</span> : (
                             <div className="w-[110px]">
@@ -220,8 +202,8 @@ export function AgentPerformancePanel({ onNavigateTab }: { onNavigateTab?: (tab:
                 {[
                   { label: 'Resolvidas', v: String(top.conversationsResolved) },
                   { label: 'SLA', v: topSla === null ? '—' : `${Math.round(topSla)}%` },
-                  { label: 'Tempo médio', v: top.avgResponseTime === null ? '—' : formatShortDuration(top.avgResponseTime) },
-                  { label: 'Satisfação', v: top.satisfaction === null ? '—' : `${top.satisfaction}%` },
+                  { label: 'Tempo médio', v: formatShortDuration(top.avgResponseTime) },
+                  { label: 'Satisfação', v: (top.satisfaction / 100).toFixed(1) },
                 ].map((x) => (
                   <div key={x.label} className="rounded-xl bg-muted/20 border border-border/50 p-2.5 text-center">
                     <div className="font-bold text-base text-foreground tabular-nums">{x.v}</div>
@@ -242,11 +224,7 @@ export function AgentPerformancePanel({ onNavigateTab }: { onNavigateTab?: (tab:
               <div className="text-center py-6 text-muted-foreground text-[13px]"><Users className="w-8 h-8 mx-auto mb-2 opacity-30" />Sem agentes</div>
             ) : (
               <div className="flex items-center gap-5">
-                <div
-                  className="relative w-[110px] h-[110px] shrink-0"
-                  role="img"
-                  aria-label={`Distribuição da equipe: ${agents.length} agentes`}
-                >
+                <div className="relative w-[110px] h-[110px] shrink-0">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie data={donutData} dataKey="value" cx="50%" cy="50%" innerRadius={38} outerRadius={52} strokeWidth={0} startAngle={90} endAngle={-270}>

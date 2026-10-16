@@ -24,8 +24,7 @@ export async function sendMessageToContact(
   messageType = 'text',
   mediaUrl?: string,
   mediaPayload?: string,
-  replyToId?: string | null,
-  clientMessageId?: string
+  replyToId?: string | null
 ): Promise<SendMessageResult> {
   if (!OUTBOUND_MESSAGE_TYPES.has(messageType as OutboundMessageType)) {
     throw new Error(`Tipo de mensagem não suportado pelo envio seguro: ${messageType}`);
@@ -40,10 +39,6 @@ export async function sendMessageToContact(
       messageType: messageType as OutboundMessageType,
       mediaUrl: mediaUrl ?? null,
       replyToId: replyToId ?? null,
-      // Id de entrega vindo de quem conhece a AÇÃO (ex.: o áudio gravado reusa o
-      // mesmo id na retentativa). Sem ele, o serviço gera um novo — correto para
-      // texto, mas duplicaria a nota de voz quando a retentativa troca o arquivo.
-      clientMessageId: clientMessageId ?? undefined,
     });
     return {
       id: result.id,

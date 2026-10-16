@@ -50,30 +50,10 @@ const Skeleton = forwardRef<HTMLDivElement, SkeletonProps>(
           ...style,
           animationDelay: delay ? `${delay}ms` : undefined,
         }}
-        aria-hidden="true"
+        role="status"
+        aria-label="Loading..."
         {...props} 
       />
-    );
-  }
-);
-
-interface SkeletonRegionProps extends React.HTMLAttributes<HTMLDivElement> {
-  /** Nome acessível da região de carregamento, em pt-BR. */
-  label?: string;
-}
-
-/**
- * Região de carregamento: o `Skeleton` é decorativo (aria-hidden), então quem
- * anuncia o carregamento ao leitor de tela é UMA região por lista, com o nome em
- * pt-BR. Mesmo padrão já usado em `ViewLoadingFallback`.
- */
-const SkeletonRegion = forwardRef<HTMLDivElement, SkeletonRegionProps>(
-  function SkeletonRegion({ className, label = "Carregando…", children, ...props }, ref) {
-    return (
-      <div ref={ref} className={className} role="status" aria-busy="true" {...props}>
-        {children}
-        <span className="sr-only">{label}</span>
-      </div>
     );
   }
 );
@@ -102,15 +82,13 @@ function SkeletonList({
   count = 5, 
   children,
   staggerDelay = 100,
-  label,
 }: { 
   count?: number; 
   children: (index: number) => React.ReactNode;
   staggerDelay?: number;
-  label?: string;
 }) {
   return (
-    <SkeletonRegion label={label}>
+    <>
       {Array.from({ length: count }).map((_, i) => (
         <div 
           key={i}
@@ -123,7 +101,7 @@ function SkeletonList({
           {children(i)}
         </div>
       ))}
-    </SkeletonRegion>
+    </>
   );
 }
 
@@ -152,7 +130,6 @@ const SkeletonButton = ({ size = "default" }: { size?: "sm" | "default" | "lg" }
 
 export { 
   Skeleton, 
-  SkeletonRegion,
   SkeletonCard, 
   SkeletonList, 
   SkeletonText,

@@ -5,37 +5,11 @@ export type SearchFilter = 'all' | 'text' | 'image' | 'video' | 'audio' | 'docum
 
 export type DatePreset = 'all' | 'last_interaction' | 'today' | '3d' | '7d' | '14d' | '30d' | '90d' | 'custom';
 
-// http(s):// e www. — "www.loja.com.br" também é link.
-const URL_REGEX = /(?:https?:\/\/|www\.)\S+/i;
+const URL_REGEX = /https?:\/\/\S+/i;
 
 /** Normalize text for accent-insensitive search */
 function normalizeText(text: string): string {
   return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-}
-
-/** Só o nome do arquivo da mídia — sem host, caminho, query nem hash. */
-function mediaFileName(url?: string): string {
-  if (!url) return '';
-  const clean = url.split('?')[0].split('#')[0];
-  const last = clean.split('/').pop() || '';
-  try {
-    return decodeURIComponent(last);
-  } catch {
-    return last;
-  }
-}
-
-/**
- * Texto pesquisável de uma mensagem: conteúdo/legenda, transcrição, nome do arquivo e remetente.
- * NUNCA entra a URL crua da mídia — host, bucket e caminho faziam qualquer busca casar
- * (procurar "supabase", por exemplo, devolvia toda foto/vídeo).
- */
-function searchableText(msg: Message): string {
-  return normalizeText(
-    [msg.content, msg.caption, msg.transcription, msg.media_filename, mediaFileName(msg.mediaUrl), msg.senderName]
-      .filter(Boolean)
-      .join(' ')
-  );
 }
 
 function startOfDay(date: Date): Date {
@@ -93,12 +67,8 @@ export function useChatSearch({
   // Stable refs for callbacks
   const onHighlightChangeRef = useRef(onHighlightChange);
   const onNavigateToMessageRef = useRef(onNavigateToMessage);
-  const onSearchQueryChangeRef = useRef(onSearchQueryChange);
-  // Atualiza os refs em efeito (nunca durante a renderização) para que os timers
-  // sempre chamem o callback mais recente do pai.
-  useEffect(() => { onHighlightChangeRef.current = onHighlightChange; }, [onHighlightChange]);
-  useEffect(() => { onNavigateToMessageRef.current = onNavigateToMessage; }, [onNavigateToMessage]);
-  useEffect(() => { onSearchQueryChangeRef.current = onSearchQueryChange; }, [onSearchQueryChange]);
+  onHighlightChangeRef.current = onHighlightChange;
+  onNavigateToMessageRef.current = onNavigateToMessage;
 
   // Compute effective date range
   const dateRange = useMemo(() => {
@@ -127,11 +97,7 @@ export function useChatSearch({
     return getPresetRange(datePreset);
   }, [datePreset, customDateFrom, customDateTo, messages]);
 
-  // 'custom' sem data escolhida não é filtro: senão a lista devolvia TODAS as mensagens.
-  const hasDateFilter =
-    datePreset === 'custom'
-      ? customDateFrom !== null || customDateTo !== null
-      : datePreset !== 'all';
+  const hasDateFilter = datePreset !== 'all';
 
   // Reset state on close
   useEffect(() => {
@@ -144,7 +110,7 @@ export function useChatSearch({
       setCustomDateFrom(null);
       setCustomDateTo(null);
       onHighlightChangeRef.current(new Set(), null);
-      onSearchQueryChangeRef.current?.('');
+      onSearchQueryChange?.('');
     }
   }, [isOpen]);
 
@@ -153,7 +119,7 @@ export function useChatSearch({
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       setDebouncedQuery(query);
-      onSearchQueryChangeRef.current?.(query);
+      onSearchQueryChange?.(query);
     }, 200);
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [query]);
@@ -195,7 +161,11 @@ export function useChatSearch({
       if (!hasQuery) return hasTypeFilter || hasDateFilter;
 
       const q = normalizeText(debouncedQuery);
-      return searchableText(msg).includes(q);
+      const searchable = normalizeText(
+        [msg.content, msg.transcription, msg.mediaUrl, msg.senderName].filter(Boolean).join(' ')
+      );
+
+      return searchable.includes(q);
     });
   }, [messages, debouncedQuery, filter, hasDateFilter, matchesDateRange]);
 
@@ -205,7 +175,9 @@ export function useChatSearch({
     const matchesQuery = (msg: Message) => {
       if (!debouncedQuery.trim()) return true;
       const q = normalizeText(debouncedQuery);
-      return searchableText(msg).includes(q);
+      return normalizeText(
+        [msg.content, msg.transcription, msg.mediaUrl, msg.senderName].filter(Boolean).join(' ')
+      ).includes(q);
     };
 
     const counts: Record<SearchFilter, number> = {

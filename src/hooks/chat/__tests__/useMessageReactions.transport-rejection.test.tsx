@@ -96,7 +96,7 @@ vi.mock('@/integrations/supabase/client', () => {
       }
       const single: Record<string, unknown> = {};
       single.select = () => single;
-      single.maybeSingle = () => Promise.resolve({ data: payload, error: null });
+      single.single = () => Promise.resolve({ data: payload, error: null });
       return single;
     };
     chain.delete = () => {

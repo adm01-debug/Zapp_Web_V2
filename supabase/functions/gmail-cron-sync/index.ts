@@ -1,7 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { getCorsHeaders, handleCors, Logger, requireEnv } from "../_shared/validation.ts";
-import { ensureValidToken, recordGmailAccountFailure, runGmailFullSync, sanitizeGmailErrorMessage, syncMessageIds } from "../_shared/gmail-helpers.ts";
+import { ensureValidToken, runGmailFullSync, syncMessageIds } from "../_shared/gmail-helpers.ts";
 
 const BATCH = 3; // max contas em paralelo para evitar timeout de 60s
 
@@ -27,7 +27,7 @@ export async function runGmailCronIncrementalSync(
     if (r.failed > 0) throw new Error(`${r.failed} mensagens falharam no sync incremental; cursor preservado`);
     synced = r.synced;
   }
-  const { data: advanced, error: cursorError } = await supabase.from("gmail_accounts").update({ history_id: hd.historyId || account.history_id, last_sync_at: new Date().toISOString(), last_error: null, error_count: 0, next_attempt_at: null }).eq("id", account.id).eq("history_id", account.history_id).select("id");
+  const { data: advanced, error: cursorError } = await supabase.from("gmail_accounts").update({ history_id: hd.historyId || account.history_id, last_sync_at: new Date().toISOString(), last_error: null }).eq("id", account.id).eq("history_id", account.history_id).select("id");
   if (cursorError) throw new Error("Failed to persist Gmail history cursor");
   return { synced, cursor_advanced: Boolean(advanced && advanced.length > 0) };
 }
@@ -53,16 +53,11 @@ export async function handleGmailCronSync(req: Request): Promise<Response> {
   const log = new Logger("gmail-cron-sync");
   try {
     const supabase = createClient(requireEnv("SUPABASE_URL"), requireEnv("SUPABASE_SERVICE_ROLE_KEY"));
-    const { data: accounts, error } = await supabase.from("gmail_accounts").select("id, user_id, token_expires_at, history_id, is_active, sync_status, error_count, next_attempt_at").eq("is_active", true);
+    const { data: accounts, error } = await supabase.from("gmail_accounts").select("id, user_id, token_expires_at, history_id, is_active").eq("is_active", true);
     if (error || !accounts?.length) { log.info("No active accounts"); return new Response(JSON.stringify({ success: true, synced: 0 }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }); }
-    // Pula as contas que exigem ação humana (reauth_required) e as que ainda
-    // estão na espera crescente de uma falha transitória — não bate no Google de novo.
-    const dueAccounts = selectGmailAccountsDue(accounts);
-    const skipped = accounts.length - dueAccounts.length;
-    if (!dueAccounts.length) { log.info("No accounts due", { skipped }); return new Response(JSON.stringify({ success: true, synced: 0, skipped }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }); }
     const results: Array<{ id: string; synced?: number; error?: string; cursor_advanced?: boolean }> = [];
-    for (let i = 0; i < dueAccounts.length; i += BATCH) {
-      const batch = dueAccounts.slice(i, i + BATCH);
+    for (let i = 0; i < accounts.length; i += BATCH) {
+      const batch = accounts.slice(i, i + BATCH);
       const batchResults = await Promise.allSettled(batch.map(async (account) => {
         try {
           const accessToken = await ensureValidToken(supabase, account, log);
@@ -79,13 +74,8 @@ export async function handleGmailCronSync(req: Request): Promise<Response> {
           }
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
-          try {
-            // token revogado/expirado vira 'reauth_required'; o resto 'error'.
-            await recordGmailAccountFailure(supabase, account.id, err, 1);
-          } catch (recordErr) {
-            log.error("Falha ao registrar o estado de erro da conta Gmail", { error: recordErr instanceof Error ? recordErr.message : String(recordErr) });
-          }
-          return { id: account.id, error: sanitizeGmailErrorMessage(msg) };
+          await supabase.from("gmail_accounts").update({ last_error: msg, sync_status: "error" }).eq("id", account.id);
+          return { id: account.id, error: msg };
         }
       }));
       for (const r of batchResults) results.push(r.status === "fulfilled" ? r.value : { id: "unknown", error: String(r.reason) });

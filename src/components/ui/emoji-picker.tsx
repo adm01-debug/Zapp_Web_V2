@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { emojiDatabase, searchEmojis, type EmojiEntry } from '@/data/emojiDatabase';
-import { safeGetJSON, safeSetJSON } from '@/lib/safeStorage';
 
 const categoryIcons: Record<string, React.ElementType> = {
   smileys: Smile,
@@ -45,11 +44,11 @@ export function EmojiPicker({
   const [activeCategory, setActiveCategory] = React.useState('smileys');
   const [hoveredEmoji, setHoveredEmoji] = React.useState<string | null>(null);
 
-  // Local recent emojis persisted to localStorage (safeStorage: cota cheia /
-  // modo privado não podem derrubar a leitura nem a escrita)
+  // Local recent emojis persisted to localStorage
   const [localRecent, setLocalRecent] = React.useState<string[]>(() => {
-    const stored = safeGetJSON<string[]>(RECENT_KEY, []);
-    return Array.isArray(stored) ? stored : [];
+    try {
+      return JSON.parse(localStorage.getItem(RECENT_KEY) || '[]');
+    } catch { return []; }
   });
 
   const recentEmojis = externalRecent ?? localRecent;
@@ -62,10 +61,7 @@ export function EmojiPicker({
       onRecentUpdate(updated);
     } else {
       setLocalRecent(updated);
-      // Escrita tolerante a falha: em modo privado/cota cheia safeSetJSON
-      // devolve false em vez de lançar — o emoji já foi entregue e o picker
-      // precisa fechar mesmo assim.
-      safeSetJSON(RECENT_KEY, updated);
+      localStorage.setItem(RECENT_KEY, JSON.stringify(updated));
     }
 
     setIsOpen(false);
@@ -82,7 +78,7 @@ export function EmojiPicker({
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         {trigger || (
-          <Button type="button" variant="ghost" size="icon" aria-label="Inserir emoji" className={cn('h-9 w-9', className)}>
+          <Button variant="ghost" size="icon" className={cn('h-9 w-9', className)}>
             <Smile className="h-5 w-5" />
           </Button>
         )}
@@ -101,9 +97,7 @@ export function EmojiPicker({
               />
               {searchQuery && (
                 <button
-                  type="button"
                   onClick={() => setSearchQuery('')}
-                  aria-label="Limpar busca"
                   className="absolute right-2 top-1/2 -translate-y-1/2"
                 >
                   <X className="h-3 w-3 text-muted-foreground" />
@@ -118,7 +112,6 @@ export function EmojiPicker({
               {/* Recent tab */}
               {recentEmojis.length > 0 && (
                 <button
-                  type="button"
                   onClick={() => setActiveCategory('recent')}
                   className={cn(
                     'flex-shrink-0 p-1.5 rounded-md transition-colors',
@@ -127,8 +120,6 @@ export function EmojiPicker({
                       : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                   )}
                   title="Recentes"
-                  aria-label="Recentes"
-                  aria-pressed={activeCategory === 'recent'}
                 >
                   <Clock className="h-4 w-4" />
                 </button>
@@ -138,7 +129,6 @@ export function EmojiPicker({
                 return (
                   <button
                     key={key}
-                    type="button"
                     onClick={() => setActiveCategory(key)}
                     className={cn(
                       'flex-shrink-0 p-1.5 rounded-md transition-colors',
@@ -147,8 +137,6 @@ export function EmojiPicker({
                         : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                     )}
                     title={category.label}
-                    aria-label={category.label}
-                    aria-pressed={activeCategory === key}
                   >
                     <Icon className="h-4 w-4" />
                   </button>
@@ -249,7 +237,6 @@ interface EmojiButtonProps {
 function EmojiButton({ emoji, onSelect, onHover, onLeave }: EmojiButtonProps) {
   return (
     <motion.button
-      type="button"
       whileHover={{ scale: 1.2 }}
       whileTap={{ scale: 0.9 }}
       onClick={() => onSelect(emoji)}
@@ -289,7 +276,6 @@ export function QuickReactionPicker({
       {quickEmojis.map((emoji) => (
         <motion.button
           key={emoji}
-          type="button"
           whileHover={{ scale: 1.3 }}
           whileTap={{ scale: 0.9 }}
           onClick={() => onReact(emoji)}
@@ -307,10 +293,8 @@ export function QuickReactionPicker({
         onEmojiSelect={onReact}
         trigger={
           <motion.button
-            type="button"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
-            aria-label="Inserir emoji"
             className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-muted"
           >
             <Smile className="h-4 w-4 text-muted-foreground" />

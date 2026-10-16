@@ -15,8 +15,6 @@ interface MobileShellProps {
   userEmail: string;
   signOut: () => void;
   unreadNotifications: number;
-  /** PE-31 — total de não lidas do Teams (mesma fonte do selo do Chat). */
-  teamsUnread?: number;
 }
 
 const mobileNavItems = [
@@ -34,7 +32,6 @@ export function MobileShell({
   userEmail,
   signOut,
   unreadNotifications,
-  teamsUnread,
 }: MobileShellProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -54,14 +51,11 @@ export function MobileShell({
     void markAllAsRead();
   }, [markAllAsRead]);
 
-  const navItemsWithBadge = useMemo(() => mobileNavItems.map((item) => {
-    // PE-31 — Chat e Equipe mostram o MESMO total do desktop (barra lateral);
-    // o Botão Times da barra inferior ficava sem selo.
-    const badge = item.id === 'inbox' ? unreadNotifications
-      : item.id === 'team-chat' ? teamsUnread
-      : undefined;
-    return badge && badge > 0 ? { ...item, badge } : { ...item, badge: undefined };
-  }), [unreadNotifications, teamsUnread]);
+  const navItemsWithBadge = useMemo(() => mobileNavItems.map((item) =>
+    item.id === 'inbox' && unreadNotifications > 0
+      ? { ...item, badge: unreadNotifications }
+      : item
+  ), [unreadNotifications]);
 
   return (
     <>
@@ -100,6 +94,7 @@ export function MobileShell({
         <MobileFAB
           onNewConversation={() => setCurrentView('inbox')}
           onNewContact={() => setCurrentView('contacts')}
+          onNewCampaign={() => setCurrentView('campaigns')}
         />
       )}
 

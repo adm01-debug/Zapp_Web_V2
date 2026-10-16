@@ -3,10 +3,9 @@ import { motion } from 'framer-motion';
 import { 
   Shield, Activity, Ban, Globe, AlertTriangle, 
   TrendingUp, TrendingDown, Clock, RefreshCw,
-  ChevronLeft, ChevronRight, X,
   BarChart3
 } from 'lucide-react';
-import { useRateLimitLogs, type RateLimitSortKey } from '@/hooks/system/useRateLimitLogs';
+import { useRateLimitLogs } from '@/hooks/system/useRateLimitLogs';
 import { useUserRole } from '@/hooks/system/useUserRole';
 import { BlockedIPsPanel } from '@/components/security/BlockedIPsPanel';
 import { IPWhitelistPanel } from '@/components/security/IPWhitelistPanel';
@@ -15,17 +14,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
   Table,
   TableBody,
@@ -39,18 +27,7 @@ import { ptBR } from 'date-fns/locale';
 
 export default function RateLimitDashboard() {
   const { isAdmin, isSupervisor } = useUserRole();
-  const {
-    logs,
-    stats,
-    total,
-    totalPages,
-    error,
-    loading,
-    filters,
-    setFilters,
-    resetFilters,
-    refetch,
-  } = useRateLimitLogs(isAdmin || isSupervisor);
+  const { logs, stats, loading, refetch } = useRateLimitLogs(isAdmin || isSupervisor);
   const [activeTab, setActiveTab] = useState('overview');
 
   if (!isAdmin && !isSupervisor) {
@@ -69,33 +46,8 @@ export default function RateLimitDashboard() {
     );
   }
 
-  // Em alguns testes o hook é trocado por um dublê que não devolve `filters`; o
-  // acesso opcional mantém a tela desenhável em vez de estourar em `undefined`.
-  const ip = filters?.ip ?? '';
-  const endpoint = filters?.endpoint ?? '';
-  const blockedOnly = filters?.blockedOnly ?? false;
-  const sortBy = filters?.sortBy ?? 'created_at';
-  const sortDir = filters?.sortDir ?? 'desc';
-  const paginaAtual = Math.max(1, filters?.page ?? 1);
-  const tamanhoPagina = Math.max(1, filters?.pageSize ?? 25);
-  const paginas = Math.max(1, totalPages ?? 1);
-  const contagemTotal = total ?? 0;
-  const primeiroDaPagina = (paginaAtual - 1) * tamanhoPagina + 1;
-  const ultimoDaPagina = Math.min(paginaAtual * tamanhoPagina, contagemTotal);
-  const temFiltro = Boolean(ip.trim() || endpoint.trim() || blockedOnly);
-
-  const descricaoDaContagem = error
-    ? 'Não foi possível carregar a contagem'
-    : contagemTotal > 0
-      ? `Mostrando ${primeiroDaPagina}–${ultimoDaPagina} de ${contagemTotal} requisições`
-      : loading
-        ? 'Carregando requisições…'
-        : 'Nenhuma requisição encontrada';
-
-  // Denominador da proporção é a JANELA de estatística (sampleSize), não a página
-  // da listagem: `logs.length` agora é o recorte da página.
-  const blockedPercentage = stats
-    ? Math.round((stats.blockedRequests / Math.max(stats.sampleSize, 1)) * 100)
+  const blockedPercentage = stats 
+    ? Math.round((stats.blockedRequests / Math.max(logs.length, 1)) * 100) 
     : 0;
 
   return (
@@ -154,7 +106,7 @@ export default function RateLimitDashboard() {
                   <Ban className="w-5 h-5 text-destructive dark:text-destructive" />
                 </div>
               </div>
-              <Progress value={blockedPercentage} className="mt-2 h-1" aria-label="Percentual de requisições bloqueadas" />
+              <Progress value={blockedPercentage} className="mt-2 h-1" />
               <p className="text-xs text-muted-foreground mt-1">{blockedPercentage}% do total</p>
             </CardContent>
           </Card>
@@ -190,7 +142,7 @@ export default function RateLimitDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Alertas Ativos</p>
-                  <p className="text-2xl font-bold text-warning">{stats?.blockedRequests || 0}</p>
+                  <p className="text-2xl font-bold text-warning">{logs.filter(l => l.blocked).length}</p>
                 </div>
                 <div className="w-10 h-10 bg-warning/10 dark:bg-warning/20/30 rounded-full flex items-center justify-center">
                   <AlertTriangle className="w-5 h-5 text-warning dark:text-warning" />
@@ -292,180 +244,54 @@ export default function RateLimitDashboard() {
           <Card>
             <CardHeader>
               <CardTitle>Logs de Rate Limiting</CardTitle>
-              <CardDescription aria-live="polite">{descricaoDaContagem}</CardDescription>
+              <CardDescription>Últimas 100 requisições monitoradas</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Filtro, ordem e recorte de página são resolvidos no SERVIDOR (hook); a
-                  lista da página é exatamente o que o servidor devolveu. */}
-              <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-end">
-                <div className="space-y-1">
-                  <Label htmlFor="logs-filtro-ip">Filtrar por IP</Label>
-                  <Input
-                    id="logs-filtro-ip"
-                    value={ip}
-                    onChange={(e) => setFilters?.({ ip: e.target.value })}
-                    placeholder="Ex.: 10.0.0.1"
-                    autoComplete="off"
-                    className="md:w-48"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="logs-filtro-endpoint">Filtrar por endpoint</Label>
-                  <Input
-                    id="logs-filtro-endpoint"
-                    value={endpoint}
-                    onChange={(e) => setFilters?.({ endpoint: e.target.value })}
-                    placeholder="Ex.: /api/v1/messages"
-                    autoComplete="off"
-                    className="md:w-64"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="logs-ordem">Ordenar por</Label>
-                  <Select
-                    value={sortBy}
-                    onValueChange={(valor) => setFilters?.({ sortBy: valor as RateLimitSortKey })}
-                  >
-                    <SelectTrigger id="logs-ordem" aria-label="Ordenar por" className="md:w-44">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="created_at">Quando</SelectItem>
-                      <SelectItem value="request_count">Requisições</SelectItem>
-                      <SelectItem value="ip_address">IP</SelectItem>
-                      <SelectItem value="endpoint">Endpoint</SelectItem>
-                      <SelectItem value="blocked">Status</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  aria-label="Inverter ordem de classificação"
-                  onClick={() => setFilters?.({ sortDir: sortDir === 'asc' ? 'desc' : 'asc' })}
-                >
-                  {sortDir === 'asc' ? (
-                    <TrendingUp className="w-4 h-4" />
-                  ) : (
-                    <TrendingDown className="w-4 h-4" />
-                  )}
-                </Button>
-                <div className="flex items-center gap-2 md:pb-2">
-                  <Checkbox
-                    id="logs-so-bloqueados"
-                    checked={blockedOnly}
-                    onCheckedChange={(marcado) => setFilters?.({ blockedOnly: marcado === true })}
-                  />
-                  <Label htmlFor="logs-so-bloqueados" className="cursor-pointer">
-                    Só bloqueados
-                  </Label>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  aria-label="Limpar filtros"
-                  disabled={!temFiltro}
-                  onClick={() => resetFilters?.()}
-                >
-                  <X className="w-4 h-4 mr-2" />
-                  Limpar filtros
-                </Button>
-              </div>
-
-              {error && (
-                <Alert variant="destructive">
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertTitle>Não foi possível carregar os logs</AlertTitle>
-                  <AlertDescription className="flex flex-col items-start gap-2">
-                    <span>{error}</span>
-                    <Button variant="outline" size="sm" onClick={() => refetch?.()}>
-                      Tentar novamente
-                    </Button>
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              {/* Erro em banner, POR CIMA da tabela: as linhas já carregadas
-                  continuam visíveis (nunca some com dado disponível). */}
+            <CardContent>
               <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>IP</TableHead>
-                        <TableHead>Endpoint</TableHead>
-                        <TableHead>Requisições</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Quando</TableHead>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>IP</TableHead>
+                      <TableHead>Endpoint</TableHead>
+                      <TableHead>Requisições</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Quando</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {logs.slice(0, 20).map((log) => (
+                      <TableRow key={log.id}>
+                        <TableCell>
+                          <code className="font-mono text-sm">{log.ip_address}</code>
+                        </TableCell>
+                        <TableCell>
+                          <code className="font-mono text-sm">{log.endpoint}</code>
+                        </TableCell>
+                        <TableCell>{log.request_count}</TableCell>
+                        <TableCell>
+                          {log.blocked ? (
+                            <Badge variant="destructive">Bloqueado</Badge>
+                          ) : (
+                            <Badge variant="secondary">OK</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-sm">
+                          {formatDistanceToNow(new Date(log.created_at), { 
+                            addSuffix: true, 
+                            locale: ptBR 
+                          })}
+                        </TableCell>
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {loading ? (
-                        <TableRow>
-                          <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                            Carregando logs…
-                          </TableCell>
-                        </TableRow>
-                      ) : logs.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                            Nenhum log encontrado para os filtros aplicados
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        logs.map((log) => (
-                          <TableRow key={log.id}>
-                            <TableCell>
-                              <code className="font-mono text-sm">{log.ip_address}</code>
-                            </TableCell>
-                            <TableCell>
-                              <code className="font-mono text-sm">{log.endpoint}</code>
-                            </TableCell>
-                            <TableCell>{log.request_count}</TableCell>
-                            <TableCell>
-                              {log.blocked ? (
-                                <Badge variant="destructive">Bloqueado</Badge>
-                              ) : (
-                                <Badge variant="secondary">OK</Badge>
-                              )}
-                            </TableCell>
-                            <TableCell className="text-muted-foreground text-sm">
-                              {formatDistanceToNow(new Date(log.created_at), { 
-                                addSuffix: true, 
-                                locale: ptBR 
-                              })}
-                            </TableCell>
-                          </TableRow>
-                      )))}
-                    </TableBody>
-                  </Table>
-                </div>
-
-              <div className="flex items-center justify-between gap-4">
-                <p className="text-sm text-muted-foreground" aria-live="polite">
-                  Página {paginaAtual} de {paginas}
-                </p>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    aria-label="Página anterior"
-                    disabled={paginaAtual <= 1}
-                    onClick={() => setFilters?.({ page: paginaAtual - 1 })}
-                  >
-                    <ChevronLeft className="w-4 h-4 mr-1" />
-                    Anterior
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    aria-label="Próxima página"
-                    disabled={paginaAtual >= paginas}
-                    onClick={() => setFilters?.({ page: paginaAtual + 1 })}
-                  >
-                    Próxima
-                    <ChevronRight className="w-4 h-4 ml-1" />
-                  </Button>
-                </div>
+                    ))}
+                    {logs.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                          Nenhum log disponível
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
               </div>
             </CardContent>
           </Card>

@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react';
-import { useReducedMotion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { FloatingParticles } from '@/components/dashboard/FloatingParticles';
@@ -10,16 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Plus, Clock, BarChart3, AlertTriangle } from 'lucide-react';
 import { useQueues, QueueWithMembers } from '@/hooks/business/useQueues';
-import {
-  useQueueGoals,
-  useQueueGoalMetrics,
-  QUEUE_GOAL_METRICS,
-  goalMetricPercent,
-  worstCrossedGoalBand,
-  formatGoalMetricValue,
-  QueueAlert,
-  type QueueGoalMetricDefinition,
-} from '@/hooks/business/useQueueGoals';
+import { useQueueGoals, QueueAlert } from '@/hooks/business/useQueueGoals';
 import { CreateQueueDialog } from './CreateQueueDialog';
 import { EditQueueDialog } from './EditQueueDialog';
 import { AddMemberDialog } from './AddMemberDialog';
@@ -27,28 +17,10 @@ import { QueueGoalsDialog } from './QueueGoalsDialog';
 import { QueueAlertsDisplay } from './QueueAlertsDisplay';
 import { QueueCard } from './QueueCard';
 
-/**
- * Texto do alerta por métrica. O valor é sempre o que a RPC mediu (`waiting_contacts`,
- * `avg_wait_minutes`, `messages_pending`, `assignment_rate`) — nenhuma conta montada aqui.
- */
-function queueAlertMessage(def: QueueGoalMetricDefinition, value: number, target: number): string {
-  switch (def.key) {
-    case 'waiting_contacts':
-      return `${formatGoalMetricValue(value)} contatos aguardando atendimento`;
-    case 'avg_wait_minutes':
-      return `Espera média de ${formatGoalMetricValue(value)} min (limite ${formatGoalMetricValue(target)} min)`;
-    case 'messages_pending':
-      return `${formatGoalMetricValue(value)} mensagens sem resposta (limite ${formatGoalMetricValue(target)})`;
-    case 'assignment_rate':
-      return `Taxa de atribuição em ${formatGoalMetricValue(value)}% (mínimo ${formatGoalMetricValue(target)}%)`;
-  }
-}
-
 export function QueuesView() {
   const navigate = useNavigate();
   const { queues, loading, createQueue, updateQueue, deleteQueue, addMember, removeMember } = useQueues();
   const { goals } = useQueueGoals();
-  const { metrics } = useQueueGoalMetrics();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [addMemberDialogOpen, setAddMemberDialogOpen] = useState(false);
@@ -62,57 +34,26 @@ export function QueuesView() {
     const allAlerts: QueueAlert[] = [];
     queues.forEach(queue => {
       const queueGoal = goals[queue.id];
-      // Sem meta cadastrada (ou com alertas desligados) não há alerta.
       if (!queueGoal || !queueGoal.alerts_enabled) return;
-      // Sem métrica da RPC não há alerta: ou a fila está fora da visibilidade do usuário (a RPC só
-      // devolve fila de membro para quem não é staff) ou a medição ainda não chegou. A conta antiga
-      // (`membros ativos / (membros ativos + aguardando)`) era inventada no front.
-      const metric = metrics[queue.id];
-      if (!metric) return;
-
-      QUEUE_GOAL_METRICS.forEach(def => {
-        const bruto = metric[def.key];
-        // `null` = não medido (sem base no período): não avisa. `0` = dado medido (fila vazia).
-        if (bruto === null || bruto === undefined) return;
-        const value = Number(bruto);
-        if (!Number.isFinite(value)) return;
-
-        const target = Number(queueGoal[def.goalKey]);
-        const percent = goalMetricPercent(value, target);
-        // Meta zerada não define percentual — sem faixa, sem alerta.
-        if (percent === null) return;
-        const band = worstCrossedGoalBand(percent, def.direction);
-        if (band === null) return;
-
-        const alertKey = `${queue.id}-${def.alertType}`;
-        if (dismissedAlerts.has(alertKey)) return;
-
-        allAlerts.push({
-          type: def.alertType,
-          queueId: queue.id,
-          queueName: metric.queue_name || queue.name,
-          queueColor: queue.color,
-          message: queueAlertMessage(def, value, target),
-          severity: def.direction === 'max'
-            ? (band >= 100 ? 'critical' : 'warning')
-            : (band <= 25 ? 'critical' : 'warning'),
-          currentValue: value,
-          threshold: target,
-        });
-      });
+      const activeMembers = queue.members.filter(m => m.is_active).length;
+      const assignmentRate = queue.waiting_count + activeMembers > 0 ? Math.round((activeMembers / (queue.waiting_count + activeMembers)) * 100) : 100;
+      if (queue.waiting_count > queueGoal.max_waiting_contacts) {
+        const alertKey = `${queue.id}-waiting_contacts`;
+        if (!dismissedAlerts.has(alertKey)) allAlerts.push({ type: 'waiting_contacts', queueId: queue.id, queueName: queue.name, queueColor: queue.color, message: `${queue.waiting_count} contatos aguardando atendimento`, severity: queue.waiting_count > queueGoal.max_waiting_contacts * 1.5 ? 'critical' : 'warning', currentValue: queue.waiting_count, threshold: queueGoal.max_waiting_contacts });
+      }
+      if (assignmentRate < queueGoal.min_assignment_rate && queue.waiting_count > 0) {
+        const alertKey = `${queue.id}-assignment_rate`;
+        if (!dismissedAlerts.has(alertKey)) allAlerts.push({ type: 'assignment_rate', queueId: queue.id, queueName: queue.name, queueColor: queue.color, message: 'Taxa de atribuição abaixo do esperado', severity: assignmentRate < queueGoal.min_assignment_rate * 0.5 ? 'critical' : 'warning', currentValue: assignmentRate, threshold: queueGoal.min_assignment_rate });
+      }
     });
     return allAlerts;
-  }, [queues, goals, metrics, dismissedAlerts]);
+  }, [queues, goals, dismissedAlerts]);
 
   const getQueueAlertCount = (queueId: string) => alerts.filter(a => a.queueId === queueId).length;
 
-  // Movimento reduzido: os fundos decorativos (aurora e partículas) têm laço infinito de
-  // opacidade — só entram sem a preferência do sistema (o `reducedMotion` não corta opacidade).
-  const reduzido = useReducedMotion() ?? false;
-
   if (loading) {
     return (
-      <div className="space-y-6 relative bg-background w-full min-w-0">{!reduzido && <AuroraBorealis />}{!reduzido && <FloatingParticles />}
+      <div className="space-y-6 relative bg-background w-full min-w-0"><AuroraBorealis /><FloatingParticles />
         <div className="flex items-center justify-between"><div><Skeleton className="h-8 w-64 mb-2" /><Skeleton className="h-4 w-96" /></div><Skeleton className="h-10 w-32" /></div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">{[1,2,3].map(i => <Card key={i} className="border border-secondary/20 bg-card"><CardContent className="space-y-4 p-6"><Skeleton className="h-20 w-full" /><Skeleton className="h-12 w-full" /></CardContent></Card>)}</div>
       </div>
@@ -121,7 +62,7 @@ export function QueuesView() {
 
   return (
     <div className="space-y-6 relative bg-background w-full min-w-0">
-      {!reduzido && <AuroraBorealis />}{!reduzido && <FloatingParticles />}
+      <AuroraBorealis /><FloatingParticles />
       <PageHeader title="Filas de Atendimento" subtitle="Organize e distribua os atendimentos por departamento"
         breadcrumbs={[{ label: 'Gestão' }, { label: 'Filas' }]}
         actions={

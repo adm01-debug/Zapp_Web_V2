@@ -69,13 +69,7 @@ const click = { stopPropagation: vi.fn() } as unknown as React.MouseEvent;
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.tableFrom.mockImplementation(() => ({
-    // t_9d534f75: fetchEmojis passou a encadear .order().order().range().
-    select: () => {
-      const chain: Record<string, unknown> = {};
-      chain.order = () => chain;
-      chain.range = () => Promise.resolve({ data: LISTA, error: null });
-      return chain;
-    },
+    select: () => ({ order: () => ({ limit: () => Promise.resolve({ data: LISTA, error: null }) }) }),
     update: (payload: Record<string, unknown>) => ({
       eq: (column: string, value: string) => mocks.updateEq(payload, column, value),
     }),
@@ -160,12 +154,8 @@ describe('useCustomEmojis — exclusão', () => {
     const { result } = await montar();
     mocks.deleteEq.mockResolvedValue({ error: { message: 'rls denied' } });
 
-    // t_9d534f75: a exclusão passou a exigir confirmação (handleDelete só marca o alvo).
-    act(() => {
-      result.current.handleDelete(click, result.current.emojis[0]);
-    });
     await act(async () => {
-      await result.current.confirmDelete();
+      await result.current.handleDelete(click, result.current.emojis[0]);
     });
 
     expect(mocks.deleteEq).toHaveBeenCalledWith('id', 'emoji-1');
@@ -179,11 +169,8 @@ describe('useCustomEmojis — exclusão', () => {
   it('DELETE aceito remove o arquivo e só então anuncia sucesso', async () => {
     const { result } = await montar();
 
-    act(() => {
-      result.current.handleDelete(click, result.current.emojis[0]);
-    });
     await act(async () => {
-      await result.current.confirmDelete();
+      await result.current.handleDelete(click, result.current.emojis[0]);
     });
 
     expect(mocks.storageRemove).toHaveBeenCalledWith(BUCKET, ['emoji_1.png']);
@@ -196,11 +183,8 @@ describe('useCustomEmojis — exclusão', () => {
     const view = await montar();
     mocks.storageRemove.mockResolvedValueOnce({ data: null, error: { message: 'network error' } });
 
-    act(() => {
-      view.result.current.handleDelete(click, view.result.current.emojis[0]);
-    });
     await act(async () => {
-      await view.result.current.confirmDelete();
+      await view.result.current.handleDelete(click, view.result.current.emojis[0]);
     });
 
     expect(view.result.current.emojis.map((em) => em.id)).toEqual(['emoji-2']);

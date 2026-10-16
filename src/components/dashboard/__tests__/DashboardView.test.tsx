@@ -20,7 +20,7 @@ vi.mock('@/hooks/analytics/useDashboardData', () => ({
 vi.mock('@/hooks/analytics/useRealtimeDashboard', () => ({
   useRealtimeDashboard: () => ({ isConnected: true, unreadMessages: 0 }),
 }));
-vi.mock('@/hooks/dashboard/useDashboardKpi', () => ({ useDashboardKpi: vi.fn(() => ({ data: undefined })) }));
+vi.mock('@/hooks/dashboard/useDashboardKpi', () => ({ useDashboardKpi: () => ({ data: undefined }) }));
 vi.mock('@/hooks/dashboard/useQueueHealth', () => ({ useQueueHealth: () => ({ rows: [], busiestQueue: null }) }));
 vi.mock('@/hooks/dashboard/useRecentConversationEvents', () => ({
   useRecentConversationEvents: () => ({ data: { items: [] } }),
@@ -69,13 +69,12 @@ vi.mock('../DashboardFilters', async (importOriginal) => {
 });
 
 import { DashboardView } from '../DashboardView';
-import { useDashboardKpi } from '@/hooks/dashboard/useDashboardKpi';
 
-function renderWithProviders(initialPath = '/') {
+function renderWithProviders() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={qc}>
-      <MemoryRouter initialEntries={[initialPath]}>
+      <MemoryRouter>
         <DashboardView />
       </MemoryRouter>
     </QueryClientProvider>,
@@ -113,62 +112,5 @@ describe('DashboardView — guard de navegacao de abas (RBAC)', () => {
     expect(screen.queryByTestId('stub-ai-quick-access')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Ver tudo (IA)' }));
     expect(screen.getByTestId('stub-ai-quick-access')).toBeInTheDocument();
-  });
-});
-
-describe('DashboardView — zonas visuais da Visão Geral', () => {
-  it('agrupa os cards em zonas rotuladas e não mistura operação com IA/engajamento', () => {
-    renderWithProviders();
-
-    const numeros = screen.getByTestId('dash-zone-numeros');
-    const operacao = screen.getByTestId('dash-zone-operacao');
-    const engajamento = screen.getByTestId('dash-zone-engajamento');
-
-    expect(numeros).toHaveTextContent('Números de hoje');
-    expect(operacao).toHaveTextContent('Operação em tempo real');
-    expect(engajamento).toHaveTextContent('Engajamento e IA');
-
-    expect(operacao.contains(screen.getByTestId('dash-row2'))).toBe(true);
-    expect(operacao.contains(screen.getByTestId('dash-row3'))).toBe(true);
-    expect(engajamento.contains(screen.getByTestId('dash-row4'))).toBe(true);
-    expect(engajamento.contains(screen.getByTestId('dash-gamification'))).toBe(true);
-    expect(engajamento.contains(screen.getByTestId('dash-row3'))).toBe(false);
-  });
-});
-
-describe('DashboardView — KPIs seguem o período escolhido (E34)', () => {
-  it('semana selecionada: passa from/until do período para useDashboardKpi e some com o aviso de "sempre hoje"', () => {
-    renderWithProviders('/?period=week');
-
-    const calls = vi.mocked(useDashboardKpi).mock.calls;
-    const lastCall = calls[calls.length - 1]?.[0];
-    expect(lastCall?.from).toBeInstanceOf(Date);
-    expect(lastCall?.until).toBeInstanceOf(Date);
-    expect(lastCall!.until!.getTime()).toBeGreaterThan(lastCall!.from!.getTime());
-
-    // O aviso existia porque os KPIs ignoravam o período; agora que seguem, sai de cena.
-    expect(screen.queryByTestId('dash-kpis-period-notice')).not.toBeInTheDocument();
-  });
-
-  it('período "hoje" (padrão) mantém o rótulo da zona como "Números de hoje"', () => {
-    renderWithProviders('/');
-    expect(screen.getByTestId('dash-zone-numeros')).toHaveTextContent('Números de hoje');
-  });
-
-  it('período diferente de hoje rotula a zona como "Números do período" (o rótulo não mente mais)', () => {
-    renderWithProviders('/?period=week');
-    expect(screen.getByTestId('dash-zone-numeros')).toHaveTextContent('Números do período');
-    expect(screen.getByTestId('dash-zone-numeros')).not.toHaveTextContent('Números de hoje');
-  });
-});
-
-describe('DashboardView — filtros do topo só na aba em que valem (L6)', () => {
-  it('a barra de filtros aparece na Visão Geral e sai de cena ao trocar de aba', () => {
-    renderWithProviders();
-    expect(screen.getByTestId('stub-filters')).toBeInTheDocument();
-
-    fireEvent.mouseDown(screen.getByRole('tab', { name: 'Metas' }));
-
-    expect(screen.queryByTestId('stub-filters')).not.toBeInTheDocument();
   });
 });

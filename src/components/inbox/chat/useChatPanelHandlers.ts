@@ -1,16 +1,12 @@
-import { useState, useRef, useEffect, useCallback, type Dispatch, type SetStateAction } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { log } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { undoToast } from '@/lib/undoToast';
-import {
-  archiveConversations,
-  restoreConversationStatuses,
-} from '@/hooks/inbox/conversationArchive';
 import { normalizeOperationalPriority } from '@/lib/ai-vocabulary';
 import { Message, InteractiveMessage, InteractiveButton, LocationMessage } from '@/types/chat';
 import { SlashCommand } from '../SlashCommands';
 import { toast } from '@/hooks/ui/use-toast';
-import { sendOutboundMessage, sendRichOutboundMessage } from '@/services/outbound-message.service';
+import { sendOutboundMessage } from '@/services/outbound-message.service';
 import {
   createForwardRunState,
   forwardMediaMessages,
@@ -22,11 +18,9 @@ import {
 } from '@/hooks/chat/useForwardMedia';
 import type { ForwardCallback } from '@/hooks/chat/useForwardMessage';
 import { useConversationActions } from '@/hooks/chat/useConversationActions';
-import { useWhisperMessagesMutation, type MotivoRecusaSussurro } from '@/hooks/chat/useWhisperMessagesMutation';
 import { useMyWorkItems, tomorrowAtNine } from '@/hooks/tasks/useMyWorkItems';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { CHAR_LIMIT } from './useChatInputLogic';
-import { sendQueue } from '@/hooks/chat/sendQueue';
 
 /** Tipos de mensagem do chat com representação textual direta no transporte. */
 const TEXTUAL_FORWARD_TYPES: ReadonlySet<Message['type']> = new Set(['text', 'interactive']);
@@ -65,27 +59,21 @@ interface UseChatPanelHandlersOptions {
   openDialog: (key: string) => void;
   closeDialog: (key: string) => void;
   handleSetActiveTool: (tool: 'chatSearch' | 'objections' | 'university' | 'aiAssistant' | 'summary' | null) => void;
-  /**
-   * Sussurro do compositor: informa se há anexo esperando envio. Sussurro é texto
-   * puro (não transporta mídia); com anexo pendente o envio como sussurro é recusado.
-   * Ausente = sem anexo (a barra de composição informa quando houver).
-   */
-  temAnexoPendente?: () => boolean;
-}
-
-interface WhisperModeState {
-  conversationId: string;
-  enabled: boolean;
 }
 
 /**
  * R2-INB-003 (item 82) — o construtor de mensagens interativas confirmava o envio
- * sem transporte. O transporte canônico agora existe: `enqueue_rich_outbound_message`
- * aceita 'buttons'/'list' e a edge `message-delivery` monta sendButtons/sendList a
- * partir do payload imutável em media_meta->outbound_delivery_payload. O contrato
- * continua explícito: o handler resolve SÓ com o aceite do transporte e rejeita em
- * falha, então o builder só fecha/limpa depois do aceite.
+ * sem transporte. O transporte canônico de saída não aceita este tipo hoje:
+ * `enqueue_outbound_message` (text/image/audio/video/document/sticker/location) e
+ * `enqueue_rich_outbound_message` (poll/contact) rejeitam o tipo e a
+ * `message-delivery` responde `unsupported_message_type`. Enquanto não existir
+ * enqueue/entrega para botões e listas, o envio é declarado indisponível — a
+ * composição fica preservada no formulário e nada é descartado em silêncio.
+ * Fonte única: guarda no handler + apresentação no builder, via o retorno do hook.
  */
+export const ENVIO_INTERATIVO_INDISPONIVEL =
+  'Envio de mensagens interativas indisponível: o transporte de botões e listas ainda não está publicado. Sua composição foi mantida.';
+
 function useLatest<T>(value: T) {
   const ref = useRef(value);
   useEffect(() => {
@@ -94,69 +82,16 @@ function useLatest<T>(value: T) {
   return ref;
 }
 
-/** Janela (em minutos) em que uma mensagem já enviada ainda pode ser editada. */
-const EDIT_WINDOW_MINUTES = 15;
-
-/**
- * Mensagem ainda dentro da janela de edição. Checado ao ABRIR a edição e de novo no
- * ENVIO — com o editor aberto, o prazo pode vencer antes de o usuário salvar, e o
- * WhatsApp já recusaria a edição.
- */
-function dentroDaJanelaDeEdicao(message: Message, agora: number = Date.now()): boolean {
-  return (agora - message.timestamp.getTime()) / 60000 <= EDIT_WINDOW_MINUTES;
-}
-
-/**
- * Avisos do sussurro recusado. O envio nunca chama o canal; quando não há a quem
- * endereçar (ou o contato/perfil ainda não está pronto) o texto é preservado e a
- * causa é dita ao usuário.
- */
-const RECUSAS_SUSSURRO: Record<MotivoRecusaSussurro, { title: string; description: string; variant: 'destructive' }> = {
-  contato_invalido: {
-    title: 'Sussurro indisponível',
-    description: 'Esta conversa ainda não tem um contato confirmado. O texto foi mantido.',
-    variant: 'destructive',
-  },
-  sem_responsavel: {
-    title: 'Conversa sem responsável',
-    description: 'Atribua a conversa a um atendente antes de sussurrar. O texto foi mantido.',
-    variant: 'destructive',
-  },
-  sem_perfil: {
-    title: 'Perfil não carregado',
-    description: 'Não foi possível identificar seu perfil. Tente novamente. O texto foi mantido.',
-    variant: 'destructive',
-  },
-  falha: {
-    title: 'Erro ao sussurrar',
-    description: 'O sussurro não foi registrado. O texto foi mantido.',
-    variant: 'destructive',
-  },
-};
-
 export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
   const {
-    conversationId, contactPhone, instanceName, onSendMessage, contactId,
+    contactPhone, instanceName, onSendMessage, contactId,
     editMessageApi, applySignature, handleTypingStart, handleTypingStop,
-    openDialog, closeDialog, handleSetActiveTool, temAnexoPendente,
+    openDialog, closeDialog, handleSetActiveTool,
   } = opts;
 
   const [inputValue, setInputValue] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [isRecordingAudio, setIsRecordingAudio] = useState(false);
-  // Sussurro (nota interna) ligado no compositor: o próximo envio grava em
-  // `whisper_messages` e NÃO sai para o canal. Desligado por padrão.
-  const [whisperMode, setWhisperMode] = useState<WhisperModeState>({ conversationId, enabled: false });
-  const isWhisper = whisperMode.conversationId === conversationId ? whisperMode.enabled : false;
-  const setIsWhisper = useCallback<Dispatch<SetStateAction<boolean>>>((value) => {
-    setWhisperMode((previous) => {
-      const current = previous.conversationId === conversationId ? previous.enabled : false;
-      return {
-        conversationId,
-        enabled: typeof value === 'function' ? value(current) : value,
-      };
-    });
-  }, [conversationId]);
   // R2-INB-022: guarda de reenvio. Como o gravador passa a continuar aberto quando o envio
   // falha, o usuário pode tocar "Enviar" de novo; este ref evita disparar dois envios
   // concorrentes da mesma gravação enquanto o primeiro ainda está em voo.
@@ -182,16 +117,12 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
   const editingMessageRef = useLatest(editingMessage);
   const replyToMessageRef = useLatest(replyToMessage);
   const forwardMessageRef = useLatest(forwardMessage);
-  const isWhisperRef = useLatest(isWhisper);
 
-  // ── Sussurro do compositor (nota interna) ──
-  // O envio vive no hook de mutação; o texto digitado só vira sussurro, nunca
-  // mensagem de canal.
-  const { enviarSussurro } = useWhisperMessagesMutation();
-  const toggleWhisper = useCallback(() => setIsWhisper((ligado) => !ligado), [setIsWhisper]);
+  const EDIT_WINDOW_MINUTES = 15;
 
   const handleEditStart = useCallback((message: Message) => {
-    if (!dentroDaJanelaDeEdicao(message)) {
+    const minutesAgo = (Date.now() - message.timestamp.getTime()) / 60000;
+    if (minutesAgo > EDIT_WINDOW_MINUTES) {
       toast({ title: 'Tempo expirado', description: `Você só pode editar mensagens nos primeiros ${EDIT_WINDOW_MINUTES} minutos.`, variant: 'destructive' });
       return;
     }
@@ -219,37 +150,6 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
     return true;
   }, []);
 
-  /**
-   * Envia o texto como sussurro (nota interna) e NUNCA chama `onSendMessage`.
-   * O texto só sai do compositor no sucesso; na falha ele fica intacto para o
-   * retry — assim um retry jamais vira mensagem de canal.
-   */
-  const enviarSussurroDoCompositor = useCallback(async (corpo: string) => {
-    if (temAnexoPendente?.()) {
-      toast({
-        title: 'Sussurro indisponível com anexo',
-        description: 'O sussurro é uma nota interna de texto. Remova o anexo para enviar.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    setIsSending(true);
-    const resultado = await enviarSussurro({ contactId, content: corpo });
-    setIsSending(false);
-    if (resultado.ok) {
-      setInputValue('');
-      setReplyToMessage(null);
-      setIsWhisper(false);
-      handleTypingStop();
-      toast({
-        title: '🤫 Sussurro enviado',
-        description: 'A nota interna ficou registrada para a equipe — não foi para o cliente.',
-      });
-      return;
-    }
-    toast(RECUSAS_SUSSURRO[resultado.motivo]);
-  }, [contactId, enviarSussurro, handleTypingStop, setIsWhisper, temAnexoPendente]);
-
   // handleSend now reads from refs → deps are stable → no re-render cascade
   const handleSend = useCallback(async () => {
     const currentInput = inputValueRef.current;
@@ -266,61 +166,20 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
     const payloadDoEnvio = currentEditing ? corpoDoEnvio : applySignature(corpoDoEnvio);
     if (recusarAcimaDoLimite(payloadDoEnvio.length)) return;
 
-    if (isWhisperRef.current && currentEditing) {
-      toast({
-        title: 'Sussurro indisponível durante edição',
-        description: 'Conclua ou cancele a edição antes de gravar uma nota interna. O texto foi mantido.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    // Sussurro (nota interna): grava em `whisper_messages` e NUNCA chama
-    // `onSendMessage` — nem neste envio, nem no retry. O ramo retorna antes de
-    // qualquer caminho de canal.
-    if (isWhisperRef.current) {
-      await enviarSussurroDoCompositor(corpoDoEnvio);
-      return;
-    }
-
     if (currentEditing) {
       const externalId = currentEditing.external_id;
       const contactJid = contactPhone ? `${contactPhone}@s.whatsapp.net` : '';
-      // R2-INB-014: sem instância, id externo ou JID NÃO existe edição a transportar — o
-      // cliente continuaria vendo o texto antigo. Nada é gravado e o editor permanece aberto.
-      if (!instanceName || !externalId || !contactJid) {
-        toast({
-          title: 'Edição indisponível',
-          description: 'Esta mensagem ainda não foi confirmada pelo WhatsApp, tente editar em instantes.',
-          variant: 'destructive',
-        });
-        return;
-      }
-      if (!dentroDaJanelaDeEdicao(currentEditing)) {
-        toast({ title: 'Tempo expirado', description: `Você só pode editar mensagens nos primeiros ${EDIT_WINDOW_MINUTES} minutos.`, variant: 'destructive' });
-        return;
-      }
       setIsSending(true);
       try {
-        // WhatsApp primeiro: só depois do aceite do transporte o espelho local é atualizado.
-        await editMessageApi(instanceName, { number: contactJid, messageId: externalId, text: currentInput.trim() });
-        // R2-INB-014: o PostgREST não lança exceção — o builder resolve em `{ error }`. O
-        // `.select('id')` devolve as linhas afetadas: `{ error }` OU 0 linhas (RLS/registro
-        // removido) NÃO são sucesso e não podem virar "Mensagem editada".
-        const { data, error } = await supabase
-          .from('messages')
-          .update({ content: currentInput.trim(), updated_at: new Date().toISOString() })
-          .eq('id', currentEditing.id)
-          .select('id');
-        if (error) throw error;
-        if (!data || data.length === 0) {
-          toast({
-            title: 'Edição não registrada',
-            description: 'A mensagem foi alterada no WhatsApp, mas o registro local não pôde ser atualizado.',
-            variant: 'destructive',
-          });
-          return;
+        if (instanceName && externalId && contactJid) {
+          await editMessageApi(instanceName, { number: contactJid, messageId: externalId, text: currentInput.trim() });
         }
+        // R2-INB-014: o PostgREST não lança exceção — o builder resolve em `{ error }`. Sucesso
+        // só existe quando a atualização local volta sem erro; sem esta checagem a UI anunciava
+        // "Mensagem editada", limpava o editor e encerrava o fluxo como êxito com a gravação
+        // recusada (RLS/permission denied).
+        const { error } = await supabase.from('messages').update({ content: currentInput.trim(), updated_at: new Date().toISOString() }).eq('id', currentEditing.id);
+        if (error) throw error;
         toast({ title: '✏️ Mensagem editada', description: 'A mensagem foi atualizada com sucesso.' });
         // Só o sucesso sai do modo de edição — na falha o texto permanece no editor para retry.
         setEditingMessage(null); setInputValue('');
@@ -339,21 +198,11 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
     const originalText = corpoDoEnvio;
     const messageContent = payloadDoEnvio;
     const wasReply = replyToMessageRef.current;
-    setInputValue(''); setReplyToMessage(null); handleTypingStop();
+    setIsSending(true); setInputValue(''); setReplyToMessage(null); handleTypingStop();
     if (wasReply) log.debug('Sending reply to:', wasReply.id);
 
-    // PK-21: fila SERIAL por conversa. O compositor NÃO espera o despacho no Edge
-    // (nem os refetches que vinham depois): a mensagem entra na fila da conversa e
-    // o editor já aceita a próxima digitação. A ordem é preservada — a segunda
-    // mensagem só sai depois que a primeira terminou — e uma falha de enqueue
-    // devolve o rascunho em vez de perdê-lo.
     try {
-      // `enqueue` pode rejeitar de forma SÍNCRONA (o transporte aceita `void`): a
-      // chamada vive DENTRO do try para que o rascunho volte em vez de se perder.
-      await sendQueue.enqueue(conversationId, () =>
-        onSendMessage(messageContent, wasReply?.id ?? null)
-      );
-      // A animação/som de "enviado" é do ACEITE do transporte, nunca da digitação.
+      await onSendMessage(messageContent, wasReply?.id ?? null);
       undoToast({
         message: 'Mensagem enviada', icon: '📨', delay: 3000,
         onUndo: () => {
@@ -364,31 +213,13 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
       });
     } catch (err) {
       log.error('Failed to send message:', err);
-      // O rascunho volta ao editor SEM perder nada: sem texto novo, volta o que
-      // falhou; com texto novo digitado durante o voo, o que falhou volta ACIMA do
-      // texto novo — nada some e o toast "Tente novamente" tem o que reenviar.
-      setInputValue((atual) => (atual === '' ? originalText : `${originalText}\n${atual}`));
-      if (wasReply) setReplyToMessage((atual) => atual ?? wasReply);
+      setInputValue(originalText);
       toast({ title: 'Erro ao enviar', description: 'Tente novamente.', variant: 'destructive' });
-    }
-  }, [conversationId, contactPhone, instanceName, editMessageApi, applySignature, onSendMessage, handleTypingStop, editingMessageRef, inputValueRef, isSendingRef, replyToMessageRef, isWhisperRef, enviarSussurroDoCompositor, recusarAcimaDoLimite]);
+    } finally { setIsSending(false); }
+  }, [contactPhone, instanceName, editMessageApi, applySignature, onSendMessage, handleTypingStop, editingMessageRef, inputValueRef, isSendingRef, replyToMessageRef, recusarAcimaDoLimite]);
 
   const handleReplyToMessage = useCallback((message: Message) => { setReplyToMessage(message); inputRef.current?.focus(); }, []);
-  // R2-INB-014: `writeText` pode rejeitar (permissão negada / contexto inseguro). Sem
-  // aguardar e tratar o erro, o toast "Copiado!" era incondicional e a V2 mentia.
-  const handleCopyMessage = useCallback(async (content: string) => {
-    try {
-      await navigator.clipboard.writeText(content);
-      toast({ title: 'Copiado!', description: 'Mensagem copiada para a área de transferência.' });
-    } catch (err) {
-      log.error('Failed to copy message:', err);
-      toast({
-        title: 'Não foi possível copiar',
-        description: 'Selecione o texto e copie manualmente.',
-        variant: 'destructive',
-      });
-    }
-  }, []);
+  const handleCopyMessage = useCallback((content: string) => { void navigator.clipboard.writeText(content); toast({ title: 'Copiado!', description: 'Mensagem copiada para a área de transferência.' }); }, []);
 
   // R2-INB-002: um novo encaminhamento começa com estado limpo — o retry dentro do
   // diálogo reusa o MESMO estado (pares concluídos), mas um encaminhamento novo não herda.
@@ -477,7 +308,6 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent, slashCommandsOpen: boolean) => {
     if (slashCommandsOpen && (e.key === 'Enter' || e.key === 'ArrowUp' || e.key === 'ArrowDown')) return;
-    if (e.altKey && e.key.toLowerCase() === 'w') { e.preventDefault(); toggleWhisper(); return; }
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
     // R2-INB-017 (item 313): o textarea é o dono de Ctrl/Cmd+F e Ctrl+K quando o evento nasce
     // no composer. Sem consumir o evento (stopPropagation), o listener de window do ChatPanel
@@ -487,10 +317,7 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
     if (e.key === 'k' && e.ctrlKey) { e.preventDefault(); e.stopPropagation(); openDialog('globalSearch'); }
     if (e.key === 'f' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); e.stopPropagation(); handleSetActiveTool('chatSearch'); }
     if (e.key === 'Escape' && slashCommandsOpen) closeDialog('slashCommands');
-    // Esc também desliga o sussurro: sair do modo é sempre explícito e nunca
-    // deixa a próxima mensagem saindo como nota interna sem intenção.
-    if (e.key === 'Escape' && isWhisperRef.current) setIsWhisper(false);
-  }, [handleSend, openDialog, closeDialog, handleSetActiveTool, isWhisperRef, setIsWhisper, toggleWhisper]);
+  }, [handleSend, openDialog, closeDialog, handleSetActiveTool]);
 
   const handleSlashCommand = useCallback((command: SlashCommand, subCommand?: string) => {
     closeDialog('slashCommands'); setInputValue('');
@@ -504,11 +331,7 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
       // anunciava "adicionar nota" e "adicionar/remover tag" sem nenhum editor
       // de nota ou seletor de tag atrás. Comando volta quando o destino existir.
       case 'priority': {
-        // Sem argumento o comando terminava em silêncio: avisa o formato esperado.
-        if (!subCommand) {
-          toast({ title: '⚡ Definir prioridade', description: 'Use /priority alta, /priority média ou /priority baixa.' });
-          break;
-        }
+        if (!subCommand) break;
         const labels: Record<string, string> = { high: 'Alta', medium: 'Média', low: 'Baixa' };
         const priorityValue = normalizeOperationalPriority(subCommand).value;
         if (!priorityValue) {
@@ -532,35 +355,17 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
       }
       case 'assign': openDialog('transferDialog'); break;
       // useConversationActions.snoozeConversation já grava em conversation_snoozes e mostra o toast.
-      // Sem argumento, o comando terminava em silêncio: avisa o formato esperado.
-      case 'snooze': {
-        if (!subCommand) {
-          toast({ title: '⏰ Adiar conversa', description: 'Use /snooze 1h, /snooze 3h, /snooze amanhã ou /snooze próxima semana.' });
-          break;
-        }
-        snoozeConversation(contactId, subCommand);
-        break;
-      }
+      case 'snooze': if (subCommand) snoozeConversation(contactId, subCommand); break;
       // useConversationActions já grava em favorite_contacts e mostra o toast.
       case 'star': (isFavorite(contactId) ? unfavoriteContact : favoriteContact)(contactId); break;
       case 'archive': {
         void (async () => {
-          // Semântica única (helper canônico): arquivar é o estado de FSM em
-          // `conversation_status` — o MESMO que a lista, o painel de detalhes e o
-          // lote usam. `assigned_to = null` devolvia à fila e não arquivava.
-          try {
-            const anteriores = await archiveConversations([contactId]);
-            toast({ title: '📦 Conversa Arquivada', description: 'A conversa foi arquivada.' });
-            undoToast({
-              message: 'Conversa arquivada',
-              icon: '📦',
-              onUndo: async () => {
-                await restoreConversationStatuses(anteriores);
-              },
-            });
-          } catch (error) {
+          const { error } = await supabase.from('contacts').update({ assigned_to: null }).eq('id', contactId);
+          if (error) {
             log.error('Failed to archive contact:', error);
             toast({ title: 'Erro ao arquivar', description: 'Não foi possível arquivar a conversa.', variant: 'destructive' });
+          } else {
+            toast({ title: '📦 Conversa Arquivada', description: 'A conversa foi arquivada.' });
           }
         })();
         break;
@@ -604,82 +409,24 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
       case 'quick': openDialog('quickReplies'); break;
       case 'summary': handleSetActiveTool('aiAssistant'); break;
       case 'produto': openDialog('catalogDirect'); break;
-      // L8 (paridade V3→V2, doc 11): o mesmo caminho do Alt+W do compositor
-      // (useChatPanelHandlers.ts:461) — o comando alterna, não liga só.
-      case 'whisper': toggleWhisper(); break;
       default: toast({ title: `Comando: ${command.label}`, description: command.description }); break;
     }
-  }, [closeDialog, openDialog, handleSetActiveTool, contactId, isFavorite, favoriteContact, unfavoriteContact, snoozeConversation, criarTarefaRef, toggleWhisper]);
+  }, [closeDialog, openDialog, handleSetActiveTool, contactId, isFavorite, favoriteContact, unfavoriteContact, snoozeConversation, criarTarefaRef]);
 
   // Contrato explícito (R2-INB-003): resolve só quando o transporte aceitou a
-  // composição; rejeita quando o envio não foi confirmado — o builder mantém a
-  // composição. O payload vai para a fila atômica no shape canônico
-  // (media_meta->outbound_delivery_payload); "CTA URL" é botão type='url',
-  // não um tipo novo.
+  // composição; rejeita quando o envio não foi confirmado. Sem transporte para
+  // botões/lista, rejeita com o motivo — o builder mantém a composição.
   const handleSendInteractiveMessage = useCallback(async (interactive: InteractiveMessage) => {
-    const title = interactive.header?.type === 'text' ? interactive.header.text : undefined;
-    try {
-      if (interactive.type === 'list') {
-        const sections = (interactive.sections ?? []).map((section) => ({
-          title: section.title,
-          rows: section.rows.map((row) => ({
-            id: row.id,
-            title: row.title,
-            ...(row.description ? { description: row.description } : {}),
-          })),
-        }));
-        await sendRichOutboundMessage({
-          contactId,
-          displayContent: `📋 *Lista:* ${interactive.body}\n${sections.flatMap((section) => section.rows.map((row) => `• ${row.title}`)).join('\n')}`,
-          messageType: 'list',
-          deliveryPayload: {
-            ...(title ? { title } : {}),
-            body: interactive.body,
-            ...(interactive.footer ? { footer: interactive.footer } : {}),
-            buttonText: interactive.listButtonText ?? '',
-            sections,
-          },
-        });
-      } else {
-        const buttons = (interactive.buttons ?? []).map((button) => ({
-          type: button.type ?? 'reply',
-          displayText: button.title ?? button.text ?? '',
-          ...(button.id ? { id: button.id } : {}),
-          ...(button.url ? { url: button.url } : {}),
-          ...(button.phoneNumber ? { phoneNumber: button.phoneNumber } : {}),
-        }));
-        await sendRichOutboundMessage({
-          contactId,
-          displayContent: `🔘 *Botões:* ${interactive.body}\n${buttons.map((button) => `• ${button.displayText}`).join('\n')}`,
-          messageType: 'buttons',
-          deliveryPayload: {
-            ...(title ? { title } : {}),
-            body: interactive.body,
-            ...(interactive.footer ? { footer: interactive.footer } : {}),
-            buttons,
-          },
-        });
-      }
-      toast({ title: 'Mensagem interativa enviada!' });
-    } catch (error) {
-      log.error('Failed to send interactive message:', error);
-      throw error;
-    }
-  }, [contactId]);
+    log.warn('Interactive message transport unavailable', { type: interactive.type });
+    throw new Error(ENVIO_INTERATIVO_INDISPONIVEL);
+  }, []);
 
   const handleInteractiveButtonClick = useCallback((button: InteractiveButton) => {
     toast({ title: 'Botão clicado', description: `Resposta: ${button.title}` });
   }, []);
 
-  // Espelha o clique em botão (IB1): o item da lista registra a resposta uma vez.
-  const handleInteractiveListItemClick = useCallback((sectionTitle: string, _rowId: string, rowTitle: string) => {
-    toast({ title: 'Item da lista clicado', description: `${sectionTitle}: ${rowTitle}` });
-  }, []);
-
   const handleSendLocation = useCallback(async (location: LocationMessage) => {
     try {
-      // PK-28: `location` é um tipo de envio como os outros — a citação pendente vai junto.
-      const replyTo = replyToMessageRef.current?.id ?? null;
       await sendOutboundMessage({
         contactId,
         content: JSON.stringify({
@@ -689,7 +436,6 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
           ...(location.address ? { address: location.address } : {}),
         }),
         messageType: 'location',
-        ...(replyTo ? { replyToId: replyTo } : {}),
       });
       toast({ title: 'Localização enviada!', description: location.name || 'Localização compartilhada' });
     } catch (error) {
@@ -697,12 +443,12 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
       toast({ title: 'Erro ao enviar localização', description: 'Tente novamente.', variant: 'destructive' });
       throw error;
     }
-  }, [contactId, replyToMessageRef]);
+  }, [contactId]);
 
   // R2-INB-022: só fecha o gravador quando o envio CONFIRMA. Em falha, mantém o AudioRecorder
   // montado — o blob vive no estado dele, então fechar descartaria uma gravação ainda recuperável.
   // Devolve true/false para o chamador (o ChatPanel hoje ignora; os testes pinam o contrato).
-  const handleAudioSend = useCallback(async (audioBlob: Blob, onSendAudio?: (blob: Blob, replyToId?: string | null) => Promise<boolean>): Promise<boolean> => {
+  const handleAudioSend = useCallback(async (audioBlob: Blob, onSendAudio?: (blob: Blob) => Promise<boolean>): Promise<boolean> => {
     if (!onSendAudio) {
       toast({ title: 'Erro', description: 'Envio de áudio não configurado.', variant: 'destructive' });
       return false;
@@ -710,12 +456,7 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
     if (isSendingAudioRef.current) return false;
     isSendingAudioRef.current = true;
     try {
-      // PK-28: a barra de resposta segue ativa durante a gravação; a citação pendente
-      // acompanha o áudio (é o mesmo caminho que `handleSend` já faz para o texto).
-      const replyPendente = replyToMessageRef.current?.id ?? null;
-      const enviado = replyPendente
-        ? await onSendAudio(audioBlob, replyPendente)
-        : await onSendAudio(audioBlob);
+      const enviado = await onSendAudio(audioBlob);
       // A ponte sinaliza falha com `false` (ela mesma já avisa o usuário); ausência de retorno
       // também conta como falha — o padrão seguro é NÃO descartar a gravação.
       if (enviado) {
@@ -730,19 +471,17 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
     } finally {
       isSendingAudioRef.current = false;
     }
-  }, [replyToMessageRef]);
+  }, []);
 
   return {
     inputValue, setInputValue, isSending, isRecordingAudio, setIsRecordingAudio,
-    isWhisper, setIsWhisper, toggleWhisper,
     replyToMessage, setReplyToMessage, forwardMessage, editingMessage,
     inputRef,
     handleEditStart, handleCancelEdit, handleSend,
     handleReplyToMessage, handleCopyMessage, handleForwardMessage, handleForwardToTargets,
     handleInputChange, handleKeyDown, handleSlashCommand,
-    handleSendInteractiveMessage,
+    handleSendInteractiveMessage, interactiveSendUnavailableReason: ENVIO_INTERATIVO_INDISPONIVEL,
     handleInteractiveButtonClick,
-    handleInteractiveListItemClick,
     handleSendLocation, handleAudioSend,
   };
 }

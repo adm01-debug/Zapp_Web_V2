@@ -1,16 +1,28 @@
 import { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useWebAuthn } from '@/hooks/auth/useWebAuthn';
 import { toast } from '@/hooks/ui/use-toast';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { clearLoginAttempts, formatLockTime } from '@/lib/loginAttempts';
-import { resolverDestinoPosLogin } from '@/lib/postLoginRedirect';
+
+const passwordSchema = z.string()
+  .min(8, 'Senha deve ter no mínimo 8 caracteres')
+  .regex(/[A-Z]/, 'Deve conter pelo menos uma letra maiúscula')
+  .regex(/[a-z]/, 'Deve conter pelo menos uma letra minúscula')
+  .regex(/[0-9]/, 'Deve conter pelo menos um número')
+  .regex(/[^A-Za-z0-9]/, 'Deve conter pelo menos um caractere especial');
 
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
   password: z.string().min(1, 'Senha é obrigatória'),
+});
+
+const signupSchema = z.object({
+  name: z.string().min(2, 'Nome deve ter no mínimo 2 caracteres').max(100, 'Nome muito longo'),
+  email: z.string().email('Email inválido').max(255, 'Email muito longo'),
+  password: passwordSchema,
 });
 
 export interface LockStatus {
@@ -19,35 +31,12 @@ export interface LockStatus {
   attempts: number;
 }
 
-/**
- * Limite de falhas antes do bloqueio, igual ao servidor
- * (`record_failed_login`: `v_max_attempts = 5`) e ao banner de
- * `src/pages/Auth.tsx` (`5 - attempts`). A Edge `auth-login` devolve `attempts`
- * (a contagem de falhas) na recusa 401/423; o contador sai SEMPRE desse valor —
- * nunca de uma checagem de conta no cliente.
- */
-export const MAX_LOGIN_ATTEMPTS = 5;
-
-/**
- * Quantas tentativas ainda restam antes do bloqueio, pelo valor que a Edge
- * enviou. Sem lock na resposta (edge indisponivel, rate limit com `attempts: 0`)
- * nao ha contagem e o retorno e 0 — o chamador nao inventa numero.
- */
-export function tentativasRestantesAteBloqueio(lock: LockStatus | null): number {
-  if (!lock || lock.isLocked) return 0;
-  if (lock.attempts <= 0 || lock.attempts >= MAX_LOGIN_ATTEMPTS) return 0;
-  return MAX_LOGIN_ATTEMPTS - lock.attempts;
-}
-
 export function useAuthForm() {
   const navigate = useNavigate();
-  const location = useLocation();
-  // Destino pedido antes do login: ?next= (link direto) ou state.from (o
-  // ProtectedRoute devolve a rota que expirou). Sem destino seguro, '/'.
-  const destinoPosLogin = resolverDestinoPosLogin(location);
-  const { user, signIn } = useAuth();
+  const { user, signIn, signUp } = useAuth();
   const { isSupported, isPlatformAuthenticatorAvailable, authenticateWithPasskey, loading: passkeyLoading } = useWebAuthn();
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('login');
   const [passkeyAvailable, setPasskeyAvailable] = useState(false);
   const [lockStatus, setLockStatus] = useState<LockStatus>({
     isLocked: false,
@@ -55,6 +44,7 @@ export function useAuthForm() {
     attempts: 0
   });
   const [formData, setFormData] = useState({
+    name: '',
     email: '',
     password: '',
   });
@@ -62,9 +52,9 @@ export function useAuthForm() {
 
   useEffect(() => {
     if (user && window.location.pathname === '/auth') {
-      navigate(destinoPosLogin);
+      navigate('/');
     }
-  }, [user, navigate, destinoPosLogin]);
+  }, [user, navigate]);
 
   useEffect(() => {
     // BUG-F3 FIX: guard against setState after unmount when the
@@ -135,9 +125,8 @@ export function useAuthForm() {
     let error: { message: string } | null = null;
     let via: 'edge' | 'direct' = 'direct';
     let lock: LockStatus | null = null;
-    let networkBlocked = false;
     try {
-      ({ error, via, lock, networkBlocked = false } = await signIn(credentials.email, credentials.password));
+      ({ error, via, lock } = await signIn(credentials.email, credentials.password));
     } finally {
       setLoading(false);
     }
@@ -153,27 +142,14 @@ export function useAuthForm() {
       setFormData((prev) => ({ ...prev, password: '' }));
       const campoSenha = formEl.querySelector<HTMLInputElement>('input[name="password"]');
       if (campoSenha) campoSenha.value = '';
-      if (networkBlocked) {
-        // Barrado pela politica de rede (IP/pais, R2-AUTH-022): mensagem propria,
-        // para nao ser confundido com senha errada nem com lockout de conta.
-        toast({ title: 'Acesso bloqueado', description: error.message, variant: 'destructive' });
-      } else if (lock?.isLocked) {
+      if (lock?.isLocked) {
         toast({ title: 'Conta bloqueada temporariamente', description: `Após ${lock.attempts} tentativas, sua conta foi bloqueada por ${formatLockTime(lock.remainingTime)}.`, variant: 'destructive' });
       } else {
-        // A Edge `auth-login` devolve `attempts` (falhas ja registradas) na recusa
-        // 401/423; o erro de senha passa a dizer quantas tentativas restam antes do
-        // bloqueio. O texto e o MESMO exista ou nao a conta — o numero sai so do
-        // valor da Edge e nenhum caminho aqui consulta a existencia do e-mail
-        // (sem enumeracao). Sem lock na resposta, a mensagem fica como sempre foi.
-        const restantes = tentativasRestantesAteBloqueio(lock);
-        const motivo = error.message === 'Invalid login credentials'
-          ? 'Email ou senha incorretos.'
-          : error.message;
         toast({
           title: 'Erro ao entrar',
-          description: restantes > 0
-            ? `${motivo} ${restantes} tentativa${restantes > 1 ? 's' : ''} restante${restantes > 1 ? 's' : ''} antes do bloqueio.`
-            : motivo,
+          description: error.message === 'Invalid login credentials'
+            ? 'Email ou senha incorretos.'
+            : error.message,
           variant: 'destructive',
         });
       }
@@ -183,34 +159,64 @@ export function useAuthForm() {
     }
   };
 
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrors({});
+    
+    const result = signupSchema.safeParse(formData);
+    if (!result.success) {
+      const fieldErrors: Record<string, string> = {};
+      result.error.issues.forEach((issue) => {
+        if (issue.path[0]) fieldErrors[issue.path[0] as string] = issue.message;
+      });
+      setErrors(fieldErrors);
+      return;
+    }
+
+    setLoading(true);
+    const { error } = await signUp(formData.email, formData.password, formData.name);
+    setLoading(false);
+
+    if (error) {
+      const errorMessage = error.message.includes('already registered') ? 'Este email já está cadastrado' : error.message;
+      toast({ title: 'Erro ao criar conta', description: errorMessage, variant: 'destructive' });
+    } else {
+      toast({ title: 'Conta criada!', description: 'Você já pode fazer login.' });
+      navigate('/');
+    }
+  };
+
   const handlePasskeyLogin = async () => {
     const result = await authenticateWithPasskey(formData.email || undefined);
-    if (!result.success || !result.token_hash) {
+    if (!result.success || !result.userId) {
       toast({ title: 'Erro ao entrar com Passkey', description: 'A autenticação com a passkey não foi concluída.', variant: 'destructive' });
       return;
     }
-    // A Edge (`verify-authentication`, PH-01) já validou a asserção e devolveu um
-    // `token_hash` de uso único. Trocamos esse token por sessão AQUI: o antigo
-    // `signInWithOtp` só ENVIAVA o link por e-mail e deixava o usuário sem sessão
-    // nenhuma — a tela protegida o devolvia ao /auth (item #71).
-    const { data, error } = await supabase.auth.verifyOtp({
-      token_hash: result.token_hash,
-      type: 'magiclink',
-    });
-    if (error || !data?.session) {
-      // Recusa genérica: não descreve o token nem o estado da conta (sem
-      // enumeração — não revela se a conta existe).
-      toast({
-        title: 'Erro ao entrar com Passkey',
-        description: 'Não foi possível concluir o login com a passkey. Tente novamente.',
-        variant: 'destructive',
-      });
+    if (!result.userEmail) {
+      toast({ title: 'Erro ao entrar com Passkey', description: 'Não foi possível identificar a conta para enviar o link de acesso.', variant: 'destructive' });
       return;
     }
-    // A sessão foi criada pelo próprio token — é a prova do login. O destino
-    // pós-login (inclui o gate de 2FA em rota, SH2) é o mesmo do login por senha.
-    toast({ title: 'Autenticado com Passkey!', description: 'Redirecionando...' });
-    navigate(destinoPosLogin);
+    const { error } = await supabase.auth.signInWithOtp({
+      email: result.userEmail,
+      options: { shouldCreateUser: false },
+    });
+    if (error) {
+      toast({ title: 'Erro ao entrar com Passkey', description: error.message, variant: 'destructive' });
+      return;
+    }
+    // signInWithOtp só ENVIA o link de acesso por e-mail — NÃO cria sessão.
+    // Anunciar "autenticado" e navegar aqui fazia o usuário ver o login
+    // concluído sem sessão nenhuma (a tela protegida o devolvia ao /auth).
+    // Só anuncia e navega quando existe sessão DE FATO e ela pertence ao
+    // usuário que a passkey validou: sessão de outra conta (login anterior,
+    // aparelho compartilhado) não prova este login.
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user?.id && session.user.id === result.userId) {
+      toast({ title: 'Autenticado com Passkey!', description: 'Redirecionando...' });
+      navigate('/');
+    } else {
+      toast({ title: 'Passkey verificada', description: 'Enviamos um link de acesso para o seu email. Abra o link para entrar.' });
+    }
   };
 
   const handleGoogleLogin = async () => {
@@ -232,6 +238,8 @@ export function useAuthForm() {
 
   return {
     loading,
+    activeTab,
+    setActiveTab,
     passkeyAvailable,
     passkeyLoading,
     lockStatus,
@@ -239,6 +247,7 @@ export function useAuthForm() {
     setFormData,
     errors,
     handleLogin,
+    handleSignUp,
     handlePasskeyLogin,
     handleGoogleLogin,
   };

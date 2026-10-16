@@ -1,16 +1,70 @@
+import { useState, useMemo, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
 import {
   TrendingUp, TrendingDown, Minus, Smile, Meh, Frown, AlertTriangle,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
+import { format, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { classifySentiment } from '@/lib/sentiment-classes';
 
-// A série da tendência mora em `src/hooks/dashboard/useSentimentTrend.ts`:
-// hook exportado de um arquivo que também exporta componentes quebra o fast
-// refresh (react-refresh/only-export-components). Este arquivo fica com os
-// componentes e segue reexportando o tipo `SentimentData` que já era daqui.
-export type { SentimentData } from '@/hooks/dashboard/useSentimentTrend';
+export interface SentimentData {
+  date: string;
+  positive: number;
+  neutral: number;
+  negative: number;
+  avg_score: number;
+  alerts_count: number;
+}
+
+export function useRealSentimentData(days: number): SentimentData[] | null {
+  const { data } = useQuery({
+    queryKey: ['sentiment-trend', days],
+    queryFn: async () => {
+      const startDate = subDays(new Date(), days);
+      const { data: analyses, error } = await supabase
+        .from('conversation_analyses')
+        .select('created_at, sentiment, sentiment_score')
+        .gte('created_at', startDate.toISOString())
+        .order('created_at');
+      
+      if (error) throw error;
+      if (!analyses || analyses.length === 0) return null;
+      
+      const dayMap = new Map<string, { positive: number; negative: number; neutral: number; total: number; alerts: number }>();
+      
+      analyses.forEach(a => {
+        const dateKey = format(new Date(a.created_at), 'yyyy-MM-dd');
+        if (!dayMap.has(dateKey)) dayMap.set(dateKey, { positive: 0, negative: 0, neutral: 0, total: 0, alerts: 0 });
+        const entry = dayMap.get(dateKey)!;
+        entry.total++;
+        // Classificação canônica: traduz o legado EN na leitura e soma `critico`
+        // no negativo. Desconhecido/ausente não entra em balde nenhum — antes o
+        // `else` final transformava crítico E desconhecido em 'neutro'
+        // (IA-SENTIMENT-001). O total do dia segue sendo o total REAL de
+        // análises, então a soma dos baldes pode ficar abaixo de 100%.
+        const classe = classifySentiment(a.sentiment);
+        if (classe === 'positivo') entry.positive++;
+        if (classe === 'negativo') { entry.negative++; entry.alerts++; }
+        if (classe === 'neutro') entry.neutral++;
+      });
+      
+      return Array.from(dayMap.entries()).map(([date, counts]) => ({
+        date,
+        positive: Math.round((counts.positive / counts.total) * 100),
+        neutral: Math.round((counts.neutral / counts.total) * 100),
+        negative: Math.round((counts.negative / counts.total) * 100),
+        avg_score: (counts.positive - counts.negative) / counts.total,
+        alerts_count: counts.alerts,
+      }));
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+  
+  return data ?? null;
+}
 
 export function SentimentIcon({ score }: { score: number }) {
   if (score >= 0.3) return <Smile className="w-5 h-5 text-success" />;

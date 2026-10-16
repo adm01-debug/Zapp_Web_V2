@@ -8,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   MessageSquare,
   GripVertical,
-  KanbanSquare,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
@@ -161,28 +160,9 @@ export function ContactKanbanView({ contacts, onContactClick }: ContactKanbanVie
     }
   }, [localContacts, queryClient]);
 
-  const isEmpty = localContacts.length === 0;
-
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
-      <div className="space-y-3">
-        <header className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <KanbanSquare className="w-5 h-5 text-primary" aria-hidden="true" />
-          <h2 className="font-display text-lg font-bold text-foreground">Pipeline</h2>
-          <p className="text-caption">Contatos agrupados por tipo; arraste o card para mudar a etapa comercial.</p>
-        </header>
-
-        {isEmpty ? (
-          <div
-            data-testid="contact-kanban-empty"
-            className="flex flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-border/60 bg-card/40 py-12 px-6 text-center"
-          >
-            <KanbanSquare className="w-6 h-6 text-muted-foreground" aria-hidden="true" />
-            <p className="text-sm font-semibold text-foreground">Sem etapa comercial</p>
-            <p className="text-caption max-w-xs">Nenhum contato para distribuir nas etapas nesta página.</p>
-          </div>
-        ) : (
-        <div className="flex gap-4 overflow-x-auto pb-4 min-h-[500px]">
+      <div className="flex gap-4 overflow-x-auto pb-4 min-h-[500px]">
         {columns.map((column, colIndex) => {
           const Icon = column.icon;
           return (
@@ -267,7 +247,7 @@ export function ContactKanbanView({ contacts, onContactClick }: ContactKanbanVie
                                     {contact.tags && contact.tags.length > 0 && (
                                       <div className="flex flex-wrap gap-1 mt-2 ml-6">
                                         {contact.tags.slice(0, 2).map(tag => (
-                                          <Badge key={tag} variant="secondary" className="text-3xs h-4 px-1">
+                                          <Badge key={tag} variant="secondary" className="text-[9px] h-4 px-1">
                                             {tag}
                                           </Badge>
                                         ))}
@@ -288,8 +268,6 @@ export function ContactKanbanView({ contacts, onContactClick }: ContactKanbanVie
             </motion.div>
           );
         })}
-        </div>
-        )}
       </div>
     </DragDropContext>
   );

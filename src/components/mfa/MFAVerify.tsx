@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Shield, Loader2 } from 'lucide-react';
 import { useMFA } from '@/hooks/auth/useMFA';
@@ -24,23 +24,10 @@ export function MFAVerify({
   const [code, setCode] = useState('');
   const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState('');
-  const inputRef = useRef<HTMLInputElement>(null);
 
-  // fetchFactors passou a relançar (PH-07): sem o catch o erro virava promise
-  // não tratada e a tela seguia dizendo "Nenhum fator MFA encontrado" — falta
-  // de dado apresentada como dado.
   useEffect(() => {
-    void fetchFactors().catch(() => {
-      setError('Não foi possível carregar seus métodos de verificação. Tente novamente.');
-    });
+    fetchFactors();
   }, [fetchFactors]);
-
-  // Depois de uma tentativa recusada o campo volta a ficar habilitado; sem o
-  // foco de volta a pessoa teria de clicar no input antes de digitar o próximo
-  // código.
-  useEffect(() => {
-    if (error) inputRef.current?.focus();
-  }, [error]);
 
   const handleVerify = async () => {
     if (code.length !== 6) return;
@@ -58,10 +45,7 @@ export function MFAVerify({
       await verifyTOTP(verifiedFactor.id, code);
       onSuccess?.();
     } catch (err: unknown) {
-      // O hook já traduz o erro do GoTrue para UMA mensagem pt-BR (distingue
-      // 'muitas tentativas' de 'código inválido'); a tela mostra essa mensagem
-      // em vez de rotular toda recusa como código inválido.
-      setError(err instanceof Error ? err.message : 'Código inválido. Tente novamente.');
+      setError('Código inválido. Tente novamente.');
       setCode('');
     } finally {
       setVerifying(false);
@@ -93,7 +77,6 @@ export function MFAVerify({
           <Label htmlFor="mfa-code">Código de Verificação</Label>
           <Input
             id="mfa-code"
-            ref={inputRef}
             type="text"
             inputMode="numeric"
             maxLength={6}
@@ -105,14 +88,10 @@ export function MFAVerify({
             }}
             className={`text-center text-2xl tracking-widest font-mono ${error ? 'border-destructive' : ''}`}
             disabled={verifying || loading}
-            aria-invalid={error ? true : undefined}
-            aria-describedby={error ? 'mfa-code-error' : undefined}
             autoFocus
           />
           {error && (
             <motion.p
-              id="mfa-code-error"
-              role="alert"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               className="text-sm text-destructive text-center"

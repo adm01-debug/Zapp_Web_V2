@@ -149,15 +149,10 @@ describe('TalkXSegmentBuilder · desfazer/refazer (X099)', () => {
     expect(screen.getByDisplayValue('VIP')).toBeInTheDocument();
   });
 
-  it('duplicar grupo copia as condições', async () => {
+  it('duplicar grupo copia as condições', () => {
     renderBuilder();
 
-    // X105 (TL-130): "Duplicar grupo" saiu do botão solto e entrou no menu "⋯"
-    // do grupo (mock 03) — abre o menu antes de clicar no item.
-    const menu = screen.getByRole('button', { name: 'Menu do grupo 1' });
-    fireEvent.pointerDown(menu);
-    fireEvent.click(menu);
-    fireEvent.click(await screen.findByRole('menuitem', { name: 'Duplicar grupo' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Duplicar grupo' }));
 
     expect(screen.getAllByDisplayValue('VIP')).toHaveLength(2);
   });

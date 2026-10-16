@@ -91,7 +91,7 @@ export function QuickRepliesManager({ onSelect, compact = false }: QuickRepliesM
               <motion.button key={template.id} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} onClick={() => handleSelect(template)} className="w-full p-2 text-left rounded-lg hover:bg-muted/50 transition-colors group">
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-sm truncate">{template.title}</span>
-                  <Star className={cn("w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity", isFavorite(template.id) && "opacity-100 fill-warning text-warning")}
+                  <Star className={cn("w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity", isFavorite(template.id) && "opacity-100 fill-yellow-400 text-warning")}
                     onClick={(e) => { e.stopPropagation(); toggleFavorite(template.id); }} />
                 </div>
                 <p className="text-xs text-muted-foreground truncate">{template.content}</p>

@@ -2,7 +2,6 @@ import { useState, useCallback } from 'react';
 import { supabase, SUPABASE_URL } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { WebhookTestResult, WebhookConfig, DiagnosticResult } from './types';
-import { motivoDeErro } from './types';
 
 export function useMonitoringActions(fetchData: () => Promise<void>) {
   const [refreshing, setRefreshing] = useState(false);
@@ -19,7 +18,7 @@ export function useMonitoringActions(fetchData: () => Promise<void>) {
       if (error) throw error;
       toast.success(`Health check: ${data?.connections?.length || 0} conexões verificadas`);
       await fetchData();
-    } catch (err) { toast.error(`Erro ao executar health check (${motivoDeErro(err)})`); }
+    } catch { toast.error('Erro ao executar health check'); }
     finally { setRefreshing(false); }
   }, [fetchData]);
 
@@ -51,7 +50,7 @@ export function useMonitoringActions(fetchData: () => Promise<void>) {
       if (error) throw error;
       const wh = data?.webhook || data;
       setWebhookConfig({ url: wh?.url || wh?.webhookUrl, events: wh?.events || [], configured: !!(wh?.url || wh?.webhookUrl) });
-    } catch (err) { setWebhookConfig({ configured: false }); toast.error(`Erro ao verificar webhook (${motivoDeErro(err)})`); }
+    } catch { setWebhookConfig({ configured: false }); toast.error('Erro ao verificar webhook'); }
   }, []);
 
   const reconfigureWebhook = useCallback(async (instanceId: string) => {
@@ -69,7 +68,7 @@ export function useMonitoringActions(fetchData: () => Promise<void>) {
       if (error) throw error;
       toast.success('Webhook reconfigurado!');
       await checkWebhookConfig(instanceId);
-    } catch (err) { toast.error('Erro: ' + motivoDeErro(err)); }
+    } catch (err) { toast.error('Erro: ' + (err instanceof Error ? err.message : 'desconhecido')); }
     finally { setReconfiguring(false); }
   }, [checkWebhookConfig]);
 
@@ -81,7 +80,7 @@ export function useMonitoringActions(fetchData: () => Promise<void>) {
       setDiagnostic(data as DiagnosticResult);
       toast.success(autoFix ? 'Diagnóstico + auto-fix concluído!' : 'Diagnóstico concluído!');
       if (autoFix) await fetchData();
-    } catch (err) { toast.error('Erro no diagnóstico (' + motivoDeErro(err) + ')'); }
+    } catch { toast.error('Erro no diagnóstico'); }
     finally { setDiagnosing(false); }
   }, [fetchData]);
 

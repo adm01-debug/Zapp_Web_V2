@@ -11,7 +11,6 @@ import {
 } from '../_shared/validation.ts';
 import { resolvePrivateBucketUrl } from '../_shared/evolution-api-proxy.ts';
 import { evoFetch, extractMessageId } from '../_shared/evolution-send.ts';
-import { resolveInstanceToken, type InstanceTokenClient } from '../_shared/evolution-instance-token.ts';
 import {
   EFFECT_MESSAGE_SEND,
   enqueueEffectReconcile,
@@ -26,7 +25,7 @@ type Claim = {
   contact_id: string;
   agent_id: string;
   content: string;
-  message_type: 'text' | 'image' | 'audio' | 'video' | 'document' | 'sticker' | 'location' | 'poll' | 'contact' | 'buttons' | 'list';
+  message_type: 'text' | 'image' | 'audio' | 'video' | 'document' | 'sticker' | 'location' | 'poll' | 'contact';
   media_url: string | null;
   caption: string | null;
   media_filename: string | null;
@@ -163,130 +162,9 @@ export function providerPayload(
         body: { ...base, contact: [contact], ...quoted },
       };
     }
-    case 'buttons': {
-      const body = richPayload?.body;
-      const title = richPayload?.title;
-      const footer = richPayload?.footer;
-      const buttons = richPayload?.buttons;
-      if (typeof body !== 'string' || body.trim().length < 1 || body.trim().length > 1024 ||
-          (title !== undefined && (typeof title !== 'string' || title.length > 60)) ||
-          (footer !== undefined && (typeof footer !== 'string' || footer.length > 60)) ||
-          !Array.isArray(buttons) || buttons.length < 1 || buttons.length > 3 ||
-          !buttons.every((button) => {
-            const b = asRecord(button);
-            if (!b) return false;
-            if (typeof b.type !== 'string' || !['reply', 'url', 'call'].includes(b.type)) return false;
-            if (typeof b.displayText !== 'string' || b.displayText.trim().length < 1 || b.displayText.trim().length > 20) return false;
-            if (b.id !== undefined && (typeof b.id !== 'string' || b.id.length > 256)) return false;
-            if (b.type === 'reply' && (typeof b.id !== 'string' || b.id.length < 1)) return false;
-            if (b.type === 'url' && (typeof b.url !== 'string' || b.url.length > 2048 || !/^https?:\/\//.test(b.url))) return false;
-            if (b.type === 'call' && (typeof b.phoneNumber !== 'string' || !/^\d{8,15}$/.test(b.phoneNumber.replace(/\D/g, '')))) return false;
-            return true;
-          })) {
-        throw new Error('invalid_buttons_payload');
-      }
-      return {
-        path: `/message/sendButtons/${claim.whatsapp_instance_name}`,
-        body: {
-          ...base,
-          ...(typeof title === 'string' && title.length > 0 ? { title } : {}),
-          description: body,
-          footer: typeof footer === 'string' && footer.length > 0 ? footer : ' ',
-          buttons: buttons.map((button) => {
-            const b = button as Record<string, unknown>;
-            return {
-              type: b.type,
-              displayText: b.displayText,
-              ...(typeof b.id === 'string' ? { id: b.id } : {}),
-              ...(typeof b.url === 'string' ? { url: b.url } : {}),
-              ...(typeof b.phoneNumber === 'string' ? { phoneNumber: b.phoneNumber.replace(/\D/g, '') } : {}),
-            };
-          }),
-          ...quoted,
-        },
-      };
-    }
-    case 'list': {
-      const body = richPayload?.body;
-      const title = richPayload?.title;
-      const footer = richPayload?.footer;
-      const buttonText = richPayload?.buttonText;
-      const sections = richPayload?.sections;
-      if (typeof body !== 'string' || body.trim().length < 1 || body.trim().length > 1024 ||
-          (title !== undefined && (typeof title !== 'string' || title.length > 60)) ||
-          (footer !== undefined && (typeof footer !== 'string' || footer.length > 60)) ||
-          typeof buttonText !== 'string' || buttonText.trim().length < 1 || buttonText.trim().length > 20 ||
-          !Array.isArray(sections) || sections.length < 1 || sections.length > 10 ||
-          !sections.every((section) => {
-            const s = asRecord(section);
-            if (!s) return false;
-            if (typeof s.title !== 'string' || s.title.trim().length < 1 || s.title.trim().length > 24) return false;
-            if (!Array.isArray(s.rows) || s.rows.length < 1 || s.rows.length > 10) return false;
-            return s.rows.every((row) => {
-              const r = asRecord(row);
-              if (!r) return false;
-              if (typeof r.title !== 'string' || r.title.trim().length < 1 || r.title.trim().length > 24) return false;
-              if (r.description !== undefined && (typeof r.description !== 'string' || r.description.length > 72)) return false;
-              return typeof r.id === 'string' && r.id.length >= 1 && r.id.length <= 256;
-            });
-          })) {
-        throw new Error('invalid_list_payload');
-      }
-      return {
-        path: `/message/sendList/${claim.whatsapp_instance_name}`,
-        body: {
-          ...base,
-          ...(typeof title === 'string' && title.length > 0 ? { title } : {}),
-          description: body,
-          footer: typeof footer === 'string' && footer.length > 0 ? footer : ' ',
-          buttonText,
-          sections: sections.map((section) => {
-            const s = section as Record<string, unknown>;
-            return {
-              title: s.title,
-              rows: (s.rows as Record<string, unknown>[]).map((row) => ({
-                title: row.title,
-                ...(typeof row.description === 'string' && row.description.length > 0 ? { description: row.description } : {}),
-                rowId: row.id,
-              })),
-            };
-          }),
-          ...quoted,
-        },
-      };
-    }
     default:
       throw new Error('unsupported_message_type');
   }
-}
-
-/**
- * E15 / TRA-002 (#18): entrega o outbound à Evolution com a credencial da
- * PRÓPRIA conexão do claim. O token sai de `get_instance_token` pelo
- * `whatsapp_instance_name` (Vault, E18/E19) — nunca da key global, que faria a
- * GO atender pela instância padrão. Sem token resolvido, `evoFetch` falha
- * fechado (400, antes de qualquer rede) em vez de emprestar a credencial da
- * padrão. `resolveInstanceToken` não lança: sem credencial segura devolve null.
- */
-export async function deliverOutbound(
-  service: InstanceTokenClient,
-  evolutionUrl: string,
-  evolutionKey: string,
-  outbound: { path: string; body: Record<string, unknown> },
-  instanceName: string,
-  fetcher?: (url: string, options: RequestInit) => Promise<Response>,
-): Promise<Response> {
-  const instanceToken = await resolveInstanceToken(service, instanceName);
-  return evoFetch(
-    evolutionUrl,
-    evolutionKey,
-    outbound.path,
-    outbound.body,
-    fetcher,
-    undefined,
-    undefined,
-    instanceToken ?? undefined,
-  );
 }
 
 async function failClaim(
@@ -409,8 +287,7 @@ export async function handleMessageDeliveryRequest(req: Request): Promise<Respon
       ? await resolvePrivateBucketUrl(caller, claim.media_url, undefined, supabaseUrl)
       : null;
     let richPayload: Record<string, unknown> | null = null;
-    if (claim.message_type === 'poll' || claim.message_type === 'contact'
-        || claim.message_type === 'buttons' || claim.message_type === 'list') {
+    if (claim.message_type === 'poll' || claim.message_type === 'contact') {
       const { data: messageMetadata, error: metadataError } = await service
         .from('messages')
         .select('media_meta')
@@ -422,9 +299,7 @@ export async function handleMessageDeliveryRequest(req: Request): Promise<Respon
     }
     const outbound = providerPayload(claim, mediaUrl, richPayload);
     providerPostAttempted = true;
-    const providerResponse = await deliverOutbound(
-      service, evolutionUrl, evolutionKey, outbound, claim.whatsapp_instance_name,
-    );
+    const providerResponse = await evoFetch(evolutionUrl, evolutionKey, outbound.path, outbound.body);
     const raw = await providerResponse.text();
     let providerData: unknown = null;
     try { providerData = raw ? JSON.parse(raw) : null; } catch { /* provider response is invalid */ }
@@ -466,11 +341,19 @@ export async function handleMessageDeliveryRequest(req: Request): Promise<Respon
       return errorResponse('Unable to persist delivery receipt', 502, req);
     }
 
-    // O SLA de 1ª resposta é registrado pelo trigger trg_messages_sla_first_response,
-    // disparado dentro de complete_outbound_message() quando a mensagem vira 'sent'
-    // (20260903225000 + 20261006211248). A RPC mark_first_response aqui era
-    // redundante e falhava sempre com 42501: ela exige auth.uid() e este caminho roda
-    // com service_role. Nada a fazer depois do recibo.
+    // This is intentionally best effort: delivery already has its durable
+    // receipt, so a metric failure must never turn a sent WhatsApp message into
+    // a client-visible send failure.
+    try {
+      const { error: metricError } = await service.rpc('mark_first_response', {
+        p_contact_id: claim.contact_id,
+      });
+      if (metricError) {
+        console.error(JSON.stringify({ event: 'message_delivery_metric_error', code: metricError.code }));
+      }
+    } catch {
+      console.error(JSON.stringify({ event: 'message_delivery_metric_error' }));
+    }
     return jsonResponse({ messageId: completed.id, status: completed.status, externalId, idempotent: false }, 200, req);
   } catch (error) {
     await failClaim(service, claim);

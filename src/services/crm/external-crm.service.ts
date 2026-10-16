@@ -5,6 +5,15 @@ import type { ContactSidebarData } from '@/types/contactSidebar';
 import type { ExternalDBFilter } from '@/types/externalDB';
 import type { EvolutionMessage } from '@/types/evolutionExternal';
 
+interface ContactSearchItem {
+  company_name?: string | null;
+  cargo?: string | null;
+}
+
+interface ContactSearchResponse {
+  results?: ContactSearchItem[];
+}
+ 
  export class ExternalCRMService {
    static async getContact360Batch(contacts: Array<{ id: string; phone: string }>) {
      const contactIds = [...new Set(contacts.map((contact) => contact.id).filter(Boolean))];
@@ -102,31 +111,78 @@ import type { EvolutionMessage } from '@/types/evolutionExternal';
      return data;
    }
  
-   /**
-    * Sugestões de empresa do formulário de contato (autocomplete).
-    *
-    * Fonte: ação estreita `companyNames` da Edge `crm-integration` (papel
-    * `view_contacts`) → `companies.nome_fantasia|nome_crm|razao_social`, já
-    * deduplicada/ordenada e com teto no servidor. Antes chamávamos
-    * `rpc`→`search_contacts_advanced` (admin-only): o atendente levava 403 a
-    * cada abertura do formulário e o supervisor baixava até 5×200 LINHAS de
-    * contato (nome, telefone) só para extrair um texto.
-    */
-   static async fetchUniqueCompanies(): Promise<string[]> {
-     const { data } = await callCRMIntegration<string[]>('companyNames');
-     return Array.isArray(data) ? data : [];
+   static async fetchUniqueCompanies(maxPages = 5, pageSize = 200) {
+     const allNames: string[] = [];
+     let page = 0;
+ 
+     while (page < maxPages) {
+       let data: ContactSearchResponse;
+       try {
+         ({ data } = await callCRMIntegration<ContactSearchResponse>('rpc', {
+           rpc: 'search_contacts_advanced',
+           params: {
+             p_search: null, p_vendedor: null, p_ramo: null, p_rfm_segment: null,
+             p_estado: null, p_cliente_ativado: true, p_ja_comprou: null,
+             p_sort_by: 'name', p_page: page, p_page_size: pageSize,
+           },
+         }));
+       } catch (error) {
+         log.error('[ExternalCRMService] Error fetching companies:', error);
+         break;
+       }
+ 
+       const results = data?.results || [];
+       if (results.length === 0) break;
+ 
+       results.forEach((r) => {
+         const name = String(r.company_name || '').trim();
+         if (name) allNames.push(name);
+       });
+ 
+       if (results.length < pageSize) break;
+       page++;
+     }
+ 
+     return [...new Set(allNames)].sort((a, b) => a.localeCompare(b, 'pt-BR'));
    }
-
-   /**
-    * Sugestões de cargo do formulário de contato (autocomplete).
-    *
-    * Fonte: ação estreita `roleNames` da Edge `crm-integration` (papel
-    * `view_contacts`) → `salespeople.role`, já deduplicada/ordenada no servidor.
-    * Mesma troca de fonte do `fetchUniqueCompanies`: antes o RPC admin-only
-    * devolvia linhas de contato e o atendente não recebia nada.
-    */
-   static async fetchUniqueRoles(): Promise<string[]> {
-     const { data } = await callCRMIntegration<string[]>('roleNames');
-     return Array.isArray(data) ? data : [];
+ 
+   static async fetchUniqueRoles() {
+     const allCargos: string[] = [];
+ 
+     let salesRoles: Array<{ role: string | null }> = [];
+     try {
+       const response = await callCRMIntegration<Array<{ role: string | null }>>('select', {
+         table: 'salespeople', select: 'role', limit: 500,
+       });
+       salesRoles = response.data || [];
+     } catch (error) {
+       log.error('[ExternalCRMService] Error fetching sales roles:', error);
+     }
+     if (salesRoles) {
+       salesRoles.forEach((r) => {
+         const v = String(r.role || '').trim();
+         if (v) allCargos.push(v);
+       });
+     }
+ 
+     let searchData: ContactSearchResponse | null = null;
+     try {
+       const response = await callCRMIntegration<ContactSearchResponse>('rpc', {
+         rpc: 'search_contacts_advanced',
+         params: { p_cliente_ativado: true, p_page: 0, p_page_size: 200 },
+       });
+       searchData = response.data;
+     } catch (error) {
+       log.error('[ExternalCRMService] Error fetching role facets:', error);
+     }
+     if (searchData) {
+       const results = searchData.results || [];
+       results.forEach((r) => {
+         const v = String(r.cargo || '').trim();
+         if (v) allCargos.push(v);
+       });
+     }
+ 
+     return [...new Set(allCargos)].sort((a, b) => a.localeCompare(b, 'pt-BR'));
    }
-}
+ }

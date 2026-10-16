@@ -27,9 +27,9 @@ describe('etapa 45 — useTasksFilters', () => {
     window.history.replaceState(null, '', '/');
   });
 
-  it('nasce dos parâmetros da URL — menos ?q=, que nunca restaura a busca (SEC-FRONTEND-05)', () => {
+  it('nasce dos parâmetros da URL', () => {
     const { result } = renderFiltros('?q=liga&prio=high&alarm=1&done=0');
-    expect(result.current.filters).toEqual({ q: '', prio: 'high', contact: null, alarm: true, done: false, due: 'all' });
+    expect(result.current.filters).toEqual({ q: 'liga', prio: 'high', contact: null, alarm: true, done: false });
     expect(result.current.isActive).toBe(true);
   });
 
@@ -53,7 +53,7 @@ describe('etapa 45 — useTasksFilters', () => {
     act(() => { result.current.toggleAlarm(); });
     act(() => { result.current.toggleDone(); });
 
-    expect(result.current.filters).toEqual({ q: '', prio: 'urgent', contact: 'c7', alarm: true, done: false, due: 'all' });
+    expect(result.current.filters).toEqual({ q: '', prio: 'urgent', contact: 'c7', alarm: true, done: false });
 
     const url = new URLSearchParams(window.location.search);
     expect(url.get('prio')).toBe('urgent');
@@ -110,23 +110,11 @@ describe('etapa 45 — useTasksFilters', () => {
     // vazio e a URL nunca recebia `q`: a lista não recortava o que o campo prometia.
     expect(result.current.filters.q).toBe('liga');
     expect(result.current.filters.prio).toBe('high');
-    expect(new URLSearchParams(window.location.search).get('q')).toBeNull();
+    expect(new URLSearchParams(window.location.search).get('q')).toBe('liga');
     expect(result.current.isActive).toBe(true);
   });
 
-  it('o texto de busca nao vai para a URL; demais filtros continuam espelhados', () => {
-    const { result } = renderFiltros();
-
-    act(() => { result.current.setSearch('liga'); });
-    act(() => { result.current.setPrio('high'); });
-    act(() => { vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS); });
-
-    expect(result.current.filters.q).toBe('liga');
-    expect(new URLSearchParams(window.location.search).get('q')).toBeNull();
-    expect(new URLSearchParams(window.location.search).get('prio')).toBe('high');
-  });
-
-  it('SEC-FRONTEND-05: deep-link com ?q= reidrata os filtros estruturados, mas NÃO a busca', () => {
+  it('Fase F: deep-link que chega DEPOIS de montar reidrata os filtros (o router manda)', () => {
     let ir: (to: string) => void = () => {};
     const Espiao = () => { ir = useNavigate(); return null; };
 
@@ -143,10 +131,9 @@ describe('etapa 45 — useTasksFilters', () => {
 
     act(() => { ir('/?q=liga&prio=high'); });
 
+    expect(result.current.filters.q).toBe('liga');
     expect(result.current.filters.prio).toBe('high');
-    // o texto livre nunca volta da URL (PII)...
-    expect(result.current.filters.q).toBe('');
-    expect(result.current.textoDaBusca).toBe('');
+    expect(result.current.textoDaBusca).toBe('liga');
   });
 
   it('nao desfaz a navegacao por pushState: a base e a URL real, nao o location obsoleto do router', () => {

@@ -1,27 +1,25 @@
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent } from '@/components/ui/card';
-import { Smartphone, Mail, ArrowRight, Fingerprint, Loader2, Lock, AlertTriangle } from 'lucide-react';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { MessageSquareDot, Mail, User, ArrowRight, Fingerprint, Loader2, Lock, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { RippleButton } from '@/components/ui/micro-interactions';
 import { PasswordInput } from '@/components/auth/PasswordInput';
+import { PasswordStrengthMeter } from '@/components/auth/PasswordStrengthMeter';
 import { SocialProof } from '@/components/auth/SocialProof';
 import { HeroBenefits } from '@/components/auth/HeroBenefits';
 import { useAuthForm } from '@/hooks/auth/useAuthForm';
 import { GOOGLE_OAUTH_ENABLED } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
-import heroWorldmap from '@/assets/hero-worldmap.jpg';
 
 export default function Auth() {
   const {
-    loading, passkeyAvailable, passkeyLoading,
+    loading, activeTab, setActiveTab, passkeyAvailable, passkeyLoading,
     lockStatus, formData, setFormData, errors,
-    handleLogin, handlePasskeyLogin, handleGoogleLogin,
+    handleLogin, handleSignUp, handlePasskeyLogin, handleGoogleLogin,
   } = useAuthForm();
-
-  // Movimento reduzido: a marca entra sem deslocar nada.
-  const prefersReducedMotion = useReducedMotion() ?? false;
 
   return (
     <main
@@ -30,30 +28,17 @@ export default function Auth() {
       aria-label="Acesso à plataforma"
       className="relative flex min-h-dvh overflow-x-hidden overflow-y-auto bg-background focus:outline-none"
     >
-      {/* Ambient background — mapa-múndi sob véu de tokens, atrás do conteúdo */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
-        {/* Imagem do mapa: cobre a página, decorativa e sem captura de foco/clique.
-            Claro = discreta; escuro = bem visível (opacidade por classe dark:). */}
-        <img
-          src={heroWorldmap}
-          alt=""
-          draggable={false}
-          loading="eager"
-          decoding="async"
-          data-testid="auth-fundo-mapa"
-          className="h-full w-full object-cover object-center opacity-30 dark:opacity-70"
-        />
-        {/* Véu por token — contraste AA em claro e escuro, sem cor literal */}
-        <div className="absolute inset-0 bg-gradient-to-br from-background/85 via-background/60 to-background/90 dark:from-background/70 dark:via-background/50 dark:to-background/80" />
+      {/* Ambient background — subtle, never competes with content */}
+      <div className="pointer-events-none absolute inset-0">
         <motion.div
           animate={{ opacity: [0.18, 0.28, 0.18] }}
           transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute -top-48 -left-32 h-[34rem] w-[34rem] rounded-full bg-primary/15 blur-[120px]"
+          className="absolute -top-48 -left-32 h-[34rem] w-[34rem] rounded-full bg-primary/25 blur-[120px]"
         />
         <motion.div
           animate={{ opacity: [0.12, 0.22, 0.12] }}
           transition={{ duration: 11, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute -bottom-40 right-1/3 h-[28rem] w-[28rem] rounded-full bg-secondary/10 blur-[120px]"
+          className="absolute -bottom-40 right-1/3 h-[28rem] w-[28rem] rounded-full bg-secondary/20 blur-[120px]"
         />
         <div
           className="absolute inset-0 opacity-[0.025]"
@@ -82,33 +67,58 @@ export default function Auth() {
           transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           className="m-auto w-full max-w-[440px]"
         >
-          {/* Marca — mesmo desenho da V3: ícone grande, título e subtítulo centralizados */}
-          <motion.div
-            initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: prefersReducedMotion ? 0 : 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className="mb-8 text-center"
-          >
-            <div
-              className="relative mx-auto mb-5 flex h-24 w-24 items-center justify-center rounded-[2rem] shadow-2xl shadow-primary/25"
-              style={{ background: 'var(--gradient-primary)' }}
-            >
-              <Smartphone className="h-12 w-12 text-primary-foreground" />
+          {/* Compact brand lockup — no more giant icon */}
+          <div className="mb-8 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div
+                className="flex h-9 w-9 items-center justify-center rounded-xl shadow-lg shadow-primary/25"
+                style={{ background: 'var(--gradient-primary)' }}
+              >
+                <MessageSquareDot className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <div className="leading-tight">
+                <div className="font-display text-base font-bold tracking-tight text-foreground">
+                  ZAPP Web
+                </div>
+                <div className="text-3xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                  Suite v2
+                </div>
+              </div>
             </div>
-            <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">
-              ZAPP Web
-            </h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Plataforma omnichannel para atendimento
+            <div className="flex items-center gap-1.5 rounded-full border border-border/40 bg-card/40 px-2.5 py-1 backdrop-blur-sm">
+              <ShieldCheck className="h-3 w-3 text-success" />
+              <span className="text-3xs font-semibold uppercase tracking-widest text-muted-foreground">
+                Seguro
+              </span>
+            </div>
+          </div>
+
+          {/* Title above the card — more editorial hierarchy */}
+          <div className="mb-5">
+            <h2 className="font-display text-3xl font-bold leading-tight tracking-tight text-foreground">
+              {activeTab === 'login' ? 'Bem-vindo de volta' : 'Crie sua conta'}
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {activeTab === 'login'
+                ? 'Acesse seu painel e continue de onde parou.'
+                : 'Comece em segundos. Sem cartão de crédito.'}
             </p>
-          </motion.div>
+          </div>
 
           {/* Card */}
           <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }}>
             <Card className="glass-strong overflow-hidden border-border/50 shadow-2xl shadow-primary/10">
-              <CardContent className="pt-6">
-                  {/* LOGIN */}
-                  <div className="mt-0">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <CardHeader className="pb-0">
+                  <TabsList className="grid w-full grid-cols-2 glass border border-border/30">
+                    <TabsTrigger value="login" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">Entrar</TabsTrigger>
+                    <TabsTrigger value="signup" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">Criar Conta</TabsTrigger>
+                  </TabsList>
+                </CardHeader>
+
+                <CardContent className="pt-6">
+                  {/* LOGIN TAB */}
+                  <TabsContent value="login" className="mt-0">
                     <AnimatePresence>
                       {lockStatus.isLocked && (
                         <motion.div initial={{ opacity: 0, scale: 0.95, y: -10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: -10 }} className="mb-4 p-4 rounded-lg bg-destructive/10 border border-destructive/20">
@@ -142,7 +152,10 @@ export default function Auth() {
                       )}
                     </AnimatePresence>
 
-                    <form onSubmit={handleLogin} className="space-y-4">
+                    {/* noValidate: quem valida é o zod do useAuthForm (mensagem em PT-BR com
+                        role="alert"). Sem ele o balão nativo do `type="email"` barra o envio
+                        antes, em inglês e fora do leitor de tela. */}
+                    <form onSubmit={handleLogin} noValidate className="space-y-4">
                       <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }} className="space-y-2">
                         <Label htmlFor="login-email" className="text-sm font-medium">Email</Label>
                         <div className="relative group">
@@ -162,48 +175,39 @@ export default function Auth() {
                       </motion.div>
                       
                       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }} className="pt-1">
-                        <RippleButton type="submit" variant="primary" className="group inline-flex w-full items-center justify-center rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/30 transition-all hover:shadow-primary/50" disabled={loading}>
+                        <RippleButton type="submit" variant="primary" className="group w-full rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/30 transition-all hover:shadow-primary/50" disabled={loading}>
                           {loading ? <motion.span animate={{ opacity: [0.5, 1, 0.5] }} transition={{ duration: 1.5, repeat: Infinity }}>Entrando...</motion.span> : <>Entrar<ArrowRight className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1" /></>}
                         </RippleButton>
                       </motion.div>
                     </form>
 
-                    {/* Entrada alternativa — largura total, na ordem da V3 */}
-                    <div className="mt-5 space-y-4">
-                      {passkeyAvailable && (
-                        <>
-                          <div className="relative flex items-center gap-3">
-                            <div className="h-px flex-1 bg-border/40" />
-                            <span className="text-3xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                              ou
-                            </span>
-                            <div className="h-px flex-1 bg-border/40" />
-                          </div>
+                    {/* Alternative sign-in — compact horizontal */}
+                    <div className="mt-5">
+                      <div className="relative my-4 flex items-center gap-3">
+                        <div className="h-px flex-1 bg-border/40" />
+                        <span className="text-3xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                          ou continue com
+                        </span>
+                        <div className="h-px flex-1 bg-border/40" />
+                      </div>
+                      <div className={passkeyAvailable && GOOGLE_OAUTH_ENABLED ? 'grid grid-cols-2 gap-2' : ''}>
+                        {passkeyAvailable && (
                           <Button
                             type="button"
                             variant="outline"
-                            className="h-11 w-full gap-2 rounded-xl border-border/50 hover:bg-muted/50"
+                            className="h-11 gap-2 rounded-xl border-border/50 hover:bg-muted/50"
                             disabled={passkeyLoading}
                             onClick={handlePasskeyLogin}
                           >
                             {passkeyLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Fingerprint className="h-4 w-4" />}
-                            <span className="text-sm font-medium">Entrar com Passkey</span>
+                            <span className="text-sm font-medium">Passkey</span>
                           </Button>
-                        </>
-                      )}
-                      {GOOGLE_OAUTH_ENABLED && (
-                        <>
-                          <div className="relative flex items-center gap-3">
-                            <div className="h-px flex-1 bg-border/40" />
-                            <span className="text-3xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                              ou continue com
-                            </span>
-                            <div className="h-px flex-1 bg-border/40" />
-                          </div>
+                        )}
+                        {GOOGLE_OAUTH_ENABLED && (
                           <Button
                             type="button"
                             variant="outline"
-                            className="h-11 w-full gap-2 rounded-xl border-border/50 hover:bg-muted/50"
+                            className="h-11 gap-2 rounded-xl border-border/50 hover:bg-muted/50"
                             onClick={handleGoogleLogin}
                           >
                             <svg className="h-4 w-4" viewBox="0 0 24 24">
@@ -212,22 +216,62 @@ export default function Auth() {
                             <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
                             <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                             </svg>
-                            <span className="text-sm font-medium">Entrar com Google</span>
+                            <span className="text-sm font-medium">Google</span>
                           </Button>
-                        </>
-                      )}
+                        )}
+                      </div>
                     </div>
                     <SocialProof />
-                    <p className="mt-5 text-center text-xs text-muted-foreground">
-                      Não tem acesso? Peça ao administrador da sua equipe.
-                    </p>
-                  </div>
+                  </TabsContent>
+
+                  {/* SIGNUP TAB */}
+                  <TabsContent value="signup" className="mt-0">
+                    <form onSubmit={handleSignUp} noValidate className="space-y-4">
+                      <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }} className="space-y-2">
+                        <Label htmlFor="signup-name" className="text-sm font-medium">Nome</Label>
+                        <div className="relative group">
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                          <Input id="signup-name" type="text" placeholder="Seu nome" maxLength={100} className="pl-10 glass border-border/50 focus:border-primary/50 focus:ring-primary/20 transition-all" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
+                        </div>
+                        <AnimatePresence>{errors.name && <motion.p role="alert" aria-live="polite" initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }} className="text-xs text-destructive">{errors.name}</motion.p>}</AnimatePresence>
+                      </motion.div>
+                      
+                      <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.6 }} className="space-y-2">
+                        <Label htmlFor="signup-email" className="text-sm font-medium">Email</Label>
+                        <div className="relative group">
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                          <Input id="signup-email" type="email" placeholder="seu@email.com" maxLength={255} className="pl-10 glass border-border/50 focus:border-primary/50 focus:ring-primary/20 transition-all" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
+                        </div>
+                        <AnimatePresence>{errors.email && <motion.p initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }} className="text-xs text-destructive">{errors.email}</motion.p>}</AnimatePresence>
+                      </motion.div>
+                      
+                      <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.7 }} className="space-y-2">
+                        <Label htmlFor="signup-password" className="text-sm font-medium">Senha</Label>
+                        <PasswordInput id="signup-password" maxLength={200} value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} />
+                        <AnimatePresence><PasswordStrengthMeter password={formData.password} /></AnimatePresence>
+                        <AnimatePresence>{errors.password && <motion.p initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }} className="text-xs text-destructive">{errors.password}</motion.p>}</AnimatePresence>
+                      </motion.div>
+                      
+                      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} className="pt-1">
+                        <Button type="submit" className="group h-12 w-full rounded-xl text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition-all hover:shadow-primary/40" style={{ background: 'var(--gradient-primary)' }} disabled={loading}>
+                          {loading ? <motion.span animate={{ opacity: [0.5, 1, 0.5] }} transition={{ duration: 1.5, repeat: Infinity }}>Criando conta...</motion.span> : <>Criar Conta<ArrowRight className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1" /></>}
+                        </Button>
+                      </motion.div>
+
+                      <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9 }} className="text-xs text-center text-muted-foreground mt-4">
+                        Ao criar uma conta, você concorda com nossos{' '}
+                        <button type="button" className="text-primary hover:underline">Termos de Uso</button>{' '}e{' '}
+                        <button type="button" className="text-primary hover:underline">Política de Privacidade</button>
+                      </motion.p>
+                    </form>
+                  </TabsContent>
                 </CardContent>
+              </Tabs>
             </Card>
           </motion.div>
 
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} className="mt-8 text-center text-2xs text-muted-foreground">
-            © {new Date().getFullYear()} Promo Brindes. Todos os direitos reservados.
+            © {new Date().getFullYear()} ZAPP Web · Todos os direitos reservados
           </motion.p>
         </motion.div>
       </div>

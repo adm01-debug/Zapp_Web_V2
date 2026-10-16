@@ -124,14 +124,12 @@ describe('usePersonalStickers — figurinha pessoal sobe em WebP (item 069)', ()
     expect(mocks.upload).toHaveBeenCalledTimes(1);
     const [caminho, arquivo, opcoes] = mocks.upload.mock.calls[0] as [string, File, { contentType: string }];
     // Antes da correção o caminho terminava em `.png` e o contentType era image/png.
-    // O primeiro segmento é `auth.uid()` (u-1) — a RLS do bucket chaveia por ele,
-    // e não pelo `profiles.id` (p-1).
-    expect(caminho).toMatch(/^u-1\/[\w-]+\.webp$/);
+    expect(caminho).toMatch(/^pessoal\/p-1\/[\w-]+\.webp$/);
     expect(arquivo.type).toBe('image/webp');
     expect(opcoes.contentType).toBe('image/webp');
     expect(navegador.codificar.mock.calls[0][0]).toMatchObject({ type: 'image/webp' });
     expect(mocks.toastError).not.toHaveBeenCalled();
-    expect(inserted[0]).toMatchObject({ category: 'pessoal', owner_id: 'p-1', uploaded_by: 'u-1' });
+    expect(inserted[0]).toMatchObject({ category: 'pessoal', owner_id: 'p-1', uploaded_by: 'p-1' });
   });
 
   it('figurinha que já é WebP sobe como veio, sem reencode', async () => {

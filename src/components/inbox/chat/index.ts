@@ -1,3 +1,4 @@
+export { ChatHeader } from './ChatHeader';
 export { ChatMessageInput, type ChatMessageInputRef } from './ChatMessageInput';
 export { ChatDialogs } from './ChatDialogs';
 export { ChatPanelHeader } from './ChatPanelHeader';

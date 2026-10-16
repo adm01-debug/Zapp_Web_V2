@@ -248,29 +248,6 @@ describe('Sidebar — acessibilidade alcançável pela interface', () => {
 });
 
 /**
- * U12 — os 3 botões da barra lateral (recolher, voltar, notificações)
- * tinham 28 px de área clicável, abaixo do mínimo de 44 px para
- * ponteiro grosso (pointer: coarse). No modo expandido o botão visível
- * continua com 28 px e só sob ponteiro de toque cresce para 44 px
- * ([@media(pointer:coarse)]:min-w/min-h) — com mouse (pointer: fine) nada muda,
- * mantendo o ícone no tamanho visual original.
- */
-describe('Sidebar — botões com área clicável ≥ 44 px só sob toque (pointer: coarse)', () => {
-  it('o botão "Recolher menu" mantém 28 px no desktop e cresce só sob (pointer: coarse)', () => {
-    renderSidebar();
-    const btn = screen.getByRole('button', { name: 'Recolher menu' });
-    expect(btn).not.toBeNull();
-    const tokens = btn.className.split(/\s+/);
-    expect(tokens).toContain('w-[28px]');
-    expect(tokens).toContain('h-[28px]');
-    expect(tokens).toContain('[@media(pointer:coarse)]:min-w-[44px]');
-    expect(tokens).toContain('[@media(pointer:coarse)]:min-h-[44px]');
-    expect(tokens).not.toContain('min-w-[44px]');
-    expect(tokens).not.toContain('min-h-[44px]');
-  });
-});
-
-/**
  * U01 — selo do item Email. O dono vê na barra lateral quantas conversas de e-mail
  * ainda não foram lidas (todas as contas, via RLS). O item Email não tinha selo; o
  * Chat (`inboxBadge`) e o Tarefas (`useMyWorkItemsBadgeInfo`) já tinham, e a regra
@@ -337,66 +314,5 @@ describe('Sidebar — selo do item Email (U01)', () => {
     expect(seloTarefas.className).not.toContain('bg-destructive');
 
     expect(within(itemDaBarra(container, 'email-chat')).getByText('4')).not.toBeNull();
-  });
-});
-
-/**
- * PE-31 — selo do item Teams (título do cartão: "selo de não lidas do Teams").
- * O total vem de `useInboxUnreadTotal().teams` (mesma fonte da aba Times) e a
- * página o entrega em `teamsBadge`, do mesmo jeito que `inboxBadge`. Regra do
- * número é a mesma dos outros selos: 0/ausente = sem selo, > 99 = "99+".
- */
-describe('Sidebar — selo do item Teams (PE-31)', () => {
-  const itemDaBarra = (container: HTMLElement, id: string) =>
-    container.querySelector(`[data-tour="${id}"]`) as HTMLElement;
-
-  it('mostra o total de não lidas do Teams, na cor do Chat', () => {
-    const { container } = renderSidebar({ currentView: 'team-chat', onViewChange: vi.fn(), teamsBadge: 6 });
-
-    const teams = itemDaBarra(container, 'team-chat');
-    expect(teams).not.toBeNull();
-    const selo = within(teams).getByText('6');
-    expect(selo.className).toContain('bg-destructive');
-    expect(selo.className).not.toContain('bg-warning');
-    // nome acessível: quem usa leitor de tela ouve a quantidade, não só "Teams"
-    expect(teams.getAttribute('aria-label')).toBe('Teams (6 não lidas)');
-  });
-
-  it('sem não lidas no Teams (0/ausente) o item fica sem selo', () => {
-    const { container } = renderSidebar();
-
-    const teams = itemDaBarra(container, 'team-chat');
-    expect(teams).not.toBeNull();
-    expect(teams.querySelector('.bg-destructive')).toBeNull();
-    expect(teams.getAttribute('aria-label')).toBe('Teams');
-  });
-
-  it('total 0 também não desenha selo (0 não é selo, é ausência)', () => {
-    const { container } = renderSidebar({ currentView: 'inbox', onViewChange: vi.fn(), teamsBadge: 0 });
-
-    const teams = itemDaBarra(container, 'team-chat');
-    expect(teams.querySelector('.bg-destructive')).toBeNull();
-    expect(teams.getAttribute('aria-label')).toBe('Teams');
-  });
-
-  it('acima de 99 o selo mostra "99+"', () => {
-    const { container } = renderSidebar({ currentView: 'inbox', onViewChange: vi.fn(), teamsBadge: 137 });
-
-    expect(within(itemDaBarra(container, 'team-chat')).getByText('99+')).not.toBeNull();
-  });
-
-  it('o selo do Teams não troca o do Chat nem aparece em outro item', () => {
-    fontes.emailUnread = { count: 4, status: 'ok' };
-    const { container } = renderSidebar({
-      currentView: 'inbox',
-      onViewChange: vi.fn(),
-      inboxBadge: 5,
-      teamsBadge: 6,
-    });
-
-    expect(within(itemDaBarra(container, 'inbox')).getByText('5')).not.toBeNull();
-    expect(within(itemDaBarra(container, 'team-chat')).getByText('6')).not.toBeNull();
-    // Tasks continua com o contador dele (e a cor dele)
-    expect(itemDaBarra(container, 'tasks')).not.toBeNull();
   });
 });

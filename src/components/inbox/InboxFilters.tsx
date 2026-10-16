@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { SlidersHorizontal, X, Calendar, User, MessageCircle, Users, Headphones, Inbox, RefreshCw } from 'lucide-react';
+import { SlidersHorizontal, X, Calendar, User, Tag, MessageCircle, Users, Headphones, Inbox, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -21,6 +21,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { appDayEnd, appDayStart, appMonthStart } from '@/lib/localDay';
 import { ptBR } from 'date-fns/locale';
+import { useInboxFilterTags } from '@/hooks/inbox/useInboxFilterTags';
 import { useAgents } from '@/hooks/crm/useAgents';
 import { useUserRole } from '@/hooks/system/useUserRole';
 import { useQueues } from '@/hooks/business/useQueues';
@@ -28,6 +29,7 @@ import { FILTER_OPTIONS } from './ContactTypeFilter';
 
 export interface InboxFiltersState {
   status: string[];
+  tags: string[];
   agentId: string | null;
   dateRange: {
     from: Date | null;
@@ -71,33 +73,19 @@ export function InboxFilters({
 }: InboxFiltersProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { agents } = useAgents();
+  const { data: tags = [] } = useInboxFilterTags();
   const { isAdmin, isSupervisor } = useUserRole();
   const { queues } = useQueues();
   const canShowAll = isAdmin || isSupervisor;
 
   const activeFiltersCount =
     filters.status.length +
+    filters.tags.length +
     (filters.agentId ? 1 : 0) +
     (filters.dateRange.from ? 1 : 0) +
-    (selectedContactType && selectedContactType !== 'all' ? 1 : 0) +
+    (selectedContactType ? 1 : 0) +
     (selectedQueueId ? 1 : 0) +
     (showAll ? 1 : 0);
-
-  // 'Todos os tipos' (valor 'all') é ausência de filtro: o botão fica marcado
-  // com `null` (estado inicial) e a URL legada com `'all'` também é reconhecida.
-  const isContactTypeSelected = (value: string) =>
-    (selectedContactType ?? 'all') === value;
-
-  const isDatePresetSelected = (preset: typeof DATE_PRESETS[number]) => {
-    if (!filters.dateRange.from || !filters.dateRange.to) return false;
-    const range = preset.getValue();
-    return (
-      !!range.from &&
-      !!range.to &&
-      range.from.getTime() === filters.dateRange.from.getTime() &&
-      range.to.getTime() === filters.dateRange.to.getTime()
-    );
-  };
 
   const triggerBadgeCount = activeFiltersCount;
 
@@ -108,8 +96,15 @@ export function InboxFilters({
     onFiltersChange({ ...filters, status: newStatus });
   }, [filters, onFiltersChange]);
 
+  const toggleTag = useCallback((tagId: string) => {
+    const newTags = filters.tags.includes(tagId)
+      ? filters.tags.filter(t => t !== tagId)
+      : [...filters.tags, tagId];
+    onFiltersChange({ ...filters, tags: newTags });
+  }, [filters, onFiltersChange]);
+
   const clearFilters = useCallback(() => {
-    onFiltersChange({ status: [], agentId: null, dateRange: { from: null, to: null } });
+    onFiltersChange({ status: [], tags: [], agentId: null, dateRange: { from: null, to: null } });
     if (onShowAllChange) onShowAllChange(false);
     if (onContactTypeChange) onContactTypeChange(null);
     if (onQueueChange) onQueueChange(null);
@@ -159,14 +154,13 @@ export function InboxFilters({
               <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1">
                 <MessageCircle className="h-3 w-3" /> Status
               </Label>
-              <div className="flex flex-wrap gap-1" role="group" aria-label="Status">
+              <div className="flex flex-wrap gap-1">
                 {STATUS_OPTIONS.map(opt => (
                   <Button
                     key={opt.value}
                     variant={filters.status.includes(opt.value) ? 'default' : 'outline'}
                     size="sm"
                     className="h-7 text-xs"
-                    aria-pressed={filters.status.includes(opt.value)}
                     onClick={() => toggleStatus(opt.value)}
                   >
                     {opt.icon} {opt.label}
@@ -184,15 +178,14 @@ export function InboxFilters({
                   <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1">
                     <Users className="h-3 w-3" /> Tipo de Contato
                   </Label>
-                  <div className="flex flex-wrap gap-1" role="group" aria-label="Tipo de Contato">
+                  <div className="flex flex-wrap gap-1">
                     {FILTER_OPTIONS.map(opt => (
                       <Button
                         key={opt.value ?? 'all'}
-                        variant={isContactTypeSelected(opt.value) ? 'default' : 'outline'}
+                        variant={selectedContactType === opt.value ? 'default' : 'outline'}
                         size="sm"
                         className="h-7 text-xs"
-                        aria-pressed={isContactTypeSelected(opt.value)}
-                        onClick={() => onContactTypeChange(opt.value === 'all' ? null : opt.value)}
+                        onClick={() => onContactTypeChange(opt.value)}
                       >
                         {opt.label}
                       </Button>
@@ -214,7 +207,7 @@ export function InboxFilters({
                     value={selectedQueueId ?? 'all'}
                     onValueChange={v => onQueueChange(v === 'all' ? null : v)}
                   >
-                    <SelectTrigger className="h-8 text-xs" aria-label="Fila">
+                    <SelectTrigger className="h-8 text-xs">
                       <SelectValue placeholder="Todas as filas" />
                     </SelectTrigger>
                     <SelectContent>
@@ -224,6 +217,31 @@ export function InboxFilters({
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+                <Separator />
+              </>
+            )}
+
+            {/* Etiquetas */}
+            {tags.length > 0 && (
+              <>
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                    <Tag className="h-3 w-3" /> Etiquetas
+                  </Label>
+                  <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto">
+                    {tags.map(tag => (
+                      <Button
+                        key={tag.id}
+                        variant={filters.tags.includes(tag.id) ? 'default' : 'outline'}
+                        size="sm"
+                        className="h-7 text-xs"
+                        onClick={() => toggleTag(tag.id)}
+                      >
+                        {tag.name}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
                 <Separator />
               </>
@@ -240,7 +258,7 @@ export function InboxFilters({
                     value={filters.agentId ?? 'all'}
                     onValueChange={v => onFiltersChange({ ...filters, agentId: v === 'all' ? null : v })}
                   >
-                    <SelectTrigger className="h-8 text-xs" aria-label="Agente">
+                    <SelectTrigger className="h-8 text-xs">
                       <SelectValue placeholder="Todos os agentes" />
                     </SelectTrigger>
                     <SelectContent>
@@ -259,7 +277,6 @@ export function InboxFilters({
                     checked={showAll}
                     onCheckedChange={onShowAllChange}
                     className="scale-75"
-                    aria-label="Mostrar todos"
                   />
                 </div>
                 <Separator />
@@ -271,14 +288,13 @@ export function InboxFilters({
               <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1">
                 <Calendar className="h-3 w-3" /> Período
               </Label>
-              <div className="flex flex-wrap gap-1" role="group" aria-label="Período">
+              <div className="flex flex-wrap gap-1">
                 {DATE_PRESETS.map(preset => (
                   <Button
                     key={preset.label}
-                    variant={isDatePresetSelected(preset) ? 'default' : 'outline'}
+                    variant="outline"
                     size="sm"
                     className="h-7 text-xs"
-                    aria-pressed={isDatePresetSelected(preset)}
                     onClick={() => onFiltersChange({ ...filters, dateRange: preset.getValue() })}
                   >
                     {preset.label}

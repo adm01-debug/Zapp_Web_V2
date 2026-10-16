@@ -35,9 +35,9 @@ const PERIOD_OPTIONS = [
 
 export function AdvancedReportsView() {
   const {
-    period, setPeriod, selectedAgent, setSelectedAgent,
+    period, setPeriod, selectedAgent, setSelectedAgent, selectedTag, setSelectedTag,
     compareEnabled, setCompareEnabled,
-    agents, dateRange, previousDateRange,
+    agents, tags, dateRange, previousDateRange,
     chartData, previousChartData, comparisonSummary, contactsChartData, stats,
     isLoading, isError, isIncomplete, error, getExportData,
   } = useReportsData();
@@ -58,7 +58,7 @@ export function AdvancedReportsView() {
             <BarChart3 className="w-7 h-7 text-primary" />
             Relatórios Avançados
           </h1>
-          <p className="text-muted-foreground mt-1">Análise detalhada de atendimentos por período e agente</p>
+          <p className="text-muted-foreground mt-1">Análise detalhada de atendimentos por período, agente e tags</p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
           <div className="flex items-center gap-2 px-3 py-2 bg-muted/50 rounded-lg border">
@@ -67,13 +67,13 @@ export function AdvancedReportsView() {
             <Switch id="compare-mode" checked={compareEnabled} onCheckedChange={setCompareEnabled} />
           </div>
           <Select value={period} onValueChange={setPeriod}>
-            <SelectTrigger aria-label="Período" className="w-40"><Calendar className="w-4 h-4 mr-2" /><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-40"><Calendar className="w-4 h-4 mr-2" /><SelectValue /></SelectTrigger>
             <SelectContent>
               {PERIOD_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={selectedAgent} onValueChange={setSelectedAgent}>
-            <SelectTrigger aria-label="Agente" className="w-40"><Users className="w-4 h-4 mr-2" /><SelectValue placeholder="Agente" /></SelectTrigger>
+            <SelectTrigger className="w-40"><Users className="w-4 h-4 mr-2" /><SelectValue placeholder="Agente" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos os agentes</SelectItem>
               {agents.map(agent => <SelectItem key={agent.id} value={agent.id}>{agent.name}</SelectItem>)}

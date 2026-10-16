@@ -49,7 +49,7 @@ export const MessageStatusIcon = memo(function MessageStatusIcon({ status, class
       return (
         <CheckCheck
           className={cn(
-            'w-[14px] h-[14px] text-info transition-all duration-500 ease-out',
+            'w-[14px] h-[14px] text-[#53bdeb] transition-all duration-500 ease-out',
             className
           )}
           strokeWidth={2.5}

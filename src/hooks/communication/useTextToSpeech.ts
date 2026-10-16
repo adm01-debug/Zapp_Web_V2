@@ -7,45 +7,6 @@ import { attachMediaVolume } from '@/lib/mediaVolumeElement';
 // Default voice: Custom voice from Voice Library
 const DEFAULT_VOICE_ID = 'TY3h8ANhQUsJaa0Bga5F';
 
-/**
- * HZ3-004-A — voz LOCAL do dispositivo (Web Speech API). Escolhida nos preferências, ela
- * lê no próprio navegador: o texto da mensagem NÃO sai do sistema. As vozes premium
- * (ElevenLabs) só entram quando o agente escolhe uma delas (`tts_voice_id`), e nesse caso
- * o seletor avisa que o texto é enviado ao provedor.
- */
-export const LOCAL_VOICE_ID = 'local';
-/** Voz do dispositivo escolhida pelo URI/nome do sintetizador: `local:<voiceURI>`. */
-export const LOCAL_VOICE_PREFIX = 'local:';
-/**
- * Teto de texto aceito pela Edge `elevenlabs-tts` (`ElevenLabsTTSSchema`: `z.string().max(5000)`).
- * Aplicado no cliente para o pedido premium não voltar 400 com o texto do cliente dentro.
- */
-export const MAX_TTS_TEXT_LENGTH = 5000;
-
-/** A voz vigente é do dispositivo (sem preferência também cai aqui)? */
-export function isLocalVoiceId(voiceId?: string): boolean {
-  return !voiceId || voiceId === LOCAL_VOICE_ID || voiceId.startsWith(LOCAL_VOICE_PREFIX);
-}
-
-/** 429 (limite), 5xx (inclui chave ausente e flag de IA desligada) caem para a voz local. */
-export function deveCairParaVozLocal(status: number): boolean {
-  return status === 429 || status >= 500;
-}
-
-function getSpeechSynthesis(): SpeechSynthesis | null {
-  if (typeof window === 'undefined') return null;
-  return window.speechSynthesis ?? null;
-}
-
-/** Resolve a voz do dispositivo pelo URI/nome configurado (`local:<voiceURI>`). */
-function resolveDeviceVoice(synth: SpeechSynthesis, voiceId: string): SpeechSynthesisVoice | null {
-  if (!voiceId.startsWith(LOCAL_VOICE_PREFIX)) return null;
-  const alvo = voiceId.slice(LOCAL_VOICE_PREFIX.length).trim();
-  if (!alvo) return null;
-  const vozes = typeof synth.getVoices === 'function' ? synth.getVoices() : [];
-  return vozes.find((v) => v.voiceURI === alvo || v.name === alvo) ?? null;
-}
-
 interface UseTextToSpeechOptions {
   initialVoiceId?: string;
   initialSpeed?: number;
@@ -63,13 +24,6 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
   const [currentMessageId, setCurrentMessageId] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioUrlRef = useRef<string | null>(null);
-  /**
-   * HZ3-004-A — fala local vigente. Guarda o texto, a mensagem e o trecho ainda não lido
-   * (só a troca de velocidade ao vivo precisa retomar do ponto: a Web Speech não aceita
-   * mudar a taxa durante a fala).
-   */
-  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
-  const localSpeechRef = useRef<{ texto: string; messageId?: string; lido: number } | null>(null);
   /**
    * R2-INB-041 — cleanup do bind de volume (subscribers do store + ganho WebAudio) da
    * fala vigente. Fica numa ref porque o `detach` devolvido por `attachMediaVolume` se
@@ -109,23 +63,6 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
   }, [initialSpeed]);
 
   /**
-   * HZ3-004-A — cancela a fala local vigente (idempotente). Só mexe no sintetizador
-   * quando existe fala NOSSA em curso: não derruba a fala de outro componente que use
-   * `speechSynthesis` por conta própria.
-   */
-  const stopLocalSpeech = useCallback(() => {
-    const utterance = utteranceRef.current;
-    if (!utterance) return;
-    utterance.onstart = null;
-    utterance.onboundary = null;
-    utterance.onend = null;
-    utterance.onerror = null;
-    utteranceRef.current = null;
-    localSpeechRef.current = null;
-    getSpeechSynthesis()?.cancel();
-  }, []);
-
-  /**
    * R2-INB-041 — solta a fala corrente de modo idempotente: pausa, desliga os handlers,
    * executa o `detach` do bind de volume, revoga a URL e limpa as refs. Não mexe em estado
    * React para poder rodar também no cleanup de unmount.
@@ -146,8 +83,7 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
       URL.revokeObjectURL(audioUrlRef.current);
       audioUrlRef.current = null;
     }
-    stopLocalSpeech();
-  }, [stopLocalSpeech]);
+  }, []);
 
   // R2-INB-040 — invalida a geração vigente: o que estiver em voo não cria mais Audio
   // (a resposta é descartada) e o pedido HTTP é abortado.
@@ -159,69 +95,6 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
     }
   }, []);
 
-  /**
-   * HZ3-004-A — assume a voz do dispositivo: a fala local passa a ser a geração vigente
-   * (um pedido de rede atrasado não pode tomar a reprodução) e o texto é lido no navegador,
-   * sem chamada nenhuma à Edge. `lido` retoma do trecho não lido e `rate` aplica a
-   * velocidade vigente.
-   */
-  const startLocalSpeech = useCallback(
-    (texto: string, messageId?: string, lido = 0, rate = speed) => {
-      const synth = getSpeechSynthesis();
-      const Utterance = typeof SpeechSynthesisUtterance !== 'undefined' ? SpeechSynthesisUtterance : null;
-      localSpeechRef.current = null;
-      if (!synth || !Utterance) {
-        if (mountedRef.current) toast.error('Voz do dispositivo não disponível neste navegador');
-        return;
-      }
-
-      invalidatePending();
-      const requestId = requestIdRef.current;
-
-      const utterance = new Utterance(texto.slice(lido));
-      utterance.rate = rate;
-      const voz = resolveDeviceVoice(synth, voiceId);
-      if (voz) utterance.voice = voz;
-
-      utteranceRef.current = utterance;
-      localSpeechRef.current = { texto, messageId, lido };
-
-      utterance.onstart = () => {
-        if (requestIdRef.current !== requestId || !mountedRef.current) return;
-        setIsLoading(false);
-        setIsPlaying(true);
-      };
-      utterance.onboundary = (evento) => {
-        if (utteranceRef.current !== utterance) return;
-        localSpeechRef.current = { texto, messageId, lido: lido + (evento.charIndex || 0) };
-      };
-      utterance.onend = () => {
-        if (utteranceRef.current !== utterance) return;
-        utteranceRef.current = null;
-        localSpeechRef.current = null;
-        if (!mountedRef.current) return;
-        setIsLoading(false);
-        setIsPlaying(false);
-        setCurrentMessageId(null);
-      };
-      utterance.onerror = () => {
-        if (utteranceRef.current !== utterance) return;
-        utteranceRef.current = null;
-        localSpeechRef.current = null;
-        if (!mountedRef.current) return;
-        setIsLoading(false);
-        setIsPlaying(false);
-        setCurrentMessageId(null);
-        toast.error('Erro ao usar a voz do dispositivo');
-      };
-
-      setCurrentMessageId(messageId || null);
-      setIsLoading(true);
-      synth.speak(utterance);
-    },
-    [voiceId, speed, invalidatePending],
-  );
-
   const stop = useCallback(() => {
     invalidatePending();
     releasePlayback();
@@ -232,8 +105,7 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
   }, [invalidatePending, releasePlayback]);
 
   // R2-INB-040/R2-INB-041 — desmontar invalida o pedido em voo e solta o player/bind
-  // vigente sem tentar gravar estado React depois que o hook saiu da árvore. HZ3-004-A:
-  // a fala local é cancelada no sintetizador (o navegador continuaria lendo sem isso).
+  // vigente sem tentar gravar estado React depois que o hook saiu da árvore.
   useEffect(() => {
     mountedRef.current = true;
     return () => {
@@ -256,16 +128,8 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
     if (audioRef.current) {
       audioRef.current.playbackRate = clampedSpeed;
     }
-    // HZ3-004-A — troca ao vivo na voz local: o sintetizador não aceita mudar a taxa no meio
-    // da fala, então o trecho ainda não lido recomeça na velocidade nova.
-    const falaLocal = localSpeechRef.current;
-    if (falaLocal) {
-      const restante = falaLocal.texto.slice(falaLocal.lido);
-      stopLocalSpeech();
-      if (restante.trim()) startLocalSpeech(falaLocal.texto, falaLocal.messageId, falaLocal.lido, clampedSpeed);
-    }
     onSpeedChange?.(clampedSpeed);
-  }, [initialSpeed, onSpeedChange, startLocalSpeech, stopLocalSpeech]);
+  }, [initialSpeed, onSpeedChange]);
 
   const speak = useCallback(async (text: string, messageId?: string) => {
     // Invalida a geração anterior (aborta o fetch em voo e libera o Audio) e assume a
@@ -288,27 +152,12 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
       return;
     }
 
-    // HZ3-004-A — caminho padrão: a voz do dispositivo lê no navegador, sem rede e sem
-    // mandar o texto da mensagem para fora do sistema.
-    if (isLocalVoiceId(voiceId)) {
-      startLocalSpeech(cleanText, messageId);
-      return;
-    }
-
     const requestId = requestIdRef.current;
     const controller = new AbortController();
     abortRef.current = controller;
 
     setIsLoading(true);
     setCurrentMessageId(messageId || null);
-
-    // HZ3-004-B — teto do servidor aplicado no cliente: acima dele a Edge responderia 400 e
-    // o pedido carregaria o texto inteiro do cliente para depois ser recusado.
-    const textoPedido =
-      cleanText.length > MAX_TTS_TEXT_LENGTH ? cleanText.slice(0, MAX_TTS_TEXT_LENGTH) : cleanText;
-    if (textoPedido.length !== cleanText.length) {
-      toast.info(`Mensagem longa: a voz premium lê os primeiros ${MAX_TTS_TEXT_LENGTH} caracteres`);
-    }
 
     try {
       const endpoint = useStreaming
@@ -323,7 +172,7 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
             ...(await edgeAuthHeaders()),
           },
           body: JSON.stringify({ 
-            text: textoPedido,
+            text: cleanText,
             voiceId
           }),
           signal: controller.signal,
@@ -332,15 +181,6 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        // HZ3-004-B — 429 (limite) e 5xx (chave ausente, provedor fora, IA desligada por flag)
-        // caem para a voz local em vez de só mostrar toast: o agente continua ouvindo.
-        if (deveCairParaVozLocal(response.status)) {
-          if (requestIdRef.current !== requestId || !mountedRef.current) return;
-          log.warn('TTS premium indisponível; caindo para a voz do dispositivo', { status: response.status });
-          toast.info('Voz premium indisponível: usando a voz do dispositivo');
-          startLocalSpeech(cleanText, messageId);
-          return;
-        }
         throw new Error(errorData.error || 'Erro ao gerar áudio');
       }
 
@@ -402,11 +242,10 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
       }
     } finally {
       if (abortRef.current === controller) abortRef.current = null;
-      // Só a geração vigente desliga o próprio loading: a obsoleta não mexe no estado
-      // (a queda para a voz local já assumiu a geração e mantém o loading da fala).
+      // Só a geração vigente desliga o próprio loading: a obsoleta não mexe no estado.
       if (requestIdRef.current === requestId && mountedRef.current) setIsLoading(false);
     }
-  }, [voiceId, speed, useStreaming, stop, releasePlayback, startLocalSpeech]);
+  }, [voiceId, speed, useStreaming, stop, releasePlayback]);
 
   return {
     speak,

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { TrendingDown, Users, AlertTriangle, Brain, RefreshCw, Loader2, ArrowUpRight, ArrowDownRight, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,6 @@ import { toast } from 'sonner';
 import { format, differenceInDays, subDays } from 'date-fns';
 import { normalizeSentiment } from '@/lib/ai-vocabulary';
 import { ptBR } from 'date-fns/locale';
-import { cn } from '@/lib/utils';
 
 interface ChurnRisk {
   contactId: string;
@@ -47,8 +46,6 @@ const computeStats = (list: ChurnRisk[]) => ({
 });
 
 export function ChurnPredictionDashboard() {
-  // CT-70 — com "reduzir movimento" ligado, a lista entra já no estado final.
-  const prefersReducedMotion = useReducedMotion();
   const [risks, setRisks] = useState<ChurnRisk[]>([]);
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
@@ -208,21 +205,16 @@ export function ChurnPredictionDashboard() {
       case 'critical': return 'bg-destructive text-destructive-foreground';
       case 'high': return 'bg-warning text-warning-foreground';
       case 'medium': return 'bg-accent text-accent-foreground';
-      case 'low': return 'bg-success text-success-foreground';
+      case 'low': return 'bg-primary text-primary-foreground';
       default: return 'bg-muted text-muted-foreground';
     }
   };
 
-  // Cor da BARRA pela mesma severidade do badge. O indicador do `Progress` é o
-  // primeiro div filho, então a cor vai pelo seletor de filho. Antes a barra era
-  // sempre azul (bg-primary do indicador) e risco baixo também usava bg-primary:
-  // a barra e o badge ficavam fora do padrão de severidade mínima (verde/success,
-  // como em AutoTicketClassifier) — e esta função existia mas nunca era chamada.
   const getRiskProgressColor = (score: number) => {
-    if (score >= 80) return '[&>div]:bg-destructive';
-    if (score >= 60) return '[&>div]:bg-warning';
-    if (score >= 30) return '[&>div]:bg-accent';
-    return '[&>div]:bg-success';
+    if (score >= 80) return 'bg-destructive';
+    if (score >= 60) return 'bg-warning';
+    if (score >= 30) return 'bg-accent';
+    return 'bg-success';
   };
 
   return (
@@ -295,8 +287,8 @@ export function ChurnPredictionDashboard() {
                 risks.filter(r => r.riskScore > 20).slice(0, 50).map((risk) => (
                   <motion.div
                     key={risk.contactId}
-                    initial={prefersReducedMotion ? false : { opacity: 0, x: -10 }}
-                    animate={prefersReducedMotion ? undefined : { opacity: 1, x: 0 }}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
                     className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
                   >
                     <Badge className={`${getRiskColor(risk.riskLevel)} text-xs shrink-0`}>
@@ -308,8 +300,8 @@ export function ChurnPredictionDashboard() {
                     </div>
                     <div className="w-24 hidden md:block">
                       <Progress 
-                        value={risk.riskScore}
-                        className={cn('h-2', getRiskProgressColor(risk.riskScore))}
+                        value={risk.riskScore} 
+                        className="h-2"
                       />
                     </div>
                     <div className="text-right shrink-0">

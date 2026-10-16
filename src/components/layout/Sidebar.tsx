@@ -25,8 +25,6 @@ interface SidebarProps {
   currentView: string;
   onViewChange: (view: string) => void;
   inboxBadge?: number;
-  /** PE-31 — selo do item Teams: mesmo total da aba Times (título do cartão). */
-  teamsBadge?: number;
   profile?: { name?: string | null; avatar_url?: string | null } | null;
   userEmail?: string;
   signOut?: () => void;
@@ -38,7 +36,6 @@ export const Sidebar = React.memo(function Sidebar({
   currentView,
   onViewChange,
   inboxBadge,
-  teamsBadge,
   profile,
   userEmail,
   signOut,
@@ -111,7 +108,7 @@ export const Sidebar = React.memo(function Sidebar({
         {!collapsed && <NotificationsPopover />}
         {!collapsed && (
           <Tooltip delayDuration={200}><TooltipTrigger asChild>
-            <button onClick={toggle} className="w-[28px] h-[28px] rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none [@media(pointer:coarse)]:min-w-[44px] [@media(pointer:coarse)]:min-h-[44px]" aria-label="Recolher menu">
+            <button onClick={toggle} className="w-[28px] h-[28px] rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none" aria-label="Recolher menu">
               <PanelLeftClose className="w-[15px] h-[15px]" />
             </button>
           </TooltipTrigger><TooltipContent side="right" sideOffset={8} className="text-xs">Recolher <kbd className="ml-1 px-1 py-0.5 rounded bg-muted text-3xs font-mono">⌘B</kbd></TooltipContent></Tooltip>
@@ -148,7 +145,6 @@ export const Sidebar = React.memo(function Sidebar({
                   onViewChange={onViewChange}
                   badge={
                     item.id === 'inbox' ? inboxBadge
-                      : item.id === 'team-chat' ? teamsBadge
                       : item.id === 'tasks' ? tasksBadgeInfo.count
                       : item.id === 'email-chat' ? emailUnread.count
                       : undefined

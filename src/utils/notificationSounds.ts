@@ -74,14 +74,11 @@ export const requestNotificationPermission = async (): Promise<boolean> => {
 export const showBrowserNotification = (
   title: string,
   body: string,
-  options?: { icon?: string; tag?: string; onClick?: () => void; requireInteraction?: boolean }
+  options?: { icon?: string; tag?: string; onClick?: () => void }
 ) => {
   if ('Notification' in window && Notification.permission === 'granted') {
     const notification = new Notification(title, {
       body, icon: options?.icon || '/favicon.ico', badge: '/favicon.ico', tag: options?.tag || 'notification',
-      // Alerta crítico (War Room) pede para ficar na tela até o operador agir — mesmo
-      // campo que o caminho antigo (`usePushNotifications.showNotification`) usava.
-      requireInteraction: options?.requireInteraction ?? false,
     });
     if (options?.onClick) {
       notification.onclick = () => { window.focus(); options.onClick?.(); notification.close(); };

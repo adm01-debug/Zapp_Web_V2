@@ -82,7 +82,6 @@ Estabelecer as diretrizes de retenção, arquivamento e exclusão de dados pesso
 | `campaign_contacts` | Operacional | 2 anos | Legítimo interesse | Excluir |
 | `scheduled_messages` | Operacional | 90 dias | Legítimo interesse | Excluir |
 | `chatbot_executions` | Operacional | 90 dias | Legítimo interesse | Excluir |
-| `voice_command_logs` | Log de comando de voz (transcrição) | 90 dias | Legítimo interesse | Excluir |
 
 ### 4.4 Dados de Segurança
 
@@ -176,25 +175,7 @@ WHERE created_at < NOW() - INTERVAL '30 days';
 -- 6. Limpar password_reset_requests > 30 dias
 DELETE FROM password_reset_requests 
 WHERE created_at < NOW() - INTERVAL '30 days';
-
--- 7. Limpar voice_command_logs > 90 dias (log de comando de voz)
---    Função de expurgo em lote, repetível: cada chamada apaga em lotes de até p_limit
---    linhas vencidas (teto de 100 lotes por chamada); chamar de novo até retornar
---    deleted = 0. Só service_role executa.
---    p_retention_days é opcional (default 90): omitido ou NULL, vale 90.
-SELECT public.purge_voice_command_logs(p_retention_days => 90, p_limit => 1000);
 ```
-
-**Auditoria do item 7 (o que auditar e como demonstrar):**
-- O que auditar: (a) transcrição/resposta acima de 2000 caracteres são recusadas;
-  (b) o titular apaga SOMENTE os próprios registros (DELETE de outro retorna 0 linhas);
-  (c) o expurgo remove só linhas com mais de 90 dias, em lote e de forma repetível;
-  (d) só `service_role` executa o expurgo.
-- Como demonstrar: rodar `supabase/tests/voice_command_logs_lgpd.sql` no banco local
-  descartável da tarefa (`zapp-db-local psql -v ON_ERROR_STOP=1 . <nome-do-banco> < supabase/tests/voice_command_logs_lgpd.sql`);
-  a saída termina em `OK — voice_command_logs_lgpd: todas as provas (T1..T13) passaram`.
-  A prova roda em transação com ROLLBACK e exercita os papéis reais
-  (`authenticated` com `request.jwt.claims`, `anon`, `service_role`).
 
 ---
 

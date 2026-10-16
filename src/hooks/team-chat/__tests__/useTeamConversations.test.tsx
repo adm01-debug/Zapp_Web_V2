@@ -17,9 +17,7 @@ const { auth, handlers, cliente } = vi.hoisted(() => ({
     from: vi.fn(),
     rpc: vi.fn(),
   },
-  cliente: {
-    canal: null as { on: ReturnType<typeof vi.fn>; subscribe: ReturnType<typeof vi.fn> } | null,
-  },
+  cliente: { canal: null as { on: ReturnType<typeof vi.fn>; subscribe: ReturnType<typeof vi.fn> } | null },
 }));
 
 vi.mock('@/hooks/auth/useAuth', () => ({ useAuth: () => ({ profile: auth.profile }) }));
@@ -95,15 +93,6 @@ const conversa = (over: Partial<Record<string, unknown>> = {}) => ({
   ...over,
 });
 
-const inboxLinha = (conversationId: string, over: Partial<Record<string, unknown>> = {}) => ({
-  conversation_id: conversationId,
-  last_message_at: null,
-  last_message_text: null,
-  last_sender_id: null,
-  unread_count: 0,
-  ...over,
-});
-
 function render(queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })) {
   const wrapper = ({ children }: { children: React.ReactNode }) =>
     React.createElement(QueryClientProvider, { client: queryClient }, children);
@@ -119,9 +108,7 @@ beforeEach(() => {
     const fila = filas.get(tabela) ?? [];
     return builder(fila.shift() ?? { data: [], error: null });
   });
-  handlers.rpc.mockImplementation((nome: string) =>
-    Promise.resolve(rpcRespostas.get(nome) ?? { data: [], error: null })
-  );
+  handlers.rpc.mockImplementation((nome: string) => Promise.resolve(rpcRespostas.get(nome) ?? { data: [], error: null }));
   handlers.removeChannel.mockReset();
   vi.clearAllMocks();
 });
@@ -138,40 +125,36 @@ describe('lista de conversas', () => {
     expect(result.current.data).toBeUndefined();
   });
 
-  it('sem conversa no inbox não busca tabela nenhuma', async () => {
-    rpcRespostas.set('get_team_inbox', { data: [], error: null });
+  it('sem participação não busca conversa nenhuma', async () => {
+    enfileirar('team_conversation_members', { data: [], error: null });
     const { result } = render();
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toEqual([]);
-    expect(handlers.rpc).toHaveBeenCalledWith('get_team_inbox');
-    expect(handlers.from).not.toHaveBeenCalled();
+    expect(handlers.from).toHaveBeenCalledTimes(1);
   });
 
-  it('erro ao ler o inbox vira erro da consulta', async () => {
-    rpcRespostas.set('get_team_inbox', { data: null, error: { message: 'permission denied' } });
+  it('erro ao ler as participações vira erro da consulta', async () => {
+    enfileirar('team_conversation_members', { data: null, error: { message: 'permission denied' } });
     const { result } = render();
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect((result.current.error as { message: string }).message).toBe('permission denied');
   });
 
   it('erro ao ler as conversas também vira erro (não devolve lista vazia)', async () => {
-    rpcRespostas.set('get_team_inbox', { data: [inboxLinha('c1')], error: null });
+    enfileirar('team_conversation_members', { data: [membroDe('c1', 'p1')], error: null });
     enfileirar('team_conversations', { data: null, error: { message: 'RLS negou' } });
     const { result } = render();
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect((result.current.error as { message: string }).message).toBe('RLS negou');
   });
 
-  it('busca as conversas pelos ids do inbox, da mais recente para a mais antiga', async () => {
-    rpcRespostas.set('get_team_inbox', { data: [inboxLinha('c1'), inboxLinha('c2')], error: null });
-    enfileirar('team_conversation_members', {
-      data: [membroDe('c1', 'p1'), membroDe('c1', 'p2'), membroDe('c2', 'p1')],
-      error: null,
-    });
-    enfileirar('team_conversations', {
-      data: [conversa({ id: 'c1' }), conversa({ id: 'c2' })],
-      error: null,
-    });
+  it('busca as conversas pelos ids das participações, da mais recente para a mais antiga', async () => {
+    enfileirar(
+      'team_conversation_members',
+      { data: [membroDe('c1', 'p1'), membroDe('c2', 'p1')], error: null },
+      { data: [membroDe('c1', 'p1'), membroDe('c1', 'p2'), membroDe('c2', 'p1')], error: null },
+    );
+    enfileirar('team_conversations', { data: [conversa({ id: 'c1' }), conversa({ id: 'c2' })], error: null });
 
     const { result } = render();
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -184,20 +167,14 @@ describe('lista de conversas', () => {
   });
 
   it('conversa direta sem nome usa o nome do outro participante e o avatar dele', async () => {
-    rpcRespostas.set('get_team_inbox', { data: [inboxLinha('c1')], error: null });
-    enfileirar('team_conversation_members', {
-      data: [
-        membroDe('c1', 'p1', {
-          id: 'p1',
-          name: 'Ana',
-          email: 'ana@ex.com',
-          avatar_url: null,
-          is_active: true,
-        }),
-        membroDe('c1', 'p2'),
-      ],
-      error: null,
-    });
+    enfileirar(
+      'team_conversation_members',
+      { data: [membroDe('c1', 'p1'), membroDe('c1', 'p2')], error: null },
+      {
+        data: [membroDe('c1', 'p1', { id: 'p1', name: 'Ana', email: 'ana@ex.com', avatar_url: null, is_active: true }), membroDe('c1', 'p2')],
+        error: null,
+      },
+    );
     enfileirar('team_conversations', { data: [conversa()], error: null });
 
     const { result } = render();
@@ -210,8 +187,11 @@ describe('lista de conversas', () => {
   });
 
   it('conversa direta sem o perfil do outro cai em "Chat Direto"', async () => {
-    rpcRespostas.set('get_team_inbox', { data: [inboxLinha('c1')], error: null });
-    enfileirar('team_conversation_members', { data: [membroDe('c1', 'p1', null)], error: null });
+    enfileirar(
+      'team_conversation_members',
+      { data: [membroDe('c1', 'p1')], error: null },
+      { data: [membroDe('c1', 'p1', null)], error: null },
+    );
     enfileirar('team_conversations', { data: [conversa()], error: null });
 
     const { result } = render();
@@ -221,11 +201,11 @@ describe('lista de conversas', () => {
   });
 
   it('conversa de grupo mantém o próprio nome e avatar', async () => {
-    rpcRespostas.set('get_team_inbox', { data: [inboxLinha('c1')], error: null });
-    enfileirar('team_conversation_members', {
-      data: [membroDe('c1', 'p1'), membroDe('c1', 'p2')],
-      error: null,
-    });
+    enfileirar(
+      'team_conversation_members',
+      { data: [membroDe('c1', 'p1')], error: null },
+      { data: [membroDe('c1', 'p1'), membroDe('c1', 'p2')], error: null },
+    );
     enfileirar('team_conversations', {
       data: [conversa({ type: 'group', name: 'Suporte N1', avatar_url: 'https://cdn/grupo.png' })],
       error: null,
@@ -240,26 +220,36 @@ describe('lista de conversas', () => {
   });
 
   it('monta a prévia da última mensagem e a contagem de não lidas', async () => {
-    rpcRespostas.set('get_team_inbox', {
+    enfileirar(
+      'team_conversation_members',
+      { data: [membroDe('c1', 'p1')], error: null },
+      { data: [membroDe('c1', 'p1')], error: null },
+    );
+    enfileirar('team_conversations', { data: [conversa()], error: null });
+    rpcRespostas.set('get_team_conversation_previews', {
       data: [
-        inboxLinha('c1', {
-          last_message_at: '2026-10-07T09:00:00.000Z',
-          last_message_text: 'já resolvi',
-          last_sender_id: 'p2',
-          unread_count: 4,
-        }),
+        {
+          conversation_id: 'c1',
+          last_message_id: 'm9',
+          last_message_content: 'já resolvi',
+          last_message_type: 'text',
+          last_message_sender_id: 'p2',
+          last_message_created_at: '2026-10-07T09:00:00.000Z',
+        },
       ],
       error: null,
     });
-    enfileirar('team_conversation_members', { data: [membroDe('c1', 'p1')], error: null });
-    enfileirar('team_conversations', { data: [conversa()], error: null });
+    rpcRespostas.set('get_team_unread_counts', {
+      data: [{ conversation_id: 'c1', unread_count: '4' }],
+      error: null,
+    });
 
     const { result } = render();
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     const c = result.current.data?.[0];
     expect(c?.last_message).toMatchObject({
-      id: 'c1',
+      id: 'm9',
       conversation_id: 'c1',
       content: 'já resolvi',
       status: 'delivered',
@@ -268,9 +258,14 @@ describe('lista de conversas', () => {
   });
 
   it('conversa sem prévia e sem contagem fica com null e zero', async () => {
-    rpcRespostas.set('get_team_inbox', { data: [inboxLinha('c1')], error: null });
-    enfileirar('team_conversation_members', { data: [membroDe('c1', 'p1')], error: null });
+    enfileirar(
+      'team_conversation_members',
+      { data: [membroDe('c1', 'p1')], error: null },
+      { data: [membroDe('c1', 'p1')], error: null },
+    );
     enfileirar('team_conversations', { data: [conversa()], error: null });
+    rpcRespostas.set('get_team_conversation_previews', { data: [], error: null });
+    rpcRespostas.set('get_team_unread_counts', { data: [], error: null });
 
     const { result } = render();
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -281,7 +276,7 @@ describe('lista de conversas', () => {
 
 describe('Realtime', () => {
   it('assina as três tabelas e invalida a lista em qualquer evento', async () => {
-    rpcRespostas.set('get_team_inbox', { data: [], error: null });
+    enfileirar('team_conversation_members', { data: [], error: null });
     const { result, queryClient, unmount } = render();
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 

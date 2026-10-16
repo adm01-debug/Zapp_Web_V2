@@ -16,12 +16,6 @@ export const DEFAULT_SHORTCUTS: ShortcutBinding[] = [
   { id: 'focus-input', name: 'Focar no campo', description: 'Move o foco para o campo de mensagem', defaultKey: '/', defaultModifiers: {}, category: 'chat' },
   { id: 'emoji-picker', name: 'Seletor de Emoji', description: 'Abre o seletor de emojis', defaultKey: 'e', defaultModifiers: { ctrlKey: true }, category: 'chat' },
   { id: 'attach-file', name: 'Anexar arquivo', description: 'Abre o seletor de arquivos', defaultKey: 'u', defaultModifiers: { ctrlKey: true }, category: 'chat' },
-  // Mudo do áudio EM REPRODUÇÃO (auditoria de paridade V3→V2 do doc 06). Sem
-  // modificador e sem escopo: vale em qualquer view e é ignorado dentro de campo
-  // de texto (a lista branca do registry não inclui este id). Não colide com o
-  // `M` local do player (`useVolumeRocker`, E16): o registry captura na janela e
-  // faz `stopPropagation`, então o toque chega uma vez só.
-  { id: 'audio-toggle-mute', name: 'Silenciar áudio em reprodução', description: 'Silencia ou retoma o áudio que está tocando', defaultKey: 'm', defaultModifiers: {}, category: 'chat' },
   // Navigation shortcuts
   { id: 'global-search', name: 'Busca global', description: 'Abre a busca global', defaultKey: 'k', defaultModifiers: { ctrlKey: true }, category: 'navigation' },
   { id: 'next-conversation', name: 'Próxima conversa', description: 'Navega para a próxima conversa', defaultKey: 'ArrowDown', defaultModifiers: { altKey: true }, category: 'navigation' },
@@ -63,55 +57,3 @@ export const DEFAULT_SHORTCUTS: ShortcutBinding[] = [
   { id: 'tasks-cancel', defaultKey: 'Delete', defaultModifiers: {}, category: 'actions', scope: TASKS_VIEWS },
   { id: 'tasks-help', defaultKey: '?', defaultModifiers: { shiftKey: true }, category: 'navigation', scope: TASKS_VIEWS },
 ];
-
-/**
- * Atalhos que o registry conhece, mas que NÃO têm executor.
- *
- * Executor, aqui, é uma entrada em `criarAcoesGlobais()`
- * (`useGlobalKeyboardShortcuts.ts`) — a única tabela de ações do app; o
- * `GlobalKeyboardProvider` não recebe `customActions` e nenhuma tela registra
- * ação para estes ids. Os caminhos fixos que existem fora do registry
- * (Ctrl+Enter de `useChatKeyboardNavigation`, Ctrl+A de `RealtimeInboxView`)
- * não leem a tecla gravada, então remapear em Configurações → Atalhos não muda
- * nada: era exatamente a tecla sem efeito que a tela prometia.
- *
- * Ficam marcados aqui e `listarAtalhosEditaveis()` os tira da tela de rebind e
- * do painel de ajuda (decisão E16: atalho sem dono não é capturado nem
- * anunciado). Continuam no registry para não sumir com a tecla que alguém já
- * tenha gravado; viram editáveis no dia em que ganharem executor próprio.
- *
- * `atalhosSemExecutor.test.ts` falha se esta lista deixar de ser exatamente o
- * conjunto de ids de `DEFAULT_SHORTCUTS` sem executor.
- */
-export const SHORTCUTS_SOMENTE_INFORMATIVOS: readonly string[] = [
-  // chat
-  'send-message',
-  'ai-suggestions',
-  'templates',
-  'focus-input',
-  'emoji-picker',
-  'attach-file',
-  // navegação
-  'next-conversation',
-  'prev-conversation',
-  // ações
-  'mark-resolved',
-  'transfer-chat',
-  'archive-chat',
-  'pin-conversation',
-  'mute-conversation',
-  'new-message',
-  // seleção
-  'select-all',
-  'clear-selection',
-  'mark-read',
-  'bulk-archive',
-];
-
-/**
- * Só os atalhos com executor: a tela de atalhos e o painel de ajuda exibem o
- * resultado disto, então nada editável (nem anunciado) fica sem efeito.
- */
-export function listarAtalhosEditaveis<T extends { id: string }>(shortcuts: T[]): T[] {
-  return shortcuts.filter((shortcut) => !SHORTCUTS_SOMENTE_INFORMATIVOS.includes(shortcut.id));
-}

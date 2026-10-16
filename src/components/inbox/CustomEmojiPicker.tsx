@@ -5,7 +5,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { HOVER_REVEAL_TAP } from './hoverActions';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SmilePlus, Search, Plus, Star, Trash2, Loader2, X, Tag, Check, ChevronDown, Smile } from 'lucide-react';
 import { CATEGORY_LABELS, ALL_CATEGORIES, NATIVE_EMOJI_CATEGORIES } from './emojiConstants';
@@ -46,14 +45,14 @@ function CategorySelector({ value, onChange, size = 'sm' }: { value: string; onC
   );
 }
 
-function UploadPreview({ pending, saving, onConfirm, onCancel }: { pending: PendingEmojiUpload; saving: boolean; onConfirm: (p: PendingEmojiUpload) => void; onCancel: () => void }) {
+function UploadPreview({ pending, onConfirm, onCancel }: { pending: PendingEmojiUpload; onConfirm: (p: PendingEmojiUpload) => void; onCancel: () => void }) {
   const [category, setCategory] = useState(pending.selectedCategory);
   const [name, setName] = useState(pending.name);
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-3 border border-border rounded-lg bg-card space-y-2.5">
       <div className="flex items-center gap-3">
         <div className="w-12 h-12 rounded-lg overflow-hidden bg-muted/30 shrink-0 flex items-center justify-center border border-border/30">
-          <img src={pending.imageUrl} alt={`Pré-visualização de ${pending.name}`} className="w-full h-full object-contain p-0.5"  loading="lazy" decoding="async"/>
+          <img src={pending.imageUrl} alt="Preview" className="w-full h-full object-contain p-0.5"  loading="lazy" decoding="async"/>
         </div>
         <Input value={name} onChange={(e) => setName(e.target.value)} className="h-7 text-xs flex-1" placeholder="Nome do emoji" />
       </div>
@@ -65,10 +64,8 @@ function UploadPreview({ pending, saving, onConfirm, onCancel }: { pending: Pend
         )}
       </div>
       <div className="flex items-center gap-2 justify-end">
-        <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={onCancel} disabled={saving}><X className="w-3 h-3 mr-1" /> Cancelar</Button>
-        <Button size="sm" className="h-7 text-xs" onClick={() => onConfirm({ ...pending, selectedCategory: category, name })} disabled={saving || !name.trim()} title={!name.trim() ? 'Dê um nome ao emoji' : undefined}>
-          {saving ? <Loader2 className="w-3 h-3 mr-1 motion-safe:animate-spin" /> : <Check className="w-3 h-3 mr-1" />} Salvar
-        </Button>
+        <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={onCancel}><X className="w-3 h-3 mr-1" /> Cancelar</Button>
+        <Button size="sm" className="h-7 text-xs" onClick={() => onConfirm({ ...pending, selectedCategory: category, name })}><Check className="w-3 h-3 mr-1" /> Salvar</Button>
       </div>
     </motion.div>
   );
@@ -83,7 +80,7 @@ export function CustomEmojiPicker({ onSendEmoji, disabled }: CustomEmojiPickerPr
   const [nativeCategoryId, setNativeCategoryId] = useState<string>('smileys');
 
   const {
-    emojis, loading, uploading, saving, pendingUpload, fileInputRef,
+    emojis, loading, uploading, pendingUpload, fileInputRef,
     handleFileSelect, handleConfirmUpload, handleCancelUpload,
     handleSend, toggleFavorite, handleCategoryChange, handleDelete, setPendingUpload,
   } = useCustomEmojis(open);
@@ -101,7 +98,7 @@ export function CustomEmojiPicker({ onSendEmoji, disabled }: CustomEmojiPickerPr
 
   return (
     <Tooltip>
-      <Popover open={open} onOpenChange={(v) => { if (!v && saving) return; setOpen(v); if (!v && pendingUpload) handleCancelUpload(); }}>
+      <Popover open={open} onOpenChange={(v) => { setOpen(v); if (!v) setPendingUpload(null); }}>
         <TooltipTrigger asChild>
           <PopoverTrigger asChild>
             <Button variant="ghost" size="icon" className="w-9 h-9 text-muted-foreground hover:text-foreground hover:bg-muted shrink-0" disabled={disabled} aria-label="Emojis Personalizados">
@@ -156,7 +153,7 @@ export function CustomEmojiPicker({ onSendEmoji, disabled }: CustomEmojiPickerPr
             </>
           ) : (
             <>
-              <AnimatePresence>{pendingUpload && (<div className="px-3 py-2 border-b border-border/50"><UploadPreview pending={pendingUpload} saving={saving} onConfirm={handleConfirmUpload} onCancel={handleCancelUpload} /></div>)}</AnimatePresence>
+              <AnimatePresence>{pendingUpload && (<div className="px-3 py-2 border-b border-border/50"><UploadPreview pending={pendingUpload} onConfirm={handleConfirmUpload} onCancel={handleCancelUpload} /></div>)}</AnimatePresence>
               <div className="px-3 py-2 border-b border-border/50">
                 <div className="relative">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
@@ -194,7 +191,7 @@ export function CustomEmojiPicker({ onSendEmoji, disabled }: CustomEmojiPickerPr
                             className={cn('relative aspect-square rounded-lg overflow-hidden group', 'bg-muted/20 hover:bg-muted/50 transition-colors', 'border border-transparent hover:border-primary/30', 'cursor-pointer')}
                             title={`${emoji.name} • ${CATEGORY_LABELS[emoji.category]?.label || emoji.category}`}>
                             <img src={emoji.image_url} alt={emoji.name} className="w-full h-full object-contain p-1" loading="lazy" />
-                            <div className={`absolute inset-0 bg-background/70 ${HOVER_REVEAL_TAP} transition-opacity flex flex-col items-center justify-between p-0.5`}>
+                            <div className="absolute inset-0 bg-background/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-between p-0.5">
                               <div className="flex items-center justify-between w-full">
                                 <button onClick={(e) => toggleFavorite(e, emoji)} className="p-0.5"><Star className={cn('w-3 h-3 transition-colors', emoji.is_favorite ? 'fill-primary text-primary' : 'text-muted-foreground')} /></button>
                                 <button onClick={(e) => handleDelete(e, emoji)} className="p-0.5"><Trash2 className="w-3 h-3 text-destructive" /></button>

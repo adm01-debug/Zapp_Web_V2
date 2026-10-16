@@ -6,6 +6,7 @@ interface UpdateProfileParams {
   display_name?: string;
   avatar_url?: string;
   phone?: string;
+  email?: string;
   signature?: string;
   birthday?: string;
 }
@@ -13,7 +14,6 @@ interface UpdateProfileParams {
 /**
  * Uses update_own_profile RPC (SECURITY DEFINER) instead of direct table update.
  * Prevents privilege escalation by only allowing safe field updates.
- * E-mail de login NAO e aceito aqui: so muda pelo fluxo do Auth (confirmacao por e-mail).
  */
 export function useSecureProfileUpdate() {
   const queryClient = useQueryClient();
@@ -24,6 +24,7 @@ export function useSecureProfileUpdate() {
         p_display_name: params.display_name,
         p_avatar_url: params.avatar_url,
         p_phone: params.phone,
+        p_email: params.email,
         p_signature: params.signature,
         p_birthday: params.birthday,
       });

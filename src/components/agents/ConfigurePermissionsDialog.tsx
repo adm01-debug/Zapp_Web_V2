@@ -29,7 +29,6 @@ export function ConfigurePermissionsDialog({ open, onOpenChange }: ConfigurePerm
       return data || [];
     },
     enabled: open,
-    staleTime: 5 * 60_000,
   });
 
   const { data: permissions = [] } = useQuery({
@@ -42,9 +41,6 @@ export function ConfigurePermissionsDialog({ open, onOpenChange }: ConfigurePerm
       return data || [];
     },
     enabled: open,
-    // HZ3-003: cargos e permissões mudam em raríssimas ocasiões; sem `staleTime` o
-    // diálogo refazia as duas consultas a cada abertura.
-    staleTime: 5 * 60_000,
   });
 
   const { data: teamProfiles = [] } = useTeamProfiles(open);

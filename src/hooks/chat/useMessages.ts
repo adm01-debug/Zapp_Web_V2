@@ -1,9 +1,7 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { mapMessageRowToMessage } from '@/adapters/inboxAdapter';
-import { resolveInteractiveResponses } from '@/hooks/chat/interactiveResponses';
 import { useSupabaseRealtime } from '@/hooks/realtime/useSupabaseRealtime';
-import { useConversationPanelInvalidation } from '@/hooks/chat/useConversationPanelInvalidation';
 import { contactMediaKey } from '@/hooks/chat/useContactMedia';
 import { contactMediaCountsKey } from '@/hooks/chat/useContactMediaCounts';
 import { conversationTabCountsKey } from '@/hooks/chat/useConversationTabCounts';
@@ -17,17 +15,7 @@ interface UseMessagesOptions {
   enabled?: boolean;
 }
 
-/**
- * SL-099: a página era de 1000 linhas — o teto padrão do PostgREST — e o GET de
- * uma conversa grande estourava o statement timeout do banco (`57014`): o pedido
- * voltava 500 e o chat abria sem histórico. O teto por requisição cai para 100
- * linhas, o que mantém a consulta dentro do orçamento do banco (e o payload 10x
- * menor). Nada do histórico é cortado: o restante continua vindo pela paginação
- * por cursor — `loadOlderMessages` -> `fetchMessagesBefore` —, que usa ESTE mesmo
- * teto, e a lista virtualizada (`ChatMessagesArea`) carrega mais pelo controle
- * "Carregar mensagens anteriores".
- */
-const MESSAGES_PAGE_SIZE = 100;
+const MESSAGES_PAGE_SIZE = 1000;
 
 /**
  * #310 (R2-INB-013): entrada do overlay de realtime com a geracao em que foi escrita.
@@ -75,13 +63,6 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
     },
     [queryClient],
   );
-
-  // #310/paridade: o painel do contato (estatísticas, histórico/Jornada, CRM 360° e a
-  // "Próxima melhor ação") depende das mensagens, mas nada o invalidava: com `staleTime` de
-  // 5 min, `refetchOnMount: false` e cache de 30 min, "Mensagens: total", a linha do tempo e o
-  // "Responder agora" ficavam parados até um reload. A invalidação é agrupada por janela
-  // (uma por contato a cada 2 s), para uma rajada de eventos não saturar a fila de requisições.
-  const schedulePanelInvalidation = useConversationPanelInvalidation(contactId);
 
   // #310: toda escrita no overlay carimba a geracao corrente — e o que permite separar
   // "evento anterior ao snapshot" (perde para ele) de "evento ocorrido durante o fetch" (vence).
@@ -214,7 +195,6 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
       // Only add if it's for the current contact and not already present
       if (newMessage.contact_id === contactId) {
         writeOverlay(newMessage.id, newMessage);
-        schedulePanelInvalidation(newMessage.contact_id);
         setMessages((prev) => {
           if (prev.some((m) => m.id === newMessage.id)) {
             return prev;
@@ -232,7 +212,7 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
         }
       }
     },
-    [contactId, invalidateMediaAggregates, writeOverlay, schedulePanelInvalidation]
+    [contactId, invalidateMediaAggregates, writeOverlay]
   );
 
   // Handle message update from realtime
@@ -243,7 +223,6 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
 
       if (updatedMessage.contact_id === contactId) {
         writeOverlay(updatedMessage.id, updatedMessage);
-        schedulePanelInvalidation(updatedMessage.contact_id);
         setMessages((prev) =>
           prev.map((m) => (m.id === updatedMessage.id ? updatedMessage : m))
         );
@@ -266,7 +245,7 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
         }
       }
     },
-    [contactId, invalidateMediaAggregates, writeOverlay, schedulePanelInvalidation]
+    [contactId, invalidateMediaAggregates, writeOverlay]
   );
 
   // Handle message delete from realtime
@@ -289,7 +268,6 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
       // O tombstone e por `id` e vale tambem quando a linha ainda nao esta na lista: um refetch em
       // voo pode trazer do snapshot a linha que ja foi apagada.
       writeOverlay(deletedId, null);
-      schedulePanelInvalidation(oldRow.contact_id ?? contactId);
       setMessages((prev) => prev.filter((m) => m.id !== deletedId));
 
       // #144/OTH-002: um DELETE remoto de midia tambem muda chips/badge/galeria. Com as colunas no
@@ -301,7 +279,7 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
         invalidateMediaAggregates(contactId as string);
       }
     },
-    [contactId, invalidateMediaAggregates, writeOverlay, schedulePanelInvalidation]
+    [contactId, invalidateMediaAggregates, writeOverlay]
   );
 
   // Fetch on contact change
@@ -335,14 +313,6 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
     }
   }, [contactId, enabled, fetchMessages]);
 
-  // Revalidacao de rede: uma queda nao avisa o hook, entao o que ficou em memoria
-  // pode ter envelhecido. O refetch e silencioso quando a conversa ja esta carregada
-  // (loadedContactIdRef) e usa o contactId CORRENTE (fetchMessages le o contactId do
-  // render atual) — uma troca de conversa durante a queda nao revalida a antiga.
-  const recoverAfterReconnect = useCallback(() => {
-    void fetchMessages();
-  }, [fetchMessages]);
-
    // Subscribe to realtime updates using the standardized hook
    useSupabaseRealtime<MessageRow>({
      channelName: `messages:${contactId}`,
@@ -352,7 +322,6 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
      onInsert: handleNewMessage,
      onUpdate: handleMessageUpdate,
      onDelete: handleMessageDelete,
-     onReconnect: recoverAfterReconnect,
    });
 
   // Add a message optimistically
@@ -382,15 +351,8 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
     setMessages((prev) => prev.filter((m) => m.id !== messageId));
   }, [writeOverlay]);
 
-  // Resposta do cliente a botão/lista chega do canal só com o id tocado (`content`); o texto
-  // está no payload da mensagem interativa enviada. A resolução é derivada da lista carregada
-  // (snapshot + realtime + páginas antigas) — nenhum estado novo, nada de escrita no banco.
-  const messagesComResposta = useMemo(() => resolveInteractiveResponses(messages), [messages]);
-
   return {
-    // A lista sai com as respostas interativas resolvidas (id -> texto tocado): é aqui que
-    // a tela do chat lê as mensagens, tanto no snapshot quanto no realtime e nas páginas antigas.
-    messages: messagesComResposta,
+    messages,
     loading,
     loadingOlder,
     hasOlder,

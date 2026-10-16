@@ -8,18 +8,16 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
-import { normalizeOperationalPriority } from '@/lib/ai-vocabulary';
-import { sentimentLevel, type SentimentLevel } from '@/lib/sentiment-level';
-import { isToday, isYesterday } from 'date-fns';
-import { formatRelativeTime } from '@/lib/formatters';
-import { Pin, CheckCircle2, UserCheck, Star, AlarmClock, Archive, Instagram, Facebook, Send, Mail, Globe, Linkedin, Frown, AlertTriangle, type LucideIcon } from 'lucide-react';
+import { normalizeOperationalPriority, normalizeSentiment, type Sentiment } from '@/lib/ai-vocabulary';
+import { formatDistanceToNow, isToday, isYesterday } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { Pin, CheckCircle2, UserCheck, Star, AlarmClock, Archive, Instagram, Facebook, Send, Mail, Globe, Linkedin, type LucideIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { CONTACT_TYPE_CONFIG } from '@/components/contacts/contactTypeConfig';
 import { ConversationGroupHeader } from './conversation-list/ConversationGroupHeader';
 import { SLAIndicator } from './SLAIndicator';
 import { useApplicableSLA } from '@/hooks/sla/useApplicableSLA';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { QuickPeek } from '@/components/ui/quick-peek';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useAgentsLite, type AgentLite } from '@/hooks/crm/useAgentsLite';
 import { useDensity, type DensityMode } from '@/hooks/ui/useDensity';
@@ -53,14 +51,13 @@ const SNOOZE_OPTIONS: { value: string; label: string }[] = [
   { value: 'nextweek', label: 'Próxima semana' },
 ];
 
-// Cores de canal: só tokens do sistema (U6), mantendo matizes distintas.
 const CHANNEL_BADGE_CONFIG: Record<string, { Icon: LucideIcon; bg: string }> = {
-  instagram: { Icon: Instagram, bg: 'bg-violeta' },
-  messenger: { Icon: Facebook, bg: 'bg-info' },
-  telegram: { Icon: Send, bg: 'bg-teal' },
-  webchat: { Icon: Globe, bg: 'bg-muted-foreground' },
-  email: { Icon: Mail, bg: 'bg-rosa' },
-  linkedin: { Icon: Linkedin, bg: 'bg-kpi-blue' },
+  instagram: { Icon: Instagram, bg: 'bg-[hsl(330,80%,55%)]' },
+  messenger: { Icon: Facebook, bg: 'bg-[hsl(220,70%,55%)]' },
+  telegram: { Icon: Send, bg: 'bg-[hsl(200,70%,50%)]' },
+  webchat: { Icon: Globe, bg: 'bg-[hsl(215,15%,45%)]' },
+  email: { Icon: Mail, bg: 'bg-[hsl(220,70%,55%)]' },
+  linkedin: { Icon: Linkedin, bg: 'bg-[hsl(201,100%,35%)]' },
 };
 
 interface VirtualizedRealtimeListProps {
@@ -165,6 +162,7 @@ export function VirtualizedRealtimeList({
 
   // TanStack Virtual retorna funcoes nao memoizaveis pelo React Compiler — mesma
   // limitacao ja aceita na baseline do ratchet para este mesmo hook.
+  // eslint-disable-next-line react-hooks/incompatible-library
   const virtualizer = useVirtualizer({
     count: flatRows.length,
     getScrollElement,
@@ -263,44 +261,17 @@ export function VirtualizedRealtimeList({
   );
 }
 
-// Selo de sentimento da linha (item L3 da paridade V3 -> V2): só o que pede
-// atenção vira selo — negativo e crítico. Neutro, positivo e desconhecido NÃO
-// poluem a lista. O valor CRU do banco (pt-BR canônico ou legado EN) passa pelo
-// mapeador único `sentimentLevel`; desconhecido/ausente devolve `null` e nenhum
-// selo aparece (nada inventado). O selo tem nome acessível pt-BR (role="img" +
-// aria-label): nunca emoji/cor como único sinal.
-const SENTIMENT_SEAL: Partial<Record<SentimentLevel, { Icon: LucideIcon; label: string; className: string }>> = {
-  negative: {
-    Icon: Frown,
-    label: 'Cliente insatisfeito',
-    className: 'bg-warning text-warning-foreground',
-  },
-  critical: {
-    Icon: AlertTriangle,
-    label: 'Cliente muito insatisfeito',
-    className: 'bg-destructive text-destructive-foreground',
-  },
+// Rótulos do sentimento canônico (pt-BR). Não existe chave em inglês: o valor
+// cru passa por normalizeSentiment, que traduz o legado EN e devolve
+// `value: null` para desconhecido — aí o rótulo é 'sem análise', nunca um
+// positivo/negativo inventado.
+const SENTIMENT_LABEL: Record<Sentiment, string> = {
+  positivo: 'positivo',
+  neutro: 'neutro',
+  negativo: 'negativo',
+  critico: 'crítico',
 };
-
-// Estado da conversa (contacts.conversation_status) em pt-BR, para a
-// pré-visualização. Valor desconhecido NÃO vira rótulo inventado (mesma regra
-// do sentimento acima): a pré-visualização só omite o estado.
-const CONVERSATION_STATUS_LABEL: Record<string, string> = {
-  open: 'Aberto',
-  waiting: 'Aguardando',
-  resolved: 'Resolvido',
-  archived: 'Arquivado',
-};
-
-// Estado da conversa (contacts.conversation_status) em pt-BR, para a
-// pré-visualização. Valor desconhecido NÃO vira rótulo inventado (mesma regra
-// do sentimento acima): a pré-visualização só omite o estado.
-const CONVERSATION_STATUS_LABEL: Record<string, string> = {
-  open: 'Aberto',
-  waiting: 'Aguardando',
-  resolved: 'Resolvido',
-  archived: 'Arquivado',
-};
+const SEM_ANALISE = 'sem análise';
 
 interface ConversationRowProps {
   conversation: ConversationWithMessages;
@@ -385,8 +356,7 @@ const ConversationRow = memo(({
   // Prioridade operacional canônica (EN) ou legado pt-BR ('alta'→'high');
   // ausente/desconhecido devolve `value: null` e nunca vira prioridade alta.
   const priority = normalizeOperationalPriority(conversation.contact.ai_priority);
-  const sentimentLevelValue = sentimentLevel(conversation.contact.ai_sentiment);
-  const sentimentSeal = sentimentLevelValue ? SENTIMENT_SEAL[sentimentLevelValue] : undefined;
+  const sentiment = normalizeSentiment(conversation.contact.ai_sentiment);
   const isHighPriority = priority.value === 'high' || priority.value === 'urgent';
   const channelType = conversation.contact.channel_type;
   const channelBadge = channelType && channelType !== 'whatsapp' ? CHANNEL_BADGE_CONFIG[channelType] : null;
@@ -423,29 +393,8 @@ const ConversationRow = memo(({
     else toast.info(`${label}: em breve`);
   };
 
-  // Pré-visualização por hover (QuickPeek): só dados JÁ carregados na linha
-  // (nome, última mensagem, não lidas e estado) — nenhuma consulta nova e
-  // nenhum campo fora do que a própria linha já recebe.
-  const conversationStatusLabel = CONVERSATION_STATUS_LABEL[conversation.contact.conversation_status];
-  const peekPreview = (
-    <div className="space-y-1.5">
-      <p className="text-xs font-medium text-foreground">
-        {conversation.contact.nickname?.trim() || conversation.contact.name || 'Contato'}
-      </p>
-      {conversation.lastMessage?.content && (
-        <p className="text-xs leading-relaxed text-muted-foreground line-clamp-4">
-          {conversation.lastMessage.content}
-        </p>
-      )}
-      <div className="flex items-center gap-2 border-t border-border/30 pt-1 text-2xs text-muted-foreground">
-        <span>{conversation.unreadCount > 0 ? `${conversation.unreadCount} não lidas` : 'Sem novas'}</span>
-        {conversationStatusLabel && <span>• {conversationStatusLabel}</span>}
-      </div>
-    </div>
-  );
-
   return (
-    <QuickPeek
+    <div
       style={{
         position: 'absolute',
         top: 0,
@@ -467,11 +416,6 @@ const ConversationRow = memo(({
       // container.
       className="px-3 overflow-clip"
       data-testid="conversation-item"
-      preview={peekPreview}
-      // Desligado na conversa ABERTA (o balão repetiria a tela que o usuário
-      // já está vendo) e, dentro do QuickPeek, em telas de toque.
-      enabled={selectedContactId !== contactId}
-      delay={500}
     >
       <div
         className={cn(
@@ -546,18 +490,22 @@ const ConversationRow = memo(({
                 </Tooltip>
               </TooltipProvider>
             )}
-            {sentimentSeal && (
+            {conversation.contact.ai_sentiment && (
               <span
                 role="img"
-                aria-label={sentimentSeal.label}
-                title={sentimentSeal.label}
+                aria-label={`Sentimento: ${sentiment.value ? SENTIMENT_LABEL[sentiment.value] : SEM_ANALISE}`}
                 className={cn(
-                  'absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-card flex items-center justify-center',
-                  sentimentSeal.className
+                  'absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-card',
+                  sentiment.value === 'positivo' && 'bg-[hsl(var(--success))]',
+                  sentiment.value === 'negativo' && 'bg-destructive',
+                  sentiment.value === 'neutro' && 'bg-[hsl(var(--warning))]',
+                  sentiment.value === 'critico' && 'bg-destructive',
+                  // sem rótulo canônico (legado inventado/vazio) → cinza, não
+                  // inventa positivo/negativo
+                  sentiment.value === null && 'bg-muted'
                 )}
-              >
-                <sentimentSeal.Icon className="w-2 h-2" aria-hidden="true" />
-              </span>
+                title={`Sentimento: ${sentiment.value ? SENTIMENT_LABEL[sentiment.value] : SEM_ANALISE}`}
+              />
             )}
           </div>
 
@@ -576,8 +524,9 @@ const ConversationRow = memo(({
               <div className="flex items-center gap-1.5 flex-shrink-0">
                 {conversation.lastMessage && (
                   <span className="text-xs text-muted-foreground">
-                    {formatRelativeTime(conversation.lastMessage.created_at, {
+                    {formatDistanceToNow(new Date(conversation.lastMessage.created_at), {
                       addSuffix: false,
+                      locale: ptBR,
                     })}
                   </span>
                 )}
@@ -652,7 +601,7 @@ const ConversationRow = memo(({
                 <button
                   aria-label="Resolver conversa"
                   onClick={(e) => handleAction(e, onResolve, 'Resolver')}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-success hover:bg-success/10 active:scale-90 transition-all duration-150"
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-emerald-500 hover:bg-emerald-500/10 active:scale-90 transition-all duration-150"
                 >
                   <CheckCircle2 className="w-3.5 h-3.5" />
                 </button>
@@ -676,7 +625,7 @@ const ConversationRow = memo(({
                 <button
                   aria-label="Fixar conversa"
                   onClick={(e) => handleAction(e, onPin, 'Fixar')}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-warning hover:bg-warning/10 active:scale-90 transition-all duration-150"
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-amber-500 hover:bg-amber-500/10 active:scale-90 transition-all duration-150"
                 >
                   <Pin className="w-3.5 h-3.5" />
                 </button>
@@ -690,7 +639,7 @@ const ConversationRow = memo(({
                     <button
                       aria-label="Adiar conversa"
                       onClick={(e) => { e.stopPropagation(); if (!onSnooze) { toast.info('Adiar: em breve'); setSnoozeOpen(false); } }}
-                      className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-info hover:bg-info/10 active:scale-90 transition-all duration-150"
+                      className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-sky-500 hover:bg-sky-500/10 active:scale-90 transition-all duration-150"
                     >
                       <AlarmClock className="w-3.5 h-3.5" />
                     </button>
@@ -727,6 +676,6 @@ const ConversationRow = memo(({
           </TooltipProvider>
         </div>
       </div>
-    </QuickPeek>
+    </div>
   );
 });

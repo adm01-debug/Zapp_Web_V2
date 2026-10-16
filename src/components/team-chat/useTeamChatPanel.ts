@@ -107,15 +107,6 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     return r === 'admin' || r === 'supervisor';
   }, [profile]);
 
-  // Cartão "transferir conversa de departamento": o vínculo da conversa é o
-  // próprio departamento, então só faz sentido oferecer o seletor para quem já
-  // pode transferir (`canTransfer`, a única regra de papel) E numa conversa de
-  // departamento. A tela de componentes lê este flag para montar o seletor.
-  const canTransferDepartment = useMemo(
-    () => canTransfer && conversation.type === 'department',
-    [canTransfer, conversation.type],
-  );
-
   const isGroupCreator = useMemo(() => {
     return !!(profile?.id && conversation.created_by === profile.id);
   }, [profile, conversation.created_by]);
@@ -230,105 +221,11 @@ export function useTeamChatPanel(conversation: TeamConversation) {
 
   const debouncedSearchQuery = useDebounce(searchQuery, 400);
 
-  // SL-082 (F69) — a busca filtrava SÓ o que já estava carregado (as mensagens
-  // mais novas + as páginas abertas): um termo que existia numa mensagem antiga
-  // nunca era achado, e o contador contava só o subconjunto local. Agora o termo
-  // vai ao servidor pela RPC `search_team_messages` (que varre a conversa
-  // inteira) e a lista exibida durante a busca é o resultado dela.
-  const searchTerm = debouncedSearchQuery.trim();
-  // O recorte salvo carrega a CONVERSA a que pertence, não só o termo: o painel é
-  // o MESMO componente quando o atendente troca de conversa (não tem `key`) e o
-  // termo digitado continua, então um registro só vale para a tela se a conversa
-  // e o termo atuais forem os que o produziram.
-  const [serverSearch, setServerSearch] = useState<{ conversationId: string; term: string; results: TeamMessage[] } | null>(null);
-  // SL-082 (refazer) — a falha da RPC ficava guardada como `results: []`, ou seja,
-  // o mesmo estado de "a busca não achou nada": a tela anunciava "Nenhuma
-  // mensagem encontrada" quando na verdade o servidor falhou. O erro é um estado
-  // SEPARADO (e preso ao termo que o produziu), para a tela poder dizer a verdade.
-  // A falha também é presa à conversa que a produziu: com o mesmo termo digitado,
-  // a falha da conversa A não pode aparecer na conversa B enquanto a busca de B
-  // ainda estava em voo.
-  const [serverSearchError, setServerSearchError] = useState<{ conversationId: string; term: string; message: string } | null>(null);
-
-  useEffect(() => {
-    if (!searchTerm) return;
-    // A conversa da requisição é lida aqui, ao disparar: é ela, junto com o termo,
-    // que diz se a resposta ainda interessa ao que está na tela.
-    const conversationId = conversation.id;
-    let cancelado = false;
-    void (async () => {
-      const { data, error } = await supabase.rpc('search_team_messages', {
-        p_conversation_id: conversationId,
-        p_query: searchTerm,
-        p_limit: 50,
-      });
-      if (cancelado) return;
-      if (error) {
-        log.error('Erro ao buscar mensagens no servidor', error);
-        // Nada de `results: []` aqui: lista vazia é resultado de busca legítimo,
-        // falha do servidor não. Limpar o resultado anterior evita que ele seja
-        // exibido como se fosse a resposta deste termo.
-        setServerSearch(null);
-        setServerSearchError({ conversationId, term: searchTerm, message: 'Não foi possível buscar as mensagens. Tente novamente.' });
-        return;
-      }
-      // Busca que deu certo limpa o erro anterior: o painel é o MESMO componente
-      // quando o atendente troca de conversa (o termo digitado continua), então o
-      // aviso de falha não pode ficar na tela por cima do resultado que chegou.
-      setServerSearchError(null);
-      // A RPC devolve o recorte de busca (id, remetente, conteúdo, data): o
-      // TeamMessageItem compõe a linha a partir daqui, sem mídia/recibo — a
-      // mensagem de resultado é texto puro.
-      const rows = (data ?? []) as {
-        id: string; sender_id: string; content: string; created_at: string; sender_name: string | null;
-      }[];
-      setServerSearch({
-        conversationId,
-        term: searchTerm,
-        results: rows.map(row => ({
-          id: row.id,
-          conversation_id: conversationId,
-          sender_id: row.sender_id,
-          content: row.content,
-          message_type: 'text',
-          media_url: null,
-          media_type: null,
-          reply_to_id: null,
-          is_edited: false,
-          status: null,
-          created_at: row.created_at,
-          updated_at: row.created_at,
-          sender: { id: row.sender_id, name: row.sender_name ?? 'Usuário', avatar_url: null },
-        })),
-      });
-    })();
-    return () => { cancelado = true; };
-  }, [searchTerm, conversation.id]);
-
-  const searchActive = searchTerm.length > 0;
-  // `isSearching` separa "buscando" de "nada encontrado" na tela: mostrar
-  // "Nenhuma mensagem encontrada" enquanto a resposta ainda está em voo é
-  // anunciar um resultado que ainda não existe.
-  // A falha do servidor tem precedência: com erro não se está mais "buscando" (a
-  // resposta chegou) e o que a tela mostra é a falha, não um resultado.
-  // Registro de OUTRA conversa (ou de outro termo) não vale para o que está na
-  // tela: com o mesmo termo digitado, o aviso e os resultados que a busca da
-  // conversa anterior deixou não podem aparecer na conversa atual enquanto a
-  // busca dela ainda está pendente.
-  const serverSearchMatches = serverSearch?.conversationId === conversation.id
-    && serverSearch?.term === searchTerm;
-  const searchError = searchActive
-    && serverSearchError?.conversationId === conversation.id
-    && serverSearchError.term === searchTerm
-    ? serverSearchError.message
-    : null;
-  const isSearching = searchActive && !searchError && !serverSearchMatches;
-
   const filteredMessages = useMemo(() => {
-    if (!searchActive) return messages;
-    if (!serverSearchMatches || !serverSearch) return [];
-    return serverSearch.results;
-  }, [messages, searchActive, serverSearchMatches, serverSearch]);
+    if (!debouncedSearchQuery.trim()) return messages;
+    const q = debouncedSearchQuery.toLowerCase();
+    return messages.filter(m => m.content?.toLowerCase().includes(q));
+  }, [messages, debouncedSearchQuery]);
 
   const checkNearBottom = useCallback(() => {
     const el = scrollRef.current;
@@ -485,12 +382,9 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     profile,
     messages,
     filteredMessages,
-    isSearching,
-    searchError,
     isLoading,
     isMuted,
     canTransfer,
-    canTransferDepartment,
     isGroupCreator,
     isFetchingOlder,
     hasOlderMessages,

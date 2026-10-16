@@ -5,7 +5,6 @@ import { Shield, Copy, Check, Download, RefreshCw, AlertTriangle } from 'lucide-
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { downloadFileWithPermission } from '@/lib/downloadFile';
 
 interface MFABackupCodesProps {
   codes?: string[];
@@ -62,20 +61,13 @@ export function MFABackupCodes({ codes: initialCodes, onRegenerate, onClose }: M
       '==========================================',
     ].join('\n');
 
-    // Y29 / SEC-SAIDAS_DE_INFORMACAO-01 — EXCEÇÃO DECLARADA: estes códigos são
-    // do PRÓPRIO usuário logado (última credencial de recuperação da conta
-    // dele), não dado de terceiro. O gate `profiles.can_download` não se aplica
-    // e o comportamento de sempre (baixar) fica explícito: o arquivo sai pela
-    // mesma porta única, com `allowWithoutPermission` e o motivo declarado.
-    downloadFileWithPermission(
-      new Blob([content], { type: 'text/plain' }),
-      'backup-codes-crm.txt',
-      {
-        canDownload: false,
-        allowWithoutPermission: true,
-        reason: 'códigos de backup MFA do próprio usuário autenticado',
-      },
-    );
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'backup-codes-crm.txt';
+    a.click();
+    URL.revokeObjectURL(url);
     toast.success('Arquivo baixado!');
   };
 

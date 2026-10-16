@@ -1,5 +1,4 @@
 import React from 'react';
-import { readEdgeErrorBody } from '@/lib/invokeEdge';
 import {
   CheckCircle2,
   Clock,
@@ -71,13 +70,18 @@ export function aiEnvelopeErrorMessage(error: unknown, fallback: string): string
 /**
  * Lê o envelope de um `functions.invoke` que falhou (HTTP não-2xx). O corpo da
  * resposta fica em `error.context` (Response) — sem lê-lo o usuário só veria
- * "Edge Function returned a non-2xx status code". A leitura do corpo é a única
- * do front (`@/lib/invokeEdge`); aqui só se valida o formato do envelope de IA.
+ * "Edge Function returned a non-2xx status code".
  */
 export async function readAiErrorEnvelope<T>(error: unknown): Promise<AiEnvelope<T> | null> {
-  const body = await readEdgeErrorBody(error);
-  if (body && typeof body === 'object' && 'capability' in body && 'status' in body) {
-    return body as AiEnvelope<T>;
+  const context = (error as { context?: Response } | null)?.context;
+  if (!context || typeof context.clone !== 'function') return null;
+  try {
+    const body = (await context.clone().json()) as unknown;
+    if (body && typeof body === 'object' && 'capability' in body && 'status' in body) {
+      return body as AiEnvelope<T>;
+    }
+  } catch {
+    // corpo sem JSON (timeout/proxy): sem envelope a mostrar
   }
   return null;
 }

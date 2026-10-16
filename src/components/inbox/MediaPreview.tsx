@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { log } from '@/lib/logger';
 import {
   X, Download, Play, Pause, FileText, File, FileSpreadsheet,
-  FileImage, FileArchive, ExternalLink, Maximize, Loader2, AlertTriangle
+  FileImage, FileArchive, ExternalLink, Maximize, Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -75,9 +75,6 @@ export function DocumentPreview({ url, fileName, fileSize, isSent }: DocumentPre
     }
   };
 
-  // U2 — o cartão do documento abre no clique; sem papel e sem teclas, abrir era
-  // privilégio do mouse (a V3 já faz este caminho). Enter e Espaço abrem; o
-  // `preventDefault` do Espaço evita rolar a conversa.
   const handleOpen = () => {
     if (resolvedUrl) window.open(resolvedUrl, '_blank', 'noopener,noreferrer');
   };
@@ -87,21 +84,9 @@ export function DocumentPreview({ url, fileName, fileSize, isSent }: DocumentPre
       whileHover={{ scale: 1.02 }}
       className={cn(
         "flex items-center gap-3 p-3 rounded-lg min-w-[240px] max-w-[300px] cursor-pointer transition-all",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         isSent ? "bg-primary-foreground/10 hover:bg-primary-foreground/15" : "bg-muted/50 hover:bg-muted/70 border border-border/30"
       )}
-      role="button"
-      tabIndex={0}
-      aria-label={`Abrir documento ${fileName}`}
       onClick={handleOpen}
-      onKeyDown={(e) => {
-        // Teclas dos botões internos (ex.: Baixar) não podem abrir o documento junto.
-        if (e.target !== e.currentTarget) return;
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          handleOpen();
-        }
-      }}
     >
       <div className={cn("flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center", isSent ? "bg-primary-foreground/20" : "bg-card")}>
         {getFileIcon(fileName)}
@@ -140,81 +125,28 @@ export const VideoPreview = forwardRef<HTMLDivElement, VideoPreviewProps>(
     const [isMuted, setIsMuted] = useState(true);
     const [showFullscreen, setShowFullscreen] = useState(false);
     const [isLoaded, setIsLoaded] = useState(false);
-    // Guarda QUAL src falhou (e não um booleano solto): se a re-resolução devolver
-    // outra URL, o erro cai sozinho, sem `setState` dentro de efeito.
-    const [failedSrc, setFailedSrc] = useState('');
-    const [attempt, setAttempt] = useState(0);
-    const { url: resolvedUrl, isLoading, refresh, error: resolveError } = useResolvedStorageUrl(url);
+    const { url: resolvedUrl, isLoading, refresh } = useResolvedStorageUrl(url);
     const videoRef = useRef<HTMLVideoElement>(null);
     // E20 — o hover continua mudo (deliberado), mas o elemento passa a carregar o volume
     // global e o mute global: `manageMuted: false` deixa o mute do preview com o
     // componente, e o `muted={isMuted || muted}` garante que mídia muda continue muda.
     const { muted: globalMuted } = useMediaElementVolume(videoRef, { manageMuted: false });
 
-    // "Nada de spinner eterno": o carregamento (ou a resolução da URL) que falha vira
-    // estado de erro na tela, com a ação de tentar de novo — o `src` que falhou fica
-    // registrado, então uma URL nova (renovada) limpa o erro sozinha.
-    const loadFailed = Boolean(resolveError) || (!resolvedUrl && !isLoading) || (Boolean(resolvedUrl) && failedSrc === resolvedUrl);
-
-    const handleVideoError = () => {
-      setIsLoaded(false);
-      setFailedSrc(resolvedUrl);
-      void refresh();
-    };
-
-    const handleRetry = () => {
-      setFailedSrc('');
-      setIsLoaded(false);
-      setAttempt((n) => n + 1);
-      void refresh();
-    };
-
     return (
       <div ref={ref}>
         <div className="space-y-2">
-          {/* U2 — o quadro do vídeo abre no clique; sem papel e sem teclas, abrir a
-              tela cheia era privilégio do mouse. Com o erro de carregamento não há o
-              que abrir: aí o contêiner deixa de ser botão em vez de ficar inerte. */}
-          <motion.div
-            whileHover={{ scale: 1.02 }}
-            className="relative rounded-lg overflow-hidden max-w-[300px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            role={loadFailed ? undefined : 'button'}
-            tabIndex={loadFailed ? -1 : 0}
-            aria-label={loadFailed ? undefined : 'Abrir vídeo em tela cheia'}
-            onClick={() => { if (!loadFailed) setShowFullscreen(true); }}
-            onKeyDown={(e) => {
-              // Controles internos do <video> e botões do aviso não abrem a tela cheia.
-              if (e.target !== e.currentTarget || loadFailed) return;
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                setShowFullscreen(true);
-              }
-            }}
-          >
-            {(!isLoaded || isLoading) && !loadFailed && (
+          <motion.div whileHover={{ scale: 1.02 }} className="relative rounded-lg overflow-hidden max-w-[300px] cursor-pointer" onClick={() => setShowFullscreen(true)}>
+            {(!isLoaded || isLoading) && (
               <div className="absolute inset-0 bg-muted animate-pulse flex items-center justify-center">
                 <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
               </div>
             )}
-            {loadFailed && (
-              <div role="alert" onClick={(e) => e.stopPropagation()} className="absolute inset-0 bg-muted flex flex-col items-center justify-center gap-2 p-3 text-center">
-                <AlertTriangle className="w-6 h-6 text-warning" />
-                <p className="text-xs text-muted-foreground">Não foi possível carregar o vídeo.</p>
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); handleRetry(); }}
-                  className="px-3 py-1 rounded-full text-xs font-medium bg-primary/10 hover:bg-primary/20 text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  Tentar de novo
-                </button>
-              </div>
-            )}
-            {resolvedUrl && !loadFailed && <video
+            {resolvedUrl && <video
               ref={videoRef}
-              key={`${resolvedUrl}#${attempt}`}
+              key={resolvedUrl}
               src={resolvedUrl} className="w-full max-h-[200px] object-cover rounded-lg" muted={isMuted || globalMuted} loop playsInline
               onLoadedData={() => setIsLoaded(true)}
-              onError={handleVideoError}
+              onError={() => { setIsLoaded(false); void refresh(); }}
               onMouseEnter={(e) => { e.currentTarget.play(); setIsPlaying(true); }}
               onMouseLeave={(e) => { e.currentTarget.pause(); e.currentTarget.currentTime = 0; setIsPlaying(false); }}
             />}
@@ -227,9 +159,9 @@ export const VideoPreview = forwardRef<HTMLDivElement, VideoPreviewProps>(
                 </motion.div>
               )}
             </AnimatePresence>
-            {!loadFailed && <button onClick={(e) => { e.stopPropagation(); setShowFullscreen(true); }} className="absolute top-2 right-2 p-1.5 rounded-full bg-background/50 text-primary-foreground opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity hover:bg-background/70" aria-label="Tela cheia">
+            <button onClick={(e) => { e.stopPropagation(); setShowFullscreen(true); }} className="absolute top-2 right-2 p-1.5 rounded-full bg-background/50 text-primary-foreground opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background/70" aria-label="Tela cheia">
               <Maximize className="w-3.5 h-3.5" />
-            </button>}
+            </button>
           </motion.div>
           {caption && <p className={cn("text-sm", isSent ? "text-primary-foreground" : "text-foreground")}>{caption}</p>}
         </div>
@@ -249,7 +181,7 @@ export function StickerPreview({ url, isSent }: StickerPreviewProps) {
   return (
     <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 300, damping: 20 }} className="relative">
       {!isLoaded && <div className="w-[120px] h-[120px] bg-muted animate-pulse rounded-lg" />}
-      <motion.img src={url} alt="Figurinha" onLoad={() => setIsLoaded(true)} whileHover={{ scale: 1.1 }} className={cn("max-w-[120px] max-h-[120px] object-contain", !isLoaded && "hidden")} />
+      <motion.img src={url} alt="Sticker" onLoad={() => setIsLoaded(true)} whileHover={{ scale: 1.1 }} className={cn("max-w-[120px] max-h-[120px] object-contain", !isLoaded && "hidden")} />
     </motion.div>
   );
 }

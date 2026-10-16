@@ -169,12 +169,12 @@ export function ChatbotL1Config() {
               <Label className="font-medium">Ativar Chatbot IA L1</Label>
               <p className="text-xs text-muted-foreground">Responder automaticamente novas mensagens</p>
             </div>
-            <Switch aria-label="Ativar Chatbot IA L1" checked={isActive} onCheckedChange={setIsActive} />
+            <Switch checked={isActive} onCheckedChange={setIsActive} />
           </div>
 
           <div className="space-y-2">
             <Label>Nome do Bot</Label>
-            <Input aria-label="Nome do Bot" value={name} onChange={e => setName(e.target.value)} />
+            <Input value={name} onChange={e => setName(e.target.value)} />
           </div>
 
           <div className="space-y-3">
@@ -186,7 +186,6 @@ export function ChatbotL1Config() {
               <Badge variant="outline">{confidenceThreshold}%</Badge>
             </Label>
             <Slider
-              thumbLabel="Nível de Confiança Mínimo"
               value={[confidenceThreshold]}
               onValueChange={v => setConfidenceThreshold(v[0])}
               min={30}
@@ -200,7 +199,7 @@ export function ChatbotL1Config() {
 
           <div className="space-y-2">
             <Label>Mensagem de Boas-vindas</Label>
-            <Textarea aria-label="Mensagem de Boas-vindas" value={welcomeMessage} onChange={e => setWelcomeMessage(e.target.value)} rows={2} />
+            <Textarea value={welcomeMessage} onChange={e => setWelcomeMessage(e.target.value)} rows={2} />
           </div>
 
           <div className="space-y-2">
@@ -208,7 +207,7 @@ export function ChatbotL1Config() {
               <ArrowRightLeft className="w-4 h-4" />
               Mensagem de Transferência
             </Label>
-            <Textarea aria-label="Mensagem de Transferência" value={transferMessage} onChange={e => setTransferMessage(e.target.value)} rows={2} />
+            <Textarea value={transferMessage} onChange={e => setTransferMessage(e.target.value)} rows={2} />
             <p className="text-xs text-muted-foreground">
               Enviada quando o bot decide transferir para um atendente humano.
             </p>

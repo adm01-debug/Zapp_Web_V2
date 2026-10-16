@@ -6,8 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Zap, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { TRIGGER_TYPES, ACTION_TYPES, filterActionConfig, MESSAGE_ACTION_TYPES, filterTriggerConfig, triggerConfigFields, validateTriggerConfig } from './automationConstants';
-import type { TriggerConfigField } from './automationConstants';
+import { TRIGGER_TYPES, ACTION_TYPES, filterActionConfig, MESSAGE_ACTION_TYPES } from './automationConstants';
 import type { AutomationRow } from './useAutomations';
 
 interface AutomationEditorDialogProps {
@@ -24,48 +23,13 @@ function readActions(automation?: AutomationRow | null): ActionRecord[] {
   return raw as unknown as ActionRecord[];
 }
 
-function toRecord(value: unknown): ActionRecord {
-  return value && typeof value === 'object' && !Array.isArray(value) ? (value as ActionRecord) : {};
-}
-
 function readConfig(action?: ActionRecord): ActionRecord {
-  return toRecord(action?.config);
+  const config = action?.config;
+  return config && typeof config === 'object' && !Array.isArray(config) ? (config as ActionRecord) : {};
 }
 
 function readString(value: unknown): string {
   return typeof value === 'string' ? value : '';
-}
-
-// Converte o valor gravado no `trigger_config` para o texto mostrado no campo;
-// vazio quando o gatilho ainda não tem a condição (ex.: automação criada antes
-// desta edição).
-function fieldInputValue(field: TriggerConfigField, config: ActionRecord): string {
-  const raw = config[field.key];
-  if (field.input === 'keywords') return Array.isArray(raw) ? raw.map(String).join(', ') : '';
-  if (field.input === 'number') return typeof raw === 'number' ? String(raw) : '';
-  return typeof raw === 'string' ? raw : '';
-}
-
-// Grava o texto digitado de volta na chave do campo. Campo esvaziado REMOVE a
-// chave (em vez de gravar `''`/`NaN`), para o `trigger_config` não guardar
-// condição vazia; a validação do save barra o campo obrigatório sem valor.
-function withFieldValue(prev: ActionRecord, field: TriggerConfigField, raw: string): ActionRecord {
-  const next = { ...prev };
-  if (field.input === 'keywords') {
-    const keywords = raw.split(',').map((word) => word.trim()).filter(Boolean);
-    if (keywords.length === 0) delete next[field.key];
-    else next[field.key] = keywords;
-    return next;
-  }
-  if (field.input === 'number') {
-    const minutes = Number(raw);
-    if (raw.trim() === '' || !Number.isFinite(minutes)) delete next[field.key];
-    else next[field.key] = Math.trunc(minutes);
-    return next;
-  }
-  if (raw.trim() === '') delete next[field.key];
-  else next[field.key] = raw;
-  return next;
 }
 
 function buildFirstAction(
@@ -114,10 +78,6 @@ function AutomationEditorForm({ open, onOpenChange, automation, onSave }: Automa
     return readString(readConfig(firstAction).message);
   });
   const [isSaving, setIsSaving] = useState(false);
-  // R2-MOD-004: o `trigger_config` deixa de ser opaco — o editor passa a exibir e
-  // gravar a condição do gatilho escolhido, preservando o que ele não edita.
-  const [triggerConfig, setTriggerConfig] = useState<ActionRecord>(() => toRecord(automation?.trigger_config));
-  const triggerFields = triggerConfigFields(triggerType);
   // O campo de mensagem aparece para TODO tipo que declara a chave `message`
   // (antes só send_message): send_notification era oferecido sem nenhum controle
   // para a mensagem e salvava a ação com config vazia.
@@ -129,23 +89,17 @@ function AutomationEditorForm({ open, onOpenChange, automation, onSave }: Automa
   // porque este repositório não contém o executor que definiria o contrato total.
   const handleSave = async () => {
     if (!name.trim()) { toast.error('Nome é obrigatório'); return; }
-    // R2-MOD-004: o gatilho precisa dos dados que o tipo exige; sem eles a
-    // automação salvaria uma condição vazia e nunca dispararia do jeito pedido.
-    const nextTriggerConfig = filterTriggerConfig(triggerType, triggerConfig);
-    const triggerError = validateTriggerConfig(triggerType, nextTriggerConfig);
-    if (triggerError) { toast.error(triggerError); return; }
     const existing = readActions(automation);
     const { action: firstAction } = buildFirstAction(automation, actionType, messageContent);
     const actions = existing.length > 0 ? [firstAction, ...existing.slice(1)] : [firstAction];
     setIsSaving(true);
     try {
-      // R2-MOD-002: preserva as demais ações que a UI não edita; R2-MOD-004:
-      // grava o gatilho editado no lugar do `trigger_config` anterior.
+      // R2-MOD-002: preserva trigger_config e as demais ações que a UI não edita.
       await onSave({
         name,
         description,
         trigger_type: triggerType,
-        trigger_config: nextTriggerConfig as AutomationRow['trigger_config'],
+        trigger_config: automation?.trigger_config ?? {},
         actions: actions as unknown as AutomationRow['actions'],
       });
       onOpenChange(false);
@@ -188,24 +142,6 @@ function AutomationEditorForm({ open, onOpenChange, automation, onSave }: Automa
               </SelectContent>
             </Select>
           </div>
-          {triggerFields.length > 0 ? (
-            <div className="space-y-3 rounded-lg border border-border p-3">
-              {triggerFields.map((field) => (
-                <div key={field.key} className="space-y-2">
-                  <Label htmlFor={`trigger-${field.key}`}>{field.label}</Label>
-                  <Input
-                    id={`trigger-${field.key}`}
-                    type={field.input === 'number' ? 'number' : 'text'}
-                    value={fieldInputValue(field, triggerConfig)}
-                    onChange={(e) => setTriggerConfig((prev) => withFieldValue(prev, field, e.target.value))}
-                    placeholder={field.placeholder}
-                  />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-xs text-muted-foreground">Este gatilho não tem configuração adicional.</p>
-          )}
           <div className="space-y-2">
             <Label>Ação (O que fazer?)</Label>
             <Select value={actionType} onValueChange={setActionType}>

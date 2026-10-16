@@ -34,18 +34,6 @@ vi.mock('@/components/inbox/location-picker/useAddressAutocomplete', () => ({
 
 import { ContactForm, type ContactFormValues } from '../ContactForm';
 
-// Teto das esperas ASSÍNCRONAS — determinismo sob carga. Mesmo idioma do irmão
-// `talkx/__tests__/RuleValueInput.test.tsx` e do teto global (`asyncUtilTimeout`,
-// `src/test/setup.ts`): as esperas aqui atravessam a cadeia real (efeito do React
-// → `getMapboxToken` → `searchPlaces` → estado do formulário → re-render do pai) e
-// o `waitFor` mede o relógio de PAREDE do worker — com a fábrica carregada a
-// preempção pode passar do teto de 5 s e reprovar um teste que está correto. Os
-// tetos NÃO afrouxam asserção nenhuma: a condição esperada é a mesma, muda só o
-// orçamento de tempo para ela aparecer — e um defeito de verdade continua vermelho
-// (estoura o teto de 15 s).
-vi.setConfig({ testTimeout: 20000 });
-const ESPERA = { timeout: 15000 };
-
 /**
  * #263 / R2-AUTH-039 — "Recálculo atrasado grava coordenadas do endereço anterior e apaga o aviso
  * de desatualização".
@@ -121,7 +109,7 @@ describe('ContactForm — resposta atrasada do recálculo (#263)', () => {
 
     // B está no formulário quando a busca começa; ela fica pendente.
     fireEvent.click(acharRecalcular());
-    await waitFor(() => expect(h.searchPlaces).toHaveBeenCalledTimes(1), ESPERA);
+    await waitFor(() => expect(h.searchPlaces).toHaveBeenCalledTimes(1));
     expect(String(h.searchPlaces.mock.calls[0][0])).toContain('Rua B');
 
     // C: o operador continua editando antes de a resposta de B chegar.
@@ -156,9 +144,9 @@ describe('ContactForm — resposta atrasada do recálculo (#263)', () => {
 
     fireEvent.click(acharRecalcular());
 
-    await waitFor(() => expect(onFieldChange).toHaveBeenCalledWith('latitude', '-22.9'), ESPERA);
+    await waitFor(() => expect(onFieldChange).toHaveBeenCalledWith('latitude', '-22.9'));
     expect(onFieldChange).toHaveBeenCalledWith('longitude', '-43.2');
-    await waitFor(() => expect(screen.queryByText(AVISO)).not.toBeInTheDocument(), ESPERA);
+    await waitFor(() => expect(screen.queryByText(AVISO)).not.toBeInTheDocument());
   });
 
   it('sugestão do autocomplete escolhida durante a busca: a resposta atrasada não sobrescreve a coordenada nova', async () => {
@@ -175,12 +163,12 @@ describe('ContactForm — resposta atrasada do recálculo (#263)', () => {
 
     fireEvent.change(screen.getByLabelText('Bairro'), { target: { value: 'Vila Nova' } });
     fireEvent.click(acharRecalcular());
-    await waitFor(() => expect(h.searchPlaces).toHaveBeenCalledTimes(1), ESPERA);
+    await waitFor(() => expect(h.searchPlaces).toHaveBeenCalledTimes(1));
 
     // Com a busca de B ainda pendente, o operador escolhe outra sugestão (coordenada D na tela).
     fireEvent.focus(screen.getByLabelText('Logradouro'));
     fireEvent.click(screen.getByRole('option', { name: /Rua D/ }));
-    await waitFor(() => expect(onFieldChange).toHaveBeenCalledWith('latitude', '-22.1'), ESPERA);
+    await waitFor(() => expect(onFieldChange).toHaveBeenCalledWith('latitude', '-22.1'));
 
     await act(async () => {
       busca.resolver({ ok: true, places: [{ name: 'Rua B', address: 'Rua B, 100', lat: -23.6, lng: -46.7 }] });

@@ -11,7 +11,6 @@ import { ROTULO_IGNORAR_WHATSAPP } from '@/lib/calls/WhatsAppCallAdapter';
 import { deveTocar, proximoToque, type EstadoDeToque } from '@/lib/calls/toqueDaChamada';
 import { useTerminoRemoto } from '@/hooks/calls/useTerminoRemoto';
 import { useAcoesDoAlerta } from '@/hooks/calls/useAcoesDoAlerta';
-import { useFotoDoContato } from '@/hooks/calls/useFotoDoContato';
 import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
 import { useCallSession } from '@/providers/CallSessionProvider';
 import { cn } from '@/lib/utils';
@@ -72,9 +71,6 @@ export const IncomingCallAlert = forwardRef<HTMLDivElement>(
   const { voip, whatsapp, rotuloLinhaWhatsApp } = useCallChannels();
   // O provedor da sessão é a fonte única de "esta chamada acabou" (T28/R2-CALL-006).
   const { session } = useCallSession();
-  // Foto do contato que está ligando (paridade com o alerta da V3): lida da
-  // tabela `contacts` sob a RLS do agente; sem foto (ou com erro), iniciais.
-  const fotoDoContato = useFotoDoContato(incomingCall?.contact_id);
   // T28: quando o outro lado desliga, a linha em `calls` encerra a sessao e o alerta
   // sai de cena sozinho (o listener para de entrega-la).
   useTerminoRemoto(incomingCall?.callId);
@@ -88,14 +84,6 @@ export const IncomingCallAlert = forwardRef<HTMLDivElement>(
   const [chamadaAtendida, setChamadaAtendida] = useState<string | null>(null);
   const identidadeEmCena = incomingCall ? identidadeDaChamada(incomingCall) : null;
   const showDialog = identidadeEmCena !== null && chamadaAtendida === identidadeEmCena;
-
-  /**
-   * Foto que não carrega não pode virar um quadrado vazio: a falha fica ancorada
-   * na identidade da chamada EM CENA, então a próxima ligação volta a tentar a
-   * foto dela. (Sem `setState` síncrono em efeito, que o lint do projeto reprova.)
-   */
-  const [fotoFalhouEm, setFotoFalhouEm] = useState<string | null>(null);
-  const mostrarFoto = fotoDoContato !== null && fotoFalhouEm !== identidadeEmCena;
 
   /**
    * R2-CALL-006 (#282): quem sabe que a chamada acabou é o PROVEDOR. Sem
@@ -265,20 +253,9 @@ export const IncomingCallAlert = forwardRef<HTMLDivElement>(
           {/* Contact info */}
           <div className="p-4 flex items-center gap-3">
             <Avatar className="h-12 w-12">
-              {mostrarFoto ? (
-                <img
-                  src={fotoDoContato ?? undefined}
-                  // Decorativa: o nome do contato é lido no texto ao lado.
-                  alt=""
-                  data-testid="foto-do-contato"
-                  className="h-full w-full object-cover"
-                  onError={() => setFotoFalhouEm(identidadeEmCena)}
-                />
-              ) : (
-                <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                  {getInitials(incomingCall.contact_name)}
-                </AvatarFallback>
-              )}
+              <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                {getInitials(incomingCall.contact_name)}
+              </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-foreground truncate">

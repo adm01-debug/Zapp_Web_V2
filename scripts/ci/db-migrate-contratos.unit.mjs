@@ -1,23 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync, existsSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import {
-  lerContrato,
-  caminhoDoContrato,
-  resolverInvocacao,
-  extrairInvocacoes,
-  invocacoesDosContratos,
-  desfazerAspasDuplasBash,
-} from '../db-audit/run-runtime-contract.mjs';
+import { lerContrato, caminhoDoContrato } from '../db-audit/run-runtime-contract.mjs';
 
 const raiz = new URL('../../', import.meta.url);
 const ler = (p) => readFileSync(new URL(p, raiz), 'utf8');
 const sha256 = (t) => createHash('sha256').update(t, 'utf8').digest('hex');
 const CONTRATOS = new URL('../../scripts/db-audit/contracts/', import.meta.url);
+// Contratos GENERICOS posteriores ao E62 (cópia de generic-migration-runtime.sql, para o pacote autorizado de uma
+// versao-alvo). Lista fechada: acrescentar uma versao aqui e' uma decisao revisada no PR, nunca automatica.
+const NOVOS_GENERICOS = ['20261004195051.sql'];
 
 test('E62: os 12 contratos sao ARQUIVOS, e o workflow nao tem mais nenhum braco embutido', () => {
   const y = ler('.github/workflows/db-migrate.yml');
@@ -28,15 +22,28 @@ test('E62: os 12 contratos sao ARQUIVOS, e o workflow nao tem mais nenhum braco 
   );
   assert.match(y, /run-runtime-contract\.mjs/, 'o passo tem de chamar o executor generico');
   // o guard continua: a comparacao com o sha confirmado (composicao da E64) sobreviveu
-  assert.match(y, /confirmacao !== process\.env\.CONFIRM_RUNTIME_SHA256/, 'a comparacao do sha tem de continuar');
-  assert.match(y, /if \(process\.env\.APPLY === 'true'/, 'e continuar condicionada ao apply');
+  // (em bash no apply: `if [ "$CONFIRMATION_HASH" != "$CONFIRM_RUNTIME_SHA256" ]`)
+  assert.ok(
+    y.includes('CONFIRMATION_HASH') && y.includes('CONFIRM_RUNTIME_SHA256'),
+    'a comparacao do sha tem de continuar',
+  );
   const arquivos = readdirSync(CONTRATOS).filter((f) => f.endsWith('.sql'));
-  assert.equal(arquivos.length, 12, `esperava 12 contratos, achei ${arquivos.length}`);
+  const historicos = arquivos.filter((f) => !NOVOS_GENERICOS.includes(f));
+  assert.equal(historicos.length, 12, `esperava 12 contratos historicos, achei ${historicos.length}`);
+  assert.deepEqual(
+    arquivos.filter((f) => NOVOS_GENERICOS.includes(f)).sort(),
+    [...NOVOS_GENERICOS].sort(),
+    'os contratos genericos autorizados tem de existir, e so eles',
+  );
+  const generico = readFileSync(new URL('../../scripts/db-audit/generic-migration-runtime.sql', import.meta.url), 'utf8');
+  for (const f of NOVOS_GENERICOS) {
+    assert.equal(readFileSync(new URL(f, CONTRATOS), 'utf8'), generico, `${f} tem de ser identico ao contrato generico`);
+  }
 });
 
 test('E62: cada contrato e o texto do braco de origem (equivalencia pelo sha do documento)', () => {
   const doc = ler('docs/audits/evidence/db-migrate-contratos-historicos.md');
-  const arquivos = readdirSync(CONTRATOS).filter((f) => f.endsWith('.sql'));
+  const arquivos = readdirSync(CONTRATOS).filter((f) => f.endsWith('.sql') && !NOVOS_GENERICOS.includes(f));
   let comFingerprint = 0;
   for (const f of arquivos) {
     const versao = f.replace('.sql', '');
@@ -60,176 +67,13 @@ test('E62: o executor e FAIL-CLOSED — versao sem contrato nao vira "nada a ver
   assert.throws(() => lerContrato('abc'), /versao alvo invalida/);
   assert.throws(() => lerContrato(''), /versao alvo invalida/);
   assert.throws(() => caminhoDoContrato('20260830170000x'), /versao alvo invalida/);
-});
-
-const EXECUTOR = new URL('../db-audit/run-runtime-contract.mjs', import.meta.url);
-const RAIZ = new URL('../../', import.meta.url).pathname;
-
-const envSemDestinoUrl = () => {
-  // Teste unitario nunca deve alcancar banco: mesmo que o runner/CI tenha
-  // DESTINO_URL valido, o filho roda sem ele e para no psql-safe local.
-  const env = { ...process.env };
-  delete env.DESTINO_URL;
-  return env;
-};
-
-// O CLI de verdade, como o workflow chama.
-const rodaCli = (versao) =>
-  spawnSync(process.execPath, ['scripts/db-audit/run-runtime-contract.mjs', versao], {
-    cwd: RAIZ,
+  // e o CLI de verdade: exit 2, sem resultado em stdout
+  const r = spawnSync(process.execPath, ['scripts/db-audit/run-runtime-contract.mjs', '20990101000000'], {
+    cwd: new URL('../../', import.meta.url).pathname,
     encoding: 'utf8',
-    env: envSemDestinoUrl(),
   });
-
-// principal() num processo filho apontando para um diretorio de contratos
-// sintetico: o exit code do processo e o do executor, sem precisar de psql.
-const rodaExecutor = (versao, dir) =>
-  spawnSync(
-    process.execPath,
-    [
-      '--input-type=module',
-      '-e',
-      `import { principal } from ${JSON.stringify(EXECUTOR.href)};` +
-        ` principal(['node','x',${JSON.stringify(versao)}], { dir: ${JSON.stringify(dir)} });`,
-    ],
-    { cwd: RAIZ, encoding: 'utf8', env: envSemDestinoUrl() },
-  );
-
-// So o executor emite "::error::" (o psql-safe emite "ERRO: DESTINO_URL ..."):
-// e o prefixo que discrimina quem recusou — sem ele o teste fica verde por acaso.
-test('E62: versao invalida sai com 2 e stdout vazio pelo PROPRIO executor', () => {
-  for (const versao of ['abc', '']) {
-    const r = rodaCli(versao);
-    assert.equal(r.status, 2, `versao "${versao}": exit`);
-    assert.equal(r.stdout, '', 'nao pode imprimir resultado para o workflow');
-    assert.match(r.stderr, /::error::versao alvo invalida/, 'o erro tem de ser do executor');
-  }
-});
-
-test('E62: contrato malformado sai com 2 e stdout vazio pelo PROPRIO executor', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'contratos-'));
-  try {
-    // Um ramo generico valido ao lado: se um contrato malformado passasse pelo
-    // parser, o executor seguiria ate o psql-safe e o stderr NAO teria
-    // "::error::" — e isso que torna os casos "barra invertida" e "$A"/"$$"
-    // vermelhos contra o parser que tratava o corpo do -c como SQL literal.
-    writeFileSync(
-      join(dir, '20990202000000.sql'),
-      '            *)\n' +
-        '              RUNTIME=$(node x.mjs -X -v ON_ERROR_STOP=1 -At \\\n' +
-        '                -f scripts/db-audit/generic-migration-runtime.sql)\n',
-    );
-    const casos = {
-      'forma nao declarada':
-        '              RUNTIME=$(node x.mjs -X -v ON_ERROR_STOP=1 -At --file=algo.sql)\n',
-      'flag desconhecida':
-        '              RUNTIME=$(node x.mjs -X -v ON_ERROR_STOP=1 -At --evil -c "\n' +
-        '                SELECT 1\n' +
-        '              ")\n',
-      'shell no -c':
-        '              RUNTIME=$(node x.mjs -X -v ON_ERROR_STOP=1 -At -c "\n' +
-        '                RUNTIME=$(node y.mjs -c "select 1")\n' +
-        '              ")\n',
-      'barra invertida': // \n literal dentro do SQL: o bash entrega "\n", nao quebra de linha
-        '              RUNTIME=$(node x.mjs -X -v ON_ERROR_STOP=1 -At -c "\n' +
-        "                SELECT 'a\\nb'\n" +
-        '              ")\n',
-      'expansao $A':
-        '              RUNTIME=$(node x.mjs -X -v ON_ERROR_STOP=1 -At -c "\n' +
-        "                SELECT '$A'\n" +
-        '              ")\n',
-      'expansao $$':
-        '              RUNTIME=$(node x.mjs -X -v ON_ERROR_STOP=1 -At -c "\n' +
-        '                SELECT 1 $$\n' +
-        '              ")\n',
-    };
-    for (const [nome, texto] of Object.entries(casos)) {
-      writeFileSync(join(dir, '20990101000000.sql'), texto);
-      const r = rodaExecutor('20990101000000', dir);
-      assert.equal(r.status, 2, `${nome}: exit`);
-      assert.equal(r.stdout, '', `${nome}: stdout tem de ficar vazio`);
-      assert.match(r.stderr, /::error::/, `${nome}: o erro tem de ser do executor, nao do psql-safe`);
-    }
-  } finally {
-    rmSync(dir, { recursive: true, force: true });
-  }
-});
-
-test('E62: versao sem contrato dedicado usa o generico e avisa SO no stderr', () => {
-  const inv = resolverInvocacao('20990101000000');
-  assert.equal(inv.generico, true, 'tem de resolver pelo contrato generico');
-  assert.ok(inv.arquivo.endsWith('generic-migration-runtime.sql'), `arquivo do generico: ${inv.arquivo}`);
-  const r = rodaCli('20990101000000');
-  // O aviso nao pode ir para o stdout: e' la que o workflow faz JSON.parse.
-  // Nao exigimos stdout vazio aqui, porque esse canal pertence ao resultado do psql;
-  // o que este teste prova e que o AVISO do fallback fica so no stderr.
-  assert.doesNotMatch(r.stdout, /Sem contrato dedicado/, 'o aviso do fallback nao pode ir para stdout');
-  assert.match(r.stderr, /Sem contrato dedicado para 20990101000000/, 'o fallback e anunciado no stderr');
-});
-
-test('E62: o corpo do -c e string bash — escapes desfeitos e expansao recusada', () => {
-  const contrato = (corpo) =>
-    '              RUNTIME=$(node x.mjs -X -v ON_ERROR_STOP=1 -At -c "\n' +
-    `${corpo}\n` +
-    '              ")';
-  // Oraculo do bash: dentro de aspas duplas \" \\ \$ voltam a ser " \ $.
-  const [inv] = extrairInvocacoes(
-    contrato(String.raw`SELECT 'a\"b', 'c\\d', '\$e'`),
-    '20260101000000',
-    'sintetico',
-  );
-  assert.equal(inv.sql, `SELECT 'a"b', 'c\\d', '$e'`, 'escapes de aspas duplas tem de ser desfeitos');
-  // e tudo que o bash expandiria (ou escape que ele nao define) e' recusado
-  for (const corpo of [
-    'SELECT $A',
-    'SELECT $1',
-    'SELECT $_',
-    'SELECT 1 $$',
-    'SELECT $(id)',
-    'SELECT ${x}',
-    'SELECT `id`',
-    String.raw`SELECT 'a\nb'`,
-  ]) {
-    assert.throws(
-      () => extrairInvocacoes(contrato(corpo), '20260101000000', 'sintetico'),
-      /substituicao de shell|barra invertida/,
-      `expansao/escape proibido foi aceito: ${corpo}`,
-    );
-  }
-});
-
-test('E62: os 7 contratos inline dedicados entregam ao psql o SQL que o BASH entrega', () => {
-  const INLINE = [
-    '20260830170000',
-    '20260831120000',
-    '20260831150000',
-    '20260908180000',
-    '20260908220000',
-    '20260909120000',
-    '20260909180000',
-  ];
-  const dir = mkdtempSync(join(tmpdir(), 'oraculo-bash-'));
-  try {
-    for (const versao of INLINE) {
-      const texto = readFileSync(
-        new URL(`../../scripts/db-audit/contracts/${versao}.sql`, import.meta.url),
-        'utf8',
-      );
-      const [inv] = extrairInvocacoes(texto, versao, `${versao}.sql`);
-      assert.ok(inv.sql, `${versao}: contrato inline`);
-      // corpo bruto entre `-c "` e o ultimo `")`: o texto que o bash recebe
-      const corpoBruto = texto.slice(texto.indexOf('-c "') + 4, texto.lastIndexOf('")'));
-      const script = join(dir, `${versao}.sh`);
-      writeFileSync(script, `printf '%s' "${corpoBruto}"\n`);
-      const bash = spawnSync('bash', [script], { encoding: 'utf8' });
-      assert.equal(bash.status, 0, `${versao}: bash ${bash.stderr}`);
-      // O bash entrega um \n a mais no inicio (a quebra depois de `-c "`):
-      // compara com trim dos dois lados.
-      assert.equal(inv.sql, bash.stdout.trim(), `versao ${versao}`);
-    }
-  } finally {
-    rmSync(dir, { recursive: true, force: true });
-  }
+  assert.equal(r.status, 2, 'versao sem contrato tem de sair com 2');
+  assert.equal(r.stdout.trim(), '', 'nao pode imprimir resultado para o workflow');
 });
 
 test('E62: o contrato da versao 20260830170000 existe e nao esta vazio', () => {
@@ -238,100 +82,117 @@ test('E62: o contrato da versao 20260830170000 existe e nao esta vazio', () => {
   assert.ok(existsSync(new URL('20260830170000.sql', CONTRATOS)));
 });
 
-// ---------------------------------------------------------------------------
-// Prova SEM banco do mesmo defeito (o que precisa de PostgreSQL 17 descartavel
-// -- o texto de shell recusado pelo psql e o JSON das 3 classes -- roda no
-// harness, e a saida dele esta no relato do cartao). Fica aqui, e nao num
-// arquivo novo, porque `scripts/ci/*.unit.mjs` e glob que o CI executa em
-// `node --test`: um `.test.sh` novo em scripts/db-audit sem passo nominal no
-// db-guard.yml vira orfao para o check-test-inventory.
-// ---------------------------------------------------------------------------
+import { lerContratoComFallback } from '../db-audit/run-runtime-contract.mjs';
+import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 
-// As versoes suportadas e o contrato de cada uma, conforme os rotulos do `case`
-// que originou os arquivos (E62). O agrupamento com `|` vale para todas as suas
-// versoes.
-const SUPORTADAS = {
-  20260830170000: { sql: /get_team_profiles/ },
-  20260831120000: { sql: /webhook_failures/ },
-  20260831150000: { sql: /messages/ },
-  20260908180000: { sql: /crm_contact_links/ },
-  20260908220000: { sql: /crm_sync_outbox/ },
-  20260909120000: { sql: /crm/ },
-  20260909180000: { sql: /global_settings/ },
-  20260909200000: { arquivo: 'scripts/db-audit/inbox-contact-authorization-runtime.sql' },
-  20260909210000: { arquivo: 'scripts/db-audit/talkx-template-history-runtime.sql' },
-  20260909220000: { arquivo: 'scripts/db-audit/message-delivery-phase1-runtime.sql' },
-  20260909230000: { arquivo: 'scripts/db-audit/talkx-template-history-runtime.sql' },
-  20260909240000: { arquivo: 'scripts/db-audit/message-delivery-phase1-runtime.sql' },
-  20260909250000: { arquivo: 'scripts/db-audit/message-delivery-phase1-runtime.sql' },
-  20260909260000: { arquivo: 'scripts/db-audit/message-delivery-phase1-runtime.sql' },
-  20260909270000: { arquivo: 'scripts/db-audit/message-delivery-phase1-runtime.sql' },
-  20260910100000: { arquivo: 'scripts/db-audit/talkx-blacklist-policy-runtime.sql' },
-  20260912130000: { arquivo: 'scripts/db-audit/talkx-recovery-runtime.sql' },
-  20260912140000: { arquivo: 'scripts/db-audit/talkx-recovery-runtime.sql' },
-  20260922220000: { arquivo: 'scripts/db-audit/notification-delivery-atomicity-runtime.sql' },
-};
-
-test('E62: as versoes suportadas resolvem para o contrato do case de origem', () => {
-  for (const [versao, esperado] of Object.entries(SUPORTADAS)) {
-    const invocacao = resolverInvocacao(versao);
-    assert.equal(invocacao.generico, false, `${versao} tem de ter contrato dedicado`);
-    if (esperado.arquivo) assert.equal(invocacao.arquivo, esperado.arquivo, `contrato de ${versao}`);
-    if (esperado.sql) assert.match(invocacao.sql ?? '', esperado.sql, `SQL de ${versao}`);
-    for (const arquivo of [invocacao.arquivo].filter(Boolean)) {
-      assert.ok(
-        readFileSync(new URL(`../../${arquivo}`, import.meta.url), 'utf8').length > 0,
-        `o arquivo declarado por ${versao} tem de existir no repo: ${arquivo}`,
-      );
-    }
-  }
-  // O generico e unico: sem ele o inventario nao teria fallback.
-  const { generico } = invocacoesDosContratos();
-  assert.equal(generico.arquivo, 'scripts/db-audit/generic-migration-runtime.sql');
+// W29: sem arquivo dedicado → fallback para o contrato generico; arquivo vazio → fail-closed.
+test('W29: lerContratoComFallback usa o generico para versao sem contrato dedicado', () => {
+  const r = lerContratoComFallback('20990101000000');
+  assert.equal(r.tipo, 'generic', 'tipo deve ser generic');
+  assert.ok(r.sql.includes('generic-migration-runtime') || r.sql.includes('structure_sha256'),
+    'sql deve ser o contrato generico');
 });
 
-test('E62: todo o inventario de supabase/migrations resolve (dedicado ou generico)', () => {
-  // O defeito R2-INF-004 derrubava o passo justamente aqui: versao sem contrato
-  // dedicado ("767 versoes" na auditoria) nao podia abortar o preflight.
-  const versoes = readdirSync(new URL('../../supabase/migrations/', import.meta.url))
-    .filter((f) => /^\d{14}_.*\.sql$/.test(f))
-    .map((f) => f.slice(0, 14));
-  assert.ok(versoes.length > 700, `inventario pequeno demais: ${versoes.length}`);
-  let dedicadas = 0;
-  for (const versao of versoes) {
-    const invocacao = resolverInvocacao(versao);
-    if (invocacao.generico) {
-      assert.equal(
-        invocacao.arquivo,
-        'scripts/db-audit/generic-migration-runtime.sql',
-        `fallback de ${versao}`,
-      );
-    } else {
-      dedicadas += 1;
-    }
+test('W29: lerContratoComFallback falha fechado para arquivo dedicado VAZIO', () => {
+  const tmp = mkdtempSync(tmpdir() + '/w29-');
+  try {
+    writeFileSync(tmp + '/20990101000001.sql', '');
+    assert.throws(
+      () => lerContratoComFallback('20990101000001', tmp),
+      /contrato vazio/,
+      'arquivo vazio deve lancar erro',
+    );
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
   }
-  assert.equal(dedicadas, Object.keys(SUPORTADAS).length, 'dedicadas = versoes suportadas do case');
 });
 
-test('E62: o parser recusa SQL sem ON_ERROR_STOP, shell sem SQL e continuacao de linha', () => {
-  const inline = (corpo) =>
-    '              RUNTIME=$(node x.mjs -X -v ON_ERROR_STOP=1 -At -c "\n' + `${corpo}\n` + '              ")';
-  const recusa = (texto, esperado, rotulo) =>
-    assert.throws(() => extrairInvocacoes(texto, '20260101000000', 'sintetico'), esperado, rotulo);
-  recusa(
-    '              RUNTIME=$(node x.mjs -X -At -c "\n                SELECT 1\n              ")',
-    /ON_ERROR_STOP/,
-    'SQL sem -v ON_ERROR_STOP=1',
-  );
-  recusa(inline('echo oi'), /nao comeca por WITH\/SELECT\/VALUES/, 'texto de shell sem SQL');
-  recusa(
-    '              RUNTIME=$(node x.mjs -X -v ON_ERROR_STOP=1 -At -c "\n' +
-      '                RUNTIME=$(node y.mjs -c "select 1")\n' +
-      '              ")',
-    /substituicao de shell|fechamento/,
-    'shell dentro do -c',
-  );
-  assert.throws(() => resolverInvocacao('abc'), /versao alvo invalida/);
-  // Continuacao de linha do bash (barra + newline) tem de sumir, como no bash.
-  assert.equal(desfazerAspasDuplasBash('linha1\\\nlinha2', 'sintetico'), 'linha1linha2');
+test('W29: lerContratoComFallback devolve o contrato dedicado quando o arquivo existe', () => {
+  const r = lerContratoComFallback('20260830170000');
+  assert.equal(r.tipo, 'dedicado', 'tipo deve ser dedicado');
+  assert.ok(r.sql.trim().length > 100, 'sql do contrato dedicado nao pode estar vazio');
+});
+
+import { lerExpect, testarCampo, avaliarContraExpect } from '../db-audit/run-runtime-contract.mjs';
+import { join } from 'node:path';
+
+// W28: testes do sistema de .expect.json
+const VERSOES_EXPECT = [
+  '20260830170000','20260831120000','20260831150000','20260908180000','20260908220000',
+  '20260909120000','20260909180000','20260909200000','20260909210000','20260909230000',
+  '20260910100000','20260922220000',
+];
+
+test('W28: os 12 arquivos .expect.json existem e sao JSON valido', () => {
+  for (const v of VERSOES_EXPECT) {
+    const ex = lerExpect(v);
+    assert.ok(ex !== null, `${v}.expect.json deve existir`);
+    assert.ok(typeof ex === 'object', `${v}.expect.json deve ser um objeto`);
+    // deve ter ao menos uma secao
+    assert.ok(ex.always || ex.before || ex.after,
+      `${v}.expect.json deve ter ao menos uma secao (always, before, ou after)`);
+  }
+});
+
+test('W28: lerExpect retorna null para versao sem .expect.json', () => {
+  const r = lerExpect('20990101000000');
+  assert.equal(r, null, 'versao sem expect.json deve devolver null');
+});
+
+test('W28: testarCampo — comparacao literal', () => {
+  assert.equal(testarCampo('x', 5, 5), null);
+  assert.equal(testarCampo('x', 'ok', 'ok'), null);
+  assert.match(testarCampo('x', 4, 5), /esperado/);
+  assert.match(testarCampo('x', false, true), /esperado/);
+});
+
+test('W28: testarCampo — $regex', () => {
+  assert.equal(testarCampo('h', 'abc123', { $regex: '^[a-z0-9]+$' }), null);
+  assert.match(testarCampo('h', 'ABC', { $regex: '^[a-z]+$' }), /nao casa com/);
+});
+
+test('W28: testarCampo — $min / $max', () => {
+  assert.equal(testarCampo('n', 5, { $min: 3 }), null);
+  assert.equal(testarCampo('n', 5, { $max: 10 }), null);
+  assert.equal(testarCampo('n', 5, { $min: 3, $max: 10 }), null);
+  assert.match(testarCampo('n', 2, { $min: 3 }), /minimo/);
+  assert.match(testarCampo('n', 11, { $max: 10 }), /maximo/);
+});
+
+test('W28: testarCampo — $any', () => {
+  assert.equal(testarCampo('v', 2, { $any: [1, 2, 4] }), null);
+  assert.match(testarCampo('v', 3, { $any: [1, 2, 4] }), /nao esta em/);
+});
+
+test('W28: avaliarContraExpect — always sempre verificado', () => {
+  const ex = { always: { count: 3 } };
+  assert.deepEqual(avaliarContraExpect({ count: 3 }, ex, true), { ok: true });
+  assert.deepEqual(avaliarContraExpect({ count: 3 }, ex, false), { ok: true });
+  const fail = avaliarContraExpect({ count: 2 }, ex, false);
+  assert.equal(fail.ok, false);
+  assert.ok(fail.falhas[0].includes('count'));
+});
+
+test('W28: avaliarContraExpect — before/after seleciona pelo needsApply', () => {
+  const ex = { before: { x: 0 }, after: { x: 1 } };
+  assert.deepEqual(avaliarContraExpect({ x: 0 }, ex, true), { ok: true });
+  assert.deepEqual(avaliarContraExpect({ x: 1 }, ex, false), { ok: true });
+  assert.equal(avaliarContraExpect({ x: 1 }, ex, true).ok, false);
+  assert.equal(avaliarContraExpect({ x: 0 }, ex, false).ok, false);
+});
+
+test('W28: avaliarContraExpect — $eq_field compara dois campos do proof', () => {
+  const ex = { always: { a: { $eq_field: 'b' } } };
+  assert.deepEqual(avaliarContraExpect({ a: 5, b: 5 }, ex, false), { ok: true });
+  const fail = avaliarContraExpect({ a: 3, b: 5 }, ex, false);
+  assert.equal(fail.ok, false);
+  assert.match(fail.falhas[0], /a/);
+});
+
+test('W28: o YAML nao tem mais o NODE heredoc inline (W28 pin)', () => {
+  const y = ler('.github/workflows/db-migrate.yml');
+  // O heredoc de 640 linhas foi removido; so o run-runtime-contract.mjs fica
+  assert.doesNotMatch(y, /RUNTIME_JSON=.*node --input-type=module/, 'NODE heredoc inline deve ter sido removido');
+  assert.match(y, /node scripts\/db-audit\/run-runtime-contract\.mjs/, 'executor deve ser chamado sem argumentos');
 });

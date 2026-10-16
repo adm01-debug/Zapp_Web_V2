@@ -2,7 +2,7 @@ import { useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { playNotificationSound } from '@/utils/notificationSounds';
-import { showBrowserNotification } from '@/utils/notificationSounds';
+import { showBrowserNotification, requestNotificationPermission } from '@/utils/notificationSounds';
 import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { getLogger } from '@/lib/logger';
@@ -88,6 +88,7 @@ export function useRealtimeSentimentAlerts() {
 
     // Show browser notification
     if (settings.browserNotifications) {
+      await requestNotificationPermission();
       showBrowserNotification(
         '⚠️ Alerta de Sentimento Negativo',
         sentimentScore !== null

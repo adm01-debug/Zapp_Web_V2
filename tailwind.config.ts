@@ -20,6 +20,15 @@ export default {
         mono: ["var(--font-mono)", "ui-monospace", "monospace"],
       },
       fontSize: {
+        // Fluid responsive sizes (CSS custom properties)
+        "fluid-xs": "var(--text-xs)",
+        "fluid-sm": "var(--text-sm)",
+        "fluid-base": "var(--text-base)",
+        "fluid-lg": "var(--text-lg)",
+        "fluid-xl": "var(--text-xl)",
+        "fluid-2xl": "var(--text-2xl)",
+        "fluid-3xl": "var(--text-3xl)",
+        "fluid-4xl": "var(--text-4xl)",
         // Abaixo da escala modular — faixa de badge/rotulo/atalho (F3 do
         // PLANO_AUDITORIA_FONTES_100_ETAPAS_2026-09-24, achado A5/E37).
         // text-[10px]/text-[11px] eram os 2 arbitrarios mais usados do repo
@@ -96,22 +105,6 @@ export default {
           DEFAULT: "hsl(var(--info))",
           foreground: "hsl(var(--info-foreground))",
         },
-        // Cores de CATEGORIA — definidas em src/styles/tokens.css (`:root` e
-        // `.dark`), par completo com contraste WCAG AA. O par de texto
-        // (`--{nome}-text`) não vira classe aqui, igual a `--primary-text`/
-        // `--warning-text`/`--destructive-text`: use `hsl(var(--violeta-text))`.
-        violeta: {
-          DEFAULT: "hsl(var(--violeta))",
-          foreground: "hsl(var(--violeta-foreground))",
-        },
-        teal: {
-          DEFAULT: "hsl(var(--teal))",
-          foreground: "hsl(var(--teal-foreground))",
-        },
-        rosa: {
-          DEFAULT: "hsl(var(--rosa))",
-          foreground: "hsl(var(--rosa-foreground))",
-        },
         kpi: {
           blue: "hsl(var(--kpi-tile-blue))",
           "blue-fg": "hsl(var(--kpi-tile-blue-fg))",
@@ -126,10 +119,12 @@ export default {
           "tile-blue": "hsl(var(--dash-tile-blue))",
           "tile-red": "hsl(var(--dash-tile-red))",
           "tile-green": "hsl(var(--dash-tile-green))",
+          "tile-violet": "hsl(var(--dash-tile-violet))",
           "tile-amber": "hsl(var(--dash-tile-amber))",
           blue: "hsl(var(--dash-blue))",
           red: "hsl(var(--dash-red))",
           green: "hsl(var(--dash-green))",
+          violet: "hsl(var(--dash-violet))",
           amber: "hsl(var(--dash-amber))",
           yellow: "hsl(var(--dash-yellow))",
         },

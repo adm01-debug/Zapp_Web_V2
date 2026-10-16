@@ -34,9 +34,7 @@ export function InteractiveMessageDisplay({
     
     if (button.type === 'url' && button.url) {
       window.open(button.url, '_blank', 'noopener,noreferrer');
-    } else if ((button.type === 'call' || button.type === 'phone') && button.phoneNumber) {
-      // 'call' é o tipo canônico da Evolution; 'phone' fica aceito como alias
-      // legado de mensagens já persistidas.
+    } else if (button.type === 'phone' && button.phoneNumber) {
       window.open(`tel:${button.phoneNumber}`, '_self');
     } else if (button.type === 'reply') {
       onButtonClick?.(button);
@@ -44,8 +42,7 @@ export function InteractiveMessageDisplay({
   };
 
   const handleListItemClick = (section: InteractiveListSection, rowId: string, rowTitle: string) => {
-    // Mensagem do próprio atendente é só prévia: a linha não tem resposta a dar.
-    if (disabled || isSent) return;
+    if (disabled) return;
     onListItemClick?.(section.title, rowId, rowTitle);
     setListOpen(false);
   };
@@ -54,7 +51,6 @@ export function InteractiveMessageDisplay({
     switch (button.type) {
       case 'url':
         return <ExternalLink className="w-3.5 h-3.5" />;
-      case 'call':
       case 'phone':
         return <Phone className="w-3.5 h-3.5" />;
       case 'reply':
@@ -190,15 +186,10 @@ export function InteractiveMessageDisplay({
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: rowIndex * 0.03 }}
-                            whileHover={{ scale: isSent ? 1 : 1.01 }}
-                            whileTap={{ scale: isSent ? 1 : 0.99 }}
+                            whileHover={{ scale: 1.01 }}
+                            whileTap={{ scale: 0.99 }}
                             onClick={() => handleListItemClick(section, row.id, row.title)}
-                            disabled={isSent}
-                            title={isSent ? 'Prévia de mensagem enviada — sem resposta' : undefined}
-                            className={cn(
-                              "w-full p-3 rounded-lg transition-colors text-left group",
-                              isSent ? "opacity-70 cursor-default" : "hover:bg-muted/80"
-                            )}
+                            className="w-full p-3 rounded-lg hover:bg-muted/80 transition-colors text-left group"
                           >
                             <div className="flex items-start justify-between gap-3">
                               <div className="flex-1 min-w-0">

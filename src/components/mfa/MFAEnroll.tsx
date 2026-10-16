@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Shield, Smartphone, Loader2 } from 'lucide-react';
+import { Shield, Smartphone, Copy, Check, Loader2 } from 'lucide-react';
 import { useMFA } from '@/hooks/auth/useMFA';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from 'sonner';
 
 interface MFAEnrollProps {
   onSuccess?: () => void;
@@ -16,6 +17,7 @@ export function MFAEnroll({ onSuccess, onCancel }: MFAEnrollProps) {
   const { enrollTOTP, verifyTOTP, loading, enrollmentData } = useMFA();
   const [step, setStep] = useState<'intro' | 'qr' | 'verify'>('intro');
   const [code, setCode] = useState('');
+  const [copied, setCopied] = useState(false);
   const [verifying, setVerifying] = useState(false);
 
   const handleStartEnrollment = async () => {
@@ -24,6 +26,15 @@ export function MFAEnroll({ onSuccess, onCancel }: MFAEnrollProps) {
       setStep('qr');
     } catch (err) {
       // Error handled in hook
+    }
+  };
+
+  const handleCopySecret = () => {
+    if (enrollmentData?.totp.secret) {
+      void navigator.clipboard.writeText(enrollmentData.totp.secret);
+      setCopied(true);
+      toast.success('Código copiado!');
+      setTimeout(() => setCopied(false), 2000);
     }
   };
 
@@ -118,11 +129,16 @@ export function MFAEnroll({ onSuccess, onCancel }: MFAEnrollProps) {
 
             <div className="space-y-2">
               <Label className="text-xs text-muted-foreground">
-                Ou digite este código no app autenticador:
+                Ou insira manualmente:
               </Label>
-              <code className="block p-2 bg-muted rounded text-xs font-mono break-all">
-                {enrollmentData.totp.secret}
-              </code>
+              <div className="flex gap-2">
+                <code className="flex-1 p-2 bg-muted rounded text-xs font-mono break-all">
+                  {enrollmentData.totp.secret}
+                </code>
+                <Button size="sm" variant="outline" onClick={handleCopySecret}>
+                  {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                </Button>
+              </div>
             </div>
 
             <Button className="w-full" onClick={() => setStep('verify')}>

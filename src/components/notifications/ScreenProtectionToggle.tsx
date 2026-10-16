@@ -36,10 +36,9 @@ export function ScreenProtectionToggle({ className }: { className?: string }) {
     window.dispatchEvent(new Event('screen-protection-change'));
   };
 
-  // Padrão "Nome: estado — ação" (plano D03), igual ao sino e aos outros controles rápidos.
   const label = enabled
-    ? 'Proteção de tela: ligada — clique para desligar'
-    : 'Proteção de tela: desligada — clique para ligar';
+    ? 'Desativar proteção de tela'
+    : 'Ativar proteção de tela';
 
   return (
     <Tooltip>

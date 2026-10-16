@@ -48,8 +48,6 @@ vi.mock('@/hooks/inbox/useConnectionsManager', () => ({
     newConnection: { name: '', phone_number: '' },
     setNewConnection: vi.fn(),
     isCreating: false,
-    addConnectionError: null,
-    clearAddConnectionError: vi.fn(),
     syncingHistory: null,
     setSyncingHistory: vi.fn(),
     evolutionLoading: false,
@@ -64,6 +62,7 @@ vi.mock('@/hooks/inbox/useConnectionsManager', () => ({
   }),
 }));
 
+vi.mock('../IntegrationsPanel', () => ({ IntegrationsPanel: () => null }));
 vi.mock('../NumberReputationMonitor', () => ({ NumberReputationMonitor: () => null }));
 vi.mock('../BusinessHoursDialog', () => ({ BusinessHoursDialog: () => null }));
 vi.mock('../ConnectionQueuesDialog', () => ({ ConnectionQueuesDialog: () => null }));

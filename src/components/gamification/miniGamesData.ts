@@ -8,16 +8,14 @@ export interface Game {
   description: string;
   icon: typeof Gamepad2;
   difficulty: 'easy' | 'medium' | 'hard';
+  xpReward: number;
 }
 
-// Os mini-games NÃO creditam XP: o cliente não pode creditar XP (PB-18/D4) e
-// nenhum caminho do servidor credita por partida. O que se guarda é o recorde
-// pessoal, por `game.id`.
 export const GAMES: Game[] = [
-  { id: 'speed-typing', name: 'Speed Typing', description: 'Digite respostas rápidas para clientes', icon: Keyboard, difficulty: 'medium' },
-  { id: 'quiz', name: 'Quiz do Atendimento', description: 'Teste seus conhecimentos', icon: Brain, difficulty: 'easy' },
-  { id: 'response-match', name: 'Response Match', description: 'Combine perguntas com respostas', icon: MessageSquare, difficulty: 'medium' },
-  { id: 'emoji-decode', name: 'Emoji Decode', description: 'Descubra o sentimento do cliente', icon: Target, difficulty: 'easy' },
+  { id: 'speed-typing', name: 'Speed Typing', description: 'Digite respostas rápidas para clientes', icon: Keyboard, difficulty: 'medium', xpReward: 50 },
+  { id: 'quiz', name: 'Quiz do Atendimento', description: 'Teste seus conhecimentos', icon: Brain, difficulty: 'easy', xpReward: 30 },
+  { id: 'response-match', name: 'Response Match', description: 'Combine perguntas com respostas', icon: MessageSquare, difficulty: 'medium', xpReward: 40 },
+  { id: 'emoji-decode', name: 'Emoji Decode', description: 'Descubra o sentimento do cliente', icon: Target, difficulty: 'easy', xpReward: 25 },
 ];
 
 export const TYPING_PHRASES = [

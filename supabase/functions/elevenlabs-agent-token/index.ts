@@ -1,10 +1,7 @@
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, enforceRateLimit } from "../_shared/validation.ts";
 import { logAiUsageDetached } from "../_shared/ai-usage.ts";
-import { aiCapabilityFlagKey, readCapabilityFlag } from "../_shared/ai-feature-flags.ts";
 
-// `import.meta.main` (mesmo padrão de `elevenlabs-tts`/`elevenlabs-sts`): o handler
-// pode ser importado por teste sem subir o servidor.
-export async function handleElevenLabsAgentToken(req: Request): Promise<Response> {
+Deno.serve(async (req) => {
   const cors = handleCors(req);
   if (cors) return cors;
 
@@ -18,22 +15,6 @@ export async function handleElevenLabsAgentToken(req: Request): Promise<Response
   if (!rl.allowed) return errorResponse("Rate limit exceeded", 429, req);
 
   try {
-    // IA-009 / SL-010b (decisão do cartão t_98090b40): kill switch de voz lido no
-    // SERVIDOR antes de tocar o provedor pago. Emitir o token de conversa é o que
-    // permite a sessão de voz começar: flag desligada (ou leitura não confiável)
-    // NEGA — nenhuma chamada à ElevenLabs e nenhum token emitido. `jsonResponse`
-    // (nunca `errorResponse` em 5xx: acima de 500 o corpo vira "Internal server
-    // error" e o consumidor perderia o código).
-    const voiceEnabled = await readCapabilityFlag(aiCapabilityFlagKey("voice"));
-    if (voiceEnabled !== true) {
-      log.warn("IA de voz desativada por flag — token nao emitido e provedor nao chamado");
-      return jsonResponse(
-        { error: { code: "AI_DISABLED", message: "IA de voz desativada por flag." } },
-        503,
-        req,
-      );
-    }
-
     const ELEVENLABS_API_KEY = requireEnv('ELEVENLABS_API_KEY');
     const ELEVENLABS_AGENT_ID = requireEnv('ELEVENLABS_AGENT_ID');
 
@@ -84,8 +65,4 @@ export async function handleElevenLabsAgentToken(req: Request): Promise<Response
     log.error("Unhandled error", { error: msg });
     return errorResponse(msg, 500, req);
   }
-}
-
-if (import.meta.main) {
-  Deno.serve(handleElevenLabsAgentToken);
-}
+});

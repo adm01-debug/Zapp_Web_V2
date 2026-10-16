@@ -21,7 +21,6 @@ import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
  */
 
 export type CampaignRowActionId = 'view' | 'edit' | 'start' | 'pause' | 'resume' | 'duplicate' | 'cancel' | 'delete';
-export type CampaignRowLifecycleKind = Extract<CampaignRowActionId, 'start' | 'pause' | 'resume' | 'cancel'>;
 
 /** Ações que mudam o estado da campanha e por isso passam por confirmação. */
 export type CampaignRowConfirmKind = 'start' | 'pause' | 'resume' | 'duplicate' | 'cancel' | 'delete';
@@ -83,8 +82,6 @@ export interface CampaignRowActionHandlers {
   onCancel: (id: string) => void | Promise<unknown>;
   onDelete: (id: string) => void | Promise<unknown>;
   onDuplicate: (c: TalkXCampaign) => void | Promise<unknown>;
-  /** X051: quando presente, iniciar/pausar/retomar/cancelar vão ao controlador único. */
-  onLifecycle?: (kind: CampaignRowLifecycleKind, c: TalkXCampaign) => boolean;
 }
 
 export interface CampaignRowActions {
@@ -119,10 +116,6 @@ export function useCampaignRowActions(handlers: CampaignRowActionHandlers): Camp
   const run = useCallback((action: CampaignRowActionId, c: TalkXCampaign) => {
     if (action === 'view') { openView(c); return; }
     if (action === 'edit') { handlers.onEdit(c); return; }
-    if (handlers.onLifecycle && (action === 'start' || action === 'pause' || action === 'resume' || action === 'cancel')) {
-      handlers.onLifecycle(action, c);
-      return;
-    }
     setError(null);
     setReason('');
     setConfirm({ kind: action as CampaignRowConfirmKind, campaign: c });

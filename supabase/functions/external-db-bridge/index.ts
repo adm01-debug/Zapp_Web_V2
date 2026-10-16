@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
+import { handleCors, errorResponse, internalErrorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
 import { ExternalDbBridgeSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 
 // ─── Allowlist of tables and operations ───────────────────────────────────
@@ -238,11 +238,10 @@ export async function handleExternalDbBridge(
 
     if (queryError) {
       log.done(500, { severity, durationMs: Math.round(durationMs) });
-      // errorResponse (nao jsonResponse) para status 500: sanitiza a mensagem
-      // antes de expor ao cliente externo, que poderia revelar nome de
-      // tabela/coluna/SQL interno via queryError (js/stack-trace-exposure).
-      // queryError ja vai completo para a telemetria (error_message acima).
-      return errorResponse(queryError, 500, req);
+      // internalErrorResponse: o corpo e sempre generico, entao nome de tabela/coluna/SQL
+      // interno em queryError nunca chega ao cliente externo (js/stack-trace-exposure).
+      // queryError ja vai completo para a telemetria (error_message acima) e para o log.
+      return internalErrorResponse(new Error(queryError), req, 500);
     }
 
     log.done(200, { severity, durationMs: Math.round(durationMs) });

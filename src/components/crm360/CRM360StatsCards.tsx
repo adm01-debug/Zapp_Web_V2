@@ -27,7 +27,7 @@ const STATS: StatCard[] = [
 ];
 
 function StatCardItem({ stat }: { stat: StatCard }) {
-  const { data, isLoading, isError } = useExternalSelect({
+  const { data, isLoading } = useExternalSelect({
     table: stat.table,
     select: 'id',
     limit: 1,
@@ -36,9 +36,6 @@ function StatCardItem({ stat }: { stat: StatCard }) {
   });
 
   const Icon = stat.icon;
-  // Sem `meta` (consulta falhou, tabela ausente ou integração desligada) ou erro
-  // na consulta: '—' em vez de um '0' que parece número real.
-  const metricUnavailable = isError || !data?.meta;
   const count = data?.meta?.record_count ?? 0;
 
   return (
@@ -50,13 +47,6 @@ function StatCardItem({ stat }: { stat: StatCard }) {
         <div>
           {isLoading ? (
             <Skeleton className="h-5 w-12" />
-          ) : metricUnavailable ? (
-            <p
-              className="text-lg font-bold leading-none text-muted-foreground"
-              title="Métrica indisponível neste ambiente"
-            >
-              —
-            </p>
           ) : (
             <p className="text-lg font-bold leading-none">
               {count > 1000 ? `${(count / 1000).toFixed(1)}k` : count.toLocaleString('pt-BR')}

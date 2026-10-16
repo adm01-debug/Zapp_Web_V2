@@ -1,17 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { resolverDestinoPosLogin } from '@/lib/postLoginRedirect';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
 type CallbackStatus = 'loading' | 'success' | 'error';
-
-const MAX_ERROR_LENGTH = 200;
-const GENERIC_ERROR = 'Ocorreu um erro durante a autenticação';
 
 // PKCE flow returns error params in the query string, not the hash fragment
 function getUrlError(): string | null {
@@ -19,25 +15,13 @@ function getUrlError(): string | null {
   return p.get('error_description') || p.get('error');
 }
 
-// A mensagem vem da URL (quem monta o link controla o texto): corta no tamanho
-// máximo, remove caracteres de marcação e cai num texto genérico quando sobra vazio.
-function sanitizeAuthError(raw: string | null | undefined): string {
-  if (!raw) return GENERIC_ERROR;
-  const text = raw.slice(0, MAX_ERROR_LENGTH).replace(/[<>"'&`]/g, '').trim();
-  return text || GENERIC_ERROR;
-}
-
 export default function SSOCallback() {
   const navigate = useNavigate();
-  const location = useLocation();
-  // Destino pedido antes do SSO (?next= ou state.from); '/' como padrao.
-  const destinoPosLogin = resolverDestinoPosLogin(location);
-  const rawUrlError = getUrlError();
-  const initialError = rawUrlError ? sanitizeAuthError(rawUrlError) : null;
-  const [status, setStatus] = useState<CallbackStatus>(initialError ? 'error' : 'loading');
-  const [errorMessage, setErrorMessage] = useState(initialError ?? '');
+  const urlError = getUrlError();
+  const [status, setStatus] = useState<CallbackStatus>(urlError ? 'error' : 'loading');
+  const [errorMessage, setErrorMessage] = useState(urlError ?? '');
   // ref tracks live status to avoid stale closure in the timeout callback
-  const statusRef = useRef<CallbackStatus>(initialError ? 'error' : 'loading');
+  const statusRef = useRef<CallbackStatus>(urlError ? 'error' : 'loading');
 
   useEffect(() => {
     // If Google returned an error in the redirect URL, show it and stop
@@ -53,7 +37,7 @@ export default function SSOCallback() {
         statusRef.current = 'success';
         setStatus('success');
         toast.success('Login realizado com sucesso!');
-        setTimeout(() => navigate(destinoPosLogin), 1500);
+        setTimeout(() => navigate('/'), 1500);
       } else if (event === 'SIGNED_OUT') {
         statusRef.current = 'error';
         setStatus('error');
@@ -66,7 +50,7 @@ export default function SSOCallback() {
       if (error) {
         statusRef.current = 'error';
         setStatus('error');
-        setErrorMessage(sanitizeAuthError(error.message));
+        setErrorMessage(error.message);
         toast.error('Erro no login SSO');
         return;
       }
@@ -74,7 +58,7 @@ export default function SSOCallback() {
         statusRef.current = 'success';
         setStatus('success');
         toast.success('Login realizado com sucesso!');
-        setTimeout(() => navigate(destinoPosLogin), 1500);
+        setTimeout(() => navigate('/'), 1500);
       }
     });
 
@@ -92,7 +76,7 @@ export default function SSOCallback() {
       clearTimeout(timer);
       authData.subscription.unsubscribe();
     };
-  }, [navigate, destinoPosLogin]);
+  }, [navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 p-4">

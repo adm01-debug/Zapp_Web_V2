@@ -10,6 +10,7 @@ const VIEW_QUERY_KEYS: Record<string, string[][]> = {
   inbox: [['contacts'], ['messages']],
   contacts: [['contacts']],
   dashboard: [['dashboard-stats'], ['contacts']],
+  campaigns: [['campaigns']],
   'knowledge-base': [['knowledge-base-articles']],
   automations: [['automations']],
   agents: [['team-members']],

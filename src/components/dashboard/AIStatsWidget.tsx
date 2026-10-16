@@ -189,7 +189,7 @@ export function AIStatsWidget() {
                   ))}
                 </div>
               </div>
-              <ChartContainer config={chartConfig} className="h-[100px] w-full" role="img" aria-label={`Evolução do sentimento: ${stats.sentimentTrend.length} pontos`}>
+              <ChartContainer config={chartConfig} className="h-[100px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={stats.sentimentTrend} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
                     <defs>

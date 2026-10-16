@@ -8,8 +8,6 @@ import { LiveRegion } from "@/components/ui/visually-hidden";
 import { GlobalKeyboardProvider } from "@/components/keyboard/GlobalKeyboardProvider";
 import { AppProviders } from "@/providers/AppProviders";
 import { AppRoutes } from "@/routes/AppRoutes";
-import { useAuth } from "@/hooks/auth/useAuth";
-import { useGlobalIncomingMessageAlerts } from "@/hooks/realtime/useGlobalIncomingMessageAlerts";
 
 const log = getLogger('App');
 
@@ -42,19 +40,15 @@ const EasterEggsProvider = lazy(() =>
   import("@/components/effects/EasterEggs")
     .then(m => ({ default: m.EasterEggsProvider }))
 );
+const InAppNotificationProvider = lazy(() =>
+  import("@/components/mobile/InAppNotificationProvider")
+    .then(m => ({ default: m.InAppNotificationProvider }))
+);
 // TC-007: listener ÚNICO de notificações do Team Chat, montado no nível do app. É um
 // provedor de efeito (renderiza null) e fica no chunk lazy para não pesar o bundle inicial.
 const TeamChatNotificationsListener = lazy(() =>
   import("@/components/team-chat/TeamChatNotificationsListener")
     .then(m => ({ default: m.TeamChatNotificationsListener }))
-);
-// HZ1-10: aviso de alerta de segurança no app inteiro (antes só dentro da
-// Central de Segurança). Mesmo slot e mesmo motivo do listener do Team Chat:
-// overlay de efeito, no chunk lazy, para o `sonner` que ele alcança não voltar
-// ao grafo estático do entry.
-const SecurityPushNotificationsListener = lazy(() =>
-  import("@/components/notifications/SecurityPushNotificationsListener")
-    .then(m => ({ default: m.SecurityPushNotificationsListener }))
 );
 // O viewport de toasts do sonner é overlay: nenhum toast existe no first paint e
 // o `toast()` bufferiza chamadas feitas antes do mount (Observer do pacote), então
@@ -63,13 +57,6 @@ const SecurityPushNotificationsListener = lazy(() =>
 const Sonner = lazy(() =>
   import("@/components/ui/sonner")
     .then(m => ({ default: m.Toaster }))
-);
-// Gamificação: host do toast de conquista/subida de nível. É overlay (renderiza o
-// próprio aviso e não envolve as rotas), então vive no mesmo bloco lazy do Sonner —
-// nada dele existe na primeira pintura.
-const AchievementCelebrationToaster = lazy(() =>
-  import("@/components/gamification/AchievementToast")
-    .then(m => ({ default: m.AchievementCelebrationToaster }))
 );
 
 /**
@@ -82,14 +69,6 @@ const AchievementCelebrationToaster = lazy(() =>
  * AppProviders (src/providers/AppProviders.tsx), not here.
  */
 function DeferredProviders() {
-  // Aviso de mensagem nova em QUALQUER tela (aba oculta ou view fora da inbox).
-  // Vive aqui como os outros listeners globais (TeamChatNotificationsListener):
-  // é side-effect, self-render (toast) e precisa de AuthProvider + QueryClient,
-  // que estão acima (AppProviders). `profile.id` é o valor de
-  // `contacts.assigned_to` — nunca o auth user id.
-  const { profile } = useAuth();
-  useGlobalIncomingMessageAlerts({ myProfileId: profile?.id ?? null });
-
   return (
     // ARCH-3 FIX: fallback={null} is intentional for side-effect providers —
     // the app must remain usable even if a non-critical overlay fails to load.
@@ -98,11 +77,11 @@ function DeferredProviders() {
       <IncomingCallAlert />
       <OutboundCallDialog />
       <TeamChatNotificationsListener />
-      <SecurityPushNotificationsListener />
-      {/* EasterEggsProvider is purely a keyboard/shake listener. No children needed. */}
-      <EasterEggsProvider>{null}</EasterEggsProvider>
+      <InAppNotificationProvider>
+        {/* EasterEggsProvider is purely a keyboard/shake listener. No children needed. */}
+        <EasterEggsProvider>{null}</EasterEggsProvider>
+      </InAppNotificationProvider>
       <Sonner />
-      <AchievementCelebrationToaster />
     </Suspense>
   );
 }
@@ -116,14 +95,10 @@ const DeferredHooks = lazy(() =>
   Promise.all([
     import('@/hooks/system/useServiceWorker'),
     import('@/hooks/ui/useScreenProtection'),
-    // Item 025: a fila offline drena também na ABERTURA (sob sessão autenticada),
-    // não só no evento `online` — ver lib/offlineQueue.ts.
-    import('@/hooks/system/useOfflineSendQueueDrain'),
-  ]).then(([swMod, spMod, offlineMod]) => ({
+  ]).then(([swMod, spMod]) => ({
     default: function DeferredHooksRunner() {
       swMod.useServiceWorker();
       spMod.useScreenProtection();
-      offlineMod.useOfflineSendQueueDrain();
       return null;
     },
   }))

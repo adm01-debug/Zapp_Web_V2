@@ -10,7 +10,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { QUEUE_COLORS } from './queueColors';
+
+const COLORS = [
+  '#3B82F6', // blue
+  '#10B981', // green
+  '#F59E0B', // amber
+  '#EF4444', // red
+  '#8B5CF6', // purple
+  '#EC4899', // pink
+  '#06B6D4', // cyan
+  '#84CC16', // lime
+];
 
 /** Campos que o formulário de edição precisa conhecer de uma fila existente. */
 export interface EditableQueue {
@@ -76,7 +86,7 @@ interface EditQueueFormProps {
 function EditQueueForm({ queue, onSubmit, onCancel, onSaved }: EditQueueFormProps) {
   const [name, setName] = useState(queue.name);
   const [description, setDescription] = useState(queue.description ?? '');
-  const [color, setColor] = useState(queue.color || QUEUE_COLORS[0]);
+  const [color, setColor] = useState(queue.color || COLORS[0]);
   const [maxWait, setMaxWait] = useState(
     queue.max_wait_time_minutes === null ? '' : String(queue.max_wait_time_minutes)
   );
@@ -145,7 +155,7 @@ function EditQueueForm({ queue, onSubmit, onCancel, onSaved }: EditQueueFormProp
       <div className="space-y-2">
         <Label className="text-foreground">Cor</Label>
         <div className="flex gap-2 flex-wrap">
-          {QUEUE_COLORS.map((c) => (
+          {COLORS.map((c) => (
             <button
               key={c}
               type="button"

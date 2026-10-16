@@ -83,7 +83,7 @@ export function SidebarRow({ icon, label, field, value, valueNode, copyable, cop
           </Button>
         )}
         {safeHref && (
-          <Button variant="ghost" size="icon" className="w-6 h-6 text-muted-foreground hover:text-foreground" aria-label={`Abrir ${label}`} asChild>
+          <Button variant="ghost" size="icon" className="w-6 h-6 text-muted-foreground hover:text-foreground" asChild>
             <a href={safeHref} target="_blank" rel="noopener noreferrer" aria-label={`Abrir ${label}`}>
               <ExternalLink className="w-3.5 h-3.5" />
             </a>

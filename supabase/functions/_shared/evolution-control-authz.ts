@@ -18,12 +18,9 @@
  *     ações de conversa que não entregam conteúdo mas mutam o estado remoto de
  *     um chat (mark-read/unread, archive-chat, send-reaction): o escopo é o
  *     contato da conversa, resolvido por `number` ou pelo JID do alvo.
- *   - `read`    → qualquer usuário autenticado, mas SÓ o que não expõe dado
- *     fora da visibilidade do agente nem configuração/credencial do provedor:
- *     estado da instância (`status`/`instance-info`/`list-instances`, com o
- *     corpo limpo de token/apikey/hash — R2EXT-AGENDA), verificação de número,
- *     leitura de grupos. A leitura sensível de diagnóstico é tratada
- *     separadamente em `webhook-diagnostic`. Somente o que está em READ_ACTIONS.
+ *   - `read`    → qualquer usuário autenticado (comportamento atual preservado;
+ *     a leitura sensível de diagnóstico é tratada separadamente em
+ *     `webhook-diagnostic`). Somente as ações listadas em READ_ACTIONS.
  *   - Qualquer ação fora dos três conjuntos cai em `control` — ação nova no
  *     handler nasce fechada e só abre quando classificada explicitamente
  *     aqui (o teste de exaustividade em __tests__/evolution-control-authz.test.ts
@@ -94,31 +91,6 @@ export const CONTROL_ACTIONS: ReadonlySet<string> = new Set([
   'set-evoai', 'delete-evoai',
   'set-n8n', 'delete-n8n',
   'set-kafka', 'set-nats', 'set-pusher',
-  // R2EXT-AGENDA: leituras de dado instance-wide (fora da visibilidade do
-  // agente) e de configuração/credencial do provedor passam a exigir
-  // admin/supervisor. Diferente de `send`, não há alvo de conversa único para
-  // resolver visibilidade (find-chats/find-contacts/find-messages devolvem a
-  // instância inteira — ADR R1EXT-F3) e nenhuma tela da V2 as chama.
-  'find-chats', 'find-contacts', 'find-messages', 'find-status-messages',
-  'get-media-base64',
-  // configuração da instância/conexão
-  'get-settings', 'get-webhook',
-  // perfil da conta/conexão (config) e de número arbitrário (fora da carteira)
-  'fetch-profile', 'fetch-profile-picture', 'fetch-business-profile',
-  // etiquetas/templates e integrações do provedor (config/credenciais)
-  'find-labels', 'find-templates',
-  'get-chatwoot', 'get-typebot', 'typebot-sessions',
-  'get-openai', 'get-dify', 'get-flowise', 'get-evolution-bot',
-  'get-rabbitmq', 'get-sqs', 'get-proxy', 'get-evoai', 'get-n8n',
-  'get-kafka', 'get-nats', 'get-pusher',
-  // catálogo de loja (configuração comercial)
-  'get-catalog', 'get-collections',
-  // R2EXT-STATUS: publicar Status/Story (send-status) NÃO tem contato-alvo — o
-  // status vai para toda a base da conexão. Enquanto estava em `send`, a
-  // ausência de alvo fazia o gate negar não-admin por acidente, mas a ação
-  // seguia com o corpo inteiro (campos livres como allContacts) e sem trilha.
-  // Como control, exige admin/supervisor de forma explícita.
-  'send-status',
 ]);
 
 /**
@@ -142,6 +114,7 @@ export const SEND_ACTIONS: ReadonlySet<string> = new Set([
   'send-buttons',
   'send-template',
   'send-ptv',
+  'send-status',
   'send-reaction',
   'offer-call',
   'send-chat-presence',
@@ -154,27 +127,58 @@ export const SEND_ACTIONS: ReadonlySet<string> = new Set([
 
 /**
  * Leituras: GETs e consultas (POST de find/check) que não alteram estado no
- * provedor E não entregam dado fora da visibilidade do agente nem configuração
- * do provedor. Continuam liberadas para qualquer usuário autenticado —
- * inclusive `status` (sonda o estado da instância na GO e espelha em
+ * provedor. Continuam liberadas para qualquer usuário autenticado — inclusive
+ * `status` (sonda o estado da instância na GO e espelha em
  * whatsapp_connections; o valor gravado vem da resposta do provedor, não do
- * chamador) e `list-instances` (única ação realmente global do handler). O
- * corpo de `instance-info`/`list-instances` é higienizado de token/apikey/hash
- * antes de sair (R2EXT-AGENDA).
+ * chamador) e `list-instances` (única ação realmente global do handler).
  */
 export const READ_ACTIONS: ReadonlySet<string> = new Set([
-  // instância (triagem/higienizadas no handler)
+  // instância
   'list-instances',
   'status',
   'instance-info',
-  // consultas ao provedor sem alvo de conversa e sem configuração
+  // settings / webhook
+  'get-settings',
+  'get-webhook',
+  // chat / mensagens (consultas)
+  'find-chats',
+  'find-messages',
+  'find-status-messages',
+  'find-contacts',
   'check-numbers',
-  // grupos (leitura) — consumidas pelas telas de grupo
+  'get-media-base64',
+  // grupos (leitura)
   'list-groups',
   'group-info',
   'group-participants',
   'group-invite-code',
   'invite-info',
+  // perfil
+  'fetch-profile',
+  'fetch-profile-picture',
+  'fetch-business-profile',
+  // labels / templates
+  'find-labels',
+  'find-templates',
+  // integrações (leitura)
+  'get-chatwoot',
+  'get-typebot',
+  'typebot-sessions',
+  'get-openai',
+  'get-dify',
+  'get-flowise',
+  'get-evolution-bot',
+  'get-rabbitmq',
+  'get-sqs',
+  'get-proxy',
+  'get-evoai',
+  'get-n8n',
+  'get-kafka',
+  'get-nats',
+  'get-pusher',
+  // catálogo de loja (consultas)
+  'get-catalog',
+  'get-collections',
 ]);
 
 /**
@@ -215,93 +219,4 @@ export function decideSendAuthz(opts: {
     status: 403,
     message: 'Sem permissão para enviar para este contato/conexão.',
   };
-}
-
-/**
- * R2EXT-STATUS: allowlist do corpo de `send-status`.
- *
- * O corpo ia inteiro para `/message/sendStatus/<instância>`. Como a ação não
- * tem contato-alvo, o chamador podia empurrar campos livres (ex.: `allContacts`,
- * `statusJidList` com números de fora da empresa) direto para o provedor. Aqui
- * só sobrevivem os campos que o produto usa, com limite de tamanho, e a lista
- * de destinatários é reduzida aos contatos conhecidos da conexão.
- */
-export const STATUS_ALLOWED_FIELDS = ['type', 'content', 'media', 'backgroundColor'] as const;
-
-/** Limite de caracteres do texto do status (mesmo teto das demais mensagens de texto). */
-export const STATUS_CONTENT_MAX_LENGTH = 1024;
-
-export interface StatusPayloadSanitizeResult {
-  /** Corpo já filtrado, pronto para o provedor. */
-  payload: Record<string, unknown>;
-  /** Campos do chamador descartados por não estarem na allowlist. */
-  droppedFields: string[];
-  /** Quantidade de JIDs de `statusJidList` descartados por não serem da empresa. */
-  droppedJids: number;
-  /**
-   * `statusJidList` veio preenchido mas NENHUM JID sobreviveu: publicar assim
-   * cairia no broadcast para toda a base (fail-open) — o chamador deve negar.
-   */
-  emptyTargetList: boolean;
-}
-
-/** Normaliza JID/telefone para dígitos (mesma regra do handler). */
-const normalizeStatusDigits = (value: unknown): string => {
-  const raw = String(value ?? '');
-  return (raw.includes('@') ? raw.split('@')[0] : raw).replace(/\D/g, '');
-};
-
-/**
- * Filtra o corpo de `send-status` pela allowlist e restringe `statusJidList`
- * aos contatos da empresa (`allowedJids`, já em dígitos).
- */
-export function sanitizeStatusPayload(
-  body: Record<string, unknown>,
-  allowedJids: ReadonlySet<string>,
-): StatusPayloadSanitizeResult {
-  const allowed = new Set<string>(STATUS_ALLOWED_FIELDS);
-  const payload: Record<string, unknown> = {};
-  const droppedFields: string[] = [];
-
-  for (const [key, value] of Object.entries(body)) {
-    // Metadados do contrato E45: não fazem parte do corpo do provedor.
-    if (key === 'action' || key === 'instance' || key === 'instanceName') continue;
-    if (key === 'statusJidList') continue; // tratado abaixo
-    if (!allowed.has(key)) {
-      droppedFields.push(key);
-      continue;
-    }
-    if (key === 'content') {
-      if (typeof value !== 'string') {
-        droppedFields.push(key);
-        continue;
-      }
-      payload.content = value.slice(0, STATUS_CONTENT_MAX_LENGTH);
-      continue;
-    }
-    if (typeof value === 'string') {
-      payload[key] = value;
-      continue;
-    }
-    droppedFields.push(key);
-  }
-
-  let droppedJids = 0;
-  let emptyTargetList = false;
-  const rawList = body.statusJidList;
-  if (Array.isArray(rawList)) {
-    const kept: string[] = [];
-    for (const entry of rawList) {
-      const jid = String(entry ?? '').trim();
-      const digits = normalizeStatusDigits(jid);
-      if (jid && digits && allowedJids.has(digits)) kept.push(jid);
-      else droppedJids += 1;
-    }
-    if (kept.length > 0) payload.statusJidList = kept;
-    else if (rawList.length > 0) emptyTargetList = true;
-  } else if (rawList !== undefined) {
-    droppedFields.push('statusJidList');
-  }
-
-  return { payload, droppedFields, droppedJids, emptyTargetList };
 }

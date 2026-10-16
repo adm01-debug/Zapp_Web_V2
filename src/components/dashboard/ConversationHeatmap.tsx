@@ -23,12 +23,12 @@
  * no multi-metric and no animations. Both serve distinct UI contexts.
  */
 import { useState, useMemo } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Calendar, Clock, TrendingUp, Flame, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
@@ -115,8 +115,7 @@ export default function ConversationHeatmap({
   onCellClick,
 }: ConversationHeatmapProps) {
   const { data: realData } = useHeatmapData();
-  const data = useMemo(() => externalData || realData || [], [externalData, realData]);
-  const reduceMotion = useReducedMotion();
+  const data = externalData || realData || [];
   const [selectedMetric, setSelectedMetric] = useState(metric);
   const [hoveredCell, setHoveredCell] = useState<{ day: number; hour: number } | null>(null);
 
@@ -160,18 +159,20 @@ export default function ConversationHeatmap({
             Mapa de Calor
           </CardTitle>
 
-          <ToggleGroup type="single" value={selectedMetric} onValueChange={(v) => { if (v) setSelectedMetric(v as 'volume' | 'response_time' | 'satisfaction'); }} className="h-8">
-            <ToggleGroupItem value="volume" className="text-xs px-2 h-6">Volume</ToggleGroupItem>
-            <ToggleGroupItem value="response_time" className="text-xs px-2 h-6">Resposta</ToggleGroupItem>
-            <ToggleGroupItem value="satisfaction" className="text-xs px-2 h-6">Satisfação</ToggleGroupItem>
-          </ToggleGroup>
+          <Tabs value={selectedMetric} onValueChange={(v) => setSelectedMetric(v as 'volume' | 'response_time' | 'satisfaction')}>
+            <TabsList className="h-8">
+              <TabsTrigger value="volume" className="text-xs px-2 h-6">Volume</TabsTrigger>
+              <TabsTrigger value="response_time" className="text-xs px-2 h-6">Resposta</TabsTrigger>
+              <TabsTrigger value="satisfaction" className="text-xs px-2 h-6">Satisfação</TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
 
         <p className="text-sm text-muted-foreground flex items-center gap-1">
           {config.description}
           <Tooltip>
             <TooltipTrigger>
-              <Info className="w-3.5 h-3.5" aria-label="Informação" />
+              <Info className="w-3.5 h-3.5" />
             </TooltipTrigger>
             <TooltipContent>
               Clique em uma célula para ver detalhes do período
@@ -193,7 +194,7 @@ export default function ConversationHeatmap({
         </div>
 
         {/* Heatmap Grid */}
-        <div className="overflow-x-auto" role="region" aria-label="Mapa de calor" tabIndex={0}>
+        <div className="overflow-x-auto">
           <div className="min-w-[600px]">
             {/* Hour labels */}
             <div className="flex ml-12 mb-1">
@@ -227,25 +228,11 @@ export default function ConversationHeatmap({
                       <Tooltip key={hour}>
                         <TooltipTrigger asChild>
                           <motion.div
-                            whileHover={reduceMotion ? undefined : { scale: 1.2, zIndex: 10 }}
-                            role={onCellClick ? 'button' : 'img'}
-                            tabIndex={0}
-                            aria-label={`${DAYS_FULL[dayIndex]}, ${formatHour(hour)}: ${cellData?.value ?? 0} ${config.unit}`}
-                            onClick={onCellClick ? () => onCellClick(dayIndex, hour) : undefined}
-                            onKeyDown={
-                              onCellClick
-                                ? (event) => {
-                                    if (event.key === 'Enter' || event.key === ' ') {
-                                      event.preventDefault();
-                                      onCellClick(dayIndex, hour);
-                                    }
-                                  }
-                                : undefined
-                            }
+                            whileHover={{ scale: 1.2, zIndex: 10 }}
+                            onClick={() => onCellClick?.(dayIndex, hour)}
                             className={cn(
                               "flex-1 aspect-square rounded cursor-pointer transition-all relative",
                               "min-w-[12px] max-w-[24px]",
-                              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
                               isHotspot && "ring-1 ring-warning/50"
                             )}
                             style={{

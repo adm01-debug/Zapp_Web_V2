@@ -49,13 +49,6 @@ const mockCatalog = vi.hoisted(() => vi.fn());
 const mockFavorites = vi.hoisted(() => vi.fn());
 const mockExternalProduct = vi.hoisted(() => vi.fn());
 
-
-// Y29 — o componente lê `profiles.can_download` (useDownloadPermission); aqui a
-// permissão é concedida para o teste observar o caminho de sempre.
-vi.mock('@/hooks/system/useDownloadPermission', () => ({
-  useDownloadPermission: () => ({ canDownload: true, isLoading: false }),
-}));
-
 vi.mock('@/hooks/integrations/useExternalCatalog', async () => {
   const actual = await vi.importActual<typeof import('@/hooks/integrations/useExternalCatalog')>(
     '@/hooks/integrations/useExternalCatalog'
@@ -204,42 +197,6 @@ describe('CT-68 — anel de foco no card real e no detalhe', () => {
       </TooltipProvider>
     );
     expect((lista.container.firstElementChild as HTMLElement).className).toContain(FOCUS);
-  });
-});
-
-describe('N-057 — filtros e limpar busca têm nome acessível', () => {
-  it('categoria e fornecedor são combobox nomeados', () => {
-    renderCatalog();
-
-    expect(screen.getByRole('combobox', { name: 'Categoria' })).toBeInTheDocument();
-    expect(screen.getByRole('combobox', { name: 'Fornecedor' })).toBeInTheDocument();
-  });
-
-  it('o botão X de limpar busca é nomeado e limpa o campo', () => {
-    renderCatalog();
-    const busca = screen.getByPlaceholderText(/Buscar por nome, SKU ou marca/i);
-
-    fireEvent.change(busca, { target: { value: 'caneta' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Limpar busca' }));
-
-    expect(busca).toHaveValue('');
-  });
-
-  it('não tem violações de axe button-name nos filtros e no limpar busca', async () => {
-    const { container } = renderCatalog();
-
-    // N-057: com a busca vazia o X NÃO é renderizado (`{search && ...}`), então
-    // o axe não teria o que avaliar. Digite para preencher a busca e prove que
-    // o botão 'Limpar busca' está de fato no DOM antes de rodar o axe.
-    const busca = screen.getByPlaceholderText(/Buscar por nome, SKU ou marca/i);
-    fireEvent.change(busca, { target: { value: 'caneta' } });
-    expect(screen.getByRole('button', { name: 'Limpar busca' })).toBeInTheDocument();
-
-    const { axe } = await import('vitest-axe');
-    const resultado = await axe(container, {
-      runOnly: { type: 'rule', values: ['button-name'] },
-    });
-    expect(resultado.violations.map((v) => v.id)).toEqual([]);
   });
 });
 

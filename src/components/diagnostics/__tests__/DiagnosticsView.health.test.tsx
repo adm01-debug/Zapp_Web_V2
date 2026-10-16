@@ -6,8 +6,8 @@ const h = vi.hoisted(() => ({
   responses: {} as Record<string, { data?: unknown; error?: unknown; count?: number | null }>,
   /** Erro devolvido por storage.from(...).list() — `null` = listagem bem-sucedida. */
   storageError: null as unknown,
-  /** Chamadas a functions.invoke — o Diagnóstico NÃO pode disparar nenhuma. */
-  invokeChamadas: [] as unknown[],
+  /** Erro devolvido por functions.invoke('connection-health-check'). */
+  invokeError: null as unknown,
   /** Status que o canal Realtime devolve no callback de subscribe(). `null` = nunca confirma. */
   subscribeStatus: null as string | null,
   canais: [] as string[],
@@ -33,12 +33,7 @@ vi.mock('@/integrations/supabase/client', () => {
       storage: {
         from: () => ({ list: () => Promise.resolve({ data: [], error: h.storageError }) }),
       },
-      functions: {
-        invoke: (...args: unknown[]) => {
-          h.invokeChamadas.push(args);
-          return Promise.resolve({ data: null, error: null });
-        },
-      },
+      functions: { invoke: () => Promise.resolve({ data: null, error: h.invokeError }) },
       channel: (nome: string) => {
         h.canais.push(nome);
         const canal = {
@@ -86,7 +81,7 @@ describe('DiagnosticsView — saúde do sistema (R2-INF-026)', () => {
     vi.clearAllMocks();
     h.responses = {};
     h.storageError = null;
-    h.invokeChamadas = [];
+    h.invokeError = null;
     h.subscribeStatus = 'SUBSCRIBED';
     h.canais = [];
   });
@@ -149,21 +144,6 @@ describe('DiagnosticsView — saúde do sistema (R2-INF-026)', () => {
   });
 
   it('mostra Saudável quando a assinatura do canal é confirmada', async () => {
-    h.responses.connection_health_logs = {
-      data: [
-        {
-          id: 'hl-1',
-          instance_id: 'inst-online',
-          status: 'healthy',
-          response_time_ms: 110,
-          error_message: null,
-          checked_at: new Date().toISOString(),
-        },
-      ],
-      error: null,
-      count: 1,
-    };
-
     render(<DiagnosticsView />);
     await abrirAbaSaude();
 
@@ -171,42 +151,5 @@ describe('DiagnosticsView — saúde do sistema (R2-INF-026)', () => {
     expect(realtime.getByText('Saudável')).toBeInTheDocument();
     expect(realtime.getByText(/Assinatura confirmada/)).toBeInTheDocument();
     expect(screen.getByText('✅ Todos os sistemas operacionais')).toBeInTheDocument();
-  });
-
-  it('lê o rastro do cron para a saúde do backend e não invoca connection-health-check', async () => {
-    h.responses.connection_health_logs = {
-      data: [
-        {
-          id: 'hl-1',
-          instance_id: 'inst-online',
-          status: 'healthy',
-          response_time_ms: 110,
-          error_message: null,
-          checked_at: new Date().toISOString(),
-        },
-      ],
-      error: null,
-      count: 1,
-    };
-
-    render(<DiagnosticsView />);
-    await abrirAbaSaude();
-
-    expect(cartaoDoSinal('Backend Functions').getByText(/Último health check automático/)).toBeInTheDocument();
-    // CRITÉRIO 1: abrir a tela não dispara a sonda (nem e-mail de alerta).
-    expect(h.invokeChamadas).toEqual([]);
-  });
-
-  it('sem rastro do cron, o backend aparece como "Não medido" — nunca Saudável', async () => {
-    h.responses.connection_health_logs = { data: [], error: null, count: 0 };
-
-    render(<DiagnosticsView />);
-    await abrirAbaSaude();
-
-    const backend = cartaoDoSinal('Backend Functions');
-    expect(backend.getAllByText('Não medido').length).toBeGreaterThan(0);
-    expect(backend.queryByText('Saudável')).not.toBeInTheDocument();
-    expect(backend.getByText('Nenhum health check automático registrado')).toBeInTheDocument();
-    expect(h.invokeChamadas).toEqual([]);
   });
 });
