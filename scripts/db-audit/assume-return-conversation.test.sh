@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Cartao t_4e49a6dc (feat(db) RPCs assumir_conversa / devolver_conversa_fila):
+# Cartao t_675d0cac / t_7602496c (feat(db) RPCs assumir_conversa / devolver_conversa_fila):
 # a V2 so tinha "Transferir"; a V3 tem "Assumir" e "Devolver a fila". A correcao
 # e a migration ADITIVA 20261011094027_assume_return_conversation.sql, com duas
 # RPCs SECURITY DEFINER auditadas:

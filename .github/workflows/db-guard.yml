@@ -414,6 +414,8 @@ jobs:
       # t_7602496c: teste novo de banco precisa estar no DB Guard; sem este passo
       # o inventario marca scripts/db-audit/assume-return-conversation.test.sh como orfao.
       - name: Simular assumir e devolver conversa por fila
+        env:
+          ASSUME_RETURN_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/assume-return-conversation.test.sh
 
       # E47: SKIP_DOCKER_SHIM=1 — o contrato runtime inclui proof.database === 'postgres'.
