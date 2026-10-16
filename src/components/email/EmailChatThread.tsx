@@ -245,18 +245,6 @@ export function EmailChatThread({ accountId, thread, onBack, onToggleDetails, sh
 
   const closeAttachmentPreview = useCallback(() => setAttachmentPreview(null), []);
 
-  // R2-COM-002: a seleção e os bytes são o MESMO estado — a prévia é uma chave só. A
-  // continuação assíncrona só aplica o resultado (bytes ou falha) se o anexo ainda for o
-  // selecionado: a resposta (ou o erro) de um anexo anterior, ou de uma prévia já fechada,
-  // é descartada em vez de sobrescrever a seleção atual.
-  const [attachmentPreview, setAttachmentPreview] = useState<{
-    attachment: (typeof threadAttachments)[number];
-    contentBase64: string | null;
-    falhou: boolean;
-  } | null>(null);
-
-  const closeAttachmentPreview = useCallback(() => setAttachmentPreview(null), []);
-
   const openAttachmentPreview = useCallback(async (attachment: (typeof threadAttachments)[number], gmailMessageId: string) => {
     setAttachmentPreview({ attachment, contentBase64: null, falhou: false });
     try {

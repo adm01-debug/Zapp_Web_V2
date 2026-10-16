@@ -127,17 +127,14 @@ test('E98: o proxy pgbouncer nunca fica em continue-on-error', () => {
 });
 
 test('E98: o guarda vivo não dispara por mudança de Edge Function', () => {
-  // `db-live-guard` prova o contrato do BANCO. Mudar `supabase/functions/**` não
-  // altera esse contrato — se entrar no `paths`, todo PR de função paga o custo
-  // de um run que conecta no banco de produção (era o defeito G-35 de outro ângulo).
+  // `db-live-guard` prova o contrato do BANCO. CI mínimo (16/10/2026): push trigger
+  // removido — o guarda roda semanalmente e por dispatch, nunca em PR/push.
+  // Sem push trigger não há paths: e o guarda não pode disparar por Edge Function.
   const texto = wf['db-live-guard.yml'];
   assert.ok(texto, 'db-live-guard.yml sumiu');
-
-  const trechoPaths = texto.split(/^\s{4}paths:/m)[1]?.split(/^\s{2}\w/m)[0] ?? '';
-  assert.ok(trechoPaths.length > 0, 'não achei o bloco paths do db-live-guard');
   assert.ok(
-    !/functions\/\*\*/.test(trechoPaths),
-    'functions/** voltou ao paths do guarda vivo: PR de Edge Function passa a conectar no banco de produção',
+    !/^\s+push:/m.test(texto),
+    'push trigger voltou ao db-live-guard: PR de Edge Function pode conectar no banco de produção',
   );
 });
 
@@ -371,7 +368,7 @@ test('E86: quem roda a suíte logada declara a limpeza do que grava em produçã
 
 const USES_CACHE = /uses:\s*actions\/cache@[a-f0-9]{40}\b/;
 const PATH_CACHE_BUN = /path:\s*~\/\.bun\/install\/cache\s*$/;
-const KEY_CACHE_BUN = /key:\s*bun-\$\{\{\s*hashFiles\('bun\.lock'\)\s*\}\}\s*$/;
+const KEY_CACHE_BUN = /key:\s*bun-\$\{\{\s*hashFiles\('bun\.lock'\)\s*\}\}/;
 
 /** Blocos de job de um workflow: chaves de 2 espaços sob `jobs:` (texto cru). */
 function blocosDeJob(texto) {
@@ -511,21 +508,16 @@ function ancestrais(grafo, job) {
   return vistos;
 }
 
-test('E69: test/security/e2e/mutation-mapa não esperam o lint (rodam em paralelo)', () => {
+test('E69: typecheck/unit-tests/node-scripts/build rodam em paralelo (CI mínimo)', () => {
+  // CI mínimo (16/10/2026): todos os jobs do ci.yml rodam em paralelo — nenhum tem needs.
   const grafo = grafoDeNeeds(wf['ci.yml']);
-  for (const job of ['test', 'security', 'e2e', 'mutation-mapa']) {
+  for (const job of ['typecheck', 'unit-tests', 'node-scripts', 'build']) {
     assert.ok(grafo.has(job), `job ${job} sumiu do ci.yml`);
     const anc = [...ancestrais(grafo, job)];
     assert.deepEqual(
       anc,
       [],
-      `${job} volta a esperar ${anc.join(', ')} — o job vira série em vez de rodar em paralelo`,
+      `${job} voltou a esperar ${anc.join(', ')} — o job deixa de ser paralelo`,
     );
   }
-});
-
-test('E69: o build continua atrás do lint E do test', () => {
-  const anc = ancestrais(grafoDeNeeds(wf['ci.yml']), 'build');
-  assert.ok(anc.has('lint-and-typecheck'), 'build deixou de esperar o lint');
-  assert.ok(anc.has('test'), 'build deixou de esperar o test');
 });
