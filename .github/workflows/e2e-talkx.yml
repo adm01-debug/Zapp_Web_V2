@@ -1,8 +1,8 @@
 # docs:
-#   gatilho: pull_request e dispatch
+#   gatilho: dispatch manual
 #   prova: o fluxo do Talk X no navegador
-#   falha: PR fica vermelho com o artefato do Playwright
-#   avisa: autor do PR
+#   falha: o run fica vermelho com o artefato do Playwright
+#   avisa: quem disparou
 # ==========================================================================
 # ZAPP-WEB · E2E Talk X em PR (Playwright, deslogado, NÃO required)
 # ==========================================================================
@@ -20,24 +20,7 @@
 name: E2E Talk X
 
 on:
-  pull_request:
-    branches: [main]
-    paths:
-      - 'src/components/talkx/**'
-      - 'src/hooks/integrations/useTalkX*'
-      - 'supabase/functions/talkx-*'
-      - 'e2e/talkx.spec.ts'
-      - 'e2e/talkx-visual.spec.ts'
-      - 'e2e/talkx-launch.spec.ts'
-      - 'e2e/fixtures/talkx-demo.ts'
-      - 'e2e/fixtures/talkx-demo/**'
-      - 'e2e/fixtures/talkx-launch/**'
-      - 'scripts/talkx/lado-a-lado.mjs'
-      # E84: `playwright.config.ts` saiu daqui. Ele é config global da suíte — foi
-      # tocado em 20 dos últimos 60 commits, quase sempre por trabalho que não é do
-      # Talk X, disparando este workflow sem motivo ("PR de Contatos não dispara").
-      # A config global continua coberta pelo job E2E do ci.yml, que é required.
-      - '.github/workflows/e2e-talkx.yml'
+  # 16/10/2026 (decisao do Joaquim, CI minimo): saiu do PR; so manual.
   workflow_dispatch:
 
 defaults:
