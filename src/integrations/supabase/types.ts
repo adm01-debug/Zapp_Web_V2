@@ -11713,6 +11713,10 @@ export type Database = {
         }[]
       }
       phone_variants: { Args: { p_phone: string }; Returns: string[] }
+      purge_gmail_account_data: {
+        Args: { p_account_id: string; p_confirm: string }
+        Returns: Json
+      }
       purge_talkx_expired_data: { Args: { p_limit?: number }; Returns: Json }
       reap_ai_jobs: { Args: never; Returns: number }
       reassign_absent_agents: {
