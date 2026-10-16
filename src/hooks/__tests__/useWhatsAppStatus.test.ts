@@ -375,6 +375,26 @@ describe('useWhatsAppStatus', () => {
     expect(h.mockInvoke).toHaveBeenCalledTimes(1);
   });
 
+  it('finds a contact stored clean when called with a formatted number', async () => {
+    seedContact('5511999999999', 'conn1');
+    seedConnection('conn1', 'inst1');
+
+    h.mockInvoke.mockResolvedValueOnce({
+      data: [{ key: { remoteJid: '5511999999999@s.whatsapp.net', id: 's1' }, message: { conversation: 'Oi' } }],
+      error: null,
+    });
+
+    const { result } = renderHook(() => useWhatsAppStatus('+55 (11) 99999-9999'));
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(result.current.error).toBeNull();
+    expect(result.current.instanceName).toBe('inst1');
+    expect(result.current.statusMessages).toHaveLength(1);
+  });
+
   // ========== PUSHNAME NÃO É IDENTIDADE (item 4 do cartão) ==========
   it('ignores pushName and returns an empty list when only the name matches', async () => {
     seedContact('5511999999999', 'conn1', 'Maria Silva');
