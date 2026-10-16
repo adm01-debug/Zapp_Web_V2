@@ -25,7 +25,10 @@ vi.mock('@/integrations/supabase/client', () => ({
 
       const builder: Record<string, unknown> = {};
       const mesmo = () => builder;
-      builder.select = () => mesmo();
+      builder.select = (...a: unknown[]) => {
+        entry.filters.push(['select', ...a]);
+        return mesmo();
+      };
       builder.order = (...a: unknown[]) => {
         entry.filters.push(['order', ...a]);
         return mesmo();
@@ -56,6 +59,7 @@ vi.mock('@/integrations/supabase/client', () => ({
 import { useContactSlaTimeline } from '../useContactSlaTimeline';
 import type { ContactSlaScope } from '../useContactSlaTimeline';
 import type { SlaTimelineFilters } from '@/lib/slaTimeline';
+import { formatSlaAttribution } from '@/lib/slaTimeline';
 
 const T0 = Date.parse('2026-10-12T10:00:00.000Z');
 const iso = (ms: number) => new Date(ms).toISOString();
@@ -276,5 +280,69 @@ describe('useContactSlaTimeline — hierarquia igual à do cabeçalho', () => {
   it('outro escopo (empresa diferente) também não casa a regra', async () => {
     comUmaConversa([regraEm({ company: 'ACME', first_response_minutes: 2 })]);
     expect(await limitePrimeiraResposta({ company: 'OUTRA' })).toBe(5);
+  });
+});
+
+describe('useContactSlaTimeline — quem respondeu', () => {
+  function comEventos(eventos: unknown[]) {
+    h.tables.sla_rules = { data: [REGRA_CONTATO], error: null };
+    h.tables.conversation_sla = { data: [linhaSla()], error: null };
+    h.tables.conversation_events = { data: eventos, error: null };
+  }
+
+  const comUmaResposta = async () => {
+    const { result } = setup({ id: 'c1' });
+    await waitFor(() => expect(result.current.milestones.length).toBeGreaterThan(0));
+    return result.current.milestones.find((m) => m.kind === 'first_response');
+  };
+
+  it('traz agente e fila do `assign` para a 1ª resposta', async () => {
+    comEventos([
+      {
+        id: 'e1',
+        event_type: 'assign',
+        created_at: iso(T0 + 30_000),
+        to_agent_id: 'ag-1',
+        to_queue_id: 'q-1',
+        to_agent: { id: 'ag-1', name: 'Ana' },
+        to_queue: { id: 'q-1', name: 'Suporte' },
+      },
+    ]);
+
+    const respondida = await comUmaResposta();
+
+    expect(respondida?.answeredBy).toEqual({
+      agentId: 'ag-1',
+      agentName: 'Ana',
+      queueId: 'q-1',
+      queueName: 'Suporte',
+    });
+    expect(formatSlaAttribution(respondida?.answeredBy ?? null)).toBe(
+      'Respondido por Ana (fila Suporte)',
+    );
+  });
+
+  it('sem evento de atribuição a 1ª resposta não diz ninguém', async () => {
+    comEventos([]);
+
+    expect((await comUmaResposta())?.answeredBy).toBeNull();
+  });
+
+  it('a leitura pede os ids, os nomes embutidos e inclui `assign`', async () => {
+    comEventos([]);
+
+    const { result } = setup({ id: 'c1' });
+    await waitFor(() => expect(opsDe('conversation_events')).not.toHaveLength(0));
+    await waitFor(() => expect(result.current.milestones.length).toBeGreaterThan(0));
+
+    const filtros = opsDe('conversation_events')[0].filters;
+    const select = String(filtros.find((f) => f[0] === 'select')?.[1] ?? '');
+    expect(select).toContain('to_agent_id');
+    expect(select).toContain('to_queue_id');
+    expect(select).toContain('profiles!conversation_events_to_agent_id_fkey');
+    expect(select).toContain('queues!conversation_events_to_queue_id_fkey');
+
+    const eventoIn = filtros.find((f) => f[0] === 'in');
+    expect(eventoIn?.[2]).toEqual(expect.arrayContaining(['assign']));
   });
 });

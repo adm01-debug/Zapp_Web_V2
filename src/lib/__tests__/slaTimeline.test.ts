@@ -9,9 +9,11 @@ import { describe, it, expect } from 'vitest';
 import {
   buildSlaMilestones,
   filterSlaMilestones,
+  formatSlaAttribution,
   formatSlaDuration,
   slaStatusForDuration,
   slaWindowStartMs,
+  type SlaMilestone,
   type SlaTimelineEvent,
   type SlaTimelineRow,
 } from '../slaTimeline';
@@ -280,5 +282,146 @@ describe('filterSlaMilestones', () => {
       T0,
     );
     expect(filterSlaMilestones(seteDias, { period: '7d' }, T0)).toEqual([]);
+  });
+});
+
+describe('buildSlaMilestones — quem respondeu', () => {
+  const assign = (
+    id: string,
+    atMs: number,
+    over: Partial<SlaTimelineEvent> = {},
+  ): SlaTimelineEvent => ({
+    id,
+    event_type: 'assign',
+    created_at: iso(atMs),
+    ...over,
+  });
+
+  const comAgente = { to_agent_id: 'ag-1', to_agent: { id: 'ag-1', name: 'Ana' } };
+  const resposta = (over: Partial<SlaTimelineRow> = {}) =>
+    row('c1', { first_response_at: iso(T0 + 2 * 60_000), ...over });
+  const primeiro = (marcos: SlaMilestone[]) =>
+    marcos.find((m) => m.kind === 'first_response')!;
+
+  it('usa o agente e a fila do `assign` entre a abertura e a resposta', () => {
+    const marcos = buildSlaMilestones(
+      [resposta()],
+      [
+        assign('a1', T0 + 30_000, {
+          ...comAgente,
+          to_queue_id: 'q-1',
+          to_queue: { id: 'q-1', name: 'Suporte' },
+        }),
+      ],
+      LIMITS,
+      T0,
+    );
+
+    const marco = primeiro(marcos);
+    expect(marco.answeredBy).toEqual({
+      agentId: 'ag-1',
+      agentName: 'Ana',
+      queueId: 'q-1',
+      queueName: 'Suporte',
+    });
+    expect(formatSlaAttribution(marco.answeredBy)).toBe('Respondido por Ana (fila Suporte)');
+  });
+
+  it('o último `assign` da janela vence o primeiro', () => {
+    const marcos = buildSlaMilestones(
+      [resposta()],
+      [
+        assign('a1', T0 + 10_000, { to_agent_id: 'ag-1', to_agent: { name: 'Ana' } }),
+        assign('a2', T0 + 60_000, { to_agent_id: 'ag-2', to_agent: { name: 'Beto' } }),
+      ],
+      LIMITS,
+      T0,
+    );
+
+    expect(primeiro(marcos).answeredBy?.agentName).toBe('Beto');
+    expect(formatSlaAttribution(primeiro(marcos).answeredBy)).toBe('Respondido por Beto');
+  });
+
+  it('sem evento de atribuição não há responsável (nada é inventado)', () => {
+    const marcos = buildSlaMilestones([resposta()], [], LIMITS, T0);
+
+    expect(primeiro(marcos).answeredBy).toBeNull();
+    expect(formatSlaAttribution(primeiro(marcos).answeredBy)).toBeNull();
+  });
+
+  it('evento posterior à resposta não atribui a resposta', () => {
+    const marcos = buildSlaMilestones(
+      [resposta()],
+      [assign('a1', T0 + 3 * 60_000, comAgente)],
+      LIMITS,
+      T0,
+    );
+
+    expect(primeiro(marcos).answeredBy).toBeNull();
+  });
+
+  it('evento anterior à abertura não conta', () => {
+    const marcos = buildSlaMilestones(
+      [resposta()],
+      [assign('a1', T0 - 1_000, comAgente)],
+      LIMITS,
+      T0,
+    );
+
+    expect(primeiro(marcos).answeredBy).toBeNull();
+  });
+
+  it('sem fila no `assign`, usa a fila do último evento com fila na janela', () => {
+    const marcos = buildSlaMilestones(
+      [resposta()],
+      [
+        {
+          id: 't1',
+          event_type: 'queue_transfer',
+          created_at: iso(T0 + 10_000),
+          to_queue_id: 'q-9',
+          to_queue: { id: 'q-9', name: 'Vendas' },
+        },
+        assign('a1', T0 + 20_000, comAgente),
+      ],
+      LIMITS,
+      T0,
+    );
+
+    expect(primeiro(marcos).answeredBy).toEqual({
+      agentId: 'ag-1',
+      agentName: 'Ana',
+      queueId: 'q-9',
+      queueName: 'Vendas',
+    });
+  });
+
+  it('evento de atribuição sozinho não vira marco e não contamina os outros marcos', () => {
+    const marcos = buildSlaMilestones(
+      [row('c1')],
+      [assign('a1', T0 + 10_000, comAgente)],
+      LIMITS,
+      T0,
+    );
+
+    expect(marcos.map((m) => m.kind)).toEqual(['first_response', 'opened']);
+    expect(marcos.every((m) => m.answeredBy === null)).toBe(true);
+  });
+
+  it('sem nome no `assign` o texto não promete fila nem agente', () => {
+    const marcos = buildSlaMilestones(
+      [resposta()],
+      [assign('a1', T0 + 10_000, { to_agent_id: 'ag-1' })],
+      LIMITS,
+      T0,
+    );
+
+    expect(primeiro(marcos).answeredBy).toEqual({
+      agentId: 'ag-1',
+      agentName: null,
+      queueId: null,
+      queueName: null,
+    });
+    expect(formatSlaAttribution(primeiro(marcos).answeredBy)).toBeNull();
   });
 });

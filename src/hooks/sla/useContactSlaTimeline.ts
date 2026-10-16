@@ -5,6 +5,7 @@ import { fetchAllRows } from '@/lib/fetchAllRows';
 import {
   buildSlaMilestones,
   filterSlaMilestones,
+  SLA_ASSIGN_EVENT_TYPES,
   SLA_TRANSFER_EVENT_TYPES,
   type SlaMilestone,
   type SlaTimelineEvent,
@@ -42,7 +43,8 @@ export interface ContactSlaScope {
  * Linha do tempo de SLA de um contato.
  *
  * Lê só o que já está gravado: `conversation_sla` (abertura, 1ª resposta, resolução e as
- * violações) e `conversation_events` (transferências do TR1). Nenhum marco é inferido de
+ * violações) e `conversation_events` (transferências do TR1 e o `assign` que atribui a
+ * conversa a um agente, com o nome do agente/fila embutido) — nenhum marco é inferido de
  * mensagem. O prazo aplicado vem da MESMA hierarquia do resto do SLA (`useApplicableSLA`:
  * regra do contato > empresa > cargo > tipo > fila > agente > padrão) — por isso o hook
  * recebe os atributos do contato/conversa em `scope`; sem um limite inventado e sem
@@ -93,9 +95,11 @@ export function useContactSlaTimeline(
           (from, to) =>
             supabase
               .from('conversation_events')
-              .select('id, event_type, created_at')
+              .select(
+                'id, event_type, created_at, to_agent_id, to_queue_id, to_agent:profiles!conversation_events_to_agent_id_fkey(id, name), to_queue:queues!conversation_events_to_queue_id_fkey(id, name)',
+              )
               .eq('contact_id', cid)
-              .in('event_type', [...SLA_TRANSFER_EVENT_TYPES])
+              .in('event_type', [...SLA_TRANSFER_EVENT_TYPES, ...SLA_ASSIGN_EVENT_TYPES])
               .order('created_at', { ascending: false })
               .order('id', { ascending: true })
               .range(from, to),

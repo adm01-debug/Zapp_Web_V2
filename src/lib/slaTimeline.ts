@@ -62,6 +62,30 @@ export interface SlaMilestone {
   status: SlaTimelineStatus;
   /** Prazo aplicado ao marco, em minutos; null quando o marco não tem prazo. */
   limitMinutes: number | null;
+  /** Quem atendeu, quando o evento real de atribuição existe; null fora da 1ª resposta. */
+  answeredBy: SlaAttribution | null;
+}
+
+/** Responsável por um marco: agente e/ou fila do evento real que atribuiu a conversa. */
+export interface SlaAttribution {
+  agentId: string | null;
+  agentName: string | null;
+  queueId: string | null;
+  queueName: string | null;
+}
+
+/**
+ * Texto de interface do responsável: `Respondido por X (fila Y)`.
+ * Sem nenhum nome conhecido devolve `null` — o marco cala em vez de inventar.
+ */
+export function formatSlaAttribution(attribution: SlaAttribution | null): string | null {
+  if (!attribution) return null;
+  const agente = attribution.agentName?.trim() || null;
+  const fila = attribution.queueName?.trim() || null;
+  if (agente && fila) return `Respondido por ${agente} (fila ${fila})`;
+  if (agente) return `Respondido por ${agente}`;
+  if (fila) return `Respondido pela fila ${fila}`;
+  return null;
 }
 
 /** Linha de `conversation_sla` como o hook a lê. */
@@ -79,6 +103,14 @@ export interface SlaTimelineEvent {
   id: string;
   event_type: string;
   created_at: string;
+  /** Agente que recebeu a conversa no evento (`assign`). */
+  to_agent_id?: string | null;
+  /** Fila que recebeu a conversa no evento (`queue_transfer` e afins). */
+  to_queue_id?: string | null;
+  /** `profiles` embutido pelo PostgREST quando há `to_agent_id`. */
+  to_agent?: { id?: string | null; name?: string | null } | null;
+  /** `queues` embutido pelo PostgREST quando há `to_queue_id`. */
+  to_queue?: { id?: string | null; name?: string | null } | null;
 }
 
 export interface SlaTimelineLimits {
@@ -96,12 +128,64 @@ export const SLA_TRANSFER_EVENT_TYPES = [
 
 const TRANSFER_TYPES = new Set<string>(SLA_TRANSFER_EVENT_TYPES);
 
+/**
+ * Tipos de `conversation_events` que atribuem a conversa a um agente: o gatilho do banco
+ * grava `assign` no instante em que a conversa passa a ter responsável (`unassign` sai na volta).
+ */
+export const SLA_ASSIGN_EVENT_TYPES = ['assign'] as const;
+
+const ASSIGN_TYPES = new Set<string>(SLA_ASSIGN_EVENT_TYPES);
+
 const MINUTE_MS = 60_000;
 
 function toMs(iso: string | null): number | null {
   if (!iso) return null;
   const t = new Date(iso).getTime();
   return Number.isFinite(t) ? t : null;
+}
+
+interface TimedEvent {
+  atMs: number;
+  event: SlaTimelineEvent;
+}
+
+/** Eventos com data válida, em ordem crescente (o desempate é o id). */
+function timedEvents(events: SlaTimelineEvent[]): TimedEvent[] {
+  return events
+    .map((event) => ({ atMs: toMs(event.created_at), event }))
+    .filter((timed): timed is TimedEvent => timed.atMs !== null)
+    .sort((a, b) => a.atMs - b.atMs || a.event.id.localeCompare(b.event.id));
+}
+
+/**
+ * Responsável pela 1ª resposta: último `assign` na janela [abertura, resposta].
+ *
+ * O gatilho do banco grava `assign` só com o agente (`to_queue_id` é do `queue_transfer`),
+ * então a fila cai para o último evento da janela que traga fila — dado real, nunca
+ * deduzido do contato. Sem `assign` nem fila na janela, a resposta não tem responsável.
+ */
+function firstResponseAttribution(
+  assigns: TimedEvent[],
+  queueChanges: TimedEvent[],
+  fromMs: number,
+  ateMs: number,
+): SlaAttribution | null {
+  const naJanela = (timed: TimedEvent) => timed.atMs >= fromMs && timed.atMs <= ateMs;
+  const atribuicao = assigns.filter(naJanela).pop();
+  const fila = queueChanges.filter(naJanela).pop();
+  if (!atribuicao && !fila) return null;
+
+  return {
+    agentId: atribuicao?.event.to_agent?.id ?? atribuicao?.event.to_agent_id ?? null,
+    agentName: atribuicao?.event.to_agent?.name ?? null,
+    queueId:
+      atribuicao?.event.to_queue?.id ??
+      atribuicao?.event.to_queue_id ??
+      fila?.event.to_queue?.id ??
+      fila?.event.to_queue_id ??
+      null,
+    queueName: atribuicao?.event.to_queue?.name ?? fila?.event.to_queue?.name ?? null,
+  };
 }
 
 /**
@@ -116,7 +200,8 @@ function toMs(iso: string | null): number | null {
  *   presente), vira `closed_no_response` no instante do fechamento com duração fixa
  *   (`resolved_at - abertura`) — o relógio não corre mais e o marco não vira `breached` sozinho.
  *   Só quem segue aberto e sem resposta é pendente: o marco fica na abertura e a situação é a de
- *   AGORA (relógio corrente).
+ *   AGORA (relógio corrente). Com resposta, o marco leva `answeredBy` (quem assumiu e em que
+ *   fila, do `assign` da janela) — sem evento de atribuição, `null`.
  * - `resolution`: só quando há `resolved_at`, com o prazo medido a partir da abertura.
  * - `transfer`: um por evento de transferência do TR1, sem prazo e sem situação.
  */
@@ -127,6 +212,14 @@ export function buildSlaMilestones(
   nowMs: number = Date.now(),
 ): SlaMilestone[] {
   const milestones: SlaMilestone[] = [];
+
+  // Candidatos a atribuir a 1ª resposta: quem assumiu (`assign`) e qual fila a conversa
+  // passou a ter. Só eventos gravados entram aqui.
+  const comData = timedEvents(events);
+  const assignEvents = comData.filter((timed) => ASSIGN_TYPES.has(timed.event.event_type));
+  const queueChanges = comData.filter(
+    (timed) => (timed.event.to_queue_id ?? timed.event.to_queue?.id ?? null) !== null,
+  );
 
   for (const row of rows) {
     const openedMs = toMs(row.first_message_at);
@@ -143,6 +236,7 @@ export function buildSlaMilestones(
       durationMs: null,
       status: 'na',
       limitMinutes: limits.firstResponseMinutes,
+      answeredBy: null,
     });
 
     const respondedMs = toMs(row.first_response_at);
@@ -159,6 +253,7 @@ export function buildSlaMilestones(
           ? 'breached'
           : slaStatusForDuration(durationMs, limits.firstResponseMinutes),
         limitMinutes: limits.firstResponseMinutes,
+        answeredBy: firstResponseAttribution(assignEvents, queueChanges, openedMs, respondedMs),
       });
     } else if (row.first_response_breached) {
       milestones.push({
@@ -169,6 +264,7 @@ export function buildSlaMilestones(
         durationMs: null,
         status: 'breached',
         limitMinutes: limits.firstResponseMinutes,
+        answeredBy: null,
       });
     } else if (resolvedMs !== null) {
       // Encerrada sem resposta: o prazo para de correr no fechamento. A duração é fixa
@@ -183,6 +279,7 @@ export function buildSlaMilestones(
         durationMs,
         status: slaStatusForDuration(durationMs, limits.firstResponseMinutes),
         limitMinutes: limits.firstResponseMinutes,
+        answeredBy: null,
       });
     } else {
       const elapsedMs = Math.max(0, nowMs - openedMs);
@@ -194,6 +291,7 @@ export function buildSlaMilestones(
         durationMs: elapsedMs,
         status: slaStatusForDuration(elapsedMs, limits.firstResponseMinutes),
         limitMinutes: limits.firstResponseMinutes,
+        answeredBy: null,
       });
     }
 
@@ -209,6 +307,7 @@ export function buildSlaMilestones(
           ? 'breached'
           : slaStatusForDuration(durationMs, limits.resolutionMinutes),
         limitMinutes: limits.resolutionMinutes,
+        answeredBy: null,
       });
     }
   }
@@ -225,6 +324,7 @@ export function buildSlaMilestones(
       durationMs: null,
       status: 'na',
       limitMinutes: null,
+      answeredBy: null,
     });
   }
 
