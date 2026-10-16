@@ -194,7 +194,9 @@ describe('useWhatsAppStatus', () => {
   it('starts with loading false and empty data', () => {
     const { result } = renderHook(() => useWhatsAppStatus(undefined));
     expect(result.current.statusMessages).toEqual([]);
-    expect(result.current.presence.loading).toBe(true);
+    // Sem telefone não há presença a carregar (título do cartão: presença
+    // não fica carregando para sempre).
+    expect(result.current.presence.loading).toBe(false);
   });
 
   // ========== REFRESH FUNCTION ==========
@@ -423,5 +425,30 @@ describe('useWhatsAppStatus', () => {
 
     expect(result.current.statusMessages).toEqual([]);
     expect(result.current.error).toBe(apiMessage);
+  });
+
+  // ========== PRESENÇA NÃO FICA CARREGANDO PARA SEMPRE (título do cartão) ==========
+  it('resets presence loading when there is no connection', async () => {
+    const { result } = renderHook(() => useWhatsAppStatus('5511999999999'));
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(result.current.error).toBe('Sem conexão WhatsApp disponível');
+    expect(result.current.presence).toEqual({ isOnline: false, lastSeen: null, loading: false });
+  });
+
+  it('resets presence loading when the fetch fails', async () => {
+    h.mockMaybeSingle.mockRejectedValueOnce(new Error('DB connection failed'));
+
+    const { result } = renderHook(() => useWhatsAppStatus('5511999999999'));
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(result.current.error).toBe('DB connection failed');
+    expect(result.current.presence).toEqual({ isOnline: false, lastSeen: null, loading: false });
   });
 });

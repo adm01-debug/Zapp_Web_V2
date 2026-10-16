@@ -212,6 +212,7 @@ export function useWhatsAppStatus(phone: string | undefined): WhatsAppStatusData
 
     if (!phone) {
       setLoading(false);
+      setPresence({ isOnline: false, lastSeen: null, loading: false });
       return;
     }
 
@@ -226,6 +227,7 @@ export function useWhatsAppStatus(phone: string | undefined): WhatsAppStatusData
 
       if (!resolvedInstance) {
         setError('Sem conexão WhatsApp disponível');
+        setPresence({ isOnline: false, lastSeen: null, loading: false });
         return;
       }
 
@@ -292,6 +294,7 @@ export function useWhatsAppStatus(phone: string | undefined): WhatsAppStatusData
       log.error('WhatsApp status fetch error:', err);
       if (mountedRef.current && generation === generationRef.current) {
         setError(err instanceof Error ? err.message : 'Erro ao buscar status');
+        setPresence({ isOnline: false, lastSeen: null, loading: false });
       }
     } finally {
       if (mountedRef.current && generation === generationRef.current) {
