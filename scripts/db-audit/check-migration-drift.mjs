@@ -848,9 +848,9 @@ function main() {
     return 1;
   }
 
-  // Com --classificar e so apply-pendente: exit 2 (neutral; lote ainda nao aplicado).
+  // Com --classificar e so apply-pendente: exit 3 (neutral; lote ainda nao aplicado).
   if (result.applyPending.length) {
-    return 2;
+    return 3;
   }
 
   if (result.warnings.length) {

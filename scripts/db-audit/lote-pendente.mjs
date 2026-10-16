@@ -6,7 +6,7 @@
  * GITHUB_STEP_SUMMARY e sai com o mesmo código de saída:
  *   exit 0 — sem drift e sem apply-pendente (clean)
  *   exit 1 — drift real (arquivo em produção sem par no disco, ou vice-versa)
- *   exit 2 — somente apply-pendente (migrations no disco sem ledger no banco)
+ *   exit 3 — somente apply-pendente (migrations no disco sem ledger no banco)
  *
  * Cada chamador aplica sua própria política sobre exit 2:
  *   db-live-guard  → em push trata como neutro (exit 0); em schedule/dispatch
@@ -49,7 +49,7 @@ if (rc === 0) {
     '',
     'Todas as migrations locais estão registradas no ledger do banco.',
   ]);
-} else if (rc === 2) {
+} else if (rc === 3) {
   writeSummary([
     '### ⏳ Lote pendente — apply aguardado',
     '',
