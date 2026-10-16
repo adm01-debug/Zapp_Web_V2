@@ -210,7 +210,10 @@ vi.mock('@/hooks/integrations/useMultiplixAudience', () => ({
 }));
 
 vi.mock('@/hooks/integrations/useMultiplixDispatches', () => ({
-  useMultiplixDispatchesList: () => ({ data: h.dispatches, refetch: vi.fn() }),
+  // O hook passou a devolver { rows, total } (TL-043/F81): a lista usa a página
+  // e o total exato do servidor. `total = rows.length` mantém o caso "lista
+  // completa" aqui e não cria o botão "Carregar mais antigos".
+  useMultiplixDispatchesList: () => ({ data: { rows: h.dispatches, total: h.dispatches.length }, refetch: vi.fn() }),
   useCreateMultiplixDispatch: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useMultiplixDispatch: () => ({
     data: {
