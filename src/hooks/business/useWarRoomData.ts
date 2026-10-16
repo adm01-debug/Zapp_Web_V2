@@ -184,7 +184,7 @@ export function useWarRoomData() {
     refetchInterval: 30000,
   });
 
-  return { agents, queues, alerts: [] as WarRoomAlert[] };
+  return { agents, queues };
 }
 
 export interface WarRoomMetrics {

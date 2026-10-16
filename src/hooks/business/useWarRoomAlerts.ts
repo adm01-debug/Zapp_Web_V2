@@ -1,6 +1,8 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { usePushNotifications } from '../system/usePushNotifications';
 import { useNotificationSettings } from '../system/useNotificationSettings';
 
@@ -13,6 +15,18 @@ interface WarRoomAlert {
   is_read: boolean;
   created_at: string;
   dedupe_key?: string | null;
+}
+
+// Tipos de alerta que o War Room (edge de alerta e monitor de SLA) grava. Um valor
+// fora da lista é registro corrompido/desconhecido: entra na lista (a tela não
+// esconde o que existe), mas NÃO dispara som nem push.
+const TIPOS_DE_ALERTA = ['critical', 'warning', 'info'] as const;
+type TipoDeAlerta = (typeof TIPOS_DE_ALERTA)[number];
+
+function tipoDeAlertaConhecido(valor: unknown): TipoDeAlerta | null {
+  return typeof valor === 'string' && (TIPOS_DE_ALERTA as readonly string[]).includes(valor)
+    ? (valor as TipoDeAlerta)
+    : null;
 }
 
 // R2-MOD-074: o monitor de SLA recriava o alerta a cada republicação da página de
@@ -78,6 +92,7 @@ async function fetchBreachedConversationIds(): Promise<string[]> {
 
 export function useWarRoomAlerts(soundEnabled?: boolean) {
   const queryClient = useQueryClient();
+  const { profile } = useAuth();
   const { showNotification, permission } = usePushNotifications();
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const { settings, isQuietHours } = useNotificationSettings();
@@ -106,6 +121,20 @@ export function useWarRoomAlerts(soundEnabled?: boolean) {
     }
   }, [soundGate, isQuietHours]);
 
+  // Bipe duplo do alerta CRÍTICO: o segundo é AGENDADO (400 ms depois), não disparado
+  // no mesmo tick — os dois `play()` de antes colapsavam num som só (o segundo zerava
+  // o `currentTime` do primeiro), então o crítico soava igual a um alerta comum.
+  const timerBipeDuplo = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const playCriticalDoubleBeep = useCallback(() => {
+    playAlertSound();
+    if (timerBipeDuplo.current) clearTimeout(timerBipeDuplo.current);
+    timerBipeDuplo.current = setTimeout(() => { playAlertSound(); }, 400);
+  }, [playAlertSound]);
+
+  useEffect(() => () => {
+    if (timerBipeDuplo.current) clearTimeout(timerBipeDuplo.current);
+  }, []);
+
   // Fetch existing alerts (página de APRESENTAÇÃO do painel: 50 mais recentes não lidos).
   const { data: alerts = [] } = useQuery({
     queryKey: ['warroom-alerts'],
@@ -131,12 +160,16 @@ export function useWarRoomAlerts(soundEnabled?: boolean) {
         { event: 'INSERT', schema: 'public', table: 'warroom_alerts' },
         (payload) => {
           const alert = payload.new as WarRoomAlert;
+          // A lista reflete o que existe no banco, inclusive tipo desconhecido.
           queryClient.invalidateQueries({ queryKey: ['warroom-alerts'] });
 
-          // Play sound
-          if (alert.alert_type === 'critical') {
-            playAlertSound();
-            playAlertSound(); // double beep for critical
+          // Tipo fora da lista conhecida: registro corrompido/desconhecido não pode
+          // disparar som nem push — só entra na lista.
+          const tipo = tipoDeAlertaConhecido(alert.alert_type);
+          if (!tipo) return;
+
+          if (tipo === 'critical') {
+            playCriticalDoubleBeep();
           } else {
             playAlertSound();
           }
@@ -147,21 +180,43 @@ export function useWarRoomAlerts(soundEnabled?: boolean) {
               title: `⚠️ ${alert.title}`,
               body: alert.message,
               tag: `warroom-${alert.id}`,
-              requireInteraction: alert.alert_type === 'critical',
+              requireInteraction: tipo === 'critical',
             });
           }
+        }
+      )
+      // Sem o UPDATE a lista ficava velha: um alerta dispensado em OUTRO cliente
+      // continuava na tela deste até o próximo refetch de 30 s.
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'warroom_alerts' },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['warroom-alerts'] });
         }
       )
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [queryClient, playAlertSound, permission, showNotification]);
+  }, [queryClient, playAlertSound, playCriticalDoubleBeep, permission, showNotification]);
 
   // Dismiss alert
-  const dismissAlert = async (alertId: string) => {
-    await supabase.from('warroom_alerts').update({ is_read: true }).eq('id', alertId);
+  const dismissAlert = useCallback(async (alertId: string) => {
+    // `dismissed_by` é o perfil do operador (não o `auth.uid`): a FK é para
+    // `profiles(id)`. Sem perfil carregado (raro) fica nulo.
+    const { error } = await supabase
+      .from('warroom_alerts')
+      .update({ is_read: true, dismissed_by: profile?.id ?? null })
+      .eq('id', alertId);
+
+    if (error) {
+      // RLS recusou ou a rede caiu: o alerta continua na lista (nada foi removido
+      // localmente), então só avisamos o operador — sem invalidar, para não dar a
+      // impressão de que foi dispensado.
+      toast.error('Não foi possível dispensar o alerta. Tente novamente.');
+      return;
+    }
     queryClient.invalidateQueries({ queryKey: ['warroom-alerts'] });
-  };
+  }, [profile?.id, queryClient]);
 
   // SLA breach monitor — checa a cada 60 s e cria no máximo UM alerta por incidente.
   // Não depende da página de alertas: era essa dependência que rearmava a checagem a

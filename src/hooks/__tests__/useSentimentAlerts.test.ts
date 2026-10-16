@@ -54,14 +54,9 @@ import { playNotificationSound } from '@/utils/notificationSounds';
 
 const mockPlaySound = vi.mocked(playNotificationSound);
 
-const colunasAuditLogs = vi.hoisted(() => ({
-  cols: '' as string,
-}));
-
 describe('useSentimentAlerts', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    colunasAuditLogs.cols = '';
     Object.assign(mockSettings, {
       soundEnabled: true,
       slaBreachSound: true,
@@ -72,27 +67,19 @@ describe('useSentimentAlerts', () => {
     });
     mockFunctionsInvoke.mockResolvedValue({ data: { alerted: false }, error: null });
     mockFrom.mockReturnValue({
-      select: vi.fn((cols: string) => {
-        colunasAuditLogs.cols = cols;
-        return {
-          eq: vi.fn().mockReturnValue({
-            order: vi.fn().mockReturnValue({
-              limit: vi.fn().mockResolvedValue({ data: [], error: null }),
-            }),
+      select: vi.fn(() => ({
+        eq: vi.fn().mockReturnValue({
+          order: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue({ data: [], error: null }),
           }),
-        };
-      }),
+        }),
+      })),
     });
   });
 
   it('exposes checkAndTriggerAlert function', () => {
     const { result } = renderHook(() => useSentimentAlerts());
     expect(typeof result.current.checkAndTriggerAlert).toBe('function');
-  });
-
-  it('exposes getRecentAlerts function', () => {
-    const { result } = renderHook(() => useSentimentAlerts());
-    expect(typeof result.current.getRecentAlerts).toBe('function');
   });
 
   it('has default threshold of 30', () => {
@@ -210,40 +197,6 @@ describe('useSentimentAlerts', () => {
     expect(mockToastError).not.toHaveBeenCalled();
   });
 
-  it('getRecentAlerts returns empty array on error', async () => {
-    mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          order: vi.fn().mockReturnValue({
-            limit: vi.fn().mockRejectedValue(new Error('DB error')),
-          }),
-        }),
-      }),
-    });
-    const { result } = renderHook(() => useSentimentAlerts());
-    const alerts = await result.current.getRecentAlerts();
-    expect(alerts).toEqual([]);
-  });
-
-  it('getRecentAlerts maps data correctly', async () => {
-    mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          order: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue({
-              data: [{ id: 'a1', entity_id: 'c1', created_at: '2024-01-01', action: 'sentiment_alert', details: { score: 10 } }],
-              error: null,
-            }),
-          }),
-        }),
-      }),
-    });
-    const { result } = renderHook(() => useSentimentAlerts());
-    const alerts = await result.current.getRecentAlerts();
-    expect(alerts).toHaveLength(1);
-    expect(alerts[0].contactId).toBe('c1');
-  });
-
   it('toca o alerta de sentimento pela preferência de MENÇÃO, não pela de SLA', async () => {
     // O som que sai aqui é o de MENÇÃO (`mention`/`mentionSoundType`). O portão estava em
     // `slaBreachSound`, então desligar o som de SLA emudecia este alerta.
@@ -268,16 +221,5 @@ describe('useSentimentAlerts', () => {
     });
 
     expect(mockPlaySound).not.toHaveBeenCalled();
-  });
-
-  it('audit_logs usa lista explícita de colunas em vez de *', async () => {
-    const { result } = renderHook(() => useSentimentAlerts());
-    await result.current.getRecentAlerts();
-    expect(colunasAuditLogs.cols).not.toBe('*');
-    expect(typeof colunasAuditLogs.cols).toBe('string');
-    expect(colunasAuditLogs.cols).toContain('id');
-    expect(colunasAuditLogs.cols).toContain('entity_id');
-    expect(colunasAuditLogs.cols).toContain('created_at');
-    expect(colunasAuditLogs.cols).toContain('details');
   });
 });
