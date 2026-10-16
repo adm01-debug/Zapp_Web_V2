@@ -87,7 +87,19 @@ describe('smoke: conversation creation (send message)', () => {
     const res = await sendMessageToContact('c1', 'hi');
     expect(res.id).toBe('msg-1');
     expect(rpcMock).toHaveBeenCalledWith('enqueue_outbound_message', expect.objectContaining({ p_contact_id: 'c1', p_content: 'hi' }));
-    expect(invokeMock).toHaveBeenCalledWith('message-delivery', { body: { messageId: 'msg-1' } });
+    // PE-16: o despacho sai pela camada padrao de Edge (`invokeEdge`), que injeta
+    // o id de correlacao. O corpo continua sendo SO o messageId; o unico campo
+    // extra no segundo argumento sao os cabecalhos de rastreio.
+    const [fn, opts] = invokeMock.mock.calls[0] as [
+      string,
+      { body: unknown; headers: Record<string, string> },
+    ];
+    expect(fn).toBe('message-delivery');
+    expect(opts.body).toEqual({ messageId: 'msg-1' });
+    expect(Object.keys(opts).sort()).toEqual(['body', 'headers']);
+    expect(opts.headers['x-request-id']).toMatch(/^[A-Za-z0-9._-]{8,64}$/);
+    expect(opts.headers['x-correlation-id']).toBe(opts.headers['x-request-id']);
+    expect(opts.headers.traceparent).toMatch(/^00-[0-9a-f]{32}-[0-9a-f]{16}-01$/);
   });
 });
 

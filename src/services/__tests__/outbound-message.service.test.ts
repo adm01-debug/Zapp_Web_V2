@@ -348,7 +348,15 @@ describe('sendOutboundMessage', () => {
     // Ação NOVA: id novo no enqueue e um despacho de verdade (nada de idempotent).
     const ids = rpc.mock.calls.map(([, args]) => args.p_client_message_id);
     expect(ids).toEqual(['acao-2']);
-    expect(invoke).toHaveBeenCalledWith('message-delivery', { body: { messageId: 'srv-online' } });
+    expect(invoke).toHaveBeenCalledWith('message-delivery', {
+      body: { messageId: 'srv-online' },
+      // PE-16: o despacho sai pelo wrapper de Edge, que injeta os cabecalhos de
+      // rastreio; o corpo continua sendo SO o messageId.
+      headers: expect.objectContaining({
+        'x-request-id': expect.stringMatching(/^[A-Za-z0-9._-]{8,64}$/),
+        'x-correlation-id': expect.stringMatching(/^[A-Za-z0-9._-]{8,64}$/),
+      }),
+    });
   });
 
   // Critério de pronto 2 — o duplo clique online continua sendo UMA ação: as
