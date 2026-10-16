@@ -115,6 +115,14 @@ const ALLOWLIST = new Set([
   // real e que a linha `-- Rollback:` da migration restaura — Postgres 17
   // descartável (docker). Passo de YAML a promover em db-guard.yml pelo dono do workflow.
   'scripts/db-audit/e44-whatsapp-connections-anon-grants.test.sh',
+  // N-102 (refazer t_b7ce25ec sobre a entrega 26101319059cbc): prova, em PG 17 descartavel, que a
+  // migration 20261013085500 APLICA sem a base que cria public.talkx_campaign_window_open (o defeito
+  // que derrubou a pilha de 14/10: 'function public.talkx_campaign_window_open(uuid, timestamp with
+  // time zone) does not exist'), que o REVOKE/GRANT segue tirando o EXECUTE de PUBLIC/anon/authenticated
+  // quando a funcao existe (e deixando so service_role), que o replay e a linha `-- Rollback:` fecham
+  // e que check-secdef-public-execute segue verde. Passo de uma linha em db-guard.yml — promover pelo
+  // dono do workflow.
+  'scripts/db-audit/talkx-n102-window-acl.test.sh',
 ]);
 
 // Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em
