@@ -1,27 +1,26 @@
 Especialista: worker (sql) (area-sql-banco)
 
-## Arquivos no diff (4; 1 é teste)
-- supabase/migrations/20261011154648_rls_scheduled_whisper_visibility.sql (a correção — está em ARQUIVOS QUE PODE TOCAR)
-- scripts/db-audit/scheduled-whisper-visibility-rls.test.sh (prova — é "testes de banco", item de ARQUIVOS QUE PODE TOCAR)
-- .github/workflows/db-guard.yml (registro do teste — arquivo FORA da lista do cartão; por quê abaixo)
-- .tmp/relato.md (este relato; já era versionado na base)
-
-## Por que .github/workflows/db-guard.yml foi indispensável
-Não é mudança de CI de terceiro: é o registro do teste novo. O `scripts/ci/check-test-inventory.mjs` roda no ci.yml e REPROVA todo `.test.sh` que exista no disco sem um passo em bloco `run:` do db-guard.yml — seria um teste órfão. A alternativa da skill do meu perfil é declarar `REGISTRO PENDENTE: <arquivo>` e deixar o dono do workflow promover, mas isso mantém o CI vermelho entre a entrega e a promoção. Preferi registrar o passo (14 linhas, igual ao precedente do cartão `feature-flags-rollout`, de 11/10) e deixar o CI verde. Se o dono do workflow preferir, o passo é removível sem tocar a correção. O passo usa `SKIP_DOCKER_SHIM=1` porque o teste sobe container próprio e cria as roles anon/authenticated/service_role (globais ao cluster), como os passos vizinhos dessa seção.
+## Como resolvi o motivo da retomada (conflito com dia/2026-10-11)
+- Motivo registrado: CONFLITO em `.github/workflows/db-guard.yml` (estado 'conflito').
+- No workspace novo (base `dia/2026-10-11`) trouxe o trabalho anterior com `git cherry-pick fa1347f0c` (commit da branch `v2/refazer-alerta-mensal-custo-email-cron-2-2610070101c2c0`). O cherry-pick limpo aplicou 3 arquivos; o único conflito foi em `db-guard.yml`, exatamente o apontado.
+- Resolução do conflito: mantive OS DOIS lados — os passos que já tinham entrado na ponta atual (N-002 e N-136) E o passo novo do cartão (R2-API-058). Nenhum passo foi perdido. Conferência: `git diff fa1347f0c HEAD -- .github/workflows/db-guard.yml` mostra o arquivo = versão do commit anterior + todo o conteúdo que entrou depois (N-002, N-136 e os demais passos que a ponta já tinha); o bloco R2-API-058 continua presente.
+- Confirmei no código ATUAL que o defeito AINDA existe antes de mexer: no HEAD antigo `git grep searchbox_budget_alert_emails|searchbox_budget_alert_tick` não retornava nada (sem ledger) e a migration `20261002601230_searchbox_budget_alert_cron.sql` seguia com o `net.http_post` INCONDICIONAL no comando do job.
 
 ## O que mudou e por quê
-A auditoria de paridade V3->V2 (achado chat-2) mostrou que o INSERT de public.scheduled_messages só exigia `created_by` = perfil do chamador (ou admin/supervisor), o UPDATE não tinha WITH CHECK, e o INSERT de public.whisper_messages só exigia `sender_id` = perfil do chamador. Nenhum olhava a visibilidade do CONTATO nem a permissão de envio. Como o enviador de agendadas (job AG2) roda com privilégio de serviço e NUNCA passa por RLS, um agente agendava (e o job entregava) para contato fora do alcance dele. A migration troca essas 3 policies por versões que exigem `is_contact_visible_to_user(contact_id, auth.uid())` e `user_has_permission(auth.uid(),'send_messages')` — exatamente as duas guardas que a RPC `enqueue_outbound_message` (20260930200000) já usa no envio. Admin/supervisor continuam passando pelo ramo dos helpers. Aditiva e atômica: só DROP/CREATE das policies citadas, dentro de `BEGIN/COMMIT`; nenhum DML, nenhum GRANT/ACL, SELECT e DELETE de scheduled_messages e a LEITURA de whisper_messages inalterados.
+- `supabase/migrations/20261006235031_searchbox_budget_alert_email_ledger.sql` (NOVO): o canal de E-MAIL do alerta mensal ganha identidade mensal e ledger próprio, com decisão ATÔMICA antes do envio. Cria `public.searchbox_budget_alert_emails` (PK = mês; estados `pending`/`sent`/`failed`/`uncertain`; `pending`/`uncertain` NÃO reenviam, só `failed` confirmado retenta), a tabela de estado do canal `public.searchbox_budget_alert_cron` (guarda a URL capturada do comando vigente do job — sem host literal no arquivo — e o comando ANTERIOR, para o rollback restaurar exatamente) e a função `public.searchbox_budget_alert_tick()` (SECURITY DEFINER, `search_path = public, pg_temp`, RLS ligada nos dois lados + REVOKE de PUBLIC/anon/authenticated). O job `searchbox-budget-alert` passa a chamar o tick único (mesmo nome/horário; `cron.schedule` atualiza, não duplica). Primeira linha é `-- Rollback:` executável.
+- `scripts/db-audit/searchbox-budget-alert-monthly-idempotency.test.sh` (NOVO): roda o comando REAL do `cron.job` num PostgreSQL 17 descartável. BLOCO A reproduz o defeito (2 POSTs no mesmo mês); BLOCO B prova 1 POST por mês + estados + retry de `failed` + ACL por papel real (anon/authenticated/service_role); BLOCO C extrai e EXECUTA as linhas `-- Rollback:` da migration e prova que o job volta ao comando anterior.
+- `.github/workflows/db-guard.yml`: registra o passo do teste novo (R2-API-058) e resolve o conflito preservando o que já entrou.
+- `docs/mapa/USO_SEARCHBOX.md`: documenta o comportamento (1 e-mail por mês).
 
 ## Prova
-- vermelho antes (dentro do próprio teste, com as policies antigas): `bash scripts/db-audit/scheduled-whisper-visibility-rls.test.sh` → `[PASS] RED: agente agenda para contato INVISÍVEL (a policy antiga aceita)`, `[PASS] RED: usuário SEM send_messages agenda (a policy antiga aceita)`, `[PASS] RED: sussurro em contato INVISÍVEL (a policy antiga aceita)`.
-- verde depois (mesmo run, após aplicar o arquivo de migration): `PASS=24 FAIL=0`, exit 0 — recusa contato invisível, recusa sem send_messages, recusa trocar `contact_id` para invisível e `created_by` para outro; supervisor agenda/sussurra em contato de outro; UPDATE legítimo do próprio agendamento passa; agente não vê agendamento nem sussurro de outro; anon não vê nenhum agendamento e é recusado no INSERT; linhas existentes (semeadas antes) seguem intactas em conteúdo/status/horário/dono.
-- asserção de recusa exige erro de row-level security, não qualquer erro (evita falso-verde).
-- rollback de verdade: as 6 linhas `-- Rollback (SQL executável, na ordem)` foram EXECUTADAS no banco LOCAL (`DROP POLICY`x3 + `CREATE POLICY`x3, exit 0) e depois a migration foi reaplicada (`DROP`/`CREATE`x3 + `BEGIN`/`COMMIT`, exit 0): o inverso roda e o estado final é o corrigido.
-- aplicação real: a migration foi aplicada no banco LOCAL da tarefa `v2-26101112373736` (`zapp-db-local psql`, saída `BEGIN/DROP POLICY/CREATE POLICY x3/COMMIT`), nunca em produção.
-- verificação: `zapp-verify . --rapido` → `OK dependencias/db_guard/tipos/lint/migrations` e `VERIFY: VERDE SEM BANCO` (sem nome de conjunto o banco é pulado, como o fechar chama). `node scripts/db-audit/check-migration-drift.mjs` → `arquivos validos em supabase/migrations: 817` exit 0. `node scripts/ci/check-test-inventory.mjs` → `OK ... .test.sh verificados individualmente`.
+- `hermes-db-migrar supabase/migrations/20261006235031_searchbox_budget_alert_email_ledger.sql` → `APLICADA no banco LOCAL 'v2-2610111406328d' (produção não foi tocada)`, exit 0.
+- `bash scripts/db-audit/searchbox-budget-alert-monthly-idempotency.test.sh` → todos os PASS de A1–A8, B1–B30 e C1–C7; fecha com `PASS: R2-API-058/#230 — ...`, exit 0. (Vermelho antes medido no próprio BLOCO A: 2 POSTs no mesmo mês; verde depois no BLOCO B: 1 POST.)
+- `node scripts/ci/check-test-inventory.mjs` → `OK ... .test.sh verificados individualmente`, exit 0.
 
 ## O que NÃO fiz e por quê
-- Não mexi em src/integrations/supabase/types.ts: os tipos são gerados de tabelas/colunas/funções e RLS (policies) não entra neles; esta migration não altera estrutura, e o passo `tipos` do zapp-verify(verde) não pede diff.
-- Não toquei SELECT nem DELETE de scheduled_messages e não mudei a LEITURA de whisper_messages (o cartão diz que a leitura já é restrita ao autor/destinatário/supervisor).
-- A visibilidade usada é a MESMA do envio (`is_contact_visible_to_user`), não a de SELECT de messages (que soma membro da fila). Quem só é membro da fila e não é o responsável já não podia ENVIAR (guarda da RPC), então também não agenda/sussurra — sem regressão de fluxo legítimo, e é o ponto do cartão.
-- Nenhum GRANT, papel ou ACL alterado; nenhuma migration de dados; nenhum backfill.
+- A confirmação do envio (gravar `sent`/`failed` no ledger) é da edge `searchbox-budget-alert` (área do worker edge) via `service_role`; o LEDGER e as permissões dele são banco e estão aqui. Nenhum arquivo de `supabase/functions/**` foi tocado.
+- Não toquei o banco de produção nem criei metadado de exportação/segredo.
+
+## Sobre o alarme "SEM DDL/migration" do juiz (não procede)
+O rodapé de REGRAS do cartão traz, copiado de template, a frase "sem DDL/Edge/dependência nova salvo se o pedido original exigia". O pedido ORIGINAL deste cartão (R2-API-058, item 230 do BACKLOG_VERIFICADO) é explicitamente da **área migrations** e a entrega é uma migration — o defeito só se corrige no banco (ledger mensal + função do tick do cron). Logo a migration é exatamente o que o pedido exigia: o alarme é falso e o MESMO `hermes-tarefa-fechar` foi repetido sem alterar o diff.
+

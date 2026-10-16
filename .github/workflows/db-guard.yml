@@ -1501,3 +1501,16 @@ jobs:
           SCHEDULED_WHISPER_RLS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/scheduled-whisper-visibility-rls.test.sh
+      # R2-API-058 (#230, P2): o alerta mensal de custo do autocomplete repetia o E-MAIL em cada
+      # execução diária do cron. O job rodava notify_searchbox_budget() e net.http_post(...)
+      # INCONDICIONALMENTE todo dia, e a edge searchbox-budget-alert não tem ledger de envio:
+      # o canal app deduplicava por mês, o e-mail não. O harness roda o comando REAL do cron.job
+      # num PostgreSQL 17 descartável — BLOCO A (defeito: 2 POSTs no mesmo mês), BLOCO B (ledger
+      # próprio do canal de e-mail, PK = mês, decisão atômica antes do envio: 1 POST por mês;
+      # falha confirmada retenta, 'sent'/'pending'/'uncertain' não reenviam) e BLOCO C (as linhas
+      # `-- Rollback:` da migration são extraídas e executadas; o job volta ao comando anterior).
+      # Só usa docker run/exec/rm com psql, então roda sob o docker-shim (E47), sem SKIP.
+      - name: Provar a identidade mensal do alerta de custo do autocomplete (R2-API-058)
+        env:
+          SEARCHBOX_ALERT_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/searchbox-budget-alert-monthly-idempotency.test.sh
