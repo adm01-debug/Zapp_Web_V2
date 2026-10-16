@@ -1,10 +1,11 @@
 Especialista: senior (area-testes-do-produto)
 
-ENTREGA: mudou só o relato (.tmp/relato.md). O código do cartão está absorvido
-na branch do dia (9f9a808792 é ancestral do HEAD). Comando: bunx vitest run
-src/components/inbox/__tests__/ChatPanel.ligar.test.tsx
-src/components/inbox/contact-details/__tests__/click-to-call-origens.test.ts.
-Resultado: Test Files 2 passed (2), Tests 15 passed (15).
+ENTREGA.
+Mudou: só .tmp/relato.md (código absorvido: 9f9a808792 ancestral do HEAD).
+Comando: bunx vitest run src/components/inbox/__tests__/ChatPanel.ligar.test.tsx src/components/inbox/contact-details/__tests__/click-to-call-origens.test.ts.
+Resultado: Test Files 2 passed, Tests 15 passed.
+Comando: zapp-verify full .
+Resultado: VERIFY: VERDE SEM BANCO (1144s).
 
 Refazer 2 — SÓ O RELATO. Os 4 pontos da recusa, na mesma ordem e numeração:
 ponto → o que mudei (arquivo) → teste que prova (nome, saída vermelha e verde).
