@@ -1,5 +1,8 @@
 -- 20261006212406_mitigar_pgcron_timeouts
--- Rollback: SELECT public.apply_pg_cron_anti_timeout(true); DROP FUNCTION public.apply_pg_cron_anti_timeout(boolean);
+-- Rollback: devolve os tres jobs ao horario anterior (select apply_pg_cron_anti_timeout(true)) e dropa a funcao; onde o papel nao tem EXECUTE em cron.alter_job a funcao avisa e devolve 0, sem reverter horario nenhum.
+-- Rollback (SQL executável, na ordem):
+--   select public.apply_pg_cron_anti_timeout(true);
+--   drop function if exists public.apply_pg_cron_anti_timeout(boolean);
 --
 -- Mitigacao dos 'job startup timeout' do pg_cron que o sensor reporta na chave
 -- pgcron-timeout (5 timeouts em 45 execucoes em 10 minutos, 06/10 17:41 local).
