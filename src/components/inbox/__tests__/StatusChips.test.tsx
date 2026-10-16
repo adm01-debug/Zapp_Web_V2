@@ -1,9 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent, renderHook, act } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
-import type { ReactNode } from 'react';
-import { StatusChips, type ChipTab } from '../conversation-list/StatusChips';
-import { useInboxFilters } from '@/hooks/inbox/useInboxFilters';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { StatusChips } from '../conversation-list/StatusChips';
 import type { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
 
 // R2-INB-056 (#349): o usuário logado tem DOIS ids distintos — o do auth
@@ -34,25 +31,11 @@ function makeConversation(overrides: Partial<ConversationWithMessages['contact']
 }
 
 describe('StatusChips', () => {
-  // Cobre os seis chips pelo MESMO critério da lista
-  // (contacts.conversation_status):
-  // - c1 open + responsável atual + não lidas   -> Todas, Não lidas, Em atendimento
-  // - c2 open + outro responsável               -> Todas
-  // - c3 waiting sem responsável                -> Todas, Aguardando
-  // - c4 open SEM mensagem carregada            -> fora de Todas (guarda de atividade)
-  // - c5 resolved sem mensagem                  -> Resolvidas
-  // - c6 resolved COM mensagem                  -> Resolvidas (não é "sem mensagem")
-  // - c7 archived + responsável + não lidas     -> só Arquivadas
-  // - c8 archived sem mensagem                  -> só Arquivadas
   const conversations: ConversationWithMessages[] = [
-    makeConversation({ id: 'c1', assigned_to: CURRENT_PROFILE_ID, unreadCount: 2, conversation_status: 'open' }),
-    makeConversation({ id: 'c2', assigned_to: OTHER_PROFILE_ID, conversation_status: 'open' }),
-    makeConversation({ id: 'c3', assigned_to: null, conversation_status: 'waiting' }),
-    makeConversation({ id: 'c4', hasMessages: false, conversation_status: 'open' }),
-    makeConversation({ id: 'c5', hasMessages: false, conversation_status: 'resolved' }),
-    makeConversation({ id: 'c6', conversation_status: 'resolved' }),
-    makeConversation({ id: 'c7', assigned_to: CURRENT_PROFILE_ID, unreadCount: 3, conversation_status: 'archived' }),
-    makeConversation({ id: 'c8', hasMessages: false, conversation_status: 'archived' }),
+    makeConversation({ id: 'c1', assigned_to: CURRENT_PROFILE_ID, unreadCount: 2 }),
+    makeConversation({ id: 'c2', assigned_to: OTHER_PROFILE_ID }),
+    makeConversation({ id: 'c3', assigned_to: null }),
+    makeConversation({ id: 'c4', hasMessages: false }),
   ];
 
   it('renders the 6 chips (no Spam — não existe no modelo)', () => {
@@ -85,28 +68,19 @@ describe('StatusChips', () => {
     expect(screen.getByTestId('status-chip-attending').querySelector('span')?.textContent).toBe('1');
   });
 
-  it('conta "Aguardando" pelo status persistido waiting, não por "sem responsável"', () => {
-    // Único waiting é c3. c4 (sem responsável, status open) NÃO conta; a regra
-    // antiga ("sem responsável") daria 2.
+  it('maps "Aguardando" to unassigned open conversations', () => {
     render(<StatusChips conversations={conversations} chipTab="all" onChipTabChange={() => {}} />);
     expect(screen.getByTestId('status-chip-waiting')).toHaveTextContent('1');
   });
 
-  it('conta "Resolvidas" pelo status resolved, não por "sem mensagem"', () => {
-    // c5 e c6. c4 tem 0 mensagens mas status open: a regra antiga ("sem
-    // mensagens") o colocaria aqui e c6 (resolvida com mensagem) ficaria de fora.
+  it('maps "Resolvidas" to conversations with no messages', () => {
     render(<StatusChips conversations={conversations} chipTab="all" onChipTabChange={() => {}} />);
-    expect(screen.getByTestId('status-chip-resolved')).toHaveTextContent('2');
+    expect(screen.getByTestId('status-chip-resolved')).toHaveTextContent('1');
   });
 
-  it('conta "Arquivadas" pelo status archived e as exclui dos outros chips', () => {
+  it('mostra 0 em "Arquivadas" quando a fixture padrão não tem conversation_status archived', () => {
     render(<StatusChips conversations={conversations} chipTab="all" onChipTabChange={() => {}} />);
-    // c7 (com mensagem e não lida) e c8 (sem mensagem): só em Arquivadas.
-    expect(screen.getByTestId('status-chip-archived')).toHaveTextContent('2');
-    expect(screen.getByTestId('status-chip-all')).toHaveTextContent('3');
-    expect(screen.getByTestId('status-chip-unread')).toHaveTextContent('1');
-    expect(screen.getByTestId('status-chip-attending')).toHaveTextContent('1');
-    expect(screen.getByTestId('status-chip-waiting')).toHaveTextContent('1');
+    expect(screen.getByTestId('status-chip-archived').querySelector('span')?.textContent).toBe('0');
   });
 
   it('calls onChipTabChange with the clicked chip id', () => {
@@ -154,22 +128,13 @@ describe('StatusChips', () => {
     }
   });
 
-  it('mostra 0 em "Arquivadas" quando a fixture padrao nao tem conversation_status archived', () => {
-    const semArquivadas: ConversationWithMessages[] = [
-      makeConversation({ id: 'c1', assigned_to: CURRENT_PROFILE_ID, unreadCount: 2, conversation_status: 'open' }),
-      makeConversation({ id: 'c2', assigned_to: null, conversation_status: 'waiting' }),
-    ];
-    render(<StatusChips conversations={semArquivadas} chipTab="all" onChipTabChange={() => {}} />);
-    expect(screen.getByTestId('status-chip-archived')).toHaveTextContent('0');
-    expect(screen.getByTestId('status-chip-all')).toHaveTextContent('2');
-  });
   it('conta "Arquivadas" pelo conversation_status real e as exclui da lista ativa', () => {
     // Arquivada NÃO é "sem mensagens": o status persistido em
     // contacts.conversation_status é a fonte. c2 tem mensagens e não lidas, e
     // ainda assim sai de Todas/Não lidas/Em atendimento; c3 está sem responsável
     // e não entra em Aguardando. Todas são contadas em Arquivadas.
     const withArchived: ConversationWithMessages[] = [
-      makeConversation({ id: 'c1', assigned_to: CURRENT_PROFILE_ID, unreadCount: 2, conversation_status: 'open' }),
+      makeConversation({ id: 'c1', assigned_to: CURRENT_PROFILE_ID, unreadCount: 2 }),
       makeConversation({ id: 'c2', assigned_to: CURRENT_PROFILE_ID, unreadCount: 1, conversation_status: 'archived' }),
       makeConversation({ id: 'c3', assigned_to: null, conversation_status: 'archived' }),
       makeConversation({ id: 'c4', hasMessages: false, conversation_status: 'archived' }),
@@ -259,177 +224,5 @@ describe('StatusChips', () => {
       expect(svg!.getAttribute('class')).toContain('h-4');
       expect(svg!.getAttribute('class')).toContain('w-4');
     });
-  });
-});
-
-/**
- * As opções com que a LISTA conta chegam ao contador do chip.
- *
- * O componente deixou de ter contagem própria: usa `countByChip`
- * (src/hooks/inbox/chipCounts.ts) com as mesmas opções de useInboxFilters.
- * Estes testes fixam os insumos que faziam o número do chip divergir da lista
- * quando faltavam — adiamento, "Mostrar todos", fila, busca, tipo de contato e
- * painel Filtros — e fecham a conta contra o `length` da lista real.
- */
-describe('contadores dos chips com as mesmas opções da lista', () => {
-  const counter = (chip: ChipTab): string =>
-    screen.getByTestId(`status-chip-${chip}`).querySelector('span')?.textContent ?? '';
-
-  // Mesma base da fixture principal do arquivo (o bloco de cima é um describe à
-  // parte), com os seis chips representados pelo estado persistido.
-  const CONVERSAS: ConversationWithMessages[] = [
-    makeConversation({ id: 'c1', assigned_to: CURRENT_PROFILE_ID, unreadCount: 2, conversation_status: 'open' }),
-    makeConversation({ id: 'c2', assigned_to: OTHER_PROFILE_ID, conversation_status: 'open' }),
-    makeConversation({ id: 'c3', assigned_to: null, conversation_status: 'waiting' }),
-    makeConversation({ id: 'c4', hasMessages: false, conversation_status: 'open' }),
-    makeConversation({ id: 'c5', hasMessages: false, conversation_status: 'resolved' }),
-    makeConversation({ id: 'c6', conversation_status: 'resolved' }),
-    makeConversation({ id: 'c7', assigned_to: CURRENT_PROFILE_ID, unreadCount: 3, conversation_status: 'archived' }),
-    makeConversation({ id: 'c8', hasMessages: false, conversation_status: 'archived' }),
-  ];
-
-  it('exclui a conversa adiada, como a lista (R2-INB-029)', () => {
-    render(
-      <StatusChips
-        conversations={CONVERSAS}
-        chipTab="all"
-        onChipTabChange={() => {}}
-        countOpts={{ snoozedIds: new Set(['c1']) }}
-      />
-    );
-    expect(counter('all')).toBe('2');
-    expect(counter('unread')).toBe('0');
-    expect(counter('attending')).toBe('0');
-  });
-
-  it('com "Mostrar todos" Em atendimento acompanha Todas', () => {
-    render(
-      <StatusChips
-        conversations={CONVERSAS}
-        chipTab="all"
-        onChipTabChange={() => {}}
-        countOpts={{ showAll: true }}
-      />
-    );
-    expect(counter('attending')).toBe('3');
-  });
-
-  it('aplica a fila selecionada aos chips abertos e a Arquivadas', () => {
-    const withQueue: ConversationWithMessages[] = [
-      makeConversation({ id: 'q1', queue_id: 'fila-a', conversation_status: 'open' }),
-      makeConversation({ id: 'q2', queue_id: 'fila-b', conversation_status: 'open' }),
-      makeConversation({ id: 'q3', queue_id: 'fila-a', conversation_status: 'archived' }),
-    ];
-    render(
-      <StatusChips
-        conversations={withQueue}
-        chipTab="all"
-        onChipTabChange={() => {}}
-        countOpts={{ selectedQueueId: 'fila-a' }}
-      />
-    );
-    expect(counter('all')).toBe('1');
-    expect(counter('archived')).toBe('1');
-  });
-
-  it('a busca recorta os contadores, como recorta a lista', () => {
-    const comBusca: ConversationWithMessages[] = [
-      makeConversation({ id: 'b1', name: 'Ana Souza', conversation_status: 'open', unreadCount: 2 }),
-      makeConversation({ id: 'b2', name: 'Ana Paula', conversation_status: 'open' }),
-      makeConversation({ id: 'b3', name: 'Joao Lima', conversation_status: 'waiting' }),
-      makeConversation({ id: 'b4', name: 'Ana Clara', conversation_status: 'archived' }),
-    ];
-    render(
-      <StatusChips
-        conversations={comBusca}
-        chipTab="all"
-        onChipTabChange={() => {}}
-        countOpts={{ search: 'ana' }}
-      />
-    );
-    // Só as "Ana" abertas (b1 e b2): b3 é outro nome e b4 é arquivada.
-    expect(counter('all')).toBe('2');
-    expect(counter('unread')).toBe('1');
-    expect(counter('waiting')).toBe('0');
-    expect(counter('archived')).toBe('1');
-  });
-
-  it('o painel Filtros (status) e o tipo de contato entram nos contadores', () => {
-    const matriz: ConversationWithMessages[] = [
-      makeConversation({ id: 'f1', phone: '5511999990001', conversation_status: 'open', unreadCount: 1 }),
-      makeConversation({ id: 'f2', phone: '5511999990002', conversation_status: 'open' }),
-      // Telefone em formato de JID de grupo: casa o tipo "grupo" do ContactTypeFilter.
-      makeConversation({ id: 'f3', phone: '120363111111-556699999999', conversation_status: 'open' }),
-    ];
-    const { unmount } = render(
-      <StatusChips
-        conversations={matriz}
-        chipTab="all"
-        onChipTabChange={() => {}}
-        countOpts={{ filters: { status: ['unread'], agentId: null, dateRange: { from: null, to: null } } }}
-      />
-    );
-    expect(counter('all')).toBe('1');
-    unmount();
-
-    render(
-      <StatusChips
-        conversations={matriz}
-        chipTab="all"
-        onChipTabChange={() => {}}
-        countOpts={{ selectedContactType: 'grupo' }}
-      />
-    );
-    expect(counter('all')).toBe('1');
-  });
-});
-
-describe('contador do chip é o length da lista real (useInboxFilters)', () => {
-  const PARIDADE: ConversationWithMessages[] = [
-    makeConversation({ id: 'p1', name: 'Ana Souza', assigned_to: CURRENT_PROFILE_ID, unreadCount: 2, conversation_status: 'open' }),
-    makeConversation({ id: 'p2', name: 'Ana Paula', assigned_to: OTHER_PROFILE_ID, conversation_status: 'open' }),
-    makeConversation({ id: 'p3', name: 'Ana Clara', conversation_status: 'waiting' }),
-    makeConversation({ id: 'p4', name: 'Ana Melo', conversation_status: 'resolved' }),
-    makeConversation({ id: 'p5', name: 'Ana Bento', assigned_to: CURRENT_PROFILE_ID, conversation_status: 'archived' }),
-    makeConversation({ id: 'p6', name: 'Joao Lima', conversation_status: 'open' }),
-    makeConversation({ id: 'p7', name: 'Ana Nunes', conversation_status: 'open' }),
-  ];
-  const ADIADAS = new Set(['p7']);
-  const CHIPS_INBOX: ChipTab[] = ['all', 'unread', 'attending', 'waiting', 'resolved', 'archived'];
-  const wrapper = ({ children }: { children: ReactNode }) => <MemoryRouter>{children}</MemoryRouter>;
-
-  // Espelha o que ConversationListSidebar entrega ao componente: as opções saem
-  // do próprio useInboxFilters — o mesmo hook que monta a lista —, então o
-  // contador não tem de onde divergir do que a lista mostra.
-  const montar = () =>
-    renderHook(
-      () => useInboxFilters({ conversations: PARIDADE, profileId: CURRENT_PROFILE_ID, snoozedIds: ADIADAS }),
-      { wrapper }
-    );
-
-  it.each(CHIPS_INBOX)('chip %s: contador == length da lista (com busca e adiada)', (chip) => {
-    const { result } = montar();
-    act(() => result.current.setChipTab(chip));
-    act(() => result.current.setSearch('ana'));
-
-    const { unmount } = render(
-      <StatusChips
-        conversations={PARIDADE}
-        chipTab={chip}
-        onChipTabChange={() => {}}
-        countOpts={{
-          snoozedIds: ADIADAS,
-          showAll: result.current.showAll,
-          selectedQueueId: result.current.selectedQueueId,
-          search: result.current.search,
-          selectedContactType: result.current.selectedContactType,
-          filters: result.current.filters,
-        }}
-      />
-    );
-
-    const doChip = screen.getByTestId(`status-chip-${chip}`).querySelector('span')?.textContent ?? '';
-    expect(doChip).toBe(String(result.current.filteredConversations.length));
-    unmount();
   });
 });

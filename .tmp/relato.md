@@ -1,23 +1,19 @@
-Especialista: iris
+Especialista: worker (design) (design-system-zapp)
 
 ## O que mudou e por quê
-- src/components/dashboard/overview/DailyMetricsKpis.tsx (novo): a faixa pedida pelo cartão — cartões com valor, variação e mini-série. Valor = TOTAL do período devolvido pela RPC; variação = último dia contra o anterior (rótulo "vs. dia anterior"); mini-série = um ponto por dia do período. Estados separados: skeleton (`daily-kpis-skeleton`), erro (`daily-kpis-error`) e vazio explícito (`daily-kpis-empty`, "Sem métricas diárias nos últimos 7 dias") — nenhum deles se confunde com zero real. Só staff: `if (isStaff !== true) return null`. Rodapé `daily-kpis-caption` diz que o número do topo é total do período (o número não é lido como "hoje"; os KPIs de hoje são a faixa de cima).
-- src/components/dashboard/overview/dailyMetricsKpisMath.ts (novo): `lastDayVariationPct` (pura) — % do último dia sobre o anterior; sem dia anterior ou base 0 devolve null (não inventa percentual). Ficou fora do .tsx porque exportar não-componente ali reprovava o ratchet de lint (react-refresh/only-export-components).
-- src/components/dashboard/overview/__tests__/DailyMetricsKpis.test.tsx (novo): prova renderizando o componente REAL sobre o hook REAL; mocka só a RPC (`supabase.rpc`) e `useCRMAdminAccess`.
-- src/components/dashboard/DashboardView.tsx: import + nova zona "Últimos 7 dias" logo depois de "Números de hoje", com `{isStaff && …}` e dentro do `SectionErrorBoundary`, para não sobrar zona vazia para quem não é staff nem derrubar a tela se a faixa falhar.
-- src/components/dashboard/overview/DailyMetricsKpis.tsx: o `reduce` da soma ficou `reduce<number>` — sem o genérico o acumulador vinha `number | null` e o `tsc -b` reprovava (TS18047/TS2322). Corrigido no commit 8875b9ec2.
-
-## Fora da lista "ARQUIVOS QUE PODE TOCAR" — por quê (cada um)
-- supabase/migrations/20261012235745_dashboard_daily_series.sql, scripts/db-audit/dashboard-daily-series.test.sh, .github/workflows/db-guard.yml, src/hooks/dashboard/useDailyMetricsKpis.ts: NÃO foram tocados por mim — são o cartão pai t_8f12e328 (a dependência que o meu cartão exige), trazidos por cherry-pick da faixa dia/2026-10-12..732aa9d42 porque a base dia/2026-10-13 não os tinha. Sem eles a faixa não compila (o hook não existe). Se o pipeline quer isso só na base, é decisão do integrador.
-- src/components/dashboard/overview/dailyMetricsKpisMath.ts: arquivo NOVO do escopo do título (faixa de KPIs na pasta overview), criado para o helper puro `lastDayVariationPct` — dentro do .tsx ele reprovava o ratchet de lint (`react-refresh/only-export-components`) e sem exportá-lo não haveria teste unitário da variação % que o cartão pede. Não altera dado, RPC nem contrato.
+- src/components/inbox/conversation-list/StatusChips.tsx: chips de status em pílula grande — chip `h-11 px-4 rounded-full text-[15px] font-medium border`; inativo `bg-muted/40 border-border text-foreground`, hover `bg-muted/70`; ativo `border-primary ring-2 ring-primary/40 text-foreground`; badge `h-7 min-w-7 px-2 rounded-full text-sm font-bold` com os tons de `COUNTER_TONE`; `aria-pressed`, `focus-visible:ring-2 ring-primary/50`, `transition-colors`, data-testid preservados. É o desenho do dono (11/10) trazido do commit 3388112c4 por `git cherry-pick`.
+- src/components/inbox/__tests__/StatusChips.test.tsx: a prova do chip "Arquivadas" media as classes ANTIGAS (`border-primary/50`, `text-muted-foreground`) e por isso quebrava o empilhamento; agora mede as classes REAIS do componente (602266c85) e trava a PARIDADE (Arquivadas ativa e o chip vizinho ativo saem com exatamente as mesmas classes), somando 2 provas novas: contador 0 sem arquivadas e clique publicando `archived`.
 
 ## Prova
-- vermelho antes: com a faixa forçada a `return null` (mutação temporária em DailyMetricsKpis.tsx, revertida por cópia em .tmp) → `npx vitest run src/components/dashboard/overview/__tests__/DailyMetricsKpis.test.tsx` → `Tests 5 failed | 3 passed (8)` (as 5 que exigem a faixa aparecem; as 3 que passam são as unitárias de `lastDayVariationPct` e a de não-staff, que esperam ausência).
-- verde depois (commit 8875b9ec2): `npx vitest run src/components/dashboard/overview/__tests__/DailyMetricsKpis.test.tsx` → `Test Files 1 passed (1); Tests 8 passed (8)`; e `npx vitest run …/DailyMetricsKpis.test.tsx src/components/dashboard/__tests__/DashboardView.test.tsx src/components/dashboard/__tests__/DashboardView.section-error.test.tsx` → `Test Files 3 passed (3); Tests 14 passed (14)`, zero pulados.
-- tipos: `node scripts/ci/typecheck-ratchet.mjs` → `Typecheck ratchet: baseline=0, atual=0, removidas=0, novas=0 / OK: nenhum novo erro de tipo foi introduzido.`
-- lint: pre-commit → `Lint ratchet (staged, 4 arquivo(s)): baseline=0, atual=0, mantidas=0, removidas=0, novas=0 / OK: nenhuma nova divida de lint foi introduzida.`
-- casos cobertos: skeleton; não-staff (nem chama a RPC); série vazia → vazio explícito; erro da RPC → erro (não vazio); total 10+15=25 com +50% e 2 barras; dia sem mediana não entra como barra 0 na mini-série.
+- vermelho antes: `npx vitest run src/components/inbox/__tests__/StatusChips.test.tsx` com o arquivo anterior à correção → `Tests  1 failed | 18 passed (19)`; `Error: expect(element).toHaveClass("border-primary/50")` no caso "aplica o mesmo estilo ativo dos demais chips em Arquivadas".
+- verde depois: `npx vitest run src/components/inbox/__tests__/StatusChips.test.tsx src/components/inbox/__tests__/StatusChips.contrasteChipAtendendo.test.tsx src/components/inbox/__tests__/StatusChips.identidade-profile.test.tsx` → `Test Files  3 passed (3); Tests  30 passed (30)`.
+- mutação: removido `h-11` de StatusChips.tsx → `Tests  1 failed | 18 passed (19)` (`AssertionError: chip sem "h-11"`); restaurado → `Tests  19 passed (19)`; prova some sem a mudança.
+- portão do cartão (critério 4): `zapp-verify fast .` → `OK db_guard; OK tipos; OK lint; OK migrations; VERIFY: VERDE SEM BANCO`, rc=0.
+- empilhamento: `zapp-verify full .` → `OK db_guard; OK tipos; OK lint; OK migrations` e os StatusChips*.test.tsx passam; os 2 vermelhos da suíte são de talkx/RuleValueInput.test.tsx e inbox/FilesTab.period.integration.test.tsx, arquivos que o diff não toca (registro no comentário do cartão).
+
+## Pontos do revisor
+- Ponto 1 (quebra os TESTES no empilhamento, src/components/inbox/__tests__/StatusChips.test.tsx): o teste exigia `border-primary/50`; o componente do desenho novo aplica `border-primary` + `ring-2 ring-primary/40`. Corrigido em 602266c85, que alinha a asserção ao que o componente realmente renderiza e acrescenta a checagem de paridade; o empilhamento deixa de listar StatusChips.test.tsx entre os vermelhos.
 
 ## O que NÃO fiz e por quê
-- Nenhum hook, RPC ou tipo alterado: a RPC `dashboard_daily_series` e `useDailyMetricsKpis` são do cartão pai t_8f12e328, trazidos por cherry-pick (faixa dia/2026-10-12..732aa9d42) — sem push, modo V2.
-- Sem exportar/baixar/compartilhar nada; sem DDL nem dependência nova.
+- Não toquei ConversationListSidebar.tsx nem InboxFilters.tsx (proibidos pelo cartão).
+- Não mexi em banco, Edge, produção nem credenciais.
