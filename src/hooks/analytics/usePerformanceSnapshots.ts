@@ -136,8 +136,22 @@ export function usePerformanceSnapshots() {
 
   const clearOldSnapshots = useCallback(async () => {
     const escopo = lastScopeRef.current;
+    // Sem perfil não há escopo próprio: a RLS negaria o DELETE mesmo assim.
+    // Avisa negado sem tocar o banco (a mesma guarda do loadHistory acima).
+    if (escopo === 'me' && !profileId) {
+      toast.error('Sem permissão para limpar estes snapshots');
+      return;
+    }
     try {
       const sevenDaysAgo = new Date(Date.now() - SETE_DIAS_MS).toISOString();
+      // Pré-checagem no escopo pedido: distingue "nada a remover" do DELETE
+      // negado pela RLS (que descarta as linhas sem erro e sem linhas de
+      // retorno, por isso sem `.select()` encadeado no DELETE).
+      const existemAntigos = await existeSnapshotAntigo(sevenDaysAgo, escopo, profileId);
+      if (!existemAntigos) {
+        toast.success('Nenhum snapshot antigo para remover');
+        return;
+      }
       // O cliente do Supabase resolve a Promise com `{ error }` em erro de
       // PostgREST/RLS (não lança): sem inspecionar o retorno, o hook anunciava
       // remoção mesmo com o DELETE recusado.
@@ -148,27 +162,19 @@ export function usePerformanceSnapshots() {
       if (escopo === 'me' && profileId) {
         del = del.eq('profile_id', profileId);
       }
-      // As linhas removidas distinguem "removi" de "nada a remover": a RLS
-      // descarta as linhas sem erro quando nega o DELETE.
-      const { data, error } = await del.select('id');
+      const { error } = await del;
       if (error) throw error;
 
-      const removidos = data?.length ?? 0;
-      if (removidos > 0) {
-        toast.success('Dados antigos removidos');
-        await loadHistory(lastRangeHoursRef.current, escopo);
+      // Pós-checagem no escopo: a RLS pode negar o DELETE silenciosamente
+      // (0 linhas, sem erro). Se os antigos continuam lá, a limpeza NÃO foi
+      // confirmada e o motivo anunciado é a falta de permissão.
+      const aindaExistem = await existeSnapshotAntigo(sevenDaysAgo, escopo, profileId);
+      if (aindaExistem) {
+        toast.error('Sem permissão para limpar estes snapshots');
         return;
       }
-
-      // Zero linhas pode ser "não havia nada" OU a RLS negando (a policy de
-      // DELETE é só admin/supervisor: agente não apaga nem os próprios). Confere
-      // a existência no escopo para não anunciar o motivo errado.
-      const existemAntigos = await existeSnapshotAntigo(sevenDaysAgo, escopo, profileId);
-      if (existemAntigos) {
-        toast.error('Sem permissão para limpar estes snapshots');
-      } else {
-        toast.success('Nenhum snapshot antigo para remover');
-      }
+      toast.success('Dados antigos removidos');
+      await loadHistory(lastRangeHoursRef.current, escopo);
     } catch (err) {
       // Preserva o histórico exibido e avisa que a limpeza NÃO foi confirmada.
       log.warn('Failed to clear old performance snapshots:', err);

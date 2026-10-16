@@ -36,6 +36,11 @@ Object.defineProperty(navigator, 'connection', {
   configurable: true,
 });
 
+// Radix Select chama scrollIntoView ao abrir o menu; jsdom não implementa.
+if (typeof Element !== 'undefined' && !Element.prototype.scrollIntoView) {
+  Element.prototype.scrollIntoView = vi.fn();
+}
+
 // Mock useAuth (needed by usePerformanceSnapshots)
 vi.mock('@/hooks/auth/useAuth', () => ({
   useAuth: () => ({ profile: { id: 'test-profile' }, user: { id: 'test-user' } }),
@@ -370,5 +375,40 @@ describe('PerformanceMonitor', () => {
 
     const semRuidoDePagina = { rules: { region: { enabled: false } } };
     expect(await axe(document.body, semRuidoDePagina)).toHaveNoViolations();
+  });
+
+  it('botão Limpar descreve o escopo próprio no title (agente comum)', async () => {
+    render(<PerformanceMonitor />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('combobox', { name: 'Período' })).toBeInTheDocument();
+    });
+
+    expect(screen.getByRole('button', { name: /limpar antigos/i })).toHaveAttribute(
+      'title',
+      'Remove os seus snapshots com mais de 7 dias',
+    );
+  });
+
+  it("botão Limpar descreve o escopo total no title (admin em 'todos')", async () => {
+    papelMock.podeVerTodos = true;
+    render(<PerformanceMonitor />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('combobox', { name: 'Escopo' })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('combobox', { name: 'Escopo' }));
+    await waitFor(() => {
+      expect(screen.getByRole('option', { name: 'Todos os usuários' })).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole('option', { name: 'Todos os usuários' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /limpar antigos/i })).toHaveAttribute(
+        'title',
+        'Remove snapshots com mais de 7 dias de todos os usuários',
+      );
+    });
   });
 });

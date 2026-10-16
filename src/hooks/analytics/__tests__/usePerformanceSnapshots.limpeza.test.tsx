@@ -9,15 +9,17 @@ const h = vi.hoisted(() => ({
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
   log: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
-  modos: { delete: 'ok' as 'ok' | 'zero-linhas' | 'envelope-erro' | 'rejeicao' },
-  // Linhas devolvidas pela LEITURA (loadHistory e a conferência de existência).
+  modos: { delete: 'ok' as 'ok' | 'rls-nega' | 'envelope-erro' | 'rejeicao' },
+  // Linhas devolvidas pela LEITURA (loadHistory e as conferências de
+  // existência pré/pós-DELETE). O DELETE 'ok' esvazia (simula a remoção real).
   antigos: [] as Array<{ id: string }>,
+  perfilId: 'perfil-1' as string | null,
   isSupervisor: false,
   chamadas: { delete: 0, select: 0, cutoff: [] as string[], eq: [] as Array<[string, unknown]> },
 }));
 
 vi.mock('@/hooks/auth/useAuth', () => ({
-  useAuth: () => ({ profile: { id: 'perfil-1' } }),
+  useAuth: () => ({ profile: h.perfilId ? { id: h.perfilId } : null }),
 }));
 
 vi.mock('@/hooks/system/useUserRole', () => ({
@@ -43,14 +45,17 @@ vi.mock('sonner', () => ({
 
 // O cliente Supabase real devolve envelope `{ data, error }` (a Promise
 // resolve MESMO com erro) — nunca lança para erro de PostgREST/RLS. O mock
-// reproduz esse contrato, o que é a precondição do defeito.
+// reproduz esse contrato, o que é a precondição do defeito. O DELETE é
+// thenável direto, sem `.select()` encadeado: a RLS nega descartando as
+// linhas sem erro, e o hook confirma pela existência pré/pós-DELETE.
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: (table: string) => {
       if (table !== 'performance_snapshots') throw new Error(`tabela inesperada: ${table}`);
 
-      // Builder de LEITURA (loadHistory: select/gte/order/limit e a conferência
-      // de existência: select('id')/lt/limit) — thenable, como o PostgrestBuilder.
+      // Builder de LEITURA (loadHistory: select/gte/order/limit e as
+      // conferências de existência: select('id')/lt/limit) — thenable, como o
+      // PostgrestBuilder.
       const leitura = () => {
         const b: Record<string, unknown> = {};
         b.eq = (col: string, val: unknown) => {
@@ -77,20 +82,21 @@ vi.mock('@/integrations/supabase/client', () => ({
             h.chamadas.eq.push([col, val]);
             return d;
           };
-          // A correção pede as linhas removidas para distinguir "removi" de
-          // "nada a remover" (RLS pode descartar sem erro).
-          d.select = (_colunas: string) => {
+          d.then = (resolve: (v: unknown) => unknown, reject?: (e: unknown) => unknown) => {
             h.chamadas.delete += 1;
             if (h.modos.delete === 'rejeicao') {
-              return Promise.reject(new Error('falha de transporte simulada'));
+              return Promise.reject(new Error('falha de transporte simulada')).then(resolve, reject);
             }
             if (h.modos.delete === 'envelope-erro') {
-              return Promise.resolve({ data: null, error: { message: 'DELETE recusado pelo RLS' } });
+              return Promise.resolve({ data: null, error: { message: 'DELETE recusado pelo RLS' } }).then(resolve, reject);
             }
-            if (h.modos.delete === 'zero-linhas') {
-              return Promise.resolve({ data: [], error: null });
+            if (h.modos.delete === 'rls-nega') {
+              // RLS descarta sem erro e sem remover: as linhas continuam lá.
+              return Promise.resolve({ data: null, error: null }).then(resolve, reject);
             }
-            return Promise.resolve({ data: [{ id: 'snap-1' }, { id: 'snap-2' }], error: null });
+            // DELETE real: remove as linhas antigas do escopo.
+            h.antigos = [];
+            return Promise.resolve({ data: null, error: null }).then(resolve, reject);
           };
           return d;
         },
@@ -112,6 +118,7 @@ describe('usePerformanceSnapshots — limpar snapshots antigos', () => {
     h.log.warn.mockClear();
     h.modos.delete = 'ok';
     h.antigos = [];
+    h.perfilId = 'perfil-1';
     h.isSupervisor = false;
     h.chamadas.delete = 0;
     h.chamadas.select = 0;
@@ -127,61 +134,84 @@ describe('usePerformanceSnapshots — limpar snapshots antigos', () => {
   }
 
   it('não anuncia remoção quando o DELETE resolve com { error } (envelope do SDK)', async () => {
+    h.antigos = [{ id: 'antigo-1' }];
     h.modos.delete = 'envelope-erro';
 
     await limpar();
 
     expect(h.toastSuccess).not.toHaveBeenCalled();
     expect(h.toastError).toHaveBeenCalledTimes(1);
-    // Não recarrega o histórico: a recarga não é prova de remoção.
-    expect(h.chamadas.select).toBe(0);
+    // Pré-checagem (1 leitura), sem pós-checagem nem recarga: a recarga não é
+    // prova de remoção.
+    expect(h.chamadas.select).toBe(1);
   });
 
   it('não anuncia remoção quando o DELETE rejeita a Promise', async () => {
+    h.antigos = [{ id: 'antigo-1' }];
     h.modos.delete = 'rejeicao';
 
     await limpar();
 
     expect(h.toastSuccess).not.toHaveBeenCalled();
     expect(h.toastError).toHaveBeenCalledTimes(1);
-    expect(h.chamadas.select).toBe(0);
+    expect(h.chamadas.select).toBe(1);
     // A causa é registrada para diagnóstico.
     expect(h.log.warn).toHaveBeenCalled();
   });
 
   it('controle: com DELETE sem erro anuncia remoção e recarrega o histórico', async () => {
+    h.antigos = [{ id: 'antigo-1' }, { id: 'antigo-2' }];
+
     await limpar();
 
     expect(h.toastError).not.toHaveBeenCalled();
     expect(h.toastSuccess).toHaveBeenCalledTimes(1);
     expect(h.toastSuccess).toHaveBeenCalledWith('Dados antigos removidos');
     expect(h.chamadas.delete).toBe(1);
-    expect(h.chamadas.select).toBe(1);
+    // Pré-checagem + pós-checagem + recarga do histórico.
+    expect(h.chamadas.select).toBe(3);
   });
 
-  it('zero linhas removidas não é anunciado como remoção (RLS pode descartar sem erro)', async () => {
-    h.modos.delete = 'zero-linhas';
+  it('sem snapshots antigos não toca o DELETE e anuncia "nada a remover"', async () => {
+    h.antigos = [];
 
     await limpar();
 
+    expect(h.chamadas.delete).toBe(0);
     expect(h.toastError).not.toHaveBeenCalled();
     expect(h.toastSuccess).toHaveBeenCalledTimes(1);
     expect(h.toastSuccess).toHaveBeenCalledWith('Nenhum snapshot antigo para remover');
   });
 
-  it('DELETE negado (0 linhas) com snapshots antigos existentes avisa falta de permissão', async () => {
-    // Agente: a policy de DELETE é só admin/supervisor, então a RLS descarta as
-    // linhas sem erro. Havendo snapshots antigos, 0 removidos = negado.
-    h.modos.delete = 'zero-linhas';
+  it('DELETE negado pela RLS (sucesso vazio, antigos continuam) avisa falta de permissão', async () => {
+    // Agente: a policy de DELETE é só admin/supervisor, então a RLS descarta
+    // as linhas sem erro. O DELETE é provocado de verdade (delete = 1) e a
+    // pós-checagem encontra os antigos ainda lá: 0 removidos = negado.
     h.antigos = [{ id: 'antigo-1' }];
+    h.modos.delete = 'rls-nega';
 
     await limpar();
 
+    expect(h.chamadas.delete).toBe(1);
+    expect(h.toastSuccess).not.toHaveBeenCalled();
+    expect(h.toastError).toHaveBeenCalledWith('Sem permissão para limpar estes snapshots');
+  });
+
+  it("sem perfil no escopo 'me' nega sem tocar o banco (mesma precedência do loadHistory)", async () => {
+    h.perfilId = null;
+    h.antigos = [{ id: 'antigo-de-outrem' }];
+
+    await limpar();
+
+    expect(h.chamadas.delete).toBe(0);
+    expect(h.chamadas.select).toBe(0);
     expect(h.toastSuccess).not.toHaveBeenCalled();
     expect(h.toastError).toHaveBeenCalledWith('Sem permissão para limpar estes snapshots');
   });
 
   it('a limpeza no escopo padrão apaga só os snapshots do próprio perfil', async () => {
+    h.antigos = [{ id: 'antigo-1' }];
+
     await limpar();
 
     expect(h.chamadas.eq).toContainEqual(['profile_id', 'perfil-1']);
@@ -189,6 +219,7 @@ describe('usePerformanceSnapshots — limpar snapshots antigos', () => {
 
   it("admin no escopo 'todos' limpa sem filtro de perfil (todos os usuários)", async () => {
     h.isSupervisor = true;
+    h.antigos = [{ id: 'antigo-1' }];
     const { result } = renderHook(() => usePerformanceSnapshots());
 
     await act(async () => {
@@ -203,6 +234,7 @@ describe('usePerformanceSnapshots — limpar snapshots antigos', () => {
   });
 
   it('mantém o período selecionado ao recarregar após a limpeza', async () => {
+    h.antigos = [{ id: 'antigo-1' }];
     const { result } = renderHook(() => usePerformanceSnapshots());
 
     // Usuário escolheu 7 dias (168h) no seletor -> loadHistory(168).
