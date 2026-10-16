@@ -15,6 +15,7 @@ const h = vi.hoisted(() => ({
   antigos: [] as Array<{ id: string }>,
   perfilId: 'perfil-1' as string | null,
   isSupervisor: false,
+  eventos: [] as string[],
   chamadas: { delete: 0, select: 0, cutoff: [] as string[], eq: [] as Array<[string, unknown]> },
 }));
 
@@ -59,7 +60,7 @@ vi.mock('@/integrations/supabase/client', () => ({
       const leitura = () => {
         const b: Record<string, unknown> = {};
         b.eq = (col: string, val: unknown) => {
-          h.chamadas.eq.push([col, val]);
+          h.chamadas.eq.push([col, val]); h.eventos.push('eq');
           return b;
         };
         b.gte = (_coluna: string, corte: string) => {
@@ -76,10 +77,11 @@ vi.mock('@/integrations/supabase/client', () => ({
 
       return {
         delete: () => {
+          h.eventos.push('delete()');
           const d: Record<string, unknown> = {};
           d.lt = () => d;
           d.eq = (col: string, val: unknown) => {
-            h.chamadas.eq.push([col, val]);
+            h.chamadas.eq.push([col, val]); h.eventos.push('eq');
             return d;
           };
           d.then = (resolve: (v: unknown) => unknown, reject?: (e: unknown) => unknown) => {
@@ -102,6 +104,7 @@ vi.mock('@/integrations/supabase/client', () => ({
         },
         select: () => {
           h.chamadas.select += 1;
+          h.eventos.push('select');
           return leitura();
         },
       };
@@ -117,6 +120,7 @@ describe('usePerformanceSnapshots — limpar snapshots antigos', () => {
     h.toastError.mockClear();
     h.log.warn.mockClear();
     h.modos.delete = 'ok';
+    h.eventos = [];
     h.antigos = [];
     h.perfilId = 'perfil-1';
     h.isSupervisor = false;
@@ -214,7 +218,9 @@ describe('usePerformanceSnapshots — limpar snapshots antigos', () => {
 
     await limpar();
 
+    expect(h.chamadas.delete).toBe(1);
     expect(h.chamadas.eq).toContainEqual(['profile_id', 'perfil-1']);
+    expect(h.toastSuccess).toHaveBeenCalledWith('Dados antigos removidos');
   });
 
   it("admin no escopo 'todos' limpa sem filtro de perfil (todos os usuários)", async () => {
@@ -231,6 +237,35 @@ describe('usePerformanceSnapshots — limpar snapshots antigos', () => {
 
     expect(h.chamadas.delete).toBe(1);
     expect(h.chamadas.eq).toHaveLength(0);
+  });
+
+  it("papel perdido após carregar 'todos' volta ao escopo próprio (revalida canSeeAll)", async () => {
+    h.isSupervisor = true;
+    h.antigos = [{ id: 'antigo-1' }];
+    const { result, rerender } = renderHook(() => usePerformanceSnapshots());
+
+    await act(async () => {
+      await result.current.loadHistory(24, 'todos');
+    });
+
+    // Papel revogado antes de limpar: o 'todos' guardado está obsoleto.
+    h.isSupervisor = false;
+    rerender();
+    // Isola o que o clearOldSnapshots faz: o loadHistory do passo anterior e
+    // o reload do final também registram select/eq.
+    h.chamadas.eq = [];
+    h.eventos = [];
+
+    await act(async () => {
+      await result.current.clearOldSnapshots();
+    });
+
+    // Caiu para o escopo próprio ANTES do DELETE: o primeiro filtro de perfil
+    // aparece antes do delete() — sem a revalidação, o DELETE sairia sem
+    // filtro (o único eq viria do reload do final, depois do delete()).
+    expect(h.eventos.indexOf('eq')).toBeLessThan(h.eventos.indexOf('delete()'));
+    expect(h.chamadas.eq).toContainEqual(['profile_id', 'perfil-1']);
+    expect(h.toastSuccess).toHaveBeenCalledWith('Dados antigos removidos');
   });
 
   it('mantém o período selecionado ao recarregar após a limpeza', async () => {

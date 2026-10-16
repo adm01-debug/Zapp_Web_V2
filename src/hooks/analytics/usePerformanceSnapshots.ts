@@ -135,7 +135,11 @@ export function usePerformanceSnapshots() {
   }, [profileId, canSeeAll]);
 
   const clearOldSnapshots = useCallback(async () => {
-    const escopo = lastScopeRef.current;
+    // Revalida o papel como o loadHistory: lastScopeRef só guarda o escopo
+    // já coagido, mas o papel pode ter mudado desde a última carga — 'todos'
+    // sem canSeeAll cai para o escopo próprio em vez de tentar um DELETE
+    // sem filtro que a RLS negaria.
+    const escopo: SnapshotScope = lastScopeRef.current === 'todos' && canSeeAll ? 'todos' : 'me';
     // Sem perfil não há escopo próprio: a RLS negaria o DELETE mesmo assim.
     // Avisa negado sem tocar o banco (a mesma guarda do loadHistory acima).
     if (escopo === 'me' && !profileId) {
@@ -180,7 +184,7 @@ export function usePerformanceSnapshots() {
       log.warn('Failed to clear old performance snapshots:', err);
       toast.error('Erro ao limpar dados');
     }
-  }, [loadHistory, profileId]);
+  }, [loadHistory, profileId, canSeeAll]);
 
   return {
     history,
