@@ -14,6 +14,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { cn } from '@/lib/utils';
 import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
 import { zappMotion, zappTransition, zappPopoverVariants } from '@/lib/motion';
+import { log } from '@/lib/logger';
+import { notificarSussurroEnviado } from '@/hooks/chat/useWhisperCount';
 
 interface WhisperModeProps {
   contactId: string;
@@ -27,6 +29,8 @@ interface WhisperMessage {
   content: string;
   sender_id: string;
   sender_name?: string;
+  /** Perfil destinatário — só ele pode marcar a linha como lida. */
+  target_agent_id: string;
   is_read: boolean;
   created_at: string;
 }
@@ -296,7 +300,7 @@ export function WhisperMode({ contactId, targetAgentId, className }: WhisperMode
     queryFn: async () => {
       const { data } = await supabase
         .from('whisper_messages')
-        .select('id, content, sender_id, is_read, created_at')
+        .select('id, content, sender_id, target_agent_id, is_read, created_at')
         .eq('contact_id', contactId)
         .order('created_at', { ascending: false })
         .limit(20);
@@ -338,18 +342,40 @@ export function WhisperMode({ contactId, targetAgentId, className }: WhisperMode
     return () => { supabase.removeChannel(channel); };
   }, [contactId, queryClient]);
 
-  // Mark as read when viewing
+  // Marca como lido só o sussurro destinado a MIM. A policy de UPDATE de
+  // `whisper_messages` só permite mexer nas linhas endereçadas ao perfil atual:
+  // sem esse filtro o banco devolve 0 linhas e o selo de quem recebe nunca zera;
+  // e um supervisor não pode marcar como lidos os sussurros endereçados a outro.
   useEffect(() => {
-    if (isExpanded && whispers.some(w => !w.is_read)) {
-      supabase
+    const meuPerfilId = profile?.id ?? null;
+    if (!isExpanded || !meuPerfilId) return;
+    const meusNaoLidos = whispers.some(w => !w.is_read && w.target_agent_id === meuPerfilId);
+    if (!meusNaoLidos) return;
+
+    let cancelado = false;
+    void (async () => {
+      const { error } = await supabase
         .from('whisper_messages')
         .update({ is_read: true })
         .eq('contact_id', contactId)
-        .eq('is_read', false)
-        .then();
-    }
-  }, [isExpanded, whispers, contactId]);
+        .eq('target_agent_id', meuPerfilId)
+        .eq('is_read', false);
 
+      if (cancelado) return;
+      if (error) {
+        // Falha ao marcar: o selo continua aceso para o destinatário tentar de novo.
+        log.error('Failed to mark whispers as read:', error);
+        return;
+      }
+      queryClient.invalidateQueries({ queryKey: ['whispers', contactId] });
+      notificarSussurroEnviado(contactId);
+    })();
+
+    return () => { cancelado = true; };
+  }, [isExpanded, whispers, contactId, profile?.id, queryClient]);
+
+  // Selo do botão: conta o não lido visível. O ajuste de "não contar os que EU
+  // enviei" é do cartão do contador/selo (WH1, `useWhisperCount`), não deste.
   const unreadCount = whispers.filter(w => !w.is_read).length;
 
   const podeEnviar = Boolean(message.trim()) && Boolean(destinoId) && !isSending;
