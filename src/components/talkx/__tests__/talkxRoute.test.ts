@@ -8,6 +8,7 @@ import {
   parseTalkXScreenRoute,
   formatTalkXRoute,
   replaceTalkXRoute,
+  replaceTalkXOpenRouteCleanup,
   screenForStatus,
   type TalkXRoute,
 } from '@/components/talkx/talkxRoute';
@@ -110,6 +111,29 @@ describe('Talk X route contract (X052)', () => {
       '/?view=talkx&tab=segments&campaign=c9',
     );
     expect(formatTalkXOpenRoute(source, null)).toBe('/?view=talkx&tab=segments');
+  });
+
+  it('aponta só o item aberto malformado, para a tela reescrever sem tocar no resto', () => {
+    expect(parseTalkXRoute('?view=talkx&segment=').malformedOpen).toEqual(['segment']);
+    expect(parseTalkXRoute('?view=talkx&template=').malformedOpen).toEqual(['template']);
+    expect(parseTalkXRoute('?view=talkx&campaign=c1&campaign=c2').malformedOpen).toEqual(['campaign']);
+    // O válido convive com o malformado: só o malformado é apontado.
+    expect(parseTalkXRoute('?view=talkx&campaign=c1&segment=').malformedOpen).toEqual(['segment']);
+    // Endereço íntegro não pede normalização nenhuma.
+    expect(parseTalkXRoute('?view=talkx&campaign=c1&segment=s1').malformedOpen).toEqual([]);
+  });
+
+  it('replaceTalkXOpenRouteCleanup tira só o parâmetro malformado, sem entrada nova', () => {
+    window.history.replaceState(null, '', '/talkx?view=talkx&campaign=c1&segment=&tab=segments');
+    const antes = window.history.length;
+
+    replaceTalkXOpenRouteCleanup(['segment']);
+
+    const params = new URLSearchParams(window.location.search);
+    expect(params.has('segment')).toBe(false);
+    expect(params.get('campaign')).toBe('c1');
+    expect(params.get('tab')).toBe('segments');
+    expect(window.history.length).toBe(antes);
   });
 });
 

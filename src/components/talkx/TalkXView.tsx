@@ -26,6 +26,8 @@ import {
   parseTalkXScreenRoute,
   screenForStatus,
   replaceTalkXRoute,
+  replaceTalkXOpenRouteCleanup,
+  type ParsedTalkXRoute,
   type TalkXScreen,
   type TalkXTab,
   type TalkXWizardRoute,
@@ -61,6 +63,18 @@ function TalkXScreenFallback() {
 
 export type TalkXTopView = 'tabs' | 'wizard' | 'monitor' | 'scheduled' | 'running';
 
+// X052/TL-109 — o item aberto da URL também escolhe a aba quando o endereço não
+// traz aba explícita: `?segment=` abre Segmentos, `?template=` abre Templates.
+// `tab=` presente (goTab) é a escolha explícita e vence o item aberto — sem isso,
+// `template=new` na URL reintroduziria Templates depois de trocar de aba.
+// O `campaign` não entra aqui: ele é do roteamento de tela (parseTalkXScreenRoute).
+function tabForRoute(parsed: ParsedTalkXRoute): TalkXTab {
+  if (new URLSearchParams(window.location.search).has('tab')) return parsed.tab;
+  if (parsed.segment) return 'segments';
+  if (parsed.template) return 'templates';
+  return parsed.tab;
+}
+
 export default function TalkXView() {
   const { campaigns, isLoading, isError, error: campaignsError, isLive, startCampaign, pauseCampaign, cancelCampaign, deleteCampaign, duplicateCampaign: duplicateCampaignMutation, refetchCampaigns } = useTalkX();
   const { data: teamProfiles = [] } = useTeamProfiles();
@@ -82,7 +96,7 @@ export default function TalkXView() {
     if (wizard) return 'wizard';
     return 'tabs';
   });
-  const [activeTab, setActiveTab] = useState<TalkXTab>(() => parseTalkXRoute(window.location.search).tab);
+  const [activeTab, setActiveTab] = useState<TalkXTab>(() => tabForRoute(parseTalkXRoute(window.location.search)));
   const [activeSub, setActiveSub] = useState<string | undefined>(() => parseTalkXRoute(window.location.search).sub);
   const [editingCampaign, setEditingCampaign] = useState<TalkXCampaign | null>(null);
   const [monitorId, setMonitorId] = useState<string | null>(null);
@@ -113,10 +127,14 @@ export default function TalkXView() {
   }, []);
 
   const syncFromBrowserHistory = useCallback(() => {
-    const parsedWizard = parseTalkXRoute(window.location.search).wizard;
+    const parsed = parseTalkXRoute(window.location.search);
+    const parsedWizard = parsed.wizard;
     const parsedScreen = parseTalkXScreenRoute(window.location.search);
 
     if (parsedWizard.needsNormalization) replaceTalkXWizardRoute(parsedWizard.route);
+    // X052/TL-109: o item aberto rejeitado sai do endereço aqui também — o sinal
+    // de normalização não pode ficar verdadeiro para sempre.
+    if (parsed.malformedOpen.length) replaceTalkXOpenRouteCleanup(parsed.malformedOpen);
     // TL-152: ?screen= inválido (ex.: report, que não tem tela) é normalizado
     // aqui também — o parâmetro é removido sem abrir outra tela no lugar.
     if (parsedScreen.needsNormalization) replaceTalkXRoute(null);
@@ -131,7 +149,10 @@ export default function TalkXView() {
     // TL-152: screen routing takes priority over wizard routing when
     // ?campaign= is present in the URL. Sem screen, a situação decide
     // (screenForStatus); campanha inexistente cai na lista, como hoje.
-    if (parsedScreen.route) {
+    // X052/TL-109: `campaign` tem um dono só por endereço — a rota de tela. Um
+    // endereço de wizard (wizard=/step=) é do wizard: o efeito não abre a tela da
+    // campanha por cima dele; somente um `screen` explícito vence o wizard.
+    if (parsedScreen.route && (!parsedWizard.route || parsedScreen.route.screen)) {
       const campaignId = parsedScreen.route.campaignId;
       const campaign = campaigns.find((candidate) => candidate.id === campaignId) ?? null;
       const screen = parsedScreen.route.screen ?? (campaign ? screenForStatus(campaign.status) : undefined);
@@ -156,7 +177,12 @@ export default function TalkXView() {
     }
 
     if (!parsedWizard.route) {
+      // X052/TL-109: sem `campaign` e sem wizard, o item aberto fecha de verdade —
+      // voltar do navegador não pode deixar a campanha aberta em memória.
       setEditingCampaign(null);
+      setMonitorId(null);
+      setScheduledCampaignId(null);
+      setRunningCampaignId(null);
       setTopView('tabs');
       return;
     }
@@ -179,6 +205,10 @@ export default function TalkXView() {
     // entrada nova no histórico) em vez de mostrar área vazia.
     const initialTab = parseTalkXRoute(window.location.search);
     if (initialTab.needsNormalization) replaceTalkXTabRoute({ tab: initialTab.tab, sub: initialTab.sub });
+    // X052/TL-109: o mesmo rigor vale para o item aberto — `?segment=`, campanha
+    // duplicada ou `?template=` saem do endereço na primeira pintura (replace:
+    // corrigir o endereço não cria entrada nova no histórico).
+    if (initialTab.malformedOpen.length) replaceTalkXOpenRouteCleanup(initialTab.malformedOpen);
     // TL-152: normaliza ?screen= desconhecido (remove o parâmetro sem
     // entrar no histórico, para não criar entradas inúteis).
     const initialScreen = parseTalkXScreenRoute(window.location.search);
@@ -198,7 +228,8 @@ export default function TalkXView() {
     const syncTab = () => {
       const parsed = parseTalkXRoute(window.location.search);
       if (parsed.needsNormalization) replaceTalkXTabRoute({ tab: parsed.tab, sub: parsed.sub });
-      setActiveTab(parsed.tab);
+      if (parsed.malformedOpen.length) replaceTalkXOpenRouteCleanup(parsed.malformedOpen);
+      setActiveTab(tabForRoute(parsed));
       setActiveSub(parsed.sub);
       setHelpRoute(parseTalkXHelpRoute(window.location.search).route);
       // R2-MOD-039: o pedido de "novo template" não sobrevive à saída da aba de templates;
