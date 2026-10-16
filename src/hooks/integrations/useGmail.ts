@@ -262,6 +262,7 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null, 
           matches.map(match => match.thread_id),
         ));
       }
+      }
       const range = emailThreadPageRange(effectiveListQuery.page);
       const { data, error, count } = await query
         .order('last_message_at', { ascending: false })

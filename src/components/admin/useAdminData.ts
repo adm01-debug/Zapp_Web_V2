@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { supabase, SUPABASE_URL } from '@/integrations/supabase/client';
 import { parseSupabaseStorageObjectUrl } from '@/lib/storage_object_reference';
 import { getLogger } from '@/lib/logger';

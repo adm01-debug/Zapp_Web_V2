@@ -165,7 +165,6 @@ export function VirtualizedRealtimeList({
 
   // TanStack Virtual retorna funcoes nao memoizaveis pelo React Compiler — mesma
   // limitacao ja aceita na baseline do ratchet para este mesmo hook.
-  // eslint-disable-next-line react-hooks/incompatible-library
   const virtualizer = useVirtualizer({
     count: flatRows.length,
     getScrollElement,

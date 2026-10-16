@@ -32,6 +32,8 @@ vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), info: vi.fn(), warn: vi.
 import { IntegrationKeysSection } from '@/components/settings/IntegrationKeysSection';
 import { toast } from 'sonner';
 
+const CHAVE_REGISTRADA = 'xi-chave-registrada';
+
 /**
  * A tela lê as configurações globais pelo hook, que agora vive no cache do React
  * Query: ela precisa do mesmo provider que o AppProviders monta na aplicação.
@@ -110,7 +112,6 @@ describe('IntegrationKeysSection — chave registrada não é a chave usada', ()
     });
     expect(toast.error).not.toHaveBeenCalled();
   });
-});
 
   it('o botão olho alterna aria-label entre "Mostrar chave" e "Ocultar chave" com aria-pressed', async () => {
     renderizar();

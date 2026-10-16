@@ -285,6 +285,7 @@ Deno.test("rate limit persistente: a função consulta o RPC e responde 429 com 
     if (savedSrv === undefined) Deno.env.delete("SUPABASE_SERVICE_ROLE_KEY");
     else Deno.env.set("SUPABASE_SERVICE_ROLE_KEY", savedSrv);
   }
+});
 
 // ─── Rate limit do handler: persistente, chave por IP antes e por USUARIO depois ───
 

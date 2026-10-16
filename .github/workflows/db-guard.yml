@@ -1797,3 +1797,27 @@ jobs:
           MESSAGES_GROUP_SENDER_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/messages-group-sender.test.sh
+
+      - name: Provar talkx_save_template_variants
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-save-template-variants.test.sh
+
+      - name: Provar talkx_segment_progress
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-segment-progress.test.sh
+
+      - name: Provar admin_cron_jobs_rpc
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/admin-cron-jobs-rpc.test.sh
+
+      - name: Provar gmail_accounts_sync_backoff
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/gmail-accounts-sync-backoff.test.sh
+
+      - name: Provar replay_classify
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/replay-classify.test.sh
+
+      - name: Provar search_email_threads
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/search-email-threads.test.sh
+
+      - name: Provar talkx_campaign_recurrence
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-campaign-recurrence.test.sh
+
+      - name: Provar talkx_n102_window_acl
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-n102-window-acl.test.sh

@@ -228,8 +228,6 @@ export async function resolveEffectiveRole(client: RoleResolver, userId: string)
   return normalizeRole(data);
 }
 
-export async function handleRevokeAuthSessions(req: Request): Promise<Response> {
-
 export async function handleRevokeAuthSessions(
   req: Request,
   deps: RevokeAuthSessionsDeps = {},

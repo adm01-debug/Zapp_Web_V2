@@ -275,6 +275,8 @@ export async function handleLogin(req: Request, deps: AuthLoginDeps): Promise<Re
     });
     if (gateError) {
       log.error("consume_login_gate failed", { code: rpcErrorCode(gateError) });
+      return errorResponse("Internal error", 500, req);
+    }
 
     const emailRl = await deps.enforceRateLimit(`auth-login-email:${email}`, EMAIL_LIMIT_MAX, EMAIL_LIMIT_WINDOW_MS);
     // Fail-CLOSED na guarda por conta: se o contador persistente nao respondeu

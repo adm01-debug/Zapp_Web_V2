@@ -439,7 +439,6 @@ export default function RateLimitDashboard() {
                     </TableBody>
                   </Table>
                 </div>
-              )}
 
               <div className="flex items-center justify-between gap-4">
                 <p className="text-sm text-muted-foreground" aria-live="polite">
