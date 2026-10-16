@@ -79,7 +79,9 @@ const ALLOWLIST = new Set([
   'scripts/db-audit/reminders-migracao-identidade.test.sh',
   // login_gate_rpc: prova a RPC consume_login_gate (t_9d4452e2) em Postgres descartável.
   'scripts/db-audit/login_gate_rpc.test.sh',
-  'scripts/db-audit/pg-cron-escalonamento.test.sh',
+  // R2-DB-019 (item 302): autoria obrigatória nas escritas de public.message_reactions —
+  // replay do pre-estado + RLS real com `authenticated` (sem BYPASSRLS).
+  'scripts/db-audit/message-reactions-autoria.test.sh',  'scripts/db-audit/pg-cron-escalonamento.test.sh',
   'scripts/db-audit/talkx-optout.test.sh',
   'scripts/db-audit/talkx-overview-stats.test.sh',
   'scripts/db-audit/talkx-campaign-segments.test.sh',
