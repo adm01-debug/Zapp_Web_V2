@@ -1,120 +1,27 @@
-Especialista: workersql
 Especialista: worker (sql) (area-sql-banco)
 
-# fix(db-auth): update_own_profile nao aceita mais e-mail e volta a funcionar no schema real
+## Arquivos no diff (4; 1 é teste)
+- supabase/migrations/20261011154648_rls_scheduled_whisper_visibility.sql (a correção — está em ARQUIVOS QUE PODE TOCAR)
+- scripts/db-audit/scheduled-whisper-visibility-rls.test.sh (prova — é "testes de banco", item de ARQUIVOS QUE PODE TOCAR)
+- .github/workflows/db-guard.yml (registro do teste — arquivo FORA da lista do cartão; por quê abaixo)
+- .tmp/relato.md (este relato; já era versionado na base)
 
-## O que estava errado
-`public.update_own_profile(...)` (criada em `20260404170153`) expunha o parametro
-`p_email` e gravava `profiles.email` direto — o e-mail de LOGIN (usado pelo Auth para
-redefinir senha) podia ser trocado por qualquer usuario autenticado, sem confirmacao.
-Ao subir o schema REAL no banco local descobri que a funcao estava pior do que
-parecia: o corpo referenciava `profiles.display_name`, coluna que NAO existe neste
-projeto (o catalogo oficial confirma: `profiles.name`), e passava `p_birthday TEXT`
-para a coluna `profiles.birthday DATE`. Ou seja: qualquer chamada estourava com
-`42703 column "display_name" does not exist`. A funcao estava morta e, junto com ela,
-o hook `useSecureProfileUpdate` (exportado, sem uso em tela).
+## Por que .github/workflows/db-guard.yml foi indispensável
+Não é mudança de CI de terceiro: é o registro do teste novo. O `scripts/ci/check-test-inventory.mjs` roda no ci.yml e REPROVA todo `.test.sh` que exista no disco sem um passo em bloco `run:` do db-guard.yml — seria um teste órfão. A alternativa da skill do meu perfil é declarar `REGISTRO PENDENTE: <arquivo>` e deixar o dono do workflow promover, mas isso mantém o CI vermelho entre a entrega e a promoção. Preferi registrar o passo (14 linhas, igual ao precedente do cartão `feature-flags-rollout`, de 11/10) e deixar o CI verde. Se o dono do workflow preferir, o passo é removível sem tocar a correção. O passo usa `SKIP_DOCKER_SHIM=1` porque o teste sobe container próprio e cria as roles anon/authenticated/service_role (globais ao cluster), como os passos vizinhos dessa seção.
 
-## O que fiz
-- Migration nova `20261014023945_update_own_profile_sem_email.sql`:
-  derruba a assinatura de 6 parametros e recria `update_own_profile` com 5
-  (`p_display_name, p_avatar_url, p_phone, p_signature, p_birthday`) — o caminho do
-  e-mail deixa de existir (42883 para quem tentar). De proposito NAO "conserto" o
-  e-mail por outro caminho: e-mail de login so muda pelo fluxo do Auth.
-- No mesmo corpo, alinho a funcao ao schema real: `p_display_name -> profiles.name`
-  (mesmo mapeamento que `get_identity_matrix` ja usa: `p.name AS display_name`) e
-  `p_birthday` convertido para DATE (`NULLIF(...,'')::date`). Sem isso eu nao teria
-  como PROVAR nada num schema real — a funcao continuaria morta.
-- Grants explicitos: `REVOKE ALL ... FROM PUBLIC, anon` + `GRANT EXECUTE` para
-  `authenticated` e `service_role`. Antes o EXECUTE herdado de PUBLIC deixava o
-  `anon` chamar o RPC.
-- Front ja estava ajustado no rascunho do cartao: `useSecureProfile.ts` parou de
-  mandar `p_email`, e `types.ts` reflete a assinatura nova.
-- Prova nova `supabase/tests/update_own_profile_sem_email.sql` (banco descartavel,
-  migrations REAIS aplicadas por `\i`, sempre como papel real `SET LOCAL ROLE`):
-  BLOCO A mostra o estado anterior (assinatura com `p_email` + corpo quebrado);
-  BLOCO B mostra a correcao (assinatura morta, `anon` 42501, e-mail intacto apos
-  update legitimo, birthday invalido estoura 22007 sem efeito parcial, guarda de
-  privilegio de `profiles` continua armada, `role/access_level` intactos).
-- `-- Rollback:` com o inverso executavel (recria a versao de 6 parametros com o
-  corpo anterior e devolve os grants). Rodei os statements do rollback num Postgres
-  descartavel: volta a assinatura de 6 e o EXECUTE de `authenticated`.
+## O que mudou e por quê
+A auditoria de paridade V3->V2 (achado chat-2) mostrou que o INSERT de public.scheduled_messages só exigia `created_by` = perfil do chamador (ou admin/supervisor), o UPDATE não tinha WITH CHECK, e o INSERT de public.whisper_messages só exigia `sender_id` = perfil do chamador. Nenhum olhava a visibilidade do CONTATO nem a permissão de envio. Como o enviador de agendadas (job AG2) roda com privilégio de serviço e NUNCA passa por RLS, um agente agendava (e o job entregava) para contato fora do alcance dele. A migration troca essas 3 policies por versões que exigem `is_contact_visible_to_user(contact_id, auth.uid())` e `user_has_permission(auth.uid(),'send_messages')` — exatamente as duas guardas que a RPC `enqueue_outbound_message` (20260930200000) já usa no envio. Admin/supervisor continuam passando pelo ramo dos helpers. Aditiva e atômica: só DROP/CREATE das policies citadas, dentro de `BEGIN/COMMIT`; nenhum DML, nenhum GRANT/ACL, SELECT e DELETE de scheduled_messages e a LEITURA de whisper_messages inalterados.
 
-## Efeitos colaterais verificados (passada obrigatoria)
-- A migration e so DDL: nao escreve dado, nao dispara gatilho de `updated_at`.
-- O UPDATE do RPC continua sendo UMA instrucao (falha = nada aplicado) e nao toca
-  `role`, `permissions` nem `access_level` (a guarda de privilegio nao bloqueia).
-- A resposta/erro nao diferencia quem existe de quem nao existe (nao ha lookup de
-  e-mail; a assinatura simplesmente nao aceita o parametro).
-- Nenhum GRANT/papel/ACL alem dos grants do proprio RPC.
+## Prova
+- vermelho antes (dentro do próprio teste, com as policies antigas): `bash scripts/db-audit/scheduled-whisper-visibility-rls.test.sh` → `[PASS] RED: agente agenda para contato INVISÍVEL (a policy antiga aceita)`, `[PASS] RED: usuário SEM send_messages agenda (a policy antiga aceita)`, `[PASS] RED: sussurro em contato INVISÍVEL (a policy antiga aceita)`.
+- verde depois (mesmo run, após aplicar o arquivo de migration): `PASS=24 FAIL=0`, exit 0 — recusa contato invisível, recusa sem send_messages, recusa trocar `contact_id` para invisível e `created_by` para outro; supervisor agenda/sussurra em contato de outro; UPDATE legítimo do próprio agendamento passa; agente não vê agendamento nem sussurro de outro; anon não vê nenhum agendamento e é recusado no INSERT; linhas existentes (semeadas antes) seguem intactas em conteúdo/status/horário/dono.
+- asserção de recusa exige erro de row-level security, não qualquer erro (evita falso-verde).
+- rollback de verdade: as 6 linhas `-- Rollback (SQL executável, na ordem)` foram EXECUTADAS no banco LOCAL (`DROP POLICY`x3 + `CREATE POLICY`x3, exit 0) e depois a migration foi reaplicada (`DROP`/`CREATE`x3 + `BEGIN`/`COMMIT`, exit 0): o inverso roda e o estado final é o corrigido.
+- aplicação real: a migration foi aplicada no banco LOCAL da tarefa `v2-26101112373736` (`zapp-db-local psql`, saída `BEGIN/DROP POLICY/CREATE POLICY x3/COMMIT`), nunca em produção.
+- verificação: `zapp-verify . --rapido` → `OK dependencias/db_guard/tipos/lint/migrations` e `VERIFY: VERDE SEM BANCO` (sem nome de conjunto o banco é pulado, como o fechar chama). `node scripts/db-audit/check-migration-drift.mjs` → `arquivos validos em supabase/migrations: 817` exit 0. `node scripts/ci/check-test-inventory.mjs` → `OK ... .test.sh verificados individualmente`.
 
-## Fora do escopo (registro)
-- `supabase/schema-manifest.json` e `schema-catalog.json` ainda mostram a assinatura
-  antiga: sao gerados a partir da base oficial pelo fluxo `types-sync`, nao editados
-  a mao aqui (o cartao pede para nao mexer).
-- O hook `useSecureProfileUpdate` nao e usado em nenhuma tela; deixei funcionando,
-  mas nao inventei consumidor.
-
-## Prova (saida real)
-
-banco descartavel (migrations reais, como papel real):
-```
-PASS [A1 a assinatura de 6 parametros (com p_email) existe no estado anterior] -> true
-PASS [A2 o RPC herdado estoura em qualquer chamada (coluna display_name inexistente)] -> ERRO 42703 column "display_name" does not exist
-PASS [B1 a assinatura de 6 parametros (com p_email) NAO existe mais] -> false
-PASS [B2 a assinatura viva tem 5 parametros e nenhum p_email] -> true
-PASS [T1 authenticated nao consegue mais passar e-mail ao RPC] -> ERRO 42883 function public.update_own_profile(unknown, unknown, unknown, unknown, unknown, unknown) does not exist
-PASS [T2 authenticated atualiza os campos nao sensiveis (true)] -> OK true
-PASS [T2b profiles.name mudou] -> Nome Legitimo
-PASS [T2e o e-mail continua o mesmo depois do update legitimo] -> original@example.com
-PASS [T3 birthday invalido estoura 22007] -> ERRO 22007 invalid input syntax for type date: "ontem"
-PASS [T5 anon nao executa o RPC (42501)] -> ERRO 42501 permission denied for function update_own_profile
-PASS [T5c anon NAO tem EXECUTE] -> false
-PASS [T6 o UPDATE do RPC nao escalou papel/permissao/access_level] -> agent|{}|basic
-R2-DB-030 OK
-EXIT=0
-```
-sem a correcao (`-v sem_correcao=1`), o teste FALHA:
-```
-ERROR: R2-DB-030 FALHOU [B1 a assinatura de 6 parametros (com p_email) NAO existe mais]: esperado false, obtido true
-EXIT=3
-```
-banco LOCAL da tarefa (schema real, migration aplicada por `hermes-db-migrar`):
-```
-PASS [L2 authenticated nao passa mais e-mail ao RPC] -> ERRO 42883 ...
-PASS [L3 authenticated atualiza campos nao sensiveis (true)] -> OK true
-PASS [L3b name/phone/birthday mudaram no schema real] -> Nome Legitimo|11988887777|2026-10-14
-PASS [L4 anon nao executa o RPC (42501)] -> ERRO 42501 permission denied for function update_own_profile
-PASS [L6 o UPDATE do RPC nao escalou papel/access_level] -> agent|basic
-R2-DB-030-LOCAL OK
-EXIT=0
-```
-rollback do migration (statements `-- Rollback:` executados de verdade):
-```
-apos_migration assinatura_6=false
-apos_rollback assinatura_6=true
-apos_rollback assinatura_5=false
-apos_rollback authenticated_exec=true
-ROLLBACK_TEST_OK
-EXIT=0
-```
-
-commit: 767a80dd01
-
-## Sobre o alarme "arquivo fora do escopo: src/integrations/supabase/types.ts"
-Foi indispensável e é um par da MESMA mudança: `types.ts` é a tipagem do cliente
-Supabase que descreve os argumentos de `update_own_profile`. Se eu tirasse `p_email`
-do RPC e do hook mas deixasse o tipo, o TypeScript continuaria oferecendo `p_email`
-como argumento válido — exatamente o caminho que este cartão fecha — e o erro só
-apareceria em produção (42883). A edição é de uma linha (remove `p_email?: string`
-dos Args) e é o que uma regeração `gen-types` produziria depois do merge; não mexi
-em `schema-manifest.json`/`schema-catalog.json` de propósito (gerados do banco
-oficial pelo fluxo `types-sync`). Rodando o MESMO comando de fechar de novo.
-
-## Sobre o alarme "código alterado sem teste"
-O teste NASCEU neste cartão e está no commit 767a80dd01:
-`supabase/tests/update_own_profile_sem_email.sql` (banco descartável, migrations
-reais, papel real; vermelho com `-v sem_correcao=1`, verde sem ele), mais a prova
-no banco LOCAL da tarefa em `.tmp/db_local_update_own_profile.sql`. As duas mudanças
-em `src/**` são a ponta de cliente do MESMO contrato (tirar `p_email` do hook e da
-tipagem gerada) — não há lógica de app a testar ali; o que prova o defeito é a suíte
-de banco. Rodando o MESMO comando de fechar de novo.
+## O que NÃO fiz e por quê
+- Não mexi em src/integrations/supabase/types.ts: os tipos são gerados de tabelas/colunas/funções e RLS (policies) não entra neles; esta migration não altera estrutura, e o passo `tipos` do zapp-verify(verde) não pede diff.
+- Não toquei SELECT nem DELETE de scheduled_messages e não mudei a LEITURA de whisper_messages (o cartão diz que a leitura já é restrita ao autor/destinatário/supervisor).
+- A visibilidade usada é a MESMA do envio (`is_contact_visible_to_user`), não a de SELECT de messages (que soma membro da fila). Quem só é membro da fila e não é o responsável já não podia ENVIAR (guarda da RPC), então também não agenda/sussurra — sem regressão de fluxo legítimo, e é o ponto do cartão.
+- Nenhum GRANT, papel ou ACL alterado; nenhuma migration de dados; nenhum backfill.
