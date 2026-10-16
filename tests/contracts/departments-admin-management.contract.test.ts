@@ -1,16 +1,17 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { Database } from '../../src/integrations/supabase/types';
 
 // Contrato de regressao da gestao de departamentos pelo admin (cartao departments-admin-gestao).
-// Na rebase da entrega aprovada, o conflito foi resolvido dentro dos caminhos permitidos pelo
-// cartao atual: migration + contrato + types gerado. Aqui guarda-se a FORMA que o revisor e o tipo
-// gerado dependem: se alguem reescrever a migration sem o REVOKE, sem o portao is_admin ou sem as
-// RPCs, ou regenerar types.ts sem elas, esta suite falha.
+// A prova de COMPORTAMENTO (RLS por papel real, RPC, recusa, auditoria, rollback) vive em
+// scripts/db-audit/departments-admin-management.test.sh, no Postgres descartavel. Aqui guarda-se
+// a FORMA que o revisor e o tipo gerado dependem: se alguem reescrever a migration sem o REVOKE,
+// sem o portao is_admin ou sem as RPCs, ou regenerar types.ts sem elas, esta suite falha.
 
 const root = process.cwd();
 const migrationPath = resolve(root, 'supabase/migrations/20261011191021_departments_admin.sql');
+const dbauditPath = resolve(root, 'scripts/db-audit/departments-admin-management.test.sh');
 const migration = readFileSync(migrationPath, 'utf8');
 const typesSource = readFileSync(resolve(root, 'src/integrations/supabase/types.ts'), 'utf8');
 // SQL ativo (fora dos comentarios, inclusive o bloco -- Rollback).
@@ -81,5 +82,11 @@ describe('contrato de gestao de departamentos pelo admin', () => {
     expect(activeSql).toContain('DISABLE TRIGGER update_team_conversations_updated_at');
     expect(activeSql).toContain('ENABLE TRIGGER update_team_conversations_updated_at');
     expect(activeSql).toContain('SET CONSTRAINTS ALL IMMEDIATE');
+  });
+
+  it('mantem o teste executavel registrado no db-guard', () => {
+    const workflow = readFileSync(resolve(root, '.github/workflows/db-guard.yml'), 'utf8');
+    expect(existsSync(dbauditPath)).toBe(true);
+    expect(workflow).toContain('scripts/db-audit/departments-admin-management.test.sh');
   });
 });

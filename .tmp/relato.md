@@ -1,27 +1,32 @@
 Especialista: senior (area-sql-banco)
 
-## Pontos da recusa
-- Ponto 1: a entrega anterior quebrava o ESPELHO DO CI no empilhamento: `docs/DB-INVENTORY.md cobre o catálogo do banco, sem mentir` acusava que `catalog_rate_limit_hits` virou citado pelo novo teste, mas seguia como `roadmap` e sem consumidor. Corrigi `docs/DB-INVENTORY.md`: a linha de `catalog_rate_limit_hits` agora é `parcial` e lista `scripts/db-audit/catalog-rate-limit-policy-pinned.test.sh`, que é o único consumidor real detectado pela guarda. Prova vermelha antes: `node --test scripts/ci/db-inventory-doc.unit.mjs` -> falhou com `"catalog_rate_limit_hits" está como "roadmap", mas o repositório diz "parcial"` e `não lista nenhum consumidor`. Prova verde depois: o mesmo comando -> `tests 15`, `pass 15`, `fail 0`.
+## O que mudou e por quê
+- supabase/migrations/20261011191021_departments_admin.sql: mantive a correção original e ajustei `departments_overview()` para exigir `public.is_admin(auth.uid())`; supervisor não passa mais no overview.
+- scripts/db-audit/departments-admin-management.test.sh: indispensável para a recusa porque os 3 pontos pediam prova SQL real. O contrato executa a migration em Postgres descartável, valida o REVOKE por comportamento (`has_table_privilege = f`, DELETE direto do admin com SQLSTATE 42501 e mutação sem REVOKE falhando), extrai SQLSTATE do `psql -v VERBOSITY=verbose`, exige SQLSTATE exato em todos os erros, cobre supervisor bloqueado no overview e prova mutações A/B/C/D.
+- .github/workflows/db-guard.yml: indispensável para o teste novo entrar no espelho do CI/db-guard, sem afrouxar guarda.
+- tests/contracts/departments-admin-management.contract.test.ts: fica só como smoke estático de contrato/registro; a prova de comportamento está no script SQL real acima.
 
-## O que veio do trabalho anterior
-- `supabase/migrations/20261007000311_catalogo_rate_limit_politica_confiavel.sql`: mantém a assinatura da RPC `catalog_rate_limit_hit(uuid,text,integer,integer)`, mas a janela e a cota passam a sair da política confiável compilada, não dos argumentos livres; ação desconhecida cai no balde `global`; ACL da assinatura exata é reafirmada; o rollback executável também ficou declarado no cabeçalho, além do bloco extraído pelo teste.
-- `scripts/db-audit/catalog-rate-limit-policy-pinned.test.sh`: executa PostgreSQL descartável com as migrations reais, papel `authenticated`, ataques de `p_window_ms` 0/negativo/1ms/enorme e `p_limit` arbitrário; extrai e executa o rollback da própria migration e reaplica a migration para provar idempotência.
-- `.github/workflows/db-guard.yml`: registra o novo `.test.sh` no DB Guard offline, sem alterar comandos existentes.
+## Pontos do revisor
+- Ponto 1: `departments_overview()` estava liberado para supervisor. Mudei a função em `supabase/migrations/20261011191021_departments_admin.sql` para `public.is_admin(auth.uid())`. Prova vermelha: `bash scripts/db-audit/departments-admin-management.test.sh` com MUTACAO C (overview liberado para supervisor) falha em `[FAIL] MUTACAO C: overview do supervisor e barrado (42501, so admin): a chamada passou`. Prova verde: o mesmo comando na migration real mostra `[OK] DEPOIS: overview do supervisor e barrado (42501, so admin) (SQLSTATE 42501)` e termina com `[OK] contrato departments-admin-gestao verificado: 18 etapas (postgres:17-alpine)`.
+- Ponto 2: a prova do REVOKE não podia depender só de grep. Mantive smoke estático apenas para impedir `GRANT DELETE`, mas a validação real agora é comportamental no Postgres descartável: `has_table_privilege('authenticated','public.departments','DELETE') = f`, DELETE direto do admin bloqueado com 42501, e MUTACAO A remove o REVOKE numa cópia temporária e falha com `[FAIL] MUTACAO A: has_table_privilege(authenticated, departments, DELETE) deveria ser f, obtido t`. Prova verde: `bash scripts/db-audit/departments-admin-management.test.sh` termina verde.
+- Ponto 3: `check_error` aceitava substring do erro; agora extrai o SQLSTATE exato do output verbose do psql e cada chamada informa SQLSTATE esperado. O caso de duas conversas-tipo conflitantes exige `22023`. Prova vermelha: MUTACAO D mantém a mesma mensagem `move_target_already_has_department_conversation`, mas troca o SQLSTATE para `P0001`, e o contrato falha com `[FAIL] MUTACAO D: mover 2 conversas-tipo colidiria (recusa): SQLSTATE divergente (esperava 22023, obteve P0001)`. Prova verde: na migration real o mesmo comando mostra `[OK] DEPOIS: mover 2 conversas-tipo colidiria (recusa) (SQLSTATE 22023)`.
 
-## Prova do comportamento de banco
-- vermelho sem a correção SQL: `TMPDIR="$PWD/.tmp" CATALOG_RATE_LIMIT_SEM_FIX=1 scripts/db-audit/catalog-rate-limit-policy-pinned.test.sh` -> `RC=1` e `[FAIL] B.1 o limite vem da politica confiavel (120/min em list_products), nao do argumento: esperado '120', obtido '1'`.
-- verde com a correção SQL: `TMPDIR="$PWD/.tmp" scripts/db-audit/catalog-rate-limit-policy-pinned.test.sh` -> `RC=0` e `PASS: R2-DB-010 — a cota do catalogo vem de politica confiavel na funcao; janela e limite arbitrarios por RPC direta nao apagam hits nem liberam a requisicao; o rollback devolve o estado anterior e reaplicar e idempotente sem criar tabela/RLS/indice novo.`
-- guarda do inventário depois do refazer: `node --test scripts/ci/db-inventory-doc.unit.mjs` -> `tests 15`, `pass 15`, `fail 0`.
-- inventário de testes: `node scripts/ci/check-test-inventory.mjs` -> não acusa `scripts/db-audit/catalog-rate-limit-policy-pinned.test.sh`; o comando ainda falha por 3 órfãos preexistentes fora deste diff (`department-invite-contract-audit-vocabulary.test.sh`, `talkx-conversion-defaults.test.sh`, `team-chat-media-contract.test.sh`).
-- verificação rápida: `zapp-verify . --rapido` -> `VERIFY: VERDE SEM BANCO (18s)` com `OK db_guard`, `OK tipos`, `OK lint`, `OK migrations`.
-- reprodução pedida do full: `zapp-verify full .` foi executado. Após a correção do inventário, db_guard/tipos/lint/migrations ficaram OK e a falha remanescente foi fora deste diff: `src/components/auth/__tests__/PasswordStrengthMeter.corrida.test.tsx` (`Senha comprometida!` ainda presente). Não alterei auth/front fora do escopo.
+## Prova executada
+- `bash scripts/db-audit/departments-admin-management.test.sh` → `[OK] contrato departments-admin-gestao verificado: 18 etapas (postgres:17-alpine)`.
+- `bun test tests/contracts/departments-admin-management.contract.test.ts` → `6 pass`, `0 fail`, `27 expect() calls`.
 
-## Arquivos do diff
-- `.github/workflows/db-guard.yml`
-- `docs/DB-INVENTORY.md`
-- `scripts/db-audit/catalog-rate-limit-policy-pinned.test.sh`
-- `supabase/migrations/20261007000311_catalogo_rate_limit_politica_confiavel.sql`
+## Avisos do juiz automático que não procedem
+- "Teste não chama o código": procede para o smoke TS, mas a prova principal é `scripts/db-audit/departments-admin-management.test.sh`, que executa o SQL real da migration em Postgres descartável e roda mutações que falham sem a correção.
+- "Arquivo fora da lista": `.github/workflows/db-guard.yml` e `scripts/db-audit/departments-admin-management.test.sh` são necessários porque a recusa exige teste SQL real e registro no db-guard; não alteram produto nem relaxam guarda.
+
+## Arquivos no diff
+.github/workflows/db-guard.yml
+.tmp/relato.md
+scripts/db-audit/departments-admin-management.test.sh
+src/integrations/supabase/types.ts
+supabase/migrations/20261011191021_departments_admin.sql
+tests/contracts/departments-admin-management.contract.test.ts
 
 ## O que NÃO fiz e por quê
-- Não alterei `schema-catalog.json`, `schema-manifest.json`, manifestos de schema nem guardas do CI para “fazer passar”. A única mudança em CI foi registrar o `.test.sh` novo no workflow que já roda scripts `db-audit`, como exigido pelo inventário de testes; a regra do inventário não foi afrouxada.
-- Não toquei no teste de auth que falhou no `zapp-verify full .`, porque é defeito fora dos arquivos e do motivo desta recusa.
+- Não mexi em produção, não rodei deploy/push/PR e não usei credenciais reais.
+- Não alterei tela nem regra fora de `departments-admin-gestao`; as mudanças adicionais no teste são só para cobrir os três pontos da recusa e o rollback do cabeçalho da própria migration.
