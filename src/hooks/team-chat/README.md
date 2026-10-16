@@ -119,7 +119,7 @@ Os tipos de linha saem de `types.ts` em vez de serem escritos à mão:
 `accept_invite`, `create_invite`, `join_department`, `leave_department`,
 `remove_member`, `update_settings`, `delete_department`, `create_department`,
 `update_role`, `kick_member`, `create_group`, `delete_group`,
-`whatsapp_updated`.
+`whatsapp_updated`, `access_requested`.
 
 ## Pendências conhecidas (não são convenção)
 
