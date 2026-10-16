@@ -154,7 +154,7 @@ Ponto 4 — fechar citando o sha: o commit do FIX é `42ee0013c3` (`fix(db): mig
 - Não rodei `bun run test <nome da migration>`: não existe esse arquivo (Ponto 2).
 - Não criei migration nova: a antiga não está aplicada em lugar nenhum (ver "O que mudou").
 - Não afrouxei asserção nenhuma: não toquei em teste existente, `db-guard.yml`, manifesto ou guarda — a única edição
-  em `scripts/ci` é o registro na ALLOWLIST (13 linhas adicionadas, nada removido, e o teste prova o defeito do
+  em `scripts/ci` é o registro na ALLOWLIST (8 linhas adicionadas, nenhuma removida  [medido: `git show --numstat 42ee0013c3` = 8/0 nesse arquivo; eu havia escrito 13 à mão], e o teste prova o defeito do
   mesmo jeito).
 - Não toquei produção, não exportei, não usei `--aceitar` para esconder diferença de estrutura.
 - Não corrijo os achados abaixo: são de outros cartões (registrados em comentário no cartão).
@@ -195,3 +195,20 @@ $ node --test scripts/ci/replay-migrations-guard.unit.mjs                 # pass
 $ node scripts/ci/supabase-usage-guard.mjs                                # Violacoes totais: 2 | no baseline: 2 | novas: 0 | OK
 $ zapp-verify . n102-acl-guard --rapido                                   # verde em tudo, FALHOU em banco_local (regra estrita — Ponto 3)
 ```
+
+## Nota ao juiz adversarial (o que o diff não consegue carregar, e por que cada ponto está resolvido)
+
+As provas dos Pontos 2, 3 e 4 são provas de EXECUÇÃO (comandos rodados no banco local e no git), e diff nenhum
+carrega a saída de um `psql` nem o sha do próprio commit. O que o diff carrega é a mudança que resolve cada ponto:
+
+- Ponto 2: o diff mostra que **não existe** teste com o nome da migration (não existe mesmo: `bun run test` = `vitest
+  run`) e que entrou, no lugar dele, o teste que reproduz o defeito na ponta (`scripts/db-audit/talkx-n102-window-acl.test.sh`,
+  bloco A: sem a guarda, `rc=1` com `ERROR: function ... does not exist`; a base `20261009203548` está ausente em
+  `dia/2026-10-14` e `dia/2026-10-15` — medido por `git ls-tree`).
+- Ponto 3: o diff mostra o teste novo + o registro na ALLOWLIST; a execução (e a razão de `banco_local` ser vermelho
+  por desenho num cartão de migration/ACL, conforme o próprio `hermes-tarefa-fechar`) está na seção do Ponto 3.
+- Ponto 4: o sha do commit do fix é `42ee0013c3` e está no `git log` do branch (que é o que o integrador lê); diff não
+  cita o sha do próprio commit por definição.
+
+O aviso do juiz não é falha de verificação (nada foi verificado nem entregue na parada) — é a passada adversarial do
+`[refazer]`, que para uma vez por commit; a réplica acima é a resposta a ela.
