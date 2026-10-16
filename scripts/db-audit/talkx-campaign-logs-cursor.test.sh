@@ -20,10 +20,14 @@
 #        aberto que ainda perderia linhas;
 #     5. ACL mantido: sem PUBLIC/anon, admin e service_role executam; agente nao-admin e barrado;
 #     6. idempotencia: reaplicar a migration nao quebra;
-#     7. o Rollback da linha 2 RODA e devolve a assinatura antiga.
+#     7. o Rollback do cabecalho (bloco 'Rollback (SQL executavel, na ordem)') RODA e devolve a
+#        assinatura antiga.
 #
 # As migrations sao encontradas por marcador interno (sobrevivem ao rename do
 # hermes-db-migrar --nova): base = 'talkx_x033_objetos_ausentes'; nova = 'talkx_campaign_logs_cursor_incompleto'.
+# NÃO entra no CI direto (workflows são do dono do workflow): registrada na
+# ALLOWLIST de scripts/ci/check-test-inventory.mjs. Roda via Docker local.
+
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -319,11 +323,14 @@ assert_eq '5. admin executa' '5' "$admin_call"
 psql_exec < "$fix_migration" >/dev/null || fail 'migration do item 122 nao reaplicou (idempotencia)'
 pass 'migration do item 122 reaplicada sem erro (idempotencia)'
 
-# 7) o Rollback da linha 2 RODA e devolve a assinatura antiga
+# 7) o Rollback do cabecalho RODA e devolve a assinatura antiga
+# O SQL vem do PROPRIO arquivo: as linhas '--   ...' entre o marcador "-- Rollback (SQL executavel,
+# na ordem):" e a linha '--' seguinte. Mesma extracao dos outros testes do repo.
 mkdir -p "$repo_root/.tmp"
-sed -n '2p' "$fix_migration" | sed -e 's/^-- *[Rr]ollback: *//' > "$repo_root/.tmp/rollback-122.sql"
-[[ -s "$repo_root/.tmp/rollback-122.sql" ]] || fail 'rollback da linha 2 nao encontrado'
-psql_exec < "$repo_root/.tmp/rollback-122.sql" >/dev/null || fail 'o Rollback da linha 2 nao rodou'
+sed -n '/^-- Rollback (SQL execut/,/^--$/p' "$fix_migration" | sed '1d;$d' | sed 's/^--   //' > "$repo_root/.tmp/rollback-122.sql"
+[[ -s "$repo_root/.tmp/rollback-122.sql" ]] || fail 'bloco "Rollback (SQL executavel)" do cabecalho nao encontrado'
+grep -qi '^create function public.talkx_campaign_logs' "$repo_root/.tmp/rollback-122.sql" || fail 'o rollback extraido nao recria a assinatura antiga'
+psql_exec < "$repo_root/.tmp/rollback-122.sql" >/dev/null || fail 'o Rollback do cabecalho nao rodou'
 rb_old="$(psql_val "SELECT to_regprocedure('public.talkx_campaign_logs(uuid,timestamptz,integer)') IS NOT NULL")"
 assert_eq '7. rollback devolve a assinatura antiga' 't' "$rb_old"
 rb_new="$(psql_val "SELECT to_regprocedure('public.talkx_campaign_logs(uuid,timestamptz,integer,uuid)') IS NULL")"

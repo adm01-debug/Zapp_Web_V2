@@ -115,6 +115,11 @@ const ALLOWLIST = new Set([
   // real e que a linha `-- Rollback:` da migration restaura — Postgres 17
   // descartável (docker). Passo de YAML a promover em db-guard.yml pelo dono do workflow.
   'scripts/db-audit/e44-whatsapp-connections-anon-grants.test.sh',
+  // #122 (R3-DELTA-003, cartão t_c7543cc1): prova em Postgres 17 descartável (docker) que o cursor
+  // composto (created_at, id) não perde a cauda empatada, que p_after sem p_after_id erra, o ACL sob
+  // roles reais, a idempotência e o Rollback. O passo no db-guard.yml é uma linha
+  // (`bash scripts/db-audit/talkx-campaign-logs-cursor.test.sh`) — promover pelo dono do workflow.
+  'scripts/db-audit/talkx-campaign-logs-cursor.test.sh',
 ]);
 
 // Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em
