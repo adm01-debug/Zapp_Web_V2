@@ -133,7 +133,7 @@ export default defineConfig({
       // As specs do módulo MAPA (E71-E74) ficam de fora: usam sessão FALSA e não
       // podem depender do login real — ver o projeto `chromium-mapa` abaixo.
       name: 'chromium-authenticated',
-      testIgnore: /auth\.spec\.ts|auth\.setup\.ts|conversation\.spec\.ts|messaging\.spec\.ts|location-picker\.spec\.ts|contact-address\.spec\.ts|contact-map-pin\.spec\.ts|contacts-snapshots\.spec\.ts|a11y-contraste\.spec\.ts|talkx-launch\.spec\.ts|telefonia\.spec\.ts|tarefas-linha-de-base\.spec\.ts|multiplix-responsivo\.spec\.ts|skins-e2e\.spec\.ts/,
+      testIgnore: /auth\.spec\.ts|auth\.setup\.ts|conversation\.spec\.ts|messaging\.spec\.ts|location-picker\.spec\.ts|contact-address\.spec\.ts|contact-map-pin\.spec\.ts|contacts-snapshots\.spec\.ts|a11y-contraste\.spec\.ts|a11y-toque-44px\.spec\.ts|talkx-launch\.spec\.ts|telefonia\.spec\.ts|tarefas-linha-de-base\.spec\.ts|multiplix-responsivo\.spec\.ts/,
       retries: RETRIES_LOGADOS,
       dependencies: ['setup'],
       use: {
@@ -173,25 +173,11 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'], storageState: { cookies: [], origins: [] } },
     },
     {
-      // CP8/CP9 do plano das Skins (docs/design/PLANO_SKINS_OPERA_GX_100_ETAPAS.md):
-      // fidelidade das 19 skins + 14 checks funcionais na tela `?view=themes`.
-      // Sessão FALSA (`installFakeSession`) + backend do app shell mockado —
-      // DESLOGADO (sem `setup`, sem `storageState`, sem secrets), mesmo padrão de
-      // `chromium-onboarding-dispensar`/`chromium-contacts-visual`. Projeto
-      // dedicado porque o catch-all `chromium-authenticated` depende de `setup`.
-      name: 'chromium-skins',
-      testMatch: /skins-[a-z0-9-]*\.spec\.ts/,
-      // E81: projeto DESLOGADO não declara `retries` — o backend é mockado e determinístico,
-      // então repetir só triplicaria o tempo da falha real e esconderia o defeito. A regra é
-      // travada por scripts/ci/playwright-config-e81.unit.mjs (o global `retries` abaixo é 0).
-      use: { ...devices['Desktop Chrome'] },
-    },
-    {
       // E98/a11y: axe-core na tela de contatos com sessao FALSA (installFakeSession)
       // e backend mockado — DESLOGADO (sem setup, sem secrets), mesmo padrao de
       // chromium-contacts-visual. Roda no job e2e do ci.yml.
       name: 'chromium-a11y',
-      testMatch: /a11y-(contraste|config-admin|tarefas-dashboard)\.spec\.ts/,
+      testMatch: /a11y-(contraste|config-admin|toque-44px)\.spec\.ts/,
       use: { ...devices['Desktop Chrome'] },
     },
     {

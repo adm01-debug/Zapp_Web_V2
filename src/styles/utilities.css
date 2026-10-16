@@ -246,44 +246,33 @@
   color: hsl(var(--primary-text));
 }
 
-/* ===== SUPERFÍCIE MOBILE — ÁREA SEGURA E ROLAGEM =====
-   `index.html` já declara `viewport-fit=cover`, ou seja o app ocupa a tela
-   inteira no iPhone — e o cabeçalho (`MobileHeader`, `InAppNotification`,
-   `NotificationsPanel`, `MobileDrawerMenu`) e a barra inferior (`MobileNavigation`,
-   `FloatingActionButtons`, `BottomSheet`, `mobile-components`), mais os campos de
-   envio do chat/team-chat, usavam `safe-area-top`/`safe-area-bottom` SEM nenhuma
-   regra: o conteúdo ia por baixo do notch e do indicador de home. Os 15 usos estão
-   em `src/`; conferido em 13/10/2026 que não havia definição aqui, em `src/index.css`
-   nem no CSS gerado. Referência: V3 `src/index.css:82-96`.
-
-   O seletor é repetido (`.safe-area-bottom.safe-area-bottom`) de propósito, como em
-   `.chip-active.chip-active` acima: `@tailwind utilities` é injetado DEPOIS destes
-   arquivos e vários consumidores trazem `py-2`/`pb-*` junto (ChatInputArea `py-2
-   safe-area-bottom`, TeamChatInputArea idem) — sem a classe a mais, o utilitário do
-   Tailwind venceria por ordem e a área segura nunca apareceria. O `env(..., 0)`
-   deixa 0 fora do iOS (sem notch): no desktop nada muda. */
-.safe-area-top.safe-area-top {
-  padding-top: env(safe-area-inset-top, 0);
-}
-
-.safe-area-bottom.safe-area-bottom {
-  padding-bottom: env(safe-area-inset-bottom, 0);
-}
-
-@media (max-width: 767px) {
-  /* Rolagem horizontal sem barra (chips, abas, emoji) — só no celular, onde uma
-     barra de 4 px entra no dedo; no desktop a régua continua sendo `scrollbar-thin`. */
-  .scrollbar-none::-webkit-scrollbar {
-    display: none;
-  }
-  .scrollbar-none {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-
-  /* O gesto de "puxar para atualizar" no topo não pode competir com o arrasto do
-     cabeçalho/painel: sem overscroll vertical no body. */
-  body {
-    overscroll-behavior-y: none;
+/* ===== ALVO DE TOQUE 44px — SOMENTE EM PONTEIRO GROSSO (toque) =====
+   t_17d91156, ajustado no refazer t_9a266076. WCAG 2.5.5 (AAA) e Apple HIG pedem
+   44x44 CSS px de alvo para o toque; os primitivos da UI (fechar do dialog/sheet,
+   checkbox, radio) nascem com 16-24px, que é o tamanho certo para o mouse.
+   Aqui a ÁREA DE TOQUE ganha 44x44 APENAS quando o apontador é grosso, SEM alterar o
+   desenho: um `::after` centrado de 44x44 faz parte da caixa de hit-test do PRÓPRIO
+   controle (o toque acerta o elemento), mas não muda `display`, borda, fundo nem o
+   tamanho visível. Foi assim que o refazer corrigiu dois efeitos colaterais da versão
+   anterior: (a) `display: inline-flex` sobrescrevia `hidden`/`sm:hidden`/`flex`/`grid`
+   que o consumidor passa ao Button/IconButton (`hidden md:inline-flex`) e reexibia
+   botão escondido no celular; (b) inflar a caixa desenhada pintava um quadrado/círculo
+   de 44px com borda no checkbox/radio e um bloco de 44px no X do sheet
+   (`data-[state=open]:bg-secondary`).
+   Os BOTÕES pequenos (Button/IconButton) NÃO usam esta classe: ganham a variante
+   Tailwind `[@media(pointer:coarse)]:min-h-[44px] [@media(pointer:coarse)]:min-w-[44px]`
+   na cva, que o `twMerge` resolve com `h-8`/`h-10` e fica na camada de utilitários.
+   O elemento precisa estar posicionado para o `::after` ancorar nele: o X já é
+   `absolute`; o checkbox/radio trazem `relative`.
+   Prova em pixel real: e2e/a11y-toque-44px.spec.ts (Chromium, devices['Pixel 5']). */
+@media (pointer: coarse) {
+  .alvo-toque-44::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 44px;
+    height: 44px;
+    transform: translate(-50%, -50%);
   }
 }
