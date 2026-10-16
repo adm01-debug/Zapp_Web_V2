@@ -19,6 +19,26 @@ export interface LockStatus {
   attempts: number;
 }
 
+/**
+ * Limite de falhas antes do bloqueio, igual ao servidor
+ * (`record_failed_login`: `v_max_attempts = 5`) e ao banner de
+ * `src/pages/Auth.tsx` (`5 - attempts`). A Edge `auth-login` devolve `attempts`
+ * (a contagem de falhas) na recusa 401/423; o contador sai SEMPRE desse valor —
+ * nunca de uma checagem de conta no cliente.
+ */
+export const MAX_LOGIN_ATTEMPTS = 5;
+
+/**
+ * Quantas tentativas ainda restam antes do bloqueio, pelo valor que a Edge
+ * enviou. Sem lock na resposta (edge indisponivel, rate limit com `attempts: 0`)
+ * nao ha contagem e o retorno e 0 — o chamador nao inventa numero.
+ */
+export function tentativasRestantesAteBloqueio(lock: LockStatus | null): number {
+  if (!lock || lock.isLocked) return 0;
+  if (lock.attempts <= 0 || lock.attempts >= MAX_LOGIN_ATTEMPTS) return 0;
+  return MAX_LOGIN_ATTEMPTS - lock.attempts;
+}
+
 export function useAuthForm() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -140,11 +160,20 @@ export function useAuthForm() {
       } else if (lock?.isLocked) {
         toast({ title: 'Conta bloqueada temporariamente', description: `Após ${lock.attempts} tentativas, sua conta foi bloqueada por ${formatLockTime(lock.remainingTime)}.`, variant: 'destructive' });
       } else {
+        // A Edge `auth-login` devolve `attempts` (falhas ja registradas) na recusa
+        // 401/423; o erro de senha passa a dizer quantas tentativas restam antes do
+        // bloqueio. O texto e o MESMO exista ou nao a conta — o numero sai so do
+        // valor da Edge e nenhum caminho aqui consulta a existencia do e-mail
+        // (sem enumeracao). Sem lock na resposta, a mensagem fica como sempre foi.
+        const restantes = tentativasRestantesAteBloqueio(lock);
+        const motivo = error.message === 'Invalid login credentials'
+          ? 'Email ou senha incorretos.'
+          : error.message;
         toast({
           title: 'Erro ao entrar',
-          description: error.message === 'Invalid login credentials'
-            ? 'Email ou senha incorretos.'
-            : error.message,
+          description: restantes > 0
+            ? `${motivo} ${restantes} tentativa${restantes > 1 ? 's' : ''} restante${restantes > 1 ? 's' : ''} antes do bloqueio.`
+            : motivo,
           variant: 'destructive',
         });
       }
