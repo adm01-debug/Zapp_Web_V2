@@ -6,6 +6,8 @@ function resultChain(result: Record<string, unknown>) {
   obj.eq = vi.fn(() => obj);
   obj.gt = vi.fn(() => obj);
   obj.order = vi.fn(() => obj);
+  obj.select = vi.fn(() => obj);
+  obj.in = vi.fn(() => obj);
   obj.single = vi.fn(() => obj);
   obj.then = (resolve: (v: unknown) => void, reject?: (e: unknown) => void) =>
     Promise.resolve(result).then(resolve, reject);
@@ -28,6 +30,12 @@ const snoozeInsertCalls: unknown[] = [];
 
 let eventsInsertResult: Record<string, unknown> = { error: null };
 const eventsInsertCalls: Record<string, unknown>[] = [];
+let transferRpcResult: Record<string, unknown> = { data: 'event-rpc-id', error: null };
+const transferRpcCalls: { name: string; args: Record<string, unknown> }[] = [];
+// Arquivar/reabrir passam pela RPC de estado (a MESMA do CloseConversationDialog),
+// não por UPDATE em contacts: o responsável (assigned_to) fica intacto.
+let archiveRpcResult: Record<string, unknown> = { data: null, error: null };
+const archiveRpcCalls: { name: string; args: Record<string, unknown> }[] = [];
 
 // favoriteContact/unfavoriteContact disparam _favBus, que aciona um
 // loadFavorites() assíncrono em segundo plano (sincroniza outras instâncias
@@ -39,6 +47,15 @@ let fakeFavoriteRows: Array<{ contact_id: string }> = [];
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     auth: { getUser: vi.fn(async () => ({ data: { user: { id: 'user-1' } } })) },
+    rpc: vi.fn((name: string, args: Record<string, unknown>) => {
+      if (name === 'set_conversation_status') {
+        archiveRpcCalls.push({ name, args });
+        return Promise.resolve(archiveRpcResult);
+      }
+      transferRpcCalls.push({ name, args });
+      if (name === 'transfer_conversation') return Promise.resolve(transferRpcResult);
+      return Promise.resolve({ data: null, error: null });
+    }),
     from: vi.fn((table: string) => {
       if (table === 'profiles') {
         return { select: vi.fn(() => resultChain({ data: { id: PROFILE_ID }, error: null })) };
@@ -144,6 +161,8 @@ describe('useConversationActions', () => {
     contactsSelectResult = { data: { assigned_to: 'agent-original' }, error: null };
     contactsUpdateResult = { error: null };
     contactsUpdateCalls.length = 0;
+    archiveRpcResult = { data: null, error: null };
+    archiveRpcCalls.length = 0;
     pinnedInsertResult = { error: null };
     pinnedDeleteResult = { error: null };
     pinnedDeleteCalls.length = 0;
@@ -154,6 +173,8 @@ describe('useConversationActions', () => {
     snoozeInsertCalls.length = 0;
     eventsInsertResult = { error: null };
     eventsInsertCalls.length = 0;
+    transferRpcResult = { data: 'event-rpc-id', error: null };
+    transferRpcCalls.length = 0;
   });
 
   afterEach(() => {
@@ -163,14 +184,18 @@ describe('useConversationActions', () => {
   });
 
   describe('archiveContact', () => {
-    it('desatribui o contato e oferece desfazer que restaura o assigned_to original', async () => {
+    it('arquiva pela RPC set_conversation_status (a mesma do diálogo de encerrar) e NÃO mexe no responsável', async () => {
       const { result } = await withProfileReady();
 
       await act(async () => {
         await result.current.archiveContact('contact-1');
       });
 
-      expect(contactsUpdateCalls).toEqual([{ assigned_to: null }]);
+      expect(archiveRpcCalls).toEqual([
+        { name: 'set_conversation_status', args: { p_contact_id: 'contact-1', p_next: 'archived' } },
+      ]);
+      // Arquivar é mudar o ESTADO: assigned_to (o responsável) fica intacto.
+      expect(contactsUpdateCalls).toEqual([]);
       expect(undoToast).toHaveBeenCalledTimes(1);
       const undoArgs = (undoToast as ReturnType<typeof vi.fn>).mock.calls[0][0];
       expect(undoArgs.message).toBe('Conversa arquivada');
@@ -179,14 +204,40 @@ describe('useConversationActions', () => {
         await undoArgs.onUndo();
       });
 
-      expect(contactsUpdateCalls).toEqual([
-        { assigned_to: null },
-        { assigned_to: 'agent-original' },
+      expect(archiveRpcCalls).toEqual([
+        { name: 'set_conversation_status', args: { p_contact_id: 'contact-1', p_next: 'archived' } },
+        { name: 'set_conversation_status', args: { p_contact_id: 'contact-1', p_next: 'open' } },
       ]);
+      expect(contactsUpdateCalls).toEqual([]);
     });
 
-    it('em erro no update, mostra toast de erro e não oferece desfazer', async () => {
-      contactsUpdateResult = { error: { message: 'falhou' } };
+    it('anuncia o novo estado no evento que atualiza chip/lista sem esperar refetch', async () => {
+      const seen: unknown[] = [];
+      const handler = (e: Event) => seen.push((e as CustomEvent).detail);
+      window.addEventListener('zapp:contact-status-changed', handler);
+      try {
+        const { result } = await withProfileReady();
+
+        await act(async () => {
+          await result.current.archiveContact('contact-1');
+        });
+        expect(seen).toEqual([{ contactId: 'contact-1', status: 'archived' }]);
+
+        const undoArgs = (undoToast as ReturnType<typeof vi.fn>).mock.calls[0][0];
+        await act(async () => {
+          await undoArgs.onUndo();
+        });
+        expect(seen).toEqual([
+          { contactId: 'contact-1', status: 'archived' },
+          { contactId: 'contact-1', status: 'open' },
+        ]);
+      } finally {
+        window.removeEventListener('zapp:contact-status-changed', handler);
+      }
+    });
+
+    it('em erro na RPC, mostra toast de erro e não oferece desfazer', async () => {
+      archiveRpcResult = { data: null, error: { message: 'falhou' } };
       const { result } = await withProfileReady();
 
       await act(async () => {
@@ -206,97 +257,109 @@ describe('useConversationActions', () => {
         await result.current.transferContact('contact-1', 'connection', 'conn-1');
       });
 
+      expect(transferRpcCalls).toEqual([]);
       expect(contactsUpdateCalls).toEqual([]);
       expect(eventsInsertCalls).toEqual([]);
       expect(toast.error).toHaveBeenCalledWith('Transferência por conexão ainda não é suportada');
       expect(toast.success).not.toHaveBeenCalled();
     });
 
-    it('transfere para atendente: atualiza assigned_to e grava evento com to_agent_id', async () => {
+    it('transfere para atendente pela RPC atômica com to_agent_id', async () => {
       const { result } = await withProfileReady();
 
       await act(async () => {
         await result.current.transferContact('contact-1', 'agent', 'agent-2');
       });
 
-      expect(contactsUpdateCalls).toEqual([{ assigned_to: 'agent-2' }]);
-      expect(eventsInsertCalls).toEqual([
-        { event_type: 'transfer', contact_id: 'contact-1', to_agent_id: 'agent-2' },
+      expect(transferRpcCalls).toEqual([
+        {
+          name: 'transfer_conversation',
+          args: {
+            p_contact_id: 'contact-1',
+            p_to_agent_id: 'agent-2',
+            p_to_queue_id: null,
+            p_note: null,
+          },
+        },
       ]);
+      expect(contactsUpdateCalls).toEqual([]);
+      expect(eventsInsertCalls).toEqual([]);
       expect(toast.success).toHaveBeenCalledWith('Chat transferido para outro atendente');
     });
 
-    it('transfere para fila: atualiza queue_id e grava evento com to_queue_id', async () => {
+    it('transfere para fila pela RPC atômica com to_queue_id', async () => {
       const { result } = await withProfileReady();
 
       await act(async () => {
         await result.current.transferContact('contact-1', 'queue', 'queue-2');
       });
 
-      expect(contactsUpdateCalls).toEqual([{ queue_id: 'queue-2' }]);
-      expect(eventsInsertCalls).toEqual([
-        { event_type: 'transfer', contact_id: 'contact-1', to_queue_id: 'queue-2' },
+      expect(transferRpcCalls).toEqual([
+        {
+          name: 'transfer_conversation',
+          args: {
+            p_contact_id: 'contact-1',
+            p_to_agent_id: null,
+            p_to_queue_id: 'queue-2',
+            p_note: null,
+          },
+        },
       ]);
+      expect(contactsUpdateCalls).toEqual([]);
+      expect(eventsInsertCalls).toEqual([]);
       expect(toast.success).toHaveBeenCalledWith('Chat transferido para outra fila');
     });
 
-    it('persiste a nota opcional em conversation_events.metadata.note', async () => {
+    it('envia a nota opcional para a RPC em p_note', async () => {
       const { result } = await withProfileReady();
 
       await act(async () => {
         await result.current.transferContact('contact-1', 'queue', 'queue-2', 'cliente pediu retorno');
       });
 
-      expect(eventsInsertCalls).toEqual([
-        {
-          event_type: 'transfer',
-          contact_id: 'contact-1',
-          to_queue_id: 'queue-2',
-          metadata: { note: 'cliente pediu retorno' },
+      expect(transferRpcCalls[0]).toEqual({
+        name: 'transfer_conversation',
+        args: {
+          p_contact_id: 'contact-1',
+          p_to_agent_id: null,
+          p_to_queue_id: 'queue-2',
+          p_note: 'cliente pediu retorno',
         },
-      ]);
+      });
+      expect(contactsUpdateCalls).toEqual([]);
+      expect(eventsInsertCalls).toEqual([]);
     });
 
-    it('nota vazia ou só espaços não grava metadata', async () => {
+    it('nota vazia ou só espaços vira p_note null', async () => {
       const { result } = await withProfileReady();
 
       await act(async () => {
         await result.current.transferContact('contact-1', 'agent', 'agent-2', '   ');
       });
 
-      expect(eventsInsertCalls[0]).not.toHaveProperty('metadata');
-    });
-
-    it('erro no update rejeita, não grava evento e não sinaliza sucesso', async () => {
-      contactsUpdateResult = { error: { message: 'falhou' } };
-      const { result } = await withProfileReady();
-
-      await act(async () => {
-        await expect(
-          result.current.transferContact('contact-1', 'agent', 'agent-2')
-        ).rejects.toEqual({ message: 'falhou' });
+      expect(transferRpcCalls[0].args).toMatchObject({
+        p_to_agent_id: 'agent-2',
+        p_to_queue_id: null,
+        p_note: null,
       });
-
-      expect(toast.error).toHaveBeenCalledWith('Erro ao transferir conversa');
       expect(eventsInsertCalls).toEqual([]);
-      expect(toast.success).not.toHaveBeenCalled();
     });
 
-    it('erro no insert do evento rejeita com o eventError: falha da transferência, nunca sucesso', async () => {
-      const eventError = { message: 'falhou evento' };
-      eventsInsertResult = { error: eventError };
+    it('erro da RPC rejeita, não grava evento/update solto e não sinaliza sucesso', async () => {
+      const rpcError = { message: 'falhou rpc' };
+      transferRpcResult = { data: null, error: rpcError };
       const { result } = await withProfileReady();
 
       await act(async () => {
         await expect(
           result.current.transferContact('contact-1', 'agent', 'agent-2', 'nota')
-        ).rejects.toBe(eventError);
+        ).rejects.toBe(rpcError);
       });
 
-      // O update é idempotente e já rodou; o evento é o que falhou — a
-      // transferência precisa ser reportada como falha, não como sucesso.
-      expect(contactsUpdateCalls).toEqual([{ assigned_to: 'agent-2' }]);
-      expect(toast.error).toHaveBeenCalledWith('Conversa transferida, mas o registro do evento falhou');
+      expect(transferRpcCalls).toHaveLength(1);
+      expect(contactsUpdateCalls).toEqual([]);
+      expect(eventsInsertCalls).toEqual([]);
+      expect(toast.error).toHaveBeenCalledWith('Erro ao transferir conversa');
       expect(toast.success).not.toHaveBeenCalled();
     });
   });
@@ -420,6 +483,63 @@ describe('useConversationActions', () => {
         await result.current.unfavoriteContact('contact-1');
       });
       await waitFor(() => expect(result.current.isFavorite('contact-1')).toBe(false));
+    });
+
+    it('pinConversation em erro: avisa e NÃO marca como fixado', async () => {
+      pinnedInsertResult = { error: { message: 'falhou' } };
+      const { result } = await withProfileReady();
+
+      await act(async () => {
+        await result.current.pinConversation('contact-1');
+      });
+
+      expect(toast.error).toHaveBeenCalledWith('Erro ao fixar conversa');
+      expect(result.current.isPinned('contact-1')).toBe(false);
+      expect(toast.success).not.toHaveBeenCalled();
+    });
+
+    it('unpinConversation em erro: avisa e mantém a conversa fixada', async () => {
+      const { result } = await withProfileReady();
+      await act(async () => {
+        await result.current.pinConversation('contact-1');
+      });
+      expect(result.current.isPinned('contact-1')).toBe(true);
+
+      pinnedDeleteResult = { error: { message: 'falhou' } };
+      await act(async () => {
+        await result.current.unpinConversation('contact-1');
+      });
+
+      expect(toast.error).toHaveBeenCalledWith('Erro ao desafixar conversa');
+      expect(result.current.isPinned('contact-1')).toBe(true);
+    });
+
+    it('favoriteContact em erro: avisa e NÃO favorita', async () => {
+      favoriteInsertResult = { error: { message: 'falhou' } };
+      const { result } = await withProfileReady();
+
+      await act(async () => {
+        await result.current.favoriteContact('contact-1');
+      });
+
+      expect(toast.error).toHaveBeenCalledWith('Erro ao favoritar contato');
+      expect(result.current.isFavorite('contact-1')).toBe(false);
+    });
+
+    it('unfavoriteContact em erro: avisa e mantém o favorito', async () => {
+      const { result } = await withProfileReady();
+      await act(async () => {
+        await result.current.favoriteContact('contact-1');
+      });
+      await waitFor(() => expect(result.current.isFavorite('contact-1')).toBe(true));
+
+      favoriteDeleteResult = { error: { message: 'falhou' } };
+      await act(async () => {
+        await result.current.unfavoriteContact('contact-1');
+      });
+
+      expect(toast.error).toHaveBeenCalledWith('Erro ao remover favorito');
+      await waitFor(() => expect(result.current.isFavorite('contact-1')).toBe(true));
     });
   });
 });

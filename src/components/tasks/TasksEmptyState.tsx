@@ -13,8 +13,11 @@ interface Props {
 export function TasksEmptyState({ variant, onClearFilter, onAddTask, columnLabel, policy }: Props) {
   if (variant === 'filter') {
     return (
-      <div className="flex flex-col items-center gap-3 py-12 text-center">
-        <p className="text-sm text-muted-foreground">Nenhuma tarefa com esse filtro</p>
+      <div className="flex flex-col items-center gap-3 py-12 text-center" data-testid="tasks-empty-filter">
+        <div className="space-y-1">
+          <p className="text-sm font-medium text-foreground">Nenhum resultado</p>
+          <p className="text-xs text-muted-foreground">Ajuste a busca ou os filtros para ver tarefas.</p>
+        </div>
         <Button variant="ghost" size="sm" onClick={onClearFilter}>Limpar filtros</Button>
       </div>
     );

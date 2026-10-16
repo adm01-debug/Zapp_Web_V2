@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { HOVER_REVEAL, HOVER_REVEAL_TAP } from './hoverActions';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { SmilePlus, X } from 'lucide-react';
@@ -38,6 +39,7 @@ export function MessageReactions({
     addReaction,
     removeReaction,
     hasReacted,
+    isReacting,
     currentProfileId,
   } = useMessageReactions(messageId, {
     instanceName,
@@ -72,17 +74,27 @@ export function MessageReactions({
   const availableReactions = showExtended ? EXTENDED_REACTIONS : WHATSAPP_REACTIONS;
 
   const handleReact = async (emoji: string) => {
-    if (hasReacted(emoji)) {
-      await removeReaction(emoji);
-    } else {
-      await addReaction(emoji);
-    }
+    try {
+      if (hasReacted(emoji)) {
+        await removeReaction(emoji);
+      } else {
+        await addReaction(emoji);
+      }
 
-    setIsOpen(false);
+      setIsOpen(false);
+    } catch {
+      // A rejeição já vira toast pt-BR no hook (`useReactionMutations`); aqui só
+      // impedimos a promessa solta e o seletor fica aberto para tentar de novo.
+    }
   };
 
   return (
-    <div data-testid="message-reactions" className={cn('flex items-center gap-1 flex-wrap', isSent ? 'justify-end' : 'justify-start')}>
+    <div
+      data-testid="message-reactions"
+      data-pending={isReacting ? 'true' : 'false'}
+      aria-busy={isReacting}
+      className={cn('flex items-center gap-1 flex-wrap', isSent ? 'justify-end' : 'justify-start')}
+    >
       <TooltipProvider>
         {reactionsList.map((reaction) => (
           <Tooltip key={reaction.emoji}>
@@ -90,10 +102,12 @@ export function MessageReactions({
               <button
                 data-testid="reaction-badge"
                 data-emoji={reaction.emoji}
+                disabled={isReacting}
                 onClick={() => handleReact(reaction.emoji)}
                 className={cn(
                   'flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs',
                   'border transition-all cursor-pointer hover:scale-110 active:scale-90',
+                  isReacting && 'opacity-50 cursor-not-allowed',
                   reaction.hasCurrentUser
                     ? 'bg-primary/10 border-primary/30 ring-1 ring-primary/20'
                     : 'bg-muted/80 hover:bg-muted border-border/50'
@@ -124,11 +138,13 @@ export function MessageReactions({
         <PopoverTrigger asChild>
           <button
             data-testid="reaction-add-button"
+            disabled={isReacting}
             className={cn(
               'p-1 rounded-full transition-all hover:scale-110 active:scale-90',
               'hover:bg-muted/80 text-muted-foreground hover:text-foreground',
+              isReacting && 'opacity-50 cursor-not-allowed',
               reactionsList.length === 0
-                ? 'opacity-0 group-hover:opacity-100'
+                ? HOVER_REVEAL
                 : 'opacity-60 hover:opacity-100'
             )}
           >
@@ -149,9 +165,11 @@ export function MessageReactions({
                   key={emoji}
                   whileHover={{ scale: 1.25 }}
                   whileTap={{ scale: 0.9 }}
+                  disabled={isReacting}
                   onClick={() => handleReact(emoji)}
                   className={cn(
                     'p-1.5 rounded-md transition-all text-lg relative',
+                    isReacting && 'opacity-50 cursor-not-allowed',
                     userHasReacted
                       ? 'bg-primary/10 ring-1 ring-primary/30'
                       : 'hover:bg-muted'
@@ -199,7 +217,7 @@ export function QuickReactionBar({
   disableRealtime,
 }: QuickReactionBarProps) {
   const [showPicker, setShowPicker] = useState(false);
-  const { addReaction, removeReaction, hasReacted, currentProfileId } = useMessageReactions(messageId, {
+  const { addReaction, removeReaction, hasReacted, isReacting, currentProfileId } = useMessageReactions(messageId, {
     instanceName,
     contactJid,
     externalId,
@@ -209,20 +227,27 @@ export function QuickReactionBar({
   });
 
   const handleReact = async (emoji: string) => {
-    if (hasReacted(emoji)) {
-      await removeReaction(emoji);
-    } else {
-      await addReaction(emoji);
+    try {
+      if (hasReacted(emoji)) {
+        await removeReaction(emoji);
+      } else {
+        await addReaction(emoji);
+      }
+      setShowPicker(false);
+    } catch {
+      // A rejeição já vira toast pt-BR no hook (`useReactionMutations`); aqui só
+      // impedimos a promessa solta e o seletor fica aberto para tentar de novo.
     }
-    setShowPicker(false);
   };
 
   return (
     <div
       data-testid="quick-reaction-bar"
       data-profile-ready={currentProfileId ? 'true' : 'false'}
+      data-pending={isReacting ? 'true' : 'false'}
+      aria-busy={isReacting}
       className={cn(
-        'absolute -top-9 flex items-center opacity-0 group-hover:opacity-100 transition-all duration-200 z-20',
+        `absolute -top-9 flex items-center ${HOVER_REVEAL_TAP} transition-all duration-200 z-20`,
         showPicker && 'opacity-100',
         isSent ? 'right-0' : 'left-0'
       )}
@@ -238,9 +263,11 @@ export function QuickReactionBar({
             key={emoji}
             data-testid="quick-reaction-emoji"
             data-emoji={emoji}
+            disabled={isReacting}
             onClick={() => handleReact(emoji)}
             className={cn(
               'w-7 h-7 flex items-center justify-center rounded-full hover:bg-muted/80 hover:scale-125 transition-all text-base',
+              isReacting && 'opacity-50 cursor-not-allowed',
               hasReacted(emoji) && 'bg-primary/10 ring-1 ring-primary/30'
             )}
           >
@@ -252,7 +279,8 @@ export function QuickReactionBar({
           <PopoverTrigger asChild>
             <button
               data-testid="quick-reaction-more"
-              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-muted/80 transition-all text-muted-foreground hover:text-foreground"
+              aria-label="Mais reações"
+              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-muted/80 transition-all text-muted-foreground hover:text-foreground [@media(pointer:coarse)]:min-w-[44px] [@media(pointer:coarse)]:min-h-[44px]"
             >
               <SmilePlus className="w-4 h-4" />
             </button>

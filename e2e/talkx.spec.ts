@@ -224,8 +224,20 @@ test.describe('Talk X module', () => {
     await expect(continuar).toBeEnabled();
     await continuar.click();
 
-    // Step 2 header ("Mensagem") should be active in the stepper.
-    await expect(page.getByText('Mensagem').first()).toBeVisible();
+    // Prova do AVANÇO pela rota: TalkXView.writeWizardRoute grava o passo na URL
+    // (?wizard=…&step=N) a cada requestStep do wizard (TalkXCampaignWizard.next →
+    // requestStep → onRouteStepChange). O rótulo "Mensagem" do stepper NÃO serve de
+    // prova: o stepper renderiza os 4 rótulos em qualquer passo (o spec "wizard
+    // stepper shows all four steps" acima afirma isso no passo 1), então
+    // `getByText('Mensagem')` ficava visível mesmo com o wizard parado no passo 1 —
+    // a assertiva antiga passava sem provar o avanço.
+    await expect(page).toHaveURL(/[?&]step=2(&|$)/);
+
+    // Passo 2 na tela: o corpo do passo 2 (StepMessage) entrou e o campo de nome do
+    // passo 1 saiu da árvore (TalkXCampaignWizard.tsx: `step === 1 && <StepAudience>`
+    // / `step === 2 && <StepMessage>`).
+    await expect(page.getByText('Escreva sua mensagem e personalize com variáveis.')).toBeVisible();
+    await expect(page.getByPlaceholder('Ex: Lançamento Linha Office')).toBeHidden();
 
     // Close the wizard before cleanup. TL-138: com alteração pendente (nome,
     // conexão e segmento preenchidos) a saída para no aviso do kit; aqui o

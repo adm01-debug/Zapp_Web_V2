@@ -58,6 +58,79 @@ export function ratePct(num: number, den: number): string {
   return v === null ? '—' : `${v}%`;
 }
 
+/** O que o card precisa saber da linha da campanha (contadores exatos, sem amostra). */
+export interface TalkXCampaignCounterRow {
+  sent_count?: number | null;
+  delivered_count?: number | null;
+  replied_count?: number | null;
+  failed_count?: number | null;
+  outcome_unknown_count?: number | null;
+}
+
+function toCount(v: unknown): number {
+  const n = typeof v === 'number' ? v : Number(v);
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
+}
+
+function toSeconds(v: unknown): number | null {
+  if (v === null || v === undefined) return null;
+  const n = typeof v === 'number' ? v : Number(v);
+  return Number.isFinite(n) && n >= 0 ? n : null;
+}
+
+/**
+ * Monta as métricas a partir da LINHA da campanha (T13-058…T13-063): os totais vêm dos
+ * contadores exatos (`sent_count`, `delivered_count`, `replied_count`, `failed_count`),
+ * nunca de amostra limitada. `avgReplySeconds` vem do painel
+ * (`talkx_campaign_report` → `kpis.avg_reply_secs`); sem respostas é null ("—").
+ */
+export function keyMetricsFromCampaign(
+  row: TalkXCampaignCounterRow,
+  avgReplySeconds: unknown,
+): TalkXKeyMetricsData {
+  const sent = toCount(row?.sent_count);
+  const delivered = toCount(row?.delivered_count);
+  const replied = toCount(row?.replied_count);
+  const failed = toCount(row?.failed_count);
+  const unknown = toCount(row?.outcome_unknown_count);
+  return {
+    sent,
+    delivered,
+    replied,
+    failed,
+    processed: sent + failed + unknown,
+    avgReplySeconds: toSeconds(avgReplySeconds),
+  };
+}
+
+/** Sem base: o card mostra os valores sem comparativo (nunca quebra a tela). */
+export const KEY_METRICS_NO_BASELINE: TalkXKeyMetricsBenchmarks = {
+  hasBaseline: false,
+  avgDeliveryRatePct: null,
+  avgReplyRatePct: null,
+};
+
+/**
+ * Mapeia o retorno de `talkx_benchmarks()` para o comparativo do card (CAP-083).
+ * Base mínima: ao menos 1 campanha concluída na janela de 90 dias
+ * (`global.campaign_count >= 1`); abaixo disso, sem comparativo. Payload fora do
+ * formato (RPC indisponível) vira "sem base", nunca exceção.
+ */
+export function benchmarksFromJson(payload: unknown): TalkXKeyMetricsBenchmarks {
+  if (typeof payload !== 'object' || payload === null) return { ...KEY_METRICS_NO_BASELINE };
+  const global = (payload as { global?: unknown }).global;
+  if (typeof global !== 'object' || global === null || Array.isArray(global)) {
+    return { ...KEY_METRICS_NO_BASELINE };
+  }
+  const g = global as Record<string, unknown>;
+  const count = typeof g.campaign_count === 'number' ? g.campaign_count : 0;
+  return {
+    hasBaseline: count >= 1,
+    avgDeliveryRatePct: toSeconds(g.avg_delivery_rate_pct),
+    avgReplyRatePct: toSeconds(g.avg_reply_rate_pct),
+  };
+}
+
 /**
  * Variação relativa contra a média histórica. Sem base mínima, sem média válida ou sem valor
  * da campanha, não existe comparativo (null) — a linha fica só com o valor.

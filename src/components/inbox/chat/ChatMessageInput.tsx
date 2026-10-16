@@ -131,6 +131,7 @@ export const ChatMessageInput = forwardRef<ChatMessageInputRef, ChatMessageInput
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={cn("glass-strong border-t border-border/50", isMobile ? "p-2 safe-area-bottom" : "p-4")}>
         <div className="flex items-end gap-1">
           <FileUploader ref={fileUploaderRef} instanceName={contactId} recipientNumber={contactPhone} contactId={contactId} connectionId={undefined}
+            replyToId={replyToMessage?.id ?? null}
             onFileSelect={(file, category) => toast({ title: 'Arquivo selecionado', description: `${file.name} (${category}) será enviado.` })}
             onFileSent={() => toast({ title: 'Arquivo enviado!', description: 'O arquivo foi enviado com sucesso via WhatsApp.' })}
           />

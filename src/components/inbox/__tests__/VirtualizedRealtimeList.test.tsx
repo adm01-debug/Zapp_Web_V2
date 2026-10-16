@@ -394,3 +394,40 @@ describe('VirtualizedRealtimeList — prioridade de não lidas definida pelos fi
     expect(linhas[1]).toContain('DeltaLida');
   });
 });
+
+describe('VirtualizedRealtimeList — data inválida na última mensagem (R2)', () => {
+  // Antes: `formatDistanceToNow(new Date(created_at))` lançava
+  // `RangeError: Invalid time value` e a linha inteira desaparecia do inbox.
+  // Agora a linha permanece e o horário vira o marcador `—`.
+  function comUltimaMensagemEm(createdAt: unknown): ConversationWithMessages {
+    const conversation = makeConversation({ id: 'invalida-1' });
+    conversation.lastMessage = {
+      id: 'm-invalida-1',
+      content: 'prévia da mensagem',
+      created_at: createdAt,
+      sender: 'contact',
+    } as unknown as ConversationWithMessages['lastMessage'];
+    return conversation;
+  }
+
+  it.each([
+    ['string vazia', ''],
+    ['texto livre', 'não é uma data'],
+    ['nulo', null],
+  ])('created_at %s: a linha renderiza com o marcador, sem lançar', (_caso, valor) => {
+    renderList([comUltimaMensagemEm(valor)]);
+
+    const linha = screen.getByTestId('conversation-item');
+    expect(linha).toBeInTheDocument();
+    expect(linha).toHaveTextContent('—');
+    expect(linha).toHaveTextContent('prévia da mensagem');
+  });
+
+  it('created_at válido continua mostrando o tempo relativo', () => {
+    renderList([comUltimaMensagemEm(new Date(Date.now() - 30 * 60 * 1000).toISOString())]);
+
+    const linha = screen.getByTestId('conversation-item');
+    expect(linha).toHaveTextContent('30 minutos');
+    expect(linha).not.toHaveTextContent('—');
+  });
+});

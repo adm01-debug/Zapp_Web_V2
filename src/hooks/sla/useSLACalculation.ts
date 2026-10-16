@@ -15,8 +15,31 @@ interface UseSLACalculationParams {
   firstMessageAt: Date;
   firstResponseAt?: Date | null;
   firstResponseMinutes: number;
-  /** Minutos decorridos a partir dos quais o indicador entra em alerta (laranja). Padrao: 2. */
+  /**
+   * Minutos decorridos a partir dos quais o indicador entra em alerta (laranja).
+   * Se omitido, o alerta dispara quando restam 30% do prazo, com pelo menos
+   * 1 minuto de antecedencia.
+   */
   warningMinutes?: number;
+}
+
+/** Fracao do prazo que resta quando o alerta automatico dispara (30%). */
+const DEFAULT_WARNING_RATIO = 0.3;
+/** Antecedencia minima do alerta automatico, em minutos. */
+const MIN_WARNING_MINUTES = 1;
+
+/**
+ * Limiar de atencao em ms, na forma que `calculateStatus` espera (minutos
+ * DECORRIDOS). O parametro explicito manda; sem ele, o alerta dispara quando
+ * restam 30% do prazo, com pelo menos 1 minuto de antecedencia.
+ */
+function resolveWarningMs(warningMinutes: number | undefined, totalMs: number): number {
+  if (warningMinutes != null) return warningMinutes * 60_000;
+  const attentionRemainingMs = Math.max(
+    totalMs * DEFAULT_WARNING_RATIO,
+    MIN_WARNING_MINUTES * 60_000
+  );
+  return totalMs - attentionRemainingMs;
 }
 
 function calculateStatus(
@@ -46,11 +69,12 @@ function calculateStatus(
 function compute(params: UseSLACalculationParams, nowMs: number): SLATimerState {
   const now = new Date(nowMs);
   const frDeadline = new Date(params.firstMessageAt.getTime() + params.firstResponseMinutes * 60_000);
-  const warningMs = (params.warningMinutes ?? 2) * 60_000;
+  const totalMs = params.firstResponseMinutes * 60_000;
+  const warningMs = resolveWarningMs(params.warningMinutes, totalMs);
 
   const firstResponse = calculateStatus(
     frDeadline.getTime() - now.getTime(),
-    params.firstResponseMinutes * 60_000,
+    totalMs,
     warningMs,
     !!params.firstResponseAt,
     params.firstResponseAt,

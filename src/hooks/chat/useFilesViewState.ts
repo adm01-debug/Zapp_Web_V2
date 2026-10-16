@@ -17,6 +17,9 @@ import type { AnalysisPeriod } from '@/components/inbox/ai-tools/PeriodFilterSel
  * A selecao (etapa 08) nunca entra aqui: nao e recorte de tela, e escolha do operador.
  * O periodo do filtro por data (F03) entra exatamente como ordem/tipo/busca: so memoria de
  * sessao, por conversa e por usuario.
+ * O filtro por REMETENTE (R08/S56) e mais um recorte de tela: entra aqui pela mesma regra e
+ * como lista de chaves do funil (`self`/`contact`/`team`/`agent:<id>`) — lista VAZIA = todos,
+ * que e o padrao.
  */
 
 export type FilesViewMode = 'grid' | 'list' | 'table';
@@ -48,6 +51,8 @@ export interface FilesViewSession {
   /** Pontas do periodo personalizado (`period === 'custom'`); `null` = nao escolhida. */
   customFrom: Date | null;
   customTo: Date | null;
+  /** R08/S56: remetentes marcados no funil (`self`/`contact`/`team`/`agent:<id>`); vazio = todos. */
+  senders: string[];
 }
 
 export const DEFAULT_FILES_VIEW_SESSION: FilesViewSession = {
@@ -57,6 +62,7 @@ export const DEFAULT_FILES_VIEW_SESSION: FilesViewSession = {
   period: 'all',
   customFrom: null,
   customTo: null,
+  senders: [],
 };
 
 export function filesViewStorageKey(userId: string): string {
@@ -125,6 +131,8 @@ interface FilesViewState {
   period: AnalysisPeriod;
   customFrom: Date | null;
   customTo: Date | null;
+  /** R08/S56: chaves dos remetentes marcados; vazio = todos. */
+  senders: string[];
   setViewMode: (mode: FilesViewMode) => void;
   setColumns: (columns: FilesColumns) => void;
   setSort: (sort: FilesSort) => void;
@@ -141,6 +149,13 @@ interface FilesViewState {
   clearCustomDates: () => void;
   /** Volta para "Qualquer data" e zera as datas (o botão do estado vazio). */
   clearPeriod: () => void;
+  /**
+   * R08/S56: marca/desmarca um remetente do funil. Nenhum marcado = todos — a chave que entra e
+   * a que sai usam a MESMA lista (nunca ha um "todos marcados" implicito).
+   */
+  toggleSender: (key: string) => void;
+  /** Volta para "todos os remetentes" (o botão do estado vazio do funil). */
+  clearSenders: () => void;
 }
 
 interface InternalState {
@@ -212,6 +227,7 @@ export function useFilesViewState(
     period: state.session.period,
     customFrom: state.session.customFrom,
     customTo: state.session.customTo,
+    senders: state.session.senders,
     setViewMode: useCallback((mode: FilesViewMode) => mergePrefs({ viewMode: mode }), [mergePrefs]),
     setColumns: useCallback((columns: FilesColumns) => mergePrefs({ columns }), [mergePrefs]),
     setSort: useCallback((sort: FilesSort) => mergeSession({ sort }), [mergeSession]),
@@ -233,5 +249,20 @@ export function useFilesViewState(
       () => mergeSession({ period: 'all', customFrom: null, customTo: null }),
       [mergeSession],
     ),
+    // R08/S56: alternar uma chave e o unico jeito de mexer na lista (nenhuma marcada = todos);
+    // a ordem de marcacao nao muda o recorte, entao a lista nao precisa ser ordenada.
+    toggleSender: useCallback(
+      (key: string) =>
+        setState((current) => {
+          const alvo = key.trim();
+          if (!alvo) return current;
+          const senders = current.session.senders.includes(alvo)
+            ? current.session.senders.filter((sender) => sender !== alvo)
+            : [...current.session.senders, alvo];
+          return { ...current, session: { ...current.session, senders } };
+        }),
+      [],
+    ),
+    clearSenders: useCallback(() => mergeSession({ senders: [] }), [mergeSession]),
   };
 }

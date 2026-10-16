@@ -137,6 +137,25 @@ describe('useSupabaseRealtime', () => {
     expect(realtimeMocks.removeChannel).toHaveBeenCalledTimes(1);
   });
 
+  it('um ouvinte que lanca nao impede os demais de receber', () => {
+    const quebrado = vi.fn(() => {
+      throw new Error('falha do ouvinte');
+    });
+    const sadio = vi.fn();
+    renderHook(() => useSupabaseRealtime({
+      channelName: 'queues-isolado', table: 'queues', onAll: quebrado,
+    }));
+    renderHook(() => useSupabaseRealtime({
+      channelName: 'queues-isolado', table: 'queues', onAll: sadio,
+    }));
+
+    act(() => realtimeMocks.payloadCallback?.({ eventType: 'UPDATE', new: { id: 'q1' } }));
+
+    expect(quebrado).toHaveBeenCalledTimes(1);
+    expect(sadio).toHaveBeenCalledTimes(1);
+    expect(realtimeMocks.removeChannel).not.toHaveBeenCalled();
+  });
+
   it('cancels deferred removal when StrictMode-style remount happens', () => {
     const first = renderHook(() => useSupabaseRealtime({
       channelName: 'strict-remount', table: 'messages',

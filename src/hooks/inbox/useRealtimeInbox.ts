@@ -8,6 +8,8 @@ import { useExternalConversations, useExternalMessages } from '@/hooks/integrati
 import { useAuth } from '@/hooks/auth/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { getLogger } from '@/lib/logger';
+import { toast } from '@/hooks/ui/use-toast';
+import { validatePttBlob } from '@/lib/audio/pttLimits';
 import { Conversation, Message } from '@/types/chat';
 import { 
   mapRealtimeConversationToConversation, 
@@ -16,8 +18,43 @@ import {
 
 const log = getLogger('useRealtimeInbox');
 
+/**
+ * Estado de retentativa de UMA gravação de áudio. Guarda o blob (identidade da
+ * gravação), o objeto já subido no bucket e o `client_message_id` daquela ação:
+ * enquanto a entrega não é confirmada, a retentativa reusa os dois últimos,
+ * então a mídia não sobe de novo e o servidor deduplica a nota de voz.
+ */
+interface EnvioDeAudioPendente {
+  blob: Blob;
+  contactId: string;
+  publicUrl: string;
+  clientMessageId: string;
+}
+
+/** Mesmo contrato do serviço de envio: sem id seguro, não há como deduplicar. */
+function criarIdDeEnvioDeAudio(): string {
+  if (typeof crypto?.randomUUID !== 'function') {
+    throw new Error('Seu navegador não suporta identificadores de entrega seguros. Atualize-o e tente novamente.');
+  }
+  return crypto.randomUUID();
+}
+
 // Feature flag: use external evolution DB as data source
 const USE_EXTERNAL_DB = false;
+
+// `contacts.id` é uuid. Link/notificação/busca podem trazer um id malformado:
+// nesse caso a consulta nunca chega ao banco (o PostgREST estouraria o cast) e o
+// resultado é "não encontrado", distinto de uma falha de transporte.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isValidUuid(value: string | null | undefined): boolean {
+  return typeof value === 'string' && UUID_RE.test(value);
+}
+
+type SelectedContactLookup =
+  | { contactId: string; status: 'loading'; error: null }
+  | { contactId: string; status: 'not-found'; error: null }
+  | { contactId: string; status: 'error'; error: string };
 
 export function useRealtimeInbox() {
   // Local DB source (original)
@@ -41,10 +78,14 @@ export function useRealtimeInbox() {
    const { newMessageNotification, dismissNotification, setSelectedContact, setSoundEnabled } = localRealtime;
    const uiState = useInboxUIState();
    const { selectedContactId, setSelectedContactId, soundOn, setSoundOn, setPendingContactId } = uiState;
+   // Retentativa de áudio: vive enquanto a gravação não é aceita nem descartada.
+   const pendingAudioSendRef = useRef<EnvioDeAudioPendente | null>(null);
    const [selectedContactFallback, setSelectedContactFallback] = useState<{
      contactId: string;
      contact: ConversationContact;
    } | null>(null);
+   // Resultado da consulta do contato fora da lista: carregando / erro / não encontrado.
+   const [selectedContactLookup, setSelectedContactLookup] = useState<SelectedContactLookup | null>(null);
    const [isOnline, setIsOnline] = useState(true);
   const { profile } = useAuth();
 
@@ -93,6 +134,12 @@ export function useRealtimeInbox() {
 
   useEffect(() => {
     if (!selectedContactId || selectedConversation) return;
+    // Guarda de UUID antes da consulta: id de link/notificação malformado nunca vai
+    // ao banco (o PostgREST estouraria o cast). O "não encontrado" desse caso é
+    // DERIVADO abaixo (`isMalformedSelectedContactId`), não gravado aqui: gravar
+    // estado direto no corpo do efeito provoca render em cascata (lint
+    // react-hooks/set-state-in-effect). O "carregando" também é derivado (padrão).
+    if (!isValidUuid(selectedContactId)) return;
     let cancelled = false;
     const loadSelectedContact = async () => {
       const { data, error } = await supabase
@@ -101,8 +148,22 @@ export function useRealtimeInbox() {
         .eq('id', selectedContactId)
         .maybeSingle();
       if (cancelled) return;
-      if (error) { log.error('Error loading selected fallback contact:', error); return; }
-      if (data) setSelectedContactFallback({ contactId: selectedContactId, contact: data });
+      if (error) {
+        log.error('Error loading selected fallback contact:', error);
+        setSelectedContactLookup({
+          contactId: selectedContactId,
+          status: 'error',
+          error: 'Não foi possível carregar o contato.',
+        });
+        return;
+      }
+      if (data) {
+        setSelectedContactFallback({ contactId: selectedContactId, contact: data });
+        setSelectedContactLookup(null);
+      } else {
+        // Sem erro e sem linha = inexistente ou fora do acesso (o RLS filtra sem erro).
+        setSelectedContactLookup({ contactId: selectedContactId, status: 'not-found', error: null });
+      }
     };
     void loadSelectedContact();
     return () => { cancelled = true; };
@@ -111,6 +172,25 @@ export function useRealtimeInbox() {
   const fallbackContact = selectedContactFallback?.contactId === selectedContactId
     ? selectedContactFallback.contact
     : null;
+
+  // Estado da consulta do contato fora da lista, para o consumidor mostrar
+  // carregando / erro / não encontrado em vez de uma tela vazia e muda.
+  // Só vale para o contato selecionado agora (resultado antigo não vaza).
+  const isMalformedSelectedContactId =
+    Boolean(selectedContactId) && !selectedConversation && !isValidUuid(selectedContactId);
+
+  const selectedContactFallbackStatus: 'idle' | 'loading' | 'error' | 'not-found' =
+    !selectedContactId || selectedConversation || fallbackContact
+      ? 'idle'
+      : isMalformedSelectedContactId
+        ? 'not-found'
+        : selectedContactLookup && selectedContactLookup.contactId === selectedContactId
+          ? selectedContactLookup.status
+          : 'loading';
+  const selectedContactFallbackError =
+    selectedContactLookup && selectedContactLookup.contactId === selectedContactId
+      ? selectedContactLookup.error
+      : null;
 
   const resolvedSelectedConversation = useMemo<ConversationWithMessages | null>(() => {
     if (selectedConversation) return selectedConversation;
@@ -127,12 +207,27 @@ export function useRealtimeInbox() {
     return () => { window.removeEventListener('online', handleOnline); window.removeEventListener('offline', handleOffline); };
   }, []);
 
+  // R2-INB-059: o contato "aberto" — aquele que suprime som/toast em
+  // `notifyAboutIncomingMessage` — tem UMA fonte: `selectedContactId`. Antes, só
+  // `handleSelectConversation` atualizava esse ref; os demais caminhos que trocam
+  // a seleção (nova conversa criada pelo modal, "Voltar" no celular e expandir o
+  // PiP, que só chamam `setSelectedContactId`) ficavam de fora. Efeito: no
+  // celular, o contato recém-fechado continuava MUDO (sem som, toast nem
+  // notificação) até uma nova seleção; a conversa criada pelo modal não suprimia
+  // o aviso dela nem marcava como lida. Aqui o id governa o ref e a leitura em
+  // TODOS os caminhos.
+  useEffect(() => {
+    setSelectedContact(selectedContactId ?? null);
+    if (selectedContactId) void markAsRead(selectedContactId);
+    // `markAsRead` não é memoizado (lê `conversationsRef` por dentro); listá-lo
+    // faria o efeito disparar a cada render. Só a TROCA do id deve agir.
+  }, [selectedContactId, setSelectedContact]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Handlers
   const handleSelectConversation = useCallback((contactId: string) => {
+    // `setSelectedContact`/`markAsRead` vivem no efeito acima: não duplicar aqui.
     setSelectedContactId(contactId);
-    setSelectedContact(contactId);
-    void markAsRead(contactId);
-  }, [setSelectedContactId, setSelectedContact, markAsRead]);
+  }, [setSelectedContactId]);
 
   const handleNotificationView = useCallback(() => {
     if (newMessageNotification) {
@@ -154,6 +249,13 @@ export function useRealtimeInbox() {
   const handleSendMessage = useCallback(async (content: string, replyToId?: string | null) => {
     if (!selectedContactId) return;
     const currentId = selectedContactId;
+    // PK-21: o caminho de envio NÃO refaz o fetch da lista de conversas nem o da
+    // conversa aberta. Os dois já são atualizados pelo Realtime — o INSERT da
+    // mensagem enfileirada é tratado por `useRealtimeMessages` (lista) e por
+    // `useMessages` (conversa aberta) na inscrição `global-messages-realtime` —, e
+    // o par de refetches dentro do envio era o que segurava o compositor depois do
+    // despacho, obrigando o agente a esperar uma ida ao servidor que o Realtime já
+    // cobria.
     try {
       await sendMessage(currentId, content, 'text', undefined, undefined, replyToId);
     } catch (err) {
@@ -162,15 +264,7 @@ export function useRealtimeInbox() {
       // chegar até ele para que não limpe o editor nem anuncie sucesso falso.
       throw err;
     }
-
-    try {
-      await refreshActiveConversation();
-    } catch (err) {
-      // O transporte já confirmou o envio. Falha de refresh não deve sugerir
-      // ao agente que reenvie a mesma mensagem e gere duplicidade.
-      log.warn('Message sent, but conversation refresh failed:', err);
-    }
-  }, [selectedContactId, sendMessage, refreshActiveConversation]);
+  }, [selectedContactId, sendMessage]);
 
    // R2-INB-022 (mantido) + R2-INB-058: o elo de baixo da cadeia do áudio precisa SINALIZAR a
    // falha ao chamador. `handleSendAudio` REJEITA quando não há contato selecionado e quando
@@ -178,13 +272,48 @@ export function useRealtimeInbox() {
    // refresh da conversa caia), e resolve `true` no sucesso — o valor que o `ChatPanel` lê para
    // fechar o gravador. Antes ela resolvia `false`/saía em silêncio, então quem está acima não
    // distinguia "áudio enviado" de "áudio descartado".
-   // Sem toast aqui: o aviso ao usuário é da camada de cima (`useChatPanelHandlers.handleAudioSend`
-   // / TextToAudioButton); duplicar faria o mesmo erro aparecer duas vezes.
+   // Sem toast para falha de TRANSPORTE: o aviso ao usuário é da camada de cima
+   // (`useChatPanelHandlers.handleAudioSend` / TextToAudioButton); duplicar faria o mesmo
+   // erro aparecer duas vezes.
+   // EXCEÇÃO (PE-24): áudio fora dos limites do WhatsApp é recusado AQUI, antes do upload,
+   // e o motivo é avisado aqui — esta é a camada que conhece a mensagem exata da validação
+   // (a de cima só tem um texto genérico). A gravação não sobe para o bucket.
    const handleSendAudio = useCallback(async (blob: Blob): Promise<boolean> => {
      if (!selectedContactId) throw new Error('Selecione uma conversa primeiro');
+     const contactId = selectedContactId;
+     const ptt = await validatePttBlob(blob);
+     if (!ptt.ok) {
+       const motivo = ptt.message ?? 'Áudio inválido.';
+       toast({ title: 'Áudio não enviado', description: motivo, variant: 'destructive' });
+       throw new Error(motivo);
+     }
      try {
-       const audioObjectUrl = await ChatService.uploadAudio(selectedContactId, blob);
-       await sendMessage(selectedContactId, '[Áudio]', 'audio', audioObjectUrl);
+       // Idempotência POR GRAVAÇÃO: a resposta de um despacho pode se perder
+       // depois de o POST já ter saído. Sem estado, a retentativa subia um
+       // arquivo novo (nome com `Date.now()`) e mandava outro
+       // `client_message_id` — duas notas de voz no WhatsApp do cliente. Aqui a
+       // MESMA gravação reenvia o objeto já subido e o mesmo id de entrega, e o
+       // `UNIQUE (contact_id, client_message_id)` do servidor deduplica.
+       const pendente = pendingAudioSendRef.current;
+       const mesmaGravacao = pendente && pendente.blob === blob && pendente.contactId === contactId;
+       if (!mesmaGravacao) {
+         // Outra gravação (ou outra conversa): a anterior não é mais retentável.
+         pendingAudioSendRef.current = null;
+       }
+       let envio = mesmaGravacao ? pendente : null;
+       if (!envio) {
+         const audioObjectUrl = await ChatService.uploadAudio(contactId, blob);
+         envio = {
+           blob,
+           contactId,
+           publicUrl: audioObjectUrl,
+           clientMessageId: criarIdDeEnvioDeAudio(),
+         };
+         pendingAudioSendRef.current = envio;
+       }
+       await sendMessage(contactId, '[Áudio]', 'audio', envio.publicUrl, undefined, null, envio.clientMessageId);
+       // Aceita: a gravação deixa de ser retentável — um áudio novo é ação nova.
+       pendingAudioSendRef.current = null;
        return true;
      } catch (err) {
        log.error('Error in handleSendAudio:', err);
@@ -199,6 +328,12 @@ export function useRealtimeInbox() {
        }
      }
    }, [selectedContactId, sendMessage, refreshActiveConversation]);
+
+  // Descarte explícito do estado de retentativa (o usuário cancelou a gravação):
+  // a próxima tentativa com o MESMO blob volta a subir e a gerar id novo.
+  const discardPendingAudioSend = useCallback(() => {
+    pendingAudioSendRef.current = null;
+  }, []);
 
   // Convert to legacy format using specialized adapter
   const legacyConversation: Conversation | null = useMemo(() => 
@@ -258,6 +393,8 @@ export function useRealtimeInbox() {
      loading, error,
      selectedMessagesLoading,
      selectedMessagesError,
+     selectedContactFallbackStatus,
+     selectedContactFallbackError,
      refetchSelectedMessages,
      hasOlderMessages: !USE_EXTERNAL_DB && localMsgs.hasOlder,
      loadingOlderMessages: !USE_EXTERNAL_DB && localMsgs.loadingOlder,
@@ -268,6 +405,7 @@ export function useRealtimeInbox() {
      handleNotificationView,
      handleSendMessage,
      handleSendAudio,
+     discardPendingAudioSend,
      refetch,
      setSelectedContact,
      markAsRead,

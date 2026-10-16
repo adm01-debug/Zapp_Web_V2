@@ -4,6 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { toast } from 'sonner';
 import type { ReactionGroup } from '@/components/ui/message-reactions';
+import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
+import { queryKeys } from './queryKeys';
 
 interface RawReaction {
   id: string;
@@ -43,7 +45,7 @@ function aggregateReactions(rows: RawReaction[], myProfileId: string | undefined
 export function useTeamMessageReactions(conversationId: string) {
   const { profile } = useAuth();
   const qc = useQueryClient();
-  const qKey = useMemo(() => ['team-reactions', conversationId], [conversationId]);
+  const qKey = useMemo(() => queryKeys.reactions(conversationId), [conversationId]);
 
   const { data: rows = [] } = useQuery<RawReaction[]>({
     queryKey: qKey,
@@ -59,8 +61,16 @@ export function useTeamMessageReactions(conversationId: string) {
   });
 
   useEffect(() => {
+    const revalidar = () => { void qc.invalidateQueries({ queryKey: qKey }); };
+
+    // Nome por conversa + sufixo exclusivo por instância (`uniqueRealtimeTopic`):
+    // `supabase.channel(nome)` DEVOLVE o canal existente quando o nome se repete
+    // e, desde a realtime-js 2.101, um `.on()` em canal já inscrito derruba a
+    // tela. O prefixo `team-reactions-<conversationId>` é o contrato do módulo
+    // (verificado por contratosModulo.test.ts), por isso o sufixo é concatenado.
+    let jaInscrito = false;
     const channel = supabase
-      .channel(`team-reactions-${conversationId}`)
+      .channel(`team-reactions-${conversationId}` + uniqueRealtimeTopic(''))
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .on('postgres_changes' as any, {
           event: '*',
@@ -68,9 +78,16 @@ export function useTeamMessageReactions(conversationId: string) {
           table: 'team_message_reactions',
           filter: `conversation_id=eq.${conversationId}`,
         },
-        () => { void qc.invalidateQueries({ queryKey: qKey }); },
+        revalidar,
       )
-      .subscribe();
+      .subscribe((status) => {
+        // A queda do canal não avisa: o que ficou em memória envelhece. Só na
+        // RE-inscrição (depois da primeira) as reações da conversa corrente
+        // são refeitas.
+        if (status !== 'SUBSCRIBED') return;
+        if (jaInscrito) revalidar();
+        jaInscrito = true;
+      });
     return () => { void supabase.removeChannel(channel); };
   }, [conversationId, qc, qKey]);
 
@@ -84,19 +101,16 @@ export function useTeamMessageReactions(conversationId: string) {
   const toggleMutation = useMutation({
     mutationFn: async ({ messageId, emoji }: { messageId: string; emoji: string }) => {
       if (!profile?.id) throw new Error('Não autenticado');
-      const existing = rows.find(r => r.message_id === messageId && r.emoji === emoji && r.profile_id === profile.id);
-      if (existing) {
-        const { error } = await supabase.from('team_message_reactions').delete().eq('id', existing.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from('team_message_reactions').insert({
-          message_id: messageId,
-          profile_id: profile.id,
-          emoji,
-          conversation_id: conversationId,
-        });
-        if (error) throw error;
-      }
+      // SL-016 (F43): alternar a reação é uma RPC só (`toggle_team_reaction`). O
+      // caminho anterior escrevia direto na tabela (INSERT/DELETE) e a policy de
+      // INSERT era justamente o buraco de reação cross-team fechado em 30/09
+      // (migration 20260930260000): a RPC confere o vínculo com a conversa da
+      // própria mensagem, sem aceitar a conversa como parâmetro do cliente.
+      const { error } = await supabase.rpc('toggle_team_reaction', {
+        p_message_id: messageId,
+        p_emoji: emoji,
+      });
+      if (error) throw error;
     },
     onMutate: async ({ messageId, emoji }) => {
       await qc.cancelQueries({ queryKey: qKey });

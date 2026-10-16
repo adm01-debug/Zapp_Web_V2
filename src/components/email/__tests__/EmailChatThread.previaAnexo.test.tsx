@@ -162,7 +162,7 @@ describe('EmailChatThread — prévia de anexo (R2-COM-002)', () => {
 
     // Abre A e fecha antes de a resposta chegar: a requisição de A fica pendente.
     fireEvent.click(screen.getByText('prévia a.txt'));
-    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Fechar' }));
     await waitFor(() => expect(screen.queryByText('a.txt')).toBeNull());
 
     fireEvent.click(screen.getByText('prévia b.txt'));

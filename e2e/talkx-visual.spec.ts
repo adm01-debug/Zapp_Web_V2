@@ -174,6 +174,39 @@ test.describe('contrato de crescimento das fixtures (X003)', () => {
   });
 });
 
+test.describe('acessibilidade por teclado da Ajuda do Talk X', () => {
+  test('Esc fecha a Ajuda e devolve o foco ao gatilho (tela 16)', async ({ page }) => {
+    await mockTalkXVisual(page, fixtureDaTela('01')!);
+    await page.goto('/?view=talkx&tab=overview');
+
+    const ajuda = page.getByRole('button', { name: 'Ajuda' });
+    await expect(ajuda).toBeVisible({ timeout: 30_000 });
+    await ajuda.focus();
+    await ajuda.press('Enter');
+    await expect(page.getByRole('heading', { name: 'Ajuda do Talk X' })).toBeVisible();
+
+    await page.keyboard.press('Escape');
+
+    await expect(page.getByRole('heading', { name: 'Ajuda do Talk X' })).toBeHidden();
+    await expect(page.getByRole('button', { name: 'Ajuda' })).toBeFocused();
+  });
+
+  test('Enter e Espaço acionam controles sem mouse (tela 01)', async ({ page }) => {
+    await mockTalkXVisual(page, fixtureDaTela('01')!);
+    await page.goto('/?view=talkx&tab=overview');
+    await expect(page.getByRole('button', { name: 'Ajuda' })).toBeVisible({ timeout: 30_000 });
+
+    for (const key of ['Enter', 'Space'] as const) {
+      const ajuda = page.getByRole('button', { name: 'Ajuda' });
+      await ajuda.focus();
+      await ajuda.press(key);
+      await expect(page.getByRole('heading', { name: 'Ajuda do Talk X' })).toBeVisible();
+      await page.keyboard.press('Escape');
+      await expect(page.getByRole('button', { name: 'Ajuda' })).toBeFocused();
+    }
+  });
+});
+
 // ---------------------------------------------------------------------------
 // Coerência das fixtures da régua, por REGRA — não por olho.
 //

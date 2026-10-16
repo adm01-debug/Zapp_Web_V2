@@ -79,7 +79,7 @@ updatePrivacySettings→/user/privacy · findLabels→/label/list · handleLabel
 set-webhook→/instance/connect(webhookUrl) [NOVO pela doc]
 
 ### Sem equivalente GO (→ 501 not_supported gracioso)
-/instance/setPresence · /settings/set+find · /webhook/find · /chat/findChats ·
+/instance/setPresence · /webhook/find · /chat/findChats ·
 /chat/findMessages · /chat/markMessageAsUnread · /message/sendPtv ·
 /message/sendTemplate · /group/inviteInfo · /group/revokeInviteCode ·
 /group/toggleEphemeral · find-status-messages (EVENT_IGNORE_STATUS=true) ·
@@ -90,7 +90,12 @@ kafka · nats · pusher · template · business · evoai · n8n · proxy(set) ·
 /chat/mute,unmute,pin,unpin · /message/markplayed · /message/status ·
 /send/carousel · /send/link · /send/status/media · /community/* · /newsletter/* ·
 /user/blocklist,unblock · /label/edit,message,unlabel · /instance/pair,logs,
-forcereconnect,advanced-settings · /polls/{id}/results
+forcereconnect,advanced-settings(←action get-settings/set-settings) · /polls/{id}/results
+
+> `get-settings`/`set-settings` no flavor go usam `/instance/advanced-settings`
+> (GET/POST, token DA conexão). O contrato campo-a-campo não está documentado no
+> swagger público do GO — a leitura é fail-closed (2xx sem campo conhecido vira
+> erro, nunca objeto vazio). Ver `evolution-api/index.ts` §2 Settings.
 
 ## Auth GO
 Header `apikey`: admin = GLOBAL_API_KEY · instância = token da instância

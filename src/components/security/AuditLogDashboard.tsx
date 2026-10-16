@@ -55,6 +55,8 @@ const ACTION_COLORS: Record<string, string> = {
   role_change: 'bg-accent/10 text-accent-foreground',
 };
 
+const LOGS_PAGE_LIMIT = 200;
+
 const ACTION_ICONS: Record<string, typeof Shield> = {
   login: User,
   logout: User,
@@ -74,14 +76,16 @@ export function AuditLogDashboard() {
   const [actionFilter, setActionFilter] = useState<string>('all');
   const [entityFilter, setEntityFilter] = useState<string>('all');
   const [stats, setStats] = useState({ total: 0, today: 0, suspicious: 0, uniqueUsers: 0 });
+  const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
+  const [truncated, setTruncated] = useState(false);
 
   const fetchLogs = useCallback(async () => {
     setLoading(true);
     let query = supabase
       .from('audit_logs')
-      .select('*')
+      .select('id, action, entity_type, user_id, details, ip_address, created_at')
       .order('created_at', { ascending: false })
-      .limit(200);
+      .limit(LOGS_PAGE_LIMIT);
 
     if (actionFilter === ROLE_FILTER_VALUE) {
       query = query.like('action', ROLE_ACTION_PREFIX + '%');
@@ -95,6 +99,9 @@ export function AuditLogDashboard() {
     const { data, error } = await query;
     if (!error && data) {
       setLogs(data as AuditLog[]);
+      // A consulta corta em LOGS_PAGE_LIMIT: com a página cheia o número exibido
+      // é "os N mais recentes", não o total — o aviso na tela deixa isso claro.
+      setTruncated(data.length >= LOGS_PAGE_LIMIT);
       
       const today = localDayKey(new Date());
       const todayLogs = data.filter(l => localDayKey(l.created_at) === today);
@@ -146,7 +153,7 @@ export function AuditLogDashboard() {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total de Logs', value: stats.total, icon: FileText, color: 'text-primary' },
+          { label: truncated ? 'Últimos 200' : 'Total de Logs', value: stats.total, icon: FileText, color: 'text-primary' },
           { label: 'Hoje', value: stats.today, icon: Calendar, color: 'text-success' },
           { label: 'Ações Sensíveis', value: stats.suspicious, icon: AlertTriangle, color: 'text-destructive' },
           { label: 'Usuários Únicos', value: stats.uniqueUsers, icon: User, color: 'text-info' },
@@ -225,6 +232,11 @@ export function AuditLogDashboard() {
             <FileText className="w-5 h-5" />
             Logs de Auditoria ({filteredLogs.length})
           </CardTitle>
+          {truncated && (
+            <p className="text-xs text-warning mt-1">
+              Exibindo os 200 registros mais recentes — pode haver registros mais antigos fora do recorte.
+            </p>
+          )}
         </CardHeader>
         <CardContent>
           <ScrollArea className="h-[500px]">
@@ -245,37 +257,49 @@ export function AuditLogDashboard() {
                       key={log.id}
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
-                      className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+                      className="rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
                     >
-                      <div className={`p-2 rounded-lg ${getActionColor(log.action)}`}>
-                        <Icon className="w-4 h-4" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-sm">{log.action}</span>
-                          {log.entity_type && (
-                            <Badge variant="outline" className="text-xs">
-                              {log.entity_type}
-                            </Badge>
-                          )}
+                      <div className="flex items-center gap-3 p-3">
+                        <div className={`p-2 rounded-lg ${getActionColor(log.action)}`}>
+                          <Icon className="w-4 h-4" />
                         </div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                          <span>{format(new Date(log.created_at), "dd/MM/yyyy HH:mm:ss", { locale: ptBR })}</span>
-                          {log.ip_address && (
-                            <>
-                              <span>•</span>
-                              <span className="flex items-center gap-1">
-                                <Globe className="w-3 h-3" />
-                                {log.ip_address}
-                              </span>
-                            </>
-                          )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-sm">{log.action}</span>
+                            {log.entity_type && (
+                              <Badge variant="outline" className="text-xs">
+                                {log.entity_type}
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                            <span>{format(new Date(log.created_at), "dd/MM/yyyy HH:mm:ss", { locale: ptBR })}</span>
+                            {log.ip_address && (
+                              <>
+                                <span>•</span>
+                                <span className="flex items-center gap-1">
+                                  <Globe className="w-3 h-3" />
+                                  {log.ip_address}
+                                </span>
+                              </>
+                            )}
+                          </div>
                         </div>
+                        {log.details && (
+                          <button
+                            type="button"
+                            onClick={() => setExpandedLogId((prev) => (prev === log.id ? null : log.id))}
+                            aria-expanded={expandedLogId === log.id}
+                            className="shrink-0 rounded-md border border-border bg-secondary/50 px-2 py-0.5 text-xs font-medium text-secondary-foreground transition-colors hover:bg-secondary/70"
+                          >
+                            {expandedLogId === log.id ? '−detalhes' : '+detalhes'}
+                          </button>
+                        )}
                       </div>
-                      {log.details && (
-                        <Badge variant="secondary" className="text-xs shrink-0">
-                          +detalhes
-                        </Badge>
+                      {expandedLogId === log.id && log.details && (
+                        <pre className="mx-3 mb-3 max-h-48 overflow-auto rounded-md bg-background/60 p-2 text-xs text-foreground/80">
+                          {JSON.stringify(log.details, null, 2)}
+                        </pre>
                       )}
                     </motion.div>
                   );

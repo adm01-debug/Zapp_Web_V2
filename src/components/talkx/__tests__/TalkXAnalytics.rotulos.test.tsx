@@ -35,6 +35,27 @@ vi.mock('@/hooks/auth/useAuth', () => ({
   useAuth: () => ({ profile: { id: 'user-1' }, user: { id: 'user-1' }, session: null, loading: false }),
 }));
 
+// X185: o card "Comparativo de Campanhas" saiu; quem responde pelo comparativo no
+// rail é o de PERÍODOS, alimentado pela RPC. Aqui ele recebe dados para o rótulo de
+// cada linha poder ser conferido contra a métrica devolvida.
+vi.mock('@/hooks/crm/useCRMAdminAccess', () => ({ useCRMAdminAccess: () => false }));
+vi.mock('@/hooks/team-chat/useActiveDepartments', () => ({ useActiveDepartments: () => ({ data: [] }) }));
+vi.mock('@/hooks/integrations/useTalkXAnalytics', async (orig) => {
+  const actual = await orig<typeof import('@/hooks/integrations/useTalkXAnalytics')>();
+  return {
+    ...actual,
+    useTalkXAnalytics: () => ({
+      data: {
+        current: { campaigns_sent: 3, reply_rate_pct: 13.3, revenue: null },
+        previous: { campaigns_sent: 2, reply_rate_pct: 10, revenue: null },
+        active: 0,
+        daily: [],
+      },
+      isPending: false,
+    }),
+  };
+});
+
 import { TalkXAnalytics } from '../TalkXAnalytics';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 
@@ -59,12 +80,20 @@ const campaigns = [
 ] as unknown as TalkXCampaign[];
 
 describe('rótulos do Analytics (R2-MOD-037)', () => {
-  it('comparativo rotula a série como taxa de envio, não de entrega', () => {
+  it('o comparativo de períodos rotula cada linha pela métrica da RPC', () => {
     wrap(<TalkXAnalytics campaigns={campaigns} />);
-    const section = screen.getByText('Comparativo de Campanhas').closest('section');
-    expect(section).toBeTruthy();
-    expect(within(section as HTMLElement).getByText('Taxa de envio')).toBeTruthy();
-    expect(within(section as HTMLElement).queryByText('Taxa de entrega')).toBeNull();
+    const section = screen.getByTestId('comparativo-periodos');
+    // Cada linha diz de que número fala e o valor bate com o campo devolvido.
+    expect(within(section).getByText('Campanhas enviadas')).toBeTruthy();
+    expect(within(section).getByText('Taxa de resposta')).toBeTruthy();
+    expect(within(section).getByText('13,3%')).toBeTruthy();
+    expect(within(section).getByText('+3,3 p.p.')).toBeTruthy();
+    expect(within(section).getByText('+50%')).toBeTruthy();
+    // A série antiga (envio × falha por campanha) saiu da tela: nenhum rótulo de
+    // taxa de envio/entrega sobrou no comparativo.
+    expect(within(section).queryByText('Taxa de envio')).toBeNull();
+    expect(within(section).queryByText('Taxa de entrega')).toBeNull();
+    expect(screen.queryByText('Comparativo de Campanhas')).toBeNull();
   });
 
   it('card de horário fala de volume de envios e não promete abertura', async () => {

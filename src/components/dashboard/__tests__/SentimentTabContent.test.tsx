@@ -38,6 +38,11 @@ describe('SentimentTabContent — zero e ausência (IA-023)', () => {
       expect(screen.getByText('45%')).toBeInTheDocument();
       expect(screen.queryByText('Crítico')).toBeNull();
     });
+
+    it('vazio verdadeiro mostra "Sem alertas no período"', () => {
+      render(<AlertsTab alerts={[]} />);
+      expect(screen.getByText('Sem alertas no período')).toBeInTheDocument();
+    });
   });
 
   describe('DistributionTab', () => {

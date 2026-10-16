@@ -128,12 +128,15 @@ export function UniversityHelp({ contactId, contactName, messages, onSelectSugge
         {loading ? (<><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Gerando resposta...</>) :
           (<><Sparkles className="w-3.5 h-3.5 mr-1.5" />Gerar resposta ({selectedIds.size} {selectedIds.size === 1 ? 'msg' : 'msgs'})</>)}
       </Button>
+      {/* Anuncia o estado de geração para leitores de tela sem depender do
+          rótulo do botão (que muda enquanto a resposta é gerada). */}
+      <p role="status" aria-live="polite" className="sr-only">{loading ? 'Gerando resposta...' : ''}</p>
       {selectedIds.size > 0 && !loading && !response && (
         <p className="text-[9px] text-muted-foreground text-center">⌘/Ctrl + Enter para gerar rapidamente</p>
       )}
 
       {error && !response && (
-        <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}
+        <motion.div role="alert" initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}
           className="flex items-start gap-2 p-3 rounded-xl bg-destructive/10 border border-destructive/20">
           <AlertTriangle className="w-4 h-4 text-destructive shrink-0 mt-0.5" />
           <div className="min-w-0 flex-1">

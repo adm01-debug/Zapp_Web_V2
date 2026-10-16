@@ -23,6 +23,10 @@
  */
 
 import { errorResponse, getClientIP } from "./validation.ts";
+import {
+  scheduleRateLimitDenial,
+  type RateLimitLogWriter,
+} from "./rate-limit-log.ts";
 
 /**
  * Cabeçalhos confiáveis que podem carregar o país do chamador, em ordem de
@@ -97,6 +101,12 @@ export interface NetworkPolicyOptions {
   rpc: NetworkPolicyRpcClient;
   defaultMaxRequests: number;
   defaultWindowSeconds: number;
+  /**
+   * Escritor opcional de `rate_limit_logs` para uma negação (403). Quando
+   * ausente, nada é gravado — o chamador (`requireAuth`) injeta o escritor
+   * service_role; testes injetam um fake. É disparado fire-and-forget.
+   */
+  recordDenial?: RateLimitLogWriter;
 }
 
 /**
@@ -169,6 +179,19 @@ export async function resolveNetworkPolicy(
     // Qualquer outra grafia cai na categoria genérica — nunca vaza regra/lista.
     const reason: "ip_blocked" | "country_blocked" =
       row.reason === "ip_blocked" ? "ip_blocked" : "country_blocked";
+    // Registro best-effort da negação (fire-and-forget). Só entra a categoria
+    // server-side; o corpo ao cliente continua genérico. `request_count` fica 1
+    // (a negação é por política, não por contagem de janela).
+    if (opts.recordDenial) {
+      scheduleRateLimitDenial(opts.recordDenial, {
+        ip,
+        endpoint,
+        country: countryCode,
+        userAgent: req.headers.get("user-agent"),
+        requestCount: 1,
+        blocked: true,
+      });
+    }
     return { allowed: false, status: 403, reason };
   } catch {
     return { allowed: false, status: 503 };

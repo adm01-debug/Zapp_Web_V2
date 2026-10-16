@@ -50,6 +50,17 @@
 .high-contrast * { font-weight: calc(var(--font-weight, 400) + 100); }
 .high-contrast button, .high-contrast a, .high-contrast [role="button"] { text-decoration: underline; text-underline-offset: 2px; }
 
+/* Y18-7 / A11Y-CONFIG_ADMIN_SHELL-09 — o chip de status ATIVO (`.status-chip-active`) pinta
+   `bg-accent` (fundo) com `text-foreground` (texto). No alto contraste CLARO o acento vira o
+   violeta solido `--accent` (258 100% 45%) e o `--foreground` e preto: 2,40:1, abaixo do piso
+   AA de 4,5:1 para texto pequeno — e o unico ponto em que o modo de acessibilidade PIORA o
+   contraste. O par de TEXTO do proprio acento (`--accent-foreground`, branco no claro) fecha
+   8,77:1. So o CLARO precisa da troca: no alto contraste ESCURO o `text-foreground` ja e
+   branco (4,71:1) e o `--accent-foreground` de la e preto (4,45:1) — dai o `:not(.dark)`. */
+.high-contrast:not(.dark) .status-chip-active {
+  color: hsl(var(--accent-foreground));
+}
+
 :root { --contrast-multiplier: 1; }
 .high-contrast { filter: contrast(var(--contrast-multiplier)); }
 

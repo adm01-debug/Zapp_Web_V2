@@ -37,6 +37,7 @@ vi.mock('@tanstack/react-query', () => ({
 }));
 
 import { useDepartmentProfiles, type DepartmentProfile } from '@/hooks/team-chat/useDepartmentManagement';
+import { queryKeys } from '@/hooks/team-chat/queryKeys';
 
 // Linhas fora de ordem alfabética: provam que a ordenação é do cliente.
 const ROWS: RpcRow[] = [
@@ -77,7 +78,7 @@ describe('useDepartmentProfiles — leitura via RPC get_team_profiles', () => {
   });
 
   it('mantém a queryKey que as mutações de membros invalidam', () => {
-    expect(useCapturedQuery().queryKey).toEqual(['departmentChat', 'profiles']);
+    expect(useCapturedQuery().queryKey).toEqual(queryKeys.departments.members());
   });
 
   it('entrega DepartmentProfile com is_active e department_id, ordenado por nome no cliente', async () => {

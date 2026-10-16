@@ -41,6 +41,12 @@ function query() {
 
 /** Abre o assistente (FAB) e devolve o `onAction` que a ponte ligou no overlay. */
 async function openVoiceAssistant(onNavigate: (view: string) => void) {
+  // O overlay é `lazy(() => import(...))`: pré-carregamos o módulo aqui para que a
+  // resolução do chunk dinâmico fique FORA do `waitFor` abaixo. Sem isto, sob carga
+  // a transformação/resolução do chunk pode estourar o tempo do `waitFor` e o teste
+  // falha com "onAction indefinido" mesmo com a ponte correta — é a corrida que o
+  // setup global (`asyncUtilTimeout`) já documenta. Nenhuma asserção é alterada.
+  await import('@/components/voice/VoiceSearchOverlayConnected');
   render(
     <TooltipProvider>
       <BrowserRouter>

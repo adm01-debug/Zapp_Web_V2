@@ -206,19 +206,26 @@ export function useRealtimeMessages() {
     void Promise.resolve().then(fetchConversations);
   }, [fetchConversations]);
 
+  // Revalidacao de rede: uma queda nao avisa o hook, entao a lista em memoria pode
+  // ter envelhecido. fetchConversations preserva os eventos ao vivo recebidos
+  // durante o request (liveRevisionRef), entao revalidar nao perde o que chegou
+  // depois. Os dois canais compartilham o callback: o limite por identidade em
+  // useSupabaseRealtime colapsa os dois gatilhos em uma unica busca.
   useSupabaseRealtime<RealtimeMessage>({
     channelName: 'global-messages-realtime',
     table: 'messages',
     onInsert: handleNewMessage,
     onUpdate: handleMessageUpdate,
-    enabled: true
+    enabled: true,
+    onReconnect: fetchConversations,
   });
 
   useSupabaseRealtime<ConversationContact>({
     channelName: 'global-contacts-realtime',
     table: 'contacts',
     onUpdate: handleContactUpdate,
-    enabled: true
+    enabled: true,
+    onReconnect: fetchConversations,
   });
 
   // Ouve atualizações de conversation_status disparadas por CloseConversationDialog
@@ -239,8 +246,8 @@ export function useRealtimeMessages() {
     return () => window.removeEventListener('zapp:contact-status-changed', handler);
   }, [commitConversations]);
 
-  const sendMessage = async (contactId: string, content: string, messageType: string = 'text', mediaUrl?: string, mediaPayload?: string, replyToId?: string | null) => {
-    return sendMessageToContact(contactId, content, messageType, mediaUrl, mediaPayload, replyToId);
+  const sendMessage = async (contactId: string, content: string, messageType: string = 'text', mediaUrl?: string, mediaPayload?: string, replyToId?: string | null, clientMessageId?: string) => {
+    return sendMessageToContact(contactId, content, messageType, mediaUrl, mediaPayload, replyToId, clientMessageId);
   };
 
   const markAsRead = async (contactId: string) => {
@@ -256,7 +263,14 @@ export function useRealtimeMessages() {
         )
       );
     } catch (err) {
+      // Falha silenciosa é mentira: o contador local continuava marcando não lidas
+      // e o operador não sabia que a leitura não foi registrada no banco. O estado
+      // só é comitado no sucesso (linha acima), então nada aqui precisa reverter —
+      // o contador segue com o valor REAL da conversa.
       log.error('Error in markAsRead hook:', err);
+      void import('sonner').then(({ toast }) => {
+        toast.error('Não foi possível marcar a conversa como lida');
+      });
     }
   };
 

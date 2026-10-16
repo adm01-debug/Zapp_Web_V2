@@ -5,8 +5,9 @@
  * foto) em UMA consulta em lote (`.in('id', ids)`) — nunca uma por cartao. A chave do
  * react-query e o conjunto ORDENADO e sem repeticao de ids, entao a mesma tela nao gera
  * consulta nova e a lista que cresce so pede os ids que ainda faltam (o cache das chaves
- * anteriores e reaproveitado). Erro/RLS negado devolve mapa vazio, sem excecao: a
- * identidade do remetente cai nas iniciais em vez de derrubar a galeria.
+ * anteriores e reaproveitado). Erro/RLS negado devolve mapa vazio e marca `isError`: a
+ * identidade do remetente cai nas iniciais em vez de derrubar a galeria, e a tela ainda
+ * distingue "sem perfil" de "falhou".
  */
 import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -48,26 +49,27 @@ function knownProfiles(queryClient: QueryClient): SenderProfileMap {
 }
 
 /**
- * Uma consulta para os ids que faltam; os ja cacheados vem do react-query sem ir ao banco.
- * Exportada para teste direto do lote/cache.
+ * Núcleo do lote: consulta os ids que faltam e devolve o mapa junto do erro (se houver).
+ * Exportada para teste direto do lote/cache. NÃO lança — quem decide entre lançar (hook,
+ * para a UI ver `isError`) e devolver mapa vazio (Journey, que cai no "Atendente") é o
+ * chamador.
  */
-export async function fetchSenderProfiles(
+export async function loadSenderProfiles(
   queryClient: QueryClient,
   ids: readonly string[],
-): Promise<SenderProfileMap> {
+): Promise<{ profiles: SenderProfileMap; error: unknown | null }> {
   const wanted = normalizeSenderIds(ids);
-  if (wanted.length === 0) return {};
+  if (wanted.length === 0) return { profiles: {}, error: null };
 
   const known = knownProfiles(queryClient);
   const missing = wanted.filter((id) => !known[id]);
-  if (missing.length === 0) return known;
+  if (missing.length === 0) return { profiles: known, error: null };
 
   const { data, error } = await supabase
     .from('profiles')
     .select(PROFILE_COLUMNS)
     .in('id', missing);
-  // RLS negado ou falha de rede: mapa vazio, sem excecao (a UI usa as iniciais).
-  if (error) return {};
+  if (error) return { profiles: {}, error };
 
   const map: SenderProfileMap = { ...known };
   for (const row of data ?? []) {
@@ -79,7 +81,26 @@ export async function fetchSenderProfiles(
       avatar_url: row.avatar_url ?? null,
     };
   }
-  return map;
+  return { profiles: map, error: null };
+}
+
+/**
+ * Uma consulta para os ids que faltam; os ja cacheados vem do react-query sem ir ao banco.
+ * RLS negado ou falha de rede: loga e devolve mapa vazio, sem excecao (a UI usa as
+ * iniciais) — contrato consumido pelo Journey (`useJourneyActors`). O hook
+ * `useMediaSenderProfiles` usa `loadSenderProfiles` e LANÇA no erro, para a UI distinguir
+ * "sem perfil" de "falhou".
+ */
+export async function fetchSenderProfiles(
+  queryClient: QueryClient,
+  ids: readonly string[],
+): Promise<SenderProfileMap> {
+  const { profiles, error } = await loadSenderProfiles(queryClient, ids);
+  if (error) {
+    console.error('[useMediaSenderProfiles] falha ao carregar os perfis dos remetentes', error);
+    return {};
+  }
+  return profiles;
 }
 
 export interface MediaSenderProfilesState {
@@ -87,6 +108,8 @@ export interface MediaSenderProfilesState {
   profiles: SenderProfileMap;
   /** Ha consulta em voo (com ids para buscar). */
   isLoading: boolean;
+  /** A consulta falhou (rede/RLS): a UI distingue "sem perfil" de "falhou". */
+  isError: boolean;
 }
 
 /** Referencia estavel para o estado sem perfis (nao recria o objeto a cada render). */
@@ -100,7 +123,16 @@ export function useMediaSenderProfiles(
 
   const query = useQuery({
     queryKey: mediaSenderProfilesKey(ids),
-    queryFn: () => fetchSenderProfiles(queryClient, ids),
+    queryFn: async () => {
+      const { profiles, error } = await loadSenderProfiles(queryClient, ids);
+      if (error) {
+        console.error('[useMediaSenderProfiles] falha ao carregar os perfis dos remetentes', error);
+        throw error instanceof Error
+          ? error
+          : new Error('Falha ao carregar os perfis dos remetentes');
+      }
+      return profiles;
+    },
     enabled: ids.length > 0,
     staleTime: 5 * 60 * 1000,
   });
@@ -108,6 +140,7 @@ export function useMediaSenderProfiles(
   return {
     profiles: query.data ?? EMPTY_PROFILES,
     isLoading: ids.length > 0 && query.isLoading,
+    isError: query.isError,
   };
 }
 

@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { toast } from '@/hooks/ui/use-toast';
+import { queryKeys } from './queryKeys';
 
 export function useSendTeamMessage() {
   const { profile } = useAuth();
@@ -33,8 +34,8 @@ export function useSendTeamMessage() {
       return data;
     },
     onSuccess: (_, vars) => {
-      queryClient.invalidateQueries({ queryKey: ['team-messages', vars.conversationId] });
-      queryClient.invalidateQueries({ queryKey: ['team-conversations'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.messages(vars.conversationId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inbox() });
     },
     onError: () => { toast({ title: 'Erro ao enviar mensagem', variant: 'destructive' }); },
   });
@@ -49,8 +50,8 @@ export function useDeleteTeamMessage() {
       return { conversationId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['team-messages', data.conversationId] });
-      queryClient.invalidateQueries({ queryKey: ['team-conversations'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.messages(data.conversationId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inbox() });
     },
     onError: () => { toast({ title: 'Erro ao excluir mensagem', variant: 'destructive' }); },
   });
@@ -64,7 +65,7 @@ export function useEditTeamMessage() {
       if (error) throw error;
       return { conversationId };
     },
-    onSuccess: (data) => { queryClient.invalidateQueries({ queryKey: ['team-messages', data.conversationId] }); },
+    onSuccess: (data) => { queryClient.invalidateQueries({ queryKey: queryKeys.messages(data.conversationId) }); },
     onError: () => { toast({ title: 'Erro ao editar mensagem', variant: 'destructive' }); },
   });
 }
@@ -118,7 +119,7 @@ export function useCreateTeamConversation() {
       if (convErr) throw convErr;
       return conv;
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['team-conversations'] }); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: queryKeys.inbox() }); },
     onError: () => { toast({ title: 'Erro ao criar conversa', variant: 'destructive' }); },
   });
 }
@@ -129,14 +130,19 @@ export function useToggleMuteConversation() {
   return useMutation({
     mutationFn: async ({ conversationId, muted }: { conversationId: string; muted: boolean }) => {
       if (!profile) throw new Error('Not authenticated');
-      const { error } = await supabase
-        .from('team_conversation_members')
-        .update({ is_muted: muted })
-        .eq('conversation_id', conversationId)
-        .eq('profile_id', profile.id);
+      // TC-007 + SL-016 (F44): a preferência é escrita pela RPC
+      // `set_team_member_pref`, na MESMA membership que o painel lê
+      // (`team_conversation_members.is_muted`). O UPDATE direto anterior não
+      // distinguia "silenciado" de "0 linhas afetadas": sem membership o RLS
+      // filtrava sem erro e a tela mostrava um mute que não existia no banco. A
+      // RPC levanta `not_member` nesse caso, então o erro aparece.
+      const { error } = await supabase.rpc('set_team_member_pref', {
+        p_conversation_id: conversationId,
+        p_is_muted: muted,
+      });
       if (error) throw error;
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['team-conversations'] }); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: queryKeys.inbox() }); },
     onError: () => { toast({ title: 'Erro ao alterar silenciar', variant: 'destructive' }); },
   });
 }
@@ -153,7 +159,7 @@ export function useRenameConversation() {
       return { conversationId };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['team-conversations'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inbox() });
       toast({ title: 'Grupo renomeado com sucesso' });
     },
     onError: () => { toast({ title: 'Erro ao renomear grupo', variant: 'destructive' }); },
@@ -164,16 +170,20 @@ export function useRemoveConversationMember() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ conversationId, profileId }: { conversationId: string; profileId: string }) => {
-      const { error } = await supabase
+      // A policy tcm_delete_own_or_admin filtra a linha do ultimo owner sem erro:
+      // sem o .select() o DELETE volta 0 linhas e a tela mostrava sucesso (QA5-10).
+      const { data, error } = await supabase
         .from('team_conversation_members')
         .delete()
         .eq('conversation_id', conversationId)
-        .eq('profile_id', profileId);
+        .eq('profile_id', profileId)
+        .select('id');
       if (error) throw error;
+      if (!data || data.length === 0) throw new Error('membership_delete_blocked');
       return { conversationId };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['team-conversations'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inbox() });
       toast({ title: 'Membro removido' });
     },
     onError: () => { toast({ title: 'Erro ao remover membro', variant: 'destructive' }); },
@@ -186,15 +196,19 @@ export function useLeaveConversation() {
   return useMutation({
     mutationFn: async ({ conversationId }: { conversationId: string }) => {
       if (!profile) throw new Error('Not authenticated');
-      const { error } = await supabase
+      // Mesmo motivo do useRemoveConversationMember: o ultimo owner so sai depois
+      // de transferir a propriedade; a RLS barra o DELETE em silencio (QA5-10).
+      const { data, error } = await supabase
         .from('team_conversation_members')
         .delete()
         .eq('conversation_id', conversationId)
-        .eq('profile_id', profile.id);
+        .eq('profile_id', profile.id)
+        .select('id');
       if (error) throw error;
+      if (!data || data.length === 0) throw new Error('membership_delete_blocked');
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['team-conversations'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inbox() });
     },
     onError: () => { toast({ title: 'Erro ao sair do grupo', variant: 'destructive' }); },
   });
@@ -213,10 +227,62 @@ export function useTransferConversation() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['team-conversations'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inbox() });
       toast({ title: 'Propriedade do grupo transferida com sucesso' });
     },
     onError: () => { toast({ title: 'Erro ao transferir grupo', variant: 'destructive' }); },
+  });
+}
+
+/**
+ * Códigos que a RPC `transfer_team_conversation_department` levanta no banco
+ * (migration `20260929400000_team_chat_e45_transfer_conversation_department_rpc`).
+ * Cada um tem a SUA mensagem: erro de permissão e erro de tipo de conversa são
+ * coisas diferentes para quem está na tela — um só texto genérico esconde qual
+ * deles aconteceu.
+ */
+const TRANSFER_DEPARTMENT_ERROR_TOASTS: Record<string, string> = {
+  not_authenticated: 'Sessão expirada. Entre novamente para transferir o departamento',
+  not_authorized: 'Sem permissão para transferir o departamento desta conversa',
+  not_a_department_conversation: 'Esta conversa não é de departamento',
+  conversation_not_found: 'Conversa não encontrada',
+};
+
+const TRANSFER_DEPARTMENT_FALLBACK_TOAST = 'Erro ao transferir o departamento da conversa';
+
+export function useTransferConversationDepartment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      conversationId,
+      toDepartmentId,
+    }: {
+      conversationId: string;
+      toDepartmentId: string;
+    }) => {
+      // Só a RPC muda o departamento: `department_id` não é gravável por DML e
+      // quem autoriza (admin/supervisor + conversa de tipo `department`) é o banco.
+      const { error } = await supabase.rpc('transfer_team_conversation_department', {
+        p_conversation_id: conversationId,
+        p_to_department_id: toDepartmentId,
+      });
+      if (error) throw error;
+      return { conversationId, toDepartmentId };
+    },
+    onSuccess: () => {
+      // `queryKeys.inbox()` é a raiz `['team-conversations']` — o inbox do Team
+      // Chat É a lista de conversas da equipe (fonte única, ver README do módulo),
+      // então uma invalidação cobre as duas.
+      queryClient.invalidateQueries({ queryKey: queryKeys.inbox() });
+      toast({ title: 'Departamento da conversa alterado' });
+    },
+    onError: (error) => {
+      const code = (error as { message?: string } | null)?.message ?? '';
+      toast({
+        title: TRANSFER_DEPARTMENT_ERROR_TOASTS[code] ?? TRANSFER_DEPARTMENT_FALLBACK_TOAST,
+        variant: 'destructive',
+      });
+    },
   });
 }
 
@@ -231,7 +297,7 @@ export function useDeleteConversation() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['team-conversations'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.inbox() });
     },
     onError: () => { toast({ title: 'Erro ao excluir grupo', variant: 'destructive' }); },
   });
