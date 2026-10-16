@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { SentimentTrendCard } from '../overview/SentimentTrendCard';
 
 const mockUseRealSentimentData = vi.fn();
-vi.mock('../SentimentHelpers', () => ({
+vi.mock('@/hooks/dashboard/useSentimentTrend', () => ({
   useRealSentimentData: (...args: unknown[]) => mockUseRealSentimentData(...args),
 }));
 
