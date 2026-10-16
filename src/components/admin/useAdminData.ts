@@ -1,8 +1,34 @@
 import { useState, useCallback, useRef } from 'react';
-import { invokeEdge, supabase } from '@/lib/supabaseHelpers';
+import { supabase, SUPABASE_URL } from '@/integrations/supabase/client';
+import { parseSupabaseStorageObjectUrl } from '@/lib/storage_object_reference';
+import { getLogger } from '@/lib/logger';
 import { toast } from 'sonner';
 import { describeAccessError, isAccessDeniedError } from '@/lib/rlsError';
 import type { AppRole } from '@/hooks/system/useUserRole';
+
+const log = getLogger('useAdminData');
+
+const AVATAR_BUCKET = 'avatars';
+// Mesma validade curta usada no AvatarUpload: o perfil guarda só o caminho e a
+// tela assina a URL sob demanda — o bucket `avatars` deixou de ser público.
+const AVATAR_SIGNED_URL_TTL_SECONDS = 300;
+
+function isStorageUrl(value: string): boolean {
+  return /^https?:\/\//i.test(value);
+}
+
+/** Devolve o caminho durável do objeto a partir de uma URL assinada (ou do próprio caminho).
+ * URL http que não é do bucket `avatars` devolve null: nunca gravamos URL http
+ * em profiles.avatar_url (o bucket é privado e a URL assinada expira). */
+function avatarObjectPath(value: string | null): string | null {
+  if (!value || !isStorageUrl(value)) return value;
+  try {
+    const origin = new URL(SUPABASE_URL).origin;
+    return parseSupabaseStorageObjectUrl(value, [AVATAR_BUCKET], [origin])?.path ?? null;
+  } catch {
+    return null;
+  }
+}
 
 export interface UserWithRole {
   id: string;
@@ -152,7 +178,25 @@ export function useAdminData(activeTab: 'users' | 'audit' | 'crm') {
             role: (userRole?.role || 'agent') as AppRole,
           };
         });
-        setUsers(usersWithRoles);
+        // Bucket privado: o perfil guarda só o caminho; assina para exibir no painel.
+        // Legado: avatar_url pode ser a URL pública completa — normaliza para
+        // caminho antes de assinar, senão a imagem quebra com o bucket privado.
+        const usersWithSignedAvatars = await Promise.all(
+          usersWithRoles.map(async (user) => {
+            if (!user.avatar_url) return user;
+            const objectPath = avatarObjectPath(user.avatar_url);
+            if (!objectPath || isStorageUrl(objectPath)) return user;
+            const { data, error } = await supabase.storage
+              .from(AVATAR_BUCKET)
+              .createSignedUrl(objectPath, AVATAR_SIGNED_URL_TTL_SECONDS);
+            if (error || !data?.signedUrl) {
+              log.warn('avatar_signed_url_error', { error: error?.message ?? 'sem signedUrl' });
+              return user;
+            }
+            return { ...user, avatar_url: data.signedUrl };
+          })
+        );
+        setUsers(usersWithSignedAvatars);
       }
     } else if (activeTab === 'audit') {
       const { data: logs } = await supabase
@@ -231,7 +275,7 @@ export function useAdminData(activeTab: 'users' | 'audit' | 'crm') {
     editingUser: UserWithRole,
     avatarFile: File | null,
   ): Promise<boolean> => {
-    let avatarUrl = editingUser.avatar_url;
+    let avatarUrl = avatarObjectPath(editingUser.avatar_url);
     if (avatarFile) {
       const fileExt = avatarFile.name.split('.').pop();
       const filePath = `${crypto.randomUUID()}.${fileExt}`;
@@ -242,8 +286,8 @@ export function useAdminData(activeTab: 'users' | 'audit' | 'crm') {
         toast.error('Erro ao enviar foto');
         return false;
       }
-      const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(filePath);
-      avatarUrl = urlData.publicUrl;
+      // Guarda o caminho do arquivo (não a URL assinada, que expira)
+      avatarUrl = filePath;
     }
 
     const { error } = await supabase
@@ -307,8 +351,8 @@ export function useAdminData(activeTab: 'users' | 'audit' | 'crm') {
         toast.error('Erro ao fazer upload da foto');
         return false;
       }
-      const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(filePath);
-      avatarUrl = urlData.publicUrl;
+      // Guarda o caminho do arquivo (não a URL assinada, que expira)
+      avatarUrl = filePath;
     }
 
     const body = {
