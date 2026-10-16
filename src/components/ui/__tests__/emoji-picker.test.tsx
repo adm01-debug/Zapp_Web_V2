@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { axe } from 'vitest-axe';
 import { EmojiPicker, QuickReactionPicker } from '@/components/ui/emoji-picker';
 
@@ -72,5 +72,67 @@ describe('EmojiPicker — botão que abre o seletor tem nome acessível', () => 
       rules: { 'color-contrast': { enabled: false } },
     });
     expect(results).toHaveNoViolations();
+  });
+});
+
+// localStorage indisponível (modo privado / cota cheia)
+//
+// O defeito: `handleSelect` entregava o emoji e SÓ DEPOIS escrevia no
+// localStorage SEM try/catch. A exceção subia antes de `setIsOpen(false)` e o
+// picker ficava aberto por baixo do erro. O teste abaixo dispara a exceção de
+// verdade (spy em Storage.prototype.setItem) e exige as DUAS coisas: emoji
+// entregue e picker fechado.
+describe('EmojiPicker — localStorage indisponível', () => {
+  it('entrega o emoji e fecha o picker mesmo quando a escrita no localStorage lança', () => {
+    const setItem = vi
+      .spyOn(Storage.prototype, 'setItem')
+      .mockImplementation(() => {
+        throw new Error('QuotaExceededError');
+      });
+    const entregues: string[] = [];
+    try {
+      render(<EmojiPicker onEmojiSelect={(e) => entregues.push(e)} />);
+
+      fireEvent.click(screen.getByRole('button', { name: 'Inserir emoji' }));
+      fireEvent.click(screen.getByRole('button', { name: '😀' }));
+
+      expect(entregues).toEqual(['😀']);
+      // Fechado = o conteúdo do popover (o campo de busca) sai da tela.
+      expect(screen.queryByPlaceholderText(/Buscar emoji/)).toBeNull();
+    } finally {
+      setItem.mockRestore();
+    }
+  });
+
+  it('monta com recentes vazios quando a leitura do localStorage lança', () => {
+    const getItem = vi
+      .spyOn(Storage.prototype, 'getItem')
+      .mockImplementation(() => {
+        throw new Error('SecurityError');
+      });
+    try {
+      render(<EmojiPicker onEmojiSelect={onSelect} />);
+      fireEvent.click(screen.getByRole('button', { name: 'Inserir emoji' }));
+      // Abre normalmente, sem "Recentes" (a leitura falha virou lista vazia).
+      expect(screen.getByPlaceholderText(/Buscar emoji/)).toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: 'Recentes' }),
+      ).toBeNull();
+    } finally {
+      getItem.mockRestore();
+    }
+  });
+
+  it('as categorias têm nome acessível em pt-BR e marcam a ativa com aria-pressed', () => {
+    render(<EmojiPicker onEmojiSelect={onSelect} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Inserir emoji' }));
+
+    const rostos = screen.getByRole('button', { name: 'Rostos' });
+    expect(rostos.tagName).toBe('BUTTON');
+    expect(rostos).toHaveAttribute('type', 'button');
+    expect(rostos).toHaveAttribute('aria-pressed', 'true');
+
+    const comidas = screen.getByRole('button', { name: 'Comida' });
+    expect(comidas).toHaveAttribute('aria-pressed', 'false');
   });
 });
