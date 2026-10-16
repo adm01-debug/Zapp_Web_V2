@@ -329,7 +329,7 @@ describe('TX-A11Y-1 — nome acessível e papel (TalkX)', () => {
     expect(screen.getByRole('combobox', { name: 'Status' })).toBeTruthy();
   });
 
-  it('linha de regra do segmento: os 3 selects têm nome (Campo, Operador, Valor)', () => {
+  it('linha de regra do segmento: os 3 selects têm nome (Campo da condição, Operador da condição, Valor da condição)', () => {
     render(
       <RuleRow
         rule={{ id: 'r1', field: 'group_category', op: 'eq', value: '' }}
@@ -338,8 +338,8 @@ describe('TX-A11Y-1 — nome acessível e papel (TalkX)', () => {
       />,
     );
 
-    expect(screen.getByRole('combobox', { name: 'Campo' })).toBeTruthy();
-    expect(screen.getByRole('combobox', { name: 'Operador' })).toBeTruthy();
+    expect(screen.getByRole('combobox', { name: 'Campo da condição' })).toBeTruthy();
+    expect(screen.getByRole('combobox', { name: 'Operador da condição' })).toBeTruthy();
     expect(screen.getByRole('combobox', { name: 'Valor da condição' })).toBeTruthy();
   });
 
