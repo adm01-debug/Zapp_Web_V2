@@ -43,6 +43,9 @@ const PINNED_REPLAY_REASONS = new Set([
   'format-only',
   'version-collision',
 ]);
+const SOURCE_ANNOTATION_RE = /^--\s*source:\s*\S/u;
+const FILE_SHA_ANNOTATION_RE = /^--\s*file-sha256:\s*([a-f0-9]{64})/iu;
+const SQL_SHA_ANNOTATION_RE = /^--\s*sql-sha256:\s*([a-f0-9]{64})/iu;
 const LEDGER_QUERY = `
 SELECT json_build_object(
   'version', version,
@@ -183,6 +186,36 @@ function validateException(exc) {
     if (!exc['sql-sha256'] || !SHA256_RE.test(exc['sql-sha256'])) {
       errors.push(`${version}: kind=${kind} exige 'sql-sha256' valido`);
     }
+    if (exc.reason === 'version-collision') {
+      const rel = exc.related_migration;
+      if (
+        !rel
+        || typeof rel !== 'object'
+        || !rel.version
+        || typeof rel.version !== 'string'
+        || !rel.filename
+        || typeof rel.filename !== 'string'
+        || !rel.file_sha256
+        || !SHA256_RE.test(rel.file_sha256)
+      ) {
+        errors.push(
+          `${version}: version-collision exige related_migration completo (version, filename, file_sha256)`,
+        );
+      } else if (rel.version <= version) {
+        errors.push(
+          `${version}: version-collision exige related_migration posterior (encontrado ${rel.version})`,
+        );
+      } else {
+        const rm = rel.filename.match(FILE_NAME_RE);
+        if (!rm || rm[1] !== rel.version) {
+          errors.push(`${version}: nome do related_migration invalido: ${rel.filename}`);
+        } else if (exc.ledger_name && rm[2] !== exc.ledger_name) {
+          errors.push(
+            `${version}: nome do related_migration (${rm[2]}) incompativel com ledger_name (${exc.ledger_name})`,
+          );
+        }
+      }
+    }
   } else {
     errors.push(`${version}: kind desconhecido '${kind}'`);
   }
@@ -241,6 +274,34 @@ function collectLocal(migrationsDir, evidencePath) {
   if (exceptionValidationErrors.length) {
     errors.push('Excecoes invalidas em migration-evidence.json:');
     errors.push(...exceptionValidationErrors.map((e) => `  ${e}`));
+  }
+
+  const filesByVersion = new Map(migrations.map((m) => [m.version, m]));
+  const relatedVersionsUsed = new Map();
+  for (const [excVersion, exc] of exceptionsByVersion) {
+    if (exc.kind !== PINNED_REPLAY_KIND || exc.reason !== 'version-collision') continue;
+    const rel = exc.related_migration;
+    if (!rel?.version || !rel?.filename) continue;
+    const relExc = exceptionsByVersion.get(rel.version);
+    if (relExc?.kind === PINNED_REPLAY_KIND && relExc?.reason === 'version-collision') {
+      errors.push(`${excVersion}: ciclo/cadeia de version-collision via ${rel.version}`);
+      continue;
+    }
+    if (relatedVersionsUsed.has(rel.version)) {
+      errors.push(
+        `${excVersion}: related_migration reutilizada (${rel.version} ja referenciada por ${relatedVersionsUsed.get(rel.version)})`,
+      );
+    } else {
+      relatedVersionsUsed.set(rel.version, excVersion);
+    }
+    const relMigration = filesByVersion.get(rel.version);
+    if (!relMigration) {
+      errors.push(`${excVersion}: related_migration orfa: ${rel.version} nao encontrado em migrations/`);
+      continue;
+    }
+    if (relMigration.fileSha256 !== rel.file_sha256) {
+      errors.push(`${excVersion}: file_sha256 do related_migration divergente para ${rel.version}`);
+    }
   }
 
   return { migrations, errors, exceptionsByVersion };
@@ -340,7 +401,7 @@ function diffStatements(fileStmts, ledgerStmts, version) {
 }
 
 function compareStatements(migration, record, exceptionsByVersion) {
-  const { version, statements: fileStmts, fileSha256 } = migration;
+  const { version, statements: fileStmts, fileSha256, fileName } = migration;
   const { statements: ledgerStmts, name: ledgerName } = record;
   const exc = exceptionsByVersion.get(version);
 
@@ -407,6 +468,49 @@ function compareStatements(migration, record, exceptionsByVersion) {
       return diffStatements(fileStmts, ledgerStmts, version);
     }
     return [];
+  }
+
+  const ledgerHasSourceRef = ledgerStmts.some((s) => SOURCE_ANNOTATION_RE.test(s));
+  if (ledgerHasSourceRef) {
+    const errs = [];
+    const slug = fileName.match(FILE_NAME_RE)?.[2];
+    if (slug && ledgerName && slug !== ledgerName) {
+      errs.push(`${version}: nome divergente (arquivo: ${slug}, ledger: ${ledgerName})`);
+    }
+    if (errs.length > 0) {
+      errs.push(`${version}: fonte divergente`);
+      return errs;
+    }
+    const isAnnotationStmt = (s) =>
+      SOURCE_ANNOTATION_RE.test(s) || FILE_SHA_ANNOTATION_RE.test(s) || SQL_SHA_ANNOTATION_RE.test(s);
+    const realStmts = ledgerStmts.filter((s) => !isAnnotationStmt(s));
+    if (realStmts.length > 0) {
+      const sqlErrs = diffStatements(fileStmts, realStmts, version);
+      if (sqlErrs.length > 0) return [...sqlErrs, `${version}: fonte divergente`];
+      return [];
+    }
+    const fileHashes = ledgerStmts
+      .map((s) => FILE_SHA_ANNOTATION_RE.exec(s)?.[1])
+      .filter(Boolean);
+    const uniqueFileHashes = new Set(fileHashes);
+    if (uniqueFileHashes.size > 1) {
+      return [`${version}: hashes de arquivo conflitantes no ledger`, `${version}: fonte divergente`];
+    }
+    if (fileHashes.length > uniqueFileHashes.size) {
+      return [`${version}: fonte divergente`];
+    }
+    if (fileHashes.length > 0) {
+      if (fileHashes[0] === fileSha256) return [];
+    }
+    const sqlHashes = ledgerStmts
+      .map((s) => SQL_SHA_ANNOTATION_RE.exec(s)?.[1])
+      .filter(Boolean);
+    if (sqlHashes.length > 0) {
+      const fileCanonical = canonicalStatements(fileStmts);
+      const expectedSqlSha = sha256(fileCanonical);
+      if (sqlHashes.some((h) => h === expectedSqlSha)) return [];
+    }
+    return [`${version}: fonte divergente`];
   }
 
   return diffStatements(fileStmts, ledgerStmts, version);
