@@ -403,4 +403,189 @@ describe('sendOutboundMessage', () => {
     const ids = rpc.mock.calls.map(([, args]) => args.p_client_message_id);
     expect(ids).toEqual(['ttl-1', 'ttl-1', 'ttl-2']);
   });
+
+  /**
+   * O "Enviar de novo" do chat (SendErrorBanner) reenvia o MESMO texto do mesmo
+   * contato: a ação é a mesma, logo o id em memória também. Se a linha anterior
+   * terminou em `failed` (falha definitiva), o enqueue devolve ELA de volta e o
+   * `claim` do dispatch só aceita `sending` — o gateway responde 409 e o botão
+   * nunca mais enviava. O reenvio precisa ser mensagem NOVA: id novo, linha nova,
+   * com a falha anterior preservada no histórico.
+   */
+  it('reenvio depois de falha DEFINITIVA vira mensagem nova, com id novo (chat)', async () => {
+    let sequencia = 0;
+    vi.stubGlobal('crypto', { randomUUID: () => `id-novo-${++sequencia}` });
+
+    const falhada = { id: 'e23ca9d2-99a8-45d2-a3fe-df344fb9b2dd', status: 'failed', external_id: null };
+    const nova = { id: 'e23ca9d2-99a8-45d2-a3fe-df344fb9b2ee', status: 'sending', external_id: null };
+    const fila = [falhada];
+    rpc.mockImplementation(async () => ({ data: fila.shift() ?? nova, error: null }));
+    // A linha falhada não pode mais ser reivindicada: o gateway responde 409, que
+    // era exatamente o que prendia o botão "Enviar de novo".
+    invoke.mockImplementation(async (_name: string, options: { body: { messageId: string } }) =>
+      options.body.messageId === falhada.id
+        ? { data: null, error: new Error('Message delivery is already in progress or cannot be sent') }
+        : {
+          data: { messageId: nova.id, status: 'sent', externalId: 'provider-novo', idempotent: false },
+          error: null,
+        });
+
+    const input = { contactId: 'contato-falha-definitiva', content: 'mensagem que falhou de vez' };
+    await expect(sendOutboundMessage(input)).resolves.toMatchObject({
+      id: nova.id, status: 'sent', externalId: 'provider-novo',
+    });
+
+    const ids = rpc.mock.calls.map(([, args]) => args.p_client_message_id);
+    expect(ids).toHaveLength(2);
+    expect(ids[1]).not.toBe(ids[0]);
+    expect(invoke).toHaveBeenCalledTimes(1);
+    expect(invoke).toHaveBeenCalledWith('message-delivery', { body: { messageId: nova.id } });
+  });
+
+  it('resposta perdida do reenvio continua idempotente: a chave da ação passa para o id novo', async () => {
+    let sequencia = 0;
+    vi.stubGlobal('crypto', { randomUUID: () => `id-reenvio-${++sequencia}` });
+
+    const falhada = { id: 'a1b2c3d4-99a8-45d2-a3fe-df344fb9b2dd', status: 'failed', external_id: null };
+    const nova = { id: 'a1b2c3d4-99a8-45d2-a3fe-df344fb9b2ee', status: 'sending', external_id: null };
+    const fila = [falhada];
+    rpc.mockImplementation(async () => ({ data: fila.shift() ?? nova, error: null }));
+    let entregas = 0;
+    invoke.mockImplementation(async (_name: string, options: { body: { messageId: string } }) => {
+      entregas += 1;
+      if (entregas === 1) return { data: null, error: new Error('network timeout') };
+      return {
+        data: { messageId: options.body.messageId, status: 'sent', externalId: 'provider-reenvio', idempotent: true },
+        error: null,
+      };
+    });
+
+    const input = { contactId: 'contato-reenvio-perdido', content: 'reenvio sem resposta' };
+    await expect(sendOutboundMessage(input)).rejects.toThrow('network timeout');
+    await expect(sendOutboundMessage(input)).resolves.toMatchObject({ id: nova.id, idempotent: true });
+
+    const ids = rpc.mock.calls.map(([, args]) => args.p_client_message_id);
+    expect(ids).toHaveLength(3);
+    expect(ids[1]).not.toBe(ids[0]);
+    expect(ids[2]).toBe(ids[1]);
+  });
+
+  it('mensagem estruturada também reenvia com id novo depois de falha definitiva', async () => {
+    let sequencia = 0;
+    vi.stubGlobal('crypto', { randomUUID: () => `id-rich-${++sequencia}` });
+
+    const falhada = { id: 'b1b2c3d4-99a8-45d2-a3fe-df344fb9b2dd', status: 'failed', external_id: null };
+    const nova = { id: 'b1b2c3d4-99a8-45d2-a3fe-df344fb9b2ee', status: 'sending', external_id: null };
+    const fila = [falhada];
+    rpc.mockImplementation(async () => ({ data: fila.shift() ?? nova, error: null }));
+    invoke.mockImplementation(async (_name: string, options: { body: { messageId: string } }) => ({
+      data: { messageId: options.body.messageId, status: 'sent', externalId: 'provider-enquete', idempotent: false },
+      error: null,
+    }));
+
+    await expect(sendRichOutboundMessage({
+      contactId: 'contato-falha-definitiva',
+      displayContent: '📊 *Enquete:* Cor',
+      messageType: 'poll',
+      deliveryPayload: { name: 'Cor', values: ['Azul'], selectableCount: 1 },
+    })).resolves.toMatchObject({ id: nova.id, status: 'sent' });
+
+    expect(rpc.mock.calls.map(([nome]) => nome)).toEqual([
+      'enqueue_rich_outbound_message', 'enqueue_rich_outbound_message',
+    ]);
+    const ids = rpc.mock.calls.map(([, args]) => args.p_client_message_id);
+    expect(ids[1]).not.toBe(ids[0]);
+  });
+
+  // Ponto 1+2 da recusa — o duplo clique concorrente depois de falha definitiva
+  // gerava 2 ids novos (cada chamada girava o seu) e 2 WhatsApps. Quem chega
+  // segundo agora adota o voo do dono: um id novo só e um dispatch só.
+  it('duplo clique concorrente depois de falha definitiva: 1 id novo só e 1 dispatch', async () => {
+    sendThrottle.reset();
+    let sequencia = 0;
+    vi.stubGlobal('crypto', { randomUUID: () => `concorrente-${++sequencia}` });
+    const vistos: string[] = [];
+    rpc.mockImplementation(async (_name: string, args: { p_client_message_id: string }) => {
+      const id = args.p_client_message_id;
+      if (!vistos.includes(id)) vistos.push(id);
+      if (vistos.indexOf(id) === 0) {
+        return { data: { id: `srv-${id}`, status: 'failed', external_id: null }, error: null };
+      }
+      return { data: { id: `srv-${id}`, status: 'sending', external_id: null }, error: null };
+    });
+    invoke.mockImplementation(async (_name: string, options: { body: { messageId: string } }) => ({
+      data: { messageId: options.body.messageId, status: 'sent', externalId: 'provider-concorrente', idempotent: false },
+      error: null,
+    }));
+
+    const input = { contactId: 'contato-concorrente', content: 'duplo enviar de novo' };
+    const [primeiro, segundo] = await Promise.all([sendOutboundMessage(input), sendOutboundMessage(input)]);
+
+    // Um id novo só além do antigo (o segundo não gera o seu).
+    expect(vistos).toEqual(['concorrente-1', 'concorrente-2']);
+    // Um dispatch só, para a linha nova — as duas chamadas resolvem nela.
+    expect(invoke).toHaveBeenCalledTimes(1);
+    expect(invoke).toHaveBeenCalledWith('message-delivery', { body: { messageId: 'srv-concorrente-2' } });
+    expect(primeiro).toMatchObject({ id: 'srv-concorrente-2', status: 'sent' });
+    expect(segundo).toMatchObject({ id: 'srv-concorrente-2', status: 'sent' });
+  });
+
+  // Ponto 4 da recusa — a drenagem offline de um item cuja linha já está
+  // `failed` mantém o comportamento antigo: uma tentativa com o id original,
+  // sem criar mensagem nova sozinha (a rotação offline é de cartão próprio).
+  it('drenagem offline de linha já failed NÃO cria mensagem nova (comportamento antigo)', async () => {
+    await offlineSendQueue.clear();
+    sendThrottle.reset();
+    vi.stubGlobal('crypto', { randomUUID: () => 'off-falha-1' });
+    Object.defineProperty(navigator, 'onLine', { configurable: true, value: false });
+    try {
+      await expect(sendOutboundMessage({ contactId: 'contato-off-falha', content: 'caiu e falhou' }))
+        .resolves.toMatchObject({ id: 'off-falha-1', status: 'pending' });
+    } finally {
+      delete (navigator as unknown as Record<string, unknown>).onLine;
+    }
+
+    rpc.mockClear();
+    invoke.mockClear();
+    rpc.mockResolvedValue({ data: { id: 'srv-off-falha', status: 'failed', external_id: null }, error: null });
+    invoke.mockRejectedValue(new Error('Message delivery is already in progress or cannot be sent'));
+
+    window.dispatchEvent(new Event('online'));
+    await vi.waitFor(() => expect(rpc).toHaveBeenCalled());
+
+    // Uma tentativa só, com o id original: sem rotação, sem linha nova.
+    const ids = rpc.mock.calls.map(([, args]) => args.p_client_message_id);
+    expect(ids).toEqual(['off-falha-1']);
+    // A entrega falhou e o item continua na fila; limpa para os próximos casos.
+    await offlineSendQueue.clear();
+  });
+
+  // Ponto 3 da recusa — o helper devolve o id efetivamente usado e a limpeza
+  // confere a guarda: depois do reenvio com sucesso, o mesmo texto é ação nova
+  // (se a limpeza usasse o id antigo, a chave vazaria e o id do reenvio seria
+  // reaproveitado aqui).
+  it('reenvio com sucesso limpa a chave com o id novo: o próximo texto igual é ação nova', async () => {
+    sendThrottle.reset();
+    let sequencia = 0;
+    vi.stubGlobal('crypto', { randomUUID: () => `guarda-${++sequencia}` });
+    const falhada = { id: 'srv-guarda-falha', status: 'failed', external_id: null };
+    const nova = { id: 'srv-guarda-nova', status: 'sending', external_id: null };
+    const fila = [falhada];
+    rpc.mockImplementation(async () => ({ data: fila.shift() ?? nova, error: null }));
+    invoke.mockImplementation(async (_name: string, options: { body: { messageId: string } }) => ({
+      data: { messageId: options.body.messageId, status: 'sent', externalId: 'provider-guarda', idempotent: false },
+      error: null,
+    }));
+
+    const input = { contactId: 'contato-guarda', content: 'texto repetido' };
+    await expect(sendOutboundMessage(input)).resolves.toMatchObject({ id: nova.id });
+
+    rpc.mockImplementation(async (_name: string, args: { p_client_message_id: string }) => ({
+      data: { id: `srv-${args.p_client_message_id}`, status: 'sending', external_id: null }, error: null,
+    }));
+    await expect(sendOutboundMessage(input)).resolves.toMatchObject({ id: 'srv-guarda-3' });
+
+    const ids = rpc.mock.calls.map(([, args]) => args.p_client_message_id);
+    expect(ids).toEqual(['guarda-1', 'guarda-2', 'guarda-3']);
+  });
 });
