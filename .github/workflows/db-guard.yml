@@ -899,6 +899,14 @@ jobs:
           TEAM_CHAT_RPC_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-chat-rpc-ambiguity.test.sh
 
+      # TC-002 (#55): duas chamadas concorrentes da RPC de conversa direta para o
+      # mesmo par precisam cair no mesmo registro, arbitradas pelo indice unico do par.
+      - name: Simular concorrencia da RPC de conversa direta (TC-002)
+        env:
+          TC002_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/tc002-direct-conversation-race.test.sh
+
       # L11 da matriz IA-004 (IA-004-matriz-autorizacao.md:297): a ACL de ESCRITA de
       # public.departments. O INSERT/UPDATE de NIVEL DE TABELA (privilegio default do schema
       # public) nunca tinha sido revogado -- e um REVOKE por coluna NAO remove grant de tabela,
