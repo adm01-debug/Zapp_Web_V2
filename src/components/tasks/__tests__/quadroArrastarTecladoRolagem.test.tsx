@@ -326,14 +326,17 @@ describe('etapa 097 — teclado do Quadro', () => {
 });
 
 
-describe('etapa 098 — rolagem horizontal', () => {
-  it('o trilho rola com snap e encaixe animado, e a coluna rola por dentro', () => {
+describe('etapa 098 — sombras de borda do trilho', () => {
+  it('o trilho é grade (não rola de lado) e a coluna rola por dentro', () => {
     renderQuadro({ byStatus: { ...VAZIO, backlog: [item({ id: 'b1', status: 'backlog' })] } });
 
+    // Etapa 099: o trilho deixou de ser carrossel — quem distribui a largura é a
+    // grelha (1 faixa na tela estreita, 2/3/5 em md/lg/xl), então não há
+    // `overflow-x-auto` nem snap para rolar de lado.
     const t = trilho()!;
-    expect(t.className).toMatch(/(^|\s)overflow-x-auto(\s|$)/);
-    expect(t.className).toMatch(/(^|\s)snap-x(\s|$)/);
-    expect(t.className).toContain('motion-safe:scroll-smooth');
+    expect(t.className).toMatch(/(^|\s)grid(\s|$)/);
+    expect(t.className).not.toMatch(/(^|\s)overflow-x-auto(\s|$)/);
+    expect(t.className).not.toMatch(/(^|\s)snap-x(\s|$)/);
 
     expect(coluna('backlog')!.querySelector('[class*="overflow-y-auto"]')).toBeTruthy();
   });
@@ -347,7 +350,9 @@ describe('etapa 098 — rolagem horizontal', () => {
     const larguraVisivel = 300;
     let larguraTotal = 900;
     let deslocamento = 0;
-    const ehTrilho = (el: HTMLElement) => String(el.className ?? '').includes('overflow-x-auto');
+    // Etapa 099: o trilho não carrega mais `overflow-x-auto` (virou grade); a
+    // âncora das medidas agora é o `data-testid` dele.
+    const ehTrilho = (el: HTMLElement) => el.dataset?.testid === 'board-track';
     const restaurar = () => {
       for (const [nome, descritor] of descritoresOriginais) {
         if (descritor) Object.defineProperty(HTMLElement.prototype, nome, descritor);
