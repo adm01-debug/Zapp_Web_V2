@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { TestQueryWrapper } from '@/test/mocks/queryClient';
 
 /**
  * Banner honesto (F0/E02 do plano multi-conexão — docs/runbooks/bloqueio-meta.md).
@@ -13,9 +14,13 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
  * PRINCIPAL" — sem saber que era bloqueio da Meta —, insistindo no login em loop, que é
  * exatamente o que estende o bloqueio. Este teste prova que o motivo da edge chega ao operador e
  * que o aviso de sucesso só aparece quando a edge realmente aceitou a ação.
+ *
+ * PD-38: o banner consulta `connection_alert_preferences` (React Query + useAuth); os testes
+ * montam com os provedores do app e o SELECT de preferência devolve `null` (= padrão ligado).
  */
 const h = vi.hoisted(() => ({
   rows: [] as unknown[],
+  preferencias: null as unknown,
   invoke: vi.fn(),
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
@@ -23,11 +28,20 @@ const h = vi.hoisted(() => ({
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    from: () => ({ select: () => ({ eq: async () => ({ data: h.rows }) }) }),
+    from: (table: string) => ({
+      select: () =>
+        table === 'connection_alert_preferences'
+          ? { maybeSingle: async () => ({ data: h.preferencias, error: null }) }
+          : { eq: async () => ({ data: h.rows }) },
+    }),
     channel: () => ({ on: () => ({ subscribe: () => ({}) }) }),
     removeChannel: () => undefined,
     functions: { invoke: (...args: unknown[]) => h.invoke(...args) },
   },
+}));
+
+vi.mock('@/hooks/auth/useAuth', () => ({
+  useAuth: () => ({ user: { id: 'user-1' }, session: null, profile: null, loading: false }),
 }));
 
 vi.mock('sonner', () => ({
@@ -54,7 +68,7 @@ describe('faixa de conexões: o motivo da edge chega ao operador', () => {
       'Ação bloqueada: janela de manutenção do WhatsApp até 26/09/2026 10:00 (proteção contra bloqueio da Meta — evita tentativas de login em loop).';
     h.invoke.mockResolvedValue({ data: { error: true, message: bloqueio }, error: null });
 
-    render(<EvolutionDisconnectBanner />);
+    render(<EvolutionDisconnectBanner />, { wrapper: TestQueryWrapper });
     fireEvent.click(await screen.findByRole('button', { name: /reconectar/i }));
 
     await waitFor(() => expect(h.toastError).toHaveBeenCalledWith(bloqueio));
@@ -69,7 +83,7 @@ describe('faixa de conexões: o motivo da edge chega ao operador', () => {
   it('recusa sem mensagem cai no texto genérico — o banner não inventa motivo', async () => {
     h.invoke.mockResolvedValue({ data: { error: true }, error: null });
 
-    render(<EvolutionDisconnectBanner />);
+    render(<EvolutionDisconnectBanner />, { wrapper: TestQueryWrapper });
     fireEvent.click(await screen.findByRole('button', { name: /reconectar/i }));
 
     await waitFor(() => expect(h.toastError).toHaveBeenCalledWith('Erro ao reconectar PRINCIPAL'));
@@ -79,7 +93,7 @@ describe('faixa de conexões: o motivo da edge chega ao operador', () => {
   it('quando a edge aceita a ação, o aviso de reconexão continua aparecendo', async () => {
     h.invoke.mockResolvedValue({ data: { qrcode: { base64: 'x' } }, error: null });
 
-    render(<EvolutionDisconnectBanner />);
+    render(<EvolutionDisconnectBanner />, { wrapper: TestQueryWrapper });
     fireEvent.click(await screen.findByRole('button', { name: /reconectar/i }));
 
     await waitFor(() => expect(h.toastSuccess).toHaveBeenCalled());

@@ -1874,6 +1874,39 @@ export type Database = {
           },
         ]
       }
+      connection_alert_preferences: {
+        Row: {
+          alert_on_degraded: boolean
+          alert_on_disconnected: boolean
+          created_at: string
+          email_enabled: boolean
+          id: string
+          push_enabled: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          alert_on_degraded?: boolean
+          alert_on_disconnected?: boolean
+          created_at?: string
+          email_enabled?: boolean
+          id?: string
+          push_enabled?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          alert_on_degraded?: boolean
+          alert_on_disconnected?: boolean
+          created_at?: string
+          email_enabled?: boolean
+          id?: string
+          push_enabled?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       connection_health_logs: {
         Row: {
           checked_at: string
