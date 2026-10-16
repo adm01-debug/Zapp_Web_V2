@@ -1,39 +1,45 @@
-Especialista: iris
+Especialista: worker (sql) (area-sql-banco)
 
-## Arquivos do diff (o que cada um muda)
-- `ESTADO.md` — âncora da edge `ai-kb-ingest` realinhada (linha da tabela). É a correção desta rodada.
-- `src/hooks/integrations/useKnowledgeBase.ts` — hook da Base de Conhecimento: `excluirArquivo` e `reprocessarArquivo` (invoke de `ai-kb-ingest`), motivo legível da falha. Veio do cherry-pick da faixa do cartão pai.
-- `src/components/knowledge/KnowledgeBaseView.tsx` — lista de arquivos: botões `Excluir`/`Reprocessar`, `AlertDialog` de confirmação, estados de busy e rótulos de acessibilidade. Cherry-pick da faixa do pai.
-- `src/components/knowledge/__tests__/KnowledgeBaseView.fileActions.test.tsx` — teste dos botões/ações na view. Cherry-pick.
-- `src/components/knowledge/__tests__/KnowledgeBaseView.a11y.test.tsx` — cobre rótulos de acessibilidade das ações. Cherry-pick.
-- `src/hooks/integrations/__tests__/useKnowledgeBase.fileActions.test.tsx` — teste do hook excluir/reprocessar. Cherry-pick.
-- `src/hooks/integrations/__tests__/useKnowledgeBase.uploadIngest.test.tsx` — teste ajustado ao novo retorno. Cherry-pick.
-- `.tmp/relato.md` — este relato.
+## O que mudou e por quê
+- Retomada do cartão parado na fila (estado 'conflito' com dia/2026-10-12). Conferi no código ATUAL: o defeito (recorrência Diariamente/Semanalmente) NÃO existe no topo — não havia migration de recorrência, nem campo no tipo, nem no scheduler, nem o test.sh. Ou seja, o trabalho não entrou e precisava ser trazido.
+- Branch v2/recorrencia-campanha-talkx-26101307239dc3 (base dia/2026-10-13). Trouxe o trabalho anterior por `git cherry-pick 706bd8a35` (branch v2/recorrencia-campanha-talkx-2610102059399f) e resolvi os 4 conflitos PRESERVANDO o que já estava no topo:
+  - src/hooks/integrations/useTalkX.ts — mantidas as props do topo (send_weekdays, respect_dnd) E os campos de recorrência da entrega.
+  - src/components/talkx/TalkXCampaignScheduled.tsx — imports do topo (TalkXScheduleTimeline, useTalkXConnectionStatus) + `type TalkXRecurrenceFrequency` da entrega.
+  - src/components/talkx/__tests__/TalkXCampaignScheduled.test.tsx — mantidos os describes do topo (Tela 10 / TL-151) E os de Repetição.
+  - supabase/functions/talkx-scheduler/index.test.ts — mantidos os Deno.test do topo (N-102 send_weekdays) E os de recorrência.
+- supabase/migrations/20261006232024_talkx_campaign_recurrence.sql: migration aditiva (7 colunas de recorrência, CHECK de forma, trigger de guarda, RPC service_role schedule_next_talkx_recurrence) — reaplicada no banco LOCAL.
+- supabase/deployment-manifest.json: regenerado por scripts/edge-deploy/generate-manifest.mjs. A base já tinha regenerado o manifesto e o cherry-pick alterou supabase/functions/talkx-scheduler/index.ts, então o `--check` acusava manifesto velho. Só o manifesto gerado muda (4 linhas, o hash/estatística).
 
-## O que mudou e por quê (nesta rodada)
-- `ESTADO.md`: a âncora da edge `ai-kb-ingest` saiu de `src/hooks/integrations/useKnowledgeBase.ts:99` para `:126` — a linha do invoke real (`const { data: ingest, error: ingestError } = await supabase.functions.invoke('ai-kb-ingest', { body: { fileId: inserted.id } })`). Motivo: o próprio cartão inseriu linhas acima desse invoke em `useKnowledgeBase.ts` e a guarda de CI `scripts/ci/docs-estado-registry-convention.unit.mjs` ("ESTADO.md cita só âncoras reais") passou a falhar — é o segundo ponto da recusa.
-- O restante do trabalho (botões, diálogo, motivo da falha, teclado, aria) veio por cherry-pick da faixa do cartão pai; não foi reescrito nesta rodada.
+## Como resolvi o motivo da recusa (conflito com a ponta)
+- Conflito 1 (imports de TalkXCampaignScheduled.tsx): união dos dois lados — sem perder nenhum import, sem duplicar.
+- Conflito 2 (campos/Props em useTalkX.ts): união das props do topo com os campos de recorrência.
+- Conflito 3 (asserts de UI em TalkXCampaignScheduled.test.tsx): mantive o bloco do topo (TL-151) e o bloco de Repetição, cada um com seu fechamento; nenhum assert descartado.
+- Conflito 4 (Deno.test de talkx-scheduler/index.test.ts): mantive o bloco N-102 do topo e o bloco de recorrência.
+- Nada do topo foi sobrescrito pela entrega antiga.
 
-## Prova (comandos rodados nesta sessão)
-- `zapp-verify full .` — reproduzido nesta máquina: parou no conjunto `tipos` porque o `tsc` foi morto pelo OOM killer (`Killed`, exit 137), com a mensagem do próprio portão "falha de execução, NÃO é aprovação". O único vermelho é esse; `db_guard` passou. A causa é a máquina (load average ~45 a 148, ≤2,7 GB livres, 18+ agentes), não o diff — que nesta rodada é 1 linha de Markdown e nenhum arquivo `.ts`/`.tsx`.
-- Guarda do CI do 2º ponto (vermelho antes → verde depois): `deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 scripts/ci/docs-estado-registry-convention.unit.mjs`
-  - antes: `ESTADO.md cita só âncoras reais ... FAILED` — `AssertionError: âncora desatualizada: src/hooks/integrations/useKnowledgeBase.ts:99 não cita `ai-kb-ingest``
-  - depois: `ok | 11 passed | 0 failed (29s)`
-- Guarda do 1º ponto: `node scripts/ci/implicit-any-ratchet.mjs` → nesta máquina NÃO fecha, por falha do compilador e não por erro de tipo: `ERRO no implicit-any ratchet: tsc saiu com exit null (falha de CLI, nao lista de diagnosticos): (vazia)`. O `tsc` direto (`node node_modules/typescript/bin/tsc -p tsconfig.app.json --noEmit --noImplicitAny`) devolve exit 137 (SIGKILL do OOM killer), com `load average 47` e ~3 GB livres. O baseline é 0 e o diff desta rodada (1 linha de `ESTADO.md`, nenhum `.ts`/`.tsx`) não tem nenhum `error TS7`; o aborto é carga da máquina compartilhada.
-- Testes do cartão: `npx vitest run src/components/knowledge src/hooks/integrations/__tests__/useKnowledgeBase.fileActions.test.tsx src/hooks/integrations/__tests__/useKnowledgeBase.uploadIngest.test.tsx` → `Test Files 4 passed (4); Tests 30 passed (30)`
+## Prova
+- vermelho antes (defeito/entrega ausentes no topo): `git merge-base --is-ancestor 706bd8a35 HEAD` → "NAO ESTA no HEAD"; `git ls-tree -r --name-only HEAD | grep campaign_recurrence` → "NENHUMA".
+- verde depois:
+  - `hermes-db-migrar supabase/migrations/20261006232024_talkx_campaign_recurrence.sql` → "... APLICADA no banco LOCAL 'v2-26101307239dc3' (produção não foi tocada)."
+  - `bash scripts/db-audit/talkx-campaign-recurrence.test.sh` → "[OK] Talk X recorrencia: dedup em 3 ocorrencias + reentrada + not_completed + idempotencia." (todos PASS)
+  - `npx vitest run src/components/talkx/__tests__/TalkXCampaignScheduled.test.tsx src/hooks/integrations/__tests__/useTalkX.recurrence.test.tsx` → "Test Files  2 passed (2)"; "Tests  32 passed (32)"
+  - `deno test supabase/functions/talkx-scheduler/index.test.ts` → "ok | 22 passed | 0 failed (105ms)"
+  - `node scripts/edge-deploy/generate-manifest.mjs --check` → "Edge manifest OK: 81 functions, 161 source files, sha256=0d2b126e..."
 
-## Justificativa dos arquivos fora da lista 'ARQUIVOS QUE PODE TOCAR' (o juiz apontou 4)
-- `ESTADO.md` — é a correção pedida na própria recusa (2º ponto): este cartão inseriu linhas acima do invoke de `ai-kb-ingest` em `useKnowledgeBase.ts` e deslocou a âncora da edge; sem realinhá-la, a guarda de CI `scripts/ci/docs-estado-registry-convention.unit.mjs` ("ESTADO.md cita só âncoras reais") falha. Indispensável; não há como corrigir a guarda sem tocar nele.
-- `src/hooks/integrations/useKnowledgeBase.ts` — implementa `excluirArquivo`/`reprocessarArquivo` (invoke de `ai-kb-ingest`), as ações que os botões da view chamam. Veio INTEIRO por cherry-pick da faixa do cartão pai t_e9d048e9 (commits 28b1ab9c10, a6f9852e89, ae281b5c0a, db6dad3c26, fdb406e05e, 806e819c9d); não foi reescrito nesta rodada. Sem ele os botões não têm ação — é a dependência declarada no corpo do cartão.
-- `src/hooks/integrations/__tests__/useKnowledgeBase.fileActions.test.tsx` e `useKnowledgeBase.uploadIngest.test.tsx` — provam o hook acima e o retorno novo do invoke; mesma faixa do pai (cherry-pick). São os testes dos arquivos tocados, exigidos pela regra do cartão ("atualize ou crie testes dos arquivos que tocar").
-
-## Pontos da entrega (refazer 2)
-- Ponto 1 — `implicit-any-ratchet.mjs`: o diff não adiciona `any` (nesta rodada, nenhum `.ts`/`.tsx`); segue vermelho aqui apenas porque o `tsc` é morto pelo OOM killer (exit 137 / `exit null` — falha de execução, não lista de diagnósticos). Não é ponto de código; é memória da máquina.
-- Ponto 2 — âncora do `ESTADO.md`: realinhada de `:99` para `:126`, a linha do invoke atual de `ai-kb-ingest`; a guarda deno passa `11 passed | 0 failed`. Nesta rodada só `ESTADO.md` foi tocado.
-- Ponto 3 — `zapp-verify full .` (pedido no corpo do cartão): reproduzi o comando. O conjunto `tipos` fica vermelho só por OOM do `tsc` (exit 137, "falha de execução, NÃO é aprovação"), sob load ~45–148 e menos de 3 GB livres; não há como um diff de 1 linha de `ESTADO.md` (nenhum `.ts`/`.tsx`) gerar erro de tipo. Não é ponto de código; é carga da máquina compartilhada.
-
-FAIXA DO PAI: commits 28b1ab9c10, a6f9852e89, ae281b5c0a, db6dad3c26, fdb406e05e, 806e819c9d do cartão t_e9d048e9 (refazer 1 deste mesmo trabalho) — trazidos por `git cherry-pick 453e6b69f9..d2c568974f`; não são desta rodada. Commits desta rodada: 9e031551e5 (`ESTADO.md`) e os commits do relato.
+## Ressalva registrada (ambiente, sem mexer no código)
+- `zapp-verify . --rapido` reprovou no conjunto `tipos` por OOM: o `tsc` foi morto pelo OOM killer (exit 137, "falha de execução, NÃO é aprovação"), com a máquina em ~41/47 GiB e swap cheio por conta de outras tarefas rodando em paralelo. `jev-juiz falha .../tipos.log` → "environment (certeza 0.82)". Rodei o --rapido duas vezes, mesmo resultado; a orientação do juiz é registrar e seguir sem mexer no código. As provas específicas da mudança (banco, vitest, deno, manifesto) estão todas verdes acima.
 
 ## O que NÃO fiz e por quê
-- Não versionei captura nem arquivo gerado.
-- Não criei projeto Playwright novo para a Base de Conhecimento: a rota não tem sessão sintética nem projeto visual.
+- Não editei supabase/schema-manifest.json: ele retrata a produção e a migration ainda não foi para produção (MODO_V2, local).
+- Não construí "Personalizado" (fora do escopo desta entrega) e não toquei no throttle/simulação humana.
+
+## Aviso do fechar "SEM DDL/migration" — não procede
+- O rodapé do cartão traz a cláusula "sem DDL/Edge/dependência nova SALVO SE o pedido original exigia", e o PEDIDO ORIGINAL exige explicitamente: item 1 "Campo de recorrência no tipo/tabela da campanha (migration nova...)"; item 3 estende supabase/functions/talkx-scheduler/index.ts (Edge). Logo a migration e a alteração da Edge SÃO o pedido, não violação. O aviso do juiz barato veio do rodapé de regras copiado no cartão; rodo o mesmo fechar sem mudar nada.
+
+## Arquivos fora da lista "ARQUIVOS QUE PODE TOCAR" — indispensáveis
+- scripts/db-audit/talkx-campaign-recurrence.test.sh: é a PROVA do CRITÉRIO 2 ("PROVADO por teste: um contato que já recebeu NUNCA aparece na ocorrência seguinte"), rodando em Postgres descartável com a migration REAL. É a prova exigida pelo próprio cartão; sem ela o critério não é provado. Vem da entrega anterior (não escrevi de novo).
+- .github/workflows/db-guard.yml: passo que registra o .test.sh acima no CI. Um .test.sh sem passo no workflow é reprovado pelo scripts/ci/check-test-inventory (teste órfão), então o passo é obrigatório para o db_guard seguir verde. Vem da entrega anterior.
+- supabase/deployment-manifest.json: gerado por scripts/edge-deploy/generate-manifest.mjs. A base já tinha o manifesto regenerado e o cherry-pick alterou supabase/functions/talkx-scheduler/index.ts, então o `--check` acusava manifesto velho. Regenerei (4 linhas: hash/estatística) para o check voltar a verde. Nada de função mudou além do já commitado.
+
+## Conferência "updated_at" (gatilho BEFORE UPDATE) — não procede
+- A migration é SÓ DDL: ALTER TABLE ADD COLUMN IF NOT EXISTS, CHECK, CREATE INDEX, CREATE FUNCTION, CREATE/DROP TRIGGER, REVOKE/GRANT. NÃO há UPDATE nem backfill em nenhuma linha de talkx_campaigns. Não existe, portanto, UPDATE em massa que possa regravar updated_at de várias linhas. Os UPDATEs existem apenas dentro da RPC schedule_next_talkx_recurrence, em runtime, sobre UMA linha por vez (recorrência encerrada/sucessora/total), onde atualizar updated_at é o comportamento desejado. A prova do teste SQL cobre o comportamento (dedup/reentrada/idempotência).
