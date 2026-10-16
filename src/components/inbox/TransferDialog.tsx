@@ -39,9 +39,19 @@ export interface TransferDialogProps {
   onTransfer: (type: TransferTargetType, targetId: string, message?: string) => void | Promise<void>;
   /** contacts.queue_id do contato sendo transferido. null/undefined = sem fila. */
   queueId?: string | null;
+  /**
+   * 'single' (padrão) — diálogo de UMA conversa: `queueId` é a fila DELA, então
+   *   contato sem fila só pode ser assumido por você mesmo
+   *   (trg_prevent_contact_assignee_hijack, decisão de produto de 2026-09-24).
+   * 'bulk' — transferência em LOTE: a fila muda de contato para contato e não
+   *   existe um `queueId` único. O seletor oferece todos os colegas ativos e
+   *   quem valida por conversa é o caminho canônico (RPC `transfer_conversation`,
+   *   uma por contato), que recusa as conversas sem fila com a mensagem do banco.
+   */
+  scope?: 'single' | 'bulk';
 }
 
-export function TransferDialog({ open, onOpenChange, onTransfer, queueId }: TransferDialogProps) {
+export function TransferDialog({ open, onOpenChange, onTransfer, queueId, scope = 'single' }: TransferDialogProps) {
   const [transferType, setTransferType] = useState<TransferTargetType>('agent');
   const [selectedTarget, setSelectedTarget] = useState<string>('');
   const [message, setMessage] = useState('');
@@ -64,7 +74,11 @@ export function TransferDialog({ open, onOpenChange, onTransfer, queueId }: Tran
   // um contato SEM fila para você mesmo — decisão de produto de 2026-09-24
   // (self-claim only). Sem filtrar aqui, o picker mostrava todo mundo e a
   // transferência para um colega falhava silenciosamente no banco.
-  const isQueueless = !queueId;
+  // O filtro vale para UMA conversa (`scope='single'`): aí `queueId` é a fila
+  // dela. No lote (`scope='bulk'`) a fila muda de contato para contato e não há
+  // queueId único — o seletor oferece os colegas ativos e a RPC por contato
+  // (`transfer_conversation`) decide cada conversa, recusando as sem fila.
+  const restrictAgentsToSelf = scope === 'single' && !queueId;
 
   const handleTransfer = async () => {
     if (!selectedTarget || isTransferring) return;
@@ -93,9 +107,9 @@ export function TransferDialog({ open, onOpenChange, onTransfer, queueId }: Tran
     onOpenChange(nextOpen);
   };
 
-  // Filter online/away agents (active ones); sem fila, só você mesmo (ver isQueueless acima)
+  // Filter online/away agents (active ones); em uma conversa sem fila, só você mesmo (ver restrictAgentsToSelf acima)
   const availableAgents = agents.filter((a) =>
-    (a.status === 'online' || a.status === 'away') && (!isQueueless || a.user_id === user?.id)
+    (a.status === 'online' || a.status === 'away') && (!restrictAgentsToSelf || a.user_id === user?.id)
   );
 
   return (
@@ -163,9 +177,14 @@ export function TransferDialog({ open, onOpenChange, onTransfer, queueId }: Tran
           {transferType === 'agent' && (
             <div className="space-y-2">
               <Label>Selecione um atendente</Label>
-              {isQueueless && (
+              {restrictAgentsToSelf && (
                 <p className="text-xs text-muted-foreground">
                   Contato sem fila: só é possível assumir para você mesmo. Para transferir a outro atendente, mova para um departamento primeiro.
+                </p>
+              )}
+              {scope === 'bulk' && (
+                <p className="text-xs text-muted-foreground">
+                  No lote, a fila de cada conversa decide o destino: as conversas sem fila só aceitam você mesmo — o banco recusa as demais e o resumo do lote conta quantas falharam.
                 </p>
               )}
               <div className="space-y-2 max-h-48 overflow-y-auto">
