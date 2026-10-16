@@ -1,10 +1,6 @@
 -- Talk X (N-102, fatia "acesso"): restringe o EXECUTE de public.talkx_campaign_window_open.
 --
--- Rollback: desfaz esta migration, restaurando a ACL anterior (EXECUTE para authenticated).
--- Rollback (SQL executável, na ordem; rode apenas se a função existir — quando o fix foi
--- no-op por base ausente não há ACL para desfazer):
---   REVOKE EXECUTE ON FUNCTION public.talkx_campaign_window_open(uuid, timestamptz) FROM service_role;
---   GRANT EXECUTE ON FUNCTION public.talkx_campaign_window_open(uuid, timestamptz) TO authenticated;
+-- Rollback: DO $$ BEGIN IF to_regprocedure('public.talkx_campaign_window_open(uuid, timestamptz)') IS NULL THEN RAISE NOTICE 'talkx_n102 rollback: funcao ausente nesta pilha, nada a restaurar'; RETURN; END IF; REVOKE EXECUTE ON FUNCTION public.talkx_campaign_window_open(uuid, timestamptz) FROM service_role; GRANT EXECUTE ON FUNCTION public.talkx_campaign_window_open(uuid, timestamptz) TO authenticated; END; $$;
 --
 -- Contexto (N-102, defeito de acesso): a migration 20261009203548 criou
 -- public.talkx_campaign_window_open(uuid, timestamptz) como SECURITY DEFINER e concedeu
@@ -24,25 +20,33 @@
 -- alcançável pela role de serviço. O check-secdef-public-execute segue verde (sem EXECUTE
 -- para PUBLIC/anon).
 --
+-- Empilhamento (refazer t_b7ce25ec): a base que CRIA a função (20261009203548) não está em
+-- nenhuma branch dia/ — vive em branches de cartões recusados/preparação. Sem ela na pilha, o
+-- REVOKE direto derrubava a aplicação das migrations:
+--   psql:<stdin>:30: ERROR:  function public.talkx_campaign_window_open(uuid, timestamp with time zone) does not exist
+-- Por isso as duas instruções passam a rodar dentro de um DO que só age quando a função existe,
+-- no padrão da casa (20261002381230, 20261003202707, 20261003212707). Não é proteção opcional:
+-- sem a função não existe ACL a revogar, e a aplicação é ordenada por versão, então sempre que a
+-- base estiver na MESMA cópia ela aplica antes desta (20261009203548 < 20261013085500) e o
+-- REVOKE acontece. O que esta migration não cobre: uma migration de versão POSTERIOR a esta que
+-- (re)crie a função precisa trazer o próprio REVOKE/GRANT — registrado em comentário no cartão.
+-- A prova versionada é scripts/db-audit/talkx-n102-window-acl.test.sh (bloco A aplica a migration
+-- num banco SEM a função; bloco B prova que o EXECUTE sai de PUBLIC/anon/authenticated e fica só
+-- em service_role quando a função existe).
+--
 -- Não edita a base 20261009203548 nem o corpo da função (as fatias de cast e de fuso cuidam
 -- disso em separado). Sem BEGIN/COMMIT (o ledger aplica cada migration em transação própria).
---
--- Empilhamento ([refazer 1] t_d5dd005b, achado do limpador 11/10): a base 20261009203548 ainda
--- não está em nenhuma branch dia/, então esta migration é órfã quando empilhada sozinha sobre a
--- dia/ (o REVOKE falhava com "function does not exist"). A guarda abaixo aplica a ACL só quando
--- a função existe; 20261009203548 < 20261013085500 na ordem do ledger, então quando a base entrar
--- a função já existe neste ponto e a ACL é aplicada normalmente. Sem a base não há função nem
--- superfície de acesso — o NOTICE registra o no-op.
 
 DO $$
 BEGIN
-  IF to_regprocedure('public.talkx_campaign_window_open(uuid, timestamptz)') IS NOT NULL THEN
-    REVOKE ALL ON FUNCTION public.talkx_campaign_window_open(uuid, timestamptz)
-      FROM PUBLIC, anon, authenticated;
-    GRANT EXECUTE ON FUNCTION public.talkx_campaign_window_open(uuid, timestamptz)
-      TO service_role;
-  ELSE
-    RAISE NOTICE 'n102_window_fixes: funcao public.talkx_campaign_window_open(uuid, timestamptz) ausente (base 20261009203548 nao aplicada); ACL nao alterada';
+  IF to_regprocedure('public.talkx_campaign_window_open(uuid, timestamptz)') IS NULL THEN
+    RAISE NOTICE 'talkx_n102: base 20261009203548 ausente nesta pilha; nada a revogar (a funcao nao existe)';
+    RETURN;
   END IF;
+
+  REVOKE ALL ON FUNCTION public.talkx_campaign_window_open(uuid, timestamptz)
+    FROM PUBLIC, anon, authenticated;
+  GRANT EXECUTE ON FUNCTION public.talkx_campaign_window_open(uuid, timestamptz)
+    TO service_role;
 END;
 $$;
