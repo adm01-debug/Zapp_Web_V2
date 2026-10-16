@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { log } from '@/lib/logger';
+import { parseUserAgent } from '@/lib/parseUserAgent';
 
 /**
  * Aviso de "novo dispositivo" no login (correção 14/10/2026).
@@ -74,27 +75,12 @@ export function gerarImpressaoDispositivo(): string {
   return Math.abs(hash).toString(36);
 }
 
-/** Navegador, sistema e nome amigável do dispositivo a partir do agente. */
+/**
+ * Navegador, sistema e nome amigável do dispositivo a partir do agente.
+ * A classificação vive em `parseUserAgent` (HZ3-009-A): aqui só o `navigator`.
+ */
 export function infoDoNavegador(): { browser: string; os: string; deviceName: string } {
-  const ua = navigator.userAgent;
-  let browser = 'Unknown';
-  let os = 'Unknown';
-
-  if (ua.includes('Chrome')) browser = 'Chrome';
-  else if (ua.includes('Firefox')) browser = 'Firefox';
-  else if (ua.includes('Safari')) browser = 'Safari';
-  else if (ua.includes('Edge')) browser = 'Edge';
-  else if (ua.includes('Opera')) browser = 'Opera';
-
-  if (ua.includes('Windows')) os = 'Windows';
-  else if (ua.includes('Mac')) os = 'macOS';
-  else if (ua.includes('Linux')) os = 'Linux';
-  else if (ua.includes('Android')) os = 'Android';
-  else if (ua.includes('iOS') || ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS';
-
-  const isMobile = /Mobile|Android|iPhone|iPad/.test(ua);
-  const deviceName = isMobile ? 'Dispositivo Móvel' : 'Desktop';
-
+  const { browser, os, deviceName } = parseUserAgent(navigator.userAgent);
   return { browser, os, deviceName };
 }
 
@@ -126,13 +112,14 @@ async function executarAvisoDeDispositivo(sessionId: string): Promise<string | n
   // Marca ANTES do await: boot + SIGNED_IN (ou StrictMode) não podem gerar dois
   // alertas. Falha também é definitiva nesta sessão — o aviso nunca bloqueia o login.
   gravarAvisoDeDispositivo(sessionId, null);
+  const info = infoDoNavegador();
   try {
     const { data, error } = await supabase.functions.invoke('detect-new-device', {
       body: {
         device_fingerprint: gerarImpressaoDispositivo(),
-        browser: infoDoNavegador().browser,
-        os: infoDoNavegador().os,
-        device_name: infoDoNavegador().deviceName,
+        browser: info.browser,
+        os: info.os,
+        device_name: info.deviceName,
       },
     });
     if (error) throw error;
