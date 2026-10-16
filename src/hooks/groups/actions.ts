@@ -100,6 +100,16 @@ export function useGroupActions({ connections, groups, selectedGroups, setGroups
     let totalSynced = 0;
     let totalErrors = 0;
 
+    // As linhas de TODAS as conexões são reunidas para irem em UM `upsert`: antes havia
+    // um upsert POR GRUPO (221 grupos = 221 idas ao banco), e cada ida é uma chance de
+    // falhar no meio da sincronização. A leitura das conexões continua por conexão
+    // porque a lista vem da Evolution, uma chamada por número.
+    const linhasPorGrupo = new Map<string, {
+      group_id: string; name: string; description: string | null;
+      participant_count: number; is_admin: boolean;
+      whatsapp_connection_id: string; updated_at: string;
+    }>();
+
     for (const conn of connections) {
       if (!conn.instance_id) continue;
       try {
@@ -118,7 +128,12 @@ export function useGroupActions({ connections, groups, selectedGroups, setGroups
           // Shapes: Evolution v2 {id, subject, desc, size} · Evolution GO/whatsmeow {JID, Name, Topic, Participants}
           const groupJid = g.id || g.jid || g.groupJid || g.JID;
           if (!groupJid) continue;
-          const { error: upsertError } = await supabase.from('whatsapp_groups').upsert({
+          // O MESMO grupo pode voltar de duas conexões (dois números que enxergam o
+          // mesmo aparelho). Com a chave repetida NO MESMO lote, o Postgres recusa o
+          // lote INTEIRO ("ON CONFLICT DO UPDATE command cannot affect row a second
+          // time"), então cada chave entra uma vez: a última conexão a devolver o
+          // grupo fica com a linha — a mesma regra de quando o upsert era por grupo.
+          linhasPorGrupo.set(groupJid, {
             group_id: groupJid,
             name: g.subject || g.name || g.Name || 'Grupo sem nome',
             description: g.desc || g.description || g.Topic || null,
@@ -126,11 +141,23 @@ export function useGroupActions({ connections, groups, selectedGroups, setGroups
             is_admin: g.announce === true || g.iAmAdmin === true || g.IsAnnounce === true,
             whatsapp_connection_id: conn.id,
             updated_at: new Date().toISOString(),
-          }, { onConflict: 'group_id' });
-          if (upsertError) log.error(`Error upserting group ${groupJid}:`, upsertError);
-          else totalSynced++;
+          });
         }
       } catch (err) { log.error(`Sync error for connection ${conn.name}:`, err); totalErrors++; }
+    }
+
+    const linhas = [...linhasPorGrupo.values()];
+    if (linhas.length > 0) {
+      const { error: upsertError } = await supabase
+        .from('whatsapp_groups')
+        .upsert(linhas, { onConflict: 'group_id' });
+      if (upsertError) {
+        // O lote é atômico: sem gravação, as linhas contam como falha no aviso.
+        log.error('Error upserting groups batch:', upsertError);
+        totalErrors += linhas.length;
+      } else {
+        totalSynced = linhas.length;
+      }
     }
 
     setIsSyncing(false);

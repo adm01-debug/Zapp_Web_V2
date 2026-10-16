@@ -51,10 +51,17 @@ export function useConversationActions() {
   }, []);
 
   const loadPinned = useCallback(async (pid: string) => {
+    // Sem `order` o Postgres devolve as linhas na ordem que quiser, então duas leituras
+    // seguidas podiam trazer as fixadas em ordens diferentes. O `position` gravado é
+    // sempre 0 (não serve de critério), então a ordem vem do `created_at` — o instante
+    // em que a conversa foi fixada — com `contact_id` como desempate para duas fixadas
+    // no mesmo instante. O Set abaixo guarda a ordem da resposta.
     const { data } = await supabase
       .from('pinned_conversations')
       .select('contact_id')
-      .eq('pinned_by', pid);
+      .eq('pinned_by', pid)
+      .order('created_at', { ascending: true })
+      .order('contact_id', { ascending: true });
     if (data && mountedRef.current) setPinnedIds(new Set(data.map((p) => p.contact_id)));
   }, []);
 
