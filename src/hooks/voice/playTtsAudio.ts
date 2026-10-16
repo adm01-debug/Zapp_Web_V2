@@ -135,6 +135,9 @@ export function playTtsAudio(
   const audioElement = new Audio();
   audioElement.preload = 'auto';
   // 'Ouvir resumo' / 'Ouvir tudo' seguem a velocidade escolhida no cabeçalho.
+  // O padrão sobrevive ao `load()`; a reaplicação por trecho (em `playObjectUrl`)
+  // cobre a restauração que a seleção de recurso faz a cada `src` novo.
+  audioElement.defaultPlaybackRate = playbackRate;
   audioElement.playbackRate = playbackRate;
   // E36 — fala do TTS é mídia de conversa: toca no volume global do atendente.
   const detachMediaVolume = attachMediaVolume(audioElement);

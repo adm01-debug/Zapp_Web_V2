@@ -166,6 +166,7 @@ describe('playTtsAudio — voz e velocidade escolhidas', () => {
     const playback = playTtsAudio(textoLongo, SUPABASE_URL, ANON_KEY, { speed: 1.5 });
     await vi.waitFor(() => expect(FakeAudio.instances[0]?.play).toHaveBeenCalledTimes(1));
     expect(FakeAudio.instances[0].playbackRate).toBe(1.5);
+    expect(FakeAudio.instances[0].defaultPlaybackRate).toBe(1.5);
 
     // O trecho 1 termina como no navegador: o player assume o trecho seguinte.
     FakeAudio.instances[0].onended?.();
