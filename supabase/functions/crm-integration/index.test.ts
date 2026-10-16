@@ -680,9 +680,9 @@ const NAMES_ROTA_EMPRESAS: LinkRoute = {
   ],
 };
 const NAMES_ROTA_CARGOS: LinkRoute = {
-  match: '/rest/v1/salespeople',
+  match: '/rest/v1/contacts',
   body: [
-    { role: 'Vendedor' }, { role: 'Gerente' }, { role: ' Vendedor ' }, { role: null }, { role: '' },
+    { cargo: 'Vendedor' }, { cargo: 'Gerente' }, { cargo: ' Vendedor ' }, { cargo: null }, { cargo: '' },
   ],
 };
 
@@ -734,7 +734,7 @@ Deno.test('sugestões de empresa: atendente COM view_contacts recebe só strings
   });
 });
 
-Deno.test('sugestões de cargo: atendente COM view_contacts recebe só strings distintas, sem linha de contato', async () => {
+Deno.test('sugestões de cargo: lê contacts.cargo (não salespeople.role) e devolve só strings, sem linha de contato', async () => {
   await withLinkEnv(async () => {
     const stub = withLinkFetch([LINK_ROTA_AUTH, LINK_ROTA_RATE, LINK_PERMISSAO_CONCEDIDA, NAMES_ROTA_CARGOS]);
     try {
@@ -747,10 +747,34 @@ Deno.test('sugestões de cargo: atendente COM view_contacts recebe só strings d
       if (JSON.stringify([...cargos].sort()) !== JSON.stringify(['Gerente', 'Vendedor'])) {
         throw new Error(`cargos inesperados (dedupe/trim/vazio): ${JSON.stringify(cargos)}`);
       }
+      const leituras = stub.seen.filter((url) => /\/rest\/v1\/(contacts|salespeople)/.test(url));
+      if (leituras.length === 0) throw new Error('a ação de cargo não leu o CRM externo');
+      if (leituras.some((url) => /salespeople/.test(url))) {
+        throw new Error(`a ação de cargo ainda lê salespeople: ${leituras.join(', ')}`);
+      }
+      // A leitura é estreita: só `cargo`, nunca nome/telefone/e-mail do contato.
+      if (!leituras.some((url) => /select=cargo(&|$)/.test(decodeURIComponent(url)))) {
+        throw new Error(`a leitura não pediu só cargo: ${leituras.join(', ')}`);
+      }
+      if (leituras.some((url) => /name|phone|email|telefone/i.test(decodeURIComponent(url)))) {
+        throw new Error(`a leitura pediu coluna de contato: ${leituras.join(', ')}`);
+      }
     } finally {
       stub.restore();
     }
   });
+});
+
+Deno.test('sugestões de cargo: credencial de cron não pode ler as sugestões', async () => {
+  Deno.env.set('SUPABASE_SERVICE_ROLE_KEY', 'test-service-key');
+  Deno.env.set('SUPABASE_URL', 'https://sb-testref.supabase.co');
+  Deno.env.set('CRON_SECRET', 'test-cron-secret');
+  const response = await handleCRMIntegrationRequest(new Request('https://edge.invalid', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-cron-secret': 'test-cron-secret' },
+    body: JSON.stringify({ action: 'roleNames' }),
+  }));
+  assertStatus(response.status, 403);
 });
 
 Deno.test('sugestões: credencial de serviço não pode ler as sugestões', async () => {
