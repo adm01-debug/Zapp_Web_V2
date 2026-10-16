@@ -99,6 +99,9 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 =======
 | `evolution-sync` | A | `src/components/connections/ConnectionsView.tsx:69` |
 | `evolution-webhook` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:30` · `src/components/monitoring/hooks/useMonitoringActions.ts:59` · `supabase/functions/webhook-diagnostic/index.ts:131` · `supabase/functions/webhook-diagnostic/index.ts:253` · `supabase/functions/webhook-diagnostic/index.ts:263` · `supabase/functions/evolution-api/index.ts:571` · `supabase/functions/evolution-api/index.ts:637` · `supabase/functions/evolution-api/index.ts:798` · `supabase/functions/_shared/evolution-go-routes.ts:221` · `supabase/functions/_shared/evolution-sync-actions.ts:215` · `supabase/functions/_shared/evolution-sync-actions.ts:292` · `supabase/config.toml:8` |
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 | `external-db-bridge` | E | — sem chamador no repositório — |
 | `external-db-proxy` | A | `src/lib/externalProxy.ts:33` |

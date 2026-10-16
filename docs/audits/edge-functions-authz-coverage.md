@@ -9,6 +9,7 @@ Régua N217: a cobertura de linhas agregada dos 5 helpers abaixo não pode ficar
 | cron-secret-auth.ts | 29 | 30 | 96.7% |
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 | evolution-control-authz.ts | 93 | 93 | 100.0% |
 | voice-copilot-authz.ts | 25 | 25 | 100.0% |
 | **Total** | **211** | **261** | **80.8%** |
@@ -16,6 +17,11 @@ Régua N217: a cobertura de linhas agregada dos 5 helpers abaixo não pode ficar
 | evolution-control-authz.ts | 123 | 123 | 100.0% |
 | voice-copilot-authz.ts | 25 | 25 | 100.0% |
 | **Total** | **241** | **291** | **82.8%** |
+>>>>>>> theirs
+=======
+| evolution-control-authz.ts | 140 | 140 | 100.0% |
+| voice-copilot-authz.ts | 25 | 25 | 100.0% |
+| **Total** | **258** | **308** | **83.8%** |
 >>>>>>> theirs
 =======
 | evolution-control-authz.ts | 140 | 140 | 100.0% |
