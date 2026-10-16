@@ -123,6 +123,14 @@ do próprio cartão não passa nome de conjunto, e o conjunto local deste worksp
 (v2-26101114266880) já não existe em `~/.local/share/zapp-local/stacks/`. Este cartão não tem
 migration nem SQL: o que ele entrega é spec de E2E e a entrada do projeto no Playwright.
 
+## Justificativa de escopo do `playwright.config.ts` (o cartão não cita o arquivo)
+
+Ele é indispensável e são só as linhas desta etapa: a spec da linha de base roda **deslogada**
+e por isso precisa de um projeto próprio (`chromium-tarefas-linha-de-base`, com
+`storageState: { cookies: [], origins: [] }` explícito) e do `testIgnore` na suíte que usa
+sessão salva — sem essas 13 linhas o comando do cartão não tem projeto para rodar e a spec
+seria adotada por um projeto que exige sessão. Nada de outro cartão entrou no arquivo.
+
 ## Arquivos no diff (colado de `git diff --name-only dia/2026-10-11...HEAD`)
 
   .tmp/relato.md
