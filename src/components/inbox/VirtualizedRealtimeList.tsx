@@ -293,6 +293,16 @@ const CONVERSATION_STATUS_LABEL: Record<string, string> = {
   archived: 'Arquivado',
 };
 
+// Estado da conversa (contacts.conversation_status) em pt-BR, para a
+// pré-visualização. Valor desconhecido NÃO vira rótulo inventado (mesma regra
+// do sentimento acima): a pré-visualização só omite o estado.
+const CONVERSATION_STATUS_LABEL: Record<string, string> = {
+  open: 'Aberto',
+  waiting: 'Aguardando',
+  resolved: 'Resolvido',
+  archived: 'Arquivado',
+};
+
 interface ConversationRowProps {
   conversation: ConversationWithMessages;
   virtualRow: VirtualItem;
