@@ -69,26 +69,31 @@ const paused = { id: 'camp-paused', name: 'Pausada', status: 'paused', paused_at
 const sending = { id: 'camp-sending', name: 'Enviando', status: 'sending' };
 
 describe('TalkXView — roteamento por status (X156/T13)', () => {
-  beforeEach(() => { h.campaigns = [paused, sending]; });
+  beforeEach(() => {
+    h.campaigns = [paused, sending];
+    // onView grava ?campaign=/?screen= na URL (TL-152): limpa o endereço para
+    // que um caso não abra a tela deixada pelo anterior.
+    window.history.replaceState(null, '', '/?view=talkx');
+  });
 
-  it('campanha paused abre a tela própria, não a genérica "em andamento"', () => {
+  it('campanha paused abre a tela própria, não a genérica "em andamento"', async () => {
     render(<TalkXView />);
     fireEvent.click(screen.getByTestId('view-paused'));
-    expect(screen.getByTestId('paused').dataset.campaign).toBe('camp-paused');
+    expect((await screen.findByTestId('paused')).dataset.campaign).toBe('camp-paused');
     expect(screen.queryByTestId('running')).toBeNull();
   });
 
-  it('a ação de linha também desvia paused para a tela própria', () => {
+  it('a ação de linha também desvia paused para a tela própria', async () => {
     render(<TalkXView />);
     fireEvent.click(screen.getByTestId('view-running-paused'));
-    expect(screen.getByTestId('paused').dataset.campaign).toBe('camp-paused');
+    expect((await screen.findByTestId('paused')).dataset.campaign).toBe('camp-paused');
     expect(screen.queryByTestId('running')).toBeNull();
   });
 
-  it('campanha sending continua na genérica (sem regressão)', () => {
+  it('campanha sending continua na genérica (sem regressão)', async () => {
     render(<TalkXView />);
     fireEvent.click(screen.getByTestId('view-sending'));
-    expect(screen.getByTestId('running').dataset.campaign).toBe('camp-sending');
+    expect((await screen.findByTestId('running')).dataset.campaign).toBe('camp-sending');
     expect(screen.queryByTestId('paused')).toBeNull();
   });
 });
