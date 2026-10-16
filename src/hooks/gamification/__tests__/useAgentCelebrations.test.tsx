@@ -6,15 +6,18 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 /**
  * CA-1/CA-2 — conquista e nível chegam ao vivo pelo `useAgentCelebrations`.
  *
- * O hook assina SÓ `agent_stats` (UPDATE/qualquer evento) do PRÓPRIO perfil, num
- * tópico exclusivo por instância, e emite UM evento por conquista nova ou aumento
- * de nível. `agent_achievements` NÃO é assinada: ela não está publicada em
- * `supabase_realtime`, então assiná-la seria uma inscrição morta (o ESPELHO DO CI
- * recusa). A conquista nova chega pelo aumento de `achievements_count` no
- * `agent_stats` — o `grant_agent_achievement` insere a linha e incrementa o
- * contador na MESMA transação — e o hook relê a janela de conquistas para
- * descobrir qual linha é nova. Ao reconectar, ele ressincroniza e emite o que
- * passou longe — sem repetir o que já foi celebrado.
+ * Refazer de c26046478 (entrega t_8e0d9185, f037b539b), recusada no ESPELHO DO
+ * CI porque assinava `agent_achievements` — tabela fora da publicação
+ * `supabase_realtime`, logo assinatura morta. Aqui só `agent_stats` é assinado
+ * (a guarda do CI recusa assinatura fora da publicação — lá ela seria morta,
+ * sem evento nenhum). A conquista nova chega pelo aumento
+ * de `achievements_count`, gravado na mesma transação do insert da conquista
+ * no servidor: o hook relê a janela e celebra só o id novo.
+ * Nível chega direto pelo evento de `agent_stats`, num tópico exclusivo por
+ * instância. Ao reconectar, ele ressincroniza e emite o que passou longe —
+ * sem repetir o que já foi celebrado.
+ *
+ * O backend é simulado (canal do Supabase), mas o hook é o real.
  */
 
 type Row = Record<string, unknown>;
@@ -23,7 +26,10 @@ type Handler = (payload: { new?: Row }) => void;
 
 const h = vi.hoisted(() => ({
   perfis: { data: { id: 'p1' }, error: null } as Resposta,
-  stats: { data: { id: 's1', profile_id: 'p1', xp: 100, level: 3, achievements_count: 2 }, error: null } as Resposta,
+  stats: {
+    data: { id: 's1', profile_id: 'p1', xp: 100, level: 3, achievements_count: 2 },
+    error: null,
+  } as Resposta,
   conquistas: { data: [] as Row[], error: null } as Resposta,
   topicos: [] as string[],
   onChamadas: [] as Array<{ event: string; config: Record<string, unknown> }>,
@@ -109,24 +115,47 @@ function conquista(overrides: Row = {}): Row {
   };
 }
 
-function statsEvento(overrides: Row = {}): Row {
-  return { profile_id: 'p1', level: 3, xp: 100, achievements_count: 2, ...overrides };
-}
-
 async function montar(opcoes: { profileId?: string; onCelebration?: (c: unknown) => void } = {}) {
   const hook = renderHook(
     () => useAgentCelebrations(opcoes as Parameters<typeof useAgentCelebrations>[0]),
     { wrapper: criarWrapper() },
   );
   await waitFor(() => expect(h.topicos.length).toBeGreaterThan(0));
+  // Barreira da semeadura: só entrega evento depois que o hook leu ids de
+  // conquista, nível e contagem atuais (sem isso a ordem seria corrida).
+  await waitFor(() => {
+    expect(h.consultas).toContain('agent_achievements');
+    expect(h.consultas).toContain('agent_stats');
+  });
   return hook;
+}
+
+/** O que o banco passa a devolver na próxima leitura da janela de conquistas. */
+function janelaDeConquistas(...linhas: Row[]) {
+  h.conquistas = { data: linhas, error: null };
+}
+
+/**
+ * Evento real de conquista: o insert da conquista e o aumento de
+ * `achievements_count` em `agent_stats` saem na mesma transação, e é o evento
+ * publicado quem avisa o cliente a reler a janela de conquistas.
+ */
+async function entregarConquista(stats: Row = {}) {
+  await act(async () => {
+    h.handlers.get('agent_stats')?.({
+      new: { id: 's1', profile_id: 'p1', xp: 100, level: 3, achievements_count: 3, ...stats },
+    });
+  });
 }
 
 describe('useAgentCelebrations', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     h.perfis = { data: { id: 'p1' }, error: null };
-    h.stats = { data: { id: 's1', profile_id: 'p1', xp: 100, level: 3, achievements_count: 2 }, error: null };
+    h.stats = {
+      data: { id: 's1', profile_id: 'p1', xp: 100, level: 3, achievements_count: 2 },
+      error: null,
+    };
     h.conquistas = { data: [], error: null };
     h.topicos = [];
     h.onChamadas = [];
@@ -135,13 +164,12 @@ describe('useAgentCelebrations', () => {
     h.consultas = [];
   });
 
-  it('assina SÓ agent_stats do próprio perfil num tópico exclusivo (agent_achievements não é publicada)', async () => {
+  it('assina só agent_stats do próprio perfil num tópico exclusivo', async () => {
     const { unmount } = await montar();
 
     expect(h.topicos[0]).toMatch(/^agente-celebracoes:/);
-    // UMA inscrição, e é no sinal publicado.
-    expect(h.handlers.size).toBe(1);
-    expect(h.onChamadas).toHaveLength(1);
+    expect(h.onChamadas.map((c) => c.config.table)).toEqual(['agent_stats']);
+    expect(h.handlers.has('agent_achievements')).toBe(false);
     expect(h.onChamadas[0]).toEqual(
       expect.objectContaining({
         event: 'postgres_changes',
@@ -153,23 +181,19 @@ describe('useAgentCelebrations', () => {
         }),
       }),
     );
-    expect(h.handlers.has('agent_achievements')).toBe(false);
 
     unmount();
     expect(h.removeChannel).toHaveBeenCalledTimes(1);
   });
 
-  it('conquista nova chega pelo aumento de achievements_count e vira 1 evento; o replay não repete', async () => {
+  it('conquista nova vira 1 evento pelo sinal da contagem, e o replay não repete', async () => {
     const celebradas: unknown[] = [];
     const { result } = await montar({ onCelebration: (c) => celebradas.push(c) });
-    h.conquistas = { data: [conquista()], error: null };
 
-    await act(async () => {
-      h.handlers.get('agent_stats')?.({ new: statsEvento({ achievements_count: 3, xp: 150 }) });
-      h.handlers.get('agent_stats')?.({ new: statsEvento({ achievements_count: 3, xp: 150 }) });
-    });
+    janelaDeConquistas(conquista());
+    await entregarConquista();
 
-    await waitFor(() => expect(result.current.celebrations).toHaveLength(1));
+    expect(result.current.celebrations).toHaveLength(1);
     expect(result.current.celebrations[0]).toMatchObject({
       kind: 'achievement',
       id: 'a9',
@@ -177,33 +201,60 @@ describe('useAgentCelebrations', () => {
       xpEarned: 50,
     });
     expect(celebradas).toHaveLength(1);
+
+    // Replay do mesmo evento (mesma contagem): não relê nem repete.
+    const leituras = h.consultas.filter((t) => t === 'agent_achievements').length;
+    await entregarConquista();
+    expect(h.consultas.filter((t) => t === 'agent_achievements')).toHaveLength(leituras);
+    expect(result.current.celebrations).toHaveLength(1);
+    expect(celebradas).toHaveLength(1);
   });
 
-  it('aumento de contagem sem linha nova na janela não celebra', async () => {
+  it('contagem de conquistas que não sobe não relê nem celebra', async () => {
     const { result } = await montar();
     await waitFor(() => expect(result.current.celebrations).toHaveLength(0));
+    const leiturasAntes = h.consultas.filter((t) => t === 'agent_achievements').length;
+    janelaDeConquistas(conquista());
 
-    // O contador subiu mas a janela continua vazia: nada a celebrar.
     await act(async () => {
-      h.handlers.get('agent_stats')?.({ new: statsEvento({ achievements_count: 3, xp: 150 }) });
+      h.handlers.get('agent_stats')?.({
+        new: { id: 's1', profile_id: 'p1', xp: 130, level: 3, achievements_count: 2 },
+      });
     });
 
-    await waitFor(() => expect(h.consultas.filter((t) => t === 'agent_achievements').length).toBeGreaterThan(1));
     expect(result.current.celebrations).toHaveLength(0);
+    expect(h.consultas.filter((t) => t === 'agent_achievements')).toHaveLength(leiturasAntes);
   });
 
   it('conquista que já existia antes de assinar não vira evento', async () => {
-    h.conquistas = { data: [conquista({ id: 'a1' })], error: null };
+    janelaDeConquistas(conquista({ id: 'a1' }));
     const { result } = await montar();
     await waitFor(() => expect(result.current.celebrations).toHaveLength(0));
 
-    // Contador sobe mas a janela só tem a conquista velha (id já conhecido).
+    // Contagem sobe (outra origem), mas a janela só tem o id já conhecido.
     await act(async () => {
-      h.handlers.get('agent_stats')?.({ new: statsEvento({ achievements_count: 3, xp: 150 }) });
+      h.handlers.get('agent_stats')?.({
+        new: { id: 's1', profile_id: 'p1', xp: 100, level: 3, achievements_count: 3 },
+      });
     });
 
-    await waitFor(() => expect(h.consultas.filter((t) => t === 'agent_achievements').length).toBeGreaterThan(1));
     expect(result.current.celebrations).toHaveLength(0);
+  });
+
+  it('semeadura celebra só o que nasceu depois de montar (corrida com o insert)', async () => {
+    // A leitura inicial pode ver uma conquista gravada DEPOIS de montar (o
+    // insert comitou antes do SELECT responder): ela vira festa, e o que já
+    // existia continua suprimido. earned_at futuro garante posterioridade ao
+    // marco capturado no efeito, sem depender de relógio.
+    const depois = new Date(Date.now() + 60_000).toISOString();
+    janelaDeConquistas(
+      conquista({ id: 'a-antiga', earned_at: '2026-10-13T10:00:00.000Z' }),
+      conquista({ id: 'a-nova', earned_at: depois }),
+    );
+    const { result } = await montar();
+
+    await waitFor(() => expect(result.current.celebrations).toHaveLength(1));
+    expect(result.current.celebrations[0]).toMatchObject({ kind: 'achievement', id: 'a-nova' });
   });
 
   it('aumento de nível vira 1 evento; nível já conhecido não repete', async () => {
@@ -211,7 +262,9 @@ describe('useAgentCelebrations', () => {
     await waitFor(() => expect(result.current.celebrations).toHaveLength(0));
 
     await act(async () => {
-      h.handlers.get('agent_stats')?.({ new: statsEvento({ level: 4, xp: 240 }) });
+      h.handlers.get('agent_stats')?.({
+        new: { id: 's1', profile_id: 'p1', level: 4, xp: 240, achievements_count: 2 },
+      });
     });
     expect(result.current.celebrations).toHaveLength(1);
     expect(result.current.celebrations[0]).toMatchObject({
@@ -222,9 +275,13 @@ describe('useAgentCelebrations', () => {
     });
 
     await act(async () => {
-      h.handlers.get('agent_stats')?.({ new: statsEvento({ level: 4, xp: 300 }) });
+      h.handlers.get('agent_stats')?.({
+        new: { id: 's1', profile_id: 'p1', level: 4, xp: 300, achievements_count: 2 },
+      });
       // nível que não subiu (mesmo valor repetido do servidor) não celebra
-      h.handlers.get('agent_stats')?.({ new: statsEvento({ level: 3, xp: 300 }) });
+      h.handlers.get('agent_stats')?.({
+        new: { id: 's1', profile_id: 'p1', level: 3, xp: 300, achievements_count: 2 },
+      });
     });
     expect(result.current.celebrations).toHaveLength(1);
   });
@@ -238,8 +295,11 @@ describe('useAgentCelebrations', () => {
 
     // Cai a conexão e, enquanto isso, o servidor concede conquista e sobe o nível.
     act(() => h.statusCallback?.('CHANNEL_ERROR'));
-    h.conquistas = { data: [conquista({ id: 'a2' })], error: null };
-    h.stats = { data: { id: 's1', profile_id: 'p1', xp: 300, level: 4, achievements_count: 3 }, error: null };
+    janelaDeConquistas(conquista({ id: 'a2' }));
+    h.stats = {
+      data: { id: 's1', profile_id: 'p1', xp: 300, level: 4, achievements_count: 3 },
+      error: null,
+    };
     act(() => h.statusCallback?.('SUBSCRIBED'));
 
     await waitFor(() => expect(consultasConquistas()).toBe(2));
@@ -255,24 +315,18 @@ describe('useAgentCelebrations', () => {
 
   it('dismiss tira da fila sem deixar a conquista voltar', async () => {
     const { result } = await montar();
-    h.conquistas = { data: [conquista({ id: 'a7' })], error: null };
 
-    await act(async () => {
-      h.handlers.get('agent_stats')?.({ new: statsEvento({ achievements_count: 3, xp: 150 }) });
-    });
-    await waitFor(() => expect(result.current.celebrations).toHaveLength(1));
+    janelaDeConquistas(conquista({ id: 'a7' }));
+    await entregarConquista({ achievements_count: 3 });
+    expect(result.current.celebrations).toHaveLength(1);
 
     await act(async () => {
       result.current.dismiss();
     });
     expect(result.current.celebrations).toHaveLength(0);
 
-    // Contador sobe de novo mas a janela só tem a conquista já dispensada.
-    await act(async () => {
-      h.handlers.get('agent_stats')?.({ new: statsEvento({ achievements_count: 4, xp: 200 }) });
-    });
-
-    await waitFor(() => expect(h.consultas.filter((t) => t === 'agent_achievements').length).toBeGreaterThan(2));
+    // Contagem sobe de novo, mas a janela só tem o id já celebrado: não volta.
+    await entregarConquista({ achievements_count: 4 });
     expect(result.current.celebrations).toHaveLength(0);
   });
 });
