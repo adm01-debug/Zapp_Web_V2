@@ -35,9 +35,9 @@ const PERIOD_OPTIONS = [
 
 export function AdvancedReportsView() {
   const {
-    period, setPeriod, selectedAgent, setSelectedAgent, selectedTag, setSelectedTag,
+    period, setPeriod, selectedAgent, setSelectedAgent,
     compareEnabled, setCompareEnabled,
-    agents, tags, dateRange, previousDateRange,
+    agents, dateRange, previousDateRange,
     chartData, previousChartData, comparisonSummary, contactsChartData, stats,
     isLoading, isError, isIncomplete, error, getExportData,
   } = useReportsData();
@@ -58,7 +58,7 @@ export function AdvancedReportsView() {
             <BarChart3 className="w-7 h-7 text-primary" />
             Relatórios Avançados
           </h1>
-          <p className="text-muted-foreground mt-1">Análise detalhada de atendimentos por período, agente e tags</p>
+          <p className="text-muted-foreground mt-1">Análise detalhada de atendimentos por período e agente</p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
           <div className="flex items-center gap-2 px-3 py-2 bg-muted/50 rounded-lg border">
