@@ -46,6 +46,12 @@ vi.mock('@/hooks/system/useNotificationSettings', () => ({
   }),
 }));
 
+vi.mock('@/hooks/system/useUserRole', () => ({
+  // Consumidor novo do painel (interruptor "avisar também da equipe"): aqui o
+  // papel é AGENTE — a chave de supervisor não aparece e não muda este teste.
+  useUserRole: () => ({ isSupervisor: false, isAdmin: false, loading: false }),
+}));
+
 vi.mock('@/utils/notificationSounds', () => ({
   playNotificationSound: vi.fn(),
   previewSound: vi.fn(),

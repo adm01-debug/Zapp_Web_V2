@@ -37,6 +37,12 @@ vi.mock('@/hooks/system/useNotificationSettings', () => ({
   }),
 }));
 
+vi.mock('@/hooks/system/useUserRole', () => ({
+  // Consumidor novo do painel (interruptor "avisar também da equipe"): papel de
+  // AGENTE, para este teste de restaurar não depender da chave de supervisor.
+  useUserRole: () => ({ isSupervisor: false, isAdmin: false, loading: false }),
+}));
+
 vi.mock('@/hooks/system/usePushNotifications', () => ({
   usePushNotifications: () => ({
     isEnabled: false,

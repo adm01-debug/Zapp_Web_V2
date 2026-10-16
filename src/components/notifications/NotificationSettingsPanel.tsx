@@ -5,8 +5,10 @@ import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Volume2, VolumeX, Play, Bell, RotateCcw } from 'lucide-react';
+import { Volume2, VolumeX, Play, Bell, Users, RotateCcw } from 'lucide-react';
 import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
+import { useUserRole } from '@/hooks/system/useUserRole';
+import { useTeamAlertsPreference } from '@/hooks/realtime/incomingAlertScope';
 import { previewSound, requestNotificationPermission } from '@/utils/notificationSounds';
 import { toast } from '@/hooks/ui/use-toast';
 import { motion } from 'framer-motion';
@@ -17,6 +19,11 @@ import { NotificationTypeSection, SentimentAlertCard, QuietHoursCard } from './N
 export function NotificationSettingsPanel() {
   const { settings, updateSettings, resetSettings, isQuietHours } = useNotificationSettings();
   const [isTestingSound, setIsTestingSound] = useState(false);
+  // A opção "avisar também da equipe" é de supervisor (inclui admin, como no
+  // resto do app); quem decide o que avisar é o `incomingAlertScope`, o MESMO
+  // ponto lido pelo aviso global de mensagem nova — o painel só liga a chave.
+  const { isSupervisor } = useUserRole();
+  const { teamAlertsEnabled, setTeamAlertsEnabled } = useTeamAlertsPreference();
 
   const handleTestSound = async () => {
     setIsTestingSound(true);
@@ -110,6 +117,28 @@ export function NotificationSettingsPanel() {
           </CardContent>
         )}
       </Card>
+
+      {/* Avisos da equipe (supervisor): liga o `teamAlerts` que o aviso global
+          de mensagem nova lê em `incomingAlertScope`. Nasce DESLIGADO — sem a
+          chave ligada, conversa de outro atendente não avisa. */}
+      {isSupervisor && (
+        <Card className="border-secondary/20 bg-card">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-info/15 flex items-center justify-center">
+                  <Users className="w-5 h-5 text-info" />
+                </div>
+                <div>
+                  <CardTitle id="notif-equipe-title" className="text-lg">Avisar também da equipe</CardTitle>
+                  <CardDescription>Receber avisos das conversas dos outros atendentes, além das suas</CardDescription>
+                </div>
+              </div>
+              <Switch checked={teamAlertsEnabled} onCheckedChange={setTeamAlertsEnabled} aria-labelledby="notif-equipe-title" />
+            </div>
+          </CardHeader>
+        </Card>
+      )}
 
       <SentimentAlertCard settings={settings} updateSettings={updateSettings} />
       <PushNotificationCard />
