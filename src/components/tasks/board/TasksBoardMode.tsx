@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { DragDropContext, type DropResult } from '@hello-pangea/dnd';
 import { toast } from 'sonner';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { BoardColumn }      from './BoardColumn';
 import type { WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
 import type { WorkItemInput, MoveOpts } from '@/hooks/tasks/useMyWorkItems';
@@ -35,10 +34,14 @@ interface Props extends WorkItemCardActions {
 // Etapa 094: as colunas do trilho na ordem — a mesma fonte do `boardInteracao`.
 const BOARD_COLUMNS: WorkItemStatus[] = BOARD_ORDER;
 
-/** Rótulo da coluna na faixa de navegação (mesma fonte das colunas). */
-function rotuloDaColuna(status: WorkItemStatus): string {
-  return KANBAN_COLUMNS.find(c => c.status === status)?.label ?? status;
+/** Etapa 099: rótulo CURTO — é o texto da aba na tela estreita. */
+function rotuloCurtoDaColuna(status: WorkItemStatus): string {
+  return KANBAN_COLUMNS.find(c => c.status === status)?.shortLabel ?? status;
 }
+
+/** Ids da relação ABA (`tab`) → painel (`tabpanel`) da tela estreita. */
+const ID_PAINEL_ABAS = 'board-tabpanel';
+const idDaAba = (status: WorkItemStatus) => `board-tab-${status}`;
 
 
 export function TasksBoardMode({
@@ -63,7 +66,7 @@ export function TasksBoardMode({
     tremorTimer.current = window.setTimeout(() => setColunaTremendo(null), 600);
   }, []);
   // Etapa 81: no ponteiro grosso o arrasto sai de cena e o `MoveToMenu` do card
-  // assume; na tela estreita as setas e os dots conduzem a faixa de colunas.
+  // assume; na tela estreita (etapa 099) as ABAS no topo conduzem as colunas.
   const dragDesligado = usePointerCoarse();
   const telaEstreita  = useNarrowViewport();
   const pressaoArrasto = usePressaoLonga();
@@ -75,6 +78,7 @@ export function TasksBoardMode({
     ? BOARD_COLUMNS
     : BOARD_COLUMNS.filter(s => s !== 'done');
   const trilhoRef     = useRef<HTMLDivElement>(null);
+  const abasRef       = useRef<HTMLDivElement>(null);
   const [colunaVisivel, setColunaVisivel] = useState(0);
   // Etapa 098: sombras das bordas — só onde ainda há conteúdo escondido.
   const [bordas, setBordas] = useState({ esq: false, dir: false });
@@ -85,24 +89,6 @@ export function TasksBoardMode({
     if (!trilho) return;
     setBordas(bordasDeRolagem(trilho));
   }, []);
-
-  /** Qual coluna está encostada à esquerda da faixa (o snap alinha por ali). */
-  const aoRolar = useCallback(() => {
-    const trilho = trilhoRef.current;
-    if (!trilho) return;
-    atualizarBordas();
-    const base = trilho.getBoundingClientRect().left;
-    let indice = 0;
-    let menorDistancia = Number.POSITIVE_INFINITY;
-    Array.from(trilho.children).forEach((coluna, i) => {
-      const distancia = Math.abs(coluna.getBoundingClientRect().left - base);
-      if (distancia < menorDistancia) {
-        menorDistancia = distancia;
-        indice = i;
-      }
-    });
-    setColunaVisivel(indice);
-  }, [atualizarBordas]);
 
   useEffect(() => {
     atualizarBordas();
@@ -118,18 +104,32 @@ export function TasksBoardMode({
     };
   }, [atualizarBordas]);
 
-  /** Leva a faixa até a coluna pedida (setas e dots). */
+  /**
+   * Etapa 099: troca a coluna à vista na tela estreita (clique/teclado nas
+   * abas). Não é mais rolagem: o trilho deixa de ser carrossel, então a aba
+   * ativa É a coluna montada. O foco segue a aba escolhida (roving tabIndex).
+   */
   const irParaColuna = useCallback((indice: number) => {
-    const trilho = trilhoRef.current;
-    if (!trilho) return;
-    const alvo = trilho.children[indice] as HTMLElement | undefined;
-    if (!alvo) return;
-    const deslocamento = alvo.getBoundingClientRect().left - trilho.getBoundingClientRect().left;
-    const destino = trilho.scrollLeft + deslocamento;
-    // `scrollTo` anima no navegador; ambientes sem ele (jsdom) não podem quebrar o clique.
-    if (typeof trilho.scrollTo === 'function') trilho.scrollTo({ left: destino, behavior: 'smooth' });
-    else trilho.scrollLeft = destino;
+    setColunaVisivel(indice);
+    abasRef.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[indice]?.focus();
   }, []);
+
+  /**
+   * Etapa 099: setas/Home/End andam entre as abas — o padrão de `tablist`
+   * (a aba ativa é a única parada do Tab; andar é pela seta).
+   */
+  const aoTecladoDasAbas = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    const total = colunasVisiveis.length;
+    const atual = Math.min(colunaVisivel, total - 1);
+    let destino: number | null = null;
+    if (e.key === 'ArrowRight') destino = (atual + 1) % total;
+    else if (e.key === 'ArrowLeft') destino = (atual - 1 + total) % total;
+    else if (e.key === 'Home') destino = 0;
+    else if (e.key === 'End') destino = total - 1;
+    if (destino === null) return;
+    e.preventDefault();
+    irParaColuna(destino);
+  }, [colunaVisivel, colunasVisiveis.length, irParaColuna]);
 
   // Etapa 87: a decisão do arrasto (portão do Aguardando + trava de WIP 3/3) saiu
   // daqui para `resolveDragEnd` (função pura, em .ts); este handler só interpreta.
@@ -228,6 +228,12 @@ export function TasksBoardMode({
   }, [aplicarDecisao, byStatus, byStatusFull, doingCount, dragSourceStatus]);
 
   const ultimaColuna = colunasVisiveis.length - 1;
+  // Etapa 099: com o toggle "Concluídas" desligado a faixa encurta — a coluna à
+  // vista nunca pode passar da última aba.
+  const colunaAtiva = Math.min(colunaVisivel, ultimaColuna);
+  // Na tela estreita o trilho monta UMA coluna — a da aba ativa. Daí para cima
+  // valem as cinco: quem decide quantas caem por linha é a grade (md/lg/xl).
+  const colunasNoTrilho = telaEstreita ? [colunasVisiveis[colunaAtiva]] : colunasVisiveis;
 
   return (
     <DragDropContext
@@ -258,38 +264,50 @@ export function TasksBoardMode({
           </button>
         </div>
 
-        {/* Etapa 81: setas ‹ › — só na tela estreita, onde as 5 colunas não cabem */}
+        {/* Etapa 099: abaixo de 768px as cinco colunas viram UMA coluna por vez e
+            a troca é por estas abas (D1: Quadro por estado). `flex-wrap` é de
+            propósito: a faixa quebra linha em vez de ganhar rolagem lateral, e é
+            ela quem substitui as antigas setas e os dots do carrossel. */}
         {telaEstreita && (
-          <div className="flex w-full min-w-0 items-center gap-2" data-testid="board-nav">
-            <button
-              type="button"
-              data-testid="board-prev"
-              aria-label="Coluna anterior"
-              disabled={colunaVisivel === 0}
-              onClick={() => irParaColuna(colunaVisivel - 1)}
-              className="h-8 w-8 shrink-0 rounded-lg border border-border/70 flex items-center justify-center transition-colors hover:bg-muted disabled:opacity-40 disabled:hover:bg-transparent"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            <span className="flex-1 min-w-0 truncate text-center text-[13px] font-semibold text-foreground">
-              {rotuloDaColuna(colunasVisiveis[Math.min(colunaVisivel, ultimaColuna)])}
-            </span>
-            <button
-              type="button"
-              data-testid="board-next"
-              aria-label="Próxima coluna"
-              disabled={colunaVisivel === ultimaColuna}
-              onClick={() => irParaColuna(colunaVisivel + 1)}
-              className="h-8 w-8 shrink-0 rounded-lg border border-border/70 flex items-center justify-center transition-colors hover:bg-muted disabled:opacity-40 disabled:hover:bg-transparent"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
+          <div
+            ref={abasRef}
+            role="tablist"
+            aria-label="Estados do Quadro"
+            data-testid="board-tabs"
+            onKeyDown={aoTecladoDasAbas}
+            className="flex w-full min-w-0 flex-wrap items-center gap-1"
+          >
+            {colunasVisiveis.map((status, i) => {
+              const ativa = i === colunaAtiva;
+              return (
+                <button
+                  key={status}
+                  type="button"
+                  role="tab"
+                  id={idDaAba(status)}
+                  aria-selected={ativa}
+                  aria-controls={ID_PAINEL_ABAS}
+                  tabIndex={ativa ? 0 : -1}
+                  onClick={() => irParaColuna(i)}
+                  className={`min-h-9 shrink-0 rounded-lg border px-3 text-xs font-medium transition-colors ${
+                    ativa
+                      ? 'border-primary/40 bg-primary/10 text-foreground'
+                      : 'border-border/70 text-muted-foreground hover:bg-muted'
+                  }`}
+                >
+                  {rotuloCurtoDaColuna(status)}
+                </button>
+              );
+            })}
           </div>
         )}
 
         {/* Etapa 098: o trilho embrulhado pelas sombras de borda — elas marcam onde
-            ainda ha coluna escondida; `motion-safe:scroll-smooth` da o encaixe
-            animado do snap (etapa 094) e respeita quem pediu menos movimento. */}
+            ainda ha coluna escondida. Etapa 099: o trilho deixou de ser carrossel
+            (`overflow-x-auto`/snap saíram) e virou GRELHA — 1 coluna por vez na
+            tela estreita e, de 768px para cima, 2/3/5 faixas que quebram linha em
+            vez de rolar de lado. As sombras seguem medidas como rede de
+            segurança: só aparecem se algo voltar a transbordar na horizontal. */}
         <div className="relative flex-1 min-h-0 flex w-full min-w-0">
           {bordas.esq && (
             <div
@@ -307,11 +325,15 @@ export function TasksBoardMode({
           )}
           <div
             ref={trilhoRef}
-            onScroll={aoRolar}
+            onScroll={atualizarBordas}
             onKeyDown={handleTeclado}
-            className="flex w-full min-w-0 gap-3 h-full overflow-x-auto snap-x snap-mandatory motion-safe:scroll-smooth pb-4"
+            data-testid="board-track"
+            id={telaEstreita ? ID_PAINEL_ABAS : undefined}
+            role={telaEstreita ? 'tabpanel' : undefined}
+            aria-labelledby={telaEstreita ? idDaAba(colunasVisiveis[colunaAtiva]) : undefined}
+            className="grid w-full min-w-0 flex-1 gap-3 h-full min-h-0 pb-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 md:content-start md:overflow-y-auto"
           >
-          {colunasVisiveis.map(status => (
+          {colunasNoTrilho.map(status => (
             <BoardColumn
               key={status}
               status={status}
@@ -337,25 +359,6 @@ export function TasksBoardMode({
           ))}
           </div>
         </div>
-
-        {/* Etapa 81: 5 dots — indicador de página (só na tela estreita) */}
-        {telaEstreita && (
-          <div className="flex w-full items-center justify-center gap-1.5" data-testid="board-dots">
-            {colunasVisiveis.map((status, i) => (
-              <button
-                key={status}
-                type="button"
-                data-testid={`board-dot-${i}`}
-                aria-label={`Ir para ${rotuloDaColuna(status)}`}
-                aria-current={colunaVisivel === i ? 'true' : undefined}
-                onClick={() => irParaColuna(i)}
-                className={`h-1.5 rounded-full transition-all ${
-                  colunaVisivel === i ? 'w-4 bg-primary' : 'w-1.5 bg-muted-foreground/40 hover:bg-muted-foreground/70'
-                }`}
-              />
-            ))}
-          </div>
-        )}
       </div>
     </DragDropContext>
   );
