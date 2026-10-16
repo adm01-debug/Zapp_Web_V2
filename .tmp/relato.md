@@ -1,26 +1,43 @@
-Especialista: worker (geral)
+Especialista: workersql (senior; skill area-sql-banco)
 
-## O que mudou e por quê
-- supabase/migrations/20261011193310_queues_distribution_overflow.sql: na ordenação round_robin de `queue_pick_agent`, troquei `COALESCE(max_evento, max_created_at)` por `GREATEST(max_evento, max_created_at)`. `log_assignment_change` é AFTER UPDATE, então contatos atribuídos por INSERT não geram `conversation_events`; com COALESCE o atendente ficava congelado na data do evento antigo de transferência e continuava parecendo o mais antigo mesmo depois de receber contatos novos por INSERT. GREATEST ignora NULL, então o fallback quando um dos dois lados falta é preservado (só retorna NULL se ambos forem NULL).
-- scripts/db-audit/queues-distribution-overflow.test.sh: acrescentei o cenário 2b (fila nova `round-robin-insert`, b1/b2): b1 recebe um contato por UPDATE de queue_id (evento fixado em 2026-03-01) e depois um contato novo por INSERT com created_at recente (2026-09-01, sem evento); b2 tem um contato por INSERT em 2026-06-01. A entrada seguinte na fila deve ir para b2 — o último atendimento real de b1 é o INSERT, não o evento velho.
-- scripts/db-audit/queues-distribution-overflow.test.sh: o caso sticky de papel 'agent' (membro 'ad' na fila 012) agora isola o filtro de papel: acrescentei `agent_skills(ad,'vendas',2)` depois dos testes de habilidade anteriores, de modo que só o papel 'agent' (ad é admin) exclui 'ad'; o esperado segue o agente elegível (a1). Sem isso, o filtro de habilidade sozinho já excluía 'ad' e o teste passava mesmo sem o JOIN user_roles (era a recusa).
-- .github/workflows/db-guard.yml: já vinha alterado pelo commit trazido (cherry-pick 5e42f6c43) para registrar o novo contrato de banco; está na lista de ARQUIVOS QUE PODE TOCAR do cartão ("só registrar o teste, se a regra exigir") e a regra exige o registro do teste de db-audit. Não fiz mudança nova nele.
-- src/integrations/supabase/types.ts: tipo gerado trazido pelo mesmo commit (colunas novas de `queues` que a migration cria). O cartão permite ("só se o tipo gerado mudar por causa da migration"); a mudança de GREATEST não altera tipo.
+Ponto 1: round_robin media evento velho e ignorava contato por INSERT mais recente
+- O que mudei: em `supabase/migrations/20261011193310_queues_distribution_overflow.sql`, a ordenação round_robin de `queue_pick_agent` passou de `COALESCE(max_evento, max_created_at)` para `GREATEST(max_evento, max_created_at)`, mantendo o fallback quando só um lado existe e usando a atividade mais recente quando existem evento e contato.
+- Teste que prova: em `scripts/db-audit/queues-distribution-overflow.test.sh`, acrescentei o cenário em que b1 recebe um contato por UPDATE de queue_id, depois recebe contato por INSERT com `created_at` recente, e o INSERT seguinte precisa ir para b2.
+- Vermelho antes da correção: `scripts/db-audit/queues-distribution-overflow.test.sh` com o teste novo e a migration ainda usando COALESCE -> `[FAIL] round_robin: considera contato por INSERT mais recente que evento antigo: esperado '00000000-0000-0000-0000-0000000000b2', obtido '00000000-0000-0000-0000-0000000000b1'`.
+- Verde depois: `scripts/db-audit/queues-distribution-overflow.test.sh` -> `[OK] contrato de distribuicao/transbordo de filas provado`.
 
-Diff do commit: 5 arquivos, 1 de teste (`scripts/db-audit/queues-distribution-overflow.test.sh`).
+Ponto 2: teste sticky/role não isolava o filtro de papel agent
+- O que mudei: em `scripts/db-audit/queues-distribution-overflow.test.sh`, antes do caso `sticky: ultimo membro sem papel agent cai no agente elegivel`, o membro `ad` agora também recebe a habilidade `vendas` nível 2. Assim, o filtro de habilidade sozinho não o exclui; só o filtro de `user_roles.role = 'agent'` impede a fixação no admin.
+- Teste que prova: o próprio caso `sticky: ultimo membro sem papel agent cai no agente elegivel` continua esperando `a1`.
+- Vermelho sem a proteção: rodei uma mutação local temporária removendo os dois `JOIN public.user_roles` e os dois `ur.role = 'agent'` de `queue_pick_agent`; o teste falhou em `[FAIL] sticky: ultimo membro sem papel agent cai no agente elegivel: esperado '00000000-0000-0000-0000-0000000000a1', obtido '00000000-0000-0000-0000-0000000000ad'`.
+- Verde depois: `scripts/db-audit/queues-distribution-overflow.test.sh` -> `[OK] contrato de distribuicao/transbordo de filas provado`.
 
-## Pontos do revisor ([refazer])
-- Ponto 1: `queue_pick_agent` usa GREATEST no ramo round_robin (arquivo acima). Cenário novo no `.test.sh` (2b); o teste falha com COALESCE e passa com a correção (prova abaixo).
-- Ponto 2: o caso sticky de papel deixou de ser resolvido pela habilidade — dei 'ad' a habilidade 'vendas' nível 2 e o esperado continua o agente elegível (a1). Prova por mutação: removendo o filtro de papel o teste falha (escolhe 'ad').
+Rollback e banco local
+- O teste executa a migration real em Postgres descartável, extrai e executa o bloco `-- Rollback:` do cabeçalho, verifica remoção da coluna `distribution`, remoção de `queue_pick_agent`, restauração do corpo antigo de `auto_assign_to_queue_agent` sem `paused`, e reaplica a migration depois do rollback.
+- Saída verde do rollback no teste: `[PASS] rollback: coluna distribution removida`; `[PASS] rollback: funcao queue_pick_agent removida`; `[PASS] rollback: body antigo do distribuidor restaurado (sem paused)`; `[PASS] reaplicacao apos rollback: migration volta a criar distribution`.
 
-## Conferências do juiz (não procedem / já cobertas)
-- UPDATE que regrava `updated_at` em todas as linhas: o transbordo (`queue_overflow_rewrite`) faz `UPDATE public.contacts ... WHERE id = NEW.id AND queue_id = NEW.queue_id` — toca UMA linha só. O contrato prova: `[PASS] transbordo: toca UMA linha de contacts (so o contato movido, sem backfill de updated_at)` (count de `updated_at >= t0` = 1) e `[PASS] transbordo: contato intocado mantem updated_at antigo` (outro contato com `updated_at < t0`). Não desliguei o gatilho porque só uma linha casa o WHERE.
-- LOOP sem teto: `queues_prevent_overflow_cycle` tem teto por chamada — `WHILE v_cur IS NOT NULL AND v_depth < 100 LOOP` com `v_depth := v_depth + 1`. Não há drenagem sem teto.
+Arquivos do diff (`git diff --name-only dia/2026-10-12...HEAD`)
+- `.github/workflows/db-guard.yml`
+- `.tmp/relato.md`
+- `scripts/db-audit/queues-distribution-overflow.test.sh`
+- `src/integrations/supabase/types.ts`
+- `supabase/migrations/20261011193310_queues_distribution_overflow.sql`
 
-## Prova (comando rodado agora)
-- vermelho antes (mutação GREATEST -> COALESCE na migration): `bash scripts/db-audit/queues-distribution-overflow.test.sh` -> `[FAIL] round_robin: ultimo atendimento por INSERT (sem evento) faz b1 sair da vez: esperado '00000000-...0b2', obtido '00000000-...0b1'` (EXIT=1)
-- vermelho do Ponto 2 (mutação `ur.role='agent'` -> `TRUE`): `bash scripts/db-audit/queues-distribution-overflow.test.sh` -> `[FAIL] sticky: ultimo membro com habilidade mas sem papel agent cai no agente elegivel: esperado '00000000-...a1', obtido '00000000-...ad'` (EXIT=1)
-- verde depois (migration restaurada, sem mutação): `bash scripts/db-audit/queues-distribution-overflow.test.sh` -> `[OK] contrato de distribuicao/transbordo de filas provado` (EXIT=0)
+Verificações rodadas
+- `scripts/db-audit/queues-distribution-overflow.test.sh` -> `[OK] contrato de distribuicao/transbordo de filas provado`.
+- Mutação temporária removendo o filtro de papel de `queue_pick_agent` -> falhou no caso `sticky: ultimo membro sem papel agent cai no agente elegivel` com `obtido ...0ad`.
+- `zapp-verify . --rapido` -> `VERIFY: VERDE SEM BANCO (12s) — o banco NÃO foi verificado; registros em /home/joaquim_ataides/.local/state/zapp-verify/e036254dae2a`.
+- `node scripts/ci/check-test-inventory.mjs` -> o teste novo `queues-distribution-overflow.test.sh` está registrado no YAML; o comando ainda falhou por 3 órfãos preexistentes e fora do escopo (`department-invite-contract-audit-vocabulary.test.sh`, `talkx-conversion-defaults.test.sh`, `team-chat-media-contract.test.sh`).
+- `git diff --check` e `git diff --cached --check` antes do commit -> sem saída/sem erro.
 
-## O que NÃO fiz e por quê
-- Não afrouxei nenhum teste existente: os casos originais permanecem e passam.
+Avisos do juiz barato
+- `src/integrations/supabase/types.ts` mudou sem teste próprio: o aviso não procede para este cartão; `types.ts` é gerado a partir da migration, e o teste novo `scripts/db-audit/queues-distribution-overflow.test.sh` executa a migration real, os triggers/funções reais, permissões e rollback em Postgres descartável.
+- Arquivos fora da lista textual do cartão: `.github/workflows/db-guard.yml` e `scripts/db-audit/queues-distribution-overflow.test.sh` foram indispensáveis para a prova exigida no refazer. O primeiro só registra o teste novo no CI; o segundo é a prova SQL real que falha sem as correções.
+- `queue_overflow_rewrite` com `UPDATE public.contacts`: não é atualização em massa; o `WHERE id = NEW.id AND queue_id = NEW.queue_id` limita a uma linha e o teste provou `transbordo: toca UMA linha de contacts` + `contato intocado mantem updated_at antigo`.
+- `WHILE ... LOOP`: o loop já tem teto (`v_depth < 100`) e só percorre a cadeia de `overflow_queue_id` para detectar ciclo, sem apagar/alterar linhas.
+
+O que NÃO fiz
+- Toquei em `.github/workflows/db-guard.yml` só para registrar o teste novo no db-guard, exigência do inventário de testes; não afrouxei guarda nem removi etapa.
+- Não toquei em outros guards, arquivos de UI, Edge Function ou produção.
+- Não alterei a semântica da fila inativa explícita; mantive o comportamento já aceito na recusa anterior e o teste existente verde.
+- Não rodei migration em produção; a prova de banco foi feita somente em Postgres descartável local pelo script db-audit.

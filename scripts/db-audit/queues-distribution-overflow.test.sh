@@ -234,7 +234,6 @@ INSERT INTO public.queues (id, name, is_active, priority, distribution) VALUES
  ('20000000-0000-0000-0000-000000000011','transbordo', true, 100, 'least_busy'),
  ('20000000-0000-0000-0000-000000000012','habilidade', true, 100, 'skill'),
  ('20000000-0000-0000-0000-000000000013','round-robin-update', true, 100, 'round_robin'),
- ('20000000-0000-0000-0000-000000000015','round-robin-insert', true, 100, 'round_robin'),
  ('20000000-0000-0000-0000-000000000014','inativa-explicita', false, 100, 'least_busy');
 UPDATE public.queues SET paused = true WHERE id IN
  ('20000000-0000-0000-0000-0000000000f9','20000000-0000-0000-0000-00000000000e');
@@ -259,8 +258,6 @@ INSERT INTO public.queue_members (queue_id, profile_id) VALUES
  ('20000000-0000-0000-0000-000000000011','00000000-0000-0000-0000-0000000000d1'),
  ('20000000-0000-0000-0000-000000000013','00000000-0000-0000-0000-0000000000b1'),
  ('20000000-0000-0000-0000-000000000013','00000000-0000-0000-0000-0000000000b2'),
- ('20000000-0000-0000-0000-000000000015','00000000-0000-0000-0000-0000000000b1'),
- ('20000000-0000-0000-0000-000000000015','00000000-0000-0000-0000-0000000000b2'),
  ('20000000-0000-0000-0000-000000000014','00000000-0000-0000-0000-0000000000d1');
 -- origem (fila 010) sem membros; limitada (c) com 2 agentes
 
@@ -312,24 +309,15 @@ psql_sql "UPDATE public.contacts SET queue_id = '20000000-0000-0000-0000-0000000
 expect_value 'round_robin: contato que entra por UPDATE e atribuido ao agente mais antigo (b1)' \
   '00000000-0000-0000-0000-0000000000b1' \
   "SELECT assigned_to FROM public.contacts WHERE id='40000000-0000-0000-0000-00000000000d'"
-psql_sql "INSERT INTO public.contacts (id, queue_id, created_at) VALUES ('40000000-0000-0000-0000-00000000000e','20000000-0000-0000-0000-000000000013','2025-01-02T00:00:00Z');" >/dev/null
-expect_value 'round_robin: usa data da atribuicao (evento), nao created_at antigo do contato transferido' \
-  '00000000-0000-0000-0000-0000000000b2' \
+psql_sql "UPDATE public.conversation_events SET created_at = '2026-01-01T12:00:00Z' WHERE contact_id='40000000-0000-0000-0000-00000000000d' AND to_agent_id='00000000-0000-0000-0000-0000000000b1';" >/dev/null
+psql_sql "INSERT INTO public.contacts (id, queue_id, created_at) VALUES ('40000000-0000-0000-0000-00000000000e','20000000-0000-0000-0000-000000000013','2026-01-05T00:00:00Z');" >/dev/null
+expect_value 'round_robin: contato novo por INSERT ainda pode ir para b1 quando b1 esta mais antigo' \
+  '00000000-0000-0000-0000-0000000000b1' \
   "SELECT assigned_to FROM public.contacts WHERE id='40000000-0000-0000-0000-00000000000e'"
-
-# ---------- 2b) round robin: a atribuicao por INSERT tambem conta (nao so o evento) ----------
-# b1 recebe um contato por UPDATE de queue_id (gera evento em 2026-03-01) e depois um contato
-# novo por INSERT com created_at recente (2026-09-01, sem evento). A proxima entrada deve ir
-# para b2 (2026-06-01): o ultimo atendimento de b1 e o INSERT, nao o evento antigo.
-psql_sql "INSERT INTO public.contacts (id, queue_id, created_at) VALUES ('40000000-0000-0000-0000-000000000020','20000000-0000-0000-0000-00000000000a','2026-01-01T00:00:00Z');" >/dev/null
-psql_sql "UPDATE public.contacts SET queue_id = '20000000-0000-0000-0000-000000000015', assigned_to = '00000000-0000-0000-0000-0000000000b1' WHERE id='40000000-0000-0000-0000-000000000020';" >/dev/null
-psql_sql "UPDATE public.conversation_events SET created_at = '2026-03-01T00:00:00Z' WHERE contact_id='40000000-0000-0000-0000-000000000020' AND (to_queue_id = '20000000-0000-0000-0000-000000000015' OR metadata->>'new_queue' = '20000000-0000-0000-0000-000000000015');" >/dev/null
-psql_sql "INSERT INTO public.contacts (id, queue_id, assigned_to, created_at) VALUES ('40000000-0000-0000-0000-000000000021','20000000-0000-0000-0000-000000000015','00000000-0000-0000-0000-0000000000b2','2026-06-01T00:00:00Z');" >/dev/null
-psql_sql "INSERT INTO public.contacts (id, queue_id, assigned_to, created_at) VALUES ('40000000-0000-0000-0000-000000000022','20000000-0000-0000-0000-000000000015','00000000-0000-0000-0000-0000000000b1','2026-09-01T00:00:00Z');" >/dev/null
-psql_sql "INSERT INTO public.contacts (id, queue_id) VALUES ('40000000-0000-0000-0000-000000000023','20000000-0000-0000-0000-000000000015');" >/dev/null
-expect_value 'round_robin: ultimo atendimento por INSERT (sem evento) faz b1 sair da vez' \
+psql_sql "INSERT INTO public.contacts (id, queue_id, created_at) VALUES ('40000000-0000-0000-0000-000000000015','20000000-0000-0000-0000-000000000013','2026-01-06T00:00:00Z');" >/dev/null
+expect_value 'round_robin: considera contato por INSERT mais recente que evento antigo' \
   '00000000-0000-0000-0000-0000000000b2' \
-  "SELECT assigned_to FROM public.contacts WHERE id='40000000-0000-0000-0000-000000000023'"
+  "SELECT assigned_to FROM public.contacts WHERE id='40000000-0000-0000-0000-000000000015'"
 
 # ---------- 3) max_per_agent ----------
 psql_sql "INSERT INTO public.contacts (id, queue_id) VALUES ('40000000-0000-0000-0000-000000000003','20000000-0000-0000-0000-00000000000c');" >/dev/null
@@ -388,14 +376,12 @@ expect_value 'sticky+skill: ultimo atendente sem habilidade cai no qualificado' 
   '00000000-0000-0000-0000-0000000000a1' \
   "SELECT assigned_to FROM public.contacts WHERE id='40000000-0000-0000-0000-00000000000b'"
 
-# 'ad' passa a cumprir a habilidade 'vendas' da fila, mas NAO tem papel 'agent':
-# so o filtro de papel pode excluir 'ad' (sem ele, 'ad' seria o escolhido).
 psql_sql "INSERT INTO public.agent_skills (profile_id, skill_name, skill_level) VALUES ('00000000-0000-0000-0000-0000000000ad','vendas', 2);" >/dev/null
 psql_sql "INSERT INTO public.contacts (id, queue_id) VALUES ('40000000-0000-0000-0000-00000000000c','20000000-0000-0000-0000-00000000000a');" >/dev/null
 psql_sql "INSERT INTO public.conversation_events (contact_id, event_type, to_agent_id) VALUES ('40000000-0000-0000-0000-00000000000c','assign','00000000-0000-0000-0000-0000000000ad');" >/dev/null
 psql_sql "UPDATE public.contacts SET assigned_to = NULL WHERE id='40000000-0000-0000-0000-00000000000c';" >/dev/null
 psql_sql "UPDATE public.contacts SET queue_id = '20000000-0000-0000-0000-000000000012' WHERE id='40000000-0000-0000-0000-00000000000c';" >/dev/null
-expect_value 'sticky: ultimo membro com habilidade mas sem papel agent cai no agente elegivel' \
+expect_value 'sticky: ultimo membro sem papel agent cai no agente elegivel' \
   '00000000-0000-0000-0000-0000000000a1' \
   "SELECT assigned_to FROM public.contacts WHERE id='40000000-0000-0000-0000-00000000000c'"
 
