@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { log } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { validateFile, FileValidationResult } from '@/utils/whatsappFileTypes';
+import { validateFile, validateFileContent, FileValidationResult } from '@/utils/whatsappFileTypes';
 import { compressImage, formatCompressionInfo } from '@/utils/imageCompression';
 import { sendOutboundMessage, type OutboundMessageType } from '@/services/outbound-message.service';
 import {
@@ -161,6 +161,12 @@ export function useFileUploadLogic(opts: {
 
   const uploadFileToStorage = useCallback(async (file: File): Promise<UploadedPrivateObject> => {
     if (!contactId) throw new Error('Selecione uma conversa antes de enviar um arquivo.');
+
+    // U8: o tipo declarado (MIME/extensão) é do cliente e pode ser forjado. Antes de gravar,
+    // confere os primeiros bytes do arquivo: `.exe` renomeado `.pdf` é recusado aqui e nada
+    // chega ao Storage (a checagem por MIME de `validateFile` continua valendo na seleção).
+    const content = await validateFileContent(file);
+    if (!content.valid) throw new Error(content.error || 'O conteúdo do arquivo não corresponde ao tipo informado.');
 
     let fileToUpload = file;
     if (file.type.startsWith('image/') && file.type !== 'image/gif') {

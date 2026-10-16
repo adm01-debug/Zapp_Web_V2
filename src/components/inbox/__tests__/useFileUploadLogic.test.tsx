@@ -225,3 +225,46 @@ describe('useFileUploadLogic — R2-INB-006: falha após enqueue e retry', () =>
     expect(secondInput.clientMessageId).toBeTruthy();
   });
 });
+
+describe('useFileUploadLogic — U8: conteúdo confere com o tipo declarado antes de enviar', () => {
+  const bytes = (data: number[]) => new Uint8Array(data);
+  // `.exe` (MZ/PE) com nome e MIME de PDF: o tipo declarado é forjado.
+  const exeAsPdf = () => new File(
+    [bytes([0x4d, 0x5a, 0x90, 0x00, 0x03, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0xff, 0xff, 0x00, 0x00])],
+    'contrato.pdf',
+    { type: 'application/pdf' },
+  );
+  // `ftyp` + marca `M4A ` (áudio/mp4 legítimo).
+  const m4a = () => new File(
+    [bytes([0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70, 0x4d, 0x34, 0x41, 0x20, 0x00, 0x00, 0x00, 0x00])],
+    'voz.m4a',
+    { type: 'audio/mp4' },
+  );
+
+  it('recusa .exe renomeado .pdf sem gravar nada no Storage', async () => {
+    const hook = renderUpload();
+    act(() => {
+      hook.result.current.handleExternalFile(exeAsPdf());
+    });
+    await send(hook);
+
+    expect(mocks.upload).not.toHaveBeenCalled();
+    expect(mocks.sendOutboundMessage).not.toHaveBeenCalled();
+    expect(mocks.toastError).toHaveBeenCalledWith(
+      expect.stringContaining('conteúdo não corresponde'),
+      { id: 'file-upload' },
+    );
+  });
+
+  it('aceita .m4a legítimo e segue o envio', async () => {
+    const hook = renderUpload();
+    act(() => {
+      hook.result.current.handleExternalFile(m4a());
+    });
+    await send(hook);
+
+    await waitFor(() => expect(mocks.upload).toHaveBeenCalledTimes(1));
+    expect(mocks.sendOutboundMessage).toHaveBeenCalledTimes(1);
+    expect(mocks.toastError).not.toHaveBeenCalled();
+  });
+});
