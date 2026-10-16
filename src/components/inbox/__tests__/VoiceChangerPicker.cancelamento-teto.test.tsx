@@ -133,7 +133,7 @@ function botaoPorTexto(texto: string): HTMLButtonElement {
 }
 
 async function abrirEGravar() {
-  render(<VoiceChangerPicker onSendAudio={vi.fn()} />);
+  render(<VoiceChangerPicker onSendAudioBlob={vi.fn()} />);
   act(() => {
     popoverState.onOpenChange?.(true);
   });
@@ -252,7 +252,7 @@ describe('VoiceChangerPicker — cancelamento da transformação, teto de grava�
   });
 
   it('mostra a mensagem de permissão negada em vez da genérica', async () => {
-    render(<VoiceChangerPicker onSendAudio={vi.fn()} />);
+    render(<VoiceChangerPicker onSendAudioBlob={vi.fn()} />);
     act(() => {
       popoverState.onOpenChange?.(true);
     });
@@ -267,7 +267,7 @@ describe('VoiceChangerPicker — cancelamento da transformação, teto de grava�
   });
 
   it('mostra a mensagem de microfone ausente quando não há dispositivo', async () => {
-    render(<VoiceChangerPicker onSendAudio={vi.fn()} />);
+    render(<VoiceChangerPicker onSendAudioBlob={vi.fn()} />);
     act(() => {
       popoverState.onOpenChange?.(true);
     });
@@ -283,7 +283,7 @@ describe('VoiceChangerPicker — cancelamento da transformação, teto de grava�
 
   it('mostra a mensagem de formato não suportado quando o MediaRecorder recusa o mimeType', async () => {
     falhaMic = 'formato';
-    render(<VoiceChangerPicker onSendAudio={vi.fn()} />);
+    render(<VoiceChangerPicker onSendAudioBlob={vi.fn()} />);
     act(() => {
       popoverState.onOpenChange?.(true);
     });
