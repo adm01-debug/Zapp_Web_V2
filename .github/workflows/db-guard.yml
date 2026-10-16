@@ -1280,6 +1280,62 @@ jobs:
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/n142-message-reactions-select-user-id.test.sh
 
+      # X041: atribuicao de conversao ao ULTIMO toque do Talk X dentro da janela de atribuicao.
+      - name: Provar atribuicao de conversao Talk X ao ultimo toque (X041)
+        env:
+          TALKX_ATTRIBUTION_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-attribution.test.sh
+
+      # R2-API-036: defaults internos de currency/occurred_at quando o endpoint manda NULL explicito.
+      - name: Provar defaults de conversao Talk X com NULL explicito (R2-API-036)
+        env:
+          TALKX_CONVERSION_DEFAULTS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-conversion-defaults.test.sh
+
+      # X040: calculo de recencia, frequencia, valor e segmento RFM a partir de contact_purchases.
+      - name: Provar calculo RFM das compras locais Talk X (X040)
+        env:
+          TALKX_RFM_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-rfm.test.sh
+
+      # TC-001 (#54): contrato de banco da midia do team chat — bucket, mensagem e renderizacao.
+      - name: Provar contrato de banco da midia do team chat (TC-001)
+        env:
+          TEAM_CHAT_MEDIA_CONTRACT_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-chat-media-contract.test.sh
+
+      # Item 55 (P1): prova a garantia de banco contra criacao concorrente de conversa direta.
+      - name: Provar corrida de criacao de conversa direta no team chat (item 55)
+        env:
+          TEAM_DIRECT_CONV_RACE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-direct-conversation-race.test.sh
+
+      # SEC-...-06/-09: autorizacao dos INSERTs de conversation_tasks e conversation_events.
+      - name: Provar autorizacao de INSERT de conversation_tasks e conversation_events
+        env:
+          CONV_TASKS_EVENTS_AUTH_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/conversation-tasks-events-insert-authorization.test.sh
+
+      # TC-008 (item 163, P2): contrato de convites e vocabulario de auditoria do team chat.
+      - name: Provar contrato de convites e vocabulario de auditoria do team chat (TC-008)
+        env:
+          DEPT_INVITE_VOCAB_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/department-invite-contract-audit-vocabulary.test.sh
+
+      # IA-TIMEOUT-001 (item 44): outbox duravel do log essencial de IA.
+      - name: Provar outbox duravel do log de uso de IA (IA-TIMEOUT-001)
+        env:
+          IA_USAGE_OUTBOX_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/ia-usage-outbox-duravel.test.sh
+
   # Gate do replay COMPLETO das migrations (cartao t_b6f4e82d). O replay-local.sh
   # existia e era provado so por harness offline; nenhum workflow o chamava, entao
   # nenhuma PR provava que o conjunto das migrations ainda aplica do zero. Aqui ele

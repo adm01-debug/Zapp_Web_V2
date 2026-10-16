@@ -3,7 +3,11 @@
   "_gerado_em": "2026-08-27",
   "_contexto": "docs/audits/EXECUCAO_2026-08-27.md, secao 'Acoplamento quebrado'",
   "known": [
-    "rpc:set_default_whatsapp_connection:src/hooks/inbox/useConnectionsManager.ts"
+    "rpc:set_default_whatsapp_connection:src/hooks/inbox/useConnectionsManager.ts",
+    "rpc:record_away_message:supabase/functions/_shared/evolution-webhook-messages.ts",
+    "rpc:log_search_event:src/components/inbox/useGlobalSearchData.ts",
+    "rpc:talkx_campaign_resume_precheck:src/hooks/integrations/useTalkXServerResumePrecheck.ts",
+    "rpc:should_send_away_message:supabase/functions/_shared/evolution-webhook-messages.ts"
   ],
   "_resolvido": {
     "rpc:talkx_campaign_window_open (N-102c)": "Removida em 2026-10-11: a migration forward-only 20261011003008_talkx_n102c_window_open.sql cria public.talkx_campaign_window_open(uuid, timestamptz), entao o alvo passou a existir na projecao do supabase-usage-guard e a entrada rpc:talkx_campaign_window_open:supabase/functions/talkx-scheduler/index.ts ficou obsoleta.",
