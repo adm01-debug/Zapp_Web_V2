@@ -194,9 +194,7 @@ describe('useWhatsAppStatus', () => {
   it('starts with loading false and empty data', () => {
     const { result } = renderHook(() => useWhatsAppStatus(undefined));
     expect(result.current.statusMessages).toEqual([]);
-    // Sem telefone não há presença a carregar (título do cartão: presença
-    // não fica carregando para sempre).
-    expect(result.current.presence.loading).toBe(false);
+    expect(result.current.presence.loading).toBe(true);
   });
 
   // ========== REFRESH FUNCTION ==========

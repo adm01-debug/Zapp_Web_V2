@@ -212,7 +212,6 @@ export function useWhatsAppStatus(phone: string | undefined): WhatsAppStatusData
 
     if (!phone) {
       setLoading(false);
-      setPresence({ isOnline: false, lastSeen: null, loading: false });
       return;
     }
 
