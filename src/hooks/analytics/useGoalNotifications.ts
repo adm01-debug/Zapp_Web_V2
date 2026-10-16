@@ -128,6 +128,10 @@ export function useGoalNotifications() {
 
           const { start, end } = getDateRange(period);
           let current = 0;
+          // Metas percentuais sem denominador no período (Taxa de Resolução sem
+          // atendimento) não têm o que comparar com o alvo: `hasData` fica false
+          // e a meta é pulada em vez de virar "0% cumprido".
+          let hasData = true;
 
           // Calculate current progress based on goal type
           switch (goal.goal_type) {
@@ -166,26 +170,32 @@ export function useGoalNotifications() {
               break;
             }
             case 'resolution_rate': {
-              // Mesmo cálculo do painel (useGoalsDashboard): percentual de
-              // conversas analisadas com status 'resolvido' no período.
+              // Mesmo cálculo do painel (useGoalsDashboard): conversas encerradas
+              // sobre as atendidas no período, pelo campo canônico
+              // `contacts.conversation_status`. Não sai de `conversation_analyses`
+              // — só quem foi analisado tem registro lá, e isso divergia do painel.
               const { count: total, error: totalError } = await supabase
-                .from('conversation_analyses')
+                .from('contacts')
                 .select('*', { count: 'exact', head: true })
-                .eq('analyzed_by', profile.id)
+                .eq('assigned_to', profile.id)
                 .gte('created_at', start.toISOString())
                 .lte('created_at', end.toISOString());
               if (totalError) throw totalError;
 
               const { count: resolved, error: resolvedError } = await supabase
-                .from('conversation_analyses')
+                .from('contacts')
                 .select('*', { count: 'exact', head: true })
-                .eq('analyzed_by', profile.id)
-                .eq('status', 'resolvido')
+                .eq('assigned_to', profile.id)
+                .eq('conversation_status', 'resolved')
                 .gte('created_at', start.toISOString())
                 .lte('created_at', end.toISOString());
               if (resolvedError) throw resolvedError;
 
-              current = total && total > 0 ? Math.round(((resolved || 0) / total) * 100) : 0;
+              // 0/0 não é 0%: sem atendimento no período não há taxa. Marca a
+              // ausência de dado para não dar a meta por cumprida nem anunciar.
+              if (!total) { hasData = false; break; }
+
+              current = Math.round(((resolved || 0) / total) * 100);
               break;
             }
             case 'response_time':
@@ -201,6 +211,10 @@ export function useGoalNotifications() {
               log.warn(`Goal type "${goal.goal_type}" sem cálculo de progresso; notificação de conquista ignorada.`);
               continue;
           }
+
+          // Sem dado no período não há o que comparar com o alvo: pula sem
+          // anunciar conquista (nem registrar dedupe).
+          if (!hasData) continue;
 
           // R3-07: a chave é o dia **do usuário** (`localDayKey`). Fatiar o ISO em UTC
           // (`start.toISOString().split('T')[0]`) devolvia o dia anterior a leste de UTC
