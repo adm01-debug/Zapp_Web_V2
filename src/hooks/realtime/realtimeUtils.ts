@@ -133,6 +133,8 @@ export function classifyMessageType(
 /** RealtimeMessage já normalizada; pode carregar o motivo do fallback. */
 export type NormalizedRealtimeMessage = RealtimeMessage & {
   unsupportedKind?: UnsupportedMessageKind;
+  /** Grupo de WhatsApp ao qual a mensagem pertence (null para mensagens 1:1). */
+  whatsapp_group_id?: string | null;
 };
 
 export function normalizeMessage(message: RealtimeMessage): NormalizedRealtimeMessage {

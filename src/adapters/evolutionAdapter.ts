@@ -190,6 +190,8 @@ export function derivedToConversationContact(dc: DerivedContact): ConversationCo
     presence_updated_at: null,
     last_seen_at: null,
     is_lid_legacy: false,
+    // Contato derivado do WhatsApp nao esta no cadastro: nunca recebeu o selo VIP.
+    is_vip: false,
   };
 }
 

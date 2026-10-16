@@ -75,7 +75,6 @@ const ALLOWLIST = new Set([
   // updated_at) NAO vira "falha recente" (failure_rate_15m / outcome_unknown_24h) na saude do
   // motor. Roda sozinho (docker postgres:17-alpine); o passo em db-guard.yml fica com o dono
   // do workflow (agente nao edita workflow).
-  'scripts/db-audit/talkx-purge-nao-falsa-falha.test.sh',  // --- .test.sh — prova em container descartável (docker); passo de YAML,
   'scripts/db-audit/talkx-purge-nao-falsa-falha.test.sh',
   // --- .test.sh — prova em container descartável (docker); passo de YAML  // a promover em db-guard.yml pelo dono do workflow (agente não edita workflow).
   // Item 293 (R2-DB-005): prova que a associação reminders→conversation_tasks preserva a
@@ -86,17 +85,10 @@ const ALLOWLIST = new Set([
   'scripts/db-audit/login_gate_rpc.test.sh',
   // R2-DB-019 (item 302): autoria obrigatória nas escritas de public.message_reactions —
   // replay do pre-estado + RLS real com `authenticated` (sem BYPASSRLS).
-  'scripts/db-audit/message-reactions-autoria.test.sh',  'scripts/db-audit/pg-cron-escalonamento.test.sh',
-  // R2-DB-019 (item 302): autoria obrigatória nas escritas de public.message_reactions —
-  // replay do pre-estado + RLS real com `authenticated` (sem BYPASSRLS).
-  'scripts/db-audit/message-reactions-autoria.test.sh',
-  'scripts/db-audit/pg-cron-escalonamento.test.sh',  'scripts/db-audit/talkx-optout.test.sh',
-
-  // R2-DB-019 (item 302): autoria obrigatória nas escritas de public.message_reactions —
-  // replay do pre-estado + RLS real com `authenticated` (sem BYPASSRLS).
   'scripts/db-audit/message-reactions-autoria.test.sh',
   'scripts/db-audit/pg-cron-escalonamento.test.sh',
-  'scripts/db-audit/talkx-optout.test.sh',  'scripts/db-audit/talkx-overview-stats.test.sh',
+  'scripts/db-audit/talkx-optout.test.sh',
+  'scripts/db-audit/talkx-overview-stats.test.sh',
   'scripts/db-audit/talkx-campaign-segments.test.sh',
   // X057b: prova em Postgres descartavel o contrato multi-segmentos da campanha Talk X (ordenacao, teto, dedupe e ACL);
   // promover para db-guard.yml pelo dono do workflow quando o runner suportar o harness.
@@ -112,9 +104,6 @@ const ALLOWLIST = new Set([
   // com papeis reais (anon/authenticated/service_role); passo de YAML a promover
   // em db-guard.yml pelo dono do workflow (agente nao edita workflow).
   'scripts/db-audit/talkx-segment-library-stats.test.sh',
-  // N-094: RLS de talkx_contact_attributes (vendedor vê só os seus; admin todos; escrita
-  // só service_role) em PG 17 descartável — promover em db-guard.yml pelo dono do workflow.
-  'scripts/db-audit/talkx-contact-attributes.test.sh',  // #464 (CAIXA-7eb1): mede a divergência de replay do E27 (publicação supabase_realtime) nos,
   // N-094: RLS de talkx_contact_attributes (vendedor vê só os seus; admin todos; escrita
   // só service_role) em PG 17 descartável — promover em db-guard.yml pelo dono do workflow.
   'scripts/db-audit/talkx-contact-attributes.test.sh',
@@ -142,8 +131,6 @@ const ALLOWLIST = new Set([
   'scripts/db-audit/whatsapp-media-policies-sem-curinga.test.sh',
   // --- .test.sh OFFLINE (sem docker, sem banco): roda em qualquer runner. O passo no  // db-guard.yml e uma linha — `bash scripts/db-audit/replay-classify.test.sh` — e cabe,
   // IA-131: prova DML em Postgres descartável; promover em db-guard.yml pelo dono do workflow.
-  'scripts/db-audit/ia131-audio-stt-openrouter.test.sh',  // --- .test.sh OFFLINE (sem docker, sem banco): roda em qualquer runner. O passo no
-  // db-guard.yml e uma linha — `bash scripts/db-audit/replay-classify.test.sh` — e cabe  // junto de gen-types.test.sh; promover pelo dono do workflow.,
   // --- .test.sh OFFLINE (sem docker, sem banco): roda em qualquer runner. O passo no
   // db-guard.yml e uma linha — `bash scripts/db-audit/replay-classify.test.sh` — e cabe
   // junto de gen-types.test.sh; promover pelo dono do workflow.  'scripts/db-audit/replay-classify.test.sh',
@@ -224,6 +211,11 @@ export const ALLOWLIST_NODE = new Set([
   // (runner de verdade em child process, `fetch` stubbed); offline. A promoção a um bloco
   // `run:` de ci.yml é do dono do workflow.
   'scripts/db-tests/run-all.unit.mjs',
+  // Suites TalkX offline (gen-estados, lado-a-lado, v4-status): provam o motor TalkX sem
+  // banco. Passo de uma linha em ci.yml — promover pelo dono do workflow (agente não edita workflow).
+  'scripts/talkx/gen-estados.unit.mjs',
+  'scripts/talkx/lado-a-lado.unit.mjs',
+  'scripts/talkx/v4-status.unit.mjs',
 ]);
 
 // ── 1. .test.ts: disco vs ci.yml ───────────────────────────────────────────────

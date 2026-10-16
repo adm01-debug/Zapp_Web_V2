@@ -1,5 +1,5 @@
 import {
-  AlertDialog, AlertDialogCancel, AlertDialogContent,
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
@@ -30,11 +30,13 @@ interface ConnectionDisconnectDialogProps {
   phoneNumber: string;
   /** Desconectar em voo: mantém o diálogo aberto com o spinner e trava tudo. */
   pending?: boolean;
+  /** Mensagem de erro exibida quando a desconexão falha (role="alert"). */
+  errorMessage?: string;
   onConfirm: () => void | Promise<void>;
 }
 
 export function ConnectionDisconnectDialog({
-  open, onOpenChange, connectionName, phoneNumber, pending = false, onConfirm,
+  open, onOpenChange, connectionName, phoneNumber, pending = false, errorMessage, onConfirm,
 }: ConnectionDisconnectDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>

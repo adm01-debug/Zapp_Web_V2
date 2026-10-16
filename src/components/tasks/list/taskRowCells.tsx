@@ -14,7 +14,22 @@ import { aceitaLembrete, MOTIVO_SEM_LEMBRETE } from '../shared/cardActions';
 import { PRIORITY_LABELS } from '@/hooks/tasks/workItemLabels';
 import { formatWorkItemDate } from '@/hooks/tasks/workItemFormat';
 import { isOverdue } from '@/hooks/tasks/workItemAggregates';
-import { prazoCompleto } from './prazoCompleto';
+// TODO: arquivo prazoCompleto.tsx não implementado — inline temporário abaixo
+// import { prazoCompleto } from './prazoCompleto';
+/** Stub temporário: retorna o prazo formatado completo para o tooltip, ou null se ausente. */
+function prazoCompleto(dueDate: string | null, now?: Date): string | null {
+  if (!dueDate) return null;
+  try {
+    const d = new Date(dueDate);
+    if (isNaN(d.getTime())) return null;
+    return d.toLocaleString('pt-BR', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    });
+  } catch {
+    return null;
+  }
+}
 import type { Priority, WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
 
 /**

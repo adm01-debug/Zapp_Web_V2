@@ -14,10 +14,12 @@ import { PasswordStrengthMeter } from '@/components/auth/PasswordStrengthMeter';
 import {
   Shield, Users, Search, Crown, UserCog, User, History, RefreshCw,
   UserPlus, Building, Eye, Loader2,
+  Brain, CalendarClock, AlertTriangle, ChevronLeft, ChevronRight,
+  type LucideIcon,
 } from 'lucide-react';
 import { useUserRole, AppRole } from '@/hooks/system/useUserRole';
 import { AdminCRMDashboard } from './AdminCRMDashboard';
-import { useAdminData, accessLevelConfig, type UserWithRole } from './useAdminData';
+import { useAdminData, accessLevelConfig, AUDIT_PAGE_SIZE, MIN_PASSWORD_LENGTH, type UserWithRole } from './useAdminData';
 import { AdminUsersTable } from './AdminUsersTable';
 import { AdminAuditTable } from './AdminAuditTable';
 import { VoipRamalField } from './VoipRamalField';
@@ -77,13 +79,16 @@ export function AdminView() {
   const [auditTo, setAuditTo] = useState('');
   const [auditPage, setAuditPage] = useState(1);
 
-  const { users, auditLogs, auditTotal, loading, error, fetchData, handleRoleChange, handleToggleActive, handleSaveUser, handleCreateUser } =
+  const { users, auditLogs, auditTotal, loading, error, fetchData, handleRoleChange, handleToggleActive, handleSaveUser, handleSaveRamal, handleCreateUser } =
     useAdminData(activeTab as 'users' | 'audit' | 'crm', {
       from: auditFrom || undefined,
       to: auditTo || undefined,
       page: auditPage,
       pageSize: AUDIT_PAGE_SIZE,
     });
+
+  // Indica se a aba atual carrega dados de usuários (controla o indicador de loading).
+  const usaDadosDeUsuario = activeTab === 'users';
 
   // A URL do avatar é criada ao escolher o arquivo e revogada quando o arquivo muda,
   // o diálogo fecha ou a tela desmonta — antes era criada a cada render e nunca liberada.

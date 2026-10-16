@@ -110,11 +110,124 @@ export function buildEdgeTraceHeaders(extraHeaders?: Record<string, string>): Ed
   };
 }
 
+/** Código canônico para erros de rede (sem status HTTP). */
+export const EDGE_ERROR_NETWORK = 'EDGE_ERROR_NETWORK';
+/** Código canônico para erros sem estrutura reconhecida. */
+export const EDGE_ERROR_UNKNOWN = 'EDGE_ERROR_UNKNOWN';
+
+/** Envelope de erro normalizado devolvido por `parseEdgeError`. */
+export interface ParsedEdgeError {
+  /** Código de domínio (ex: `VALIDATION_ERROR`, `forbidden`). */
+  code: string;
+  /** Mensagem legível para o usuário. */
+  message: string;
+  /** Status HTTP original; `null` em erro de rede. */
+  status: number | null;
+  /** Erros por campo (`{ nomeDoCampo: 'mensagem' }`). */
+  fieldErrors?: Record<string, string>;
+  /** Corpo cru da resposta, para debug. */
+  raw?: unknown;
+}
+
+/**
+ * Erro tipado que `invokeEdge` devolve quando a Edge retorna um status não-2xx.
+ * Estende `Error` para poder ser `throw`ado, mas o contrato de `invokeEdge`
+ * nunca lança — o chamador decide.
+ */
+export class EdgeFunctionError extends Error implements ParsedEdgeError {
+  code: string;
+  status: number | null;
+  fieldErrors?: Record<string, string>;
+  raw?: unknown;
+  functionName?: string;
+
+  constructor(parsed: ParsedEdgeError, functionName?: string) {
+    super(parsed.message);
+    this.name = 'EdgeFunctionError';
+    this.code = parsed.code;
+    this.status = parsed.status;
+    this.fieldErrors = parsed.fieldErrors;
+    this.raw = parsed.raw;
+    this.functionName = functionName;
+  }
+}
+
 /** `status` do erro de HTTP (FunctionsHttpError); `null` em erro de rede. */
 function statusOf(error: unknown): number | null {
   const context = (error as { context?: { status?: unknown } } | null)?.context;
   return typeof context?.status === 'number' ? context.status : null;
 }
+
+/**
+ * Lê o corpo JSON cru do erro de Edge. Devolve `null` se não há `context.clone`
+ * ou se o corpo não é JSON válido.
+ */
+export async function readEdgeErrorBody(error: unknown): Promise<unknown> {
+  const context = (error as { context?: { clone?: () => { json?: () => Promise<unknown> } } } | null)?.context;
+  if (!context?.clone) return null;
+  try {
+    return await context.clone().json?.() ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Normaliza qualquer erro devolvido por `invokeEdge` (ou capturado de `catch`) em
+ * um `ParsedEdgeError` com `code`, `message`, `status` e `fieldErrors`.
+ *
+ * Reconhece:
+ *  - Envelope canônico `{ error: { code, message, fields } }` (validação estruturada)
+ *  - Código plano `{ error: 'string', message?: 'string' }` (domínio)
+ *  - `EdgeFunctionError` já parseado
+ *  - Erro de rede (sem `context`)
+ *  - Corpo não-JSON (cai na mensagem do SDK)
+ */
+export async function parseEdgeError(error: unknown, fallbackMessage?: string): Promise<ParsedEdgeError> {
+  // Já é um EdgeFunctionError — evita re-parsear.
+  if (error instanceof EdgeFunctionError) {
+    return { code: error.code, message: error.message, status: error.status, fieldErrors: error.fieldErrors, raw: error.raw };
+  }
+
+  const status = statusOf(error);
+  const body = await readEdgeErrorBody(error);
+
+  if (body === null) {
+    // Sem corpo: erro de rede ou fallback.
+    const rawMsg = (error as { message?: string } | null)?.message;
+    return {
+      code: status === null ? EDGE_ERROR_NETWORK : EDGE_ERROR_UNKNOWN,
+      message: rawMsg ?? fallbackMessage ?? 'Erro desconhecido',
+      status,
+    };
+  }
+
+  // Envelope canônico: { error: { code, message, fields } }
+  const errorObj = (body as { error?: unknown })?.error;
+  if (errorObj !== null && typeof errorObj === 'object' && 'code' in (errorObj as object)) {
+    const e = errorObj as { code: string; message?: string; fields?: Array<{ path: string; message: string }> };
+    const fieldErrors = e.fields
+      ? Object.fromEntries(e.fields.map((f) => [f.path, f.message]))
+      : undefined;
+    return { code: e.code, message: e.message ?? e.code, status, fieldErrors, raw: body };
+  }
+
+  // Código plano: { error: 'some_code', message?: 'texto' }
+  if (typeof errorObj === 'string') {
+    const msg = (body as { message?: string })?.message ?? errorObj;
+    return { code: errorObj, message: msg, status, raw: body };
+  }
+
+  // Fallback: usa a mensagem original do SDK (não inventa texto).
+  const sdkMsg = (error as { message?: string } | null)?.message ?? fallbackMessage ?? 'Erro desconhecido';
+  return { code: EDGE_ERROR_UNKNOWN, message: sdkMsg, status, raw: body };
+}
+
+/**
+ * Alias de `parseEdgeError` — nome usado em `useAdminData` onde o foco é ler
+ * o `status` e a `message` sem um segundo argumento de fallback.
+ */
+export const readEdgeError = parseEdgeError;
 
 /**
  * `supabase.functions.invoke` com o id de correlação injetado. Mesmo contrato de

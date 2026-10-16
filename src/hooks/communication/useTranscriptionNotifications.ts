@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/ui/use-toast';
-import { playNotificationSound, showBrowserNotification, requestNotificationPermission } from '@/utils/notificationSounds';
+import { playNotificationSound, showBrowserNotification } from '@/utils/notificationSounds';
 import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { log } from '@/lib/logger';
@@ -116,11 +116,6 @@ export function useTranscriptionNotifications(options: TranscriptionNotification
   useEffect(() => {
     meuPerfilIdRef.current = profile?.id ?? null;
   }, [profile?.id]);
-
-  useEffect(() => {
-    // Request notification permission on mount
-    void requestNotificationPermission();
-  }, []);
 
   useEffect(() => {
     if (!enabled || !settings.transcriptionNotificationEnabled) return;

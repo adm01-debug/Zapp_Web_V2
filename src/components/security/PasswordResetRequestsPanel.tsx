@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { getLogger } from '@/lib/logger';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Key, Clock, CheckCircle, XCircle, Search, User, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,7 +17,9 @@ import { RejectResetDialog } from './RejectResetDialog';
 import { usePasswordResetRequests, type ResetRequest } from '@/hooks/security/usePasswordResetRequests';
 
 export function PasswordResetRequestsPanel() {
-  const { requests, loading, processing, fetchRequests, approveRequest, rejectRequest } = usePasswordResetRequests();
+  const { requests, loading, processing: _hookProcessing, fetchRequests, approveRequest, rejectRequest } = usePasswordResetRequests();
+  const [processing, setProcessing] = useState(false);
+  const log = getLogger('password-reset-panel');
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<'pending' | 'all'>('pending');
   const [selectedRequest, setSelectedRequest] = useState<ResetRequest | null>(null);

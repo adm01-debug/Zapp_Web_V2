@@ -6,6 +6,7 @@ import { getLogger } from '@/lib/logger';
 import { toast } from 'sonner';
 import { describeAccessError, isAccessDeniedError } from '@/lib/rlsError';
 import type { AppRole } from '@/hooks/system/useUserRole';
+import { invokeEdge, readEdgeError } from '@/lib/invokeEdge';
 
 const log = getLogger('useAdminData');
 
@@ -119,6 +120,27 @@ export const accessLevelConfig: Record<string, { label: string; description: str
 export const MIN_PASSWORD_LENGTH = 8;
 
 export const AUDIT_PAGE_SIZE = 50;
+
+/** Erro por campo devolvido por `mapCreateUserError`. */
+export interface CreateUserFieldError {
+  /** Campo que originou o erro (`null` = erro geral, sem campo específico). */
+  field: 'email' | 'password' | 'name' | null;
+  /** Mensagem amigável sem expor detalhes internos do servidor. */
+  message: string;
+}
+
+/**
+ * Classifica a mensagem de erro da Edge `create-user` em um campo específico
+ * ou em um erro geral, sem vazar texto interno do servidor para a tela.
+ */
+export function mapCreateUserError(rawMessage: string | undefined): CreateUserFieldError {
+  if (!rawMessage) return { field: null, message: 'Erro ao criar usuário' };
+  const msg = rawMessage.toLowerCase();
+  if (msg.includes('email') || msg.includes('e-mail')) return { field: 'email', message: 'Informe um e-mail válido.' };
+  if (msg.includes('senha') || msg.includes('password')) return { field: 'password', message: `A senha deve ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres.` };
+  if (msg.includes('nome') || msg.includes('name')) return { field: 'name', message: 'Informe o nome do usuário.' };
+  return { field: null, message: 'Erro ao criar usuário' };
+}
 
 /** 'YYYY-MM-DD' → instante UTC do início do dia no fuso do navegador. */
 export function inicioDoDiaLocal(data: string): string {
@@ -346,7 +368,8 @@ export function useAdminData(activeTab: 'users' | 'audit' | 'crm', auditFilter?:
     ramal: string,
     sipPassword: string,
   ): Promise<boolean> => {
-    const { error } = await supabase.rpc('set_voip_profile_credentials', {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase.rpc as any)('set_voip_profile_credentials', {
       p_profile_id: profileId,
       p_ramal: ramal,
       p_sip_password: sipPassword,
@@ -422,14 +445,14 @@ export function useAdminData(activeTab: 'users' | 'audit' | 'crm', auditFilter?:
       // `Bearer ${session?.access_token}` à mão (podia virar 'Bearer undefined')
       // e lia o corpo do erro sem guarda.
       try {
-        await invokeEdge('create-user', body);
+        await invokeEdge('create-user', { body });
       } catch (firstError) {
         const { status } = await readEdgeError(firstError);
         if (status !== 401) throw firstError;
         // Sessão expirada: renova UMA vez e repete antes de desistir.
         const { error: refreshError } = await supabase.auth.refreshSession();
         if (refreshError) throw firstError;
-        await invokeEdge('create-user', body);
+        await invokeEdge('create-user', { body });
       }
 
       toast.success('Usuário criado com sucesso!');

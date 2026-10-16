@@ -14,6 +14,7 @@ export type ServerLoginResult =
   | { ok: true; mode: 'verify' }
   | { ok: false; unavailable: false; error: string; lock: ServerLoginLock }
   | { ok: false; unavailable: false; networkBlocked: true; retryable: boolean; error: string; lock: ServerLoginLock }
+  | { ok: false; unavailable: false; rateLimited: true; retryAfterSeconds: number | null; error: string; lock: ServerLoginLock }
   | { ok: false; unavailable: true; error: string };
 
 /**
@@ -232,6 +233,22 @@ export async function serverLogin(
       retryable: true,
       error: NETWORK_POLICY_UNAVAILABLE_BODY,
       lock: NO_LOCK,
+    };
+  }
+
+  // Muitas tentativas de login (por IP ou por e-mail): a edge responde 429 antes
+  // de conferir a senha. NAO e lockout de conta (sem tentativa contabilizada) e NAO
+  // e indisponibilidade — a mensagem propria evita "Login temporariamente indisponivel".
+  // O `Retry-After` e lido quando disponivel; sem ele a mensagem e generica.
+  if (response.status === 429) {
+    const retryAfterSeconds = parseRetryAfterSeconds(response.headers);
+    return {
+      ok: false,
+      unavailable: false,
+      rateLimited: true,
+      retryAfterSeconds,
+      error: rateLimitedMessage(retryAfterSeconds),
+      lock: NO_LOCK_RATE_LIMITED,
     };
   }
 
