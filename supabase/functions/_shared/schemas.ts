@@ -626,7 +626,7 @@ export function parseBody<T>(schema: z.ZodSchema<T>, data: unknown):
  */
 export function validationErrorResponse(
   source: { issues?: FieldError[]; error?: string } | z.ZodError | FieldError[],
-  _req?: Request,
+  req?: Request,
   contractVersion: 1 | 2 = 1,
 ): Response {
   let fields: FieldError[];
@@ -643,7 +643,7 @@ export function validationErrorResponse(
     status: 422,
     headers: {
       'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': 'https://zapp-web-v2.vercel.app',
+      'Access-Control-Allow-Origin': allowedOriginFor(req),
       'x-contract-version': String(contractVersion),
       'Cache-Control': 'no-store',
       Vary: 'Origin',

@@ -106,30 +106,6 @@ export class Logger {
   }
 }
 
-// Endereco canonico de producao no CORS (ver docs/runbooks/deploy.md). So ele
-// entra na lista exata: os hosts que ja serviram o app fora do fluxo
-// GitHub -> Vercel entregavam build velho. URLs de deployment/preview deste
-// projeto (zappwebv2-<hash|branch>-juca1.vercel.app) continuam em
-// ORIGIN_PATTERNS; o alias padrao do projeto (zappwebv2-juca1.vercel.app)
-// deixa de ser aceito de proposito, para existir UM endereco canonico.
-const EXACT_ALLOWED_ORIGINS = new Set([
-  'https://zapp-web-v2.vercel.app',
-]);
-
-const ORIGIN_PATTERNS = [
-  /^https:\/\/zappwebv2-[a-z0-9-]+-juca1\.vercel\.app$/,
-  /^http:\/\/localhost(?::\d{1,5})?$/,
-  /^http:\/\/127\.0\.0\.1(?::\d{1,5})?$/,
-];
-
-/** Origens do projeto (canônica + padrões de preview/local). Exportado para que
- * edge functions que precisam montar um `redirectTo` do GoTrue usem a MESMA
- * allow-list do CORS, em vez de repetí-la (open-redirect por origem do chamador). */
-export function isAllowedOrigin(origin: string): boolean {
-  return EXACT_ALLOWED_ORIGINS.has(origin) ||
-    ORIGIN_PATTERNS.some((pattern) => pattern.test(origin));
-}
-
 /** Security headers applied to all responses */
 const SECURITY_HEADERS: Record<string, string> = {
   'X-Content-Type-Options': 'nosniff',
@@ -146,7 +122,7 @@ const SECURITY_HEADERS: Record<string, string> = {
 /** Build CORS + security headers with origin validation */
 export function getCorsHeaders(req?: Request): Record<string, string> {
   const origin = req?.headers.get('origin') || '';
-  const allowedOrigin = isAllowedOrigin(origin) ? origin : 'https://zapp-web-v2.vercel.app';
+  const allowedOrigin = isAllowedOrigin(origin) ? origin : FALLBACK_ORIGIN;
   const requestId = req?.headers.get('x-request-id') || crypto.randomUUID();
   return {
     ...SECURITY_HEADERS,

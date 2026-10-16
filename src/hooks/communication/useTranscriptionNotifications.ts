@@ -118,11 +118,6 @@ export function useTranscriptionNotifications(options: TranscriptionNotification
   }, [profile?.id]);
 
   useEffect(() => {
-    // Request notification permission on mount
-    void requestNotificationPermission();
-  }, []);
-
-  useEffect(() => {
     if (!enabled || !settings.transcriptionNotificationEnabled) return;
 
     // O handler do canal é assíncrono (espera a busca do contato). Sem este sinalizador, uma
