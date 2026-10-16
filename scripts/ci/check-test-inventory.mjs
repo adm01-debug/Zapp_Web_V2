@@ -203,6 +203,7 @@ const ALLOWLIST = new Set([
   // defeito no caminho antigo (dois UPDATE) e o bloco B prova a RPC, o fail-closed e o gatilho de
   // updated_at. O passo de uma linha no db-guard.yml e do dono do workflow (agente nao edita workflow).
   'scripts/db-audit/whatsapp-default-connection-atomicity.test.sh',
+
 ]);
 // Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em// workflow nenhum. Todas rodam offline (`node --test <arquivo>`); a promoção é uma linha em
 // ci.yml/db-guard.yml — do dono do workflow (agente não edita workflow). R2-INF-013: as quatro
