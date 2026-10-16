@@ -21,7 +21,7 @@ export type { EmailThreadListFilters, EmailThreadListQuery, EmailThreadStateFilt
 
 // Re-export types
 export type { GmailAccount, EmailThread, EmailMessage, EmailAttachment, EmailLabel } from '../gmail/gmailTypes';
-import type { GmailAccount, EmailThread, EmailMessage, EmailAttachment, EmailLabel } from '../gmail/gmailTypes';
+import type { GmailAccount, GmailSyncStatus, EmailThread, EmailMessage, EmailAttachment, EmailLabel } from '../gmail/gmailTypes';
 
 // PE-94: camada de escrita dos marcadores, alcançável por quem importa o barril
 // `hooks/integrations` (que faz `export * from './useGmail'`).
@@ -84,6 +84,18 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null, 
   });
 
   const activeAccount = accountId ? accounts.find(a => a.id === accountId && a.is_active) : accounts.find(a => a.is_active);
+
+  // PE-06 — o módulo de e-mail passa a saber, pela conta ativa, se a sincronização
+  // exige reconectar (`sync_status='reauth_required'`, gravado pelo backend quando o
+  // Google recusa o refresh token) e qual foi a última falha. `lastError` é o texto
+  // do backend já sanitizado (sem token nem e-mail completo —
+  // supabase/functions/_shared/gmail-helpers.ts); aqui só é normalizado para
+  // string não vazia ou null, sem inventar texto próprio.
+  const syncStatus: GmailSyncStatus | null = activeAccount?.sync_status ?? null;
+  const lastError: string | null = activeAccount?.last_error?.trim() ? activeAccount.last_error.trim() : null;
+  const lastSyncedAt: string | null = activeAccount?.last_sync_at ?? null;
+  const needsReconnect = syncStatus === 'reauth_required';
+
   const invalidateThreadData = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: ['gmail-threads'] });
     void queryClient.invalidateQueries({ queryKey: ['gmail-thread-counts'] });
@@ -468,6 +480,8 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null, 
 
   return {
     accounts, activeAccount, accountsLoading, accountsError, refetchAccounts, connectGmail, exchangeCode, disconnectGmail,
+    // PE-06: estado de sincronização da conta ativa, sem obrigar a tela a reler a linha crua.
+    syncStatus, lastError, lastSyncedAt, needsReconnect,
     threads, threadsLoading, threadsError, requestedThread, requestedThreadLoading, requestedThreadError, selectedThreadId, setSelectedThreadId, refetchThreads,
     threadMessages, messagesLoading, messagesError, refetchMessages, threadAttachments, labels, labelsManagement,
     syncInbox, syncLabels, sendEmail, replyEmail, markAsRead, trashMessage, trashThread, modifyLabels, modifyThreadLabels, saveDraft, deleteDraft, downloadAttachment, getAttachmentContent,
