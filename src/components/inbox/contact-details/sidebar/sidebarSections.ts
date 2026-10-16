@@ -11,12 +11,16 @@
  * apenas mais um valor conhecido: a chave de storage NÃO muda, então a
  * preferência já salva do usuário é preservada intacta (nenhuma seção é
  * aberta ou fechada à força) — quem nunca gravou preferência recebe o default
- * com as 4 seções abertas, e quem abrir a nova seção tem a escolha persistida.
+ * com as seções abertas, e quem abrir a nova seção tem a escolha persistida.
+ *
+ * `delivery` (Entrega de mensagens: enviadas/entregues/lidas por hora) entrou em
+ * 2026-10-16 e segue a MESMA regra de `intelligence`: valor conhecido a mais,
+ * chave de storage intacta, preferência já salva preservada.
  */
-export const SIDEBAR_SECTIONS = ['professional', 'personal', 'singu', 'intelligence'] as const;
+export const SIDEBAR_SECTIONS = ['professional', 'personal', 'singu', 'intelligence', 'delivery'] as const;
 export type SidebarSectionValue = (typeof SIDEBAR_SECTIONS)[number];
 
-export const DEFAULT_OPEN_SECTIONS: SidebarSectionValue[] = ['professional', 'personal', 'singu', 'intelligence'];
+export const DEFAULT_OPEN_SECTIONS: SidebarSectionValue[] = ['professional', 'personal', 'singu', 'intelligence', 'delivery'];
 
 const STORAGE_KEY = 'contact-sidebar-accordion-state@v2';
 const LEGACY_STORAGE_KEY = 'contact-details-accordion-state';

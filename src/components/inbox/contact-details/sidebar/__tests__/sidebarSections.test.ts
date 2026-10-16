@@ -72,4 +72,16 @@ describe('sidebarSections — migração do localStorage (etapa 44)', () => {
     localStorage.setItem(NEW_KEY, JSON.stringify(['professional', 'singu']));
     expect(getStoredSidebarState()).toEqual(['professional', 'singu']);
   });
+
+  // Seção nova "Entrega de mensagens" (2026-10-16): mesma regra de intelligence —
+  // valor conhecido a mais, chave de storage intacta. Cobre a regressão de o valor
+  // novo não entrar em SIDEBAR_SECTIONS (aí o default viraria "tudo fechado").
+  it('a seção nova delivery é conhecida e persiste ao reabrir', () => {
+    saveSidebarState(['delivery']);
+    expect(getStoredSidebarState()).toEqual(['delivery']);
+  });
+
+  it('sem preferência gravada o delivery já vem aberto no default', () => {
+    expect(DEFAULT_OPEN_SECTIONS).toContain('delivery');
+  });
 });

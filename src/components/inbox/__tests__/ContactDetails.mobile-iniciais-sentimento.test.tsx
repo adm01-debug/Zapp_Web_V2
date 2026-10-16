@@ -24,6 +24,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { describe, it, expect, beforeEach, beforeAll, afterEach, vi } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { EnrichedContactData } from '@/hooks/crm/useContactEnrichedData';
 import type { Conversation } from '@/types/chat';
 
@@ -87,6 +88,21 @@ const CONTATO = { id: 'c1', name: 'Maria Silva', phone: '+551****9999' };
 const comSentimento = (ai_sentiment: unknown): EnrichedContactData =>
   ({ ai_sentiment } as EnrichedContactData);
 
+/**
+ * O painel real vive dentro de um provider de query na aplicação; a seção
+ * "Entrega de mensagens" (16/10/2026) consulta a RPC `delivery_stats` no mount,
+ * então o teste monta o mesmo contexto. Antes disso o painel passava sem provider
+ * só porque todas as seções que consultam estavam desligadas por flag/mock.
+ */
+function renderResponsive() {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(
+    <QueryClientProvider client={qc}>
+      <ContactDetailsResponsive conversation={conversa} onClose={() => {}} />
+    </QueryClientProvider>,
+  );
+}
+
 beforeEach(() => { h.isMobile.value = true; h.reduceMotion.value = false; });
 afterEach(() => cleanup());
 
@@ -97,7 +113,7 @@ beforeAll(() => { Element.prototype.scrollTo = vi.fn(); });
 // ───────────────────────── 1. Celular: largura, altura, a11y ────────────────
 describe('ContactDetailsResponsive — painel no celular', () => {
   it('monta como sheet de altura definida e painel de largura total', () => {
-    render(<ContactDetailsResponsive conversation={conversa} onClose={() => {}} />);
+    renderResponsive();
 
     const dialogo = screen.getByRole('dialog');
     expect(dialogo.className).toContain('h-[85vh]');
@@ -110,7 +126,7 @@ describe('ContactDetailsResponsive — painel no celular', () => {
   });
 
   it('anuncia o painel ao leitor de tela (título + descrição ligados ao diálogo)', () => {
-    render(<ContactDetailsResponsive conversation={conversa} onClose={() => {}} />);
+    renderResponsive();
 
     const descricao = screen.getByText('Dados do contato e histórico da conversa.');
     expect(descricao).toBeDefined();
@@ -124,7 +140,7 @@ describe('ContactDetailsResponsive — painel no celular', () => {
 
   it('no desktop não monta sheet — o painel lateral continua igual', () => {
     h.isMobile.value = false;
-    render(<ContactDetailsResponsive conversation={conversa} onClose={() => {}} />);
+    renderResponsive();
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(screen.getByTestId('contact-panel')).toBeDefined();
   });

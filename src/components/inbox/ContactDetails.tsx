@@ -4,12 +4,13 @@ import { buildEditContactShape } from './contact-details/editContactShape';
 import { Conversation } from '@/types/chat';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { PanelRightClose, Brain } from 'lucide-react';
+import { PanelRightClose, Brain, Send } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ContactHeaderSection } from './contact-details/ContactHeaderSection';
 import { ContactSidebarSections } from './contact-details/sidebar/ContactSidebarSections';
 import { SidebarSection } from './contact-details/sidebar/SidebarSection';
 import { ContactIntelligencePanel } from './contact-details/ContactIntelligencePanel';
+import { ContactDeliveryPanel } from './contact-details/ContactDeliveryPanel';
 import { useContactEnrichedData } from '@/hooks/crm/useContactEnrichedData';
 import { useConversationActions } from '@/hooks/chat/useConversationActions';
 import { useContactQuickActions } from '@/hooks/inbox/useContactQuickActions';
@@ -126,6 +127,13 @@ export function ContactDetails({ conversation, onClose }: ContactDetailsProps) {
               subtitle="Risco de churn e melhores horários de contato"
             >
               <ContactIntelligencePanel contactId={contact.id} />
+            </SidebarSection>
+            <SidebarSection
+              index={4} value="delivery" tone="green"
+              icon={<Send />} title="Entrega de mensagens"
+              subtitle="Enviadas, entregues e lidas por hora"
+            >
+              <ContactDeliveryPanel contactId={contact.id} />
             </SidebarSection>
           </Accordion>
         </div>
