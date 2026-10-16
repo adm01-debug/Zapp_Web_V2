@@ -46,6 +46,17 @@ export function useInteractiveMessage() {
     setButtons(prev => prev.filter((_, i) => i !== index));
   }, []);
 
+  // Sobe o botão para a primeira posição (a ordem enviada ao WhatsApp é a da
+  // lista). No primeiro botão não há para onde subir: devolve a lista intacta.
+  const moveButtonToFirst = useCallback((index: number) => {
+    setButtons(prev => {
+      if (index <= 0 || index >= prev.length) return prev;
+      const next = [...prev];
+      const [moved] = next.splice(index, 1);
+      return [moved, ...next];
+    });
+  }, []);
+
   const addSection = useCallback(() => {
     if (sections.length >= 10) {
       toast({ title: 'Limite atingido', description: 'Máximo de 10 seções por lista (limite WhatsApp)', variant: 'destructive' });
@@ -96,6 +107,22 @@ export function useInteractiveMessage() {
           ? { ...s, rows: s.rows.filter((_, ri) => ri !== rowIndex) }
           : s
       )
+    );
+  }, []);
+
+  // Sobe/desce a linha uma posição por vez, trocando apenas de lugar os objetos
+  // da linha (id, título e descrição seguem com a linha). Nos extremos devolve
+  // a seção intacta.
+  const moveRow = useCallback((sectionIndex: number, rowIndex: number, direction: 'up' | 'down') => {
+    setSections(prev =>
+      prev.map((s, si) => {
+        if (si !== sectionIndex) return s;
+        const target = direction === 'up' ? rowIndex - 1 : rowIndex + 1;
+        if (target < 0 || target >= s.rows.length) return s;
+        const rows = [...s.rows];
+        [rows[rowIndex], rows[target]] = [rows[target], rows[rowIndex]];
+        return { ...s, rows };
+      })
     );
   }, []);
 
@@ -190,7 +217,7 @@ export function useInteractiveMessage() {
     sections, expandedSections,
     resetForm, addButton, updateButton, removeButton,
     addSection, updateSection, removeSection,
-    addRowToSection, updateRow, removeRow,
+    addRowToSection, updateRow, removeRow, moveRow, moveButtonToFirst,
     toggleSection, getTotalRows,
     validate, buildMessage,
   };

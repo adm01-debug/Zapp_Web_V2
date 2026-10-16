@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus, Trash2, ExternalLink, Phone, MessageSquare,
-  GripVertical, X, Check, List, Layers, ChevronDown,
+  X, Check, List, Layers, ChevronDown, ArrowUp, ArrowDown,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,7 +41,7 @@ export function InteractiveMessageBuilder({ open, onOpenChange, onSend }: Intera
     sections, expandedSections,
     resetForm, addButton, updateButton, removeButton,
     addSection, updateSection, removeSection,
-    addRowToSection, updateRow, removeRow,
+    addRowToSection, updateRow, removeRow, moveRow, moveButtonToFirst,
     toggleSection, getTotalRows,
     validate, buildMessage,
   } = useInteractiveMessage();
@@ -146,7 +146,9 @@ export function InteractiveMessageBuilder({ open, onOpenChange, onSend }: Intera
                   <motion.div key={button.id} initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="p-3 rounded-lg border border-border bg-muted/30 space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <GripVertical className="w-4 h-4 text-muted-foreground" />
+                        <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" aria-label="Subir botão para a primeira posição" disabled={index === 0} onClick={() => moveButtonToFirst(index)}>
+                          <ArrowUp className="w-4 h-4" />
+                        </Button>
                         <Badge variant="secondary" className="gap-1">{getButtonTypeIcon(button.type)}{getButtonTypeLabel(button.type)}</Badge>
                       </div>
                       <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => removeButton(index)}>
@@ -228,9 +230,19 @@ export function InteractiveMessageBuilder({ open, onOpenChange, onSend }: Intera
                                         <Input placeholder="Título do item (máx. 24)" value={row.title} onChange={(e) => updateRow(sectionIndex, rowIndex, { title: e.target.value })} maxLength={24} className="h-8 text-sm" />
                                         <Input placeholder="Descrição (opcional, máx. 72)" value={row.description || ''} onChange={(e) => updateRow(sectionIndex, rowIndex, { description: e.target.value })} maxLength={72} className="h-8 text-sm" />
                                       </div>
-                                      <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive shrink-0" onClick={() => removeRow(sectionIndex, rowIndex)}>
-                                        <X className="w-3 h-3" />
-                                      </Button>
+                                      <div className="flex items-start gap-1 shrink-0">
+                                        <div className="flex flex-col">
+                                          <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-foreground" aria-label="Subir item" disabled={rowIndex === 0} onClick={() => moveRow(sectionIndex, rowIndex, 'up')}>
+                                            <ArrowUp className="w-3 h-3" />
+                                          </Button>
+                                          <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-foreground" aria-label="Descer item" disabled={rowIndex === section.rows.length - 1} onClick={() => moveRow(sectionIndex, rowIndex, 'down')}>
+                                            <ArrowDown className="w-3 h-3" />
+                                          </Button>
+                                        </div>
+                                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={() => removeRow(sectionIndex, rowIndex)}>
+                                          <X className="w-3 h-3" />
+                                        </Button>
+                                      </div>
                                     </div>
                                   </motion.div>
                                 ))}
