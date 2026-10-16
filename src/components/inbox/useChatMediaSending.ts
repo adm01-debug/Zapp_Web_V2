@@ -73,7 +73,7 @@ export function useChatMediaSending(contactId: string, contactPhone: string | un
     return resolved;
   }, [instanceName, resolveInstance, contactPhone]);
 
-  const handleSendSticker = useCallback(async (stickerUrl: string) => {
+  const handleSendSticker = useCallback(async (stickerUrl: string, replyToId?: string | null) => {
     const inst = await ensureInstance();
     if (!inst) return;
 
@@ -81,6 +81,9 @@ export function useChatMediaSending(contactId: string, contactPhone: string | un
       void inst;
       await sendOutboundMessage({
         contactId, content: '[Sticker]', messageType: 'sticker', mediaUrl: stickerUrl,
+        // PK-28: a barra de resposta continua ativa durante o anexo; sem isto a
+        // figurinha saía sem a citação que o texto já carregava.
+        ...(replyToId ? { replyToId } : {}),
       });
 
       // Auto-save sticker
@@ -100,7 +103,7 @@ export function useChatMediaSending(contactId: string, contactPhone: string | un
     }
   }, [ensureInstance, contactId]);
 
-  const handleSendCustomEmoji = useCallback(async (emojiUrl: string) => {
+  const handleSendCustomEmoji = useCallback(async (emojiUrl: string, replyToId?: string | null) => {
     const inst = await ensureInstance();
     if (!inst) return;
 
@@ -112,6 +115,7 @@ export function useChatMediaSending(contactId: string, contactPhone: string | un
         content: isUrl ? '[Emoji]' : emojiUrl,
         messageType: isUrl ? 'image' : 'text',
         mediaUrl: isUrl ? emojiUrl : null,
+        ...(replyToId ? { replyToId } : {}),
       });
       toast({ title: 'Emoji enviado!' });
     } catch {
@@ -125,7 +129,7 @@ export function useChatMediaSending(contactId: string, contactPhone: string | un
   // (antes: `catch {}`) transformava a falha em sucesso — o popover fechava e a prévia era
   // descartada sem a mensagem ter ido. Contrato: REJEITA em falha (depois do toast de erro) e
   // resolve só quando o envio confirma.
-  const handleSendAudioMeme = useCallback(async (audioUrl: string) => {
+  const handleSendAudioMeme = useCallback(async (audioUrl: string, replyToId?: string | null) => {
     const inst = await ensureInstance();
     if (!inst) throw new Error(CONEXAO_WHATSAPP_INDISPONIVEL);
 
@@ -134,6 +138,7 @@ export function useChatMediaSending(contactId: string, contactPhone: string | un
       void inst;
       await sendOutboundMessage({
         contactId, content: '[Áudio Meme]', messageType: 'audio', mediaUrl: normalizedAudioUrl,
+        ...(replyToId ? { replyToId } : {}),
       });
       toast({ title: '🔊 Áudio meme enviado!' });
     } catch (err) {

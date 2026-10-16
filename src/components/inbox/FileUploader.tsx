@@ -28,6 +28,8 @@ interface FileUploaderProps {
   recipientNumber?: string;
   contactId?: string;
   connectionId?: string;
+  /** PK-28: citação pendente no compositor — acompanha a mídia no envio. */
+  replyToId?: string | null;
   onFileSelect?: (file: File, category: string) => void;
   onFileSent?: (messageData: FileMessageData) => void;
   disabled?: boolean;
@@ -128,7 +130,7 @@ function QueueFileItem({ queuedFile, onRemove, onRetry, disabled }: { queuedFile
 }
 
 export const FileUploader = forwardRef<FileUploaderRef, FileUploaderProps>(({
-  instanceName, recipientNumber, contactId, connectionId, onFileSelect, onFileSent, disabled,
+  instanceName, recipientNumber, contactId, connectionId, replyToId, onFileSelect, onFileSent, disabled,
 }, ref) => {
   // O `<input type="file">` escondido e a ref que o abre pertencem ao COMPONENTE: o hook
   // recebe a ref e a usa nos handlers, mas nao a devolve. Devolver a ref no objeto do
@@ -142,7 +144,7 @@ export const FileUploader = forwardRef<FileUploaderRef, FileUploaderProps>(({
     apiLoading, canSend, validFilesCount, totalQueueProgress,
     handleClose, handleSendFile, handleSendAllFiles, handleFileChange,
     handleExternalFile, handleExternalFiles, removeFromQueue, retryQueueFile,
-  } = useFileUploadLogic({ instanceName, recipientNumber, contactId, connectionId, onFileSelect, onFileSent, fileInputRef });
+  } = useFileUploadLogic({ instanceName, recipientNumber, contactId, connectionId, replyToId, onFileSelect, onFileSent, fileInputRef });
 
   const failedCount = fileQueue.filter(f => f.status === 'error').length;
   // U4: resumo da fila anunciado por leitor de tela ("2 de 3 enviados, 1 falhou").

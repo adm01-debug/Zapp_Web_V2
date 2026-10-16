@@ -493,8 +493,11 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
           onCloseSlashCommands={() => closeDialog('slashCommands')} onQuickReply={handleQuickReply}
           onRecordToggle={() => handlers.setIsRecordingAudio(!handlers.isRecordingAudio)} onAudioSend={(blob) => handlers.handleAudioSend(blob, onSendAudio)} onAudioCancel={() => handlers.setIsRecordingAudio(false)}
           onOpenInteractiveBuilder={() => openDialog('interactiveBuilder')} onOpenSchedule={() => openDialog('scheduleDialog')}
-          onOpenLocationPicker={() => openDialog('locationPicker')} onSendSticker={handleSendSticker}
-          onSendAudioMeme={handleSendAudioMeme} onSendCustomEmoji={handleSendCustomEmoji}
+          onOpenLocationPicker={() => openDialog('locationPicker')}
+          // PK-28: figurinha/emoji/áudio-meme são tipos de envio como o texto — a
+          // citação pendente no compositor precisa acompanhá-los.
+          onSendSticker={(url) => handleSendSticker(url, handlers.replyToMessage?.id ?? null)}
+          onSendAudioMeme={(url) => handleSendAudioMeme(url, handlers.replyToMessage?.id ?? null)} onSendCustomEmoji={(url) => handleSendCustomEmoji(url, handlers.replyToMessage?.id ?? null)}
           signatureEnabled={signatureEnabled} signatureName={agentName} onToggleSignature={toggleSignature}
           onOpenCatalog={() => openDialog('catalogDirect')} onSelectSuggestion={(text) => handlers.setInputValue(text)} onSelectTemplate={(text) => handlers.setInputValue(text)}
           fileUploaderRef={fileUploaderRef} inputRef={handlers.inputRef}
