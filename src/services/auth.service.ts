@@ -122,6 +122,28 @@ export class AuthService {
       });
       return { error, via: 'edge', lock: null, unavailable: error !== null };
     }
+    return AuthService.loginFailure(result);
+  }
+
+  /**
+   * Reautenticacao (R2-AUTH-023): confere a senha NA EDGE, em modo `verify`, e
+   * NAO instala sessao nenhuma. O `setSession` antigo trocava a sessao do usuario
+   * por um token AAL1, rebaixando AAL2 -> AAL1 a cada acao sensivel (o usuario era
+   * jogado de volta para /2fa). A elevacao do 2o fator e feita na sessao CORRENTE
+   * (mfa.challenge + verify), pelo chamador.
+   */
+  static async verifyPassword(email: string, password: string): Promise<SignInResult> {
+    const result = await serverLogin(email, password, 'verify');
+    if (result.ok) return { error: null, via: 'edge', lock: null, unavailable: false };
+    return AuthService.loginFailure(result);
+  }
+
+  /**
+   * Traduz a recusa da Edge para o contrato de `SignInResult`, compartilhado por
+   * login e reautenticacao: senha errada, lockout, negacao de rede e
+   * indisponibilidade precisam continuar distinguiveis pelo chamador.
+   */
+  private static loginFailure(result: Extract<ServerLoginResult, { ok: false }>): SignInResult {
     if ('networkBlocked' in result) {
       // Nao e senha errada nem lockout: a politica de rede (IP/pais) barrou o
       // login antes de qualquer verificacao de senha. Mensagem generica — nunca
