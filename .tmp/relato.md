@@ -1,28 +1,19 @@
-Especialista: worker (sql) (area-sql-banco)
-
-# Retomada — fix(ci): baseline do usage-guard acompanha a RPC da conexao padrao empilhada (#174)
+Especialista: Hugo (area-front-hooks)
 
 ## O que mudou e por quê
-- Retomei a entrega de #174 trazendo o stack inteiro para a base atual (tip `dia/2026-10-13`, commit 96dd72dc5f). Cherry-pick dos 5 commits da branch anterior `v2/t-b59835ff-2610111223f845` (1ccd9e50f6, 21b562b72e, 52b952dc18, c8a6f8b73c, b324381833), um a um, sem reescrever o defeito.
-- O único conflito real foi `scripts/db-audit/known-violations.json`, porque a `dia/` passou a ter também a chave temporária `rpc:talkx_campaign_window_open:*` (NOTA 2026-10-11, t_7457095e), que a entrega antiga não conhecia.
-- Resolução: **preservei o que já entrou** — mantive a chave `rpc:talkx_campaign_window_open:*` e a NOTA 2026-10-11 no `_comment`, e apliquei só o que é do #174: removi a chave `rpc:set_default_whatsapp_connection:src/hooks/inbox/useConnectionsManager.ts` (fica obsoleta quando a migration 20261006234158 entra no stack) e acrescentei a entrada correspondente em `_resolvido`. Remover exceção aperta o ratchet, não afrouxa.
-- Os outros arquivos entraram sem conflito: `supabase/migrations/20261006234158_whatsapp_default_connection_rpc_atomica.sql` (RPC `set_default_whatsapp_connection`, SECURITY DEFINER, `search_path` fixo, nasce fechada), `scripts/db-audit/whatsapp-default-connection-atomicity.test.sh` (nova) e o passo correspondente no `.github/workflows/db-guard.yml` (registro do teste no db-guard).
+- `scripts/ci/docs-estado-registry-convention.unit.mjs`: a guarda deixou de comparar **números globais** (quadro `## Totais`, contagem do cabeçalho `Base: N ...`, cabeçalho `## Órfãs (N)`) e passou a validar só o que é **conjunto/por linha**. Dois cartões empilhados que cada um acrescenta uma edge/âncora deixavam um dos números velho e derrubavam a guarda mesmo com as duas entregas certas — o defeito do cartão. Removida a função `totaisPorColunaMarkdown`, agora sem uso.
+- `ESTADO.md` e `FEATURE_REGISTRY.md`: acrescentada 1 frase na convenção dizendo que o quadro `## Totais` e a contagem do cabeçalho são retrato manual e **não** são recalculados pela guarda (evita o documento prometer o que o teste não faz mais).
+- O rigor fica igual por linha: conjunto de edges == `supabase/functions/*/index.ts`, cada âncora existe e cita a própria edge, grupo == primeiro chamador real A→B→C→D, órfã (E) sem chamador, e registro de views com componente/arquivo/classificação recalculados do código.
 
 ## Prova
-- vermelho antes (guarda com a chave obsoleta de volta): `node scripts/db-audit/supabase-usage-guard.mjs` → `Entradas obsoletas no baseline (a violacao sumiu - remova-as): rpc:set_default_whatsapp_connection:src/hooks/inbox/useConnectionsManager.ts` — EXIT=1
-- verde depois (estado do diff): `node scripts/db-audit/supabase-usage-guard.mjs` → `Violacoes totais: 1 | no baseline: 1 | novas: 0` / `OK: nenhuma violacao nova.` — EXIT=0
-- prova do banco (migrations REAIS, papeis authenticated/anon, Postgres descartavel):
-  `bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/whatsapp-default-connection-atomicity.test.sh`
-  → todos os blocos A (defeito) e B (RPC) PASS, incluindo B.5b (o gatilho regrava updated_at em exatamente 2 linhas), B.8/B.9 (falha aborta tudo, padrao anterior permanece), B.14 (sem oráculo), B.15 (anon sem EXECUTE), B.18–B.21 (serializacao por advisory lock, termina com exatamente UMA padrao) — saída final `PASS: TRA-004 ...` e EXIT=0.
-- `git diff --stat dia/2026-10-13` mostra só os 4 arquivos do #174; nenhum marcador de conflito restante.
+- vermelho antes (guarda da base, mesma pilha): `GUARDA="$PWD/.tmp/guarda-base.mjs" bash .tmp/repro.sh dia/2026-10-13` → `ℹ fail 2` com `AssertionError: total do grupo A em ESTADO.md divergiu da tabela` e `o cabeçalho do ESTADO.md ficou para trás do número de edges` (a árvore empilhada tem as duas linhas `stack-alpha`/`stack-beta`, mas o resumo conta só uma).
+- verde depois (mesmo comando, guarda do cartão): `bash .tmp/repro.sh dia/2026-10-13` → `ℹ tests 9` `ℹ pass 9` `ℹ fail 0`.
+- guarda na árvore real do workspace: `node --test scripts/ci/docs-estado-registry-convention.unit.mjs` → `ℹ tests 9` `ℹ pass 9` `ℹ fail 0`.
+- os 3 casos vermelhos continuam vermelhos (sobre a árvore empilhada, `bash .tmp/defeitos.sh`): `edge-inexistente` → `ℹ fail 3` com `ESTADO.md lista \`ghost-edge\`, que não é edge`; `ancora-orfa` → `ℹ fail 1` com `âncora desatualizada: src/tmp-stack.ts:99 não cita \`stack-alpha\``; `registro-arquivo-inexistente` → `ℹ fail 1` com `arquivo de \`dashboard\` divergiu do código`.
 
-## Sobre o aviso "SEM DDL/migration" do fechar (não procede)
-O rodapé do cartão é um template que traz "sem DDL/Edge/dependência nova salvo se o pedido original exigia". Este cartão de banco tem o pedido original JUSTAMENTE sobre a migration/RPC #174 (o defeito é a troca de conexão padrão feita por dois UPDATE sem transação; a correção é a RPC atômica, que só existe no banco). A migration e a suíte de banco estão na entrega porque o pedido original as exige — nada de DDL fora do escopo. Não há como retirar a migration sem reabrir o defeito original.
-
-## Sobre o aviso do juiz (gatilho BEFORE UPDATE de updated_at) — não procede
-A RPC não faz um UPDATE em massa: cada comando atinge só linhas que de fato mudam de valor (no máximo a padrão antiga e o alvo). A suíte prova isso em A.2b (o caminho antigo, de dois UPDATE soltos, toca 3 linhas) contra B.5b (a RPC nova toca exatamente 2 linhas: padrão antiga + alvo) e B.5 (as linhas intocadas C3/C4 preservam o updated_at). Ou seja, o efeito colateral já está medido e limitado por teste; não há gatilho a desligar.
+## Como reproduzir o empilhamento (passo 1)
+O harness está em `.tmp/` (ignorado pelo git, recriável): `bash .tmp/repro.sh dia/2026-10-13` cria duas entregas isoladas sobre a mesma base (`stack-alpha`, `stack-beta`), junta as duas com 3-way merge (`git merge-file`, o mesmo algoritmo por trás de `git merge --squash`) mantendo a união das linhas — e roda a guarda do workspace na árvore resultante. `GUARDA=<arquivo> bash .tmp/repro.sh` roda qualquer versão da guarda (foi assim que colei o vermelho com a guarda da base).
 
 ## O que NÃO fiz e por quê
-- Não toquei na chave `rpc:talkx_campaign_window_open:*` nem na NOTA 2026-10-11: são de outro cartão (t_7457095e) e continuam válidas enquanto a migration do talkx estiver fora de `dia/`.
-- Não alterei a migration do #174 além do stack: o corpo e o rollback vieram dos commits originais, inclusive a linha `-- Rollback (SQL executavel, na ordem)` já no formato do modelo.
-- Regras de 07–08/10 respeitadas: nada de push/PR/deploy, nada de produção; só banco local descartável.
+- Não mexi no corpo das tabelas de docs além da frase de convenção: as linhas de edge/view já estavam corretas; o defeito era só a dependência de numeração global na guarda.
+- Não removi o quadro `## Totais` dos docs (decisão de forma do documento, fora do que o cartão pede); só deixei explícito que ele é manual.

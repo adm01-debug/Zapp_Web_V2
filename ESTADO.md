@@ -17,6 +17,11 @@ partir do código e falha quando:
 * uma edge marcada como **órfã** passa a ter chamador, inclusive entrada externa em
   `supabase/config.toml` (ou vice-versa).
 
+O quadro `## Totais` e a contagem do cabeçalho são um **retrato manual** da ponta do dia: eles
+mudam a cada entrega que acrescenta uma edge, então a guarda **não** os recalcula — dois cartões
+empilhados não podem brigar por um número global. O que a guarda prova é a tabela acima (conjunto
+de edges, âncora e grupo de cada linha), sempre recalculado do código.
+
 Ou seja: mudou o código, o teste vermelho obriga a atualizar este arquivo.
 
 ## Grupos (prioridade nesta ordem)
