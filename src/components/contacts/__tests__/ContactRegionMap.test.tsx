@@ -83,6 +83,25 @@ describe('ContactRegionMap', () => {
     expect(FakeMarker.instances[1].getElement().textContent).toBe('10');
   });
 
+  it('o rótulo da bolha usa o plural certo (1 contato / N contatos)', async () => {
+    render(
+      <ContactRegionMap
+        regions={[
+          { region: 'São Paulo - SP', count: 1 },
+          { region: 'Curitiba - PR', count: 12 },
+        ]}
+        selectedRegion={null}
+        onSelectRegion={vi.fn()}
+      />,
+    );
+    await waitFor(() => expect(FakeMap.instances).toHaveLength(1));
+    act(() => FakeMap.instances[0].emit('load'));
+
+    const titulos = FakeMarker.instances.map((m) => m.getElement().getAttribute('aria-label'));
+    expect(titulos).toContain('São Paulo - SP · 1 contato');
+    expect(titulos).toContain('Curitiba - PR · 12 contatos');
+  });
+
   it('a região com mais contatos tem a bolha maior', async () => {
     render(<ContactRegionMap regions={regions} selectedRegion={null} onSelectRegion={vi.fn()} />);
     await waitFor(() => expect(FakeMap.instances).toHaveLength(1));

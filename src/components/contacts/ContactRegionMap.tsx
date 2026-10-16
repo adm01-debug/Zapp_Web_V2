@@ -12,6 +12,7 @@ import {
   MAPBOX_MAP_LOAD_TIMEOUT_MS,
 } from '@/lib/mapboxToken';
 import { BRAZIL_CENTER, regionCoordinates } from './contactRegionGeo';
+import { plural } from '@/lib/plural';
 
 export interface RegionBubble {
   region: string;
@@ -150,7 +151,7 @@ export function ContactRegionMap({ regions, preciseContacts = [], selectedRegion
       const size = bubbleSize(count, maxCount);
       const el = document.createElement('button');
       el.type = 'button';
-      el.title = `${region} · ${count} contato${count !== 1 ? 's' : ''}`;
+      el.title = `${region} · ${plural(count, 'contato', 'contatos')}`;
       el.setAttribute('aria-label', el.title);
       el.style.width = `${size}px`;
       el.style.height = `${size}px`;

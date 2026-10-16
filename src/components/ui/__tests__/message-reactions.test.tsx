@@ -30,7 +30,7 @@ describe('ReactionBadge', () => {
   it('mostra emoji e contagem no nome acessível (plural)', () => {
     render(<ReactionBadge reaction={reaction('👍', 3, false)} onClick={vi.fn()} />);
 
-    // Nome acessível exato: o plural tem de ser "reações", não "reaçãoões".
+    // Nome acessível exato: o plural tem de ser a palavra inteira "reações", não a terminação colada.
     const badge = screen.getByRole('button', { name: '👍 3 reações' });
     expect(within(badge).getByText('👍')).toBeInTheDocument();
     expect(within(badge).getByText('3')).toBeInTheDocument();
@@ -180,5 +180,74 @@ describe('QuickReactionStrip', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Mais reações' }));
 
     expect(onOpenFull).toHaveBeenCalledTimes(1);
+  });
+
+  it('a tira se revela no foco (não só no hover) — contrato de classe do Tailwind', () => {
+    render(<QuickReactionStrip onSelect={vi.fn()} onOpenFull={vi.fn()} />);
+
+    const toolbar = screen.getByRole('toolbar', { name: 'Reação rápida' });
+    // O jsdom não calcula CSS: prova-se pelo contrato de classe que o Tailwind aplica à
+    // bolha (`group-focus-within/msg`) e à própria tira (`focus-within`) quando o teclado
+    // entra nela.
+    expect(toolbar.className).toContain('group-hover/msg:opacity-100');
+    expect(toolbar.className).toContain('group-focus-within/msg:opacity-100');
+    expect(toolbar.className).toContain('focus-within:opacity-100');
+    expect(toolbar.className).toContain('focus-within:pointer-events-auto');
+  });
+
+  it('os emojis estão na ordem de tabulação e as setas andam entre eles', () => {
+    render(<QuickReactionStrip onSelect={vi.fn()} onOpenFull={vi.fn()} />);
+
+    const primeiro = screen.getByRole('button', { name: `Reagir com ${WHATSAPP_EMOJIS[0]}` });
+    const segundo = screen.getByRole('button', { name: `Reagir com ${WHATSAPP_EMOJIS[1]}` });
+    // Alcançável por Tab: nenhum botão da tira nasce fora da ordem de tabulação.
+    expect(primeiro).not.toHaveAttribute('tabindex', '-1');
+    expect(screen.getByRole('button', { name: 'Mais reações' })).not.toHaveAttribute('tabindex', '-1');
+
+    primeiro.focus();
+    expect(document.activeElement).toBe(primeiro);
+
+    fireEvent.keyDown(primeiro, { key: 'ArrowRight' });
+    expect(document.activeElement).toBe(segundo);
+
+    fireEvent.keyDown(segundo, { key: 'ArrowLeft' });
+    expect(document.activeElement).toBe(primeiro);
+  });
+
+  it('as setas chegam ao gatilho "Mais reações" (circular) e Esc sai da tira', () => {
+    render(<QuickReactionStrip onSelect={vi.fn()} onOpenFull={vi.fn()} />);
+
+    const primeiro = screen.getByRole('button', { name: `Reagir com ${WHATSAPP_EMOJIS[0]}` });
+    const mais = screen.getByRole('button', { name: 'Mais reações' });
+    const toolbar = screen.getByRole('toolbar', { name: 'Reação rápida' });
+
+    primeiro.focus();
+    fireEvent.keyDown(primeiro, { key: 'ArrowLeft' }); // circular: volta para o último
+    expect(document.activeElement).toBe(mais);
+
+    fireEvent.keyDown(mais, { key: 'Escape' });
+    expect(toolbar.contains(document.activeElement)).toBe(false);
+    expect(document.activeElement).not.toBe(mais);
+  });
+
+  it('o gatilho "Mais reações" cresce para 44 px só com ponteiro grosso', () => {
+    render(<QuickReactionStrip onSelect={vi.fn()} onOpenFull={vi.fn()} />);
+
+    const mais = screen.getByRole('button', { name: 'Mais reações' });
+    expect(mais.className).toContain('[@media(pointer:coarse)]:min-h-[44px]');
+    expect(mais.className).toContain('[@media(pointer:coarse)]:min-w-[44px]');
+    expect(mais.className).toContain('focus-visible:ring-2');
+  });
+});
+
+describe('MessageReactionBar — gatilho do seletor alcançável por teclado', () => {
+  it('o botão "Adicionar reação" se revela no foco e tem 44 px no ponteiro grosso', () => {
+    render(<MessageReactionBar reactions={[reaction('👍', 1, false)]} onToggle={vi.fn()} />);
+
+    const botao = screen.getByRole('button', { name: 'Adicionar reação' });
+    expect(botao.className).toContain('group-hover/msg:opacity-100');
+    expect(botao.className).toContain('focus-visible:opacity-100');
+    expect(botao.className).toContain('[@media(pointer:coarse)]:min-h-[44px]');
+    expect(botao.className).toContain('[@media(pointer:coarse)]:min-w-[44px]');
   });
 });
