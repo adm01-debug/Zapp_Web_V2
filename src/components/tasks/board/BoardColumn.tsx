@@ -80,21 +80,23 @@ export function BoardColumn({
     : visibleItems.length > 0 ? String(visibleItems.length) : '';
 
   return (
-    // E16: as colunas DIVIDEM a largura do trilho (`flex-1`) com um piso legível de 200px.
-    // Antes eram fixas em 232px (260px no `xl`): as cinco somavam 1348px e não cabiam em
-    // 1440 com sidebar aberta e gutter dos dois lados (1440 − 256 − 2×36 = 1112px).
-    // Agora o piso do conjunto é 5×200 + 4×12 = 1048px, então cabe em 1440 sem rolagem.
-    // Abaixo de 1048px de trilho, o flexbox não encolhe mais e o `overflow-x-auto` + snap
-    // assume. As setas/‹› e os dots existem só no corte mobile de `pointerMedia.ts`
-    // (`max-width: 767px`); em larguras intermediárias, a condução é o próprio scroll.
+    // Etapa 099: a coluna deixou de ser item de flexbox do carrossel e virou
+    // ITEM DE GRELHA. O trilho decide quantas caem por linha (`grid-cols-1` na
+    // tela estreita, 2/3/5 em md/lg/xl) e a coluna só impõe o piso:
+    //   • `md:min-w-[200px]` — o mesmo piso legível da E16, que cabe nas 2
+    //     faixas de 768px e nas 3 de 1024px (conta no teste da etapa 099);
+    //   • `xl:min-w-0` — a partir de 1280px quem manda é a faixa `minmax(0,1fr)`
+    //     da grelha: as cinco colunas aparecem sem rolagem horizontal (5×200+48
+    //     não caberia em 1280 com a sidebar aberta: 5 faixas dão ~180px cada).
     <div
       data-board-column={status}
       {...(realceEspera ? { 'data-testid': 'board-waiting-emphasis' } : {})}
       className={[
-        'flex flex-col flex-1 min-w-[200px] h-full min-h-0 rounded-[14px] border bg-card overflow-hidden snap-start',
-        // Etapa 093: recolhida, a coluna para de dividir a largura (`flex-none`)
-        // e mantém o piso de 200px — o cabeçalho é o que sobra.
-        colapsada ? 'flex-none w-[200px]' : '',
+        'flex flex-col min-w-0 md:min-w-[200px] xl:min-w-0 h-full min-h-0 rounded-[14px] border bg-card overflow-hidden',
+        // Etapa 093: recolhida, a coluna para de dividir a largura e fica só com
+        // o cabeçalho — `w-full` respeita a faixa que a grelha deu a ela (nada
+        // de largura fixa, que estouraria a faixa de ~180px do `xl`).
+        colapsada ? 'w-full' : '',
         // Etapa 83: recusa por limite cheio — a BORDA muda sempre (o aviso não
         // depende de animação); o tranco curto só existe sem movimento reduzido.
         shake ? 'border-destructive motion-safe:animate-wiggle' : 'border-border/70',

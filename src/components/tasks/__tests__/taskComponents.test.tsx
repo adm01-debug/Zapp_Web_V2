@@ -250,8 +250,10 @@ describe('Tarefas — componentes dos três modos', () => {
     const esperados = ['Caixa de entrada', 'A fazer', 'Fazendo', 'Aguardando', 'Concluído'];
     const titulos   = esperados.map(rotulo => screen.getByText(rotulo));
 
-    // 1) a linha que contem as colunas nao inverte a ordem visual (flex-row-reverse)
-    const linha = titulos[0].closest('.flex.gap-3') as HTMLElement | null;
+    // 1) a linha que contem as colunas nao inverte a ordem visual (flex-row-reverse).
+    // Etapa 099: a faixa virou grade (era `.flex.gap-3`), entao a ancora do
+    // contêiner passou a ser a classe `gap-3` dele.
+    const linha = titulos[0].closest('.gap-3') as HTMLElement | null;
     expect(linha).toBeTruthy();
     expect(linha!.className).not.toMatch(/reverse/);
 
