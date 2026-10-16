@@ -58,6 +58,16 @@ vi.mock('@/hooks/crm/useContactCustomFields', () => ({
 vi.mock('@/hooks/integrations/useTalkXInsights', () => ({
   useTalkXInsights: () => ({ data: undefined, isLoading: false, isError: false, error: null }),
 }));
+// X051: a revisão do wizard resolve o disparo pelo controlador único
+// (`useTalkXLifecycle` → `useTalkX`, que usa react-query). Sem a porta mockada o
+// passo 4 cairia em "No QueryClient set"; este teste anda pelos quatro passos e
+// não exercita as operações do ciclo de vida.
+vi.mock('@/hooks/integrations/useTalkX', () => ({
+  useTalkX: () => ({
+    startCampaign: vi.fn(), pauseCampaign: vi.fn(), cancelCampaign: vi.fn(),
+    updateCampaign: { mutateAsync: vi.fn() },
+  }),
+}));
 vi.mock('@/hooks/integrations/useTalkXSegments', () => ({
   useAudienceEstimate: () => ({ data: undefined, isFetching: false }),
   RULE_FIELDS: [{ value: 'company', label: 'Empresa', kind: 'text' }],
