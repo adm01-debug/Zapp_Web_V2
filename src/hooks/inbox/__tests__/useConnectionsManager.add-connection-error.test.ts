@@ -164,4 +164,27 @@ describe('useConnectionsManager — erro de nova conexão ([refazer 1] P1/P2/P3)
     expect(result.current.addConnectionError).toBeNull();
     expect(result.current.isAddDialogOpen).toBe(false);
   });
+
+  it('[refazer 1b] número curto não-DDI chega à Evolution (não cai na validação de vazio/DDI)', async () => {
+    // Regressão do empilhamento com useConnectionsManager.handlers.test.tsx:
+    // a validação P1 (<=2 dígitos) barrava '1' e o caminho de falha de
+    // criação ('GO fora do ar') nunca era exercido. A validação rejeita só
+    // vazio ou DDI puro ('55'); resto passa para a Evolution.
+    mocks.createConnection.mockRejectedValue(new Error('GO fora do ar'));
+    const result = await mount();
+    act(() => {
+      result.current.setIsAddDialogOpen(true);
+      result.current.setNewConnection({ name: 'X', phone_number: '1' });
+    });
+
+    await act(async () => {
+      await result.current.handleAddConnection();
+    });
+
+    expect(mocks.createConnection).toHaveBeenCalled();
+    expect(result.current.addConnectionError).toBe('GO fora do ar');
+    expect(mocks.toast).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Erro ao criar conexão', description: 'GO fora do ar' }),
+    );
+  });
 });

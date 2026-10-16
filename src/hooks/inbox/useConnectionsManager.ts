@@ -169,9 +169,12 @@ export function useConnectionsManager() {
     setAddConnectionError(null);
     // [refazer 1] P1: só o DDI ('+55'/dígitos '55') não é número válido — a
     // checagem antiga (!phone_number) passava com o pré-preenchimento do
-    // foco. Rejeita sem dígitos além do DDI, com a mensagem original.
+    // foco. Rejeita vazio ou só-DDI com a mensagem original; a validação
+    // de comprimento real mora no PhoneInput/Evolution (não barrar aqui
+    // placeholders curtos que os testes de handlers usam no caminho de
+    // falha de criação).
     const phoneDigits = newConnection.phone_number.replace(/\D/g, '');
-    if (!newConnection.name || phoneDigits.length <= 2) {
+    if (!newConnection.name || phoneDigits.length === 0 || phoneDigits === '55') {
       const message = 'Preencha o nome e o número do telefone.';
       setAddConnectionError(message);
       toast({ title: 'Erro', description: message, variant: 'destructive' });
