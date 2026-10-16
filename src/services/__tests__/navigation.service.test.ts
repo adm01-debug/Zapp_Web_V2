@@ -47,6 +47,15 @@ describe('NavigationService role gating', () => {
     expect(itens.map(({ label }) => label)).not.toContain('Quadro');
   });
 
+  it('nao expoe mais "Campanhas Classicas" (id campaigns) em nenhum menu', () => {
+    const itens = NavigationService.getPrimaryNav()
+      .concat(NavigationService.getGroups().flatMap(({ items }) => items));
+
+    expect(itens.map(({ id }) => id)).not.toContain('campaigns');
+    expect(itens.map(({ label }) => label)).not.toContain('Campanhas Clássicas');
+    expect(NavigationService.canAccess('campaigns', ['admin'])).toBe(false);
+  });
+
   it('never authorizes an unknown view id (deny by default)', () => {
     expect(NavigationService.canAccess('nonexistent-view', ['admin'])).toBe(false);
     expect(NavigationService.canAccess('nonexistent-view', [])).toBe(false);

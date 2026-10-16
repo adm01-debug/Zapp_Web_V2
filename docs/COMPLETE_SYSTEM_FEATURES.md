@@ -806,12 +806,11 @@
 
 | Item | Valor |
 |------|-------|
-| Rota | `?view=campaigns` → `CampaignsView` |
-| Componentes | `src/components/campaigns/CampaignsView.tsx`, `CampaignCreateDialog.tsx`, `CampaignABTesting.tsx` |
-| Hook | `src/hooks/communication/useCampaigns.ts` |
-| Tabelas | `campaigns`, `campaign_contacts` |
+| Estado atual | Fora de rota em 2026-10-16 (Talk X é o sistema ativo) |
+| Sistema ativo | Talk X (`?view=talkx`) |
+| Tabelas históricas | `campaigns`, `campaign_contacts` |
 
-**Funcionalidades:** CRUD de campanhas, criação com seleção de contatos, status (rascunho/agendada/enviando/concluída/cancelada/pausada), progresso do envio, intervalo entre envios, filtros por status e teste A/B.
+**Atualização (2026-10-16):** a tela clássica de campanhas saiu do menu, do roteador e dos atalhos de mobile; o Talk X é a tela de campanhas do produto. O documento mantém o histórico das tabelas, e a retirada física dos arquivos do módulo clássico segue em cartão separado.
 
 ---
 
