@@ -33,11 +33,18 @@ Se a variável estiver ausente, a função **não inventa varredura**: responde
 aviso ao usuário) e grava uma linha de `warn` sem a chave. Chave recusada pelo
 provedor (401/403) tem o mesmo tratamento, com `reason: "scanner_auth_failed"`.
 
-## Exceção por decisão do owner
+## Exceção por decisão do owner (13/10/2026)
 
-Fora dessas indisponibilidades, **só o owner (`adm01`) pode liberar um arquivo
-sem veredito** — por exemplo, um tipo de arquivo que o provedor não analisa e que
-o atendimento precisa trafegar. A liberação é uma decisão registrada (quem, qual
-arquivo pelo hash SHA-256, por quê, validade), nunca um parâmetro da requisição:
-o chamador não consegue pedir `skip`/exceção para si mesmo. Sem registro válido
-da exceção, vale a regra padrão: sem veredito confiável, o envio bloqueia.
+Quando o hash SHA-256 é desconhecido, o arquivo SAI para o VirusTotal (o envio
+dos bytes a um terceiro é parte da varredura, não vazamento: só hash, veredito,
+`scanId` e tamanho voltam para o log/auditoria, nunca nome de cliente, telefone
+ou conteúdo).
+
+Fora das indisponibilidades acima, o Joaquim (owner) pode liberar um arquivo em
+caso específico, sem precisar de aprovação — por exemplo, um tipo de arquivo que
+o provedor não analisa e que o atendimento precisa trafegar. A exceção vale para
+escopos restritos (um hash/arquivo por vez, com validade) e é uma decisão
+registrada (quem liberou, qual arquivo pelo hash SHA-256, por quê, até quando),
+nunca um parâmetro da requisição: o chamador não consegue pedir `skip`/exceção
+para si mesmo. Sem registro válido da exceção, vale a regra padrão: sem veredito
+confiável, o envio bloqueia.

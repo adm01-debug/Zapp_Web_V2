@@ -590,3 +590,10 @@ Deno.test("M28: contadores e veredito — sem contadores não há veredito", () 
   assert(verdictFromStats({ malicious: 0, suspicious: 0 }) === "clean", "clean não reconhecido");
   assert(VT_POLL_MAX_ATTEMPTS > 0, "o polling precisa de pelo menos uma tentativa");
 });
+
+Deno.test("M28 [refazer 1]: um único motor malicioso já bloqueia (fronteira fail-closed)", () => {
+  assert(
+    verdictFromStats({ malicious: 1, suspicious: 0 }) === "malicious",
+    "1 motor malicioso tinha de ser malicious, não clean",
+  );
+});
