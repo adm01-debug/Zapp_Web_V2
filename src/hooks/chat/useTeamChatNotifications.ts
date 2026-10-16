@@ -216,12 +216,18 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
           profile.id,
         );
         if (membership === undefined) {
-          const { data: membershipRows } = await supabase
+          const { data: membershipRows, error: membershipError } = await supabase
             .from('team_conversation_members')
             .select('id, is_muted')
             .eq('conversation_id', msg.conversation_id)
             .eq('profile_id', profile.id)
             .limit(1);
+          // Falha na leitura NÃO pode virar "sem resultados" (ou seja, notificação
+          // silenciosamente ignorada): registra e sai sem notificar.
+          if (membershipError) {
+            log.warn('Falha ao confirmar participação na conversa; sem notificação:', membershipError.message);
+            return;
+          }
           membership = membershipRows?.[0] ?? null;
         }
 

@@ -16,6 +16,8 @@ const h = vi.hoisted(() => ({
   channelNames: [] as unknown[],
   fromTables: [] as unknown[],
   membership: [{ id: 'm1', is_muted: false }] as Array<{ id: string; is_muted: boolean }>,
+  erro: null as string | null,
+  logWarn: vi.fn(),
   rpc: vi.fn(),
   show: vi.fn(),
 }));
@@ -30,7 +32,10 @@ vi.mock('@/integrations/supabase/client', () => {
   const consulta: Record<string, unknown> = {};
   consulta.select = () => consulta;
   consulta.eq = () => consulta;
-  consulta.limit = () => Promise.resolve({ data: h.membership, error: null });
+  consulta.limit = () =>
+    Promise.resolve(
+      h.erro ? { data: null, error: { message: h.erro } } : { data: h.membership, error: null },
+    );
   return {
     supabase: {
       channel: (name: unknown) => {
@@ -64,7 +69,12 @@ vi.mock('@/hooks/system/usePushNotifications', () => ({
 vi.mock('@/hooks/system/useNavigationHistory', () => ({ navigateToView: vi.fn() }));
 
 vi.mock('@/lib/logger', () => ({
-  getLogger: () => ({ error: vi.fn(), warn: vi.fn(), debug: vi.fn(), info: vi.fn() }),
+  getLogger: () => ({
+    error: vi.fn(),
+    warn: (...args: unknown[]) => h.logWarn(...args),
+    debug: vi.fn(),
+    info: vi.fn(),
+  }),
 }));
 
 import { useTeamChatNotifications } from '@/hooks/chat/useTeamChatNotifications';
@@ -100,6 +110,8 @@ beforeEach(() => {
   h.channelNames = [];
   h.fromTables = [];
   h.membership = [{ id: 'm1', is_muted: false }];
+  h.erro = null;
+  h.logWarn.mockReset();
   h.rpc.mockReset();
   h.rpc.mockResolvedValue({ data: [{ id: 'outro', name: 'Ana' }], error: null });
   h.show.mockReset();
@@ -171,5 +183,20 @@ describe('useTeamChatNotifications — canal estável (HZ5-09)', () => {
 
     expect(h.show).not.toHaveBeenCalled();
     expect(h.fromTables).not.toContain('team_conversation_members');
+  });
+
+  it('falha ao ler a associação não vira "sem resultados": não notifica e não quebra', async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    h.erro = 'permission denied';
+
+    renderHook(() => useTeamChatNotifications(null), { wrapper: wrapper(client) });
+    await act(async () => { await h.handler!(mensagem()); });
+
+    expect(h.fromTables).toContain('team_conversation_members');
+    expect(h.show).not.toHaveBeenCalled();
+    expect(h.logWarn).toHaveBeenCalledWith(
+      'Falha ao confirmar participação na conversa; sem notificação:',
+      'permission denied',
+    );
   });
 });
