@@ -1477,3 +1477,14 @@ jobs:
           TEAM_CHAT_PAGE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-messages-page-cursor-tiebreak.test.sh
+      # SEC-DEFINER_GRANTS_STORAGE-06/08 (auditoria SEGURANCA_DEFINER_GRANTS_STORAGE_2026-10-07):
+      # os buckets publicos `stickers`/`audio-memes` nasciam sem file_size_limit nem allowed_mime_types
+      # (texto arbitrario servido sem JWT) e, em team-chat-files, SELECT/DELETE comparavam a pasta com
+      # auth.uid() enquanto o INSERT grava a pasta com current_profile_id() (o dono nao via/apagava o
+      # proprio envio). Inicia container proprio e roda CREATE ROLE anon/authenticated/service_role —
+      # as roles sao globais ao cluster, entao SKIP_DOCKER_SHIM=1 como nos vizinhos.
+      - name: Provar limites dos buckets e a identidade de team-chat-files (SEC-DEFINER_GRANTS_STORAGE-06/08)
+        env:
+          BUCKETS_CHAT_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/buckets-stickers-team-chat-files.test.sh
