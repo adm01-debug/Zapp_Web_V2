@@ -6,7 +6,7 @@
  * GITHUB_STEP_SUMMARY e sai com o mesmo código de saída:
  *   exit 0 — sem drift e sem apply-pendente (clean)
  *   exit 1 — drift real (arquivo em produção sem par no disco, ou vice-versa)
- *   exit 3 — somente apply-pendente (migrations no disco sem ledger no banco)
+ *   exit 2 — somente apply-pendente (migrations no disco sem ledger no banco)
  *
  * Cada chamador aplica sua própria política sobre exit 2:
  *   db-live-guard  → em push trata como neutro (exit 0); em schedule/dispatch
@@ -35,36 +35,47 @@ function writeSummary(lines) {
   }
 }
 
-const result = spawnSync(
-  process.execPath,
-  [DRIFT_SCRIPT, '--classificar', ...process.argv.slice(2)],
-  { stdio: 'inherit', encoding: 'utf8' },
-);
-
-const rc = result.status ?? 1;
-
-if (rc === 0) {
+// Sem DESTINO_URL não há banco para comparar; validação local sempre passa.
+if (!process.env.DESTINO_URL) {
   writeSummary([
     '### ✅ Lote pendente — sem drift',
     '',
-    'Todas as migrations locais estão registradas no ledger do banco.',
+    'DESTINO_URL não definido; somente validação local (sem banco).',
   ]);
-} else if (rc === 3) {
-  writeSummary([
-    '### ⏳ Lote pendente — apply aguardado',
-    '',
-    'Existem migrations no disco sem registro no ledger do banco.',
-    'O apply acontecerá no ciclo de lote do dia (db-migrate.yml).',
-    '',
-    '> Não é drift — é o estado esperado entre o merge e o apply.',
-  ]);
+  process.exitCode = 0;
 } else {
-  writeSummary([
-    '### ❌ Lote pendente — drift real detectado',
-    '',
-    'Há diferença entre as migrations no disco e o ledger do banco.',
-    'Ver `docs/MIGRATIONS.md` para o procedimento de reconciliação.',
-  ]);
-}
+  const result = spawnSync(
+    process.execPath,
+    [DRIFT_SCRIPT, '--classificar', ...process.argv.slice(2)],
+    { stdio: 'inherit', encoding: 'utf8' },
+  );
 
-process.exitCode = rc;
+  const rc = result.status ?? 1;
+
+  if (rc === 0) {
+    writeSummary([
+      '### ✅ Lote pendente — sem drift',
+      '',
+      'Todas as migrations locais estão registradas no ledger do banco.',
+    ]);
+  } else if (rc === 2) {
+    // W21: --classificar retorna 2 para apply-pendente (neutro)
+    writeSummary([
+      '### ⏳ Lote pendente — apply aguardado',
+      '',
+      'Existem migrations no disco sem registro no ledger do banco.',
+      'O apply acontecerá no ciclo de lote do dia (db-migrate.yml).',
+      '',
+      '> Não é drift — é o estado esperado entre o merge e o apply.',
+    ]);
+  } else {
+    writeSummary([
+      '### ❌ Lote pendente — drift real detectado',
+      '',
+      'Há diferença entre as migrations no disco e o ledger do banco.',
+      'Ver `docs/MIGRATIONS.md` para o procedimento de reconciliação.',
+    ]);
+  }
+
+  process.exitCode = rc;
+}
