@@ -35,6 +35,7 @@ vi.mock('../RateLimitRealtimeAlerts', () => ({ RateLimitRealtimeAlerts: () => <d
 vi.mock('../RateLimitConfigPanel', () => ({ RateLimitConfigPanel: () => <div /> }));
 vi.mock('../AuditLogDashboard', () => ({ AuditLogDashboard: () => <div /> }));
 vi.mock('../QuarantinePanel', () => ({ QuarantinePanel: () => <div /> }));
+vi.mock('../AclAlertsPanel', () => ({ AclAlertsPanel: () => <div /> }));
 vi.mock('@/hooks/system/useUserRole', () => ({ useUserRole: () => ({ hasRole: () => true }) }));
 vi.mock('@/hooks/system/useSecurityPushNotifications', () => ({
   useSecurityPushNotifications: () => undefined,
