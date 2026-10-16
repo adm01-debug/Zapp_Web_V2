@@ -176,8 +176,9 @@ const ALLOWLIST = new Set([
   // contacts_stats/search_contacts (admin tudo, agente so o seu, anon/PUBLIC sem
   // EXECUTE, service_role tudo) e que o Rollback remove a funcao. Passo de uma linha
   // em db-guard.yml a promover pelo dono do workflow.
-  'scripts/db-audit/contacts-stats-series-rpc.test.sh',]);
-
+  'scripts/db-audit/contacts-stats-series-rpc.test.sh',]);,
+  'scripts/db-audit/contacts-stats-series-rpc.test.sh',
+]);
 // Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em
 // workflow nenhum. Todas rodam offline (`node --test <arquivo>`); a promoção é uma linha em
 // ci.yml/db-guard.yml — do dono do workflow (agente não edita workflow). R2-INF-013: as quatro
