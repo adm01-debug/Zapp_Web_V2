@@ -13,6 +13,9 @@ import { zappTransition } from '@/lib/motion';
 /** Aviso único quando o navegador recusa a reprodução por gesto/autoplay. */
 const PLAYBACK_BLOCKED = 'O navegador bloqueou a reprodução. Toque no botão de novo.';
 
+/** Teto da gravação: a Edge `voice-changer` recusa áudio acima de ~10 MB (≈60 s de webm). */
+const MAX_RECORDING_MS = 60_000;
+
 const VOICE_PRESETS = [
   // Masculinas
   { id: 'grave', emoji: '🎤', label: 'Grave', cat: 'masc' },
@@ -87,8 +90,20 @@ export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPicker
   const streamRef = useRef<MediaStream | null>(null);
   const mountedRef = useRef(true);
   const openRef = useRef(false);
+  /** Timer do teto de gravação (60 s). */
+  const recordingTimerRef = useRef<number | null>(null);
+  /** Aborto da transformação em voo: disparado ao fechar o popover/desmontar. */
+  const transformAbortRef = useRef<AbortController | null>(null);
+
+  const limparTimerGravacao = useCallback(() => {
+    if (recordingTimerRef.current !== null) {
+      window.clearTimeout(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+  }, []);
 
   const releaseCapture = useCallback(() => {
+    limparTimerGravacao();
     const recorder = mediaRecorderRef.current;
     if (recorder) {
       recorder.ondataavailable = null;
@@ -100,10 +115,13 @@ export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPicker
       streamRef.current.getTracks().forEach(t => t.stop());
       streamRef.current = null;
     }
-  }, []);
+  }, [limparTimerGravacao]);
 
   const cleanup = useCallback(() => {
     if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    // Fechar o popover cancela uma transformação em voo: a resposta tardia não
+    // pode reaparecer depois que o usuário saiu da tela.
+    transformAbortRef.current?.abort();
     releaseCapture();
     if (transformedUrl) URL.revokeObjectURL(transformedUrl);
     setRecordedBlob(null);
@@ -121,6 +139,7 @@ export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPicker
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
+      transformAbortRef.current?.abort();
       releaseCapture();
     };
   }, [releaseCapture]);
@@ -128,6 +147,14 @@ export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPicker
   useEffect(() => {
     openRef.current = open;
   }, [open]);
+
+  const stopRecording = useCallback(() => {
+    limparTimerGravacao();
+    if (mediaRecorderRef.current?.state === 'recording') {
+      mediaRecorderRef.current.stop();
+    }
+    setIsRecording(false);
+  }, [limparTimerGravacao]);
 
   const startRecording = useCallback(async () => {
     try {
@@ -157,23 +184,40 @@ export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPicker
       mediaRecorderRef.current = recorder;
       setIsRecording(true);
       setTransformedUrl(null);
-    } catch {
-      toast.error('Não foi possível acessar o microfone');
+      // Teto de 60 s: sem corte, uma gravação esquecida só falharia no upload
+      // (a Edge recusa acima de ~10 MB). Encerra a gravação e avisa.
+      recordingTimerRef.current = window.setTimeout(() => {
+        recordingTimerRef.current = null;
+        toast.warning('Gravação limitada a 60 segundos');
+        stopRecording();
+      }, MAX_RECORDING_MS);
+    } catch (err) {
+      // O motivo real muda a ação do usuário: permissão negada, microfone
+      // ausente e formato não suportado pedem coisas diferentes.
+      const nome = err instanceof DOMException ? err.name : '';
+      if (nome === 'NotAllowedError' || nome === 'SecurityError') {
+        toast.error('Permissão de microfone negada. Libere o acesso no navegador.');
+      } else if (nome === 'NotFoundError') {
+        toast.error('Nenhum microfone encontrado neste dispositivo.');
+      } else if (nome === 'NotSupportedError') {
+        toast.error('Este navegador não grava áudio neste formato.');
+      } else {
+        toast.error('Não foi possível acessar o microfone');
+      }
     }
-  }, []);
-
-  const stopRecording = useCallback(() => {
-    if (mediaRecorderRef.current?.state === 'recording') {
-      mediaRecorderRef.current.stop();
-    }
-    setIsRecording(false);
-  }, []);
+  }, [stopRecording]);
 
   const transformVoice = useCallback(async () => {
     if (!recordedBlob) return;
     setIsTransforming(true);
     setTransformError(null);
     if (transformedUrl) { URL.revokeObjectURL(transformedUrl); setTransformedUrl(null); }
+
+    // Uma transformação por vez: se o usuário pedir outra voz, a anterior é
+    // abortada em vez de competir para pintar a prévia.
+    transformAbortRef.current?.abort();
+    const controller = new AbortController();
+    transformAbortRef.current = controller;
 
     try {
       const formData = new FormData();
@@ -191,6 +235,7 @@ export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPicker
             'apikey': SUPABASE_ANON_KEY,
           },
           body: formData,
+          signal: controller.signal,
         }
       );
 
@@ -200,17 +245,23 @@ export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPicker
       }
 
       const audioBlob = await response.blob();
+      // O popover pode ter fechado (ou o componente desmontado) enquanto a Edge
+      // respondia: o blob tardio não vira prévia nem cria URL órfã.
+      if (controller.signal.aborted || !mountedRef.current || !openRef.current) return;
       const url = URL.createObjectURL(audioBlob);
       setTransformedUrl(url);
       toast.success('Voz transformada! 🎭');
     } catch (err) {
+      // Cancelamento não é erro do usuário: sai sem toast nem aviso inline.
+      if (controller.signal.aborted) return;
       const msg = err instanceof Error ? err.message : 'desconhecido';
       // Aviso inline (com "Tentar de novo") além do toast: o usuário não perde
       // a gravação e recupera o fluxo sem regravar.
       setTransformError(msg);
       toast.error(`Erro ao transformar voz: ${msg}`);
     } finally {
-      setIsTransforming(false);
+      if (transformAbortRef.current === controller) transformAbortRef.current = null;
+      if (mountedRef.current) setIsTransforming(false);
     }
   }, [recordedBlob, selectedVoice, transformedUrl]);
 
