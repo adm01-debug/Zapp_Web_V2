@@ -11,6 +11,7 @@ import { downloadFileWithPermission, notifyDownloadBlocked } from '@/lib/downloa
 import { useDownloadPermission } from '@/hooks/system/useDownloadPermission';
 import { chunkEmailIds, collectEmailPages } from '@/lib/emailPagination';
 import { escapeOrFilterValue } from '@/lib/postgrestFilters';
+import { emailLoadErrorCopy } from '@/lib/emailErrorState';
 import {
   EMAIL_THREAD_DEFAULT_FILTERS, emailThreadPageCount, emailThreadPageRange, emailThreadQueryDescriptor,
   emailThreadSearchOr, emailThreadSelectColumns, escapeLikeWildcards, type EmailThreadListQuery,
@@ -44,6 +45,19 @@ const EMPTY_ATTACHMENTS: EmailAttachment[] = [];
  */
 const DEFAULT_THREAD_LIST_QUERY: EmailThreadListQuery = { ...EMAIL_THREAD_DEFAULT_FILTERS, page: 1 };
 const EMPTY_THREAD_PAGE: { rows: EmailThread[]; total: number | null } = { rows: [], total: null };
+
+/**
+ * Aviso padrão de falha das AÇÕES do e-mail (desconectar, marcar lido, lixeira,
+ * marcador, rascunho). O texto por tipo de falha já existe em
+ * `emailLoadErrorCopy` (offline, sessão expirada, sem permissão, limite do Gmail,
+ * servidor) — o título diz QUAL ação não saiu e a descrição continua a mesma do
+ * carregamento. Antes, as ações sem `onError` falhavam em silêncio e as que
+ * tinham interpolavam `error.message` cru, que é `undefined` quando a rejeição
+ * não é um `Error`.
+ */
+function notifyGmailActionError(action: string, error: unknown): void {
+  toast.error(`Não foi possível ${action}`, { description: emailLoadErrorCopy(error).description });
+}
 
 /**
  * Origin view for the OAuth return trip. The canonical URL is ?view=<id>; the
@@ -120,7 +134,23 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null, 
 
   const disconnectGmail = useMutation({
     mutationFn: async (accId: string) => callGmailFunction('gmail-oauth', { action: 'disconnect', account_id: accId }),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['gmail-accounts'] }); invalidateThreadData(); toast.success('Gmail desconectado'); },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['gmail-accounts'] });
+      invalidateThreadData();
+      // A Edge responde 200 com `partial: true` / `revoked: false` quando a conta
+      // saiu daqui mas o Google não confirmou a revogação
+      // (supabase/functions/gmail-oauth/index.ts:259-271). Anunciar 'Gmail
+      // desconectado' ali faz o operador acreditar que o acesso foi revogado no
+      // Google quando ainda existe credencial ativa lá.
+      if (data?.revoked === false || data?.partial === true) {
+        toast.warning('Gmail desconectado aqui', {
+          description: 'O Google não confirmou a revogação do acesso. Revogue em myaccount.google.com/permissions.',
+        });
+        return;
+      }
+      toast.success('Gmail desconectado');
+    },
+    onError: (error: Error) => notifyGmailActionError('desconectar o Gmail', error),
   });
 
   const effectiveListQuery = listQuery ?? DEFAULT_THREAD_LIST_QUERY;
@@ -356,6 +386,7 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null, 
     },
     retry: 1,
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['gmail-labels'] }); },
+    onError: (error: Error) => notifyGmailActionError('sincronizar os marcadores', error),
   });
 
   const sendEmail = useMutation({
@@ -382,7 +413,24 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null, 
       return callGmailFunction('gmail-send', { action: 'mark-read', account_id: activeAccount.id, message_ids: messageIds });
     },
     retry: 1,
-    onSuccess: () => { invalidateThreadData(); queryClient.invalidateQueries({ queryKey: ['gmail-messages'] }); },
+    onSuccess: (data, messageIds) => {
+      invalidateThreadData();
+      queryClient.invalidateQueries({ queryKey: ['gmail-messages'] });
+      // O `mark-read` responde 207 com `success: false` e `failed_ids` quando o
+      // Gmail aceita só parte dos ids (supabase/functions/gmail-send/index.ts:305).
+      // O FunctionsClient trata 2xx — inclusive 207 — como sucesso e devolve
+      // `error: null`: o payload de domínio é a única fonte da verdade, igual ao
+      // 207 do sync-inbox.
+      const failedIds = Array.isArray(data?.failed_ids) ? (data.failed_ids as string[]) : [];
+      if (failedIds.length === 0) return;
+      // A lista é reconsultada (acima), então as mensagens que o Gmail recusou
+      // continuam não lidas; o aviso refaz só o que ficou pendente.
+      toast.warning('Não foi possível marcar como lida', {
+        description: `${failedIds.length} de ${messageIds.length} mensagem(ns) não foram marcadas como lidas.`,
+        action: { label: 'Tentar de novo', onClick: () => markAsRead.mutate(failedIds) },
+      });
+    },
+    onError: (error: Error) => notifyGmailActionError('marcar como lida', error),
   });
 
   const trashMessage = useMutation({
@@ -391,6 +439,7 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null, 
       return callGmailFunction('gmail-send', { action: 'trash', account_id: activeAccount.id, message_id: messageId });
     },
     onSuccess: () => { invalidateThreadData(); toast.success('Email movido para lixeira'); },
+    onError: (error: Error) => notifyGmailActionError('mover o e-mail para a lixeira', error),
   });
 
   const trashThread = useMutation({
@@ -399,6 +448,7 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null, 
       return callGmailFunction('gmail-send', { action: 'trash-thread', account_id: activeAccount.id, thread_id: gmailThreadId });
     },
     onSuccess: () => { invalidateThreadData(); toast.success('Thread movida para lixeira'); },
+    onError: (error: Error) => notifyGmailActionError('mover a conversa para a lixeira', error),
   });
 
   const modifyLabels = useMutation({
@@ -407,6 +457,7 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null, 
       return callGmailFunction('gmail-send', { action: 'modify-labels', account_id: activeAccount.id, ...params });
     },
     onSuccess: () => { invalidateThreadData(); queryClient.invalidateQueries({ queryKey: ['gmail-messages'] }); },
+    onError: (error: Error) => notifyGmailActionError('atualizar os marcadores da mensagem', error),
   });
 
   const modifyThreadLabels = useMutation({
@@ -426,6 +477,7 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null, 
       if (!activeAccount) throw new Error('No active Gmail account');
       return callGmailFunction('gmail-send', { action: params.draft_id ? 'update-draft' : 'create-draft', account_id: activeAccount.id, ...params });
     },
+    onError: (error: Error) => notifyGmailActionError('salvar o rascunho', error),
   });
 
   const deleteDraft = useMutation({
@@ -433,6 +485,7 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null, 
       if (!activeAccount) throw new Error('No active Gmail account');
       return callGmailFunction('gmail-send', { action: 'delete-draft', account_id: activeAccount.id, draft_id: draftId });
     },
+    onError: (error: Error) => notifyGmailActionError('apagar o rascunho', error),
   });
 
   const getAttachmentContent = useCallback(async (attachment: EmailAttachment & { gmail_message_id: string }) => {
