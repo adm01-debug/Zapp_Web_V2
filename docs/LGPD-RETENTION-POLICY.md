@@ -82,6 +82,7 @@ Estabelecer as diretrizes de retenção, arquivamento e exclusão de dados pesso
 | `campaign_contacts` | Operacional | 2 anos | Legítimo interesse | Excluir |
 | `scheduled_messages` | Operacional | 90 dias | Legítimo interesse | Excluir |
 | `chatbot_executions` | Operacional | 90 dias | Legítimo interesse | Excluir |
+| `search_events` | Operacional/Analítico (termo de busca **normalizado**) | 90 dias | Legítimo interesse | Excluir (`purge_search_events`) |
 
 ### 4.4 Dados de Segurança
 
@@ -175,6 +176,13 @@ WHERE created_at < NOW() - INTERVAL '30 days';
 -- 6. Limpar password_reset_requests > 30 dias
 DELETE FROM password_reset_requests 
 WHERE created_at < NOW() - INTERVAL '30 days';
+
+-- 7. Limpar search_events > 90 dias (HZ1-06) — em lote, so service_role
+--    SELECT public.purge_search_events(1000);  -- repete ate devolver 0
+--    A tabela guarda o termo NORMALIZADO (minusculo, sem acento, pontuacao
+--    virou espaco, max. 80) e nunca telefone, e-mail, CPF/CNPJ ou token:
+--    o descarte acontece na RPC log_search_event, antes do INSERT.
+--    A agenda (pg_cron / Edge Function) NAO esta ativa; o expurgo e manual.
 ```
 
 ---
@@ -372,6 +380,7 @@ Deno.serve(async () => {
 | Versão | Data | Autor | Alterações |
 |--------|------|-------|------------|
 | 1.0 | 2026-04-11 | Claude AI | Versão inicial |
+| 1.1 | 2026-10-16 | worker (sql) | `search_events` (análise de buscas, HZ1-06): 90 dias, termo normalizado, sem PII; expurgo `purge_search_events` no 5.4 |
 
 ---
 
