@@ -1,5 +1,5 @@
 import { toast } from 'sonner';
-import React, { useEffect, useState, useMemo, useCallback, useRef, Suspense } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import {
   Zap, Plus, FileText, ShieldBan, BarChart3, ArrowLeft,
   LayoutDashboard, HelpCircle,
@@ -12,50 +12,33 @@ import { useTalkXSegments } from '@/hooks/integrations/useTalkXSegments';
 import { useTalkXTemplates } from '@/hooks/integrations/useTalkXTemplates';
 import { useTalkXServiceStatus } from '@/hooks/integrations/useTalkXServiceStatus';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
-import { ModuleHeader, TalkXSkeletonRows, TalkXWhatsAppDisconnectedState } from './talkxShared';
+import { ModuleHeader, IconTile, TalkXSkeletonRows, TalkXWhatsAppDisconnectedState } from './talkxShared';
 import { PrimaryButton } from '@/components/dashboard/overview/DashboardCard';
+import { TalkXHelpCenter } from './help/TalkXHelpCenter';
 import { parseTalkXHelpRoute, pushTalkXHelpRoute, type TalkXHelpRoute } from './help/talkxHelpRoute';
 import { TalkXOverview } from './TalkXOverview';
-import { SectionErrorBoundary } from '@/components/ui/section-error-boundary';
+import { TalkXCampaignWizard } from './TalkXCampaignWizard';
+import { TalkXLiveMonitor } from './TalkXLiveMonitor';
+import { TalkXSegments } from './TalkXSegments';
+import { TalkXTemplates } from './TalkXTemplates';
+import { TalkXSuppression } from './TalkXSuppression';
+import { TalkXAnalytics } from './TalkXAnalytics';
+import { TalkXSettings } from './TalkXSettings';
+import { TalkXCampaignScheduled } from './TalkXCampaignScheduled';
+import { TalkXCampaignRunning } from './TalkXCampaignRunning';
+import { TalkXCampaignReport } from './report/TalkXCampaignReport';
 import {
   goTab,
   parseTalkXRoute,
   pushTalkXWizardRoute,
   replaceTalkXTabRoute,
   replaceTalkXWizardRoute,
-  parseTalkXScreenRoute,
-  screenForStatus,
-  replaceTalkXRoute,
-  type TalkXScreen,
   type TalkXTab,
   type TalkXWizardRoute,
 } from './talkxRoute';
 import type { WizardStep } from './useCampaignEditor';
-import { lazyWithRetry } from '@/lib/lazyWithRetry';
 
-// TL-177 — as telas pesadas do Talk X ficam fora do chunk inicial do módulo.
-// Mantemos a Visão geral eagerly loaded, porque ela é a primeira aba, e carregamos
-// sob demanda wizard, monitor, ajuda, listas, analytics e telas de acompanhamento.
-const TalkXHelpCenter = lazyWithRetry(() => import('./help/TalkXHelpCenter').then((m) => ({ default: m.TalkXHelpCenter })));
-const TalkXCampaignWizard = lazyWithRetry(() => import('./TalkXCampaignWizard').then((m) => ({ default: m.TalkXCampaignWizard })));
-const TalkXLiveMonitor = lazyWithRetry(() => import('./TalkXLiveMonitor').then((m) => ({ default: m.TalkXLiveMonitor })));
-const TalkXSegments = lazyWithRetry(() => import('./TalkXSegments').then((m) => ({ default: m.TalkXSegments })));
-const TalkXTemplates = lazyWithRetry(() => import('./TalkXTemplates').then((m) => ({ default: m.TalkXTemplates })));
-const TalkXSuppression = lazyWithRetry(() => import('./TalkXSuppression').then((m) => ({ default: m.TalkXSuppression })));
-const TalkXAnalytics = lazyWithRetry(() => import('./TalkXAnalytics').then((m) => ({ default: m.TalkXAnalytics })));
-const TalkXSettings = lazyWithRetry(() => import('./TalkXSettings').then((m) => ({ default: m.TalkXSettings })));
-const TalkXCampaignScheduled = lazyWithRetry(() => import('./TalkXCampaignScheduled').then((m) => ({ default: m.TalkXCampaignScheduled })));
-const TalkXCampaignRunning = lazyWithRetry(() => import('./TalkXCampaignRunning').then((m) => ({ default: m.TalkXCampaignRunning })));
-
-function TalkXScreenFallback() {
-  return (
-    <div className="p-4" role="status" aria-live="polite" aria-busy="true">
-      <TalkXSkeletonRows rows={4} />
-    </div>
-  );
-}
-
-export type TalkXTopView = 'tabs' | 'wizard' | 'monitor' | 'scheduled' | 'running';
+export type TalkXTopView = 'tabs' | 'wizard' | 'monitor' | 'scheduled' | 'running' | 'report';
 
 export default function TalkXView() {
   const { campaigns, isLoading, isError, error: campaignsError, isLive, startCampaign, pauseCampaign, cancelCampaign, deleteCampaign, duplicateCampaign: duplicateCampaignMutation, refetchCampaigns } = useTalkX();
@@ -68,33 +51,19 @@ export default function TalkXView() {
   // estado não aparece (nunca um falso "desconectado" na tela).
   const { whatsapp: whatsappService } = useTalkXServiceStatus();
   const whatsappDisconnected = whatsappService.connected === false;
-  // TL-152: a mesma precedência do syncFromBrowserHistory (?campaign= com
-  // screen explícito vence o wizard) — load e popstate abrem a mesma tela
-  // para o mesmo endereço.
-  const [topView, setTopView] = useState<TalkXTopView>(() => {
-    const screenRoute = parseTalkXScreenRoute(window.location.search).route;
-    if (screenRoute?.screen) return screenRoute.screen;
-    const wizard = parseTalkXRoute(window.location.search).wizard.route;
-    if (wizard) return 'wizard';
-    return 'tabs';
-  });
+  const [topView, setTopView] = useState<TalkXTopView>(() => parseTalkXRoute(window.location.search).wizard.route ? 'wizard' : 'tabs');
   const [activeTab, setActiveTab] = useState<TalkXTab>(() => parseTalkXRoute(window.location.search).tab);
   const [activeSub, setActiveSub] = useState<string | undefined>(() => parseTalkXRoute(window.location.search).sub);
   const [editingCampaign, setEditingCampaign] = useState<TalkXCampaign | null>(null);
   const [monitorId, setMonitorId] = useState<string | null>(null);
   const [scheduledCampaignId, setScheduledCampaignId] = useState<string | null>(null);
   const [runningCampaignId, setRunningCampaignId] = useState<string | null>(null);
-  const [wizardInitial, setWizardInitial] = useState<{ segmentIds?: string[]; templateId?: string } | undefined>();
+  const [reportCampaignId, setReportCampaignId] = useState<string | null>(null);
+  const [wizardInitial, setWizardInitial] = useState<{ segmentId?: string; templateId?: string } | undefined>();
   const [wizardRoute, setWizardRoute] = useState<TalkXWizardRoute | null>(() => parseTalkXRoute(window.location.search).wizard.route);
-  // TL-152: a rota de tela resolve os ids quando as campanhas chegam
-  // (primeira pintura); uma vez só, para não puxar a View de volta a
-  // cada recarregamento das campanhas.
-  const didInitialScreenSync = useRef(false);
   // X189: a Ajuda deixou de ser modal e virou tela com endereço próprio
   // (?screen=help&topic=&article=); o "?" do cabeçalho abre esta rota.
   const [helpRoute, setHelpRoute] = useState<TalkXHelpRoute | null>(() => parseTalkXHelpRoute(window.location.search).route);
-  const helpTriggerRef = useRef<HTMLButtonElement | null>(null);
-  const restoreHelpTriggerFocusRef = useRef(false);
   // R2-MOD-039: o item "Novo template" do menu Templates navega para a aba de templates
   // pedindo o editor VAZIO (antes chamava openNew, que é o wizard de campanha). O pedido
   // é limpo quando a aba o atende, para não reabrir o editor sozinho depois.
@@ -112,12 +81,7 @@ export default function TalkXView() {
 
   const syncFromBrowserHistory = useCallback(() => {
     const parsedWizard = parseTalkXRoute(window.location.search).wizard;
-    const parsedScreen = parseTalkXScreenRoute(window.location.search);
-
     if (parsedWizard.needsNormalization) replaceTalkXWizardRoute(parsedWizard.route);
-    // TL-152: ?screen= inválido (ex.: report, que não tem tela) é normalizado
-    // aqui também — o parâmetro é removido sem abrir outra tela no lugar.
-    if (parsedScreen.needsNormalization) replaceTalkXRoute(null);
 
     // The browser history event, rather than a render effect, is the source of
     // truth for back/forward. Resetting here also guarantees a draft from the
@@ -125,33 +89,6 @@ export default function TalkXView() {
     setLocalDraftRouteId(null);
     setWizardRoute(parsedWizard.route);
     setWizardInitial(undefined);
-
-    // TL-152: screen routing takes priority over wizard routing when
-    // ?campaign= is present in the URL. Sem screen, a situação decide
-    // (screenForStatus); campanha inexistente cai na lista, como hoje.
-    if (parsedScreen.route) {
-      const campaignId = parsedScreen.route.campaignId;
-      const campaign = campaigns.find((candidate) => candidate.id === campaignId) ?? null;
-      const screen = parsedScreen.route.screen ?? (campaign ? screenForStatus(campaign.status) : undefined);
-      if (screen === 'wizard') {
-        setEditingCampaign(campaign && (campaign.status === 'draft' || campaign.status === 'scheduled') ? campaign : null);
-        setTopView('wizard');
-        return;
-      }
-      if (screen) {
-        setEditingCampaign(null);
-        setMonitorId(null);
-        setScheduledCampaignId(null);
-        setRunningCampaignId(null);
-        switch (screen) {
-          case 'scheduled': setScheduledCampaignId(campaignId); break;
-          case 'running': setRunningCampaignId(campaignId); break;
-          default: setMonitorId(campaignId); break;
-        }
-        setTopView(screen === 'scheduled' || screen === 'running' ? screen : 'monitor');
-        return;
-      }
-    }
 
     if (!parsedWizard.route) {
       setEditingCampaign(null);
@@ -177,19 +114,9 @@ export default function TalkXView() {
     // entrada nova no histórico) em vez de mostrar área vazia.
     const initialTab = parseTalkXRoute(window.location.search);
     if (initialTab.needsNormalization) replaceTalkXTabRoute({ tab: initialTab.tab, sub: initialTab.sub });
-    // TL-152: normaliza ?screen= desconhecido (remove o parâmetro sem
-    // entrar no histórico, para não criar entradas inúteis).
-    const initialScreen = parseTalkXScreenRoute(window.location.search);
-    if (initialScreen.needsNormalization) replaceTalkXRoute(null);
-    // TL-152: o init só define o topView — os ids da tela roteada resolvem
-    // aqui, quando as campanhas chegam (primeira pintura, uma vez só).
-    if (!didInitialScreenSync.current && !isLoading) {
-      didInitialScreenSync.current = true;
-      syncFromBrowserHistory();
-    }
     window.addEventListener('popstate', syncFromBrowserHistory);
     return () => window.removeEventListener('popstate', syncFromBrowserHistory);
-  }, [isLoading, syncFromBrowserHistory]);
+  }, [syncFromBrowserHistory]);
 
   // Aba ativa vem da URL; popstate (inclusive o disparado por goTab) restaura tab/sub.
   useEffect(() => {
@@ -223,11 +150,10 @@ export default function TalkXView() {
     window.dispatchEvent(new PopStateEvent('popstate'));
   }, [isLoading, localDraftRouteId, routedCampaign, routedCampaignIsEditable, topView, wizardRoute]);
 
-  const openNew = useCallback((initial?: { segmentIds?: string[]; templateId?: string }) => {
+  const openNew = useCallback((initial?: { segmentId?: string; templateId?: string }) => {
     setLocalDraftRouteId(null);
     setEditingCampaign(null); setWizardInitial(initial); setTopView('wizard');
     writeWizardRoute({ campaignId: 'new', step: 1 });
-    replaceTalkXRoute(null);
   }, [writeWizardRoute]);
   const openEdit = useCallback((c: TalkXCampaign) => {
     setLocalDraftRouteId(null);
@@ -238,32 +164,15 @@ export default function TalkXView() {
       ? (savedStep as WizardStep)
       : 1;
     writeWizardRoute({ campaignId: c.id, step });
-    replaceTalkXRoute(null);
   }, [writeWizardRoute]);
-  // TL-152: cada tela de acompanhamento tem endereço próprio (?campaign= e
-  // ?screen=). Abrir a tela grava a rota (push: voltar retorna à lista) e
-  // limpa a rota do wizard — um endereço nunca aponta para duas telas.
-  // Transições reativas (mudança de status, pós-lançamento) usam replace.
-  const writeScreenRoute = useCallback((campaignId: string, screen: TalkXScreen, replace = false) => {
-    const url = new URL(window.location.href);
-    url.searchParams.set('campaign', campaignId);
-    url.searchParams.set('screen', screen);
-    url.searchParams.delete('wizard');
-    url.searchParams.delete('step');
-    const href = `${url.pathname}${url.search}${url.hash}`;
-    if (replace) window.history.replaceState(null, '', href);
-    else window.history.pushState(null, '', href);
-    setWizardRoute(null);
-  }, []);
-
-  const openMonitor = useCallback((c: TalkXCampaign) => { setMonitorId(c.id); setTopView('monitor'); writeScreenRoute(c.id, 'monitor'); }, [writeScreenRoute]);
-  const openScheduled = useCallback((c: TalkXCampaign) => { setScheduledCampaignId(c.id); setTopView('scheduled'); writeScreenRoute(c.id, 'scheduled'); }, [writeScreenRoute]);
-  const openRunning = useCallback((c: TalkXCampaign) => { setRunningCampaignId(c.id); setTopView('running'); writeScreenRoute(c.id, 'running'); }, [writeScreenRoute]);
+  const openMonitor = useCallback((c: TalkXCampaign) => { setMonitorId(c.id); setTopView('monitor'); }, []);
+  const openScheduled = useCallback((c: TalkXCampaign) => { setScheduledCampaignId(c.id); setTopView('scheduled'); }, []);
+  const openRunning = useCallback((c: TalkXCampaign) => { setRunningCampaignId(c.id); setTopView('running'); }, []);
+  const openReport = useCallback((c: TalkXCampaign) => { setReportCampaignId(c.id); setTopView('report'); }, []);
   const backToList = useCallback(() => {
     setLocalDraftRouteId(null);
-    setTopView('tabs'); setEditingCampaign(null); setMonitorId(null); setScheduledCampaignId(null); setRunningCampaignId(null); setWizardInitial(undefined);
+    setTopView('tabs'); setEditingCampaign(null); setMonitorId(null); setScheduledCampaignId(null); setRunningCampaignId(null); setReportCampaignId(null); setWizardInitial(undefined);
     writeWizardRoute(null, true);
-    replaceTalkXRoute(null);
   }, [writeWizardRoute]);
 
   // X189: a Ajuda é uma tela do módulo com rota própria; o endereço vive na URL
@@ -273,19 +182,9 @@ export default function TalkXView() {
     setHelpRoute(next);
   }, []);
   const closeHelp = useCallback(() => {
-    restoreHelpTriggerFocusRef.current = true;
     pushTalkXHelpRoute(null);
     setHelpRoute(null);
   }, []);
-
-  useEffect(() => {
-    if (helpRoute || !restoreHelpTriggerFocusRef.current) return;
-    restoreHelpTriggerFocusRef.current = false;
-    const frame = window.requestAnimationFrame(() => {
-      helpTriggerRef.current?.focus();
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, [helpRoute]);
 
   const creators = useMemo(() => {
     const m: Record<string, string> = {};
@@ -309,7 +208,6 @@ export default function TalkXView() {
       setLocalDraftRouteId(created.id);
       setTopView('wizard');
       writeWizardRoute({ campaignId: created.id, step: 1 });
-      replaceTalkXRoute(null);
     } catch {
       // A mutation já mostra o toast de erro.
     }
@@ -331,42 +229,53 @@ export default function TalkXView() {
   const onView = useCallback((c: TalkXCampaign) => {
     if (c.status === 'scheduled') { openScheduled(c); return; }
     if (c.status === 'sending' || c.status === 'paused') { openRunning(c); return; }
+    // X164: campanha CONCLUÍDA abre o Relatório (tela 14); os demais estados seguem no Monitor.
+    if (c.status === 'completed') { openReport(c); return; }
     openMonitor(c);
-  }, [openMonitor, openScheduled, openRunning]);
+  }, [openMonitor, openReport, openScheduled, openRunning]);
 
   if (topView === 'scheduled' && scheduledCampaignId) {
     return (
-      <Suspense fallback={<TalkXScreenFallback />}>
-        <TalkXCampaignScheduled
-          campaignId={scheduledCampaignId!}
-          onBack={backToList}
-          onEdit={(c) => { setScheduledCampaignId(null); openEdit(c); }}
-          onStatusChange={(campaign) => {
-            setScheduledCampaignId(null);
-            if (campaign.status === 'sending') {
-              setMonitorId(campaign.id);
-              setTopView('monitor');
-              writeScreenRoute(campaign.id, 'monitor', true);
-              return;
-            }
-            backToList();
-          }}
-        />
-      </Suspense>
+      <TalkXCampaignScheduled
+        campaignId={scheduledCampaignId!}
+        onBack={backToList}
+        onEdit={(c) => { setScheduledCampaignId(null); openEdit(c); }}
+        onStatusChange={(campaign) => {
+          setScheduledCampaignId(null);
+          if (campaign.status === 'sending') {
+            setMonitorId(campaign.id);
+            setTopView('monitor');
+            return;
+          }
+          backToList();
+        }}
+      />
     );
   }
 
 
   if (topView === 'running') {
     return (
-      <Suspense fallback={<TalkXScreenFallback />}>
-        <TalkXCampaignRunning
-          initialCampaignId={runningCampaignId}
-          onBack={backToList}
-          onViewMonitor={(id) => { setRunningCampaignId(null); setMonitorId(id); setTopView('monitor'); writeScreenRoute(id, 'monitor', true); }}
-        />
-      </Suspense>
+      <TalkXCampaignRunning
+        initialCampaignId={runningCampaignId}
+        onBack={backToList}
+        onViewMonitor={(id) => { setRunningCampaignId(null); setMonitorId(id); setTopView('monitor'); }}
+      />
     );
+  }
+
+  if (topView === 'report' && reportCampaignId) {
+    const reportCampaign = campaigns.find((candidate) => candidate.id === reportCampaignId) ?? null;
+    if (reportCampaign) {
+      return (
+        <TalkXCampaignReport
+          campaign={reportCampaign}
+          creators={creators}
+          onBack={backToList}
+          onViewMonitor={(id) => { setReportCampaignId(null); setMonitorId(id); setTopView('monitor'); }}
+        />
+      );
+    }
   }
 
   if (topView === 'wizard') {
@@ -388,29 +297,25 @@ export default function TalkXView() {
     }
     return (
       <div className="min-h-full w-full min-w-0 bg-background">
-        <Suspense fallback={<TalkXScreenFallback />}>
-          <TalkXCampaignWizard
-            key={`talkx-wizard:${wizardCampaign?.id || 'new'}`}
-            campaign={wizardCampaign}
-            onClose={backToList}
-            onLaunched={(id, status) => {
-              writeWizardRoute(null, true);
-              if (status === 'scheduled') {
-                setScheduledCampaignId(id);
-                setTopView('scheduled');
-                writeScreenRoute(id, 'scheduled', true);
-                return;
-              }
-              setMonitorId(id);
-              setTopView('monitor');
-              writeScreenRoute(id, 'monitor', true);
-            }}
-            initial={{ ...wizardInitial, step: wizardRoute?.step }}
-            routeStep={wizardRoute?.step}
-            onRouteStepChange={onWizardStepChange}
-            onDraftIdentity={onDraftIdentity}
-          />
-        </Suspense>
+        <TalkXCampaignWizard
+          key={`talkx-wizard:${wizardCampaign?.id || 'new'}`}
+          campaign={wizardCampaign}
+          onClose={backToList}
+          onLaunched={(id, status) => {
+            writeWizardRoute(null, true);
+            if (status === 'scheduled') {
+              setScheduledCampaignId(id);
+              setTopView('scheduled');
+              return;
+            }
+            setMonitorId(id);
+            setTopView('monitor');
+          }}
+          initial={{ ...wizardInitial, step: wizardRoute?.step }}
+          routeStep={wizardRoute?.step}
+          onRouteStepChange={onWizardStepChange}
+          onDraftIdentity={onDraftIdentity}
+        />
       </div>
     );
   }
@@ -419,15 +324,11 @@ export default function TalkXView() {
     return (
       <div className="min-h-full w-full min-w-0 bg-background">
         <div className="flex items-center gap-3 mb-4">
-          <button type="button" onClick={backToList} className="h-9 px-3 rounded-lg border border-border/70 bg-input/40 flex items-center gap-1.5 text-xs font-medium text-foreground-secondary hover:bg-muted/50">
+          <button type="button" onClick={backToList} className="h9 px-3 rounded-lg border border-border/70 bg-input/40 flex items-center gap-1.5 text-xs font-medium text-foreground-secondary hover:bv-muted/50">
             <ArrowLeft className="w-4 h-4" />Voltar à campanhas
           </button>
         </div>
-        <SectionErrorBoundary sectionName="Monitor ao vivo">
-          <Suspense fallback={<TalkXScreenFallback />}>
-            <TalkXLiveMonitor campaignId={monitorId} onBack={backToList} />
-          </Suspense>
-        </SectionErrorBoundary>
+        <TalkXLiveMonitor campaignId={monitorId} onBack={backToList} />
       </div>
     );
   }
@@ -435,9 +336,7 @@ export default function TalkXView() {
   if (helpRoute) {
     return (
       <div className="min-h-full w-full min-w-0 bg-background">
-        <Suspense fallback={<TalkXScreenFallback />}>
-          <TalkXHelpCenter route={helpRoute} onRouteChange={changeHelpRoute} onClose={closeHelp} />
-        </Suspense>
+        <TalkXHelpCenter route={helpRoute} onRouteChange={changeHelpRoute} onClose={closeHelp} />
       </div>
     );
   }
@@ -457,9 +356,7 @@ export default function TalkXView() {
               </span>
             )}
             <button
-              ref={helpTriggerRef}
-              type="button"
-              onClick={() => changeHelpRoute({})}
+              type="button" onClick={() => changeHelpRoute({})}
               className="talkx-glow-ring inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg border border-border/60 bg-input/40 text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors text-xs font-medium"
             >
               <HelpCircle className="w-4 h-4" />Ajuda
@@ -532,35 +429,23 @@ export default function TalkXView() {
           />
         </TabsContent>
         <TabsContent value="segments" className="mt-4">
-          <Suspense fallback={<TalkXScreenFallback />}>
-            <TalkXSegments onUseCampaign={(segmentIds) => openNew({ segmentIds })} />
-          </Suspense>
+          <TalkXSegments onUseCampaign={(segmentId) => openNew({ segmentId })} />
         </TabsContent>
         <TabsContent value="templates" className="mt-4">
-          <Suspense fallback={<TalkXScreenFallback />}>
-            <TalkXTemplates
-              onUseTemplate={(templateId) => openNew({ templateId })}
-              startNew={templateStartNew}
-              onStartNewHandled={() => setTemplateStartNew(false)}
-              onOpenMonitor={(id) => { const c = campaigns.find((x) => x.id === id); if (c) openMonitor(c); }}
-            />
-          </Suspense>
+          <TalkXTemplates
+            onUseTemplate={(templateId) => openNew({ templateId })}
+            startNew={templateStartNew}
+            onStartNewHandled={() => setTemplateStartNew(false)}
+            onOpenMonitor={(id) => { setMonitorId(id); setTopView('monitor'); }}
+          />
         </TabsContent>
         <TabsContent value="suppression" className="mt-4">
-          <Suspense fallback={<TalkXScreenFallback />}>
-            <TalkXSuppression />
-          </Suspense>
+          <TalkXSuppression />
         </TabsContent>
         <TabsContent value="analytics" className="mt-4">
           {activeSub === 'configuracoes'
-            ? <Suspense fallback={<TalkXScreenFallback />}><TalkXSettings /></Suspense>
-            : (
-              <SectionErrorBoundary sectionName="Analytics de campanhas">
-                <Suspense fallback={<TalkXScreenFallback />}>
-                  <TalkXAnalytics campaigns={campaigns} isLoading={isLoading} isError={isError} />
-                </Suspense>
-              </SectionErrorBoundary>
-            )}
+            ? <TalkXSettings />
+            : <TalkXAnalytics campaigns={campaigns} isLoading={isLoading} isError={isError} />}
         </TabsContent>
       </Tabs>
     </div>
