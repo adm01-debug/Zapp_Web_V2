@@ -36,6 +36,9 @@ describe('volume de mídia — toda superfície de conversa passa pelo controle 
     // shell. Antes o contrato apontava para TelefoniaView e ficava verde com a ref órfã
     // enquanto o elemento real tocava fora do controle.
     ['gravação de chamada', 'src/components/calls/RecordingPlayer.tsx'],
+    // Superfície nova do sussurro por voz: o player é quem RENDERIZA o `<audio>` da nota
+    // (13/10), então ele entra no mesmo controle único dos outros áudios da conversa.
+    ['nota de sussurro por voz', 'src/components/inbox/WhisperAudioPlayer.tsx'],
   ];
 
   it.each(superfícies)('%s usa o controle único', (_nome, arquivo) => {
