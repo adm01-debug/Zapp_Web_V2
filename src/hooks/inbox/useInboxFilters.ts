@@ -177,7 +177,6 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
   // Convert URL filters to InboxFiltersState
   const filters = useMemo<InboxFiltersState>(() => ({
     status: urlFilters.status,
-    tags: urlFilters.tags,
     agentId: urlFilters.agentId,
     dateRange: {
       from: urlFilters.dateFrom ? parseISO(urlFilters.dateFrom) : null,
@@ -191,7 +190,6 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
   const setFilters = useCallback((newFilters: InboxFiltersState) => {
     setUrlFilters({
       status: newFilters.status,
-      tags: newFilters.tags,
       agentId: newFilters.agentId,
       dateFrom: localDayKey(newFilters.dateRange.from),
       dateTo: localDayKey(newFilters.dateRange.to),
@@ -254,7 +252,7 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
     // 'all' não filtra por assigned_to (subTab já vem null) — mostra todas abertas
     // attending e waiting já são tratados pelo subTab derivado
 
-    // Filtros por cima do chip — busca, painel Filtros (status/tags/atendente/
+    // Filtros por cima do chip — busca, painel Filtros (status/atendente/
     // datas) e tipo de contato. A regra vive em passesExtraFilters, em
     // ./chipCounts: é a MESMA que o countByChip aplica, então o número do chip e
     // o length da lista não têm mais como divergir.

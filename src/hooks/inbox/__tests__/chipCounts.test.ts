@@ -23,6 +23,7 @@ vi.mock('@/hooks/system/useFeatureFlag', () => ({ useFeatureFlag: () => false })
 import { useInboxFilters } from '../useInboxFilters';
 import { countByChip, passesExtraFilters } from '../chipCounts';
 import type { ChipTab } from '@/components/inbox/TicketTabs';
+import type { InboxFiltersState } from '@/components/inbox/InboxFilters';
 
 const PROFILE_ID = 'p1';
 
@@ -145,7 +146,6 @@ interface Combo {
   nome: string;
   search?: string;
   status?: string[];
-  tags?: string[];
   agentId?: string | null;
   from?: Date | null;
   to?: Date | null;
@@ -209,7 +209,6 @@ const CONVERSAS_MATRIZ = [
 
 const estadoFiltros = (combo: Combo) => ({
   status: combo.status ?? [],
-  tags: combo.tags ?? [],
   agentId: combo.agentId ?? null,
   dateRange: { from: combo.from ?? null, to: combo.to ?? null },
 });
@@ -251,14 +250,13 @@ const COMBOS: Combo[] = [
   { nome: 'fila q1', queueId: 'q1' },
   { nome: 'status não lidas', status: ['unread'] },
   { nome: 'status pendentes', status: ['pending'] },
-  { nome: 'etiqueta vip', tags: ['vip'] },
   { nome: 'atendente p1', agentId: 'p1' },
   { nome: 'intervalo de datas', from: new Date(2026, 9, 1), to: new Date(2026, 9, 9) },
   { nome: 'intervalo sem "de" (só até)', to: new Date(2026, 9, 9) },
   { nome: 'busca + tipo', search: 'a', contactType: 'individual' },
   { nome: 'fila + tipo grupo', queueId: 'q2', contactType: 'grupo' },
   { nome: 'showAll', showAll: true },
-  { nome: 'tudo junto', search: 'o', contactType: 'individual', status: ['read'], tags: ['vip'], agentId: 'p1', from: new Date(2026, 9, 1), to: new Date(2026, 9, 31) },
+  { nome: 'tudo junto', search: 'o', contactType: 'individual', status: ['read'], agentId: 'p1', from: new Date(2026, 9, 1), to: new Date(2026, 9, 31) },
 ];
 
 describe('contador com busca/filtros/tipo — matriz de combinações', () => {
@@ -339,7 +337,6 @@ describe('contador com busca/filtros/tipo — matriz de combinações', () => {
         status: i % 3 === 0 ? 'waiting' : 'open',
         assigned: i % 2 === 0 ? PROFILE_ID : 'p2',
         unread: i % 5,
-        tags: i % 4 === 0 ? ['vip'] : [],
         lastMessageAt: `2026-10-${String((i % 28) + 1).padStart(2, '0')}T12:00:00.000Z`,
       }),
     ) as never;
@@ -348,7 +345,7 @@ describe('contador com busca/filtros/tipo — matriz de combinações', () => {
       () => useInboxFilters({ conversations: volume, profileId: PROFILE_ID }),
       { wrapper },
     );
-    const combo: Combo = { nome: 'volume', search: 'Volume', tags: ['vip'] };
+    const combo: Combo = { nome: 'volume', search: 'Volume' };
     aplicarCombo(result, combo);
 
     const counts = countByChip(volume, PROFILE_ID, optsDoCombo(combo));
@@ -406,5 +403,29 @@ describe('busca da lista — acento e telefone', () => {
       act(() => result.current.setChipTab('all'));
       expect(result.current.filteredConversations.map((c) => c.contact.id)).toEqual(['joao']);
     }
+  });
+});
+
+// ---------- ordem de 16/10/2026: a etiqueta de contato não é mais filtro ----------
+describe('etiqueta de contato não recorta mais a lista nem o contador', () => {
+  /** Link antigo/estado salvo ainda pode trazer o campo `tags` no filtro. */
+  const filtroLegado = {
+    status: [],
+    agentId: null,
+    dateRange: { from: null, to: null },
+    tags: ['VIP'],
+  } as unknown as InboxFiltersState;
+
+  it('um filtro legado com `tags` é ignorado: as duas conversas continuam na lista', () => {
+    const comEtiqueta = conversaMatriz('legado-vip', {
+      nome: 'Legado Vip', tags: ['VIP'], lastMessageAt: '2026-10-08T12:00:00.000Z',
+    }) as never;
+    const semEtiqueta = conversaMatriz('comum', {
+      nome: 'Comum', lastMessageAt: '2026-10-08T12:00:00.000Z',
+    }) as never;
+
+    expect(passesExtraFilters(comEtiqueta, { filters: filtroLegado })).toBe(true);
+    expect(passesExtraFilters(semEtiqueta, { filters: filtroLegado })).toBe(true);
+    expect(countByChip([comEtiqueta, semEtiqueta], PROFILE_ID, { filters: filtroLegado }).all).toBe(2);
   });
 });

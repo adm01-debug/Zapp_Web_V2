@@ -144,7 +144,6 @@ export default function ChatPopup() {
         status: 'open',
         lastMessage: undefined,
         unreadCount: 0,
-        tags: contact.tags || [],
         priority: popupPriority,
         createdAt: new Date(contact.created_at),
         updatedAt: new Date(contact.updated_at),
