@@ -152,7 +152,7 @@ function PurgeGmailDataDialog({ account, onClose }: { account: GmailAccount; onC
                   );
                 }}
               >
-                {purge.isPending && <Loader2 className="w-3 h-3 animate-spin mr-1" />}
+                {purge.isPending && <Loader2 className="w-3 h-3 motion-safe:animate-spin mr-1" />}
                 Apagar definitivamente
               </Button>
             </>
