@@ -138,8 +138,10 @@ const ALLOWLIST = new Set([
   // --- .test.sh OFFLINE (sem docker, sem banco): roda em qualquer runner. O passo no  // db-guard.yml e uma linha — `bash scripts/db-audit/replay-classify.test.sh` — e cabe,
   // IA-131: prova DML em Postgres descartável; promover em db-guard.yml pelo dono do workflow.
   'scripts/db-audit/ia131-audio-stt-openrouter.test.sh',  // --- .test.sh OFFLINE (sem docker, sem banco): roda em qualquer runner. O passo no
-  // db-guard.yml e uma linha — `bash scripts/db-audit/replay-classify.test.sh` — e cabe  // junto de gen-types.test.sh; promover pelo dono do workflow.
-  'scripts/db-audit/replay-classify.test.sh',
+  // db-guard.yml e uma linha — `bash scripts/db-audit/replay-classify.test.sh` — e cabe  // junto de gen-types.test.sh; promover pelo dono do workflow.,
+  // --- .test.sh OFFLINE (sem docker, sem banco): roda em qualquer runner. O passo no
+  // db-guard.yml e uma linha — `bash scripts/db-audit/replay-classify.test.sh` — e cabe
+  // junto de gen-types.test.sh; promover pelo dono do workflow.  'scripts/db-audit/replay-classify.test.sh',
   // --- .test.sh — prova em container descartável (docker) do R2-DB-008 (item 295):
   // encerrar→reabrir→encerrar no mesmo dia. Depende de docker (como os demais deste bloco);
   // o passo no db-guard.yml é uma linha `bash scripts/db-audit/conversation-closures-reopen-same-day.test.sh`
