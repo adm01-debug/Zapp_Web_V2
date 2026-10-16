@@ -1437,3 +1437,14 @@ jobs:
         env:
           TALKX_SUPPRESSION_READ_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-suppression-read-rpcs.test.sh
+      # N-009 (P3 · storage, SEC-DEFINER_GRANTS_STORAGE-06): os buckets publicos
+      # de figurinhas (stickers) e audios-meme (audio-memes) aceitavam qualquer
+      # tipo e tamanho de arquivo. O contrato aplica a migration real num
+      # PostgreSQL 17 descartavel e prova: file_size_limit e allowed_mime_types
+      # exatos, text/html recusado e image/webp (stickers) / audio/mpeg
+      # (audio-memes) aceitos pelo comportamento (ANY) como authenticated,
+      # rollback do cabecalho restaurando NULLs e reaplicacao idempotente.
+      - name: Provar limites de storage em stickers e audio-memes (N-009)
+        env:
+          STICKERS_MEMES_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/storage-limits-stickers-audio-memes.test.sh
