@@ -252,6 +252,18 @@ jobs:
           WEBHOOK_ACL_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/check-webhook-failures-acl.test.sh
 
+      # SEC-RLS_CONTATOS_MENSAGENS-05 (P2 defesa em profundidade): 17 tabelas de
+      # contatos/mensagens concediam a `anon` os 8 privilegios de tabela (inclusive
+      # TRUNCATE, que ignora RLS). O harness reproduz a ACL legada, aplica a migration
+      # real e prova anon=0 com authenticated/service_role intactos; SKIP_DOCKER_SHIM=1
+      # porque o teste cria os papeis anon/authenticated/service_role (globais no
+      # cluster) e inicia container proprio, incompativel com o shim do E47.
+      - name: Simular revogacao dos privilegios de anon nas 17 tabelas de contatos/mensagens (SEC-RLS_CONTATOS_MENSAGENS-05)
+        env:
+          ANON_PRIVS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/anon-privileges-contact-messages.test.sh
+
       # M-DB-02: nenhuma SECURITY DEFINER de public com EXECUTE para PUBLIC/anon
       # (a T26 abriu uma assim por create or replace com parametro novo).
       - name: Simular SECURITY DEFINER aberta para PUBLIC/anon
