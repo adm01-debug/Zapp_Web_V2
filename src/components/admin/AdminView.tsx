@@ -13,15 +13,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { PasswordStrengthMeter } from '@/components/auth/PasswordStrengthMeter';
 import {
   Shield, Users, Search, Crown, UserCog, User, History, RefreshCw,
-  UserPlus, Building, Eye, Loader2, Brain, AlertTriangle, ChevronLeft, ChevronRight,
+  UserPlus, Building, Eye, Loader2,
 } from 'lucide-react';
 import { useUserRole, AppRole } from '@/hooks/system/useUserRole';
 import { AdminCRMDashboard } from './AdminCRMDashboard';
-import { PlaybooksManager } from './PlaybooksManager';
-import { SupervisorCopilot } from './SupervisorCopilot';
-import { TrainingMode } from './TrainingMode';
-import { CrisisRoom } from './CrisisRoom';
-import { useAdminData, accessLevelConfig, MIN_PASSWORD_LENGTH, AUDIT_PAGE_SIZE, type UserWithRole } from './useAdminData';
+import { useAdminData, accessLevelConfig, type UserWithRole } from './useAdminData';
 import { AdminUsersTable } from './AdminUsersTable';
 import { AdminAuditTable } from './AdminAuditTable';
 import { VoipRamalField } from './VoipRamalField';
@@ -61,7 +57,7 @@ const googleServiceOptions: ReadonlyArray<{ key: GoogleServiceKey; label: string
 
 export function AdminView() {
   const { isAdmin, isSupervisor, loading: roleLoading } = useUserRole();
-  const [activeTab, setActiveTab] = useState<AdminTab>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'audit' | 'crm'>('users');
   const [searchTerm, setSearchTerm] = useState('');
   const [editingUser, setEditingUser] = useState<UserWithRole | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -207,27 +203,9 @@ export function AdminView() {
         </div>
       </motion.div>
 
-      <div role="tablist" aria-label="Seções da administração" className="flex gap-2 flex-wrap">
-        {abas.map(([tab, Icon, label], index, lista) => (
-          <Button
-            key={tab}
-            id={`tab-${tab}`}
-            role="tab"
-            aria-selected={activeTab === tab}
-            aria-controls="admin-tabpanel"
-            tabIndex={activeTab === tab ? 0 : -1}
-            ref={(el) => { tabsRef.current[tab] = el; }}
-            variant={activeTab === tab ? 'default' : 'outline'}
-            onClick={() => setActiveTab(tab as typeof activeTab)}
-            onKeyDown={(e) => {
-              const passo = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
-              if (passo === 0 && e.key !== 'Home' && e.key !== 'End') return;
-              e.preventDefault();
-              const destino = e.key === 'Home' ? 0 : e.key === 'End' ? lista.length - 1 : (index + passo + lista.length) % lista.length;
-              const proxima = lista[destino][0];
-              setActiveTab(proxima as typeof activeTab);
-              tabsRef.current[proxima]?.focus();
-            }}
+      <div className="flex gap-2 flex-wrap">
+        {([['users', Users, `Usuários (${users.length})`], ['audit', History, 'Auditoria'], ['crm', Building, 'CRM 360°']] as const).map(([tab, Icon, label]) => (
+          <Button key={tab} variant={activeTab === tab ? 'default' : 'outline'} onClick={() => setActiveTab(tab as typeof activeTab)}
             className={activeTab === tab ? 'bg-primary hover:bg-primary/90' : ''} size="sm">
             <Icon className="w-4 h-4 mr-2" /> {label}
           </Button>
@@ -484,26 +462,6 @@ export function AdminView() {
       ) : activeTab === 'crm' ? (
         <SectionErrorBoundary key="crm" sectionName="CRM Admin">
           <AdminCRMDashboard />
-        </SectionErrorBoundary>
-      ) : activeTab === 'playbooks' ? (
-        <SectionErrorBoundary key="playbooks" sectionName="Playbooks">
-          <PlaybooksManager />
-        </SectionErrorBoundary>
-      ) : activeTab === 'copilot' ? (
-        <SectionErrorBoundary key="copilot" sectionName="Copiloto">
-          <SupervisorCopilot />
-        </SectionErrorBoundary>
-      ) : activeTab === 'training' ? (
-        <SectionErrorBoundary key="training" sectionName="Modo Treinamento">
-          <TrainingMode />
-        </SectionErrorBoundary>
-      ) : activeTab === 'crisis' ? (
-        <SectionErrorBoundary key="crisis" sectionName="Sala de Crise">
-          <CrisisRoom />
-        </SectionErrorBoundary>
-      ) : activeTab === 'cron' ? (
-        <SectionErrorBoundary key="cron" sectionName="Tarefas agendadas">
-          <CronJobsTab />
         </SectionErrorBoundary>
       ) : null}
       </div>

@@ -12,6 +12,7 @@ export const ConnectionsView = lazyWithRetry(() => import('@/components/connecti
 export const SettingsView = lazyWithRetry(() => import('@/components/settings/SettingsView').then(m => ({ default: m.SettingsView })));
 export const ClientWalletView = lazyWithRetry(() => import('@/components/wallet/ClientWalletView').then(m => ({ default: m.ClientWalletView })));
 export const AdminView = lazyWithRetry(() => import('@/components/admin/AdminView').then(m => ({ default: m.AdminView })));
+export const SupervisaoView = lazyWithRetry(() => import('@/components/admin/SupervisaoView').then(m => ({ default: m.SupervisaoView })));
 export const ProductManagement = lazyWithRetry(() => import('@/components/catalog/ExternalProductManagement').then(m => ({ default: m.ExternalProductManagement })));
 export const GroupsView = lazyWithRetry(() => import('@/components/groups/GroupsView').then(m => ({ default: m.GroupsView })));
 export const TranscriptionsHistoryView = lazyWithRetry(() => import('@/components/transcriptions/TranscriptionsHistoryView').then(m => ({ default: m.TranscriptionsHistoryView })));

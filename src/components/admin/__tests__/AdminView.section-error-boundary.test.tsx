@@ -2,12 +2,14 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 /**
- * Paridade V3 → V2, Parte 7 — falha num bloco do Admin não derruba a tela.
+ * Paridade V3 → V2, Parte 7 — falha num bloco do Admin não derruba a tela, e a
+ * divisão da Parte 8 — as ferramentas do supervisor saíram do AdminView.
  *
- * A V3 protege as abas com uso próprio/arriscado com `SectionErrorBoundary`.
- * Na V2 existem CRM 360°, Playbooks, Copilot IA, Treinamento e Sala de Crise
- * (a aba "Histórico QR" não existe aqui). Aqui o CRM lança na renderização e o
- * Playbooks — bloco independente do mesmo painel — tem de continuar funcionando.
+ * O painel `admin` (ADMIN_ONLY) ficou com Usuários, Auditoria e CRM 360°: Fila,
+ * Copiloto, Sala de Crise, Playbooks e Treinamento migraram para a visão
+ * `supervisao` (STAFF) — lá elas ganham teste próprio em SupervisaoView.test.tsx.
+ * Aqui fica a prova de isolamento: o CRM lança na renderização e o bloco da
+ * Auditoria — independente, no mesmo painel — continua funcionando.
  */
 
 vi.mock('@/hooks/system/useUserRole', () => ({
@@ -29,14 +31,10 @@ vi.mock('../useAdminData', () => ({
 vi.mock('../AdminUsersTable', () => ({ AdminUsersTable: () => <div data-testid="users-table" /> }));
 vi.mock('../AdminAuditTable', () => ({ AdminAuditTable: () => <div data-testid="audit-table" /> }));
 
-// O bloco do CRM lança; o do Playbooks é a prova de que o resto segue de pé.
+// O bloco do CRM lança; o da Auditoria é a prova de que o resto segue de pé.
 vi.mock('../AdminCRMDashboard', () => ({
   AdminCRMDashboard: () => { throw new Error('falha do CRM'); },
 }));
-vi.mock('../PlaybooksManager', () => ({ PlaybooksManager: () => <div data-testid="playbooks-ok" /> }));
-vi.mock('../SupervisorCopilot', () => ({ SupervisorCopilot: () => <div /> }));
-vi.mock('../TrainingMode', () => ({ TrainingMode: () => <div /> }));
-vi.mock('../CrisisRoom', () => ({ CrisisRoom: () => <div /> }));
 
 import { AdminView } from '@/components/admin/AdminView';
 
@@ -54,16 +52,28 @@ describe('AdminView — SectionErrorBoundary isola o bloco que falha (Parte 7)',
     expect(screen.getByText(/Erro em "CRM Admin"/)).toBeInTheDocument();
     // A tela não foi derrubada: o cabeçalho e as demais abas continuam de pé.
     expect(screen.getByRole('heading', { name: /Administração/ })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /Playbooks/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Auditoria/ })).toBeInTheDocument();
   });
 
-  it('com o CRM quebrado, o Playbooks (bloco independente) ainda renderiza', () => {
+  it('com o CRM quebrado, a Auditoria (bloco independente) ainda renderiza', () => {
     render(<AdminView />);
 
     fireEvent.click(screen.getByRole('tab', { name: /CRM 360/ }));
     expect(screen.getByText(/Erro em "CRM Admin"/)).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('tab', { name: /Playbooks/ }));
-    expect(screen.getByTestId('playbooks-ok')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Auditoria/ }));
+    expect(screen.getByTestId('audit-table')).toBeInTheDocument();
+  });
+
+  it('não expõe mais as ferramentas do supervisor (migraram para a visão supervisao)', () => {
+    render(<AdminView />);
+
+    for (const nome of [/Playbooks/, /Copiloto/, /Treinamento/, /Sala de Crise/]) {
+      expect(screen.queryByRole('button', { name: nome })).toBeNull();
+    }
+    // O que o admin mantém continua lá.
+    expect(screen.getByRole('button', { name: /Usuários/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Auditoria/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /CRM 360/ })).toBeInTheDocument();
   });
 });
