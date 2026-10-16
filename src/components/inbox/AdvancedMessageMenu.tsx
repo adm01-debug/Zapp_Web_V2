@@ -169,7 +169,7 @@ export function AdvancedMessageMenu({ contactId, instanceName, recipientNumber, 
     <>
       <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
         <PopoverTrigger asChild>
-          <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary hover:bg-primary/10" title="Mais opções de mensagem">
+          <Button variant="ghost" size="icon" aria-label="Mais opções de mensagem" className="text-muted-foreground hover:text-primary hover:bg-primary/10" title="Mais opções de mensagem">
             <MoreHorizontal className="w-5 h-5" />
           </Button>
         </PopoverTrigger>
@@ -200,8 +200,9 @@ export function AdvancedMessageMenu({ contactId, instanceName, recipientNumber, 
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>URL da figurinha (imagem/webp)</Label>
+              <Label htmlFor="advanced-sticker-url">URL da figurinha (imagem/webp)</Label>
               <Input
+                id="advanced-sticker-url"
                 value={stickerUrl}
                 onChange={(e) => setStickerUrl(e.target.value)}
                 placeholder="https://exemplo.com/sticker.webp"
@@ -225,16 +226,18 @@ export function AdvancedMessageMenu({ contactId, instanceName, recipientNumber, 
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>Pergunta</Label>
+              <Label htmlFor="advanced-poll-name">Pergunta</Label>
               <Input
+                id="advanced-poll-name"
                 value={pollName}
                 onChange={(e) => setPollName(e.target.value)}
                 placeholder="Qual horário preferem?"
               />
             </div>
             <div>
-              <Label>Seleções permitidas</Label>
+              <Label htmlFor="advanced-poll-selectable-count">Seleções permitidas</Label>
               <Input
+                id="advanced-poll-selectable-count"
                 type="number"
                 min={1}
                 max={pollOptions.length}
@@ -248,6 +251,7 @@ export function AdvancedMessageMenu({ contactId, instanceName, recipientNumber, 
               {pollOptions.map((opt, i) => (
                 <div key={i} className="flex gap-2">
                   <Input
+                    aria-label={`Opção ${i + 1} da enquete`}
                     value={opt}
                     onChange={(e) => {
                       const updated = [...pollOptions];
@@ -257,7 +261,7 @@ export function AdvancedMessageMenu({ contactId, instanceName, recipientNumber, 
                     placeholder={`Opção ${i + 1}`}
                   />
                   {pollOptions.length > 2 && (
-                    <Button variant="ghost" size="icon" onClick={() => setPollOptions(pollOptions.filter((_, j) => j !== i))}>
+                    <Button variant="ghost" size="icon" aria-label={`Remover opção ${i + 1}`} onClick={() => setPollOptions(pollOptions.filter((_, j) => j !== i))}>
                       <Trash2 className="w-4 h-4 text-destructive" />
                     </Button>
                   )}
@@ -287,20 +291,20 @@ export function AdvancedMessageMenu({ contactId, instanceName, recipientNumber, 
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <Label>Nome completo *</Label>
-              <Input value={contactCard.fullName} onChange={(e) => setContactCard({ ...contactCard, fullName: e.target.value })} placeholder="João Silva" />
+              <Label htmlFor="advanced-contact-name">Nome completo *</Label>
+              <Input id="advanced-contact-name" value={contactCard.fullName} onChange={(e) => setContactCard({ ...contactCard, fullName: e.target.value })} placeholder="João Silva" />
             </div>
             <div>
-              <Label>Telefone *</Label>
-              <Input value={contactCard.phoneNumber} onChange={(e) => setContactCard({ ...contactCard, phoneNumber: e.target.value })} placeholder="5511999999999" />
+              <Label htmlFor="advanced-contact-phone">Telefone *</Label>
+              <Input id="advanced-contact-phone" value={contactCard.phoneNumber} onChange={(e) => setContactCard({ ...contactCard, phoneNumber: e.target.value })} placeholder="5511999999999" />
             </div>
             <div>
-              <Label>Empresa</Label>
-              <Input value={contactCard.organization} onChange={(e) => setContactCard({ ...contactCard, organization: e.target.value })} placeholder="Empresa XYZ" />
+              <Label htmlFor="advanced-contact-org">Empresa</Label>
+              <Input id="advanced-contact-org" value={contactCard.organization} onChange={(e) => setContactCard({ ...contactCard, organization: e.target.value })} placeholder="Empresa XYZ" />
             </div>
             <div>
-              <Label>E-mail</Label>
-              <Input value={contactCard.email} onChange={(e) => setContactCard({ ...contactCard, email: e.target.value })} placeholder="joao@empresa.com" />
+              <Label htmlFor="advanced-contact-email">E-mail</Label>
+              <Input id="advanced-contact-email" value={contactCard.email} onChange={(e) => setContactCard({ ...contactCard, email: e.target.value })} placeholder="joao@empresa.com" />
             </div>
             <Button onClick={handleSendContact} disabled={isSendingOutbound} className="w-full">
               <Send className="w-4 h-4 mr-2" /> Enviar Contato
@@ -320,8 +324,9 @@ export function AdvancedMessageMenu({ contactId, instanceName, recipientNumber, 
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>Texto do status</Label>
+              <Label htmlFor="advanced-status-text">Texto do status</Label>
               <Textarea
+                id="advanced-status-text"
                 value={statusText}
                 onChange={(e) => setStatusText(e.target.value)}
                 placeholder="Seu status aqui..."
