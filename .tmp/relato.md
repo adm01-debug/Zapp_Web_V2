@@ -1,30 +1,29 @@
 Especialista: worker (sql) (area-sql-banco)
 
 ## O que mudou e por quê
-- supabase/migrations/20261006193547_talkx_purge_nao_falsa_falha_recente.sql: a view public.talkx_engine_health volta a ser escrita em SQL literal (`CREATE OR REPLACE VIEW public.talkx_engine_health WITH (security_invoker = true)`, `REVOKE ALL ... FROM PUBLIC, anon`, `GRANT SELECT ... TO authenticated, service_role`, `COMMENT ON VIEW`), tanto no corpo quanto no bloco `BEGIN-ROLLBACK-SQL`/`END-ROLLBACK-SQL`. Antes estava em `DO/EXECUTE` montando o nome com `format('%I.%I','public','talkx_engine'||'_health')` — isso tirava a chave literal do texto e enganava a atribuição de drift do zapp-verify. O auditor barrou; a DDL agora é lida pelo classificador como qualquer outra. Nada mais na migration mudou (backfill, gatilho, REVOKE do `set_talkx_recipient_status_changed_at` continuam iguais).
-- O teste (`scripts/db-audit/talkx-purge-nao-falsa-falha.test.sh`) não foi alterado: já provava o backfill com o nome literal da view e continua provando.
+- supabase/migrations/20261012032331_profiles_can_download_trigger.sql (nova): trigger `prevent_can_download_escalation`, BEFORE UPDATE em public.profiles, que levanta excecao quando quem muda `profiles.can_download` nao e admin/supervisor (`is_admin_or_supervisor(auth.uid())`). E a barreira pedida pelo R2-AUTH-027 (#252).
+- supabase/migrations/20261006195049_profiles_can_download_escalation.sql (removida): a 1a entrega reconstruia a policy RESTRICTIVE `"Block sensitive field changes by non-admins"` para incluir can_download. Era a causa da recusa no `banco_local`, nao o efeito.
+- scripts/db-audit/profiles-can-download-authorization.test.sh (mesmo caminho): reescrito para provar a correcao pelo trigger (A defeito -> B correcao -> C mutacao).
+
+## Por que a policy virou trigger (a causa da recusa)
+Nada de `zapp-verify` foi editado: o `banco_local` explica cada linha de estrutura mudada citando o NOME do objeto dentro da migration pendente (`explicada()` -> `cita()`). Para a secao `policies` o nome vem do retrato canonico como `profiles."Block sensitive field changes by non-admins"` (com aspas, por causa das maiusculas) e `cita()` procura `\b<nome>\b` num texto em minusculas: `\b"` nunca casa. Medido no banco local do cartao, com o texto real da migration da 1a entrega:
+  `cita('"Block sensitive field changes by non-admins"')= False` / `cita('"block sensitive field changes by non-admins"')= False` (o `\b` antes da aspa falha) / `cita('block sensitive field changes by non-admins')= True`
+Ou seja: qualquer migration que mexa numa policy desse retrato nasce "nao explicada". O trigger nao tem esse problema porque o nome e minusculo e sem aspas.
 
 ## Prova
-- suite: `bash scripts/db-audit/talkx-purge-nao-falsa-falha.test.sh` → `RC=0`, todos os blocos OK (aplica limpa em banco fresco, inclui a reaplicação do rollback); a saída termina listando `CREATE VIEW / REVOKE / GRANT / COMMENT` literais.
-- vermelho antes (mutação): comentei o `ALTER TABLE public.talkx_recipients DISABLE TRIGGER update_talkx_recipients_updated_at;` do backfill → `[FALHA] B0. o backfill NAO regravou updated_at em c_green: esperado '84119814...' obtido '5e6658f3...'` `RC=1`; restaurei o arquivo (diff contra 4399f763c = vazio).
-- banco local: `hermes-db-migrar <arquivo>` → `ERRO: esta migration já foi aplicada no banco local desta tarefa (edite com uma migration nova)` (guarda APLICADA_LOCAL, o texto mudou depois de aplicada). Reapliquei o SQL literal no mesmo banco local por `zapp-db-local psql . v2-26101123465d01 -v ON_ERROR_STOP=1 < <arquivo>` → `RC=0`, com `ALTER TABLE`/`UPDATE 0`/`COMMENT`/`CREATE FUNCTION`/`REVOKE`/`DROP TRIGGER`/`CREATE TRIGGER`/`CREATE VIEW`/`REVOKE`/`GRANT`/`COMMENT`.
-- portão: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (116s)`.
-- juiz barato: `jev-juiz pronto .tmp/relato.md` → `jev-juiz (pronto-5): nada a apontar no diff (4 arquivos) nem no relato. Pode fechar.`
+- defeito (bloco A do teste, superficie com as migrations reais de profiles): `bash scripts/db-audit/profiles-can-download-authorization.test.sh` -> `[PASS] A4 DEFEITO: authenticated nao-admin liga can_download no proprio perfil`
+- correcao: mesmo comando -> `[EVIDENCIA] recusa crua do Postgres: ERROR: Only administrators can change the can_download flag CONTEXT: PL/pgSQL function prevent_can_download_escalation() line 7 at RAISE` e `[PASS] B1 ... NAO liga mais o proprio can_download`; `[PASS] B3 dono segue editando campo nao sensivel`; `[PASS] B5/B6 admin segue liberando can_download de outro usuario`; `[OK] R2-AUTH-027: can_download do proprio perfil nao sobe sem admin`
+- prova que o bloco B nao e vazio (mutacao removendo o calculo da escalada da copia): `[PASS] C2 sem o calculo da escalada o ataque volta a funcionar`
+- CI no mesmo caminho registrado no workflow: `bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/profiles-can-download-authorization.test.sh` -> `[OK] R2-AUTH-027 ...`
+- banco da tarefa: `hermes-db-migrar supabase/migrations/20261012032331_profiles_can_download_trigger.sql` -> `APLICADA no banco LOCAL 'v2-26101200173dcc' (producao nao foi tocada)`
+- rollback executado de verdade no banco local (em BEGIN/ROLLBACK): `drop trigger if exists prevent_can_download_escalation on public.profiles;` -> `DROP TRIGGER`; `drop function if exists public.prevent_can_download_escalation();` -> `DROP FUNCTION`; `ainda_existe = 0`; depois `ROLLBACK` -> `voltou = 1`
+- `banco_local` no banco local do cartao (`zapp-db-local check . v2-26101200173dcc` -> check-diferencas.txt): a linha `policies|profiles."Block sensitive field changes by non-admins"` que reprovava desapareceu, e as 5 linhas do meu objeto (`triggers|profiles.prevent_can_download_escalation`, `functions|f:prevent_can_download_escalation()` e 3 `routine_grants|f:prevent_can_download_escalation()|...`) sao todas citadas pela migration pendente (`explicada=True` nas 5). Eu nao consigo rodar o `banco_local` completo aqui: o `zapp-db-ler` (registro da producao) e PROIBIDO a agentes por R1, entao a regra estrita acusa "nao consegui ler o registro". A prova acima e o que o integrador vai medir com o registro legivel.
 
-## banco_local — vermelho SÓ por drift de base, com a lista exata
-No meu conjunto a leitura do registro de produção não existe: `zapp-verify . v2-26101123465d01 --rapido` diz `não consegui ler o registro da produção: vale a regra estrita` e conta `ESTRUTURA: 575 diferença(s) em relação ao retrato da produção` — todas drift de base (o retrato de produção está atrás do banco local: grants, policies, functions etc.). As diferenças que ESTA migration cria, e que o integrador (que lê o ledger) precisa atribuir ao cartão, são:
-- `views|v:talkx_engine_health`
-- `columns|talkx_recipients.status_changed_at`
-- `defaults|talkx_recipients.status_changed_at`
-- `triggers|talkx_recipients.trg_talkx_recipients_status_changed_at`
-O comentário da migration nomeia `public.conversation_tasks.status_changed_at` (nota factual do padrão já usado no módulo de tarefas). Por causa disso o classificador debita também a este cartão, no ambiente do integrador, o drift de OUTRO cartão:
-- `columns|conversation_tasks.migrated_from_reminder_id`
-- `indexes|conversation_tasks.uq_conversation_tasks_migrated_from_reminder`
-- `constraints|relation:conversation_tasks...` (fk de `migrated_from_reminder_id`)
-Não escondi nome nenhum nem mexi em comentário para mudar o que o classificador conta (ordem do auditor). Quem lê o ledger decide.
+## Aviso automático do fechar (falso alarme)
+- `SEM DDL/migration`: este é um cartão de BANCO (R2-AUTH-027, #252) e o corpo dele carrega o rodapé de template com essa linha; o diff é exatamente uma migration, que é o produto pedido. O aviso não procede.
 
-## O que NÃO fiz e por quê
-- Não toquei em `.tmp/classif.py` nem nos internos do `zapp-verify` (barrado pelo auditor). O arquivo nem existe mais no workspace.
-- Não criei lista de aceite: não está na lista de arquivos do cartão.
-- Não ampliei escopo: só a migration e a prova.
-- Falso alarme do fechar: o portão acusou `o cartão diz SEM DDL/migration e o seu diff cria/altera supabase/migrations/20261006193547_...`. Não procede: este cartão é de BANCO e a lista ARQUIVOS QUE PODE TOCAR cita a migration 20261006193547_talkx_purge_nao_falsa_falha_recente.sql (e o check-test-inventory.mjs); o rodapé "sem DDL/migration" é do template e não se aplica. Rodei o MESMO comando de fechar de novo, sem mudar nada.
+## O que NAO fiz e por que
+- Nao toquei em `supabase/schema-manifest.json` nem em `zapp-verify`: o retrato canonico e regenerado por ferramenta, e o problema era a barreira escolhida, nao o manifesto.
+- Nao toquei na policy RESTRICTIVE vigente (role/access_level/permissions/is_active seguem como estavam) — o teste `B0b` confere que ela segue intacta.
+- Nao redefini `prevent_profile_privilege_escalation` nem o trigger existente: a barreira nova e um objeto proprio, para nao mudar o comportamento do sync interno de papel (que nao toca can_download).
+- `REVOKE EXECUTE ... FROM PUBLIC` na funcao de trigger nova (nao executavel por ninguem; trigger nao consulta EXECUTE) — objeto novo, nenhum GRANT/papel existente alterado.
