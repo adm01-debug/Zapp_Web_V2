@@ -99,8 +99,10 @@ BEGIN
   END LOOP;
 
   -- ---------------------------------------------------------------- T1/T3/T4/T5/T6
-  -- Como A (agente comum: so ve o que esta atribuido a ele).
+  -- Como A (agente comum: so ve o que esta atribuido a ele), no PAPEL REAL
+  -- `authenticated` — nao como postgres: e o papel com que a RPC roda no app.
   PERFORM set_config('request.jwt.claims', json_build_object('sub', v_user_a)::text, true);
+  PERFORM set_config('role', 'authenticated', true);
 
   -- Tres grupos: fila A, fila B e "sem fila" (queue_id NULL).
   SELECT count(*) INTO v_linhas FROM public.inbox_wait_summary();
@@ -167,8 +169,9 @@ BEGIN
   v_ok := v_ok + 1;
 
   -- ---------------------------------------------------------------- T1 (visibilidade)
-  -- Como B: enxerga apenas X9 (o contato do B), na fila A.
+  -- Como B (tambem no papel `authenticated`): enxerga apenas X9 (o contato do B), na fila A.
   PERFORM set_config('request.jwt.claims', json_build_object('sub', v_user_b)::text, true);
+  PERFORM set_config('role', 'authenticated', true);
   SELECT count(*) INTO v_linhas FROM public.inbox_wait_summary();
   IF v_linhas <> 1 THEN
     RAISE EXCEPTION 'T1 FALHOU: B deveria ver so 1 grupo (fila A do proprio B) e veio %', v_linhas;
@@ -195,6 +198,8 @@ BEGIN
   END IF;
 
   -- Prova funcional: como `anon` a chamada e barrada de verdade.
+  -- (volta ao papel do script para poder assumir `anon`: `authenticated` nao e membro de `anon`.)
+  PERFORM set_config('role', 'none', true);
   PERFORM set_config('request.jwt.claims', json_build_object('sub', v_user_a)::text, true);
   PERFORM set_config('role', 'anon', true);
   v_barrado := false;
