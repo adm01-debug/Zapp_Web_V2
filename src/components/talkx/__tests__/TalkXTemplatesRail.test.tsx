@@ -1,6 +1,7 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, cleanup, within } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 /**
  * X092 / TL-124 — painel lateral da tela 04 (Templates).
@@ -66,7 +67,14 @@ vi.mock('@/hooks/integrations/useTalkXTemplates', () => ({
   }),
 }));
 
-vi.mock('@/integrations/supabase/client', () => ({ supabase: { from: () => supa.chain } }));
+vi.mock('@/integrations/supabase/client', () => ({
+  supabase: {
+    from: () => supa.chain,
+    rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
+    channel: () => supa.canal,
+    removeChannel: vi.fn(),
+  },
+}));
 
 const supa = vi.hoisted(() => {
   const state = { data: [] as Array<Record<string, unknown>> | null, error: null as unknown };
@@ -78,7 +86,10 @@ const supa = vi.hoisted(() => {
     order: self,
     limit: () => Promise.resolve({ data: state.data, error: state.error }),
   });
-  return { state, chain };
+  const canal: Record<string, unknown> = {};
+  canal.on = () => canal;
+  canal.subscribe = () => canal;
+  return { state, chain, canal };
 });
 
 import { TalkXTemplates } from '../TalkXTemplates';
@@ -87,6 +98,12 @@ import {
   fetchConversionRanking,
   CONVERSION_ROW_LIMIT,
 } from '@/hooks/integrations/useTalkXTemplatesConversion';
+
+/** A tela real usa react-query (KPIs da biblioteca); o provider é obrigatório. */
+function renderComQc(ui: React.ReactElement) {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>);
+}
 
 /**
  * Ranking com base mínima, calculado pelo CÓDIGO DE PRODUÇÃO (`buildConversionRanking`) —
@@ -114,13 +131,13 @@ const painel = () => screen.getByText('Mais convertidos').closest('section') as 
 const galeria = () => screen.getByTestId('talkx-templates-gallery');
 const nomesDaGaleria = () =>
   within(galeria()).getAllByText(/^(Oferta VIP|Pós-venda|Boas-vindas)$/)
-    // Só os cartões/linhas da galeria (o KPI "Mais usado" também mostra um nome).
-    .filter((el) => el.closest('[role="button"]') !== null)
+    // Só cartões/linhas da galeria (nem o nome do KPI, nem o painel lateral).
+    .filter((el) => el.closest('[data-talkx-view]') !== null)
     .map((el) => el.textContent);
 
 describe('X092 — painel lateral da tela 04 (Templates)', () => {
   it('"Mais convertidos" ranqueia por taxa de resposta, não por usos', () => {
-    render(<TalkXTemplates onUseTemplate={vi.fn()} />);
+    renderComQc(<TalkXTemplates onUseTemplate={vi.fn()} />);
 
     // Antes: "Mais usados" por `use_count` (Boas-vindas, 90 usos, em 1º).
     expect(screen.queryByText('Mais usados')).toBeNull();
@@ -133,7 +150,7 @@ describe('X092 — painel lateral da tela 04 (Templates)', () => {
 
   it('o 1º de "Mais convertidos" usa o template de MAIOR taxa (e não o mais usado)', () => {
     const onUseTemplate = vi.fn();
-    render(<TalkXTemplates onUseTemplate={onUseTemplate} />);
+    renderComQc(<TalkXTemplates onUseTemplate={onUseTemplate} />);
 
     fireEvent.click(within(painel()).getByText('Oferta VIP'));
     expect(onUseTemplate).toHaveBeenCalledWith('tpl-alto');
@@ -141,7 +158,7 @@ describe('X092 — painel lateral da tela 04 (Templates)', () => {
 
   it('sem base mínima diz "sem dados ainda" e não troca por "mais usados"', () => {
     mocks.conversion = { ranking: semBase, isLoading: false, isError: false, error: null };
-    render(<TalkXTemplates onUseTemplate={vi.fn()} />);
+    renderComQc(<TalkXTemplates onUseTemplate={vi.fn()} />);
 
     expect(within(painel()).getByText('sem dados ainda')).toBeTruthy();
     expect(screen.queryByText('Mais usados')).toBeNull();
@@ -149,7 +166,7 @@ describe('X092 — painel lateral da tela 04 (Templates)', () => {
   });
 
   it('"Ver todos" leva a galeria para a ordem por taxa de resposta', () => {
-    render(<TalkXTemplates onUseTemplate={vi.fn()} />);
+    renderComQc(<TalkXTemplates onUseTemplate={vi.fn()} />);
 
     // Ordem do banco (por usos) antes de pedir o recorte por resposta.
     expect(nomesDaGaleria()).toEqual(['Boas-vindas', 'Oferta VIP', 'Pós-venda']);
@@ -160,7 +177,7 @@ describe('X092 — painel lateral da tela 04 (Templates)', () => {
   });
 
   it('sugestão de A/B abre o editor do template certo já nas variações', () => {
-    render(<TalkXTemplates onUseTemplate={vi.fn()} />);
+    renderComQc(<TalkXTemplates onUseTemplate={vi.fn()} />);
 
     // Regra real: ≥ 200 envios (A9) e taxa abaixo da média da biblioteca → Pós-venda.
     fireEvent.click(screen.getByText(/Teste uma variação A\/B em "Pós-venda"/).closest('button') as HTMLElement);
@@ -174,7 +191,7 @@ describe('X092 — painel lateral da tela 04 (Templates)', () => {
 
   it('erro de leitura NÃO vira "sem dados ainda" no painel', () => {
     mocks.conversion = { ranking: null, isLoading: false, isError: true, error: new Error('42501') };
-    render(<TalkXTemplates onUseTemplate={vi.fn()} />);
+    renderComQc(<TalkXTemplates onUseTemplate={vi.fn()} />);
 
     expect(within(painel()).getByText('Não foi possível carregar o ranking de resposta.')).toBeTruthy();
     expect(within(painel()).queryByText('sem dados ainda')).toBeNull();
@@ -182,7 +199,7 @@ describe('X092 — painel lateral da tela 04 (Templates)', () => {
   });
 
   it('HeroCard com o texto do mock e "Criar template" sem promessa de IA', () => {
-    render(<TalkXTemplates onUseTemplate={vi.fn()} />);
+    renderComQc(<TalkXTemplates onUseTemplate={vi.fn()} />);
 
     expect(screen.getByText('Templates que convertem, recomendações sob medida para o seu negócio.')).toBeTruthy();
     expect(screen.getByText('Do zero')).toBeTruthy();
