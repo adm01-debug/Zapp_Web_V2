@@ -31,7 +31,11 @@ interface AudioMessagePlayerProps {
 
 export function AudioMessagePlayer({ audioUrl, messageId, isSent, existingTranscription, transcriptionStatus: initialStatus }: AudioMessagePlayerProps) {
   const [transcription, setTranscription] = useState<string | null>(existingTranscription || null);
-  const [transcriptionStatus, setTranscriptionStatus] = useState<string>(initialStatus || 'pending');
+  // A prop `transcriptionStatus` chega do pai (MessageBubble repassa o da
+  // mensagem) e pode mudar depois do mount, quando a lista atualiza; o estado
+  // local (realtime, transcrição pedida aqui) vale enquanto existir.
+  const [statusLocal, setStatusLocal] = useState<string | null>(null);
+  const transcriptionStatus = statusLocal ?? initialStatus ?? 'pending';
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [showTranscription, setShowTranscription] = useState(!!existingTranscription);
   const isMountedRef = useRef(true);
@@ -47,14 +51,6 @@ export function AudioMessagePlayer({ audioUrl, messageId, isSent, existingTransc
     return () => { isMountedRef.current = false; };
   }, []);
 
-  // O `transcriptionStatus` chega do pai (MessageBubble repassa o da mensagem) e
-  // pode mudar depois do mount (a lista atualiza); sem isto o rerender com um
-  // status novo seria ignorado. Só reage à prop — o estado interno (realtime,
-  // transcrição local) continua mandando enquanto a prop não muda.
-  useEffect(() => {
-    if (initialStatus) setTranscriptionStatus(initialStatus);
-  }, [initialStatus]);
-
   const {
     audioRef, resolvedUrl, isPlaying, isLoading, hasError,
     playbackRate, progress, waveformHeights,
@@ -69,7 +65,7 @@ export function AudioMessagePlayer({ audioUrl, messageId, isSent, existingTransc
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages', filter: `id=eq.${messageId}` },
         (payload) => {
           const newData = payload.new as { transcription_status?: string; transcription?: string };
-          if (newData.transcription_status) setTranscriptionStatus(newData.transcription_status);
+          if (newData.transcription_status) setStatusLocal(newData.transcription_status);
           if (newData.transcription) { setTranscription(newData.transcription); setShowTranscription(true); }
         }
       ).subscribe();
@@ -78,7 +74,7 @@ export function AudioMessagePlayer({ audioUrl, messageId, isSent, existingTransc
 
   const handleTranscribe = async () => {
     if (isTranscribing || transcriptionStatus === 'processing') return;
-    setIsTranscribing(true); setTranscriptionStatus('processing'); setShowTranscription(true);
+    setIsTranscribing(true); setStatusLocal('processing'); setShowTranscription(true);
     try {
       const freshUrl = await resolveAudioUrl(audioUrl);
       // PE-55/PD-64: o servidor é a ÚNICA fonte. A Edge `ai-transcribe-audio` grava
@@ -89,24 +85,24 @@ export function AudioMessagePlayer({ audioUrl, messageId, isSent, existingTransc
       if (error) throw error;
       if (!isMountedRef.current) return;
       if (data?.fallback) {
-        setTranscriptionStatus('failed');
+        setStatusLocal('failed');
         toast({ title: 'Áudio não suportado', description: data.errorMessage || 'Não foi possível transcrever.', variant: 'destructive' });
         return;
       }
       const text = typeof data?.transcription === 'string' ? data.transcription.trim() : '';
       if (text) {
         setTranscription(text);
-        setTranscriptionStatus('completed');
+        setStatusLocal('completed');
       } else {
         // Resposta sem erro e sem texto não é sucesso silencioso: sem isto o player
         // ficaria preso em "Transcrevendo..." para sempre. Falha visível.
-        setTranscriptionStatus('failed');
+        setStatusLocal('failed');
         toast({ title: 'Erro na transcrição', description: 'Não foi possível transcrever o áudio.', variant: 'destructive' });
       }
     } catch (error) {
       log.error('Transcription error:', error);
       // Uma nova falha não apaga a transcrição já conhecida (estado verdadeiro).
-      if (isMountedRef.current) setTranscriptionStatus('failed');
+      if (isMountedRef.current) setStatusLocal('failed');
       toast({ title: 'Erro na transcrição', description: 'Não foi possível transcrever o áudio.', variant: 'destructive' });
     } finally { if (isMountedRef.current) setIsTranscribing(false); }
   };
