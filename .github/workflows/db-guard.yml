@@ -1,10 +1,8 @@
 # docs:
-#   gatilho: pull_request, push na main, merge_group e dispatch
+#   gatilho: dispatch manual
 #   prova: guardas OFFLINE do banco (nunca recebe DESTINO_URL, roda codigo de PR)
-#   falha: PR fica vermelho; nenhum codigo de PR alcanca o banco de producao
-#   avisa: autor do PR e revisor
-# nao-e-bug:
-#   - merge_group inerte: gatilho adicionado em #712 para o dia em que a merge queue for habilitada; hoje fica inerte e sem custo porque a conta e User (nao Org)
+#   falha: o run fica vermelho; nunca alcanca o banco de producao
+#   avisa: quem disparou
 # ==================================================================
 # ZAPP-WEB · Guardas de banco OFFLINE
 # ==================================================================
@@ -16,17 +14,7 @@
 name: DB Guard (offline)
 
 on:
-  # Sem filtro de paths: o nome do check precisa existir em todo PR para poder
-  # ser exigido pela branch protection sem bloquear diffs apenas de docs.
-  # E23: 'develop' removido — branch nao existe no repo (so main).
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-    types: [opened, synchronize, reopened, ready_for_review]
-  # Fila de merge: sem este gatilho o check required nunca reportaria no merge
-  # group e a fila travaria todos os merges do repo.
-  merge_group:
+  # 16/10/2026 (decisao do Joaquim, CI minimo): saiu do CI por PR/push; so manual.
   workflow_dispatch:
 
 defaults:
