@@ -93,6 +93,41 @@ export function NPSDashboard() {
     );
   }
 
+  // Falha de leitura NÃO é "nenhuma pesquisa respondida": sem este estado o painel
+  // caía no estado vazio (ou exibia NPS 0) e o usuário lia dado fabricado.
+  if (error) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-6 w-full min-w-0"
+      >
+        <div>
+          <h2 className="text-xl font-bold text-foreground">Net Promoter Score (NPS)</h2>
+          <p className="text-sm text-muted-foreground">Meça a lealdade dos seus clientes</p>
+        </div>
+
+        <Card>
+          <CardContent
+            data-testid="nps-error-state"
+            role="alert"
+            className="flex flex-col items-center justify-center gap-3 py-12 px-6 text-center"
+          >
+            <AlertTriangle className="w-10 h-10 text-destructive/70" strokeWidth={1.6} />
+            <p className="text-sm font-semibold text-foreground">Não foi possível carregar as pesquisas NPS</p>
+            <p className="text-xs text-muted-foreground max-w-[420px] leading-snug">
+              A leitura das respostas falhou, então não há pontuação nem contagens para mostrar —
+              zero aqui seria dado inventado.
+            </p>
+            <Button variant="outline" size="sm" onClick={() => refetch()}>
+              Tentar novamente
+            </Button>
+          </CardContent>
+        </Card>
+      </motion.div>
+    );
+  }
+
   // Nenhuma pesquisa NPS é enviada na V2 (o envio não existe; o CSAT automático
   // é o PD-34). Sem respostas, mostrar medidor 0 + cards zerados seria dado
   // fabricado — o painel diz a verdade.
