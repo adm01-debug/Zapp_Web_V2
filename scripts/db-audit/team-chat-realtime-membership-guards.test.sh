@@ -5,9 +5,14 @@
 #   1) `team_message_reactions` NÃO estava na publicação `supabase_realtime` embora
 #      `useTeamMessageReactions` assine `postgres_changes` com filtro `conversation_id=eq.<id>`.
 #   2) `team_messages` e `team_message_reactions` estavam com REPLICA IDENTITY DEFAULT (`d`):
-#      evento de DELETE/UPDATE chega só com a chave primária, então nem o filtro por
-#      `conversation_id` nem a checagem de RLS do Realtime têm a linha antiga — a exclusão de
-#      mensagem por outro membro não alcançava o painel.
+#      com DEFAULT o WAL do DELETE/UPDATE registra só a chave primária. FULL é o que o BLOCO D
+#      prova — o WAL do DELETE passa a carregar a linha antiga com `conversation_id`.
+#      LIMITE do Realtime (mesmo do relato, ponto 4), para nao prometer mais do que a correcao
+#      entrega: com RLS ligada o Supabase Realtime manda no DELETE SOMENTE a chave primaria e
+#      NAO filtra evento de DELETE — nenhuma REPLICA IDENTITY muda esse contrato. O painel
+#      reage ao evento sem ler o payload: `src/hooks/team-chat/useTeamMessages.ts` e
+#      `src/hooks/team-chat/useTeamMessageReactions.ts` so chamam `invalidateQueries` e refazem
+#      a consulta por `conversationId` (no maximo um refetch a mais, nunca dado errado).
 #   3) UPDATE (`team_messages_update_own`) e DELETE ("Senders can delete own messages") de
 #      `team_messages` só checavam o remetente: um EX-MEMBRO continuava editando e apagando as
 #      próprias mensagens na conversa de que saiu.
@@ -18,8 +23,11 @@
 # executa a própria linha `-- Rollback:` da migration e confirma que ela restaura o estado.
 #
 # Pre-estado fiel das policies de `team_messages` e `team_message_reactions` (as que a migration
-# troca/remove), medido no banco local desta tarefa (2026-10-14). `team_conversations` entra só
-# como dependência de FK e para as duas policies de que o seed depende — a migration não a toca.
+# troca/remove), medido no banco local desta tarefa (2026-10-14). `team_conversations` entra como
+# dependência de FK e com as QUATRO policies que ela tem no banco local desta tarefa, medidas por
+# `pg_policies` em 2026-10-16 (SELECT de membro/criador, INSERT autenticado, DELETE do
+# criador/admin e UPDATE do criador) — a migration não a toca. B.31–B.33 refinam essa fixture;
+# quem mede team_conversations direto no banco é o relato (ponto 5 da recusa).
 set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -219,12 +227,18 @@ ALTER TABLE public.team_messages              ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.team_message_receipts      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.team_message_reactions     ENABLE ROW LEVEL SECURITY;
 
--- team_conversations (dependencia) — policies vigentes em producao.
+-- team_conversations (dependencia) — as 4 policies vigentes, medidas no banco local
+-- desta tarefa por pg_policies em 2026-10-16.
 CREATE POLICY "Members can view their conversations" ON public.team_conversations FOR SELECT TO authenticated
   USING (public.is_team_conversation_member(auth.uid(), id)
          OR created_by = (SELECT p.id FROM public.profiles p WHERE p.user_id = auth.uid() LIMIT 1));
 CREATE POLICY "Authenticated users can create conversations" ON public.team_conversations FOR INSERT TO authenticated
   WITH CHECK (created_by = (SELECT p.id FROM public.profiles p WHERE p.user_id = auth.uid() LIMIT 1));
+CREATE POLICY "Conversation creator or admin can delete" ON public.team_conversations FOR DELETE TO authenticated
+  USING (created_by = public.current_profile_id() OR public.is_admin_or_supervisor(auth.uid()));
+CREATE POLICY team_conversations_update_own ON public.team_conversations FOR UPDATE TO authenticated
+  USING (created_by = public.current_profile_id())
+  WITH CHECK (created_by = public.current_profile_id());
 
 -- team_conversation_members (dependencia): as 4 policies vigentes. A de SELECT importa — a policy de
 -- SELECT de team_message_reactions faz um JOIN em team_conversation_members, e esse subselect TAMBEM
@@ -507,7 +521,7 @@ expect_value 'B.31 team_conversations esta na publicacao supabase_realtime' '1' 
   "SELECT count(*) FROM pg_publication_tables WHERE pubname='supabase_realtime' AND tablename='team_conversations';"
 expect_value 'B.32 team_conversations segue com REPLICA IDENTITY DEFAULT (a migration nao a toca)' '1' \
   "SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relname='team_conversations' AND c.relreplident='d';"
-expect_value 'B.33 team_conversations tem 2 policies (SELECT de membros + INSERT autenticado)' '2' \
+expect_value 'B.33 team_conversations tem 4 policies (SELECT de membro/criador, INSERT autenticado, DELETE do criador/admin e UPDATE do criador)' '4' \
   "SELECT count(*) FROM pg_policies WHERE schemaname='public' AND tablename='team_conversations';"
 
 # Ponto 2 da recusa (DEPOIS, policy unica): mesma semantica do A.22-A.27 — a dona
