@@ -4290,7 +4290,7 @@
         "f:get_crm_sync_health()": "9cf5b336671de1c553a00669a6ca9bd7",
         "f:get_identity_matrix()": "ee1c634bf89c268c0e3c5d3b5c1209bd",
         "f:talk_me_list_queues()": "ac87efe094296d8a862405c6e7e2031f",
-        "f:talkx_engine_alerts()": "2115ad6a5d9c25e61dc7aa5149a71b0c",
+        "f:talkx_engine_alerts()": "df99b59b5fcfb65a19c46fa840b51ca9",
         "f:handle_new_user_role()": "370b0b17f24b54194f804b7b31a7e9f7",
         "f:notify_due_reminders()": "5b982bbca6351d3726057e6f513e208c",
         "f:trigger_ai_jobs_tick()": "2bc6a8308e1a251affa0ad30e11bbf19",
@@ -4360,7 +4360,7 @@
         "f:clear_login_attempts(p_email text)": "fbd371488468f52b08d7eac9c986d81b",
         "f:fn_send_audio_meme(p_meme_id uuid)": "ee87b0a9cd9b267ae08815f148d35aaf",
         "f:talkx_segment_tags(p_segment uuid)": "7e311a73eb7c9ad5ff06b62d1799556a",
-        "f:enforce_talkx_campaign_mutability()": "f648d1b7171b816f137ac42310ea441a",
+        "f:enforce_talkx_campaign_mutability()": "1fe9a5d711e4b04553d66d1537b92542",
         "f:ensure_single_default_ai_provider()": "6541fb3b5cf5d0a67ef19a1db1b46511",
         "f:get_gmail_tokens(p_account_id uuid)": "a5e8633b2e4b1640d960871c0b17a04c",
         "f:is_account_locked(check_email text)": "b5426064b0fa5fde62c9607fb426cea4",
@@ -5282,7 +5282,7 @@
         "e:public.multiplix_dispatch_status|postgres|USAGE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "e:public.multiplix_recipient_status|postgres|USAGE|grantor=postgres": "68934a3e9455fa72420237eb05902327"
     },
-    "generated_at": "2026-10-16T10:09:02Z",
+    "generated_at": "2026-10-16T18:17:30Z",
     "column_grants": {
         "r:public.departments.id|authenticated|INSERT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "r:public.departments.id|authenticated|SELECT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
