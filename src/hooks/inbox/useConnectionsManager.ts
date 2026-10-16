@@ -287,14 +287,34 @@ export function useConnectionsManager() {
 
   const handleReconnect = (connection: WhatsAppConnection) => handleShowQrCode(connection);
 
-  const handleDisconnect = async (connection: WhatsAppConnection) => {
-    if (!connection.instance_id) return;
+  // t_cce2f0f7: o resultado era engolido e a falha era anunciada DUAS vezes (o
+  // sonner do `withToast` dentro do `disconnectInstance` + o `use-toast` daqui),
+  // enquanto a tela fechava o diálogo como sucesso. Agora: uma única origem de
+  // aviso (o sonner da Evolution) e um retorno booleano — `false` significa que a
+  // sessão NÃO caiu, e o diálogo continua aberto com o motivo.
+  const handleDisconnect = async (connection: WhatsAppConnection): Promise<boolean> => {
+    if (!connection.instance_id) return false;
+
     try {
       await disconnectInstance(connection.instance_id);
-      await supabase.from('whatsapp_connections').update({ status: 'disconnected', qr_code: null }).eq('id', connection.id);
     } catch (error: unknown) {
-      toast({ title: 'Erro ao desconectar', description: error instanceof Error ? error.message : 'Erro desconhecido', variant: 'destructive' });
+      log.error('Error disconnecting connection:', error);
+      return false;
     }
+
+    const { error } = await supabase
+      .from('whatsapp_connections')
+      .update({ status: 'disconnected', qr_code: null })
+      .eq('id', connection.id);
+
+    if (error) {
+      log.error('Error marking connection as disconnected:', error);
+      // O estado real é o que está no banco: re-sincroniza em vez de mentir.
+      await fetchConnections();
+      return false;
+    }
+
+    return true;
   };
 
   // A troca de padrão é atômica no banco (RPC de t_ae0a55a6): uma chamada só

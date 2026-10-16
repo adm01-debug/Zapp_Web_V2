@@ -37,7 +37,12 @@ interface ConnectionCardProps {
   syncingHistory: string | null;
   onShowQrCode: (c: WhatsAppConnection) => void;
   onCopyId: (id: string) => void;
-  onDisconnect: (c: WhatsAppConnection) => void;
+  /**
+   * Devolve `false` quando a sessão NÃO caiu (Evolution recusou / vínculo local
+   * não atualizou): nesse caso o diálogo continua aberto com o motivo. Qualquer
+   * outro retorno (inclusive `undefined`, dos chamadores antigos) fecha o diálogo.
+   */
+  onDisconnect: (c: WhatsAppConnection) => unknown;
   onSetDefault: (id: string) => void;
   onDelete: (c: WhatsAppConnection) => void;
   onBusinessHours: (id: string, name: string) => void;
@@ -66,8 +71,37 @@ export function ConnectionCard({
   // confirmação — nada executa no primeiro clique.
   const { isAdmin, isSupervisor } = useUserRole();
   const [confirmDisconnect, setConfirmDisconnect] = useState(false);
+  const [disconnectPending, setDisconnectPending] = useState(false);
+  const [disconnectError, setDisconnectError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [auditOpen, setAuditOpen] = useState(false);
+
+  // t_cce2f0f7: o diálogo de confirmação fechava no clique, então uma falha na
+  // Evolution (sessão não caiu) aparecia como sucesso. Aqui ele só fecha quando
+  // o handler confirma; falha (ou rejeição) mantém o diálogo aberto com o motivo.
+  const handleConfirmDisconnect = async () => {
+    if (disconnectPending) return;
+    setDisconnectPending(true);
+    setDisconnectError(null);
+    try {
+      const sucesso = await onDisconnect(connection);
+      if (sucesso === false) {
+        setDisconnectError('Não foi possível desconectar. A sessão continua ativa — tente novamente.');
+        return;
+      }
+      setConfirmDisconnect(false);
+    } catch {
+      setDisconnectError('Não foi possível desconectar. A sessão continua ativa — tente novamente.');
+    } finally {
+      setDisconnectPending(false);
+    }
+  };
+
+  const handleDisconnectDialogOpenChange = (open: boolean) => {
+    setConfirmDisconnect(open);
+    // O erro é da tentativa, não do estado da conexão: fechar limpa o motivo.
+    if (!open) setDisconnectError(null);
+  };
 
   return (
     <motion.div whileHover={{ y: -2, boxShadow: '0 8px 30px hsl(var(--primary) / 0.1)' }}>
@@ -202,10 +236,12 @@ export function ConnectionCard({
 
       <ConnectionDisconnectDialog
         open={confirmDisconnect}
-        onOpenChange={setConfirmDisconnect}
+        onOpenChange={handleDisconnectDialogOpenChange}
         connectionName={connection.name}
         phoneNumber={connection.phone_number}
-        onConfirm={() => onDisconnect(connection)}
+        onConfirm={handleConfirmDisconnect}
+        pending={disconnectPending}
+        errorMessage={disconnectError}
       />
       {isAdmin && (
         <ConnectionDeleteDialog
