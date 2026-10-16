@@ -57,6 +57,19 @@ describe('AuthService.signIn (edge auth-login fail-closed)', () => {
     expect(authMocks.signInWithPassword).not.toHaveBeenCalled();
   });
 
+  /**
+   * Decisao do dono (15/10): a mensagem de bloqueio NAO pode revelar SE o barrado
+   * foi o IP ou o pais — o texto anterior nomeava a categoria. Neutra e legivel:
+   * nem detalhe tecnico, nem a mensagem de indisponibilidade reutilizada aqui.
+   */
+  it('403 da politica de rede: mensagem neutra, sem revelar se foi IP ou pais', async () => {
+    serverLoginMock.mockResolvedValue({ ok: false, unavailable: false, networkBlocked: true, retryable: false, error: 'Access denied' });
+    const r = await AuthService.signIn('a@b.co', 'pw');
+    expect(r.error?.message).toBe('Não foi possível entrar a partir desta rede. Fale com o administrador.');
+    expect(r.error?.message).not.toMatch(/IP|pa[íi]s|endere[çc]o|regra|whitelist|blacklist/i);
+    expect(r.error?.message).not.toBe(NETWORK_UNAVAILABLE_MESSAGE);
+  });
+
   it('503 da politica de rede: mensagem de rede temporaria (retentavel)', async () => {
     serverLoginMock.mockResolvedValue({ ok: false, unavailable: false, networkBlocked: true, retryable: true, error: 'Service unavailable' });
     const r = await AuthService.signIn('a@b.co', 'pw');
