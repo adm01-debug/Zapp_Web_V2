@@ -265,7 +265,7 @@ export function CatalogBulkSendDialog({ products, open, onOpenChange, onSent }: 
                 </p>
               )}
             </div>
-            <Progress value={progress} className="w-full" />
+            <Progress value={progress} className="w-full" aria-label="Envio em massa" />
             <p className="text-xs text-muted-foreground tabular-nums">{progress}%</p>
           </div>
         )}
