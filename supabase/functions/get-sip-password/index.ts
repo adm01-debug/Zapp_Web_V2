@@ -16,28 +16,50 @@ export function provisionamentoSip(
   };
 }
 
-export async function handleGetSipPassword(req: Request): Promise<Response> {
+/** Seams de injecao do handler. `client` substitui o client do chamador para o
+ *  teste exercitar o gate de rate limit sem tocar rede. */
+export interface GetSipCallerClient {
+  auth: {
+    getClaims: (token: string) => PromiseLike<{
+      data: { claims?: { sub?: string } } | null;
+      error: unknown;
+    }>;
+  };
+  from: (table: string) => {
+    select: (columns: string) => {
+      eq: (column: string, value: string) => {
+        maybeSingle: () => PromiseLike<{ data: { id: string; is_active: boolean } | null; error: unknown }>;
+      };
+    };
+  };
+}
+
+export interface GetSipPasswordDeps {
+  enforceRateLimit?: (key: string, maxRequests: number, windowMs: number) => PromiseLike<{ allowed: boolean }>;
+  client?: GetSipCallerClient;
+}
+
+export async function handleGetSipPassword(req: Request, deps: GetSipPasswordDeps = {}): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
 
   const log = new Logger("get-sip-password");
+  const rateLimit = deps.enforceRateLimit ?? enforceRateLimit;
 
   try {
+    // Pre-auth: chave por IP, contador persistente (nao zera a cada isolate).
     const ip = getClientIP(req);
-    const rl = await enforceRateLimit(`sip-pwd:${ip}`, 10, 60_000);
-    if (!rl.allowed) {
-      const limited = errorResponse("Rate limit exceeded", 429, req);
-      limited.headers.set("Retry-After", "60");
-      return limited;
-    }
+    const rl = await rateLimit(`sip-pwd:${ip}`, 10, 60_000);
+    if (!rl.allowed) return errorResponse("Rate limit exceeded", 429, req);
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       return errorResponse('Unauthorized', 401, req);
     }
 
-    const supabase = createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_ANON_KEY'), {
-      global: { headers: { Authorization: authHeader } },
-    });
+    const supabase: GetSipCallerClient = deps.client ??
+      (createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_ANON_KEY'), {
+        global: { headers: { Authorization: authHeader } },
+      }) as unknown as GetSipCallerClient);
 
     const token = authHeader.replace('Bearer ', '');
     const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
@@ -46,11 +68,17 @@ export async function handleGetSipPassword(req: Request): Promise<Response> {
     }
 
     const userId = claimsData.claims.sub;
+    if (!userId) return errorResponse('Invalid or expired token', 401, req);
     const { data: profile, error: profileError } = await supabase
       .from('profiles').select('id, is_active').eq('user_id', userId).maybeSingle();
 
     if (profileError || !profile) return errorResponse('User profile not found', 403, req);
     if (!profile.is_active) return errorResponse('User account is inactive', 403, req);
+
+    // Pos-auth: chave por USUARIO — o segredo da linha nao vaza para uma conta
+    // comprometida mesmo distribuindo requests entre IPs/isolates.
+    const userRl = await rateLimit(`sip-pwd:user:${userId}`, 10, 60_000);
+    if (!userRl.allowed) return errorResponse("Rate limit exceeded", 429, req);
 
     // Secret ausente é erro de configuração, não falha de runtime: responde 503
     // com código estável em vez de estourar 500 genérico (requireEnv lançava).
@@ -73,5 +101,5 @@ export async function handleGetSipPassword(req: Request): Promise<Response> {
 // Convenção do repo para funções testáveis: o handler é exportado e o servidor
 // só sobe quando o módulo é o entrypoint (o runtime do Supabase é o entrypoint).
 if (import.meta.main) {
-  Deno.serve(handleGetSipPassword);
+  Deno.serve((req) => handleGetSipPassword(req));
 }
