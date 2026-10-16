@@ -44,7 +44,7 @@ const h = vi.hoisted(() => {
     };
     b.then = (resolve: (v: unknown) => unknown) =>
       Promise.resolve(
-        mutated ? { error: null, data: [{ id: state.lastId ?? '?' }], ...state.mutation } : state.list,
+        mutated ? { data: [{ id: state.lastId ?? '?' }], ...state.mutation } : state.list,
       ).then(resolve);
     return b;
   };
