@@ -166,7 +166,9 @@ describe('TalkXView tab deep links (X007)', () => {
       expect(new URLSearchParams(window.location.search).get('tab')).toBe('analytics');
       expect(new URLSearchParams(window.location.search).get('sub')).toBe('configuracoes');
     });
-    expect(screen.getByTestId('settings')).toBeInTheDocument();
+    // X194: a tela chega por chunk (React.lazy) — a espera é a mesma verificação, só
+    // depois de o chunk resolver; antes era síncrono porque a tela vinha no import.
+    expect(await screen.findByTestId('settings')).toBeInTheDocument();
   });
 
   it('?tab=campaigns é o alias da Visão geral: mostra a lista em vez de área vazia', async () => {
@@ -304,12 +306,14 @@ describe('TalkXWizardReview — linhas com dado real (X134)', () => {
     expect(screen.getByText('Gerar mais vendas e conversões · Turma de outubro')).toBeInTheDocument();
   });
 
-  it('Segmentos selecionados mostra os nomes e "N segmentos | X contatos"', async () => {
+  it('Segmentos selecionados mostra os nomes, a união e a contagem por segmento', async () => {
     render(
       <TalkXWizardReview
         ed={reviewEd({
           audienceSource: 'segment',
           selectedSegments: [{ id: 'seg_1', name: 'VIP', estimated_count: 1250 }],
+          segmentEstimates: { seg_1: 1250 },
+          audienceTotal: 1200,
           eligibleCount: 1200,
         })}
         campaign={draft as never}
@@ -319,7 +323,8 @@ describe('TalkXWizardReview — linhas com dado real (X134)', () => {
 
     expect(screen.getByText('Segmentos selecionados')).toBeInTheDocument();
     expect(screen.getByText('VIP')).toBeInTheDocument();
-    expect(screen.getByText('1 segmento | 1.200 contatos')).toBeInTheDocument();
+    expect(screen.getByText(/1\.200 contatos na união/)).toBeInTheDocument();
+    expect(screen.getByText(/VIP \(1\.250\)/)).toBeInTheDocument();
   });
 
   it('Agendamento mostra o dia relativo e quanto falta ("Hoje, 16:12 · Em 5 minutos")', async () => {

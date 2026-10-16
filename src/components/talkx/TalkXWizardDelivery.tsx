@@ -17,7 +17,7 @@ import { IconTile, WhatsAppBubble, RailCard, MetaRow, InsightCard, OBJECTIVES, S
 import type { TalkXPreviewInteractive } from './TalkXMessagePreview';
 import { TalkXNoData } from './kit/states';
 import { useTalkXInsights } from '@/hooks/integrations/useTalkXInsights';
-import { formatScheduleRelative } from './useCampaignEditor';
+import { formatScheduleRelative, type WizardStep } from './useCampaignEditor';
 import { useContactCustomFields } from '@/hooks/crm/useContactCustomFields';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
 
@@ -274,10 +274,6 @@ export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed
   // ("Gerar mais vendas e conversões"); a descrição livre da campanha continua
   // visível na mesma linha, para não sumir do resumo.
   const objectiveSub = [objectiveEntry?.description, ed.description].filter(Boolean).join(' · ') || undefined;
-  // T09-018 — "N segmentos | X contatos": a contagem usa o número de segmentos
-  // selecionados (o wizard passou a aceitar mais de um) e os elegíveis reais.
-  const audienceIsSegment = ed.audienceSource === 'segment';
-  const segmentCount = audienceIsSegment ? ed.selectedSegments.length : 0;
   const connection = (ed.connections ?? []).find((c) => c.id === ed.connectionId);
   // X134/T09-018: relativo calculado no fuso da campanha, uma vez por render.
   const schedule = ed.isScheduled && ed.scheduledAt
@@ -331,7 +327,7 @@ export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed
       <Section icon={FileText} title="Resumo da campanha" subtitle="Verifique se todas as informações estão corretas.">
         <Row icon={FileText} label="Nome da campanha" value={ed.name || '—'} step={1} onEditStep={onEditStep} />
         <Row icon={Target} label="Objetivo" value={objective} sub={objectiveSub} step={1} onEditStep={onEditStep} />
-        <Row icon={audienceIsSegment ? Bookmark : Users} label={audienceIsSegment ? 'Segmentos selecionados' : 'Público selecionado'} value={audienceIsSegment ? (ed.selectedSegments.length > 0 ? ed.selectedSegments.map((s) => s.name).join(', ') : '—') : `${fmtInt(ed.selectedContacts.length)} contatos`} sub={audienceIsSegment ? <><span>{`${fmtInt(segmentCount)} ${segmentCount === 1 ? 'segmento' : 'segmentos'} | ${fmtInt(ed.eligibleCount)} contatos`}</span>{ed.selectedSegments.length > 0 && <>{' · '}<span>{`${fmtInt(ed.audienceTotal)} contatos na união · ${ed.selectedSegments.map((s) => `${s.name} (${fmtInt(ed.segmentEstimates?.[s.id] ?? s.estimated_count ?? 0)})`).join(' · ')}`}</span></>}</> : `${fmtInt(ed.eligibleCount)} contatos elegíveis`} ok={audienceOk} step={1} onEditStep={onEditStep} />
+        <Row icon={ed.audienceSource === 'segment' ? Bookmark : Users} label={ed.audienceSource === 'segment' ? 'Segmentos selecionados' : 'Público selecionado'} value={ed.audienceSource === 'segment' ? (ed.selectedSegments.length > 0 ? ed.selectedSegments.map((s) => s.name).join(', ') : '—') : `${fmtInt(ed.selectedContacts.length)} contatos`} sub={ed.audienceSource === 'segment' ? (ed.selectedSegments.length > 0 ? `${fmtInt(ed.audienceTotal)} contatos na união · ${ed.selectedSegments.map((s) => `${s.name} (${fmtInt(ed.segmentEstimates?.[s.id] ?? s.estimated_count ?? 0)})`).join(' · ')}` : `${fmtInt(ed.audienceTotal)} contatos na união`) : `${fmtInt(ed.eligibleCount)} contatos elegíveis`} ok={audienceOk} step={1} onEditStep={onEditStep} />
         <Row icon={Ban} label="Exclusões / Supressão" value={ed.respectSuppression ? 'Lista de supressão ativa' : 'Supressão desativada'} sub={ed.respectSuppression ? `${fmtInt(ed.suppressedCount)} contatos excluídos` : 'Atenção: opt-outs ainda são pulados no envio'} ok={ed.respectSuppression} step={3} onEditStep={onEditStep} />
         <Row icon={MessageSquare} label="Template de mensagem" value={ed.selectedTemplate?.name ?? 'Mensagem personalizada'} sub={ed.selectedTemplate ? (ed.selectedTemplate.status === 'approved' ? 'Template aprovado' : 'Template em revisão') : `${ed.messageTemplate.length} caracteres`} ok={ed.selectedTemplate ? ed.selectedTemplate.status === 'approved' : undefined} step={2} onEditStep={onEditStep} />
         <Row icon={Sliders} label="Variáveis de personalização" value={variables.length > 0 ? variables.join(', ') : 'Nenhuma'} sub={`${variables.length} variáveis configuradas`} step={2} onEditStep={onEditStep} />
