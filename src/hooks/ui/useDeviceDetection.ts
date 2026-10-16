@@ -73,7 +73,7 @@ export function useDeviceDetection() {
         .order('last_seen_at', { ascending: false });
 
       if (error) throw error;
-      setDevices(data || []);
+      setDevices((data ?? []) as UserDevice[]);
     } catch (error) {
       log.error('Error fetching devices:', error);
     }
