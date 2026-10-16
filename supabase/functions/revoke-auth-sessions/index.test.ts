@@ -1,13 +1,4 @@
-import {
-  planRevocation,
-  decodeJwtClaims,
-  buildRevocationAudit,
-  recordRevocationAudit,
-  decideThirdPartyRevocation,
-  normalizeRole,
-  resolveEffectiveRole,
-  handleRevokeAuthSessions,
-} from "./index.ts";
+import { planRevocation, decodeJwtClaims, handleRevokeAuthSessions } from "./index.ts";
 import { resetRateLimitServiceClient } from "../_shared/validation.ts";
 
 const A = "00000000-0000-4000-8000-000000000001";
