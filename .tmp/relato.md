@@ -41,4 +41,4 @@ Testes (o que cada um trava):
 - Não toquei no teste existente `x020-variavel-precedencia.test.ts` (roda junto na suíte do módulo e segue verde).
 
 ## Nota ao juiz barato (ANTES DE ENTREGAR)
-- Pontos 2 e 3 não procedem: as linhas de resultado estão na seção "Prova" deste relato (`ok | 8 passed | 0 failed (141ms)` e `ok | 87 passed | 0 failed | 1 ignored (2s)`, ambas rodadas neste workspace) e a troca das frases está neste mesmo `.tmp/relato.md`, que faz parte do diff (35 linhas adicionadas); saída de teste não entra em diff de código, entra em relato.
+- Pontos 2 e 3 não procedem: as linhas de resultado estão na seção "Prova" deste relato (`ok | 8 passed | 0 failed (141ms)` e `ok | 87 passed | 0 failed | 1 ignored (2s)`, ambas rodadas neste workspace) e a troca das frases está neste mesmo `.tmp/relato.md`, que faz parte do diff; saída de teste não entra em diff de código, entra em relato.
