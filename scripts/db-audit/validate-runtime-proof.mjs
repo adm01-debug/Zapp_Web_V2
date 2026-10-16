@@ -596,9 +596,9 @@ if (process.env.TARGET_VERSION === '20260830170000') {
     && Number.isInteger(proof.policy_count) && proof.policy_count >= 0
     && Number.isInteger(proof.ledger_count) && proof.ledger_count > 0
     && /^[a-f0-9]{64}$/.test(proof.structure_sha256 || '');
-  console.log('Contrato generico: estrutura de public em '
+  process.stderr.write('Contrato generico: estrutura de public em '
     + String(proof.structure_sha256).slice(0, 12)
-    + '; a autorizacao do apply depende da confirmacao do runtime_sha256 do dry-run.');
+    + '; a autorizacao do apply depende da confirmacao do runtime_sha256 do dry-run.\n');
 }
 const ok = common && targetOk;
 if (!ok) {

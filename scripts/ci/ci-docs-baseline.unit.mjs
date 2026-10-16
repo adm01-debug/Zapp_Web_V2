@@ -467,7 +467,7 @@ test('W95 CONTRIBUTING.md: cita branch do lote dia/AAAA-MM-DD', async () => {
   assert.match(texto, /dia\/AAAA-MM-DD/);
 });
 
-test('W95 CONTRIBUTING.md: lista os 6 required checks', async () => {
+test('W95 CONTRIBUTING.md: lista os 7 required checks (W84 incluiu CodeQL)', async () => {
   const texto = await readFile(CONTRIBUTING, 'utf8');
   assert.match(texto, /Lint.*TypeCheck|Lint & TypeCheck/);
   assert.match(texto, /Unit Tests/);
@@ -475,6 +475,7 @@ test('W95 CONTRIBUTING.md: lista os 6 required checks', async () => {
   assert.match(texto, /Security Audit/);
   assert.match(texto, /Contrato DB offline/);
   assert.match(texto, /E2E Tests/);
+  assert.match(texto, /CodeQL/);
 });
 
 test('W95 CONTRIBUTING.md: nao referencia branch develop', async () => {
@@ -514,11 +515,12 @@ const TERMOS_CONTRIBUTING = [
   'Security Audit',
   'Contrato DB offline',
   'Playwright',
+  'CodeQL',
   'CLAUDE.md',
   'Zapp_Web_V2',
 ];
 
-test('W95: CONTRIBUTING.md tem os termos obrigatorios (bun, fluxo lote, 6 required checks)', async () => {
+test('W95: CONTRIBUTING.md tem os termos obrigatorios (bun, fluxo lote, 7 required checks)', async () => {
   const conteudo = await readFile(CONTRIBUTING, 'utf8');
   assert.ok(!conteudo.includes('npm install') || conteudo.includes('bun install'), 'deve usar bun, nao npm');
   assert.ok(!/\bdevelop\b/.test(conteudo), 'nao deve mencionar branch develop');

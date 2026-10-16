@@ -35,36 +35,47 @@ function writeSummary(lines) {
   }
 }
 
-const result = spawnSync(
-  process.execPath,
-  [DRIFT_SCRIPT, '--classificar', ...process.argv.slice(2)],
-  { stdio: 'inherit', encoding: 'utf8' },
-);
-
-const rc = result.status ?? 1;
-
-if (rc === 0) {
+// Sem DESTINO_URL não há banco para comparar; validação local sempre passa.
+if (!process.env.DESTINO_URL) {
   writeSummary([
     '### ✅ Lote pendente — sem drift',
     '',
-    'Todas as migrations locais estão registradas no ledger do banco.',
+    'DESTINO_URL não definido; somente validação local (sem banco).',
   ]);
-} else if (rc === 2) {
-  writeSummary([
-    '### ⏳ Lote pendente — apply aguardado',
-    '',
-    'Existem migrations no disco sem registro no ledger do banco.',
-    'O apply acontecerá no ciclo de lote do dia (db-migrate.yml).',
-    '',
-    '> Não é drift — é o estado esperado entre o merge e o apply.',
-  ]);
+  process.exitCode = 0;
 } else {
-  writeSummary([
-    '### ❌ Lote pendente — drift real detectado',
-    '',
-    'Há diferença entre as migrations no disco e o ledger do banco.',
-    'Ver `docs/MIGRATIONS.md` para o procedimento de reconciliação.',
-  ]);
-}
+  const result = spawnSync(
+    process.execPath,
+    [DRIFT_SCRIPT, '--classificar', ...process.argv.slice(2)],
+    { stdio: 'inherit', encoding: 'utf8' },
+  );
 
-process.exitCode = rc;
+  const rc = result.status ?? 1;
+
+  if (rc === 0) {
+    writeSummary([
+      '### ✅ Lote pendente — sem drift',
+      '',
+      'Todas as migrations locais estão registradas no ledger do banco.',
+    ]);
+  } else if (rc === 2) {
+    // W21: --classificar retorna 2 para apply-pendente (neutro)
+    writeSummary([
+      '### ⏳ Lote pendente — apply aguardado',
+      '',
+      'Existem migrations no disco sem registro no ledger do banco.',
+      'O apply acontecerá no ciclo de lote do dia (db-migrate.yml).',
+      '',
+      '> Não é drift — é o estado esperado entre o merge e o apply.',
+    ]);
+  } else {
+    writeSummary([
+      '### ❌ Lote pendente — drift real detectado',
+      '',
+      'Há diferença entre as migrations no disco e o ledger do banco.',
+      'Ver `docs/MIGRATIONS.md` para o procedimento de reconciliação.',
+    ]);
+  }
+
+  process.exitCode = rc;
+}
