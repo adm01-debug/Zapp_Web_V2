@@ -385,9 +385,8 @@ export default function RateLimitDashboard() {
                 </Alert>
               )}
 
-              {/* Erro em banner, POR CIMA da tabela: as linhas já carregadas
-                  continuam visíveis (nunca some com dado disponível). */}
-              <div className="rounded-md border">
+              {!error && (
+                <div className="rounded-md border">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -438,7 +437,8 @@ export default function RateLimitDashboard() {
                       )))}
                     </TableBody>
                   </Table>
-              </div>
+                </div>
+              )}
 
               <div className="flex items-center justify-between gap-4">
                 <p className="text-sm text-muted-foreground" aria-live="polite">
