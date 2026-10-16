@@ -115,6 +115,11 @@ const ALLOWLIST = new Set([
   // real e que a linha `-- Rollback:` da migration restaura — Postgres 17
   // descartável (docker). Passo de YAML a promover em db-guard.yml pelo dono do workflow.
   'scripts/db-audit/e44-whatsapp-connections-anon-grants.test.sh',
+  // N-102 (item t_24386cbf): prova de ida e volta da SERIE N-102 na cadeia real
+  // (base 20261009203548 -> fatia deste cartao -> o proprio bloco `-- Rollback:` executado)
+  // sobre um dnd_hours de OUTRO dono. Roda no banco LOCAL da tarefa (zapp-db-local), que nao
+  // existe no runner do db-guard.yml -- por isso o passo de YAML fica para o dono do workflow.
+  'scripts/db-audit/talkx-n102-rollback-cadeia-real.test.sh',
 ]);
 
 // Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em
