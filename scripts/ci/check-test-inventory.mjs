@@ -123,8 +123,13 @@ const ALLOWLIST = new Set([
   // dono do workflow (agente não edita workflow).
   'scripts/db-audit/message-reactions-author-model.test.sh',
   // IA-131: prova DML em Postgres descartável; promover em db-guard.yml pelo dono do workflow.
-  'scripts/db-audit/ia131-audio-stt-openrouter.test.sh',  // --- .test.sh OFFLINE (sem docker, sem banco): roda em qualquer runner. O passo no
-  // db-guard.yml e uma linha — `bash scripts/db-audit/replay-classify.test.sh` — e cabe
+  'scripts/db-audit/ia131-audio-stt-openrouter.test.sh',  // --- .test.sh OFFLINE (sem docker, sem banco): roda em qualquer runner. O passo no,
+  // SEC-DEFINER_GRANTS_STORAGE-02 (item do audit de 07/10): prova em PG 17 descartavel que o
+  // nome do objeto nao vira padrao LIKE nas policies de midia do WhatsApp (RED com
+  // 20260930700000, GREEN com 20261011003024, rodando como authenticated/anon). Passo de uma
+  // linha em db-guard.yml — promover pelo dono do workflow (agente nao edita workflow).
+  'scripts/db-audit/whatsapp-media-policies-sem-curinga.test.sh',
+  // --- .test.sh OFFLINE (sem docker, sem banco): roda em qualquer runner. O passo no  // db-guard.yml e uma linha — `bash scripts/db-audit/replay-classify.test.sh` — e cabe
   // junto de gen-types.test.sh; promover pelo dono do workflow.
   'scripts/db-audit/replay-classify.test.sh',
   // --- .test.sh — prova em container descartável (docker) do R2-DB-008 (item 295):
