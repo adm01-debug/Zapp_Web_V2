@@ -11529,6 +11529,15 @@ export type Database = {
         Args: { p_profile_id: string }
         Returns: Json
       }
+      inbox_wait_summary: {
+        Args: { p_queue_id?: string }
+        Returns: {
+          avg_open_seconds: number
+          max_wait_seconds: number
+          queue_id: string
+          waiting_count: number
+        }[]
+      }
       ingest_inbound_message: {
         Args: {
           p_connection_id: string
