@@ -226,6 +226,33 @@ describe('EmailChatReplyBar', () => {
     });
   });
 
+  // Envio que falha: a barra não pode se comportar como se tivesse enviado —
+  // o texto continua ali para o operador tentar de novo e a trava do botão
+  // Enviar é liberada (senão o próximo clique não faz nada).
+  describe('envio que falha', () => {
+    it('mantém o texto, não conclui o envio e destrava a nova tentativa', async () => {
+      replyMutateAsync.mockRejectedValueOnce(new Error('Edge respondeu 502'));
+      const onSent = vi.fn();
+      renderBar({ onSent });
+
+      const textarea = screen.getByPlaceholderText('Digite sua resposta...') as HTMLTextAreaElement;
+      fireEvent.change(textarea, { target: { value: 'Resposta que não saiu' } });
+      fireEvent.click(screen.getByRole('button', { name: /Enviar/i }));
+      await waitFor(() => expect(replyMutateAsync).toHaveBeenCalledTimes(1));
+
+      // A falha não vira sucesso na tela.
+      expect(onSent).not.toHaveBeenCalled();
+      expect(textarea.value).toBe('Resposta que não saiu');
+
+      // A tentativa seguinte acontece de verdade (a trava do envio foi liberada).
+      replyMutateAsync.mockResolvedValueOnce({});
+      fireEvent.click(screen.getByRole('button', { name: /Enviar/i }));
+      await waitFor(() => expect(replyMutateAsync).toHaveBeenCalledTimes(2));
+      await waitFor(() => expect(onSent).toHaveBeenCalledTimes(1));
+      expect(textarea.value).toBe('');
+    });
+  });
+
   describe('handleKeyDown', () => {
     it('Ctrl+Enter envia a mensagem', async () => {
       renderBar();

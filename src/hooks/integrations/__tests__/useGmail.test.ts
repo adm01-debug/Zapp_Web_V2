@@ -294,6 +294,92 @@ describe('useGmail', () => {
     });
   });
 
+  // Contrato com a Edge `gmail-send`: o `action` e o NOME do campo que o handler
+  // lê (message_id / thread_id / draft_id) têm de sair do hook exatamente como
+  // estão escritos em supabase/functions/gmail-send/index.ts. Trocar o rótulo da
+  // ação ou mandar o id em outro campo não dá erro visível: a Edge responde 400
+  // ou 404 e a lixeira simplesmente não acontece.
+  describe('payload das ações de lixeira e rascunho (contrato com a Edge)', () => {
+    function mockActions() {
+      vi.mocked(callGmailFunction).mockImplementation(async (fn: string, opts: Record<string, unknown>) => {
+        if (fn === 'gmail-oauth' && opts.action === 'list-accounts') return { accounts: [MOCK_ACCOUNT] };
+        return { success: true };
+      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.mocked(supabase.from).mockImplementation(() => makeFromChain() as any);
+    }
+
+    async function renderReady() {
+      const view = renderHook(() => useGmail(), { wrapper: createWrapper() });
+      await waitFor(() => expect(view.result.current.accountsLoading).toBe(false));
+      return view;
+    }
+
+    /** Último par (função, corpo) entregue à Edge. */
+    function ultimaChamada(): [string, Record<string, unknown>] {
+      const calls = vi.mocked(callGmailFunction).mock.calls;
+      return calls[calls.length - 1] as unknown as [string, Record<string, unknown>];
+    }
+
+    it('mover mensagem para a lixeira manda action trash com message_id e conta', async () => {
+      mockActions();
+      const { result, unmount } = await renderReady();
+
+      await act(() => result.current.trashMessage.mutateAsync('gmail-msg-1'));
+
+      const [fn, body] = ultimaChamada();
+      expect(fn).toBe('gmail-send');
+      expect(body.action).toBe('trash');
+      expect(body.message_id).toBe('gmail-msg-1');
+      expect(body.account_id).toBe('acc1');
+      expect(toast.success).toHaveBeenCalledWith('Email movido para lixeira');
+      unmount();
+    });
+
+    it('mover conversa para a lixeira manda action trash-thread com thread_id', async () => {
+      mockActions();
+      const { result, unmount } = await renderReady();
+
+      await act(() => result.current.trashThread.mutateAsync('gmail-t1'));
+
+      const [fn, body] = ultimaChamada();
+      expect(fn).toBe('gmail-send');
+      expect(body.action).toBe('trash-thread');
+      expect(body.thread_id).toBe('gmail-t1');
+      expect(toast.success).toHaveBeenCalledWith('Thread movida para lixeira');
+      unmount();
+    });
+
+    it('salvar rascunho SEM draft_id cria (create-draft) e COM draft_id atualiza (update-draft)', async () => {
+      mockActions();
+      const { result, unmount } = await renderReady();
+
+      await act(() => result.current.saveDraft.mutateAsync({ to: 'dest@example.com', subject: 'Oi' }));
+      let [, body] = ultimaChamada();
+      expect(body.action).toBe('create-draft');
+      expect(Object.prototype.hasOwnProperty.call(body, 'draft_id')).toBe(false);
+
+      await act(() => result.current.saveDraft.mutateAsync({ draft_id: 'draft-1', to: 'dest@example.com', subject: 'Oi de novo' }));
+      [, body] = ultimaChamada();
+      expect(body.action).toBe('update-draft');
+      expect(body.draft_id).toBe('draft-1');
+      unmount();
+    });
+
+    it('apagar rascunho manda action delete-draft com draft_id', async () => {
+      mockActions();
+      const { result, unmount } = await renderReady();
+
+      await act(() => result.current.deleteDraft.mutateAsync('draft-1'));
+
+      const [fn, body] = ultimaChamada();
+      expect(fn).toBe('gmail-send');
+      expect(body.action).toBe('delete-draft');
+      expect(body.draft_id).toBe('draft-1');
+      unmount();
+    });
+  });
+
   describe('ação que falha avisa (e desconexão parcial não mente)', () => {
     function mockActions(handler: (action: string, opts: Record<string, unknown>) => unknown) {
       vi.mocked(callGmailFunction).mockImplementation(async (fn: string, opts: Record<string, unknown>) => {
