@@ -53,7 +53,7 @@
 set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-migration="$repo_root/supabase/migrations/20261013235908_team_chat_media_acl_r2_db_020.sql"
+migration="$repo_root/supabase/migrations/20261009172324_team_chat_media_acl_r2_db_020.sql"
 postgres_image="${R2DB020_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-v2-r2db020-test-$$"
 
