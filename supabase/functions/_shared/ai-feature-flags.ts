@@ -64,12 +64,19 @@ export const AI_CAPABILITY_BY_FUNCTION: Readonly<Record<string, AiCapability>> =
   "ai-classify-tickets": "classify_tickets",
   "ai-transcribe-audio": "transcribe_audio",
   "voice-agent": "voice",
-  // SL-010b (decisão do cartão de decisão t_98090b40): a família de voz/áudio da
-  // ElevenLabs INTEIRA responde a UMA chave só (`ai.capability.voice`), fiel ao
-  // §2.1 do IA-009 — desligar a voz desliga a família toda, sem chave por função.
+  // SL-010b (decisão do cartão t_98090b40): a família de voz/áudio da ElevenLabs
+  // inteira responde à ÚNICA capacidade de voz do desenho (IA-009 §2.1,
+  // `ai.capability.voice`) — uma chave desliga toda a voz. Não se cria capacidade
+  // nova por função (o desenho declara dez; chave granular seria chave inventada).
+  "elevenlabs-tts": "voice",
+  "elevenlabs-tts-stream": "voice",
+  "elevenlabs-sfx": "voice",
+  "elevenlabs-sts": "voice",
   "elevenlabs-dialogue": "voice",
   "elevenlabs-voice-design": "voice",
   "voice-changer": "voice",
+  "elevenlabs-agent-token": "voice",
+  "elevenlabs-scribe-token": "voice",
   "chatbot-l1": "chatbot_l1",
 });
 

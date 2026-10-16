@@ -76,6 +76,30 @@ Deno.test("capabilityFlagKeyForFunction resolve o slug da função para a chave 
   assertEquals(capabilityFlagKeyForFunction("chatbot-l1"), "ai.capability.chatbot_l1");
 });
 
+Deno.test("a família de voz/áudio da ElevenLabs responde à ÚNICA chave ai.capability.voice (SL-010b)", () => {
+  // Decisão do cartão t_98090b40: a família inteira de voz sob a única capacidade `voice`
+  // do desenho IA-009 §2.1 — uma chave desliga toda a voz. NÃO se inventa capacidade nova.
+  const familiaDeVoz = [
+    "voice-agent",
+    "elevenlabs-tts",
+    "elevenlabs-tts-stream",
+    "elevenlabs-sfx",
+    "elevenlabs-sts",
+    "elevenlabs-dialogue",
+    "elevenlabs-voice-design",
+    "voice-changer",
+    "elevenlabs-agent-token",
+    "elevenlabs-scribe-token",
+  ];
+  for (const slug of familiaDeVoz) {
+    assertEquals(
+      capabilityFlagKeyForFunction(slug),
+      "ai.capability.voice",
+      `${slug} deveria responder à chave única de voz (ai.capability.voice)`,
+    );
+  }
+});
+
 Deno.test("função sem capacidade declarada não tem chave (não se inventa chave por prefixo)", () => {
   for (const slug of ["ai-proxy", "classify-sticker", "classify-emoji", "ai-jobs-worker"]) {
     assertEquals(capabilityFlagKeyForFunction(slug), null, `${slug} não deveria ter capacidade`);
