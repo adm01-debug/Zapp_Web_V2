@@ -706,10 +706,10 @@ Deno.test("login com `mode:'login'` explícito devolve tokens e NÃO revoga sess
 
   const res = await handleLogin(
     post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "secret", mode: "login" })),
-    { admin, anon },
+    { admin, anon, enforceRateLimit: () => Promise.resolve({ allowed: true }) },
   );
   assertEquals(res.status, 200);
-  assertEquals(admin.signOuts.length, 0);
+  assertEquals(admin.calls.some((c) => c.fn === "revoke_auth_sessions"), false);
 });
 
 // ── R2-AUTH-004 (item 6): credencial válida com perfil inativo NÃO entra ──────
