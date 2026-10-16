@@ -102,15 +102,23 @@ describe('InstanceSettingsDialog — aba Config', () => {
   });
 
   it('salvar envia o estado completo da aba com o nome da instância', async () => {
-    h.getSettings.mockResolvedValue({ rejectCall: false, msgCall: '', alwaysOnline: false });
+    h.getSettings.mockResolvedValue({
+      rejectCall: false,
+      msgCall: '',
+      groupsIgnore: false,
+      alwaysOnline: false,
+      readMessages: false,
+      readStatus: false,
+      syncFullHistory: false,
+    });
 
     render(abrir());
     await waitFor(() => expect(h.getSettings).toHaveBeenCalledWith('conexao-1'));
 
-    fireEvent.click(screen.getByLabelText('Sempre online'));
+    fireEvent.click(await screen.findByLabelText('Sempre online'));
     expect(screen.getByLabelText('Sempre online').getAttribute('aria-checked')).toBe('true');
 
-    fireEvent.click(salvarConfig());
+    fireEvent.click(await screen.findByRole('button', { name: /Salvar Configurações/ }));
 
     await waitFor(() => expect(h.setSettings).toHaveBeenCalledTimes(1));
     expect(h.setSettings).toHaveBeenCalledWith({
@@ -133,10 +141,55 @@ describe('InstanceSettingsDialog — aba Config', () => {
     render(abrir());
     await waitFor(() => expect(h.getSettings).toHaveBeenCalledWith('conexao-1'));
 
-    fireEvent.click(salvarConfig());
+    fireEvent.click(await screen.findByRole('button', { name: /Salvar Configurações/ }));
 
     await waitFor(() => expect(h.toast.error).toHaveBeenCalledWith('Erro ao salvar'));
     expect(h.toast.success).not.toHaveBeenCalledWith('Configurações salvas!');
+  });
+
+  it('leitura que falha mostra erro com "Tentar de novo", nunca interruptores desligados', async () => {
+    h.getSettings.mockRejectedValue(new Error('provedor fora do ar'));
+
+    render(abrir());
+
+    expect(await screen.findByText('Não foi possível ler as configurações desta conexão.')).toBeTruthy();
+    // O defeito antigo: falha de leitura aparecia como tudo desligado.
+    expect(screen.queryByLabelText('Rejeitar chamadas')).toBeNull();
+    expect(screen.queryByLabelText('Ignorar grupos')).toBeNull();
+
+    h.getSettings.mockResolvedValue({
+      rejectCall: true,
+      msgCall: 'Não posso atender agora',
+      groupsIgnore: false,
+      alwaysOnline: false,
+      readMessages: false,
+      readStatus: false,
+      syncFullHistory: false,
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }));
+
+    await waitFor(() =>
+      expect(screen.getByLabelText('Rejeitar chamadas').getAttribute('aria-checked')).toBe('true'),
+    );
+    expect(screen.queryByText('Não foi possível ler as configurações desta conexão.')).toBeNull();
+  });
+
+  it('campo que a Edge não devolveu aparece como "Indisponível nesta versão" e fica fora do payload', async () => {
+    h.getSettings.mockResolvedValue({ rejectCall: true });
+
+    render(abrir());
+
+    expect(await screen.findByLabelText('Rejeitar chamadas')).toBeTruthy();
+    // Os 5 interruptores sem campo na resposta não podem fingir "desligado";
+    // a mensagem de rejeição também ficou fora (campo msgCall ausente).
+    expect(screen.getAllByText('Indisponível nesta versão').length).toBe(5);
+    expect(screen.queryByLabelText('Ignorar grupos')).toBeNull();
+    expect(screen.queryByPlaceholderText('Não posso atender. Envie mensagem.')).toBeNull();
+
+    fireEvent.click(salvarConfig());
+
+    await waitFor(() => expect(h.setSettings).toHaveBeenCalledTimes(1));
+    expect(h.setSettings).toHaveBeenCalledWith({ instanceName: 'conexao-1', rejectCall: true });
   });
 });
 
@@ -172,7 +225,7 @@ describe('InstanceSettingsDialog — aba Perfil', () => {
     expect(h.toast.success).toHaveBeenCalledWith('Perfil atualizado!');
   });
 
-  it('campo em branco não é enviado (não apaga o que já está na conta)', async () => {
+  it('nome em branco não é enviado (não apaga o nome da conta)', async () => {
     h.fetchProfile.mockResolvedValue({ name: 'Antigo', status: 'Recado atual' });
 
     render(abrir());
@@ -183,6 +236,33 @@ describe('InstanceSettingsDialog — aba Perfil', () => {
 
     await waitFor(() => expect(h.updateProfileStatus).toHaveBeenCalledWith('conexao-1', 'Recado atual'));
     expect(h.updateProfileName).not.toHaveBeenCalled();
+  });
+
+  it('recado apagado é enviado vazio (dá para limpar o que estava na conta)', async () => {
+    h.fetchProfile.mockResolvedValue({ name: 'Loja', status: 'Recado atual' });
+
+    render(abrir());
+    await waitFor(() => expect(statusInput().value).toBe('Recado atual'));
+
+    fireEvent.change(statusInput(), { target: { value: '' } });
+    fireEvent.click(salvarPerfil());
+
+    await waitFor(() => expect(h.updateProfileStatus).toHaveBeenCalledWith('conexao-1', ''));
+    expect(h.toast.success).toHaveBeenCalledWith('Perfil atualizado!');
+  });
+
+  it('URL de foto fora do http(s) é recusada e não chega ao provedor', async () => {
+    h.fetchProfile.mockResolvedValue({ name: 'Loja', status: '', profilePictureUrl: '' });
+
+    render(abrir());
+    await waitFor(() => expect(nomeInput().value).toBe('Loja'));
+
+    fireEvent.change(fotoInput(), { target: { value: 'javascript:alert(1)' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Aplicar' }));
+
+    await waitFor(() => expect(h.toast.error).toHaveBeenCalledWith('A URL da foto precisa começar com http:// ou https://.'));
+    expect(h.updateProfilePicture).not.toHaveBeenCalled();
+    expect(h.toast.success).not.toHaveBeenCalledWith('Foto atualizada!');
   });
 
   it('Aplicar grava a foto; Remover apaga a foto e limpa o campo', async () => {
@@ -203,8 +283,24 @@ describe('InstanceSettingsDialog — aba Perfil', () => {
     expect(fotoInput().value).toBe('');
     expect(h.toast.success).toHaveBeenCalledWith('Foto removida');
   });
+});
 
-  it.todo('PL-03 (iris): a aba Etiquetas mostra erro honesto quando findLabels falha');
+describe('InstanceSettingsDialog — abas da instância', () => {
+  it('não expõe mais a aba Etiquetas e mantém só Config, Perfil e Privacidade', async () => {
+    h.getSettings.mockResolvedValue({
+      rejectCall: false, msgCall: '', groupsIgnore: false, alwaysOnline: false,
+      readMessages: false, readStatus: false, syncFullHistory: false,
+    });
+
+    render(abrir());
+    await waitFor(() => expect(h.getSettings).toHaveBeenCalledWith('conexao-1'));
+
+    expect(screen.queryByText('Etiquetas')).toBeNull();
+    expect(screen.queryByText('Nenhuma etiqueta encontrada. Etiquetas são criadas no WhatsApp Business.')).toBeNull();
+    expect(screen.getByText('Config')).toBeTruthy();
+    expect(screen.getByText('Perfil')).toBeTruthy();
+    expect(screen.getByText('Privacidade')).toBeTruthy();
+  });
 });
 
 describe('InstanceSettingsDialog — fora da minha área (registrado no cartão)', () => {
