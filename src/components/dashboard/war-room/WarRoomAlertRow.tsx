@@ -24,7 +24,7 @@ export function WarRoomAlertRow({ alert, onDismiss }: AlertRowProps) {
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
-      className={cn("p-3 rounded-lg border flex items-start gap-3", alertStyles[alert.type], alert.isNew && alert.type === 'critical' && "animate-pulse")}
+      className={cn("p-3 rounded-lg border flex items-start gap-3", alertStyles[alert.type], alert.isNew && alert.type === 'critical' && "motion-safe:animate-pulse")}
     >
       <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
       <div className="flex-1 min-w-0">
@@ -32,7 +32,7 @@ export function WarRoomAlertRow({ alert, onDismiss }: AlertRowProps) {
         <div className="text-xs opacity-80">{alert.message}</div>
         <div className="text-xs opacity-60 mt-1">{alert.timestamp.toLocaleTimeString()}</div>
       </div>
-      <Button variant="ghost" size="icon" className="shrink-0 h-6 w-6" onClick={onDismiss}><XCircle className="w-4 h-4" /></Button>
+      <Button variant="ghost" size="icon" aria-label={`Dispensar alerta: ${alert.title}`} className="shrink-0 h-6 w-6" onClick={onDismiss}><XCircle className="w-4 h-4" /></Button>
     </motion.div>
   );
 }
