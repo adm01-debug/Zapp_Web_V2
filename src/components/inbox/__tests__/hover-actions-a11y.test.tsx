@@ -6,6 +6,7 @@ import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { axe } from 'vitest-axe';
 import { HOVER_REVEAL, HOVER_REVEAL_TAP } from '../hoverActions';
 import { MessageTemplates } from '../MessageTemplates';
+import { QuickRepliesManager } from '../QuickRepliesManager';
 
 /**
  * U1 — as 21 ações do inbox que só apareciam no hover.
@@ -119,7 +120,12 @@ vi.mock('@/hooks/auth/useAuth', () => ({
 }));
 
 vi.mock('framer-motion', () => ({
-  motion: { div: ({ children, ...props }: { children?: ReactNode; [key: string]: unknown }) => <div {...props}>{children}</div> },
+  motion: {
+    div: ({ children, ...props }: { children?: ReactNode; [key: string]: unknown }) => <div {...props}>{children}</div>,
+    // O botão do framer-motion perde `whileHover`/`whileTap` (atributo que não
+    // existe no DOM); o que interessa aqui é o botão nativo por dentro.
+    button: ({ children }: { children?: ReactNode }) => <button type="button">{children}</button>,
+  },
   AnimatePresence: ({ children }: { children?: ReactNode }) => <>{children}</>,
 }));
 
@@ -185,5 +191,85 @@ describe('hoverActions — camada de ações do template na tela', () => {
     const { container } = abrirCamada();
     const resultados = await axe(container, { runOnly: { type: 'rule', values: ['button-name'] } });
     expect(resultados).toHaveNoViolations();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Prova na tela: a estrela de favoritar da resposta rápida (compact) era um
+// `<svg>` com `onClick` — o Tab nunca chegava nela. Agora é botão de verdade.
+// ---------------------------------------------------------------------------
+
+const { TOGGLE_FAVORITE, RESPOSTA_RAPIDA } = vi.hoisted(() => ({
+  TOGGLE_FAVORITE: vi.fn(),
+  RESPOSTA_RAPIDA: [
+    {
+      id: 'qr-1',
+      title: 'Boas-vindas',
+      content: 'Olá! Como posso ajudar?',
+      shortcut: '/ola',
+      category: 'geral',
+      is_global: false,
+      use_count: 1,
+      user_id: 'u1',
+      created_at: '2026-10-01T10:00:00.000Z',
+      updated_at: '2026-10-01T10:00:00.000Z',
+    },
+  ],
+}));
+
+vi.mock('@/hooks/chat/useQuickReplies', () => ({
+  useQuickReplies: () => ({
+    templates: RESPOSTA_RAPIDA,
+    filteredTemplates: RESPOSTA_RAPIDA,
+    favoriteTemplates: [],
+    recentTemplates: [],
+    searchQuery: '',
+    setSearchQuery: vi.fn(),
+    isLoading: false,
+    createTemplate: vi.fn(),
+    updateTemplate: vi.fn(),
+    deleteTemplate: vi.fn(),
+    toggleFavorite: TOGGLE_FAVORITE,
+    isFavorite: () => false,
+    incrementUseCount: vi.fn(),
+    isCreating: false,
+    isUpdating: false,
+  }),
+}));
+
+vi.mock('sonner', () => ({ toast: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn() }) }));
+
+const NOME_FAVORITAR = 'Favoritar resposta: Boas-vindas';
+
+describe('hoverActions — o favoritar da resposta rápida é alcançável', () => {
+  it('é um botão nativo com nome: aceita foco e alterna ao clique', () => {
+    render(<QuickRepliesManager compact onSelect={vi.fn()} />);
+    const favoritar = screen.getByRole('button', { name: NOME_FAVORITAR });
+
+    // O que o Tab precisa encontrar: botão nativo, fora de `tabindex="-1"`,
+    // habilitado, com nome acessível — e que responde ao clique.
+    expect(favoritar.tagName).toBe('BUTTON');
+    expect(favoritar).not.toHaveAttribute('tabindex', '-1');
+    expect(favoritar).not.toBeDisabled();
+    expect(favoritar).toHaveAttribute('aria-pressed', 'false');
+    favoritar.focus();
+    expect(favoritar).toHaveFocus();
+
+    fireEvent.click(favoritar);
+    expect(TOGGLE_FAVORITE).toHaveBeenCalledWith('qr-1');
+  });
+
+  it('leva o padrão inteiro e os 40 px de toque', () => {
+    render(<QuickRepliesManager compact onSelect={vi.fn()} />);
+    const utilitarios = screen
+      .getByRole('button', { name: NOME_FAVORITAR })
+      .className.split(/\s+/);
+
+    for (const via of VIAS) {
+      expect(utilitarios).toContain(via);
+    }
+    expect(utilitarios).toContain('[@media(pointer:coarse)]:min-h-10');
+    expect(utilitarios).toContain('[@media(pointer:coarse)]:min-w-10');
+    expect(utilitarios).not.toContain(CLASSE_ANTIGA);
   });
 });

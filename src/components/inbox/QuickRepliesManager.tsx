@@ -89,14 +89,21 @@ export function QuickRepliesManager({ onSelect, compact = false }: QuickRepliesM
         <ScrollArea className="h-[200px]">
           <div className="space-y-1">
             {displayedTemplates.map((template) => (
-              <motion.button key={template.id} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} onClick={() => handleSelect(template)} className="w-full p-2 text-left rounded-lg hover:bg-muted/50 transition-colors group">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-sm truncate">{template.title}</span>
-                  <Star className={cn(`w-3.5 h-3.5 ${HOVER_REVEAL_TAP} transition-opacity`, isFavorite(template.id) && "opacity-100 fill-yellow-400 text-warning")}
-                    onClick={(e) => { e.stopPropagation(); toggleFavorite(template.id); }} />
-                </div>
-                <p className="text-xs text-muted-foreground truncate">{template.content}</p>
-              </motion.button>
+              <div key={template.id} className="flex items-center gap-1 rounded-lg hover:bg-muted/50 transition-colors group">
+                <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} onClick={() => handleSelect(template)} className="flex-1 min-w-0 p-2 text-left">
+                  <span className="block font-medium text-sm truncate">{template.title}</span>
+                  <p className="text-xs text-muted-foreground truncate">{template.content}</p>
+                </motion.button>
+                <button
+                  type="button"
+                  aria-label={`Favoritar resposta: ${template.title}`}
+                  aria-pressed={isFavorite(template.id)}
+                  onClick={() => toggleFavorite(template.id)}
+                  className={cn('shrink-0 mr-1 rounded-md flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', HOVER_REVEAL_TAP)}
+                >
+                  <Star className={cn('w-3.5 h-3.5 transition-colors', isFavorite(template.id) && 'fill-yellow-400 text-warning')} />
+                </button>
+              </div>
             ))}
           </div>
         </ScrollArea>
