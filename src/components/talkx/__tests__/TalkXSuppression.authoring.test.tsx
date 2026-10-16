@@ -43,10 +43,14 @@ vi.mock('@/integrations/supabase/client', () => {
     self.maybeSingle = () => Promise.resolve({ data: { id: 'profile-1' }, error: null });
     // #407: a busca de contato passou a mandar filtro ao servidor e a fechar a
     // consulta com .order(...).limit(...) — o mock precisa aceitar o encadeamento.
-    self.order = () =>
-      Object.assign(Promise.resolve({ data, error: null }), {
+    self.order = () => {
+      const done = Object.assign(Promise.resolve({ data, error: null }), {
         limit: () => Promise.resolve({ data, error: null }),
+        order: () => done,
+        range: () => done,
       });
+      return done;
+    };
     return self;
   };
   return {
@@ -67,8 +71,10 @@ vi.mock('@/integrations/supabase/client', () => {
           const self: Record<string, unknown> = {};
           self.select = () => self;
           self.is = () => self;
-          self.order = () =>
-            Promise.resolve({
+          self.order = () => {
+            // HZ2-013: a lista encadeia `.order()` duas vezes (desempate por `id`) e
+            // fecha com `.range()`; emular a cadeia mantém as MESMAS linhas de antes.
+            const done = Object.assign(Promise.resolve({
               data: [
                 {
                   id: 'bl-1',
@@ -90,7 +96,9 @@ vi.mock('@/integrations/supabase/client', () => {
                 },
               ],
               error: null,
-            });
+            }), { order: () => done, range: () => done });
+            return done;
+          };
           self.update = (payload: Record<string, unknown>) => {
             updated.push(payload);
             return {

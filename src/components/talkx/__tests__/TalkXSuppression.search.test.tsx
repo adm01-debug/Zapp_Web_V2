@@ -79,6 +79,8 @@ vi.mock('@/integrations/supabase/client', () => {
       orders.push({ col, asc: opts?.ascending !== false });
       return self;
     };
+    // HZ2-013: a lista fecha a consulta com `.range()` (fatia do PostgREST).
+    self.range = (from: number, to: number) => { record('range', [from, to]); return self; };
     self.then = (res: (v: unknown) => unknown, rej: (e: unknown) => unknown) => Promise.resolve(run()).then(res, rej);
     return self;
   };

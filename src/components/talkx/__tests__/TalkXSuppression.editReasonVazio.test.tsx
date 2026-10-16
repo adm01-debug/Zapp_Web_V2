@@ -57,7 +57,16 @@ vi.mock('@/integrations/supabase/client', () => {
     self.select = () => self;
     self.is = () => self;
     self.not = () => self;
-    self.order = () => Promise.resolve({ data: h.rows, error: null });
+    // HZ2-013: a lista de supressão encadeia `.order()` duas vezes (desempate por
+    // `id`) e fecha com `.range()` — a cadeia emulada precisa aceitar isso e
+    // continuar thenable, resolvendo as MESMAS linhas de antes.
+    self.order = () => {
+      const done = Object.assign(Promise.resolve({ data: h.rows, error: null }), {
+        order: () => done,
+        range: () => done,
+      });
+      return done;
+    };
     self.limit = () => Promise.resolve({ data: [], error: null });
     return self;
   };
@@ -68,7 +77,16 @@ vi.mock('@/integrations/supabase/client', () => {
         const self: Record<string, unknown> = {};
         self.select = () => self;
         self.is = () => self;
-        self.order = () => Promise.resolve({ data: h.rows, error: null });
+        // HZ2-013: a lista de supressão encadeia `.order()` duas vezes (desempate por
+    // `id`) e fecha com `.range()` — a cadeia emulada precisa aceitar isso e
+    // continuar thenable, resolvendo as MESMAS linhas de antes.
+    self.order = () => {
+      const done = Object.assign(Promise.resolve({ data: h.rows, error: null }), {
+        order: () => done,
+        range: () => done,
+      });
+      return done;
+    };
         self.update = (payload: Record<string, unknown>) => ({
           in: (column: string, ids: string[]) => {
             h.updates.push({ payload, column, ids });

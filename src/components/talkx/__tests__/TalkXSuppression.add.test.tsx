@@ -71,7 +71,15 @@ vi.mock('@/integrations/supabase/client', () => {
     const self: Record<string, unknown> = {};
     self.select = () => self;
     self.is = () => self;
-    self.order = () => Promise.resolve({ data: BL, error: null });
+    // HZ2-013: a lista encadeia `.order()` duas vezes (desempate por `id`) e fecha
+    // com `.range()`; emular assim mantém a cadeia thenable com as mesmas linhas.
+    self.order = () => {
+      const done = Object.assign(Promise.resolve({ data: BL, error: null }), {
+        order: () => done,
+        range: () => done,
+      });
+      return done;
+    };
     return self;
   };
   return {
