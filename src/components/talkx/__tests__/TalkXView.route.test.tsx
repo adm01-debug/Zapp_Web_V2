@@ -469,14 +469,22 @@ describe('TalkXView item aberto na URL (TL-109 / X052)', () => {
 
   afterEach(() => vi.clearAllMocks());
 
-  it('render de ?segment= termina com a URL sem segment (normaliza pela tela)', async () => {
+  it('render de ?segment= termina com a URL sem segment (normaliza pela tela, via replace)', async () => {
     window.history.replaceState(null, '', '/?view=talkx&segment=');
+    const pushState = vi.spyOn(window.history, 'pushState');
+    const replaceState = vi.spyOn(window.history, 'replaceState');
+
     render(<TalkXView />);
 
     expect(await screen.findByRole('button', { name: 'Abrir novo wizard' })).toBeInTheDocument();
     await waitFor(() => {
       expect(new URLSearchParams(window.location.search).has('segment')).toBe(false);
     });
+    // Carga inicial: corrigir o endereco tem de usar replace — nunca empurrar entrada nova.
+    expect(replaceState).toHaveBeenCalled();
+    expect(pushState).not.toHaveBeenCalled();
+    pushState.mockRestore();
+    replaceState.mockRestore();
   });
 
   it('campanha duplicada no endereço não é escolhida por acaso e sai da URL', async () => {
@@ -545,10 +553,13 @@ describe('TalkXView item aberto na URL (TL-109 / X052)', () => {
     window.history.replaceState(null, '', '/?view=talkx');
     const antes = window.history.length;
     window.history.replaceState(null, '', '/?view=talkx&campaign=cmp_sched');
+    const pushState = vi.spyOn(window.history, 'pushState');
 
     render(<TalkXView />);
 
     expect(await screen.findByTestId('scheduled')).toBeInTheDocument();
+    await waitFor(() => expect(pushState).not.toHaveBeenCalled());
     expect(window.history.length).toBe(antes);
+    pushState.mockRestore();
   });
 });
