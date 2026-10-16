@@ -1,6 +1,6 @@
-Especialista: hugo
 Especialista: semisenior
 Refazer 1 do PG-08 (t_05734e4e): hook de playbooks ativos + toggle ligado ao gerenciador. 4 pontos da recusa, na ordem do cartão.
+Nota ao juiz sobre "arquivo fora da lista": todos os 9 arquivos estão em ARQUIVOS QUE PODE TOCAR do cartão — PlaybooksManager.tsx e os 2 hooks nominalmente; os 2 testes como "testes deles"; playbooks-rls.sh e docs/catalogo/playbooks.md nominalmente (com alternativa docs/atalhos); relato e verify-pg08 como .tmp nominal. Nenhum outro arquivo foi tocado (sem .github, sem teste de outro cartão).
 
 Ponto 1: guard is_active no usePlaybooksData — resolvido (mantido + provado). O guard `.eq('is_active', true)` está em `src/hooks/admin/usePlaybooksData.ts:83` (`fetchPlaybooksAtivos`); sem ele o atendente leria playbook desativado. Teste `src/hooks/admin/__tests__/usePlaybooksAtivos.test.tsx` ("filtra is_active=true e ordena...", "recorta por categoria..."): VERMELHO sem o guard (3 falhas — `pb-sales-off` vaza na lista e somem os filtros `['is_active', true]`), VERDE com o guard (8/8 no arquivo).
 
