@@ -190,7 +190,7 @@ export function useAgentCelebrations(
    * Conquista não existe no Realtime em produção: a única tabela de gamificação
    * publicada em `supabase_realtime` é `agent_stats` (a guarda do CI recusa
    * assinatura fora da publicação — e lá ela seria morta, sem evento nenhum).
-   * O sinal publicado é a própria contagem: `grant_agent_achievement` insere a
+   * O sinal publicado é a própria contagem: a concessão no servidor insere a
    * conquista e, na MESMA transação, sobe `achievements_count` em `agent_stats`.
    * Contagem maior = conquista gravada; relê a janela e celebra só o que é novo
    * (o filtro de ids já conhecidos impede repetir o que já foi visto).
