@@ -158,9 +158,9 @@ Essas correções não encerram todas as etapas futuras. O ledger preserva integ
 | BLOCKED_EXTERNAL | 1 | 5 |
 | DONE_VERIFIED | 2 | 3 |
 | HUMAN_ACCEPTANCE | 2 | 1 |
-| IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE | 28 | 34 |
+| IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE | 29 | 34 |
 | NEEDS_REVALIDATION | 0 | 1 |
-| NOT_IMPLEMENTED | 50 | 15 |
+| NOT_IMPLEMENTED | 49 | 15 |
 | OBSERVATION_WINDOW | 2 | 1 |
 | PARTIAL | 114 | 30 |
 | VALIDATED_FAIL | 1 | 5 |
@@ -388,7 +388,7 @@ Os títulos longos Multiplix são abreviados apenas nesta tabela; `tasks.json` c
 | X153 | Tela 12: montar cabeçalho, seletor, abas, anel de progresso e "Pico de respostas" | PARTIAL | — | [plano L184](https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/talkx/v4/etapas/F11-acompanhar-campanha.md#L184) |
 | X154 | Tela 12: montar "Ações da campanha", "Configurações atuais" e a aba Configurações | PARTIAL | — | [plano L196](https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/talkx/v4/etapas/F11-acompanhar-campanha.md#L196) |
 | X155 | Tela 12: dar conteúdo real às abas Destinatários, Mensagens, Resultados e Logs | PARTIAL | — | [plano L208](https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/talkx/v4/etapas/F11-acompanhar-campanha.md#L208) |
-| X156 | Tela 13: criar `TalkXCampaignPaused.tsx` com cabeçalho, banner, Retomar e Encerrar | NOT_IMPLEMENTED | — | [plano L220](https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/talkx/v4/etapas/F11-acompanhar-campanha.md#L220) |
+| X156 | Tela 13: criar `TalkXCampaignPaused.tsx` com cabeçalho, banner, Retomar e Encerrar | IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE | — | [plano L220](https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/talkx/v4/etapas/F11-acompanhar-campanha.md#L220) |
 | X157 | Tela 13: montar as 8 abas com conteúdo real | NOT_IMPLEMENTED | — | [plano L232](https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/talkx/v4/etapas/F11-acompanhar-campanha.md#L232) |
 | X158 | Tela 13: montar os 4 KPIs, o anel por audiência e o card "Segmentos da campanha" | NOT_IMPLEMENTED | — | [plano L244](https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/talkx/v4/etapas/F11-acompanhar-campanha.md#L244) |
 | X159 | Tela 13: criar o "Checklist para retomar" com 5 itens, verificação e persistência | PARTIAL | — | [plano L256](https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/talkx/v4/etapas/F11-acompanhar-campanha.md#L256) |
