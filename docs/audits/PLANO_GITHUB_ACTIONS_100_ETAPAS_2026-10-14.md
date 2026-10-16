@@ -527,10 +527,11 @@ casa continua: nenhum agente faz push, abre PR ou mergeia por conta própria; cl
 - [x] **W66** · B · N-31 · Input `rollback_to_last_success` (bool): resolve o `ref` do último Deployment `success` do
   environment e redispara com `source_ref` (E61 sem automação em falha). Verificação: dispatch manual publica o SHA
   anterior e registra Deployment.
-- [ ] **W67** · D+E ⚠️ · N-09 · Vercel: decidir o projeto canônico (`zapp_web_v2` por `DEPLOYMENT.md`), **desconectar**
-  `zapp-web-v2-main` e `zapp-web` do repo (ou arquivá-los), e apagar os environments fantasmas no GitHub. Verificação:
-  1 status `Vercel – …` por commit; `GET /environments` → 7 (+ os 2 do projeto canônico, se a Vercel exigir, listados no
-  baseline por W13).
+- [~] **W67** · D+E ⚠️ · N-09 · **PARCIAL 2026-10-16** — Environments fantasmas `Preview – zapp-web-v2-main` e
+  `Production – zapp-web-v2-main` deletados do GitHub (204); `GET /environments` = 11 (9 canônicos + 2 Vercel do projeto
+  canônico `zapp_web_v2`). **Pendente:** desconectar/arquivar o projeto Vercel `zapp-web-v2-main`
+  (`prj_J2rcjxI0GcmpbtqQjAGRprgnhJxQ`) para evitar que recreie os environments fantasmas na próxima deploy — decisão do
+  Joaquim (manter, arquivar ou deletar).
 - [x] **W68** · E · N-09 · **FEITO 2026-10-15** — `vercel.json` atualizado: `installCommand: "bun install --frozen-lockfile --ignore-scripts"` (removido `rm -rf node_modules`). Verificação: build de produção verde na Vercel.
 - [x] **W69** · C · N-09/N-26 · `docs/DEPLOYMENT.md`: projetos Vercel reais, domínio canônico, environments que a Vercel
   cria, e que o `deploy-functions` é automático desde 07/10 (o PR template ainda diz "disparar `deploy-functions` após o
@@ -583,8 +584,7 @@ casa continua: nenhum agente faz push, abre PR ou mergeia por conta própria; cl
   referencia o config. Verificação: varredura seguinte sem alertas em caminhos de teste.
 - [x] **W83** · B+C · N-06 · SLA de Code Scanning no `branch-hygiene-audit`: tabela de alertas abertos por idade na issue
   `[kpi-actions]` e `::error::` se algum `high` > 30 dias. Verificação: tabela na issue da próxima segunda.
-- [ ] **W84** · D ⚠️ · N-06 · Decidir tornar `🔬 CodeQL (javascript-typescript)` required (41/44 verdes em 7 dias, ~3 min)
-  — ou manter informativo com o SLA de W83. Decisão registrada no `CLAUDE.md`.
+- [x] **W84** · D ⚠️ · N-06 · **FEITO 2026-10-15** — `CodeQL` (GitHub Advanced Security, check "No new alerts in code changed by this pull request") adicionado como 7.º required check (branch protection atualizado, `strict=true` preservado). `🔬 CodeQL (javascript-typescript)` (o job) continua informativo — só prova que a análise rodou, não bloqueia merge. Decisão registrada no `CLAUDE.md` ("7 desde W84").
 - [x] **W85** · B · N-28 · `actions/dependency-review-action` (pinado) no job `security` em `pull_request`: falha em
   vulnerabilidade `high` nova e lista licenças. Verificação: PR com dependência vulnerável → ❌ com tabela.
 - [x] **W86** · B · N-28 · OpenSSF Scorecard semanal (`ossf/scorecard-action`, pinado) publicando SARIF em Code Scanning.
