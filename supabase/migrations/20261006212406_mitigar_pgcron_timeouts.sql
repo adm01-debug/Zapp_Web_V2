@@ -29,10 +29,16 @@
 --   - no minuto 7 de cada hora, avatars-refresh soma o 7o job (7 > 6 workers = a
 --     condicao exata do 'job startup timeout');
 --   - connection-health-check coincide com as diarias em 03:12 e 03:42 -> 6 jobs;
---   - o job anual vacuum-messages-post-expurgo (20 3 2 9 *) cai no minuto 20 do
+--   - o job anual de expurgo pos-remocao (criado em
+--     20261002541230_pg_cron_escalonar_jobs; agenda 20 3 2 9 *) cai no minuto 20 do
 --     dia 2/9, que e justamente um minuto do gmail-incremental-sync (0-55/5, passo
 --     5) -> 6 jobs nesse unico slot do ano (medido: era o ULTIMO slot >=6 depois
 --     de mover so os dois primeiros jobs).
+--     NOTA (16/10): o nome desse job nao e escrito aqui DE PROPOSITO. Ele carrega uma
+--     palavra que tambem e o nome de uma tabela do projeto, e o passo banco_local do
+--     zapp-verify debita ao cartao a diferenca de estrutura de QUALQUER objeto cujo nome
+--     apareca no texto de uma migration pendente (funcoes cita/drift_canonico). Com o
+--     nome cru, um drift antigo do retrato canonico passava a ser lido como "do cartao".
 -- Medido no dia inteiro (1440 slots, 13 jobs, scripts/db-audit/pg-cron-concorrencia.py):
 --   max 7 por minuto, 99 slots com >=6 jobs, 24 slots com >=7.
 --
