@@ -2,6 +2,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { crossTabSendDedupe } from '@/lib/crossTabSendDedupe';
 import { drainOfflineQueueOnReconnect, offlineSendQueue, type OfflineQueuedMessage } from '@/lib/offlineQueue';
 import { sendThrottle } from '@/lib/sendThrottle';
+import { enrichSentMessageLinkPreview } from './link-preview.service';
 
 export type OutboundMessageType = 'text' | 'image' | 'audio' | 'video' | 'document' | 'sticker' | 'location';
 
@@ -18,6 +19,12 @@ export interface SendOutboundMessageInput {
    * do not have one get a new UUID for this user action.
    */
   clientMessageId?: string;
+  /**
+   * PK-24: prévia que o chamador já trouxe (`ChatService` repassa
+   * `payload.link_preview`). Quando presente, o funil não pede outra — é a
+   * guarda que antes morava no `ChatService.sendMessage`.
+   */
+  linkPreview?: unknown;
 }
 
 export interface OutboundMessageDeliveryResult {
@@ -163,7 +170,22 @@ async function enqueueAndDispatch(
     throw enqueueError ?? new Error('Não foi possível enfileirar a mensagem.');
   }
 
-  return dispatchQueuedMessage(queued.id, queued.status ?? null, queued.external_id ?? null);
+  const result = await dispatchQueuedMessage(queued.id, queued.status ?? null, queued.external_id ?? null);
+
+  // Prévia do link (PK-24): bônus DEPOIS do aceite, no caminho real de envio
+  // (`messageSender`/`ChatService` já passam por aqui). É o mesmo formato que o
+  // webhook grava nas mensagens recebidas. Nunca atrasa este retorno nem derruba
+  // o envio — uma falha só deixa a mensagem sem prévia. Com prévia pronta do
+  // chamador não há o que buscar (a guarda antiga do `ChatService`).
+  if (
+    (input.messageType ?? 'text') === 'text' &&
+    input.content.length > 0 &&
+    input.linkPreview == null
+  ) {
+    void enrichSentMessageLinkPreview(queued.id, input.content);
+  }
+
+  return result;
 }
 
 /** O que ficou na fila offline sai com a MESMA chave estável: sem duplicar (item 024). */
@@ -180,6 +202,8 @@ async function deliverQueuedOfflineMessage(message: OfflineQueuedMessage): Promi
       caption: message.caption,
       replyToId: message.replyToId,
       whatsappConnectionId: message.whatsappConnectionId,
+      // PK-24: a guarda da prévia atravessa a fila offline junto.
+      linkPreview: message.linkPreview ?? null,
     },
     message.clientMessageId,
   );
@@ -216,6 +240,9 @@ async function enqueueOffline(
     caption: input.caption ?? null,
     replyToId: input.replyToId ?? null,
     whatsappConnectionId: input.whatsappConnectionId ?? null,
+    // PK-24: a guarda da prévia atravessa a fila offline; ausente não muda
+    // nada no que já está gravado.
+    ...(input.linkPreview != null ? { linkPreview: input.linkPreview } : {}),
   });
   // `pending`: a bolha mostra "enviando" até a fila drenar — nada foi entregue ainda.
   return { id: queued.clientMessageId, status: 'pending', externalId: null, idempotent: false };

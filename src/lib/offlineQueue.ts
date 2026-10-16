@@ -28,6 +28,12 @@ export interface OfflineQueuedMessage {
   caption: string | null;
   replyToId: string | null;
   whatsappConnectionId: string | null;
+  /**
+   * PK-24: prévia que o chamador já trouxe. Opcional para não mudar as linhas
+   * antigas da fila — quem não tem segue pedindo a prévia na drenagem.
+   * Nunca entra nas chaves de idempotência/dedupe (só transporte da guarda).
+   */
+  linkPreview?: unknown;
   /** Ordem de drenagem. Sempre único e crescente (a fila respeita a ordem de composição). */
   enqueuedAt: number;
   /** Tentativas de drenagem já feitas — observabilidade, não decide nada. */

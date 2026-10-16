@@ -1,30 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { Message, MessageInsert } from '@/types/chat';
-import { getLogger } from '@/lib/logger';
 import { sendOutboundMessage, type OutboundMessageType } from './outbound-message.service';
-
-const log = getLogger('ChatService');
-
-// Extract first http(s) URL from message content
-const URL_REGEX = /https?:\/\/[^\s<>"'`]+/i;
-
-async function enrichLinkPreview(messageId: string, content: string): Promise<void> {
-  const match = content.match(URL_REGEX);
-  if (!match) return;
-  const url = match[0].replace(/[).,;!?]+$/, '');
-  try {
-    const { data, error } = await supabase.functions.invoke('fetch-link-preview', {
-      body: { url },
-    });
-    if (error || !data?.preview) return;
-    await supabase
-      .from('messages')
-      .update({ link_preview: data.preview })
-      .eq('id', messageId);
-  } catch (err) {
-    log.error('Failed to enrich link preview', err);
-  }
-}
 
 export type { Message, MessageInsert };
 
@@ -90,10 +66,11 @@ export class ChatService {
       mediaUrl: payload.media_url,
       replyToId: payload.reply_to_id,
       whatsappConnectionId: payload.whatsapp_connection_id,
+      // PK-24: o funil é o ponto único da prévia — o ChatService só repassa a
+      // que o chamador já trouxe para o funil não pedir outra (a guarda antiga
+      // `!payload.link_preview` agora mora no funil).
+      linkPreview: payload.link_preview ?? null,
     });
-    if (messageType === 'text' && payload.content.length > 0 && !payload.link_preview) {
-      void enrichLinkPreview(result.id, payload.content);
-    }
     return result;
   }
 
