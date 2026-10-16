@@ -65,7 +65,7 @@ describe('WhatsAppTemplatesManager — exclusão com confirmação', () => {
   it('a lixeira abre a confirmação e NÃO apaga antes de confirmar; cancelar mantém o template', () => {
     render(<WhatsAppTemplatesManager />);
 
-    fireEvent.click(screen.getByLabelText(/Excluir Promoção/));
+    fireEvent.click(screen.getByLabelText(/^Excluir /));
 
     expect(mocks.handleDelete).not.toHaveBeenCalled();
     expect(screen.getByText('Excluir template?')).toBeTruthy();
@@ -77,7 +77,7 @@ describe('WhatsAppTemplatesManager — exclusão com confirmação', () => {
   it('confirmar exclui o template certo', () => {
     render(<WhatsAppTemplatesManager />);
 
-    fireEvent.click(screen.getByLabelText(/Excluir Promoção/));
+    fireEvent.click(screen.getByLabelText(/^Excluir /));
     fireEvent.click(screen.getByRole('button', { name: 'Excluir' }));
 
     expect(mocks.handleDelete).toHaveBeenCalledWith('tpl-1');

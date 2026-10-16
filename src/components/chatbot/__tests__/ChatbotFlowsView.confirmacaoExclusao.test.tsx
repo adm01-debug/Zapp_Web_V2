@@ -46,7 +46,7 @@ describe('ChatbotFlowsView — exclusão com confirmação', () => {
   it('a lixeira abre a confirmação e NÃO apaga antes de confirmar; cancelar mantém o fluxo', () => {
     render(<ChatbotFlowsView />);
 
-    fireEvent.click(screen.getByLabelText(/Excluir fluxo/));
+    fireEvent.click(screen.getByLabelText(/^Excluir fluxo /));
 
     expect(mocks.deleteMutate).not.toHaveBeenCalled();
     expect(screen.getByText('Excluir fluxo de chatbot?')).toBeTruthy();
@@ -58,7 +58,7 @@ describe('ChatbotFlowsView — exclusão com confirmação', () => {
   it('confirmar exclui o fluxo certo', () => {
     render(<ChatbotFlowsView />);
 
-    fireEvent.click(screen.getByLabelText(/Excluir fluxo/));
+    fireEvent.click(screen.getByLabelText(/^Excluir fluxo /));
     fireEvent.click(screen.getByRole('button', { name: 'Excluir' }));
 
     expect(mocks.deleteMutate).toHaveBeenCalledWith('flow-1');

@@ -47,7 +47,7 @@ describe('KnowledgeBaseView — exclusão com confirmação', () => {
   it('a lixeira abre a confirmação e NÃO apaga antes de confirmar; cancelar mantém o artigo', () => {
     render(<KnowledgeBaseView />);
 
-    fireEvent.click(screen.getByLabelText(/Excluir artigo/));
+    fireEvent.click(screen.getByLabelText(/^Excluir artigo: /));
 
     expect(mocks.deleteArticle).not.toHaveBeenCalled();
     expect(screen.getByText('Excluir artigo?')).toBeTruthy();
@@ -59,7 +59,7 @@ describe('KnowledgeBaseView — exclusão com confirmação', () => {
   it('confirmar exclui o artigo certo', () => {
     render(<KnowledgeBaseView />);
 
-    fireEvent.click(screen.getByLabelText(/Excluir artigo/));
+    fireEvent.click(screen.getByLabelText(/^Excluir artigo: /));
     fireEvent.click(screen.getByRole('button', { name: 'Excluir' }));
 
     expect(mocks.deleteArticle).toHaveBeenCalledWith('art-1');
