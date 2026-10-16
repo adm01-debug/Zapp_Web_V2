@@ -184,6 +184,10 @@ export function ConversationMemorySection({ contactId, index = 3 }: Conversation
   }, []);
 
   const handleSave = useCallback(async () => {
+    // Envio já em curso (o botão desabilita, mas um segundo submit pode
+    // chegar antes da próxima renderização): ignora em silêncio, sem erro.
+    if (saving) return;
+
     const payload: ConversationMemoryDraft = {
       commercialSummary: draft.commercialSummary,
       pendingItems: parseMemoryLines(draft.pendingItems),
@@ -201,7 +205,7 @@ export function ConversationMemorySection({ contactId, index = 3 }: Conversation
     setEditing(false);
     // Invalida a consulta do painel: a lista relê o banco e mostra o salvo.
     reload();
-  }, [draft, save, reload]);
+  }, [draft, save, reload, saving]);
 
   const canEdit = !loading && status !== 'error';
 

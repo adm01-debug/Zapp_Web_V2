@@ -264,6 +264,20 @@ describe('ConversationMemorySection — editar e salvar à mão', () => {
     await waitFor(() => expect(toastMock.success).toHaveBeenCalled());
   });
 
+  it('segundo envio com gravação em curso é ignorado em silêncio (um único upsert, sem erro)', async () => {
+    h.state.hold = true;
+    await abrirEdicao();
+
+    fireEvent.submit(screen.getByTestId('memoria-formulario'));
+    fireEvent.submit(screen.getByTestId('memoria-formulario'));
+
+    expect(h.upsert).toHaveBeenCalledTimes(1);
+
+    h.state.release?.();
+    await waitFor(() => expect(toastMock.success).toHaveBeenCalledTimes(1));
+    expect(toastMock.error).not.toHaveBeenCalled();
+  });
+
   it('descartar sai da edição sem gravar e joga o rascunho fora', async () => {
     await abrirEdicao();
 

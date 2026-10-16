@@ -84,4 +84,22 @@ describe('useSaveConversationMemory — gravou? avisou?', () => {
     expect(result.current.saving).toBe(false);
     expect(result.current.error).toBe('Não foi possível salvar a memória da conversa. Tente de novo.');
   });
+
+  it('segundo save com o primeiro ainda em curso é ignorado (um único upsert)', async () => {
+    const { result } = renderHook(() => useSaveConversationMemory('c1'));
+    const draft = { commercialSummary: 'Resumo', pendingItems: [], promisesMade: [] };
+
+    let first: boolean | undefined;
+    let second: boolean | undefined;
+    await act(async () => {
+      const p1 = result.current.save(draft);
+      const p2 = result.current.save(draft);
+      [first, second] = await Promise.all([p1, p2]);
+    });
+
+    expect(first).toBe(true);
+    expect(second).toBe(false);
+    expect(h.upsert).toHaveBeenCalledTimes(1);
+    expect(result.current.saving).toBe(false);
+  });
 });

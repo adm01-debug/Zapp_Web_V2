@@ -14,7 +14,7 @@
  * `useConversationMemory` — depois do upsert a lista relê o banco e mostra o
  * que ficou gravado.
  */
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { log } from '@/lib/logger';
 
@@ -36,35 +36,44 @@ export const EMPTY_MEMORY_DRAFT: ConversationMemoryDraft = {
 export function useSaveConversationMemory(contactId: string) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Trava síncrona contra envio duplo: o estado `saving` só aparece na
+  // próxima renderização, então dois `save()` no mesmo ciclo passariam os
+  // dois. A ref barra o segundo na hora, sem segundo upsert.
+  const inFlight = useRef(false);
 
   const clearError = useCallback(() => setError(null), []);
 
   const save = useCallback(async (draft: ConversationMemoryDraft): Promise<boolean> => {
+    if (inFlight.current) return false;
+    inFlight.current = true;
     setSaving(true);
     setError(null);
 
-    const summary = draft.commercialSummary.trim();
-    const { error: saveError } = await supabase
-      .from('conversation_memory')
-      .upsert(
-        {
-          contact_id: contactId,
-          commercial_summary: summary ? summary : null,
-          pending_items: draft.pendingItems,
-          promises_made: draft.promisesMade,
-        },
-        { onConflict: 'contact_id' },
-      );
+    try {
+      const summary = draft.commercialSummary.trim();
+      const { error: saveError } = await supabase
+        .from('conversation_memory')
+        .upsert(
+          {
+            contact_id: contactId,
+            commercial_summary: summary ? summary : null,
+            pending_items: draft.pendingItems,
+            promises_made: draft.promisesMade,
+          },
+          { onConflict: 'contact_id' },
+        );
 
-    if (saveError) {
-      log.error('Error saving conversation memory:', saveError);
-      setError('Não foi possível salvar a memória da conversa. Tente de novo.');
+      if (saveError) {
+        log.error('Error saving conversation memory:', saveError);
+        setError('Não foi possível salvar a memória da conversa. Tente de novo.');
+        return false;
+      }
+
+      return true;
+    } finally {
+      inFlight.current = false;
       setSaving(false);
-      return false;
     }
-
-    setSaving(false);
-    return true;
   }, [contactId]);
 
   return { save, saving, error, clearError };
