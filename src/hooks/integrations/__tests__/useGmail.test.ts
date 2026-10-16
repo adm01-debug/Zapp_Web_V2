@@ -479,7 +479,11 @@ describe('useGmail', () => {
     it('lastSyncLabel diz há quanto tempo sincronizou e envelhece sozinho, sem consulta nova', async () => {
       vi.useFakeTimers();
       try {
-        const sincronizada = { ...MOCK_ACCOUNT, last_sync_at: new Date(Date.now() - 2 * 60_000 - 30_000).toISOString() };
+        const sincronizada = {
+          ...MOCK_ACCOUNT,
+          // `MOCK_ACCOUNT.last_sync_at` é `null`: o cast mantém a união usada pelo hook.
+          last_sync_at: new Date(Date.now() - 2 * 60_000 - 30_000).toISOString() as string | null,
+        };
         setupDefaultMocks([sincronizada], []);
         const { result } = renderHook(() => useGmail(), { wrapper: createProductionLikeWrapper() });
 
