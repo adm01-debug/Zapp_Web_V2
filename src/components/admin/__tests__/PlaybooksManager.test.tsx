@@ -11,13 +11,20 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
  * `setPlaybookActive` exige para não ler a escrita como sucesso falso.
  */
 const h = vi.hoisted(() => {
-  const state = {
-    list: { data: [] as unknown, error: null as unknown },
-    mutation: { error: null as unknown },
-    lastId: null as unknown,
-    inserts: [] as Array<Record<string, unknown>>,
-    updates: [] as Array<Record<string, unknown>>,
-    deletes: [] as Array<[string, unknown]>,
+  const state: {
+    list: { data: unknown; error: unknown };
+    mutation: { error: unknown; data?: unknown };
+    lastId: unknown;
+    inserts: Array<Record<string, unknown>>;
+    updates: Array<Record<string, unknown>>;
+    deletes: Array<[string, unknown]>;
+  } = {
+    list: { data: [], error: null },
+    mutation: { error: null },
+    lastId: null,
+    inserts: [],
+    updates: [],
+    deletes: [],
   };
 
   const from = (_table: string) => {
@@ -200,5 +207,20 @@ describe('PlaybooksManager (PG-08)', () => {
     // ...e a lista local sincronizou: o selo virou "Inativo"
     expect(await screen.findByText('Inativo')).toBeInTheDocument();
     expect(screen.getByRole('switch', { name: 'Ativar playbook Playbook A' })).toBeInTheDocument();
+  });
+
+  it('salvar edição barrada pela RLS (0 linhas, sem erro) não anuncia sucesso e mantém o diálogo', async () => {
+    h.state.list = { data: [playbook()], error: null };
+    h.state.mutation = { error: null, data: [] };
+    render(<PlaybooksManager />, { wrapper: TestQueryWrapper });
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Editar playbook' }));
+    fireEvent.click(screen.getByRole('switch', { name: 'Playbook ativo' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Erro ao salvar'));
+    expect(toast.success).not.toHaveBeenCalled();
+    // o diálogo continua aberto: o campo de nome segue visível
+    expect(screen.getByPlaceholderText('Nome do playbook')).toBeInTheDocument();
   });
 });

@@ -142,11 +142,14 @@ export function PlaybooksManager() {
         is_active: isActive,
       };
 
-      const { error } = selectedPlaybook
-        ? await supabase.from('playbooks').update(payload).eq('id', selectedPlaybook.id)
-        : await supabase.from('playbooks').insert(payload);
+      const escrita = selectedPlaybook
+        ? await supabase.from('playbooks').update(payload).eq('id', selectedPlaybook.id).select('id')
+        : await supabase.from('playbooks').insert(payload).select('id');
 
-      if (error) {
+      // RLS que barra devolve `{ data: [], error: null }` — sucesso falso.
+      // Sem conferir as linhas afetadas a tela fecharia o diálogo e anunciaria
+      // "salvo" sem nada ter gravado.
+      if (escrita.error || !escrita.data?.length) {
         toast.error('Erro ao salvar');
         return;
       }
