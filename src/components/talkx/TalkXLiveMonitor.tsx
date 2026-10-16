@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
 import type { TalkXCampaign, TalkXRecipient } from '@/hooks/integrations/useTalkX';
 import { useTalkXLifecycle, TalkXLifecycleDialog } from './useTalkXLifecycle';
 import { useTalkXEvents } from '@/hooks/integrations/useTalkXEvents';
+import { useTalkXLiveChannel } from '@/hooks/integrations/useTalkXLiveChannel';
 import { useTalkXConnectionStatus } from '@/hooks/integrations/useTalkXConnectionStatus';
 import { IconTile, RailCard, MetaRow, StatusPill, CAMPAIGN_STATUS, RECIPIENT_STATUS, fmtInt, pct, fmtDateTime, fmtAgo } from './talkxShared';
 import { TalkXLiveKpiRow } from './tracking/TalkXLiveKpiRow';
@@ -31,6 +32,10 @@ const REFETCH = 4000;
 export function TalkXLiveMonitor({ campaignId, onBack, onOpenHelp }: Props) {
   const qc = useQueryClient();
   const lifecycle = useTalkXLifecycle();
+  // X144/TL-153d: a tela lê o estado do canal único para decidir o ritmo das consultas:
+  // ao vivo, o evento atualiza os dados e o polling para (`false`); sem o canal, o painel
+  // usa o intervalo degradado em vez de polling fixo.
+  const liveChannel = useTalkXLiveChannel(campaignId);
   // X047: cada bloco assíncrono deste Monitor declara o próprio estado (carga/erro/vazio)
   // e o próprio refetch. O retry de um bloco não troca a campanha aberta.
   const {
@@ -117,7 +122,7 @@ export function TalkXLiveMonitor({ campaignId, onBack, onOpenHelp }: Props) {
   const remaining = campaign ? Math.max(0, campaign.total_recipients - processed) : 0;
 
   // Real rate data from hook (E02) — replaced Math.random with actual DB data
-  const { rateByMinute: chartData, isLoading: rateLoading, isError: rateError, refetch: refetchRate } = useTalkXMonitor(campaignId, statusFilter);
+  const { rateByMinute: chartData, isLoading: rateLoading, isError: rateError, refetch: refetchRate } = useTalkXMonitor(campaignId, statusFilter, liveChannel.live ? false : (liveChannel.panelPollMs ?? undefined));
 
   // X148 — "Saúde da Campanha": o último envio e a taxa por minuto saem dos envios da
   // campanha INTEIRA. A consulta acima recebe o filtro de status da aba de destinatários;
