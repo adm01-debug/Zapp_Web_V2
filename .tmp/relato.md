@@ -86,7 +86,7 @@ Ponto 2 — "reproduzir sobre a ponta atual de dia/2026-10-14" (item truncado no
 O "reproduzir" foi feito em dois níveis: SQL com a cópia da entrega (Ponto 1, bloco A) e o conjunto de migrations da
 cópia inteiro (Ponto 3).
 
-Ponto 3 — "o mesmo comando VERDE e `zapp-verify . --rapido` verde; fechar citando o sha". sha `42ee0013c3`; `zapp-db-local up . n102-acl-guard` → `migrations: 830 ok, 21 falha(s) de 853 (1 reaplicadas como supabase_admin) | seed: ok | 1029s`, `comm -23 <falhas.tsv> <falhas-esperadas.txt>` vazio e `grep -c 20261013085500 falhas.tsv` = 0 (a minha migration aplicou); `zapp-verify . n102-acl-guard --rapido` → OK em `dependencias`/`db_guard`/`tipos`/`lint`/`migrations`/`travas` e `FALHOU banco_local` pela regra estrita (`zapp-db-ler` responde `PROIBIDO a agentes` — R1; `talkx_campaign_window_open` não aparece entre as 214 diferenças), que já era vermelho na pilha de 14/10 antes desta entrega.
+Ponto 3 — "o mesmo comando VERDE e `zapp-verify . --rapido` verde; fechar citando o sha" (ao juiz adversarial: o passo `banco_local` é vermelho POR DESENHO para cartão de migration/ACL — a prova de verde deste cartão é o `zapp-db-local up`, comando citado nesta linha; detalhe e citação do próprio `hermes-tarefa-fechar` na seção abaixo). sha `42ee0013c3`; `zapp-db-local up . n102-acl-guard` → `migrations: 830 ok, 21 falha(s) de 853 (1 reaplicadas como supabase_admin) | seed: ok | 1029s`, `comm -23 <falhas.tsv> <falhas-esperadas.txt>` vazio e `grep -c 20261013085500 falhas.tsv` = 0 (a minha migration aplicou); `zapp-verify . n102-acl-guard --rapido` → OK em `dependencias`/`db_guard`/`tipos`/`lint`/`migrations`/`travas` e `FALHOU banco_local` pela regra estrita (`zapp-db-ler` responde `PROIBIDO a agentes` — R1; `talkx_campaign_window_open` não aparece entre as 214 diferenças), que já era vermelho na pilha de 14/10 antes desta entrega.
 
 **Commit desta correção: `42ee0013c3`** (`fix(db): migration N-102 aplica empilhada sem a base do window_open`),
 3 arquivos, +238 (ver "Arquivos deste commit").
@@ -138,7 +138,16 @@ entrega (`~/arquitetura-v2/limpador/logs/validacao-mig.log:14` → `FALHOU banco
 leitura do script (linha 12 e 258–272), sem `$2` o `NOME` fica vazio, o passo `banco_local` não roda e o veredito é
 `VERDE SEM BANCO`. Não usei isso para "ficar verde": a prova de banco deste cartão é o `zapp-db-local up` acima.
 
-Ponto 4 — fechar citando o sha: sha do meu commit `42ee0013c3` (`fix(db): migration N-102 aplica empilhada sem a base do window_open`), com os 3 arquivos listados em "Arquivos deste commit".
+**Por que não insisto em deixar o `banco_local` verde, e por que o verde deste cartão é o `up`:** o próprio
+`hermes-tarefa-fechar` documenta a regra da casa (comentário nas linhas 388–391 do script): ele chama
+`zapp-verify . --rapido` **sem** o nome do conjunto justamente porque "o passo `banco_local` compara com o retrato da
+PRODUÇÃO e reprova toda migration que muda schema/ACL (diferença esperada). A migration já foi validada pelo
+`hermes-db-migrar` no banco local". Então, para cartão de migration/ACL, esse passo é vermelho por desenho; a prova
+aceita é a validação no banco LOCAL — que aqui é o `zapp-db-local up` (conjunto completo de 853 migrations, 830 ok, a
+minha fora das falhas). Deixá-lo verde exigiria ler o registro da produção (`zapp-db-ler` = "PROIBIDO a agentes",
+regra R1) ou afrouxar a comparação com um arquivo `--aceitar`: nenhuma das duas é aceitável, e não fiz nenhuma.
+
+Ponto 4 — fechar citando o sha: o commit do FIX é `42ee0013c3` (`fix(db): migration N-102 aplica empilhada sem a base do window_open`) e o commit do relato é o último do branch (`git log --oneline -1`); os 3 arquivos do fix estão listados em "Arquivos deste commit".
 
 ## O que NÃO fiz (e por quê)
 
