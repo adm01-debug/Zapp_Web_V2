@@ -27,7 +27,8 @@
 #      eventos em horários fixos do dia civil de America/Sao_Paulo.
 #   5. Asserções: EXECUTE negado a anon; leitura direta limitada por RLS;
 #      spoof de p_agent por JWT não privilegiado; conciliação com verdade de
-#      base; edge cases da E44 (0 linhas, outlier p50/p90, virada de dia SP).
+#      base; edge cases da E44 (0 linhas, outlier p50/p90, virada de dia SP) e
+#      período escolhido + período anterior de mesmo tamanho (E31/E34/IA-056).
 #
 # DASH-SQL-REGRESSION-001 CORRIGIDO (migration
 # 20261006064630_dashboard_contact_counts_restaura_trava_e33): a definição vigente
@@ -98,7 +99,8 @@ for f in \
   20260927120000_dashboard_kpi_p_since_default_null_guard.sql \
   20260930400000_dashboard_contact_counts_filter_deleted_at.sql \
   20261003272707_reconcile_local_replay_with_canonical.sql \
-  20261006064630_dashboard_contact_counts_restaura_trava_e33.sql; do
+  20261006064630_dashboard_contact_counts_restaura_trava_e33.sql \
+  20261013235902_dashboard_kpi_periodo.sql; do
   [[ -f "$migrations_dir/$f" ]] || fail "migration nao encontrada: $f"
 done
 
@@ -158,7 +160,7 @@ assert_last_definer 'policy "Agents or admins can view closures"' \
 
 # RPCs do dashboard (lista fixa — a cadeia e aplicada mais abaixo):
 assert_last_definer 'RPC dashboard_kpi' \
-  '20261003272707_reconcile_local_replay_with_canonical.sql' \
+  '20261013235902_dashboard_kpi_periodo.sql' \
   '(CREATE( OR REPLACE)? FUNCTION public\.dashboard_kpi|ALTER FUNCTION[^;]*public\.dashboard_kpi|DROP FUNCTION[^;]*public\.dashboard_kpi)'
 assert_last_definer 'RPC dashboard_hourly_volume' \
   '20260925221406_dashboard_fix_p_agent_uuid_perf_and_fanout.sql' \
@@ -417,20 +419,21 @@ for f in \
   psql_file "$migrations_dir/$f" || fail "falha ao aplicar $f"
 done
 
-# Definição final de dashboard_kpi vive na migration de reconciliação
-# (arquivo multi-objeto): extrai só o CREATE OR REPLACE dessa função.
-awk '/CREATE OR REPLACE FUNCTION public.dashboard_kpi/,/\$function\$;/' \
-  "$migrations_dir/20261003272707_reconcile_local_replay_with_canonical.sql" \
-  > "$tmp_dir/kpi_final.sql"
-grep -q 'CREATE OR REPLACE FUNCTION public.dashboard_kpi' "$tmp_dir/kpi_final.sql" \
-  || fail 'extracao de dashboard_kpi da migration de reconciliacao veio vazia'
-grep -q '\$function\$;' "$tmp_dir/kpi_final.sql" \
-  || fail 'extracao de dashboard_kpi nao fechou o corpo da funcao'
-psql_file "$tmp_dir/kpi_final.sql"
+# Definição final de dashboard_kpi: a migration PRÓPRIA (assinatura nova
+# p_from/p_until), que dropa a assinatura antiga (3 args) e reaplica a ACL
+# (REVOKE anon/PUBLIC) na assinatura nova. Precisa vir DEPOIS dos hardenings de
+# ACL abaixo, que ainda miram a assinatura antiga. A extração verbatim do CREATE
+# da migration de reconciliação deixou de ser necessária: a migration
+# 20261013235902 é a última a definir dashboard_kpi e a guarda de vigência acima
+# prova isso.
 
 # Harderning de ACL (migrations reais): tira EXECUTE de anon e de PUBLIC.
 psql_file "$migrations_dir/20260926100134_dashboard_revoke_anon_execute_rpcs.sql"
 psql_file "$migrations_dir/20260926100302_dashboard_revoke_public_execute_rpcs.sql"
+
+# Migration nova: dashboard_kpi(p_from, p_until, p_queue, p_agent).
+psql_file "$migrations_dir/20261013235902_dashboard_kpi_periodo.sql" \
+  || fail 'falha ao aplicar 20261013235902_dashboard_kpi_periodo.sql'
 
 # ── Fixtures determinísticas ──────────────────────────────────────────────────
 # ADMIN user 1111/profile a01 · AGENT_A user 2222/profile b01 (membro Q1)
@@ -495,6 +498,17 @@ INSERT INTO public.conversation_closures (contact_id, created_at) VALUES
   ('d0000000-0000-0000-0000-000000000006',
    (date_trunc('day', now() AT TIME ZONE 'America/Sao_Paulo') AT TIME ZONE 'America/Sao_Paulo') + interval '9 hours');
 
+-- E2 (janelas encostadas): 1 closure EXATAMENTE na fronteira de uma janela
+-- (hoje-SP menos 10 dias, 00:00) e 1 bem no FUTURO (hoje-SP + 100 dias).
+-- A da fronteira só pode contar numa das duas janelas que se encostam (nunca
+-- nas duas — o fim é exclusivo); a do futuro só existe na janela ABERTA
+-- (p_until null). Contato d4 (livre em Q1, assigned_to NULL).
+INSERT INTO public.conversation_closures (contact_id, created_at) VALUES
+  ('d0000000-0000-0000-0000-000000000004',
+   (date_trunc('day', now() AT TIME ZONE 'America/Sao_Paulo') AT TIME ZONE 'America/Sao_Paulo') - interval '10 days'),
+  ('d0000000-0000-0000-0000-000000000004',
+   (date_trunc('day', now() AT TIME ZONE 'America/Sao_Paulo') AT TIME ZONE 'America/Sao_Paulo') + interval '100 days');
+
 -- SLA de hoje-SP no contato de A: {60,90,110,120,150,36000}s → mediana 115,
 -- p90 18075 (o outlier de 10h não pode distorcer o p50 — aceite E44), 1 breach.
 INSERT INTO public.conversation_sla (contact_id, first_message_at, first_response_at, first_response_breached)
@@ -548,6 +562,11 @@ CONTATO_B_COMPART='d0000000-0000-0000-0000-000000000002'
 CONTATO_B_FORA='d0000000-0000-0000-0000-000000000003'
 CONTATO_C_FORA='d0000000-0000-0000-0000-000000000006'
 
+# Dia civil de São Paulo em America/Sao_Paulo, janelas com FIM EXCLUSIVO —
+# usadas nas chamadas da nova assinatura dashboard_kpi(p_from, p_until, p_queue, p_agent).
+SP_DAY="(date_trunc('day', now() AT TIME ZONE 'America/Sao_Paulo') AT TIME ZONE 'America/Sao_Paulo')"
+SP_DAY_END="($SP_DAY + interval '1 day')"
+
 admin() { printf "SET ROLE authenticated; SELECT set_config('request.jwt.claims', '%s', false); %s" "$ADMIN" "$1"; }
 agent() { printf "SET ROLE authenticated; SELECT set_config('request.jwt.claims', '%s', false); %s" "$AGENT" "$1"; }
 agent_b() { printf "SET ROLE authenticated; SELECT set_config('request.jwt.claims', '%s', false); %s" "$AGENT_B" "$1"; }
@@ -557,7 +576,7 @@ echo '── BLOCO A: EXECUTE fechado para chamadas sem privilégio (DASH-092) �
 
 expect_error 'A1 anon não executa dashboard_kpi (REVOKE de anon vigente)' \
   'permission denied for function dashboard_kpi' \
-  "$(anon "SELECT public.dashboard_kpi(now() - interval '30 days', NULL, NULL);")"
+  "$(anon "SELECT public.dashboard_kpi($SP_DAY, $SP_DAY_END, NULL, NULL);")"
 expect_error 'A2 anon não executa dashboard_contact_counts' \
   'permission denied for function dashboard_contact_counts' \
   "$(anon "SELECT public.dashboard_contact_counts(now() - interval '30 days', now(), NULL, NULL);")"
@@ -566,7 +585,7 @@ expect_error 'A3 anon não executa dashboard_hourly_volume' \
   "$(anon "SELECT count(*) FROM public.dashboard_hourly_volume(8, NULL, NULL);")"
 
 expect_value 'A4 authenticated sem JWT (auth.uid() NULL) falha fechado no kpi' '0' \
-  "SET ROLE authenticated; SELECT (public.dashboard_kpi(now() - interval '30 days', NULL, NULL) ->> 'resolvedToday');"
+  "SET ROLE authenticated; SELECT (public.dashboard_kpi($SP_DAY, $SP_DAY_END, NULL, NULL) ->> 'resolvedToday');"
 expect_value 'A5 anon lê zero linhas de contacts mesmo com GRANT de tabela' '0' \
   "$(anon "SELECT count(*) FROM public.contacts;")"
 
@@ -590,11 +609,11 @@ echo
 echo '── BLOCO C: RPCs do dashboard sob JWT não privilegiado ───────────────────────'
 
 expect_value 'C1 kpi de agent conta só o próprio escopo (3 hoje; closure de B em contato compartilhado NÃO entra)' '3' \
-  "$(agent "SELECT (public.dashboard_kpi(now() - interval '30 days', NULL, NULL) ->> 'resolvedToday');")"
+  "$(agent "SELECT (public.dashboard_kpi($SP_DAY, $SP_DAY_END, NULL, NULL) ->> 'resolvedToday');")"
 expect_value 'C2 trava E33 do kpi: spoof de p_agent devolve os dados do próprio chamador' 't' \
-  "$(agent "SELECT public.dashboard_kpi(now() - interval '30 days', NULL, '$PERFIL_B') = public.dashboard_kpi(now() - interval '30 days', NULL, '$PERFIL_A');")"
+  "$(agent "SELECT public.dashboard_kpi($SP_DAY, $SP_DAY_END, NULL, '$PERFIL_B') = public.dashboard_kpi($SP_DAY, $SP_DAY_END, NULL, '$PERFIL_A');")"
 expect_value 'C3 admin filtrando por p_agent=B vê o escopo de B (2 closures hoje)' '2' \
-  "$(admin "SELECT (public.dashboard_kpi(now() - interval '30 days', NULL, '$PERFIL_B') ->> 'resolvedToday');")"
+  "$(admin "SELECT (public.dashboard_kpi($SP_DAY, $SP_DAY_END, NULL, '$PERFIL_B') ->> 'resolvedToday');")"
 
 expect_value 'C4 hourly de agent conta só mensagens dos próprios contatos (5 hoje + 3 ontem = 8)' '8' \
   "$(agent "SELECT coalesce(sum(message_count),0) FROM public.dashboard_hourly_volume(8, NULL, NULL);")"
@@ -626,22 +645,51 @@ echo
 echo '── BLOCO D: edge cases E44 contra o código real (DASH-091) ───────────────────'
 
 expect_value 'D1 kpi com janela vazia (futuro): resolvedToday=0 sem erro' '0' \
-  "$(admin "SELECT (public.dashboard_kpi(now() + interval '10 years', NULL, NULL) ->> 'resolvedToday');")"
+  "$(admin "SELECT (public.dashboard_kpi(now() + interval '10 years', now() + interval '10 years' + interval '1 day', NULL, NULL) ->> 'resolvedToday');")"
 expect_value 'D2 kpi com janela vazia: avgResponseToday é null (não divide por zero)' '' \
-  "$(admin "SELECT coalesce(public.dashboard_kpi(now() + interval '10 years', NULL, NULL) ->> 'avgResponseToday', '');")"
+  "$(admin "SELECT coalesce(public.dashboard_kpi(now() + interval '10 years', now() + interval '10 years' + interval '1 day', NULL, NULL) ->> 'avgResponseToday', '');")"
 expect_value 'D3 kpi com janela vazia: resolvedHourly8 vem zerado' '[0, 0, 0, 0, 0, 0, 0, 0]' \
-  "$(admin "SELECT (public.dashboard_kpi(now() + interval '10 years', NULL, NULL) ->> 'resolvedHourly8')::jsonb::text;")"
+  "$(admin "SELECT (public.dashboard_kpi(now() + interval '10 years', now() + interval '10 years' + interval '1 day', NULL, NULL) ->> 'resolvedHourly8')::jsonb::text;")"
 
 expect_value 'D4 mediana robusta a outlier: avgResponseToday=115 (p50, ignora outlier de 10h)' '115' \
-  "$(admin "SELECT (public.dashboard_kpi(now() - interval '30 days', NULL, '$PERFIL_A') ->> 'avgResponseToday');")"
+  "$(admin "SELECT (public.dashboard_kpi($SP_DAY, $SP_DAY_END, NULL, '$PERFIL_A') ->> 'avgResponseToday');")"
 expect_value 'D5 p90 reflete o outlier: p90ResponseToday=18075 (vai só pro tooltip)' '18075' \
-  "$(admin "SELECT (public.dashboard_kpi(now() - interval '30 days', NULL, '$PERFIL_A') ->> 'p90ResponseToday');")"
+  "$(admin "SELECT (public.dashboard_kpi($SP_DAY, $SP_DAY_END, NULL, '$PERFIL_A') ->> 'p90ResponseToday');")"
 
 expect_value 'D6 virada de dia SP: closure às 23h30 de ontem-SP cai em resolvedYesterday' '1' \
-  "$(admin "SELECT (public.dashboard_kpi(now() - interval '30 days', NULL, '$PERFIL_A') ->> 'resolvedYesterday');")"
+  "$(admin "SELECT (public.dashboard_kpi($SP_DAY, $SP_DAY_END, NULL, '$PERFIL_A') ->> 'resolvedYesterday');")"
 expect_value 'D7 buckets resolvedHourly8 do dia SP: [0,0,0,2,1,0,0,0]' '[0, 0, 0, 2, 1, 0, 0, 0]' \
-  "$(admin "SELECT (public.dashboard_kpi(now() - interval '30 days', NULL, '$PERFIL_A') ->> 'resolvedHourly8')::jsonb::text;")"
+  "$(admin "SELECT (public.dashboard_kpi($SP_DAY, $SP_DAY_END, NULL, '$PERFIL_A') ->> 'resolvedHourly8')::jsonb::text;")"
 expect_value 'D8 slaBreachedToday conta o breach marcado' '1' \
-  "$(admin "SELECT (public.dashboard_kpi(now() - interval '30 days', NULL, '$PERFIL_A') ->> 'slaBreachedToday');")"
+  "$(admin "SELECT (public.dashboard_kpi($SP_DAY, $SP_DAY_END, NULL, '$PERFIL_A') ->> 'slaBreachedToday');")"
+
+echo
+echo '── BLOCO E: período escolhido e período anterior de mesmo tamanho (E31/E34/IA-056) ──'
+
+# E1 — período custom de 2 dias: [hoje-SP - 2d, hoje-SP). Só a closure de ontem
+# 23h30 cai nele (bucket 7); o período anterior de mesmo tamanho fica vazio.
+expect_value 'E1 período custom de 2 dias: 1 contato no bucket 7; período anterior vazio' '1|0|[0, 0, 0, 0, 0, 0, 0, 1]' \
+  "$(admin "SELECT (public.dashboard_kpi($SP_DAY - interval '2 days', $SP_DAY, NULL, NULL) ->> 'resolvedToday') || '|' || (public.dashboard_kpi($SP_DAY - interval '2 days', $SP_DAY, NULL, NULL) ->> 'resolvedYesterday') || '|' || (public.dashboard_kpi($SP_DAY - interval '2 days', $SP_DAY, NULL, NULL) ->> 'resolvedHourly8')::jsonb::text;")"
+
+# E2 — janelas encostadas: a closure EXATA na fronteira de hoje-SP-10d conta na
+# segunda janela (fim exclusivo = início do atual) e NUNCA na primeira. Não é
+# contada duas vezes (nada de sobreposição).
+expect_value 'E2 janelas encostadas: registro na fronteira conta só na janela que o inclui (0|1|0)' '0|1|0' \
+  "$(admin "SELECT (public.dashboard_kpi($SP_DAY - interval '11 days', $SP_DAY - interval '10 days', NULL, NULL) ->> 'resolvedToday') || '|' || (public.dashboard_kpi($SP_DAY - interval '10 days', $SP_DAY - interval '9 days', NULL, NULL) ->> 'resolvedToday') || '|' || (public.dashboard_kpi($SP_DAY - interval '10 days', $SP_DAY - interval '9 days', NULL, NULL) ->> 'resolvedYesterday');")"
+
+# E3 — virada de dia SP no kpi do agent A: 3 contatos hoje, 1 no período anterior
+# (a closure às 23h30 de ontem-SP), sem vazar para o período de hoje.
+expect_value 'E3 virada de dia SP: 23h30 de ontem no anterior, 3 hoje (3|1)' '3|1' \
+  "$(admin "SELECT (public.dashboard_kpi($SP_DAY, $SP_DAY_END, NULL, '$PERFIL_A') ->> 'resolvedToday') || '|' || (public.dashboard_kpi($SP_DAY, $SP_DAY_END, NULL, '$PERFIL_A') ->> 'resolvedYesterday');")"
+
+# E4 — p_until NULL = janela aberta: inclui a closure no FUTURO (7 contatos);
+# com fim explícito ela fica de fora (6). Prova que o teto é realmente aberto.
+expect_value 'E4 p_until null = janela aberta: inclui o futuro (7) vs fim explícito (6)' '7|6' \
+  "$(admin "SELECT (public.dashboard_kpi($SP_DAY - interval '1 day', NULL, NULL, NULL) ->> 'resolvedToday') || '|' || (public.dashboard_kpi($SP_DAY - interval '1 day', $SP_DAY_END, NULL, NULL) ->> 'resolvedToday');")"
+
+# E5 — default (sem argumentos) = dia atual em America/Sao_Paulo: hoje=3, anterior=1
+# no escopo do agent A, idêntico à janela explícita do dia de hoje.
+expect_value 'E5 default sem argumentos = dia atual SP (hoje=3, anterior=1)' '3|1' \
+  "$(agent "SELECT (public.dashboard_kpi() ->> 'resolvedToday') || '|' || (public.dashboard_kpi() ->> 'resolvedYesterday');")"
 
 printf '\n[OK] fronteira de autorizacao das RPCs do dashboard verificada com JWT nao privilegiado\n'
