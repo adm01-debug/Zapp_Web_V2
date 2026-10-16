@@ -1,5 +1,9 @@
 -- N-118 isolada ([refazer 1] t_85000f2a): sobe APENAS a janela Talk X ja corrigida.
--- Rollback: DROP FUNCTION IF EXISTS public.talkx_campaign_window_open(uuid, timestamptz); ALTER TABLE public.talkx_campaigns DROP COLUMN IF EXISTS send_weekdays; ALTER TABLE public.talkx_campaigns DROP COLUMN IF EXISTS respect_dnd;
+-- Rollback: dropa a funcao nova e as duas colunas da janela (funcao e colunas sao novas: nada anterior a recriar).
+-- Rollback (SQL executável, na ordem):
+--   drop function if exists public.talkx_campaign_window_open(uuid, timestamptz);
+--   alter table public.talkx_campaigns drop column if exists send_weekdays;
+--   alter table public.talkx_campaigns drop column if exists respect_dnd;
 -- Direto em public.talkx_campaigns (sem _legacy, sem reescrever save/update).
 -- Contrato BOOLEAN: TRUE = janela aberta. O motor (talkx-scheduler) consome
 -- `windowOpen !== true` como fora-da-janela, entao FALSE e erro fecham (skip).
