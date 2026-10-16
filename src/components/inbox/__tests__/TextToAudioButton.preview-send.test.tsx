@@ -254,7 +254,7 @@ describe('G6 — geração em voo é abortada ao fechar o popover', () => {
     // Fecha o popover no meio da geração paga.
     await act(async () => { fireEvent.click(gatilho); });
 
-    expect(sinal?.aborted).toBe(true);
+    expect((sinal as AbortSignal | null | undefined)?.aborted).toBe(true);
 
     await act(async () => {
       liberar({ ok: true, status: 200, blob: async () => BLOB_GERADO } as unknown as Response);

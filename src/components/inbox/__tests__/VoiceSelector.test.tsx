@@ -106,7 +106,7 @@ describe('G6 — prévia de voz do VoiceSelector', () => {
       fireEvent.keyDown(screen.getByRole('menu'), { key: 'Escape' });
     });
 
-    expect(sinal?.aborted).toBe(true);
+    expect((sinal as AbortSignal | null | undefined)?.aborted).toBe(true);
 
     // A resposta chega DEPOIS do fechamento: não pode tocar nada.
     await act(async () => {
