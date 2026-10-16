@@ -24,7 +24,6 @@ const OVERRIDES = { E11: 'x', E24: ' ', E38: 'x', E39: 'x', E95: 'x' };
 const ESTADOS = ['CONCLUÍDA', 'AGUARDA RUNTIME', 'PARCIAL', 'PRECISA REVALIDAÇÃO',
   'REVOGADA', 'PENDENTE', 'DECISÃO PENDENTE', 'BLOQUEIO TÉCNICO'];
 const NAO_CONCLUIDOS = new Set(['AGUARDA RUNTIME', 'PARCIAL', 'PRECISA REVALIDAÇÃO']);
-const CONTAGEM_ANTIGA = [/dos\s+17\s+workflows/i, /17\s+no\s+total/i, /14\s+workflows/i, /14\s+arquivos/i];
 const TOCA_STRICT_FALSE = /strict[ ]*[:=][ ]*`?false|`strict`[^\n]{0,40}`false`/i;
 const ROTULO_HISTORICO = /revogad|REVOGAD|históric|HISTÓRIC|superad|SUPERAD|reconciliad|Reconcilia/;
 const RE_ITEM = /^\s*-\s*\[([ xX~!])\]\s*\*\*(E\d{1,3})\*\*/;
@@ -36,11 +35,8 @@ const achata = (t) => t.replace(/\s+/g, ' ');
 
 function violacoesContagemClaude(texto, totalYaml) {
   const out = [];
-  for (const l of linhas(texto)) {
-    for (const re of CONTAGEM_ANTIGA) {
-      if (re.test(l)) out.push('contagem antiga');
-    }
-  }
+  // A contagem vigente precisa existir literalmente; números em registros
+  // históricos datados não devem ser reescritos para imitar o estado atual.
   const chato = achata(texto);
   if (!new RegExp(`\\*\\*${totalYaml}\\*\\* arquivos em \`.github/workflows/\``).test(chato)) {
     out.push(`CLAUDE.md nao declara os ${totalYaml} arquivos de .github/workflows/`);
@@ -291,16 +287,17 @@ test('fixture: celula cortada em "…" e cabecalho "## " duplicado sao rejeitado
   assert.deepEqual(violacoesCabecalhoDuplicado(RECON_COMPLETA), []);
 });
 
-test('inventario: 16 YAML em .github/workflows e a fonte gerada em paridade', async () => {
+test('inventário: fonte gerada lista todos os YAML existentes', async () => {
   const arquivos = (await readdir(DIR_WF)).filter((f) => /\.ya?ml$/.test(f));
-  assert.equal(arquivos.length, 16);
+  assert.ok(arquivos.length > 0);
   const readme = await readFile(README_CI, 'utf8');
-  assert.match(readme, /\*\*16 workflows\.\*\*/);
+  assert.ok(readme.includes(`**${arquivos.length} workflows.**`));
   for (const f of arquivos) assert.ok(readme.includes(f));
 });
 
-test('CLAUDE.md: contagem atual e fonte canonica (sem 14/17)', async () => {
-  assert.deepEqual(violacoesContagemClaude(await readFile(CLAUDE, 'utf8'), 16), []);
+test('CLAUDE.md: contagem atual e fonte canônica', async () => {
+  const total = (await readdir(DIR_WF)).filter((f) => /\.ya?ml$/.test(f)).length;
+  assert.deepEqual(violacoesContagemClaude(await readFile(CLAUDE, 'utf8'), total), []);
 });
 
 test('CLAUDE.md: politica unica de strict, coerente com o baseline', async () => {
@@ -332,42 +329,31 @@ test('plano: nenhuma etapa superada pede reexecucao', async () => {
   }
 });
 
-test('plano: inventario atual e 16 YAML com fonte gerada', async () => {
+test('plano: inventário atual acompanha a fonte gerada', async () => {
   const plano = await readFile(PLANO, 'utf8');
   const chato = achata(plano);
-  assert.match(chato, /\*\*16\*\* arquivos YAML em `\.github\/workflows\/`/);
+  const total = (await readdir(DIR_WF)).filter((f) => /\.ya?ml$/.test(f)).length;
+  assert.ok(chato.includes(`**${total}** arquivos YAML em \`.github/workflows/\``));
   assert.ok(plano.includes('docs/ci/README.md'));
   assert.ok(plano.includes('render-workflow-docs.mjs'));
   assert.match(chato, /403[^.]*limite de evidência/i);
   for (const id of ETAPAS_TRA009) assert.ok(plano.includes(id));
 });
 
-test('E62/E76: os numeros citados conferem com o repositorio', async () => {
-  const plano = await readFile(PLANO, 'utf8');
-  const rec = reconciliacao(plano);
-
-  const linhasDb = (await readFile(DB_MIGRATE, 'utf8')).split('\n');
-  if (linhasDb.at(-1) === '') linhasDb.pop();
-  const e62 = rec.get('E62');
-  assert.ok(e62);
-  assert.ok(e62.linha.includes(`${linhasDb.length} linhas`));
-  assert.match(e62.linha, /guardas de DB|pós-apply/i);
-
+test('E62/E76: reconciliação referencia contratos atuais e a versão do lockfile', async () => {
+  const rec = reconciliacao(await readFile(PLANO, 'utf8'));
+  assert.match(rec.get('E62').linha, /run-runtime-contract\.mjs/);
+  const workflow = await readFile(DB_MIGRATE, 'utf8');
+  assert.ok(workflow.includes('run-runtime-contract.mjs'));
   const lock = await readFile(BUN_LOCK, 'utf8');
-  assert.ok(/playwright@1\.63\.0/.test(lock));
-  assert.ok(/playwright-core@1\.63\.0/.test(lock));
-  assert.ok(/@playwright\/test@1\.63\.0/.test(lock));
-
-  const tres = ['ci.yml', 'e2e-logado.yml', 'e2e-talkx.yml'];
-  for (const f of tres) {
+  const version = /"@playwright\/test@(\d+\.\d+\.\d+)"/.exec(lock)?.[1];
+  assert.ok(version);
+  for (const f of ['e2e-logado.yml', 'e2e-talkx.yml']) {
     const wf = await readFile(join(DIR_WF, f), 'utf8');
-    assert.ok(wf.includes('playwright@1.63.0'));
+    assert.ok(wf.includes(`playwright@${version}`));
   }
-  const e76 = rec.get('E76');
-  assert.ok(e76);
-  for (const f of tres) assert.ok(e76.linha.includes(f), `E76 deve citar ${f}`);
-  assert.match(e76.linha, /1\.63\.0/);
-  assert.match(e76.linha, /não há mismatch/i);
+  assert.ok(rec.get('E76').linha.includes(version));
+  assert.match(rec.get('E76').linha, /ci.yml.*não executa/i);
 });
 
 test('plano: tabela de reconciliacao sem celula cortada e sem cabecalho "## " duplicado', async () => {

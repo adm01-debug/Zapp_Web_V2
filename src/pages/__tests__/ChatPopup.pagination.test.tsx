@@ -23,7 +23,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // O jsdom não dá layout: sem medida do contêiner o virtualizador não renderiza
-// item nenhum. O virtual-core lê `offsetHeight` do elemento de rolagem (não
+// item nenhum. O virtual-core lê `clientHeight` do elemento de rolagem (não
 // getBoundingClientRect), então a medida entra por aí — e por instância, sem
 // mexer no ResizeObserver: um observer que responde a cada elemento realimenta
 // a medição até estourar "Maximum update depth exceeded" e derrubar a árvore.
@@ -31,8 +31,10 @@ const ALTURA_JANELA = 600;
 /** Mede o contêiner de rolagem como janela; as linhas ficam na estimativa. */
 function medirLayout() {
   const proto = HTMLElement.prototype;
-  const original = Object.getOwnPropertyDescriptor(proto, 'offsetHeight');
-  Object.defineProperty(proto, 'offsetHeight', {
+  const original = Object.getOwnPropertyDescriptor(proto, 'clientHeight');
+  const originalOffset = Object.getOwnPropertyDescriptor(proto, 'offsetHeight');
+  Object.defineProperty(proto, 'offsetHeight', { configurable: true, get() { return ALTURA_ESTIMADA; } });
+  Object.defineProperty(proto, 'clientHeight', {
     configurable: true,
     get(this: HTMLElement) {
       return this.getAttribute('role') === 'log' ? ALTURA_JANELA : ALTURA_ESTIMADA;
@@ -40,8 +42,10 @@ function medirLayout() {
   });
   return {
     mockRestore() {
-      if (original) Object.defineProperty(proto, 'offsetHeight', original);
+      if (originalOffset) Object.defineProperty(proto, 'offsetHeight', originalOffset);
       else delete (proto as unknown as Record<string, unknown>).offsetHeight;
+      if (original) Object.defineProperty(proto, 'clientHeight', original);
+      else delete (proto as unknown as Record<string, unknown>).clientHeight;
     },
   };
 }
@@ -106,7 +110,7 @@ vi.mock('@/integrations/supabase/client', () => ({
   },
 }));
 
-vi.mock('@/lib/logger', () => ({
+vi.mock('@/lib/logger', async (importOriginal) => ({ ...await importOriginal<typeof import('@/lib/logger')>(),
   log: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
   getLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
 }));

@@ -1,6 +1,8 @@
 # docs:
 #   gatilho: workflow_run (conclusao dos workflows principais na main)
 #   prova: abre issue quando qualquer workflow critico falha na main
+#   falha: registra o run e o commit na issue de falha
+#   avisa: mantenedores, pela issue falha-main
 #   workflows monitorados: ci, deploy-functions, db-migrate, db-live-guard, types-sync
 
 name: Notifica falha na main

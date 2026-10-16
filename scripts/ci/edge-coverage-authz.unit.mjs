@@ -65,6 +65,8 @@ export const TEST_FILES = [
  */
 export const TESTES_AUTH_FORA_DA_MEDICAO = [
   'ai-auth-service-path.test.ts',
+  'gmail-reauth-required.test.ts', // reautorização OAuth Gmail, não helper de authz da régua
+  'require-auth-profile-active.test.ts', // requireAuth em validation.ts, fora dos cinco helpers medidos
   'ai-audio-authz-runtime.test.ts',
   'webhook-auth-gates.test.ts',
   'webhook-auth-shadow.test.ts',
@@ -199,7 +201,7 @@ export function medirDoZero(repoRoot = RAIZ) {
       timeout: 60_000,
     });
     if (cobertura.error) throw new Error(`deno coverage não executou: ${cobertura.error.message}`);
-    if (cobertura.status !== 0) throw new Error(`deno coverage falhou: ${cobertura.stderr}`);
+    if (cobertura.status !== 0) throw new Error(`deno test status ${statusTestes}: ${saidaTestes}\ndeno coverage falhou: ${cobertura.stderr}`);
     return {
       resumo: resumirCobertura(parseLcov(cobertura.stdout)),
       statusTestes,

@@ -1,13 +1,13 @@
 # docs:
-#   gatilho: pull_request e dispatch
+#   gatilho: dispatch manual
 #   prova: o fluxo do Talk X no navegador
-#   falha: PR fica vermelho com o artefato do Playwright
-#   avisa: autor do PR
+#   falha: run fica vermelho com o artefato do Playwright
+#   avisa: quem disparou
 # ==========================================================================
-# ZAPP-WEB · E2E Talk X em PR (Playwright, deslogado, NÃO required)
+# ZAPP-WEB · E2E Talk X manual (Playwright, deslogado, NÃO required)
 # ==========================================================================
-# Roda o spec do Talk X em Chromium quando um PR toca arquivos do Talk X —
-# antes do merge, sem secrets de autenticação.
+# Roda os specs do Talk X em Chromium sob demanda, sem secrets de autenticação.
+# A decisão de CI mínimo de 16/10/2026 revogou o gatilho em PR descrito no E27.
 #
 # E27 (auditoria GitHub Actions 2026-10-01): gatilho original era `push`
 # branches-ignore:main para contornar check-pr-workflow-secrets.mjs que proíbe
@@ -20,24 +20,7 @@
 name: E2E Talk X
 
 on:
-  pull_request:
-    branches: [main]
-    paths:
-      - 'src/components/talkx/**'
-      - 'src/hooks/integrations/useTalkX*'
-      - 'supabase/functions/talkx-*'
-      - 'e2e/talkx.spec.ts'
-      - 'e2e/talkx-visual.spec.ts'
-      - 'e2e/talkx-launch.spec.ts'
-      - 'e2e/fixtures/talkx-demo.ts'
-      - 'e2e/fixtures/talkx-demo/**'
-      - 'e2e/fixtures/talkx-launch/**'
-      - 'scripts/talkx/lado-a-lado.mjs'
-      # E84: `playwright.config.ts` saiu daqui. Ele é config global da suíte — foi
-      # tocado em 20 dos últimos 60 commits, quase sempre por trabalho que não é do
-      # Talk X, disparando este workflow sem motivo ("PR de Contatos não dispara").
-      # A config global continua coberta pelo job E2E do ci.yml, que é required.
-      - '.github/workflows/e2e-talkx.yml'
+  # Decisão de 16/10/2026: E2E fora do CI automático por PR.
   workflow_dispatch:
 
 defaults:
@@ -84,15 +67,15 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/ms-playwright
-          key: pw-c-${{ hashFiles('bun.lock') }}-${{ runner.os }}
+          key: pw-c-v2-${{ hashFiles('bun.lock') }}-${{ runner.os }}
 
       - name: 🎭 Install Playwright (Chromium)
         if: steps.pw-cache.outputs.cache-hit != 'true'
-        run: bunx playwright@1.63.0 install --with-deps chromium
+        run: bunx playwright@1.64.1 install --with-deps chromium
 
       - name: 🔧 Dependências de sistema do Playwright (cache quente)
         if: steps.pw-cache.outputs.cache-hit == 'true'
-        run: bunx playwright@1.63.0 install-deps chromium
+        run: bunx playwright@1.64.1 install-deps chromium
 
       - name: 📐 Run Playwright E2E Talk X (Chromium, deslogado)
         run: bun run test:e2e -- --project=chromium

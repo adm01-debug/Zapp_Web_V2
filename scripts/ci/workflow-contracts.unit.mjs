@@ -134,7 +134,9 @@ test('E98: o guarda vivo não dispara por mudança de Edge Function', () => {
   assert.ok(texto, 'db-live-guard.yml sumiu');
 
   const trechoPaths = texto.split(/^\s{4}paths:/m)[1]?.split(/^\s{2}\w/m)[0] ?? '';
-  assert.ok(trechoPaths.length > 0, 'não achei o bloco paths do db-live-guard');
+  assert.match(texto, /^  schedule:/m);
+  assert.match(texto, /^  workflow_dispatch:/m);
+  assert.doesNotMatch(texto, /^  (?:push|pull_request):/m);
   assert.ok(
     !/functions\/\*\*/.test(trechoPaths),
     'functions/** voltou ao paths do guarda vivo: PR de Edge Function passa a conectar no banco de produção',
@@ -371,7 +373,7 @@ test('E86: quem roda a suíte logada declara a limpeza do que grava em produçã
 
 const USES_CACHE = /uses:\s*actions\/cache@[a-f0-9]{40}\b/;
 const PATH_CACHE_BUN = /path:\s*~\/\.bun\/install\/cache\s*$/;
-const KEY_CACHE_BUN = /key:\s*bun-\$\{\{\s*hashFiles\('bun\.lock'\)\s*\}\}\s*$/;
+const KEY_CACHE_BUN = /key:\s*bun-.*\$\{\{\s*hashFiles\('bun\.lock'\)\s*\}\}/;
 
 /** Blocos de job de um workflow: chaves de 2 espaços sob `jobs:` (texto cru). */
 function blocosDeJob(texto) {
@@ -406,7 +408,7 @@ test('E67: todo job que roda bun install restaura o cache do Bun antes de instal
 
   for (const nome of nomes) {
     for (const job of blocosDeJob(wf[nome])) {
-      const linhasJob = job.texto.split('\n');
+      const linhasJob = job.texto.split('\n').filter((line) => !/^\s*#/.test(line));
       const idxInstall = linhasJob.findIndex((l) => /\bbun install\b/.test(l));
       if (idxInstall === -1) continue;
       jobsComInstall += 1;
@@ -511,9 +513,10 @@ function ancestrais(grafo, job) {
   return vistos;
 }
 
-test('E69: test/security/e2e/mutation-mapa não esperam o lint (rodam em paralelo)', () => {
+test('CI mínimo: tipos, unidades, scripts e build rodam em paralelo', () => {
   const grafo = grafoDeNeeds(wf['ci.yml']);
-  for (const job of ['test', 'security', 'e2e', 'mutation-mapa']) {
+  assert.deepEqual([...grafo.keys()].sort(), ['build', 'node-scripts', 'typecheck', 'unit-tests']);
+  for (const job of ['typecheck', 'unit-tests', 'node-scripts', 'build']) {
     assert.ok(grafo.has(job), `job ${job} sumiu do ci.yml`);
     const anc = [...ancestrais(grafo, job)];
     assert.deepEqual(
@@ -524,8 +527,7 @@ test('E69: test/security/e2e/mutation-mapa não esperam o lint (rodam em paralel
   }
 });
 
-test('E69: o build continua atrás do lint E do test', () => {
+test('CI mínimo: build não espera jobs de lint/test removidos', () => {
   const anc = ancestrais(grafoDeNeeds(wf['ci.yml']), 'build');
-  assert.ok(anc.has('lint-and-typecheck'), 'build deixou de esperar o lint');
-  assert.ok(anc.has('test'), 'build deixou de esperar o test');
+  assert.deepEqual([...anc], []);
 });

@@ -127,7 +127,7 @@ test('E81: projeto deslogado nao declara retries nenhum', () => {
 
 test('E81: a suite deslogada do ci.yml nao paga o custo do retry', () => {
   const doCi = projetosNoWorkflow(ler('.github/workflows/ci.yml'));
-  assert.ok(doCi.length > 0, 'o job E2E do ci.yml lista projetos explicitamente');
+  assert.equal(doCi.length, 0, 'CI mínimo não executa E2E por PR');
   for (const nome of doCi) {
     assert.ok(
       deslogados.includes(nome),

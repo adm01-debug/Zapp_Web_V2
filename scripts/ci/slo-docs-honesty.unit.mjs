@@ -297,7 +297,8 @@ const ARTEFATO_MONITOR_EXTERNO =
   /(uptime|health[-_.]?check|external[-_.]?monitor|monitor[-_.]?externo|front[-_.]?(monitor|uptime)|monitor[-_.]?front|version[-_.]?json)/i;
 
 export function nomesIndicamArtefatoMonitor(nomes) {
-  return nomes.some((n) => ARTEFATO_MONITOR_EXTERNO.test(n));
+  // Smoke pós-deploy de Edge Functions não mede uptime contínuo do frontend.
+  return nomes.some((n) => n !== 'edge-deploy/health-check.mjs' && ARTEFATO_MONITOR_EXTERNO.test(n));
 }
 
 export function existeArtefatoMonitor() {
@@ -308,7 +309,7 @@ export function existeArtefatoMonitor() {
   if (fs.existsSync(dirScripts)) {
     for (const sub of fs.readdirSync(dirScripts)) {
       const p = path.join(dirScripts, sub);
-      if (fs.statSync(p).isDirectory()) nomes.push(...fs.readdirSync(p));
+      if (fs.statSync(p).isDirectory()) nomes.push(...fs.readdirSync(p).map((n) => `${sub}/${n}`));
     }
   }
   return nomesIndicamArtefatoMonitor(nomes);
@@ -391,7 +392,7 @@ test('mutação no documento real: view de latência de PENDENTE para REAL acusa
 });
 
 test('mutação no documento real: caminho de workflow inválido acusa I2', () => {
-  const problemas = mutar('`db-live-guard.yml` passou a rodar', '`db-live-guard-inexistente.yml` passou a rodar');
+  const problemas = mutar('`db-live-guard.yml` roda', '`db-live-guard-inexistente.yml` roda');
   assert.ok(problemas.some((p) => p.startsWith('I2')), problemas.join('; '));
 });
 
@@ -487,6 +488,8 @@ test('fixture I3: com o artefato de monitoramento presente, o REAL passa', () =>
 
 test('fixture I3: auditoria Talk X Monitor Panel não conta como monitor externo de uptime', () => {
   assert.equal(nomesIndicamArtefatoMonitor(['talkx-monitor-panel.test.sh']), false);
+  assert.equal(nomesIndicamArtefatoMonitor(['edge-deploy/health-check.mjs']), false);
+  assert.equal(nomesIndicamArtefatoMonitor(['ops/external-monitor.mjs']), true);
   assert.equal(nomesIndicamArtefatoMonitor(['uptime-check.mjs']), true);
 });
 

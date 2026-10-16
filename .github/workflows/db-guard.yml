@@ -1,8 +1,8 @@
 # docs:
-#   gatilho: pull_request, push na main, merge_group e dispatch
+#   gatilho: dispatch manual
 #   prova: guardas OFFLINE do banco (nunca recebe DESTINO_URL, roda codigo de PR)
-#   falha: PR fica vermelho; nenhum codigo de PR alcanca o banco de producao
-#   avisa: autor do PR e revisor
+#   falha: o run fica vermelho; nunca alcanca o banco de producao
+#   avisa: quem disparou
 # ==================================================================
 # ZAPP-WEB · Guardas de banco OFFLINE
 # ==================================================================
@@ -14,17 +14,7 @@
 name: DB Guard (offline)
 
 on:
-  # Sem filtro de paths: o nome do check precisa existir em todo PR para poder
-  # ser exigido pela branch protection sem bloquear diffs apenas de docs.
-  # E23: 'develop' removido — branch nao existe no repo (so main).
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-    types: [opened, synchronize, reopened, ready_for_review]
-  # Fila de merge: sem este gatilho o check required nunca reportaria no merge
-  # group e a fila travaria todos os merges do repo.
-  merge_group:
+  # 16/10/2026 (decisao do Joaquim, CI minimo): saiu do CI por PR/push; so manual.
   workflow_dispatch:
 
 defaults:
@@ -1518,7 +1508,6 @@ jobs:
       # O harness executa a migration real, valida o vermelho sem ela, o verde com
       # get_profile_id_for_user(auth.uid()) e os dois formatos de rollback executavel.
       # SKIP_DOCKER_SHIM=1 porque o teste cria roles globais anon/authenticated/service_role.
-      - name: Provar leitura de reacoes pelo profile_id (N-142)
       # N-142 (P3 · seguranca): message_reactions.user_id guarda profiles.id, mas a
       # policy message_reactions_select_policy comparava com auth.uid() (auth user
       # uuid) — o autor nunca via a propria reacao. O teste aplica a migration real
@@ -1641,6 +1630,11 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
+          # Dispatch manual pede a prova completa, mesmo sem base de PR.
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "mudou=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           # So o PR olha o diff: push na main e merge_group ja passaram pelo gate na PR.
           if [ "${{ github.event_name }}" != "pull_request" ] || [ -z "$BASE_SHA" ]; then
             echo "mudou=false" >> "$GITHUB_OUTPUT"
@@ -1688,6 +1682,20 @@ jobs:
           if-no-files-found: warn
           retention-days: 7
 
+  supplemental-contracts:
+    name: Contratos DB complementares
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      POSTGRES_TEST_IMAGE: postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+    steps:
+      - name: Baixar o codigo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Os contratos abaixo criam seus próprios containers. Não pertencem ao
+      # replay completo (que só executa quando muda supabase/migrations).
       # X176 (TL-164): as três RPCs de leitura da supressão (listagem paginada, KPIs e
       # atividade) não existiam — a tela lia a tabela inteira e somava em memória. O passo
       # aplica a migration real em PostgreSQL 17 descartável e executa como os papéis reais:
@@ -1791,7 +1799,6 @@ jobs:
       # nao muda, que outsider/anon seguem barrados e que o rollback derruba as colunas.
       # Inicia container proprio e roda CREATE ROLE anon/authenticated/service_role
       # (globais ao cluster) -> SKIP_DOCKER_SHIM="1", como os blocos vizinhos.
-      - name: Provar o remetente de grupo em messages (t_35d5aa82)
       - name: Provar o remetente de grupo em messages (t_313f15cd)
         env:
           MESSAGES_GROUP_SENDER_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}

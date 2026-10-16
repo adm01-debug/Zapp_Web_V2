@@ -5,7 +5,7 @@ import { useTextToSpeech } from '@/hooks/communication/useTextToSpeech';
 import { useUserSettings } from '@/hooks/system/useUserSettings';
 import { useSendTeamMessage, useDeleteTeamMessage, useEditTeamMessage, useToggleMuteConversation, TeamMessage, TeamConversation } from '@/hooks/chat/useTeamChat';
 import { useRenameConversation, useRemoveConversationMember, useLeaveConversation, useDeleteConversation } from '@/hooks/team-chat/useTeamChatMutations';
-import { useTeamMessages } from '@/hooks/team-chat/useTeamMessages';
+import { useTeamMessages, type TeamMessageEvent } from '@/hooks/team-chat/useTeamMessages';
 import { useTeamMessageReactions } from '@/hooks/team-chat/useTeamMessageReactions';
 // eslint-disable-next-line no-restricted-imports
 import { supabase } from '@/integrations/supabase/client';
@@ -65,6 +65,8 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   const [oldestCursor, setOldestCursor] = useState<{ createdAt: string; id: string } | null>(null);
   const [hasOlderMessages, setHasOlderMessages] = useState(true);
   const [isFetchingOlder, setIsFetchingOlder] = useState(false);
+  const [olderError, setOlderError] = useState(false);
+  const olderRequestRef = useRef(0);
 
   // Rascunho e resposta são da conversa: o painel não remonta ao trocar de
   // conversa, então o reset acontece no render (mesmo padrão de
@@ -82,7 +84,23 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   const isNearBottomRef = useRef(true);
   const savedScrollFromBottomRef = useRef<number | null>(null);
 
-  const { messages: newestMessages, isLoading } = useTeamMessages(conversation.id);
+  const reconcileOlder = useCallback((event: TeamMessageEvent) => {
+    if (event.type === 'resync') {
+      olderRequestRef.current += 1;
+      setOlderMessages([]);
+      setOldestCursor(null);
+      setHasOlderMessages(true);
+      setIsFetchingOlder(false);
+      setOlderError(false);
+      return;
+    }
+    setOlderMessages(previous => event.type === 'delete'
+      ? previous.filter(message => message.id !== event.id)
+      : previous.map(message => message.id === event.id
+        ? { ...message, content: event.content, is_edited: event.is_edited, updated_at: event.updated_at }
+        : message));
+  }, []);
+  const { messages: newestMessages, isLoading, isError: messagesError, refetch: refetchMessages } = useTeamMessages(conversation.id, reconcileOlder);
   const sendMutation = useSendTeamMessage();
   const deleteMutation = useDeleteTeamMessage();
   const editMutation = useEditTeamMessage();
@@ -164,9 +182,13 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     setOlderMessages([]);
     setOldestCursor(null);
     setHasOlderMessages(true);
+    setOlderError(false);
+    setIsFetchingOlder(false);
+    olderRequestRef.current += 1;
     setShowStats(false);
     setShowTransferDialog(false);
     setShowGroupManagement(false);
+    return () => { olderRequestRef.current += 1; };
   }, [conversation.id]);
 
   useEffect(() => {
@@ -192,6 +214,8 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     const el = scrollRef.current;
     if (el) savedScrollFromBottomRef.current = el.scrollHeight - el.scrollTop;
     setIsFetchingOlder(true);
+    setOlderError(false);
+    const request = ++olderRequestRef.current;
     try {
       // TC-006 — keyset composto `(created_at, id)`. Só `created_at` pulava as
       // mensagens que empatam no mesmo instante: o lote seguinte trazia
@@ -211,6 +235,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
         .order('id', { ascending: false })
         .limit(60);
       if (error) throw error;
+      if (request !== olderRequestRef.current) return;
       const older = ((data || []) as TeamMessage[]).reverse();
       if (older.length === 0) {
         setHasOlderMessages(false);
@@ -222,9 +247,12 @@ export function useTeamChatPanel(conversation: TeamConversation) {
         });
       }
     } catch (err) {
+      if (request !== olderRequestRef.current) return;
       log.error('Erro ao carregar mensagens anteriores', err);
+      savedScrollFromBottomRef.current = null;
+      setOlderError(true);
     } finally {
-      setIsFetchingOlder(false);
+      if (request === olderRequestRef.current) setIsFetchingOlder(false);
     }
   }, [isFetchingOlder, hasOlderMessages, oldestCursor, conversation.id]);
 
@@ -236,6 +264,8 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   // vai ao servidor pela RPC `search_team_messages` (que varre a conversa
   // inteira) e a lista exibida durante a busca é o resultado dela.
   const searchTerm = debouncedSearchQuery.trim();
+  const searchBelowMinChars = searchQuery.trim().length > 0 && searchQuery.trim().length < 2;
+  const [searchAttempt, setSearchAttempt] = useState(0);
   // O recorte salvo carrega a CONVERSA a que pertence, não só o termo: o painel é
   // o MESMO componente quando o atendente troca de conversa (não tem `key`) e o
   // termo digitado continua, então um registro só vale para a tela se a conversa
@@ -249,18 +279,24 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   // a falha da conversa A não pode aparecer na conversa B enquanto a busca de B
   // ainda estava em voo.
   const [serverSearchError, setServerSearchError] = useState<{ conversationId: string; term: string; message: string } | null>(null);
+  const retrySearch = useCallback(() => {
+    setServerSearchError(null);
+    setServerSearch(null);
+    setSearchAttempt(previous => previous + 1);
+  }, []);
 
   useEffect(() => {
-    if (!searchTerm) return;
+    if (searchTerm.length < 2) return;
     // A conversa da requisição é lida aqui, ao disparar: é ela, junto com o termo,
     // que diz se a resposta ainda interessa ao que está na tela.
     const conversationId = conversation.id;
     let cancelado = false;
     void (async () => {
+      try {
       const { data, error } = await supabase.rpc('search_team_messages', {
         p_conversation_id: conversationId,
         p_query: searchTerm,
-        p_limit: 50,
+        p_limit: 100,
       });
       if (cancelado) return;
       if (error) {
@@ -301,11 +337,17 @@ export function useTeamChatPanel(conversation: TeamConversation) {
           sender: { id: row.sender_id, name: row.sender_name ?? 'Usuário', avatar_url: null },
         })),
       });
+      } catch (error) {
+        if (cancelado) return;
+        log.error('Erro ao buscar mensagens no servidor', error);
+        setServerSearch(null);
+        setServerSearchError({ conversationId, term: searchTerm, message: 'Não foi possível buscar as mensagens. Tente novamente.' });
+      }
     })();
     return () => { cancelado = true; };
-  }, [searchTerm, conversation.id]);
+  }, [searchTerm, conversation.id, searchAttempt]);
 
-  const searchActive = searchTerm.length > 0;
+  const searchActive = searchQuery.trim().length >= 2;
   // `isSearching` separa "buscando" de "nada encontrado" na tela: mostrar
   // "Nenhuma mensagem encontrada" enquanto a resposta ainda está em voo é
   // anunciar um resultado que ainda não existe.
@@ -316,10 +358,10 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   // conversa anterior deixou não podem aparecer na conversa atual enquanto a
   // busca dela ainda está pendente.
   const serverSearchMatches = serverSearch?.conversationId === conversation.id
-    && serverSearch?.term === searchTerm;
+    && serverSearch?.term === searchTerm && searchTerm === searchQuery.trim();
   const searchError = searchActive
     && serverSearchError?.conversationId === conversation.id
-    && serverSearchError.term === searchTerm
+    && serverSearchError.term === searchTerm && searchTerm === searchQuery.trim()
     ? serverSearchError.message
     : null;
   const isSearching = searchActive && !searchError && !serverSearchMatches;
@@ -486,7 +528,14 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     messages,
     filteredMessages,
     isSearching,
+    isSearchingMessages: isSearching,
     searchError,
+    searchBelowMinChars,
+    searchIsCapped: serverSearchMatches && (serverSearch?.results.length ?? 0) >= 100,
+    retrySearch,
+    messagesError,
+    refetchMessages,
+    olderError,
     isLoading,
     isMuted,
     canTransfer,

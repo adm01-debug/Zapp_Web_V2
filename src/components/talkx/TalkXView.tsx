@@ -95,7 +95,10 @@ export default function TalkXView() {
   // para o mesmo endereço.
   const [topView, setTopView] = useState<TalkXTopView>(() => {
     const screenRoute = parseTalkXScreenRoute(window.location.search).route;
-    if (screenRoute?.screen) return screenRoute.screen;
+    if (screenRoute?.screen) {
+      const screen = screenRoute.screen;
+      return screen === 'scheduled' || screen === 'running' ? screen : 'monitor';
+    }
     const wizard = parseTalkXRoute(window.location.search).wizard.route;
     if (wizard) return 'wizard';
     return 'tabs';

@@ -326,7 +326,13 @@ export async function handleTalkxScheduler(
           'talkx_campaign_window_open',
           { p_campaign_id: campaign.id, p_at: nowIso },
         );
-        if (winErr || windowOpen !== true) {
+        // RETURNS TABLE chega do PostgREST como array. Só uma linha com
+        // allowed=true autoriza o envio; vazio, múltiplas linhas ou forma
+        // inesperada fecham a janela (sem coerção truthy de arrays/strings).
+        const allowed = Array.isArray(windowOpen)
+          && windowOpen.length === 1
+          && windowOpen[0]?.allowed === true;
+        if (winErr || !allowed) {
           log.info(`Campanha fora da janela de envio: ${campaign.name} (${campaign.id})`, {
             campaignId: campaign.id,
             windowOpen,

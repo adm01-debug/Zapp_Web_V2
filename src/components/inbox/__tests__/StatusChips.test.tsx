@@ -22,6 +22,7 @@ function makeConversation(overrides: Partial<ConversationWithMessages['contact']
     contact: {
       id: contactOverrides.id ?? 'c1',
       assigned_to: null,
+      conversation_status: 'open',
       ...contactOverrides,
     } as ConversationWithMessages['contact'],
     messages: hasMessages ? [{ id: 'm1' } as never] : [],
@@ -34,8 +35,8 @@ describe('StatusChips', () => {
   const conversations: ConversationWithMessages[] = [
     makeConversation({ id: 'c1', assigned_to: CURRENT_PROFILE_ID, unreadCount: 2 }),
     makeConversation({ id: 'c2', assigned_to: OTHER_PROFILE_ID }),
-    makeConversation({ id: 'c3', assigned_to: null }),
-    makeConversation({ id: 'c4', hasMessages: false }),
+    makeConversation({ id: 'c3', assigned_to: null, conversation_status: 'waiting' }),
+    makeConversation({ id: 'c4', hasMessages: false, conversation_status: 'resolved' }),
   ];
 
   it('renders the 6 chips (no Spam — não existe no modelo)', () => {
@@ -68,12 +69,12 @@ describe('StatusChips', () => {
     expect(screen.getByTestId('status-chip-attending').querySelector('span')?.textContent).toBe('1');
   });
 
-  it('maps "Aguardando" to unassigned open conversations', () => {
+  it('maps "Aguardando" to persisted waiting conversations', () => {
     render(<StatusChips conversations={conversations} chipTab="all" onChipTabChange={() => {}} />);
     expect(screen.getByTestId('status-chip-waiting')).toHaveTextContent('1');
   });
 
-  it('maps "Resolvidas" to conversations with no messages', () => {
+  it('maps "Resolvidas" to persisted resolved conversations', () => {
     render(<StatusChips conversations={conversations} chipTab="all" onChipTabChange={() => {}} />);
     expect(screen.getByTestId('status-chip-resolved')).toHaveTextContent('1');
   });

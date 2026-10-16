@@ -78,6 +78,7 @@ function fakeAdmin(opts: {
   const stateRows: StateRow[] = [];
   const rpcCalls: Array<{ fn: string; args: Record<string, unknown> }> = [];
   const updateCalls: Array<Record<string, unknown>> = [];
+  const auditCalls: Array<Record<string, unknown>> = [];
   const upsertCalls: Array<{ row: Record<string, unknown>; options: Record<string, unknown> }> = [];
   const updateResults = [...(opts.updateResults ?? [])];
   const account = opts.account === undefined ? ACCOUNT : opts.account;

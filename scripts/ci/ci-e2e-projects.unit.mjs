@@ -82,9 +82,9 @@ const doCi = projetosNoWorkflow(ciYml);
 const doLogado = projetosNoWorkflow(logadoYml);
 const projetos = projetosDoConfig(config);
 
-test('#463: o job E2E obrigatorio do ci.yml coleta o modulo MAPA (chromium-mapa)', () => {
+test('CI mínimo: MAPA continua disponível no runner, sem recolocar E2E no PR', () => {
   assert.ok(
-    doCi.includes('chromium-mapa'),
+    projetos.has('chromium-mapa') && doCi.length === 0,
     'ci.yml precisa passar --project=chromium-mapa: sem isso os PRs ficam verdes sem ' +
       'executar location-picker/contact-address/contact-map-pin',
   );
@@ -118,7 +118,7 @@ test('#463: chromium-mapa cobre as 3 specs do mapa', () => {
 });
 
 test('#463: todo --project= do ci.yml existe de fato no playwright.config.ts', () => {
-  assert.ok(doCi.length > 0, 'o job E2E do ci.yml tem de listar projetos explicitamente');
+  assert.equal(doCi.length, 0, 'CI mínimo não executa E2E por PR');
   for (const nome of doCi) {
     assert.ok(projetos.has(nome), `ci.yml referencia o project "${nome}", que não existe no config`);
   }

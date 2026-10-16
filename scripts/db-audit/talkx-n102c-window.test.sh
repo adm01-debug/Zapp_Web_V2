@@ -53,12 +53,19 @@ psql_test >/dev/null <<'SQL'
 CREATE ROLE service_role NOLOGIN;
 CREATE ROLE authenticated NOLOGIN;
 CREATE ROLE anon NOLOGIN;
+CREATE SCHEMA auth;
+CREATE FUNCTION auth.role() RETURNS text LANGUAGE sql STABLE AS $$
+  SELECT NULLIF(current_setting('request.jwt.claim.role', true), '')
+$$;
 
 CREATE TABLE public.talkx_campaigns (
   id uuid PRIMARY KEY,
   schedule_timezone text NOT NULL DEFAULT 'America/Sao_Paulo',
   send_weekdays smallint[],
-  respect_dnd boolean NOT NULL DEFAULT true
+  respect_dnd boolean NOT NULL DEFAULT true,
+  send_window_start time,
+  send_window_end time,
+  business_hours_only boolean NOT NULL DEFAULT false
 );
 
 CREATE TABLE public.talkx_settings (
@@ -75,43 +82,15 @@ INSERT INTO public.talkx_campaigns(id, schedule_timezone, send_weekdays, respect
   ('30000000-0000-0000-0000-000000000003', 'America/Sao_Paulo', '{1}',         false);
 SQL
 
-# ---- corpo ANTERIOR (defeito): fuso da sessao (UTC) + ISODOW; sem restricao de ACL ----
+# ---- assinatura REAL da predecessora: TABLE, nunca boolean ----
+# Sem o fix, este corpo ignora o fuso local e mantém EXECUTE público.
 psql_test >/dev/null <<'SQL'
-CREATE OR REPLACE FUNCTION public.talkx_campaign_window_open(p_campaign_id uuid, p_at timestamptz)
-RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $function$
-DECLARE
-  v_campaign public.talkx_campaigns%ROWTYPE;
-  v_dnd_hours jsonb;
-  v_weekday integer;
-  v_start_minutes integer;
-  v_end_minutes integer;
-  v_minutes_of_day integer;
-BEGIN
-  SELECT * INTO v_campaign FROM public.talkx_campaigns WHERE id = p_campaign_id;
-  IF NOT FOUND THEN RAISE EXCEPTION 'talkx_campaign_not_found' USING ERRCODE = 'P0002'; END IF;
-  IF v_campaign.send_weekdays IS NOT NULL THEN
-    v_weekday := EXTRACT(ISODOW FROM p_at)::integer % 7;
-    IF NOT (v_weekday = ANY(v_campaign.send_weekdays)) THEN RETURN false; END IF;
-  END IF;
-  IF v_campaign.respect_dnd THEN
-    SELECT value INTO v_dnd_hours FROM public.talkx_settings WHERE key = 'dnd_hours';
-    IF v_dnd_hours IS NOT NULL AND jsonb_typeof(v_dnd_hours) = 'object' THEN
-      v_minutes_of_day := EXTRACT(HOUR FROM p_at)::integer * 60 + EXTRACT(MINUTE FROM p_at)::integer;
-      v_start_minutes := (split_part(v_dnd_hours ->> 'start', ':', 1))::integer * 60 + (split_part(v_dnd_hours ->> 'start', ':', 2))::integer;
-      v_end_minutes := (split_part(v_dnd_hours ->> 'end', ':', 1))::integer * 60 + (split_part(v_dnd_hours ->> 'end', ':', 2))::integer;
-      IF EXTRACT(DOW FROM p_at) = 0 AND (v_dnd_hours ->> 'sundays')::boolean = false THEN RETURN true; END IF;
-      IF jsonb_array_length(v_dnd_hours -> 'holidays') > 0 THEN
-        IF p_at::date = ANY(v_dnd_hours -> 'holidays')::date[] THEN RETURN true; END IF;
-      END IF;
-      IF v_start_minutes < v_end_minutes THEN
-        IF v_minutes_of_day >= v_start_minutes AND v_minutes_of_day < v_end_minutes THEN RETURN false; END IF;
-      ELSIF v_start_minutes > v_end_minutes THEN
-        IF v_minutes_of_day >= v_start_minutes OR v_minutes_of_day < v_end_minutes THEN RETURN false; END IF;
-      END IF;
-    END IF;
-  END IF;
-  RETURN true;
-END;
+CREATE OR REPLACE FUNCTION public.talkx_campaign_window_open(p_campaign_id uuid, p_at timestamptz DEFAULT now())
+RETURNS TABLE(allowed boolean, reason text, next_window timestamptz)
+LANGUAGE sql SECURITY DEFINER SET search_path = public, pg_temp AS $function$
+  SELECT send_weekdays IS NULL OR EXTRACT(DOW FROM p_at)::smallint = ANY(send_weekdays),
+    NULL::text, NULL::timestamptz
+  FROM public.talkx_campaigns WHERE id = p_campaign_id;
 $function$;
 SQL
 
@@ -121,7 +100,7 @@ if [[ -z "$skip_fix" ]]; then
   psql_test < "$migration" >/dev/null || fail 'a migration 20261011003008 nao e replayavel (2a aplicacao falhou)'
 fi
 
-window() { psql_test -Atqc "SELECT public.talkx_campaign_window_open('$1'::uuid, '$2'::timestamptz)"; }
+window() { psql_test -Atqc "SET request.jwt.claim.role = 'service_role'; SET ROLE service_role; SELECT allowed FROM public.talkx_campaign_window_open('$1'::uuid, '$2'::timestamptz)"; }
 
 # (1) ABRE dentro da janela — segunda 10:00 em Sao Paulo, semana permitida {1..5}
 [[ "$(window 30000000-0000-0000-0000-000000000001 2026-10-12T13:00:00+00)" == 't' ]] \
@@ -145,14 +124,16 @@ done
 
 printf '[OK] Talk X N-102c: window_open abre dentro, fecha fora (dia local) e respeita o fuso; ACL restrita a service_role.\n'
 
-# ---- Rollback executavel: extrai a linha do rodape da migration, derruba a funcao e
-#      prova que reaplicar a migration a recria (reversivel de verdade) ----
-rollback_sql="$(grep -m1 -oE 'DROP FUNCTION[^;]*;' "$migration")"
-[[ -n "$rollback_sql" ]] || fail 'migration sem linha de rollback executavel (DROP FUNCTION ...)'
-psql_test -c "$rollback_sql" >/dev/null || fail "rollback nao executou: $rollback_sql"
-[[ -z "$(psql_test -Atqc "SELECT to_regprocedure('public.talkx_campaign_window_open(uuid,timestamptz)')")" ]] \
-  || fail 'rollback nao removeu a funcao'
-psql_test < "$migration" >/dev/null || fail 'migration nao reaplica apos o rollback'
-[[ -n "$(psql_test -Atqc "SELECT to_regprocedure('public.talkx_campaign_window_open(uuid,timestamptz)')")" ]] \
-  || fail 'migration nao recriou a funcao apos o rollback'
-printf '[OK] Rollback N-102c: %s remove a funcao e a migration a recria.\n' "$rollback_sql"
+# A migration não apaga a RPC predecessora nem muda seu retorno.
+[[ "$(psql_test -Atqc "SELECT pg_get_function_result('public.talkx_campaign_window_open(uuid,timestamptz)'::regprocedure)")" == 'TABLE(allowed boolean, reason text, next_window timestamp with time zone)' ]] \
+  || fail 'assinatura TABLE da predecessora não foi preservada'
+
+# DND e horários são parte do mesmo contrato, não podem sumir no replace.
+psql_test -c "UPDATE public.talkx_campaigns SET respect_dnd = true WHERE id = '30000000-0000-0000-0000-000000000001'" >/dev/null
+[[ "$(window 30000000-0000-0000-0000-000000000001 2026-10-13T02:00:00+00)" == 'f' ]] || fail 'DND noturno deveria fechar'
+psql_test -c "UPDATE public.talkx_campaigns SET respect_dnd = false, business_hours_only = true WHERE id = '30000000-0000-0000-0000-000000000001'" >/dev/null
+[[ "$(window 30000000-0000-0000-0000-000000000001 2026-10-12T22:00:00+00)" == 'f' ]] || fail 'horário comercial deveria fechar às 19h local'
+[[ "$(window 30000000-0000-0000-0000-000000000001 2026-10-12T13:00:00+00)" == 't' ]] || fail 'horário comercial deveria abrir às 10h local'
+psql_test -c "UPDATE public.talkx_campaigns SET schedule_timezone = 'invalid/zone' WHERE id = '30000000-0000-0000-0000-000000000001'" >/dev/null
+[[ "$(window 30000000-0000-0000-0000-000000000001 2026-10-12T13:00:00+00)" == 'f' ]] || fail 'timezone inválido deveria fechar'
+printf '[OK] Assinatura TABLE, DND, business_hours e timezone inválido preservados.\n'

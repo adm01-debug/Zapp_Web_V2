@@ -12,8 +12,8 @@ vi.mock('@/hooks/auth/useAuth', () => ({
 
 // Cartão t_90dcdcc8, item 4 [refazer 1]: os chips de filtro funcionam como seleção única
 // (Todas/Não lidas/etc) mas não anunciavam papel/estado ao leitor de tela.
-// Padrão copiado de TeamConversationList.tsx:104-119 (role="tablist" no grupo
-// + role="tab"/aria-selected em cada botão).
+// São filtros do mesmo painel, não abas com tabpanels: grupo nomeado e
+// botões nativos com aria-pressed preservam teclado e anunciam o ativo.
 //
 // O componente é renderizado REAL (sem dublê de primitivo de UI): os chips são
 // `<button>` nativos, então o axe enxerga o markup de verdade.
@@ -34,22 +34,22 @@ const SERIOUS = new Set(['critical', 'serious']);
 const ids = (violations: { id: string }[]) => violations.map((v) => v.id).sort();
 
 describe('StatusChips — nome/papel acessível (t_90dcdcc8)', () => {
-  it('o grupo de filtros é um tablist nomeado', () => {
+  it('o grupo de filtros é nomeado', () => {
     render(<StatusChips conversations={conversations} chipTab="all" onChipTabChange={() => {}} />);
-    const tablist = screen.getByRole('tablist', { name: 'Filtros de conversa' });
+    const tablist = screen.getByRole('group', { name: 'Filtros de conversa' });
     expect(tablist).toBeInTheDocument();
     expect(tablist).toBe(screen.getByTestId('status-chips'));
   });
 
-  it('cada chip é um tab e só o ativo fica aria-selected', () => {
+  it('cada chip é um botão e só o ativo fica aria-pressed', () => {
     render(<StatusChips conversations={conversations} chipTab="unread" onChipTabChange={() => {}} />);
 
-    const tabs = screen.getAllByRole('tab');
+    const tabs = screen.getAllByRole('button');
     expect(tabs).toHaveLength(6);
 
-    expect(screen.getByTestId('status-chip-unread')).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByTestId('status-chip-unread')).toHaveAttribute('aria-pressed', 'true');
     for (const id of ['all', 'attending', 'waiting', 'resolved', 'archived']) {
-      expect(screen.getByTestId(`status-chip-${id}`)).toHaveAttribute('aria-selected', 'false');
+      expect(screen.getByTestId(`status-chip-${id}`)).toHaveAttribute('aria-pressed', 'false');
     }
   });
 });

@@ -23,6 +23,7 @@ import { QuickPeek } from '@/components/ui/quick-peek';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useAgentsLite, type AgentLite } from '@/hooks/crm/useAgentsLite';
 import { useDensity, type DensityMode } from '@/hooks/ui/useDensity';
+import { ConversationReopenDialog } from './conversation-list/ConversationReopenDialog';
 
 // Alturas calibradas para o conteudo real da linha (nome + linha de cargo
 // opcional + previa + cluster de badges com SLA/tags, que pode quebrar em 2
@@ -74,6 +75,7 @@ interface VirtualizedRealtimeListProps {
   onPin?: (contactId: string) => void;
   pinnedIds?: Set<string>;
   onResolve?: (contactId: string) => void;
+  onReopen?: (contactId: string) => void | Promise<void>;
   onTransfer?: (contactId: string) => void;
   onFavorite?: (contactId: string) => void;
   favoriteIds?: Set<string>;
@@ -103,6 +105,7 @@ export function VirtualizedRealtimeList({
   onPin,
   pinnedIds = EMPTY_SET,
   onResolve,
+  onReopen,
   onTransfer,
   onFavorite,
   favoriteIds = EMPTY_SET,
@@ -247,6 +250,7 @@ export function VirtualizedRealtimeList({
               onToggleSelection={onToggleSelection}
               handleClick={handleClick}
               onResolve={onResolve}
+              onReopen={onReopen}
               onTransfer={onTransfer}
               onPin={onPin}
               onFavorite={onFavorite}
@@ -303,6 +307,7 @@ interface ConversationRowProps {
   onToggleSelection?: (contactId: string) => void;
   handleClick: (contactId: string, e: React.SyntheticEvent) => void;
   onResolve?: (contactId: string) => void;
+  onReopen?: (contactId: string) => void | Promise<void>;
   onTransfer?: (contactId: string) => void;
   onPin?: (contactId: string) => void;
   onFavorite?: (contactId: string) => void;
@@ -360,6 +365,7 @@ const ConversationRow = memo(({
   onToggleSelection,
   handleClick,
   onResolve,
+  onReopen,
   onTransfer,
   onPin,
   onFavorite,
@@ -398,6 +404,24 @@ const ConversationRow = memo(({
   const tags = conversation.contact.tags ?? [];
 
   const [snoozeOpen, setSnoozeOpen] = useState(false);
+  const [reopenOpen, setReopenOpen] = useState(false);
+  const [reopenPending, setReopenPending] = useState(false);
+  const [reopenError, setReopenError] = useState<string | null>(null);
+  const canReopen = Boolean(onReopen) && ['resolved', 'archived'].includes(conversation.contact.conversation_status);
+  const reopenLabel = conversation.contact.conversation_status === 'archived' ? 'Desarquivar' : 'Reabrir';
+  const confirmReopen = async () => {
+    if (!onReopen || reopenPending) return;
+    setReopenPending(true);
+    setReopenError(null);
+    try {
+      await onReopen(contactId);
+      setReopenOpen(false);
+    } catch {
+      setReopenError('Não foi possível reabrir a conversa. Tente novamente.');
+    } finally {
+      setReopenPending(false);
+    }
+  };
 
   // ConversationSLABadge chama useApplicableSLA (react-query) — sem um
   // QueryClient no contexto o useQuery lanca "No QueryClient set" e derruba
@@ -637,6 +661,13 @@ const ConversationRow = memo(({
         {/* Hover action buttons */}
         <div className="absolute bottom-2 left-0 right-0 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto group-focus-within:pointer-events-auto transition-all duration-150 pl-[60px]">
           <TooltipProvider delayDuration={200}>
+            {canReopen && (
+              <button type="button" aria-label={`${reopenLabel} conversa`}
+                className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-primary"
+                onClick={(event) => { event.stopPropagation(); setReopenError(null); setReopenOpen(true); }}>
+                <Archive className="w-3.5 h-3.5" aria-hidden="true" />
+              </button>
+            )}
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
@@ -716,6 +747,11 @@ const ConversationRow = memo(({
             </Tooltip>
           </TooltipProvider>
         </div>
+        <ConversationReopenDialog open={reopenOpen}
+          onOpenChange={(open) => { if (!reopenPending) setReopenOpen(open); }}
+          action={conversation.contact.conversation_status === 'archived' ? 'unarchive' : 'reopen'}
+          contactName={conversation.contact.name} isPending={reopenPending} error={reopenError}
+          onConfirm={() => { void confirmReopen(); }} />
       </div>
     </QuickPeek>
   );

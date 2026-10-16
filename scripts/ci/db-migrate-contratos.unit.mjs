@@ -19,7 +19,7 @@ const ler = (p) => readFileSync(new URL(p, raiz), 'utf8');
 const sha256 = (t) => createHash('sha256').update(t, 'utf8').digest('hex');
 const CONTRATOS = new URL('../../scripts/db-audit/contracts/', import.meta.url);
 
-test('E62: os 12 contratos sao ARQUIVOS, e o workflow nao tem mais nenhum braco embutido', () => {
+test('E62: os contratos sao arquivos e o workflow valida o hash antes de aplicar', () => {
   const y = ler('.github/workflows/db-migrate.yml');
   assert.equal(
     /^ {12}\d{14}\)\s*$/m.test(y),
@@ -28,10 +28,10 @@ test('E62: os 12 contratos sao ARQUIVOS, e o workflow nao tem mais nenhum braco 
   );
   assert.match(y, /run-runtime-contract\.mjs/, 'o passo tem de chamar o executor generico');
   // o guard continua: a comparacao com o sha confirmado (composicao da E64) sobreviveu
-  assert.match(y, /confirmacao !== process\.env\.CONFIRM_RUNTIME_SHA256/, 'a comparacao do sha tem de continuar');
-  assert.match(y, /if \(process\.env\.APPLY === 'true'/, 'e continuar condicionada ao apply');
+  assert.match(y, /validate-runtime-proof\.mjs/, 'a prova deve ser validada pelo executor externo');
+  assert.match(y, /if \[ "\$APPLY" = "true" \] && \[ "\$CONFIRMATION_HASH" != "\$CONFIRM_RUNTIME_SHA256" \]/, 'apply deve recusar hash composto divergente');
   const arquivos = readdirSync(CONTRATOS).filter((f) => f.endsWith('.sql'));
-  assert.equal(arquivos.length, 12, `esperava 12 contratos, achei ${arquivos.length}`);
+  assert.equal(arquivos.length, 13, `esperava 12 contratos históricos e o lote de 05/10, achei ${arquivos.length}`);
 });
 
 test('E62: cada contrato e o texto do braco de origem (equivalencia pelo sha do documento)', () => {
@@ -270,6 +270,7 @@ const SUPORTADAS = {
   20260912130000: { arquivo: 'scripts/db-audit/talkx-recovery-runtime.sql' },
   20260912140000: { arquivo: 'scripts/db-audit/talkx-recovery-runtime.sql' },
   20260922220000: { arquivo: 'scripts/db-audit/notification-delivery-atomicity-runtime.sql' },
+  20261004195051: { arquivo: 'scripts/db-audit/generic-migration-runtime.sql' },
 };
 
 test('E62: as versoes suportadas resolvem para o contrato do case de origem', () => {

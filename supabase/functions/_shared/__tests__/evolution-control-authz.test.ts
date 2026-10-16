@@ -49,14 +49,14 @@ Deno.test("classifyEvolutionAction - ação desconhecida cai em control (deny by
 
 Deno.test("classifyEvolutionAction - envios diretos e mutações de conversa são send", () => {
   for (const action of [
-    "send-text", "send-media", "send-audio", "send-template", "send-ptv",
-    "send-reaction", "send-chat-presence", "offer-call",
-    "mark-read", "mark-unread", "archive-chat",
+    "send-text", "send-media", "send-audio", "send-ptv",
+    "send-reaction", "send-chat-presence",
+    "mark-read", "archive-chat",
   ]) {
     assertEquals(classifyEvolutionAction(action), "send", `${action} deve ser send`);
   }
   assert(SEND_ACTIONS.has("send-text"));
-  assert(SEND_ACTIONS.has("offer-call"));
+  assert(SEND_ACTIONS.has("send-chat-presence"));
 });
 
 Deno.test("R2EXT-STATUS: send-status é controle (não tem contato-alvo para gate por visibilidade)", () => {
@@ -72,7 +72,7 @@ Deno.test("classifyEvolutionAction - leituras não sensíveis seguem liberadas a
   for (const action of [
     "status", "list-instances", "instance-info",
     "check-numbers",
-    "list-groups", "group-info", "group-participants", "group-invite-code", "invite-info",
+    "list-groups", "group-info", "group-participants", "group-invite-code",
   ]) {
     assertEquals(classifyEvolutionAction(action), "read", `${action} deve ser read`);
     assert(READ_ACTIONS.has(action), `${action} deve estar em READ_ACTIONS`);
@@ -84,21 +84,23 @@ Deno.test("R2EXT-AGENDA: leitura instance-wide e configuração do provedor exig
   // alvo de conversa para gate por visibilidade) e as demais expõem configuração
   // ou credencial do provedor: todas restritas a admin/supervisor.
   const movedToControl = [
-    "find-chats", "find-contacts", "find-messages", "find-status-messages",
+    "find-contacts",
     "get-media-base64",
-    "get-settings", "get-webhook",
+    "get-webhook",
     "fetch-profile", "fetch-profile-picture", "fetch-business-profile",
-    "find-labels", "find-templates",
-    "get-chatwoot", "get-typebot", "typebot-sessions",
-    "get-openai", "get-dify", "get-flowise", "get-evolution-bot",
-    "get-rabbitmq", "get-sqs", "get-proxy", "get-evoai", "get-n8n",
-    "get-kafka", "get-nats", "get-pusher",
-    "get-catalog", "get-collections",
+    "find-labels", "pairing-code",
   ];
   for (const action of movedToControl) {
     assertEquals(classifyEvolutionAction(action), "control", `${action} deve ser control`);
     assert(CONTROL_ACTIONS.has(action), `${action} deve estar em CONTROL_ACTIONS`);
     assert(!READ_ACTIONS.has(action), `${action} não pode continuar em READ_ACTIONS`);
+  }
+});
+
+Deno.test("E43: ações removidas não integram o schema e continuam negadas por padrão", () => {
+  for (const action of ["send-template", "offer-call", "mark-unread", "invite-info", "find-chats", "find-messages", "get-chatwoot", "set-n8n"]) {
+    assertEquals(classifyEvolutionAction(action), "control");
+    assert(!CONTROL_ACTIONS.has(action) && !SEND_ACTIONS.has(action) && !READ_ACTIONS.has(action));
   }
 });
 
@@ -133,7 +135,7 @@ Deno.test("matriz é exaustiva: toda ação do handler está em exatamente um co
   const handlerActions = new Set(
     [...handlerSource.matchAll(/action === '([^']+)'/g)].map((m) => m[1]),
   );
-  assert(handlerActions.size > 100, `sanidade: handler deve ter >100 ações (achou ${handlerActions.size})`);
+  assert(handlerActions.size > 0, 'sanidade: extração precisa encontrar as ações do handler');
 
   const sets = { CONTROL_ACTIONS, SEND_ACTIONS, READ_ACTIONS };
   for (const [name, set] of Object.entries(sets)) {

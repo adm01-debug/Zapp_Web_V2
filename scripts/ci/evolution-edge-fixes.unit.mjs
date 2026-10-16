@@ -276,11 +276,22 @@ test("proxyToEvolution: erro não expõe corpo bruto da GO via campo 'details'",
   );
 });
 
+test("get-webhook conserva implementação GO e isola a rota v2 por flavor", () => {
+  const inicio = apiSrc.indexOf("if (action === 'get-webhook')");
+  assert.ok(inicio >= 0);
+  const proxima = apiSrc.indexOf("\n    if (action ===", inicio + 1);
+  const bloco = apiSrc.slice(inicio, proxima < 0 ? undefined : proxima);
+  assert.match(bloco, /if \(!isGoFlavor\) return await proxy\(`/);
+  assert.match(bloco, /proxy\('\/instance\/fetchInstances', 'GET'\)/);
+  assert.match(bloco, /rec\.webhook/);
+});
+
 test("rotas sem equivalente na GO foram removidas do handler (SL-075 E43)", () => {
   // E43: as rotas sem equivalente na GO sairam do handler (404 antes de I/O).
   for (const action of [
     "find-messages", "find-status-messages", "find-chats", "set-presence",
-    "set-settings", "get-settings", "get-webhook", "send-template",
+    // get-webhook tem implementação GO própria; não é mais uma rota v2 sem equivalente.
+    "set-settings", "get-settings", "send-template",
     "mark-unread", "invite-info", "toggle-ephemeral", "offer-call",
     "set-chatwoot", "get-chatwoot", "delete-chatwoot", "set-typebot",
     "get-typebot", "delete-typebot", "typebot-sessions",

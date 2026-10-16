@@ -1,5 +1,6 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { MessageSquare } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { ConversationEmptyState } from '@/components/shared/ConversationEmptyState';
 import { useCustomShortcuts } from '@/hooks/ui/useCustomShortcuts';
 import { listarAtalhosEditaveis } from '@/hooks/shortcuts/defaultShortcuts';
@@ -21,8 +22,22 @@ import { listarAtalhosEditaveis } from '@/hooks/shortcuts/defaultShortcuts';
  */
 const INBOX_EMPTY_SHORTCUT_IDS = ['prev-conversation', 'next-conversation', 'global-search'];
 
-export function InboxEmptyChat() {
+interface InboxEmptyChatProps {
+  waitingCount?: number;
+  unreadCount?: number;
+  onNewConversation?: () => void;
+}
+
+export function InboxEmptyChat({ waitingCount, unreadCount, onNewConversation }: InboxEmptyChatProps) {
   const { shortcuts, formatShortcut } = useCustomShortcuts();
+  const [reducedMotion, setReducedMotion] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => setReducedMotion(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
 
   const atalhos = useMemo(
     () => listarAtalhosEditaveis(shortcuts).filter((shortcut) => INBOX_EMPTY_SHORTCUT_IDS.includes(shortcut.id)),
@@ -36,7 +51,15 @@ export function InboxEmptyChat() {
       description="Escolha uma conversa na lista ao lado para visualizar e responder mensagens"
       className="bg-inbox-panel overflow-hidden"
       action={
-        atalhos.length > 0 ? (
+        <div data-testid="inbox-empty-actions" className={`flex flex-col items-center gap-4 ${reducedMotion ? '' : 'motion-safe:animate-in motion-safe:fade-in'}`}>
+          {onNewConversation && <Button onClick={onNewConversation}>Nova conversa</Button>}
+          {(waitingCount !== undefined || unreadCount !== undefined) && (
+            <div className="flex flex-wrap justify-center gap-3 text-sm text-muted-foreground">
+              {waitingCount !== undefined && <span data-testid="inbox-empty-waiting">{waitingCount} aguardando</span>}
+              {unreadCount !== undefined && <span data-testid="inbox-empty-unread">{unreadCount} {unreadCount === 1 ? 'não lida' : 'não lidas'}</span>}
+            </div>
+          )}
+        {atalhos.length > 0 && (
           <div
             data-testid="inbox-empty-shortcuts"
             className="flex flex-col items-center gap-2"
@@ -44,7 +67,11 @@ export function InboxEmptyChat() {
             <span className="text-xs font-medium text-muted-foreground">Atalhos do teclado</span>
             <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
               {atalhos.map((shortcut) => {
-                const keys = formatShortcut(shortcut);
+                // A busca global aceita Ctrl ou Meta; o restante mantém o
+                // binding remapeado exibido pelo registry.
+                const keys = formatShortcut(shortcut).map((key) =>
+                  shortcut.id === 'global-search' && key === 'Ctrl' && /Mac|iPhone|iPad/.test(navigator.platform)
+                    ? '⌘' : key);
                 return (
                   <div key={shortcut.id} className="flex items-center gap-1.5">
                     {keys.map((key, index) => (
@@ -63,7 +90,8 @@ export function InboxEmptyChat() {
               })}
             </div>
           </div>
-        ) : undefined
+        )}
+        </div>
       }
     />
   );

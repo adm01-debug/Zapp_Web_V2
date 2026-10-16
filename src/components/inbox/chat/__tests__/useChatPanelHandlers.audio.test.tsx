@@ -15,7 +15,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('@/lib/logger', () => ({
+vi.mock('@/lib/logger', async (importOriginal) => ({ ...await importOriginal<typeof import('@/lib/logger')>(),
   log: { debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 vi.mock('@/integrations/supabase/client', () => ({

@@ -17,7 +17,7 @@
  * 2026-10-16 e segue a MESMA regra de `intelligence`: valor conhecido a mais,
  * chave de storage intacta, preferência já salva preservada.
  */
-export const SIDEBAR_SECTIONS = ['professional', 'personal', 'singu', 'intelligence', 'delivery'] as const;
+export const SIDEBAR_SECTIONS = ['professional', 'personal', 'singu', 'intelligence', 'delivery', 'memoria'] as const;
 export type SidebarSectionValue = (typeof SIDEBAR_SECTIONS)[number];
 
 export const DEFAULT_OPEN_SECTIONS: SidebarSectionValue[] = ['professional', 'personal', 'singu', 'intelligence', 'delivery'];
