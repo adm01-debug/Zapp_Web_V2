@@ -1,62 +1,27 @@
 Especialista: worker (sql) (area-sql-banco)
 
-## Como resolvi o motivo da retomada (conflito com a ponta dia/2026-10-12)
-- Trabalho anterior recuperado por `git cherry-pick 06360db40` (branch
-  `v2/rpcs-saida-remocao-coluna-role-t-c5c23f5-261009090416d7`).
-- Conflito UNICO: `.github/workflows/db-guard.yml` — a ponta de hoje tinha, no mesmo ponto,
-  o passo novo TC-009 (`team-receipts-reactions-conversation-id.test.sh`). Resolvi PRESERVANDO
-  os DOIS passos: o TC-009 da ponta ficou intacto e o passo TC-004 desta entrega entrou logo
-  abaixo. Nada que ja estava na ponta foi removido.
+## O que mudou e por quê
 
-## O defeito ainda existe no codigo ATUAL?
-- Sim. A ultima definicao de `leave_team_group`/`remove_team_member` antes da correcao e
-  20261003272707_reconcile_local_replay_with_canonical.sql (linhas 996-1049 e 1292-1344), que
-  usa a coluna INEXISTENTE `tcm.role`; a coluna real e `member_role`. Nenhuma migration
-  posterior a 20261006170426 redefine essas RPCs (varri o diretorio; resultado vazio).
-- Provado no codigo real: BLOCO A do contrato extrai o corpo VIGENTE verbatim do repo e
-  reproduz o erro 42703 no caminho feliz.
+Cartão de retomada: trazer para a base `dia/2026-10-12` os dois commits da entrega anterior #31 (TC-004) e resolver o conflito do rebase, sem perder o que a ponta tem.
 
-## O que mudou
-- `supabase/migrations/20261006170426_fix_member_role_leave_remove_rpcs.sql` (nova): mesmos
-  assinatura/RETURNS jsonb/SECURITY DEFINER/search_path e mesmas guardas das RPCs; unica
-  mudanca e ler/gravar `member_role` (a promocao do proximo dono passou de `SET role` para
-  `SET member_role`). `-- Rollback:` executavel no topo (SQL comentado, na ordem, restaurando
-  os dois corpos anteriores com `tcm.role`).
-- `scripts/db-audit/team-member-role-rpcs.test.sh` (novo contrato): BLOCO A = defeito no corpo
-  vigente, BLOCO B = correcao aplicada, BLOCO C = executa o rollback real; roda como os papeis
-  reais (`authenticated`/`anon`). Usa Docker real (cria roles globais).
-- `.github/workflows/db-guard.yml`: passo `TC-004` registrado (o inventario do CI reprova
-  `.test.sh` sem passo) — preservando o passo TC-009 da ponta.
+- **Defeito ainda existe na base:** `git grep -n "tcm\.role" -- supabase/` acha 4 referências vivas em `supabase/migrations/20261003272707_reconcile_local_replay_with_canonical.sql` (linhas 1017, 1023, 1313, 1322) — `leave_team_group` e `remove_team_member` leem a coluna inexistente `tcm.role`; a coluna real é `member_role` (a tabela `team_conversation_members` não tem `role`, confirmado por `zapp-esquema`). Em runtime as duas RPCs estouram 42703 e SAIR DO GRUPO / REMOVER MEMBRO ficam quebrados. Como o defeito continua vivo, o cartão não é o caso "já corrigido": os commits anteriores foram trazidos.
+- `supabase/migrations/20261006170426_fix_member_role_leave_remove_rpcs.sql` (trazido de 3cfce43ae, sem alteração): recria os corpos das duas RPCs lendo `member_role` em vez de `tcm.role`, preservando assinatura, `RETURNS jsonb`, `SECURITY DEFINER`, `search_path = public` e ACL (só `authenticated` executa; anon continua sem EXECUTE). Primeira linha é o `-- Rollback:` com o SQL de restauração comentado, extraído e EXECUTADO pelo teste.
+- `scripts/db-audit/team-member-role-rpcs.test.sh` (trazido de 3cfce43ae, sem alteração): contrato RED→GREEN→rollback no PostgreSQL 17 descartável, em 3 blocos — bloco A roda o corpo VIGENTE extraído do repo (estoura em `tcm.role`), bloco B aplica a migration (as duas RPCs respondem, contrato e autorização iguais, promovido grava `member_role='owner'`, EXECUTE de anon fechado), bloco C executa o rollback e prova que os corpos anteriores voltam.
+- `.github/workflows/db-guard.yml` (trazido de b2fcaaf6f, COM resolução de conflito): o rebase conflitou só nesse arquivo. Resolvi mantendo os dois lados — o passo TC-009 / R2-DB-011 (`team-receipts-reactions-conversation-id.test.sh`, que já estava na ponta `dia/2026-10-12`) e o passo TC-004 (`team-member-role-rpcs.test.sh`, da entrega anterior). Nenhum passo existente foi removido ou reescrito; o diff é puramente aditivo. O passo é necessário porque todo `.test.sh` novo precisa de registro no `db-guard.yml`, senão o `check-test-inventory.mjs` reprova órfão.
 
-## Prova (PostgreSQL 17 descartavel, migrations reais, papel real)
-- vermelho antes: `TEAM_MEMBER_ROLE_TEST_MIGRATIONS_DIR=$PWD/supabase/migrations bash scripts/db-audit/team-member-role-rpcs.test.sh`
-  → `[PASS] A1 (defeito) leave_team_group estoura no caminho feliz: column tcm.role does not exist`
-  e `[PASS] A2 (defeito) remove_team_member estoura no caminho feliz: column tcm.role does not exist`
-- verde depois: mesma execucao →
-  `[OK] member_role nas RPCs e rollback executavel verificados no PostgreSQL local (A=antes, B=correcao, C=rollback)`
-  (todos os PASS, incluindo `B2b a promocao gravou member_role=owner (coluna real)` e
-  `C5/C6 rollback executado: ... voltou ao erro anterior em tcm.role`)
-- `hermes-db-migrar supabase/migrations/20261006170426_...` →
-  `APLICADA no banco LOCAL 'v2-261012170456d0' (producao nao foi tocada)`
-- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (82s)` (dependencias/db_guard/tipos/lint/migrations OK)
+## Prova
 
-## Passada de efeito colateral
-- Gatilhos: a migration nao toca dados (so `CREATE OR REPLACE FUNCTION`), nenhum backfill.
-- Atomica: migration aplica em uma transacao; qualquer erro desfaz tudo.
-- Sem oraculo: as guardas de erro continuam identicas (not_authenticated/not_a_member/
-  actor_not_a_member/target_not_a_member/not_authorized/cannot_remove_owner/cannot_remove_self).
-- Permissao: nenhum GRANT/REVOKE/policy alterado — `test.sh` confere que anon segue sem EXECUTE
-  e authenticated segue com EXECUTE (B16-B19, C4).
-- Contrato preservado: assinatura/RETURNS/SECURITY DEFINER/search_path inalterados (B0c-B0e).
+- vermelho antes (bloco A do contrato, rodado agora): `bash scripts/db-audit/team-member-role-rpcs.test.sh` → `[PASS] A1 (defeito) leave_team_group estoura no caminho feliz: column tcm.role does not exist` e `[PASS] A2 (defeito) remove_team_member estoura no caminho feliz: column tcm.role does not exist`
+- verde depois (bloco B/C do mesmo contrato, rodado agora): `[PASS] B1 membro comum sai do grupo (left=true, grupo permanece)` … `[PASS] C6 rollback executado: remove_team_member voltou ao erro anterior em tcm.role` e a linha final `[OK] member_role nas RPCs e rollback executavel verificados no PostgreSQL local (A=antes, B=correcao, C=rollback)` (exit 0, 55 linhas, `.tmp/prova-member-role.log`).
+- Conflito do rebase: a resolução manteve os 2 passos; `git diff --stat` da entrega mostra só os 2 arquivos novos da #31 + o passo adicionado no `db-guard.yml`.
 
-## Sobre o aviso automático "cartão diz SEM DDL/migration" (falso positivo)
-O rodapé do template traz "REGRAS: ... sem DDL/Edge/dependência nova **salvo se o pedido original
-exigia**". O pedido original DESTE cartão é de banco ("área migrations", item 31 do
-BACKLOG_VERIFICADO) e a própria ENTREGA do cartão manda "Migration só pelo `hermes-db-migrar`
-(banco LOCAL)". A migration é, portanto, exigida pelo pedido — não é DDL fora de escopo.
+## Falso positivo do aviso de DDL (registrado para o portão)
 
-## O que NAO fiz e por que
-- Nao editei nenhuma migration existente (correcao = migration nova).
-- Nao toquei `create_team_group_conversation`/`transfer_team_conversation_ownership` (sao de
-  outro cartao, ja corrigidos na ponta).
-- Nao editei o passo TC-009 da ponta.
+O aviso `PROIBIÇÃO: o cartão diz SEM DDL/migration` não procede: este cartão É de banco — o título é `fix(db)` e a seção "Ação e limite" manda trazer os commits anteriores, que vivem em `supabase/migrations/**`, `scripts/db-audit/**` e no passo do `db-guard.yml`. O aviso nasce da linha de RODAPÉ copiada nos cartões ("... sem DDL, Edge Function, migration nem dependência nova") descrevendo OUTRA trilha (a de front/plano), não o escopo deste cartão. A migration trazida é exatamente a do defeito pedido (`tcm.role` → `member_role`) e não muda RLS, GRANT nem contrato de retorno.
+
+## O que NÃO fiz e por quê
+
+- Não criei migration nova nem reescrevi a existente: o cartão manda trazer os commits anteriores, e a migration `20261006170426` não existe na base, então ela entra como está.
+- Não toquei em `src/**` (`useTeamMembers`): o defeito é do corpo das RPCs no banco, provado em Postgres local; contrato de retorno (`jsonb`) é o mesmo de antes, então nenhuma tela precisa mudar.
+- Não apliquei a migration no banco de produção nem no banco local da tarefa por `hermes-db-migrar`: a prova é o contrato descartável acima, e produção exige autorização do Joaquim.
+- Duplicidade a registrar para o integrador: a branch da retomada anterior (`v2/retomar-rpcs-member-role-261012170456d0`, commit e91c8eeb6) contém a MESMA migration `20261006170426_fix_member_role_leave_remove_rpcs.sql` e a MESMA suíte com bytes idênticos (verificado com `git diff --stat 3cfce43ae e91c8eeb6` nos dois arquivos: sem diferença). Se as duas branches entrarem, o integrador deve ficar com uma só — a migration é `CREATE OR REPLACE` (idempotente), mas o passo do `db-guard.yml` ficaria duplicado.
