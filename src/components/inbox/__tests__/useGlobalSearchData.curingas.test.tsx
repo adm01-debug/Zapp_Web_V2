@@ -96,4 +96,29 @@ describe('useGlobalSearchData — curingas do LIKE escapados', () => {
     expect(or).toContain('phone.ilike."%a\\\\_b%"');
     expect(or).not.toContain('name.ilike.%a_b%');
   });
+
+  it('digitar `100%` não casa tudo: o `%` sai literal em mensagem, transcrição e contato', async () => {
+    await search('100%');
+
+    const content = h.calls.ilike.find(([col]) => col === 'content');
+    expect(content?.[1]).toBe('%100\\%%');
+    // `%100%%` casaria qualquer coisa terminando em `100` — o curinga tem de sumir.
+    expect(content?.[1]).not.toBe('%100%%');
+
+    const transcription = h.calls.ilike.find(([col]) => col === 'transcription');
+    expect(transcription?.[1]).toBe('%100\\%%');
+
+    const or = h.calls.or.find((clause) => clause.includes('name.ilike'));
+    expect(or).toContain('name.ilike."%100\\\\%%"');
+    expect(or).not.toContain('name.ilike.%100%%');
+  });
+
+  it('a contrabarra digitada é escapada primeiro (não re-escapa o que vem depois)', async () => {
+    await search('a\\b');
+
+    const content = h.calls.ilike.find(([col]) => col === 'content');
+    // Entrada `a\b` vira `a\\b` no padrão do LIKE, dentro de `%...%`.
+    expect(content?.[1]).toBe('%a\\\\b%');
+    expect(content?.[1]).not.toBe('%a\\b%');
+  });
 });
