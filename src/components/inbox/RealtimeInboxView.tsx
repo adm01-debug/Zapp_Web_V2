@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo, lazy, Suspense } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef, lazy, Suspense } from 'react';
 import { useIsMobile } from '@/hooks/ui/use-mobile';
 import { usePullToRefresh } from '@/hooks/ui/usePullToRefresh';
 import { MiniChatPiP } from '@/components/mobile/MiniChatPiP';
@@ -178,6 +178,24 @@ export function RealtimeInboxView() {
     navigateToView('email-chat', { emailContact: contato.id, emailTo: contato.email ?? '' });
   }, [inbox.legacyConversation]);
 
+  // L6 (paridade V3→V2, doc 11): a soma das não lidas da lista vira anúncio em
+  // região `aria-live` quando SOBE. `null` marca a carga inicial: abrir a Inbox
+  // já com conversas não lidas não é mensagem nova e não pode ser anunciado.
+  const totalNaoLidas = useMemo(
+    () => inbox.cachedConversations.reduce((total, c) => total + (c.unreadCount ?? 0), 0),
+    [inbox.cachedConversations],
+  );
+  const totalNaoLidasAnteriorRef = useRef<number | null>(null);
+  const anuncioNovasMensagensRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const anterior = totalNaoLidasAnteriorRef.current;
+    totalNaoLidasAnteriorRef.current = totalNaoLidas;
+    if (anterior === null || totalNaoLidas <= anterior) return;
+    const novas = totalNaoLidas - anterior;
+    const regiao = anuncioNovasMensagensRef.current;
+    if (regiao) regiao.textContent = novas === 1 ? 'Nova mensagem recebida' : `${novas} novas mensagens`;
+  }, [totalNaoLidas]);
+
   // "Usar resposta" (aba IA) — leva o texto sugerido para o input do Chat e troca de aba.
   const [pendingDraft, setPendingDraft] = useState<string | null>(null);
   const handleUseSuggestion = useCallback((text: string) => {
@@ -258,6 +276,17 @@ export function RealtimeInboxView() {
 
   return (
     <div className="flex h-full min-h-0 w-full relative bg-background overflow-hidden">
+      {/* L6: região viva só da Inbox. `role="status"` + `aria-live="polite"` e
+          texto escrito por efeito (sem estado) — id próprio para não colidir com
+          a região de rotas do `useAriaAnnouncer`. */}
+      <div
+        ref={anuncioNovasMensagensRef}
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        data-testid="inbox-novas-mensagens"
+        className="sr-only"
+      />
       {inbox.globalSearchOpen && (
         <Suspense fallback={null}>
           <GlobalSearch
