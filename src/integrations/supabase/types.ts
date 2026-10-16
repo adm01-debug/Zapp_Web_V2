@@ -11403,6 +11403,10 @@ export type Database = {
         }
         Returns: string
       }
+      credit_agent_mini_game_xp: {
+        Args: { p_game_id: string; p_profile_id: string; p_xp: number }
+        Returns: Json
+      }
       current_profile_id: { Args: never; Returns: string }
       crisis_room_snapshot: { Args: never; Returns: Json }
       dashboard_contact_counts: {

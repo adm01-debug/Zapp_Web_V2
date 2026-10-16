@@ -23,6 +23,18 @@ export interface Achievement {
   earned_at: string;
 }
 
+export interface MiniGameXpCreditResult {
+  credited: boolean;
+  reason: 'ok' | 'daily_limit' | 'zero_xp' | 'sem_stats';
+  partidas: number;
+  maxPartidasDia: number;
+  xpCreditado: number;
+  newXp?: number;
+  newLevel?: number;
+  previousLevel?: number;
+  leveledUp?: boolean;
+}
+
 export const ACHIEVEMENT_TYPES = {
   FAST_RESPONSE: 'fast_response',
   SPEED_DEMON: 'speed_demon',
