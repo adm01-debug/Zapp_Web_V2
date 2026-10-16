@@ -3,6 +3,8 @@
  * and provides utilities to open/focus/close them.
  */
 
+import { formatDocumentTitle } from './productName';
+
 const openPopups = new Map<string, Window>();
 
 // Clean up closed windows periodically
@@ -37,10 +39,12 @@ export function openChatPopup(contactId: string, contactName: string): Window | 
 
   if (popup) {
     openPopups.set(contactId, popup);
-    // Set title after load
+    // Set title after load — MESMO formato do ChatPopup (que escreve no documento
+    // desta mesma janela ao carregar o contato): os dois usam o nome do produto de
+    // `@/lib/productName`, senão quem carrega por último decide o título.
     popup.addEventListener('load', () => {
       try {
-        popup.document.title = `Chat — ${contactName}`;
+        popup.document.title = formatDocumentTitle(`Chat — ${contactName}`);
       } catch { /* cross-origin */ }
     });
   }
