@@ -30,6 +30,11 @@ Testes (o que cada um trava):
 - Ponto 3: NaN informado como defeito aberto em Observacoes, com o contraste explícito (cartão pedia "ignorado" x produção colapsa tudo na última variante).
 - Defeito novo (diff vazio): resolvido — o diff agora contém `supabase/functions/talkx-send/x020-variavel-distribuicao.test.ts` (163 linhas, trazido por cherry-pick da branch indicada, sem alteração); a prova foi rodada de novo neste workspace (linhas em "Prova" acima); as frases "nenhum arquivo novo neste diff" e "prova já executada no trabalho anterior, sem alteração aqui" foram removidas.
 
+## Pontos do corrigir desta rodada (prova inline)
+- Ponto 1: teste trazido por cherry-pick da branch `v2/teste-proporcao-fronteiras-sorteio-varia-26101219274e30` (52f665575 indicado na recusa + c5c9369421 da mesma branch, sem alteração); prova: o diff contém `supabase/functions/talkx-send/x020-variavel-distribuicao.test.ts` (163 linhas novas).
+- Ponto 2: `deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 supabase/functions/talkx-send/x020-variavel-distribuicao.test.ts` → `ok | 8 passed | 0 failed (141ms)`; suíte `deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 supabase/functions/talkx-send/` → `ok | 87 passed | 0 failed | 1 ignored (2s)`; ambos rodados neste workspace.
+- Ponto 3: frases "nenhum arquivo novo neste diff" e "prova já executada no trabalho anterior, sem alteração aqui" removidas; seções Passo 1, Observacoes (NaN) e Pontos da recusa mantidas; prova: este `.tmp/relato.md` faz parte do diff.
+
 ## O que NÃO fiz e por quê
 - Nenhuma alteração de código de produção (o cartão proíbe); o único arquivo de código no diff é o teste novo, inalterado desde o cherry-pick.
 - Não toquei no teste existente `x020-variavel-precedencia.test.ts` (roda junto na suíte do módulo e segue verde).
