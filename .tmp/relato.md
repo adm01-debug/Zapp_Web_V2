@@ -76,6 +76,11 @@ aprovado já está na ponta e os extras do refazer 1 foram descartados.)
 
 ## O que NÃO fiz e por quê
 
+- Aviso do juiz barato sobre a migration
+`20261009150000_scope_wa_label_rpc_by_connection.sql` (sem rollback): não
+procede para este cartão — o arquivo não está no meu diff (só `.tmp/relato.md`)
+e pertence a outro cartão (commit 2c018822f4, #31); não mexi nele.
+
 - Não removi `AuthService.signUp` nem `useAuth.signUp`: o Ponto 2 da recusa manda
 reverter essas mudanças por estarem fora da lista de arquivos do cartão.
 Registrei o caminho residual como achado fora do escopo no cartão
