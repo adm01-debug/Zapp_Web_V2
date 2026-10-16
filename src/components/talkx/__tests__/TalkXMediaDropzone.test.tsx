@@ -349,6 +349,38 @@ describe('TalkXMediaDropzone (X095)', () => {
     await waitFor(() => expect(payload()?.media_type).toBe('document'));
   });
 
+  it('falha passageira (408) mostra o alerta em linha, nao grava nada e reenviar tenta de novo', async () => {
+    const timeoutBody = {
+      error: true,
+      code: 'SCAN_TIMEOUT',
+      message: 'A verificacao demorou demais. Tente novamente.',
+      verdict: 'unknown',
+      scanId: null,
+    };
+    mocks.scanInvoke
+      .mockResolvedValueOnce({
+        data: null,
+        error: { message: 'Edge Function returned a non-2xx status code', context: new Response(JSON.stringify(timeoutBody), { status: 408 }) },
+      })
+      .mockResolvedValue({
+        data: { success: true, scanned: true, verdict: 'clean', scanId: 'scan-2', message: 'Arquivo verificado.' },
+        error: null,
+      });
+
+    render(<Harness />);
+    chooseFile(makeFile('relatorio.pdf', 'application/pdf', 1024));
+
+    expect(await screen.findByTestId('talkx-media-error')).toHaveTextContent('demorou');
+    expect(mocks.upload).not.toHaveBeenCalled();
+    expect(payload()).toBeNull();
+
+    // "Tentar novamente" no Talk X e escolher o arquivo de novo: varre outra vez e grava.
+    chooseFile(makeFile('relatorio.pdf', 'application/pdf', 1024));
+    await waitFor(() => expect(mocks.scanInvoke).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(mocks.upload).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(payload()?.media_type).toBe('document'));
+  });
+
   it('falha-aberto grava e avisa em voz baixa, sem alerta de erro na tela', async () => {
     mocks.scanInvoke.mockResolvedValue({
       data: {
