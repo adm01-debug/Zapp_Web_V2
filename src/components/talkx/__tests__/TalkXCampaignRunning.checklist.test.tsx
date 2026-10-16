@@ -77,6 +77,7 @@ vi.mock('@/hooks/integrations/useTalkX', () => ({
     pauseCampaign: vi.fn(),
     cancelCampaign: vi.fn(),
     startCampaign: vi.fn(),
+    setSelectedCampaignId: vi.fn(),
   }),
 }));
 
