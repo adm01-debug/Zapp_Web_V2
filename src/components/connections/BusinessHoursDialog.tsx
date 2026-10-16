@@ -121,14 +121,15 @@ export function BusinessHoursDialog({
   const temJornadaInvalida = errosPorDia.length > 0;
 
   // Prévia: a mensagem como o cliente a recebe, com as variáveis preenchidas
-  // pelo horário do primeiro dia aberto (valores de exemplo).
+  // pelo horário do primeiro dia aberto (valores de exemplo). O banco devolve
+  // `HH:MM:SS`: a prévia mostra `HH:MM`, como o cliente lê.
   const diaExemplo =
     localHours.find((h) => h.is_open && classificarJanela(h.open_time, h.close_time) === 'normal') ??
     localHours.find((h) => h.is_open && classificarJanela(h.open_time, h.close_time) === 'noturna');
   const previa = resolverVariaveisExemplo(localAway.content, {
     nome: 'Ana',
-    abertura: diaExemplo?.open_time ?? '--:--',
-    fechamento: diaExemplo?.close_time ?? '--:--',
+    abertura: (diaExemplo?.open_time ?? '').slice(0, 5) || '--:--',
+    fechamento: (diaExemplo?.close_time ?? '').slice(0, 5) || '--:--',
   });
 
   // Sync local state when data is fetched

@@ -73,6 +73,7 @@ export type MotivoDoDia =
   | 'sem-configuracao'
   | 'fechado-hoje'
   | 'horario-invalido'
+  | 'horario-incompleto'
   | 'dentro'
   | 'fora';
 
@@ -125,7 +126,16 @@ export function resumoDoDia(
   }
 
   const tipo = classificarJanela(dia.open_time, dia.close_time);
-  if (tipo === 'incompleta' || tipo === 'igual') {
+  if (tipo === 'incompleta') {
+    return {
+      isOpen: false,
+      motivo: 'horario-incompleto',
+      viraODia: false,
+      intervalo: null,
+      origem: 'hoje',
+    };
+  }
+  if (tipo === 'igual') {
     return {
       isOpen: false,
       motivo: 'horario-invalido',
@@ -232,6 +242,8 @@ function textoDoTooltip(resumo: ResumoDoDia): string {
       return 'Horário hoje: Fechado hoje';
     case 'horario-invalido':
       return 'Horário de hoje inválido: início e fim iguais — ajuste em Horário de Atendimento';
+    case 'horario-incompleto':
+      return 'Horário de hoje incompleto: informe início e fim em Horário de Atendimento';
     default:
       return resumo.origem === 'ontem'
         ? `Janela de ontem: ${resumo.intervalo} (vira o dia)`

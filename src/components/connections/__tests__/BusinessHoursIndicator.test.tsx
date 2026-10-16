@@ -195,37 +195,26 @@ describe('BusinessHoursIndicator — estados do selo', () => {
     expect(screen.queryByText('Aberto')).toBeNull();
   });
 
-  it('janela que vira o dia (início > fim) fica aberta e avisa que vira o dia', async () => {
-    // Janela noturna em vigor AGORA: de madrugada ela vem da linha de ONTEM
-    // (22:00→06:00); fora dela, da linha de hoje (início 1 h atrás, fim 2 h
-    // atrás — início > fim).
-    const agora = agoraBrasil();
-    const agoraMinutos = agora.getHours() * 60 + agora.getMinutes();
-    const madrugada = agoraMinutos <= 6 * 60;
-    const abre = madrugada ? '22:00' : hojeDeslocado(-60);
-    const fecha = madrugada ? '06:00' : hojeDeslocado(-120);
-    h.rows = [
-      {
-        day_of_week: madrugada ? DIA_ONTEM : DIA_HOJE,
-        is_open: true,
-        open_time: `${abre}:00`,
-        close_time: `${fecha}:00`,
-      },
-    ];
+  it('janela noturna em vigor à noite (23:00 congelado): abre pela linha de hoje e avisa que vira o dia', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      vi.setSystemTime(new Date('2026-10-16T23:00:00-03:00')); // sexta, 23:00 em São Paulo
+      h.rows = [
+        { day_of_week: 5, is_open: true, open_time: '22:00:00', close_time: '06:00:00' },
+      ];
 
-    const { container } = setup();
-    expect(await screen.findByText('Aberto')).toBeTruthy();
+      const { container } = setup();
+      expect(await screen.findByText('Aberto')).toBeTruthy();
 
-    const trigger = container.querySelector('div')!;
-    fireEvent.pointerEnter(trigger);
-    fireEvent.pointerMove(trigger);
-    expect(
-      await screen.findByText(
-        madrugada
-          ? `Janela de ontem: ${abre} - ${fecha} (vira o dia)`
-          : `Horário hoje: ${abre} - ${fecha} (vira o dia)`,
-      ),
-    ).toBeTruthy();
+      const trigger = container.querySelector('div')!;
+      fireEvent.pointerEnter(trigger);
+      fireEvent.pointerMove(trigger);
+      expect(
+        await screen.findByText('Horário hoje: 22:00 - 06:00 (vira o dia)'),
+      ).toBeTruthy();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('madrugada: sábado 02:00 com a sexta aberta até as 06:00 mostra “Aberto” e a janela de ontem', async () => {
@@ -337,6 +326,23 @@ describe('regra de horário comercial (função pura)', () => {
     expect(resumo.intervalo).toBeNull();
   });
 
+  it('janela incompleta (fim faltando) fica fechada com o aviso de incompleto, não o de iguais', async () => {
+    h.rows = [
+      { day_of_week: DIA_HOJE, is_open: true, open_time: '09:00:00', close_time: '' },
+    ];
+    const { container } = setup();
+    expect(await screen.findByText('Fechado')).toBeTruthy();
+
+    const trigger = container.querySelector('div')!;
+    fireEvent.pointerEnter(trigger);
+    fireEvent.pointerMove(trigger);
+    expect(
+      await screen.findByText(
+        'Horário de hoje incompleto: informe início e fim em Horário de Atendimento',
+      ),
+    ).toBeTruthy();
+  });
+
   it('janela igual no selo: “Fechado” com o aviso de horário inválido, nunca “vira o dia” da própria linha', async () => {
     h.rows = [
       { day_of_week: DIA_HOJE, is_open: true, open_time: '09:00:00', close_time: '09:00:00' },
@@ -353,6 +359,13 @@ describe('regra de horário comercial (função pura)', () => {
         'Horário de hoje inválido: início e fim iguais — ajuste em Horário de Atendimento',
       ),
     ).toBeTruthy();
+  });
+
+  it('janela incompleta nunca vira motivo fora/dentro nem usa o texto de iguais', () => {
+    const resumo = resumoDoDia({ is_open: true, open_time: '09:00', close_time: '' }, 10 * 60);
+    expect(resumo.motivo).toBe('horario-incompleto');
+    expect(resumo.isOpen).toBe(false);
+    expect(resumo.intervalo).toBeNull();
   });
 
   it('janela igual nunca vira motivo fora/dentro da própria linha', () => {

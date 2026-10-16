@@ -191,6 +191,20 @@ describe('BusinessHoursDialog — envio automático da mensagem de ausência', (
     ).toBeTruthy();
   });
 
+  it('prévia com horário do banco (HH:MM:SS) mostra HH:MM', () => {
+    h.hours = semana('09:00:00', '18:00:00');
+    h.away = {
+      whatsapp_connection_id: 'conn-1',
+      content: 'Abrimos às {horario_abertura} e fechamos às {horario_fechamento}.',
+      is_enabled: true,
+    };
+    render(<BusinessHoursDialog {...props} />);
+
+    expect(
+      screen.getByText('Abrimos às 09:00 e fechamos às 18:00.'),
+    ).toBeTruthy();
+  });
+
   it('prévia vazia convida a digitar; a função de substituição só troca o que conhece', () => {
     render(<BusinessHoursDialog {...props} />);
     expect(screen.getByText('Digite a mensagem para ver como o cliente vai recebê-la.')).toBeTruthy();
