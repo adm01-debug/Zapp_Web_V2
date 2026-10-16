@@ -1,5 +1,5 @@
-import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, getClientIP, enforceRateLimit } from "../_shared/validation.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, getCorsHeaders, enforceRateLimit, getClientIP } from "../_shared/validation.ts";
 import { WebAuthnActionSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import {
   verifyAuthenticationAssertion,
@@ -164,50 +164,28 @@ function credentialRefusalResponse(req: Request, lock: LockPayload): Response {
 }
 
 export async function handleWebAuthn(req: Request, deps: WebAuthnDeps = {}): Promise<Response> {
-
-/** Página do GoTrue admin por vez (200 é o teto do `perPage`). */
-const USERS_PAGE_SIZE = 200;
-/** Trava o custo da varredura: até 25 páginas (5.000 contas) por chamada. */
-const USERS_MAX_PAGES = 25;
-
-export interface WebAuthnInjected {
-  supabaseAdmin?: SupabaseClient;
-  supabaseUrl?: string;
-  anonKey?: string;
-  /** Injetável no teste; em produção usa o limiter persistente de `_shared/validation.ts`. */
-  enforceRateLimit?: typeof enforceRateLimit;
-}
-
-/**
- * Resolve o id do auth user pelo e-mail varrendo TODAS as páginas do admin API.
- * `listUsers()` sem argumentos devolvia só a 1ª página (50 contas): uma conta além
- * dela era tratada como inexistente (passkey nunca oferecida). A varredura é limitada
- * por `USERS_MAX_PAGES`; falha de leitura não autoriza nada (retorna null).
- */
-export async function findUserIdByEmail(supabaseAdmin: SupabaseClient, email: string): Promise<string | null> {
-  const wanted = email.trim().toLowerCase();
-  for (let page = 1; page <= USERS_MAX_PAGES; page++) {
-    const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: USERS_PAGE_SIZE });
-    if (error) return null;
-    const users = data?.users ?? [];
-    const match = users.find((u) => (u.email ?? '').toLowerCase() === wanted);
-    if (match) return match.id;
-    if (users.length < USERS_PAGE_SIZE) return null;
-  }
-  return null;
-}
-
-export async function handleWebAuthn(req: Request, _injected?: WebAuthnInjected): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
 
   const log = new Logger("webauthn");
-  const limiter = _injected?.enforceRateLimit ?? enforceRateLimit;
+  const rateLimit = deps.enforceRateLimit ?? enforceRateLimit;
+  const verifyAssertion = deps.verifyAuthenticationAssertion ?? verifyAuthenticationAssertion;
 
   try {
-    const supabaseUrl = _injected?.supabaseUrl ?? requireEnv('SUPABASE_URL');
-    const supabaseAnonKey = _injected?.anonKey ?? requireEnv('SUPABASE_ANON_KEY');
-    const supabaseAdmin = _injected?.supabaseAdmin ?? createClient(supabaseUrl, requireEnv('SUPABASE_SERVICE_ROLE_KEY'));
+    const admin: WebAuthnAdminClient = deps.admin
+      ?? (createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY')) as unknown as WebAuthnAdminClient);
+
+    // R2-AUTH-022: MESMA trava de rede do auth-login, na fronteira do endpoint e
+    // ANTES de ler o body — negação 403 (ou 503 indecidível) curto-circuita tudo.
+    const policy = await resolveNetworkPolicy(req, 'webauthn', {
+      rpc: admin,
+      defaultMaxRequests: IP_LIMIT_DEFAULT_MAX,
+      defaultWindowSeconds: IP_LIMIT_DEFAULT_WINDOW_SECONDS,
+    });
+    if (!policy.allowed) {
+      log.done(policy.status, policy.status === 403 ? { reason: policy.reason } : {});
+      return networkPolicyDenialResponse(policy, req);
+    }
 
     const rawBody = await req.json();
     const parsed = parseBody(WebAuthnActionSchema, rawBody);
@@ -321,12 +299,12 @@ export async function handleWebAuthn(req: Request, _injected?: WebAuthnInjected)
         let authUserId: string | null = null;
 
         if (userEmail) {
-          authUserId = await findUserIdByEmail(supabaseAdmin, userEmail);
-          if (authUserId) {
-            const { data: credentials } = await supabaseAdmin.from('passkey_credentials').select('credential_id, transports').eq('user_id', authUserId);
-            // Conta sem passkey registrada → allowCredentials vazio, INDISTINGUÍVEL de
-            // e-mail inexistente: o corpo não revela se a conta existe.
-            allowCredentials = (credentials || []).map(cred => ({
+          const { data: userData } = await admin.auth.admin.listUsers();
+          const user = userData?.users?.find(u => u.email === userEmail);
+          if (user) {
+            authUserId = user.id;
+            const { data: credentials } = await admin.from('passkey_credentials').select('credential_id, transports').eq('user_id', user.id);
+            allowCredentials = (credentials || []).map((cred: { credential_id: string; transports: string[] | null }) => ({
               id: cred.credential_id, type: 'public-key', transports: cred.transports || ['internal', 'hybrid'],
             }));
           }
