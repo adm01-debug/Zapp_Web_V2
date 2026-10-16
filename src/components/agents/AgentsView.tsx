@@ -72,7 +72,7 @@ export function AgentsView() {
     { label: 'Online', value: stats.onlineCount, color: 'bg-status-online', icon: undefined as React.ElementType | undefined },
     { label: 'Ausente', value: stats.awayCount, color: 'bg-status-away', icon: undefined as React.ElementType | undefined },
     { label: 'Offline', value: stats.offlineCount, color: 'bg-status-offline', icon: undefined as React.ElementType | undefined },
-    { label: 'Chats Ativos', value: stats.totalActiveChats, color: undefined as string | undefined, icon: MessageSquare as React.ElementType },
+    { label: 'Chats Ativos', value: stats.totalActiveChats ?? '—', color: undefined as string | undefined, icon: MessageSquare as React.ElementType },
   ];
 
   if (isLoading || pendingLoading || sendsLoading) {
@@ -194,7 +194,8 @@ export function AgentsView() {
         <StaggeredList className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filteredAgents.map((agent) => {
             const maxChats = agent.max_chats || 5;
-            const capacityPercent = (agent.activeChats / maxChats) * 100;
+            // Capacidade indisponível (leitura falhou) não vira "0/5": mostra '—'.
+            const capacityPercent = agent.activeChats === null ? null : (agent.activeChats / maxChats) * 100;
             const pending = pendingCounts[agent.id] ?? 0;
             const lastSend = recentSends[agent.id] ?? null;
 
@@ -240,19 +241,23 @@ export function AgentsView() {
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">Capacidade</span>
                         <span className="font-medium text-foreground">
-                          {agent.activeChats}/{maxChats} chats
+                          {agent.activeChats === null ? 'Indisponível' : `${agent.activeChats}/${maxChats} chats`}
                         </span>
                       </div>
-                      <Progress
-                        value={capacityPercent}
-                        aria-label={`Capacidade: ${capacityPercent}% — ${agent.activeChats} de ${maxChats} chats`}
-                        className={cn(
-                          'h-2',
-                          capacityPercent <= 50 && '[&>div]:bg-success',
-                          capacityPercent > 50 && capacityPercent <= 80 && '[&>div]:bg-warning',
-                          capacityPercent > 80 && '[&>div]:bg-destructive'
-                        )}
-                      />
+                      {capacityPercent === null ? (
+                        <p className="text-xs text-muted-foreground">Capacidade indisponível</p>
+                      ) : (
+                        <Progress
+                          value={capacityPercent}
+                          aria-label={`Capacidade: ${capacityPercent}% — ${agent.activeChats} de ${maxChats} chats`}
+                          className={cn(
+                            'h-2',
+                            capacityPercent <= 50 && '[&>div]:bg-success',
+                            capacityPercent > 50 && capacityPercent <= 80 && '[&>div]:bg-warning',
+                            capacityPercent > 80 && '[&>div]:bg-destructive'
+                          )}
+                        />
+                      )}
                     </div>
 
                     {/* Carga: pendentes e último envio (o supervisor vê a sobrecarga de cada atendente) */}
