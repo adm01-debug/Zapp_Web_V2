@@ -35,14 +35,16 @@ export function useCustomEmojis(open: boolean) {
   // Há mais páginas? A tela usa para mostrar "Carregar mais" e some quando acaba.
   const [hasMore, setHasMore] = useState(false);
   const [uploading, setUploading] = useState(false);
-  // A mensagem de falha do envio precisa viver no estado (não só no toast), porque
-  // quem exibe a mensagem com a ação "Tentar novamente" é a tela.
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const [pendingUpload, setPendingUpload] = useState<PendingEmojiUpload | null>(null);
   // Exclusão com confirmação: `handleDelete` marca o alvo e nada é removido antes
   // de `confirmDelete`. Antes a linha sumia da tela e do banco no primeiro clique.
   const [pendingDelete, setPendingDelete] = useState<CustomEmoji | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Trava de reentrância do Salvar: o estado só reflete no próximo render, então dois
+  // cliques no mesmo tick veriam `saving === false` e criariam duas linhas.
+  const savingRef = useRef(false);
   // R2-API-053: caminhos de Storage cuja remoção foi recusada depois de a linha já ter
   // saído. Ficam registrados como etapa pendente e a limpeza é retomada na próxima leitura.
   const pendingStorageRemovals = useRef<string[]>([]);
@@ -113,8 +115,14 @@ export function useCustomEmojis(open: boolean) {
     setUploadError(null);
     setUploading(true);
     try {
+      // Item 226: a policy de INSERT do bucket exige admin/supervisor OU a pasta do
+      // PRÓPRIO usuário (`(storage.foldername(name))[1] = auth.uid()`). Subir na raiz
+      // funciona só para admin — o atendente comum recebia erro de permissão.
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { toast.error('Sessão não identificada; entre novamente para enviar emojis'); return; }
+
       const ext = getFileExtensionWithDefault(file.name, 'png');
-      const storagePath = `emoji_${Date.now()}_${crypto.randomUUID()}.${ext}`;
+      const storagePath = `${user.id}/emoji_${Date.now()}_${crypto.randomUUID()}.${ext}`;
 
       const { error: uploadError } = await supabase.storage
         .from('custom-emojis')
@@ -178,20 +186,38 @@ export function useCustomEmojis(open: boolean) {
   }, [uploadFile]);
 
   const handleConfirmUpload = useCallback(async (pending: PendingEmojiUpload) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    const { error } = await supabase.from('custom_emojis').insert({
-      name: pending.name, image_url: pending.imageUrl,
-      category: pending.selectedCategory, is_favorite: false,
-      use_count: 0, uploaded_by: user?.id || null,
-    });
-    if (error) { toast.error('Erro ao salvar emoji'); return; }
-    toast.success(`Emoji salvo como "${CATEGORY_LABELS[pending.selectedCategory]?.label || pending.selectedCategory}"!`);
-    setPendingUpload(null);
-    setUploadError(null);
-    fetchEmojis();
+    // Duplo clique: a trava é síncrona (ref), então o segundo clique morre aqui mesmo
+    // antes do primeiro `await` — uma linha só.
+    if (savingRef.current) return;
+    const name = pending.name.trim();
+    if (!name) { toast.error('Dê um nome ao emoji'); return; }
+
+    savingRef.current = true;
+    setSaving(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { error } = await supabase.from('custom_emojis').insert({
+        name, image_url: pending.imageUrl,
+        category: pending.selectedCategory, is_favorite: false,
+        use_count: 0, uploaded_by: user?.id || null,
+      });
+      if (error) { toast.error('Erro ao salvar emoji'); return; }
+      toast.success(`Emoji salvo como "${CATEGORY_LABELS[pending.selectedCategory]?.label || pending.selectedCategory}"!`);
+      setPendingUpload(null);
+      setUploadError(null);
+      fetchEmojis();
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
+    }
   }, [fetchEmojis]);
 
   const handleCancelUpload = useCallback(async () => {
+    // Item 226 (refazer 1): fechar o popover (Escape/clique fora) durante o Salvar
+    // chamava esta limpeza com o insert ainda em voo e apagava o objeto que a linha
+    // recém-criada referencia (órfão invertido). A trava é o ref (síncrono): o estado
+    // `saving` só reflete no próximo render e não fecha a corrida do mesmo tick.
+    if (savingRef.current) return;
     if (pendingUpload) {
       await supabase.storage.from('custom-emojis').remove([pendingUpload.storagePath]);
     }
@@ -201,7 +227,12 @@ export function useCustomEmojis(open: boolean) {
   const handleSend = useCallback(async (emoji: CustomEmoji, onSendEmoji: (url: string) => void, onClose: () => void) => {
     onSendEmoji(emoji.image_url);
     onClose();
-    await supabase.from('custom_emojis').update({ use_count: (emoji.use_count || 0) + 1 }).eq('id', emoji.id);
+    // PB-35: o UPDATE direto em `use_count` atinge 0 linhas quando o emoji é de OUTRO
+    // dono (a policy de UPDATE é do dono/admin) — sem erro e sem contador. A RPC
+    // `increment_custom_emoji_use` (SECURITY DEFINER) grava no lugar do atendente.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RPC nova (PB-35), types.ts ainda não sincronizado
+    const { error } = await (supabase as any).rpc('increment_custom_emoji_use', { p_emoji_id: emoji.id });
+    if (error) toast.error('Não foi possível registrar o uso do emoji');
   }, []);
 
   const toggleFavorite = useCallback(async (e: React.MouseEvent, emoji: CustomEmoji) => {
@@ -272,7 +303,7 @@ export function useCustomEmojis(open: boolean) {
 
   return {
     emojis, loading, loadingMore, hasMore, loadMore,
-    uploading, uploadError, retryUpload, pendingUpload, pendingDelete,
+    uploading, uploadError, retryUpload, saving, pendingUpload, pendingDelete,
     fileInputRef,
     handleFileSelect, handleConfirmUpload, handleCancelUpload,
     handleSend, toggleFavorite, handleCategoryChange,
