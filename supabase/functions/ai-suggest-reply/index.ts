@@ -22,6 +22,8 @@ export interface AiSuggestReplyDeps {
   ) => Promise<Response | null>;
   /** Roteador de IA (default: `generateWithRouting`). */
   generate?: (params: GenerateParams) => Promise<GenerateResult>;
+  /** Busca artigos na KB para a última mensagem do cliente (default: RPC `search_knowledge_base` real). */
+  searchKnowledgeBase?: (query: string, maxResults: number) => Promise<{ data: Array<{ category?: string; title: string; content: string; rank: number }> | null } | null>;
 }
 
 export async function handleAiSuggestReply(
@@ -68,12 +70,18 @@ export async function handleAiSuggestReply(
         : null;
 
       if (lastClientMessage) {
-        const { data: relevantArticles, error: kbError } = await supabase
-          .rpc('search_knowledge_base', { search_query: lastClientMessage, max_results: 5 });
-
-        // Erro no RPC: o contexto fica vazio de forma explícita — sem fallback
-        // para artigos publicados (removido neste cartão) e sem resto parcial.
-        if (kbError) {
+        // Seam `deps.searchKnowledgeBase` existe só para o teste rodar o
+        // handler real offline; o default é o RPC real. Erro no RPC: o
+        // contexto fica vazio de forma explícita — sem fallback para artigos
+        // publicados e sem resto parcial.
+        const searchKB = deps.searchKnowledgeBase ??
+          ((q: string, max: number) =>
+            supabase.rpc('search_knowledge_base', { search_query: q, max_results: max }));
+        const searchResult = await searchKB(lastClientMessage, 5) as
+          | { data?: Array<{ category?: string; title: string; content: string; rank: number }> | null; error?: unknown }
+          | null;
+        const relevantArticles = searchResult?.data;
+        if (searchResult && "error" in searchResult && (searchResult as { error?: unknown }).error) {
           knowledgeContext = '';
         } else if (relevantArticles && relevantArticles.length > 0) {
           knowledgeContext = `\n\nBASE DE CONHECIMENTO DA EMPRESA (use como referência para suas respostas):\n${
