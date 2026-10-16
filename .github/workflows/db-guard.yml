@@ -1138,6 +1138,24 @@ jobs:
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/profiles-role-escalation-guard.test.sh
 
+      # N-147 (P3 · banco, limpeza de RLS): o ramo `OR is_admin_or_supervisor` das
+      # policies SELECT/UPDATE de email_threads e email_messages (migration
+      # 20260403105341) era inerte — o SELECT de gmail_accounts mostra a conta
+      # so ao dono, entao o EXISTS nunca decide nada para admin de outra conta.
+      # A migration 20261010120000 remove o ramo sem mudar quem enxerga o que
+      # (so o dono ve/atualiza). O teste aplica as migrations reais num
+      # PostgreSQL 17 descartavel e prova: dono ve/atualiza, admin e supervisor
+      # de outra conta nao veem nem atualizam, antes e depois; sem a migration
+      # o bloco B falha (vermelho), com ela passa (verde), e o rollback devolve
+      # o texto anterior. Inicia container proprio e roda CREATE ROLE
+      # anon/authenticated/service_role — as roles sao globais ao cluster, entao
+      # o docker-shim do E47 colidiria com as do shim.
+      - name: Provar a remocao do ramo admin inerte do RLS de email (N-147)
+        env:
+          EMAIL_RLS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/email-rls-sem-ramo-admin.test.sh
+
       # N-136 (P2 · banco, roteiro de recriacao): o runbook docs/runbooks/recriar-banco-local.md
       # documenta o comando para recriar o banco local do zero. O teste prova que o arquivo
       # existe, cita os caminhos corretos (replay-local.sh, supabase/migrations), nao menciona
