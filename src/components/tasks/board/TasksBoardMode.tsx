@@ -1,11 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DragDropContext, type DropResult } from '@hello-pangea/dnd';
 import { toast } from 'sonner';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { BoardColumn }      from './BoardColumn';
+import { BoardDueColumn }   from './BoardDueColumn';
 import type { WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
 import type { WorkItemInput, MoveOpts } from '@/hooks/tasks/useMyWorkItems';
 import { KANBAN_COLUMNS } from '@/hooks/tasks/workItem.types';
+import { boardDueColumns } from '@/hooks/tasks/workItemBoardGroups';
 import { resolveDragEnd, type DragEndResolution } from './resolveDragEnd';
 import { BOARD_ORDER, colunaVizinha, resolverMoverPorTeclado, bordasDeRolagem } from './boardInteracao';
 import { useNarrowViewport, usePointerCoarse, usePressaoLonga } from '../shared/pointerMedia';
@@ -34,6 +36,27 @@ interface Props extends WorkItemCardActions {
 
 // Etapa 094: as colunas do trilho na ordem — a mesma fonte do `boardInteracao`.
 const BOARD_COLUMNS: WorkItemStatus[] = BOARD_ORDER;
+
+/**
+ * Etapa 102 (D1): como o Quadro agrupa as colunas. `estado` é o padrão (imagem 05);
+ * `prazo` é a alternância opcional (imagem 03, etapa 101) e é **somente leitura**.
+ */
+type BoardGroupMode = 'estado' | 'prazo';
+
+/** Preferência do agrupamento do Quadro (mesmo padrão do `tasks-mode`). */
+const BOARD_GROUP_STORAGE_KEY = 'tasks-board-group';
+
+/** Botão-pílula da barra (alvo de 40 px); ativo com o mesmo realce da etapa 093. */
+const classeDoBotao = (ativo: boolean) =>
+  `min-h-10 min-w-10 shrink-0 rounded-lg border px-3 text-xs font-medium transition-colors ${
+    ativo ? 'border-primary/40 bg-primary/10 text-foreground' : 'border-border/70 text-muted-foreground hover:bg-muted'
+  }`;
+
+/** Lê a preferência salva; qualquer valor que não seja `prazo` cai em `estado`. */
+function lerAgrupamentoSalvo(): BoardGroupMode {
+  if (typeof localStorage === 'undefined') return 'estado';
+  return localStorage.getItem(BOARD_GROUP_STORAGE_KEY) === 'prazo' ? 'prazo' : 'estado';
+}
 
 /** Rótulo da coluna na faixa de navegação (mesma fonte das colunas). */
 function rotuloDaColuna(status: WorkItemStatus): string {
@@ -76,6 +99,30 @@ export function TasksBoardMode({
     : BOARD_COLUMNS.filter(s => s !== 'done');
   const trilhoRef     = useRef<HTMLDivElement>(null);
   const [colunaVisivel, setColunaVisivel] = useState(0);
+  // Etapa 102 (D1): o agrupamento do Quadro, persistido como o modo do módulo —
+  // a leitura acontece só na montagem (sem efeito).
+  const [agruparPor, setAgruparPor] = useState<BoardGroupMode>(lerAgrupamentoSalvo);
+  const porPrazo = agruparPor === 'prazo';
+
+  /** Troca o agrupamento, grava a preferência e devolve a faixa à 1ª coluna. */
+  const trocarAgrupamento = useCallback((modo: BoardGroupMode) => {
+    setAgruparPor(modo);
+    setColunaVisivel(0);
+    if (typeof localStorage !== 'undefined') localStorage.setItem(BOARD_GROUP_STORAGE_KEY, modo);
+  }, []);
+
+  // Etapa 102: o recorte por prazo sai da MESMA lista do Quadro (B13, sem
+  // consulta nova) e, com a lista completa em mãos, o agrupamento conta o mesmo
+  // conjunto que o arrasto das colunas por estado.
+  const itensDoQuadro = useMemo(
+    () => Object.values(byStatusFull ?? byStatus).flat(),
+    [byStatus, byStatusFull],
+  );
+  const colunasPrazo = useMemo(() => boardDueColumns(itensDoQuadro), [itensDoQuadro]);
+  /** Rótulos na ordem renderizada — a faixa estreita (81/99) serve aos dois agrupamentos. */
+  const rotulosDasColunas = porPrazo
+    ? colunasPrazo.map(c => c.label)
+    : colunasVisiveis.map(rotuloDaColuna);
   // Etapa 098: sombras das bordas — só onde ainda há conteúdo escondido.
   const [bordas, setBordas] = useState({ esq: false, dir: false });
 
@@ -227,7 +274,7 @@ export function TasksBoardMode({
     }
   }, [aplicarDecisao, byStatus, byStatusFull, doingCount, dragSourceStatus]);
 
-  const ultimaColuna = colunasVisiveis.length - 1;
+  const ultimaColuna = rotulosDasColunas.length - 1;
 
   return (
     <DragDropContext
@@ -241,22 +288,48 @@ export function TasksBoardMode({
             switch "Mostrar concluídas" da barra de filtros, que corta os ITENS da
             consulta — aqui o que muda é a COLUNA. Sem "ordenar coluna": a posição
             manual e a ordem por data de conclusão são as decisões de
-            docs/design/TAREFAS_QUADRO_STATUS.md. */}
-        <div className="flex w-full min-w-0 items-center justify-end gap-2" data-testid="board-toolbar">
+            docs/design/TAREFAS_QUADRO_STATUS.md.
+            Etapa 102 (D1): a barra ganha o "Agrupar por: Estado | Prazo" — o
+            "Concluídas" é do agrupamento por estado (a coluna por prazo já traz
+            as concluídas de 7 dias), por isso ele só aparece em Estado. */}
+        <div className="flex w-full min-w-0 flex-wrap items-center justify-end gap-2" data-testid="board-toolbar">
+          <div className="flex items-center gap-1.5" role="group" aria-label="Agrupar por" data-testid="board-group-toggle">
+            <span className="text-xs text-muted-foreground">Agrupar por:</span>
+            {(['estado', 'prazo'] as const).map(modo => (
+              <button
+                key={modo}
+                type="button"
+                data-testid={`board-group-${modo}`}
+                aria-pressed={agruparPor === modo}
+                onClick={() => trocarAgrupamento(modo)}
+                className={classeDoBotao(agruparPor === modo)}
+              >
+                {modo === 'estado' ? 'Estado' : 'Prazo'}
+              </button>
+            ))}
+          </div>
+          {/* Etapa 093: o "Concluídas" é do agrupamento por estado (o por prazo já
+              traz as concluídas de 7 dias) — no prazo ele sai de cena. */}
+          {!porPrazo && (
           <button
             type="button"
             data-testid="board-done-toggle"
             aria-pressed={mostrarConcluidas}
             onClick={() => { setMostrarConcluidas(v => !v); setColunaVisivel(0); }}
-            className={`min-h-10 min-w-10 shrink-0 rounded-lg border px-3 text-xs font-medium transition-colors ${
-              mostrarConcluidas
-                ? 'border-primary/40 bg-primary/10 text-foreground'
-                : 'border-border/70 text-muted-foreground hover:bg-muted'
-            }`}
+            className={classeDoBotao(mostrarConcluidas)}
           >
             Concluídas
           </button>
+          )}
         </div>
+
+        {/* Etapa 102: o agrupamento por prazo é SOMENTE LEITURA (D1) — a dica
+            diz, à vista, por que a alça de arrasto sumiu e o que usar no lugar. */}
+        {porPrazo && (
+          <p data-testid="board-due-hint" className="w-full min-w-0 text-[11px] text-muted-foreground">
+            Agrupamento por prazo é somente leitura: arrastar fica desligado — para mover uma tarefa, use o menu do cartão.
+          </p>
+        )}
 
         {/* Etapa 81: setas ‹ › — só na tela estreita, onde as 5 colunas não cabem */}
         {telaEstreita && (
@@ -272,7 +345,7 @@ export function TasksBoardMode({
               <ChevronLeft className="h-4 w-4" />
             </button>
             <span className="flex-1 min-w-0 truncate text-center text-[13px] font-semibold text-foreground">
-              {rotuloDaColuna(colunasVisiveis[Math.min(colunaVisivel, ultimaColuna)])}
+              {rotulosDasColunas[Math.min(colunaVisivel, ultimaColuna)]}
             </span>
             <button
               type="button"
@@ -311,42 +384,62 @@ export function TasksBoardMode({
             onKeyDown={handleTeclado}
             className="flex w-full min-w-0 gap-3 h-full overflow-x-auto snap-x snap-mandatory motion-safe:scroll-smooth pb-4"
           >
-          {colunasVisiveis.map(status => (
-            <BoardColumn
-              key={status}
-              status={status}
-              items={byStatus[status] ?? []}
-              isLoading={isLoading}
-              doingCount={doingTotal}
-              dragSourceStatus={dragSourceStatus}
-              dragDisabled={dragDesligado}
-              pressaoArrasto={pressaoArrasto}
-              shake={colunaTremendo === status}
-              onOpen={onOpen}
-              onMoveTo={(it, to) => (onMoveTo ?? onMove)(it, to)}
-              onDelete={onDelete}
-              onCreate={status === 'backlog' ? onCreate : undefined}
-              onOpenContact={onOpenContact}
-              onRequestWaitingReason={onRequestWaitingReason}
-              onComplete={onComplete}
-              onReopen={onReopen}
-              onSnooze={onSnooze}
-              onClearReminder={onClearReminder}
-              onOpenReminder={onOpenReminder}
-            />
-          ))}
+          {porPrazo
+            ? colunasPrazo.map(col => (
+              <BoardDueColumn
+                key={col.key}
+                columnKey={col.key}
+                label={col.label}
+                items={col.items}
+                isLoading={isLoading}
+                onOpen={onOpen}
+                onMoveTo={(it, to) => (onMoveTo ?? onMove)(it, to)}
+                onDelete={onDelete}
+                onOpenContact={onOpenContact}
+                onRequestWaitingReason={onRequestWaitingReason}
+                onComplete={onComplete}
+                onReopen={onReopen}
+                onSnooze={onSnooze}
+                onClearReminder={onClearReminder}
+                onOpenReminder={onOpenReminder}
+              />
+            ))
+            : colunasVisiveis.map(status => (
+              <BoardColumn
+                key={status}
+                status={status}
+                items={byStatus[status] ?? []}
+                isLoading={isLoading}
+                doingCount={doingTotal}
+                dragSourceStatus={dragSourceStatus}
+                dragDisabled={dragDesligado}
+                pressaoArrasto={pressaoArrasto}
+                shake={colunaTremendo === status}
+                onOpen={onOpen}
+                onMoveTo={(it, to) => (onMoveTo ?? onMove)(it, to)}
+                onDelete={onDelete}
+                onCreate={status === 'backlog' ? onCreate : undefined}
+                onOpenContact={onOpenContact}
+                onRequestWaitingReason={onRequestWaitingReason}
+                onComplete={onComplete}
+                onReopen={onReopen}
+                onSnooze={onSnooze}
+                onClearReminder={onClearReminder}
+                onOpenReminder={onOpenReminder}
+              />
+            ))}
           </div>
         </div>
 
         {/* Etapa 81: 5 dots — indicador de página (só na tela estreita) */}
         {telaEstreita && (
           <div className="flex w-full items-center justify-center gap-1.5" data-testid="board-dots">
-            {colunasVisiveis.map((status, i) => (
+            {rotulosDasColunas.map((rotulo, i) => (
               <button
-                key={status}
+                key={rotulo}
                 type="button"
                 data-testid={`board-dot-${i}`}
-                aria-label={`Ir para ${rotuloDaColuna(status)}`}
+                aria-label={`Ir para ${rotulo}`}
                 aria-current={colunaVisivel === i ? 'true' : undefined}
                 onClick={() => irParaColuna(i)}
                 className={`h-1.5 rounded-full transition-all ${
