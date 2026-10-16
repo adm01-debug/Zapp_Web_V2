@@ -15,6 +15,8 @@ vi.mock('framer-motion', () => ({
     }),
   },
   AnimatePresence: ({ children }: { children?: React.ReactNode }) => children,
+  // VideoFullscreen (U2) lê `useReducedMotion` para o gesto de entrada.
+  useReducedMotion: () => false,
 }));
 
 vi.mock('@/hooks/system/useDownloadPermission', () => ({

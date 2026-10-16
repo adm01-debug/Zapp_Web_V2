@@ -75,6 +75,9 @@ export function DocumentPreview({ url, fileName, fileSize, isSent }: DocumentPre
     }
   };
 
+  // U2 — o cartão do documento abre no clique; sem papel e sem teclas, abrir era
+  // privilégio do mouse (a V3 já faz este caminho). Enter e Espaço abrem; o
+  // `preventDefault` do Espaço evita rolar a conversa.
   const handleOpen = () => {
     if (resolvedUrl) window.open(resolvedUrl, '_blank', 'noopener,noreferrer');
   };
@@ -84,9 +87,21 @@ export function DocumentPreview({ url, fileName, fileSize, isSent }: DocumentPre
       whileHover={{ scale: 1.02 }}
       className={cn(
         "flex items-center gap-3 p-3 rounded-lg min-w-[240px] max-w-[300px] cursor-pointer transition-all",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         isSent ? "bg-primary-foreground/10 hover:bg-primary-foreground/15" : "bg-muted/50 hover:bg-muted/70 border border-border/30"
       )}
+      role="button"
+      tabIndex={0}
+      aria-label={`Abrir documento ${fileName}`}
       onClick={handleOpen}
+      onKeyDown={(e) => {
+        // Teclas dos botões internos (ex.: Baixar) não podem abrir o documento junto.
+        if (e.target !== e.currentTarget) return;
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleOpen();
+        }
+      }}
     >
       <div className={cn("flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center", isSent ? "bg-primary-foreground/20" : "bg-card")}>
         {getFileIcon(fileName)}
@@ -157,7 +172,25 @@ export const VideoPreview = forwardRef<HTMLDivElement, VideoPreviewProps>(
     return (
       <div ref={ref}>
         <div className="space-y-2">
-          <motion.div whileHover={{ scale: 1.02 }} className="relative rounded-lg overflow-hidden max-w-[300px] cursor-pointer" onClick={() => { if (!loadFailed) setShowFullscreen(true); }}>
+          {/* U2 — o quadro do vídeo abre no clique; sem papel e sem teclas, abrir a
+              tela cheia era privilégio do mouse. Com o erro de carregamento não há o
+              que abrir: aí o contêiner deixa de ser botão em vez de ficar inerte. */}
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            className="relative rounded-lg overflow-hidden max-w-[300px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            role={loadFailed ? undefined : 'button'}
+            tabIndex={loadFailed ? -1 : 0}
+            aria-label={loadFailed ? undefined : 'Abrir vídeo em tela cheia'}
+            onClick={() => { if (!loadFailed) setShowFullscreen(true); }}
+            onKeyDown={(e) => {
+              // Controles internos do <video> e botões do aviso não abrem a tela cheia.
+              if (e.target !== e.currentTarget || loadFailed) return;
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setShowFullscreen(true);
+              }
+            }}
+          >
             {(!isLoaded || isLoading) && !loadFailed && (
               <div className="absolute inset-0 bg-muted animate-pulse flex items-center justify-center">
                 <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
@@ -194,7 +227,7 @@ export const VideoPreview = forwardRef<HTMLDivElement, VideoPreviewProps>(
                 </motion.div>
               )}
             </AnimatePresence>
-            {!loadFailed && <button onClick={(e) => { e.stopPropagation(); setShowFullscreen(true); }} className="absolute top-2 right-2 p-1.5 rounded-full bg-background/50 text-primary-foreground opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background/70" aria-label="Tela cheia">
+            {!loadFailed && <button onClick={(e) => { e.stopPropagation(); setShowFullscreen(true); }} className="absolute top-2 right-2 p-1.5 rounded-full bg-background/50 text-primary-foreground opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity hover:bg-background/70" aria-label="Tela cheia">
               <Maximize className="w-3.5 h-3.5" />
             </button>}
           </motion.div>
