@@ -10276,6 +10276,16 @@ export type Database = {
         }
         Relationships: []
       }
+      team_message_read_state: {
+        Row: {
+          all_read: boolean | null
+          conversation_id: string | null
+          member_count: number | null
+          message_id: string | null
+          read_count: number | null
+        }
+        Relationships: []
+      }
       talkx_campaign_metrics: {
         Row: {
           campaign_id: string | null
@@ -11694,6 +11704,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      inbox_unread_total: { Args: never; Returns: number }
       increment_agent_messages: {
         Args: { p_profile_id: string; p_type: string }
         Returns: Json
@@ -12287,6 +12298,20 @@ export type Database = {
           tags: string[]
           total_count: number
           updated_at: string
+        }[]
+      }
+      search_email_threads: {
+        Args: {
+          p_account: string
+          p_after?: string
+          p_limit?: number
+          p_q: string
+        }
+        Returns: {
+          last_message_at: string
+          match_field: string
+          match_snippet: string
+          thread_id: string
         }[]
       }
       search_knowledge_base: {

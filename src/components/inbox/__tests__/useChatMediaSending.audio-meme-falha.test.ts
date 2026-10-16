@@ -25,7 +25,7 @@ const estado = vi.hoisted(() => ({
   onOpenChange: undefined as ((v: boolean) => void) | undefined,
   onOpenChangeRaiz: undefined as ((v: boolean) => void) | undefined,
   upload: vi.fn(),
-  getPublicUrl: vi.fn(),
+  createSignedUrl: vi.fn(),
   contatoConnectionId: 'conn-1' as string | null,
   instanceId: 'inst-1' as string | null,
   rpcs: [] as string[],
@@ -122,8 +122,11 @@ vi.mock('@/integrations/supabase/client', () => {
         estado.rpcs.push(nome);
         return { data: null, error: null };
       },
-      auth: { getSession: async () => ({ data: { session: null } }) },
-      storage: { from: () => ({ upload: estado.upload, getPublicUrl: estado.getPublicUrl }) },
+      auth: {
+        getSession: async () => ({ data: { session: null } }),
+        getUser: async () => ({ data: { user: { id: 'u1' } } }),
+      },
+      storage: { from: () => ({ upload: estado.upload, createSignedUrl: estado.createSignedUrl }) },
     },
     SUPABASE_URL: 'http://localhost:54321',
     SUPABASE_ANON_KEY: 'anon-de-teste',
@@ -214,7 +217,7 @@ describe('handleSendAudioMeme sinaliza a falha do envio (#350)', () => {
     rejeicoesNaoTratadas.length = 0;
     process.on('unhandledRejection', guardarRejeicaoNaoTratada);
     estado.upload.mockReset().mockResolvedValue({ error: null });
-    estado.getPublicUrl.mockReset().mockReturnValue({ data: { publicUrl: PUBLIC_URL } });
+    estado.createSignedUrl.mockReset().mockResolvedValue({ data: { signedUrl: PUBLIC_URL }, error: null });
     estado.contatoConnectionId = 'conn-1';
     estado.instanceId = 'inst-1';
 
@@ -425,5 +428,49 @@ describe('handleSendAudioMeme sinaliza a falha do envio (#350)', () => {
     );
     // A rejeição do envio é tratada no ponto de chamada do picker.
     expect(rejeicoesNaoTratadas).toHaveLength(0);
+  });
+});
+
+/**
+ * PK-28 · paridade doc 06 — a citação junto da figurinha/emoji/áudio-meme.
+ *
+ * O servidor cita qualquer tipo (`message-delivery` · `providerPayload.quoted`);
+ * o que faltava era o cliente mandar o id da resposta quando o compositor estava
+ * respondendo e o envio saía por um destes pickers.
+ */
+describe('useChatMediaSending — PK-28: citação da resposta', () => {
+  it('o áudio meme sai citando a mensagem respondida', async () => {
+    const { result } = renderHook(() => useChatMediaSending(CONTATO, TELEFONE));
+
+    await act(async () => {
+      await result.current.handleSendAudioMeme(AUDIO_URL, 'reply-meme-1');
+    });
+
+    expect(estado.enviar).toHaveBeenCalledWith(
+      expect.objectContaining({ messageType: 'audio', replyToId: 'reply-meme-1' }),
+    );
+  });
+
+  it('o emoji de imagem sai citando a mensagem respondida', async () => {
+    const { result } = renderHook(() => useChatMediaSending(CONTATO, TELEFONE));
+
+    await act(async () => {
+      await result.current.handleSendCustomEmoji(PUBLIC_URL, 'reply-emoji-1');
+    });
+
+    expect(estado.enviar).toHaveBeenCalledWith(
+      expect.objectContaining({ messageType: 'image', replyToId: 'reply-emoji-1' }),
+    );
+  });
+
+  it('sem resposta pendente o payload não ganha o campo (contrato antigo intacto)', async () => {
+    const { result } = renderHook(() => useChatMediaSending(CONTATO, TELEFONE));
+
+    await act(async () => {
+      await result.current.handleSendAudioMeme(AUDIO_URL);
+    });
+
+    expect(estado.enviar).toHaveBeenCalled();
+    expect(estado.enviar.mock.lastCall?.[0]).not.toHaveProperty('replyToId');
   });
 });

@@ -49,11 +49,11 @@ function setup(initial: ConversationWithMessages[]) {
   );
   const hydrateConversationForMessage = vi.fn().mockResolvedValue(undefined);
 
-  const { result } = renderHook(() =>
+  const { result, unmount } = renderHook(() =>
     useMessageUpdateBatcher(conversationsRef, commitConversations, hydrateConversationForMessage),
   );
 
-  return { result, conversationsRef, commitConversations, hydrateConversationForMessage };
+  return { result, unmount, conversationsRef, commitConversations, hydrateConversationForMessage };
 }
 
 beforeEach(() => {
@@ -127,6 +127,44 @@ describe('useMessageUpdateBatcher — hidrata contato fora da lista', () => {
     });
 
     expect(contexto.hydrateConversationForMessage).not.toHaveBeenCalled();
+    expect(contexto.commitConversations).not.toHaveBeenCalled();
+  });
+});
+
+describe('useMessageUpdateBatcher — teto de espera e desmonte', () => {
+  it('rajada continua (UPDATE a cada 60 ms) commita dentro do teto de 500 ms', () => {
+    const contexto = setup([conversaCom(msg({ id: 'm1', status: 'sent' }))]);
+
+    // Debounce puro nunca commitaria: cada UPDATE reinicia a janela de 100 ms.
+    for (let i = 0; i < 9; i += 1) {
+      act(() => {
+        contexto.result.current.handleMessageUpdate({
+          new: msg({ id: 'm1', status: i % 2 === 0 ? 'delivered' : 'read' }),
+        } as never);
+        vi.advanceTimersByTime(60);
+      });
+    }
+
+    // 9 x 60 ms = 540 ms: o teto de 500 ms ja liberou o lote pendente.
+    expect(contexto.commitConversations).toHaveBeenCalled();
+    expect(contexto.conversationsRef.current[0].messages[0].status).toBe('delivered');
+  });
+
+  it('desmontar com lote pendente nao dispara commit depois do desmonte', () => {
+    const contexto = setup([conversaCom(msg({ id: 'm1', status: 'sent' }))]);
+
+    act(() => {
+      contexto.result.current.handleMessageUpdate({ new: msg({ id: 'm1', status: 'read' }) } as never);
+    });
+
+    act(() => {
+      contexto.unmount();
+    });
+
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+
     expect(contexto.commitConversations).not.toHaveBeenCalled();
   });
 });

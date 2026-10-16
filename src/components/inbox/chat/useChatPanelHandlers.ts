@@ -2,6 +2,10 @@ import { useState, useRef, useEffect, useCallback, type Dispatch, type SetStateA
 import { log } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { undoToast } from '@/lib/undoToast';
+import {
+  archiveConversations,
+  restoreConversationStatuses,
+} from '@/hooks/inbox/conversationArchive';
 import { normalizeOperationalPriority } from '@/lib/ai-vocabulary';
 import { Message, InteractiveMessage, InteractiveButton, LocationMessage } from '@/types/chat';
 import { SlashCommand } from '../SlashCommands';
@@ -22,6 +26,7 @@ import { useWhisperMessagesMutation, type MotivoRecusaSussurro } from '@/hooks/c
 import { useMyWorkItems, tomorrowAtNine } from '@/hooks/tasks/useMyWorkItems';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { CHAR_LIMIT } from './useChatInputLogic';
+import { sendQueue } from '@/hooks/chat/sendQueue';
 
 /** Tipos de mensagem do chat com representação textual direta no transporte. */
 const TEXTUAL_FORWARD_TYPES: ReadonlySet<Message['type']> = new Set(['text', 'interactive']);
@@ -334,11 +339,21 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
     const originalText = corpoDoEnvio;
     const messageContent = payloadDoEnvio;
     const wasReply = replyToMessageRef.current;
-    setIsSending(true); setInputValue(''); setReplyToMessage(null); handleTypingStop();
+    setInputValue(''); setReplyToMessage(null); handleTypingStop();
     if (wasReply) log.debug('Sending reply to:', wasReply.id);
 
+    // PK-21: fila SERIAL por conversa. O compositor NÃO espera o despacho no Edge
+    // (nem os refetches que vinham depois): a mensagem entra na fila da conversa e
+    // o editor já aceita a próxima digitação. A ordem é preservada — a segunda
+    // mensagem só sai depois que a primeira terminou — e uma falha de enqueue
+    // devolve o rascunho em vez de perdê-lo.
     try {
-      await onSendMessage(messageContent, wasReply?.id ?? null);
+      // `enqueue` pode rejeitar de forma SÍNCRONA (o transporte aceita `void`): a
+      // chamada vive DENTRO do try para que o rascunho volte em vez de se perder.
+      await sendQueue.enqueue(conversationId, () =>
+        onSendMessage(messageContent, wasReply?.id ?? null)
+      );
+      // A animação/som de "enviado" é do ACEITE do transporte, nunca da digitação.
       undoToast({
         message: 'Mensagem enviada', icon: '📨', delay: 3000,
         onUndo: () => {
@@ -349,10 +364,14 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
       });
     } catch (err) {
       log.error('Failed to send message:', err);
-      setInputValue(originalText);
+      // O rascunho volta ao editor SEM perder nada: sem texto novo, volta o que
+      // falhou; com texto novo digitado durante o voo, o que falhou volta ACIMA do
+      // texto novo — nada some e o toast "Tente novamente" tem o que reenviar.
+      setInputValue((atual) => (atual === '' ? originalText : `${originalText}\n${atual}`));
+      if (wasReply) setReplyToMessage((atual) => atual ?? wasReply);
       toast({ title: 'Erro ao enviar', description: 'Tente novamente.', variant: 'destructive' });
-    } finally { setIsSending(false); }
-  }, [contactPhone, instanceName, editMessageApi, applySignature, onSendMessage, handleTypingStop, editingMessageRef, inputValueRef, isSendingRef, replyToMessageRef, isWhisperRef, enviarSussurroDoCompositor, recusarAcimaDoLimite]);
+    }
+  }, [conversationId, contactPhone, instanceName, editMessageApi, applySignature, onSendMessage, handleTypingStop, editingMessageRef, inputValueRef, isSendingRef, replyToMessageRef, isWhisperRef, enviarSussurroDoCompositor, recusarAcimaDoLimite]);
 
   const handleReplyToMessage = useCallback((message: Message) => { setReplyToMessage(message); inputRef.current?.focus(); }, []);
   // R2-INB-014: `writeText` pode rejeitar (permissão negada / contexto inseguro). Sem
@@ -526,18 +545,22 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
       case 'star': (isFavorite(contactId) ? unfavoriteContact : favoriteContact)(contactId); break;
       case 'archive': {
         void (async () => {
-          // ADR-005: arquivar conversa é o estado de FSM em `conversation_status` — o MESMO que
-          // o arquivamento em massa usa. `assigned_to = null` devolvia à fila e não arquivava,
-          // então o aviso "Conversa Arquivada" era falso.
-          const { error } = await supabase
-            .from('contacts')
-            .update({ conversation_status: 'archived', updated_at: new Date().toISOString() })
-            .eq('id', contactId);
-          if (error) {
+          // Semântica única (helper canônico): arquivar é o estado de FSM em
+          // `conversation_status` — o MESMO que a lista, o painel de detalhes e o
+          // lote usam. `assigned_to = null` devolvia à fila e não arquivava.
+          try {
+            const anteriores = await archiveConversations([contactId]);
+            toast({ title: '📦 Conversa Arquivada', description: 'A conversa foi arquivada.' });
+            undoToast({
+              message: 'Conversa arquivada',
+              icon: '📦',
+              onUndo: async () => {
+                await restoreConversationStatuses(anteriores);
+              },
+            });
+          } catch (error) {
             log.error('Failed to archive contact:', error);
             toast({ title: 'Erro ao arquivar', description: 'Não foi possível arquivar a conversa.', variant: 'destructive' });
-          } else {
-            toast({ title: '📦 Conversa Arquivada', description: 'A conversa foi arquivada.' });
           }
         })();
         break;
@@ -648,8 +671,15 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
     toast({ title: 'Botão clicado', description: `Resposta: ${button.title}` });
   }, []);
 
+  // Espelha o clique em botão (IB1): o item da lista registra a resposta uma vez.
+  const handleInteractiveListItemClick = useCallback((sectionTitle: string, _rowId: string, rowTitle: string) => {
+    toast({ title: 'Item da lista clicado', description: `${sectionTitle}: ${rowTitle}` });
+  }, []);
+
   const handleSendLocation = useCallback(async (location: LocationMessage) => {
     try {
+      // PK-28: `location` é um tipo de envio como os outros — a citação pendente vai junto.
+      const replyTo = replyToMessageRef.current?.id ?? null;
       await sendOutboundMessage({
         contactId,
         content: JSON.stringify({
@@ -659,6 +689,7 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
           ...(location.address ? { address: location.address } : {}),
         }),
         messageType: 'location',
+        ...(replyTo ? { replyToId: replyTo } : {}),
       });
       toast({ title: 'Localização enviada!', description: location.name || 'Localização compartilhada' });
     } catch (error) {
@@ -666,12 +697,12 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
       toast({ title: 'Erro ao enviar localização', description: 'Tente novamente.', variant: 'destructive' });
       throw error;
     }
-  }, [contactId]);
+  }, [contactId, replyToMessageRef]);
 
   // R2-INB-022: só fecha o gravador quando o envio CONFIRMA. Em falha, mantém o AudioRecorder
   // montado — o blob vive no estado dele, então fechar descartaria uma gravação ainda recuperável.
   // Devolve true/false para o chamador (o ChatPanel hoje ignora; os testes pinam o contrato).
-  const handleAudioSend = useCallback(async (audioBlob: Blob, onSendAudio?: (blob: Blob) => Promise<boolean>): Promise<boolean> => {
+  const handleAudioSend = useCallback(async (audioBlob: Blob, onSendAudio?: (blob: Blob, replyToId?: string | null) => Promise<boolean>): Promise<boolean> => {
     if (!onSendAudio) {
       toast({ title: 'Erro', description: 'Envio de áudio não configurado.', variant: 'destructive' });
       return false;
@@ -679,7 +710,12 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
     if (isSendingAudioRef.current) return false;
     isSendingAudioRef.current = true;
     try {
-      const enviado = await onSendAudio(audioBlob);
+      // PK-28: a barra de resposta segue ativa durante a gravação; a citação pendente
+      // acompanha o áudio (é o mesmo caminho que `handleSend` já faz para o texto).
+      const replyPendente = replyToMessageRef.current?.id ?? null;
+      const enviado = replyPendente
+        ? await onSendAudio(audioBlob, replyPendente)
+        : await onSendAudio(audioBlob);
       // A ponte sinaliza falha com `false` (ela mesma já avisa o usuário); ausência de retorno
       // também conta como falha — o padrão seguro é NÃO descartar a gravação.
       if (enviado) {
@@ -694,7 +730,7 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
     } finally {
       isSendingAudioRef.current = false;
     }
-  }, []);
+  }, [replyToMessageRef]);
 
   return {
     inputValue, setInputValue, isSending, isRecordingAudio, setIsRecordingAudio,
@@ -706,6 +742,7 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
     handleInputChange, handleKeyDown, handleSlashCommand,
     handleSendInteractiveMessage,
     handleInteractiveButtonClick,
+    handleInteractiveListItemClick,
     handleSendLocation, handleAudioSend,
   };
 }

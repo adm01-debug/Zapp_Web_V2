@@ -2,6 +2,7 @@
  * CRM360ExplorerView — Full CRM 360° data explorer
  */
 import { useState, useCallback } from 'react';
+import { MotionConfig } from 'framer-motion';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -67,6 +68,7 @@ export function CRM360ExplorerView() {
   }
 
   return (
+    <MotionConfig reducedMotion="user">
     <div className="space-y-4 h-full flex flex-col w-full min-w-0">
       <PageHeader
         title="CRM 360° Explorer"
@@ -128,5 +130,6 @@ export function CRM360ExplorerView() {
       <CompanyFormDialog open={companyDialogOpen} onOpenChange={setCompanyDialogOpen} company={editingCompany} onSuccess={handleSuccess} />
       <ContactFormDialog open={contactDialogOpen} onOpenChange={setContactDialogOpen} contact={editingContact} onSuccess={handleSuccess} />
     </div>
+    </MotionConfig>
   );
 }

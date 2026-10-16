@@ -25,6 +25,8 @@ interface SidebarProps {
   currentView: string;
   onViewChange: (view: string) => void;
   inboxBadge?: number;
+  /** PE-31 — selo do item Teams: mesmo total da aba Times (título do cartão). */
+  teamsBadge?: number;
   profile?: { name?: string | null; avatar_url?: string | null } | null;
   userEmail?: string;
   signOut?: () => void;
@@ -36,6 +38,7 @@ export const Sidebar = React.memo(function Sidebar({
   currentView,
   onViewChange,
   inboxBadge,
+  teamsBadge,
   profile,
   userEmail,
   signOut,
@@ -145,6 +148,7 @@ export const Sidebar = React.memo(function Sidebar({
                   onViewChange={onViewChange}
                   badge={
                     item.id === 'inbox' ? inboxBadge
+                      : item.id === 'team-chat' ? teamsBadge
                       : item.id === 'tasks' ? tasksBadgeInfo.count
                       : item.id === 'email-chat' ? emailUnread.count
                       : undefined

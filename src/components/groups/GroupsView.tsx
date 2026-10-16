@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, MotionConfig, useReducedMotion } from 'framer-motion';
 import { FloatingParticles } from '@/components/dashboard/FloatingParticles';
 import { AuroraBorealis } from '@/components/effects/AuroraBorealis';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -64,10 +64,16 @@ export function GroupsView() {
     setBroadcastMessage('');
   };
 
+  // Movimento reduzido (preferência do sistema): os fundos decorativos (aurora e partículas)
+  // têm laço infinito de opacidade — o `reducedMotion` do framer-motion não os corta, então
+  // eles só entram quando não há preferência. O `MotionConfig` cobre as demais animações.
+  const reduzido = useReducedMotion() ?? false;
+
   return (
+    <MotionConfig reducedMotion="user">
     <div className="space-y-4 sm:space-y-6 relative bg-background w-full min-w-0">
-      <AuroraBorealis />
-      <FloatingParticles />
+      {!reduzido && <AuroraBorealis />}
+      {!reduzido && <FloatingParticles />}
       <PageHeader
         title="Grupos WhatsApp"
         subtitle={`Gerencie seus grupos (${groups.length} grupos)`}
@@ -313,5 +319,6 @@ export function GroupsView() {
         </DialogContent>
       </Dialog>
     </div>
+    </MotionConfig>
   );
 }

@@ -42,6 +42,20 @@ function criarIdDeEnvioDeAudio(): string {
 // Feature flag: use external evolution DB as data source
 const USE_EXTERNAL_DB = false;
 
+// `contacts.id` é uuid. Link/notificação/busca podem trazer um id malformado:
+// nesse caso a consulta nunca chega ao banco (o PostgREST estouraria o cast) e o
+// resultado é "não encontrado", distinto de uma falha de transporte.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isValidUuid(value: string | null | undefined): boolean {
+  return typeof value === 'string' && UUID_RE.test(value);
+}
+
+type SelectedContactLookup =
+  | { contactId: string; status: 'loading'; error: null }
+  | { contactId: string; status: 'not-found'; error: null }
+  | { contactId: string; status: 'error'; error: string };
+
 export function useRealtimeInbox() {
   // Local DB source (original)
   const localRealtime = useRealtimeMessages();
@@ -70,6 +84,8 @@ export function useRealtimeInbox() {
      contactId: string;
      contact: ConversationContact;
    } | null>(null);
+   // Resultado da consulta do contato fora da lista: carregando / erro / não encontrado.
+   const [selectedContactLookup, setSelectedContactLookup] = useState<SelectedContactLookup | null>(null);
    const [isOnline, setIsOnline] = useState(true);
   const { profile } = useAuth();
 
@@ -118,6 +134,12 @@ export function useRealtimeInbox() {
 
   useEffect(() => {
     if (!selectedContactId || selectedConversation) return;
+    // Guarda de UUID antes da consulta: id de link/notificação malformado nunca vai
+    // ao banco (o PostgREST estouraria o cast). O "não encontrado" desse caso é
+    // DERIVADO abaixo (`isMalformedSelectedContactId`), não gravado aqui: gravar
+    // estado direto no corpo do efeito provoca render em cascata (lint
+    // react-hooks/set-state-in-effect). O "carregando" também é derivado (padrão).
+    if (!isValidUuid(selectedContactId)) return;
     let cancelled = false;
     const loadSelectedContact = async () => {
       const { data, error } = await supabase
@@ -126,8 +148,22 @@ export function useRealtimeInbox() {
         .eq('id', selectedContactId)
         .maybeSingle();
       if (cancelled) return;
-      if (error) { log.error('Error loading selected fallback contact:', error); return; }
-      if (data) setSelectedContactFallback({ contactId: selectedContactId, contact: data });
+      if (error) {
+        log.error('Error loading selected fallback contact:', error);
+        setSelectedContactLookup({
+          contactId: selectedContactId,
+          status: 'error',
+          error: 'Não foi possível carregar o contato.',
+        });
+        return;
+      }
+      if (data) {
+        setSelectedContactFallback({ contactId: selectedContactId, contact: data });
+        setSelectedContactLookup(null);
+      } else {
+        // Sem erro e sem linha = inexistente ou fora do acesso (o RLS filtra sem erro).
+        setSelectedContactLookup({ contactId: selectedContactId, status: 'not-found', error: null });
+      }
     };
     void loadSelectedContact();
     return () => { cancelled = true; };
@@ -136,6 +172,25 @@ export function useRealtimeInbox() {
   const fallbackContact = selectedContactFallback?.contactId === selectedContactId
     ? selectedContactFallback.contact
     : null;
+
+  // Estado da consulta do contato fora da lista, para o consumidor mostrar
+  // carregando / erro / não encontrado em vez de uma tela vazia e muda.
+  // Só vale para o contato selecionado agora (resultado antigo não vaza).
+  const isMalformedSelectedContactId =
+    Boolean(selectedContactId) && !selectedConversation && !isValidUuid(selectedContactId);
+
+  const selectedContactFallbackStatus: 'idle' | 'loading' | 'error' | 'not-found' =
+    !selectedContactId || selectedConversation || fallbackContact
+      ? 'idle'
+      : isMalformedSelectedContactId
+        ? 'not-found'
+        : selectedContactLookup && selectedContactLookup.contactId === selectedContactId
+          ? selectedContactLookup.status
+          : 'loading';
+  const selectedContactFallbackError =
+    selectedContactLookup && selectedContactLookup.contactId === selectedContactId
+      ? selectedContactLookup.error
+      : null;
 
   const resolvedSelectedConversation = useMemo<ConversationWithMessages | null>(() => {
     if (selectedConversation) return selectedConversation;
@@ -194,6 +249,13 @@ export function useRealtimeInbox() {
   const handleSendMessage = useCallback(async (content: string, replyToId?: string | null) => {
     if (!selectedContactId) return;
     const currentId = selectedContactId;
+    // PK-21: o caminho de envio NÃO refaz o fetch da lista de conversas nem o da
+    // conversa aberta. Os dois já são atualizados pelo Realtime — o INSERT da
+    // mensagem enfileirada é tratado por `useRealtimeMessages` (lista) e por
+    // `useMessages` (conversa aberta) na inscrição `global-messages-realtime` —, e
+    // o par de refetches dentro do envio era o que segurava o compositor depois do
+    // despacho, obrigando o agente a esperar uma ida ao servidor que o Realtime já
+    // cobria.
     try {
       await sendMessage(currentId, content, 'text', undefined, undefined, replyToId);
     } catch (err) {
@@ -202,15 +264,7 @@ export function useRealtimeInbox() {
       // chegar até ele para que não limpe o editor nem anuncie sucesso falso.
       throw err;
     }
-
-    try {
-      await refreshActiveConversation();
-    } catch (err) {
-      // O transporte já confirmou o envio. Falha de refresh não deve sugerir
-      // ao agente que reenvie a mesma mensagem e gere duplicidade.
-      log.warn('Message sent, but conversation refresh failed:', err);
-    }
-  }, [selectedContactId, sendMessage, refreshActiveConversation]);
+  }, [selectedContactId, sendMessage]);
 
    // R2-INB-022 (mantido) + R2-INB-058: o elo de baixo da cadeia do áudio precisa SINALIZAR a
    // falha ao chamador. `handleSendAudio` REJEITA quando não há contato selecionado e quando
@@ -339,6 +393,8 @@ export function useRealtimeInbox() {
      loading, error,
      selectedMessagesLoading,
      selectedMessagesError,
+     selectedContactFallbackStatus,
+     selectedContactFallbackError,
      refetchSelectedMessages,
      hasOlderMessages: !USE_EXTERNAL_DB && localMsgs.hasOlder,
      loadingOlderMessages: !USE_EXTERNAL_DB && localMsgs.loadingOlder,

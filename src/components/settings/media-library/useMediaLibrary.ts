@@ -3,6 +3,7 @@ import { getLogger } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { fetchAllRows } from '@/lib/fetchAllRows';
 import { toast } from 'sonner';
+import { audioMemeCategoryEmojis } from '@/lib/audioMemeCategories';
 
 const log = getLogger('useMediaLibrary');
 
@@ -37,10 +38,8 @@ export const STICKER_CATEGORIES: Record<string, string> = {
   animais: '🐱', comida: '🍕', esportes: '⚽', trabalho: '💼', outros: '📦',
 };
 
-export const AUDIO_CATEGORIES: Record<string, string> = {
-  risadas: '😂', bordões: '🎤', efeitos: '💥', músicas: '🎵',
-  memes: '🤣', narração: '📢', animais: '🐶', outros: '📦',
-};
+/** Categorias de áudio-meme: fonte única em `@/lib/audioMemeCategories`. */
+export const AUDIO_CATEGORIES: Record<string, string> = audioMemeCategoryEmojis();
 
 export const EMOJI_CATEGORIES: Record<string, string> = {
   custom: '⭐', team: '👥', brand: '🏢', fun: '🎮', outros: '📦',

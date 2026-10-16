@@ -17,6 +17,7 @@ import { MessageSquare, RefreshCw, Search as SearchIcon, X } from 'lucide-react'
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { CloseConversationDialog } from './CloseConversationDialog';
+import { chipDoStatusReaberto } from './conversation-list/reopenChip';
 import { TransferDialog, type TransferTargetType } from './TransferDialog';
 import { ZenModeToggle } from '@/components/layout/ZenModeToggle';
 import { useLayoutContext } from '@/contexts/LayoutContext';
@@ -205,6 +206,21 @@ export function ConversationListSidebar({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- inbox é `any` (tipo de useRealtimeInbox()), então o linter não vê inbox.refetch como estável; dep no objeto inteiro reproduziria o bug do #810 (inbox é novo a cada render).
   }, [conversationActions, inbox.refetch]);
 
+  const handleReopen = useCallback(async (contactId: string) => {
+    if (!conversationActions) {
+      toast.error('Ação indisponível — tente recarregar a página');
+      // Rejeita para quem chamou (a linha) não fechar a confirmação como se tivesse dado certo.
+      throw new Error('Ações de conversa indisponíveis');
+    }
+    const resultado = await conversationActions.reopenConversation(contactId);
+    if (!resultado) throw new Error('Falha ao reabrir conversa');
+    // A conversa sai do chip Resolvidas/Arquivadas: leva a lista para o chip onde ela
+    // agora aparece (Aguardando se sem responsável, Em atendimento se atribuída).
+    inboxFilters.setChipTab(chipDoStatusReaberto(resultado.status));
+    inbox.refetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- inbox é `any` (tipo de useRealtimeInbox()): mesmo motivo do handleArchive acima.
+  }, [conversationActions, inboxFilters.setChipTab, inbox.refetch]);
+
   const handleListTransfer = useCallback(async (type: TransferTargetType, targetId: string, note?: string) => {
     if (!transferTarget) return;
     if (!conversationActions) {
@@ -341,7 +357,10 @@ export function ConversationListSidebar({
         )}
 
         <StatusChips
-          conversations={inbox.conversations}
+          // Os números vêm de useInboxFilters.chipCounts: já recortados pela
+          // busca, pelos filtros, pelo "Mostrar todos" e pela fila — as mesmas
+          // regras de filteredConversations, para o chip e a lista nunca divergirem.
+          counts={inboxFilters.chipCounts}
           chipTab={inboxFilters.chipTab}
           onChipTabChange={inboxFilters.setChipTab}
           countOpts={statusChipCountOpts}
@@ -574,6 +593,7 @@ export function ConversationListSidebar({
               onTransfer={(contactId) => setTransferTarget(contactId)}
               onSnooze={(contactId, duration) => conversationActions?.snoozeConversation(contactId, duration)}
               onArchive={handleArchive}
+              onReopen={handleReopen}
             />
           </ErrorBoundary>
         )}

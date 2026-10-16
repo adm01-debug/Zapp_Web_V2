@@ -32,6 +32,10 @@ let eventsInsertResult: Record<string, unknown> = { error: null };
 const eventsInsertCalls: Record<string, unknown>[] = [];
 let transferRpcResult: Record<string, unknown> = { data: 'event-rpc-id', error: null };
 const transferRpcCalls: { name: string; args: Record<string, unknown> }[] = [];
+// Arquivar/reabrir passam pela RPC de estado (a MESMA do CloseConversationDialog),
+// não por UPDATE em contacts: o responsável (assigned_to) fica intacto.
+let archiveRpcResult: Record<string, unknown> = { data: null, error: null };
+const archiveRpcCalls: { name: string; args: Record<string, unknown> }[] = [];
 
 // favoriteContact/unfavoriteContact disparam _favBus, que aciona um
 // loadFavorites() assíncrono em segundo plano (sincroniza outras instâncias
@@ -44,6 +48,10 @@ vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     auth: { getUser: vi.fn(async () => ({ data: { user: { id: 'user-1' } } })) },
     rpc: vi.fn((name: string, args: Record<string, unknown>) => {
+      if (name === 'set_conversation_status') {
+        archiveRpcCalls.push({ name, args });
+        return Promise.resolve(archiveRpcResult);
+      }
       transferRpcCalls.push({ name, args });
       if (name === 'transfer_conversation') return Promise.resolve(transferRpcResult);
       return Promise.resolve({ data: null, error: null });
@@ -153,6 +161,8 @@ describe('useConversationActions', () => {
     contactsSelectResult = { data: { assigned_to: 'agent-original' }, error: null };
     contactsUpdateResult = { error: null };
     contactsUpdateCalls.length = 0;
+    archiveRpcResult = { data: null, error: null };
+    archiveRpcCalls.length = 0;
     pinnedInsertResult = { error: null };
     pinnedDeleteResult = { error: null };
     pinnedDeleteCalls.length = 0;
@@ -174,14 +184,18 @@ describe('useConversationActions', () => {
   });
 
   describe('archiveContact', () => {
-    it('desatribui o contato e oferece desfazer que restaura o assigned_to original', async () => {
+    it('arquiva pela RPC set_conversation_status (a mesma do diálogo de encerrar) e NÃO mexe no responsável', async () => {
       const { result } = await withProfileReady();
 
       await act(async () => {
         await result.current.archiveContact('contact-1');
       });
 
-      expect(contactsUpdateCalls).toEqual([{ assigned_to: null }]);
+      expect(archiveRpcCalls).toEqual([
+        { name: 'set_conversation_status', args: { p_contact_id: 'contact-1', p_next: 'archived' } },
+      ]);
+      // Arquivar é mudar o ESTADO: assigned_to (o responsável) fica intacto.
+      expect(contactsUpdateCalls).toEqual([]);
       expect(undoToast).toHaveBeenCalledTimes(1);
       const undoArgs = (undoToast as ReturnType<typeof vi.fn>).mock.calls[0][0];
       expect(undoArgs.message).toBe('Conversa arquivada');
@@ -190,14 +204,40 @@ describe('useConversationActions', () => {
         await undoArgs.onUndo();
       });
 
-      expect(contactsUpdateCalls).toEqual([
-        { assigned_to: null },
-        { assigned_to: 'agent-original' },
+      expect(archiveRpcCalls).toEqual([
+        { name: 'set_conversation_status', args: { p_contact_id: 'contact-1', p_next: 'archived' } },
+        { name: 'set_conversation_status', args: { p_contact_id: 'contact-1', p_next: 'open' } },
       ]);
+      expect(contactsUpdateCalls).toEqual([]);
     });
 
-    it('em erro no update, mostra toast de erro e não oferece desfazer', async () => {
-      contactsUpdateResult = { error: { message: 'falhou' } };
+    it('anuncia o novo estado no evento que atualiza chip/lista sem esperar refetch', async () => {
+      const seen: unknown[] = [];
+      const handler = (e: Event) => seen.push((e as CustomEvent).detail);
+      window.addEventListener('zapp:contact-status-changed', handler);
+      try {
+        const { result } = await withProfileReady();
+
+        await act(async () => {
+          await result.current.archiveContact('contact-1');
+        });
+        expect(seen).toEqual([{ contactId: 'contact-1', status: 'archived' }]);
+
+        const undoArgs = (undoToast as ReturnType<typeof vi.fn>).mock.calls[0][0];
+        await act(async () => {
+          await undoArgs.onUndo();
+        });
+        expect(seen).toEqual([
+          { contactId: 'contact-1', status: 'archived' },
+          { contactId: 'contact-1', status: 'open' },
+        ]);
+      } finally {
+        window.removeEventListener('zapp:contact-status-changed', handler);
+      }
+    });
+
+    it('em erro na RPC, mostra toast de erro e não oferece desfazer', async () => {
+      archiveRpcResult = { data: null, error: { message: 'falhou' } };
       const { result } = await withProfileReady();
 
       await act(async () => {
@@ -443,6 +483,63 @@ describe('useConversationActions', () => {
         await result.current.unfavoriteContact('contact-1');
       });
       await waitFor(() => expect(result.current.isFavorite('contact-1')).toBe(false));
+    });
+
+    it('pinConversation em erro: avisa e NÃO marca como fixado', async () => {
+      pinnedInsertResult = { error: { message: 'falhou' } };
+      const { result } = await withProfileReady();
+
+      await act(async () => {
+        await result.current.pinConversation('contact-1');
+      });
+
+      expect(toast.error).toHaveBeenCalledWith('Erro ao fixar conversa');
+      expect(result.current.isPinned('contact-1')).toBe(false);
+      expect(toast.success).not.toHaveBeenCalled();
+    });
+
+    it('unpinConversation em erro: avisa e mantém a conversa fixada', async () => {
+      const { result } = await withProfileReady();
+      await act(async () => {
+        await result.current.pinConversation('contact-1');
+      });
+      expect(result.current.isPinned('contact-1')).toBe(true);
+
+      pinnedDeleteResult = { error: { message: 'falhou' } };
+      await act(async () => {
+        await result.current.unpinConversation('contact-1');
+      });
+
+      expect(toast.error).toHaveBeenCalledWith('Erro ao desafixar conversa');
+      expect(result.current.isPinned('contact-1')).toBe(true);
+    });
+
+    it('favoriteContact em erro: avisa e NÃO favorita', async () => {
+      favoriteInsertResult = { error: { message: 'falhou' } };
+      const { result } = await withProfileReady();
+
+      await act(async () => {
+        await result.current.favoriteContact('contact-1');
+      });
+
+      expect(toast.error).toHaveBeenCalledWith('Erro ao favoritar contato');
+      expect(result.current.isFavorite('contact-1')).toBe(false);
+    });
+
+    it('unfavoriteContact em erro: avisa e mantém o favorito', async () => {
+      const { result } = await withProfileReady();
+      await act(async () => {
+        await result.current.favoriteContact('contact-1');
+      });
+      await waitFor(() => expect(result.current.isFavorite('contact-1')).toBe(true));
+
+      favoriteDeleteResult = { error: { message: 'falhou' } };
+      await act(async () => {
+        await result.current.unfavoriteContact('contact-1');
+      });
+
+      expect(toast.error).toHaveBeenCalledWith('Erro ao remover favorito');
+      await waitFor(() => expect(result.current.isFavorite('contact-1')).toBe(true));
     });
   });
 });

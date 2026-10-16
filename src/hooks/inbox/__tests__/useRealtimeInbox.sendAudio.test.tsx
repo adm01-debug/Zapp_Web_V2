@@ -158,6 +158,34 @@ describe('useRealtimeInbox.handleSendAudio — falha sinalizada ao chamador (#35
   });
 });
 
+/**
+ * PK-28 · paridade doc 06 — a citação junto do áudio.
+ *
+ * `handleSendMessage` já levava o id da resposta (R2-INB-001); a cadeia do áudio
+ * parava antes do transporte e a gravação saía sem citação, mesmo com o gravador
+ * aberto a partir da barra de resposta.
+ */
+describe('useRealtimeInbox.handleSendAudio — PK-28: citação da resposta', () => {
+  it('o áudio citado viaja com o id da mensagem respondida até o transporte', async () => {
+    const { result } = renderHook(() => useRealtimeInbox());
+
+    await act(async () => {
+      await result.current.handleSendAudio(blob, 'reply-audio-1');
+    });
+
+    expect(uploadAudioMock).toHaveBeenCalledWith('c1', blob);
+    expect(sendMessageMock).toHaveBeenCalledWith(
+      'c1', '[Áudio]', 'audio', 'audio/arquivo.webm', undefined, 'reply-audio-1',
+    );
+  });
+
+  it('sem resposta pendente o contrato antigo continua igual (nenhum argumento a mais)', async () => {
+    await expect(sendAudio()).resolves.toBe(true);
+
+    expect(sendMessageMock).toHaveBeenCalledWith('c1', '[Áudio]', 'audio', 'audio/arquivo.webm');
+  });
+});
+
 // PE-24 — o áudio fora dos limites do WhatsApp não pode subir. A recusa é ANTES do
 // `ChatService.uploadAudio` e o motivo é avisado aqui: é esta camada que conhece a
 // mensagem exata da validação (a de cima só tem o texto genérico).

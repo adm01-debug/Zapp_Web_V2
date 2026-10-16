@@ -14,6 +14,8 @@
  * quebrar o envio.
  */
 
+import { offlineQueueDrainLock, type CrossTabDrainLock } from './crossTabDrainLock';
+
 export const OFFLINE_QUEUE_DATABASE = 'zapp-offline-outbox';
 export const OFFLINE_QUEUE_DATABASE_VERSION = 1;
 export const OFFLINE_QUEUE_STORE = 'outbound_messages';
@@ -48,6 +50,13 @@ export interface OfflineQueueDrainResult {
   sent: number;
   /** Mensagens que continuam na fila. */
   remaining: number;
+  /**
+   * PK-28: `true` quando OUTRA aba está drenando e esta não tocou a fila. A fila
+   * é o mesmo IndexedDB para todas as abas: entregar em paralelo mandaria cada
+   * mensagem duas vezes. A aba que perdeu a trava não entrega nada — e é o
+   * `remaining` já conhecido que alimenta o aviso de pendentes.
+   */
+  outraAba?: boolean;
 }
 
 export interface OfflineQueueDrainOptions {
@@ -72,6 +81,11 @@ export interface OfflineQueue {
 export interface OfflineQueueOptions {
   driver?: OfflineQueueDriver;
   now?: () => number;
+  /**
+   * Trava de drenagem entre abas (PK-28). Padrão: `offlineQueueDrainLock`.
+   * `null` desliga a coordenação (aba única / teste de regra da fila).
+   */
+  lock?: CrossTabDrainLock | null;
 }
 
 /** Driver de memória: fallback de ambiente sem IndexedDB e base dos testes de regra. */
@@ -181,6 +195,7 @@ export function resolveOfflineQueueDriver(): OfflineQueueDriver {
 export function createOfflineQueue(options: OfflineQueueOptions = {}): OfflineQueue {
   const driver = options.driver ?? resolveOfflineQueueDriver();
   const now = options.now ?? (() => Date.now());
+  const lock = options.lock !== undefined ? options.lock : offlineQueueDrainLock;
   const listeners = new Set<() => void>();
   let snapshot = 0;
   let draining: Promise<OfflineQueueDrainResult> | null = null;
@@ -201,14 +216,11 @@ export function createOfflineQueue(options: OfflineQueueOptions = {}): OfflineQu
     commitSnapshot((await driver.readAll()).length);
   }
 
-  async function drain(
+  /** Corpo da drenagem, sem coordenação entre abas: quem chama já é o dono. */
+  async function executar(
     deliver: (message: OfflineQueuedMessage) => Promise<void>,
     drainOptions: OfflineQueueDrainOptions = {},
   ): Promise<OfflineQueueDrainResult> {
-    // Uma drenagem por vez: dois gatilhos de `online` próximos não podem entregar
-    // a mesma mensagem duas vezes.
-    if (draining) return draining;
-    const run = (async (): Promise<OfflineQueueDrainResult> => {
       let sent = 0;
       let pending: OfflineQueuedMessage[];
       try {
@@ -248,6 +260,26 @@ export function createOfflineQueue(options: OfflineQueueOptions = {}): OfflineQu
         drainOptions.onError?.(error);
       }
       return { sent, remaining };
+  }
+
+  /**
+   * Uma drenagem por aba por vez E uma aba por vez (PK-28): a fila é o MESMO
+   * IndexedDB para todas as abas da origem, então dois gatilhos de `online` em
+   * abas diferentes entregariam as mesmas mensagens em dobro. Quem não pega a
+   * trava devolve `outraAba: true` sem tocar na fila.
+   */
+  async function drain(
+    deliver: (message: OfflineQueuedMessage) => Promise<void>,
+    drainOptions: OfflineQueueDrainOptions = {},
+  ): Promise<OfflineQueueDrainResult> {
+    // Uma drenagem por vez NESTA aba: dois gatilhos de `online` próximos não
+    // podem entregar a mesma mensagem duas vezes.
+    if (draining) return draining;
+    const run = (async (): Promise<OfflineQueueDrainResult> => {
+      if (!lock) return executar(deliver, drainOptions);
+      const resultado = await lock.runExclusive(() => executar(deliver, drainOptions));
+      if (!resultado.ran) return { sent: 0, remaining: snapshot, outraAba: true };
+      return resultado.value ?? { sent: 0, remaining: snapshot };
     })();
     draining = run;
     try {

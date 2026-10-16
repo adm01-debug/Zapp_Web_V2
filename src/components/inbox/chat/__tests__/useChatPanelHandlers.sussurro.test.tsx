@@ -11,6 +11,8 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act, waitFor, cleanup } from '@testing-library/react';
+import React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { Message } from '@/types/chat';
 
 
@@ -45,12 +47,21 @@ vi.mock('@/integrations/supabase/client', () => {
   return {
     supabase: {
       auth: { getUser: async () => ({ data: { user: { id: 'agente-1' } }, error: null }) },
+      channel: () => ({ on: () => ({ subscribe: () => ({}) }) }),
+      removeChannel: vi.fn(),
       from: (tabela: string) => ({
         select: () => {
           if (tabela === 'whisper_messages') {
             mocks.consultas += 1;
-            // O builder do supabase é aguardável; devolvemos direto o resultado do count.
-            return { eq: () => ({ count: mocks.whisperCount, error: null }) };
+            // Cadeia real do hook: .eq(contact_id).eq(target_agent_id).eq(is_read).neq(sender_id)
+            const countChain: Record<string, unknown> = {
+              eq: () => countChain,
+              neq: () => ({
+                then: (resolve: (value: unknown) => unknown) =>
+                  Promise.resolve({ count: mocks.whisperCount, error: null }).then(resolve),
+              }),
+            };
+            return countChain;
           }
           return builder(tabela);
         },
@@ -65,6 +76,11 @@ vi.mock('@/integrations/supabase/client', () => {
 });
 vi.mock('@/lib/logger', () => ({
   log: { error: vi.fn(), debug: vi.fn(), warn: vi.fn(), info: vi.fn() },
+  getLogger: () => ({ error: vi.fn(), debug: vi.fn(), warn: vi.fn(), info: vi.fn() }),
+}));
+// useWhisperCount (contador do selo) lê o perfil logado para contar só o que é dele.
+vi.mock('@/hooks/auth/useAuth', () => ({
+  useAuth: () => ({ profile: { id: '33333333-3333-4333-8333-333333333333', role: 'supervisor' } }),
 }));
 vi.mock('@/lib/undoToast', () => ({ undoToast: (...args: unknown[]) => mocks.undoToast(...args) }));
 vi.mock('@/lib/ai-vocabulary', () => ({ normalizeOperationalPriority: () => ({ value: null }) }));
@@ -349,10 +365,14 @@ describe('contador de sussurros (selo do cabeçalho)', () => {
 
   it('lê o count com o RLS existente e reconsulta quando um sussurro novo é gravado', async () => {
     mocks.whisperCount = 2;
-    const { result } = renderHook(() => ({
-      count: useWhisperCount(CONTATO),
-      enviar: useWhisperMessagesMutation().enviarSussurro,
-    }));
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+    const { result } = renderHook(
+      () => ({
+        count: useWhisperCount(CONTATO),
+        enviar: useWhisperMessagesMutation().enviarSussurro,
+      }),
+      { wrapper: ({ children }) => <QueryClientProvider client={qc}>{children}</QueryClientProvider> },
+    );
 
     await waitFor(() => expect(result.current.count).toBe(2));
 

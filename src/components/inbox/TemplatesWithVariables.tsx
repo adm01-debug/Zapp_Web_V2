@@ -102,8 +102,8 @@ export function TemplatesWithVariables({ templates, onUseTemplate, contactData }
                       <div className="mt-1 text-xs text-muted-foreground line-clamp-2"><VariableHighlighter text={template.content} /></div>
                     </div>
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingTemplate(template); setEditorOpen(true); }}><Edit2 className="w-3 h-3" /></Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleUseTemplate(template)}><Copy className="w-3 h-3" /></Button>
+                      <Button variant="ghost" size="icon" aria-label="Editar template" className="h-7 w-7" onClick={() => { setEditingTemplate(template); setEditorOpen(true); }}><Edit2 className="w-3 h-3" /></Button>
+                      <Button variant="ghost" size="icon" aria-label="Usar template" className="h-7 w-7" onClick={() => handleUseTemplate(template)}><Copy className="w-3 h-3" /></Button>
                     </div>
                   </div>
                 </motion.div>

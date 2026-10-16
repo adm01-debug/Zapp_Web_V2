@@ -146,6 +146,49 @@ describe('useFileUploadLogic — storage path', () => {
   });
 });
 
+/**
+ * PK-28 · paridade doc 06 — a citação junto da mídia.
+ *
+ * O servidor cita QUALQUER tipo (`message-delivery` · `providerPayload.quoted`);
+ * o que faltava era o cliente mandar o id: o diálogo de mídia abria com a barra
+ * de resposta ativa e a imagem saía sem a citação que o texto já carregava.
+ */
+describe('useFileUploadLogic — PK-28: citação da resposta na mídia', () => {
+  function renderUploadComResposta(replyToId: string | null) {
+    return renderHook(() => useFileUploadLogic({
+      contactId: CONTACT_ID,
+      connectionId: 'connection-1',
+      replyToId,
+      onFileSent: vi.fn(),
+      fileInputRef: makeFileInputRef(),
+    }));
+  }
+
+  it('a imagem sai citando a mensagem respondida', async () => {
+    const hook = renderUploadComResposta('reply-img-1');
+    act(() => {
+      hook.result.current.handleExternalFile(createFile('foto.png'));
+    });
+    await send(hook);
+
+    await waitFor(() => expect(mocks.sendOutboundMessage).toHaveBeenCalledTimes(1));
+    expect(mocks.sendOutboundMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ replyToId: 'reply-img-1' }),
+    );
+  });
+
+  it('sem resposta pendente o payload fica igual ao contrato antigo (sem o campo)', async () => {
+    const hook = renderUploadComResposta(null);
+    act(() => {
+      hook.result.current.handleExternalFile(createFile('foto.png'));
+    });
+    await send(hook);
+
+    await waitFor(() => expect(mocks.sendOutboundMessage).toHaveBeenCalledTimes(1));
+    expect(mocks.sendOutboundMessage.mock.calls[0][0]).not.toHaveProperty('replyToId');
+  });
+});
+
 describe('useFileUploadLogic — R2-INB-006: falha após enqueue e retry', () => {
   it('remove o objeto órfão quando o envio falha e a fila prova que NÃO há linha', async () => {
     mocks.sendOutboundMessage.mockRejectedValueOnce(new Error('fila cheia'));

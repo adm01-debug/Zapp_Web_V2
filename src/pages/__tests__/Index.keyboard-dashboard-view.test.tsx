@@ -69,6 +69,13 @@ vi.mock('@/hooks/communication/useTranscriptionNotifications', () => ({
 vi.mock('@/hooks/integrations/useGmailOAuth', () => ({
   useGmailOAuth: () => undefined,
 }));
+// PE-30/31: o total de não lidas (Chat/Teams) é fonte de SELO, não participa do
+// fluxo do atalho. O dublê entrega número NÃO nulo para o caso que prova que a
+// página repassa o número do hook (e não um `0` cravado) ao shell.
+const naoLidas = vi.hoisted(() => ({ count: 0, teams: 0 }));
+vi.mock('@/hooks/inbox/useInboxUnreadTotal', () => ({
+  useInboxUnreadTotal: () => naoLidas,
+}));
 // Setas/voltar-avançar ficam fora do fluxo do Ctrl+2.
 vi.mock('@/hooks/ui/useKeyboardNavigation', () => ({
   useKeyboardNavigation: () => undefined,
@@ -106,8 +113,17 @@ vi.mock('@/components/performance/HotRoutePrefetcher', () => ({
 // publica `currentView` no DOM para a asserção ler o que o shell de verdade
 // receberia.
 vi.mock('@/components/layout/AppShell', () => ({
-  AppShell: ({ currentView }: { currentView: string }) => (
-    <div data-testid="app-shell" data-view={currentView} />
+  AppShell: ({ currentView, unreadNotifications, teamsUnread }: {
+    currentView: string;
+    unreadNotifications?: number;
+    teamsUnread?: number;
+  }) => (
+    <div
+      data-testid="app-shell"
+      data-view={currentView}
+      data-nao-lidas={String(unreadNotifications)}
+      data-teams-nao-lidas={String(teamsUnread)}
+    />
   ),
 }));
 
@@ -150,6 +166,8 @@ describe('#447 — Ctrl+2 troca a view do shell para dashboard', () => {
     cleanup();
     localStorage.clear();
     vi.clearAllMocks();
+    naoLidas.count = 0;
+    naoLidas.teams = 0;
   });
 
   afterEach(() => {
@@ -191,5 +209,36 @@ describe('#447 — Ctrl+2 troca a view do shell para dashboard', () => {
 
     expect(viewNoShell()).toBe('inbox');
     expect(viewNaUrl()).toBe('inbox');
+  });
+});
+
+/**
+ * PE-31 — a página deixa de mandar `unreadNotifications={0}` cravado: o número
+ * que o shell recebe é o que o hook de totais entrega (Chat e Teams). O shell
+ * aqui é dublê (o alvo é a PASSAGEM); o desenho dos selos é provado nas barras.
+ */
+describe('PE-31 — a página repassa o total real de não lidas ao shell', () => {
+  beforeEach(() => {
+    cleanup();
+    localStorage.clear();
+    vi.clearAllMocks();
+    naoLidas.count = 7;
+    naoLidas.teams = 4;
+  });
+
+  afterEach(() => {
+    cleanup();
+    window.history.replaceState(null, '', '/');
+    naoLidas.count = 0;
+    naoLidas.teams = 0;
+  });
+
+  it('entrega o contador do Chat e o do Teams do hook, não um 0 cravado', async () => {
+    window.history.replaceState(null, '', '/?view=inbox');
+    await montarShell('/?view=inbox');
+
+    const shell = screen.getByTestId('app-shell');
+    expect(shell.getAttribute('data-nao-lidas')).toBe('7');
+    expect(shell.getAttribute('data-teams-nao-lidas')).toBe('4');
   });
 });

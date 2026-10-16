@@ -1,6 +1,11 @@
 // Shared proxy logic for Evolution API edge function
 import { translateV2ToGo } from "./evolution-go-routes.ts";
 import { instanceNameFromV2Path } from "./evolution-instance-token.ts";
+import {
+  mediaEgressPolicyFromEnv,
+  resolveMediaEgressUrl,
+  type MediaEgressPolicy,
+} from "./media-egress.ts";
 
 // GO responde envios como { message:'success', data:{ Info:{ ID, Chat, IsFromMe,… }, Message } }.
 // O frontend (messageSender, useChatMediaSending, useSendProduct) lê key.id/messageId (shape v2).
@@ -322,15 +327,58 @@ interface PrivateStorageSigner {
   };
 }
 
+/**
+ * Hosts de mídia que o app já trata como provedor próprio, além do que a
+ * política de egress monta do ambiente (SUPABASE_URL/EVOLUTION_API_URL +
+ * MEDIA_EGRESS_ALLOWED_*). É o CDN de imagens do catálogo — a MESMA constante
+ * de `src/lib/cfImages.ts` (CF_IMAGES_HOST). Sem ele, enviar foto de produto
+ * (media_url aponta para o imagedelivery.net) quebraria: o card manda aceitar
+ * "provedores configurados".
+ */
+export const CONFIGURED_MEDIA_HOST_SUFFIXES = ["imagedelivery.net"] as const;
+
+/** Política de egress aplicada a URL de mídia que ENTREGA ao provedor. */
+export function outboundMediaEgressPolicy(): MediaEgressPolicy {
+  const base = mediaEgressPolicyFromEnv();
+  const hostSuffixes = base.hostSuffixes.slice();
+  for (const extra of CONFIGURED_MEDIA_HOST_SUFFIXES) {
+    if (!hostSuffixes.includes(extra)) hostSuffixes.push(extra);
+  }
+  return { trustedOrigins: base.trustedOrigins, hostSuffixes };
+}
+
+/**
+ * Valida uma URL de mídia como DESTINO de envio e devolve a forma normalizada,
+ * ou null quando o host é arbitrário (loopback, link-local, IP literal fora de
+ * origem confiável ou domínio não permitido). É o mesmo juízo da política de
+ * download, reaproveitado para o que a Edge MANDA ao provedor buscar.
+ */
+export function resolveAllowedMediaEgressUrl(
+  url: string,
+  policy: MediaEgressPolicy = outboundMediaEgressPolicy()
+): string | null {
+  const resolved = resolveMediaEgressUrl(url, policy);
+  return resolved ? resolved.toString() : null;
+}
+
 export async function resolvePrivateBucketUrl(
   supabase: PrivateStorageSigner,
   url: string,
   buckets: string[] = ['whatsapp-media', 'audio-messages'],
-  expectedOrigin?: string
+  expectedOrigin?: string,
+  policy: MediaEgressPolicy = outboundMediaEgressPolicy()
 ): Promise<string> {
   if (typeof url !== 'string') return url;
   const objectReference = parsePrivateStorageObject(url, buckets, expectedOrigin);
-  if (!objectReference) return url;
+  if (!objectReference) {
+    // Não é objeto do Storage do projeto: só passa se for de host conhecido.
+    // Antes, qualquer https seguia como estava e a Edge mandava o provedor
+    // buscar loopback/link-local/host arbitrário (SSRF-por-procurador).
+    if (!resolveAllowedMediaEgressUrl(url, policy)) {
+      throw new Error('media_url de host não permitido');
+    }
+    return url;
+  }
 
   const { data: signedData, error } = await supabase.storage
     .from(objectReference.bucket)

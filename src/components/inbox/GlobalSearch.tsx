@@ -6,6 +6,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { HOVER_REVEAL_TAP } from './hoverActions';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { useGlobalSearchData, type SearchResult, type TagSuggestion } from './useGlobalSearchData';
@@ -280,7 +281,7 @@ export function GlobalSearch({ open, onOpenChange, onSelectResult, onNewConversa
                   </div>
                   <div className="flex items-center gap-2">
                     {item.resultCount !== undefined && <span className="text-xs text-muted-foreground">{item.resultCount} resultados</span>}
-                    <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100" aria-label="Remover do histórico" onClick={(e) => { e.stopPropagation(); removeFromHistory(item.query); }}>
+                    <Button variant="ghost" size="icon" className={`h-6 w-6 ${HOVER_REVEAL_TAP}`} aria-label="Remover do histórico" onClick={(e) => { e.stopPropagation(); removeFromHistory(item.query); }}>
                       <X className="h-3 w-3" />
                     </Button>
                   </div>

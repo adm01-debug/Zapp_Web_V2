@@ -81,6 +81,8 @@ export function useFileUploadLogic(opts: {
   recipientNumber?: string;
   contactId?: string;
   connectionId?: string;
+  /** PK-28: citação pendente no compositor — acompanha a mídia no envio. */
+  replyToId?: string | null;
   onFileSelect?: (file: File, category: string) => void;
   onFileSent?: (messageData: FileMessageData) => void;
   /**
@@ -92,7 +94,7 @@ export function useFileUploadLogic(opts: {
    */
   fileInputRef: React.RefObject<HTMLInputElement | null>;
 }) {
-  const { contactId, connectionId, onFileSelect, onFileSent, fileInputRef } = opts;
+  const { contactId, connectionId, replyToId, onFileSelect, onFileSent, fileInputRef } = opts;
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [filePreview, setFilePreview] = useState<FilePreview | null>(null);
@@ -147,14 +149,14 @@ export function useFileUploadLogic(opts: {
   }, []);
 
   const processFilesToQueue = useCallback((files: File[]): QueuedFile[] => {
-    const processed = files.slice(0, MAX_FILES).map((file, index) => {
+    const processed = files.slice(0, MAX_FILES).map((file) => {
       const validation = validateFile(file);
       let preview: string | undefined;
       if (validation.valid && (validation.category === 'image' || file.type === 'application/pdf')) {
         preview = URL.createObjectURL(file);
         previewsRef.current.add(preview);
       }
-      return { id: `${Date.now()}-${index}`, file, validation, preview, status: 'pending' as const, progress: 0 };
+      return { id: createStorageObjectId(), file, validation, preview, status: 'pending' as const, progress: 0 };
     });
     return processed.sort((a, b) => (categoryOrder[a.validation.category || 'document'] ?? 99) - (categoryOrder[b.validation.category || 'document'] ?? 99));
   }, []);
@@ -229,6 +231,9 @@ export function useFileUploadLogic(opts: {
         contactId, content: messageContent, messageType, mediaUrl: locatorUrl,
         caption: cap?.trim() || null, whatsappConnectionId: connectionId ?? null,
         clientMessageId,
+        // PK-28: a barra de resposta segue ativa com o diálogo de mídia aberto; sem
+        // isto a imagem/documento saía sem a citação que o texto já carregava.
+        ...(replyToId ? { replyToId } : {}),
       });
       pendingUploadsRef.current.delete(actionKey);
       return { result, mediaUrl: locatorUrl, category: messageType };
@@ -244,7 +249,7 @@ export function useFileUploadLogic(opts: {
       }
       throw error;
     }
-  }, [contactId, connectionId, uploadFileToStorage]);
+  }, [contactId, connectionId, replyToId, uploadFileToStorage]);
 
   const handleSendFile = useCallback(async () => {
     if (!filePreview || !filePreview.validation.valid) return;

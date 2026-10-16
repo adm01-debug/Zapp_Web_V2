@@ -60,6 +60,8 @@ interface ChatPanelProps {
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
   onArchiveConversation?: () => void;
+  /** Reabre (resolvida) / desarquiva (arquivada) a conversa atual (RPC reopen_conversation). */
+  onReopenConversation?: (contactId: string) => void | Promise<void>;
   pinnedConversations?: PinnedChatItem[];
   onSelectPinned?: (contactId: string) => void;
   /** Contrato de paginacao do historico antigo (opcional: ausente = consumidor antigo, sem controle). */
@@ -193,7 +195,7 @@ function dialogReducer(state: DialogState, action: DialogAction): DialogState {
 
 type ActiveTool = 'chatSearch' | 'objections' | 'university' | 'aiAssistant' | 'summary' | null;
 
-export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, showDetails = false, onToggleDetails, onBack, hideHeader = false, pendingDraft, onDraftConsumed, isFavorite, onToggleFavorite, onArchiveConversation, pinnedConversations, onSelectPinned, hasOlderMessages, loadingOlderMessages, onLoadOlderMessages }: ChatPanelProps) {
+export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, showDetails = false, onToggleDetails, onBack, hideHeader = false, pendingDraft, onDraftConsumed, isFavorite, onToggleFavorite, onArchiveConversation, onReopenConversation, pinnedConversations, onSelectPinned, hasOlderMessages, loadingOlderMessages, onLoadOlderMessages }: ChatPanelProps) {
   const [dialogs, dispatch] = useReducer(dialogReducer, initialDialogState);
   const openDialog = useCallback((key: DialogKey) => dispatch({ type: 'OPEN', key }), []);
   const closeDialog = useCallback((key: DialogKey) => dispatch({ type: 'CLOSE', key }), []);
@@ -440,6 +442,7 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
             onGenerateSummary={() => handleSetActiveTool('summary')} isSummaryLoading={false} canGenerateSummary={canGenerateSummary}
             onCloseConversation={() => openDialog('closeDialog')}
             onArchive={onArchiveConversation}
+            onReopenConversation={onReopenConversation}
             isFavorite={isFavorite} onToggleFavorite={onToggleFavorite}
             lastMessages={lastContactMessages}
             allMessages={allMessagesForHeader}
@@ -470,7 +473,7 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
           ttsLoading={ttsLoading} ttsPlaying={ttsPlaying} ttsMessageId={ttsMessageId} instanceName={instanceName}
           conversationId={conversation.id} contactJid={contactJid} contactAvatar={contactAvatar}
           onSpeak={speak} onStop={stop} onReply={handlers.handleReplyToMessage} onForward={handlers.handleForwardMessage} onCopy={handlers.handleCopyMessage}
-          onScrollToMessage={handleScrollToMessage} onInteractiveButtonClick={handlers.handleInteractiveButtonClick} onEditStart={handlers.handleEditStart}
+          onScrollToMessage={handleScrollToMessage} onInteractiveButtonClick={handlers.handleInteractiveButtonClick} onInteractiveListItemClick={handlers.handleInteractiveListItemClick} onEditStart={handlers.handleEditStart}
           highlightedMessageIds={realceCombinado} activeHighlightId={ativoCombinado} searchQuery={searchQuery}
           hasOlderMessages={hasOlderMessages} loadingOlderMessages={loadingOlderMessages} onLoadOlderMessages={onLoadOlderMessages} />
 
@@ -490,8 +493,11 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
           onCloseSlashCommands={() => closeDialog('slashCommands')} onQuickReply={handleQuickReply}
           onRecordToggle={() => handlers.setIsRecordingAudio(!handlers.isRecordingAudio)} onAudioSend={(blob) => handlers.handleAudioSend(blob, onSendAudio)} onAudioCancel={() => handlers.setIsRecordingAudio(false)}
           onOpenInteractiveBuilder={() => openDialog('interactiveBuilder')} onOpenSchedule={() => openDialog('scheduleDialog')}
-          onOpenLocationPicker={() => openDialog('locationPicker')} onSendSticker={handleSendSticker}
-          onSendAudioMeme={handleSendAudioMeme} onSendCustomEmoji={handleSendCustomEmoji}
+          onOpenLocationPicker={() => openDialog('locationPicker')}
+          // PK-28: figurinha/emoji/áudio-meme são tipos de envio como o texto — a
+          // citação pendente no compositor precisa acompanhá-los.
+          onSendSticker={(url) => handleSendSticker(url, handlers.replyToMessage?.id ?? null)}
+          onSendAudioMeme={(url) => handleSendAudioMeme(url, handlers.replyToMessage?.id ?? null)} onSendCustomEmoji={(url) => handleSendCustomEmoji(url, handlers.replyToMessage?.id ?? null)}
           signatureEnabled={signatureEnabled} signatureName={agentName} onToggleSignature={toggleSignature}
           onOpenCatalog={() => openDialog('catalogDirect')} onSelectSuggestion={(text) => handlers.setInputValue(text)} onSelectTemplate={(text) => handlers.setInputValue(text)}
           fileUploaderRef={fileUploaderRef} inputRef={handlers.inputRef}

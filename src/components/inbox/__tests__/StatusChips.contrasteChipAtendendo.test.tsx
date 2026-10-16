@@ -21,15 +21,9 @@
  */
 import { readFileSync } from 'node:fs';
 import { render, screen, cleanup } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { StatusChips } from '../conversation-list/StatusChips';
-import type { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
-
-// O contador do chip é do `profile.id`, não do auth id (#349) — o perfil logado é o único
-// com a conversa atribuída, então "Em atendimento" fica com 1.
-vi.mock('@/hooks/auth/useAuth', () => ({
-  useAuth: () => ({ user: { id: 'auth-1' }, profile: { id: 'perfil-1' } }),
-}));
+import type { ChipCounts } from '@/hooks/inbox/chipCounts';
 
 // ─── WCAG 2.1: HSL (formato dos tokens) → sRGB → razão de contraste ─────────
 
@@ -144,19 +138,12 @@ function tokensDaClasse(className: string, tipo: 'bg' | 'text', vars: Record<str
   return achados;
 }
 
-const conversations: ConversationWithMessages[] = [
-  {
-    contact: { id: 'c1', assigned_to: 'perfil-1' } as ConversationWithMessages['contact'],
-    messages: [{ id: 'm1' } as never],
-    unreadCount: 0,
-    lastMessage: null,
-  },
-];
+const counts: ChipCounts = { all: 1, unread: 0, attending: 1, waiting: 0, resolved: 0, archived: 0 };
 
 /** Renderiza o `StatusChips` REAL com o chip "Em atendimento" ATIVO e devolve o par fundo×texto. */
 function medirChipAtendendo(): { fundo: string; base: string } {
   cleanup();
-  render(<StatusChips conversations={conversations} chipTab="attending" onChipTabChange={() => {}} />);
+  render(<StatusChips counts={counts} chipTab="attending" onChipTabChange={() => {}} />);
   const chip = screen.getByTestId('status-chip-attending');
   expect(chip, 'o chip ativo é o que o cartão audita').toHaveClass('status-chip-active');
   const fundos = tokensDaClasse(chip.className, 'bg', CLARO);
