@@ -10,6 +10,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
  *
  * O backend é simulado (canal do Supabase), mas o componente e o hook são os reais —
  * o teste não injeta a resposta pronta no toast.
+ *
+ * Só `agent_stats` é assinado, porque é a única tabela de gamificação publicada em
+ * `supabase_realtime`; a conquista nova chega pelo aumento de `achievements_count`,
+ * gravado na mesma transação do insert (`grant_agent_achievement`).
  */
 
 type Resposta = { data: unknown; error: { message: string } | null };
@@ -99,7 +103,7 @@ function conquista(overrides: Record<string, unknown> = {}): Record<string, unkn
 
 /** Espera o canal estar assinado e o baseline do banco ter sido lido. */
 async function pronto() {
-  await waitFor(() => expect(h.handlers.size).toBe(2));
+  await waitFor(() => expect(h.handlers.size).toBe(1));
   await waitFor(() => expect(h.consultas).toContain('agent_achievements'));
   await waitFor(() => expect(h.consultas).toContain('agent_stats'));
 }
@@ -110,11 +114,30 @@ async function entregar(tabela: string, payload: { new?: Record<string, unknown>
   });
 }
 
+/** O que o banco passa a devolver na próxima leitura da janela de conquistas. */
+function janelaDeConquistas(...linhas: Array<Record<string, unknown>>) {
+  h.conquistas = { data: linhas, error: null };
+}
+
+/**
+ * Evento real de conquista: o insert da conquista e o aumento de
+ * `achievements_count` em `agent_stats` saem na mesma transação, e é o evento
+ * publicado quem avisa o cliente a reler a janela de conquistas.
+ */
+async function entregarConquista(stats: Record<string, unknown> = {}) {
+  await entregar('agent_stats', {
+    new: { id: 's1', profile_id: 'p1', xp: 100, level: 3, achievements_count: 3, ...stats },
+  });
+}
+
 describe('AchievementCelebrationToaster', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     prefersReduzido.valor = false;
-    h.stats = { data: { id: 's1', profile_id: 'p1', xp: 100, level: 3 }, error: null };
+    h.stats = {
+      data: { id: 's1', profile_id: 'p1', xp: 100, level: 3, achievements_count: 2 },
+      error: null,
+    };
     h.conquistas = { data: [], error: null };
     h.handlers = new Map<string, Handler>();
     h.onChamadas = [];
@@ -130,11 +153,20 @@ describe('AchievementCelebrationToaster', () => {
     expect(regiao).toBeEmptyDOMElement();
   });
 
+  it('assina só agent_stats: agent_achievements não é publicado no Realtime', async () => {
+    montar();
+    await pronto();
+
+    expect(h.onChamadas.map((c) => c.config.table)).toEqual(['agent_stats']);
+    expect(h.handlers.has('agent_achievements')).toBe(false);
+  });
+
   it('conquista nova aparece com nome, descrição e XP', async () => {
     montar();
     await pronto();
 
-    await entregar('agent_achievements', { new: conquista() });
+    janelaDeConquistas(conquista());
+    await entregarConquista();
 
     expect(await screen.findByText('Marco de 500 mensagens')).toBeInTheDocument();
     expect(screen.getByText('Você chegou a 500 mensagens')).toBeInTheDocument();
@@ -142,21 +174,37 @@ describe('AchievementCelebrationToaster', () => {
     expect(screen.getByText('Conquista Desbloqueada!')).toBeInTheDocument();
   });
 
+  it('contagem de conquistas que não sobe não relê nem celebra', async () => {
+    montar();
+    await pronto();
+    const leiturasAntes = h.consultas.filter((t) => t === 'agent_achievements').length;
+    janelaDeConquistas(conquista());
+
+    await entregar('agent_stats', {
+      new: { id: 's1', profile_id: 'p1', xp: 130, level: 3, achievements_count: 2 },
+    });
+
+    await waitFor(() => expect(screen.getByRole('status')).toBeEmptyDOMElement());
+    expect(h.consultas.filter((t) => t === 'agent_achievements')).toHaveLength(leiturasAntes);
+  });
+
   it('conquista que já existia antes de assinar não vira toast', async () => {
-    h.conquistas = { data: [conquista({ id: 'a1' })], error: null };
+    janelaDeConquistas(conquista({ id: 'a1' }));
     montar();
     await pronto();
 
-    await entregar('agent_achievements', { new: conquista({ id: 'a1' }) });
+    await entregarConquista();
 
-    expect(screen.getByRole('status')).toBeEmptyDOMElement();
+    await waitFor(() => expect(screen.getByRole('status')).toBeEmptyDOMElement());
   });
 
   it('subida de nível mostra nível anterior, novo e XP', async () => {
     montar();
     await pronto();
 
-    await entregar('agent_stats', { new: { profile_id: 'p1', level: 4, xp: 240 } });
+    await entregar('agent_stats', {
+      new: { id: 's1', profile_id: 'p1', level: 4, xp: 240, achievements_count: 2 },
+    });
 
     expect(await screen.findByText('Nível 4!')).toBeInTheDocument();
     expect(screen.getByText('Você subiu do nível 3 para o nível 4')).toBeInTheDocument();
@@ -167,12 +215,13 @@ describe('AchievementCelebrationToaster', () => {
     montar();
     await pronto();
 
-    await entregar('agent_achievements', {
-      new: conquista({ id: 'a1', achievement_name: 'Primeira conquista' }),
-    });
-    await entregar('agent_achievements', {
-      new: conquista({ id: 'a2', achievement_name: 'Segunda conquista' }),
-    });
+    janelaDeConquistas(conquista({ id: 'a1', achievement_name: 'Primeira conquista' }));
+    await entregarConquista();
+    janelaDeConquistas(
+      conquista({ id: 'a2', achievement_name: 'Segunda conquista' }),
+      conquista({ id: 'a1', achievement_name: 'Primeira conquista' }),
+    );
+    await entregarConquista({ achievements_count: 4 });
 
     expect(await screen.findByText('Primeira conquista')).toBeInTheDocument();
     expect(screen.queryByText('Segunda conquista')).not.toBeInTheDocument();
@@ -187,7 +236,8 @@ describe('AchievementCelebrationToaster', () => {
     montar({ duration: 300 });
     await pronto();
 
-    await entregar('agent_achievements', { new: conquista() });
+    janelaDeConquistas(conquista());
+    await entregarConquista();
     expect(await screen.findByText('Marco de 500 mensagens')).toBeInTheDocument();
 
     await waitFor(
@@ -201,7 +251,8 @@ describe('AchievementCelebrationToaster', () => {
     montar();
     await pronto();
 
-    await entregar('agent_achievements', { new: conquista() });
+    janelaDeConquistas(conquista());
+    await entregarConquista();
 
     expect(await screen.findByText('Marco de 500 mensagens')).toBeInTheDocument();
     expect(screen.queryByTestId('celebration-particles')).not.toBeInTheDocument();
@@ -211,7 +262,8 @@ describe('AchievementCelebrationToaster', () => {
     montar();
     await pronto();
 
-    await entregar('agent_achievements', { new: conquista() });
+    janelaDeConquistas(conquista());
+    await entregarConquista();
 
     expect(await screen.findByText('Marco de 500 mensagens')).toBeInTheDocument();
     expect(screen.getByTestId('celebration-particles')).toBeInTheDocument();
