@@ -8,10 +8,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
-import { normalizeOperationalPriority, normalizeSentiment, type Sentiment } from '@/lib/ai-vocabulary';
+import { normalizeOperationalPriority } from '@/lib/ai-vocabulary';
+import { sentimentLevel, type SentimentLevel } from '@/lib/sentiment-level';
 import { isToday, isYesterday } from 'date-fns';
 import { formatRelativeTime } from '@/lib/formatters';
-import { Pin, CheckCircle2, UserCheck, Star, AlarmClock, Archive, Instagram, Facebook, Send, Mail, Globe, Linkedin, type LucideIcon } from 'lucide-react';
+import { Pin, CheckCircle2, UserCheck, Star, AlarmClock, Archive, Instagram, Facebook, Send, Mail, Globe, Linkedin, Frown, AlertTriangle, type LucideIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { CONTACT_TYPE_CONFIG } from '@/components/contacts/contactTypeConfig';
 import { ConversationGroupHeader } from './conversation-list/ConversationGroupHeader';
@@ -262,17 +263,24 @@ export function VirtualizedRealtimeList({
   );
 }
 
-// Rótulos do sentimento canônico (pt-BR). Não existe chave em inglês: o valor
-// cru passa por normalizeSentiment, que traduz o legado EN e devolve
-// `value: null` para desconhecido — aí o rótulo é 'sem análise', nunca um
-// positivo/negativo inventado.
-const SENTIMENT_LABEL: Record<Sentiment, string> = {
-  positivo: 'positivo',
-  neutro: 'neutro',
-  negativo: 'negativo',
-  critico: 'crítico',
+// Selo de sentimento da linha (item L3 da paridade V3 -> V2): só o que pede
+// atenção vira selo — negativo e crítico. Neutro, positivo e desconhecido NÃO
+// poluem a lista. O valor CRU do banco (pt-BR canônico ou legado EN) passa pelo
+// mapeador único `sentimentLevel`; desconhecido/ausente devolve `null` e nenhum
+// selo aparece (nada inventado). O selo tem nome acessível pt-BR (role="img" +
+// aria-label): nunca emoji/cor como único sinal.
+const SENTIMENT_SEAL: Partial<Record<SentimentLevel, { Icon: LucideIcon; label: string; className: string }>> = {
+  negative: {
+    Icon: Frown,
+    label: 'Cliente insatisfeito',
+    className: 'bg-warning text-warning-foreground',
+  },
+  critical: {
+    Icon: AlertTriangle,
+    label: 'Cliente muito insatisfeito',
+    className: 'bg-destructive text-destructive-foreground',
+  },
 };
-const SEM_ANALISE = 'sem análise';
 
 // Estado da conversa (contacts.conversation_status) em pt-BR, para a
 // pré-visualização. Valor desconhecido NÃO vira rótulo inventado (mesma regra
@@ -367,7 +375,8 @@ const ConversationRow = memo(({
   // Prioridade operacional canônica (EN) ou legado pt-BR ('alta'→'high');
   // ausente/desconhecido devolve `value: null` e nunca vira prioridade alta.
   const priority = normalizeOperationalPriority(conversation.contact.ai_priority);
-  const sentiment = normalizeSentiment(conversation.contact.ai_sentiment);
+  const sentimentLevelValue = sentimentLevel(conversation.contact.ai_sentiment);
+  const sentimentSeal = sentimentLevelValue ? SENTIMENT_SEAL[sentimentLevelValue] : undefined;
   const isHighPriority = priority.value === 'high' || priority.value === 'urgent';
   const channelType = conversation.contact.channel_type;
   const channelBadge = channelType && channelType !== 'whatsapp' ? CHANNEL_BADGE_CONFIG[channelType] : null;
@@ -527,22 +536,18 @@ const ConversationRow = memo(({
                 </Tooltip>
               </TooltipProvider>
             )}
-            {conversation.contact.ai_sentiment && (
+            {sentimentSeal && (
               <span
                 role="img"
-                aria-label={`Sentimento: ${sentiment.value ? SENTIMENT_LABEL[sentiment.value] : SEM_ANALISE}`}
+                aria-label={sentimentSeal.label}
+                title={sentimentSeal.label}
                 className={cn(
-                  'absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-card',
-                  sentiment.value === 'positivo' && 'bg-[hsl(var(--success))]',
-                  sentiment.value === 'negativo' && 'bg-destructive',
-                  sentiment.value === 'neutro' && 'bg-[hsl(var(--warning))]',
-                  sentiment.value === 'critico' && 'bg-destructive',
-                  // sem rótulo canônico (legado inventado/vazio) → cinza, não
-                  // inventa positivo/negativo
-                  sentiment.value === null && 'bg-muted'
+                  'absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-card flex items-center justify-center',
+                  sentimentSeal.className
                 )}
-                title={`Sentimento: ${sentiment.value ? SENTIMENT_LABEL[sentiment.value] : SEM_ANALISE}`}
-              />
+              >
+                <sentimentSeal.Icon className="w-2 h-2" aria-hidden="true" />
+              </span>
             )}
           </div>
 
