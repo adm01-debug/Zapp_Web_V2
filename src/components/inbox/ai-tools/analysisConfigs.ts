@@ -160,13 +160,14 @@ export interface AiTextWindow {
  * enviam as mensagens concatenadas numa única mensagem do `ai-proxy`, cujo teto
  * é `AI_PROXY_CONTENT_LIMIT`). Descarta os itens mais antigos até o texto
  * concatenado caber — o separador `\n` conta no orçamento.
+ *
+ * O comprimento que vale é o do texto UNIDO com `\n` — exatamente o que vai no
+ * corpo da mensagem. Medido direto no `join`, sem contabilidade paralela.
  */
 export function limitAiTexts(texts: string[], maxChars: number = AI_PROXY_CONTENT_LIMIT): AiTextWindow {
   const window = [...texts];
   let omitted = 0;
-  let totalChars = window.reduce((sum, text) => sum + text.length, Math.max(0, window.length - 1));
-  while (window.length > 1 && totalChars > maxChars) {
-    totalChars -= window[0].length + 1;
+  while (window.length > 1 && window.join('\n').length > maxChars) {
     window.shift();
     omitted += 1;
   }
@@ -187,14 +188,16 @@ export function isPeriodCoveredByWindow(
   now = Date.now(),
 ): boolean {
   if (days === null) return false;
-  if (!hasOlderMessages) return true;
-  let oldest = Number.POSITIVE_INFINITY;
-  for (const message of messages) {
-    const timestamp = message.created_at ? Date.parse(message.created_at) : Number.NaN;
-    if (!Number.isNaN(timestamp) && timestamp < oldest) oldest = timestamp;
+  if (messages.length === 0 || hasOlderMessages) {
+    let oldest = Number.POSITIVE_INFINITY;
+    for (const message of messages) {
+      const timestamp = message.created_at ? Date.parse(message.created_at) : Number.NaN;
+      if (!Number.isNaN(timestamp) && timestamp < oldest) oldest = timestamp;
+    }
+    if (!Number.isFinite(oldest)) return false;
+    return oldest <= now - days * 86_400_000;
   }
-  if (!Number.isFinite(oldest)) return false;
-  return oldest <= now - days * 86_400_000;
+  return true;
 }
 
 export const statusConfig: Record<string, { label: string; icon: React.ElementType; className: string }> = {

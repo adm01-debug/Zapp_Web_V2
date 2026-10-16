@@ -85,6 +85,27 @@ describe('limitAiTexts — teto de UMA mensagem do ai-proxy (50000 chars)', () =
     expect(janela.texts).toHaveLength(1);
     expect(janela.omitted).toBe(0);
   });
+
+  it('com strings vazias no meio o comprimento final é o do texto unido com \\n', () => {
+    // 50 + 1 + 0 + 1 + 0 + 1 + 48 = 101: o separador de cada item conta,
+    // inclusive o das strings vazias — é o que vai no corpo do `ai-proxy`.
+    const textos = ['a'.repeat(50), '', '', 'b'.repeat(48)];
+    const janela = limitAiTexts(textos, 101);
+
+    expect(janela.texts.join('\n')).toHaveLength(101);
+    expect(janela.omitted).toBe(0);
+    expect(janela.total).toBe(4);
+  });
+
+  it('com strings vazias no meio o corte mantém o sufixo mais recente que cabe', () => {
+    const textos = ['a'.repeat(50), '', '', 'b'.repeat(48)];
+    const cortada = limitAiTexts(textos, 100);
+    const concatenado = cortada.texts.join('\n');
+
+    expect(concatenado.length).toBeLessThanOrEqual(100);
+    expect(cortada.omitted).toBe(1);
+    expect(cortada.texts[cortada.texts.length - 1]).toBe('b'.repeat(48));
+  });
 });
 
 describe('isPeriodCoveredByWindow — só grava period_days com o período inteiro na janela', () => {
@@ -111,6 +132,17 @@ describe('isPeriodCoveredByWindow — só grava period_days com o período intei
     const janelaCortada = [{ created_at: emDias(1) }, { created_at: emDias(0.5) }];
     expect(isPeriodCoveredByWindow(janelaCortada, 7, true, agora)).toBe(false);
     expect(isPeriodCoveredByWindow(janelaCortada, 1, true, agora)).toBe(true);
+  });
+
+  it('lista vazia nunca cobre o período pedido (nada foi analisado)', () => {
+    // Sem a guarda, a lista vazia com hasOlderMessages=false retornava true e
+    // gravava period_days sem nenhuma mensagem analisada.
+    expect(isPeriodCoveredByWindow([], 7, false, agora)).toBe(false);
+    expect(isPeriodCoveredByWindow([], 7, true, agora)).toBe(false);
+  });
+
+  it('sem nenhuma data válida não há como provar cobertura', () => {
+    expect(isPeriodCoveredByWindow([{ created_at: 'não-é-data' }, {}], 7, true, agora)).toBe(false);
   });
 });
 
