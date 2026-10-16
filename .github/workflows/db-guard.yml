@@ -237,6 +237,10 @@ jobs:
           CATALOG_RATE_LIMIT_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/catalog-rate-limit-policy-pinned.test.sh
+      - name: Simular politica confiavel do rate limit do catalogo
+        env:
+          CATALOG_RATE_LIMIT_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/catalog-rate-limit-policy-pinned.test.sh
 
       - name: Testar normalizacao deterministica dos tipos gerados
         run: bash scripts/db-audit/gen-types.test.sh

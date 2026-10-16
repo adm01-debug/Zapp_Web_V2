@@ -1,21 +1,21 @@
 -- catalogo_rate_limit_politica_confiavel
--- Rollback: execute o bloco SQL comentado imediatamente abaixo; ele recria public.catalog_rate_limit_hit(uuid, text, integer, integer) com o corpo anterior completo e restaura REVOKE/GRANT.
--- ===== BEGIN-ROLLBACK (SQL executavel; ordem inversa dos comandos desta migration) =====
--- create or replace function public.catalog_rate_limit_hit(
+-- Rollback: o bloco BEGIN-ROLLBACK no fim DESTE arquivo recria public.catalog_rate_limit_hit(uuid, text, integer, integer) com o corpo anterior completo e restaura os mesmos REVOKE/GRANT.
+-- Rollback (SQL executável, na ordem):
+--   create or replace function public.catalog_rate_limit_hit(
 --   p_user      uuid,
 --   p_action    text,
 --   p_limit     integer,
 --   p_window_ms integer
--- )
--- returns boolean
--- language plpgsql
--- security definer
--- set search_path = public, pg_temp
--- as $$
--- declare
+--   )
+--   returns boolean
+--   language plpgsql
+--   security definer
+--   set search_path = public, pg_temp
+--   as $$
+--   declare
 --   v_janela interval := make_interval(secs => p_window_ms / 1000.0);
 --   v_count  integer;
--- begin
+--   begin
 --   if auth.uid() is not null and auth.uid() <> p_user then
 --     return false;
 --   end if;
@@ -30,15 +30,15 @@
 --    where user_id = p_user and action = p_action and hit_at > now() - v_janela;
 --
 --   return v_count <= p_limit;
--- end;
--- $$;
+--   end;
+--   $$;
 --
--- comment on function public.catalog_rate_limit_hit(uuid, text, integer, integer) is
+--   comment on function public.catalog_rate_limit_hit(uuid, text, integer, integer) is
 --   'CT-19: conta um hit e devolve true enquanto o usuario estiver dentro da cota (p_limit por p_window_ms). Atomico: o insert/on conflict serializa no PK, entao chamadas concorrentes somam corretamente entre isolates. Devolve false para JWT de usuario tentando gastar a cota de outro.';
 --
--- revoke all on function public.catalog_rate_limit_hit(uuid, text, integer, integer) from public, anon;
--- grant execute on function public.catalog_rate_limit_hit(uuid, text, integer, integer) to service_role, authenticated;
--- ===== END-ROLLBACK =====
+--   revoke all on function public.catalog_rate_limit_hit(uuid, text, integer, integer) from public, anon;
+--   grant execute on function public.catalog_rate_limit_hit(uuid, text, integer, integer) to service_role, authenticated;
+--
 -- R2-DB-010 (item 296) — a cota do catalogo vem de CONFIGURACAO CONFIAVEL, nunca dos argumentos.
 --
 -- Defeito (auditoria de 2026-10-03, severidade P2): public.catalog_rate_limit_hit(uuid, text,
@@ -128,3 +128,43 @@ comment on function public.catalog_rate_limit_hit(uuid, text, integer, integer) 
 -- preserva os privilegios ja concedidos; as linhas existem para o caso de a funcao nascer aqui.
 revoke all on function public.catalog_rate_limit_hit(uuid, text, integer, integer) from public, anon;
 grant execute on function public.catalog_rate_limit_hit(uuid, text, integer, integer) to service_role, authenticated;
+
+-- ===== BEGIN-ROLLBACK (SQL executavel; ordem inversa dos comandos desta migration) =====
+-- create or replace function public.catalog_rate_limit_hit(
+--   p_user      uuid,
+--   p_action    text,
+--   p_limit     integer,
+--   p_window_ms integer
+-- )
+-- returns boolean
+-- language plpgsql
+-- security definer
+-- set search_path = public, pg_temp
+-- as $$
+-- declare
+--   v_janela interval := make_interval(secs => p_window_ms / 1000.0);
+--   v_count  integer;
+-- begin
+--   if auth.uid() is not null and auth.uid() <> p_user then
+--     return false;
+--   end if;
+--
+--   insert into public.catalog_rate_limit_hits (user_id, action) values (p_user, p_action);
+--
+--   delete from public.catalog_rate_limit_hits
+--    where user_id = p_user and action = p_action and hit_at <= now() - v_janela;
+--
+--   select count(*) into v_count
+--     from public.catalog_rate_limit_hits
+--    where user_id = p_user and action = p_action and hit_at > now() - v_janela;
+--
+--   return v_count <= p_limit;
+-- end;
+-- $$;
+--
+-- comment on function public.catalog_rate_limit_hit(uuid, text, integer, integer) is
+--   'CT-19: conta um hit e devolve true enquanto o usuario estiver dentro da cota (p_limit por p_window_ms). Atomico: o insert/on conflict serializa no PK, entao chamadas concorrentes somam corretamente entre isolates. Devolve false para JWT de usuario tentando gastar a cota de outro.';
+--
+-- revoke all on function public.catalog_rate_limit_hit(uuid, text, integer, integer) from public, anon;
+-- grant execute on function public.catalog_rate_limit_hit(uuid, text, integer, integer) to service_role, authenticated;
+-- ===== END-ROLLBACK =====

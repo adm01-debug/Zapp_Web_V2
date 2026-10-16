@@ -1,44 +1,27 @@
-Especialista: workersql
-Executor do refazer: senior (area-sql-banco)
+Especialista: senior (area-sql-banco)
 
-Aviso do juiz sobre arquivos fora da lista:
-- scripts/db-audit/enqueue-connection-scope.test.sh é indispensável porque a própria recusa exigiu prova SQL que falha sem a correção, incluindo DORA fora da fila em g_fila, rollback executado e tipos/claim de grupo. Sem esse arquivo, o defeito de banco ficaria provado só por leitura de SQL, que o revisor recusou.
-- src/adapters/evolutionAdapter.ts é indispensável por typecheck: o contrato NormalizedRealtimeMessage já consumido pelo front ganhou whatsapp_group_id no tipo gerado de messages; o adaptador real que constrói esse shape precisava preencher o campo como null no caminho legado de Evolution, sem mudar comportamento visual.
+## Pontos da recusa
+- Ponto 1: a entrega anterior quebrava o ESPELHO DO CI no empilhamento: `docs/DB-INVENTORY.md cobre o catálogo do banco, sem mentir` acusava que `catalog_rate_limit_hits` virou citado pelo novo teste, mas seguia como `roadmap` e sem consumidor. Corrigi `docs/DB-INVENTORY.md`: a linha de `catalog_rate_limit_hits` agora é `parcial` e lista `scripts/db-audit/catalog-rate-limit-policy-pinned.test.sh`, que é o único consumidor real detectado pela guarda. Prova vermelha antes: `node --test scripts/ci/db-inventory-doc.unit.mjs` -> falhou com `"catalog_rate_limit_hits" está como "roadmap", mas o repositório diz "parcial"` e `não lista nenhum consumidor`. Prova verde depois: o mesmo comando -> `tests 15`, `pass 15`, `fail 0`.
 
-Ponto 1: rollback real e executável da migration de grupo.
-- O que mudei: supabase/migrations/20261011155946_enqueue_group_outbound_message.sql agora traz, no cabeçalho, o rollback executável que recria public.claim_outbound_message com o corpo anterior completo, remove a RPC nova, os índices, o CHECK e a coluna whatsapp_group_id. O teste extrai esse bloco do próprio arquivo e executa no Postgres descartável.
-- Prova vermelha antes: com a migration anterior e os testes novos, o script falhou em C1a antes de chegar ao rollback: [FAIL] C1a DORA fora da fila nao enfileira em g_fila sem conexao explicita (sem oraculo): deveria falhar, mas passou.
-- Prova verde depois: bash scripts/db-audit/enqueue-connection-scope.test.sh -> [PASS] E1 a coluna whatsapp_group_id foi removida; [PASS] E2 a RPC de grupo foi removida; [PASS] E3 os indices de grupo foram removidos; [PASS] E3b o CHECK de destino unico foi removido; [PASS] E4 claim volta ao corpo so-de-contato (sem whatsapp_group_id); [OK] rollback da migration de grupo executado e verificado.
+## O que veio do trabalho anterior
+- `supabase/migrations/20261007000311_catalogo_rate_limit_politica_confiavel.sql`: mantém a assinatura da RPC `catalog_rate_limit_hit(uuid,text,integer,integer)`, mas a janela e a cota passam a sair da política confiável compilada, não dos argumentos livres; ação desconhecida cai no balde `global`; ACL da assinatura exata é reafirmada; o rollback executável também ficou declarado no cabeçalho, além do bloco extraído pelo teste.
+- `scripts/db-audit/catalog-rate-limit-policy-pinned.test.sh`: executa PostgreSQL descartável com as migrations reais, papel `authenticated`, ataques de `p_window_ms` 0/negativo/1ms/enorme e `p_limit` arbitrário; extrai e executa o rollback da própria migration e reaplica a migration para provar idempotência.
+- `.github/workflows/db-guard.yml`: registra o novo `.test.sh` no DB Guard offline, sem alterar comandos existentes.
 
-Ponto 2: prova SQL do acesso ao grupo por fila/conexão, sem oracle e sem mock.
-- O que mudei: na RPC public.enqueue_group_outbound_message, a visibilidade do grupo agora nega usuário comum fora da fila quando a conexão do grupo, ou a conexão resolvida para grupo sem conexão, tem vínculo em public.whatsapp_connection_queues. A resposta é message_group_not_authorized, igual a grupo inexistente, para não enumerar grupos. Mantive a guarda L7 da conexão efetivamente usada no envio quando ela difere da conexão própria do grupo.
-- O que mudei no teste: scripts/db-audit/enqueue-connection-scope.test.sh agora cria g_fila, g_free e g_sem_conn; cobre DORA fora da fila com conexão nula e com conn_fila, CARLA membro da fila, ADM, grupo sem conexão, conexão sem fila, idempotência, claim/complete e regressão do contato.
-- Prova vermelha antes: com a migration anterior e os testes novos, DORA enfileirou em g_fila sem conexão explícita e o script parou com [FAIL] C1a DORA fora da fila nao enfileira em g_fila sem conexao explicita (sem oraculo): deveria falhar, mas passou.
-- Prova verde depois: bash scripts/db-audit/enqueue-connection-scope.test.sh -> [PASS] C1a DORA fora da fila nao enfileira em g_fila sem conexao explicita (sem oraculo); [PASS] C1b DORA fora da fila nao enfileira em g_fila nem escolhendo a propria conexao da fila; [PASS] C1c as recusas de visibilidade de grupo nao gravaram mensagens; [PASS] C2 CARLA enfileira mensagem para o grupo -- permitido, 1 linha; [PASS] C2b ADM (admin/supervisor) enfileira no grupo da fila -- permitido; [PASS] C16 DORA envia para grupo de conexao sem fila -- permitido; [OK] enfileiramento e delivery de grupo (whatsapp_group_id) verificado.
+## Prova do comportamento de banco
+- vermelho sem a correção SQL: `TMPDIR="$PWD/.tmp" CATALOG_RATE_LIMIT_SEM_FIX=1 scripts/db-audit/catalog-rate-limit-policy-pinned.test.sh` -> `RC=1` e `[FAIL] B.1 o limite vem da politica confiavel (120/min em list_products), nao do argumento: esperado '120', obtido '1'`.
+- verde com a correção SQL: `TMPDIR="$PWD/.tmp" scripts/db-audit/catalog-rate-limit-policy-pinned.test.sh` -> `RC=0` e `PASS: R2-DB-010 — a cota do catalogo vem de politica confiavel na funcao; janela e limite arbitrarios por RPC direta nao apagam hits nem liberam a requisicao; o rollback devolve o estado anterior e reaplicar e idempotente sem criar tabela/RLS/indice novo.`
+- guarda do inventário depois do refazer: `node --test scripts/ci/db-inventory-doc.unit.mjs` -> `tests 15`, `pass 15`, `fail 0`.
+- inventário de testes: `node scripts/ci/check-test-inventory.mjs` -> não acusa `scripts/db-audit/catalog-rate-limit-policy-pinned.test.sh`; o comando ainda falha por 3 órfãos preexistentes fora deste diff (`department-invite-contract-audit-vocabulary.test.sh`, `talkx-conversion-defaults.test.sh`, `team-chat-media-contract.test.sh`).
+- verificação rápida: `zapp-verify . --rapido` -> `VERIFY: VERDE SEM BANCO (18s)` com `OK db_guard`, `OK tipos`, `OK lint`, `OK migrations`.
+- reprodução pedida do full: `zapp-verify full .` foi executado. Após a correção do inventário, db_guard/tipos/lint/migrations ficaram OK e a falha remanescente foi fora deste diff: `src/components/auth/__tests__/PasswordStrengthMeter.corrida.test.tsx` (`Senha comprometida!` ainda presente). Não alterei auth/front fora do escopo.
 
-Ponto 3: types.ts reflete o novo contrato de mensagens/RPC.
-- O que mudei: src/integrations/supabase/types.ts agora expõe messages.whatsapp_group_id em Row/Insert/Update, a relação messages_whatsapp_group_id_fkey para whatsapp_groups, a RPC enqueue_group_outbound_message e o retorno com whatsapp_group_id. src/adapters/evolutionAdapter.ts recebeu o campo whatsapp_group_id: null para manter o shape NormalizedRealtimeMessage tipado no caminho existente.
-- Prova: bun run typecheck -> $ tsc -b --force, exit 0.
-- Observação do fluxo de geração: tentei validar o fluxo local com supabase db start && bash scripts/db-audit/gen-types.sh --local .tmp/types.local.generated.ts; ele falhou antes desta migration, em uma migration legada de cron job inexistente no banco local descartável. Não usei produção nem DESTINO_URL.
+## Arquivos do diff
+- `.github/workflows/db-guard.yml`
+- `docs/DB-INVENTORY.md`
+- `scripts/db-audit/catalog-rate-limit-policy-pinned.test.sh`
+- `supabase/migrations/20261007000311_catalogo_rate_limit_politica_confiavel.sql`
 
-Ponto transversal: invariantes de estrutura e segurança da migration.
-- O que mudei: a coluna nova recebeu FK para public.whatsapp_groups, índice de FK, índice único parcial de idempotência por grupo, CHECK que impede contact_id e whatsapp_group_id simultâneos em mensagens novas, e a RPC nova usa SECURITY DEFINER com SET search_path = pg_catalog, public e EXECUTE só para authenticated.
-- Prova verde: bash scripts/db-audit/enqueue-connection-scope.test.sh -> [PASS] D1 whatsapp_group_id e FK para whatsapp_groups; [PASS] D2 indice unico parcial de idempotencia de grupo existe; [PASS] D3 RPC de grupo e SECURITY DEFINER com search_path fixo; [PASS] D4 RPC de grupo so tem EXECUTE para authenticated; [PASS] D5 RPC de grupo fixa search_path em pg_catalog,public; [PASS] D6 CHECK impede mensagem com contact_id e whatsapp_group_id ao mesmo tempo; [PASS] D7 CHECK recusa destino duplo na mesma mensagem.
-
-Arquivos do diff:
-.tmp/relato.md
-scripts/db-audit/enqueue-connection-scope.test.sh
-src/adapters/evolutionAdapter.ts
-src/integrations/supabase/types.ts
-supabase/migrations/20261011155946_enqueue_group_outbound_message.sql
-
-Comandos de verificação executados:
-- bash scripts/db-audit/enqueue-connection-scope.test.sh 2>&1 | tee .tmp/green-enqueue-group.log -> exit 0; terminou com [OK] contrato de escopo de conexao no enfileiramento verificado, [OK] enfileiramento e delivery de grupo (whatsapp_group_id) verificado e [OK] rollback da migration de grupo executado e verificado.
-- bun run typecheck 2>&1 | tee .tmp/typecheck.log -> exit 0; saída: $ tsc -b --force.
-- git diff --cached --check -> exit 0.
-- varredura dos arquivos do diff pelo identificador do banco de produção -> prod-id-ausente-nos-arquivos-do-diff.
-- hermes-tarefa-fechar "fix(banco): corrige refazer envio de grupo" .tmp/relato.md -> verificação rápida OK db_guard; OK tipos; OK lint; OK migrations.
-
-O que não fiz:
-- Não toquei produção, não rodei DESTINO_URL e não fiz deploy/push.
-- Não mexi em CI, guardas ou manifestos para “fazer passar”.
+## O que NÃO fiz e por quê
+- Não alterei `schema-catalog.json`, `schema-manifest.json`, manifestos de schema nem guardas do CI para “fazer passar”. A única mudança em CI foi registrar o `.test.sh` novo no workflow que já roda scripts `db-audit`, como exigido pelo inventário de testes; a regra do inventário não foi afrouxada.
+- Não toquei no teste de auth que falhou no `zapp-verify full .`, porque é defeito fora dos arquivos e do motivo desta recusa.
