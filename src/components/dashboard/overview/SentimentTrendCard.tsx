@@ -3,7 +3,7 @@ import { TrendingUp } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer } from 'recharts';
 import { CHART_TICK_FONT_SIZE_SM } from '@/lib/chart-theme';
 import { DashboardCard, SectionHeader, CardSelect } from './DashboardCard';
-import { useRealSentimentData } from '../SentimentHelpers';
+import { useRealSentimentData } from '@/hooks/dashboard/useSentimentTrend';
 
 const LEGEND = [
   { key: 'positive', label: 'Positivo', dot: 'bg-dash-green', stroke: 'hsl(var(--dash-green))' },

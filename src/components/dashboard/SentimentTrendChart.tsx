@@ -4,7 +4,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { format, parseISO, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { useSentimentTrend } from '@/hooks/analytics/useSentimentTrend';
+import { useSentimentTrend } from '@/hooks/dashboard/useSentimentTrend';
 import { useRecentSentimentAlerts } from '@/hooks/analytics/useRecentSentimentAlerts';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { DashboardCard, SectionHeader, CardSelect, Pill, InitialsAvatar, ProgressBar } from './overview/DashboardCard';
@@ -31,63 +31,65 @@ function sentimentLabel(score: number): { label: string; tone: 'success' | 'warn
 
 export function SentimentTrendChart({ onNavigateTab }: { onNavigateTab?: (tab: string) => void }) {
   const [days, setDays] = useState<'7' | '14' | '30'>('14');
-  const trend = useSentimentTrend(Number.parseInt(days));
+  const { data, error } = useSentimentTrend(Number.parseInt(days));
   const { data: recent } = useRecentSentimentAlerts(Number.parseInt(days));
-  // Série diária (janela no fuso do app) — a mesma do hook de tendência.
-  const data = trend.series;
-  const { current, previous, deltaPct } = trend;
 
-  // Números do período: percentuais e score PONDERADOS pelo total real de
-  // conversas (não mais média de médias diárias) e o período anterior de mesmo
-  // tamanho para o "vs. período anterior" (achado P1-D).
   const stats = useMemo(() => {
-    if (current.total === 0) return null;
+    if (!data || data.length === 0) return null;
+    const totalAlerts = data.reduce((s, d) => s + d.alerts_count, 0);
+    const avgPositive = data.reduce((s, d) => s + d.positive, 0) / data.length;
+    const avgNegative = data.reduce((s, d) => s + d.negative, 0) / data.length;
+    const avgScore = data.reduce((s, d) => s + d.avg_score, 0) / data.length;
+    const half = Math.ceil(data.length / 2);
+    const recentHalf = data.slice(half);
+    const prevHalf = data.slice(0, half);
+    const recentAvg = recentHalf.length ? recentHalf.reduce((s, d) => s + d.avg_score, 0) / recentHalf.length : 0;
+    const prevAvg = prevHalf.length ? prevHalf.reduce((s, d) => s + d.avg_score, 0) / prevHalf.length : 0;
+    const deltaPct = prevAvg !== 0 ? Math.round(((recentAvg - prevAvg) / Math.abs(prevAvg)) * 100) : null;
+    const recentPos = recentHalf.length ? recentHalf.reduce((s, d) => s + d.positive, 0) / recentHalf.length : 0;
+    const prevPos = prevHalf.length ? prevHalf.reduce((s, d) => s + d.positive, 0) / prevHalf.length : 0;
+    const recentNeg = recentHalf.length ? recentHalf.reduce((s, d) => s + d.negative, 0) / recentHalf.length : 0;
+    const prevNeg = prevHalf.length ? prevHalf.reduce((s, d) => s + d.negative, 0) / prevHalf.length : 0;
     return {
-      avgScore: current.avgScore,
-      totalAlerts: current.negatives,
-      avgPositive: current.positivePct,
-      avgNegative: current.negativePct,
-      avgNeutral: current.neutralPct,
-      deltaPct,
-      posDelta: previous ? Math.round(current.positivePct - previous.positivePct) : null,
-      negDelta: previous ? Math.round(current.negativePct - previous.negativePct) : null,
-      scoreSeries: data.map((d) => Math.round((d.avgScore + 1) * 50)),
+      avgScore, totalAlerts,
+      avgPositive: Math.round(avgPositive), avgNegative: Math.round(avgNegative),
+      avgNeutral: Math.max(0, 100 - Math.round(avgPositive) - Math.round(avgNegative)),
+      deltaPct, posDelta: Math.round(recentPos - prevPos), negDelta: Math.round(recentNeg - prevNeg),
+      scoreSeries: data.map((d) => Math.round((d.avg_score + 1) * 50)),
     };
-  }, [current, previous, deltaPct, data]);
+  }, [data]);
 
-  // Total REAL de análises no período (leitura paginada, sem corte).
-  const totalAnalyses = current.total;
+  // Total real de análises no período (conversation_analyses) — vem do hook de alertas, não é estimativa.
+  const totalAnalyses = useMemo(() => recent?.departments.reduce((s, d) => s + d.total, 0) ?? 0, [recent]);
 
-  const chartData = data.map((d) => ({
+  const chartData = (data ?? []).map((d) => ({
     date: format(parseISO(d.date), 'dd MMM', { locale: ptBR }),
     Positivo: d.positive,
     Negativo: d.negative,
   }));
 
   const donutData = stats ? [
-    { name: 'Positivo', value: stats.avgPositive, count: current.positives },
-    { name: 'Negativo', value: stats.avgNegative, count: current.negatives },
-    { name: 'Neutro', value: stats.avgNeutral, count: current.neutrals },
+    { name: 'Positivo', value: stats.avgPositive },
+    { name: 'Negativo', value: stats.avgNegative },
+    { name: 'Neutro', value: stats.avgNeutral },
   ] : [];
 
   const insights = useMemo(() => {
     if (!stats) return [];
     const list: { icon: typeof TrendingUp; tile: string; title: string; text: string }[] = [];
-    if (stats.posDelta != null && stats.posDelta !== 0) {
+    if (stats.posDelta !== 0) {
       list.push({
         icon: TrendingUp, tile: stats.posDelta > 0 ? 'bg-dash-tile-green' : 'bg-dash-tile-red',
         title: stats.posDelta > 0 ? 'Sentimento em alta' : 'Sentimento em queda',
-        text: `O sentimento positivo ${stats.posDelta > 0 ? 'aumentou' : 'caiu'} ${Math.abs(stats.posDelta)} p.p. comparado ao período anterior de mesmo tamanho.`,
+        text: `O sentimento positivo ${stats.posDelta > 0 ? 'aumentou' : 'caiu'} ${Math.abs(stats.posDelta)} p.p. na segunda metade do período.`,
       });
     }
     list.push({
       icon: Minus, tile: 'bg-muted/60',
-      title: stats.negDelta == null ? 'Sem base de comparação' : Math.abs(stats.negDelta) <= 2 ? 'Estabilidade no período' : stats.negDelta > 0 ? 'Negativos em alta' : 'Negativos em queda',
-      text: stats.negDelta == null
-        ? 'O período anterior de mesmo tamanho não tem análises para comparar.'
-        : Math.abs(stats.negDelta) <= 2
-          ? 'O volume de menções negativas se manteve estável comparado ao período anterior de mesmo tamanho.'
-          : `As menções negativas ${stats.negDelta > 0 ? 'subiram' : 'caíram'} ${Math.abs(stats.negDelta)} p.p. comparado ao período anterior de mesmo tamanho.`,
+      title: Math.abs(stats.negDelta) <= 2 ? 'Estabilidade no período' : stats.negDelta > 0 ? 'Negativos em alta' : 'Negativos em queda',
+      text: Math.abs(stats.negDelta) <= 2
+        ? 'O volume de menções negativas se manteve estável comparado ao período anterior.'
+        : `As menções negativas ${stats.negDelta > 0 ? 'subiram' : 'caíram'} ${Math.abs(stats.negDelta)} p.p. comparado ao período anterior.`,
     });
     const worst = recent?.departments.find((d) => d.negative > 0 && d.total >= 3);
     if (worst) {
@@ -115,7 +117,7 @@ export function SentimentTrendChart({ onNavigateTab }: { onNavigateTab?: (tab: s
           footer={stats && (
             <div className="mt-1">
               <ProgressBar value={stats.avgPositive} tone="success" height={6} />
-              <p className="text-xs text-muted-foreground mt-2">{current.positives.toLocaleString('pt-BR')} de {totalAnalyses.toLocaleString('pt-BR')} conversas</p>
+              <p className="text-xs text-muted-foreground mt-2">{Math.round(totalAnalyses * stats.avgPositive / 100).toLocaleString('pt-BR')} de {totalAnalyses.toLocaleString('pt-BR')} conversas</p>
             </div>
           )}
         />
@@ -124,7 +126,7 @@ export function SentimentTrendChart({ onNavigateTab }: { onNavigateTab?: (tab: s
           footer={stats && (
             <div className="mt-1">
               <ProgressBar value={stats.avgNegative} tone="danger" height={6} />
-              <p className="text-xs text-muted-foreground mt-2">{current.negatives.toLocaleString('pt-BR')} de {totalAnalyses.toLocaleString('pt-BR')} conversas</p>
+              <p className="text-xs text-muted-foreground mt-2">{Math.round(totalAnalyses * stats.avgNegative / 100).toLocaleString('pt-BR')} de {totalAnalyses.toLocaleString('pt-BR')} conversas</p>
             </div>
           )}
         />
@@ -149,27 +151,21 @@ export function SentimentTrendChart({ onNavigateTab }: { onNavigateTab?: (tab: s
             )}
           />
           <div className="h-[260px]">
-            {trend.isError ? (
+            {error ? (
               <div className="h-full flex flex-col items-center justify-center text-muted-foreground gap-2">
-                <AlertTriangle className="w-10 h-10 opacity-30" />
+                <AlertTriangle className="w-10 h-10 opacity-40 text-destructive" />
                 <p className="text-sm font-medium text-foreground">Não foi possível carregar a tendência de sentimento</p>
-                <p className="text-xs">Falha ao ler as análises do período</p>
-                <button type="button" onClick={trend.refetch} className="text-[13px] font-semibold text-primary-glow hover:underline">Tentar de novo</button>
+                <p className="text-xs">Tente de novo em instantes</p>
               </div>
-            ) : !stats ? (
+            ) : !data || data.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-muted-foreground gap-2">
                 <Smile className="w-10 h-10 opacity-30" />
                 <p className="text-sm font-medium text-foreground">Sem dados de sentimento no período</p>
                 <p className="text-xs">Os dados aparecem quando houver análises processadas</p>
               </div>
             ) : (
-              <div
-                className="h-full w-full"
-                role="img"
-                aria-label={`Tendência de sentimento: ${chartData.length} dias, positivo e negativo`}
-              >
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
                   <defs>
                     <linearGradient id="posGrad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="hsl(var(--dash-green))" stopOpacity={0.3} />
@@ -186,12 +182,11 @@ export function SentimentTrendChart({ onNavigateTab }: { onNavigateTab?: (tab: s
                   <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: CHART_TOOLTIP_FONT_SIZE }} />
                   <Area type="monotone" dataKey="Positivo" stroke="hsl(var(--dash-green))" fill="url(#posGrad)" strokeWidth={2} dot={{ r: 3, fill: 'hsl(var(--dash-green))', strokeWidth: 0 }} />
                   <Area type="monotone" dataKey="Negativo" stroke="hsl(var(--dash-red))" fill="url(#negGrad)" strokeWidth={2} dot={{ r: 3, fill: 'hsl(var(--dash-red))', strokeWidth: 0 }} />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
+                </AreaChart>
+              </ResponsiveContainer>
             )}
           </div>
-          {stats && (
+          {data && data.length > 0 && (
             <div className="flex items-center justify-center gap-6 mt-3 text-[13px]">
               <span className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-dash-green" />Sentimento Positivo</span>
               <span className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-dash-red" />Sentimento Negativo</span>
@@ -284,7 +279,7 @@ export function SentimentTrendChart({ onNavigateTab }: { onNavigateTab?: (tab: s
                     <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: DONUT[i].color }} />{d.name}</div>
                     <div className="flex items-center gap-4 tabular-nums">
                       <span className="font-semibold text-foreground">{d.value}%</span>
-                      <span className="text-muted-foreground w-12 text-right">{d.count.toLocaleString('pt-BR')}</span>
+                      <span className="text-muted-foreground w-12 text-right">{Math.round(totalAnalyses * d.value / 100).toLocaleString('pt-BR')}</span>
                     </div>
                   </div>
                 ))}

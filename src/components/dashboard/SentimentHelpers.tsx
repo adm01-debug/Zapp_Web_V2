@@ -1,4 +1,3 @@
-import { useState, useMemo, useCallback } from 'react';
 import {
   TrendingUp, TrendingDown, Minus, Smile, Meh, Frown, AlertTriangle,
 } from 'lucide-react';
@@ -6,42 +5,12 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useSentimentTrend } from '@/hooks/analytics/useSentimentTrend';
 
-export interface SentimentData {
-  date: string;
-  positive: number;
-  neutral: number;
-  negative: number;
-  avg_score: number;
-  alerts_count: number;
-}
-
-/**
- * Série diária de sentimento, num formato compatível com os consumidores
- * antigos (`SentimentTrendCard`). O cálculo real — janela no fuso do app,
- * leitura paginada sem corte e classificação canônica — mora em
- * `useSentimentTrend` (achado P1-D). Devolve `null` no vazio e no erro, como
- * antes; quem precisa distinguir os dois usa o hook direto.
- */
-// eslint-disable-next-line react-refresh/only-export-components -- este arquivo já reúne helpers do painel e o hook de série; separar quebraria os consumidores (`SentimentTrendCard`).
-export function useRealSentimentData(days: number): SentimentData[] | null {
-  const trend = useSentimentTrend(days);
-  if (trend.isLoading || trend.isError) return null;
-  if (trend.isEmpty) return null;
-  // Só os dias com análise, como o formato antigo deste hook (quem desenha a
-  // tendência dia a dia usa `useSentimentTrend`, que devolve a janela inteira).
-  return trend.series
-    .filter((dia) => dia.total > 0)
-    .map((dia) => ({
-      date: dia.date,
-      positive: dia.positive,
-      neutral: dia.neutral,
-      negative: dia.negative,
-      avg_score: dia.avgScore,
-      alerts_count: dia.alerts_count,
-    }));
-}
+// A série da tendência mora em `src/hooks/dashboard/useSentimentTrend.ts`:
+// hook exportado de um arquivo que também exporta componentes quebra o fast
+// refresh (react-refresh/only-export-components). Este arquivo fica com os
+// componentes e segue reexportando o tipo `SentimentData` que já era daqui.
+export type { SentimentData } from '@/hooks/dashboard/useSentimentTrend';
 
 export function SentimentIcon({ score }: { score: number }) {
   if (score >= 0.3) return <Smile className="w-5 h-5 text-success" />;
