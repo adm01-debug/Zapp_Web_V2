@@ -201,7 +201,7 @@ describe('useMessageUpdateBatcher — `played` não espera a janela do lote', ()
     expect(contexto.conversationsRef.current[0].messages[0].status).toBe('played');
   });
 
-  it('segundo parcial sem os campos do primeiro não apaga o que já estava pendente', () => {
+  it('segundo update enxuto não apaga os campos que já estavam pendentes', () => {
     const contexto = setup([conversaCom(msg({ id: 'm1', content: 'texto antigo', status: 'sent' }))]);
 
     act(() => {
@@ -242,7 +242,7 @@ describe('useMessageUpdateBatcher — `played` não espera a janela do lote', ()
           media_url: 'https://cdn.exemplo/a.ogg',
         } as unknown as RealtimeMessage,
       } as never);
-      // `played` chega parcial (só o status): tem de sair na hora SEM perder
+      // `played` chega enxuto (só o status): tem de sair na hora SEM perder
       // caption/media que só o update pendente trouxe.
       contexto.result.current.handleMessageUpdate({
         new: { id: 'm1', contact_id: 'c1', status: 'played' } as unknown as RealtimeMessage,
