@@ -54,6 +54,29 @@ interface DialogContentProps
   showCloseButton?: boolean;
 }
 
+const DialogDescription = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Description>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Description>
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Description ref={ref} className={cn("text-sm text-muted-foreground", className)} {...props} />
+));
+DialogDescription.displayName = DialogPrimitive.Description.displayName;
+
+function temFilhoDescricao(children: React.ReactNode): boolean {
+  let achou = false;
+  React.Children.forEach(children, (child) => {
+    if (achou || !React.isValidElement(child)) return;
+    const tipo = child.type as unknown;
+    if (tipo === DialogDescription || tipo === DialogPrimitive.Description) {
+      achou = true;
+      return;
+    }
+    const filhos = (child.props as { children?: React.ReactNode } | undefined)?.children;
+    if (filhos && temFilhoDescricao(filhos)) achou = true;
+  });
+  return achou;
+}
+
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   DialogContentProps
@@ -61,14 +84,26 @@ const DialogContent = React.forwardRef<
   // A11y: o Radix avisa no console ("Missing `Description` or
   // `aria-describedby={undefined}` for {DialogContent}") sempre que o conteúdo
   // não declara descrição, e o leitor de tela perde o contexto do diálogo.
-  // Injetamos uma descrição oculta em pt-BR quando o chamador NÃO informa
-  // `aria-describedby`. A chave é conferida no objeto de props (e não por valor)
+  // Injetamos uma descrição oculta em pt-BR SOMENTE quando o chamador não
+  // informa `aria-describedby` E não há <DialogDescription> filho: quando o
+  // filho existe, o Radix resolve o id dele sozinho e sobrescrever o
+  // `aria-describedby` quebraria o vínculo com a descrição real.
+  // A chave é conferida no objeto de props (e não por valor)
   // porque vários diálogos da V2 passam `aria-describedby={undefined}` de
   // propósito para silenciar o aviso: nesse caso respeitamos e não injetamos nada.
   const temDescribedByProp = Object.prototype.hasOwnProperty.call(props, 'aria-describedby');
   const autoDescriptionId = React.useId();
-  const describedBy = temDescribedByProp ? props['aria-describedby'] : autoDescriptionId;
-  const needsFallbackDescription = !temDescribedByProp;
+  const temDescricaoFilha = temFilhoDescricao(children);
+  const needsFallbackDescription = !temDescribedByProp && !temDescricaoFilha;
+  // Quando há <DialogDescription> filho e o chamador não informou a prop, o
+  // `aria-describedby` é omitido de propósito para o Radix resolver o id da
+  // descrição real sozinho: passar `aria-describedby={undefined}` explícito
+  // inibe a resolução automática e quebra o vínculo.
+  const describedByProps = temDescribedByProp
+    ? { 'aria-describedby': props['aria-describedby'] as string | undefined }
+    : needsFallbackDescription
+      ? { 'aria-describedby': autoDescriptionId }
+      : {};
   return (
   <DialogPortal>
     <DialogOverlay />
@@ -76,7 +111,7 @@ const DialogContent = React.forwardRef<
       ref={ref}
       className={cn(dialogContentVariants({ size }), className)}
       {...props}
-      aria-describedby={describedBy}
+      {...describedByProps}
     >
       {needsFallbackDescription && (
         <DialogPrimitive.Description id={autoDescriptionId} className="sr-only">
@@ -117,14 +152,6 @@ const DialogTitle = React.forwardRef<
   />
 ));
 DialogTitle.displayName = DialogPrimitive.Title.displayName;
-
-const DialogDescription = React.forwardRef<
-  React.ElementRef<typeof DialogPrimitive.Description>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Description>
->(({ className, ...props }, ref) => (
-  <DialogPrimitive.Description ref={ref} className={cn("text-sm text-muted-foreground", className)} {...props} />
-));
-DialogDescription.displayName = DialogPrimitive.Description.displayName;
 
 export {
   Dialog,

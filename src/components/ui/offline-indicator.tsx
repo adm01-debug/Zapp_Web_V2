@@ -84,18 +84,24 @@ export function useOfflineStatus() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [wasOffline, setWasOffline] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isOnlineRef = useRef(isOnline);
 
   useEffect(() => {
     const handleOnline = () => {
-      if (!isOnline) {
+      if (!isOnlineRef.current) {
         setWasOffline(true);
         if (timerRef.current) clearTimeout(timerRef.current);
-        timerRef.current = setTimeout(() => setWasOffline(false), 3000);
+        timerRef.current = setTimeout(() => {
+          timerRef.current = null;
+          setWasOffline(false);
+        }, 3000);
       }
+      isOnlineRef.current = true;
       setIsOnline(true);
     };
 
     const handleOffline = () => {
+      isOnlineRef.current = false;
       setIsOnline(false);
     };
 
@@ -105,9 +111,15 @@ export function useOfflineStatus() {
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
-      if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [isOnline]);
+  }, []);
+
+  // O timer do aviso "voltou" só é limpo no desmonte. Limpar no cleanup do
+  // efeito acima (que antes dependia de [isOnline]) cancelava o timer de 3 s
+  // a cada troca de estado e travava `wasOffline` em true.
+  useEffect(() => () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+  }, []);
 
   return { isOnline, wasOffline };
 }

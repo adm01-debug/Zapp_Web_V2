@@ -11,11 +11,12 @@
  * (e) o `Sparkline` decorativo é `aria-hidden`;
  * (f) `AvatarGroup` usa chave derivada do conteúdo, não do índice.
  * (g) o `SkipLinks` só renderiza o link cujo alvo existe no DOM, inclusive
- *     alvo montado ou removido depois da primeira pintura (sem avanço de relógio).
+ *     alvo montado ou removido depois da primeira pintura (no ciclo de 1,5 s),
+ *     sem setState em laço quando nada muda.
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent, cleanup, act } from '@testing-library/react';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { SkipLinks } from '@/components/ui/skip-link';
 import { useAnnounce } from '@/components/ui/visually-hidden';
 import { useOfflineStatus } from '@/components/ui/offline-indicator';
@@ -79,6 +80,26 @@ describe('(a) DialogContent — descrição acessível de fallback', () => {
     const dialogo = screen.getByRole('dialog');
     expect(dialogo).toHaveAttribute('aria-describedby', 'ajuda-do-dialogo');
     // O texto de fallback só existe quando o chamador não descreve o diálogo.
+    expect(screen.queryByText('Conteúdo da caixa de diálogo')).toBeNull();
+  });
+
+  it('diálogo com DialogDescription filho NÃO recebe fallback e mantém o vínculo do Radix', () => {
+    render(
+      <Dialog open>
+        <DialogContent>
+          <DialogTitle>Com descrição real</DialogTitle>
+          <DialogDescription>Descrição real do diálogo</DialogDescription>
+        </DialogContent>
+      </Dialog>,
+    );
+
+    const dialogo = screen.getByRole('dialog');
+    const descricaoReal = screen.getByText('Descrição real do diálogo');
+    const idReal = descricaoReal.getAttribute('id');
+    expect(idReal).toBeTruthy();
+    // O aria-describedby do diálogo aponta para a descrição real resolvida
+    // pelo Radix — e o fallback oculto não existe.
+    expect(dialogo).toHaveAttribute('aria-describedby', idReal);
     expect(screen.queryByText('Conteúdo da caixa de diálogo')).toBeNull();
   });
 });
@@ -162,11 +183,65 @@ describe('(c) temporizadores limpos no desmonte', () => {
 
     unmount();
 
-    // O hook guarda o id do `setTimeout` e o limpa (na troca de estado e no desmonte).
+    // O hook guarda o id do `setTimeout` e o limpa (na retrigger e no desmonte).
     // Sem a limpeza, nenhum clearTimeout referencia um id agendado pelo próprio hook.
     const idsAgendados = setSpy.mock.results.map((r) => r.value as number);
     const limpouUmIdProprio = clearSpy.mock.calls.some((call) => idsAgendados.includes(call[0] as number));
     expect(limpouUmIdProprio).toBe(true);
+  });
+
+  it('useOfflineStatus apaga o aviso "voltou" após 3 s (sem travar em true)', () => {
+    vi.useFakeTimers();
+    function Harness() {
+      const { wasOffline } = useOfflineStatus();
+      return <span>{wasOffline ? 'voltou' : 'ok'}</span>;
+    }
+    render(<Harness />);
+
+    act(() => {
+      window.dispatchEvent(new Event('offline'));
+    });
+    act(() => {
+      window.dispatchEvent(new Event('online'));
+    });
+    expect(screen.getByText('voltou')).toBeInTheDocument();
+
+    // O cleanup do efeito de listeners NÃO pode cancelar este timer: após
+    // 3 s o aviso some sozinho. (Com o cleanup antigo em [isOnline], o timer
+    // era cancelado na troca de estado e 'voltou' travava.)
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+    expect(screen.getByText('ok')).toBeInTheDocument();
+  });
+
+  it('useOfflineStatus desmontado antes dos 3 s não faz setState', () => {
+    vi.useFakeTimers();
+    const erroSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    function Harness() {
+      const { wasOffline } = useOfflineStatus();
+      return <span>{wasOffline ? 'voltou' : 'ok'}</span>;
+    }
+    const { unmount } = render(<Harness />);
+
+    act(() => {
+      window.dispatchEvent(new Event('offline'));
+    });
+    act(() => {
+      window.dispatchEvent(new Event('online'));
+    });
+    expect(screen.getByText('voltou')).toBeInTheDocument();
+
+    unmount();
+    // O efeito de desmonte limpa o timer: avançar o relógio não dispara
+    // setState em componente desmontado (sem aviso do React).
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+    const avisouDesmontado = erroSpy.mock.calls.some((call) =>
+      String(call[0] ?? '').includes('unmounted'),
+    );
+    expect(avisouDesmontado).toBe(false);
   });
 });
 
@@ -207,21 +282,23 @@ describe('(g) SkipLinks — só renderiza o link do alvo que existe', () => {
     expect(screen.queryByRole('link', { name: /pular para busca/i })).toBeNull();
   });
 
-  it('alvo montado DEPOIS da primeira pintura ganha o link sem avanço de relógio', async () => {
-    // Com o `setInterval` antigo de 1,5 s, o link só apareceria depois de avançar
-    // os relógios; com o `MutationObserver`, aparece no próximo microtask.
+  it('alvo montado DEPOIS ganha o link no próximo ciclo de 1,5 s', () => {
+    vi.useFakeTimers();
     render(<SkipLinks />);
     expect(screen.queryByRole('link', { name: /pular para conteúdo principal/i })).toBeNull();
 
     const alvo = document.createElement('main');
     alvo.id = 'main-content';
     document.body.appendChild(alvo);
-    await act(async () => {});
+    act(() => {
+      vi.advanceTimersByTime(1500);
+    });
 
     expect(screen.getByRole('link', { name: /pular para conteúdo principal/i })).toBeInTheDocument();
   });
 
-  it('alvo removido do DOM perde o link sem avanço de relógio', async () => {
+  it('alvo removido do DOM perde o link no próximo ciclo de 1,5 s', () => {
+    vi.useFakeTimers();
     const alvo = document.createElement('main');
     alvo.id = 'main-content';
     document.body.appendChild(alvo);
@@ -229,9 +306,43 @@ describe('(g) SkipLinks — só renderiza o link do alvo que existe', () => {
     expect(screen.getByRole('link', { name: /pular para conteúdo principal/i })).toBeInTheDocument();
 
     document.body.removeChild(alvo);
-    await act(async () => {});
+    act(() => {
+      vi.advanceTimersByTime(1500);
+    });
 
     expect(screen.queryByRole('link', { name: /pular para conteúdo principal/i })).toBeNull();
+  });
+
+  it('intervalo sem mudança no DOM não faz setState nem re-render em laço', () => {
+    vi.useFakeTimers();
+    const alvo = document.createElement('main');
+    alvo.id = 'main-content';
+    document.body.appendChild(alvo);
+    render(<SkipLinks />);
+    expect(screen.getByRole('link', { name: /pular para conteúdo principal/i })).toBeInTheDocument();
+
+    // Vários ciclos sem mudar o DOM: o gating (prev reaproveitado) impede
+    // setState a cada tick — o link segue lá, sem laço de re-render.
+    act(() => {
+      vi.advanceTimersByTime(1500);
+    });
+    act(() => {
+      vi.advanceTimersByTime(1500);
+    });
+    act(() => {
+      vi.advanceTimersByTime(1500);
+    });
+    expect(screen.getByRole('link', { name: /pular para conteúdo principal/i })).toBeInTheDocument();
+  });
+
+  it('usa polling de 1,5 s com limpeza no desmonte', () => {
+    vi.useFakeTimers();
+    const intervalSpy = vi.spyOn(window, 'setInterval');
+    const clearSpy = vi.spyOn(window, 'clearInterval');
+    const { unmount } = render(<SkipLinks />);
+    expect(intervalSpy).toHaveBeenCalledWith(expect.any(Function), 1500);
+    unmount();
+    expect(clearSpy).toHaveBeenCalled();
   });
 });
 describe('(f) AvatarGroup — chave estável', () => {

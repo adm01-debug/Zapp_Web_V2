@@ -84,9 +84,8 @@ export function SkipLinks() {
   }, []);
 
   // Only render skip-links whose target actually exists in the DOM.
-  // Targets vary per route (auth vs. dashboard) and can be mounted assíncronamente:
-  // observamos o DOM em vez de sondar a cada 1,5 s (polling desperdiçava ciclo e
-  // atrasava a reação ao alvo que aparece).
+  // Targets vary per route (auth vs. dashboard), so we re-check on each route change
+  // and on a small interval to catch async-mounted regions.
   useEffect(() => {
     const candidates = ['#main-content', '#main-navigation', '#inbox-section', '#search-input'];
     const detect = () => {
@@ -94,15 +93,17 @@ export function SkipLinks() {
       candidates.forEach((id) => {
         if (document.querySelector(id)) found.add(id);
       });
+      // Só troca o estado quando o conjunto muda: o intervalo de 1,5 s chama
+      // `detect` sempre, mas sem alvo novo/removido o `prev` é reaproveitado
+      // e não há re-render nem laço.
       setAvailableTargets((prev) => {
         if (prev.size === found.size && [...found].every((v) => prev.has(v))) return prev;
         return found;
       });
     };
     detect();
-    const observer = new MutationObserver(detect);
-    observer.observe(document.body, { childList: true, subtree: true });
-    return () => observer.disconnect();
+    const t = window.setInterval(detect, 1500);
+    return () => window.clearInterval(t);
   }, []);
 
   const has = (id: string) => availableTargets.has(id);
