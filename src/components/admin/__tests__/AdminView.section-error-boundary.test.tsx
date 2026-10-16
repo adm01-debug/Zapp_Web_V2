@@ -17,10 +17,13 @@ vi.mock('@/hooks/system/useUserRole', () => ({
 vi.mock('../useAdminData', () => ({
   useAdminData: () => ({
     users: [], auditLogs: [], loading: false,
+    auditTotal: 0, error: null,
     fetchData: vi.fn(), handleRoleChange: vi.fn(), handleToggleActive: vi.fn(),
     handleSaveUser: vi.fn(), handleCreateUser: vi.fn(),
   }),
   accessLevelConfig: {},
+  MIN_PASSWORD_LENGTH: 8,
+  AUDIT_PAGE_SIZE: 50,
 }));
 
 vi.mock('../AdminUsersTable', () => ({ AdminUsersTable: () => <div data-testid="users-table" /> }));

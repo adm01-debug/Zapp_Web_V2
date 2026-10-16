@@ -41,7 +41,9 @@ vi.mock('../useAdminData', () => ({
     ],
     auditLogs: [],
     loading: false,
-    fetchData: fetchDataSpy,
+    auditTotal: 0,
+    error: null,
+    fetchData: vi.fn(),
     handleRoleChange: vi.fn(),
     handleToggleActive: vi.fn(),
     handleSaveUser: vi.fn(),
@@ -53,6 +55,8 @@ vi.mock('../useAdminData', () => ({
     advanced: { label: 'Avançado', description: '' },
     full: { label: 'Completo', description: '' },
   },
+  MIN_PASSWORD_LENGTH: 8,
+  AUDIT_PAGE_SIZE: 50,
 }));
 
 import { AdminView } from '../AdminView';
@@ -71,9 +75,9 @@ function abrirDialogoAdicao() {
 }
 
 describe('AdminView — acessibilidade dos seletores (N-063)', () => {
-  it('getByLabelText("Nível de Acesso") encontra o combobox do diálogo de edição', () => {
+  it('getByLabelText("Nível de acesso (informativo)") encontra o combobox do diálogo de edição', () => {
     abrirDialogoEdicao();
-    expect(screen.getByLabelText('Nível de Acesso')).toBeInTheDocument();
+    expect(screen.getByLabelText('Nível de acesso (informativo)')).toBeInTheDocument();
   });
 
   it('getByLabelText("Role") encontra o combobox do diálogo de adição', () => {

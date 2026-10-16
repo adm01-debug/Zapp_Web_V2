@@ -23,6 +23,9 @@ vi.mock('@/integrations/supabase/client', () => ({
             in: vi.fn().mockImplementation(() => makeChain()),
             eq: vi.fn().mockImplementation(() => makeChain()),
             limit: vi.fn().mockImplementation(() => makeChain()),
+            range: vi.fn().mockImplementation(() => makeChain()),
+            gte: vi.fn().mockImplementation(() => makeChain()),
+            lte: vi.fn().mockImplementation(() => makeChain()),
             single: vi.fn().mockImplementation(() => makeChain()),
             update: vi.fn().mockImplementation(() => ({
               eq: vi.fn().mockResolvedValue({ error: null }),

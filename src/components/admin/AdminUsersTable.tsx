@@ -24,9 +24,11 @@ interface AdminUsersTableProps {
   onRoleChange: (userId: string, role: AppRole) => void;
   onToggleActive: (user: UserWithRole) => void;
   onEditUser: (user: UserWithRole) => void;
+  /** Texto do estado vazio (nenhum usuário após busca/consulta). */
+  emptyMessage?: string;
 }
 
-export function AdminUsersTable({ users, isAdmin, onRoleChange, onToggleActive, onEditUser }: AdminUsersTableProps) {
+export function AdminUsersTable({ users, isAdmin, onRoleChange, onToggleActive, onEditUser, emptyMessage = 'Nenhum usuário cadastrado.' }: AdminUsersTableProps) {
   return (
     <Card className="border border-secondary/20 bg-card">
       <CardHeader><h2 className="text-lg font-semibold leading-none tracking-tight">Usuários</h2></CardHeader>
@@ -37,12 +39,21 @@ export function AdminUsersTable({ users, isAdmin, onRoleChange, onToggleActive, 
               <TableHead>Usuário</TableHead>
               <TableHead>Cargo/Depto</TableHead>
               <TableHead>Role</TableHead>
-              <TableHead>Acesso</TableHead>
+              {/* `profiles.access_level` está DEPRECATED e nada no sistema o impõe:
+                  a coluna mostra o dado, mas não pode parecer que concede acesso. */}
+              <TableHead>Acesso (informativo)</TableHead>
               <TableHead>Status</TableHead>
               {isAdmin && <TableHead>Ações</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
+            {users.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={isAdmin ? 6 : 5} className="py-8 text-center text-muted-foreground">
+                  {emptyMessage}
+                </TableCell>
+              </TableRow>
+            )}
             {users.map((user) => {
               const RoleIcon = roleIconMap[user.role];
               const accessInfo = accessLevelConfig[user.access_level || 'basic'];
@@ -79,6 +90,10 @@ export function AdminUsersTable({ users, isAdmin, onRoleChange, onToggleActive, 
                           <SelectItem value="admin">Admin</SelectItem>
                           <SelectItem value="supervisor">Supervisor</SelectItem>
                           <SelectItem value="agent">Atendente</SelectItem>
+                          {/* A role `special_agent` existe no enum `app_role` e é usada
+                              pelo VisibilityGrantsManager; sem esta opção o seletor
+                              ficava vazio e não havia como promover ninguém. */}
+                          <SelectItem value="special_agent">Agente Especial</SelectItem>
                         </SelectContent>
                       </Select>
                     ) : (
