@@ -1,13 +1,22 @@
 {
+<<<<<<< ours
   "_comment": "Baseline (ratchet) do supabase-usage-guard. Entradas aqui são violações CONHECIDAS e aceitas (ex: tabela usada via join indireto, schema divergente temporário). O guard falha em CI se houver NOVAS violações fora deste baseline. Para remover uma entrada: certifique-se que o alvo existe em schema-catalog.json, senão o guard vai acusar nova violação. NOTA 2026-10-08 (#174): a chave rpc:set_default_whatsapp_connection:* é TEMPORÁRIA — a RPC existe e está APROVADA (t_ae0a55a6, migration 20261006234158_whatsapp_default_connection_rpc_atomica.sql, commits 076d3262b/96fb877ea), mas a metade de banco ainda não entrou em nenhuma branch dia/, então a projeção forward-only deste guard não a vê. REMOVER esta chave assim que a migration estiver na dia: nesse momento o alvo passa a existir, a chave fica obsoleta e o guard volta a falhar sozinho pedindo a remoção.",
+=======
+  "_comment": "Baseline (ratchet) do supabase-usage-guard. Entradas aqui são violações CONHECIDAS e aceitas (ex: tabela usada via join indireto, schema divergente temporário). O guard falha em CI se houver NOVAS violações fora deste baseline. Para remover uma entrada: certifique-se que o alvo existe em schema-catalog.json, senão o guard vai acusar nova violação. NOTA 2026-10-08 (#174): a chave rpc:set_default_whatsapp_connection:* é TEMPORÁRIA — a RPC existe e está APROVADA (t_ae0a55a6, migration 20261006234158_whatsapp_default_connection_rpc_atomica.sql, commits 076d3262b/96fb877ea), mas a metade de banco ainda não entrou em nenhuma branch dia/, então a projeção forward-only deste guard não a vê. REMOVER esta chave assim que a migration estiver na dia: nesse momento o alvo passa a existir, a chave fica obsoleta e o guard volta a falhar sozinho pedindo a remoção. NOTA 2026-10-11 (t_7457095e): a chave rpc:talkx_campaign_window_open:* é TEMPORÁRIA pelo mesmo motivo — o chamador é o talkx-scheduler (edge, supabase/functions/talkx-scheduler/index.ts) e o alvo vem do cartão-irmão de banco (branch v2/talkx-campaign-dnd-weekdays-261010181233-2610102047340b, migration 20261011000003_20261010_talkx_campaigns_dnd_weekdays.sql), ainda fora de dia/. REMOVER esta chave assim que a migration estiver na dia: então o alvo passa a existir, a chave fica obsoleta e o guard volta a falhar sozinho pedindo a remoção. NOTA 2026-10-16 (t_6c065cc9): a chave rpc:get_search_insights:* é TEMPORÁRIA pelo mesmo motivo — o chamador é src/hooks/admin/useSearchInsights.ts (tela Insights de Busca) e o alvo vem do cartão-irmão de banco (branch v2/search-events-2610160824376c, migration 20261016112552_search_events.sql), ainda fora de dia/. REMOVER esta chave assim que a migration estiver na dia:.",
+>>>>>>> theirs
   "_gerado_em": "2026-08-27",
   "_contexto": "docs/audits/EXECUCAO_2026-08-27.md, secao 'Acoplamento quebrado'",
   "known": [
     "rpc:set_default_whatsapp_connection:src/hooks/inbox/useConnectionsManager.ts",
+<<<<<<< ours
     "rpc:record_away_message:supabase/functions/_shared/evolution-webhook-messages.ts",
     "rpc:log_search_event:src/components/inbox/useGlobalSearchData.ts",
     "rpc:talkx_campaign_resume_precheck:src/hooks/integrations/useTalkXServerResumePrecheck.ts",
     "rpc:should_send_away_message:supabase/functions/_shared/evolution-webhook-messages.ts"
+=======
+    "rpc:talkx_campaign_window_open:supabase/functions/talkx-scheduler/index.ts",
+    "rpc:get_search_insights:src/hooks/admin/useSearchInsights.ts"
+>>>>>>> theirs
   ],
   "_resolvido": {
     "rpc:talkx_campaign_window_open (N-102c)": "Removida em 2026-10-11: a migration forward-only 20261011003008_talkx_n102c_window_open.sql cria public.talkx_campaign_window_open(uuid, timestamptz), entao o alvo passou a existir na projecao do supabase-usage-guard e a entrada rpc:talkx_campaign_window_open:supabase/functions/talkx-scheduler/index.ts ficou obsoleta.",
