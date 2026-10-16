@@ -345,12 +345,12 @@ END $$;
 --     `talkx_suppress_contact`: SECURITY DEFINER, cujo chamador exigido e
 --     auth.role() = 'service_role', e que escreve contacts.consent_status =
 --     'revoked'. Aqui:
---       T7a (sempre)  -- o CAMINHO da rotina: escrita de consent_status com
---                        auth.role() = 'service_role' passa pela guarda.
---       T7b (se a rotina existir no replay) -- a chamada real, pelo nome.
---     O replay local deste cartao nao aplicou as migrations do Talk X (falha
---     pre-existente do conjunto: o tipo public.talkx_blacklist_reason nao existe
---     aqui), entao T7b roda condicionalmente; o caminho de escrita e o mesmo.
+--       T7a -- o CAMINHO da rotina: escrita de consent_status com
+--             auth.role() = 'service_role' passa pela guarda.
+--       T7b -- a chamada REAL, pelo nome: prova que a implantacao inclui o
+--             Talk X (tipo public.talkx_blacklist_reason + rotina). Se a rotina
+--             estiver ausente no replay, o teste FALHA aqui em vez de pular:
+--             pular mascararia implantacao quebrada.
 -- ---------------------------------------------------------------------------
 DO $$
 DECLARE
@@ -369,13 +369,15 @@ BEGIN
            'public.talkx_suppress_contact(uuid, text, text, public.talkx_blacklist_reason, text, uuid, uuid)'
          ) IS NOT NULL INTO v_existe;
 
-  IF v_existe THEN
-    EXECUTE format(
-      $q$SELECT public.talkx_suppress_contact(%L::uuid, %L::text, %L::text, %L::public.talkx_blacklist_reason, %L::text, NULL::uuid)$q$,
-      'cccccccc-0000-4000-8000-000000000004', '5511900000004',
-      'Fixture opt-out LGPD', 'opt_out', 'auto_optout'
-    ) INTO v_ret;
+  IF NOT v_existe THEN
+    RAISE EXCEPTION 'T7 FALHOU: public.talkx_suppress_contact ausente no replay local (implantacao sem o Talk X)';
   END IF;
+
+  EXECUTE format(
+    $q$SELECT public.talkx_suppress_contact(%L::uuid, %L::text, %L::text, %L::public.talkx_blacklist_reason, %L::text, NULL::uuid)$q$,
+    'cccccccc-0000-4000-8000-000000000004', '5511900000004',
+    'Fixture opt-out LGPD', 'opt_out', 'auto_optout'
+  ) INTO v_ret;
 
   EXECUTE 'RESET ROLE';
 
@@ -385,11 +387,7 @@ BEGIN
     RAISE EXCEPTION 'T7 FALHOU: a escrita da rotina interna foi barrada (consent_status=%)', v_consent;
   END IF;
 
-  IF v_existe THEN
-    RAISE NOTICE 'T7 ok: talkx_suppress_contact marcou revoked (retorno=%)', v_ret;
-  ELSE
-    RAISE NOTICE 'T7 ok: caminho service_role escreveu revoked; talkx_suppress_contact ausente neste replay local (falha pre-existente)';
-  END IF;
+  RAISE NOTICE 'T7 ok: talkx_suppress_contact marcou revoked (retorno=%)', v_ret;
 END $$;
 
 -- ---------------------------------------------------------------------------
