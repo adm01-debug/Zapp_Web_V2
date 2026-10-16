@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -72,6 +72,24 @@ function getOAuthReturnView(): string {
   return 'integrations';
 }
 
+/**
+ * PE-07 — texto pt-BR do cabeçalho do e-mail: há quanto tempo a conta sincronizou.
+ * `null` quando a conta nunca sincronizou ou o carimbo é inválido (a tela não
+ * mostra texto em branco nem 'há 0 min' inventado). Carimbo no futuro (relógio
+ * fora de sincronia) cai em 'agora' em vez de número negativo.
+ */
+export function formatLastSyncLabel(lastSyncAt: string | Date | null, now: number = Date.now()): string | null {
+  if (lastSyncAt === null || lastSyncAt === undefined || lastSyncAt === '') return null;
+  const timestamp = lastSyncAt instanceof Date ? lastSyncAt.getTime() : new Date(lastSyncAt).getTime();
+  if (Number.isNaN(timestamp)) return null;
+  const elapsedMinutes = Math.floor((now - timestamp) / 60_000);
+  if (elapsedMinutes < 1) return 'sincronizado agora';
+  if (elapsedMinutes < 60) return `sincronizado há ${elapsedMinutes} min`;
+  const elapsedHours = Math.floor(elapsedMinutes / 60);
+  if (elapsedHours < 24) return `sincronizado há ${elapsedHours} h`;
+  return `sincronizado há ${Math.floor(elapsedHours / 24)} d`;
+}
+
 export function useGmail(accountId?: string, requestedThreadId?: string | null, listQuery?: EmailThreadListQuery) {
   const queryClient = useQueryClient();
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
@@ -95,6 +113,13 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null, 
         })) as GmailAccount[];
       }
     },
+    // PE-07/PM-23 — o cron grava `reauth_required` na conta sem que ninguém mexa
+    // na tela; com o `staleTime` de 5 min e `refetchOnWindowFocus:false` do
+    // queryClient, a faixa de reconexão só aparecia depois de recarregar. A
+    // consulta se repete a cada 60 s enquanto a tela estiver observando; em aba
+    // oculta o ciclo fica parado (`refetchIntervalInBackground` é false).
+    refetchInterval: 60_000,
+    refetchIntervalInBackground: false,
   });
 
   const activeAccount = accountId ? accounts.find(a => a.id === accountId && a.is_active) : accounts.find(a => a.is_active);
@@ -109,6 +134,16 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null, 
   const lastError: string | null = activeAccount?.last_error?.trim() ? activeAccount.last_error.trim() : null;
   const lastSyncedAt: string | null = activeAccount?.last_sync_at ?? null;
   const needsReconnect = syncStatus === 'reauth_required';
+
+  // PE-07 — o rótulo relativo do cabeçalho ('sincronizado há 3 min') precisa
+  // envelhecer sozinho: um relógio de 30 s re-renderiza o texto enquanto a tela
+  // estiver montada, sem nenhuma consulta nova.
+  const [clockNow, setClockNow] = useState(() => Date.now());
+  useEffect(() => {
+    const ticker = setInterval(() => setClockNow(Date.now()), 30_000);
+    return () => clearInterval(ticker);
+  }, []);
+  const lastSyncLabel = formatLastSyncLabel(lastSyncedAt, clockNow);
 
   const invalidateThreadData = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: ['gmail-threads'] });
@@ -534,7 +569,7 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null, 
   return {
     accounts, activeAccount, accountsLoading, accountsError, refetchAccounts, connectGmail, exchangeCode, disconnectGmail,
     // PE-06: estado de sincronização da conta ativa, sem obrigar a tela a reler a linha crua.
-    syncStatus, lastError, lastSyncedAt, needsReconnect,
+    syncStatus, lastError, lastSyncedAt, lastSyncLabel, needsReconnect,
     threads, threadsLoading, threadsError, requestedThread, requestedThreadLoading, requestedThreadError, selectedThreadId, setSelectedThreadId, refetchThreads,
     threadMessages, messagesLoading, messagesError, refetchMessages, threadAttachments, labels, labelsManagement,
     syncInbox, syncLabels, sendEmail, replyEmail, markAsRead, trashMessage, trashThread, modifyLabels, modifyThreadLabels, saveDraft, deleteDraft, downloadAttachment, getAttachmentContent,
