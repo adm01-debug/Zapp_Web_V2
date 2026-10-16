@@ -16,6 +16,12 @@ import { supabase } from '@/integrations/supabase/client';
  * (22023 fora disso) — a tela repete as duas checagens antes de chamar.
  */
 
+/** Falha do RPC (PostgrestError): 42501 admin_required / 22023 purge_not_allowed. */
+export interface GmailPurgeError {
+  code?: string;
+  message?: string;
+}
+
 /** O que existe guardado hoje para a conta (o que a limpeza vai apagar). */
 export interface GmailStoredDataCounts {
   threads: number;
@@ -73,7 +79,7 @@ export function useGmailStoredDataCounts(accountId?: string) {
 export function usePurgeGmailAccountData() {
   const queryClient = useQueryClient();
 
-  return useMutation<GmailPurgeResult, unknown, { accountId: string; confirm: string }>({
+  return useMutation<GmailPurgeResult, GmailPurgeError, { accountId: string; confirm: string }>({
     mutationFn: async ({ accountId, confirm }) => {
       const { data, error } = await supabase.rpc('purge_gmail_account_data', {
         p_account_id: accountId,

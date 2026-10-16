@@ -59,9 +59,9 @@ const contaDesconectada = {
   last_sync_at: null,
   last_error: null,
   created_at: '2026-09-01T00:00:00Z',
-} as GmailAccount;
+} as unknown as GmailAccount;
 
-const contaAtiva = { ...contaDesconectada, id: 'acc-on-1', is_active: true } as GmailAccount;
+const contaAtiva = { ...contaDesconectada, id: 'acc-on-1', is_active: true } as unknown as GmailAccount;
 
 const resultado: GmailPurgeResult = {
   account_id: 'acc-off-1',

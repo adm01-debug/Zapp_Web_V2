@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useGmail, type GmailAccount } from '@/hooks/integrations/useGmail';
 import {
-  useGmailStoredDataCounts, usePurgeGmailAccountData, type GmailPurgeResult,
+  useGmailStoredDataCounts, usePurgeGmailAccountData, type GmailPurgeResult, type GmailPurgeError,
 } from '@/hooks/integrations/useGmailDataPurge';
 import { useUserRole } from '@/hooks/system/useUserRole';
 import { format } from 'date-fns';
@@ -18,8 +18,8 @@ import { ptBR } from 'date-fns/locale';
 import { AlertTriangle, Loader2, RefreshCw } from 'lucide-react';
 
 /** Texto por tipo de falha do RPC (42501 admin_required / 22023 purge_not_allowed). */
-function purgeErrorCopy(error: unknown): string {
-  const code = (error as { code?: string } | null)?.code;
+function purgeErrorCopy(error: GmailPurgeError | null | undefined): string {
+  const code = error?.code;
   if (code === '42501') return 'Só administradores podem apagar os dados de e-mail.';
   if (code === '22023') return 'A conta precisa estar desconectada e o e-mail digitado precisa ser o da conta.';
   return 'Não foi possível apagar os dados. Nada foi apagado — tente de novo.';
