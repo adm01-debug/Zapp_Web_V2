@@ -284,12 +284,17 @@ pass '(a) active=2 (scheduled + sending), sem recorte de periodo'
 # ---------------------------------------------------------------------------
 # O periodo vai de (now() - 5 dias) ate now(), intervalo INCLUSIVO: sao 6 datas.
 # A expectativa e DERIVADA do periodo, nao fixada em numero magico.
-exp_days="$(psql_q "SELECT (((now())::date - (now() - interval '5 days')::date) + 1)")"
+# A funcao bucketiza 'day' em p_timezone (default America/Sao_Paulo, nao passado
+# aqui), nao no fuso da sessao do teste (UTC no container descartavel). Entre
+# 00h-03h UTC a data civil em Sao Paulo ainda e "ontem": sem AT TIME ZONE aqui,
+# a data de referencia do teste fica um dia na frente da bucketizacao real da
+# funcao e TODOS os pontos da serie aparentam "buraco" (achado na PR #1963).
+exp_days="$(psql_q "SELECT ((((now()) AT TIME ZONE 'America/Sao_Paulo')::date - ((now() - interval '5 days') AT TIME ZONE 'America/Sao_Paulo')::date) + 1)")"
 ndays="$(psql_q "SELECT jsonb_array_length(public.talkx_overview_stats($win5)->'daily')")"
 [[ "$ndays" == "$exp_days" ]] || fail "(b) daily deveria ter $exp_days pontos (um por dia do periodo inclusivo) [obtido: $ndays]"
 # cobertura: o dia de cada ponto e exatamente primeiro_dia + indice, sem buraco nem fora de ordem
 buracos="$(psql_q "SELECT count(*) FROM jsonb_array_elements(public.talkx_overview_stats($win5)->'daily') WITH ORDINALITY AS t(e, ord)
-  WHERE ((e->>'day')::date - (now() - interval '5 days')::date) <> (ord - 1)")"
+  WHERE ((e->>'day')::date - ((now() - interval '5 days') AT TIME ZONE 'America/Sao_Paulo')::date) <> (ord - 1)")"
 [[ "$buracos" == '0' ]] || fail "(b) serie diaria com buraco ou fora de ordem [divergencias: $buracos]"
 allfields="$(psql_q "SELECT count(*) FROM jsonb_array_elements(public.talkx_overview_stats($win5)->'daily') e
   WHERE (e->>'sent') IS NOT NULL AND (e->>'delivered') IS NOT NULL AND (e->>'replied') IS NOT NULL")"
