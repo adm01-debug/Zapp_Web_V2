@@ -4,20 +4,35 @@ import { axe } from 'vitest-axe';
 
 const h = vi.hoisted(() => ({ rpc: vi.fn(), analyses: vi.fn(), profiles: vi.fn() }));
 
-vi.mock('@/integrations/supabase/client', () => ({
-  supabase: {
-    rpc: (...args: unknown[]) => h.rpc(...args),
-    from: (table: string) => {
-      if (table === 'conversation_analyses') {
-        return { select: () => ({ gte: () => ({ order: () => h.analyses() }) }) };
-      }
-      if (table === 'profiles') {
-        return { select: () => ({ eq: () => h.profiles() }) };
-      }
-      throw new Error(`tabela inesperada no mock: ${table}`);
+vi.mock('@/integrations/supabase/client', () => {
+  const paginado = (buscarPagina: (from: number, to: number) => unknown) => {
+    const q: Record<string, unknown> = {};
+    q.select = () => q;
+    q.gte = () => q;
+    q.order = () => q;
+    q.eq = () => q;
+    q.range = (from: number, to: number) => Promise.resolve(buscarPagina(from, to));
+    return q;
+  };
+
+  return {
+    supabase: {
+      rpc: (nome: string, params: Record<string, unknown>) => {
+        h.rpc(nome, params);
+        return paginado((from, to) => h.rpc(nome, params, from, to));
+      },
+      from: (table: string) => {
+        if (table === 'conversation_analyses') {
+          return { select: () => paginado((from, to) => h.analyses(from, to)) };
+        }
+        if (table === 'profiles') {
+          return { select: () => ({ eq: () => h.profiles() }) };
+        }
+        throw new Error(`tabela inesperada no mock: ${table}`);
+      },
     },
-  },
-}));
+  };
+});
 vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() } }));
 
 import { SentimentAlertsDashboard } from '../SentimentAlertsDashboard';
@@ -63,5 +78,15 @@ describe('SentimentAlertsDashboard — acessibilidade', () => {
     // fica desligada aqui. Todo o resto tem de passar zerado.
     const resultado = await axe(container, { rules: { 'button-name': { enabled: false } } });
     expect(resultado.violations.map((v) => v.id)).toEqual([]);
+  });
+
+  it('falha de leitura mostra o erro com "Tentar de novo" em vez de fingir vazio', { timeout: 60000 }, async () => {
+    h.analyses.mockResolvedValue({ data: null, error: { message: 'permission denied for table conversation_analyses' } });
+    render(<SentimentAlertsDashboard />);
+
+    const alerta = await screen.findByTestId('sentiment-error', {}, { timeout: 45000 });
+    expect(alerta).toHaveAttribute('role', 'alert');
+    expect(alerta).toHaveTextContent('Não foi possível carregar os dados de sentimento');
+    expect(screen.getByRole('button', { name: /tentar de novo/i })).toBeInTheDocument();
   });
 });

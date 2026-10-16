@@ -11,7 +11,7 @@ import { OverviewTab, AgentsTab, AlertsTab, DistributionTab } from './SentimentT
 export function SentimentAlertsDashboard() {
   const [period, setPeriod] = useState('7');
   const [activeTab, setActiveTab] = useState('overview');
-  const { alerts, analyses, loading, stats, dailyData, agentData, fetchData } = useSentimentData(period);
+  const { alerts, analyses, loading, error, isError, incomplete, stats, dailyData, agentData, fetchData } = useSentimentData(period);
 
   return (
     <div className="space-y-6 w-full min-w-0">
@@ -29,6 +29,31 @@ export function SentimentAlertsDashboard() {
           <Button variant="outline" size="icon" onClick={fetchData} disabled={loading}><RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} /></Button>
         </div>
       </div>
+
+      {isError && (
+        <div
+          role="alert"
+          data-testid="sentiment-error"
+          className="flex flex-col gap-3 rounded-lg border border-destructive/40 bg-destructive/10 p-4 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
+            <div>
+              <p className="text-sm font-medium">Não foi possível carregar os dados de sentimento agora.</p>
+              {error?.message ? <p className="text-xs text-muted-foreground">{error.message}</p> : null}
+            </div>
+          </div>
+          <Button variant="outline" size="sm" onClick={fetchData} disabled={loading}>
+            Tentar de novo
+          </Button>
+        </div>
+      )}
+
+      {!isError && incomplete ? (
+        <p className="text-xs text-muted-foreground" data-testid="sentiment-incomplete">
+          A leitura do período não foi completa — os números podem estar abaixo do total.
+        </p>
+      ) : null}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {[

@@ -13,33 +13,67 @@ import { renderHook, waitFor } from '@testing-library/react';
 
 const h = vi.hoisted(() => ({ rpc: vi.fn(), analyses: vi.fn(), profiles: vi.fn() }));
 
-vi.mock('@/integrations/supabase/client', () => ({
-  supabase: {
-    rpc: (...args: unknown[]) => h.rpc(...args),
-    from: (table: string) => {
-      if (table === 'conversation_analyses') {
-        return { select: () => ({ gte: () => ({ order: () => h.analyses() }) }) };
-      }
-      if (table === 'profiles') {
-        return { select: () => ({ eq: () => h.profiles() }) };
-      }
-      throw new Error(`tabela inesperada no mock: ${table}`);
+// Builder mínimo de PostgREST: `.select/.gte/.order/.eq` encadeiam devolvendo o
+// próprio objeto e `.range(from, to)` é onde a página é pedida de verdade — é o
+// ponto que o hook usa para paginar (`fetchAllRows`). Sem ele o teste não
+// alcança a paginação nem o caminho de erro de leitura.
+vi.mock('@/integrations/supabase/client', () => {
+  const paginado = (buscarPagina: (from: number, to: number) => unknown) => {
+    const q: Record<string, unknown> = {};
+    q.select = () => q;
+    q.gte = () => q;
+    q.lte = () => q;
+    q.order = () => q;
+    q.eq = () => q;
+    q.range = (from: number, to: number) => Promise.resolve(buscarPagina(from, to));
+    return q;
+  };
+
+  return {
+    supabase: {
+      rpc: (nome: string, params: Record<string, unknown>) => {
+        h.rpc(nome, params);
+        return paginado((from, to) => h.rpc(nome, params, from, to));
+      },
+      from: (table: string) => {
+        if (table === 'conversation_analyses') {
+          return { select: () => paginado((from, to) => h.analyses(from, to)) };
+        }
+        if (table === 'profiles') {
+          return { select: () => ({ eq: () => h.profiles() }) };
+        }
+        throw new Error(`tabela inesperada no mock: ${table}`);
+      },
     },
-  },
-}));
+  };
+});
 vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() } }));
 
 import { useSentimentData } from '../useSentimentData';
 
+const daysAgo = (n: number) => new Date(Date.now() - n * 86400000).toISOString();
+
+const analysis = (over: Record<string, unknown>) => ({
+  id: String(over.id ?? 'x'),
+  contact_id: 'c1',
+  sentiment: 'neutro',
+  sentiment_score: null,
+  created_at: daysAgo(1),
+  analyzed_by: null,
+  ...over,
+});
+
+const resetMocks = () => {
+  h.rpc.mockReset();
+  h.analyses.mockReset();
+  h.profiles.mockReset();
+  h.rpc.mockResolvedValue({ data: [], error: null });
+  h.analyses.mockResolvedValue({ data: [], error: null });
+  h.profiles.mockResolvedValue({ data: [], error: null });
+};
+
 describe('useSentimentData', () => {
-  beforeEach(() => {
-    h.rpc.mockReset();
-    h.analyses.mockReset();
-    h.profiles.mockReset();
-    h.rpc.mockResolvedValue({ data: [], error: null });
-    h.analyses.mockResolvedValue({ data: [], error: null });
-    h.profiles.mockResolvedValue({ data: [], error: null });
-  });
+  beforeEach(resetMocks);
 
   it('monta sem lançar exceção e sai do loading (guarda contra TDZ de fetchData no useEffect)', async () => {
     const { result } = renderHook(() => useSentimentData('7'));
@@ -83,25 +117,7 @@ describe('useSentimentData', () => {
 // IA-023: ausência/valor inválido é EXCLUÍDO dos agregados (nunca vira 50) e
 // nota 0 continua 0. Média sem nenhuma amostra válida é `null`, não 50.
 describe('useSentimentData — zero e ausência (IA-023)', () => {
-  const daysAgo = (n: number) => new Date(Date.now() - n * 86400000).toISOString();
-  const analysis = (over: Record<string, unknown>) => ({
-    id: String(over.id ?? 'x'),
-    contact_id: 'c1',
-    sentiment: 'neutro',
-    sentiment_score: null,
-    created_at: daysAgo(1),
-    analyzed_by: null,
-    ...over,
-  });
-
-  beforeEach(() => {
-    h.rpc.mockReset();
-    h.analyses.mockReset();
-    h.profiles.mockReset();
-    h.rpc.mockResolvedValue({ data: [], error: null });
-    h.analyses.mockResolvedValue({ data: [], error: null });
-    h.profiles.mockResolvedValue({ data: [], error: null });
-  });
+  beforeEach(resetMocks);
 
   it('nota ausente é excluída da média e 0 continua 0 (não vira 50)', async () => {
     h.analyses.mockResolvedValue({
@@ -184,5 +200,88 @@ describe('useSentimentData — zero e ausência (IA-023)', () => {
     const { result } = renderHook(() => useSentimentData('7'));
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.agentData[0].avgScore).toBeNull();
+  });
+});
+
+// Falha de leitura, período e paginação: com a consulta de uma página só
+// (teto do PostgREST), erro e período inválido apareciam como "sem dados".
+describe('useSentimentData — falha visível, período e paginação', () => {
+  beforeEach(resetMocks);
+
+  it('falha na leitura das análises vira isError (não desaparece como "sem dados")', async () => {
+    h.analyses.mockResolvedValue({ data: null, error: { message: 'permission denied for table conversation_analyses' } });
+    const { result } = renderHook(() => useSentimentData('7'));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.isError).toBe(true);
+    expect(result.current.error?.message).toContain('conversation_analyses');
+  });
+
+  it('período não numérico vira erro visível e NÃO dispara consulta', async () => {
+    const { result } = renderHook(() => useSentimentData('abc'));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.isError).toBe(true);
+    expect(result.current.error?.message).toMatch(/Período inválido/);
+    expect(h.rpc).not.toHaveBeenCalled();
+    expect(h.analyses).not.toHaveBeenCalled();
+  });
+
+  // timeout por teste maior que o default: na suíte inteira (dezenas de arquivos
+  // em paralelo) o worker fica sem CPU e a espera pelo fim do fetch passa de 12s.
+  it('lê TODAS as páginas das análises (1500 linhas, teto de 1000 por resposta)', { timeout: 60000 }, async () => {
+    const pagina = (from: number, to: number) => {
+      const rows: Array<Record<string, unknown>> = [];
+      for (let i = from; i < Math.min(to + 1, 1500); i += 1) {
+        rows.push(analysis({ id: `a${i}`, sentiment: 'positivo' }));
+      }
+      return { data: rows, error: null };
+    };
+    h.analyses.mockImplementation((from: number, to: number) => Promise.resolve(pagina(from, to)));
+    const { result } = renderHook(() => useSentimentData('7'));
+    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 45000 });
+    expect(h.analyses).toHaveBeenCalledWith(0, 999);
+    expect(h.analyses).toHaveBeenCalledWith(1000, 1999);
+    expect(result.current.stats.totalAnalyses).toBe(1500);
+    expect(result.current.stats.positiveAnalyses).toBe(1500);
+    expect(result.current.incomplete).toBe(false);
+  });
+
+  it('lê TODAS as páginas dos alertas da RPC (1200 alertas, teto de 1000 por resposta)', { timeout: 60000 }, async () => {
+    const pagina = (from: number, to: number) => {
+      const rows: Array<Record<string, unknown>> = [];
+      for (let i = from; i < Math.min(to + 1, 1200); i += 1) {
+        rows.push({ id: `al${i}`, entity_id: `c${i}`, created_at: daysAgo(0), details: { sentiment_score: 10 } });
+      }
+      return { data: rows, error: null };
+    };
+    h.rpc.mockImplementation((_nome: string, _params: unknown, from: number, to: number) =>
+      Promise.resolve(pagina(from, to)));
+    const { result } = renderHook(() => useSentimentData('7'));
+    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 45000 });
+    expect(h.rpc).toHaveBeenCalledWith('dashboard_sentiment_alerts', expect.anything(), 1000, 1999);
+    expect(result.current.stats.totalAlerts).toBe(1200);
+    expect(result.current.stats.criticalAlerts).toBe(1200);
+  });
+
+  it('classificação canônica: critico conta como negativo e o legado EN é traduzido (IA-SENTIMENT-001)', async () => {
+    h.analyses.mockResolvedValue({
+      data: [
+        analysis({ id: '1', sentiment: 'critico', created_at: daysAgo(0) }),
+        analysis({ id: '2', sentiment: 'negative', created_at: daysAgo(0) }),
+        analysis({ id: '3', sentiment: 'positive', created_at: daysAgo(0) }),
+        analysis({ id: '4', sentiment: 'nao-existe', created_at: daysAgo(0) }),
+      ],
+      error: null,
+    });
+    const { result } = renderHook(() => useSentimentData('7'));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.stats.negativeAnalyses).toBe(2);
+    expect(result.current.stats.positiveAnalyses).toBe(1);
+    // desconhecido NÃO é contado como neutro por conveniência
+    expect(result.current.stats.neutralAnalyses).toBe(0);
+    expect(result.current.stats.negativeRate).toBe(50);
+    // a série diária usa a mesma classe
+    const hoje = result.current.dailyData[result.current.dailyData.length - 1];
+    expect(hoje.negative).toBe(2);
+    expect(hoje.positive).toBe(1);
   });
 });
