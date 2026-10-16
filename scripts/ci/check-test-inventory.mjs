@@ -194,8 +194,15 @@ const ALLOWLIST = new Set([
   // de 1.000 linhas do PostgREST) e nega agente comum/anon/service_role com
   // excecao, nunca com zeros. Passo de YAML a promover em db-guard.yml pelo dono
   // do workflow (REGISTRO PENDENTE).
-  'scripts/db-audit/crisis-room-snapshot.test.sh',]);
-
+  'scripts/db-audit/crisis-room-snapshot.test.sh',]);,
+  // #174 (t_ae0a55a6): prova em Postgres 17 descartavel (docker, container proprio) que a RPC
+  // set_default_whatsapp_connection (migration 20261006234158_whatsapp_default_connection_rpc_atomica.sql)
+  // troca a conexao padrao do WhatsApp numa transacao, serializada por advisory lock, autorizada por
+  // is_admin_or_supervisor(auth.uid()) e valida o pos-estado (exatamente uma padrao); o bloco A mostra o
+  // defeito no caminho antigo (dois UPDATE) e o bloco B prova a RPC, o fail-closed e o gatilho de
+  // updated_at. O passo de uma linha no db-guard.yml e do dono do workflow (agente nao edita workflow).
+  'scripts/db-audit/whatsapp-default-connection-atomicity.test.sh',
+]);
 // Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em// workflow nenhum. Todas rodam offline (`node --test <arquivo>`); a promoção é uma linha em
 // ci.yml/db-guard.yml — do dono do workflow (agente não edita workflow). R2-INF-013: as quatro
 // primeiras já existiam quando a auditoria (2026-10-03) apontou o defeito; as três de
