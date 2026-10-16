@@ -2,9 +2,15 @@
 // de qualquer `Date` ser criado. Assim o piso do calendário tem de vir da
 // campanha (Europa/Londres, no teste A14) e não do relógio local do processo —
 // sem isso os dois fusos coincidiriam e o teste não provaria nada.
+//
+// `process.env.TZ` é global do WORKER do vitest: fica compartilhado entre os
+// arquivos de teste que rodam no mesmo fork. Por isso guardamos o valor
+// original e o devolvemos no fim (o mesmo padrão de `useAIStats.test.tsx`):
+// sem o cleanup este arquivo roubaria o fuso dos demais na suíte empilhada.
+const TZ_ORIGINAL = process.env.TZ;
 process.env.TZ = 'America/Sao_Paulo';
 
-import { describe, it, expect, vi, beforeEach, afterEach, beforeAll } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, beforeAll, afterAll } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 
@@ -46,10 +52,6 @@ vi.mock('@/hooks/integrations/useTalkX', () => ({
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() } }));
 
-vi.mock('@/hooks/integrations/useTalkXConnectionStatus', () => ({
-  useTalkXConnectionStatus: () => ({ status: 'connected', label: 'Conectada', loading: false }),
-}));
-
 import { TalkXCampaignScheduled } from '../TalkXCampaignScheduled';
 
 // O gatilho do Select (Radix) chama `hasPointerCapture` no pointerdown que o abre
@@ -58,6 +60,13 @@ beforeAll(() => {
   Element.prototype.hasPointerCapture = () => false;
   Element.prototype.setPointerCapture = () => {};
   Element.prototype.releasePointerCapture = () => {};
+});
+
+// Devolve o fuso do processo ao que era antes deste arquivo: o worker do vitest
+// é reutilizado pelos outros arquivos de teste e o `process.env.TZ` vaza.
+afterAll(() => {
+  if (TZ_ORIGINAL === undefined) delete process.env.TZ;
+  else process.env.TZ = TZ_ORIGINAL;
 });
 
 const BASE_CAMPAIGN = {

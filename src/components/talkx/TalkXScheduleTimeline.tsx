@@ -101,11 +101,7 @@ function buildScheduleMilestones(campaign: TalkXCampaign, editing: ScheduleEditi
   }
 
   if (startAt) {
-    // A comparação é pelo INSTANTE (Date.parse), não pelo texto: o PostgREST
-    // devolve timestamptz como '+00:00' e o conversor gera '.000Z' — o mesmo
-    // instante em textos diferentes não é edição.
-    const editedNotSaved =
-      editedStart != null && (savedStart == null || Date.parse(editedStart) !== Date.parse(savedStart));
+    const editedNotSaved = editedStart != null && editedStart !== savedStart;
     milestones.push({
       key: 'start', icon: Send, tone: 'primary', when: startAt,
       label: 'Início dos envios',
