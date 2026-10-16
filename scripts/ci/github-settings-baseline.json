@@ -64,18 +64,15 @@
   ],
   "environments": [
     "banco-leitura",
-    "copilot",
     "db-ledger-evidence",
     "legacy-import-destrutivo",
     "perimetro-leitura",
-    "Preview",
     "producao-ddl",
-    "producao-edge-functions",
-    "Production"
+    "producao-edge-functions"
   ],
   "environments_para_apagar": {
-    "_comentario": "E94 pendente: sem regra de protecao e sem uso por workflow. Ao apagar, remover da lista 'environments' acima no mesmo PR.",
-    "lista": ["copilot", "Preview", "Production"]
+    "_comentario": "E94 concluido em 2026-10-16: copilot, Preview e Production apagados. Lista vazia.",
+    "lista": []
   },
   "environments_vercel_managed": {
     "_comentario": "W13: environments criados automaticamente pela Vercel. A presenca deles nao e regressao — sao classificados como 'gerenciados pela Vercel' no settings-guard (aviso, nao erro).",
