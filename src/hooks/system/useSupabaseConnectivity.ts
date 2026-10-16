@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { FunctionsFetchError } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import { SUPABASE_URL } from '@/integrations/supabase/client';
 import { getLogger } from '@/lib/logger';
 import { useNetworkStatus } from './useNetworkStatus';
 
@@ -11,22 +10,29 @@ const log = getLogger('SupabaseConnectivity');
  *
  * Complementa o `useNetworkStatus` (que só enxerga `navigator.onLine`): cobre o
  * caso em que a internet do usuário funciona mas o backend Supabase está
- * inacessível. A sonda é leve — uma chamada GET no endpoint de saúde do projeto
- * (`health`, Edge Function; paridade do `health-check` do V3) — e NÃO consulta
- * tabela de dados do usuário. O `connection-health-check` fica de fora de
- * propósito: é um job de cron/admin que chama a Evolution API e grava no banco a
- * cada execução, carga incompatível com uma sonda de navegador a cada 30 s.
+ * inacessível. A sonda é leve — um GET `no-cors`, sem cabeçalhos próprios e sem
+ * preflight de CORS, no endpoint de saúde do PRÓPRIO projeto (`auth/v1/health`)
+ * — e NÃO passa por Edge Function nem consulta tabela: a Edge `health` da V2
+ * consulta `whatsapp_connections` a cada chamada (carga e falso negativo) e o
+ * `connection-health-check` é job de cron/admin que chama a Evolution API e
+ * grava no banco, os dois incompatíveis com uma sonda de navegador a cada 60 s.
+ * `auth.getSession()` também não serve de sonda: lê a sessão local e fica cego
+ * com o backend fora.
  *
- * Estados:
+ * Estados da sonda (o `checking` é só o instante antes da primeira resposta):
  *  - `checking`  → primeira sonda ainda não respondeu;
- *  - `online`    → backend respondeu (latência dentro do limite);
- *  - `degraded`  → backend respondeu devagar OU falhou uma/duas vezes seguidas;
- *  - `offline`   → navegador offline (sem sondar) OU backend inacessível após
- *                  `CONNECTIVITY_FAILURES_BEFORE_OFFLINE` falhas seguidas.
+ *  - `online`    → conectado: backend respondeu (latência dentro do limite);
+ *  - `degraded`  → instável: backend respondeu devagar OU falhou uma/duas vezes;
+ *  - `offline`   → sem conexão: navegador offline (sem sondar) OU backend
+ *                  inacessível após `CONNECTIVITY_FAILURES_BEFORE_OFFLINE`
+ *                  falhas seguidas.
  *
- * O ciclo pausa com a aba oculta (`visibilitychange`) e retoma ao voltar; cada
- * tentativa falha agenda a próxima com recuo exponencial (dobra o intervalo,
- * respeitando o mínimo de 30 s e o teto).
+ * O ciclo é um heartbeat de `CONNECTIVITY_BASE_INTERVAL_MS` (60 s) que pausa com
+ * a aba oculta (`visibilitychange`) e com o navegador offline, e retoma ao
+ * voltar; cada tentativa falha agenda a próxima com recuo exponencial (dobra o
+ * intervalo, respeitando o teto de `CONNECTIVITY_MAX_INTERVAL_MS`). Qualquer
+ * resposta HTTP — inclusive opaca, 4xx ou 5xx — prova que a infraestrutura
+ * respondeu; só falha de rede/DNS/timeout marca o backend como inacessível.
  *
  * Uso:
  * ```tsx
@@ -63,8 +69,8 @@ interface ConnectivityState {
   consecutiveFailures: number;
 }
 
-/** Intervalo mínimo entre sondas (o cartão exige pelo menos 30 s). */
-export const CONNECTIVITY_BASE_INTERVAL_MS = 30_000;
+/** Heartbeat entre sondas com o backend saudável (60 s — paridade do V3). */
+export const CONNECTIVITY_BASE_INTERVAL_MS = 60_000;
 /** Teto do recuo exponencial entre tentativas após falha. */
 export const CONNECTIVITY_MAX_INTERVAL_MS = 300_000;
 /** Timeout de cada sonda: sem resposta nesse prazo = backend inacessível. */
@@ -73,8 +79,16 @@ export const CONNECTIVITY_PROBE_TIMEOUT_MS = 6_000;
 export const CONNECTIVITY_DEGRADED_LATENCY_MS = 2_000;
 /** Falhas consecutivas antes de declarar `offline` (backend inacessível). */
 export const CONNECTIVITY_FAILURES_BEFORE_OFFLINE = 3;
-/** Endpoint de saúde leve do projeto (Edge `health` — paridade do `health-check` do V3). */
-export const CONNECTIVITY_HEALTH_ENDPOINT = 'health';
+/**
+ * Caminho de saúde do projeto (GoTrue). Não é Edge Function nem tabela: o Kong
+ * responde por ele mesmo com o backend fora de pé.
+ */
+export const CONNECTIVITY_HEALTH_PATH = '/auth/v1/health';
+
+/** URL sondada: o endpoint de saúde do próprio projeto Supabase. */
+export function connectivityProbeUrl(baseUrl: string = SUPABASE_URL): string {
+  return `${baseUrl.replace(/\/+$/, '')}${CONNECTIVITY_HEALTH_PATH}`;
+}
 
 /** Delay da próxima tentativa: dobra por falha, limitado ao teto. */
 export function nextBackoffDelay(failures: number): number {
@@ -85,22 +99,24 @@ export function nextBackoffDelay(failures: number): number {
 /**
  * Uma sonda no backend. Devolve `reachable` = o servidor respondeu algo.
  *
- * `FunctionsFetchError` é o único erro que significa "nada respondeu"
- * (rede/DNS/timeout/abort). Qualquer outra resposta — inclusive HTTP não-2xx
- * (`FunctionsHttpError`) — prova que o backend está de pé.
+ * `mode: 'no-cors'`: GET simples, sem cabeçalhos próprios (e sem preflight), de
+ * propósito — a resposta é opaca e não dá para ler status nem corpo, o que não
+ * importa aqui: o que se mede é a PROMESSA do fetch. Se resolveu, rede, DNS e
+ * Kong responderam, inclusive 4xx/5xx. Só a REJEIÇÃO (falha de rede, DNS,
+ * conexão recusada ou o `AbortError` do timeout) significa "nada respondeu".
  */
 async function probeBackend(): Promise<{ reachable: boolean; latencyMs: number }> {
   const started = Date.now();
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), CONNECTIVITY_PROBE_TIMEOUT_MS);
   try {
-    const { error } = await supabase.functions.invoke(CONNECTIVITY_HEALTH_ENDPOINT, {
+    await fetch(connectivityProbeUrl(), {
       method: 'GET',
+      mode: 'no-cors',
+      cache: 'no-store',
       signal: controller.signal,
     });
-    const latencyMs = Date.now() - started;
-    if (error instanceof FunctionsFetchError) return { reachable: false, latencyMs };
-    return { reachable: true, latencyMs };
+    return { reachable: true, latencyMs: Date.now() - started };
   } catch {
     return { reachable: false, latencyMs: Date.now() - started };
   } finally {
