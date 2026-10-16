@@ -174,6 +174,26 @@ describe('useCSAT', () => {
     expect(result.current.stats?.trend).toBe(25);
   });
 
+  // CSAT-ORDENACAO: a leitura pagina em ordem ascendente (keyset), mas a
+  // Avaliacoes recentes lista do mais novo ao mais antigo, como antes.
+  it('expoe as avaliacoes da mais recente para a mais antiga', async () => {
+    h.fila = [
+      {
+        data: [
+          avaliacao('old', 2, diasAtras(10)),
+          avaliacao('mid', 4, diasAtras(3)),
+          avaliacao('new', 5, diasAtras(1)),
+        ],
+        error: null,
+      },
+    ];
+
+    const { result } = renderHook(() => useCSAT('month'), { wrapper: createWrapper() });
+
+    await waitFor(() => expect(result.current.surveys).toHaveLength(3));
+    expect(result.current.surveys.map((s) => s.id)).toEqual(['new', 'mid', 'old']);
+  });
+
   // R2-MOD-028: as estatisticas nao podem ficar no snapshot anterior quando a
   // releitura das avaliacoes chega depois da invalidacao pos-submissao.
   it('atualiza media, total e distribuicao junto com a lista apos nova submissao', async () => {

@@ -56,8 +56,16 @@ export function useCSAT(period: 'today' | 'week' | 'month' = 'month') {
       const rows = await fetchSurveysKeyset<CSATSurvey>('*', previousStart);
 
       const currentStartMs = currentStart.getTime();
+      // A leitura pagina em ordem ascendente (keyset por created_at, id): a
+      // ordem de leitura nao e ordem de exibicao. A Avaliacoes recentes lista
+      // do mais novo ao mais antigo, como antes.
+      const byRecencyDesc = (a: CSATSurvey, b: CSATSurvey) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime() ||
+        (b.id < a.id ? -1 : b.id > a.id ? 1 : 0);
       return {
-        current: rows.filter((r) => new Date(r.created_at).getTime() >= currentStartMs),
+        current: rows
+          .filter((r) => new Date(r.created_at).getTime() >= currentStartMs)
+          .sort(byRecencyDesc),
         previous: rows.filter((r) => new Date(r.created_at).getTime() < currentStartMs),
       };
     },
