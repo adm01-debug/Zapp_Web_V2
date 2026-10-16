@@ -15,10 +15,10 @@
  * falha de leitura nunca reativa efeito automático, o mesmo princípio do
  * `fallback = false` do hook do cliente (que, no cliente, segue valendo).
  *
- * ESCOPO: as 10 capacidades do desenho IA-009, uma chave por capacidade
- * (`ai.capability.<capacidade>`). Chave por provedor (`ai.provider.*`) e por
- * conexão (`ai.bot.<connectionId>`) são o cartão irmão (SL-010 / IA-039) e não
- * entram aqui. Função SEM capacidade declarada no mapa abaixo não é barrada por
+ * ESCOPO: as 10 capacidades do desenho IA-009 + copilot_live (CV-010), uma chave
+ * por capacidade (`ai.capability.<capacidade>`). Chave por provedor (`ai.provider.*`)
+ * e por conexão (`ai.bot.<connectionId>`) são o cartão irmão (SL-010 / IA-039) e
+ * não entram aqui. Função SEM capacidade declarada no mapa abaixo não é barrada por
  * este gate (decisão explícita: função nova não nasce desligada por engano);
  * `ai-proxy` (transporte genérico, sem capacidade de produto) e os classificadores
  * `classify-*` ficam de fora pelo mesmo motivo — ver o relato do cartão.
@@ -31,7 +31,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { getCorsHeaders, requireEnv } from "./validation.ts";
 
-/** Capacidades de IA do desenho IA-009 (chave `ai.capability.<capacidade>`). */
+/** Capacidades de IA do desenho IA-009 + Copiloto de Vendas (CV-010). */
 export type AiCapability =
   | "suggest_reply"
   | "enhance_message"
@@ -42,7 +42,8 @@ export type AiCapability =
   | "classify_tickets"
   | "transcribe_audio"
   | "voice"
-  | "chatbot_l1";
+  | "chatbot_l1"
+  | "copilot_live";
 
 /** Prefixo único das chaves de capacidade (nada de string solta no código). */
 export const AI_CAPABILITY_FLAG_PREFIX = "ai.capability.";
@@ -71,6 +72,9 @@ export const AI_CAPABILITY_BY_FUNCTION: Readonly<Record<string, AiCapability>> =
   "elevenlabs-voice-design": "voice",
   "voice-changer": "voice",
   "chatbot-l1": "chatbot_l1",
+  // CV-010: Copiloto de Vendas ao Vivo — chave `ai.capability.copilot_live`.
+  // Desligar esta capacidade bloqueia TODA a família copilot-live sem deploy.
+  "copilot-live": "copilot_live",
 });
 
 /** Chave canônica de uma capacidade: `ai.capability.<capacidade>`. */
