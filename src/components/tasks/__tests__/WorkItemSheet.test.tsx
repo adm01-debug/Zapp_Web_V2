@@ -91,6 +91,12 @@ async function abrirPrioridade() {
   return screen.findByRole('listbox');
 }
 
+/** Etapa 142: o ⋮ do rodapé abre no pointerdown (Radix). */
+async function abrirMenuRodape() {
+  fireEvent.pointerDown(screen.getByTestId('sheet-menu'), { button: 0 });
+  return screen.findByRole('menu');
+}
+
 describe('WorkItemSheet — FASE C (etapas 23–25)', () => {
   beforeEach(() => cleanup());
   afterEach(() => cleanup());
@@ -162,13 +168,15 @@ describe('WorkItemSheet — FASE C (etapas 23–25)', () => {
     expect(fazendo.getAttribute('aria-disabled')).toBe('true');
   });
 
-  it('25: Concluir move para done e Cancelar tarefa chama onCancel', () => {
+  it('25: Concluir move para done e Cancelar tarefa (no menu ⋮) chama onCancel', async () => {
     const p = props();
     render(<WorkItemSheet {...p} />);
 
     fireEvent.click(screen.getByTestId('sheet-concluir'));
     expect(p.onMove).toHaveBeenCalledWith(base, 'done');
 
+    // Etapa 142: "Cancelar tarefa" saiu do rodapé e entrou no menu ⋮.
+    await abrirMenuRodape();
     fireEvent.click(screen.getByTestId('sheet-cancelar'));
     expect(p.onCancel).toHaveBeenCalledWith(base);
   });
