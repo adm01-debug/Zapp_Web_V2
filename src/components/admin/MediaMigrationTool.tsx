@@ -96,8 +96,9 @@ export function MediaMigrationTool() {
 
           {running && (
             <div className="space-y-2">
-              <Progress value={30} className="h-2" />
-              <p className="text-xs text-muted-foreground animate-pulse">Processando mídias...</p>
+              {/* Indeterminada (sem value): não há progresso real por mídia, então nada de percentual fixo. */}
+              <Progress className="h-2 motion-safe:animate-pulse" aria-label="Progresso da migração de mídia" />
+              <p className="text-xs text-muted-foreground motion-safe:animate-pulse">Processando mídias...</p>
             </div>
           )}
         </CardContent>
@@ -133,7 +134,7 @@ export function MediaMigrationTool() {
             </div>
 
             {result.processed > 0 && (
-              <Progress value={progress} className="h-2" />
+              <Progress value={progress} className="h-2" aria-label="Progresso da migração" />
             )}
 
             {result.message && (

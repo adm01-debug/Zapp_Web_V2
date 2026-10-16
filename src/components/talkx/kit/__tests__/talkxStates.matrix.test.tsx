@@ -223,6 +223,9 @@ vi.mock('@/integrations/supabase/client', () => {
     c.is = () => c;
     c.not = () => c;
     c.order = () => c;
+    // HZ2-013: a lista de supressão fecha a consulta com `.range()` (fatia do
+    // PostgREST); a tabela emulada responde o mesmo conjunto de antes.
+    c.range = () => resolver();
     c.limit = () => resolver();
     c.single = () => resolver();
     c.then = (ok: (v: unknown) => unknown, err?: (e: unknown) => unknown) => resolver().then(ok, err);

@@ -1,9 +1,11 @@
 /**
  * useExternalCargos
- * 
- * Fetches unique job titles/roles from the external CRM database.
- * - salespeople.role: accessible directly (no RLS blocking anon)
- * - contacts.cargo: blocked by RLS, so we extract from search_contacts_advanced RPC
+ *
+ * Fetches the unique cargo suggestions for the contact form autocomplete
+ * through the narrow `roleNames` action of the crm-integration Edge Function,
+ * allowed to `view_contacts` (attendants included). It replaces the previous
+ * mix of the admin-only `search_contacts_advanced` RPC (which returned whole
+ * contact rows and 403'd for attendants) and the generic `select` action.
  */
  import { useQuery } from '@tanstack/react-query';
  import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';

@@ -1,5 +1,7 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
+import type { ReactNode } from 'react';
 
 const mockFrom = vi.fn();
 vi.mock('@/integrations/supabase/client', () => ({
@@ -8,6 +10,16 @@ vi.mock('@/integrations/supabase/client', () => ({
 vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), info: vi.fn(), warn: vi.fn() } }));
 
 import { useGlobalSettings } from '@/hooks/system/useGlobalSettings';
+
+// O hook lê do cache do React Query (configuração compartilhada): cada teste renderiza
+// com o próprio QueryClient, como o AppProviders monta na aplicação.
+function renderGlobalSettings() {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  const wrapper = ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={client}>{children}</QueryClientProvider>
+  );
+  return renderHook(() => useGlobalSettings(), { wrapper });
+}
 
 describe('useGlobalSettings', () => {
   beforeEach(() => {
@@ -31,29 +43,29 @@ describe('useGlobalSettings', () => {
   });
 
   it('fetches global settings', async () => {
-    const { result } = renderHook(() => useGlobalSettings());
+    const { result } = renderGlobalSettings();
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(mockFrom).toHaveBeenCalledWith('global_settings');
   });
 
   it('exposes getSetting function', async () => {
-    const { result } = renderHook(() => useGlobalSettings());
+    const { result } = renderGlobalSettings();
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(typeof result.current.getSetting).toBe('function');
   });
 
   it('exposes updateSetting function', () => {
-    const { result } = renderHook(() => useGlobalSettings());
+    const { result } = renderGlobalSettings();
     expect(typeof result.current.updateSetting).toBe('function');
   });
 
   it('exposes addSetting function', () => {
-    const { result } = renderHook(() => useGlobalSettings());
+    const { result } = renderGlobalSettings();
     expect(typeof result.current.addSetting).toBe('function');
   });
 
   it('getSetting returns null for unknown key', async () => {
-    const { result } = renderHook(() => useGlobalSettings());
+    const { result } = renderGlobalSettings();
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.getSetting('nonexistent')).toBeNull();
   });

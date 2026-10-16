@@ -3,7 +3,12 @@ import { renderHook, waitFor } from '@testing-library/react';
 
 type Row = Record<string, unknown>;
 interface TableConfig { rows: Row[]; error: { message: string } | null }
-interface QueryLog { table: string; filters: Array<{ op: string; col: string; val: unknown }> }
+interface QueryLog {
+  table: string;
+  filters: Array<{ op: string; col: string; val: unknown }>;
+  order: { col: string; asc: boolean } | null;
+  limit: number | null;
+}
 
 const h = vi.hoisted(() => ({
   tables: {} as Record<string, TableConfig>,
@@ -18,7 +23,8 @@ const h = vi.hoisted(() => ({
 vi.mock('@/integrations/supabase/client', () => {
   const makeBuilder = (table: string) => {
     const filters: QueryLog['filters'] = [];
-    h.queries.push({ table, filters });
+    const entry: QueryLog = { table, filters, order: null, limit: null };
+    h.queries.push(entry);
 
     const cfg = (): TableConfig => h.tables[table] ?? { rows: [], error: null };
 
@@ -33,10 +39,28 @@ vi.mock('@/integrations/supabase/client', () => {
         }),
       );
 
+    // Ordena/limita de verdade: é o que permite provar que o hook lê a linha MAIS
+    // RECENTE de `conversation_sla` e não a primeira que o dublê devolver.
+    const orderedRows = () => {
+      const rows = matching();
+      if (!entry.order) return rows;
+      const { col, asc } = entry.order;
+      return [...rows].sort((a, b) => {
+        const av = String(a[col] ?? '');
+        const bv = String(b[col] ?? '');
+        return asc ? av.localeCompare(bv) : bv.localeCompare(av);
+      });
+    };
+
+    const finalRows = () => {
+      const rows = orderedRows();
+      return entry.limit === null ? rows : rows.slice(0, entry.limit);
+    };
+
     const result = () => {
       const { error } = cfg();
       if (error) return { data: null, count: null, error };
-      const rows = matching();
+      const rows = finalRows();
       return { data: rows, count: rows.length, error: null };
     };
 
@@ -45,11 +69,23 @@ vi.mock('@/integrations/supabase/client', () => {
       eq: (col: string, val: unknown) => { filters.push({ op: 'eq', col, val }); return builder; },
       in: (col: string, val: unknown) => { filters.push({ op: 'in', col, val }); return builder; },
       gte: (col: string, val: unknown) => { filters.push({ op: 'gte', col, val }); return builder; },
-      order: () => builder,
-      limit: () => builder,
+      order: (col: string, opts?: { ascending?: boolean }) => {
+        entry.order = { col, asc: opts?.ascending !== false };
+        return builder;
+      },
+      limit: (n: number) => { entry.limit = n; return builder; },
       maybeSingle: () => {
         const { error } = cfg();
-        return Promise.resolve({ data: error ? null : (matching()[0] ?? null), error });
+        if (error) return Promise.resolve({ data: null, error });
+        const rows = finalRows();
+        // PostgREST: `.maybeSingle()` SEM limite estoura quando há mais de uma linha.
+        if (entry.limit === null && rows.length > 1) {
+          return Promise.resolve({
+            data: null,
+            error: { message: 'JSON object requested, multiple (or no) rows returned' },
+          });
+        }
+        return Promise.resolve({ data: rows[0] ?? null, error: null });
       },
       then: (resolve: (value: unknown) => unknown) => Promise.resolve(result()).then(resolve),
     };
@@ -162,5 +198,98 @@ describe('useNextBestAction', () => {
 
     expect(actions).toHaveLength(1);
     expect(actions[0].type).toBe('upsell');
+  });
+
+  it('só a primeira resposta estourada sugere escalar, nomeando esse prazo', async () => {
+    h.tables.conversation_sla = {
+      rows: [{ contact_id: CONTACT, first_response_breached: true, resolution_breached: false }],
+      error: null,
+    };
+
+    const actions = await render();
+    const escalate = actions.filter(a => a.type === 'escalate');
+
+    expect(escalate).toHaveLength(1);
+    expect(escalate[0].description).toBe('Primeira resposta atrasada');
+    expect(escalate[0].priority).toBe('high');
+  });
+
+  it('prazo de resolução estourado NÃO sugere escalar (fora de escopo)', async () => {
+    h.tables.conversation_sla = {
+      rows: [{ contact_id: CONTACT, first_response_breached: false, resolution_breached: true }],
+      error: null,
+    };
+
+    const actions = await render();
+
+    expect(actions.some(a => a.type === 'escalate')).toBe(false);
+    expect(actions.some(a => a.type === 'data_unavailable')).toBe(false);
+    expect(actions.some(a => a.type === 'upsell')).toBe(true);
+  });
+
+  it('1ª resposta e resolução estouradas juntas geram uma única sugestão, nomeando a 1ª resposta', async () => {
+    h.tables.conversation_sla = {
+      rows: [{ contact_id: CONTACT, first_response_breached: true, resolution_breached: true }],
+      error: null,
+    };
+
+    const actions = await render();
+    const escalate = actions.filter(a => a.type === 'escalate');
+
+    expect(escalate).toHaveLength(1);
+    expect(escalate[0].description).toBe('Primeira resposta atrasada');
+    expect(escalate[0].label).toBe('Escalar para supervisor');
+  });
+
+  it('nenhum prazo estourado não sugere escalar', async () => {
+    h.tables.conversation_sla = {
+      rows: [{ contact_id: CONTACT, first_response_breached: false, resolution_breached: false }],
+      error: null,
+    };
+
+    const actions = await render();
+
+    expect(actions.some(a => a.type === 'escalate')).toBe(false);
+    expect(actions.some(a => a.type === 'upsell')).toBe(true);
+  });
+
+  it('com várias linhas de SLA lê a mais recente (order created_at desc + limit 1) e não perde o alerta', async () => {
+    h.tables.conversation_sla = {
+      rows: [
+        { contact_id: CONTACT, first_response_breached: false, created_at: '2026-10-01T10:00:00Z' },
+        { contact_id: CONTACT, first_response_breached: false, created_at: '2026-10-05T10:00:00Z' },
+        { contact_id: CONTACT, first_response_breached: true, created_at: '2026-10-09T10:00:00Z' },
+      ],
+      error: null,
+    };
+
+    const actions = await render();
+    const escalate = actions.filter(a => a.type === 'escalate');
+
+    expect(escalate).toHaveLength(1);
+    expect(escalate[0].description).toBe('Primeira resposta atrasada');
+    expect(actions.some(a => a.type === 'data_unavailable')).toBe(false);
+
+    const slaQuery = h.queries.find(q => q.table === 'conversation_sla');
+    expect(slaQuery?.order).toEqual({ col: 'created_at', asc: false });
+    expect(slaQuery?.limit).toBe(1);
+  });
+
+  it('sem nenhuma linha de SLA não escala nem aponta falha de leitura', async () => {
+    const actions = await render();
+
+    expect(actions.some(a => a.type === 'escalate')).toBe(false);
+    expect(actions.some(a => a.type === 'data_unavailable')).toBe(false);
+    expect(actions.some(a => a.type === 'upsell')).toBe(true);
+  });
+
+  it('erro de leitura do SLA vira aviso explícito, sem escalar nem sugerir oportunidade', async () => {
+    h.tables.conversation_sla = { rows: [], error: { message: 'permission denied' } };
+
+    const actions = await render();
+
+    expect(actions.some(a => a.type === 'data_unavailable')).toBe(true);
+    expect(actions.some(a => a.type === 'escalate')).toBe(false);
+    expect(actions.some(a => a.type === 'upsell')).toBe(false);
   });
 });

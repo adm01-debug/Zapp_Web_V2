@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Cpu, FileText, Bell, ArrowRight, ChevronRight, Clock, Lightbulb, TrendingUp, TrendingDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -27,7 +26,7 @@ const FEATURE_TILE: Record<string, string> = {
   analysis: 'bg-primary',
   sentiment: 'bg-dash-tile-red',
   summary: 'bg-dash-tile-green',
-  transcription: 'bg-dash-tile-violet',
+  transcription: 'bg-violeta',
   trends: 'bg-dash-tile-amber',
 };
 
@@ -66,7 +65,6 @@ function TrendText({ trend, label }: { trend?: { direction: 'up' | 'down' | 'sta
 }
 
 export function AIQuickAccess({ onNavigateTab }: { onNavigateTab?: (tab: string) => void }) {
-  const navigate = useNavigate();
   const handleFeatureClick = useAIFeatureNavigation();
   const { data: aiStats } = useAIStats(30);
   const { data: provider } = useActiveAIProvider();
@@ -148,7 +146,7 @@ export function AIQuickAccess({ onNavigateTab }: { onNavigateTab?: (tab: string)
             className="cursor-pointer" onClick={() => handleFeatureClick(feature)}>
             <div className="flex items-start gap-4">
               <div className={cn('w-16 h-16 rounded-2xl flex items-center justify-center shrink-0', FEATURE_TILE[feature.id] ?? 'bg-dash-tile-blue')}>
-                <feature.icon className="w-7 h-7 text-white" />
+                <feature.icon className={cn('w-7 h-7', feature.id === 'transcription' ? 'text-violeta-foreground' : 'text-white')} />
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-start justify-between gap-2">
@@ -172,7 +170,7 @@ export function AIQuickAccess({ onNavigateTab }: { onNavigateTab?: (tab: string)
       <div className="grid grid-cols-1 xl:grid-cols-[2fr_1fr] gap-4">
         <DashboardCard testid="ai-recent-card" variant="comfortable">
           <SectionHeader icon={Clock} title="Análises Recentes" subtitle="Últimas análises e processamentos de IA" tileSize={44} size="lg"
-            right={<VerTodasButton onClick={() => navigate('/sentiment-alerts')} />}
+            right={<VerTodasButton onClick={() => navigateToView('sentiment')} />}
           />
           <div className="rounded-lg bg-muted/20 border border-border/40 px-4 h-10 grid grid-cols-[2fr_1.4fr_1fr_0.8fr_auto] items-center text-xs font-semibold text-muted-foreground">
             <span>Conversa</span><span>Tipo de análise</span><span>Resultado</span><span>Data</span><span className="w-6" />
@@ -199,7 +197,7 @@ export function AIQuickAccess({ onNavigateTab }: { onNavigateTab?: (tab: string)
         </DashboardCard>
         <DashboardCard testid="ai-insights-card" variant="comfortable">
           <SectionHeader icon={Lightbulb} title="Insights de IA" subtitle="Principais insights do período" tileSize={44} size="lg"
-            right={<CardSelect value={insightPeriod} onValueChange={(v) => setInsightPeriod(v as InsightPeriod)} options={INSIGHT_PERIODS} testid="ai-insights-period" />}
+            right={<CardSelect name="Período insights" value={insightPeriod} onValueChange={(v) => setInsightPeriod(v as InsightPeriod)} options={INSIGHT_PERIODS} testid="ai-insights-period" />}
           />
           {!insights || insights.total === 0 ? (
             <div className="py-10 flex flex-col items-center text-muted-foreground gap-2">

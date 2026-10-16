@@ -11,9 +11,10 @@ import { Separator } from '@/components/ui/separator';
 import {
   Bell, Volume2, VolumeX, Play, Moon,
   AlertTriangle, MessageSquare, AtSign, RotateCcw,
-  CheckCircle2, TrendingDown, Activity, Mic,
+  CheckCircle2, TrendingDown, Activity, Mic, Wifi, Smartphone, Mail,
 } from 'lucide-react';
 import { NotificationSettings, SoundTypeOption } from '@/hooks/system/useNotificationSettings';
+import { useConnectionAlertPreferences } from '@/hooks/system/useConnectionAlertPreferences';
 import { playNotificationSound, SoundType, NotificationType } from '@/utils/notificationSounds';
 import { cn } from '@/lib/utils';
 
@@ -24,6 +25,18 @@ const SOUND_TYPES: { value: SoundTypeOption; label: string; description: string 
   { value: 'alert', label: 'Alerta', description: 'Som mais chamativo' },
   { value: 'soft', label: 'Suave', description: 'Notificação discreta' },
 ];
+
+const TIPO_LABEL: Record<NotificationType, string> = {
+  message: 'mensagem',
+  mention: 'menção',
+  sla_breach: 'violação de SLA',
+  sla_warning: 'aviso de SLA',
+  // A fileira que usa 'achievement' é "Transcrição de Áudio": o nome acessível
+  // precisa conter o texto visível da linha, senão o leitor de tela anuncia
+  // "conquista" num controle que a tela chama de transcrição.
+  achievement: 'transcrição de áudio',
+  goal_achieved: 'meta alcançada',
+};
 
 interface SoundSelectorProps {
   value: SoundTypeOption;
@@ -42,10 +55,12 @@ export function SoundSelector({ value, onChange, notificationType, label, soundV
     setTimeout(() => setIsTesting(false), 1000);
   };
 
+  const tipo = TIPO_LABEL[notificationType] ?? notificationType;
+
   return (
     <div className="flex items-center gap-2">
       <Select value={value} onValueChange={(v: SoundTypeOption) => onChange(v)}>
-        <SelectTrigger className="w-[130px]">
+        <SelectTrigger className="w-[130px]" aria-label={`Som de ${tipo}`}>
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -56,7 +71,7 @@ export function SoundSelector({ value, onChange, notificationType, label, soundV
           ))}
         </SelectContent>
       </Select>
-      <Button variant="ghost" size="icon" onClick={handleTest} disabled={isTesting} className="h-8 w-8">
+      <Button variant="ghost" size="icon" onClick={handleTest} disabled={isTesting} className="h-8 w-8" aria-label={`Testar som de ${tipo}`}>
         <Play className={cn("w-3 h-3", isTesting && "animate-pulse text-primary")} />
       </Button>
     </div>
@@ -136,7 +151,7 @@ function NotifRow({ icon: Icon, iconColor, title, desc, enabled, onToggle, sound
       </div>
       <div className="flex items-center gap-3">
         {soundSelector}
-        {onToggle && <Switch checked={enabled} onCheckedChange={onToggle} />}
+        {onToggle && <Switch checked={enabled} onCheckedChange={onToggle} aria-label={`Ativar notificação de ${title}`} />}
       </div>
     </div>
   );
@@ -157,13 +172,14 @@ export function SentimentAlertCard({ settings, updateSettings }: SentimentAlertC
               <TrendingDown className="w-5 h-5 text-warning" />
             </div>
             <div>
-              <CardTitle className="text-lg">Alertas de Sentimento</CardTitle>
+              <CardTitle id="sentiment-alert-title" className="text-lg">Alertas de Sentimento</CardTitle>
               <CardDescription>Notificações quando clientes ficam insatisfeitos</CardDescription>
             </div>
           </div>
           <Switch
             checked={settings.sentimentAlertEnabled}
             onCheckedChange={(checked) => updateSettings({ sentimentAlertEnabled: checked })}
+            aria-labelledby="sentiment-alert-title"
           />
         </div>
       </CardHeader>
@@ -226,6 +242,78 @@ export function SentimentAlertCard({ settings, updateSettings }: SentimentAlertC
   );
 }
 
+/**
+ * PD-38 — cartão "Alertas de Conexão" da tela de Notificações.
+ *
+ * Traz os DOIS grupos de preferência do aviso de conexão, por usuário:
+ * o TIPO — o interruptor mestre, `alert_on_degraded` (conexão instável) e
+ * `alert_on_disconnected` (conexão caída), que a faixa dentro do app
+ * (EvolutionDisconnectBanner) consulta — e os CANAIS por onde o aviso sai:
+ * `push_enabled` (notificação do navegador) e `email_enabled` (e-mail).
+ * Cada interruptor grava na hora pelo hook (upsert otimista com rollback).
+ */
+export function ConnectionAlertPreferencesCard() {
+  const { preferences, updatePreference } = useConnectionAlertPreferences();
+
+  return (
+    <Card className="border-secondary/20 bg-card">
+      <CardHeader>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-warning/15 flex items-center justify-center">
+            <Wifi className="w-5 h-5 text-warning" />
+          </div>
+          <div>
+            <CardTitle className="text-lg">Alertas de Conexão</CardTitle>
+            <CardDescription>Por onde avisar quando a conexão de WhatsApp cair</CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-sm font-medium">Quando alertar</p>
+        <NotifRow
+          icon={TrendingDown}
+          iconColor="text-warning"
+          title="Conexão degradada"
+          desc="Avisar quando a conexão ficar instável"
+          enabled={preferences.alert_on_degraded}
+          onToggle={(checked) => updatePreference({ alert_on_degraded: checked })}
+        />
+        <Separator />
+        <NotifRow
+          icon={AlertTriangle}
+          iconColor="text-destructive"
+          title="Conexão desconectada"
+          desc="Avisar quando a conexão cair"
+          enabled={preferences.alert_on_disconnected}
+          onToggle={(checked) => updatePreference({ alert_on_disconnected: checked })}
+        />
+        <Separator />
+        <p className="text-sm font-medium">Por onde avisar</p>
+        <NotifRow
+          icon={Smartphone}
+          iconColor="text-primary"
+          title="Navegador"
+          desc="Notificação do navegador quando a conexão cair"
+          enabled={preferences.push_enabled}
+          onToggle={(checked) => updatePreference({ push_enabled: checked })}
+        />
+        <Separator />
+        <NotifRow
+          icon={Mail}
+          iconColor="text-info"
+          title="E-mail"
+          desc="Aviso por e-mail quando a conexão cair"
+          enabled={preferences.email_enabled}
+          onToggle={(checked) => updatePreference({ email_enabled: checked })}
+        />
+        <p className="text-xs text-muted-foreground">
+          Estas preferências valem apenas para os avisos de conexão de WhatsApp.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
 interface QuietHoursCardProps {
   settings: NotificationSettings;
   updateSettings: (partial: Partial<NotificationSettings>) => void;
@@ -242,13 +330,13 @@ export function QuietHoursCard({ settings, updateSettings, isQuietHours }: Quiet
               <Moon className="w-5 h-5 text-muted-foreground" />
             </div>
             <div>
-              <CardTitle className="text-lg">Horário Silencioso</CardTitle>
+              <CardTitle id="quiet-hours-title" className="text-lg">Horário Silencioso</CardTitle>
               <CardDescription>Desativar sons em horários específicos</CardDescription>
             </div>
           </div>
           <div className="flex items-center gap-2">
             {isQuietHours() && <Badge variant="secondary" className="bg-muted">Ativo agora</Badge>}
-            <Switch checked={settings.quietHoursEnabled} onCheckedChange={(checked) => updateSettings({ quietHoursEnabled: checked })} />
+            <Switch checked={settings.quietHoursEnabled} onCheckedChange={(checked) => updateSettings({ quietHoursEnabled: checked })} aria-labelledby="quiet-hours-title" />
           </div>
         </div>
       </CardHeader>

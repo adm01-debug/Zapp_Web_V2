@@ -58,20 +58,22 @@ describe('StatusChips — identidade do contador "Em atendimento" (R2-INB-056)',
 
   it('conta a conversa atribuída ao PROFILE id do usuário logado', () => {
     const conversations = [
-      makeConversation({ id: 'minha', assigned_to: MY_PROFILE_ID }),
-      makeConversation({ id: 'do-colega', assigned_to: OUTRO_PROFILE_ID }),
-      makeConversation({ id: 'sem-dono', assigned_to: null }),
+      makeConversation({ id: 'minha', assigned_to: MY_PROFILE_ID, conversation_status: 'open' }),
+      makeConversation({ id: 'do-colega', assigned_to: OUTRO_PROFILE_ID, conversation_status: 'open' }),
+      makeConversation({ id: 'sem-dono', assigned_to: null, conversation_status: 'waiting' }),
     ];
 
     render(<StatusChips conversations={conversations} chipTab="all" onChipTabChange={() => {}} />);
 
     // Só a conversa com assigned_to = profile.id do logado entra no contador.
+    // "Aguardando" segue o status persistido (contacts.conversation_status),
+    // como a lista: por isso a conversa sem dono é criada como 'waiting'.
     expect(screen.getByTestId('status-chip-attending')).toHaveTextContent('1');
     expect(screen.getByTestId('status-chip-waiting')).toHaveTextContent('1');
   });
 
   it('NÃO conta a conversa cujo assigned_to coincide com o AUTH id (auth id não é profile id)', () => {
-    const conversations = [makeConversation({ id: 'auth-nao-e-profile', assigned_to: AUTH_USER_ID })];
+    const conversations = [makeConversation({ id: 'auth-nao-e-profile', assigned_to: AUTH_USER_ID, conversation_status: 'open' })];
 
     render(<StatusChips conversations={conversations} chipTab="all" onChipTabChange={() => {}} />);
 
@@ -87,7 +89,7 @@ describe('StatusChips — identidade do contador "Em atendimento" (R2-INB-056)',
       user: { id: AUTH_USER_ID },
       profile,
     };
-    const conversations = [makeConversation({ id: 'sem-profile-id', assigned_to: undefined })];
+    const conversations = [makeConversation({ id: 'sem-profile-id', assigned_to: undefined, conversation_status: 'waiting' })];
 
     render(<StatusChips conversations={conversations} chipTab="all" onChipTabChange={() => {}} />);
 

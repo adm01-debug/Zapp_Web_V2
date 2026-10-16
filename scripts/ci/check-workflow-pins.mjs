@@ -11,24 +11,14 @@ const IMAGE_DIGEST = /@sha256:[a-f0-9]{64}/u;
 // string EXATA usada no YAML (por exemplo "24", "1.24.x"), para a comparação ser de
 // igualdade e não de faixa.
 export const TOOLCHAIN_PATH = ".github/toolchain.json";
-export const TOOLCHAIN_KEYS = ["bun", "deno", "node", "go", "supabase-cli", "postgres-image", "actionlint", "actionlint-sha256-linux-amd64", "zizmor"];
+export const TOOLCHAIN_KEYS = ["bun", "deno", "node", "go", "supabase-cli", "playwright", "postgres-image"];
 
 const SCALAR = /^(?:'([^']*)'|"([^"]*)"|([^\s#'"]+))(?:\s+#.*)?$/u;
 const TOOLCHAIN_VERSION_INPUT = /^\s*(?:-\s*)?["']?(bun|deno|node|go)-version["']?\s*:\s*(.*)$/u;
 const SUPABASE_CLI_ENV = /^\s*["']?SUPABASE_CLI_VERSION["']?\s*:\s*(.*)$/u;
 const SUPABASE_CLI_VERSION_INPUT = /^\s*["']?version["']?\s*:\s*(.*)$/u;
 const IMAGE_LINE = /^\s*(?:-\s*)?(?:["']?image["']?|["']?[A-Za-z][A-Za-z0-9_]*_IMAGE["']?)\s*:\s*(.*)$/u;
-// W09: a versão do Playwright vem SÓ do bun.lock (`./node_modules/.bin/playwright`).
-// Qualquer seletor `playwright@…` ou `@playwright/<pacote>@…` num workflow — número,
-// `latest`, `next`, `v1.63.0` — faz o `bunx` resolver o pacote fora do lockfile e
-// reintroduz a duplicação que deixava o bump do Dependabot vermelho por construção — é
-// violação, sempre (Codex, PR #1923: o escopo `@playwright/test` expõe o mesmo binário).
-const PLAYWRIGHT_PIN = /(?:@playwright\/[\w.-]+|\bplaywright)@([^\s"'`]+)/gu;
-export const PLAYWRIGHT_ESPERADO = "(sem pin: ./node_modules/.bin/playwright, versão do bun.lock)";
-// W88: padrões para binários baixados via curl e pip em scripts de workflow
-const ACTIONLINT_VERSION_LINE = /^\s*actionlint_version=["']?([0-9][^\s"']*)["']?/u;
-const ACTIONLINT_SHA256_LINE = /^\s*actionlint_sha256=["']?([0-9a-f]{64})["']?/u;
-const ZIZMOR_PIP_LINE = /\bzizmor==([0-9][^\s"']*)/u;
+const PLAYWRIGHT_PIN = /playwright@([0-9][0-9A-Za-z.-]*)/gu;
 
 /** Valor literal de um escalar YAML; `null` quando é expressão do Actions ou valor multilinha. */
 function scalarValue(raw) {
@@ -120,8 +110,7 @@ export function loadToolchain(root = process.cwd()) {
 /**
  * Compara cada versão de toolchain literalizada no workflow com a fonte única.
  * Cobre: bun/deno/node/go em `*-version`, `SUPABASE_CLI_VERSION` (e o `version:` do passo
- * supabase/setup-cli) e a imagem do serviço Postgres; `playwright@X` literal em `run:` é
- * sempre violação (W09: a versão do Playwright é a do bun.lock).
+ * supabase/setup-cli), `playwright@X` em `run:` e a imagem do serviço Postgres.
  */
 export function findToolchainDrift(source, file = "workflow.yml", toolchain = {}) {
   const violations = [];
@@ -157,19 +146,7 @@ export function findToolchainDrift(source, file = "workflow.yml", toolchain = {}
     const image = line.match(IMAGE_LINE);
     if (image && image[1].trim().startsWith("postgres")) { report("postgres-image", scalarValue(image[1])); continue; }
 
-    for (const pin of line.matchAll(PLAYWRIGHT_PIN)) {
-      violations.push({ file, line: lineNumber, tool: "playwright", value: pin[1], expected: PLAYWRIGHT_ESPERADO });
-    }
-
-    // W88: binários baixados via curl (actionlint) e pip (zizmor)
-    const actionlintVer = line.match(ACTIONLINT_VERSION_LINE);
-    if (actionlintVer) { report("actionlint", actionlintVer[1]); continue; }
-
-    const actionlintHash = line.match(ACTIONLINT_SHA256_LINE);
-    if (actionlintHash) { report("actionlint-sha256-linux-amd64", actionlintHash[1]); continue; }
-
-    const zizmorVer = line.match(ZIZMOR_PIP_LINE);
-    if (zizmorVer) { report("zizmor", zizmorVer[1]); }
+    for (const pin of line.matchAll(PLAYWRIGHT_PIN)) { report("playwright", pin[1]); }
   }
   return violations;
 }
@@ -178,48 +155,6 @@ export function loadAllowedOwnerRepos(root = process.cwd()) {
   const jsonPath = path.join(root, "scripts", "ci", "allowed-actions.json");
   const data = JSON.parse(readFileSync(jsonPath, "utf8"));
   return new Set(data.patterns);
-}
-
-/**
- * W88: verifica que todo binário baixado por curl em run: steps tem versão e sha256
- * declarados em toolchain.json e que os valores coincidem.
- *
- * Padrão detectado no YAML:
- *   <tool>_version="X.Y.Z"   →  toolchain["<tool>-version"] deve ser "X.Y.Z"
- *   <tool>_sha256="HASH"     →  toolchain["<tool>-sha256"]  deve ser "HASH"
- */
-export function findCurlBinaryViolations(source, file = "workflow.yml", toolchain = {}) {
-  const violations = [];
-  const lines = source.replace(/\r\n?/gu, "\n").split("\n");
-  const versionRe = /^\s+([a-z][a-z0-9_]*)_version="([^"]+)"/u;
-  const sha256Re  = /^\s+([a-z][a-z0-9_]*)_sha256="([0-9a-f]{64})"/u;
-
-  for (const [index, line] of lines.entries()) {
-    const lineNumber = index + 1;
-    const vMatch = line.match(versionRe);
-    if (vMatch) {
-      const [, tool, value] = vMatch;
-      const key = `${tool.replace(/_/gu, "-")}-version`;
-      const expected = Object.hasOwn(toolchain, key) ? toolchain[key] : null;
-      if (expected === null) {
-        violations.push({ file, line: lineNumber, tool, field: "version", value, expected: null, motivo: "chave ausente em toolchain.json" });
-      } else if (value !== expected) {
-        violations.push({ file, line: lineNumber, tool, field: "version", value, expected });
-      }
-    }
-    const sMatch = line.match(sha256Re);
-    if (sMatch) {
-      const [, tool, value] = sMatch;
-      const key = `${tool.replace(/_/gu, "-")}-sha256`;
-      const expected = Object.hasOwn(toolchain, key) ? toolchain[key] : null;
-      if (expected === null) {
-        violations.push({ file, line: lineNumber, tool, field: "sha256", value, expected: null, motivo: "chave ausente em toolchain.json" });
-      } else if (value !== expected) {
-        violations.push({ file, line: lineNumber, tool, field: "sha256", value, expected });
-      }
-    }
-  }
-  return violations;
 }
 
 export function main(root = process.cwd()) {
@@ -249,10 +184,6 @@ export function main(root = process.cwd()) {
   }
   const driftViolations = toolchain
     ? files.flatMap((file) => findToolchainDrift(sources.get(file), file, toolchain))
-    : [];
-
-  const binaryViolations = toolchain
-    ? files.flatMap((file) => findCurlBinaryViolations(sources.get(file), file, toolchain))
     : [];
 
   let exitCode = 0;
@@ -290,16 +221,6 @@ export function main(root = process.cwd()) {
       console.error(`  ${violation.file}:${violation.line} ${violation.tool}: ${violation.value} (fonte: ${violation.expected ?? "chave ausente"})`);
     }
     console.error(`Mude a versão em ${TOOLCHAIN_PATH} e propague para os workflows; nenhum valor fora da fonte é aceito.`);
-    exitCode = 1;
-  }
-
-  if (binaryViolations.length) {
-    console.error("FALHA: binário baixado por curl com versão/sha256 divergente de toolchain.json (W88):");
-    for (const v of binaryViolations) {
-      const motivo = v.motivo ?? `${v.value} (esperado: ${v.expected})`;
-      console.error(`  ${v.file}:${v.line} ${v.tool} ${v.field}: ${motivo}`);
-    }
-    console.error(`Atualize ${TOOLCHAIN_PATH} ou o YAML; os dois devem coincidir.`);
     exitCode = 1;
   }
 

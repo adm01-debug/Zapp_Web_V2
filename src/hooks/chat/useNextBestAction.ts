@@ -97,19 +97,27 @@ export function useNextBestAction(contactId: string, contactName: string) {
         });
       }
 
+      // `conversation_sla` guarda UMA linha por ciclo do contato: o índice único
+      // `ux_conversation_sla_open_per_contact` é PARCIAL (só as linhas ainda sem 1ª
+      // resposta), então um contato atendido várias vezes tem várias linhas. Sem
+      // ordem/limite, o `.maybeSingle()` devolve erro de "múltiplas linhas" e o alerta
+      // de SLA desaparece; a linha que importa é a mais recente (`created_at desc`).
       const { data: slaData, error: slaError } = await supabase
         .from('conversation_sla')
         .select('first_response_breached')
         .eq('contact_id', contactId)
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (slaError) readFailures.push('SLA');
 
-      if (slaData?.first_response_breached) {
+      // Escala só pelo prazo de 1ª resposta (SLA de Resolução está fora do escopo).
+      if (slaData?.first_response_breached === true) {
         suggestedActions.push({
           type: 'escalate',
           label: 'Escalar para supervisor',
-          description: 'SLA estourado - requer atenção imediata',
+          description: 'Primeira resposta atrasada',
           priority: 'high',
           icon: AlertTriangle,
         });

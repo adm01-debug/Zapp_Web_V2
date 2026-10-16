@@ -1,0 +1,368 @@
+-- ============================================================================
+-- supabase/tests/admin_unlock_login_autorizacao.sql
+-- Cartao t_8ea464f2 (lacuna LA — destravar login bloqueado pelo admin).
+--
+-- O QUE PROVA (criterio de pronto do cartao):
+--   A) a RPC nova public.admin_unlock_login(text) existe, e SECURITY DEFINER com
+--      search_path fixo, e so `authenticated` tem EXECUTE (anon e PUBLIC, nao);
+--   B) um AGENTE logado NAO destrava ninguem — 42501 admin_required, sem efeito
+--      nenhum na linha de tentativas nem na trilha;
+--   C) um SUPERVISOR tambem nao (a autoridade do cartao e is_admin, nao
+--      is_admin_or_supervisor);
+--   D) um ANONIMO e barrado pela ACL (42501);
+--   E) o ADMIN destrava: a linha de public.login_attempts some e fica EXATAMENTE
+--      1 linha em public.audit_logs com action='login_unlock', user_id = o admin
+--      (QUEM destravou) e entity_id = a linha apagada;
+--   F) o log NAO guarda o e-mail completo (grava email_masked) e o e-mail
+--      original nao aparece em nenhuma coluna da trilha;
+--   G) autorizacao ANTES da entrada: e-mail vazio/ausente com agente da 42501
+--      (nao 22023) — o guard roda primeiro; com admin, entrada invalida da 22023;
+--   H) conta ja destravada: no-op silencioso, SEM trilha nova (nem erro, nem
+--      resposta diferente para e-mail que existe e que nao existe);
+--   I) efeito colateral: a linha de OUTRA conta bloqueada fica intacta.
+--
+-- COMO A PROTECAO ENTRA NO TESTE: ambiente minimo criado a mao (papeis, schema
+-- auth, tabelas-base) — e a PROTECAO aplicada VERBATIM das migrations reais do
+-- repositorio, em ordem cronologica, via `\i`: user_roles/audit_logs/app_role,
+-- login_attempts, o fecho da policy permissiva de login_attempts, as policies de
+-- RLS da tabela, is_admin e a migration do cartao. Mesmo padrao de
+-- supabase/tests/user_roles_troca_de_papel_autorizacao_e_auditoria.sql.
+-- NAO entram 20260903260000 (revoga funcoes e renomeia a policy de SELECT; nada
+-- disso toca o caminho da RPC) nem as migrations de ACL de outras funcoes: a RPC e
+-- SECURITY DEFINER e roda como owner, entao nao passa pela RLS de login_attempts.
+--
+-- ENFORCEMENT como PAPEL REAL: as chamadas rodam com `SET LOCAL ROLE
+-- authenticated`/`anon` + JWT sintetico em request.jwt.claims — o caminho do
+-- PostgREST, nunca como postgres/superusuario (que ignora RLS e GRANT). O helper
+-- confere que `current_user` e mesmo o papel pedido: se o papel nao pegasse, o
+-- teste FALHA em vez de dar verde.
+--
+-- COMO RODA (PostgreSQL 17 descartavel; o psql roda no host e passa os caminhos do
+-- proprio repositorio — nao precisa de volume, -v repo=):
+--   docker run -d --name zapp-la-unlock-test -e POSTGRES_PASSWORD=test_only \
+--     -p 127.0.0.1:55432:5432 postgres:17-alpine
+--   PGPASSWORD=test_only psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -p 55432 -U postgres \
+--     -d postgres -v mig_dir="$PWD/supabase/migrations" \
+--     -f supabase/tests/admin_unlock_login_autorizacao.sql
+--   docker stop zapp-la-unlock-test
+-- (no CI quem roda as suites supabase/tests/*.sql e o proprio harness; aqui o alvo e
+--  um Postgres 17 limpo, que e o que estas suites assumem.)
+--
+-- VERMELHO (prova que o teste pega a correcao faltando): acrescente `-v sem_guarda=1`.
+--   Com sem_guarda a RPC e recriada (CREATE OR REPLACE, mantendo as ACLs) SEM o
+--   guard de admin — o mesmo defeito que o cartao corrige. BLOCO A (agente/
+--   supervisor) passa a destravar e o teste falha. Nada persiste: termina em ROLLBACK.
+--
+-- Tudo roda numa unica transacao que termina em ROLLBACK: idempotente, sem efeito
+-- colateral e reaplicavel.
+-- ============================================================================
+
+\set ON_ERROR_STOP on
+\if :{?mig_dir}
+\else
+  \set mig_dir supabase/migrations
+\endif
+
+BEGIN;
+
+-- ── Superficie minima (ambiente; o contrato vem das migrations logo abaixo) ──
+CREATE ROLE anon NOLOGIN;
+CREATE ROLE authenticated NOLOGIN;
+CREATE ROLE service_role NOLOGIN BYPASSRLS;
+CREATE ROLE zz_public_probe NOLOGIN;   -- sonda de PUBLIC (membro implicito de PUBLIC, e so)
+
+CREATE SCHEMA auth;
+CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$
+  SELECT nullif(coalesce(
+    nullif(current_setting('request.jwt.claim.sub', true), ''),
+    nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub'
+  ), '')::uuid $$;
+CREATE FUNCTION auth.role() RETURNS text LANGUAGE sql STABLE AS $$
+  SELECT coalesce(
+    nullif(current_setting('request.jwt.claim.role', true), ''),
+    nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role'
+  )::text $$;
+GRANT USAGE ON SCHEMA auth TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION auth.uid(), auth.role() TO anon, authenticated, service_role;
+
+CREATE TABLE auth.users (id uuid PRIMARY KEY);
+CREATE SCHEMA storage;
+CREATE TABLE storage.buckets (id text PRIMARY KEY, name text, public boolean);
+CREATE TABLE storage.objects (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), bucket_id text);
+CREATE PUBLICATION supabase_realtime;
+
+CREATE TABLE public.profiles (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
+  name text NOT NULL,
+  role text DEFAULT 'agent',
+  permissions jsonb DEFAULT '{}'::jsonb,
+  access_level text DEFAULT 'active',
+  is_active boolean DEFAULT true
+);
+CREATE TABLE public.contacts (id uuid PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE public.whatsapp_connections (id uuid PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE public.warroom_alerts (id uuid PRIMARY KEY DEFAULT gen_random_uuid());
+-- as duas tabelas que 20260830080000 toca (policies) — ambiente, nao contrato
+CREATE TABLE public.permissions (id uuid PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE public.role_permissions (id uuid PRIMARY KEY DEFAULT gen_random_uuid());
+-- tabelas que 20260315115805 toca (ambiente, nao contrato)
+CREATE TABLE public.webauthn_challenges (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), user_id uuid);
+CREATE TABLE public.whatsapp_groups (id uuid PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE public.messages (id uuid PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE public.notifications (id uuid PRIMARY KEY DEFAULT gen_random_uuid());
+
+-- ── Fixture de pessoas (antes das migrations: sem gatilho de auth.users) ─────
+SET session_replication_role = replica;
+INSERT INTO auth.users (id) VALUES
+  ('11111111-1111-1111-1111-11111111111a'),  -- ADMIN
+  ('22222222-2222-2222-2222-22222222222b'),  -- AGENTE
+  ('44444444-4444-4444-4444-44444444444d');  -- SUPERVISOR
+INSERT INTO public.profiles (id, user_id, name) VALUES
+  ('a0000000-0000-0000-0000-00000000000a', '11111111-1111-1111-1111-11111111111a', 'ADMIN LA'),
+  ('b0000000-0000-0000-0000-00000000000b', '22222222-2222-2222-2222-22222222222b', 'AGENTE LA'),
+  ('d0000000-0000-0000-0000-00000000000d', '44444444-4444-4444-4444-44444444444d', 'SUPERVISOR LA');
+SET session_replication_role = origin;
+
+-- ── A PROTECAO, verbatim das migrations reais, em ordem cronologica ──────────
+\echo '── aplicando as migrations REAIS (user_roles/audit_logs, login_attempts, is_admin, RLS, RPC do cartao) ──'
+\i :mig_dir/20251215025014_fcc5bc79-55e3-4972-8765-6a7840fdce5a.sql
+\i :mig_dir/20251231132448_8f744f22-eacc-43e9-be5b-8b194737c75d.sql
+\i :mig_dir/20260315115805_edf10d24-a610-4b78-8518-d96ca963f800.sql
+\i :mig_dir/20260404162520_249862a5-69cf-466f-a6dd-4ae620eca775.sql
+\i :mig_dir/20260830080000_fn_is_admin_and_fix_permissions_rls.sql
+\i :mig_dir/20261016005650_admin_unlock_login.sql
+
+-- GRANT de tabela do PostgREST: e ele + a RLS que definem o caminho direto.
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.login_attempts, public.audit_logs, public.user_roles
+  TO authenticated, service_role;
+GRANT SELECT ON public.profiles TO authenticated, service_role;
+
+-- ── Fixtures de papel e de tentativas (depois das migrations) ────────────────
+SET session_replication_role = replica;
+INSERT INTO public.user_roles (user_id, role) VALUES
+  ('11111111-1111-1111-1111-11111111111a', 'admin'),
+  ('22222222-2222-2222-2222-22222222222b', 'agent'),
+  ('44444444-4444-4444-4444-44444444444d', 'supervisor');
+SET session_replication_role = origin;
+
+INSERT INTO public.login_attempts (id, email, ip_address, attempt_count, locked_until) VALUES
+  ('1a000000-0000-0000-0000-000000000001', 'alvo.bloqueado@empresa.com', '203.0.113.7', 7, now() + INTERVAL '30 minutes'),
+  ('1a000000-0000-0000-0000-000000000002', 'outro.bloqueado@empresa.com', '203.0.113.9', 5, now() + INTERVAL '10 minutes');
+
+DELETE FROM public.audit_logs;   -- baseline: so as operacoes do teste contam
+
+-- ── Modo vermelho: o guard de admin ausente (o defeito que o cartao corrige) ──
+\if :{?sem_guarda}
+  -- CREATE OR REPLACE: preserva as ACLs da migration; some so o guard.
+  CREATE OR REPLACE FUNCTION public.admin_unlock_login(p_email text)
+  RETURNS void
+  LANGUAGE sql
+  SECURITY DEFINER
+  SET search_path TO 'public', 'pg_temp'
+  AS $$ DELETE FROM public.login_attempts WHERE email = lower(btrim(p_email)); $$;
+  \echo '  [sem_guarda] o guard de admin foi retirado da RPC (dentro da transacao)'
+\endif
+
+-- ── Helpers do proprio teste ────────────────────────────────────────────────
+CREATE FUNCTION pg_temp.espera(p_label text, p_atual text, p_esperado text) RETURNS void
+LANGUAGE plpgsql AS $h$
+BEGIN
+  IF p_atual IS DISTINCT FROM p_esperado THEN
+    RAISE EXCEPTION 'LA FALHOU [%]: esperado %, obtido %', p_label, p_esperado, p_atual;
+  END IF;
+  RAISE NOTICE 'PASS [%] -> %', p_label, p_atual;
+END $h$;
+
+CREATE FUNCTION pg_temp.espera_erro(p_label text, p_atual text, p_sqlstate text) RETURNS void
+LANGUAGE plpgsql AS $h$
+BEGIN
+  IF p_atual IS NULL OR p_atual NOT LIKE 'ERRO ' || p_sqlstate || ' %' THEN
+    RAISE EXCEPTION 'LA FALHOU [%]: esperava erro SQLSTATE %, veio: %', p_label, p_sqlstate, p_atual;
+  END IF;
+  RAISE NOTICE 'PASS [%] -> %', p_label, p_atual;
+END $h$;
+
+CREATE FUNCTION pg_temp.espera_contem(p_label text, p_atual text, p_trecho text) RETURNS void
+LANGUAGE plpgsql AS $h$
+BEGIN
+  IF p_atual IS NULL OR position(p_trecho IN p_atual) = 0 THEN
+    RAISE EXCEPTION 'LA FALHOU [%]: "%" nao contem "%"', p_label, p_atual, p_trecho;
+  END IF;
+  RAISE NOTICE 'PASS [%] -> %', p_label, p_atual;
+END $h$;
+
+-- Roda p_sql sob o PAPEL REAL (SET LOCAL ROLE) com o JWT de p_uid (ou sem JWT).
+-- Devolve 'OK <linhas>' ou 'ERRO <sqlstate> <mensagem>'. O bloco EXCEPTION interno
+-- garante que uma operacao negada NAO aborta a transacao do teste.
+CREATE FUNCTION pg_temp.operacao(p_papel text, p_uid uuid, p_sql text) RETURNS text
+LANGUAGE plpgsql AS $h$
+DECLARE v_ret text; v_n bigint;
+BEGIN
+  IF p_uid IS NULL THEN
+    PERFORM set_config('request.jwt.claims', '', true);
+  ELSE
+    PERFORM set_config('request.jwt.claims',
+      json_build_object('sub', p_uid, 'role', 'authenticated')::text, true);
+  END IF;
+  EXECUTE format('SET LOCAL ROLE %I', p_papel);
+  IF current_user <> p_papel THEN
+    RAISE EXCEPTION 'LA FALHOU: papel real nao aplicado (current_user=%)', current_user;
+  END IF;
+  BEGIN
+    EXECUTE p_sql;
+    GET DIAGNOSTICS v_n = ROW_COUNT;
+    v_ret := 'OK ' || v_n;
+  EXCEPTION WHEN OTHERS THEN
+    v_ret := 'ERRO ' || SQLSTATE || ' ' || SQLERRM;
+  END;
+  RESET ROLE;
+  RETURN v_ret;
+END $h$;
+
+-- Atalho: chama a RPC como o papel pedido.
+CREATE FUNCTION pg_temp.rpc(p_papel text, p_uid uuid, p_email text) RETURNS text
+LANGUAGE plpgsql AS $h$
+BEGIN
+  RETURN pg_temp.operacao(p_papel, p_uid,
+    format('SELECT public.admin_unlock_login(%L)', p_email));
+END $h$;
+
+\echo
+\echo '── T0: forma da RPC e fronteira de ACL ──────────────────────────────────'
+SELECT pg_temp.espera('T0a admin_unlock_login e SECURITY DEFINER',
+  (SELECT prosecdef::text FROM pg_proc WHERE oid = 'public.admin_unlock_login(text)'::regprocedure), 'true');
+SELECT pg_temp.espera('T0b admin_unlock_login fixa o search_path',
+  (SELECT (coalesce(array_to_string(proconfig, ','), '') LIKE '%search_path=%')::text
+     FROM pg_proc WHERE oid = 'public.admin_unlock_login(text)'::regprocedure), 'true');
+SELECT pg_temp.espera('T0c authenticated TEM EXECUTE na RPC',
+  has_function_privilege('authenticated', 'public.admin_unlock_login(text)', 'EXECUTE')::text, 'true');
+SELECT pg_temp.espera('T0d anon NAO tem EXECUTE na RPC',
+  has_function_privilege('anon', 'public.admin_unlock_login(text)', 'EXECUTE')::text, 'false');
+-- T0e: num Postgres 17 a coluna pg_proc.proacl nao existe mais, entao PUBLIC e
+-- sondado por um papel que nao pertence a mais nada: todo papel e membro implicito
+-- de PUBLIC, logo EXECUTE=false aqui prova que PUBLIC perdeu o EXECUTE default.
+SELECT pg_temp.espera('T0e PUBLIC NAO tem EXECUTE na RPC (papel-sonda sem outro vinculo)',
+  has_function_privilege('zz_public_probe', 'public.admin_unlock_login(text)', 'EXECUTE')::text, 'false');
+SELECT pg_temp.espera('T0f RLS ligada em login_attempts',
+  (SELECT relrowsecurity::text FROM pg_class WHERE oid = 'public.login_attempts'::regclass), 'true');
+SELECT pg_temp.espera('T0g RLS ligada em audit_logs',
+  (SELECT relrowsecurity::text FROM pg_class WHERE oid = 'public.audit_logs'::regclass), 'true');
+
+\echo
+\echo '── BLOCO A: agente, supervisor e anonimo NAO destravam ninguem ──────────'
+
+-- T1 — AGENTE: recusado pelo guard interno, e nada muda na linha
+SELECT pg_temp.espera_erro('T1 agente nao destrava (admin_required)',
+  pg_temp.rpc('authenticated', '22222222-2222-2222-2222-22222222222b', 'alvo.bloqueado@empresa.com'),
+  '42501');
+SELECT pg_temp.espera_contem('T1b a recusa e nomeada admin_required',
+  pg_temp.rpc('authenticated', '22222222-2222-2222-2222-22222222222b', 'alvo.bloqueado@empresa.com'),
+  'admin_required');
+SELECT pg_temp.espera('T1c a linha do alvo continua la (sem efeito parcial)',
+  (SELECT (count(*) || '/' || max(attempt_count) || '/' || (max(locked_until) IS NOT NULL)::text)
+     FROM public.login_attempts WHERE email = 'alvo.bloqueado@empresa.com'), '1/7/true');
+
+-- T2 — SUPERVISOR: a autoridade e is_admin, nao is_admin_or_supervisor
+SELECT pg_temp.espera_erro('T2 supervisor nao destrava (autoridade e do admin)',
+  pg_temp.rpc('authenticated', '44444444-4444-4444-4444-44444444444d', 'alvo.bloqueado@empresa.com'),
+  '42501');
+
+-- T3 — ANONIMO: barrado pela ACL, sem JWT
+SELECT pg_temp.espera_erro('T3 anonimo nao executa a RPC (ACL)',
+  pg_temp.rpc('anon', NULL, 'alvo.bloqueado@empresa.com'),
+  '42501');
+
+-- T4 — o que foi negado nao vai para a trilha
+SELECT pg_temp.espera('T4 nenhuma tentativa negada gerou auditoria',
+  (SELECT count(*)::text FROM public.audit_logs WHERE action = 'login_unlock'), '0');
+
+\echo
+\echo '── BLOCO B: autorizacao ANTES da entrada ────────────────────────────────'
+
+-- T5 — e-mail vazio com AGENTE: 42501 (o guard roda primeiro), nao 22023
+SELECT pg_temp.espera_erro('T5 agente com e-mail vazio para no guard (42501, nao 22023)',
+  pg_temp.rpc('authenticated', '22222222-2222-2222-2222-22222222222b', ''),
+  '42501');
+
+-- T6 — e-mail vazio/ausente com ADMIN: 22023 invalid_email
+SELECT pg_temp.espera_erro('T6 admin com e-mail vazio -> invalid_email',
+  pg_temp.rpc('authenticated', '11111111-1111-1111-1111-11111111111a', '   '),
+  '22023');
+SELECT pg_temp.espera_erro('T7 admin com e-mail nulo -> invalid_email',
+  pg_temp.operacao('authenticated', '11111111-1111-1111-1111-11111111111a',
+    $sql$SELECT public.admin_unlock_login(NULL::text)$sql$),
+  '22023');
+SELECT pg_temp.espera('T7b nenhuma entrada invalida criou trilha',
+  (SELECT count(*)::text FROM public.audit_logs WHERE action = 'login_unlock'), '0');
+
+\echo
+\echo '── BLOCO C: o ADMIN destrava e a trilha registra QUEM destravou ─────────'
+
+-- T8 — o destravamento em si (a RPC e void: 'OK 1' = a chamada passou sem erro; o
+-- efeito e medido em T8b/T9)
+SELECT pg_temp.espera('T8 admin destrava a conta bloqueada',
+  pg_temp.rpc('authenticated', '11111111-1111-1111-1111-11111111111a', 'Alvo.Bloqueado@Empresa.com'),
+  'OK 1');
+SELECT pg_temp.espera('T8b a linha de tentativas sumiu (attempt_count/locked_until zerados)',
+  (SELECT count(*)::text FROM public.login_attempts WHERE email = 'alvo.bloqueado@empresa.com'), '0');
+
+-- T9 — a trilha: exatamente 1 linha, com autor, alvo e reputacao do bloqueio
+SELECT pg_temp.espera('T9a exatamente 1 linha login_unlock',
+  (SELECT count(*)::text FROM public.audit_logs WHERE action = 'login_unlock'), '1');
+SELECT pg_temp.espera('T9b entity_type = login_attempts',
+  (SELECT entity_type FROM public.audit_logs WHERE action = 'login_unlock'), 'login_attempts');
+SELECT pg_temp.espera('T9c quem destravou (user_id) e o admin',
+  (SELECT user_id::text FROM public.audit_logs WHERE action = 'login_unlock'),
+  '11111111-1111-1111-1111-11111111111a');
+SELECT pg_temp.espera('T9d entity_id aponta a linha apagada',
+  (SELECT entity_id::text FROM public.audit_logs WHERE action = 'login_unlock'),
+  '1a000000-0000-0000-0000-000000000001');
+SELECT pg_temp.espera('T9e details traz tentativas e o estado do bloqueio',
+  (SELECT (details->>'attempts') || '/' || (details->>'was_locked')
+     FROM public.audit_logs WHERE action = 'login_unlock'), '7/true');
+
+-- T10 — o e-mail completo NAO aparece na trilha (so mascarado)
+SELECT pg_temp.espera('T10a o log registra o e-mail MASCARADO',
+  (SELECT details->>'email_masked' FROM public.audit_logs WHERE action = 'login_unlock'),
+  'a***@empresa.com');
+SELECT pg_temp.espera('T10b o e-mail completo nao aparece em coluna nenhuma da trilha',
+  (SELECT count(*)::text FROM public.audit_logs
+     WHERE action = 'login_unlock'
+       AND (coalesce(details::text, '') LIKE '%alvo.bloqueado@empresa.com%'
+            OR coalesce(entity_type, '') LIKE '%alvo.bloqueado@empresa.com%')), '0');
+
+-- T11 — efeito colateral: a OUTRA conta bloqueada nao foi tocada
+SELECT pg_temp.espera('T11 a linha da outra conta fica intacta',
+  (SELECT (count(*) || '/' || max(attempt_count) || '/' || (max(locked_until) > now())::text)
+     FROM public.login_attempts WHERE email = 'outro.bloqueado@empresa.com'), '1/5/true');
+SELECT pg_temp.espera('T11b sobrou exatamente a linha da outra conta',
+  (SELECT count(*)::text FROM public.login_attempts), '1');
+
+-- T13 — o caminho DIRETO (PostgREST, sem a RPC) tambem esta fechado para o agente:
+-- a RLS da tabela e a barreira ali (DELETE = 0 linhas, sem erro).
+SELECT pg_temp.espera('T13 agente nao apaga a linha direto pela tabela (RLS)',
+  pg_temp.operacao('authenticated', '22222222-2222-2222-2222-22222222222b',
+    $sql$DELETE FROM public.login_attempts WHERE email = 'outro.bloqueado@empresa.com'$sql$),
+  'OK 0');
+SELECT pg_temp.espera('T13b a linha da outra conta continua la',
+  (SELECT count(*)::text FROM public.login_attempts WHERE email = 'outro.bloqueado@empresa.com'), '1');
+
+\echo
+\echo '── BLOCO D: conta ja destravada (sem oraculo e sem trilha falsa) ───────'
+
+-- T12 — e-mail que existe (ja limpo) e e-mail que nunca existiu: MESMA resposta.
+-- A RPC e void, entao a resposta e sempre a mesma ('OK 1' = passou sem erro); a
+-- prova de que nada aconteceu e a trilha (T12c) e a contagem de linhas.
+SELECT pg_temp.espera('T12a e-mail ja destravado -> no-op silencioso',
+  pg_temp.rpc('authenticated', '11111111-1111-1111-1111-11111111111a', 'alvo.bloqueado@empresa.com'), 'OK 1');
+SELECT pg_temp.espera('T12b e-mail que nunca existiu -> mesma resposta',
+  pg_temp.rpc('authenticated', '11111111-1111-1111-1111-11111111111a', 'ninguem@empresa.com'), 'OK 1');
+SELECT pg_temp.espera('T12c no-op nao cria trilha (continua 1 linha)',
+  (SELECT count(*)::text FROM public.audit_logs WHERE action = 'login_unlock'), '1');
+
+ROLLBACK;
+
+\echo
+\echo 'LA OK: agente/supervisor/anonimo nao destravam; o admin destrava, a linha some'
+\echo '       e fica 1 linha de auditoria com QUEM destravou e o e-mail mascarado.'

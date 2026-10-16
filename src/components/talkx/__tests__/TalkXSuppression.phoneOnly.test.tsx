@@ -46,14 +46,38 @@ vi.mock('@/integrations/supabase/client', () => {
     },
   ];
 
+  // A busca por termo passou a ser feita NA CONSULTA (`.or()` no servidor), então
+  // o mock precisa emular o PostgREST: `contacts!inner` só deixa passar linha com
+  // contato e cada `.or()` restringe as linhas pelo termo do seu grupo.
+  const matches = (r: Record<string, unknown>, o: { filter: string; table?: string }): boolean => {
+    const terms = [...o.filter.matchAll(/ilike\."%(.+?)%"/g)].map((m) => m[1].toLowerCase());
+    const contact = r.contacts as { name?: string | null; phone?: string | null } | null;
+    return terms.some((t) => (o.table === 'contacts'
+      ? (contact?.name ?? '').toLowerCase().includes(t) || (contact?.phone ?? '').includes(t)
+      : ((r.phone as string | null) ?? '').includes(t) || ((r.reason as string | null) ?? '').toLowerCase().includes(t)));
+  };
+
   const chain = (data: unknown[]) => {
+    let rows = data;
+    let joinInner = false;
+    const ors: { filter: string; table?: string }[] = [];
     const self: Record<string, unknown> = {};
-    self.select = () => self;
-    self.is = () => self;
+    self.select = (fields?: string) => { if (String(fields ?? '').includes('contacts!inner')) joinInner = true; return self; };
+    self.is = (col: string, val: unknown) => { rows = rows.filter((r) => (r as Record<string, unknown>)[col] === val); return self; };
     self.not = () => self;
     self.eq = () => self;
-    self.order = () => Promise.resolve({ data, error: null });
-    self.limit = () => Promise.resolve({ data, error: null });
+    self.or = (filter: string, opts?: { referencedTable?: string }) => { ors.push({ filter, table: opts?.referencedTable }); return self; };
+    self.order = () => self;
+    // HZ2-013: a lista fecha a consulta com `.range()`; sem isso a cadeia emulada
+    // quebra e a tela fica sem linhas.
+    self.range = () => self;
+    self.limit = () => Promise.resolve({ data: [], error: null });
+    self.then = (resolve: (v: unknown) => unknown, reject?: (e: unknown) => unknown) => {
+      let out = rows;
+      if (joinInner) out = out.filter((r) => (r as Record<string, unknown>).contacts);
+      for (const o of ors) out = out.filter((r) => matches(r as Record<string, unknown>, o));
+      return Promise.resolve({ data: out, error: null }).then(resolve, reject);
+    };
     return self;
   };
 

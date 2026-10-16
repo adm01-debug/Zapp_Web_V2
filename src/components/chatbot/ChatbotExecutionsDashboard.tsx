@@ -114,7 +114,7 @@ export function ChatbotExecutionsDashboard() {
         <CardHeader className="flex flex-row items-center justify-between pb-3">
           <CardTitle className="text-base">Execuções do Chatbot</CardTitle>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-40" aria-label="Filtrar status das execuções">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

@@ -24,10 +24,12 @@ describe('volume de mídia — toda superfície de conversa passa pelo controle 
     // o StoryViewer só era usado pela WhatsAppStatusSection morta). Se a
     // superfície voltar, re-entra aqui no mesmo commit.
 
-    // TC-006: o shell do chat interno (TeamChatPanel) não renderiza mídia; quem
-    // renderiza `<audio>`/`<video>` e chama `useMediaElementVolume` é o
-    // `teamChatParts`. Apontar para o shell deixava o contrato verde por texto,
-    // não por ligação efetiva (mesma regra VOL-02 da gravação de chamada).
+    // Mesma lição da gravação de chamada (VOL-02): a superfície é o arquivo que RENDERIZA o
+    // `<audio>`, não o shell. Depois da partição do chat interno em partes (TC-006,
+    // `ec1bb1453`) o `<audio>` e a ligação ao controle saíram do TeamChatPanel, que virou só
+    // shell; manter a entrada apontando para o shell deixava o contrato vermelho na base por
+    // entrada desatualizada. A prova por comportamento do arquivo novo está no teste dedicado
+    // logo abaixo ('chat interno da equipe liga o <audio> efetivo ao controle único').
     ['chat interno da equipe', 'src/components/team-chat/teamChatParts.tsx'],
     ['transcrições (autoplay)', 'src/components/transcriptions/TranscriptionContactGroup.tsx'],
     // VOL-02: a superfície é o player que RENDERIZA o `<audio>` (RecordingPlayer), não o
@@ -65,6 +67,31 @@ describe('volume de mídia — toda superfície de conversa passa pelo controle 
     expect(
       read('src/components/calls/TelefoniaView.tsx'),
       'o shell da Telefonia não renderiza áudio: não pode voltar a segurar a ligação órfã',
+    ).not.toMatch(/useMediaElementVolume/);
+  });
+
+  /**
+   * A mesma confusão shell × arquivo que RENDERIZA vale para o chat interno: a ocorrência
+   * textual do hook num shell que não tem `<audio>` não é prova. A superfície do chat interno
+   * é `teamChatParts` e tem de ligar o controle ao `<audio>` EFETIVO; o shell não pode voltar
+   * a segurar a ligação órfã (mero `import`/chamada do hook sem elemento).
+   */
+  it('chat interno da equipe liga o <audio> efetivo ao controle único', () => {
+    const fonte = read('src/components/team-chat/teamChatParts.tsx');
+
+    expect(fonte, 'as partes do chat interno precisam renderizar um <audio>').toContain('<audio');
+    expect(
+      fonte,
+      'o <audio> efetivo precisa estar ligado ao controle único de volume',
+    ).toMatch(/useMediaElementVolume\(audioRef\)/);
+    expect(
+      fonte,
+      'a ref do controle precisa estar aplicada ao elemento',
+    ).toMatch(/<audio\s+ref=\{audioRef\}/);
+
+    expect(
+      read('src/components/team-chat/TeamChatPanel.tsx'),
+      'o shell do chat interno não renderiza áudio: não pode voltar a segurar a ligação órfã',
     ).not.toMatch(/useMediaElementVolume/);
   });
 

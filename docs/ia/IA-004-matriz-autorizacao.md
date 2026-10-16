@@ -314,6 +314,28 @@ Outros caminhos de áudio conferidos no mesmo passo (não têm o defeito do L13)
 a policy de `storage.objects` decide) e falha FECHADO sem identidade; `multiplix-voices/index.ts:183-200`
 confere o grant (`canRecoverAsset` + `revoked_at`/`invalidated_at`) **antes** de assinar a URL.
 
+### 7.2 Confirmação de L7 na ponta de 08/10/2026 (cartão SL-065)
+
+O inventário da 2ª leva trazia L7 como **não verificável**. Conferido no código da ponta do dia, com prova
+rodada (não só leitura):
+
+| # | Estado em 08/10 | Evidência |
+|---|---|---|
+| L7 | **FECHADO** | `supabase/migrations/20260930200000_enforce_enqueue_connection_scope.sql:102-131` repõe `public.enqueue_outbound_message` com a guarda de escopo de conexão: fora de `is_admin_or_supervisor`, quem não é dono da conexão atribuída ao contato (`v_assigned_connection_id`) e não é membro ativo de nenhuma fila vinculada à conexão escolhida em `whatsapp_connection_queues` recebe `42501 whatsapp_connection_out_of_scope` (`:130`). É a **última** definição da RPC — nenhuma migration de versão maior a repõe (`20260909220000`, `20260909240000`, `20260909250000` [a citada nesta tabela] e `20260930190000` não têm a guarda) — e é o único caminho de envio do navegador (`src/services/outbound-message.service.ts:110`). Prova: `scripts/db-audit/enqueue-connection-scope.test.sh` = **10 PASS / 0 FAIL** em PostgreSQL 17 descartável (`bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/enqueue-connection-scope.test.sh`, exit 0): o BLOCO A mostra o envio de quem está fora da fila **passando antes** da migration e o BLOCO B a recusa **depois**, com B3 (membro da fila) e B4 (admin/supervisor) permitidos, B5/B6 pelos fallbacks históricos e B7 provando que a guarda do L9 (`send_messages`) continua valendo. O passo roda no CI em `.github/workflows/db-guard.yml:350-353`. |
+
+Duas ressalvas honestas, para não vender mais do que o código faz:
+
+- O **efeito** descrito na coluna "O que o servidor faz hoje" ("um agente envia pelo número de qualquer conexão
+  `connected`") está fechado no servidor, no momento do envio. A metade de **leitura** do enunciado — a view
+  `whatsapp_connections_safe` e as policies de leitura de conexão continuarem sem recorte de fila/departamento —
+  **segue como está de propósito**: o atendente precisa listar as conexões para escolher e para ver o estado delas;
+  o recorte por fila é imposto na **ação**, não na leitura da lista. Mexer na view/policy seria DDL, fora da trilha
+  desta leva.
+- A guarda é **inerte por construção enquanto `whatsapp_connection_queues` estiver vazia** (`:9-11`): sem vínculo
+  fila↔conexão cadastrado não há escopo a comparar. O mecanismo está implementado e provado; a restrição passa a
+  morder na prática quando a operação cadastrar os vínculos. A contagem de vínculos no banco canônico não foi
+  conferida — agente não acessa produção (R1) — e a prova do código não depende disso.
+
 ---
 
 ## 8. Cenários de teste negativos propostos

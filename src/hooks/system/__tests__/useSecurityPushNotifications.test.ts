@@ -3,8 +3,11 @@
  *
  * Cobre os dois caminhos de aviso de alerta de segurança — notificação push
  * (permissão concedida + inscrito) e o fallback por toast —, o polling de 20 s
- * sobre `security_alerts` (com o filtro por `created_at` do último check) e as
- * mensagens vindas do service worker.
+ * sobre `security_alerts` (cursor pelo `created_at`/`id` do ÚLTIMO alerta
+ * recebido, relógio do servidor) e as mensagens vindas do service worker.
+ *
+ * HZ1-10: o cursor não usa mais o relógio do navegador — os testes de relógio
+ * adiantado e atrasado provam que ele não pula nem repete alerta.
  *
  * A fronteira dublada é o cliente Supabase (rede/banco), o módulo de push, o
  * `useAuth`, o `sonner` e o `navigator.serviceWorker`. O hook é o código real.
@@ -13,7 +16,18 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 
 type Filtro = [op: string, column: string, value: unknown];
-type Consulta = { table: string; filters: Filtro[]; order: string | null; ascending: boolean };
+
+/** Cursor composto do polling: `created_at` + `id` (desempate). */
+type Cursor = { createdAt: string; id: string };
+
+type Consulta = {
+  table: string;
+  select: string | null;
+  filters: Filtro[];
+  cursor: Cursor | null;
+  orders: Array<[string, boolean]>;
+  limit: number | null;
+};
 
 const mocks = vi.hoisted(() => ({
   user: { id: 'user-1' } as { id: string } | null,
@@ -109,6 +123,32 @@ const fakeServiceWorker = {
   }),
 };
 
+/** Filtros `eq`/`gt` e o `or` do cursor composto, aplicados sobre a fixture. */
+function aplicarFiltros(rows: Array<Record<string, unknown>>, consulta: Consulta) {
+  let out = rows.slice();
+  for (const [op, col, val] of consulta.filters) {
+    if (op === 'eq') out = out.filter((r) => r[col] === val);
+    if (op === 'gt') out = out.filter((r) => String(r[col]) > String(val));
+  }
+  const c = consulta.cursor;
+  if (c) {
+    out = out.filter(
+      (r) =>
+        String(r.created_at) > c.createdAt ||
+        (String(r.created_at) === c.createdAt && String(r.id) > c.id),
+    );
+  }
+  for (let i = consulta.orders.length - 1; i >= 0; i -= 1) {
+    const [col, ascending] = consulta.orders[i];
+    out = out.slice().sort((a, b) => {
+      if (String(a[col]) === String(b[col])) return 0;
+      return (String(a[col]) < String(b[col]) ? -1 : 1) * (ascending ? 1 : -1);
+    });
+  }
+  if (consulta.limit !== null) out = out.slice(0, consulta.limit);
+  return out;
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   vi.useFakeTimers();
@@ -125,30 +165,28 @@ beforeEach(() => {
     configurable: true,
   });
 
-  // Mini-PostgREST: aplica eq/gt e a ordenação sobre os alertas do teste.
+  // Mini-PostgREST: aplica eq/gt, o cursor composto, a ordenação e o limite.
   mocks.from.mockImplementation((table: string) => {
-    const consulta: Consulta = { table, filters: [], order: null, ascending: true };
+    const consulta: Consulta = {
+      table,
+      select: null,
+      filters: [],
+      cursor: null,
+      orders: [],
+      limit: null,
+    };
     mocks.consultas.push(consulta);
 
     const resolver = () => {
       if (mocks.erroPoll) return Promise.resolve({ data: null, error: mocks.erroPoll });
-      let rows = mocks.alertas.slice();
-      for (const [op, col, val] of consulta.filters) {
-        if (op === 'eq') rows = rows.filter((r) => r[col] === val);
-        if (op === 'gt') rows = rows.filter((r) => String(r[col]) > String(val));
-      }
-      if (consulta.order) {
-        const col = consulta.order;
-        rows.sort((a, b) => {
-          if (String(a[col]) === String(b[col])) return 0;
-          return (String(a[col]) < String(b[col]) ? -1 : 1) * (consulta.ascending ? 1 : -1);
-        });
-      }
-      return Promise.resolve({ data: rows, error: null });
+      return Promise.resolve({ data: aplicarFiltros(mocks.alertas, consulta), error: null });
     };
 
     const builder: Record<string, unknown> = {};
-    builder.select = vi.fn(() => builder);
+    builder.select = vi.fn((cols: string) => {
+      consulta.select = cols;
+      return builder;
+    });
     builder.eq = vi.fn((col: string, val: unknown) => {
       consulta.filters.push(['eq', col, val]);
       return builder;
@@ -157,9 +195,19 @@ beforeEach(() => {
       consulta.filters.push(['gt', col, val]);
       return builder;
     });
+    // `or('created_at.gt.<ts>,and(created_at.eq.<ts>,id.gt.<id>)')` — o cursor.
+    builder.or = vi.fn((expr: string) => {
+      const m = /^created_at\.gt\.([^,]+),and\(created_at\.eq\.([^,]+),id\.gt\.(.+)\)$/.exec(expr);
+      if (!m) throw new Error(`expressão de cursor inesperada: ${expr}`);
+      consulta.cursor = { createdAt: m[1], id: m[3] };
+      return builder;
+    });
     builder.order = vi.fn((col: string, opts?: { ascending?: boolean }) => {
-      consulta.order = col;
-      consulta.ascending = opts?.ascending !== false;
+      consulta.orders.push([col, opts?.ascending !== false]);
+      return builder;
+    });
+    builder.limit = vi.fn((n: number) => {
+      consulta.limit = n;
       return builder;
     });
     builder.then = (res: (v: unknown) => unknown, rej: (e: unknown) => unknown) =>
@@ -171,6 +219,14 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers();
 });
+
+/** Deixa o ciclo do polling (mount imediato + timers) rodar. */
+async function ciclo(ms = 0) {
+  await act(async () => {
+    if (ms > 0) await vi.advanceTimersByTimeAsync(ms);
+    else await Promise.resolve();
+  });
+}
 
 describe('useSecurityPushNotifications — envio do alerta', () => {
   it('com push disponível envia notificação com IP, urgência e vibração longa', async () => {
@@ -282,36 +338,101 @@ describe('useSecurityPushNotifications — envio do alerta', () => {
   });
 });
 
-describe('useSecurityPushNotifications — polling de security_alerts', () => {
-  it('consulta a cada 20 s filtrando o próprio usuário e os não resolvidos', async () => {
+describe('useSecurityPushNotifications — cursor do polling (relógio do servidor)', () => {
+  it('alerta anterior ao início do monitoramento não é notificado', async () => {
+    // A linha de base é o alerta mais recente QUE JÁ EXISTE, lida no relógio do
+    // servidor — é ela que impede o histórico de virar aviso na montagem.
+    mocks.alertas = [
+      alerta({ id: 'al-antigo', created_at: '2026-10-07T11:00:00.000Z' }),
+      alerta({ id: 'al-recente', created_at: '2026-10-07T11:59:00.000Z' }),
+    ];
     const { unmount } = renderHook(() => useSecurityPushNotifications());
+    await ciclo();
 
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(20_000);
-    });
-
+    // Linha de base: o mais recente QUE JÁ EXISTE, pelo relógio do servidor.
     expect(mocks.consultas).toHaveLength(1);
     expect(mocks.consultas[0].table).toBe('security_alerts');
+    expect(mocks.consultas[0].select).toBe('id, created_at');
     expect(mocks.consultas[0].filters).toEqual([
       ['eq', 'user_id', 'user-1'],
       ['eq', 'is_resolved', false],
-      ['gt', 'created_at', T0],
     ]);
-    expect(mocks.consultas[0].order).toBe('created_at');
-    expect(mocks.consultas[0].ascending).toBe(true);
+    expect(mocks.consultas[0].orders).toEqual([
+      ['created_at', false],
+      ['id', false],
+    ]);
+    expect(mocks.consultas[0].limit).toBe(1);
+    // O histórico do usuário NÃO vira aviso: nada é notificado na montagem.
+    expect(mocks.showNotification).not.toHaveBeenCalled();
+    expect(mocks.toastInfo).not.toHaveBeenCalled();
+    unmount();
+  });
+
+  it('consulta a cada 20 s filtrando o próprio usuário e os não resolvidos', async () => {
+    mocks.alertas = [alerta({ id: 'al-base', created_at: T0 })];
+    const { unmount } = renderHook(() => useSecurityPushNotifications());
+    await ciclo();
+
+    mocks.alertas = [
+      ...mocks.alertas,
+      alerta({ id: 'al-novo', created_at: '2026-10-07T12:00:10.000Z' }),
+    ];
+    await ciclo(20_000);
+
+    // O escopo (dono + não resolvido) vale em TODAS as consultas do laço: na
+    // linha de base e em cada ciclo. O que mudou foi o cursor, não o filtro.
+    expect(mocks.consultas).toHaveLength(2);
+    for (const consulta of mocks.consultas) {
+      expect(consulta.table).toBe('security_alerts');
+      expect(consulta.filters).toEqual([
+        ['eq', 'user_id', 'user-1'],
+        ['eq', 'is_resolved', false],
+      ]);
+    }
+    unmount();
+  });
+
+  it('o ciclo seguinte consulta o que veio DEPOIS do último alerta recebido', async () => {
+    mocks.alertas = [alerta({ id: 'al-base', created_at: '2026-10-07T12:00:00.000Z' })];
+    const { unmount } = renderHook(() => useSecurityPushNotifications());
+    await ciclo();
+
+    mocks.alertas = [
+      ...mocks.alertas,
+      alerta({ id: 'al-novo', created_at: '2026-10-07T12:00:10.000Z' }),
+    ];
+    await ciclo(20_000);
+
+    expect(mocks.consultas).toHaveLength(2);
+    const janela = mocks.consultas[1];
+    expect(janela.filters).toEqual([
+      ['eq', 'user_id', 'user-1'],
+      ['eq', 'is_resolved', false],
+    ]);
+    // Cursor composto: `created_at` do último recebido + `id` como desempate.
+    expect(janela.cursor).toEqual({ createdAt: '2026-10-07T12:00:00.000Z', id: 'al-base' });
+    expect(janela.orders).toEqual([
+      ['created_at', true],
+      ['id', true],
+    ]);
+    expect(mocks.showNotification).toHaveBeenCalledTimes(1);
+    expect(mocks.showNotification).toHaveBeenCalledWith(
+      expect.objectContaining({ tag: 'security-al-novo' }),
+    );
     unmount();
   });
 
   it('notifica cada alerta novo da janela, na ordem cronológica', async () => {
+    mocks.alertas = [alerta({ id: 'al-base', created_at: T0 })];
+    const { unmount } = renderHook(() => useSecurityPushNotifications());
+    await ciclo();
+
     mocks.alertas = [
+      ...mocks.alertas,
       alerta({ id: 'al-10', severity: 'low', title: 'Segundo', created_at: '2026-10-07T12:00:15.000Z' }),
       alerta({ id: 'al-9', severity: 'critical', title: 'Primeiro', created_at: '2026-10-07T12:00:05.000Z' }),
     ];
-    const { unmount } = renderHook(() => useSecurityPushNotifications());
-
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(20_000);
-    });
+    await ciclo(20_000);
 
     expect(mocks.showNotification.mock.calls.map((c) => (c[0] as { title: string }).title)).toEqual([
       '🔐 Primeiro',
@@ -320,71 +441,92 @@ describe('useSecurityPushNotifications — polling de security_alerts', () => {
     unmount();
   });
 
-  it('alerta anterior ao início do monitoramento não é notificado', async () => {
-    mocks.alertas = [
-      alerta({ id: 'al-antigo', created_at: '2026-10-07T11:59:00.000Z' }),
-      alerta({ id: 'al-novo', created_at: '2026-10-07T12:00:10.000Z' }),
-    ];
+  it('dois alertas no MESMO instante na fronteira: o desempate por id não perde o segundo', async () => {
+    mocks.alertas = [alerta({ id: 'al-base', created_at: T0 })];
     const { unmount } = renderHook(() => useSecurityPushNotifications());
+    await ciclo();
 
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(20_000);
-    });
+    // Mesmo `created_at` do cursor: só o `id` maior denuncia que é novo.
+    mocks.alertas = [
+      ...mocks.alertas,
+      alerta({ id: 'zz-empate', title: 'Empatado', created_at: T0 }),
+    ];
+    await ciclo(20_000);
+
+    expect(mocks.showNotification).toHaveBeenCalledTimes(1);
+    expect(mocks.showNotification).toHaveBeenCalledWith(
+      expect.objectContaining({ tag: 'security-zz-empate' }),
+    );
+    unmount();
+  });
+
+  it('relógio do navegador ADIANTADO 10 min não pula alerta (cursor é do servidor)', async () => {
+    // O navegador acha que é 12:10; o servidor grava o alerta às 12:01.
+    vi.setSystemTime(new Date('2026-10-07T12:10:00.000Z'));
+    mocks.alertas = [alerta({ id: 'al-base', created_at: T0 })];
+    const { unmount } = renderHook(() => useSecurityPushNotifications());
+    await ciclo();
+
+    mocks.alertas = [
+      ...mocks.alertas,
+      alerta({ id: 'al-servidor', title: 'Novo dispositivo', created_at: '2026-10-07T12:01:00.000Z' }),
+    ];
+    await ciclo(20_000);
+
+    expect(mocks.showNotification).toHaveBeenCalledTimes(1);
+    expect(mocks.showNotification).toHaveBeenCalledWith(
+      expect.objectContaining({ tag: 'security-al-servidor' }),
+    );
+    unmount();
+  });
+
+  it('relógio do navegador ATRASADO 10 min não repete alerta já avisado', async () => {
+    // O navegador acha que é 11:50; o alerta existe desde as 12:00 (servidor).
+    vi.setSystemTime(new Date('2026-10-07T11:50:00.000Z'));
+    mocks.alertas = [alerta({ id: 'al-existentes', title: 'Já existia', created_at: T0 })];
+    const { unmount } = renderHook(() => useSecurityPushNotifications());
+    await ciclo();
+
+    mocks.alertas = [
+      ...mocks.alertas,
+      alerta({ id: 'al-depois', title: 'Depois do mount', created_at: '2026-10-07T12:00:30.000Z' }),
+    ];
+    await ciclo(20_000);
 
     const tags = mocks.showNotification.mock.calls.map((c) => (c[0] as { tag: string }).tag);
-    expect(tags).toEqual(['security-al-novo']);
+    expect(tags).toEqual(['security-al-depois']);
     unmount();
   });
 
   it('erro no polling não notifica e NÃO avança a janela (nada é pulado)', async () => {
-    mocks.erroPoll = { code: '42501', message: 'permission denied for table security_alerts' };
+    // A "janela" agora é o cursor do servidor: o erro não a move.
+    mocks.alertas = [alerta({ id: 'al-base', created_at: T0 })];
     const { unmount } = renderHook(() => useSecurityPushNotifications());
+    await ciclo();
 
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(20_000);
-    });
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(20_000);
-    });
+    mocks.erroPoll = { code: '42501', message: 'permission denied for table security_alerts' };
+    await ciclo(20_000);
+    await ciclo(20_000);
 
     expect(mocks.showNotification).not.toHaveBeenCalled();
     expect(mocks.logDebug).toHaveBeenCalledWith(
       'Security alerts poll error:',
       expect.objectContaining({ code: '42501' }),
     );
-    expect(mocks.consultas).toHaveLength(2);
-    // As DUAS consultas usam a mesma janela: o erro não engole o intervalo.
-    expect(mocks.consultas.map((c) => c.filters[2])).toEqual([
-      ['gt', 'created_at', T0],
-      ['gt', 'created_at', T0],
+    const janelas = mocks.consultas.slice(1);
+    expect(janelas).toHaveLength(2);
+    // As DUAS consultas usam o MESMO cursor: o erro não engole o intervalo.
+    expect(janelas.map((c) => c.cursor)).toEqual([
+      { createdAt: T0, id: 'al-base' },
+      { createdAt: T0, id: 'al-base' },
     ]);
-    unmount();
-  });
-
-  it('polling bem-sucedido avança a janela para o instante da resposta', async () => {
-    const { unmount } = renderHook(() => useSecurityPushNotifications());
-
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(20_000);
-    });
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(20_000);
-    });
-
-    expect(mocks.consultas).toHaveLength(2);
-    expect(mocks.consultas[0].filters[2]).toEqual(['gt', 'created_at', T0]);
-    // 20 s de relógio falso: a segunda janela começa onde a primeira terminou.
-    expect(mocks.consultas[1].filters[2]).toEqual(['gt', 'created_at', '2026-10-07T12:00:20.000Z']);
     unmount();
   });
 
   it('sem usuário logado nenhum polling é armado', async () => {
     mocks.user = null;
     const { unmount } = renderHook(() => useSecurityPushNotifications());
-
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(60_000);
-    });
+    await ciclo(60_000);
 
     expect(mocks.consultas).toHaveLength(0);
     expect(mocks.logDebug).not.toHaveBeenCalledWith(
@@ -395,19 +537,50 @@ describe('useSecurityPushNotifications — polling de security_alerts', () => {
   });
 
   it('desmontar limpa o intervalo (nenhuma consulta depois)', async () => {
+    mocks.alertas = [alerta({ id: 'al-base', created_at: T0 })];
     const { unmount } = renderHook(() => useSecurityPushNotifications());
-
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(20_000);
-    });
+    await ciclo();
     expect(mocks.consultas).toHaveLength(1);
 
     unmount();
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(60_000);
-    });
+    await ciclo(60_000);
 
     expect(mocks.consultas).toHaveLength(1);
+  });
+
+  it('dois pontos de montagem NÃO duplicam consulta nem aviso (um laço por usuário)', async () => {
+    // O listener global (AppProviders) e a Central de Segurança montam o mesmo
+    // hook: sem o laço compartilhado, o mesmo alerta viraria dois toasts.
+    mocks.alertas = [alerta({ id: 'al-base', created_at: T0 })];
+    const a = renderHook(() => useSecurityPushNotifications());
+    const b = renderHook(() => useSecurityPushNotifications());
+    await ciclo();
+    expect(mocks.consultas).toHaveLength(1);
+
+    mocks.alertas = [
+      ...mocks.alertas,
+      alerta({ id: 'al-unico', title: 'Uma vez só', created_at: '2026-10-07T12:00:09.000Z' }),
+    ];
+    await ciclo(20_000);
+
+    expect(mocks.consultas).toHaveLength(2);
+    expect(mocks.showNotification).toHaveBeenCalledTimes(1);
+    expect(mocks.showNotification).toHaveBeenCalledWith(
+      expect.objectContaining({ tag: 'security-al-unico' }),
+    );
+    b.unmount();
+    // O segundo ponto de montagem saiu: o laço continua vivo pelo primeiro.
+    mocks.alertas = [
+      ...mocks.alertas,
+      alerta({ id: 'al-depois', created_at: '2026-10-07T12:00:19.000Z' }),
+    ];
+    await ciclo(20_000);
+    expect(mocks.consultas).toHaveLength(3);
+    expect(mocks.showNotification).toHaveBeenCalledTimes(2);
+    a.unmount();
+    await ciclo(40_000);
+    // Últimos consumidores fora: o laço para.
+    expect(mocks.consultas).toHaveLength(3);
   });
 });
 
@@ -448,16 +621,19 @@ describe('useSecurityPushNotifications — mensagens do service worker', () => {
     expect(swHandlers).toHaveLength(0);
     expect(fakeServiceWorker.removeEventListener).toHaveBeenCalledWith('message', expect.any(Function));
   });
-});
 
-describe('useSecurityPushNotifications — defeitos encontrados (não corrigidos neste cartão)', () => {
-  // BUG: o handler lê `event.data.type` direto. `postMessage(null)` (ou um
-  // worker sem payload) entrega `event.data === null` e o handler estoura com
-  // TypeError — a exceção sobe como erro não tratado dentro do listener.
-  it.fails('mensagem do service worker sem payload não deveria derrubar o handler', () => {
-    renderHook(() => useSecurityPushNotifications());
+  it('com dois pontos de montagem o listener do service worker é registrado UMA vez', async () => {
+    const a = renderHook(() => useSecurityPushNotifications());
+    const b = renderHook(() => useSecurityPushNotifications());
     expect(swHandlers).toHaveLength(1);
 
-    expect(() => swHandlers[0]({ data: null } as unknown as MessageEvent)).not.toThrow();
+    swHandlers[0]({ data: { type: 'SECURITY_ACTION' } } as MessageEvent);
+    expect(mocks.toastInfo).toHaveBeenCalledTimes(1);
+
+    b.unmount();
+    expect(swHandlers).toHaveLength(1);
+    a.unmount();
+    expect(swHandlers).toHaveLength(0);
+    expect(fakeServiceWorker.removeEventListener).toHaveBeenCalledWith('message', expect.any(Function));
   });
 });

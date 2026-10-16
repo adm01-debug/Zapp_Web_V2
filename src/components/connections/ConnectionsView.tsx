@@ -16,11 +16,10 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/hooks/ui/use-toast';
+import { toast } from 'sonner';
 import { BusinessHoursDialog } from './BusinessHoursDialog';
 import { ConnectionQueuesDialog } from './ConnectionQueuesDialog';
 import { InstanceSettingsDialog } from './InstanceSettingsDialog';
-import { IntegrationsPanel } from './IntegrationsPanel';
 import { NumberReputationMonitor } from './NumberReputationMonitor';
 import { ConnectionCard } from './ConnectionCard';
 import { useConnectionsManager } from '@/hooks/inbox/useConnectionsManager';
@@ -61,21 +60,48 @@ export function ConnectionsView() {
   const [businessHoursDialog, setBusinessHoursDialog] = useState({ open: false, connectionId: '', connectionName: '' });
   const [queuesDialog, setQueuesDialog] = useState({ open: false, connectionId: '', connectionName: '' });
   const [settingsDialog, setSettingsDialog] = useState({ open: false, instanceName: '', connectionName: '' });
-  const [integrationsDialog, setIntegrationsDialog] = useState({ open: false, instanceName: '', connectionName: '' });
+
+  // A Evolution GO recusa o histórico (200 com `notSupported`). Quando isso
+  // acontece, escondemos a ação em todos os cartões até a página recarregar.
+  const [historyNotSupported, setHistoryNotSupported] = useState(false);
+  const [checkingHealth, setCheckingHealth] = useState<string | null>(null);
 
   const handleSyncHistory = async (connection: { id: string; instance_id?: string | null }) => {
     if (!connection.instance_id) return;
     setSyncingHistory(connection.id);
-    toast({ title: 'Sincronizando histórico...', description: 'Isso pode levar alguns minutos.' });
+    toast('Sincronizando histórico...', { description: 'Isso pode levar alguns minutos.' });
     try {
       const { data, error } = await supabase.functions.invoke('evolution-sync', {
         body: { action: 'sync-all-messages', instanceName: connection.instance_id },
       });
       if (error) throw error;
-      toast({ title: 'Sincronização concluída!', description: `${data?.totalSynced || 0} mensagens sincronizadas de ${data?.totalContacts || 0} contatos.` });
+      // Provedor GO: a função responde 200 com `{ success: false, notSupported: true }`.
+      // Sem esta checagem a tela dizia "Sincronização concluída! 0 mensagens",
+      // como se tivesse dado certo.
+      if (data?.notSupported || data?.success === false) {
+        setHistoryNotSupported(true);
+        toast.warning('Histórico não suportado', {
+          description: data?.message || 'O provedor atual (Evolution GO) não suporta sincronização de histórico. Requer Evolution API v2.',
+        });
+        return;
+      }
+      toast.success('Sincronização concluída!', { description: `${data?.totalSynced || 0} mensagens sincronizadas de ${data?.totalContacts || 0} contatos.` });
     } catch (e: unknown) {
-      toast({ title: 'Erro na sincronização', description: e instanceof Error ? e.message : 'Erro desconhecido', variant: 'destructive' });
+      toast.error('Erro na sincronização', { description: e instanceof Error ? e.message : 'Erro desconhecido' });
     } finally { setSyncingHistory(null); }
+  };
+
+  // Usa a ação de health check já existente (staff/admin). A função verifica
+  // todas as conexões; o cartão se atualiza pelo realtime do `whatsapp_connections`.
+  const handleHealthCheck = async (connection: { id: string }) => {
+    setCheckingHealth(connection.id);
+    try {
+      const { data, error } = await supabase.functions.invoke('connection-health-check', { method: 'POST', body: {} });
+      if (error) throw error;
+      toast.success('Health check concluído', { description: `${data?.connections?.length || 0} conexão(ões) verificada(s).` });
+    } catch (e: unknown) {
+      toast.error('Erro no health check', { description: e instanceof Error ? e.message : 'Erro desconhecido' });
+    } finally { setCheckingHealth(null); }
   };
 
   return (
@@ -196,8 +222,10 @@ export function ConnectionsView() {
                 onBusinessHours={(id, name) => setBusinessHoursDialog({ open: true, connectionId: id, connectionName: name })}
                 onQueues={(id, name) => setQueuesDialog({ open: true, connectionId: id, connectionName: name })}
                 onSettings={(inst, name) => setSettingsDialog({ open: true, instanceName: inst, connectionName: name })}
-                onIntegrations={(inst, name) => setIntegrationsDialog({ open: true, instanceName: inst, connectionName: name })}
                 onSyncHistory={handleSyncHistory}
+                historyNotSupported={historyNotSupported}
+                onHealthCheck={handleHealthCheck}
+                checkingHealth={checkingHealth}
               />
             </StaggeredItem>
           ))}
@@ -207,7 +235,6 @@ export function ConnectionsView() {
       <BusinessHoursDialog open={businessHoursDialog.open} onOpenChange={(open) => setBusinessHoursDialog(prev => ({ ...prev, open }))} connectionId={businessHoursDialog.connectionId} connectionName={businessHoursDialog.connectionName} />
       <ConnectionQueuesDialog open={queuesDialog.open} onOpenChange={(open) => setQueuesDialog(prev => ({ ...prev, open }))} connectionId={queuesDialog.connectionId} connectionName={queuesDialog.connectionName} />
       <InstanceSettingsDialog open={settingsDialog.open} onOpenChange={(open) => setSettingsDialog(prev => ({ ...prev, open }))} instanceName={settingsDialog.instanceName} connectionName={settingsDialog.connectionName} />
-      <IntegrationsPanel open={integrationsDialog.open} onOpenChange={(open) => setIntegrationsDialog(prev => ({ ...prev, open }))} instanceName={integrationsDialog.instanceName} connectionName={integrationsDialog.connectionName} />
       <NumberReputationMonitor />
     </div>
   );

@@ -59,7 +59,7 @@ const itemTermoAntigo: CommandItem = {
   category: 'search',
 };
 
-const resultado = (titulo: string) => screen.queryByRole('button', { name: titulo });
+const resultado = (titulo: string) => screen.queryByRole('option', { name: titulo });
 
 afterEach(() => {
   vi.clearAllMocks();

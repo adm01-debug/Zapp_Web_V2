@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { getLogger } from '@/lib/logger';
 import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
+import { useVisiblePolling } from '@/hooks/realtime/useVisiblePolling';
 
 const log = getLogger('RealtimeDashboard');
 
@@ -224,7 +225,8 @@ export function useRealtimeDashboard(filters: RealtimeDashboardScope = {}) {
     partidaSnapshotRef.current = 0;
     minuteCountRef.current = 0;
 
-    fetchInitialData();
+    // O snapshot inicial e o periódico vêm do `useVisiblePolling` (aba visível
+    // + rede ativa): o mount não dispara leitura própria para não duplicar.
 
     // Tópico exclusivo por instância: `supabase.channel('dashboard-realtime')`
     // devolve o MESMO canal quando o nome se repete e, desde a realtime-js
@@ -362,18 +364,20 @@ export function useRealtimeDashboard(filters: RealtimeDashboardScope = {}) {
       minuteCountRef.current = 0;
     }, 60000);
 
-    // Refresh full data every 5 minutes
-    const refreshInterval = setInterval(fetchInitialData, 5 * 60 * 1000);
-
     return () => {
       supabase.removeChannel(channel);
       clearInterval(flushInterval);
       clearInterval(metricsInterval);
-      clearInterval(refreshInterval);
     };
   // `agentId`/`queueId` entram porque os handlers do canal leem o recorte; na
   // prática `fetchInitialData` já muda de identidade quando qualquer um muda.
   }, [fetchInitialData, agentId, queueId]);
+
+  // Atualização de 5 min: `useVisiblePolling` só lê com a aba VISÍVEL e a rede
+  // ONLINE, uma requisição por vez. Com a aba oculta nada é agendado; ao voltar
+  // o foco ou a rede ele refaz o snapshot imediatamente — é a ressincronização
+  // depois de uma queda, sem esperar o próximo ciclo de 5 min.
+  useVisiblePolling(fetchInitialData, 5 * 60 * 1000);
 
   return state;
 }

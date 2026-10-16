@@ -92,7 +92,9 @@ export function WarRoomDashboard({
         <Card className="lg:col-span-2">
           <CardHeader className="pb-3"><CardTitle className="text-lg flex items-center gap-2"><MessageSquare className="w-5 h-5" />Filas em Tempo Real</CardTitle></CardHeader>
           <CardContent className="space-y-3">
-            {queues.map((queue) => <WarRoomQueueRow key={queue.id} queue={queue} onClick={() => onQueueClick?.(queue.id)} />)}
+            {queues.length === 0
+              ? <p className="text-sm text-muted-foreground text-center py-6">Sem filas no período</p>
+              : queues.map((queue) => <WarRoomQueueRow key={queue.id} queue={queue} onClick={() => onQueueClick?.(queue.id)} />)}
           </CardContent>
         </Card>
 
@@ -104,9 +106,13 @@ export function WarRoomDashboard({
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 max-h-80 overflow-auto">
-            <AnimatePresence>
-              {alerts.map((alert) => <WarRoomAlertRow key={alert.id} alert={alert} onDismiss={() => { onAlertDismiss?.(alert.id); void dismissAlert(alert.id); }} />)}
-            </AnimatePresence>
+            {alerts.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">Sem alertas no período</p>
+            ) : (
+              <AnimatePresence>
+                {alerts.map((alert) => <WarRoomAlertRow key={alert.id} alert={alert} onDismiss={() => { onAlertDismiss?.(alert.id); void dismissAlert(alert.id); }} />)}
+              </AnimatePresence>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -116,7 +122,9 @@ export function WarRoomDashboard({
           <CardHeader className="pb-3"><CardTitle className="text-lg flex items-center gap-2"><Users className="w-5 h-5" />Status dos Agentes</CardTitle></CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-              {agents.map((agent) => <WarRoomAgentCard key={agent.id} agent={agent} onClick={() => onAgentClick?.(agent.id)} />)}
+              {agents.length === 0
+                ? <p className="text-sm text-muted-foreground text-center py-6 col-span-full">Sem agentes no período</p>
+                : agents.map((agent) => <WarRoomAgentCard key={agent.id} agent={agent} onClick={() => onAgentClick?.(agent.id)} />)}
             </div>
           </CardContent>
         </Card>

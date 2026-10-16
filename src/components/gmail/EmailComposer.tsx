@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
+import { useCallback, useEffect, useId, useMemo, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -32,6 +32,12 @@ interface EmailComposerProps {
   forwardAttachments?: Array<EmailAttachment & { gmail_message_id: string }>;
   onClose: () => void;
   onSent?: () => void;
+  /**
+   * Quando false, o compositor não move o foco para o campo Para ao abrir.
+   * Padrão: move o foco, exceto quando há rascunho restaurado (para não
+   * roubar o foco do ponto onde o usuário estava).
+   */
+  autoFocus?: boolean;
 }
 
 export function EmailComposer({
@@ -43,6 +49,7 @@ export function EmailComposer({
   forwardAttachments = [],
   onClose,
   onSent,
+  autoFocus,
 }: EmailComposerProps) {
   const { sendEmail, replyEmail, saveDraft, deleteDraft, getAttachmentContent, activeAccount } = useGmail(accountId);
   const resolvedAccountId = accountId || activeAccount?.id;
@@ -340,8 +347,32 @@ export function EmailComposer({
     forward: 'Encaminhar',
   };
 
+  // N-177: id único por instância — duas vistas podem montar um compositor
+  // cada (novo + resposta), e id fixo duplicaria o alvo do aria-labelledby.
+  const composerTitleId = useId();
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+  const toInputRef = useRef<HTMLInputElement>(null);
+
+  // N-177: o foco automático só acontece numa composição nova. Se há rascunho
+  // restaurado, o usuário já estava em outro ponto — não roubar o foco.
+  // `autoFocus` permite override explícito pelo chamador.
+  const shouldAutoFocus = autoFocus ?? !restoredDraft;
+
+  useEffect(() => {
+    previousFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    if (!shouldAutoFocus) return;
+    const timer = window.setTimeout(() => { toInputRef.current?.focus(); }, 0);
+    return () => {
+      window.clearTimeout(timer);
+      const previous = previousFocusRef.current;
+      if (previous && document.contains(previous)) previous.focus();
+    };
+  }, [shouldAutoFocus]);
+
   return createPortal((
     <motion.div
+      role="dialog"
+      aria-labelledby={composerTitleId}
       initial={{ opacity: 0, y: 20, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: 20, scale: 0.95 }}
@@ -352,7 +383,7 @@ export function EmailComposer({
         <CardHeader className="flex flex-row items-center justify-between border-b border-border bg-inbox-panel p-3">
           <div className="flex items-center gap-2">
             <Send className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium">{modeLabels[mode]}</span>
+            <span id={composerTitleId} className="text-sm font-medium">{modeLabels[mode]}</span>
             {activeAccount && (
               <Badge variant="outline" className="text-3xs px-1">
                 {activeAccount.email_address}
@@ -382,6 +413,7 @@ export function EmailComposer({
                 <div className="flex items-center gap-2">
                   <Label className="text-xs text-muted-foreground w-12 shrink-0">Para:</Label>
                   <Input
+                    ref={toInputRef}
                     value={to}
                     aria-label="Destinatários"
                     onChange={(e) => { setTo(e.target.value); markDraftDirty(); }}

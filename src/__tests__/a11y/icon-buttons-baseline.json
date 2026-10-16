@@ -1,0 +1,151 @@
+{
+  "findings": [
+    {
+      "file": "src/components/admin/PlaybooksManager.tsx",
+      "line": 259,
+      "column": 23,
+      "tag": "Button",
+      "snippet": "<Button variant=\"ghost\" size=\"icon\" className=\"w-6 h-6\" onClick={() => removeStep(idx)}>"
+    },
+    {
+      "file": "src/components/admin/SupervisorCopilot.tsx",
+      "line": 147,
+      "column": 11,
+      "tag": "Button",
+      "snippet": "<Button size=\"icon\" onClick={() => askQuestion()} disabled={loading || !question.trim()}>"
+    },
+    {
+      "file": "src/components/admin/TrainingMode.tsx",
+      "line": 314,
+      "column": 17,
+      "tag": "Button",
+      "snippet": "<Button size=\"icon\" onClick={sendResponse} disabled={!input.trim()}>"
+    },
+    {
+      "file": "src/components/calls/CallDialog.tsx",
+      "line": 344,
+      "column": 19,
+      "tag": "Button",
+      "snippet": "<Button variant=\"outline\" size=\"icon\" className={cn( 'w-12 h-12 rounded-full', isMuted && 'bg-destructive/10 border-destructive text-destructive' )} // T21 — o mudo agora é o REAL do motor (engine.toggleMute()), // não um estado local que não silenciava nada. onClick={toggleMute} >"
+    },
+    {
+      "file": "src/components/calls/CallDialog.tsx",
+      "line": 387,
+      "column": 17,
+      "tag": "Button",
+      "snippet": "<Button size=\"icon\" className=\"w-14 h-14 rounded-full bg-whatsapp hover:bg-whatsapp-dark\" onClick={handleAnswer} >"
+    },
+    {
+      "file": "src/components/calls/CallDialog.tsx",
+      "line": 398,
+      "column": 15,
+      "tag": "Button",
+      "snippet": "<Button size=\"icon\" className=\"w-14 h-14 rounded-full bg-destructive hover:bg-destructive/90\" onClick={handleEnd} >"
+    },
+    {
+      "file": "src/components/catalog/ExternalProductManagement.tsx",
+      "line": 849,
+      "column": 13,
+      "tag": "Button",
+      "snippet": "<Button variant=\"ghost\" size=\"icon\" className=\"absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7\" onClick={() => dispatch({ type: 'search', value: '' })}>"
+    },
+    {
+      "file": "src/components/cognitive/FeatureSpotlight.tsx",
+      "line": 45,
+      "column": 11,
+      "tag": "Button",
+      "snippet": "<Button variant=\"ghost\" size=\"icon\" onClick={onDismiss}>"
+    },
+    {
+      "file": "src/components/cognitive/FeatureSpotlight.tsx",
+      "line": 95,
+      "column": 9,
+      "tag": "Button",
+      "snippet": "<Button variant=\"ghost\" size=\"icon\" className=\"h-6 w-6\" onClick={() => { setIsVisible(false); onDismiss?.(); }}>"
+    },
+    {
+      "file": "src/components/contacts/BulkActionsBar.tsx",
+      "line": 306,
+      "column": 9,
+      "tag": "Button",
+      "snippet": "<Button size=\"icon\" variant=\"ghost\" className=\"h-7 w-7 text-primary-foreground hover:bg-primary-foreground/20\" onClick={onClearSelection}>"
+    },
+    {
+      "file": "src/components/contacts/ContactDialogs.tsx",
+      "line": 154,
+      "column": 19,
+      "tag": "Button",
+      "snippet": "<Button variant=\"ghost\" size=\"icon\" className=\"w-6 h-6\" onClick={() => { void navigator.clipboard.writeText(showSuccess?.protocol || ''); toast.success('Protocolo copiado!'); }} >"
+    },
+    {
+      "file": "src/components/contacts/ContactNotes.tsx",
+      "line": 154,
+      "column": 11,
+      "tag": "Button",
+      "snippet": "<Button variant=\"ghost\" size=\"icon\" className=\"w-6 h-6\" onClick={() => setShowInput(!showInput)} >"
+    },
+    {
+      "file": "src/components/dashboard/SentimentAlertsDashboard.tsx",
+      "line": 29,
+      "column": 11,
+      "tag": "Button",
+      "snippet": "<Button variant=\"outline\" size=\"icon\" onClick={fetchData} disabled={loading}>"
+    },
+    {
+      "file": "src/components/dashboard/war-room/WarRoomAlertRow.tsx",
+      "line": 35,
+      "column": 7,
+      "tag": "Button",
+      "snippet": "<Button variant=\"ghost\" size=\"icon\" className=\"shrink-0 h-6 w-6\" onClick={onDismiss}>"
+    },
+    {
+      "file": "src/components/dashboard/WarRoomDashboard.tsx",
+      "line": 76,
+      "column": 44,
+      "tag": "Button",
+      "snippet": "<Button variant=\"ghost\" size=\"icon\" onClick={() => updateSettings({ soundEnabled: !settings.soundEnabled })}>"
+    },
+    {
+      "file": "src/components/dashboard/WarRoomDashboard.tsx",
+      "line": 77,
+      "column": 44,
+      "tag": "Button",
+      "snippet": "<Button variant=\"ghost\" size=\"icon\" onClick={() => setAutoRefresh(!autoRefresh)}>"
+    },
+    {
+      "file": "src/components/dashboard/WarRoomDashboard.tsx",
+      "line": 78,
+      "column": 44,
+      "tag": "Button",
+      "snippet": "<Button variant=\"ghost\" size=\"icon\" onClick={toggleFullscreen}>"
+    },
+    {
+      "file": "src/components/leaderboard/Leaderboard.tsx",
+      "line": 37,
+      "column": 13,
+      "tag": "Button",
+      "snippet": "<Button variant=\"ghost\" size=\"icon\" onClick={handleRefresh} disabled={isRefreshing} className=\"h-8 w-8\">"
+    },
+    {
+      "file": "src/components/queues/QueuesComparisonDashboard.tsx",
+      "line": 113,
+      "column": 11,
+      "tag": "Button",
+      "snippet": "<Button variant=\"ghost\" size=\"icon\" onClick={() => navigate('/')} className=\"hover:bg-muted/30\" >"
+    },
+    {
+      "file": "src/components/queues/QueuesComparisonDashboard.tsx",
+      "line": 273,
+      "column": 31,
+      "tag": "Button",
+      "snippet": "<Button variant=\"ghost\" size=\"icon\" className=\"w-8 h-8\" onClick={() => navigate(`/queue/${queue.id}`)} >"
+    },
+    {
+      "file": "src/components/reports/ScheduledReportConfigs.tsx",
+      "line": 142,
+      "column": 19,
+      "tag": "Button",
+      "snippet": "<Button size=\"icon\" variant=\"ghost\" className=\"h-7 w-7 text-muted-foreground hover:text-destructive\" onClick={() => deleteConfig.mutate(cfg.id)} >"
+    }
+  ]
+}

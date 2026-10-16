@@ -4,6 +4,7 @@ import { Megaphone, Users, FileText } from 'lucide-react';
 import React from 'react';
 import type { CommandItem } from '@/components/ui/command-palette-data';
 import type { TalkXCampaign } from './useTalkX';
+import { replaceTalkXOpenRoute, replaceTalkXRoute, replaceTalkXTabRoute } from '@/components/talkx/talkxRoute';
 
 interface TalkXSegment { id: string; name: string }
 interface TalkXTemplate { id: string; name: string }
@@ -12,6 +13,19 @@ const STATUS_LABEL: Record<string, string> = {
   draft: 'Rascunho', scheduled: 'Agendada', running: 'Em andamento',
   paused: 'Pausada', completed: 'Concluída', cancelled: 'Cancelada',
 };
+
+/**
+ * Grava o endereço do item (campanha, segmento ou template) ANTES de trocar de
+ * módulo: o TalkXView lê a URL ao montar (e o TalkXSegments/X094 leem o id do
+ * endereço), então o item certo abre direto, sem passar pela Visão geral. Com o
+ * módulo já aberto, o popstate faz o TalkXView reler o endereço.
+ */
+function openTalkXItem(onNavigate: ((view: string) => void) | undefined, route: () => void) {
+  const jaNoTalkX = new URLSearchParams(window.location.search).get('view') === 'talkx';
+  route();
+  onNavigate?.('talkx');
+  if (jaNoTalkX) window.dispatchEvent(new PopStateEvent('popstate'));
+}
 
 export function useTalkXCommandItems(onNavigate?: (view: string) => void): CommandItem[] {
   const queryClient = useQueryClient();
@@ -34,7 +48,18 @@ export function useTalkXCommandItems(onNavigate?: (view: string) => void): Comma
       category: 'talkx' as const,
       keywords: ['campanha', 'talkx', 'disparos', c.status],
       badge: STATUS_LABEL[c.status],
-      action: () => onNavigate?.('talkx'),
+      action: () => openTalkXItem(onNavigate, () => {
+        replaceTalkXRoute({ campaignId: c.id });
+        // Anti-regressão do consumidor acima: ?segment=/?template= obsoletos não
+        // podem sobreviver à abertura de uma campanha, senão o TalkXView os leria
+        // como pedido de aba na próxima navegação por tab.
+        const url = new URL(window.location.href);
+        url.searchParams.delete('segment');
+        url.searchParams.delete('mode');
+        url.searchParams.delete('template');
+        url.searchParams.delete('ttab');
+        window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
+      }),
     }));
 
     const segmentItems: CommandItem[] = segments.map((s) => ({
@@ -44,7 +69,15 @@ export function useTalkXCommandItems(onNavigate?: (view: string) => void): Comma
       icon: React.createElement(Users, { className: 'h-4 w-4' }),
       category: 'talkx' as const,
       keywords: ['segmento', 'talkx', 'público'],
-      action: () => onNavigate?.('talkx'),
+      action: () => openTalkXItem(onNavigate, () => {
+        replaceTalkXOpenRoute({ kind: 'segment', id: s.id });
+        replaceTalkXTabRoute({ tab: 'segments' });
+        // O id de template (e a sub-aba do editor) não sobrevivem à troca de item.
+        const url = new URL(window.location.href);
+        url.searchParams.delete('template');
+        url.searchParams.delete('ttab');
+        window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
+      }),
     }));
 
     const templateItems: CommandItem[] = templates.map((t) => ({
@@ -54,7 +87,15 @@ export function useTalkXCommandItems(onNavigate?: (view: string) => void): Comma
       icon: React.createElement(FileText, { className: 'h-4 w-4' }),
       category: 'talkx' as const,
       keywords: ['template', 'talkx', 'mensagem', 'modelo'],
-      action: () => onNavigate?.('talkx'),
+      action: () => openTalkXItem(onNavigate, () => {
+        replaceTalkXOpenRoute({ kind: 'template', id: t.id });
+        replaceTalkXTabRoute({ tab: 'templates' });
+        // O id de segmento (e o modo do construtor) não sobrevivem à troca de item.
+        const url = new URL(window.location.href);
+        url.searchParams.delete('segment');
+        url.searchParams.delete('mode');
+        window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
+      }),
     }));
 
     return [...campaignItems, ...segmentItems, ...templateItems];

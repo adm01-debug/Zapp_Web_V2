@@ -66,7 +66,7 @@ export function useReactionMutations(
           { onConflict: 'message_id,user_id,emoji' }
         )
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
 

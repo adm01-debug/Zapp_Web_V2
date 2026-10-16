@@ -1,12 +1,115 @@
-import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, createAuthedClient } from "../_shared/validation.ts";
+import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, createAuthedClient, markDegraded } from "../_shared/validation.ts";
 import { decideReassignConversation, REASSIGN_DENIED_MESSAGE } from "../_shared/voice-copilot-authz.ts";
 import { escapeOrFilterValue } from "../_shared/postgrest-filters.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 
-Deno.serve(async (req) => {
+/**
+ * Busca de produtos por voz: reusa a MESMA edge que o CmdK já chama
+ * (`useCatalogQuickSearch` -> promogifts-catalog), em vez de reescrever a
+ * busca aqui. Assim RLS, limite por ação e cota continuam num único lugar
+ * (lá); o serviço de voz só repassa o JWT do chamador como Authorization e
+ * usa a anon key como `apikey` do gateway (nunca a service_role).
+ */
+const CATALOG_FUNCTION_NAME = "promogifts-catalog";
+/** Mesmo tamanho de página do CmdK (useCatalogQuickSearch: limit 8). */
+const CATALOG_SEARCH_LIMIT = 8;
+const CATALOG_SEARCH_MAX_QUERY = 200;
+
+export interface CatalogSearchOptions {
+  supabaseUrl: string;
+  /** anon key — vai só como `apikey` do gateway, nunca como Authorization. */
+  apikey: string;
+  /** JWT do chamador já validado por requireAuth. */
+  authHeader: string;
+  fetchImpl?: typeof fetch;
+}
+
+export interface CatalogSearchResult {
+  products: unknown[];
+  total: number;
+  /** true quando o catálogo respondeu erro — o consumidor distingue
+   * "sem resultado" de "catálogo indisponível" (nada de fail-open silencioso). */
+  failed?: boolean;
+}
+
+/**
+ * POST para a edge de catálogo com os MESMOS parâmetros que o CmdK envia.
+ * A resposta de promogifts-catalog é `{ data: products[], meta: { total } }`.
+ */
+export async function searchCatalogProducts(
+  query: unknown,
+  options: CatalogSearchOptions,
+): Promise<CatalogSearchResult> {
+  const search = String(query ?? "").trim().slice(0, CATALOG_SEARCH_MAX_QUERY);
+  if (!search) return { products: [], total: 0 };
+
+  const fetcher = options.fetchImpl ?? fetch;
+  const response = await fetcher(`${options.supabaseUrl}/functions/v1/${CATALOG_FUNCTION_NAME}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      // O JWT do chamador é repassado (não a service key): a authz real do
+      // catálogo continua sendo dele.
+      Authorization: options.authHeader,
+      apikey: options.apikey,
+    },
+    body: JSON.stringify({
+      action: "list_products",
+      search,
+      limit: CATALOG_SEARCH_LIMIT,
+      compact: true,
+    }),
+  });
+
+  if (!response.ok) {
+    markDegraded("catalog_search_unavailable");
+    return { products: [], total: 0, failed: true };
+  }
+
+  const payload = await response.json().catch(() => null) as
+    | { data?: unknown; meta?: { total?: unknown } }
+    | null;
+  const products = Array.isArray(payload?.data) ? payload.data as unknown[] : [];
+  const total = typeof payload?.meta?.total === "number" ? payload.meta.total : products.length;
+  return { products, total };
+}
+
+/**
+ * Valores canônicos de `conversation_tasks.status` (módulo Tarefas:
+ * src/hooks/tasks/workItem.types.ts + o CHECK da coluna no banco). Qualquer
+ * outro valor é recusado — o copiloto não inventa status.
+ */
+export const TASK_STATUSES = ['backlog', 'todo', 'doing', 'waiting', 'done', 'cancelled'] as const;
+
+/**
+ * Sinônimos de "tarefa em aberto" na fala do usuário ("minhas tarefas abertas"):
+ * tudo menos `done`/`cancelled`. Não é um status da coluna — é um atalho de
+ * linguagem natural que o copiloto traduz para o filtro equivalente.
+ */
+const OPEN_TASK_STATUS_ALIASES = new Set(['aberta', 'abertas', 'aberto', 'abertos', 'open', 'em aberto']);
+
+/** Injeção de dependências para o teste rodar o handler real sem rede nem env. */
+export interface VoiceCopilotDeps {
+  /** Autenticação; por padrão usa `requireAuth(req)` (JWT + política de rede). */
+  authorize?: (req: Request) => Promise<{ userId: string } | Response>;
+  /** Client service_role; por padrão criado com as envs. */
+  supabase?: SupabaseClient;
+  /** Client com o JWT do caller (RLS real); por padrão `createAuthedClient(req)`. */
+  authedClient?: SupabaseClient;
+  /** Leitura de env; por padrão `requireEnv`. */
+  env?: (key: string) => string;
+  /** Substitui o POST para a edge de catálogo (`search_catalog_products`); por padrão `fetch`. */
+  catalogFetch?: typeof fetch;
+}
+
+export async function handleVoiceCopilotAction(
+  req: Request,
+  deps: VoiceCopilotDeps = {},
+): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
-  const authCheck = await requireAuth(req);
+
+  const authCheck = deps.authorize ? await deps.authorize(req) : await requireAuth(req);
   if (authCheck instanceof Response) return authCheck;
   const __uid = (authCheck as { userId: string }).userId;
 
@@ -15,14 +118,15 @@ Deno.serve(async (req) => {
   try {
     const { action, params } = await req.json();
 
-    const supabaseUrl = requireEnv('SUPABASE_URL');
-    const supabaseKey = requireEnv('SUPABASE_SERVICE_ROLE_KEY');
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const readEnv = deps.env ?? ((key: string) => requireEnv(key));
+    const supabaseUrl = readEnv('SUPABASE_URL');
+    const supabaseKey = readEnv('SUPABASE_SERVICE_ROLE_KEY');
+    const supabase = deps.supabase ?? createClient(supabaseUrl, supabaseKey);
     // Client autenticado como o caller: usado nas leituras abaixo para que a
-    // RLS real de `contacts`/`profiles` filtre por auth.uid(), em vez do
-    // client service_role (que bypassa RLS e vazaria PII/dashboard para
-    // qualquer usuário autenticado do app, não só agentes).
-    const authedClient = await createAuthedClient(req);
+    // RLS real de `contacts`/`profiles`/`conversation_tasks` filtre por
+    // auth.uid(), em vez do client service_role (que bypassa RLS e vazaria
+    // PII/dashboard para qualquer usuário autenticado do app, não só agentes).
+    const authedClient = deps.authedClient ?? await createAuthedClient(req);
 
     log.info("Processing voice action", { action });
 
@@ -45,6 +149,76 @@ Deno.serve(async (req) => {
           .limit(5);
         if (error) throw error;
         result = data;
+        break;
+      }
+
+      case 'search_tasks': {
+        // Tarefas PESSOAIS do módulo Tarefas (src/components/tasks/). A leitura
+        // sai pelo authedClient: a RLS real de `conversation_tasks` decide o
+        // que o chamador enxerga — o copiloto só devolve o que o próprio
+        // usuário já vê no módulo. O service_role bypassaria a RLS e vazaria
+        // tarefa de outra pessoa.
+        const { query, status } = params ?? {};
+        // Mesma sanitização do search_contacts: remove curingas/escape do
+        // PostgREST (a gramática do `.or()` não tem escape automático).
+        const sanitized = String(query || '').replace(/[%_\\]/g, '').trim();
+
+        // Status é validado ANTES de tocar o banco: valor fora do vocabulário
+        // não vira consulta — recusa em vez de devolver lixo.
+        const statusFilter = typeof status === 'string' ? status.trim().toLowerCase() : '';
+        let statusFilterValue: string | null = null;
+        let statusExcluded: string | null = null;
+        if (statusFilter) {
+          if ((TASK_STATUSES as readonly string[]).includes(statusFilter)) {
+            statusFilterValue = statusFilter;
+          } else if (OPEN_TASK_STATUS_ALIASES.has(statusFilter)) {
+            statusExcluded = '(done,cancelled)';
+          } else {
+            result = [];
+            break;
+          }
+        }
+
+        let q = authedClient
+          .from('conversation_tasks')
+          .select('id, title, description, status, priority, due_date, assigned_to, created_by, contact_id')
+          // Ordem determinística e útil por voz: prazo mais próximo primeiro e,
+          // no empate, a criada por último.
+          .order('due_date', { ascending: true, nullsFirst: false })
+          .order('created_at', { ascending: false })
+          .limit(10);
+
+        if (sanitized) {
+          const like = escapeOrFilterValue(`%${sanitized}%`);
+          q = q.or(`title.ilike.${like},description.ilike.${like}`);
+        }
+        if (statusFilterValue) q = q.eq('status', statusFilterValue);
+        if (statusExcluded) q = q.not('status', 'in', statusExcluded);
+
+        const { data, error } = await q;
+        if (error) throw error;
+        result = data ?? [];
+        break;
+      }
+
+      case 'search_catalog_products': {
+        const { query } = params;
+        // Mesma edge e mesmos parâmetros do CmdK; a resposta tem o conteúdo
+        // de produto (id, nome, sku, preço, imagem principal) que a voz lê.
+        // A authz real do catálogo continua sendo o JWT do chamador: sem ele,
+        // 401 sem nem chamar o catálogo (nada de fallback para '').
+        const authHeader =
+          req.headers.get('Authorization') ?? req.headers.get('authorization');
+        if (!authHeader) {
+          return errorResponse('Missing Authorization bearer token', 401, req);
+        }
+        const anonKey = readEnv('SUPABASE_ANON_KEY');
+        result = await searchCatalogProducts(query, {
+          supabaseUrl,
+          apikey: anonKey,
+          authHeader,
+          fetchImpl: deps.catalogFetch,
+        });
         break;
       }
 
@@ -224,6 +398,61 @@ Deno.serve(async (req) => {
         break;
       }
 
+      case 'search_files_in_conversation': {
+        const { query, contactId } = params ?? {};
+
+        // Sem termo e sem conversa não há o que procurar: devolve vazio em vez de
+        // varrer TODOS os arquivos visíveis ao chamador (busca sem intenção dita).
+        const sanitized = String(query || '').replace(/[%_\\]/g, '').trim();
+        if (!sanitized && !contactId) {
+          result = [];
+          break;
+        }
+
+        // A RLS real de `messages` (FOR SELECT TO authenticated — só mensagens de
+        // contatos atribuídos ao profile do chamador, ou admin/supervisor) decide
+        // o que ele vê. Por isso a leitura é SEMPRE pelo authedClient (token do
+        // PRÓPRIO chamador): o service_role bypassa a RLS e vazaria o arquivo de
+        // qualquer conversa. Mesmo padrão de `search_contacts`.
+        let filesQuery = authedClient
+          .from('messages')
+          .select('id, contact_id, media_type, media_filename, created_at')
+          // Só linhas que são arquivo (mensagem de texto tem media_url nulo).
+          .not('media_url', 'is', null)
+          // Fora as apagadas (is_deleted = true; nulo/false continuam visíveis).
+          .not('is_deleted', 'is', true);
+
+        // Conversa dita restringe a ela; sem ela, a RLS já limita às conversas visíveis.
+        if (contactId) filesQuery = filesQuery.eq('contact_id', contactId);
+
+        if (sanitized) {
+          const like = escapeOrFilterValue(`%${sanitized}%`);
+          filesQuery = filesQuery.or(`media_filename.ilike.${like},media_type.ilike.${like}`);
+        }
+
+        const { data, error } = await filesQuery
+          .order('created_at', { ascending: false })
+          .limit(20);
+        if (error) throw error;
+
+        // O `messageId` é o que o frontend usa para abrir a conversa já rolada até
+        // o arquivo (mesmo mecanismo de "ver na conversa").
+        result = (data ?? []).map((row: {
+          id: string;
+          contact_id: string | null;
+          media_type: string | null;
+          media_filename: string | null;
+          created_at: string;
+        }) => ({
+          messageId: row.id,
+          contactId: row.contact_id,
+          mediaType: row.media_type,
+          filename: row.media_filename,
+          createdAt: row.created_at,
+        }));
+        break;
+      }
+
       default:
         result = { error: `Ação desconhecida: ${action}` };
     }
@@ -235,4 +464,10 @@ Deno.serve(async (req) => {
     log.error("Unhandled error", { error: msg });
     return errorResponse(msg, 500, req);
   }
-});
+}
+
+// `Deno.serve` só quando este módulo é o principal (deploy). O guard mantém o
+// handler importável pelos testes, sem abrir porta.
+if (import.meta.main) {
+  Deno.serve((req) => handleVoiceCopilotAction(req));
+}

@@ -40,7 +40,7 @@ describe('useEvolutionApi - Exhaustive Test Suite', () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    it('exposes all 60+ functions', () => {
+    it('exposes all supported functions', () => {
       const { result } = renderHook(() => useEvolutionApi());
       const expectedFunctions = [
         'createInstance', 'createConnection', 'listInstances', 'connectInstance', 'getInstanceStatus',
@@ -50,7 +50,7 @@ describe('useEvolutionApi - Exhaustive Test Suite', () => {
         'sendLocationMessage', 'sendContactMessage', 'sendReaction', 'sendPollMessage',
         'sendListMessage', 'sendButtonsMessage', 'sendStatusMessage', 'sendTemplateMessage',
         'markMessageAsRead', 'markMessageAsUnread', 'archiveChat', 'deleteMessage', 'updateMessage',
-        'findChats', 'findMessages', 'findStatusMessages', 'findContacts',
+        'findContacts',
         'checkWhatsAppNumbers', 'getMediaBase64', 'deleteMessageForEveryone', 'editMessage',
         'createGroup', 'listGroups', 'getGroupInfo', 'getGroupParticipants',
         'updateGroupName', 'updateGroupDescription', 'updateGroupParticipants',
@@ -60,6 +60,17 @@ describe('useEvolutionApi - Exhaustive Test Suite', () => {
         'updateProfilePicture', 'removeProfilePicture', 'fetchProfilePicture',
         'fetchBusinessProfile', 'updatePrivacySettings',
         'findLabels', 'handleLabel',
+      ];
+      expectedFunctions.forEach(fn => {
+        expect(typeof result.current[fn as keyof typeof result.current]).toBe('function');
+      });
+    });
+
+    // SL-075 E43: a superfície do hook encolhe junto com a edge.
+    it('não expõe mais os métodos das ações que a Evolution GO não tem', () => {
+      const { result } = renderHook(() => useEvolutionApi());
+      const removidos = [
+        'findChats', 'findMessages', 'findStatusMessages',
         'setChatwoot', 'getChatwoot', 'deleteChatwoot',
         'setTypebot', 'getTypebot', 'deleteTypebot', 'getTypebotSessions', 'changeTypebotStatus', 'startTypebot',
         'setOpenAI', 'getOpenAI', 'deleteOpenAI',
@@ -68,10 +79,15 @@ describe('useEvolutionApi - Exhaustive Test Suite', () => {
         'setEvolutionBot', 'getEvolutionBot', 'deleteEvolutionBot',
         'setRabbitMQ', 'getRabbitMQ', 'setSQS', 'getSQS',
         'createTemplate', 'findTemplates', 'deleteTemplate',
+        'offerCall', 'getBusinessCatalog', 'getBusinessCollections',
+        'setProxy', 'getProxy',
+        'setEvoAI', 'getEvoAI', 'deleteEvoAI',
+        'setN8N', 'getN8N', 'deleteN8N',
+        'setKafka', 'getKafka', 'setNats', 'getNats', 'setPusher', 'getPusher',
       ];
-      expectedFunctions.forEach(fn => {
-        expect(typeof result.current[fn as keyof typeof result.current]).toBe('function');
-      });
+      for (const fn of removidos) {
+        expect(result.current[fn as keyof typeof result.current]).toBeUndefined();
+      }
     });
   });
 
@@ -498,28 +514,6 @@ describe('useEvolutionApi - Exhaustive Test Suite', () => {
   // 6. CHAT MANAGEMENT
   // =============================================
   describe('Chat Management', () => {
-    it('findChats uses POST (proxy pattern)', async () => {
-      const { result } = renderHook(() => useEvolutionApi());
-      await act(async () => {
-        await result.current.findChats('wpp2', 1, 20);
-      });
-      expect(mockInvoke).toHaveBeenCalledWith('evolution-api/find-chats', {
-        method: 'POST',
-        body: { instanceName: 'wpp2', page: 1, offset: 20 },
-      });
-    });
-
-    it('findMessages with time range', async () => {
-      const { result } = renderHook(() => useEvolutionApi());
-      await act(async () => {
-        await result.current.findMessages('wpp2', '5511@s.whatsapp.net', 1, 50, 1000, 2000);
-      });
-      expect(mockInvoke).toHaveBeenCalledWith('evolution-api/find-messages', {
-        method: 'POST',
-        body: { instanceName: 'wpp2', remoteJid: '5511@s.whatsapp.net', page: 1, offset: 50, timestampStart: 1000, timestampEnd: 2000 },
-      });
-    });
-
     it('checkWhatsAppNumbers', async () => {
       const { result } = renderHook(() => useEvolutionApi());
       await act(async () => {
@@ -682,164 +676,8 @@ describe('useEvolutionApi - Exhaustive Test Suite', () => {
   });
 
   // =============================================
-  // 10-15. INTEGRATIONS
+  // 10. INTEGRATIONS — removidas no SL-075 E43
   // =============================================
-  describe('Integrations', () => {
-    it('setChatwoot sends config', async () => {
-      const { result } = renderHook(() => useEvolutionApi());
-      const config = { instanceName: 'wpp2', accountId: '1', token: 'tk', url: 'https://cw.io' };
-      await act(async () => {
-        await result.current.setChatwoot(config);
-      });
-      expect(mockToast.success).toHaveBeenCalledWith('Chatwoot configurado');
-    });
-
-    it('deleteChatwoot uses POST (proxy pattern)', async () => {
-      const { result } = renderHook(() => useEvolutionApi());
-      await act(async () => {
-        await result.current.deleteChatwoot('wpp2');
-      });
-      expect(mockInvoke).toHaveBeenCalledWith('evolution-api/delete-chatwoot', { method: 'POST', body: { instanceName: 'wpp2' } });
-    });
-
-    it('setTypebot sends full config', async () => {
-      const { result } = renderHook(() => useEvolutionApi());
-      const config = { instanceName: 'wpp2', url: 'https://tb.io', typebot: 'flow1', enabled: true };
-      await act(async () => {
-        await result.current.setTypebot(config);
-      });
-      expect(mockToast.success).toHaveBeenCalledWith('Typebot configurado');
-    });
-
-    it('startTypebot sends session params', async () => {
-      const { result } = renderHook(() => useEvolutionApi());
-      await act(async () => {
-        await result.current.startTypebot('wpp2', '5511@s.whatsapp.net', 'https://tb.io', 'flow1', { name: 'João' });
-      });
-      expect(mockInvoke).toHaveBeenCalledWith('evolution-api/start-typebot', {
-        method: 'POST',
-        body: { instanceName: 'wpp2', remoteJid: '5511@s.whatsapp.net', url: 'https://tb.io', typebot: 'flow1', variables: { name: 'João' } },
-      });
-    });
-
-    it('changeTypebotStatus', async () => {
-      const { result } = renderHook(() => useEvolutionApi());
-      await act(async () => {
-        await result.current.changeTypebotStatus('wpp2', '5511@s.whatsapp.net', 'paused');
-      });
-      expect(mockInvoke).toHaveBeenCalledWith('evolution-api/typebot-change-status', {
-        method: 'POST',
-        body: { instanceName: 'wpp2', remoteJid: '5511@s.whatsapp.net', status: 'paused' },
-      });
-    });
-
-    it('setOpenAI sends AI config', async () => {
-      const { result } = renderHook(() => useEvolutionApi());
-      await act(async () => {
-        await result.current.setOpenAI({ instanceName: 'wpp2', openAiApiKey: 'sk-xxx', model: 'gpt-4', enabled: true });
-      });
-      expect(mockToast.success).toHaveBeenCalledWith('OpenAI configurado');
-    });
-
-    it('deleteOpenAI uses POST (proxy pattern)', async () => {
-      const { result } = renderHook(() => useEvolutionApi());
-      await act(async () => {
-        await result.current.deleteOpenAI('wpp2');
-      });
-      expect(mockInvoke).toHaveBeenCalledWith('evolution-api/delete-openai', { method: 'POST', body: { instanceName: 'wpp2' } });
-    });
-
-    it('setDify sends config', async () => {
-      const { result } = renderHook(() => useEvolutionApi());
-      await act(async () => {
-        await result.current.setDify({ instanceName: 'wpp2', apiUrl: 'https://dify.io', apiKey: 'dk-xxx' });
-      });
-      expect(mockToast.success).toHaveBeenCalledWith('Dify configurado');
-    });
-
-    it('setFlowise sends config', async () => {
-      const { result } = renderHook(() => useEvolutionApi());
-      await act(async () => {
-        await result.current.setFlowise({ instanceName: 'wpp2', apiUrl: 'https://fw.io', chatflowId: 'cf-1' });
-      });
-      expect(mockToast.success).toHaveBeenCalledWith('Flowise configurado');
-    });
-
-    it('setEvolutionBot sends config', async () => {
-      const { result } = renderHook(() => useEvolutionApi());
-      await act(async () => {
-        await result.current.setEvolutionBot({ instanceName: 'wpp2', apiUrl: 'https://eb.io' });
-      });
-      expect(mockToast.success).toHaveBeenCalledWith('Evolution Bot configurado');
-    });
-
-    it('deleteEvolutionBot uses POST (proxy pattern)', async () => {
-      const { result } = renderHook(() => useEvolutionApi());
-      await act(async () => {
-        await result.current.deleteEvolutionBot('wpp2');
-      });
-      expect(mockInvoke).toHaveBeenCalledWith('evolution-api/delete-evolution-bot', { method: 'POST', body: { instanceName: 'wpp2' } });
-    });
-  });
-
-  // =============================================
-  // 16. RABBITMQ / SQS
-  // =============================================
-  describe('RabbitMQ / SQS', () => {
-    it('setRabbitMQ with events', async () => {
-      const { result } = renderHook(() => useEvolutionApi());
-      await act(async () => {
-        await result.current.setRabbitMQ('wpp2', true, ['messages.upsert']);
-      });
-      expect(mockInvoke).toHaveBeenCalledWith('evolution-api/set-rabbitmq', {
-        method: 'POST',
-        body: { instanceName: 'wpp2', enabled: true, events: ['messages.upsert'] },
-      });
-    });
-
-    it('setSQS', async () => {
-      const { result } = renderHook(() => useEvolutionApi());
-      await act(async () => {
-        await result.current.setSQS('wpp2', false);
-      });
-      expect(mockInvoke).toHaveBeenCalledWith('evolution-api/set-sqs', {
-        method: 'POST',
-        body: { instanceName: 'wpp2', enabled: false, events: undefined },
-      });
-    });
-  });
-
-  // =============================================
-  // 17. TEMPLATES
-  // =============================================
-  describe('Templates', () => {
-    it('createTemplate', async () => {
-      const { result } = renderHook(() => useEvolutionApi());
-      await act(async () => {
-        await result.current.createTemplate('wpp2', { name: 'hello', language: 'pt_BR', category: 'utility', components: [] });
-      });
-      expect(mockToast.success).toHaveBeenCalledWith('Template criado');
-    });
-
-    it('findTemplates uses POST (proxy pattern)', async () => {
-      const { result } = renderHook(() => useEvolutionApi());
-      await act(async () => {
-        await result.current.findTemplates('wpp2');
-      });
-      expect(mockInvoke).toHaveBeenCalledWith('evolution-api/find-templates', { method: 'POST', body: { instanceName: 'wpp2' } });
-    });
-
-    it('deleteTemplate uses POST (proxy pattern)', async () => {
-      const { result } = renderHook(() => useEvolutionApi());
-      await act(async () => {
-        await result.current.deleteTemplate('wpp2', { name: 'hello' });
-      });
-      expect(mockInvoke).toHaveBeenCalledWith('evolution-api/delete-template', {
-        method: 'POST',
-        body: { instanceName: 'wpp2', name: 'hello' },
-      });
-    });
-  });
 
   // =============================================
   // RETURN VALUE TESTS

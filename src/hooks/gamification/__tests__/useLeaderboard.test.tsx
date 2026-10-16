@@ -94,9 +94,10 @@ vi.mock('@/integrations/supabase/client', () => {
 });
 
 import { log } from '@/lib/logger';
-import { useLeaderboard } from '@/hooks/gamification/useLeaderboard';
+import { useLeaderboard, TEAM_FETCH_LIMIT } from '@/hooks/gamification/useLeaderboard';
 
 const logError = log.error as ReturnType<typeof vi.fn>;
+const logWarn = log.warn as ReturnType<typeof vi.fn>;
 
 const ANA = 'perfil-ana';
 const BRUNO = 'perfil-bruno';
@@ -151,10 +152,10 @@ async function responder(indice: number, rows: Row[]) {
 describe('useLeaderboard — leitura do servidor', () => {
   beforeEach(() => estado());
 
-  it('pede o ranking à RPC com o período corrente e limite 10', async () => {
+  it('pede o ranking à RPC com o período corrente e o teto da equipe inteira', async () => {
     const { result } = await montar();
 
-    expect(h.rpcCalls[0]).toEqual({ fn: 'dashboard_leaderboard', args: { p_period: 'week', p_limit: 10 } });
+    expect(h.rpcCalls[0]).toEqual({ fn: 'dashboard_leaderboard', args: { p_period: 'week', p_limit: TEAM_FETCH_LIMIT } });
     expect(result.current.timeRange).toBe('week');
   });
 
@@ -164,7 +165,7 @@ describe('useLeaderboard — leitura do servidor', () => {
     await act(async () => result.current.setTimeRange('month'));
     await waitFor(() => expect(h.rpcCalls.length).toBeGreaterThan(1));
 
-    expect(h.rpcCalls[h.rpcCalls.length - 1]?.args).toEqual({ p_period: 'month', p_limit: 10 });
+    expect(h.rpcCalls[h.rpcCalls.length - 1]?.args).toEqual({ p_period: 'month', p_limit: TEAM_FETCH_LIMIT });
     expect(result.current.timeRange).toBe('month');
   });
 
@@ -372,7 +373,7 @@ describe('useLeaderboard — atualização manual e realtime', () => {
 
     expect(result.current.isRefreshing).toBe(true);
     await waitFor(() => expect(h.rpcCalls.length).toBe(2));
-    expect(h.rpcCalls[1].args).toEqual({ p_period: 'week', p_limit: 10 });
+    expect(h.rpcCalls[1].args).toEqual({ p_period: 'week', p_limit: TEAM_FETCH_LIMIT });
     expect(h.pendentes).toHaveLength(1);
 
     await responder(0, [linha()]);
@@ -407,5 +408,39 @@ describe('useLeaderboard — atualização manual e realtime', () => {
 
     expect(h.canaisRemovidos).toBe(1);
     expect(h.canais[1].topico).not.toBe(h.canais[0].topico);
+  });
+});
+
+describe('useLeaderboard — amostra ausente vira null (não 0)', () => {
+  beforeEach(() => estado());
+
+  it('com 15 atendentes, só quem tem amostra tem satisfação/tempo (os demais ficam null)', async () => {
+    // 5 com amostra (satisfação 80..100, 1ª resposta 30..70 s) e 10 sem amostra:
+    // a RPC devolve 0 nesses 10 (não distingue de um 0 real).
+    estado(Array.from({ length: 15 }, (_, i) => linha({
+      profile_id: `perfil-${i}`,
+      name: `Agente ${i}`,
+      rank: i + 1,
+      satisfaction: i < 5 ? 80 + i * 5 : 0,
+      avg_response_time: i < 5 ? 30 + i * 10 : 0,
+    })));
+
+    const { result } = await montar();
+
+    expect(result.current.agents).toHaveLength(15);
+    expect(result.current.agents.slice(0, 5).map((a) => a.satisfaction)).toEqual([80, 85, 90, 95, 100]);
+    expect(result.current.agents.slice(0, 5).map((a) => a.avgResponseTime)).toEqual([30, 40, 50, 60, 70]);
+    expect(result.current.agents.slice(5).every((a) => a.satisfaction === null)).toBe(true);
+    expect(result.current.agents.slice(5).every((a) => a.avgResponseTime === null)).toBe(true);
+    expect(logWarn).not.toHaveBeenCalled();
+  });
+
+  it('avisa no log quando o retorno encosta no teto (pode haver equipe além dele)', async () => {
+    estado(Array.from({ length: TEAM_FETCH_LIMIT }, (_, i) => linha({ profile_id: `perfil-${i}`, rank: i + 1 })));
+
+    const { result } = await montar();
+
+    expect(result.current.agents).toHaveLength(TEAM_FETCH_LIMIT);
+    expect(logWarn).toHaveBeenCalledWith(expect.stringContaining('truncado'));
   });
 });

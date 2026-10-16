@@ -6,9 +6,10 @@
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { getCorsHeaders, handleCors, internalErrorResponse, Logger } from "../_shared/validation.ts";
 import { evoFetch, extractMessageId } from "../_shared/evolution-send.ts";
-import { DEFAULT_SCHEDULE_TIMEZONE, deliveryWindowStatus, parseBusinessHours } from "../_shared/talkx-window.ts";
+import { DEFAULT_SCHEDULE_TIMEZONE, deliveryWindowStatus, parseBusinessHours, parseDndHours, type DndSetting } from "../_shared/talkx-window.ts";
 import { pauseReasonForWindow } from "../_shared/talkx-resume-policy.ts";
 import { liveTalkXInstanceId } from "../_shared/talkx-delivery-connection.ts";
+import { encodeTalkxRecipientToken } from "../_shared/talkx-tracking-token.ts";
 import { timingSafeEqual } from "../_shared/hmac-validation.ts";
 import {
   newCorrelationId,
@@ -41,6 +42,90 @@ async function deriveTestSendKey(parts: Array<string | null | undefined>): Promi
   return Array.from(new Uint8Array(digest))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
+}
+
+/**
+ * Gera o token opaco do recipient_id (?r=<token>): UUID cifrado de forma
+ * deterministica com chave derivada de TALKX_CONVERT_SECRET + MAC truncada
+ * (ver _shared/talkx-tracking-token.ts - contrato UNICO entre send e link).
+ * Sem segredo configurado recusa-se a gerar (undefined): o chamador NAO
+ * pode cair no id cru. 32 chars base64url (16 cipher + 8 tag).
+ */
+export async function hmacTokenForRecipient(
+  recipientId: string,
+  secret?: string,
+): Promise<string | undefined> {
+  const key = secret ?? Deno.env.get("TALKX_CONVERT_SECRET");
+  return encodeTalkxRecipientToken(recipientId, key);
+}
+
+/**
+ * Helpers de link rastreável no nível usado pelo envio (trackingUrlFor /
+ * linksByLabelFor): monta as URLs de TODOS os links da campanha para um
+ * destinatário. Pura (recebe as linhas já lidas) para ser testável sem
+ * banco: sem segredo, trackingUrlFor devolve undefined e linksByLabelFor
+ * devolve {} — NUNCA o recipient_id cru.
+ */
+export function buildTalkxTrackingLinkHelpers(params: {
+  links: Array<{ slug?: unknown; label?: unknown }>;
+  secret: string | undefined;
+  configuredBase: string;
+  supabaseUrl: string;
+}): {
+  trackingUrlFor: (recipientId: string) => Promise<string | undefined>;
+  linksByLabelFor: (recipientId: string) => Promise<Record<string, string>>;
+} {
+  const urlFor = (slug: string, recipientId: string): Promise<string | undefined> =>
+    buildTalkxTrackingUrl({
+      slug,
+      recipientId,
+      secret: params.secret,
+      configuredBase: params.configuredBase,
+      supabaseUrl: params.supabaseUrl,
+    });
+  const oldestSlug = typeof params.links[0]?.slug === "string" ? params.links[0].slug : undefined;
+  const slugByLabel = new Map<string, string>();
+  for (const row of params.links) {
+    if (typeof row.slug === "string" && typeof row.label === "string" && row.label.trim()) {
+      slugByLabel.set(row.label.trim().toLowerCase(), row.slug);
+    }
+  }
+  // Declarada SEM `async` de propósito: `urlFor` já devolve a Promise, então o `async`/`await`
+  // aqui só embrulharia de novo — e o contrato scripts/db-audit/talkx-e90-links-contract.test.mjs
+  // trava esta assinatura (`const trackingUrlFor = (recipientId: string)`) para garantir que o
+  // call site real do envio receba a URL por destinatário. Mesmo comportamento, uma camada menos.
+  const trackingUrlFor = (recipientId: string): Promise<string | undefined> =>
+    oldestSlug ? urlFor(oldestSlug, recipientId) : Promise.resolve(undefined);
+  const linksByLabelFor = async (recipientId: string): Promise<Record<string, string>> => {
+    const out: Record<string, string> = {};
+    for (const [label, slug] of Array.from(slugByLabel.entries())) {
+      const url = await urlFor(slug, recipientId);
+      if (url) out[label] = url;
+    }
+    return out;
+  };
+  return { trackingUrlFor, linksByLabelFor };
+}
+
+/**
+ * Monta a URL rastreável de um slug para um destinatário. O parâmetro `r`
+ * carrega o TOKEN opaco — nunca o recipient_id cru. Sem segredo devolve
+ * undefined: o chamador trata como "link indisponível" (placeholder
+ * "[link]"/skipped, o caminho já existente de link ausente).
+ */
+export async function buildTalkxTrackingUrl(params: {
+  slug: string;
+  recipientId: string;
+  secret: string | undefined;
+  configuredBase: string;
+  supabaseUrl: string;
+}): Promise<string | undefined> {
+  const token = await hmacTokenForRecipient(params.recipientId, params.secret);
+  if (!token) return undefined;
+  const rParam = encodeURIComponent(token);
+  return params.configuredBase.length > 0
+    ? `${params.configuredBase}/l/${encodeURIComponent(params.slug)}?r=${rParam}`
+    : `${params.supabaseUrl}/functions/v1/talkx-link?s=${encodeURIComponent(params.slug)}&r=${rParam}`;
 }
 
 export async function handleTalkxSend(
@@ -128,23 +213,54 @@ export async function handleTalkxSend(
       // customVariables (nomes) e aceito no corpo por retrocompatibilidade com o
       // frontend, mas nao e mais necessario: qualquer placeholder sem valor real
       // vira "[nome]" automaticamente (ver personalize()).
-      const { templateContent, mediaUrl, mediaType, phone, idempotencyKey } = body as {
+      const { templateContent, mediaUrl, mediaType, phone, idempotencyKey, connectionId } = body as {
         templateContent: string;
         mediaUrl?: string | null;
         mediaType?: string | null;
         phone: string;
         idempotencyKey?: string | null;
         customVariables?: string[];
+        connectionId?: string | null;
       };
       if (!templateContent || !phone) {
         return new Response(JSON.stringify({ error: "templateContent e phone obrigatorios" }), { status: 400, headers });
       }
-      // Buscar conexao WhatsApp padrao (primeira ativa)
-      const { data: conn } = await supabase
-        .from("whatsapp_connections").select("status, instance_id").eq("status", "connected").limit(1).single();
+      if (!connectionId) {
+        return new Response(JSON.stringify({ error: "connectionId obrigatorio" }), { status: 400, headers });
+      }
+      // Buscar a conexao WhatsApp especificada e validar que esta conectada
+      const { data: conn, error: connError } = await supabase
+        .from("whatsapp_connections").select("status, instance_id").eq("id", connectionId).maybeSingle();
+      if (connError || !conn) {
+        return new Response(JSON.stringify({ error: "Conexao nao encontrada" }), { status: 404, headers });
+      }
+      if (conn.status !== "connected") {
+        return new Response(JSON.stringify({ error: "A conexao informada nao esta conectada" }), { status: 400, headers });
+      }
       const testInstanceId = liveTalkXInstanceId(conn);
       if (!testInstanceId) {
-        return new Response(JSON.stringify({ error: "Nenhuma conexao WhatsApp ativa" }), { status: 400, headers });
+        return new Response(JSON.stringify({ error: "Nenhuma instancia WhatsApp ativa na conexao" }), { status: 400, headers });
+      }
+      // X067: limite de envios de teste — 5 por janela de 10 minutos.
+      const { data: limitRow } = await supabase
+        .from("talkx_settings").select("value").eq("key", "test_send_limit").maybeSingle();
+      // X067: valor inválido em talkx_settings (texto não numérico, zero ou
+      // negativo) não pode desligar o limite — cai no padrão 5. Antes,
+      // `count >= NaN` era sempre falso e liberava envios sem teto.
+      const configuredLimit = Number((limitRow as { value?: unknown } | null)?.value);
+      const limit = Number.isFinite(configuredLimit) && configuredLimit > 0 ? configuredLimit : 5;
+      const windowStart = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+      const { count, error: countError } = await supabase
+        .from("talkx_test_sends")
+        .select("*", { head: true, count: "exact" })
+        .eq("connection_id", connectionId)
+        .gte("created_at", windowStart);
+      if (countError) {
+        log.error("test_send_count_failed", { correlationId, error: countError.message });
+        return internalErrorResponse(countError, req);
+      }
+      if ((count ?? 0) >= limit) {
+        return new Response(JSON.stringify({ error: "Limite de envios de teste atingido" }), { status: 429, headers });
       }
       // Personalizar com dados ficticios para preview
       const dummyContact = { name: "Joao Silva", nickname: "Joao", company: "Empresa Teste" };
@@ -211,6 +327,30 @@ export async function handleTalkxSend(
         return internalErrorResponse(claimError, req);
       }
 
+      // X067: trilha de auditoria do envio de teste. Grava sucesso E falha (a
+      // coluna `error` guarda o motivo) e CHECA o resultado do insert — antes o
+      // retorno era ignorado e uma linha recusada pelo banco sumia em silêncio.
+      const recordTestSendAudit = async (
+        status: "sent" | "failed",
+        providerMessageId: string | null,
+        errorText: string | null = null,
+      ): Promise<void> => {
+        const { error: auditError } = await supabase.from("talkx_test_sends").insert({
+          template_id: null,
+          campaign_id: null,
+          connection_id: connectionId,
+          to_phone: cleanPhone,
+          status,
+          provider_message_id: providerMessageId,
+          error: errorText,
+          created_by: actorId,
+        });
+        if (auditError) {
+          log.error("test_send_audit_failed", { correlationId, error: auditError.message });
+        }
+      };
+      let audited = false;
+
       try {
         let sendRes: Response;
         if (mediaUrl && mediaType) {
@@ -243,11 +383,15 @@ export async function handleTalkxSend(
           // Resposta DEFINITIVA de falha: o provedor não entregou — libera o claim
           // para permitir um retry deliberado (não houve efeito externo).
           await supabase.from("talkx_test_send_claims").delete().eq("request_key", requestKey);
+          await recordTestSendAudit("failed", null, `Evolution retornou ${sendRes.status}: ${errBody}`.slice(0, 500));
+          audited = true;
           return new Response(JSON.stringify({ error: `Evolution retornou ${sendRes.status}: ${errBody}` }), { status: 502, headers });
         }
         const providerResult = await sendRes.json().catch(() => null);
         const providerMessageId = extractMessageId(providerResult);
         if (!providerMessageId || providerMessageId.length > 512) {
+          await recordTestSendAudit("failed", null, "Evolution não confirmou um identificador de entrega");
+          audited = true;
           return new Response(JSON.stringify({ error: "Evolution não confirmou um identificador de entrega" }), { status: 502, headers });
         }
         // Confirma no claim: a próxima repetição devolve este id SEM novo POST.
@@ -255,6 +399,9 @@ export async function handleTalkxSend(
           .from("talkx_test_send_claims")
           .update({ provider_message_id: providerMessageId, sent_at: new Date().toISOString() })
           .eq("request_key", requestKey);
+        // Auditoria do envio de teste.
+        await recordTestSendAudit("sent", providerMessageId);
+        audited = true;
         return new Response(JSON.stringify({ success: true, provider_message_id: providerMessageId }), { headers });
       } catch (e) {
         // Exceção (rede/timeout): o efeito externo ficou INDETERMINADO, então o
@@ -262,6 +409,12 @@ export async function handleTalkxSend(
         // presume exactly-once externo).
         // R2-INF-016: o 500 montado a mao devolvia `e.message` cru ao chamador.
         log.error("Falha ao enviar apos o claim", { correlationId, error: e instanceof Error ? e.message : String(e) });
+        // Efeito externo INDETERMINADO (rede/timeout): registra a tentativa como
+        // falha na auditoria, mas o claim é mantido — repetir não pode virar um
+        // segundo POST sem confirmação.
+        if (!audited) {
+          await recordTestSendAudit("failed", null, `indeterminado: ${e instanceof Error ? e.message : String(e)}`.slice(0, 500));
+        }
         return internalErrorResponse(e, req);
       }
     }
@@ -352,13 +505,15 @@ export async function handleTalkxSend(
 
     const loadBusinessHoursAndDailyLimit = async (): Promise<{
       businessHours: { start?: string; end?: string; days?: number[] } | null;
+      dndSetting: DndSetting | null;
       dailyLimit: number;
     }> => {
       let businessHours: { start?: string; end?: string; days?: number[] } | null = null;
+      let dndSetting: DndSetting | null = null;
       let dailyLimit = 0;
       const { data: settingsRows, error: settingsErr } = await supabase
         .from("talkx_settings").select("key, value")
-        .in("key", ["business_hours", "daily_limit_per_connection"]);
+        .in("key", ["business_hours", "dnd_hours", "daily_limit_per_connection"]);
       if (!settingsErr) {
         // #121A: `talkx_settings.value` é JSONB — `business_hours` chega como
         // OBJETO `{start,end,tz,days}` (string JSON só por compatibilidade).
@@ -368,13 +523,24 @@ export async function handleTalkxSend(
           if (row.key === "business_hours") {
             const parsed = parseBusinessHours(row.value);
             if (parsed) businessHours = parsed;
+          } else if (row.key === "dnd_hours") {
+            dndSetting = parseDndHours(row.value);
           } else if (row.key === "daily_limit_per_connection") {
             const n = Number(row.value);
             if (Number.isFinite(n) && n > 0) dailyLimit = n;
           }
         }
+      } else {
+        // N-118: leitura de talkx_settings falhou — dndSetting fica null e o
+        // DND é ignorado (fail-open documentado): um erro transitório de
+        // leitura não pode travar todas as campanhas com um motivo sem
+        // retomada automática. O warn deixa o bypass visível ao operador.
+        log.warn("talkx_settings indisponível: DND ignorado nesta passada", {
+          correlationId,
+          error: settingsErr instanceof Error ? settingsErr.message : String(settingsErr),
+        });
       }
-      return { businessHours, dailyLimit };
+      return { businessHours, dndSetting, dailyLimit };
     };
 
     const countSentTodayForConnection = async (whatsappConnectionId: string): Promise<number> => {
@@ -427,8 +593,8 @@ export async function handleTalkxSend(
     // Com o domínio próprio, a URL é /l/:slug (rewrite no vercel.json); sem ele,
     // cai no caminho direto da edge (?s=...&r=...).
     const loadTrackingLinks = async (): Promise<{
-      trackingUrlFor: (recipientId: string) => string | undefined;
-      linksByLabelFor: (recipientId: string) => Record<string, string>;
+      trackingUrlFor: (recipientId: string) => Promise<string | undefined>;
+      linksByLabelFor: (recipientId: string) => Promise<Record<string, string>>;
     }> => {
       const { data: links } = await supabase
         .from("talkx_links")
@@ -436,26 +602,14 @@ export async function handleTalkxSend(
         .eq("campaign_id", campaignId)
         .order("created_at", { ascending: true });
       const configuredBase = (Deno.env.get("TALKX_LINK_BASE_URL") ?? "").trim().replace(/\/+$/, "");
-      const urlFor = (slug: string, recipientId: string) =>
-        configuredBase.length > 0
-          ? `${configuredBase}/l/${encodeURIComponent(slug)}?r=${encodeURIComponent(recipientId)}`
-          : `${supabaseUrl}/functions/v1/talkx-link?s=${encodeURIComponent(slug)}&r=${encodeURIComponent(recipientId)}`;
-      const rows = (links ?? []) as { slug?: unknown; label?: unknown }[];
-      const oldestSlug = typeof rows[0]?.slug === "string" ? rows[0].slug : undefined;
-      const slugByLabel = new Map<string, string>();
-      for (const row of rows) {
-        if (typeof row.slug === "string" && typeof row.label === "string" && row.label.trim()) {
-          slugByLabel.set(row.label.trim().toLowerCase(), row.slug);
-        }
-      }
-      const trackingUrlFor = (recipientId: string) =>
-        oldestSlug ? urlFor(oldestSlug, recipientId) : undefined;
-      const linksByLabelFor = (recipientId: string) => {
-        const out: Record<string, string> = {};
-        for (const [label, slug] of slugByLabel) out[label] = urlFor(slug, recipientId);
-        return out;
-      };
-      return { trackingUrlFor, linksByLabelFor };
+      const secret = Deno.env.get("TALKX_CONVERT_SECRET");
+      // Sem segredo: urlFor devolve undefined (link indisponível) — NUNCA o id cru.
+      return buildTalkxTrackingLinkHelpers({
+        links: ((links ?? []) as { slug?: unknown; label?: unknown }[]),
+        secret,
+        configuredBase,
+        supabaseUrl,
+      });
     };
 
     // X022: rótulos de link cadastrados na campanha. {{link:rotulo}} com rótulo
@@ -620,6 +774,7 @@ export async function handleTalkxSend(
     interface EngineState {
       campaign: Record<string, unknown>;
       businessHours: { start?: string; end?: string; days?: number[] } | null;
+      dndSetting: DndSetting | null;
       dailyLimit: number;
       sentTodayTotal: number;
       minuteLimit: number;
@@ -640,8 +795,8 @@ export async function handleTalkxSend(
       evolutionUrl: string;
       evolutionKey: string;
       supabaseUrl: string;
-      trackingUrlFor: (recipientId: string) => string | undefined;
-      linksByLabelFor: (recipientId: string) => Record<string, string>;
+      trackingUrlFor: (recipientId: string) => Promise<string | undefined>;
+      linksByLabelFor: (recipientId: string) => Promise<Record<string, string>>;
       mediaForSend: () => Promise<string>;
       deliveryLogs: DeliveryLogEntry[];
     }
@@ -764,12 +919,12 @@ export async function handleTalkxSend(
       // check is not enough when a campaign crosses a local-time boundary.
       const { data: currentCampaign, error: currentCampaignError } = await supabase
         .from("talkx_campaigns")
-        .select("status, send_interval_min, send_interval_max, typing_delay_min, typing_delay_max, send_window_start, send_window_end, business_hours_only, speed_profile, schedule_timezone")
+        .select("status, send_interval_min, send_interval_max, typing_delay_min, typing_delay_max, send_window_start, send_window_end, business_hours_only, speed_profile, schedule_timezone, send_weekdays, respect_dnd")
         .eq("id", campaignId).single();
       if (currentCampaignError) throw new Error(`talkx_campaign_state_lookup_failed: ${currentCampaignError.message}`);
       if (currentCampaign?.status !== "sending") return "stop";
       state.campaign = { ...state.campaign, ...currentCampaign };
-      const currentWindowStatus = deliveryWindowStatus(state.campaign, undefined, state.businessHours);
+      const currentWindowStatus = deliveryWindowStatus(state.campaign, new Date(), state.businessHours, state.dndSetting);
       if (!currentWindowStatus.allowed) {
         // V03: grava POR QUE pausou — sem isso a retomada automática não tinha
         // como distinguir pausa da janela de pausa do operador.
@@ -807,6 +962,7 @@ export async function handleTalkxSend(
         campaignId,
         campaign: state.campaign,
         businessHours: state.businessHours,
+        dndSetting: state.dndSetting,
         initialInstanceId: state.initialInstanceId,
         instanceToken: state.instanceToken,
         evolutionUrl: state.evolutionUrl,
@@ -870,13 +1026,13 @@ export async function handleTalkxSend(
         await refreshBudget(state);
         const { data: fresh } = await supabase
           .from("talkx_campaigns")
-          .select("send_interval_min, send_interval_max, typing_delay_min, typing_delay_max, send_window_start, send_window_end, business_hours_only, speed_profile, schedule_timezone")
+          .select("send_interval_min, send_interval_max, typing_delay_min, typing_delay_max, send_window_start, send_window_end, business_hours_only, speed_profile, schedule_timezone, send_weekdays, respect_dnd")
           .eq("id", campaignId).single();
         if (fresh) {
           state.campaign = { ...state.campaign, ...fresh };
           // Recheck the campaign's own IANA window after configuration reload.
           // The locked transition preserves a concurrent manual pause/cancel.
-          const refreshedWindowStatus = deliveryWindowStatus(state.campaign, undefined, state.businessHours);
+          const refreshedWindowStatus = deliveryWindowStatus(state.campaign, new Date(), state.businessHours, state.dndSetting);
           if (!refreshedWindowStatus.allowed) {
             log.warn('Campanha pausada automaticamente: fora da janela de envio', { correlationId, campaignId });
             await pauseCampaign(pauseReasonForWindow(refreshedWindowStatus));
@@ -903,8 +1059,9 @@ export async function handleTalkxSend(
       minuteRemaining: number,
       dayRemaining: number,
       businessHours: { start?: string; end?: string; days?: number[] } | null,
-      trackingUrlFor: (recipientId: string) => string | undefined,
-      linksByLabelFor: (recipientId: string) => Record<string, string>,
+      dndSetting: DndSetting | null,
+      trackingUrlFor: (recipientId: string) => Promise<string | undefined>,
+      linksByLabelFor: (recipientId: string) => Promise<Record<string, string>>,
     ): Promise<EngineState> => {
       // whatsapp-media e bucket privado: a GO so baixa via signed URL (TTL 300s). Uma
       // assinatura serve varios destinatarios; reassina depois de 240s porque campanhas
@@ -922,6 +1079,7 @@ export async function handleTalkxSend(
       return {
         campaign,
         businessHours,
+        dndSetting,
         dailyLimit,
         sentTodayTotal,
         minuteLimit,
@@ -985,7 +1143,7 @@ export async function handleTalkxSend(
       let engineStateParaSaida: EngineState | null = null;
 
       try {
-        const { businessHours } = await loadBusinessHoursAndDailyLimit();
+        const { businessHours, dndSetting } = await loadBusinessHoursAndDailyLimit();
 
         // Get WhatsApp connection instance
         const { data: connection } = await supabase
@@ -1043,7 +1201,7 @@ export async function handleTalkxSend(
         const { trackingUrlFor, linksByLabelFor } = await loadTrackingLinks();
         const state = await buildEngineState(
           campaignRow, workerId, initialInstanceId, instanceToken,
-          dailyLimit, sentTodayTotal, minuteLimit, minuteRemaining, dayRemaining, businessHours, trackingUrlFor, linksByLabelFor,
+          dailyLimit, sentTodayTotal, minuteLimit, minuteRemaining, dayRemaining, businessHours, dndSetting, trackingUrlFor, linksByLabelFor,
         );
         engineStateParaSaida = state;
 
@@ -1218,7 +1376,7 @@ export async function handleTalkxSend(
       }
     }
     // V20: horário comercial + limite diário por conexão (talkx_settings)
-    const { businessHours, dailyLimit } = await loadBusinessHoursAndDailyLimit();
+    const { businessHours, dndSetting, dailyLimit } = await loadBusinessHoursAndDailyLimit();
     const sentTodayTotal = dailyLimit > 0
       ? await countSentTodayForConnection(campaign.whatsapp_connection_id)
       : 0;
@@ -1252,7 +1410,7 @@ export async function handleTalkxSend(
     // Enforce delivery limits in the selected IANA timezone before the locked
     // transition. An invalid legacy timezone fails closed instead of falling
     // back to Brasília and sending at an unintended local hour.
-    const windowStatus = deliveryWindowStatus(campaign, undefined, businessHours);
+    const windowStatus = deliveryWindowStatus(campaign, new Date(), businessHours, dndSetting);
     if (!windowStatus.allowed) {
       return new Response(JSON.stringify({ ok: false, reason: windowStatus.reason, next_window: windowStatus.next_window }), { headers });
     }

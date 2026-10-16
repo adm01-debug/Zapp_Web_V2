@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { safeGetItem, safeSetItem } from '@/lib/safeStorage';
 
 export type Theme = 'light' | 'dark' | 'system';
 export type ResolvedTheme = 'light' | 'dark';
@@ -25,7 +26,7 @@ type ThemeSnapshot = {
 const getStoredTheme = (): Theme => {
   if (typeof window === 'undefined') return 'system';
 
-  const stored = localStorage.getItem(THEME_STORAGE_KEY);
+  const stored = safeGetItem(THEME_STORAGE_KEY);
   return stored === 'light' || stored === 'dark' || stored === 'system' ? stored : 'system';
 };
 
@@ -47,6 +48,7 @@ const listeners = new Set<(snapshot: ThemeSnapshot) => void>();
 let transitionTimeout: number | null = null;
 let rootTransitionTimeout: number | null = null;
 let systemListenerAttached = false;
+let storageListenerAttached = false;
 
 const notify = () => {
   listeners.forEach((listener) => listener(themeState));
@@ -105,7 +107,7 @@ const updateThemeState = (nextTheme: Theme, animate = true) => {
   };
 
   if (typeof window !== 'undefined') {
-    localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+    safeSetItem(THEME_STORAGE_KEY, nextTheme);
   }
 
   applyThemeToDocument(themeState.resolvedTheme, animate);
@@ -131,10 +133,38 @@ const ensureSystemListener = () => {
   systemListenerAttached = true;
 };
 
+/**
+ * HZ3-005: o doc 26 promete tema sincronizado entre abas, mas nenhuma versão ouvia
+ * o `storage` da chave `theme`. O navegador só entrega esse evento às OUTRAS abas
+ * (a que gravou não recebe), então aqui basta reagir ao valor gravado fora daqui —
+ * `newValue` nulo (chave removida) volta para `system`. A troca chega sem animação
+ * (a animação de 300 ms é do clique do usuário nesta aba).
+ */
+const handleStorageThemeChange = (event: StorageEvent) => {
+  if (event.key !== THEME_STORAGE_KEY) return;
+
+  const stored = event.newValue;
+  const nextTheme: Theme =
+    stored === 'light' || stored === 'dark' || stored === 'system' ? stored : 'system';
+
+  // Mesma aba/valor repetido: reler o localStorage já está feito, nada a avisar.
+  if (nextTheme === themeState.theme) return;
+
+  updateThemeState(nextTheme, false);
+};
+
+const ensureStorageListener = () => {
+  if (typeof window === 'undefined' || storageListenerAttached) return;
+
+  window.addEventListener('storage', handleStorageThemeChange);
+  storageListenerAttached = true;
+};
+
 const initializeTheme = () => {
   if (typeof window === 'undefined') return;
 
   ensureSystemListener();
+  ensureStorageListener();
   themeState = {
     theme: getStoredTheme(),
     resolvedTheme: resolveTheme(getStoredTheme()),

@@ -5,6 +5,14 @@ import { openMenu } from './contactDeleteFixtures';
 vi.mock('../ContactSearchWithSuggestions', () => ({ ContactSearchWithSuggestions: () => null }));
 vi.mock('../ContactAdvancedFilters', () => ({ ContactAdvancedFilters: () => <div>painel-filtros</div> }));
 vi.mock('../FilterPresets', () => ({ FilterPresets: () => null }));
+// CT-011 — a barra lê a sub-chave `contacts.v2.toolbar` pelo hook compartilhado
+// de CT-005. Aqui a chave fica DESLIGADA (a barra é a atual): é o comportamento
+// que este arquivo já provava, e o teste não precisa de AuthProvider/QueryClient.
+vi.mock('@/hooks/contacts/useContactsV2Flags', () => ({
+  useContactsV2Flags: () => ({
+    toolbar: false, cards: false, detalhe: false, empresa: false, edicao: false, protecao: false,
+  }),
+}));
 vi.mock('@/components/ui/select', () => ({
   Select: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   SelectTrigger: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
@@ -104,6 +112,8 @@ describe('ContactViewSwitcher (etapa 82)', () => {
     const props = renderSwitcher('table');
     openMenu(screen.getByRole('button', { name: /Colunas/ }));
     expect(screen.getAllByRole('menuitem').map(i => i.textContent?.trim())).toEqual(['Por empresa']);
+    // Aviso honesto: fora da Lista o agrupamento por empresa não tem efeito.
+    expect(screen.getByText(/por empresa só na Lista/)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('menuitem', { name: 'Por empresa' }));
     expect(props.onGroupByCompanyChange).toHaveBeenCalledWith(true);

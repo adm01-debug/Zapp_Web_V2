@@ -10,7 +10,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
  * monta a TELA REAL, joga o Speed Typing até o relógio zerar e então clica no
  * jogo seguinte: o Quiz tem de abrir na primeira pergunta e o recorde dele tem
  * de continuar vazio.
+ *
+ * #267: a tela passou a creditar XP no servidor (`creditMiniGameXp`), e o hook
+ * `useAgentGamification` exige um AuthProvider que este teste não monta. O mock
+ * abaixo só entrega o consumidor de crédito; nenhuma asserção deste arquivo foi
+ * afrouxada (ele continua medindo recorde e reabertura do jogo).
  */
+const { creditMiniGameXpMock } = vi.hoisted(() => ({ creditMiniGameXpMock: vi.fn() }));
+
+vi.mock('@/hooks/gamification/useAgentGamification', () => ({
+  useAgentGamification: () => ({ creditMiniGameXp: creditMiniGameXpMock }),
+}));
+
 vi.mock('@/lib/secureRandom', () => ({ secureRandomFloat: vi.fn(() => 0.01) }));
 
 import { TrainingMiniGames } from '../TrainingMiniGames';
@@ -27,6 +38,14 @@ describe('TrainingMiniGames — fim do Speed Typing', () => {
   beforeEach(() => {
     localStorage.clear();
     vi.useFakeTimers();
+    creditMiniGameXpMock.mockReset();
+    creditMiniGameXpMock.mockResolvedValue({
+      credited: true,
+      reason: 'ok',
+      partidas: 1,
+      maxPartidasDia: 5,
+      xpCreditado: 10,
+    });
   });
 
   afterEach(() => {
