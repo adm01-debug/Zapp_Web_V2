@@ -2263,6 +2263,7 @@ export type Database = {
           id: string
           is_lid_legacy: boolean
           job_title: string | null
+          last_seen_at: string | null
           latitude: number | null
           lead_origin: string | null
           lead_score: number | null
@@ -2273,6 +2274,8 @@ export type Database = {
           notes: string | null
           phone: string
           postal_code: string | null
+          presence_status: string | null
+          presence_updated_at: string | null
           queue_id: string | null
           risk_score: number | null
           state: string | null
@@ -2308,6 +2311,7 @@ export type Database = {
           id?: string
           is_lid_legacy?: boolean
           job_title?: string | null
+          last_seen_at?: string | null
           latitude?: number | null
           lead_origin?: string | null
           lead_score?: number | null
@@ -2318,6 +2322,8 @@ export type Database = {
           notes?: string | null
           phone: string
           postal_code?: string | null
+          presence_status?: string | null
+          presence_updated_at?: string | null
           queue_id?: string | null
           risk_score?: number | null
           state?: string | null
@@ -2353,6 +2359,7 @@ export type Database = {
           id?: string
           is_lid_legacy?: boolean
           job_title?: string | null
+          last_seen_at?: string | null
           latitude?: number | null
           lead_origin?: string | null
           lead_score?: number | null
@@ -2363,6 +2370,8 @@ export type Database = {
           notes?: string | null
           phone?: string
           postal_code?: string | null
+          presence_status?: string | null
+          presence_updated_at?: string | null
           queue_id?: string | null
           risk_score?: number | null
           state?: string | null

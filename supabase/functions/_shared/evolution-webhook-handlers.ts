@@ -214,14 +214,61 @@ export async function handlePresenceUpdate(supabase: EvolutionDbClient, instance
   const presenceData = isRecord(data) ? data : {};
   const jid = ((presenceData.id as string) || (presenceData.remoteJid as string) || '').trim();
 
-  // Grupo e difusão não são contatos: não disparam "digitando".
-  if (!jid || jid.endsWith('@g.us') || jid.endsWith('@broadcast')) return;
+  if (jid && !jid.endsWith('@g.us')) {
+    // O GO entrega dois envelopes aqui: ChatPresence {presences:{jid:{lastKnownPresence}}}
+    // com composing/paused, e Presence {status} com online/offline (às vezes
+    // available/unavailable). Antes só 'composing' era aproveitado. Colhemos
+    // TODOS os estados do evento e derivamos digitando e presença real.
+    const estados: string[] = [];
+    if (presences) {
+      for (const [, pState] of Object.entries(presences)) {
+        const valor = pState?.lastKnownPresence ?? pState?.status;
+        if (typeof valor === 'string') estados.push(valor.toLowerCase());
+      }
+    } else {
+      const direto = presenceData.status ?? presenceData.lastKnownPresence;
+      if (typeof direto === 'string') estados.push(direto.toLowerCase());
+    }
 
-  const presences = presenceData.presences as Record<string, Record<string, unknown>> | undefined;
-  let isComposing = false;
-  if (presences) {
-    for (const [, pState] of Object.entries(presences)) {
-      if (pState?.lastKnownPresence === 'composing' || pState?.status === 'composing') { isComposing = true; break; }
+    const isComposing = estados.includes('composing');
+    const online = estados.some((e) => e === 'online' || e === 'available');
+    const offline = estados.some((e) => e === 'offline' || e === 'unavailable');
+
+    const phone = normalizePhone(jid);
+    if (phone) {
+      const connection = await getConnectionByInstance(supabase, instance);
+      if (connection) {
+        const contact = await getContactByPhone(supabase, phone, connection.id);
+        if (contact) {
+          // 'digitando' inalterado: todo evento de presença ainda avisa o front.
+          const channel = supabase.channel(`typing:${contact.id}`);
+          await channel.send({ type: 'broadcast', event: 'contact_typing', payload: { isTyping: isComposing, contactId: contact.id, timestamp: new Date().toISOString() } });
+          supabase.removeChannel(channel);
+
+          // Presença ONLINE/OFFLINE real do contato (R2-INB-030 removia o que era
+          // falso; o real vindo do WhatsApp é permitido). Grava só o estado e os
+          // horários — nada além disso.
+          if (online || offline) {
+            const agora = new Date().toISOString();
+            const updateData: Record<string, unknown> = {
+              presence_status: online ? 'online' : 'offline',
+              presence_updated_at: agora,
+            };
+            if (offline) {
+              // "Visto por último" só avança na TRANSIÇÃO online -> offline:
+              // um contato que o WhatsApp já mandava como offline não reescreve
+              // (nem inventa) esse horário.
+              const { data: atual } = await supabase
+                .from('contacts')
+                .select('presence_status')
+                .eq('id', contact.id)
+                .maybeSingle();
+              if (atual?.presence_status === 'online') updateData.last_seen_at = agora;
+            }
+            await supabase.from('contacts').update(updateData).eq('id', contact.id);
+          }
+        }
+      }
     }
   } else {
     const directStatus = presenceData.status as string || presenceData.lastKnownPresence as string;
