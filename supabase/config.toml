@@ -82,3 +82,10 @@ verify_jwt = true
 # verify_jwt=true e o default do CLI; declarado aqui para documentacao explicita.
 [functions.talkx-ai]
 verify_jwt = true
+
+# #44: drenagem da outbox duravel do log essencial de IA (public.ai_usage_outbox),
+# chamada pelo pg_cron (net.http_post) com x-cron-secret, sem JWT de sessao -- mesmo
+# padrao das demais funcoes de cron (L5/IA-004): a guarda interna compara o segredo
+# em tempo constante e recusa a anon key. Nao reativar o gate de JWT aqui.
+[functions.ai-usage-outbox-drain]
+verify_jwt = false
