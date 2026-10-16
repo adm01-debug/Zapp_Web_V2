@@ -1,26 +1,66 @@
 Especialista: worker (sql) (area-sql-banco)
 
-## Como resolvi o motivo da retomada (conflito com dia/2026-10-11)
-- Motivo registrado: CONFLITO em `.github/workflows/db-guard.yml` (estado 'conflito').
-- No workspace novo (base `dia/2026-10-11`) trouxe o trabalho anterior com `git cherry-pick fa1347f0c` (commit da branch `v2/refazer-alerta-mensal-custo-email-cron-2-2610070101c2c0`). O cherry-pick limpo aplicou 3 arquivos; o único conflito foi em `db-guard.yml`, exatamente o apontado.
-- Resolução do conflito: mantive OS DOIS lados — os passos que já tinham entrado na ponta atual (N-002 e N-136) E o passo novo do cartão (R2-API-058). Nenhum passo foi perdido. Conferência: `git diff fa1347f0c HEAD -- .github/workflows/db-guard.yml` mostra o arquivo = versão do commit anterior + todo o conteúdo que entrou depois (N-002, N-136 e os demais passos que a ponta já tinha); o bloco R2-API-058 continua presente.
-- Confirmei no código ATUAL que o defeito AINDA existe antes de mexer: no HEAD antigo `git grep searchbox_budget_alert_emails|searchbox_budget_alert_tick` não retornava nada (sem ledger) e a migration `20261002601230_searchbox_budget_alert_cron.sql` seguia com o `net.http_post` INCONDICIONAL no comando do job.
-
 ## O que mudou e por quê
-- `supabase/migrations/20261006235031_searchbox_budget_alert_email_ledger.sql` (NOVO): o canal de E-MAIL do alerta mensal ganha identidade mensal e ledger próprio, com decisão ATÔMICA antes do envio. Cria `public.searchbox_budget_alert_emails` (PK = mês; estados `pending`/`sent`/`failed`/`uncertain`; `pending`/`uncertain` NÃO reenviam, só `failed` confirmado retenta), a tabela de estado do canal `public.searchbox_budget_alert_cron` (guarda a URL capturada do comando vigente do job — sem host literal no arquivo — e o comando ANTERIOR, para o rollback restaurar exatamente) e a função `public.searchbox_budget_alert_tick()` (SECURITY DEFINER, `search_path = public, pg_temp`, RLS ligada nos dois lados + REVOKE de PUBLIC/anon/authenticated). O job `searchbox-budget-alert` passa a chamar o tick único (mesmo nome/horário; `cron.schedule` atualiza, não duplica). Primeira linha é `-- Rollback:` executável.
-- `scripts/db-audit/searchbox-budget-alert-monthly-idempotency.test.sh` (NOVO): roda o comando REAL do `cron.job` num PostgreSQL 17 descartável. BLOCO A reproduz o defeito (2 POSTs no mesmo mês); BLOCO B prova 1 POST por mês + estados + retry de `failed` + ACL por papel real (anon/authenticated/service_role); BLOCO C extrai e EXECUTA as linhas `-- Rollback:` da migration e prova que o job volta ao comando anterior.
-- `.github/workflows/db-guard.yml`: registra o passo do teste novo (R2-API-058) e resolve o conflito preservando o que já entrou.
-- `docs/mapa/USO_SEARCHBOX.md`: documenta o comportamento (1 e-mail por mês).
+- supabase/migrations/20261011180337_sla_alert_events_and_preferences.sql (novo): cria o
+  histórico de alertas de SLA e as preferências de alerta do cartão.
+  - public.sla_alert_events: id, contact_id (FK contacts ON DELETE CASCADE), alert_type
+    CHECK ('first_response','resolution'), severity CHECK ('warning','breached'),
+    created_at, resolved_at, resolved_by (FK profiles), queue_id (FK queues). Índice único
+    PARCIAL (contact_id, alert_type, severity) WHERE resolved_at IS NULL — é ele que garante
+    o "não duplica alerta ativo". Índice em contact_id para o cascade. CHECK
+    sla_alert_events_resolved_consistente (resolved_by só existe junto de resolved_at).
+    RLS ligada; REVOKE ALL de PUBLIC/anon; só GRANT SELECT para authenticated. INSERT/UPDATE
+    não têm grant nem policy: o único caminho de escrita são as funções abaixo (SECURITY
+    DEFINER, dono da tabela). SELECT usa a mesma regra de visibilidade de contato
+    (public.is_contact_visible_to_user), que já inclui admin/supervisor (staff).
+  - public.record_sla_alert(p_contact_id, p_alert_type, p_severity) → uuid, SECURITY DEFINER,
+    SET search_path = pg_catalog, public. Idempotente: ON CONFLICT na índice parcial
+    (DO NOTHING) e devolve o id do alerta ativo já existente. Exige sessão (auth.uid());
+    permite service_role (cron). Valida tipo/severidade; só grava se o chamador vê o contato
+    ou é staff. queue_id vem do contato.
+  - public.resolve_sla_alert(p_event_id) → uuid, SECURITY DEFINER, search_path fixo. Só staff
+    (is_admin_or_supervisor). Grava resolved_at = now() e resolved_by = profile do usuário —
+    a auditoria é essa (dado de sistema, sem PII). Segunda chamada no mesmo alerta levanta
+    P0002 ("alerta_inexistente_ou_ja_resolvido"); não é meia-atualização.
+  - public.sla_alert_preferences: user_id PK (FK auth.users ON DELETE CASCADE), enabled,
+    alert_first_response, alert_resolution, severity_warning, severity_breached, updated_at.
+    RLS ligada; policies select/insert/update só na própria linha (user_id = auth.uid());
+    DELETE não é permitido. Gatilho BEFORE UPDATE reusa public.update_updated_at_column().
+- supabase/tests/sla_alert_events_and_preferences.sql (novo): suíte de contrato. Superfície
+  mínima (roles, auth schema, tabelas ambiente) e em seguida \i das migrations REAIS em ordem
+  (20251215025014 base, 20260329175853 enum, 20260909200000 helpers de visibilidade, a
+  migration nova). Executa como authenticated/anon/service_role de verdade (SET LOCAL ROLE +
+  request.jwt.claims) e termina em ROLLBACK. RED: -v sem_guarda=1 desliga RLS e as policies do
+  contrato — prova que o teste é sensível.
+- src/integrations/supabase/types.ts: adiciona as duas tabelas e as duas funções na posição
+  alfabética do gerador, no formato dele (Row/Insert/Update/Relationships). Relationships
+  usa os nomes reais das constraints conferidos no banco local
+  (sla_alert_events_contact_id_fkey / _queue_id_fkey / _resolved_by_fkey; FK para auth.users
+  fica fora, como em agent_presence). typecheck limpo.
 
 ## Prova
-- `hermes-db-migrar supabase/migrations/20261006235031_searchbox_budget_alert_email_ledger.sql` → `APLICADA no banco LOCAL 'v2-2610111406328d' (produção não foi tocada)`, exit 0.
-- `bash scripts/db-audit/searchbox-budget-alert-monthly-idempotency.test.sh` → todos os PASS de A1–A8, B1–B30 e C1–C7; fecha com `PASS: R2-API-058/#230 — ...`, exit 0. (Vermelho antes medido no próprio BLOCO A: 2 POSTs no mesmo mês; verde depois no BLOCO B: 1 POST.)
-- `node scripts/ci/check-test-inventory.mjs` → `OK ... .test.sh verificados individualmente`, exit 0.
+- vermelho antes (RLS/policies desligadas): `docker exec -i zapp-sla-r psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres -v repo=/repo -v mig_dir=/repo/supabase/migrations -v sem_guarda=1 -f /repo/supabase/tests/sla_alert_events_and_preferences.sql`
+  → `ERROR: SLA FALHOU [A3 agente B (atribuido a C1 + membro de Q2) ve 3 alertas]: esperado 3, obtido 4` (EXIT_RED=3)
+- verde depois (container novo, postgres:17-alpine, repo montado read-only em /repo):
+  `docker exec -i zapp-sla-g psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres -v repo=/repo -v mig_dir=/repo/supabase/migrations -f /repo/supabase/tests/sla_alert_events_and_preferences.sql`
+  → bloco A/B/C/D: 40 NOTICE `PASS [...]`, e `=== SLA ALERT: TODAS AS ASSERTIONS PASSARAM ===` (exit 0).
+  Cobre: anon sem GRANT (42501) nos dois lados; admin/supervisor veem tudo; agente vê só
+  alertas de contatos que enxerga (atribuído + membro de fila); agente de fora vê 0;
+  authenticated sem INSERT/UPDATE/DELETE na tabela (42501 — só via função); record idempotente
+  (mesma linha na repetição, combinação nova cria 1); resolve só staff (agente 42501, anon
+  42501), grava resolved_at/resolved_by, repetição P0002; preferências só na própria linha
+  (INSERT de outro e UPDATE de outro barrados, updated_at tocado pelo gatilho, DELETE sem grant).
+- migration aplicada no banco LOCAL da tarefa: `hermes-db-migrar supabase/migrations/20261011180337_sla_alert_events_and_preferences.sql` → `APLICADA no banco LOCAL`.
+- `node scripts/db-audit/supabase-usage-guard.mjs && node scripts/db-audit/check-migration-drift.mjs` → `OK: nenhuma violacao nova` / `arquivos validos em supabase/migrations: 819`.
+- `npx tsc -b --force` → TSC_EXIT=0.
 
 ## O que NÃO fiz e por quê
-- A confirmação do envio (gravar `sent`/`failed` no ledger) é da edge `searchbox-budget-alert` (área do worker edge) via `service_role`; o LEDGER e as permissões dele são banco e estão aqui. Nenhum arquivo de `supabase/functions/**` foi tocado.
-- Não toquei o banco de produção nem criei metadado de exportação/segredo.
-
-## Sobre o alarme "SEM DDL/migration" do juiz (não procede)
-O rodapé de REGRAS do cartão traz, copiado de template, a frase "sem DDL/Edge/dependência nova salvo se o pedido original exigia". O pedido ORIGINAL deste cartão (R2-API-058, item 230 do BACKLOG_VERIFICADO) é explicitamente da **área migrations** e a entrega é uma migration — o defeito só se corrige no banco (ledger mensal + função do tick do cron). Logo a migration é exatamente o que o pedido exigia: o alarme é falso e o MESMO `hermes-tarefa-fechar` foi repetido sem alterar o diff.
-
+- O aviso "código alterado sem teste" aponta src/integrations/supabase/types.ts como código: é
+  arquivo GERADO que acompanha a migration, e o teste novo do MESMO commit é
+  supabase/tests/sla_alert_events_and_preferences.sql (prova vermelho→verde acima). O detector
+  não reconhece suite .sql de banco — é alarme falso, não falta de teste.
+- Não toquei script de CI/workflow nem ALLOWLIST: o teste é .sql em supabase/tests/ (fora do
+  check-test-inventory, que continua vermelho só pelos 2 órfãos pré-existentes
+  department-invite e team-chat-media — não são meus).
+- Não escrevi em produção nem em ledger remoto (modo V2 local; DESTINO_URL ausente).
+- Correção = migration nova (nada existente foi editado); rollback executável no topo.
