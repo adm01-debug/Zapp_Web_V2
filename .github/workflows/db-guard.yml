@@ -1031,6 +1031,18 @@ jobs:
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-member-role-rpcs.test.sh
 
+      # R2-DB-020 (item 13): a policy de SELECT de team-chat-files resolvia `name` para
+      # profiles.name (subselect com JOIN em profiles), liberando objeto de conversa alheia
+      # a quem tivesse profiles.name = media_path da mensagem; e media_path nao era vinculado
+      # a remetente/conversa. O bloco A prova o vazamento, a sonda prova que o legado existia
+      # (ADD CONSTRAINT validado falharia), a migration aplica, o bloco B prova a correcao e a
+      # transicao (updated_at preservado, tabela de apoio do rollback) e o bloco C executa o
+      # rollback real, inclusive a devolucao do dado.
+      - name: Simular ACL e persistencia de media_path do Team Chat (R2-DB-020)
+        env:
+          R2DB020_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-chat-media-acl-r2-db-020.test.sh
+
       # E76 (plano MAPA Fase 7), ajuste (b) da decisao 20261002-063721: o contrato da
       # RPC `search_contacts` (8 campos de endereco, ACL sem anon/PUBLIC e trigger de
       # auditoria) vive aqui porque este workflow tem gatilho `pull_request` (linha 17) —
