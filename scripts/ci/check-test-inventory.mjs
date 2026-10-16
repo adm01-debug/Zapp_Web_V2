@@ -182,8 +182,13 @@ const ALLOWLIST = new Set([
   // composto (created_at, id) não perde a cauda empatada, que p_after sem p_after_id erra, o ACL sob
   // roles reais, a idempotência e o Rollback. O passo no db-guard.yml é uma linha
   // (`bash scripts/db-audit/talkx-campaign-logs-cursor.test.sh`) — promover pelo dono do workflow.
-  'scripts/db-audit/talkx-campaign-logs-cursor.test.sh',]);
-// Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em
+  'scripts/db-audit/talkx-campaign-logs-cursor.test.sh',]);,
+  // R2-DB (11/10/2026): prova o log de tentativas de envio (public.message_attempts) em PG 17
+  // descartavel com papel real (authenticated/anon/service_role) e rollback executado. Passo de
+  // uma linha em db-guard.yml — `bash scripts/db-audit/message-attempts-log.test.sh` — a promover
+  // pelo dono do workflow (agente nao edita workflow).
+  'scripts/db-audit/message-attempts-log.test.sh',
+]);// Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em
 // workflow nenhum. Todas rodam offline (`node --test <arquivo>`); a promoção é uma linha em
 // ci.yml/db-guard.yml — do dono do workflow (agente não edita workflow). R2-INF-013: as quatro
 // primeiras já existiam quando a auditoria (2026-10-03) apontou o defeito; as três de
