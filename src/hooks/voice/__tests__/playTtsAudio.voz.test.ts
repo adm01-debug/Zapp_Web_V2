@@ -27,6 +27,7 @@ class FakeAudio {
   preload = '';
   volume = 1;
   muted = false;
+  playedRates: number[] = [];
   currentTime = 0;
   _src = '';
   defaultPlaybackRate = 1;
@@ -46,12 +47,18 @@ class FakeAudio {
 
   play = vi.fn(() => {
     this.paused = false;
+    // Guarda a velocidade vigente no instante de cada `play()`: é ela que o
+    // atendente ouve naquele trecho.
+    this.playedRates.push(this.playbackRate);
     return Promise.resolve();
   });
   pause = vi.fn(() => {
     this.paused = true;
   });
-  load = vi.fn();
+  load = vi.fn(() => {
+    // O navegador real também restaura o `playbackRate` ao padrão no `load()`.
+    this.playbackRate = this.defaultPlaybackRate;
+  });
   removeAttribute = vi.fn();
 
   constructor() {
@@ -171,6 +178,8 @@ describe('playTtsAudio — voz e velocidade escolhidas', () => {
     // O trecho 1 termina como no navegador: o player assume o trecho seguinte.
     FakeAudio.instances[0].onended?.();
     await vi.waitFor(() => expect(FakeAudio.instances[0]?.play).toHaveBeenCalledTimes(2));
+    // A velocidade que o atendente ouve em cada `play()`: 1.5x nos dois trechos.
+    expect(FakeAudio.instances[0].playedRates).toEqual([1.5, 1.5]);
     expect(FakeAudio.instances[0].playbackRate).toBe(1.5);
 
     playback.stop();
