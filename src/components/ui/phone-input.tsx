@@ -1,6 +1,5 @@
-import { useCallback, useMemo, type ChangeEvent } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
-import { cleanPhone } from '@/lib/calls/phone';
 import { cn } from '@/lib/utils';
 
 interface PhoneInputProps {
@@ -11,101 +10,76 @@ interface PhoneInputProps {
   disabled?: boolean;
 }
 
-/** DDI do Brasil em E.164. */
-const BR_CC = '55';
-/** Teto do Brasil: 55 (DDI) + DDD (2) + assinante (9). */
-const BR_MAX_DIGITS = 13;
-/** Teto E.164 (DDI + assinante). */
-const E164_MAX_DIGITS = 15;
-
 /**
- * Máscara brasileira: `+55 XX XXXXX-XXXX` (celular) / `+55 XX XXXX-XXXX` (fixo).
- *
- * O grupo do assinante é decidido pelo primeiro dígito (celular começa em 9)
- * para que apagar um dígito NÃO troque o formato do número já exibido.
+ * Formata uma string de dígitos em telefone brasileiro:
+ *   +55 XX XXXXX-XXXX  (celular, 11 dígitos no total)
+ *   +55 XX XXXX-XXXX   (fixo, 10)
+ *   +CC XXXXXXXXX      (internacional/incompleto — passthrough)
+ * Comportamento portado do `PhoneInput` da V3.
  */
-function formatBR(digits: string): string {
-  const ddd = digits.slice(2, 4);
-  const rest = digits.slice(4, BR_MAX_DIGITS);
-
-  const parts = ['+55'];
-  if (ddd.length > 0) parts.push(ddd);
-  if (rest.length > 0) {
-    if (rest.length <= 5) {
-      parts.push(rest);
-    } else {
-      const head = rest.startsWith('9') ? 5 : 4;
-      parts.push(`${rest.slice(0, head)}-${rest.slice(head)}`);
-    }
-  }
-  return parts.join(' ');
-}
-
-/** Internacional: E.164, sem inventar DDI. */
-function formatE164(digits: string): string {
-  return digits.length > 0 ? `+${digits.slice(0, E164_MAX_DIGITS)}` : '';
-}
-
-/**
- * Decide como exibir o `value` controlado. O valor guardado já vem do
- * `onChange` (formatado), então a exibição é idempotente:
- * - com `+` e corpo começando em 55 → Brasil;
- * - com `+` e outro DDI → E.164 (não é tocado pela máscara BR);
- * - sem `+` → parcela local ainda incompleta, exibida como digitada.
- */
-function formatDisplay(value: string): string {
-  const digits = cleanPhone(value);
+function formatPhone(digits: string): string {
   if (!digits) return '';
-  if (!value.trimStart().startsWith('+')) return digits;
-  if (digits.startsWith(BR_CC)) return formatBR(digits.slice(0, BR_MAX_DIGITS));
-  return formatE164(digits);
-}
 
-/** `onChange(e.target.value)` → (formatado, bruto). */
-function resolveNext(text: string): { formatted: string; raw: string } {
-  let digits = cleanPhone(text);
-  if (!digits) return { formatted: '', raw: '' };
-
-  const explicitDdi = text.trimStart().startsWith('+');
-
-  if (explicitDdi) {
-    // DDI digitado que não é o Brasil: E.164, nunca ganha +55.
-    if (!digits.startsWith(BR_CC)) {
-      digits = digits.slice(0, E164_MAX_DIGITS);
-      return { formatted: formatE164(digits), raw: digits };
+  // Começa com 55 e tem corpo suficiente: formata como BR.
+  if (digits.startsWith('55') && digits.length >= 4) {
+    const ddd = digits.slice(2, 4);
+    const rest = digits.slice(4);
+    if (rest.length <= 5) {
+      return `+55 ${ddd} ${rest}`;
     }
-  } else if (!(digits.length >= 12 && digits.startsWith(BR_CC))) {
-    // Sem DDI: 10/11 dígitos (DDD + número) ou DDD plausível → é o Brasil.
-    const ddd = digits.length >= 2 ? Number(digits.slice(0, 2)) : Number.NaN;
-    if (digits.length >= 10 || (ddd >= 11 && ddd <= 99)) {
-      digits = BR_CC + digits;
-    } else {
-      // Parcial local: ainda não dá para decidir — devolve como foi digitado.
-      return { formatted: digits, raw: digits };
+    // Fixo (10 dígitos no total): 8 após o DDD → XXXX-XXXX.
+    if (rest.length === 8) {
+      return `+55 ${ddd} ${rest.slice(0, 4)}-${rest.slice(4)}`;
     }
+    // Celular (11 dígitos) e parciais: 5-4.
+    // Teto: no máximo 9 dígitos após o DDD.
+    const capped = rest.slice(0, 9);
+    return `+55 ${ddd} ${capped.slice(0, 5)}-${capped.slice(5)}`;
   }
 
-  digits = digits.slice(0, BR_MAX_DIGITS);
-  return { formatted: formatBR(digits), raw: digits };
+  // Parcial: usuário começou a digitar.
+  if (digits.length <= 2) return `+${digits}`;
+  if (digits.length <= 4) return `+${digits.slice(0, 2)} ${digits.slice(2)}`;
+
+  // Internacional ou incompleto.
+  return `+${digits.slice(0, 2)} ${digits.slice(2)}`;
+}
+
+/** Extrai apenas os dígitos de uma string. */
+function extractDigits(value: string): string {
+  return value.replace(/\D/g, '');
 }
 
 /**
- * Campo de telefone com máscara brasileira (`+55 XX XXXXX-XXXX`).
- * - Só o número do Brasil ganha a máscara `+55` (DDD plausível ou `+55` colado).
- * - Número de outro país com `+` é aceito e mantido em E.164, sem virar `+55`.
- * - Aceita apenas dígitos; formata em tempo real; `onChange` devolve
- *   (formatado, bruto).
+ * Campo de telefone com máscara brasileira (+55 XX XXXXX-XXXX).
+ * - Prefixa +55 quando o operador digita um DDD direto
+ * - Aceita apenas dígitos
+ * - Formata em tempo real
+ * - `onChange` devolve (formatado, bruto)
  * - Sem pré-preenchimento no foco: o campo vazio continua vazio e o
  *   placeholder faz o papel de dica ([refazer 1] P1 — '+55' sozinho não
  *   pode contar como número preenchido).
  */
 export function PhoneInput({ value, onChange, placeholder = '+55 11 99999-0000', className, disabled }: PhoneInputProps) {
-  // O valor exibido é DERIVADO do `value` controlado (sem effect).
-  const displayValue = useMemo(() => formatDisplay(value), [value]);
+  // O valor exibido é DERIVADO do `value` controlado (sem effect): o que sobe
+  // pelo onChange já vem formatado, então formatar de novo é idempotente.
+  const displayValue = useMemo(() => formatPhone(extractDigits(value)), [value]);
 
-  const handleChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-    const { formatted, raw } = resolveNext(e.target.value);
-    onChange(formatted, raw);
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    let digits = extractDigits(e.target.value);
+
+    // Prefixa 55 quando o operador digita um DDD brasileiro direto (ex.: "11...").
+    if (digits.length >= 2 && !digits.startsWith('55')) {
+      const possibleDDD = parseInt(digits.slice(0, 2), 10);
+      if (possibleDDD >= 11 && possibleDDD <= 99) {
+        digits = '55' + digits;
+      }
+    }
+
+    // Teto de 13 dígitos (55 + 2 DDD + 9 número).
+    if (digits.length > 13) digits = digits.slice(0, 13);
+
+    onChange(formatPhone(digits), digits);
   }, [onChange]);
 
   return (

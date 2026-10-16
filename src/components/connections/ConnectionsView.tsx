@@ -7,6 +7,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PhoneInput } from '@/components/ui/phone-input';
 import { Label } from '@/components/ui/label';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription,
@@ -33,6 +34,7 @@ export function ConnectionsView() {
     connections, loading,
     isAddDialogOpen, setIsAddDialogOpen,
     qrCodeDialog, newConnection, setNewConnection, isCreating,
+    addConnectionError, clearAddConnectionError,
     syncingHistory, setSyncingHistory, evolutionLoading,
     handleAddConnection, handleShowQrCode, handleRefreshQrCode,
     handleCopyId, handleDisconnect, handleSetDefault, handleDelete, closeQrDialog,
@@ -55,33 +57,17 @@ export function ConnectionsView() {
   // criava a conexão inoperante (token perdido, QR da PRINCIPAL) que a trava
   // existe para impedir.
   const openAddConnectionDialog = () => {
+    // [refazer 1] P2: reabrir não pode mostrar o erro da tentativa anterior.
+    clearAddConnectionError();
     if (multiConnectionEnabled) setIsAddDialogOpen(true);
   };
 
-  // t_cce2f0f7: o diálogo mandava o número cru para a Evolution — "abc" ou um
-  // DDD sem assinante criavam uma instância inoperante. O normalizador BR do
-  // projeto decide o caso nacional; E.164 explícito com outro DDI segue aceito
-  // (decisão do cartão irmão t_1fb60ff8, que preserva número internacional).
-  const [phoneError, setPhoneError] = useState<string | null>(null);
-  const PHONE_ERROR_MESSAGE = 'Informe o número com DDI 55 — ex.: +55 11 99999-0000.';
-
-  const validatePhone = (raw: string): string | null => {
-    const trimmed = raw.trim();
-    if (normalizeE164BR(trimmed)) return null;
-    if (/^\+[1-9]\d{7,14}$/.test(trimmed.replace(/[\s().-]/g, ''))) return null;
-    return PHONE_ERROR_MESSAGE;
-  };
-
-  const handleSubmitConnection = () => {
-    const erro = validatePhone(newConnection.phone_number);
-    setPhoneError(erro);
-    if (erro) return;
-    handleAddConnection();
-  };
-
+  // [refazer 1] P2: fechar (por qualquer caminho do Dialog) e reabrir pelo
+  // gatilho também limpam: toda transição de aberto/fechado descarta o erro
+  // da tentativa anterior (o erro é definido com o diálogo já aberto, sem
+  // transição, então não é apagado na hora em que aparece).
   const handleAddDialogOpenChange = (open: boolean) => {
-    // O erro é da tentativa, não do formulário: fechar (ou reabrir) limpa o motivo.
-    setPhoneError(null);
+    clearAddConnectionError();
     setIsAddDialogOpen(open);
   };
 
@@ -153,21 +139,22 @@ export function ConnectionsView() {
             <DialogContent aria-describedby={undefined} className="sm:max-w-md">
               <DialogHeader><DialogTitle>Adicionar Nova Conexão</DialogTitle><DialogDescription>Crie uma nova instância para conectar ao WhatsApp</DialogDescription></DialogHeader>
               <div className="grid gap-4 py-4">
-                <div className="space-y-2"><Label>Nome da Conexão</Label><Input placeholder="Ex: WhatsApp Vendas" value={newConnection.name} onChange={(e) => setNewConnection({ ...newConnection, name: e.target.value })} /></div>
-                <div className="space-y-2">
-                  <Label>Número do WhatsApp</Label>
-                  <Input
-                    placeholder="+55 11 99999-0000"
-                    value={newConnection.phone_number}
-                    aria-invalid={phoneError ? true : undefined}
-                    onChange={(e) => { setPhoneError(null); setNewConnection({ ...newConnection, phone_number: e.target.value }); }}
-                  />
-                  {phoneError && <p role="alert" className="text-sm text-destructive">{phoneError}</p>}
-                </div>
+                <div className="space-y-2"><Label>Nome da Conexão</Label><Input placeholder="Ex: WhatsApp Vendas" value={newConnection.name} onChange={(e) => { clearAddConnectionError(); setNewConnection({ ...newConnection, name: e.target.value }); }} /></div>
+                <div className="space-y-2"><Label>Número do WhatsApp</Label><PhoneInput value={newConnection.phone_number} onChange={(formatted) => { clearAddConnectionError(); setNewConnection({ ...newConnection, phone_number: formatted }); }} /></div>
+                {addConnectionError && (
+                  <p
+                    role="alert"
+                    data-testid="add-connection-error"
+                    className="flex items-start gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
+                  >
+                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                    {addConnectionError}
+                  </p>
+                )}
                 <div className="flex justify-end gap-2 pt-4">
-                  <Button variant="outline" onClick={() => { setPhoneError(null); setIsAddDialogOpen(false); }} disabled={isCreating}>Cancelar</Button>
-                  <Button onClick={handleSubmitConnection} className="bg-whatsapp hover:bg-whatsapp-dark" disabled={isCreating}>
-                    {isCreating ? <><Loader2 className="w-4 h-4 mr-2 motion-safe:animate-spin" />Criando...</> : 'Adicionar'}
+                  <Button variant="outline" onClick={() => { clearAddConnectionError(); setIsAddDialogOpen(false); }} disabled={isCreating}>Cancelar</Button>
+                  <Button onClick={handleAddConnection} className="bg-whatsapp hover:bg-whatsapp-dark" disabled={isCreating}>
+                    {isCreating ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Criando...</> : 'Adicionar'}
                   </Button>
                 </div>
               </div>
