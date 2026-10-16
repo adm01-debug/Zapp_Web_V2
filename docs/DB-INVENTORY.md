@@ -85,7 +85,7 @@ arquivos do repositório, pela regra da seção anterior — cada linha carrega 
 | `campaign_contacts` | Destinatários da campanha e estado do envio de cada um | ativo | `src/hooks/communication/useCampaigns.ts` |
 | `campaigns` | Campanhas de mensagem (conteúdo, mídia e configuração de disparo) | ativo | `src/components/campaigns/CampaignsView.tsx`, `src/components/campaigns/__tests__/CampaignCreateDialog.r2-mod-005.test.tsx`, `src/components/campaigns/__tests__/CampaignsView.audiencia.r2-mod-005.test.tsx` … |
 | `catalog_favorites` | Produtos do catálogo externo favoritados pelo usuário | ativo | `src/components/catalog/ExternalProductCatalog.tsx`, `src/components/catalog/__tests__/ExternalProductCatalog.test.tsx`, `src/components/catalog/catalogShared.tsx` … |
-| `catalog_rate_limit_hits` | Contadores de uso do catálogo por usuário e ação, em janela | parcial | `scripts/db-audit/catalog-rate-limit-policy-pinned.test.sh` |
+| `catalog_rate_limit_hits` | Contadores de uso do catálogo por usuário e ação, em janela | roadmap | — |
 | `catalog_rate_limits` | Limite de uso do catálogo por usuário e ação | ativo | `supabase/functions/promogifts-catalog/index.ts` |
 | `catalog_send_events` | Histórico de envios de produto do catálogo por contato | ativo | `src/components/catalog/CatalogRail.tsx`, `src/components/catalog/ContactSelectionStep.tsx`, `src/components/catalog/ExternalProductCatalog.tsx` … |
 | `channel_connections` | Conexões de canal (WhatsApp e omnichannel): identidade, estado e credenciais | ativo | `src/components/omnichannel/OmnichannelManager.tsx`, `src/lib/omnichannel/execucaoDeCanais.ts`, `supabase/functions/whatsapp-webhook/index.test.ts` … |
@@ -134,7 +134,7 @@ arquivos do repositório, pela regra da seção anterior — cada linha carrega 
 | `gmail_accounts` | Contas Gmail conectadas (endereço, tokens cifrados e estado de sincronização) | ativo | `supabase/functions/_shared/__tests__/gmail-cursor-cas-db.test.ts`, `supabase/functions/_shared/__tests__/gmail-helpers-account-scope.test.ts`, `supabase/functions/_shared/__tests__/gmail-helpers.test.ts` … |
 | `goals_configurations` | Metas por agente ou fila (diária, semanal e tipo) | ativo | `src/components/dashboard/GoalsConfigDialog.tsx`, `src/components/dashboard/__tests__/GoalsConfigDialog.test.tsx`, `src/hooks/__tests__/useGoalNotifications.goal-types.test.ts` … |
 | `ip_whitelist` | IPs liberados, com descrição e autor | ativo | `src/components/security/IPWhitelistPanel.tsx`, `scripts/db-audit/network-policy-rpc.test.sh` |
-| `knowledge_base_articles` | Artigos da base de conhecimento usada pela IA e pelo chatbot | ativo | `src/components/settings/ChatbotL1Config.tsx`, `src/hooks/integrations/useKnowledgeBase.ts`, `supabase/functions/ai-suggest-reply/index.ts` … |
+| `knowledge_base_articles` | Artigos da base de conhecimento usada pela IA e pelo chatbot | ativo | `src/components/settings/ChatbotL1Config.tsx`, `src/hooks/integrations/useKnowledgeBase.ts`, `supabase/functions/chatbot-l1/index.ts` … |
 | `knowledge_base_files` | Arquivos anexados aos artigos da base de conhecimento | ativo | `src/hooks/integrations/useKnowledgeBase.ts`, `.github/workflows/db-migrate.yml`, `scripts/db-audit/contracts/20260831150000.sql` |
 | `link_preview_cache` | Cache da prévia de links, com validade por hash de URL | ativo | `supabase/functions/fetch-link-preview/index.ts` |
 | `link_preview_cache_metrics` | Métricas de limpeza do cache de prévia (removidos, restantes e tempo) | roadmap | — |
@@ -182,7 +182,7 @@ arquivos do repositório, pela regra da seção anterior — cada linha carrega 
 | `scheduled_report_configs` | Configuração de relatórios agendados pela tela (frequência e destinatários) | ativo | `src/components/reports/ScheduledReportConfigs.tsx`, `src/hooks/dashboard/useScheduledReportConfigs.ts`, `scripts/ci/dashboard-readme-drift.unit.mjs` |
 | `scheduled_reports` | Relatórios agendados (tipo, frequência, destinatários e formato) | ativo | `src/hooks/chat/useScheduledReports.ts`, `supabase/functions/send-scheduled-report/index.test.ts`, `supabase/functions/send-scheduled-report/index.ts` |
 | `security_alerts` | Alertas de segurança (tipo, severidade e IP de origem) | ativo | `src/components/security/RateLimitRealtimeAlerts.tsx`, `src/components/security/SecurityOverview.tsx`, `src/hooks/system/useSecurityPushNotifications.ts` … |
-| `sicoob_contact_mapping` | Mapeamento entre contato do Zapp, usuário Sicoob e agente | parcial | `scripts/db-audit/anon-privileges-contact-messages.test.sh` |
+| `sicoob_contact_mapping` | Mapeamento entre contato do Zapp, usuário Sicoob e agente | parcial | `scripts/db-audit/inbox-contact-authorization.test.sh` |
 | `sla_configurations` | Configurações de SLA (tempo de primeira resposta e de resolução) | ativo | `src/hooks/sla/useApplicableSLA.ts`, `src/hooks/sla/useSLAConfigurations.ts`, `scripts/db-audit/sla-first-response-delivery-contract.test.mjs` |
 | `sla_rules` | Regras de SLA por prioridade, fila ou contato | ativo | `src/components/settings/SLARulesManager.tsx`, `src/hooks/sla/__tests__/useApplicableSLA.test.tsx`, `src/hooks/sla/useApplicableSLA.ts` … |
 | `stickers` | Figurinhas do chat, por categoria e autor | ativo | `src/components/inbox/StickerPicker.tsx`, `src/components/inbox/__tests__/StickerPicker.catalogo.test.tsx`, `src/components/inbox/chat/MessageBubble.tsx` … |
