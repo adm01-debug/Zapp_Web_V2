@@ -9,10 +9,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Clock, MessageSquare, Bell, Palette, Save, RefreshCw, Loader2,
   Keyboard, Volume2, ArrowRight, Package, Globe, TrendingUp, Settings,
-  Tags, MessageSquareHeart, Bot, Brain, Users,
+  MessageSquareHeart, Bot, Brain, Users,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { AIAutoTagsConfig } from '@/components/settings/AIAutoTagsConfig';
 import { AIProvidersManager } from '@/components/settings/AIProvidersManager';
 import { CSATAutoConfig } from '@/components/settings/CSATAutoConfig';
 import { ChatbotL1Config } from '@/components/settings/ChatbotL1Config';
@@ -46,7 +45,6 @@ const TABS_META: Record<string, { label: string; icon: LucideIcon; staffOnly: bo
   automation: { label: 'Automação', icon: RefreshCw, staffOnly: true },
   routing: { label: 'Roteamento', icon: Users, staffOnly: true },
   followup: { label: 'Follow-up', icon: ArrowRight, staffOnly: true },
-  'ai-tags': { label: 'Tags IA', icon: Tags, staffOnly: true },
   'chatbot-l1': { label: 'Chatbot L1', icon: Bot, staffOnly: true },
   'ai-providers': { label: 'Gestão IA', icon: Brain, staffOnly: true },
   csat: { label: 'CSAT', icon: MessageSquareHeart, staffOnly: true },
@@ -67,7 +65,7 @@ const TABS_META: Record<string, { label: string; icon: LucideIcon; staffOnly: bo
 // de midia. A ordem das abas dentro do grupo preserva a ordem original da barra.
 const TAB_GROUPS: { id: string; label: string; icon: LucideIcon; tabs: string[] }[] = [
   { id: 'atendimento', label: 'Atendimento', icon: MessageSquare, tabs: ['schedule', 'messages', 'automation', 'routing', 'followup'] },
-  { id: 'ia', label: 'Inteligência artificial', icon: Bot, tabs: ['ai-tags', 'chatbot-l1', 'ai-providers'] },
+  { id: 'ia', label: 'Inteligência artificial', icon: Bot, tabs: ['chatbot-l1', 'ai-providers'] },
   { id: 'qualidade', label: 'Qualidade', icon: MessageSquareHeart, tabs: ['csat', 'nps'] },
   { id: 'aparencia', label: 'Aparência', icon: Palette, tabs: ['notifications', 'appearance', 'shortcuts', 'sounds'] },
   { id: 'sistema', label: 'Sistema', icon: Settings, tabs: ['global', 'media'] },
@@ -273,12 +271,6 @@ export function SettingsView() {
         {isStaff && (
           <TabsContent value="nps">
             <NPSDashboard />
-          </TabsContent>
-        )}
-
-        {isStaff && (
-          <TabsContent value="ai-tags">
-            <AIAutoTagsConfig />
           </TabsContent>
         )}
 

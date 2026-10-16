@@ -37,18 +37,18 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 
 | Grupo | Edges |
 |---|---|
-| A | 54 |
+| A | 53 |
 | B | 1 |
 | C | 3 |
 | D | 6 |
-| E | 17 |
+| E | 18 |
 | **total** | **81** |
 
 ## Tabela
 
 | Edge | Grupo | Âncora do chamador (arquivo:linha) |
 |---|---|---|
-| `ai-auto-tag` | A | `src/components/settings/AIAutoTagsConfig.tsx:55` |
+| `ai-auto-tag` | E | — sem chamador no repositório — |
 | `ai-churn-analysis` | A | `src/components/ai/ChurnPredictionDashboard.tsx:182` |
 | `ai-classify-tickets` | A | `src/components/ai/AutoTicketClassifier.tsx:204` |
 | `ai-conversation-analysis` | A | `src/components/inbox/AIConversationAssistant.tsx:107` |
@@ -130,7 +130,7 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `webhook-diagnostic` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:78` |
 | `whatsapp-webhook` | D | `supabase/config.toml:11` |
 
-## Órfãs (17) — GATE B
+## Órfãs (18) — GATE B
 
 Edge que existe em `supabase/functions/`, mas nenhum ponto do repositório a dispara: não há
 `invoke`/`/functions/v1` em `src/`, nem chamada de outra edge, nem agendador em
@@ -139,6 +139,7 @@ Edge que existe em `supabase/functions/`, mas nenhum ponto do repositório a dis
 As auditorias de migração de 2026-08 já apontavam parte destes nomes; a guarda agora
 mantém a lista honesta.
 
+- `ai-auto-tag`
 - `auto-close-conversations`
 - `cleanup-rate-limit-logs`
 - `elevenlabs-agent-token`

@@ -52,7 +52,6 @@ interface ChartData {
 interface ContactsChartData {
   daily: Array<Record<string, unknown>>;
   byType: Array<{ name: string; value: number }>;
-  byTag: Array<{ name: string; contatos: number }>;
 }
 
 // ─── Comparison Summary ───
@@ -264,10 +263,6 @@ export function ContactsCharts({ data, isLoading }: { data: ContactsChartData; i
   const ariaPie = topTipo
     ? `Gráfico de contatos por tipo. Maior tipo: ${topTipo.name} com ${topTipo.value}.`
     : 'Gráfico de contatos por tipo.';
-  const topTag = maxItem(data.byTag, (r) => r.contatos);
-  const ariaBar = topTag
-    ? `Gráfico de contatos por tag. Maior etiqueta: ${topTag.name} com ${topTag.contatos}.`
-    : 'Gráfico de contatos por tag.';
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <Card>
@@ -301,25 +296,6 @@ export function ContactsCharts({ data, isLoading }: { data: ContactsChartData; i
             </ResponsiveContainer>
           ) : (
             <div className="h-[300px] flex items-center justify-center text-muted-foreground">Nenhum dado disponível</div>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card className="lg:col-span-2">
-        <CardHeader><CardTitle className="text-base">Contatos por Tag</CardTitle></CardHeader>
-        <CardContent>
-          {isLoading ? <Skeleton className="h-[300px] w-full" /> : data.byTag.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={data.byTag} aria-label={ariaBar} title="Contatos por tag" desc="Total de contatos por etiqueta em barras verticais.">
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                <Tooltip contentStyle={TOOLTIP_STYLE} />
-                <Bar dataKey="contatos" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="h-[300px] flex items-center justify-center text-muted-foreground">Nenhum dado de tags disponível</div>
           )}
         </CardContent>
       </Card>

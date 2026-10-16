@@ -184,6 +184,10 @@ describe('AdvancedReportsView — acessibilidade dos filtros (N-091)', () => {
 
     expect(screen.getByRole('combobox', { name: 'Período' })).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: 'Agente' })).toBeInTheDocument();
+    // Relatórios não têm mais recorte por tag/etiqueta — nem filtro, nem texto.
+    expect(screen.queryByRole('combobox', { name: /tag|etiqueta/i })).toBeNull();
+    expect(screen.getByText('Análise detalhada de atendimentos por período e agente')).toBeInTheDocument();
+    expect(screen.queryByText(/, agente e tags/)).toBeNull();
   });
 
   it('axe button-name zerado nos filtros de período e agente', async () => {
