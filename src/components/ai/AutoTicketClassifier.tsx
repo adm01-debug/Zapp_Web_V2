@@ -19,7 +19,6 @@ interface ClassifiedTicket {
   priority: string;
   /** Percentual 0..100 medido; `null` quando a confiança falta ou é inválida. */
   confidence: number | null;
-  tags: string[];
   lastMessage: string;
 }
 
@@ -51,9 +50,9 @@ const PRIORITY_RANK: Record<string, number> = { urgent: 4, high: 3, medium: 2, l
 
 /**
  * IA-114 — a categoria/prioridade exibida vem do servidor. Como um contato pode ter
- * mais de uma etiqueta, a consolidação é determinística: maior severidade; no empate,
- * maior confiança; ainda no empate, categoria em ordem alfabética. Assim a ordem de
- * chegada das etiquetas não muda arbitrariamente o resultado.
+ * mais de uma classificação, a consolidação é determinística: maior severidade; no
+ * empate, maior confiança; ainda no empate, categoria em ordem alfabética. Assim a
+ * ordem de chegada dos resultados não muda arbitrariamente o resultado.
  */
 const normalizeServerConfidence = (server: ServerClassification): number | null => {
   return normalizeScore(server.confidence, { min: 0, max: 1, scale: 'ratio' }).value;
@@ -116,72 +115,15 @@ export function AutoTicketClassifier() {
   const [classifying, setClassifying] = useState(false);
   const [categoryStats, setCategoryStats] = useState<Record<string, number>>({});
 
-  const classifyTag = (tagName: string): string => {
-    const lower = tagName.toLowerCase();
-    if (lower.includes('suporte') || lower.includes('bug') || lower.includes('erro')) return 'Suporte Técnico';
-    if (lower.includes('vend') || lower.includes('preço') || lower.includes('compra')) return 'Vendas';
-    if (lower.includes('pag') || lower.includes('boleto') || lower.includes('fatura')) return 'Financeiro';
-    if (lower.includes('reclam') || lower.includes('insatisf')) return 'Reclamação';
-    if (lower.includes('agend') || lower.includes('horário')) return 'Agendamento';
-    return 'Informação';
-  };
-
-  const derivePriority = (tagName: string, confidence: number): string => {
-    const lower = tagName.toLowerCase();
-    if (lower.includes('urgent') || lower.includes('reclam')) return 'urgent';
-    if (confidence > 0.8 && (lower.includes('bug') || lower.includes('erro'))) return 'high';
-    if (confidence > 0.5) return 'medium';
-    return 'low';
-  };
-
   const loadClassifiedTickets = useCallback(async (): Promise<ClassifiedTicket[] | null> => {
     setLoading(true);
     try {
-      // Fetch AI-tagged contacts
-      const { data: tags, error } = await supabase
-        .from('ai_conversation_tags')
-        .select('*, contacts(name, phone)')
-        .order('created_at', { ascending: false })
-        .limit(100);
-
-      if (error) {
-        toast.error('Erro ao carregar tickets classificados');
-        return null;
-      }
-      if (!tags) {
-        toast.error('A lista de tickets classificados não pôde ser carregada');
-        return null;
-      }
-
-      const grouped = new Map<string, ClassifiedTicket>();
-      tags.forEach((tag: Record<string, unknown>) => {
-        const contactId = tag.contact_id as string;
-        const contact = tag.contacts as Record<string, string> | null;
-        // Confiança ausente/inválida não vira 0,7: fica null e a UI omite (IA-023).
-        const confidence = normalizeScore(tag.confidence, { min: 0, max: 1, scale: 'ratio' });
-        if (!grouped.has(contactId)) {
-          grouped.set(contactId, {
-            contactId,
-            contactName: contact?.name || 'Desconhecido',
-            category: classifyTag(tag.tag_name as string),
-            priority: derivePriority(tag.tag_name as string, confidence.value ?? 0),
-            confidence: confidence.value === null ? null : confidence.value * 100,
-            tags: [tag.tag_name as string],
-            lastMessage: '',
-          });
-        } else {
-          const existing = grouped.get(contactId)!;
-          existing.tags.push(tag.tag_name as string);
-        }
-      });
-
-      const list = Array.from(grouped.values());
-      setTickets(list);
-      setCategoryStats(countByCategory(list));
-      return list;
-    } catch (err) {
-      toast.error('Erro ao carregar tickets classificados');
-      return null;
+      // Ordem de 12/10/2026: a classificação automática alimentada pela IA saiu do
+      // sistema. Sem fonte de tickets classificados, a tela fica no estado vazio e
+      // nenhuma consulta é disparada.
+      setTickets([]);
+      setCategoryStats({});
+      return [];
     } finally {
       setLoading(false);
     }
