@@ -56,4 +56,10 @@ export const DEFAULT_SHORTCUTS: ShortcutBinding[] = [
   { id: 'tasks-complete', defaultKey: 'x', defaultModifiers: {}, category: 'actions', scope: TASKS_VIEWS },
   { id: 'tasks-cancel', defaultKey: 'Delete', defaultModifiers: {}, category: 'actions', scope: TASKS_VIEWS },
   { id: 'tasks-help', defaultKey: '?', defaultModifiers: { shiftKey: true }, category: 'navigation', scope: TASKS_VIEWS },
+  // RADAR copiloto (CV-056) — atalhos do painel de sugestões ao vivo
+  { id: 'radar-toggle', name: 'Abrir/fechar RADAR', description: 'Expande ou recolhe o painel RADAR', defaultKey: 'L', defaultModifiers: { ctrlKey: true, shiftKey: true }, category: 'chat' },
+  { id: 'radar-use-1', name: 'Usar sugestão 1', description: 'Aplica a primeira sugestão do RADAR na caixa de digitação', defaultKey: '1', defaultModifiers: { ctrlKey: true, altKey: true }, category: 'chat' },
+  { id: 'radar-use-2', name: 'Usar sugestão 2', description: 'Aplica a segunda sugestão do RADAR na caixa de digitação', defaultKey: '2', defaultModifiers: { ctrlKey: true, altKey: true }, category: 'chat' },
+  { id: 'radar-use-3', name: 'Usar sugestão 3', description: 'Aplica a terceira sugestão do RADAR na caixa de digitação', defaultKey: '3', defaultModifiers: { ctrlKey: true, altKey: true }, category: 'chat' },
+  { id: 'radar-next-card', name: 'Próximo cartão RADAR', description: 'Move o foco para o próximo cartão do painel RADAR', defaultKey: ']', defaultModifiers: { ctrlKey: true }, category: 'chat' },
 ];
