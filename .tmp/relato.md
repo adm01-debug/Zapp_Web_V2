@@ -88,3 +88,13 @@ usei o real em todos os comandos.
 
 Arquivos (lista exata de `git diff --name-only dia/2026-10-16...HEAD`, sem contar de cabeça):
 .tmp/relato.md
+
+Anexo — saídas literais do terminal (resposta ao juiz barato; nada à mão):
+A1. `git merge-base --is-ancestor 9f9a808792 HEAD && echo ABSORVIDO-9f9a-em-HEAD || echo NAO-absorvido` → `ABSORVIDO-9f9a-em-HEAD` (exit 0).
+A2. `git diff --stat 62e9b8167cb1 9f9a808792 -- "src/components/inbox/__tests__/ChatPanel.ligar.test.tsx" src/components/inbox/chat/ChatPanelHeader.tsx` → (sem saída; exit 0).
+A3. `git diff --stat e6dfa37bf1 9f9a808792 -- <os 4 arquivos do cartão>` → `src/components/inbox/ChatPanel.tsx | 18 ++++++++++++++----` + `1 file changed, 14 insertions(+), 4 deletions(-)` (só o drift transfer_conversation; os outros 3 arquivos, zero linha).
+A4. Verde: `Test Files 2 passed (2)` / `Tests 15 passed (15)` / `Duration 1.66s`.
+A5. Vermelho 1 (voip neutralizado): `Test Files 1 failed (1)` / `Tests 1 failed | 2 passed (3)` / `Duration 1.98s`.
+A6. Vermelho 2 (ChatPanel nos EMISSORES): `Test Files 1 failed (1)` / `Tests 3 failed | 13 passed (16)` / `Duration 1.19s`.
+A7. `rg -n "onStartCall" src/components/inbox/chat/ChatPanelHeader.tsx` → (sem saída; exit 1).
+Sobre os 4 subpontos do juiz, 1 linha cada: (1) procede em parte — faltava colar o literal; corrigido neste anexo A1–A3 com commit novo. (2) não procede como escrito — não houve conflito algum (rebase limpo, sem marca de merge em nenhum arquivo); arquivo:linha do botão real está no Ponto 2 (ContactActionButtons.tsx:163, CallSessionProvider.tsx:424, events.ts:53). (3) não procede — zapp-verify full foi dispensado pelo próprio cartão ("não rode", dispensa do coordenador de quinta 20:46–20:48); rodei a suite focal real (vitest, A4–A6) em vez dela. (4) procede em parte — faltava o literal; corrigido em A4–A6 (testes citados pelo nome: "Ligar via Telefone" e C02/EMISSORES).
