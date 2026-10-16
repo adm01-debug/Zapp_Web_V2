@@ -31,7 +31,7 @@ export interface NextAction {
  */
 export const OPEN_TASK_STATUSES: WorkItemStatus[] = ['backlog', 'todo', 'doing', 'waiting'];
 
-export const nextBestActionKey = (contactId: string | null | undefined) =>
+export const nextBestActionKey = (contactId: string) =>
   ['next-best-action', contactId] as const;
 
 /** Motor de sugestão da "Próxima melhor ação" — extraído de NextBestActionEngine
