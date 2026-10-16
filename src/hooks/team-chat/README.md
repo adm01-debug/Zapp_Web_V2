@@ -48,6 +48,7 @@ Storage.
 | `useRemoveConversationMember`      | `useTeamChatMutations.ts`    | tabela  | `team_conversation_members`            |
 | `useLeaveConversation`             | `useTeamChatMutations.ts`    | tabela  | `team_conversation_members`            |
 | `useTransferConversation`          | `useTeamChatMutations.ts`    | rpc     | `transfer_team_conversation_ownership` |
+| `useTransferConversationDepartment` | `useTeamChatMutations.ts`   | rpc     | `transfer_team_conversation_department` |
 | `useDeleteConversation`            | `useTeamChatMutations.ts`    | tabela  | `team_conversations`                   |
 | `useAddConversationMembers`        | `useTeamChatMembers.ts`      | tabela  | `team_conversation_members`            |
 | `useTeamMemberDetails`             | `useTeamMemberDetails.ts`    | rpc     | `get_team_profiles`                    |

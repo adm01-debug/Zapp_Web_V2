@@ -234,6 +234,58 @@ export function useTransferConversation() {
   });
 }
 
+/**
+ * Códigos que a RPC `transfer_team_conversation_department` levanta no banco
+ * (migration `20260929400000_team_chat_e45_transfer_conversation_department_rpc`).
+ * Cada um tem a SUA mensagem: erro de permissão e erro de tipo de conversa são
+ * coisas diferentes para quem está na tela — um só texto genérico esconde qual
+ * deles aconteceu.
+ */
+const TRANSFER_DEPARTMENT_ERROR_TOASTS: Record<string, string> = {
+  not_authenticated: 'Sessão expirada. Entre novamente para transferir o departamento',
+  not_authorized: 'Sem permissão para transferir o departamento desta conversa',
+  not_a_department_conversation: 'Esta conversa não é de departamento',
+  conversation_not_found: 'Conversa não encontrada',
+};
+
+const TRANSFER_DEPARTMENT_FALLBACK_TOAST = 'Erro ao transferir o departamento da conversa';
+
+export function useTransferConversationDepartment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      conversationId,
+      toDepartmentId,
+    }: {
+      conversationId: string;
+      toDepartmentId: string;
+    }) => {
+      // Só a RPC muda o departamento: `department_id` não é gravável por DML e
+      // quem autoriza (admin/supervisor + conversa de tipo `department`) é o banco.
+      const { error } = await supabase.rpc('transfer_team_conversation_department', {
+        p_conversation_id: conversationId,
+        p_to_department_id: toDepartmentId,
+      });
+      if (error) throw error;
+      return { conversationId, toDepartmentId };
+    },
+    onSuccess: () => {
+      // `queryKeys.inbox()` é a raiz `['team-conversations']` — o inbox do Team
+      // Chat É a lista de conversas da equipe (fonte única, ver README do módulo),
+      // então uma invalidação cobre as duas.
+      queryClient.invalidateQueries({ queryKey: queryKeys.inbox() });
+      toast({ title: 'Departamento da conversa alterado' });
+    },
+    onError: (error) => {
+      const code = (error as { message?: string } | null)?.message ?? '';
+      toast({
+        title: TRANSFER_DEPARTMENT_ERROR_TOASTS[code] ?? TRANSFER_DEPARTMENT_FALLBACK_TOAST,
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
 export function useDeleteConversation() {
   const queryClient = useQueryClient();
   return useMutation({

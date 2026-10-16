@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
-import type { TeamConversation, TeamMember, TeamMessage } from './teamChatTypes';
+import type { TeamConversation, TeamConversationType, TeamMember, TeamMessage } from './teamChatTypes';
 import { queryKeys } from './queryKeys';
 
 export function useTeamConversations() {
@@ -86,7 +86,7 @@ export function useTeamConversations() {
 
         return {
           ...conv,
-          type: conv.type as 'direct' | 'group',
+          type: conv.type as TeamConversationType,
           name: displayName,
           avatar_url: conv.type === 'direct' && !conv.avatar_url
             ? members.find(m => m.profile_id !== profile.id)?.profile?.avatar_url ?? null

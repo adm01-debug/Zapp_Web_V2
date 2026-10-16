@@ -107,6 +107,15 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     return r === 'admin' || r === 'supervisor';
   }, [profile]);
 
+  // Cartão "transferir conversa de departamento": o vínculo da conversa é o
+  // próprio departamento, então só faz sentido oferecer o seletor para quem já
+  // pode transferir (`canTransfer`, a única regra de papel) E numa conversa de
+  // departamento. A tela de componentes lê este flag para montar o seletor.
+  const canTransferDepartment = useMemo(
+    () => canTransfer && conversation.type === 'department',
+    [canTransfer, conversation.type],
+  );
+
   const isGroupCreator = useMemo(() => {
     return !!(profile?.id && conversation.created_by === profile.id);
   }, [profile, conversation.created_by]);
@@ -481,6 +490,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     isLoading,
     isMuted,
     canTransfer,
+    canTransferDepartment,
     isGroupCreator,
     isFetchingOlder,
     hasOlderMessages,

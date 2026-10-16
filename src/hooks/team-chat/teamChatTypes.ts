@@ -21,9 +21,9 @@ export type TeamMessagePageRow = Functions['get_team_messages_page']['Returns'][
 
 /**
  * Vocabulário do CHECK `team_conversations_type_check`: é o que o banco aceita.
- * A tela de Team Chat hoje só desenha `direct` e `group`, então
- * `TeamConversation.type` continua com esses dois — conversa de departamento
- * entra quando a tela tratar dela.
+ * `TeamConversation.type` usa este vocabulário inteiro desde que a tela passou a
+ * tratar a conversa de departamento (transferência de departamento: o painel
+ * precisa distinguir `department` de `group` para liberar o seletor).
  */
 export type TeamConversationType = 'direct' | 'group' | 'department';
 /** Mesmo vocabulário do CHECK `team_conversation_members_member_role_check`. */
@@ -54,7 +54,7 @@ export type DepartmentAuditAction = (typeof DEPARTMENT_AUDIT_ACTIONS)[number];
 
 export interface TeamConversation {
   id: string;
-  type: 'direct' | 'group';
+  type: TeamConversationType;
   name: string | null;
   avatar_url: string | null;
   created_by: string | null;
