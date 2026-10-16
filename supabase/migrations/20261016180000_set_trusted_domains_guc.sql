@@ -1,0 +1,16 @@
+-- P1: Define o GUC app.settings.trusted_domains que estava NULL em produção
+--
+-- AÇÃO MANUAL NECESSÁRIA: ALTER DATABASE requer superuser, não disponível
+-- via service_role. Executar no painel do Supabase (SQL Editor com acesso
+-- de superuser ou via supabase CLI com --db-url):
+--
+--   ALTER DATABASE postgres SET "app.settings.trusted_domains" TO 'promobrindes.com.br';
+--
+-- Enquanto não executado, handle_new_user_role() usa o fallback hardcoded
+-- 'promobrindes.com.br' (COALESCE no corpo da função), que é o valor correto —
+-- portanto o comportamento está correto mas sem a configuração explícita.
+--
+-- Referência: src/integrations/supabase/functions/handle_new_user_role.sql
+--
+-- Este arquivo é um placeholder para rastrear a pendência no ledger.
+SELECT 'GUC app.settings.trusted_domains requer ação manual de superuser (ver comentário acima)' AS status;

@@ -95,8 +95,7 @@ export function useDashboardKpi(filters: DashboardKpiFilters = {}) {
     // este card, A9, e o período era ignorado, E34).
     queryKey: ['dashboard-kpi', fromIso, untilIso, queueId, agentId],
     queryFn: async () => {
-      // cast temporário: types.ts gerado ainda não tem dashboard_kpi (RPC nova, E23) — sync automático (PR #703) traz o tipo real em breve.
-      const { data, error } = await (supabase as any).rpc('dashboard_kpi', { // eslint-disable-line @typescript-eslint/no-explicit-any -- cast temporário até sync de types (PR #703)
+      const { data, error } = await supabase.rpc('dashboard_kpi', {
         p_from: fromIso,
         p_until: untilIso,
         p_queue: queueId,

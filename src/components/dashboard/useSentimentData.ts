@@ -104,7 +104,7 @@ export function useSentimentData(period: string) {
       // mesmo shape (id/entity_id/created_at/details), escopada só a
       // action='sentiment_alert'. Cast local via 'any' até o types.ts
       // (gerado, não sincronizado no self-hosted) conhecer essa RPC.
-      const { data: alertData, error: alertError } = await (supabase as any).rpc('dashboard_sentiment_alerts', { p_since: startDate }); // eslint-disable-line @typescript-eslint/no-explicit-any -- RPC nova (E39), types.ts ainda não sincronizado
+      const { data: alertData, error: alertError } = await supabase.rpc('dashboard_sentiment_alerts', { p_since: startDate });
 
       if (alertError) throw alertError;
 
