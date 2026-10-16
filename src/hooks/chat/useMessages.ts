@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { mapMessageRowToMessage } from '@/adapters/inboxAdapter';
+import { mapMessageRowToMessage, withResolvedReplies } from '@/adapters/inboxAdapter';
 import { useSupabaseRealtime } from '@/hooks/realtime/useSupabaseRealtime';
 import { contactMediaKey } from '@/hooks/chat/useContactMedia';
 import { contactMediaCountsKey } from '@/hooks/chat/useContactMediaCounts';
@@ -133,7 +133,9 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
             if (entry.message) merged.set(id, entry.message);
             else merged.delete(id);
           }
-          return [...merged.values()].sort((a, b) => timeOf(a) - timeOf(b));
+          return withResolvedReplies(
+            [...merged.values()].sort((a, b) => timeOf(a) - timeOf(b)),
+          );
         });
         if (!keepOlder) setHasOlder(data.length === MESSAGES_PAGE_SIZE);
         loadedContactIdRef.current = requestedContactId;
@@ -178,9 +180,9 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
       setMessages((current) => {
         const merged = new Map(older.map((message) => [message.id, message]));
         for (const message of current) merged.set(message.id, message);
-        return [...merged.values()].sort((a, b) =>
+        return withResolvedReplies([...merged.values()].sort((a, b) =>
           new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime()
-        );
+        ));
       });
       setHasOlder(data.length === MESSAGES_PAGE_SIZE);
     } catch (err) {
@@ -210,9 +212,9 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
             return prev;
           }
           // Sort after adding just in case of race conditions
-          return [...prev, newMessage].sort((a, b) =>
+          return withResolvedReplies([...prev, newMessage].sort((a, b) =>
             new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime()
-          );
+          ));
         });
 
         // Etapa 45: mensagem nova COM midia muda a galeria da aba Arquivos e as contagens dela.
@@ -234,7 +236,7 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
       if (updatedMessage.contact_id === contactId) {
         writeOverlay(updatedMessage.id, updatedMessage);
         setMessages((prev) =>
-          prev.map((m) => (m.id === updatedMessage.id ? updatedMessage : m))
+          withResolvedReplies(prev.map((m) => (m.id === updatedMessage.id ? updatedMessage : m)))
         );
 
         // #144/OTH-002: so invalida quando o universo de midia muda DE FATO — compara os DOIS
@@ -350,7 +352,10 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
       if (prev.some((m) => m.id === message.id)) {
         return prev;
       }
-      return [...prev, message];
+      // #411: a mensagem otimista do envio (o id da resposta ja esta em maos no
+      // momento do envio) resolve a citada contra a lista carregada NA HORA — sem
+      // esperar o INSERT do servidor, que e quem trazia o `replyTo` ate agora.
+      return withResolvedReplies([...prev, message]);
     });
   }, [writeOverlay]);
 

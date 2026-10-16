@@ -10,6 +10,7 @@ import { sendMessageToContact } from '../realtime/messageSender';
 import {
   normalizeMessage, buildConversation,
 } from '../realtime/realtimeUtils';
+import { withResolvedRowReplies } from '@/adapters/inboxAdapter';
 import { useRealtimeNotifications } from '../realtime/useRealtimeNotifications';
 import { useMessageUpdateBatcher } from '../realtime/useMessageUpdateBatcher';
 
@@ -84,10 +85,10 @@ export function useRealtimeMessages() {
             if (existing.messages.some((m) => m.id === message.id)) return prev;
             const updated = [...prev];
             updated.splice(idx, 1);
-            updated.unshift(buildConversation(contact, [...existing.messages, message]));
+            updated.unshift(buildConversation(contact, withResolvedRowReplies([...existing.messages, message])));
             return updated;
           }
-          return [buildConversation(contact, [message]), ...prev];
+          return [buildConversation(contact, withResolvedRowReplies([message])), ...prev];
         });
         notifyAboutIncomingMessage(contact, message);
       } catch (err) { log.error('Error hydrating conversation for incoming message:', err); }
@@ -121,7 +122,7 @@ export function useRealtimeMessages() {
         if (conv.messages.some((m) => m.id === newMessage.id)) return prev;
         const updated = [...prev];
         updated.splice(idx, 1);
-        updated.unshift(buildConversation(conv.contact, [...conv.messages, newMessage]));
+        updated.unshift(buildConversation(conv.contact, withResolvedRowReplies([...conv.messages, newMessage])));
         return updated;
       });
 
