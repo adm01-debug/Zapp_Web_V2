@@ -20,7 +20,7 @@ FAIXA DO PAI: commit `a7fb842e4d` (`fix(lib): normalizeMediaUrl robusto e withRe
 ## Prova
 - verde (3 rodadas seguidas, sem falha nem pulado): `npx vitest run src/lib/__tests__/retry.politica.test.ts src/lib/__tests__/safeStorage.test.ts src/lib/__tests__/popupManager.test.ts src/lib/__tests__/webauthnUtils.test.ts src/lib/__tests__/supabaseHelpers.test.ts src/lib/__tests__/avatar-colors.test.ts` → `Test Files 6 passed (6); Tests 103 passed (103)` na rodada 1/3, 2/3 e 3/3.
 - vermelho antes (mutação: `src/lib/retry.ts` revertido temporariamente à versão da base `dia/2026-10-16`, sem o padrão seguro/aborto do pai): `npx vitest run src/lib/__tests__/retry.politica.test.ts` → `Test Files 1 failed (1); Tests 2 failed | 13 passed (15)` — o teste falha sem a correção, pela razão certa. Produção restaurada em seguida (`git checkout HEAD -- src/lib/retry.ts`) e worktree confirmado limpo (`git status --short` vazio antes do commit do relato).
-- `zapp-verify . --rapido`: ver bloco FATOS MEDIDOS PELO FECHAR.
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (110s)` (`OK db_guard, tipos 107s, lint, migrations`; `AVISO banco_local NÃO VERIFICADO` — o cartão não tem migration, nada a provar no banco).
 
 ## Arquivos do diff (`git diff --name-only dia/2026-10-16...HEAD`, colado do comando)
 - `.tmp/relato.md`
