@@ -130,10 +130,17 @@ function horaCurta(mensagem: Message): string {
  * confirmação obrigatória no reenvio (mesma regra da falha de colega vista por um gestor).
  */
 function usePerfilAtual(): { profile: Profile | null } {
+  // O banner nunca derruba o chat por falta de provider (previews/testes): só a ausência de
+  // provider — erro exato lançado por `useAuth` fora do `AuthProvider` — cai para perfil
+  // desconhecido. Qualquer outro erro de auth continua estourando, para não mascarar sessão
+  // quebrada como "sem perfil".
   try {
-    return useAuth();
-  } catch {
-    return { profile: null };
+    return { profile: useAuth().profile ?? null };
+  } catch (erro) {
+    if (erro instanceof Error && erro.message.includes('must be used within an AuthProvider')) {
+      return { profile: null };
+    }
+    throw erro;
   }
 }
 
@@ -183,7 +190,10 @@ export function SendErrorBanner({ messages, onSendMessage, className }: SendErro
   const idadeSelecionada = selecionada ? idadeMs(selecionada, agora) : 0;
   const selecionadaAntiga = idadeSelecionada > LIMITE_FALHA_ANTIGA_MS;
   const selecionadaDeOutro = selecionada ? deOutroAtendente(selecionada) : false;
-  const exigeConfirmacao = selecionadaAntiga || selecionadaDeOutro || idadeSelecionada > LIMITE_CONFIRMACAO_MS;
+  // Sem perfil a autoria não é atribuível: o reenvio sempre pede confirmação, mesmo da
+  // falha sem `agent_id` (que com perfil carregado seria tratada como própria e sairia direto).
+  const exigeConfirmacao =
+    autoriaIndefinida || selecionadaAntiga || selecionadaDeOutro || idadeSelecionada > LIMITE_CONFIRMACAO_MS;
   /** Atendente comum não reenvia falha de colega: aparece identificada, com reenvio bloqueado. */
   const reenvioBloqueado = selecionadaDeOutro && !gestor && !autoriaIndefinida;
   const podeReenviar = podeReenviarComoTexto(selecionada) && !reenvioBloqueado;

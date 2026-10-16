@@ -138,6 +138,23 @@ describe('SendErrorBanner · autor (P1: falha de colega aparece, reenvio bloquea
     expect(screen.queryByRole('button', { name: 'Enviar de novo' })).toBeNull();
   });
 
+  it('sem perfil: até a falha sem `agent_id` pede confirmação (autoria não atribuível)', () => {
+    controle.perfil = null;
+    const onSendMessage = vi.fn().mockResolvedValue(undefined);
+    render(
+      <SendErrorBanner
+        messages={[falha({ id: 'f-sem-autor', content: 'texto', created_at: haMinutos(5) })]}
+        onSendMessage={onSendMessage}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar de novo' }));
+    // Não saiu direto: abriu a confirmação, porque sem perfil nada pode ser atribuído a "minha".
+    expect(onSendMessage).not.toHaveBeenCalled();
+    expect(screen.getByRole('group', { name: 'Confirmar reenvio' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar reenvio' }));
+    expect(onSendMessage).toHaveBeenCalledWith('texto');
+  });
+
   it('atendente comum: falha própria recente reenvia direto, sem confirmação', () => {
     const onSendMessage = vi.fn();
     render(
