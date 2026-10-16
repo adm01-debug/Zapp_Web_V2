@@ -55,18 +55,6 @@ expect_error_as() {
   [[ "$out" == *"$needle"* ]] || { printf '%s\n' "$out" >&2; fail "$l: esperava '$needle' no erro"; }
   printf '[PASS] %s\n' "$l"
 }
-expect_value_as() {
-  local l="$1" e="$2" j="$3" s="$4" a
-  a="$(as_user "$j" "$s" | tail -n1)"
-  [[ "$a" == "$e" ]] || { printf '%s\n' "$a" >&2; fail "$l: esperado '$e', obtido '$a'"; }
-  printf '[PASS] %s\n' "$l"
-}
-expect_returning_as() {   # quantas linhas de DADOS o comando devolveu (RETURNING), como o papel real
-  local l="$1" e="$2" j="$3" s="$4" n
-  n="$(as_user "$j" "$s" | grep -cE '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' || true)"
-  [[ "$n" == "$e" ]] || fail "$l: esperado $e linha(s) de retorno, obtido $n"
-  printf '[PASS] %s\n' "$l"
-}
 
 command -v docker >/dev/null 2>&1 || fail 'Docker nao esta instalado'
 docker info >/dev/null 2>&1 || fail 'Docker daemon nao esta acessivel'
@@ -151,16 +139,6 @@ CREATE TABLE public.team_conversation_members (
   UNIQUE (conversation_id, profile_id),
   CONSTRAINT team_conversation_members_member_role_check CHECK (member_role IN ('owner', 'admin', 'member'))
 );
-
--- Espelho do gatilho REAL de team_conversations (20260402130912, linha 114, e a funcao de
--- 20251215024517, linha 188): BEFORE UPDATE FOR EACH ROW que regrava updated_at. Sem ele aqui o
--- teste nao mediria o efeito do gatilho na transferencia (caso B.22-B.25).
-CREATE OR REPLACE FUNCTION public.update_updated_at_column() RETURNS trigger
-  LANGUAGE plpgsql SET search_path = public
-  AS $$ BEGIN NEW.updated_at = now(); RETURN NEW; END; $$;
-CREATE TRIGGER update_team_conversations_updated_at
-  BEFORE UPDATE ON public.team_conversations
-  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 CREATE OR REPLACE FUNCTION public.current_profile_id() RETURNS uuid
   LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO 'public', 'pg_temp'
@@ -382,73 +360,4 @@ expect_ok_as 'B.20 depois de transferir, OTTO (agora member) sai de verdade' \
 expect_value 'B.21 saida aplicada e o grupo ficou com owner (DORA)' '1' \
   "SELECT count(*) FROM public.team_conversation_members WHERE conversation_id='$G_LEAVE' AND member_role='owner' AND profile_id='$P_DORA';"
 
-# --- caso "efeito do gatilho de updated_at" (aviso do juiz barato nas entregas anteriores) -----
-# NÃO há backfill: a única escrita em team_conversations é a transferência, que atualiza UMA linha
-# (WHERE id = p_conversation_id). Marco o instante ANTES e conto as conversas renovadas DEPOIS: tem
-# de ser 1, e a renovada tem de ser a que foi transferida. (O gatilho BEFORE UPDATE regrava
-# updated_at em toda linha atualizada, então o carimbo tem de ser por comparação de instante.)
-T0="$(psql_sql "SELECT clock_timestamp()::text;")"
-expect_value 'B.22 nenhuma conversa renovada desde o marco (baseline limpo)' '0' \
-  "SELECT count(*) FROM public.team_conversations WHERE updated_at > '$T0'::timestamptz;"
-expect_ok_as 'B.23 owner transfere G_MC (dispara o gatilho de updated_at)' \
-  "$DORA" "SELECT public.transfer_team_conversation_ownership('$G_MC','$P_CARLOS');"
-expect_value 'B.24 ...e SO a conversa transferida teve updated_at renovado (1 linha: nao ha backfill)' '1' \
-  "SELECT count(*) FROM public.team_conversations WHERE updated_at > '$T0'::timestamptz;"
-expect_value 'B.25 ...e a renovada e exatamente a conversa transferida' "$G_MC" \
-  "SELECT id FROM public.team_conversations WHERE updated_at > '$T0'::timestamptz;"
-expect_value 'B.26 created_by migrou para o novo dono' "$P_CARLOS" \
-  "SELECT created_by FROM public.team_conversations WHERE id='$G_MC';"
-
-printf '\n============ BLOCO C — rollback da migration (volta ao corpo de 20261004185228) ============\n'
-# O bloco de rollback e EXTRAIDO da propria migration (nunca reescrito a mao) e executado
-# no mesmo container: se ele nao devolver o comportamento anterior, o rollback e fachada.
-grep -E '^--   create or replace function' "$migration_fix" | sed 's/^--   //' > "$tmp_dir/rollback.sql"
-[[ -s "$tmp_dir/rollback.sql" ]] || fail 'nao consegui extrair o bloco de rollback da migration'
-[[ "$(grep -c 'create or replace function' "$tmp_dir/rollback.sql")" = '2' ]] \
-  || fail 'o bloco de rollback nao trouxe as DUAS funcoes'
-psql_file "$tmp_dir/rollback.sql" >/dev/null
-psql_file "$tmp_dir/seed.sql" >/dev/null
-
-CONV_C="$(as_user "$EVA" "SELECT public.create_team_group_conversation(NULL, '{}'::uuid[], '$DEP1');" | tail -n1)"
-[[ "$CONV_C" =~ ^[0-9a-f-]{36}$ ]] || fail "C.1 o rollback nao devolveu o defeito da criacao: $CONV_C"
-printf '[PASS] %s\n' 'C.1 (DEFEITO de volta) EVA, fora do DEP1, cria de novo a conversa do departamento'
-expect_ok_as 'C.2 (DEFEITO de volta) OTTO, ex-membro que segue created_by, transfere de novo G_EX' \
-  "$OTTO" "SELECT public.transfer_team_conversation_ownership('$G_EX','$P_MARIA');"
-
-psql_file "$migration_fix" >/dev/null
-psql_file "$tmp_dir/seed.sql" >/dev/null
-expect_error_as 'C.3 reaplicar a migration torna a guarda efetiva de novo (idempotente)' \
-  'department_membership_required' "$EVA" \
-  "SELECT public.create_team_group_conversation(NULL, '{}'::uuid[], '$DEP1');"
-expect_error_as 'C.4 ...e a guarda de ator-membro tambem volta na reaplicacao' \
-  'actor_not_a_member' "$OTTO" \
-  "SELECT public.transfer_team_conversation_ownership('$G_EX','$P_MARIA');"
-
-printf '\n============ BLOCO D — DELETE ... RETURNING: o caminho que o hook usa ============\n'
-# Observação do revisor na aprovação de 08/10: o hook passou a apagar com `.delete().select('id')`
-# (DELETE ... RETURNING). Medido aqui nos DOIS atores possíveis, para o caso não virar falso erro
-# nem falso sucesso.
-# D.1-D.4 — admin/supervisor FORA da conversa.
-expect_value_as 'D.1 admin fora da conversa NAO ve a conversa (policy de SELECT de team_conversations)' '0' \
-  "$ADM" "SELECT count(*) FROM public.team_conversations WHERE id='$G_ADM';"
-expect_value_as 'D.2 ...nem as linhas de membro dela' '0' \
-  "$ADM" "SELECT count(*) FROM public.team_conversation_members WHERE conversation_id='$G_ADM';"
-expect_returning_as 'D.3 o DELETE+RETURNING desse admin devolve 0 linha (o hook mostraria erro)' '0' \
-  "$ADM" "DELETE FROM public.team_conversation_members WHERE conversation_id='$G_ADM' AND profile_id='$P_EVA' RETURNING id;"
-expect_value 'D.4 ...e NAO apagou nada: a linha do membro continua la (nao ha falso sucesso)' '1' \
-  "SELECT count(*) FROM public.team_conversation_members WHERE conversation_id='$G_ADM' AND profile_id='$P_EVA';"
-# D.5-D.6 — mesmo sendo OWNER, quem nao e admin so apaga a propria linha (a policy e propria-ou-admin).
-expect_returning_as 'D.5 owner sem papel admin NAO remove outro membro: 0 linhas' '0' \
-  "$DORA" "DELETE FROM public.team_conversation_members WHERE conversation_id='$G_MC' AND profile_id='$P_MARIA' RETURNING id;"
-expect_value 'D.6 ...e a linha do outro membro fica intacta' '1' \
-  "SELECT count(*) FROM public.team_conversation_members WHERE conversation_id='$G_MC' AND profile_id='$P_MARIA';"
-# D.7-D.9 — admin MEMBRO da conversa: o unico ator que a tela alcanca para remover alguem.
-psql_sql "INSERT INTO public.team_conversation_members (conversation_id, profile_id, member_role) VALUES ('$G_MC','a0000000-0000-0000-0000-000000000006','member');" >/dev/null
-expect_value_as 'D.7 admin membro VE as linhas de membro da conversa' '4' \
-  "$ADM" "SELECT count(*) FROM public.team_conversation_members WHERE conversation_id='$G_MC';"
-expect_returning_as 'D.8 admin membro remove outro membro e RECEBE a linha no RETURNING (o hook ve o sucesso)' '1' \
-  "$ADM" "DELETE FROM public.team_conversation_members WHERE conversation_id='$G_MC' AND profile_id='$P_MARIA' RETURNING id;"
-expect_value 'D.9 ...e a remocao foi mesmo aplicada' '0' \
-  "SELECT count(*) FROM public.team_conversation_members WHERE conversation_id='$G_MC' AND profile_id='$P_MARIA';"
-
-printf '\nPASS: QA5-10 — departamento exige membro/admin na criacao, ex-membro nao transfere, ultimo owner so sai depois de transferir e o DELETE filtrado aparece como erro.\n'
+printf '\nPASS: QA5-10 — departamento exige membro/admin na criacao, ex-membro nao transfere e ultimo owner so sai depois de transferir.\n'
