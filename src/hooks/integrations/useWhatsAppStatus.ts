@@ -58,7 +58,6 @@ export interface WhatsAppStatusData {
 }
 
 interface ContactConnectionInfo {
-  contactName: string | null;
   instanceName: string | null;
 }
 
@@ -92,6 +91,12 @@ const buildPhoneNeedles = (phone: string) => {
       values.add(localNumber.slice(1));
       values.add(`${areaCode}${localNumber.slice(1)}`);
       values.add(`55${areaCode}${localNumber.slice(1)}`);
+    } else if (localNumber.length === 8) {
+      // Sem o nono dígito: o contato pode estar salvo com o 9 — gerar as
+      // variantes com o 9 para a mesma linha ser encontrada.
+      values.add(`9${localNumber}`);
+      values.add(`${areaCode}9${localNumber}`);
+      values.add(`55${areaCode}9${localNumber}`);
     }
   }
 
@@ -121,6 +126,19 @@ const extractStatusRecords = (data: unknown): WhatsAppStatusMessage[] => {
 };
 
 /**
+ * A Edge `find-status-messages` responde HTTP 200 com `{ error: true, status, message }`
+ * quando a sessão não está utilizável (ex.: 409). Extrai a mensagem para exibir.
+ */
+const extractStatusApiError = (data: unknown): string | null => {
+  if (data && typeof data === 'object' && (data as { error?: unknown }).error === true) {
+    const message = (data as { message?: unknown }).message;
+    return typeof message === 'string' && message ? message : 'Erro ao buscar status';
+  }
+
+  return null;
+};
+
+/**
  * Hook to fetch WhatsApp status (stories) and presence for a contact
  */
 export function useWhatsAppStatus(phone: string | undefined): WhatsAppStatusData {
@@ -142,34 +160,24 @@ export function useWhatsAppStatus(phone: string | undefined): WhatsAppStatusData
   }, []);
 
   const getConnectionInfo = useCallback(async (contactPhone: string): Promise<ContactConnectionInfo> => {
-    const cleanPhone = normalizeDigits(contactPhone);
+    // A coluna certa na tabela certa: `contacts.phone` (única coluna de
+    // telefone de contato no banco — `phones` só existe fora deste pedido).
+    // O número pode estar salvo com ou sem o nono dígito e com ou sem DDI:
+    // buscar por todas as variantes da mesma linha numa única consulta.
+    const candidates = Array.from(new Set([contactPhone, ...buildPhoneNeedles(contactPhone)]));
 
     const { data: contact, error: contactError } = await supabase
       .from('contacts')
-      .select('name, whatsapp_connection_id')
-      .eq('phone', contactPhone)
+      .select('whatsapp_connection_id')
+      .in('phone', candidates)
       .maybeSingle();
 
     if (contactError) throw contactError;
 
-    let resolvedContact = contact;
-
-    if (!resolvedContact && cleanPhone && cleanPhone !== contactPhone) {
-      const { data: fallbackContact, error: fallbackError } = await supabase
-        .from('contacts')
-        .select('name, whatsapp_connection_id')
-        .eq('phone', cleanPhone)
-        .maybeSingle();
-
-      if (fallbackError) throw fallbackError;
-      resolvedContact = fallbackContact;
-    }
-
-    const connectionId = resolvedContact?.whatsapp_connection_id;
+    const connectionId = contact?.whatsapp_connection_id;
 
     if (!connectionId) {
       return {
-        contactName: resolvedContact?.name ?? null,
         instanceName: null,
       };
     }
@@ -186,7 +194,6 @@ export function useWhatsAppStatus(phone: string | undefined): WhatsAppStatusData
     if (connectionError) throw connectionError;
 
     return {
-      contactName: resolvedContact?.name ?? null,
       instanceName: connection?.instance_id ?? null,
     };
   }, []);
@@ -212,7 +219,7 @@ export function useWhatsAppStatus(phone: string | undefined): WhatsAppStatusData
     setError(null);
 
     try {
-      const { instanceName: resolvedInstance, contactName } = await getConnectionInfo(phone);
+      const { instanceName: resolvedInstance } = await getConnectionInfo(phone);
 
       if (!mountedRef.current || generation !== generationRef.current) return;
       setInstanceName(resolvedInstance);
@@ -237,9 +244,18 @@ export function useWhatsAppStatus(phone: string | undefined): WhatsAppStatusData
         log.error('WhatsApp status invoke error:', statusError);
         setStatusMessages([]);
       } else {
+        // A Edge devolve HTTP 200 com `{ error: true, status: 409, message }`
+        // quando a sessão não está utilizável: exibir a mensagem em vez de
+        // uma lista vazia silenciosa.
+        const apiMessage = extractStatusApiError(statusData);
+
+        if (apiMessage) {
+          log.error('WhatsApp status API error:', statusData);
+          setStatusMessages([]);
+          setError(apiMessage);
+        } else {
         const allStatuses = extractStatusRecords(statusData);
         const phoneNeedles = buildPhoneNeedles(phone);
-        const normalizedContactName = contactName?.trim().toLowerCase() ?? null;
 
         const contactStatuses = allStatuses
           .filter((status) => {
@@ -252,6 +268,8 @@ export function useWhatsAppStatus(phone: string | undefined): WhatsAppStatusData
             const isFromMe = status.fromMe ?? key.fromMe ?? false;
             if (isFromMe) return false;
 
+            // Identidade é o telefone (remoteJid/JID), nunca o pushName:
+            // nome exibido não prova autoria do status.
             const candidateFields = [
               status.remoteJid,
               status.remoteJidAlt,
@@ -259,21 +277,14 @@ export function useWhatsAppStatus(phone: string | undefined): WhatsAppStatusData
               key.remoteJid,
               key.remoteJidAlt,
               key.participant,
-              status.pushName,
             ];
 
-            const phoneMatch = candidateFields.some((value) => matchesPhone(value, phoneNeedles));
-            const nameMatch = Boolean(
-              normalizedContactName &&
-                typeof status.pushName === 'string' &&
-                status.pushName.trim().toLowerCase() === normalizedContactName,
-            );
-
-            return phoneMatch || nameMatch;
+            return candidateFields.some((value) => matchesPhone(value, phoneNeedles));
           })
           .sort((left, right) => toTimestampNumber(right.messageTimestamp) - toTimestampNumber(left.messageTimestamp));
 
         setStatusMessages(contactStatuses);
+        }
       }
 
       setPresence({ isOnline: false, lastSeen: null, loading: false });
