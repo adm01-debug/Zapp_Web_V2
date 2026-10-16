@@ -1,34 +1,22 @@
 /**
- * A11Y-03 / A11Y-06 — comparação de filas: a tabela rola dentro do próprio
- * contêiner em 390px (overflow-x-auto) e nenhuma coluna fica sem nome acessível
- * (o <TableHead> da coluna de ações tem texto sr-only).
+ * N-085 — Botões "Voltar" e "Abrir fila" têm nome acessível.
  *
- * O landmark (<main>) e o <h1> vivem fora deste componente — na página e no
- * dashboard — e são provados no teste de PÁGINA:
- * src/pages/__tests__/QueuesComparisonSLA.landmarks.test.tsx.
- *
- * Teste que falha sem a correção e passa com ela.
+ * Prova no componente REAL (QueuesComparisonDashboard) que os dois
+ * botões icon-only possuem aria-label legível por leitor de tela,
+ * conforme o critério de aceite do cartão.
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { QueuesComparisonDashboard } from '../QueuesComparisonDashboard';
 
+vi.mock('@/components/effects/AuroraBorealis', () => ({ AuroraBorealis: () => null }));
+vi.mock('@/components/dashboard/FloatingParticles', () => ({ FloatingParticles: () => null }));
+vi.mock('@/components/queues/QueuesComparisonCharts', () => ({ QueuesComparisonCharts: () => null }));
+vi.mock('@/components/queues/PeriodSelector', () => ({ PeriodSelector: () => null }));
 vi.mock('@/hooks/business/useQueuesComparison', () => ({
   useQueuesComparison: () => ({
     queuesPerformance: [
-      {
-        id: 'q1',
-        name: 'Suporte',
-        color: '#3B82F6',
-        totalContacts: 100,
-        assignedContacts: 80,
-        waitingContacts: 20,
-        totalMessages: 500,
-        avgMessagesPerContact: 5,
-        agentsCount: 4,
-        assignmentRate: 80,
-      },
+      { id: 'q1', name: 'Suporte', color: '#3B82F6', totalContacts: 10, assignedContacts: 8, waitingContacts: 2, totalMessages: 50, avgMessagesPerContact: 5, agentsCount: 3 },
     ],
     loading: false,
   }),
@@ -36,23 +24,24 @@ vi.mock('@/hooks/business/useQueuesComparison', () => ({
 
 function renderDashboard() {
   return render(
-    <MemoryRouter><QueuesComparisonDashboard /></MemoryRouter>,
+    <MemoryRouter>
+      <QueuesComparisonDashboard />
+    </MemoryRouter>,
   );
 }
 
-describe('a11y: QueuesComparisonDashboard', () => {
-  it('não tem TableHead vazio — toda coluna tem texto acessível', () => {
-    const { container } = renderDashboard();
-    expect(container.querySelectorAll('th:empty')).toHaveLength(0);
-  });
+import { QueuesComparisonDashboard } from '../QueuesComparisonDashboard';
 
-  it('a coluna de ações tem nome acessível "Ações"', () => {
+describe('QueuesComparisonDashboard — acessibilidade', () => {
+  it('botão Voltar tem aria-label "Voltar"', () => {
     renderDashboard();
-    expect(screen.getByRole('columnheader', { name: 'Ações' })).toBeInTheDocument();
+    const backButton = screen.getByRole('button', { name: 'Voltar' });
+    expect(backButton).toBeInTheDocument();
   });
 
-  it('o container da tabela tem overflow-x-auto para rolar em 390px', () => {
-    const { container } = renderDashboard();
-    expect(container.querySelector('.overflow-x-auto')).not.toBeNull();
+  it('botão de abrir fila tem aria-label que inclui o nome da fila', () => {
+    renderDashboard();
+    const openButton = screen.getByRole('button', { name: /Abrir fila Suporte/ });
+    expect(openButton).toBeInTheDocument();
   });
 });

@@ -27,7 +27,7 @@ export function QueueCard({ queue, alertCount, onAddMember, onRemoveMember, onSe
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: `color-mix(in srgb, ${queue.color} 15%, transparent)` }}>
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${queue.color}15` }}>
               <MessageSquare className="w-5 h-5" style={{ color: queue.color }} />
             </div>
             <div>
@@ -73,12 +73,7 @@ export function QueueCard({ queue, alertCount, onAddMember, onRemoveMember, onSe
                         <AvatarImage src={member.profile?.avatar_url || undefined} alt={member.profile?.name || 'Membro'} />
                         <AvatarFallback className="text-xs bg-primary/10 text-primary">{member.profile?.name?.[0] || '?'}</AvatarFallback>
                       </Avatar>
-                      <button
-                        type="button"
-                        aria-label={`Remover ${member.profile?.name || 'atendente'} da fila`}
-                        onClick={() => onRemoveMember(queue.id, member.profile_id)}
-                        className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-destructive-foreground rounded-full opacity-0 pointer-events-none transition-opacity flex items-center justify-center group-hover:opacity-100 group-hover:pointer-events-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:opacity-100 focus-visible:pointer-events-auto [@media(hover:none)]:opacity-100 [@media(hover:none)]:pointer-events-auto [@media(pointer:coarse)]:after:content-[''] [@media(pointer:coarse)]:after:absolute [@media(pointer:coarse)]:after:left-1/2 [@media(pointer:coarse)]:after:top-1/2 [@media(pointer:coarse)]:after:h-11 [@media(pointer:coarse)]:after:w-6 [@media(pointer:coarse)]:after:-translate-x-1/2 [@media(pointer:coarse)]:after:-translate-y-1/2"
-                      >
+                      <button aria-label={`Remover ${member.profile?.name || 'atendente'} da fila ${queue.name}`} onClick={() => onRemoveMember(queue.id, member.profile_id)} className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                         <UserMinus className="w-2.5 h-2.5" />
                       </button>
                     </div>
@@ -87,7 +82,7 @@ export function QueueCard({ queue, alertCount, onAddMember, onRemoveMember, onSe
                 {activeMembers.length > 4 && <span className="ml-2 text-sm text-muted-foreground">+{activeMembers.length - 4} mais</span>}
               </>
             ) : <span className="text-sm text-muted-foreground">Nenhum atendente</span>}
-            <Button variant="ghost" size="icon" aria-label={`Adicionar atendente à fila ${queue.name}`} className="ml-auto w-8 h-8 hover:bg-primary/10 hover:text-primary" onClick={() => onAddMember(queue)}><Plus className="w-4 h-4" /></Button>
+            <Button aria-label={`Adicionar atendente à fila ${queue.name}`} variant="ghost" size="icon" className="ml-auto w-8 h-8 hover:bg-primary/10 hover:text-primary" onClick={() => onAddMember(queue)}><Plus className="w-4 h-4" /></Button>
           </div>
         </div>
         <div className="flex items-center justify-between pt-2 border-t border-border/20">
