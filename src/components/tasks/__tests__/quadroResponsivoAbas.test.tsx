@@ -241,6 +241,44 @@ describe('etapa 099 — abaixo de 768px: uma coluna por vez, com abas no topo', 
     }
   });
 
+  it('as 5 abas mantêm alvo de toque de 40px, sem classe contradizendo o piso', async () => {
+    const devolverMidia = fingirMidia(TELA_ESTREITA);
+    try {
+      renderQuadro({ backlog: [CAIXA] });
+      const abas = await screen.findByTestId('board-tabs');
+      const botoes = within(abas).getAllByRole('tab');
+      expect(botoes).toHaveLength(5);
+
+      // Todo `min-h-*` declarado em cada aba, já convertido para px — inclusive
+      // variante com prefixo, porque é ela que vence no cascade quando vale.
+      const pisos = botoes.map(b =>
+        b.className
+          .split(/\s+/)
+          .filter(c => /^(?:[a-z]+:)?min-h-/.test(c))
+          .map(c => {
+            const px = escalaTailwind(c.replace(/^((?:[a-z]+:)?)min-h-/, ''));
+            if (px === null) throw new Error(`o teste não sabe converter a altura da aba: ${c}`);
+            return px;
+          }),
+      );
+
+      // As cinco abas continuam iguais entre si: nenhuma com piso próprio.
+      expect(
+        pisos.every(p => p.join('/') === pisos[0].join('/')),
+        `as abas divergem no piso de altura: ${pisos.map(p => p.join('+')).join(' | ')}`,
+      ).toBe(true);
+
+      for (const [i, p] of pisos.entries()) {
+        expect(p.length, `aba ${i} não declara altura mínima`).toBeGreaterThan(0);
+        for (const px of p) {
+          expect(px, `aba ${i}: ${px}px fica abaixo do alvo de toque de 40px`).toBeGreaterThanOrEqual(40);
+        }
+      }
+    } finally {
+      devolverMidia();
+    }
+  });
+
   it('a tela estreita do Quadro passa no axe', async () => {
     const devolverMidia = fingirMidia(TELA_ESTREITA);
     try {

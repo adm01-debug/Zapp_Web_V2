@@ -289,7 +289,7 @@ export function TasksBoardMode({
                   aria-controls={ID_PAINEL_ABAS}
                   tabIndex={ativa ? 0 : -1}
                   onClick={() => irParaColuna(i)}
-                  className={`min-h-9 shrink-0 rounded-lg border px-3 text-xs font-medium transition-colors ${
+                  className={`min-h-10 shrink-0 rounded-lg border px-3 text-xs font-medium transition-colors ${
                     ativa
                       ? 'border-primary/40 bg-primary/10 text-foreground'
                       : 'border-border/70 text-muted-foreground hover:bg-muted'
