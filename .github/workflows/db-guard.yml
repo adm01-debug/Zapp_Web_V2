@@ -1062,6 +1062,8 @@ jobs:
 
       - name: "Estatísticas de visão geral Talk X"
         if: env.SKIP_CONTRACTS != 'true'
+        env:
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-overview-stats.test.sh
 
       - name: "Segmentos de campanha Talk X"

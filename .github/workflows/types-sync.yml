@@ -382,7 +382,7 @@ jobs:
         # no repo (migration nao aplicada em prod), classifica como "awaiting apply"
         # e nao abre issue — o problema some quando a migration entrar no banco.
         # W26: lote-pendente.mjs (fonte unica): exit 0 = sem drift, exit 1 = drift real,
-        # exit 2 = so apply-pendente.
+        # exit 3 = so apply-pendente.
         id: gate1b
         if: steps.diff.outputs.schema_changed == 'true' && steps.gate1.outputs.passed == 'false'
         env:
@@ -393,7 +393,7 @@ jobs:
           node scripts/db-audit/lote-pendente.mjs > /tmp/drift.log 2>&1
           drift_exit=$?
           set -e
-          if [ "$drift_exit" -eq 2 ]; then
+          if [ "$drift_exit" -eq 3 ]; then
             echo "awaiting_apply=true" >> "$GITHUB_OUTPUT"
             echo "::notice::Gate 1 aguardando apply de migrations pendentes — erros de TypeScript decorrem de objetos nao aplicados em prod ainda."
           else
@@ -433,7 +433,8 @@ jobs:
           # F-01 (auditoria 2026-09-27): mesmo pipefail dos Gates 1 e 2 — sem ele o
           # tee sempre saia 0 e o gate passava mesmo com o script bloqueando.
           set -o pipefail
-          if node scripts/db-audit/check-remocoes-destrutivas.mjs supabase/schema-catalog.json /tmp/catalog.new.json 2>&1 | tee /tmp/gate3.log; then
+          git show HEAD:supabase/schema-catalog.json > /tmp/catalog.old.json
+          if node scripts/db-audit/check-remocoes-destrutivas.mjs /tmp/catalog.old.json /tmp/catalog.new.json 2>&1 | tee /tmp/gate3.log; then
             echo "passed=true" >> "$GITHUB_OUTPUT"
           else
             echo "passed=false" >> "$GITHUB_OUTPUT"
