@@ -45,9 +45,15 @@ function fakeCaller(opts: { isAdmin?: boolean; userId?: string | null } = {}) {
 
 function fakeAdmin(
   row: Record<string, unknown> | null,
-  opts: { updateError?: { message: string }; auditError?: { message: string } } = {},
+  opts: {
+    updateError?: { message: string };
+    auditError?: { message: string };
+    /** Linhas devolvidas pelo UPDATE (o CAS: [] = nenhuma linha casou). */
+    updateRows?: Array<{ id: string }> | null;
+  } = {},
 ) {
   const calls: DbCall[] = [];
+  const filters: string[] = [];
   const admin = {
     from(table: string) {
       let op = "";
@@ -69,7 +75,10 @@ function fakeAdmin(
           payload = p;
           return builder;
         },
-        eq: () => builder,
+        eq: (col: string, val: unknown) => {
+          filters.push(`${table}.${col}=${String(val)}`);
+          return builder;
+        },
         single: () => {
           calls.push({ table, op: op || "select" });
           return Promise.resolve({ data: row, error: row ? null : { message: "not found" } });
@@ -80,7 +89,7 @@ function fakeAdmin(
         ) => {
           calls.push({ table, op, payload });
           const result = op === "update"
-            ? { data: null, error: opts.updateError ?? null }
+            ? { data: opts.updateRows === undefined ? [{ id: REQUEST_ID }] : opts.updateRows, error: opts.updateError ?? null }
             : op === "insert"
             ? { data: null, error: opts.auditError ?? null }
             : { data: null, error: null };
@@ -90,7 +99,7 @@ function fakeAdmin(
       return builder;
     },
   } as unknown as ApproveResetAdminClient;
-  return { admin, calls };
+  return { admin, calls, filters };
 }
 
 function fakeEmail(opts: { error?: { message: string } | null } = {}) {
@@ -113,7 +122,7 @@ const env = (name: string) => {
   throw new Error(`env inesperado: ${name}`);
 };
 
-const baseDeps = { env, enforceRateLimit: () => Promise.resolve({ allowed: true }) };
+const baseDeps = { env, enforceRateLimit: async () => ({ allowed: true }) };
 
 function makeRequest(body: unknown, headers: Record<string, string> = {}): Request {
   return new Request("https://stub.supabase.co/functions/v1/approve-password-reset", {
@@ -336,7 +345,7 @@ Deno.test("rate limit responde 429 antes de qualquer efeito", async () => {
 
   const res = await handleApprovePasswordResetRequest(makeRequest(APPROVE_BODY), {
     env,
-    enforceRateLimit: () => Promise.resolve({ allowed: false }),
+    enforceRateLimit: async () => ({ allowed: false }),
     caller,
     admin,
     emailClient: email.client,
@@ -347,59 +356,76 @@ Deno.test("rate limit responde 429 antes de qualquer efeito", async () => {
   assert(email.calls.length === 0 && calls.length === 0, "rate limit não pode ter efeito");
 });
 
-// O limite agora vive FORA do isolate (RPC service_role `consume_rate_limit`). Prova:
-// o decisor persistente libera a 1ª chamada e nega a 2ª, com o MESMO IP — o contador
-// em memória (limite 10) liberaria as duas, então um 429 na 2ª só pode vir do store.
-Deno.test("rate limit persistente: a decisão vem do RPC, não do contador em memória do isolate", async () => {
-  const savedUrl = Deno.env.get("SUPABASE_URL");
-  const savedSrv = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  Deno.env.set("SUPABASE_URL", "https://stub.supabase.co");
-  Deno.env.set("SUPABASE_SERVICE_ROLE_KEY", "stub-service-key");
-  resetRateLimitServiceClient();
+Deno.test("rate limit por USUARIO pos-auth: limite persistente por conta -> 429", async () => {
+  const { caller } = fakeCaller();
+  const { admin, calls } = fakeAdmin(pendingRow());
+  const email = fakeEmail();
+  const keys: string[] = [];
 
-  const originalFetch = globalThis.fetch;
-  const seen: string[] = [];
-  let rpcCalls = 0;
-  globalThis.fetch = ((input: RequestInfo | URL) => {
-    const url = typeof input === "string"
-      ? input
-      : input instanceof URL
-      ? input.toString()
-      : (input as Request).url;
-    seen.push(url);
-    if (url.includes("/rest/v1/rpc/consume_rate_limit")) {
-      rpcCalls++;
-      const allowed = rpcCalls === 1;
-      return Promise.resolve(new Response(
-        JSON.stringify([{ allowed, remaining: allowed ? 9 : 0 }]),
-        { status: 200, headers: { "content-type": "application/json" } },
-      ));
-    }
-    return Promise.resolve(new Response("nao stubado", { status: 599 }));
-  }) as typeof fetch;
+  const res = await handleApprovePasswordResetRequest(makeRequest(APPROVE_BODY), {
+    env,
+    enforceRateLimit: async (key) => {
+      keys.push(key);
+      return { allowed: !key.includes(":user:") };
+    },
+    caller,
+    admin,
+    emailClient: email.client,
+  });
 
-  try {
-    const deps = (() => {
-      const { caller } = fakeCaller();
-      const { admin, calls } = fakeAdmin(pendingRow());
-      const email = fakeEmail();
-      return { env, caller, admin, emailClient: email.client, dbCalls: calls, email };
-    })();
+  assert(res.status === 429, `veio ${res.status}`);
+  assert(
+    keys.length === 2 && keys[0] === "approve-reset:unknown" && keys[1] === `approve-reset:user:${CALLER_ID}`,
+    `chaves inesperadas: ${JSON.stringify(keys)}`,
+  );
+  assert(email.calls.length === 0 && calls.length === 0, "limite por usuário não pode ter efeito");
+});
 
-    const primeira = await handleApprovePasswordResetRequest(makeRequest(APPROVE_BODY), deps);
-    assert(primeira.status !== 429, `a 1ª chamada está dentro do limite, veio ${primeira.status}`);
-    assert(deps.email.calls.length === 1, "a 1ª chamada deveria ter efeito (enviar o e-mail)");
+Deno.test("aprovação concorrente: UPDATE afeta 0 linhas -> 409 e nada auditado", async () => {
+  // O CAS (WHERE id=... AND status='pending') não casa porque outro pedido
+  // concorrente já aprovou. Sem a guarda de linhas afetadas, este handler
+  // reescreveria reviewed_by de quem venceu e auditaria "approved" de novo.
+  const { caller } = fakeCaller();
+  const { admin, calls, filters } = fakeAdmin(pendingRow(), { updateRows: [] });
+  const email = fakeEmail();
 
-    const segunda = await handleApprovePasswordResetRequest(makeRequest(APPROVE_BODY), deps);
-    assert(segunda.status === 429, `a 2ª chamada foi negada pelo store, veio ${segunda.status}`);
-    assert(segunda.headers.get("Retry-After") !== null, "o 429 deve trazer Retry-After");
-    assert(rpcCalls >= 2, `o limite deveria consultar o RPC a cada chamada: ${seen.join(",")}`);
-  } finally {
-    globalThis.fetch = originalFetch;
-    resetRateLimitServiceClient();
-    if (savedUrl === undefined) Deno.env.delete("SUPABASE_URL");
-    else Deno.env.set("SUPABASE_URL", savedUrl);
-    if (savedSrv === undefined) Deno.env.delete("SUPABASE_SERVICE_ROLE_KEY");
-    else Deno.env.set("SUPABASE_SERVICE_ROLE_KEY", savedSrv);
-  }
+  const res = await handleApprovePasswordResetRequest(makeRequest(APPROVE_BODY), {
+    ...baseDeps,
+    caller,
+    admin,
+    emailClient: email.client,
+  });
+
+  assert(res.status === 409, `esperado 409, veio ${res.status}`);
+  assert(
+    filters.includes("password_reset_requests.status=pending"),
+    `o UPDATE deve filtrar status='pending': ${JSON.stringify(filters)}`,
+  );
+  assert(
+    !calls.some((c) => c.table === "audit_logs" && c.op === "insert"),
+    `perdedor do corrida não pode auditar 'approved': ${JSON.stringify(calls)}`,
+  );
+});
+
+Deno.test("rejeição concorrente: UPDATE afeta 0 linhas -> 409 e nada auditado", async () => {
+  const { caller } = fakeCaller();
+  const { admin, calls, filters } = fakeAdmin(pendingRow(), { updateRows: [] });
+  const email = fakeEmail();
+
+  const res = await handleApprovePasswordResetRequest(makeRequest(REJECT_BODY), {
+    ...baseDeps,
+    caller,
+    admin,
+    emailClient: email.client,
+  });
+
+  assert(res.status === 409, `esperado 409, veio ${res.status}`);
+  assert(
+    filters.includes("password_reset_requests.status=pending"),
+    `o UPDATE deve filtrar status='pending': ${JSON.stringify(filters)}`,
+  );
+  assert(
+    !calls.some((c) => c.table === "audit_logs" && c.op === "insert"),
+    `nada pode ser auditado quando o CAS não casa: ${JSON.stringify(calls)}`,
+  );
 });

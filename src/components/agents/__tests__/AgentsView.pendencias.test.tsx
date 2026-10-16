@@ -155,15 +155,9 @@ vi.mock('@/hooks/crm/useAgentPresence', () => ({
   useAgentPresenceMap: () => ({}),
 }));
 
-// t_b35c23b0: o cabeçalho de conexões usa a fonte da V2 (store global de
-// whatsapp_connections). Neutro aqui — o teste prova as pendências por atendente.
-vi.mock('@/hooks/connections/useConnectionsHealth', () => ({
-  useConnectionsHealth: () => ({
-    connections: [],
-    loading: false,
-    error: null,
-    refresh: vi.fn(),
-  }),
+// t_227e36d1: o InviteAgentDialog (composto pela tela) lê o papel do usuário.
+vi.mock('@/hooks/system/useUserRole', () => ({
+  useUserRole: () => ({ isAdmin: true, isSupervisor: true, loading: false }),
 }));
 
 import { AgentsView } from '@/components/agents/AgentsView';

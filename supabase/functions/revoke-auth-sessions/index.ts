@@ -32,6 +32,24 @@ const RevokeAuthSessionsSchema = z.object({
 
 export type Scope = "global" | "local" | "others";
 
+/** Seams de injecao: o teste prova o gate de rate limit e a chave por usuario sem
+ *  tocar rede. `caller` substitui o client do chamador (getUser + rpc de papel). */
+export interface RevokeCallerClient {
+  auth: {
+    getUser: () => PromiseLike<{ data: { user: { id: string } | null }; error: unknown }>;
+  };
+  rpc: (fn: string, args: Record<string, unknown>) => PromiseLike<{
+    data: unknown;
+    error: { code?: string; message?: string } | null;
+  }>;
+}
+
+export interface RevokeAuthSessionsDeps {
+  env?: (name: string) => string;
+  enforceRateLimit?: (key: string, maxRequests: number, windowMs: number) => PromiseLike<{ allowed: boolean }>;
+  caller?: RevokeCallerClient;
+}
+
 export type RevocationPlan =
   | { ok: true; scope: Scope; actor: string | null; target: string | null; targetSession: string | null; preserve: string | null }
   | { ok: false; status: number; message: string };
@@ -211,36 +229,44 @@ export async function resolveEffectiveRole(client: RoleResolver, userId: string)
 }
 
 export async function handleRevokeAuthSessions(req: Request): Promise<Response> {
+
+export async function handleRevokeAuthSessions(
+  req: Request,
+  deps: RevokeAuthSessionsDeps = {},
+): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
 
   const log = new Logger("revoke-auth-sessions");
+  const env = deps.env ?? requireEnv;
+  const rateLimit = deps.enforceRateLimit ?? enforceRateLimit;
 
   try {
     if (req.method !== "POST") return errorResponse("Method not allowed", 405, req);
 
+    // Pre-auth: chave por IP, contador persistente (nao zera a cada isolate).
     const ip = getClientIP(req);
-    const rl = await enforceRateLimit(`revoke-auth-sessions:${ip}`, 20, 60_000);
-    if (!rl.allowed) {
-      const limited = errorResponse("Rate limit exceeded", 429, req);
-      limited.headers.set("Retry-After", "60");
-      return limited;
-    }
+    const rl = await rateLimit(`revoke-auth-sessions:${ip}`, 20, 60_000);
+    if (!rl.allowed) return errorResponse("Rate limit exceeded", 429, req);
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) return errorResponse("Unauthorized", 401, req);
 
-    const supabaseUrl = requireEnv("SUPABASE_URL");
-    const anonKey = requireEnv("SUPABASE_ANON_KEY");
-    const serviceKey = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
+    const supabaseUrl = env("SUPABASE_URL");
+    const anonKey = env("SUPABASE_ANON_KEY");
+    const serviceKey = env("SUPABASE_SERVICE_ROLE_KEY");
 
-    const supabaseUser = createClient(supabaseUrl, anonKey, {
+    const supabaseUser: RevokeCallerClient = deps.caller ?? createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
     const supabaseAdmin = createClient(supabaseUrl, serviceKey);
 
     const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
     if (userError || !user) return errorResponse("Unauthorized", 401, req);
+
+    // Pos-auth: chave por USUARIO — segura uma conta comprometida mesmo trocando de IP.
+    const userRl = await rateLimit(`revoke-auth-sessions:user:${user.id}`, 20, 60_000);
+    if (!userRl.allowed) return errorResponse("Rate limit exceeded", 429, req);
 
     let body: unknown;
     try {
@@ -314,4 +340,4 @@ export async function handleRevokeAuthSessions(req: Request): Promise<Response> 
   }
 }
 
-if (import.meta.main) Deno.serve(handleRevokeAuthSessions);
+if (import.meta.main) Deno.serve((req) => handleRevokeAuthSessions(req));

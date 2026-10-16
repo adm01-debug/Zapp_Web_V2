@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Lock, CheckCircle, Loader2, Eye, EyeOff } from 'lucide-react';
+import { Lock, CheckCircle, Loader2, Eye, EyeOff, ShieldAlert } from 'lucide-react';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PasswordStrengthMeter } from '@/components/auth/PasswordStrengthMeter';
+import { MFAVerify } from '@/components/mfa/MFAVerify';
+import { useMFA } from '@/hooks/auth/useMFA';
 import { toast } from 'sonner';
+
+// Estado do portão do 2º fator: enquanto não sabemos o nível de garantia da
+// sessão, o formulário NÃO aparece. Verificado o AAL, a troca é liberada.
+type PortaoSegundoFator = 'verificando' | 'liberado' | 'totp' | 'erro';
 
 const passwordSchema = z.string()
   .min(8, 'Mínimo 8 caracteres')
@@ -36,6 +42,25 @@ export default function ResetPassword() {
   // Contagem visível até o redirecionamento; o usuário pode cancelá-la.
   const [countdown, setCountdown] = useState(5);
   const [redirectCancelled, setRedirectCancelled] = useState(false);
+  // Portão do 2º fator: com TOTP verificado a sessão de recuperação é AAL1 e o
+  // GoTrue recusa `updateUser({password})` com `insufficient_aal`. O desafio
+  // TOTP tem de vir ANTES do formulário.
+  const [portaoSegundoFator, setPortaoSegundoFator] = useState<PortaoSegundoFator>('verificando');
+  // A troca de senha encerra as outras sessões; se isso falhar, o usuário
+  // precisa ver — nunca dizemos que encerrou sem ter encerrado.
+  const [falhaAoEncerrarSessoes, setFalhaAoEncerrarSessoes] = useState(false);
+  const { getAssuranceLevel } = useMFA();
+
+  // Lê o nível de garantia da sessão. `getAssuranceLevel` devolve null quando a
+  // leitura falha: sem saber o nível, NÃO liberamos a escrita de senha (falha
+  // fechado) — a sessão AAL1 que não consegue confirmar o fator pendente é
+  // exatamente o caso que o GoTrue recusa.
+  const decidirPortaoPeloNivel = useCallback(async (): Promise<PortaoSegundoFator> => {
+    const assurance = await getAssuranceLevel();
+    if (!assurance) return 'erro';
+    const pendente = assurance.nextLevel === 'aal2' && assurance.currentLevel !== 'aal2';
+    return pendente ? 'totp' : 'liberado';
+  }, [getAssuranceLevel]);
 
   useEffect(() => {
     // Check if user came from password reset email
@@ -62,6 +87,20 @@ export default function ResetPassword() {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Só depois de a sessão estar confirmada é que faz sentido perguntar o nível
+  // de garantia. A tela fica no portão 'verificando' até isso resolver — e o
+  // setState vive no `.then`, nunca sincronamente dentro do efeito.
+  useEffect(() => {
+    if (checkingSession || !hasSession) return;
+    let ativo = true;
+    void decidirPortaoPeloNivel().then((estado) => {
+      if (ativo) setPortaoSegundoFator(estado);
+    });
+    return () => {
+      ativo = false;
+    };
+  }, [checkingSession, hasSession, decidirPortaoPeloNivel]);
 
   // Após o sucesso, redireciona com contagem regressiva visível. O usuário pode
   // cancelar ("Ficar nesta página") — nesse caso o efeito para e nada navega.
@@ -108,10 +147,39 @@ export default function ResetPassword() {
     try {
       const { error } = await supabase.auth.updateUser({ password });
 
-      if (error) throw error;
+      if (error) {
+        // Sessão AAL1 com TOTP verificado: o GoTrue exige o 2º fator. Em vez de
+        // mostrar um erro cru, levamos o usuário ao desafio TOTP.
+        const codigo = (error as { code?: string }).code;
+        if (codigo === 'insufficient_aal' || /AAL2 session is required/i.test(error.message ?? '')) {
+          setPortaoSegundoFator('totp');
+          setError('Para trocar a senha, confirme o código do seu autenticador.');
+          toast.error('Confirme o código de verificação em duas etapas para trocar a senha.');
+          return;
+        }
+        throw error;
+      }
 
+      // Trocar a senha encerra as OUTRAS sessões: quem ficou com a sessão antiga
+      // perde o acesso. Se o encerramento falhar, o usuário vê — não afirmamos
+      // que encerrou sem ter encerrado.
+      let falhaAoEncerrar = false;
+      try {
+        const { error: erroRevogacao } = await supabase.functions.invoke('revoke-auth-sessions', {
+          body: { scope: 'others' },
+        });
+        if (erroRevogacao) throw erroRevogacao;
+      } catch {
+        falhaAoEncerrar = true;
+      }
+
+      setFalhaAoEncerrarSessoes(falhaAoEncerrar);
       setSuccess(true);
-      toast.success('Senha alterada com sucesso!');
+      if (falhaAoEncerrar) {
+        toast.error('Senha alterada, mas não foi possível encerrar as outras sessões.');
+      } else {
+        toast.success('Senha alterada com sucesso! As outras sessões foram encerradas.');
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Erro ao alterar senha');
       toast.error('Erro ao alterar senha');
@@ -198,9 +266,81 @@ export default function ResetPassword() {
                   </div>
                 </>
               )}
+              {falhaAoEncerrarSessoes ? (
+                <p role="alert" className="mt-3 text-sm text-destructive">
+                  Sua senha foi alterada, mas não foi possível encerrar as outras sessões desta
+                  conta. Saia e entre novamente e, em Segurança, encerre os outros dispositivos.
+                </p>
+              ) : (
+                <p className="mt-3 text-sm text-muted-foreground">
+                  As outras sessões desta conta foram encerradas.
+                </p>
+              )}
             </CardHeader>
           </Card>
         </motion.div>
+      </div>
+    );
+  }
+
+  if (portaoSegundoFator === 'verificando') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 p-4">
+        <div
+          role="status"
+          aria-live="polite"
+          className="flex items-center gap-2 text-muted-foreground"
+        >
+          <Loader2 className="w-5 h-5 motion-safe:animate-spin" />
+          <span>Verificando verificação em duas etapas…</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (portaoSegundoFator === 'erro') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div role="alert">
+              <CardTitle className="flex items-center justify-center gap-2">
+                <ShieldAlert className="w-5 h-5 text-destructive" aria-hidden="true" />
+                Não foi possível confirmar a verificação em duas etapas
+              </CardTitle>
+              <CardDescription>
+                Sem confirmar o nível de segurança da sua sessão, não trocamos sua senha.
+                Tente de novo em alguns instantes.
+              </CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Button
+              className="w-full"
+              onClick={() => {
+                setPortaoSegundoFator('verificando');
+                void decidirPortaoPeloNivel().then(setPortaoSegundoFator);
+              }}
+            >
+              Tentar novamente
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (portaoSegundoFator === 'totp') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 p-4">
+        <MFAVerify
+          title="Confirme o 2º fator"
+          description="Sua conta usa verificação em duas etapas. Confirme o código do autenticador para trocar a senha."
+          onSuccess={() => setPortaoSegundoFator('liberado')}
+          onCancel={() => {
+            void supabase.auth.signOut().then(() => navigate('/auth'));
+          }}
+        />
       </div>
     );
   }

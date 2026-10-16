@@ -83,9 +83,17 @@ verify_jwt = true
 [functions.talkx-ai]
 verify_jwt = true
 
+<<<<<<< ours
 # #44: drenagem da outbox duravel do log essencial de IA (public.ai_usage_outbox),
 # chamada pelo pg_cron (net.http_post) com x-cron-secret, sem JWT de sessao -- mesmo
 # padrao das demais funcoes de cron (L5/IA-004): a guarda interna compara o segredo
 # em tempo constante e recusa a anon key. Nao reativar o gate de JWT aqui.
 [functions.ai-usage-outbox-drain]
 verify_jwt = false
+=======
+# Convite de usuario por e-mail (paridade V3). Admin convida qualquer papel;
+# supervisor so convida 'agent'. verify_jwt=true e o default do CLI; o front
+# chama via supabase.functions.invoke, que ja manda o JWT da sessao.
+[functions.invite-user]
+verify_jwt = true
+>>>>>>> theirs

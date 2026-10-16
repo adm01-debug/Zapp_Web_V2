@@ -18,7 +18,6 @@ function dayKeysOf(range: { from: Date; to: Date }): string[] {
 export function useReportsData() {
   const [period, setPeriod] = useState('30');
   const [selectedAgent, setSelectedAgent] = useState<string>('all');
-  const [selectedTag, setSelectedTag] = useState<string>('all');
   const [compareEnabled, setCompareEnabled] = useState(false);
 
   const { agents } = useAgents();
@@ -86,12 +85,12 @@ export function useReportsData() {
   });
 
   const { data: contactsResult, isLoading: loadingContacts, error: contactsError } = useQuery({
-    queryKey: ['reports-contacts', period, selectedAgent, selectedTag],
+    queryKey: ['reports-contacts', period, selectedAgent],
     queryFn: async () => {
       const base = () => {
         let query = supabase
           .from('contacts')
-          .select('id, created_at, assigned_to, tags, contact_type')
+          .select('id, created_at, assigned_to, contact_type')
           .gte('created_at', dateRange.from.toISOString())
           .lte('created_at', dateRange.to.toISOString());
         if (selectedAgent !== 'all') query = query.eq('assigned_to', selectedAgent);
@@ -102,12 +101,12 @@ export function useReportsData() {
   });
 
   const { data: previousContactsResult, isLoading: loadingPreviousContacts, error: previousContactsError } = useQuery({
-    queryKey: ['reports-contacts-previous', period, selectedAgent, selectedTag],
+    queryKey: ['reports-contacts-previous', period, selectedAgent],
     queryFn: async () => {
       const base = () => {
         let query = supabase
           .from('contacts')
-          .select('id, created_at, assigned_to, tags, contact_type')
+          .select('id, created_at, assigned_to, contact_type')
           .gte('created_at', previousDateRange.from.toISOString())
           .lte('created_at', previousDateRange.to.toISOString());
         if (selectedAgent !== 'all') query = query.eq('assigned_to', selectedAgent);
@@ -122,13 +121,6 @@ export function useReportsData() {
   const previousMessagesData = previousMessagesResult?.rows;
   const contactsData = contactsResult?.rows;
   const previousContactsData = previousContactsResult?.rows;
-
-  const tags = useMemo(() => {
-    if (!contactsData) return [];
-    const tagSet = new Set<string>();
-    contactsData.forEach(c => (c.tags || []).forEach((t: string) => tagSet.add(t)));
-    return [...tagSet].sort((a, b) => a.localeCompare(b)).map(name => ({ id: name, name }));
-  }, [contactsData]);
 
   // Process data for charts
   const chartData = useMemo(() => {
@@ -187,7 +179,7 @@ export function useReportsData() {
   }, [messagesData, contactsData, previousMessagesData, previousContactsData, compareEnabled]);
 
   const contactsChartData = useMemo(() => {
-    if (!contactsData) return { byType: [], byTag: [], daily: [] };
+    if (!contactsData) return { byType: [], daily: [] };
     const typeCounts: Record<string, number> = {};
     contactsData.forEach(c => {
       if (!c.contact_type) return; // omite contatos sem tipo definido
@@ -196,14 +188,11 @@ export function useReportsData() {
       typeCounts[label] = (typeCounts[label] || 0) + 1;
     });
     const byType = Object.entries(typeCounts).map(([type, count]) => ({ name: type, value: count }));
-    const tagCounts: Record<string, number> = {};
-    contactsData.forEach(c => { (c.tags || []).forEach((tag: string) => { tagCounts[tag] = (tagCounts[tag] || 0) + 1; }); });
-    const byTag = Object.entries(tagCounts).map(([tag, count]) => ({ name: tag, contatos: count })).sort((a, b) => b.contatos - a.contatos).slice(0, 10);
     const daily = dayKeysOf(dateRange).map(key => ({
       date: dayKeyLabel(key),
       novos: contactsData.filter(c => appDayKey(c.created_at) === key).length,
     }));
-    return { byType, byTag, daily };
+    return { byType, daily };
   }, [contactsData, dateRange]);
 
   const stats = useMemo(() => {
@@ -269,9 +258,9 @@ export function useReportsData() {
   });
 
   return {
-    period, setPeriod, selectedAgent, setSelectedAgent, selectedTag, setSelectedTag,
+    period, setPeriod, selectedAgent, setSelectedAgent,
     compareEnabled, setCompareEnabled,
-    agents, tags, dateRange, previousDateRange,
+    agents, dateRange, previousDateRange,
     chartData, previousChartData, comparisonSummary, contactsChartData, stats,
     isLoading, isError, isIncomplete, error, getExportData,
   };

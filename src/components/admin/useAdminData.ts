@@ -1,8 +1,34 @@
 import { useState, useCallback, useRef } from 'react';
-import { invokeEdge, supabase } from '@/lib/supabaseHelpers';
+import { supabase, SUPABASE_URL } from '@/integrations/supabase/client';
+import { parseSupabaseStorageObjectUrl } from '@/lib/storage_object_reference';
+import { getLogger } from '@/lib/logger';
 import { toast } from 'sonner';
 import { describeAccessError, isAccessDeniedError } from '@/lib/rlsError';
 import type { AppRole } from '@/hooks/system/useUserRole';
+
+const log = getLogger('useAdminData');
+
+const AVATAR_BUCKET = 'avatars';
+// Mesma validade curta usada no AvatarUpload: o perfil guarda só o caminho e a
+// tela assina a URL sob demanda — o bucket `avatars` deixou de ser público.
+const AVATAR_SIGNED_URL_TTL_SECONDS = 300;
+
+function isStorageUrl(value: string): boolean {
+  return /^https?:\/\//i.test(value);
+}
+
+/** Devolve o caminho durável do objeto a partir de uma URL assinada (ou do próprio caminho).
+ * URL http que não é do bucket `avatars` devolve null: nunca gravamos URL http
+ * em profiles.avatar_url (o bucket é privado e a URL assinada expira). */
+function avatarObjectPath(value: string | null): string | null {
+  if (!value || !isStorageUrl(value)) return value;
+  try {
+    const origin = new URL(SUPABASE_URL).origin;
+    return parseSupabaseStorageObjectUrl(value, [AVATAR_BUCKET], [origin])?.path ?? null;
+  } catch {
+    return null;
+  }
+}
 
 export interface UserWithRole {
   id: string;
@@ -60,58 +86,22 @@ function roleChangeErrorMessage(error: { code?: string; message?: string }): str
   return 'Erro ao atualizar role';
 }
 
-// Campos que a criação de usuário (Edge `create-user`) valida no servidor.
-export type CreateUserField = 'name' | 'email' | 'password' | 'role';
+// Mensagens claras para os erros da RPC `set_voip_profile_credentials`
+// (PostgREST devolve o texto do RAISE EXCEPTION em `error.message`).
+const RAMAL_ERROR_MESSAGES: Record<string, string> = {
+  ramal_em_uso: 'Este ramal já está em uso por outro atendente.',
+  invalid_ramal: 'Ramal inválido: use letras, números e . _ @ + - (até 64 caracteres).',
+  invalid_sip_password: 'Informe a senha SIP (1 a 256 caracteres).',
+  not_authorized: 'Apenas administradores podem definir o ramal.',
+  profile_not_found: 'Usuário não encontrado para definir o ramal.',
+};
 
-export interface CreateUserFieldError {
-  /** Campo do formulário que originou o erro; `null` quando não dá para atribuir. */
-  field: CreateUserField | null;
-  /** Mensagem em pt-BR para mostrar ao lado do campo. */
-  message: string;
-}
-
-// A Edge devolve tudo num único texto (mensagem do GoTrue ou os erros do zod
-// unidos por '; '). Traduzimos esse texto para o CAMPO que o formulário destaca,
-// sem mostrar a mensagem crua do servidor.
-const CREATE_USER_ERROR_RULES: ReadonlyArray<{ field: CreateUserField; pattern: RegExp; message: string }> = [
-  // E-mail duplicado chega do GoTrue como "...already been registered".
-  { field: 'email', pattern: /already\s+(been\s+)?registered|already\s+exists|duplicate|j[áa]\s+cadastrad/i, message: 'Este e-mail já está cadastrado.' },
-  { field: 'email', pattern: /email/i, message: 'Informe um e-mail válido.' },
-  { field: 'password', pattern: /password|senha/i, message: 'A senha deve ter pelo menos 8 caracteres.' },
-  // O zod da Edge não devolve o NOME do campo inválido (a mensagem é
-  // "Invalid enum value. Expected ..."); o único enum escalar do corpo é `role`.
-  { field: 'role', pattern: /invalid enum value|role|papel/i, message: 'Papel de usuário inválido.' },
-  { field: 'name', pattern: /name|nome/i, message: 'Informe o nome do usuário.' },
-];
-
-export function mapCreateUserError(serverMessage: string | null | undefined): CreateUserFieldError {
-  const texto = typeof serverMessage === 'string' ? serverMessage : '';
-  for (const rule of CREATE_USER_ERROR_RULES) {
-    if (rule.pattern.test(texto)) return { field: rule.field, message: rule.message };
+function ramalErrorMessage(error: { message?: string }): string {
+  const message = error.message ?? '';
+  for (const [code, text] of Object.entries(RAMAL_ERROR_MESSAGES)) {
+    if (message.includes(code)) return text;
   }
-  return { field: null, message: 'Erro ao criar usuário' };
-}
-
-// Mensagem e status de um erro de `functions.invoke`. O supabase-js devolve
-// `FunctionsHttpError` com o `Response` cru em `error.context`; o corpo é
-// `{ error: '...' }` na Edge padrão, mas pode vir vazio/HTML de um proxy —
-// por isso a leitura do corpo é guardada.
-async function readEdgeError(error: unknown): Promise<{ status: number | null; message: string }> {
-  const context = (error as { context?: { status?: number; clone?: () => Response } } | null)?.context;
-  if (context && typeof context.status === 'number' && typeof context.clone === 'function') {
-    let message = '';
-    try {
-      const parsed: unknown = await context.clone().json();
-      if (parsed && typeof parsed === 'object' && typeof (parsed as { error?: unknown }).error === 'string') {
-        message = (parsed as { error: string }).error;
-      }
-    } catch {
-      // corpo não-JSON (HTML de proxy, resposta vazia): segue com o padrão.
-    }
-    return { status: context.status, message: message || 'Erro ao criar usuário' };
-  }
-  const message = error instanceof Error && error.message ? error.message : 'Erro ao criar usuário';
-  return { status: null, message };
+  return 'Erro ao salvar o ramal.';
 }
 
 export const accessLevelConfig: Record<string, { label: string; description: string }> = {
@@ -121,65 +111,141 @@ export const accessLevelConfig: Record<string, { label: string; description: str
   full: { label: 'Completo', description: 'Acesso total ao sistema' },
 };
 
-export function useAdminData(activeTab: 'users' | 'audit' | 'crm') {
+// Item 1 (paridade V2/V3): a Edge `create-user` valida a senha com
+// `z.string().min(8)` (supabase/functions/create-user/index.ts), mas o
+// formulário do painel exigia só 6. A régua vem daqui para a tela usar o
+// mesmo número e o mesmo texto.
+export const MIN_PASSWORD_LENGTH = 8;
+
+export const AUDIT_PAGE_SIZE = 50;
+
+/** 'YYYY-MM-DD' → instante UTC do início do dia no fuso do navegador. */
+export function inicioDoDiaLocal(data: string): string {
+  return new Date(`${data}T00:00:00`).toISOString();
+}
+
+/** 'YYYY-MM-DD' → instante UTC do último milissegundo do dia no fuso do navegador. */
+export function fimDoDiaLocal(data: string): string {
+  return new Date(`${data}T23:59:59.999`).toISOString();
+}
+
+// Filtros da aba de auditoria (item 1): intervalo de datas inclusivo (dias
+// inteiros, no fuso do navegador) e paginação 1-based. Quem chama (AdminView)
+// monta o estado e passa adiante; o hook só monta a consulta.
+export interface AuditLogFilter {
+  /** Data inicial inclusiva, 'YYYY-MM-DD'. */
+  from?: string;
+  /** Data final inclusiva, 'YYYY-MM-DD'. */
+  to?: string;
+  /** Página 1-based. Padrão 1. */
+  page?: number;
+  /** Tamanho da página. Padrão AUDIT_PAGE_SIZE. */
+  pageSize?: number;
+}
+
+export function useAdminData(activeTab: 'users' | 'audit' | 'crm', auditFilter?: AuditLogFilter) {
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [auditTotal, setAuditTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  // Erro nunca pode virar lista vazia silenciosa (critério 1): o estado fica
+  // na tela e o toast avisa quem operou.
+  const [error, setError] = useState<string | null>(null);
   // Reentrância de desativação/reativação por usuário: evita que um duplo clique
   // no Switch dispare duas gravações concorrentes do mesmo perfil.
   const togglingRef = useRef<Set<string>>(new Set());
   // Erro por campo da última tentativa de criação (limpo a cada nova tentativa).
   const [createUserError, setCreateUserError] = useState<CreateUserFieldError | null>(null);
 
+  // Dependências primitivas: evita refetch a cada render quando o chamador
+  // passa um objeto de filtro inline.
+  const auditFrom = auditFilter?.from;
+  const auditTo = auditFilter?.to;
+  const auditPage = Math.max(1, auditFilter?.page ?? 1);
+  const auditPageSize = auditFilter?.pageSize ?? AUDIT_PAGE_SIZE;
+
   const fetchData = useCallback(async () => {
     setLoading(true);
+    setError(null);
 
     if (activeTab === 'users') {
-      const { data: profiles } = await supabase
+      const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('id, user_id, name, email, avatar_url, nickname, signature, job_title, department, phone, access_level, max_chats, can_download, is_active, created_at')
         .order('name');
 
-      const { data: roles } = await supabase
+      if (profilesError) {
+        setError('Não foi possível carregar os usuários.');
+        toast.error('Não foi possível carregar os usuários. Tente novamente.');
+        setLoading(false);
+        return;
+      }
+
+      const { data: roles, error: rolesError } = await supabase
         .from('user_roles')
         .select('user_id, role');
 
-      if (profiles && roles) {
-        const usersWithRoles = profiles.map(profile => {
-          const userRole = roles.find(r => r.user_id === profile.user_id);
-          return {
-            ...profile,
-            role: (userRole?.role || 'agent') as AppRole,
-          };
-        });
-        setUsers(usersWithRoles);
+      if (rolesError) {
+        setError('Não foi possível carregar os papéis dos usuários.');
+        toast.error('Não foi possível carregar os papéis dos usuários. Tente novamente.');
+        setLoading(false);
+        return;
       }
+
+      const usersWithRoles = (profiles ?? []).map(profile => {
+        const userRole = (roles ?? []).find(r => r.user_id === profile.user_id);
+        return {
+          ...profile,
+          role: (userRole?.role || 'agent') as AppRole,
+        };
+      });
+      setUsers(usersWithRoles);
     } else if (activeTab === 'audit') {
-      const { data: logs } = await supabase
+      const start = (auditPage - 1) * auditPageSize;
+
+      let query = supabase
         .from('audit_logs')
-        .select('id, user_id, action, entity_type, details, created_at')
+        .select('id, user_id, action, entity_type, details, created_at', { count: 'exact' })
         .order('created_at', { ascending: false })
-        .limit(100);
+        .range(start, start + auditPageSize - 1);
 
-      if (logs) {
-        const userIds = [...new Set(logs.map(l => l.user_id).filter((id): id is string => id !== null))];
-        const { data: profiles } = userIds.length > 0
-          ? await supabase
-            .from('profiles')
-            .select('user_id, name, email')
-            .in('user_id', userIds)
-          : { data: [] };
+      if (auditFrom) query = query.gte('created_at', inicioDoDiaLocal(auditFrom));
+      if (auditTo) query = query.lte('created_at', fimDoDiaLocal(auditTo));
 
-        const logsWithUsers: AuditLog[] = logs.map(log => ({
-          ...log,
-          user: profiles?.find(p => p.user_id === log.user_id) || null,
-        }));
-        setAuditLogs(logsWithUsers);
+      const { data: logs, error: logsError, count } = await query;
+
+      if (logsError) {
+        setError('Não foi possível carregar a auditoria.');
+        toast.error('Não foi possível carregar a auditoria. Tente novamente.');
+        setLoading(false);
+        return;
       }
+
+      const rows = logs ?? [];
+      const userIds = [...new Set(rows.map(l => l.user_id).filter((id): id is string => id !== null))];
+      const { data: profiles, error: profilesError } = userIds.length > 0
+        ? await supabase
+          .from('profiles')
+          .select('user_id, name, email')
+          .in('user_id', userIds)
+        : { data: [] as { user_id: string; name: string; email: string | null }[], error: null };
+
+      if (profilesError) {
+        // A auditoria carregou; só os nomes dos autores falharam — mostra os
+        // registros sem nome em vez de esconder a lista inteira.
+        toast.error('Não foi possível carregar os nomes dos autores.');
+      }
+
+      const logsWithUsers: AuditLog[] = rows.map(log => ({
+        ...log,
+        user: profiles?.find(p => p.user_id === log.user_id) || null,
+      }));
+      setAuditLogs(logsWithUsers);
+      setAuditTotal(count ?? rows.length);
     }
 
     setLoading(false);
-  }, [activeTab]);
+  }, [activeTab, auditFrom, auditTo, auditPage, auditPageSize]);
 
   // R2-AUTH-008 (item 74): a troca de papel vai pela RPC atômica
   // `admin_set_role` (SECURITY DEFINER). O caminho delete+insert era
@@ -231,7 +297,7 @@ export function useAdminData(activeTab: 'users' | 'audit' | 'crm') {
     editingUser: UserWithRole,
     avatarFile: File | null,
   ): Promise<boolean> => {
-    let avatarUrl = editingUser.avatar_url;
+    let avatarUrl = avatarObjectPath(editingUser.avatar_url);
     if (avatarFile) {
       const fileExt = avatarFile.name.split('.').pop();
       const filePath = `${crypto.randomUUID()}.${fileExt}`;
@@ -242,8 +308,8 @@ export function useAdminData(activeTab: 'users' | 'audit' | 'crm') {
         toast.error('Erro ao enviar foto');
         return false;
       }
-      const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(filePath);
-      avatarUrl = urlData.publicUrl;
+      // Guarda o caminho do arquivo (não a URL assinada, que expira)
+      avatarUrl = filePath;
     }
 
     const { error } = await supabase
@@ -271,6 +337,28 @@ export function useAdminData(activeTab: 'users' | 'audit' | 'crm') {
     return true;
   }, [fetchData]);
 
+  // PE-104/105: provisiona a credencial SIP do atendente pela RPC atômica
+  // `set_voip_profile_credentials` (SECURITY DEFINER, admin/supervisor). A senha vai
+  // direto para o Vault — nunca fica em coluna comum nem volta para a tela.
+  const handleSaveRamal = useCallback(async (
+    profileId: string,
+    ramal: string,
+    sipPassword: string,
+  ): Promise<boolean> => {
+    const { error } = await supabase.rpc('set_voip_profile_credentials', {
+      p_profile_id: profileId,
+      p_ramal: ramal,
+      p_sip_password: sipPassword,
+    });
+    if (error) {
+      toast.error(ramalErrorMessage(error));
+      return false;
+    }
+    toast.success('Ramal salvo.');
+    fetchData();
+    return true;
+  }, [fetchData]);
+
   interface CreateUserPayload {
     name: string;
     nickname?: string;
@@ -291,8 +379,10 @@ export function useAdminData(activeTab: 'users' | 'audit' | 'crm') {
       toast.error('Preencha todos os campos obrigatórios');
       return false;
     }
-    if (payload.password.length < 6) {
-      toast.error('A senha deve ter pelo menos 6 caracteres');
+    // Mesma régua da Edge `create-user` (z.string().min(8)): o frontend não
+    // pode aceitar senha que o backend vai recusar.
+    if (payload.password.length < MIN_PASSWORD_LENGTH) {
+      toast.error(`A senha deve ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres`);
       return false;
     }
 
@@ -307,8 +397,8 @@ export function useAdminData(activeTab: 'users' | 'audit' | 'crm') {
         toast.error('Erro ao fazer upload da foto');
         return false;
       }
-      const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(filePath);
-      avatarUrl = urlData.publicUrl;
+      // Guarda o caminho do arquivo (não a URL assinada, que expira)
+      avatarUrl = filePath;
     }
 
     const body = {
@@ -356,11 +446,14 @@ export function useAdminData(activeTab: 'users' | 'audit' | 'crm') {
   return {
     users,
     auditLogs,
+    auditTotal,
     loading,
+    error,
     fetchData,
     handleRoleChange,
     handleToggleActive,
     handleSaveUser,
+    handleSaveRamal,
     handleCreateUser,
     createUserError,
   };

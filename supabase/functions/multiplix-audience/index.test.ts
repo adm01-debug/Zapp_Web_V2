@@ -690,6 +690,11 @@ Deno.test('R2-DB-003 handler: resolve redige a linha fora do escopo na resposta 
       }
       return json(null);
     }
+    // R2-AUTH-004: `requireAuth` lê `profiles.is_active` por `user_id` (igualdade
+    // exata) antes de liberar o handler; o stub responde "ativo" no caminho feliz.
+    if (url.includes('/rest/v1/profiles') && url.includes('select=is_active')) {
+      return json({ is_active: true });
+    }
     return new Response('rota nao stubada', { status: 404 });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   }) as any;

@@ -220,6 +220,12 @@ function withFetch(rotas: Rotas) {
       return Promise.resolve(json({}, 201));
     }
 
+    // R2-AUTH-004: `requireAuth` lê `profiles.is_active` por `user_id` (igualdade
+    // exata) antes de liberar o handler; o stub responde "ativo" no caminho feliz.
+    if (url.includes("/rest/v1/profiles") && url.includes("select=is_active")) {
+      return Promise.resolve(json({ is_active: true }));
+    }
+
     // `resolveProfileId` do registrador (maybeSingle: um objeto ou nada).
     if (url.includes("/rest/v1/profiles")) {
       return Promise.resolve(json({ id: "perfil-sintetico" }));

@@ -2,7 +2,11 @@
 
 Formato: `- AAAA-MM-DD · <etapa> · <evidência>`
 
+<<<<<<< ours
 Este registro lista o que está **presente e verificável nesta cópia** (ponta de dia de 12/10/2026).
+=======
+Este registro lista o que está **presente e verificável nesta cópia** (ponta de dia de 08/10/2026).
+>>>>>>> theirs
 Cada caminho citado é conferido por
 `src/__tests__/multiplix-changelog-registry.test.ts` — entrada que aponte para artefato
 inexistente reprova o contrato. As entradas registram **existência de artefato**; elas não afirmam
@@ -14,7 +18,11 @@ aberta, e publicação de documento não fecha etapa.
 
 - 2026-10-08 · Grafo do repositório regenerado no HEAD (E001 · F99) · receita `PYTHONHASHSEED=0 graphify update . --force` (sem custo de API); `graphify-out/GRAPH_REPORT.md` registra o commit de HEAD na seção "Graph Freshness". `graphify-out/` é gitignored (`.gitignore`), então o grafo é artefato LOCAL, regenerável a qualquer momento e **não versionado** — a ausência dele num checkout não prova código morto: o próprio manifesto de evidência do grafo declara o limite da extração AST em `docs/reconciliation/evidence/graphify_evidence_manifest.json` ("AST extraction does not establish dynamic runtime reachability or dead code").
 
+<<<<<<< ours
 - 2026-10-08 · Superfície do módulo no app (tela com o composer em regiões, e monitor) · `src/components/multiplix/MultiplixView.tsx`, `src/components/multiplix/MultiplixMonitor.tsx`. O diálogo `MultiplixComposerDialog` deixou de existir (TL-006: o composer virou região da própria `MultiplixView`).
+=======
+- 2026-10-08 · Superfície do módulo no app (tela com composição inline e monitor) · `src/components/multiplix/MultiplixView.tsx`, `src/components/multiplix/MultiplixMonitor.tsx`.
+>>>>>>> theirs
 
 - 2026-10-08 · Estado e elegibilidade no app · hooks de integração `src/hooks/integrations/useMultiplixDispatches.ts` e `src/hooks/integrations/useMultiplixAudience.ts`; regra de elegibilidade compartilhada em `src/lib/multiplix-eligibility.ts`.
 

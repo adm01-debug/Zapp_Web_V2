@@ -31,8 +31,10 @@ const CHANGELOG_MODULO = 'docs/multiplix/CHANGELOG_MULTIPLIX.md';
 const INDICE = 'docs/README.md';
 const CHANGELOG_RAIZ = 'CHANGELOG.md';
 const MANIFESTO_GRAFO = 'docs/reconciliation/evidence/graphify_evidence_manifest.json';
+const TESTE_REGISTRO = 'src/__tests__/multiplix-changelog-registry.test.ts';
 
 const ler = (rel: string) => readFileSync(join(RAIZ, rel), 'utf8');
+const lerBytes = (rel: string) => readFileSync(join(RAIZ, rel));
 const existe = (rel: string) => existsSync(join(RAIZ, rel));
 
 /** Caminhos de arquivo citados em `code spans` (aceita sufixo `:linha`). */
@@ -84,7 +86,34 @@ describe('registro do changelog do módulo Multiplix (F99/TL-051)', () => {
   });
 
   it('o CHANGELOG.md da raiz aponta para o changelog do módulo', () => {
-    expect(ler(CHANGELOG_RAIZ)).toContain(CHANGELOG_MODULO);
+    const linhasMultiplix = ler(CHANGELOG_RAIZ)
+      .split('\n')
+      .filter((linha) => linha.includes('Multiplix') && linha.includes(CHANGELOG_MODULO));
+
+    expect(linhasMultiplix).toHaveLength(1);
+    expect(linhasMultiplix[0]).toMatch(/^- Multiplix/);
+    expect(linhasMultiplix[0]).not.toMatch(/^\+-/);
+  });
+
+  it('o registro do módulo aponta a composição do disparo para um arquivo existente', () => {
+    // O inventário completo tem numeração fixa nas seções 35..48; o contrato
+    // específico do Multiplix pertence ao changelog do módulo.
+    const linhaComposer = ler(CHANGELOG_MODULO)
+      .split('\n')
+      .find((linha) => linha.includes('composição inline'));
+
+    expect(linhaComposer, 'entrada da composição inline ausente no changelog do módulo').toBeDefined();
+    expect(linhaComposer!).toContain('MultiplixView.tsx');
+    expect(linhaComposer!).not.toContain('MultiplixComposerDialog.tsx');
+    expect(existe('src/components/multiplix/MultiplixView.tsx')).toBe(true);
+  });
+
+  it('os arquivos novos terminam com newline final', () => {
+    for (const rel of [CHANGELOG_MODULO, TESTE_REGISTRO]) {
+      const bytes = lerBytes(rel);
+      expect(bytes.length, `${rel} vazio`).toBeGreaterThan(0);
+      expect(bytes[bytes.length - 1], `${rel} sem newline final`).toBe(10);
+    }
   });
 
   it('o grafo (E001) é registrado como artefato local regenerável, não como prova de código morto', () => {

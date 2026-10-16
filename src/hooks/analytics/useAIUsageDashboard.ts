@@ -82,7 +82,6 @@ export const FUNCTION_COLORS: Record<string, string> = {
   'ai-enhance-message': '#8b5cf6',
   'ai-conversation-analysis': '#f59e0b',
   'ai-conversation-summary': '#10b981',
-  'ai-auto-tag': '#ef4444',
   'chatbot-l1': '#06b6d4',
 };
 
@@ -91,7 +90,6 @@ export const FUNCTION_LABELS: Record<string, string> = {
   'ai-enhance-message': 'Reescrita de Mensagem',
   'ai-conversation-analysis': 'Análise de Conversa',
   'ai-conversation-summary': 'Resumo de Conversa',
-  'ai-auto-tag': 'Auto-Tag',
   'chatbot-l1': 'Chatbot L1',
 };
 

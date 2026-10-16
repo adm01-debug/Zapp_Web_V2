@@ -8,7 +8,7 @@ import {
   Link2, Plug, Inbox, PhoneCall, Activity, Calendar,
   Phone, Shield, ShieldCheck, UserCog, Palette, BookOpen, Lock,
   ScrollText, Mic, Compass, Cpu, BarChartHorizontal, BrainCircuit,
-  Webhook, HardDrive, FlaskConical, ListChecks, Send,
+  Webhook, HardDrive, FlaskConical, ListChecks, Send, SearchCheck,
 } from 'lucide-react';
 
 export interface NavItem {
@@ -123,7 +123,15 @@ export class NavigationService {
           { id: 'agents', icon: Phone, label: 'Equipe', roles: STAFF_ROLES },
           { id: 'security', icon: Shield, label: 'Segurança', roles: STAFF_ROLES },
           { id: 'privacy', icon: ShieldCheck, label: 'LGPD', roles: STAFF_ROLES },
+          // Ferramentas do supervisor (Fila, Copiloto, Sala de Crise, Playbooks e
+          // Treinamento) ficavam presas dentro de `admin`, que e ADMIN_ONLY — o
+          // publico a que se destinam nao alcancava. `supervisao` e STAFF
+          // (supervisor e admin); `admin` fica com Usuarios e Auditoria.
+          { id: 'supervisao', icon: ShieldCheck, label: 'Supervisão', roles: STAFF_ROLES },
           { id: 'admin', icon: UserCog, label: 'Admin', roles: ADMIN_ONLY },
+          // HZ1-06: números da busca global. A RPC que alimenta a tela nega quem
+          // não é admin/supervisor — o item usa o mesmo filtro (STAFF_ROLES).
+          { id: 'search-insights', icon: SearchCheck, label: 'Insights de Busca', roles: STAFF_ROLES },
           { id: 'themes', icon: Palette, label: 'Skins', roles: STAFF_ROLES },
           { id: 'docs', icon: BookOpen, label: 'Documentação', roles: STAFF_ROLES },
           { id: 'settings', icon: Settings, label: 'Configurações' }, // sem roles: SettingsView.tsx já filtra as 12 abas de sistema por isStaff; agente precisa das 4 pessoais

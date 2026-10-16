@@ -10,8 +10,7 @@
 // Run with: deno test --config scripts/ci/deno.json --frozen --allow-env supabase/functions/get-sip-password/index.test.ts
 
 import { assertEquals } from "https://deno.land/std@0.224.0/testing/asserts.ts";
-import { handleGetSipPassword, provisionamentoSip } from "./index.ts";
-import { resetRateLimitServiceClient } from "../_shared/validation.ts";
+import { provisionamentoSip, handleGetSipPassword, type GetSipCallerClient } from "./index.ts";
 
 const semEnv = () => undefined;
 const comEnv = (vars: Record<string, string>) => (key: string) => vars[key];
@@ -40,50 +39,58 @@ Deno.test("T15: wsPort sai como número (o front tipa number)", () => {
   assertEquals(typeof provisionamentoSip(comEnv({ SIP_WS_PORT: "5066" })).wsPort, "number");
 });
 
-// O limite vive FORA do isolate (RPC service_role `consume_rate_limit`). Prova:
-// com o decisor persistente negando, a função responde 429 + Retry-After ANTES de
-// ler o Bearer — e o RPC foi de fato consultado.
-Deno.test("rate limit persistente: a função consulta o RPC e responde 429 com Retry-After", async () => {
-  const savedUrl = Deno.env.get("SUPABASE_URL");
-  const savedSrv = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  Deno.env.set("SUPABASE_URL", "https://stub.supabase.co");
-  Deno.env.set("SUPABASE_SERVICE_ROLE_KEY", "stub-service-key");
-  resetRateLimitServiceClient();
+// ── Rate limit do handler: persistente, chave por IP antes e por USUARIO depois ──
 
-  const originalFetch = globalThis.fetch;
-  const seen: string[] = [];
-  globalThis.fetch = ((input: RequestInfo | URL) => {
-    const url = typeof input === "string"
-      ? input
-      : input instanceof URL
-      ? input.toString()
-      : (input as Request).url;
-    seen.push(url);
-    if (url.includes("/rest/v1/rpc/consume_rate_limit")) {
-      return Promise.resolve(new Response(JSON.stringify([{ allowed: false, remaining: 0 }]), {
-        status: 200,
-        headers: { "content-type": "application/json" },
-      }));
-    }
-    return Promise.resolve(new Response("nao stubado", { status: 599 }));
-  }) as typeof fetch;
+const SIP_URL = "https://example.supabase.co/functions/v1/get-sip-password";
+const USER = "00000000-0000-4000-8000-000000000001";
 
-  try {
-    const req = new Request("https://stub.supabase.co/functions/v1/get-sip-password", {
-      headers: { Authorization: "Bearer token-de-teste" },
-    });
-    const res = await handleGetSipPassword(req);
-    assertEquals(res.status, 429);
-    assertEquals(res.headers.get("Retry-After"), "60");
-    if (!seen.some((u) => u.includes("/rest/v1/rpc/consume_rate_limit"))) {
-      throw new Error(`deveria consultar o limiter persistente: ${seen.join(",")}`);
-    }
-  } finally {
-    globalThis.fetch = originalFetch;
-    resetRateLimitServiceClient();
-    if (savedUrl === undefined) Deno.env.delete("SUPABASE_URL");
-    else Deno.env.set("SUPABASE_URL", savedUrl);
-    if (savedSrv === undefined) Deno.env.delete("SUPABASE_SERVICE_ROLE_KEY");
-    else Deno.env.set("SUPABASE_SERVICE_ROLE_KEY", savedSrv);
-  }
+function postSip(headers: Record<string, string> = {}): Request {
+  return new Request(SIP_URL, { method: "POST", headers: { ...headers, "content-type": "application/json" } });
+}
+
+/** Client do chamador injetado: claims válidos + profile ativo, sem tocar rede. */
+interface FakeChain {
+  select: (columns: string) => FakeChain;
+  eq: (column: string, value: string) => FakeChain;
+  maybeSingle: () => Promise<{ data: { id: string; is_active: boolean } | null; error: null }>;
+}
+
+function fakeClient(sub: string, profile: { id: string; is_active: boolean } | null): GetSipCallerClient {
+  const chain: FakeChain = {
+    select: () => chain,
+    eq: () => chain,
+    maybeSingle: () => Promise.resolve({ data: profile, error: null }),
+  };
+  return {
+    auth: { getClaims: () => Promise.resolve({ data: { claims: { sub } }, error: null }) },
+    from: () => chain,
+  } as unknown as GetSipCallerClient;
+}
+
+Deno.test("rate limit (IP) nega antes de autenticar -> 429 sem entregar a senha", async () => {
+  const keys: string[] = [];
+  const res = await handleGetSipPassword(postSip({ "x-forwarded-for": "9.9.9.9" }), {
+    enforceRateLimit: (key) => {
+      keys.push(key);
+      return Promise.resolve({ allowed: false });
+    },
+  });
+
+  assertEquals(res.status, 429);
+  assertEquals(keys, ["sip-pwd:9.9.9.9"]);
+  assertEquals((await res.text()).includes("SIP_PASSWORD"), false);
+});
+
+Deno.test("rate limit por USUARIO pos-auth: conta comprometida trocando de IP -> 429", async () => {
+  const keys: string[] = [];
+  const res = await handleGetSipPassword(postSip({ "x-forwarded-for": "9.9.9.9", Authorization: "Bearer x.y.z" }), {
+    client: fakeClient(USER, { id: "p1", is_active: true }),
+    enforceRateLimit: (key) => {
+      keys.push(key);
+      return Promise.resolve({ allowed: !key.includes(":user:") });
+    },
+  });
+
+  assertEquals(res.status, 429);
+  assertEquals(keys, ["sip-pwd:9.9.9.9", `sip-pwd:user:${USER}`]);
 });

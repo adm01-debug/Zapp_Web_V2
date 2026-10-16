@@ -29,7 +29,6 @@ const h = vi.hoisted(() => {
     id: `c${i}`,
     created_at: '2026-10-02T12:00:00.000Z',
     assigned_to: 'a1',
-    tags: [],
     contact_type: 'lead',
   }));
 
@@ -90,6 +89,12 @@ describe('useReportsData — totais e ausência de dados (R2-MOD-018/019)', () =
     expect(result.current.stats.totalContacts).toBe(h.totalContacts);
     expect(result.current.isIncomplete).toBe(false);
     expect(result.current.isError).toBe(false);
+    // O módulo de etiquetas saiu dos relatórios: o hook não expõe lista de tags,
+    // filtro selecionado nem a série por tag nos gráficos de contatos.
+    expect(result.current).not.toHaveProperty('tags');
+    expect(result.current).not.toHaveProperty('selectedTag');
+    expect(result.current).not.toHaveProperty('setSelectedTag');
+    expect(result.current.contactsChartData).not.toHaveProperty('byTag');
     // Orçamento POR TESTE com causa medida (não é retry nem asserção afrouxada: o
     // `waitFor` e os valores esperados continuam os mesmos). Este teste deixa o hook
     // fazer o trabalho REAL de agrupamento: `chartData` roda `dayKeysOf(30 dias)` ×

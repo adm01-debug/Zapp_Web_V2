@@ -18,9 +18,12 @@
  *     ações de conversa que não entregam conteúdo mas mutam o estado remoto de
  *     um chat (mark-read/unread, archive-chat, send-reaction): o escopo é o
  *     contato da conversa, resolvido por `number` ou pelo JID do alvo.
- *   - `read`    → qualquer usuário autenticado (comportamento atual preservado;
- *     a leitura sensível de diagnóstico é tratada separadamente em
- *     `webhook-diagnostic`). Somente as ações listadas em READ_ACTIONS.
+ *   - `read`    → qualquer usuário autenticado, mas SÓ o que não expõe dado
+ *     fora da visibilidade do agente nem configuração/credencial do provedor:
+ *     estado da instância (`status`/`instance-info`/`list-instances`, com o
+ *     corpo limpo de token/apikey/hash — R2EXT-AGENDA), verificação de número,
+ *     leitura de grupos. A leitura sensível de diagnóstico é tratada
+ *     separadamente em `webhook-diagnostic`. Somente o que está em READ_ACTIONS.
  *   - Qualquer ação fora dos três conjuntos cai em `control` — ação nova no
  *     handler nasce fechada e só abre quando classificada explicitamente
  *     aqui (o teste de exaustividade em __tests__/evolution-control-authz.test.ts
@@ -46,11 +49,12 @@ export const CONTROL_ACTIONS: ReadonlySet<string> = new Set([
   'create-instance',
   'create-connection',
   'connect',
+  // R2-API-016: o pareamento por CÓDIGO (número) também inicia login na
+  // instância — mesmo risco do 'connect' (agent não pode parear aparelho).
+  'pairing-code',
   'delete-instance',
   'restart-instance',
   'disconnect',
-  'set-presence',
-  'set-settings',
   'set-webhook',
   // perfil da conta
   'update-profile-name',
@@ -68,12 +72,9 @@ export const CONTROL_ACTIONS: ReadonlySet<string> = new Set([
   'accept-invite',
   'leave-group',
   'update-group-picture',
-  'toggle-ephemeral',
-  // etiquetas / templates / bloqueio
+  // etiquetas / bloqueio
   'handle-label',
   'update-block-status',
-  'create-template',
-  'delete-template',
   // mensagens — editar/apagar conteúdo (inclusive "para todos") destrói ou
   // reescreve a trilha de mensagens: restrito a admin/supervisor.
   'delete-message',
@@ -91,6 +92,31 @@ export const CONTROL_ACTIONS: ReadonlySet<string> = new Set([
   'set-evoai', 'delete-evoai',
   'set-n8n', 'delete-n8n',
   'set-kafka', 'set-nats', 'set-pusher',
+  // ─── LEITURAS de integração/configuração que DEVOLVEM credenciais da
+  // instância (no flavor v2 a resposta carrega apiKey/secret/password
+  // configurados) e não têm NENHUMA tela de atendente como consumidora —
+  // prova por `git grep` em src/ (a string da ação só aparece no teste de
+  // exaustividade). Antes eram 'read' (qualquer autenticado as disparava).
+  'get-chatwoot', 'get-typebot', 'typebot-sessions',
+  'get-openai', 'get-dify', 'get-flowise', 'get-evolution-bot',
+  'get-rabbitmq', 'get-sqs', 'get-proxy', 'get-evoai',
+  'get-n8n', 'get-kafka', 'get-nats', 'get-pusher',
+  // ─── Consultas sem tela consumidora (histórico, catálogo, mídia, contatos,
+  // templates): restringem a superfície de leitura a admin/supervisor.
+  'find-chats', 'find-messages', 'find-templates', 'find-contacts',
+  'get-catalog', 'get-collections', 'get-media-base64',
+  // check-numbers sonda números na Meta (sem tela consumidora) e é gatilho de
+  // bloqueio da Meta — não volta a 'read'.
+  'check-numbers',
+  // group-participants: declarado só no hook useEvolutionGroups, sem tela que o
+  // consuma.
+  'group-participants',
+  // reconcile-instances: compara o que existe no provedor com o que está em
+  // whatsapp_connections e devolve as duas listas divergentes (só nomes, nunca
+  // tokens). É leitura, mas enxerga a topologia de TODAS as conexões: fica em
+  // CONTROL (admin/supervisor), mais restrita que 'list-instances', que é
+  // 'read'. NUNCA importa: nenhuma linha é criada.
+  'reconcile-instances',
 ]);
 
 /**
@@ -112,73 +138,48 @@ export const SEND_ACTIONS: ReadonlySet<string> = new Set([
   'send-poll',
   'send-list',
   'send-buttons',
-  'send-template',
   'send-ptv',
   'send-status',
   'send-reaction',
-  'offer-call',
   'send-chat-presence',
   // mutações de estado da conversa no provedor (não entregam conteúdo, mas
   // seguem o mesmo escopo: o contato da conversa)
   'mark-read',
-  'mark-unread',
   'archive-chat',
 ]);
 
 /**
  * Leituras: GETs e consultas (POST de find/check) que não alteram estado no
- * provedor. Continuam liberadas para qualquer usuário autenticado — inclusive
- * `status` (sonda o estado da instância na GO e espelha em
- * whatsapp_connections; o valor gravado vem da resposta do provedor, não do
- * chamador) e `list-instances` (única ação realmente global do handler).
+ * provedor E que têm consumidor real no front (`git grep` em src/). Continuam
+ * liberadas para qualquer usuário autenticado — inclusive `status` (sonda o
+ * estado da instância na GO e espelha em whatsapp_connections; o valor gravado
+ * vem da resposta do provedor, não do chamador) e `get-settings`/`get-webhook`
+ * (lidos pela tela de conexão). As leituras sem tela consumidora foram movidas
+ * para CONTROL_ACTIONS (get-* de integração, find-chats/messages/templates,
+ * find-contacts, get-catalog/collections, get-media-base64, check-numbers,
+ * group-participants).
  */
 export const READ_ACTIONS: ReadonlySet<string> = new Set([
-  // instância
+  // instância (triagem/higienizadas no handler)
   'list-instances',
   'status',
   'instance-info',
   // settings / webhook
   'get-settings',
   'get-webhook',
-  // chat / mensagens (consultas)
-  'find-chats',
-  'find-messages',
+  // chat / mensagens (consultas) — consumido por useWhatsAppStatus
   'find-status-messages',
-  'find-contacts',
-  'check-numbers',
-  'get-media-base64',
   // grupos (leitura)
   'list-groups',
   'group-info',
-  'group-participants',
   'group-invite-code',
   'invite-info',
   // perfil
   'fetch-profile',
   'fetch-profile-picture',
   'fetch-business-profile',
-  // labels / templates
+  // labels
   'find-labels',
-  'find-templates',
-  // integrações (leitura)
-  'get-chatwoot',
-  'get-typebot',
-  'typebot-sessions',
-  'get-openai',
-  'get-dify',
-  'get-flowise',
-  'get-evolution-bot',
-  'get-rabbitmq',
-  'get-sqs',
-  'get-proxy',
-  'get-evoai',
-  'get-n8n',
-  'get-kafka',
-  'get-nats',
-  'get-pusher',
-  // catálogo de loja (consultas)
-  'get-catalog',
-  'get-collections',
 ]);
 
 /**

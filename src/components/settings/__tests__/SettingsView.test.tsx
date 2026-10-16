@@ -42,7 +42,6 @@ vi.mock('@/components/nps/NPSDashboard', () => ({ NPSDashboard: () => <div data-
 vi.mock('@/components/settings/FollowUpSequences', () => ({ FollowUpSequences: () => <div data-testid="stub-followup" /> }));
 vi.mock('@/components/inbox/QuickRepliesManager', () => ({ QuickRepliesManager: () => <div data-testid="stub-quick-replies" /> }));
 vi.mock('@/components/inbox/stickers/StickerManager', () => ({ StickerManager: () => <div data-testid="stub-sticker-manager" /> }));
-vi.mock('@/components/settings/AIAutoTagsConfig', () => ({ AIAutoTagsConfig: () => <div data-testid="stub-ai-tags" /> }));
 vi.mock('@/components/settings/AIProvidersManager', () => ({ AIProvidersManager: () => <div data-testid="stub-ai-providers" /> }));
 vi.mock('@/components/settings/CSATAutoConfig', () => ({ CSATAutoConfig: () => <div data-testid="stub-csat" /> }));
 vi.mock('@/components/settings/ChatbotL1Config', () => ({ ChatbotL1Config: () => <div data-testid="stub-chatbot-l1" /> }));
@@ -63,11 +62,11 @@ vi.mock('@/components/settings/AppearanceSettings', () => ({ AppearanceSettings:
 
 import { SettingsView } from '../SettingsView';
 
-// As 12 abas restritas a staff, com o testid que o painel real (stubado
+// As 11 abas restritas a staff, com o testid que o painel real (stubado
 // acima) deixa no DOM quando o TabsContent que o envolve monta.
 const STAFF_ONLY_TEST_IDS = [
   'stub-schedule', 'stub-messages', 'stub-automation', 'stub-global',
-  'stub-followup', 'stub-media', 'stub-nps', 'stub-ai-tags', 'stub-csat',
+  'stub-followup', 'stub-media', 'stub-nps', 'stub-csat',
   'stub-chatbot-l1', 'stub-routing', 'stub-ai-providers',
 ];
 
@@ -77,7 +76,7 @@ describe('SettingsView — guard das abas staff-only (RBAC)', () => {
     roleState.isSupervisor = false;
   });
 
-  it('agente: nenhum dos 12 paineis staff-only monta no DOM', () => {
+  it('agente: nenhum dos 11 paineis staff-only monta no DOM', () => {
     render(<SettingsView />);
     for (const testId of STAFF_ONLY_TEST_IDS) {
       expect(screen.queryByTestId(testId)).not.toBeInTheDocument();
@@ -87,7 +86,7 @@ describe('SettingsView — guard das abas staff-only (RBAC)', () => {
     expect(screen.getByTestId('stub-appearance')).toBeInTheDocument();
   });
 
-  it('agente: nenhuma das 12 abas staff-only aparece na barra', () => {
+  it('agente: nenhuma das 11 abas staff-only aparece na barra', () => {
     render(<SettingsView />);
     const tabs = screen.getAllByRole('tab').map((el) => el.textContent);
     expect(tabs).toEqual(['Notificações', 'Aparência', 'Atalhos', 'Sons']);
@@ -133,11 +132,11 @@ describe('SettingsView — agrupamento em dois niveis', () => {
   });
 
   const GRUPOS = ['Atendimento', 'Inteligência artificial', 'Qualidade', 'Aparência', 'Sistema'];
-  // As 16 abas que o staff ve (12 restritas + 4 pessoais). Se uma ficar fora de
+  // As 15 abas que o staff ve (11 restritas + 4 pessoais). Se uma ficar fora de
   // qualquer grupo, o teste abaixo nao a encontra ao percorrer os grupos.
   const TODAS_ABAS_STAFF = [
     'Horário', 'Mensagens', 'Automação', 'Roteamento', 'Follow-up',
-    'Tags IA', 'Chatbot L1', 'Gestão IA',
+    'Chatbot L1', 'Gestão IA',
     'CSAT', 'NPS',
     'Global', 'Mídia',
     'Notificações', 'Aparência', 'Atalhos', 'Sons',
@@ -151,7 +150,7 @@ describe('SettingsView — agrupamento em dois niveis', () => {
     }
   });
 
-  it('staff: percorrer os grupos expoe as 16 abas, sem aba orfa e sem duplicata', () => {
+  it('staff: percorrer os grupos expoe as 15 abas, sem aba orfa e sem duplicata', () => {
     roleState.isAdmin = true;
     render(<SettingsView />);
     const vistas: string[] = [];
@@ -162,6 +161,22 @@ describe('SettingsView — agrupamento em dois niveis', () => {
     expect(vistas).toHaveLength(TODAS_ABAS_STAFF.length); // nenhuma aba removida
     expect(new Set(vistas).size).toBe(vistas.length);     // nenhuma aba duplicada
     expect([...vistas].sort()).toEqual([...TODAS_ABAS_STAFF].sort());
+  });
+
+  // t_dd25f4b4: o painel de classificação automática por marcador saiu do produto —
+  // nem a aba (nome montado abaixo para o teste não virar resíduo textual do módulo)
+  // nem o painel que ela montava existem mais no grupo de IA.
+  it('staff: a seção de marcadores automáticos saiu do grupo de IA', () => {
+    const abaRemovida = ['Tags', 'IA'].join(' ');
+    roleState.isAdmin = true;
+    render(<SettingsView />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Inteligência artificial' }));
+
+    const abas = screen.getAllByRole('tab').map((el) => el.textContent ?? '');
+    expect(abas).toEqual(['Chatbot L1', 'Gestão IA']);
+    expect(abas).not.toContain(abaRemovida);
+    expect(abas.some((t) => /tag|etiqueta/i.test(t))).toBe(false);
   });
 
   it('agente: so o grupo Aparência aparece e traz as 4 abas pessoais', () => {
@@ -184,7 +199,7 @@ describe('SettingsView — agrupamento em dois niveis', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Inteligência artificial' }));
     expect(screen.getAllByRole('tab').map((el) => el.textContent)).toEqual([
-      'Tags IA', 'Chatbot L1', 'Gestão IA',
+      'Chatbot L1', 'Gestão IA',
     ]);
 
     fireEvent.click(screen.getByRole('button', { name: 'Qualidade' }));

@@ -2263,6 +2263,7 @@ export type Database = {
           id: string
           is_lid_legacy: boolean
           job_title: string | null
+          last_seen_at: string | null
           latitude: number | null
           lead_origin: string | null
           lead_score: number | null
@@ -2273,6 +2274,8 @@ export type Database = {
           notes: string | null
           phone: string
           postal_code: string | null
+          presence_status: string | null
+          presence_updated_at: string | null
           queue_id: string | null
           risk_score: number | null
           state: string | null
@@ -2308,6 +2311,7 @@ export type Database = {
           id?: string
           is_lid_legacy?: boolean
           job_title?: string | null
+          last_seen_at?: string | null
           latitude?: number | null
           lead_origin?: string | null
           lead_score?: number | null
@@ -2318,6 +2322,8 @@ export type Database = {
           notes?: string | null
           phone: string
           postal_code?: string | null
+          presence_status?: string | null
+          presence_updated_at?: string | null
           queue_id?: string | null
           risk_score?: number | null
           state?: string | null
@@ -2353,6 +2359,7 @@ export type Database = {
           id?: string
           is_lid_legacy?: boolean
           job_title?: string | null
+          last_seen_at?: string | null
           latitude?: number | null
           lead_origin?: string | null
           lead_score?: number | null
@@ -2363,6 +2370,8 @@ export type Database = {
           notes?: string | null
           phone?: string
           postal_code?: string | null
+          presence_status?: string | null
+          presence_updated_at?: string | null
           queue_id?: string | null
           risk_score?: number | null
           state?: string | null
@@ -10547,6 +10556,18 @@ export type Database = {
         Args: { p_contact_id: string; p_prefix: string; p_tag: string }
         Returns: undefined
       }
+      admin_cron_jobs_permitidos: { Args: never; Returns: string[] }
+      admin_list_cron_jobs: {
+        Args: never
+        Returns: {
+          active: boolean
+          jobname: string
+          last_return_message: string
+          last_run_at: string
+          last_status: string
+          schedule: string
+        }[]
+      }
       admin_set_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -10558,14 +10579,9 @@ export type Database = {
           out_user_id: string
         }[]
       }
-      agent_workload: {
-        Args: never
-        Returns: {
-          last_send_at: string
-          open_chats: number
-          profile_id: string
-          waiting_chats: number
-        }[]
+      admin_toggle_cron_job: {
+        Args: { p_ativo: boolean; p_jobname: string }
+        Returns: Json
       }
       ai_budget_reconcile: { Args: never; Returns: number }
       ai_budget_release: {
@@ -12005,7 +12021,10 @@ export type Database = {
         }[]
       }
       phone_variants: { Args: { p_phone: string }; Returns: string[] }
-      purge_qr_attempts: { Args: never; Returns: number }
+      purge_gmail_account_data: {
+        Args: { p_account_id: string; p_confirm: string }
+        Returns: Json
+      }
       purge_talkx_expired_data: { Args: { p_limit?: number }; Returns: Json }
       reap_ai_jobs: { Args: never; Returns: number }
       reassign_absent_agents: {
@@ -12407,6 +12426,10 @@ export type Database = {
           p_profile_id: string
         }
         Returns: undefined
+      }
+      set_voip_profile_credentials: {
+        Args: { p_profile_id: string; p_ramal: string; p_sip_password: string }
+        Returns: string
       }
       skill_based_assign: { Args: { p_queue_id: string }; Returns: string }
       snapshot_talkx_campaign_audience: {

@@ -31,6 +31,55 @@ export const NETWORK_POLICY_UNAVAILABLE_BODY = 'Service unavailable';
 const NO_LOCK: ServerLoginLock = { isLocked: false, lockedUntil: null, attempts: 1, remainingTime: 0 };
 
 /**
+ * Estado de lock que acompanha o 429. Todo ramo `unavailable: false` traz `lock`
+ * (o chamador le sempre), mas aqui NAO houve senha conferida: `attempts: 0`
+ * mantem a tela de login sem o banner "N tentativas restantes antes do bloqueio"
+ * (pages/Auth.tsx), que so vale quando a edge contou uma senha errada de fato.
+ */
+const NO_LOCK_RATE_LIMITED: ServerLoginLock = { isLocked: false, lockedUntil: null, attempts: 0, remainingTime: 0 };
+
+/**
+ * Mensagem propria de "muitas tentativas" (429 da edge `auth-login`, por IP ou
+ * por e-mail). E a MESMA exista ou nao a conta e seja qual for o limite
+ * estourado: nada aqui revela e-mail cadastrado, IP ou regra.
+ */
+export const RATE_LIMITED_MESSAGE = 'Muitas tentativas de login. Aguarde alguns minutos.';
+
+/**
+ * Mensagem de "muitas tentativas" com a espera pedida pela resposta, quando ela
+ * e conhecida. Sem espera fica a mensagem generica acima — hoje e o caso: a edge
+ * responde 429 sem `Retry-After` (errorResponse de _shared/validation.ts) e o
+ * CORS nem expoe o header, entao o valor so aparece quando a Edge passar a envia-lo.
+ */
+export function rateLimitedMessage(retryAfterSeconds: number | null): string {
+  if (retryAfterSeconds === null || retryAfterSeconds <= 0) return RATE_LIMITED_MESSAGE;
+  if (retryAfterSeconds < 60) {
+    return `Muitas tentativas de login. Tente novamente em ${Math.ceil(retryAfterSeconds)}s.`;
+  }
+  return `Muitas tentativas de login. Tente novamente em ${Math.ceil(retryAfterSeconds / 60)} min.`;
+}
+
+/**
+ * Le a espera que a resposta 429 pede: `Retry-After` em segundos ("45") ou em
+ * data HTTP ("Wed, 21 Oct 2026 07:28:00 GMT"). Devolve os segundos a esperar, ou
+ * null quando o header nao existe / nao da para ler (valor invalido ou data ja
+ * no passado) — quem chama cai na mensagem sem contagem, nunca inventa espera.
+ */
+export function parseRetryAfterSeconds(headers: Headers, now: number = Date.now()): number | null {
+  const raw = headers.get('retry-after');
+  if (!raw) return null;
+  const value = raw.trim();
+  if (/^\d+$/.test(value)) {
+    const seconds = Number(value);
+    return seconds > 0 ? seconds : null;
+  }
+  const at = Date.parse(value);
+  if (Number.isNaN(at)) return null;
+  const seconds = Math.ceil((at - now) / 1000);
+  return seconds > 0 ? seconds : null;
+}
+
+/**
  * Regiao da invocacao da edge `auth-login` (T06).
  *
  * A edge faz ~5 round-trips ao banco/GoTrue (2x consume_rate_limit,

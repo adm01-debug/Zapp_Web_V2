@@ -1,3 +1,5 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { ReactNode } from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { axe } from 'vitest-axe';
@@ -30,7 +32,19 @@ vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), info: vi.fn(), warn: vi.
 import { IntegrationKeysSection } from '@/components/settings/IntegrationKeysSection';
 import { toast } from 'sonner';
 
-const CHAVE_REGISTRADA = 'xi-chave-registrada';
+/**
+ * A tela lê as configurações globais pelo hook, que agora vive no cache do React
+ * Query: ela precisa do mesmo provider que o AppProviders monta na aplicação.
+ */
+function renderizar() {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: 0 }, mutations: { retry: false } },
+  });
+  const wrapper = ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={client}>{children}</QueryClientProvider>
+  );
+  return render(<IntegrationKeysSection />, { wrapper });
+}
 
 const settingsIniciais = [
   {
@@ -61,7 +75,7 @@ beforeEach(() => {
 
 describe('IntegrationKeysSection — chave registrada não é a chave usada', () => {
   it('mostra que a autoridade efetiva é a variável de ambiente do servidor e não a chave salva', async () => {
-    render(<IntegrationKeysSection />);
+    renderizar();
 
     expect(await screen.findByText(/não é a chave usada/i)).toBeInTheDocument();
     expect(screen.getAllByText(/ELEVENLABS_API_KEY/).length).toBeGreaterThan(0);
@@ -69,7 +83,7 @@ describe('IntegrationKeysSection — chave registrada não é a chave usada', ()
   });
 
   it('o badge não afirma uso efetivo da chave registrada', async () => {
-    render(<IntegrationKeysSection />);
+    renderizar();
 
     expect(await screen.findByText('Registrada (não usada pelo TTS)')).toBeInTheDocument();
     expect(screen.queryByText('Configurada')).not.toBeInTheDocument();
@@ -78,7 +92,7 @@ describe('IntegrationKeysSection — chave registrada não é a chave usada', ()
   it('não anuncia sucesso quando o salvamento falha', async () => {
     mockSingle.mockResolvedValue({ data: null, error: { message: 'policy violation' } });
 
-    render(<IntegrationKeysSection />);
+    renderizar();
     await salvarNovaChave();
 
     await waitFor(() => {
@@ -88,7 +102,7 @@ describe('IntegrationKeysSection — chave registrada não é a chave usada', ()
   });
 
   it('anuncia sucesso somente quando a persistência é aceita', async () => {
-    render(<IntegrationKeysSection />);
+    renderizar();
     await salvarNovaChave();
 
     await waitFor(() => {
@@ -98,9 +112,8 @@ describe('IntegrationKeysSection — chave registrada não é a chave usada', ()
   });
 });
 
-describe('IntegrationKeysSection — seção só para admin', () => {
-  it('o supervisor (não admin) não vê a seção de chaves de integração', async () => {
-    roleState.isAdmin = false;
+  it('o botão olho alterna aria-label entre "Mostrar chave" e "Ocultar chave" com aria-pressed', async () => {
+    renderizar();
 
     const { container } = render(<IntegrationKeysSection />);
 
@@ -138,10 +151,10 @@ describe('IntegrationKeysSection — seção só para admin', () => {
     expect(screen.getByRole('button', { name: /salvar/i })).toBeEnabled();
   });
 
-  it('axe não aponta violações de label na seção do admin', async () => {
-    render(<IntegrationKeysSection />);
-    await screen.findByTestId('chave-elevenlabs_api_key-registrada');
-    const results = await axe(document.body, { rules: { region: { enabled: false } } });
-    expect(results.violations.filter((v) => v.id === 'label')).toEqual([]);
+  it('axe não aponta violações no botão olho', async () => {
+    renderizar();
+    const botaoOlho = await screen.findByRole('button', { name: /^Mostrar chave ElevenLabs API Key$/i });
+    const results = await axe(botaoOlho);
+    expect(results).toHaveNoViolations();
   });
 });

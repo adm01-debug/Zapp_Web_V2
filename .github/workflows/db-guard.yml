@@ -429,10 +429,29 @@ jobs:
           GAMIFICATION_MARCO_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/gamification-marco-nao-bloqueia-envio.test.sh
 
+<<<<<<< ours
+<<<<<<< ours
       - name: Simular INSERT de evento de conversa com autor e contato visivel (N-143)
         env:
           CONVEVENTS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/conversation-events-insert-autor-visivel.test.sh
+=======
+=======
+>>>>>>> theirs
+      # t_d7ef14d6 (Gmail com token revogado): a migration 20261014023912_gmail_accounts_sync_backoff
+      # acrescenta error_count/next_attempt_at a public.gmail_accounts para a espera crescente do
+      # gmail-cron-sync. Prova em PostgreSQL 17 descartavel: as colunas antes/depois com
+      # tipo/default/NOT NULL corretos, a linha antiga herda error_count = 0 e next_attempt_at NULL,
+      # o ACL da tabela (o papel real) e IDENTICO antes/depois (a adicao nao concede nada a
+      # anon/authenticated) e o Rollback declarado no topo desfaz a adicao.
+      - name: Simular espera crescente do gmail_accounts (Gmail token revogado)
+        env:
+          GMAIL_BACKOFF_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/gmail-accounts-sync-backoff.test.sh
+<<<<<<< ours
+>>>>>>> theirs
+=======
+>>>>>>> theirs
 
       - name: Simular vinculo de time na reacao em mensagem (#1265)
         env:
@@ -1280,6 +1299,8 @@ jobs:
       - name: Provar o runbook de recriacao do banco local (N-136)
         run: bash scripts/db-audit/recriar-banco-local.test.sh
 
+<<<<<<< ours
+<<<<<<< ours
       # N-142 (P3): message_reactions.user_id guarda public.profiles.id, nao auth.users.id.
       # O harness executa a migration real, valida o vermelho sem ela, o verde com
       # get_profile_id_for_user(auth.uid()) e os dois formatos de rollback executavel.
@@ -1345,6 +1366,19 @@ jobs:
           IA_USAGE_OUTBOX_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/ia-usage-outbox-duravel.test.sh
+=======
+      # t_ac2fa555 (P1 · banco, painel admin de cron jobs): as RPCs admin_list_cron_jobs e
+      # admin_toggle_cron_job nao existiam no V2. O contrato aplica o ARQUIVO real num
+      # PostgreSQL 17 descartavel e prova, com papel real: guarda is_admin(auth.uid()),
+      # allow-list fechada (manutencao/limpeza fora), ACL negando anon e service_role,
+      # jobid preservado via cron.alter_job (sem DML direto) e auditoria em audit_logs.
+      # Cria roles anon/authenticated/service_role -> colide com o docker-shim do E47.
+      - name: Provar as RPCs do painel admin de cron jobs (t_ac2fa555)
+        env:
+          ADMIN_CRON_JOBS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/admin-cron-jobs-rpc.test.sh
+>>>>>>> theirs
 
   # Gate do replay COMPLETO das migrations (cartao t_b6f4e82d). O replay-local.sh
   # existia e era provado so por harness offline; nenhum workflow o chamava, entao
@@ -1419,3 +1453,20 @@ jobs:
             replay-erros.tsv
           if-no-files-found: warn
           retention-days: 7
+=======
+      # PE-09 (cartao t_59d66c7a): a busca de e-mail so alcancava email_threads
+      # (subject/snippet/last_from_*); o corpo (email_messages.body_text) e o nome
+      # do anexo (email_attachments.filename) ficavam de fora. O harness aplica a
+      # migration REAL no PostgreSQL 17 descartavel e roda como os papeis reais
+      # (anon/authenticated/service_role): acha o termo no corpo e no anexo, diz
+      # em que campo casou (match_field) e o trecho (match_snippet), nao vaza para
+      # outro dono nem para quem nao tem conta, nao devolve a caixa inteira em
+      # termo vazio/curinga literal, pagina por p_after e o plano usa o indice de
+      # trigrama. Inicia container proprio (docker run/exec) -> SKIP_DOCKER_SHIM=1,
+      # como os passos vizinhos que sobem container proprio.
+      - name: Provar a busca de e-mail por corpo e anexo (PE-09)
+        env:
+          SEARCH_EMAIL_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/search-email-threads.test.sh
+>>>>>>> theirs

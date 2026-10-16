@@ -12,8 +12,10 @@ import { PasskeysPanel } from './PasskeysPanel';
 import { SecurityNotificationsPanel } from './SecurityNotificationsPanel';
 import { BlockedIPsPanel } from './BlockedIPsPanel';
 import { IPWhitelistPanel } from './IPWhitelistPanel';
+import { LoginBlockedLogPanel } from './LoginBlockedLogPanel';
 import { GeoBlockingPanel } from './GeoBlockingPanel';
 import { PasswordResetRequestsPanel } from './PasswordResetRequestsPanel';
+import { AclAlertsPanel } from './AclAlertsPanel';
 import { RateLimitRealtimeAlerts } from './RateLimitRealtimeAlerts';
 import { RateLimitConfigPanel } from './RateLimitConfigPanel';
 import { AuditLogDashboard } from './AuditLogDashboard';
@@ -132,6 +134,7 @@ export function SecurityView() {
                 <div className="space-y-6">
                   <BlockedIPsPanel />
                   <IPWhitelistPanel />
+                  <LoginBlockedLogPanel />
                 </div>
               </TabsContent>
 
@@ -154,7 +157,8 @@ export function SecurityView() {
               <TabsContent value="admin">
                 <div className="space-y-6">
                   <PasswordResetRequestsPanel />
-                  
+                  <AclAlertsPanel />
+
                   <div className="grid gap-6 md:grid-cols-2">
                     <Card>
                       <CardHeader>

@@ -19,76 +19,24 @@ import { resolveElevenLabsStsInputs } from "../_shared/schemas.ts";
  * Mesmo teto do STT (`ai-transcribe-audio`, 25 MiB).
  */
 
-/** Teto do upload aceito, igual ao do caminho de STT. */
-export const MAX_STS_AUDIO_BYTES = 25 * 1024 * 1024;
+/** Teto do upload aceito, igual ao do caminho de STT. O validador de upload (teto +
+ * content-length + magic bytes) mora em `_shared/` desde o G3, para ser o MESMO
+ * código do `voice-changer`. Reexportado por este módulo para não mudar o caminho
+ * de import dos consumidores e testes existentes. */
+export {
+  announcedAudioTooLarge,
+  MAX_STS_AUDIO_BYTES,
+  sniffStsAudioFormat,
+  STS_SNIFF_BYTES,
+  validateStsUpload,
+} from "../_shared/sts-upload.ts";
+export type { StsAudioFormat, StsUploadRejection } from "../_shared/sts-upload.ts";
 
-/** Containers que o app envia (gravador webm/opus, wav, m4a, mp3) e o provedor aceita. */
-export type StsAudioFormat = "mp3" | "wav" | "ogg" | "webm" | "m4a";
-
-/** Bytes lidos para identificar o container (ID3 + cabeçalho de frame mp3 já bastam). */
-export const STS_SNIFF_BYTES = 16;
-
-function startsWith(bytes: Uint8Array, ascii: string): boolean {
-  if (bytes.length < ascii.length) return false;
-  for (let i = 0; i < ascii.length; i++) {
-    if (bytes[i] !== ascii.charCodeAt(i)) return false;
-  }
-  return true;
-}
-
-/**
- * Identifica o container pelos BYTES reais. Devolve `null` quando não é nenhum
- * áudio reconhecido — o chamador recusa em vez de mandar payload que o provedor
- * recusaria (ou, pior, tratar como áudio).
- */
-export function sniffStsAudioFormat(bytes: Uint8Array): StsAudioFormat | null {
-  if (bytes.length >= 12 && startsWith(bytes, "RIFF") && startsWith(bytes.subarray(8), "WAVE")) {
-    return "wav";
-  }
-  if (startsWith(bytes, "OggS")) return "ogg";
-  // EBML (webm/mkv): 0x1A 0x45 0xDF 0xA3
-  if (bytes.length >= 4 && bytes[0] === 0x1a && bytes[1] === 0x45 && bytes[2] === 0xdf && bytes[3] === 0xa3) {
-    return "webm";
-  }
-  // ISO-BMFF (mp4/m4a): "ftyp" no offset 4.
-  if (bytes.length >= 8 && startsWith(bytes.subarray(4), "ftyp")) return "m4a";
-  if (startsWith(bytes, "ID3")) return "mp3";
-  // Frame MPEG sem tag ID3: sincronismo de 11 bits (0xFF + top 3 bits em 1).
-  if (bytes.length >= 2 && bytes[0] === 0xff && (bytes[1] & 0xe0) === 0xe0) return "mp3";
-  return null;
-}
-
-/** Recusa tipada do upload (status + mensagem), ou `null` quando pode seguir. */
-export interface StsUploadRejection {
-  status: number;
-  error: string;
-}
-
-/** Lê só os primeiros bytes do arquivo — o suficiente para o container. */
-async function readHead(file: File): Promise<Uint8Array> {
-  const head = await file.slice(0, STS_SNIFF_BYTES).arrayBuffer();
-  return new Uint8Array(head);
-}
-
-/**
- * Confere tamanho real e conteúdo ANTES de gastar o provedor. O `File.type`
- * declarado NÃO é fonte de verdade: a prova do tipo é a assinatura dos bytes.
- */
-export async function validateStsUpload(file: File): Promise<StsUploadRejection | null> {
-  if (file.size === 0) {
-    return { status: 400, error: "Arquivo de áudio vazio" };
-  }
-  if (file.size > MAX_STS_AUDIO_BYTES) {
-    return {
-      status: 413,
-      error: `Audio file too large (max ${MAX_STS_AUDIO_BYTES} bytes)`,
-    };
-  }
-  if (!sniffStsAudioFormat(await readHead(file))) {
-    return { status: 415, error: "Conteúdo não é um áudio reconhecido" };
-  }
-  return null;
-}
+import {
+  announcedAudioTooLarge,
+  MAX_STS_AUDIO_BYTES,
+  validateStsUpload,
+} from "../_shared/sts-upload.ts";
 
 export async function handleElevenLabsSts(req: Request): Promise<Response> {
   const cors = handleCors(req);
@@ -125,9 +73,12 @@ export async function handleElevenLabsSts(req: Request): Promise<Response> {
     // Teto no cabeçalho ANTES de `req.formData()`: o corpo abusivo não chega a
     // ser lido para a memória (o `content-length` pode mentir para baixo, e aí o
     // `size` real do File decide no passo seguinte).
-    const announced = Number(req.headers.get("content-length") ?? "");
-    if (Number.isFinite(announced) && announced > MAX_STS_AUDIO_BYTES) {
-      return errorResponse(`Audio file too large (max ${MAX_STS_AUDIO_BYTES} bytes)`, 413, req);
+    if (announcedAudioTooLarge(req, MAX_STS_AUDIO_BYTES)) {
+      return errorResponse(
+        `Arquivo de áudio grande demais (máximo ${MAX_STS_AUDIO_BYTES} bytes)`,
+        413,
+        req,
+      );
     }
 
     const formData = await req.formData();

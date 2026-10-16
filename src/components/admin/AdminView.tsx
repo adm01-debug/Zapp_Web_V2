@@ -9,19 +9,18 @@ import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Card, CardContent } from '@/components/ui/card';
+import { PasswordStrengthMeter } from '@/components/auth/PasswordStrengthMeter';
 import {
   Shield, Users, Search, Crown, UserCog, User, History, RefreshCw,
-  UserPlus, Building, Eye, Loader2, Brain,
+  UserPlus, Building, Eye, Loader2,
 } from 'lucide-react';
 import { useUserRole, AppRole } from '@/hooks/system/useUserRole';
 import { AdminCRMDashboard } from './AdminCRMDashboard';
-import { PlaybooksManager } from './PlaybooksManager';
-import { SupervisorCopilot } from './SupervisorCopilot';
-import { TrainingMode } from './TrainingMode';
-import { CrisisRoom } from './CrisisRoom';
 import { useAdminData, accessLevelConfig, type UserWithRole } from './useAdminData';
 import { AdminUsersTable } from './AdminUsersTable';
 import { AdminAuditTable } from './AdminAuditTable';
+import { VoipRamalField } from './VoipRamalField';
 import { SectionErrorBoundary } from '@/components/ui/section-error-boundary';
 
 const roleIconMap = { admin: Crown, supervisor: UserCog, agent: User, special_agent: Eye } as const;
@@ -42,6 +41,8 @@ function normalizarLimiteChats(valor: number): number {
 
 type GoogleServiceKey = 'google_sheets' | 'google_docs' | 'google_calendar' | 'google_drive';
 
+type AdminTab = 'users' | 'audit' | 'crm' | 'playbooks' | 'copilot' | 'training' | 'crisis' | 'cron';
+
 // SL-160/P2-3.4: a integração com Google Calendar não existe no produto (não há OAuth
 // nem sincronização em src/ ou supabase/functions — só a tela de demonstração, fora dos
 // grupos principais da navegação). A permissão `google_calendar` era oferecida aqui e
@@ -56,7 +57,7 @@ const googleServiceOptions: ReadonlyArray<{ key: GoogleServiceKey; label: string
 
 export function AdminView() {
   const { isAdmin, isSupervisor, loading: roleLoading } = useUserRole();
-  const [activeTab, setActiveTab] = useState<'users' | 'audit' | 'crm' | 'playbooks' | 'copilot' | 'training' | 'crisis'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'audit' | 'crm'>('users');
   const [searchTerm, setSearchTerm] = useState('');
   const [editingUser, setEditingUser] = useState<UserWithRole | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -70,15 +71,19 @@ export function AdminView() {
   const [newUserAvatarFile, setNewUserAvatarFile] = useState<File | null>(null);
   const [newUserGoogleServices, setNewUserGoogleServices] = useState({ google_sheets: false, google_docs: false, google_calendar: false, google_drive: false });
   const [creatingUser, setCreatingUser] = useState(false);
+  // Filtro de data e paginação da auditoria: o estado vive aqui e o hook
+  // `useAdminData` monta a consulta (ele não guarda estado de filtro).
+  const [auditFrom, setAuditFrom] = useState('');
+  const [auditTo, setAuditTo] = useState('');
+  const [auditPage, setAuditPage] = useState(1);
 
-  const { users, auditLogs, loading, fetchData, handleRoleChange, handleToggleActive, handleSaveUser, handleCreateUser } = useAdminData(activeTab as 'users' | 'audit' | 'crm');
-
-  // Busca dados só nas abas que os usam: as demais (CRM, Playbooks, Copilot,
-  // Treinamento, Crise) carregam dados próprios e não devem levar o spinner de tela cheia.
-  const usaDadosDeUsuario = activeTab === 'users' || activeTab === 'audit';
-  useEffect(() => {
-    if (isSupervisor && usaDadosDeUsuario) fetchData();
-  }, [isSupervisor, usaDadosDeUsuario, fetchData]);
+  const { users, auditLogs, auditTotal, loading, error, fetchData, handleRoleChange, handleToggleActive, handleSaveUser, handleCreateUser } =
+    useAdminData(activeTab as 'users' | 'audit' | 'crm', {
+      from: auditFrom || undefined,
+      to: auditTo || undefined,
+      page: auditPage,
+      pageSize: AUDIT_PAGE_SIZE,
+    });
 
   // A URL do avatar é criada ao escolher o arquivo e revogada quando o arquivo muda,
   // o diálogo fecha ou a tela desmonta — antes era criada a cada render e nunca liberada.
@@ -86,6 +91,16 @@ export function AdminView() {
     if (!editAvatarPreview) return undefined;
     return () => URL.revokeObjectURL(editAvatarPreview);
   }, [editAvatarPreview]);
+
+  // Trocar o período volta para a primeira página: sem isso a página 3 de um
+  // período novo poderia cair fora do intervalo e mostrar tabela vazia.
+  const onAuditFromChange = (value: string) => { setAuditFrom(value); setAuditPage(1); };
+  const onAuditToChange = (value: string) => { setAuditTo(value); setAuditPage(1); };
+  const limparFiltroAuditoria = () => { setAuditFrom(''); setAuditTo(''); setAuditPage(1); };
+
+  const auditTotalPages = Math.max(1, Math.ceil((auditTotal ?? 0) / AUDIT_PAGE_SIZE));
+  // A busca client-side só faz sentido nas abas que mostram lista filtrada.
+  const abaTemBusca = activeTab === 'users' || activeTab === 'audit';
 
   const onSaveUser = async () => {
     if (!editingUser) return;
@@ -158,6 +173,20 @@ export function AdminView() {
     );
   }
 
+  // A aba "Tarefas agendadas" é SÓ de admin: as RPCs que ela usa
+  // (`admin_list_cron_jobs`/`admin_toggle_cron_job`) recusam quem não é admin — um
+  // supervisor não deve nem ver a aba (evita abrir uma tela que só daria acesso negado).
+  const abas: ReadonlyArray<readonly [AdminTab, LucideIcon, string]> = [
+    ['users', Users, `Usuários (${users.length})`],
+    ['audit', History, 'Auditoria'],
+    ['crm', Building, 'CRM 360°'],
+    ['playbooks', Shield, 'Playbooks'],
+    ['copilot', Brain, 'Copilot IA'],
+    ['training', Users, 'Treinamento'],
+    ['crisis', Shield, 'Sala de Crise'],
+    ...(isAdmin ? ([['cron', CalendarClock, 'Tarefas agendadas']] as const) : []),
+  ];
+
   return (
     <div className="space-y-6 relative bg-background w-full min-w-0">
       <AuroraBorealis />
@@ -174,37 +203,37 @@ export function AdminView() {
         </div>
       </motion.div>
 
-      <div role="tablist" aria-label="Seções da administração" className="flex gap-2 flex-wrap">
-        {([['users', Users, `Usuários (${users.length})`], ['audit', History, 'Auditoria'], ['crm', Building, 'CRM 360°'], ['playbooks', Shield, 'Playbooks'], ['copilot', Brain, 'Copilot IA'], ['training', Users, 'Treinamento'], ['crisis', Shield, 'Sala de Crise']] as const).map(([tab, Icon, label], index, lista) => (
-          <Button
-            key={tab}
-            id={`tab-${tab}`}
-            role="tab"
-            aria-selected={activeTab === tab}
-            aria-controls="admin-tabpanel"
-            tabIndex={activeTab === tab ? 0 : -1}
-            ref={(el) => { tabsRef.current[tab] = el; }}
-            variant={activeTab === tab ? 'default' : 'outline'}
-            onClick={() => setActiveTab(tab as typeof activeTab)}
-            onKeyDown={(e) => {
-              const passo = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
-              if (passo === 0 && e.key !== 'Home' && e.key !== 'End') return;
-              e.preventDefault();
-              const destino = e.key === 'Home' ? 0 : e.key === 'End' ? lista.length - 1 : (index + passo + lista.length) % lista.length;
-              const proxima = lista[destino][0];
-              setActiveTab(proxima as typeof activeTab);
-              tabsRef.current[proxima]?.focus();
-            }}
+      <div className="flex gap-2 flex-wrap">
+        {([['users', Users, `Usuários (${users.length})`], ['audit', History, 'Auditoria'], ['crm', Building, 'CRM 360°']] as const).map(([tab, Icon, label]) => (
+          <Button key={tab} variant={activeTab === tab ? 'default' : 'outline'} onClick={() => setActiveTab(tab as typeof activeTab)}
             className={activeTab === tab ? 'bg-primary hover:bg-primary/90' : ''} size="sm">
             <Icon className="w-4 h-4 mr-2" /> {label}
           </Button>
         ))}
       </div>
 
-      {usaDadosDeUsuario && (
+      {/* Busca: só nas abas em que o termo de fato filtra a lista carregada. */}
+      {abaTemBusca && (
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input placeholder={activeTab === 'users' ? 'Buscar usuários...' : 'Buscar logs...'} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
+        </div>
+      )}
+
+      {/* Filtro de data da auditoria: limites inclusivos no fuso local. */}
+      {activeTab === 'audit' && (
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="space-y-2">
+            <Label htmlFor="audit_de">Data inicial</Label>
+            <Input id="audit_de" type="date" className="w-40" value={auditFrom} onChange={(e) => onAuditFromChange(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="audit_ate">Data final</Label>
+            <Input id="audit_ate" type="date" className="w-40" value={auditTo} onChange={(e) => onAuditToChange(e.target.value)} />
+          </div>
+          {(auditFrom || auditTo) && (
+            <Button variant="outline" size="sm" onClick={limparFiltroAuditoria}>Limpar filtro</Button>
+          )}
         </div>
       )}
 
@@ -270,7 +299,7 @@ export function AdminView() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="access_level">Nível de Acesso</Label>
+                  <Label htmlFor="access_level">Nível de acesso (informativo)</Label>
                   <Select value={editingUser.access_level || 'basic'} onValueChange={(v) => setEditingUser({ ...editingUser, access_level: v })}>
                     <SelectTrigger id="access_level"><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -281,6 +310,8 @@ export function AdminView() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {/* `profiles.access_level` está DEPRECATED: o campo é registro, não permissão. */}
+                  <p className="text-xs text-muted-foreground">Informativo: este nível não libera nada hoje — quem dá acesso é o papel (Role).</p>
                 </div>
               </div>
               <div className="flex items-center justify-between rounded-lg border p-4">
@@ -290,6 +321,11 @@ export function AdminView() {
                 </div>
                 <Switch id="edit_download" checked={editingUser.can_download ?? false} onCheckedChange={(checked) => setEditingUser({ ...editingUser, can_download: checked })} />
               </div>
+              {isAdmin && (
+                <VoipRamalField
+                  onSave={(ramal, sipPassword) => handleSaveRamal(editingUser.id, ramal, sipPassword)}
+                />
+              )}
               <div className="flex justify-end gap-2 pt-4">
                 <Button variant="outline" onClick={() => fecharEdicaoUsuario(false)}>Cancelar</Button>
                 <Button onClick={onSaveUser} disabled={savingUser} className="bg-primary hover:bg-primary/90">
@@ -320,7 +356,11 @@ export function AdminView() {
               {newUserAvatarFile && <p className="text-xs text-muted-foreground">{newUserAvatarFile.name}</p>}
             </div>
             <div className="space-y-2"><Label htmlFor="add_email">Email *</Label><Input id="add_email" type="email" placeholder="usuario@email.com" value={newUser.email} onChange={(e) => setNewUser(p => ({ ...p, email: e.target.value }))} /></div>
-            <div className="space-y-2"><Label htmlFor="add_senha">Senha *</Label><Input id="add_senha" type="password" placeholder="Mínimo 6 caracteres" value={newUser.password} onChange={(e) => setNewUser(p => ({ ...p, password: e.target.value }))} /></div>
+            <div className="space-y-2">
+              <Label htmlFor="add_senha">Senha *</Label>
+              <Input id="add_senha" type="password" placeholder={`Mínimo ${MIN_PASSWORD_LENGTH} caracteres`} value={newUser.password} onChange={(e) => setNewUser(p => ({ ...p, password: e.target.value }))} />
+              <PasswordStrengthMeter password={newUser.password} />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="role">Role</Label>
               <Select value={newUser.role} onValueChange={(v) => setNewUser(p => ({ ...p, role: v as AppRole }))}>
@@ -376,35 +416,52 @@ export function AdminView() {
       <div role="tabpanel" id="admin-tabpanel" aria-labelledby={`tab-${activeTab}`} tabIndex={0}>
       {loading && usaDadosDeUsuario ? (
         <div className="flex justify-center py-12"><RefreshCw className="w-8 h-8 animate-spin text-muted-foreground" /></div>
+      ) : error ? (
+        <Card className="border-destructive/30">
+          <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
+            <AlertTriangle className="w-8 h-8 text-destructive" />
+            <p role="alert" className="text-muted-foreground">{error}</p>
+            <Button variant="outline" onClick={fetchData}><RefreshCw className="w-4 h-4 mr-2" /> Tentar novamente</Button>
+          </CardContent>
+        </Card>
       ) : activeTab === 'users' ? (
         <AdminUsersTable
           users={filteredUsers}
+          emptyMessage={searchTerm ? `Nenhum usuário encontrado para "${searchTerm}".` : 'Nenhum usuário cadastrado.'}
           isAdmin={isAdmin}
           onRoleChange={handleRoleChange}
           onToggleActive={handleToggleActive}
           onEditUser={abrirEdicaoUsuario}
         />
       ) : activeTab === 'audit' ? (
-        <AdminAuditTable logs={filteredLogs} />
+        <div className="space-y-4">
+          <AdminAuditTable
+            logs={filteredLogs}
+            emptyMessage={searchTerm
+              ? `Nenhum log de auditoria encontrado para "${searchTerm}".`
+              : (auditFrom || auditTo
+                ? 'Nenhum log de auditoria no período selecionado.'
+                : 'Nenhum log de auditoria registrado.')}
+          />
+          {auditTotal > 0 && (
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm text-muted-foreground">
+                {auditTotal} registro(s) — página {auditPage} de {auditTotalPages}
+              </p>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" disabled={auditPage <= 1} onClick={() => setAuditPage(p => Math.max(1, p - 1))}>
+                  <ChevronLeft className="w-4 h-4 mr-1" /> Anterior
+                </Button>
+                <Button variant="outline" size="sm" disabled={auditPage >= auditTotalPages} onClick={() => setAuditPage(p => Math.min(auditTotalPages, p + 1))}>
+                  Próxima <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
       ) : activeTab === 'crm' ? (
         <SectionErrorBoundary key="crm" sectionName="CRM Admin">
           <AdminCRMDashboard />
-        </SectionErrorBoundary>
-      ) : activeTab === 'playbooks' ? (
-        <SectionErrorBoundary key="playbooks" sectionName="Playbooks">
-          <PlaybooksManager />
-        </SectionErrorBoundary>
-      ) : activeTab === 'copilot' ? (
-        <SectionErrorBoundary key="copilot" sectionName="Copiloto">
-          <SupervisorCopilot />
-        </SectionErrorBoundary>
-      ) : activeTab === 'training' ? (
-        <SectionErrorBoundary key="training" sectionName="Modo Treinamento">
-          <TrainingMode />
-        </SectionErrorBoundary>
-      ) : activeTab === 'crisis' ? (
-        <SectionErrorBoundary key="crisis" sectionName="Sala de Crise">
-          <CrisisRoom />
         </SectionErrorBoundary>
       ) : null}
       </div>

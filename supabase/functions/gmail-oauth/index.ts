@@ -1,6 +1,13 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
 import { GmailOAuthActionSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
+import {
+  GMAIL_REAUTH_HTTP_STATUS,
+  gmailReauthErrorPayload,
+  isGmailReauthError,
+  recordGmailAccountFailure,
+  requestGmailTokenRefresh,
+} from "../_shared/gmail-helpers.ts";
 
 const GMAIL_SCOPES = [
   "https://www.googleapis.com/auth/gmail.readonly",
@@ -16,6 +23,16 @@ interface TokenResponse {
   expires_in: number;
   token_type: string;
   scope: string;
+}
+
+/**
+ * Máscara de e-mail para a trilha de auditoria: guarda só a 1ª letra da caixa
+ * local e o domínio. O e-mail completo nunca entra em log nem em `details`.
+ */
+function maskEmail(email: string): string {
+  const at = email.indexOf("@");
+  if (at <= 0) return "***";
+  return `${email.slice(0, 1)}***${email.slice(at)}`;
 }
 
 async function getAuthUrl(clientId: string, redirectUri: string, state?: string): Promise<string> {
@@ -42,14 +59,17 @@ async function exchangeCode(code: string, clientId: string, clientSecret: string
   return response.json();
 }
 
+// Adaptador do seam de DI para a cópia ÚNICA do refresh (requestGmailTokenRefresh,
+// em _shared/gmail-helpers.ts) — não há fetch próprio de token aqui.
 async function refreshAccessToken(refreshToken: string, clientId: string, clientSecret: string): Promise<TokenResponse> {
-  const response = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ refresh_token: refreshToken, client_id: clientId, client_secret: clientSecret, grant_type: "refresh_token" }),
-  });
-  if (!response.ok) throw new Error(`Token refresh failed: ${await response.text()}`);
-  return response.json();
+  const tokens = await requestGmailTokenRefresh(refreshToken, clientId, clientSecret);
+  return {
+    access_token: tokens.access_token,
+    refresh_token: tokens.refresh_token,
+    expires_in: tokens.expires_in,
+    token_type: "Bearer",
+    scope: GMAIL_SCOPES,
+  };
 }
 
 async function getGmailProfile(accessToken: string): Promise<{ emailAddress: string }> {
@@ -149,15 +169,45 @@ export async function handleGmailOAuth(req: Request, deps: GmailOAuthDeps): Prom
         const gmailProfile = await deps.google.fetchProfile(tokens.access_token);
         const expiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
 
-        // Guard against account takeover: reject if this Gmail address is already linked to another user
+        // Guarda de account takeover: um e-mail JÁ VINCULADO E ATIVO de outro
+        // usuário é recusado. A linha INATIVA (conexão desfeita pelo dono, ou
+        // dono que saiu da empresa) é reaproveitada — ninguém fica preso a um
+        // vínculo morto —, mas a assunção deixa trilha em `audit_logs`.
         const { data: existingAccount } = await supabase
           .from("gmail_accounts")
-          .select("user_id")
+          .select("id, user_id, is_active")
           .eq("email_address", gmailProfile.emailAddress)
           .maybeSingle();
 
         if (existingAccount && existingAccount.user_id !== user.id) {
-          return errorResponse("This Gmail address is already linked to another account", 409, req);
+          if (existingAccount.is_active) {
+            return errorResponse("This Gmail address is already linked to another account", 409, req);
+          }
+
+          const emailMasked = maskEmail(gmailProfile.emailAddress);
+          // A trilha é gravada ANTES do upsert e com a service_role: sem rastro
+          // não há assunção (fail-closed). `action` nomeada, e o e-mail entra
+          // só mascarado em `details`.
+          const { error: auditError } = await supabase.from("audit_logs").insert({
+            user_id: user.id,
+            action: "gmail_account_taken_over",
+            entity_type: "gmail_account",
+            entity_id: existingAccount.id,
+            details: { previous_user_id: existingAccount.user_id, email_masked: emailMasked },
+          });
+          if (auditError) {
+            log.error("Falha ao registrar auditoria da assuncao da conta Gmail", {
+              error: auditError.message ?? "erro desconhecido",
+              accountId: existingAccount.id,
+            });
+            return errorResponse("Nao foi possivel registrar a reconexao desta conta Gmail", 500, req);
+          }
+
+          log.warn("Conta Gmail inativa de outro usuario assumida na reconexao", {
+            emailMasked,
+            previousUserId: existingAccount.user_id,
+            accountId: existingAccount.id,
+          });
         }
 
         const { data: account, error: upsertError } = await supabase
@@ -168,6 +218,9 @@ export async function handleGmailOAuth(req: Request, deps: GmailOAuthDeps): Prom
             token_expires_at: expiresAt,
             is_active: true,
             sync_status: "pending",
+            // reconectar a mesma conta (onConflict email_address) limpa o erro
+            // anterior — inclusive 'reauth_required' de token revogado.
+            last_error: null,
           }, { onConflict: "email_address" })
           .select()
           .single();
@@ -190,7 +243,18 @@ export async function handleGmailOAuth(req: Request, deps: GmailOAuthDeps): Prom
         if (!account) return errorResponse("Gmail account not found", 404, req);
 
         const storedTokens = await getTokens(supabase, account.id);
-        const tokens = await deps.google.refreshToken(storedTokens.refresh_token);
+
+        let tokens: TokenResponse;
+        try {
+          tokens = await deps.google.refreshToken(storedTokens.refresh_token);
+        } catch (refreshError) {
+          if (!isGmailReauthError(refreshError)) throw refreshError;
+          // Token revogado: marca a conta e devolve 409 com code reauth_required
+          // (o app converte em kind:'reauth' e abre a reconexão).
+          await recordGmailAccountFailure(supabase, account.id, refreshError, 1);
+          log.done(GMAIL_REAUTH_HTTP_STATUS, { action });
+          return jsonResponse(gmailReauthErrorPayload(), GMAIL_REAUTH_HTTP_STATUS, req);
+        }
         const expiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
 
         await storeTokens(supabase, account.id, tokens.access_token, tokens.refresh_token || null);

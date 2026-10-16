@@ -21,6 +21,12 @@ const h = vi.hoisted(() => ({
   getSession: vi.fn(),
   updateUser: vi.fn(),
   onAuthStateChange: vi.fn(),
+  signOut: vi.fn(),
+  getAssuranceLevel: vi.fn(),
+  listFactors: vi.fn(),
+  challenge: vi.fn(),
+  verify: vi.fn(),
+  invoke: vi.fn(),
 }));
 
 vi.mock('@/integrations/supabase/client', () => ({
@@ -29,6 +35,16 @@ vi.mock('@/integrations/supabase/client', () => ({
       getSession: (...a: unknown[]) => h.getSession(...a),
       updateUser: (...a: unknown[]) => h.updateUser(...a),
       onAuthStateChange: (...a: unknown[]) => h.onAuthStateChange(...a),
+      signOut: (...a: unknown[]) => h.signOut(...a),
+      mfa: {
+        getAuthenticatorAssuranceLevel: (...a: unknown[]) => h.getAssuranceLevel(...a),
+        listFactors: (...a: unknown[]) => h.listFactors(...a),
+        challenge: (...a: unknown[]) => h.challenge(...a),
+        verify: (...a: unknown[]) => h.verify(...a),
+      },
+    },
+    functions: {
+      invoke: (...a: unknown[]) => h.invoke(...a),
     },
   },
 }));
@@ -64,6 +80,10 @@ beforeEach(() => {
   h.getSession.mockResolvedValue({ data: { session: { access_token: 'tok' } } });
   h.updateUser.mockResolvedValue({ error: null });
   h.onAuthStateChange.mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } });
+  h.getAssuranceLevel.mockResolvedValue({ data: { currentLevel: 'aal1', nextLevel: 'aal1' } });
+  h.listFactors.mockResolvedValue({ data: { totp: [] }, error: null });
+  h.invoke.mockResolvedValue({ data: { revoked_sessions: 1 }, error: null });
+  h.signOut.mockResolvedValue({ error: null });
 });
 
 afterEach(() => {

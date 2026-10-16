@@ -12,6 +12,7 @@ export const ConnectionsView = lazyWithRetry(() => import('@/components/connecti
 export const SettingsView = lazyWithRetry(() => import('@/components/settings/SettingsView').then(m => ({ default: m.SettingsView })));
 export const ClientWalletView = lazyWithRetry(() => import('@/components/wallet/ClientWalletView').then(m => ({ default: m.ClientWalletView })));
 export const AdminView = lazyWithRetry(() => import('@/components/admin/AdminView').then(m => ({ default: m.AdminView })));
+export const SupervisaoView = lazyWithRetry(() => import('@/components/admin/SupervisaoView').then(m => ({ default: m.SupervisaoView })));
 export const ProductManagement = lazyWithRetry(() => import('@/components/catalog/ExternalProductManagement').then(m => ({ default: m.ExternalProductManagement })));
 export const GroupsView = lazyWithRetry(() => import('@/components/groups/GroupsView').then(m => ({ default: m.GroupsView })));
 export const TranscriptionsHistoryView = lazyWithRetry(() => import('@/components/transcriptions/TranscriptionsHistoryView').then(m => ({ default: m.TranscriptionsHistoryView })));
@@ -51,6 +52,7 @@ export const GmailWebhookMonitor = lazyWithRetry(() => import('@/components/admi
 export const MediaMigrationTool = lazyWithRetry(() => import('@/components/admin/MediaMigrationTool').then(m => ({ default: m.MediaMigrationTool })));
 export const CRM360ExplorerView = lazyWithRetry(() => import('@/components/crm360/CRM360ExplorerView').then(m => ({ default: m.CRM360ExplorerView })));
 export const AIUsageDashboard = lazyWithRetry(() => import('@/components/admin/AIUsageDashboard').then(m => ({ default: m.AIUsageDashboard })));
+export const SearchInsightsView = lazyWithRetry(() => import('@/components/admin/SearchInsightsView').then(m => ({ default: m.SearchInsightsView })));
 export const TalkXView = lazyWithRetry(() => import('@/components/talkx/TalkXView'));
 export const MultiplixView = lazyWithRetry(() => import('@/components/multiplix/MultiplixView'));
 export const EvolutionMonitoringDashboard = lazyWithRetry(() => import('@/components/monitoring/EvolutionMonitoringDashboard').then(m => ({ default: m.EvolutionMonitoringDashboard })));

@@ -1,25 +1,37 @@
-import { useState, useRef } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Camera, Loader2, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { parseSupabaseStorageObjectUrl } from '@/lib/storage_object_reference';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useActionFeedback } from '@/hooks/ui/useActionFeedback';
 import { getLogger } from '@/lib/logger';
 
 const log = getLogger('AvatarUpload');
 
+// Expiração curta: o perfil guarda só o caminho do arquivo e a URL assinada é
+// regerada a cada render, então não há motivo para uma validade longa.
+export const AVATAR_SIGNED_URL_TTL_SECONDS = 300;
+
+const AVATAR_BUCKET = 'avatars';
+
+function isStorageUrl(value: string): boolean {
+  return /^https?:\/\//i.test(value);
+}
+
 /**
- * Extensão de `avatars/<user_id>/avatar.<ext>` a partir da URL pública.
- * Descarta o `?t=` que o upload usa para furar o cache.
+ * Normaliza o valor guardado em profile.avatar_url para o caminho do objeto.
+ * Avatares legados guardam a URL pública completa ('.../object/public/avatars/...?t=...');
+ * com o bucket privado esse valor precisa virar caminho antes de assinar.
+ * Aceita rotas /object/public/, /object/sign/ e /object/authenticated/, ignora a query
+ * e restringe ao bucket `avatars`. Retorna null quando não dá para normalizar.
  */
-function extensaoDaUrlDoAvatar(avatarUrl: string | null | undefined): string | null {
-  if (!avatarUrl) return null;
-  const nome = (avatarUrl.split('?')[0].split('/').pop() ?? '').toLowerCase();
-  const ponto = nome.lastIndexOf('.');
-  return ponto === -1 ? null : nome.slice(ponto + 1) || null;
+function avatarObjectPath(value: string | null | undefined): string | null {
+  if (!value) return null;
+  if (!isStorageUrl(value)) return value;
+  return parseSupabaseStorageObjectUrl(value, [AVATAR_BUCKET], [])?.path ?? null;
 }
 
 export function AvatarUpload() {
@@ -27,8 +39,34 @@ export function AvatarUpload() {
   const queryClient = useQueryClient();
   const feedback = useActionFeedback();
   const [uploading, setUploading] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Gera URL assinada temporária a partir do caminho armazenado
+  useEffect(() => {
+    const raw = profile?.avatar_url;
+    // Legado: avatar_url pode ser a URL pública completa; normaliza para caminho.
+    // A limpeza (setAvatarUrl(null)) acontece dentro do callback assíncrono para
+    // não chamar setState de forma síncrona dentro do efeito.
+    const filePath = raw && user ? avatarObjectPath(raw) : null;
+    let cancelled = false;
+    (async () => {
+      if (!filePath || isStorageUrl(filePath)) {
+        if (!cancelled) setAvatarUrl(null);
+        return;
+      }
+      const { data, error } = await supabase.storage
+        .from('avatars')
+        .createSignedUrl(filePath, AVATAR_SIGNED_URL_TTL_SECONDS);
+      const signedUrl = data?.signedUrl ?? null;
+      if (!cancelled && !error && signedUrl) {
+        setAvatarUrl(signedUrl);
+      } else if (!cancelled) {
+        setAvatarUrl(null);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [profile?.avatar_url, user]);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -70,34 +108,30 @@ export function AvatarUpload() {
           .upload(filePath, file, { upsert: true });
         if (uploadError) throw uploadError;
 
-        // Get public URL
-        const { data: { publicUrl } } = supabase.storage
-          .from('avatars')
-          .getPublicUrl(filePath);
-
-        const urlWithCache = `${publicUrl}?t=${Date.now()}`;
-
-        // Update profile
+        // Guarda o caminho do arquivo (não a URL assinada, que expira)
         const { error: updateError } = await supabase
           .from('profiles')
-          .update({ avatar_url: urlWithCache })
+          .update({ avatar_url: filePath })
           .eq('user_id', user.id);
         if (updateError) throw updateError;
 
-        // Limpeza do formato antigo: falha aqui não derruba a troca já gravada.
-        if (orfaos.length > 0) {
-          const { error: removeError } = await supabase.storage.from('avatars').remove(orfaos);
-          if (removeError) log.warn('Falha ao apagar o avatar antigo:', removeError);
-        }
-
-        setAvatarUrl(urlWithCache);
         await refreshProfile();
-
-        // O avatar do perfil também é lido pelo cache do react-query (lista de
-        // membros e perfil do usuário). Sem invalidar, o app inteiro continua
-        // mostrando a foto antiga até o staleTime vencer.
-        queryClient.invalidateQueries({ queryKey: ['team-profiles-rpc'] });
-        queryClient.invalidateQueries({ queryKey: ['user-profile'] });
+        // O caminho é fixo (`<user.id>/avatar.<ext>`), então profile.avatar_url pode
+        // não mudar e o useEffect não roda de novo: reassina e atualiza a prévia aqui.
+        try {
+          const { data: signed, error: signError } = await supabase.storage
+            .from(AVATAR_BUCKET)
+            .createSignedUrl(filePath, AVATAR_SIGNED_URL_TTL_SECONDS);
+          if (!signError && signed?.signedUrl) {
+            setAvatarUrl(signed.signedUrl);
+          } else {
+            // Mantém a prévia via refreshProfile; a próxima renderização reassina.
+            log.warn('avatar_resign_after_upload_error', { error: signError?.message ?? 'sem URL assinada' });
+          }
+        } catch (thrown) {
+          // Mantém a prévia via refreshProfile; a próxima renderização reassina.
+          log.warn('avatar_resign_after_upload_error', { error: thrown instanceof Error ? thrown.message : 'desconhecido' });
+        }
       },
       {
         loadingMessage: 'Enviando foto...',
@@ -110,7 +144,7 @@ export function AvatarUpload() {
 
   const handleRemove = async () => {
     if (!user) return;
-    
+
     await feedback.withFeedback(
       async () => {
         const { error } = await supabase
