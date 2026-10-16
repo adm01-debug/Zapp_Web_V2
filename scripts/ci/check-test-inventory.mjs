@@ -75,8 +75,9 @@ const ALLOWLIST = new Set([
   // updated_at) NAO vira "falha recente" (failure_rate_15m / outcome_unknown_24h) na saude do
   // motor. Roda sozinho (docker postgres:17-alpine); o passo em db-guard.yml fica com o dono
   // do workflow (agente nao edita workflow).
-  'scripts/db-audit/talkx-purge-nao-falsa-falha.test.sh',  // --- .test.sh — prova em container descartável (docker); passo de YAML
-  // a promover em db-guard.yml pelo dono do workflow (agente não edita workflow).
+  'scripts/db-audit/talkx-purge-nao-falsa-falha.test.sh',  // --- .test.sh — prova em container descartável (docker); passo de YAML,
+  'scripts/db-audit/talkx-purge-nao-falsa-falha.test.sh',
+  // --- .test.sh — prova em container descartável (docker); passo de YAML  // a promover em db-guard.yml pelo dono do workflow (agente não edita workflow).
   // Item 293 (R2-DB-005): prova que a associação reminders→conversation_tasks preserva a
   // identidade da origem (título+dono+contato+horários) com bijeção. Promover quando o
   // docker descartável estiver disponível no runner do db-guard.yml.
