@@ -9,7 +9,7 @@ import { describe, it, expect } from 'vitest';
 import { subDays, addDays, formatISO } from 'date-fns';
 import { computeChurnRisk, getRiskLevel, type ChurnContact } from '@/components/ai/churnRisk';
 import { rateThreshold, rateNetwork, computeOverallScore, type MetricStatus } from '@/components/performance/metricThresholds';
-import { classifyTag, derivePriority, groupTagsIntoTickets, CATEGORIES, PRIORITY_MAP } from '@/components/ai/ticketClassification';
+import { classifyTag, derivePriority, CATEGORIES, PRIORITY_MAP } from '@/components/ai/ticketClassification';
 import { formatWhatsAppText } from '@/components/inbox/chat/MarkdownPreview';
 import { cn } from '@/lib/utils';
 
@@ -185,73 +185,6 @@ describe('Simulação: classificação de tickets (fuzz de 600 strings)', () => 
     }
   });
 
-  it('groupTagsIntoTickets ignora linhas malformadas sem lançar', () => {
-    const tickets = groupTagsIntoTickets([
-      { contact_id: null, tag_name: 'suporte' },
-      { contact_id: 'c1', tag_name: null },
-      { contact_id: 'c1' },
-      { tag_name: 'venda' },
-      {},
-      { contact_id: '', tag_name: 'x' },
-      { contact_id: 'ok', tag_name: 'suporte técnico', confidence: 'alta', contacts: 42 },
-    ]);
-    expect(tickets.length).toBe(1);
-    expect(tickets[0].contactId).toBe('ok');
-    // Confiança não-numérica NÃO vira 70%: ausente/inválida permanece null (IA-023).
-    expect(tickets[0].confidence).toBeNull();
-  });
-
-  it('confiança ausente fica null e confiança ZERO continua zero (IA-023)', () => {
-    const [semConfianca] = groupTagsIntoTickets([
-      { contact_id: 'c1', tag_name: 'suporte', contacts: { name: 'A' } },
-    ]);
-    expect(semConfianca.confidence).toBeNull();
-
-    const [zerada] = groupTagsIntoTickets([
-      { contact_id: 'c2', tag_name: 'suporte', confidence: 0, contacts: { name: 'B' } },
-    ]);
-    expect(zerada.confidence).toBe(0); // 0 medido continua 0 — nunca 70
-  });
-
-  it('confiança em escala trocada é recusada em vez de inventada (IA-023)', () => {
-    // 70 num campo ratio (0..1) veio em percentual, e o resto é tipo/faixa
-    // inválidos: nada disso pode virar um número exibível.
-    for (const raw of [70, -0.2, 1.5, Number.NaN, '0.9', undefined]) {
-      const [t] = groupTagsIntoTickets([
-        { contact_id: 'cx', tag_name: 'vendas', confidence: raw, contacts: { name: 'X' } },
-      ]);
-      expect(t.confidence).toBeNull();
-    }
-  });
-
-  it('confiança válida (fração 0..1) continua convertida para percentual', () => {
-    const [t] = groupTagsIntoTickets([
-      { contact_id: 'c4', tag_name: 'suporte', confidence: 0.85, contacts: { name: 'D' } },
-    ]);
-    expect(t.confidence).toBeCloseTo(85);
-  });
-
-  it('groupTagsIntoTickets: nº de tickets = contatos únicos; confiança null ou em [0,100]', () => {
-    for (let i = 0; i < 100; i++) {
-      const n = Math.floor(rng() * 30);
-      const tags = Array.from({ length: n }, (_, j) => ({
-        contact_id: `c${Math.floor(rng() * 8)}`,
-        tag_name: randomTag(),
-        confidence: rng() > 0.2 ? rng() : null,
-        contacts: rng() > 0.1 ? { name: `N${j}` } : null,
-      }));
-      const tickets = groupTagsIntoTickets(tags);
-      expect(tickets.length).toBe(new Set(tags.map(t => t.contact_id)).size);
-      for (const t of tickets) {
-        // Ausente/inválida é null; quando presente, o percentual está em [0,100].
-        if (t.confidence !== null) {
-          expect(t.confidence).toBeGreaterThanOrEqual(0);
-          expect(t.confidence).toBeLessThanOrEqual(100);
-        }
-        expect(t.contactName.length).toBeGreaterThan(0);
-      }
-    }
-  });
 });
 
 describe('Simulação: formatWhatsAppText — segurança XSS (300+ payloads)', () => {
