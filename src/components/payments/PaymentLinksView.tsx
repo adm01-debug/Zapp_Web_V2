@@ -18,8 +18,20 @@ import {
 import { cn } from '@/lib/utils';
 import { usePaymentLinks } from '@/hooks/payments/usePaymentLinks';
 
+interface PaymentLink {
+  id: string;
+  title: string;
+  status: 'active' | 'paid' | 'expired' | 'cancelled';
+  amount: number;
+  payment_method: string;
+  created_at: string;
+  description?: string;
+  expires_at?: string | null;
+}
+
 export function PaymentLinksView() {
-  const { links, isLoading: loading, isError, createLink, deleteLink } = usePaymentLinks();
+  const { links: _links, isLoading: loading, isError, createLink, deleteLink } = usePaymentLinks();
+  const links = (_links ?? []) as PaymentLink[];
   const [showDialog, setShowDialog] = useState(false);
 
   // Form

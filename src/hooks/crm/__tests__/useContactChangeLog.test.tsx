@@ -137,7 +137,7 @@ describe('useContactChangeLog — operação', () => {
     const { result } = renderHook(() => useContactChangeLog('c1'), { wrapper });
     await waitFor(() => expect(result.current.entries.length).toBe(3));
 
-    const byId = new Map(result.current.entries.map((e) => [e.id, e]));
+    const byId = new Map(result.current.entries.map((e: { id: number; performedAt: string; operationLabel: string }) => [e.id, e]));
     expect(byId.get(3)?.operationLabel).toBe('Excluído');
     expect(byId.get(2)?.operationLabel).toBe('Restaurado');
     expect(byId.get(1)?.operationLabel).toBe('Criado');
@@ -153,7 +153,7 @@ describe('useContactChangeLog — operação', () => {
     const { result } = renderHook(() => useContactChangeLog('c1'), { wrapper });
     await waitFor(() => expect(result.current.entries.length).toBe(2));
 
-    expect(result.current.entries.map((e) => e.performedAt)).toEqual([
+    expect(result.current.entries.map((e: { id: number; performedAt: string }) => e.performedAt)).toEqual([
       h.state.rows[0].performed_at,
       h.state.rows[1].performed_at,
     ]);
@@ -188,7 +188,7 @@ describe('useContactChangeLog — leitura', () => {
     const { result } = renderHook(() => useContactChangeLog('c1'), { wrapper });
     await waitFor(() => expect(result.current.entries.length).toBe(1500));
 
-    const ids = result.current.entries.map((e) => e.id);
+    const ids = result.current.entries.map((e: { id: number; performedAt: string }) => e.id);
     expect(new Set(ids).size).toBe(1500);
     expect(ids).toEqual(h.state.rows.map((r) => r.id));
     expect(h.state.rangeCalls).toBeGreaterThanOrEqual(2);

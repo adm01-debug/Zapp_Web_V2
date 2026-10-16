@@ -1,4 +1,3 @@
-import { Loader2 } from 'lucide-react';
 import {
   AlertDialog, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -54,7 +53,7 @@ export function ConnectionDisconnectDialog({
         <AlertDialogFooter>
           <AlertDialogCancel disabled={pending}>Cancelar</AlertDialogCancel>
           <AlertDialogAction
-            onClick={(e) => { e.preventDefault(); void onConfirm(); }}
+            onClick={(e: { preventDefault(): void }) => { e.preventDefault(); void onConfirm(); }}
             disabled={pending}
             aria-busy={pending}
             className="bg-destructive hover:bg-destructive/90"

@@ -131,9 +131,9 @@ describe('PaymentLinksView', () => {
     }
     const excluidores = vi
       .mocked(usePaymentLinks)
-      .mock.results.map((r) => (r.value as { deleteLink: ReturnType<typeof vi.fn> }).deleteLink);
+      .mock.results.map((r: { type: string; value: unknown }) => (r.value as { deleteLink: ReturnType<typeof vi.fn> }).deleteLink);
     expect(excluidores.length).toBeGreaterThan(0);
-    await waitFor(() => expect(excluidores.some((m) => m.mock.calls.length > 0)).toBe(true));
+    await waitFor(() => expect(excluidores.some((m: ReturnType<typeof vi.fn>) => m.mock.calls.length > 0)).toBe(true));
     expect(writeText).not.toHaveBeenCalled();
   });
 

@@ -47,7 +47,7 @@ export function useTarefasAgendadas() {
       // traduzido por `mensagemDeErro` antes de chegar à tela.
       if (erroConsulta) throw erroConsulta;
 
-      return (linhas ?? []).map((linha) => ({
+      return (linhas ?? []).map((linha: TarefaAgendada) => ({
         jobname: linha.jobname,
         schedule: linha.schedule,
         active: linha.active,
