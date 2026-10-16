@@ -2,6 +2,20 @@ import { useState, useCallback } from 'react';
 import { InteractiveMessage, InteractiveButton, InteractiveListSection } from '@/types/chat';
 import { toast } from '@/hooks/ui/use-toast';
 
+/**
+ * Só aceita link absoluto com esquema `https://` e host parseável. Sem isso o
+ * renderizador (InteractiveMessage.tsx) abre o que vier em `window.open`, o que
+ * aceitaria link relativo, `javascript:` ou outro esquema.
+ */
+export function isHttpsUrl(value?: string): boolean {
+  if (!value || !value.trim()) return false;
+  try {
+    return new URL(value.trim()).protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 export function useInteractiveMessage() {
   const [messageType, setMessageType] = useState<'buttons' | 'list'>('buttons');
   const [body, setBody] = useState('');
@@ -44,6 +58,17 @@ export function useInteractiveMessage() {
 
   const removeButton = useCallback((index: number) => {
     setButtons(prev => prev.filter((_, i) => i !== index));
+  }, []);
+
+  // Sobe o botão para a primeira posição (a ordem enviada ao WhatsApp é a da
+  // lista). No primeiro botão não há para onde subir: devolve a lista intacta.
+  const moveButtonToFirst = useCallback((index: number) => {
+    setButtons(prev => {
+      if (index <= 0 || index >= prev.length) return prev;
+      const next = [...prev];
+      const [moved] = next.splice(index, 1);
+      return [moved, ...next];
+    });
   }, []);
 
   const addSection = useCallback(() => {
@@ -99,6 +124,22 @@ export function useInteractiveMessage() {
     );
   }, []);
 
+  // Sobe/desce a linha uma posição por vez, trocando apenas de lugar os objetos
+  // da linha (id, título e descrição seguem com a linha). Nos extremos devolve
+  // a seção intacta.
+  const moveRow = useCallback((sectionIndex: number, rowIndex: number, direction: 'up' | 'down') => {
+    setSections(prev =>
+      prev.map((s, si) => {
+        if (si !== sectionIndex) return s;
+        const target = direction === 'up' ? rowIndex - 1 : rowIndex + 1;
+        if (target < 0 || target >= s.rows.length) return s;
+        const rows = [...s.rows];
+        [rows[rowIndex], rows[target]] = [rows[target], rows[rowIndex]];
+        return { ...s, rows };
+      })
+    );
+  }, []);
+
   const toggleSection = useCallback((sectionId: string) => {
     setExpandedSections(prev =>
       prev.includes(sectionId) ? prev.filter(id => id !== sectionId) : [...prev, sectionId]
@@ -131,9 +172,15 @@ export function useInteractiveMessage() {
           toast({ title: 'ID obrigatório', description: 'Botões de resposta precisam ter um identificador', variant: 'destructive' });
           return false;
         }
-        if (button.type === 'url' && !button.url) {
-          toast({ title: 'URL obrigatória', description: 'Botões de URL precisam ter um link', variant: 'destructive' });
-          return false;
+        if (button.type === 'url') {
+          if (!button.url) {
+            toast({ title: 'URL obrigatória', description: 'Botões de URL precisam ter um link', variant: 'destructive' });
+            return false;
+          }
+          if (!isHttpsUrl(button.url)) {
+            toast({ title: 'URL inválida', description: 'Use um endereço https:// válido (ex.: https://promobrindes.com.br)', variant: 'destructive' });
+            return false;
+          }
         }
         if (button.type === 'call' && !/^\d{8,15}$/.test((button.phoneNumber ?? '').replace(/\D/g, ''))) {
           toast({ title: 'Telefone obrigatório', description: 'Botões de ligação precisam ter um número com 8 a 15 dígitos', variant: 'destructive' });
@@ -190,7 +237,7 @@ export function useInteractiveMessage() {
     sections, expandedSections,
     resetForm, addButton, updateButton, removeButton,
     addSection, updateSection, removeSection,
-    addRowToSection, updateRow, removeRow,
+    addRowToSection, updateRow, removeRow, moveRow, moveButtonToFirst,
     toggleSection, getTotalRows,
     validate, buildMessage,
   };

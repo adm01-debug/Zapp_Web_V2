@@ -44,6 +44,7 @@ interface ChatMessagesAreaProps {
   onCopy: (content: string) => void;
   onScrollToMessage: (messageId: string) => void;
   onInteractiveButtonClick: (button: InteractiveButton) => void;
+  onInteractiveListItemClick?: (sectionTitle: string, rowId: string, rowTitle: string) => void;
   onEditStart?: (message: Message) => void;
   highlightedMessageIds?: Set<string>;
   activeHighlightId?: string | null;
@@ -103,7 +104,7 @@ function isNearBottom(el: HTMLElement): boolean {
 export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessagesAreaProps>(({ 
   messages, isContactTyping, isColleagueTyping = false, typingUserName, ttsLoading, ttsPlaying, ttsMessageId,
   instanceName, conversationId, contactJid, contactAvatar, onSpeak, onStop, onReply, onForward, onCopy,
-  onScrollToMessage, onInteractiveButtonClick, onEditStart, highlightedMessageIds, activeHighlightId, searchQuery,
+  onScrollToMessage, onInteractiveButtonClick, onInteractiveListItemClick, onEditStart, highlightedMessageIds, activeHighlightId, searchQuery,
   hasOlderMessages, loadingOlderMessages, onLoadOlderMessages,
 }, ref) => {
   const queryClient = useQueryClient();
@@ -444,6 +445,7 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
                 onCopy={onCopy}
                 onScrollToMessage={onScrollToMessage}
                 onInteractiveButtonClick={onInteractiveButtonClick}
+                onInteractiveListItemClick={onInteractiveListItemClick}
                 onEditStart={onEditStart}
                 onMessageDeleted={handleMessageDeleted}
                 registerRef={(el) => { messageRefs.current[message.id] = el; }}
