@@ -744,13 +744,32 @@ export const EVOLUTION_API_ACTIONS: readonly string[] = [
 // `''`, caía na checagem do E17 e seguia o mesmo caminho — `null` continua
 // equivalente a "ausente". O que passa a ser recusado é o TIPO errado
 // (`{instanceName: 5}` virava `"5"` e mirava uma instância inexistente).
+// E17/B2 (12/10/2026): o NOME da instância vira path/query da URL que vai ao
+// provedor (`/instance/delete/${instance}`, `?instanceName=${instance}`). Sem um
+// conjunto de caracteres, um nome com `/`, `?`, `#` ou espaço reescrevia a rota
+// (path traversal / injeção de query). O app só gera `[a-z0-9_]` (front
+// generateInstanceName) e as conexões legadas são alfanuméricas; o conjunto
+// aceita também `-` e maiúsculas para não quebrar nomes já gravados. Recusa
+// (422) em vez de escapar-e-seguir: nome fora do conjunto é payload inválido.
+export const INSTANCE_NAME_PATTERN = /^[A-Za-z0-9_-]{1,128}$/;
+
 export const EvolutionApiRequestSchema = z.object({
   action: z.enum(EVOLUTION_API_ACTIONS as [string, ...string[]], {
     errorMap: () => ({ message: 'Ação desconhecida: não é uma ação suportada pelo evolution-api.' }),
   }).nullish(),
   instanceName: z.string().max(200).nullish(),
   instance: z.string().max(200).nullish(),
-}).passthrough();
+}).passthrough().superRefine((value, ctx) => {
+  const raw = (value as { instanceName?: unknown; instance?: unknown });
+  const candidate = raw.instanceName ?? raw.instance;
+  if (typeof candidate !== 'string' || candidate.length === 0) return;
+  if (INSTANCE_NAME_PATTERN.test(candidate)) return;
+  ctx.addIssue({
+    code: z.ZodIssueCode.custom,
+    path: [raw.instanceName != null ? 'instanceName' : 'instance'],
+    message: 'Nome de instância inválido — use apenas letras, números, "-" e "_" (até 128 caracteres).',
+  });
+});
 
 /**
  * Ações globais — as ÚNICAS que não operam sobre uma instância (E17).
@@ -765,4 +784,49 @@ export const EVOLUTION_API_INSTANCE_FREE_ACTIONS: readonly string[] = [
 /** `instance` (instanceName) é obrigatória para a ação? */
 export function evolutionApiRequiresInstance(action: string): boolean {
   return !EVOLUTION_API_INSTANCE_FREE_ACTIONS.includes(action);
+}
+
+// ─── Telefone brasileiro (create-connection) ─────────────────
+// Mesma regra do V3 (src/lib/phoneUtils.ts): 67 DDDs válidos + nono dígito do
+// celular antigo (DDD + 8 dígitos iniciando em 6-9). A saída é E.164 só-dígitos
+// COM o DDI 55 — o formato canônico do resto do Edge
+// (`_shared/messaging/phone.ts`). Recusa (nunca trunca/corrige em silêncio)
+// qualquer coisa fora disso: é o que impede gravar `phone_number` inválido e só
+// descobrir no pareamento.
+export const VALID_BR_DDDS: ReadonlySet<string> = new Set([
+  '11', '12', '13', '14', '15', '16', '17', '18', '19',
+  '21', '22', '24', '27', '28',
+  '31', '32', '33', '34', '35', '37', '38',
+  '41', '42', '43', '44', '45', '46',
+  '47', '48', '49',
+  '51', '53', '54', '55',
+  '61', '62', '63', '64', '65', '66', '67', '68', '69',
+  '71', '73', '74', '75', '77', '79',
+  '81', '82', '83', '84', '85', '86', '87', '88', '89',
+  '91', '92', '93', '94', '95', '96', '97', '98', '99',
+]);
+
+export type BrazilianPhoneResult =
+  | { ok: true; value: string }
+  | { ok: false; message: string };
+
+/** Normaliza/valida um telefone brasileiro para E.164 só-dígitos (DDI 55). */
+export function normalizeBrazilianPhone(raw: unknown): BrazilianPhoneResult {
+  const digits = String(raw ?? '').replace(/\D/g, '');
+  if (!digits) return { ok: false, message: 'Telefone é obrigatório.' };
+  let national = digits;
+  if (national.startsWith('55') && (national.length === 12 || national.length === 13)) {
+    national = national.slice(2);
+  }
+  if (national.length !== 10 && national.length !== 11) {
+    return { ok: false, message: 'Telefone inválido: informe DDD + número (10 ou 11 dígitos).' };
+  }
+  const ddd = national.slice(0, 2);
+  if (!VALID_BR_DDDS.has(ddd)) {
+    return { ok: false, message: `Telefone inválido: DDD ${ddd} não existe.` };
+  }
+  if (national.length === 10 && '6789'.includes(national[2])) {
+    national = `${national.slice(0, 2)}9${national.slice(2)}`;
+  }
+  return { ok: true, value: `55${national}` };
 }
