@@ -86,58 +86,22 @@ function roleChangeErrorMessage(error: { code?: string; message?: string }): str
   return 'Erro ao atualizar role';
 }
 
-// Campos que a criação de usuário (Edge `create-user`) valida no servidor.
-export type CreateUserField = 'name' | 'email' | 'password' | 'role';
+// Mensagens claras para os erros da RPC `set_voip_profile_credentials`
+// (PostgREST devolve o texto do RAISE EXCEPTION em `error.message`).
+const RAMAL_ERROR_MESSAGES: Record<string, string> = {
+  ramal_em_uso: 'Este ramal já está em uso por outro atendente.',
+  invalid_ramal: 'Ramal inválido: use letras, números e . _ @ + - (até 64 caracteres).',
+  invalid_sip_password: 'Informe a senha SIP (1 a 256 caracteres).',
+  not_authorized: 'Apenas administradores podem definir o ramal.',
+  profile_not_found: 'Usuário não encontrado para definir o ramal.',
+};
 
-export interface CreateUserFieldError {
-  /** Campo do formulário que originou o erro; `null` quando não dá para atribuir. */
-  field: CreateUserField | null;
-  /** Mensagem em pt-BR para mostrar ao lado do campo. */
-  message: string;
-}
-
-// A Edge devolve tudo num único texto (mensagem do GoTrue ou os erros do zod
-// unidos por '; '). Traduzimos esse texto para o CAMPO que o formulário destaca,
-// sem mostrar a mensagem crua do servidor.
-const CREATE_USER_ERROR_RULES: ReadonlyArray<{ field: CreateUserField; pattern: RegExp; message: string }> = [
-  // E-mail duplicado chega do GoTrue como "...already been registered".
-  { field: 'email', pattern: /already\s+(been\s+)?registered|already\s+exists|duplicate|j[áa]\s+cadastrad/i, message: 'Este e-mail já está cadastrado.' },
-  { field: 'email', pattern: /email/i, message: 'Informe um e-mail válido.' },
-  { field: 'password', pattern: /password|senha/i, message: 'A senha deve ter pelo menos 8 caracteres.' },
-  // O zod da Edge não devolve o NOME do campo inválido (a mensagem é
-  // "Invalid enum value. Expected ..."); o único enum escalar do corpo é `role`.
-  { field: 'role', pattern: /invalid enum value|role|papel/i, message: 'Papel de usuário inválido.' },
-  { field: 'name', pattern: /name|nome/i, message: 'Informe o nome do usuário.' },
-];
-
-export function mapCreateUserError(serverMessage: string | null | undefined): CreateUserFieldError {
-  const texto = typeof serverMessage === 'string' ? serverMessage : '';
-  for (const rule of CREATE_USER_ERROR_RULES) {
-    if (rule.pattern.test(texto)) return { field: rule.field, message: rule.message };
+function ramalErrorMessage(error: { message?: string }): string {
+  const message = error.message ?? '';
+  for (const [code, text] of Object.entries(RAMAL_ERROR_MESSAGES)) {
+    if (message.includes(code)) return text;
   }
-  return { field: null, message: 'Erro ao criar usuário' };
-}
-
-// Mensagem e status de um erro de `functions.invoke`. O supabase-js devolve
-// `FunctionsHttpError` com o `Response` cru em `error.context`; o corpo é
-// `{ error: '...' }` na Edge padrão, mas pode vir vazio/HTML de um proxy —
-// por isso a leitura do corpo é guardada.
-async function readEdgeError(error: unknown): Promise<{ status: number | null; message: string }> {
-  const context = (error as { context?: { status?: number; clone?: () => Response } } | null)?.context;
-  if (context && typeof context.status === 'number' && typeof context.clone === 'function') {
-    let message = '';
-    try {
-      const parsed: unknown = await context.clone().json();
-      if (parsed && typeof parsed === 'object' && typeof (parsed as { error?: unknown }).error === 'string') {
-        message = (parsed as { error: string }).error;
-      }
-    } catch {
-      // corpo não-JSON (HTML de proxy, resposta vazia): segue com o padrão.
-    }
-    return { status: context.status, message: message || 'Erro ao criar usuário' };
-  }
-  const message = error instanceof Error && error.message ? error.message : 'Erro ao criar usuário';
-  return { status: null, message };
+  return 'Erro ao salvar o ramal.';
 }
 
 export const accessLevelConfig: Record<string, { label: string; description: string }> = {
@@ -315,6 +279,28 @@ export function useAdminData(activeTab: 'users' | 'audit' | 'crm') {
     return true;
   }, [fetchData]);
 
+  // PE-104/105: provisiona a credencial SIP do atendente pela RPC atômica
+  // `set_voip_profile_credentials` (SECURITY DEFINER, admin/supervisor). A senha vai
+  // direto para o Vault — nunca fica em coluna comum nem volta para a tela.
+  const handleSaveRamal = useCallback(async (
+    profileId: string,
+    ramal: string,
+    sipPassword: string,
+  ): Promise<boolean> => {
+    const { error } = await supabase.rpc('set_voip_profile_credentials', {
+      p_profile_id: profileId,
+      p_ramal: ramal,
+      p_sip_password: sipPassword,
+    });
+    if (error) {
+      toast.error(ramalErrorMessage(error));
+      return false;
+    }
+    toast.success('Ramal salvo.');
+    fetchData();
+    return true;
+  }, [fetchData]);
+
   interface CreateUserPayload {
     name: string;
     nickname?: string;
@@ -405,6 +391,7 @@ export function useAdminData(activeTab: 'users' | 'audit' | 'crm') {
     handleRoleChange,
     handleToggleActive,
     handleSaveUser,
+    handleSaveRamal,
     handleCreateUser,
     createUserError,
   };
