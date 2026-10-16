@@ -398,9 +398,19 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
       closeDialog('scheduleDialog');
     } catch (err) {
       // Falha de upload, de locator ou de persistência: remove o objeto órfão
-      // best-effort e não anuncia sucesso (nenhum closeDialog no caminho de erro).
+      // best-effort, avisa na tela e RELANÇA. Sem o relançamento o
+      // `ScheduleMessageDialog` tratava a promessa como sucesso, anunciava "Mensagem
+      // agendada!" e fechava — agendamento que não existe em lugar nenhum (N8).
       if (storagePath) await removeStoredObjectBestEffort('whatsapp-media', storagePath);
       log.error('Failed to schedule message:', err);
+      toast({
+        title: 'Não foi possível agendar',
+        description: attachment
+          ? `Falha ao agendar o anexo "${attachment.name}": ${err instanceof Error ? err.message : 'erro desconhecido'}. Tente de novo.`
+          : 'A mensagem não foi salva. Tente de novo.',
+        variant: 'destructive',
+      });
+      throw err;
     }
   };
 

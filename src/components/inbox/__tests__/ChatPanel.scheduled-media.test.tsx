@@ -22,6 +22,7 @@ const mocks = vi.hoisted(() => ({
   getPublicUrl: vi.fn(),
   remove: vi.fn(),
   scheduleMessage: vi.fn(),
+  toast: vi.fn(),
   dialogsProps: { current: null as null | Record<string, unknown> },
 }));
 
@@ -73,7 +74,7 @@ vi.mock('@/hooks/system/useUserSettings', () => ({
   useUserSettings: () => ({ settings: {}, updateSettings: vi.fn(), saveSettings: vi.fn() }),
 }));
 
-vi.mock('@/hooks/ui/use-toast', () => ({ toast: vi.fn() }));
+vi.mock('@/hooks/ui/use-toast', () => ({ toast: mocks.toast }));
 
 vi.mock('@/hooks/chat/useScheduledMessages', () => ({
   useScheduledMessages: () => ({
@@ -180,14 +181,24 @@ function renderPanel() {
   );
 }
 
-/** Invoca o handler de agendamento capturado de ChatDialogs. */
+/**
+ * Invoca o handler de agendamento capturado de ChatDialogs.
+ * A falha é devolvida (e não lançada): o handler RELANÇA de propósito, para o diálogo não
+ * anunciar sucesso quando o agendamento não existe — os testes de erro conferem isso.
+ */
 async function scheduleAttachment(file: File, scheduledAt = new Date(Date.now() + 3600_000)) {
   const props = mocks.dialogsProps.current as unknown as {
     onScheduleMessage: (message: string, scheduledAt: Date, attachment?: File) => Promise<void>;
   };
+  let error: unknown = null;
   await act(async () => {
-    await props.onScheduleMessage('Olá, segue o anexo', scheduledAt, file);
+    try {
+      await props.onScheduleMessage('Olá, segue o anexo', scheduledAt, file);
+    } catch (err) {
+      error = err;
+    }
   });
+  return { error };
 }
 
 beforeEach(() => {
@@ -248,24 +259,43 @@ describe('ChatPanel — anexo agendado no path canônico do contato', () => {
     expect(payload.messageType).toBe('image');
   });
 
-  it('limpa o objeto do storage quando a persistência do agendamento falha', async () => {
+  it('limpa o objeto do storage e relança quando a persistência do agendamento falha', async () => {
     mocks.scheduleMessage.mockRejectedValueOnce(new Error('insert falhou'));
     renderPanel();
-    await scheduleAttachment(createFile());
+    const { error } = await scheduleAttachment(createFile());
 
     await waitFor(() => expect(mocks.remove).toHaveBeenCalledTimes(1));
     const [uploadedPath] = mocks.upload.mock.calls[0] as [string];
     expect(mocks.remove.mock.calls[0][0]).toEqual([uploadedPath]);
     expect(mocks.scheduleMessage).toHaveBeenCalledTimes(1);
+    // Relança: o diálogo mantém o botão e não anuncia "Mensagem agendada!" (N8).
+    expect(error).toBeInstanceOf(Error);
+    expect((error as Error).message).toBe('insert falhou');
+    // Aviso claro na tela, com o motivo real.
+    expect(mocks.toast).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Não foi possível agendar',
+        variant: 'destructive',
+        description: expect.stringContaining('insert falhou'),
+      }),
+    );
   });
 
-  it('limpa o objeto quando a referência durável (locator) não é gerada', async () => {
+  it('limpa o objeto e relança quando a referência durável (locator) não é gerada', async () => {
     mocks.getPublicUrl.mockReturnValue({ data: null });
     renderPanel();
-    await scheduleAttachment(createFile());
+    const { error } = await scheduleAttachment(createFile());
 
     await waitFor(() => expect(mocks.remove).toHaveBeenCalledTimes(1));
     expect(mocks.scheduleMessage).not.toHaveBeenCalled();
+    expect(error).toBeInstanceOf(Error);
+    expect(mocks.toast).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Não foi possível agendar',
+        variant: 'destructive',
+        description: expect.stringContaining('foto do cliente.png'),
+      }),
+    );
   });
 
   it.each([

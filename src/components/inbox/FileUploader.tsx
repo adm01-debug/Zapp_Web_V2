@@ -97,7 +97,14 @@ function QueueFileItem({ queuedFile, onRemove, onRetry, disabled }: { queuedFile
               </motion.span>
             )}
           </div>
-          {(queuedFile.status === 'uploading' || queuedFile.status === 'sending') && <Progress value={queuedFile.progress} className="h-1 mt-2" aria-label={`Progresso de ${queuedFile.file.name}`} />}
+          {(queuedFile.status === 'uploading' || queuedFile.status === 'sending') && (
+            queuedFile.indeterminate ? (
+              /* Sem evento de bytes: indeterminado com o mesmo aria-label, nunca 0% parado. */
+              <Progress aria-label={`Progresso de ${queuedFile.file.name}`} className="h-1 mt-2" />
+            ) : (
+              <Progress value={queuedFile.progress} className="h-1 mt-2" aria-label={`Progresso de ${queuedFile.file.name}`} />
+            )
+          )}
         </div>
         {queuedFile.status === 'error' && queuedFile.validation.valid && (
           <motion.div
@@ -134,13 +141,17 @@ export const FileUploader = forwardRef<FileUploaderRef, FileUploaderProps>(({
 
   const {
     isDialogOpen, filePreview, fileQueue, isMultiMode, caption, setCaption,
-    uploading, uploadProgress, uploadStage, currentQueueIndex,
+    uploading, uploadProgress, uploadStage, currentQueueIndex, uploadIndeterminate,
     apiLoading, canSend, validFilesCount, totalQueueProgress,
     handleClose, handleSendFile, handleSendAllFiles, handleFileChange,
     handleExternalFile, handleExternalFiles, removeFromQueue, retryQueueFile,
   } = useFileUploadLogic({ instanceName, recipientNumber, contactId, connectionId, onFileSelect, onFileSent, fileInputRef });
 
   const failedCount = fileQueue.filter(f => f.status === 'error').length;
+  // Total do lote: indeterminado quando NENHUM item inacabado tem bytes para acompanhar
+  // (todos sem `stream()` ou navegador sem corpo em stream) — nunca média parada em 0%.
+  const pendentesLote = fileQueue.filter(f => f.status !== 'done');
+  const totalIndeterminado = uploading && pendentesLote.length > 0 && pendentesLote.every(f => f.indeterminate || !f.validation.valid);
 
   useImperativeHandle(ref, () => ({
     handleExternalFile,
@@ -233,11 +244,30 @@ export const FileUploader = forwardRef<FileUploaderRef, FileUploaderProps>(({
               )}
               <AnimatePresence>
                 {uploading && (
-                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-2">
-                    <Progress value={uploadProgress} className="h-2" aria-label={`Progresso de ${filePreview.file.name}`} />
-                    <p className="text-xs text-muted-foreground text-center">
-                      {uploadStage === 'uploading' ? `Fazendo upload... ${uploadProgress}%` : `Enviando via WhatsApp... ${uploadProgress}%`}
-                    </p>
+                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-2" aria-busy={uploading}>
+                    {/* Sem evento de bytes no navegador a barra fica indeterminada: melhor
+                        dizer "enviando" do que cravar 0% enquanto o arquivo sobe. */}
+                    {uploadIndeterminate ? (
+                      <>
+                        {/* Sem evento de bytes não há porcentagem honesta: Progress
+                            indeterminado (sem `value`, logo sem `aria-valuenow`) com o
+                            MESMO aria-label da barra determinada. */}
+                        <Progress
+                          aria-label={`Progresso de ${filePreview.file.name}`}
+                          className="motion-safe:animate-pulse motion-reduce:animate-none"
+                        />
+                        <p className="text-xs text-muted-foreground text-center" data-testid="upload-indeterminado">
+                        {uploadStage === 'uploading' ? 'Fazendo upload...' : 'Enviando via WhatsApp...'}
+                      </p>
+                      </>
+                    ) : (
+                      <>
+                        <Progress value={uploadProgress} className="h-2" aria-label={`Progresso de ${filePreview.file.name}`} />
+                        <p className="text-xs text-muted-foreground text-center">
+                          {uploadStage === 'uploading' ? `Fazendo upload... ${uploadProgress}%` : `Enviando via WhatsApp... ${uploadProgress}%`}
+                        </p>
+                      </>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -262,7 +292,11 @@ export const FileUploader = forwardRef<FileUploaderRef, FileUploaderProps>(({
 
           {isMultiMode && uploading && (
             <div className="space-y-2">
-              <Progress value={totalQueueProgress} className="h-2" aria-label="Progresso total" />
+              {totalIndeterminado ? (
+                <Progress aria-label="Progresso total" className="motion-safe:animate-pulse motion-reduce:animate-none" />
+              ) : (
+                <Progress value={totalQueueProgress} className="h-2" aria-label="Progresso total" />
+              )}
               <p className="text-xs text-muted-foreground text-center">Enviando arquivo {currentQueueIndex + 1} de {fileQueue.length}...</p>
             </div>
           )}

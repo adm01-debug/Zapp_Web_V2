@@ -185,7 +185,13 @@ describe('useFileUploadLogic — U7: fila, limites e compressão', () => {
     });
 
     await waitFor(() => expect(mocks.toastSuccess).toHaveBeenCalledWith(expect.stringContaining('1 arquivo(s) enviado(s)')));
-    expect(mocks.toastError).toHaveBeenCalledWith(expect.stringContaining('1 arquivo(s) falharam'));
+    expect(mocks.toastError).toHaveBeenCalledWith(
+      expect.stringContaining('1 arquivo(s) falharam'),
+      expect.objectContaining({
+        duration: 8000,
+        action: expect.objectContaining({ label: 'Tentar de novo' }),
+      }),
+    );
   });
 
   it('removeFromQueue revoga o object URL do preview removido', () => {
