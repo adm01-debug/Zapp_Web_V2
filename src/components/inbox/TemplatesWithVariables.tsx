@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { log } from '@/lib/logger';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,6 +36,8 @@ interface TemplateWithVariablesProps {
 }
 
 export function TemplatesWithVariables({ templates, onUseTemplate, contactData }: TemplateWithVariablesProps) {
+  const { profile } = useAuth();
+  const agentName = profile?.name?.trim() || undefined;
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [editorOpen, setEditorOpen] = useState(false);
@@ -51,7 +54,7 @@ export function TemplatesWithVariables({ templates, onUseTemplate, contactData }
   const categories = useMemo(() => ['all', ...Array.from(new Set(templates.map(t => t.category)))], [templates]);
 
   const handleUseTemplate = (template: Template) => {
-    const processedContent = replaceVariables(template.content, contactData);
+    const processedContent = replaceVariables(template.content, contactData, undefined, agentName);
     onUseTemplate(processedContent, {});
     toast.success(`Template "${template.title}" aplicado!`);
   };
@@ -112,7 +115,7 @@ export function TemplatesWithVariables({ templates, onUseTemplate, contactData }
           </div>
         </ScrollArea>
       </CardContent>
-      <TemplateEditorDialog open={editorOpen} onOpenChange={setEditorOpen} template={editingTemplate} onSave={handleSave} />
+      <TemplateEditorDialog open={editorOpen} onOpenChange={setEditorOpen} template={editingTemplate} onSave={handleSave} agentName={agentName} />
     </Card>
   );
 }
