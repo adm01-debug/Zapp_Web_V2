@@ -177,25 +177,23 @@ const ALLOWLIST = new Set([
   // contacts_stats/search_contacts (admin tudo, agente so o seu, anon/PUBLIC sem
   // EXECUTE, service_role tudo) e que o Rollback remove a funcao. Passo de uma linha
   // em db-guard.yml a promover pelo dono do workflow.
-  'scripts/db-audit/contacts-stats-series-rpc.test.sh',]);,
   'scripts/db-audit/contacts-stats-series-rpc.test.sh',
   // #122 (R3-DELTA-003, cartão t_c7543cc1): prova em Postgres 17 descartável (docker) que o cursor
   // composto (created_at, id) não perde a cauda empatada, que p_after sem p_after_id erra, o ACL sob
   // roles reais, a idempotência e o Rollback. O passo no db-guard.yml é uma linha
   // (`bash scripts/db-audit/talkx-campaign-logs-cursor.test.sh`) — promover pelo dono do workflow.
-  'scripts/db-audit/talkx-campaign-logs-cursor.test.sh',]);,
+  'scripts/db-audit/talkx-campaign-logs-cursor.test.sh',
   // R2-DB (11/10/2026): prova o log de tentativas de envio (public.message_attempts) em PG 17
   // descartavel com papel real (authenticated/anon/service_role) e rollback executado. Passo de
   // uma linha em db-guard.yml — `bash scripts/db-audit/message-attempts-log.test.sh` — a promover
   // pelo dono do workflow (agente nao edita workflow).
   'scripts/db-audit/message-attempts-log.test.sh',
-]);// Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em,
   // R2-AUTH-036 (Sala de Crise): prova em Postgres 17 descartavel (docker) que a
   // RPC crisis_room_snapshot() mede as 4 metricas num agregado unico (sem o corte
   // de 1.000 linhas do PostgREST) e nega agente comum/anon/service_role com
   // excecao, nunca com zeros. Passo de YAML a promover em db-guard.yml pelo dono
   // do workflow (REGISTRO PENDENTE).
-  'scripts/db-audit/crisis-room-snapshot.test.sh',]);,
+  'scripts/db-audit/crisis-room-snapshot.test.sh',
   // #174 (t_ae0a55a6): prova em Postgres 17 descartavel (docker, container proprio) que a RPC
   // set_default_whatsapp_connection (migration 20261006234158_whatsapp_default_connection_rpc_atomica.sql)
   // troca a conexao padrao do WhatsApp numa transacao, serializada por advisory lock, autorizada por
