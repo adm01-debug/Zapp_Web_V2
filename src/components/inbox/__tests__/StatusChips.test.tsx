@@ -154,6 +154,15 @@ describe('StatusChips', () => {
     }
   });
 
+  it('mostra 0 em "Arquivadas" quando a fixture padrao nao tem conversation_status archived', () => {
+    const semArquivadas: ConversationWithMessages[] = [
+      makeConversation({ id: 'c1', assigned_to: CURRENT_PROFILE_ID, unreadCount: 2, conversation_status: 'open' }),
+      makeConversation({ id: 'c2', assigned_to: null, conversation_status: 'waiting' }),
+    ];
+    render(<StatusChips conversations={semArquivadas} chipTab="all" onChipTabChange={() => {}} />);
+    expect(screen.getByTestId('status-chip-archived')).toHaveTextContent('0');
+    expect(screen.getByTestId('status-chip-all')).toHaveTextContent('2');
+  });
   it('conta "Arquivadas" pelo conversation_status real e as exclui da lista ativa', () => {
     // Arquivada NÃO é "sem mensagens": o status persistido em
     // contacts.conversation_status é a fonte. c2 tem mensagens e não lidas, e
