@@ -126,6 +126,17 @@ export const FILTER_OPTIONS: FilterOption[] = [
     iconColor: 'text-info',
     match: (c) => !isGroup(c.contact.phone) && c.contact.contact_type === 'transportadora',
   },
+  {
+    // `parceiro` é um dos 6 valores aceitos pelo CHECK de contacts.contact_type
+    // (20260928180000_add_contact_type_check_constraint.sql) e existe na UI de
+    // Contatos (contactTypeConfig.tsx). Sem esta opção, contato parceiro não
+    // casava nenhum filtro de tipo — e as categorias deixavam de ser partição.
+    value: 'parceiro',
+    label: 'Parceiros',
+    icon: Handshake,
+    iconColor: 'text-secondary',
+    match: (c) => !isGroup(c.contact.phone) && c.contact.contact_type === 'parceiro',
+  },
 ];
 
 // Separators go AFTER these values

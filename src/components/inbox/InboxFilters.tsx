@@ -83,9 +83,25 @@ export function InboxFilters({
     filters.tags.length +
     (filters.agentId ? 1 : 0) +
     (filters.dateRange.from ? 1 : 0) +
-    (selectedContactType ? 1 : 0) +
+    (selectedContactType && selectedContactType !== 'all' ? 1 : 0) +
     (selectedQueueId ? 1 : 0) +
     (showAll ? 1 : 0);
+
+  // 'Todos os tipos' (valor 'all') é ausência de filtro: o botão fica marcado
+  // com `null` (estado inicial) e a URL legada com `'all'` também é reconhecida.
+  const isContactTypeSelected = (value: string) =>
+    (selectedContactType ?? 'all') === value;
+
+  const isDatePresetSelected = (preset: typeof DATE_PRESETS[number]) => {
+    if (!filters.dateRange.from || !filters.dateRange.to) return false;
+    const range = preset.getValue();
+    return (
+      !!range.from &&
+      !!range.to &&
+      range.from.getTime() === filters.dateRange.from.getTime() &&
+      range.to.getTime() === filters.dateRange.to.getTime()
+    );
+  };
 
   const triggerBadgeCount = activeFiltersCount;
 
@@ -154,13 +170,14 @@ export function InboxFilters({
               <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1">
                 <MessageCircle className="h-3 w-3" /> Status
               </Label>
-              <div className="flex flex-wrap gap-1">
+              <div className="flex flex-wrap gap-1" role="group" aria-label="Status">
                 {STATUS_OPTIONS.map(opt => (
                   <Button
                     key={opt.value}
                     variant={filters.status.includes(opt.value) ? 'default' : 'outline'}
                     size="sm"
                     className="h-7 text-xs"
+                    aria-pressed={filters.status.includes(opt.value)}
                     onClick={() => toggleStatus(opt.value)}
                   >
                     {opt.icon} {opt.label}
@@ -178,14 +195,15 @@ export function InboxFilters({
                   <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1">
                     <Users className="h-3 w-3" /> Tipo de Contato
                   </Label>
-                  <div className="flex flex-wrap gap-1">
+                  <div className="flex flex-wrap gap-1" role="group" aria-label="Tipo de Contato">
                     {FILTER_OPTIONS.map(opt => (
                       <Button
                         key={opt.value ?? 'all'}
-                        variant={selectedContactType === opt.value ? 'default' : 'outline'}
+                        variant={isContactTypeSelected(opt.value) ? 'default' : 'outline'}
                         size="sm"
                         className="h-7 text-xs"
-                        onClick={() => onContactTypeChange(opt.value)}
+                        aria-pressed={isContactTypeSelected(opt.value)}
+                        onClick={() => onContactTypeChange(opt.value === 'all' ? null : opt.value)}
                       >
                         {opt.label}
                       </Button>
@@ -289,13 +307,14 @@ export function InboxFilters({
               <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1">
                 <Calendar className="h-3 w-3" /> Período
               </Label>
-              <div className="flex flex-wrap gap-1">
+              <div className="flex flex-wrap gap-1" role="group" aria-label="Período">
                 {DATE_PRESETS.map(preset => (
                   <Button
                     key={preset.label}
-                    variant="outline"
+                    variant={isDatePresetSelected(preset) ? 'default' : 'outline'}
                     size="sm"
                     className="h-7 text-xs"
+                    aria-pressed={isDatePresetSelected(preset)}
                     onClick={() => onFiltersChange({ ...filters, dateRange: preset.getValue() })}
                   >
                     {preset.label}
