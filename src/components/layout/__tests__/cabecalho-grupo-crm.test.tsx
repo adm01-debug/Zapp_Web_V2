@@ -9,6 +9,11 @@
  * O teste monta as TRÊS telas reais e cobra o contrato visível de cada uma:
  * um `h1` com o nome do módulo e a trilha `Gestão > <telas>` no cabeçalho
  * compartilhado. Sem a mudança (base), cada uma dessas asserções fica vermelha.
+ *
+ * RESIDUAL (Admin/AdminView.tsx e Segurança/SecurityView.tsx): as duas telas do
+ * grupo Admin mantinham `<h1>` próprio (um dentro de um flex com ícone; o outro
+ * com ícone em caixa). Os dois casos abaixo entram no MESMO helper e ficam
+ * vermelhos enquanto os dois `<h1>` próprios existirem.
  */
 import type { ReactNode } from 'react';
 import { render, fireEvent, screen, within } from '@testing-library/react';
@@ -108,10 +113,30 @@ vi.mock('@/components/security/AuditLogDashboard', () => ({ AuditLogDashboard: (
 vi.mock('@/components/security/QuarantinePanel', () => ({ QuarantinePanel: () => null }));
 vi.mock('@/hooks/system/useSecurityPushNotifications', () => ({ useSecurityPushNotifications: () => undefined }));
 
+// Admin — fonte de dados e filhos dublados (o alvo é só o cabeçalho compartilhado).
+vi.mock('@/components/admin/useAdminData', () => ({
+  useAdminData: () => ({
+    users: [], auditLogs: [], loading: false,
+    fetchData: vi.fn(), handleRoleChange: vi.fn(), handleToggleActive: vi.fn(),
+    handleSaveUser: vi.fn(), handleCreateUser: vi.fn(),
+  }),
+  accessLevelConfig: { basic: { label: 'Básico', description: 'Acesso básico' } },
+}));
+vi.mock('@/components/admin/AdminUsersTable', () => ({ AdminUsersTable: () => null }));
+vi.mock('@/components/admin/AdminAuditTable', () => ({ AdminAuditTable: () => null }));
+vi.mock('@/components/admin/AdminCRMDashboard', () => ({ AdminCRMDashboard: () => null }));
+vi.mock('@/components/admin/PlaybooksManager', () => ({ PlaybooksManager: () => null }));
+vi.mock('@/components/admin/SupervisorCopilot', () => ({ SupervisorCopilot: () => null }));
+vi.mock('@/components/admin/TrainingMode', () => ({ TrainingMode: () => null }));
+vi.mock('@/components/admin/CrisisRoom', () => ({ CrisisRoom: () => null }));
+vi.mock('@/components/dashboard/FloatingParticles', () => ({ FloatingParticles: () => null }));
+vi.mock('@/components/effects/AuroraBorealis', () => ({ AuroraBorealis: () => null }));
+
 import { ContactsView } from '@/components/contacts/ContactsView';
 import { CRM360ExplorerView } from '@/components/crm360/CRM360ExplorerView';
 import { ScheduleCalendarView } from '@/components/schedule/ScheduleCalendarView';
 import { SecurityView } from '@/components/security/SecurityView';
+import { AdminView } from '@/components/admin/AdminView';
 
 /** Prova que a navegação ficou no roteador (nenhum reload de página inteira). */
 function RotaAtual() {
@@ -161,6 +186,16 @@ describe('cabeçalho do grupo — trilha consistente (Gestão > X)', () => {
   it('Agendamentos usa o PageHeader compartilhado (antes: título dentro do CardHeader)', () => {
     montar(<ScheduleCalendarView />);
     exigirCabecalho('Agendamentos', 'Agendamentos');
+  });
+
+  it('Admin usa o PageHeader compartilhado (antes: h1 próprio em flex com o ícone Shield)', () => {
+    montar(<AdminView />);
+    exigirCabecalho('Administração', 'Admin');
+  });
+
+  it('Central de Segurança usa o PageHeader compartilhado (antes: h1 próprio com ícone em caixa)', () => {
+    montar(<SecurityView />);
+    exigirCabecalho('Central de Segurança', 'Segurança');
   });
 });
 

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 
 const { handleSaveUser } = vi.hoisted(() => ({
   handleSaveUser: vi.fn(async (_usuario?: { max_chats?: number }, _arquivo?: unknown) => true),
@@ -57,8 +58,13 @@ vi.mock('../useAdminData', () => ({
 
 import { AdminView } from '../AdminView';
 
+// O PageHeader compartilhado (usado pelo cabeçalho da tela) navega pelo roteador.
+function renderAdmin() {
+  return render(<MemoryRouter><AdminView /></MemoryRouter>);
+}
+
 function abrirEdicao() {
-  render(<AdminView />);
+  renderAdmin();
   fireEvent.click(screen.getByRole('button', { name: /Editar Ana Silva/i }));
   return screen.getByLabelText('Limite de Chats') as HTMLInputElement;
 }

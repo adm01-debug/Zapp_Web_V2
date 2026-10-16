@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
@@ -53,10 +54,15 @@ vi.mock('../useAdminData', () => ({
 
 import { AdminView } from '../AdminView';
 
+// O PageHeader compartilhado (usado pelo cabeçalho da tela) navega pelo roteador.
+function renderAdmin() {
+  return render(<MemoryRouter><AdminView /></MemoryRouter>);
+}
+
 const arquivo = () => new File(['foto'], 'foto.png', { type: 'image/png' });
 
 function abrirEdicaoEEnviarFoto() {
-  const resultado = render(<AdminView />);
+  const resultado = renderAdmin();
   fireEvent.click(screen.getByRole('button', { name: /Editar Ana Silva/i }));
   const entrada = document.querySelector('#edit_avatar') as HTMLInputElement;
   const criar = vi.fn(() => 'blob:preview-1');
@@ -84,7 +90,7 @@ describe('AdminView — URL do avatar é revogada (N-065)', () => {
   it('sem foto escolhida nenhuma URL de objeto é criada', () => {
     const criar = vi.fn(() => 'blob:preview-1');
     URL.createObjectURL = criar as unknown as typeof URL.createObjectURL;
-    render(<AdminView />);
+    renderAdmin();
     fireEvent.click(screen.getByRole('button', { name: /Editar Ana Silva/i }));
     expect(criar).not.toHaveBeenCalled();
   });

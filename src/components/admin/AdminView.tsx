@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion } from '@/components/ui/motion';
 import { FloatingParticles } from '@/components/dashboard/FloatingParticles';
 import { AuroraBorealis } from '@/components/effects/AuroraBorealis';
 import { Button } from '@/components/ui/button';
@@ -23,6 +22,7 @@ import { useAdminData, accessLevelConfig, type UserWithRole } from './useAdminDa
 import { AdminUsersTable } from './AdminUsersTable';
 import { AdminAuditTable } from './AdminAuditTable';
 import { SectionErrorBoundary } from '@/components/ui/section-error-boundary';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 const roleIconMap = { admin: Crown, supervisor: UserCog, agent: User, special_agent: Eye } as const;
 const roleLabelMap = { admin: 'Administrador', supervisor: 'Supervisor', agent: 'Atendente', special_agent: 'Agente Especial' } as const;
@@ -163,16 +163,18 @@ export function AdminView() {
       <AuroraBorealis />
       <FloatingParticles />
 
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2"><Shield className="w-6 h-6 text-whatsapp" /> Administração</h1>
-          <p className="text-muted-foreground">Gerencie usuários, permissões e visualize logs de auditoria</p>
-        </div>
-        <div className="flex gap-2">
-          {isAdmin && <Button onClick={() => setIsAddDialogOpen(true)} className="bg-primary hover:bg-primary/90"><UserPlus className="w-4 h-4 mr-2" /> Adicionar Usuário</Button>}
-          <Button variant="outline" onClick={fetchData}><RefreshCw className="w-4 h-4 mr-2" /> Atualizar</Button>
-        </div>
-      </motion.div>
+      <PageHeader
+        title="Administração"
+        subtitle="Gerencie usuários, permissões e visualize logs de auditoria"
+        breadcrumbs={[{ label: 'Gestão' }, { label: 'Admin' }]}
+        icon={<Shield className="w-5 h-5 text-whatsapp" />}
+        actions={
+          <>
+            {isAdmin && <Button onClick={() => setIsAddDialogOpen(true)} className="bg-primary hover:bg-primary/90"><UserPlus className="w-4 h-4 mr-2" /> Adicionar Usuário</Button>}
+            <Button variant="outline" onClick={fetchData}><RefreshCw className="w-4 h-4 mr-2" /> Atualizar</Button>
+          </>
+        }
+      />
 
       <div role="tablist" aria-label="Seções da administração" className="flex gap-2 flex-wrap">
         {([['users', Users, `Usuários (${users.length})`], ['audit', History, 'Auditoria'], ['crm', Building, 'CRM 360°'], ['playbooks', Shield, 'Playbooks'], ['copilot', Brain, 'Copilot IA'], ['training', Users, 'Treinamento'], ['crisis', Shield, 'Sala de Crise']] as const).map(([tab, Icon, label], index, lista) => (

@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 /**
@@ -37,6 +38,11 @@ vi.mock('../CrisisRoom', () => ({ CrisisRoom: () => <div /> }));
 
 import { AdminView } from '@/components/admin/AdminView';
 
+// O PageHeader compartilhado (usado pelo cabeçalho da tela) navega pelo roteador.
+function renderAdmin() {
+  return render(<MemoryRouter><AdminView /></MemoryRouter>);
+}
+
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
@@ -44,7 +50,7 @@ afterEach(() => {
 
 describe('AdminView — SectionErrorBoundary isola o bloco que falha (Parte 7)', () => {
   it('CRM 360° lançando mostra o aviso no lugar da aba e mantém o painel', () => {
-    render(<AdminView />);
+    renderAdmin();
 
     fireEvent.click(screen.getByRole('tab', { name: /CRM 360/ }));
 
@@ -55,7 +61,7 @@ describe('AdminView — SectionErrorBoundary isola o bloco que falha (Parte 7)',
   });
 
   it('com o CRM quebrado, o Playbooks (bloco independente) ainda renderiza', () => {
-    render(<AdminView />);
+    renderAdmin();
 
     fireEvent.click(screen.getByRole('tab', { name: /CRM 360/ }));
     expect(screen.getByText(/Erro em "CRM Admin"/)).toBeInTheDocument();

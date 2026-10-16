@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { axe } from 'vitest-axe';
 
 const { fetchDataSpy } = vi.hoisted(() => ({ fetchDataSpy: vi.fn() }));
@@ -57,15 +58,20 @@ vi.mock('../useAdminData', () => ({
 
 import { AdminView } from '../AdminView';
 
+// O PageHeader compartilhado (usado pelo cabeçalho da tela) navega pelo roteador.
+function renderAdmin() {
+  return render(<MemoryRouter><AdminView /></MemoryRouter>);
+}
+
 function abrirDialogoEdicao() {
-  const result = render(<AdminView />);
+  const result = renderAdmin();
   fireEvent.click(screen.getByRole('button', { name: /Atualizar/i }));
   fireEvent.click(screen.getByRole('button', { name: /Editar Ana Silva/i }));
   return result;
 }
 
 function abrirDialogoAdicao() {
-  const result = render(<AdminView />);
+  const result = renderAdmin();
   fireEvent.click(screen.getByRole('button', { name: /Adicionar Usuário/i }));
   return result;
 }
@@ -121,7 +127,7 @@ describe('AdminView — abas acessíveis e busca no lugar certo (N-064)', () => 
   });
 
   it('expõe tablist nomeado, 7 abas e painel rotulado pela aba ativa', () => {
-    render(<AdminView />);
+    renderAdmin();
     expect(screen.getByRole('tablist', { name: 'Seções da administração' })).toBeInTheDocument();
     expect(screen.getAllByRole('tab')).toHaveLength(7);
     expect(screen.getByRole('tab', { name: /Usuários/ })).toHaveAttribute('aria-selected', 'true');
@@ -129,7 +135,7 @@ describe('AdminView — abas acessíveis e busca no lugar certo (N-064)', () => 
   });
 
   it('só a aba ativa fica alcançável pelo Tab (tabIndex móvel)', () => {
-    render(<AdminView />);
+    renderAdmin();
     for (const aba of screen.getAllByRole('tab')) {
       const selecionada = aba.getAttribute('aria-selected') === 'true';
       expect(aba).toHaveAttribute('tabindex', selecionada ? '0' : '-1');
@@ -137,7 +143,7 @@ describe('AdminView — abas acessíveis e busca no lugar certo (N-064)', () => 
   });
 
   it('seta para a direita foca e seleciona a aba seguinte', () => {
-    render(<AdminView />);
+    renderAdmin();
     const usuarios = screen.getByRole('tab', { name: /Usuários/ });
     usuarios.focus();
     fireEvent.keyDown(usuarios, { key: 'ArrowRight' });
@@ -148,7 +154,7 @@ describe('AdminView — abas acessíveis e busca no lugar certo (N-064)', () => 
   });
 
   it('seta para a esquerda na auditoria volta para Usuários (Home vai para a primeira)', () => {
-    render(<AdminView />);
+    renderAdmin();
     const auditoria = screen.getByRole('tab', { name: /Auditoria/ });
     fireEvent.click(auditoria);
     fireEvent.keyDown(auditoria, { key: 'ArrowLeft' });
@@ -160,7 +166,7 @@ describe('AdminView — abas acessíveis e busca no lugar certo (N-064)', () => 
   });
 
   it('a busca aparece em Usuários e Auditoria e some nas abas que não usam lista', () => {
-    render(<AdminView />);
+    renderAdmin();
     expect(screen.getByPlaceholderText('Buscar usuários...')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('tab', { name: /Auditoria/ }));
     expect(screen.getByPlaceholderText('Buscar logs...')).toBeInTheDocument();
@@ -169,7 +175,7 @@ describe('AdminView — abas acessíveis e busca no lugar certo (N-064)', () => 
   });
 
   it('não busca dados de usuário nas abas que não os usam, e busca ao voltar para Usuários', () => {
-    render(<AdminView />);
+    renderAdmin();
     expect(fetchDataSpy).toHaveBeenCalledTimes(1);
     fireEvent.click(screen.getByRole('tab', { name: /Treinamento/ }));
     expect(fetchDataSpy).toHaveBeenCalledTimes(1);

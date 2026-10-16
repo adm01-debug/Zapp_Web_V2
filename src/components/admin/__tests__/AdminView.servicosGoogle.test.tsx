@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 
 // SL-160 — o inventário de 07/10/2026 (P2-3.4) aponta o Google Calendar como
@@ -39,8 +40,13 @@ vi.mock('../useAdminData', () => ({
 
 import { AdminView } from '../AdminView';
 
+// O PageHeader compartilhado (usado pelo cabeçalho da tela) navega pelo roteador.
+function renderAdmin() {
+  return render(<MemoryRouter><AdminView /></MemoryRouter>);
+}
+
 function abrirDialogoComContaGoogle() {
-  render(<AdminView />);
+  renderAdmin();
   fireEvent.click(screen.getByRole('button', { name: /Adicionar Usuário/i }));
   fireEvent.change(screen.getByPlaceholderText('usuario@gmail.com'), {
     target: { value: 'atendente@promobrindes.com.br' },

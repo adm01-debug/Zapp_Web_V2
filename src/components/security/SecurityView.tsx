@@ -20,6 +20,7 @@ import { AuditLogDashboard } from './AuditLogDashboard';
 import { QuarantinePanel } from './QuarantinePanel';
 import { useUserRole } from '@/hooks/system/useUserRole';
 import { useSecurityPushNotifications } from '@/hooks/system/useSecurityPushNotifications';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 export function SecurityView() {
   const navigate = useNavigate();
@@ -38,17 +39,12 @@ export function SecurityView() {
         className="max-w-6xl mx-auto space-y-6"
       >
         {/* Header */}
-        <div className="flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-primary/10">
-            <Shield className="w-6 h-6 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-display font-bold">Central de Segurança</h1>
-            <p className="text-muted-foreground">
-              Gerencie todas as configurações de segurança da sua conta e sistema
-            </p>
-          </div>
-        </div>
+        <PageHeader
+          title="Central de Segurança"
+          subtitle="Gerencie todas as configurações de segurança da sua conta e sistema"
+          breadcrumbs={[{ label: 'Gestão' }, { label: 'Segurança' }]}
+          icon={<Shield className="w-5 h-5 text-primary" />}
+        />
 
         {/* Realtime Alerts for Admin/Supervisor (mesmo gate do RateLimitDashboard) */}
         {(isAdmin || isSupervisor) && <RateLimitRealtimeAlerts />}
