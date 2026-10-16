@@ -349,6 +349,13 @@ jobs:
         env:
           TASKS_REARM_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/tasks-rearm-on-remind-change.test.sh
+      # Item 72 (R2-AUTH-006): pedido anônimo de reset resolve a identidade no
+      # servidor (auth.users), conta inexistente não grava nem revela, e o rate
+      # limit anônimo responde igual ao caminho sem limite (silencioso).
+      - name: Simular pedido anônimo de recuperação de senha (item 72)
+        env:
+          RECUPERACAO_ANONIMA_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/recuperacao-anonima-pedido-reset.test.sh
 
       # Item 265 (R2-AUTH-041): a consulta de custo do painel de IA recebia fim
       # nulo (janela aberta) e `created_at < NULL` eliminava todas as chamadas —
