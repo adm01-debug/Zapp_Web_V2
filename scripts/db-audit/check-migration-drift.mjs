@@ -43,6 +43,20 @@ const PINNED_REPLAY_REASONS = new Set([
   'format-only',
   'version-collision',
 ]);
+const KNOWN_FIELDS = {
+  [COMMENT_ONLY_KIND]: new Set([
+    'version', 'filename', 'file_sha256', 'ledger_name', 'ledger_statements_sha256',
+    'kind', 'justification',
+  ]),
+  [NAME_ONLY_KIND]: new Set([
+    'version', 'filename', 'file_sha256', 'ledger_name', 'kind', 'justification',
+  ]),
+  [PINNED_REPLAY_KIND]: new Set([
+    'version', 'filename', 'file_sha256', 'file_sql_sha256', 'ledger_name',
+    'ledger_statements_sha256', 'ledger_sql_sha256', 'kind', 'reason',
+    'related_migration', 'justification', 'sql-sha256',
+  ]),
+};
 const SOURCE_ANNOTATION_RE = /^--\s*source:\s*\S/u;
 const FILE_SHA_ANNOTATION_RE = /^--\s*file-sha256:\s*([a-f0-9]{64})/iu;
 const SQL_SHA_ANNOTATION_RE = /^--\s*sql-sha256:\s*([a-f0-9]{64})/iu;
@@ -64,6 +78,22 @@ const SQL_STARTERS = new Set([
 
 function sha256(value) {
   return crypto.createHash('sha256').update(value).digest('hex');
+}
+
+function escapeLogName(s) {
+  return s.replace(/[\x00-\x1f\x7f]/gu, (c) => {
+    if (c === '\n') return '\\n';
+    if (c === '\r') return '\\r';
+    if (c === '\t') return '\\t';
+    return `\\u${c.codePointAt(0).toString(16).padStart(4, '0')}`;
+  });
+}
+
+function normalizeRecordName(version, name) {
+  let s = name.trim();
+  if (s.startsWith(`${version}_`)) s = s.slice(version.length + 1);
+  if (s.endsWith('.sql')) s = s.slice(0, -4);
+  return s;
 }
 
 function ledgerStatementsSha256(statements) {
@@ -125,24 +155,62 @@ function parseRecord(raw) {
 }
 
 function loadEvidence(evidencePath) {
+  const errors = [];
+  let parsed;
   try {
     const raw = fs.readFileSync(evidencePath, 'utf8');
-    const data = JSON.parse(raw);
-    if (!data || typeof data !== 'object') return { exceptions: {} };
-    if (Array.isArray(data)) return { exceptions: {} };
-    return data;
+    parsed = JSON.parse(raw);
   } catch {
-    return { exceptions: {} };
+    return { data: { schema_version: 2, exceptions: [] }, errors: [] };
   }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    errors.push('migration-evidence.json invalido: nao e um objeto');
+    return { data: { schema_version: 2, exceptions: [] }, errors };
+  }
+  if (parsed.schema_version !== 2) {
+    errors.push(`migration-evidence.json invalido: schema_version do manifesto deve ser 2, encontrado ${parsed.schema_version}`);
+    return { data: { schema_version: 2, exceptions: [] }, errors };
+  }
+  if (!Array.isArray(parsed.exceptions)) {
+    errors.push('migration-evidence.json invalido: exceptions deve ser array');
+    return { data: { schema_version: 2, exceptions: [] }, errors };
+  }
+  let prevVersion = null;
+  for (const exc of parsed.exceptions) {
+    if (exc && typeof exc.version === 'string') {
+      if (prevVersion !== null && exc.version <= prevVersion) {
+        errors.push(`migration-evidence.json invalido: excecoes fora de ordem estritamente crescente (${exc.version} apos ${prevVersion})`);
+        break;
+      }
+      prevVersion = exc.version;
+    }
+  }
+  const HASH_FIELDS = ['file_sha256', 'file_sql_sha256', 'ledger_statements_sha256', 'ledger_sql_sha256', 'sql-sha256'];
+  for (const exc of parsed.exceptions) {
+    if (!exc || typeof exc !== 'object') continue;
+    for (const field of HASH_FIELDS) {
+      const val = exc[field];
+      if (val !== undefined && (typeof val !== 'string' || val !== val.toLowerCase() || !SHA256_RE.test(val))) {
+        errors.push(`migration-evidence.json invalido: ${field} invalido (nao e hex minusculo) em ${exc.version ?? '(sem version)'}`);
+      }
+    }
+  }
+  return { data: parsed, errors };
 }
 
-function buildExceptionsByVersion(evidence) {
+function buildExceptionsByVersion(exceptions) {
   const byVersion = new Map();
-  const exceptions = evidence?.exceptions ?? {};
-  for (const [version, exc] of Object.entries(exceptions)) {
-    byVersion.set(version, exc);
+  const errors = [];
+  for (const exc of exceptions) {
+    if (!exc?.version) continue;
+    const { version } = exc;
+    if (byVersion.has(version)) {
+      errors.push(`versao duplicada no manifesto: ${version}`);
+    } else {
+      byVersion.set(version, exc);
+    }
   }
-  return byVersion;
+  return { byVersion, errors };
 }
 
 function describeException(exc) {
@@ -166,21 +234,30 @@ function validateException(exc) {
     errors.push('excecao sem version valida');
     return errors;
   }
+  const knownFields = KNOWN_FIELDS[kind];
+  if (!knownFields) {
+    errors.push(`${version}: kind desconhecido '${kind}'`);
+    return errors;
+  }
+  const unknownFields = Object.keys(exc).filter((k) => !knownFields.has(k));
+  if (unknownFields.length > 0) {
+    errors.push(`${version}: campos ausentes ou desconhecidos: ${unknownFields.join(', ')}`);
+  }
   if (kind === COMMENT_ONLY_KIND) {
-    if (!exc['file-sha256'] || !SHA256_RE.test(exc['file-sha256'])) {
-      errors.push(`${version}: kind=${kind} exige 'file-sha256' valido`);
+    if (!exc.file_sha256 || !SHA256_RE.test(exc.file_sha256)) {
+      errors.push(`${version}: kind=${kind} exige 'file_sha256' valido`);
     }
   } else if (kind === NAME_ONLY_KIND) {
-    if (!exc['file-sha256'] || !SHA256_RE.test(exc['file-sha256'])) {
-      errors.push(`${version}: kind=${kind} exige 'file-sha256' valido`);
+    if (!exc.file_sha256 || !SHA256_RE.test(exc.file_sha256)) {
+      errors.push(`${version}: kind=${kind} exige 'file_sha256' valido`);
     }
-    if (!exc.name || typeof exc.name !== 'string') {
-      errors.push(`${version}: kind=${kind} exige 'name' valido`);
+    if (!exc.ledger_name || typeof exc.ledger_name !== 'string') {
+      errors.push(`${version}: kind=${kind} exige 'ledger_name' valido`);
     }
   } else if (kind === PINNED_REPLAY_KIND) {
     if (!PINNED_REPLAY_REASONS.has(exc.reason)) {
       errors.push(
-        `${version}: kind=${kind} exige reason em {${[...PINNED_REPLAY_REASONS].join(', ')}}; encontrado '${exc.reason}'`,
+        `${version}: reason nao permitido para kind=${kind}: '${exc.reason}'; permitidos: {${[...PINNED_REPLAY_REASONS].join(', ')}}`,
       );
     }
     if (!exc['sql-sha256'] || !SHA256_RE.test(exc['sql-sha256'])) {
@@ -215,9 +292,20 @@ function validateException(exc) {
           );
         }
       }
+    } else if (exc.related_migration != null) {
+      errors.push(`${version}: related_migration deve ser null para reason=${exc.reason}`);
     }
-  } else {
-    errors.push(`${version}: kind desconhecido '${kind}'`);
+    if (exc.ledger_name !== undefined) {
+      if (typeof exc.ledger_name !== 'string' || exc.ledger_name !== exc.ledger_name.trim()) {
+        errors.push(`${version}: ledger_name invalido (nao pode ter espacos iniciais/finais)`);
+      } else if (exc.reason !== 'version-collision') {
+        const fm = exc.filename?.match(FILE_NAME_RE);
+        const slug = fm?.[2];
+        if (slug && exc.ledger_name && exc.ledger_name !== slug) {
+          errors.push(`${version}: ledger_name so pode divergir com reason=version-collision`);
+        }
+      }
+    }
   }
   return errors;
 }
@@ -229,7 +317,9 @@ function parseMigrationFile(filePath) {
   const statements = chunks
     .map((c) => c.trim())
     .filter((c) => c.length > 0 && c !== ';');
-  return { statements };
+  const hasSql = hasSqlCode(raw);
+  const hasContent = raw.trim().length > 0;
+  return { statements, hasSql, hasContent };
 }
 
 function splitStatements(statement) {
@@ -248,21 +338,23 @@ function collectLocal(migrationsDir, evidencePath) {
   const entries = fs.readdirSync(migrationsDir);
   const migrations = [];
   const errors = [];
-  const evidence = loadEvidence(evidencePath);
-  const exceptionsByVersion = buildExceptionsByVersion(evidence);
+  const { data: evidence, errors: evidenceErrors } = loadEvidence(evidencePath);
+  errors.push(...evidenceErrors);
+  const { byVersion: exceptionsByVersion, errors: buildErrors } = buildExceptionsByVersion(evidence.exceptions);
+  errors.push(...buildErrors);
 
   for (const entry of entries.sort()) {
     if (!entry.endsWith('.sql')) continue;
     const m = entry.match(FILE_NAME_RE);
     if (!m) {
-      errors.push(`nome de arquivo invalido: ${entry}`);
+      errors.push(`nome/formato invalido: ${entry}`);
       continue;
     }
     const version = m[1];
     const filePath = path.join(migrationsDir, entry);
-    const { statements } = parseMigrationFile(filePath);
+    const { statements, hasSql, hasContent } = parseMigrationFile(filePath);
     const fileSha256 = computeFileSha256(filePath);
-    migrations.push({ version, fileName: entry, filePath, statements, fileSha256 });
+    migrations.push({ version, fileName: entry, filePath, statements, hasSql, hasContent, fileSha256 });
   }
 
   const exceptionValidationErrors = [];
@@ -277,6 +369,11 @@ function collectLocal(migrationsDir, evidencePath) {
   }
 
   const filesByVersion = new Map(migrations.map((m) => [m.version, m]));
+  for (const [excVersion] of exceptionsByVersion) {
+    if (!filesByVersion.has(excVersion)) {
+      errors.push(`excecao orfa no manifesto: ${excVersion}`);
+    }
+  }
   const relatedVersionsUsed = new Map();
   for (const [excVersion, exc] of exceptionsByVersion) {
     if (exc.kind !== PINNED_REPLAY_KIND || exc.reason !== 'version-collision') continue;
@@ -363,7 +460,7 @@ function parseLedger(raw) {
   for (const line of lines) {
     const parsed = parseRecord(line);
     if (!parsed || typeof parsed.version !== 'string') {
-      errors.push(`linha invalida no ledger: ${line.slice(0, 80)}`);
+      errors.push(`registro invalido no ledger: ${line.slice(0, 80)}`);
       continue;
     }
     records.push(parsed);
@@ -405,31 +502,55 @@ function compareStatements(migration, record, exceptionsByVersion) {
   const { statements: ledgerStmts, name: ledgerName } = record;
   const exc = exceptionsByVersion.get(version);
 
+  if (exc?.kind === COMMENT_ONLY_KIND) {
+    const errs = [];
+    if (exc.file_sha256 !== fileSha256) {
+      errs.push(
+        `${version}: file_sha256 divergente do manifesto: esperado ${exc.file_sha256}, encontrado ${fileSha256}`,
+      );
+    }
+    if (!ledgerName) {
+      errs.push(`${version}: ledger_name ausente para excecao`);
+    } else if (exc.ledger_name && exc.ledger_name !== ledgerName) {
+      errs.push(
+        `${version}: ledger_name divergente do manifesto: esperado ${exc.ledger_name}, encontrado ${ledgerName}`,
+      );
+    }
+    const excLedgerStmtsSha = exc.ledger_statements_sha256;
+    if (excLedgerStmtsSha !== undefined) {
+      const actualLedgerStmtsSha = ledgerStatementsSha256(ledgerStmts ?? []);
+      if (excLedgerStmtsSha !== actualLedgerStmtsSha) {
+        errs.push(`${version}: ledger_statements_sha256 divergente: esperado=${excLedgerStmtsSha}; ledger=${actualLedgerStmtsSha}`);
+      }
+    }
+    if (canonicalStatements(ledgerStmts ?? []).length > 0) {
+      errs.push(`${version}: comment-only exige ledger sem SQL canonico`);
+    }
+    return errs;
+  }
+
+  if (exc?.kind === NAME_ONLY_KIND) {
+    const errs = [];
+    if (exc.file_sha256 !== fileSha256) {
+      errs.push(
+        `${version}: file_sha256 divergente do manifesto: esperado ${exc.file_sha256}, encontrado ${fileSha256}`,
+      );
+    }
+    if (exc.ledger_name !== ledgerName) {
+      errs.push(
+        `${version}: ledger_name divergente do manifesto: esperado ${exc.ledger_name}, encontrado ${ledgerName}`,
+      );
+    }
+    if (ledgerStmts && ledgerStmts.length > 0) {
+      const hasRealSql = ledgerStmts.some((s) => SQL_STARTERS.has(s.trim().toLowerCase().split(/\s/)[0]));
+      if (hasRealSql) {
+        errs.push(`${version}: name-and-file-pinned exige ledger sem SQL/hash historico`);
+      }
+    }
+    return errs;
+  }
+
   if (!ledgerStmts || ledgerStmts.length === 0) {
-    if (exc?.kind === COMMENT_ONLY_KIND) {
-      const excSha = exc['file-sha256'];
-      if (excSha !== fileSha256) {
-        return [
-          `${version}: excecao comment-only mas hash do arquivo mudou: esperado ${excSha}, encontrado ${fileSha256}`,
-        ];
-      }
-      return [];
-    }
-    if (exc?.kind === NAME_ONLY_KIND) {
-      const excSha = exc['file-sha256'];
-      const excName = exc.name;
-      if (excSha !== fileSha256) {
-        return [
-          `${version}: excecao name-only mas hash do arquivo mudou: esperado ${excSha}, encontrado ${fileSha256}`,
-        ];
-      }
-      if (excName !== ledgerName) {
-        return [
-          `${version}: excecao name-only mas name no ledger mudou: esperado ${excName}, encontrado ${ledgerName}`,
-        ];
-      }
-      return [];
-    }
     if (!exc && !ledgerName) return [];
     return [
       `statements IS NULL ou vazio para ${version} no ledger (sem excecao em migration-evidence.json)`,
@@ -437,22 +558,44 @@ function compareStatements(migration, record, exceptionsByVersion) {
   }
 
   if (exc?.kind === PINNED_REPLAY_KIND) {
-    const excSha = exc['sql-sha256'];
+    const excLedgerSha = exc.ledger_statements_sha256 ?? exc['sql-sha256'];
+    const actualLedgerSha = ledgerStatementsSha256(ledgerStmts);
+    if (excLedgerSha !== actualLedgerSha) {
+      return [`${version}: ledger_statements_sha256 divergente: esperado=${excLedgerSha}; ledger=${actualLedgerSha}`];
+    }
+    if (exc.ledger_sql_sha256 === sha256('')) {
+      return [`${version}: pinned-replay exige ledgerSql canonico nao vazio`];
+    }
+    if (exc.file_sha256 !== fileSha256) {
+      return [`${version}: file_sha256 divergente: esperado ${exc.file_sha256}, encontrado ${fileSha256}`];
+    }
+    const actualFileSqlSha = sha256(canonicalStatements(fileStmts));
+    if (exc.file_sql_sha256 !== actualFileSqlSha) {
+      return [`${version}: file_sql_sha256 divergente: esperado ${exc.file_sql_sha256}, encontrado ${actualFileSqlSha}`];
+    }
+    if (exc.ledger_name && exc.ledger_name !== ledgerName) {
+      return [`${version}: ledger_name divergente do manifesto: esperado ${exc.ledger_name}, encontrado ${ledgerName}`];
+    }
+    const ledgerFileMarkers = collectHashMarkers(ledgerStmts, 'file');
+    if (ledgerFileMarkers.has('MALFORMED')) {
+      return [`${version}: marcador file-sha256 invalido`];
+    }
+    const ledgerSqlMarkers = collectHashMarkers(ledgerStmts, 'ledger');
+    if (ledgerSqlMarkers.size > 1) {
+      return [`${version}: hashes SQL conflitantes`];
+    }
     const canonicalFile = canonicalStatements(fileStmts);
     const canonicalLedger = canonicalStatements(ledgerStmts);
-    if (excSha !== ledgerStatementsSha256(ledgerStmts)) {
-      return [
-        `${version}: excecao pinned-replay mas hash do ledger mudou (alguem editou o ledger); remover a excecao`,
-      ];
+    if (canonicalFile === canonicalLedger) {
+      return [`${version}: pinned-replay obsoleta`];
     }
     const fileMarkers = collectHashMarkers(fileStmts, 'file');
-    const ledgerMarkers = collectHashMarkers(ledgerStmts, 'ledger');
     if (fileMarkers.size > 0) {
       for (const marker of fileMarkers) {
         if (marker === 'MALFORMED') {
           return [`${version}: marcador file-sha256 malformado no arquivo`];
         }
-        if (!ledgerMarkers.has(marker) && marker !== fileSha256) {
+        if (!ledgerSqlMarkers.has(marker) && marker !== fileSha256) {
           return [
             `${version}: pinned-replay: file-sha256 ${marker} nao encontrado no ledger nem igual ao sha256 do arquivo atual`,
           ];
@@ -460,12 +603,42 @@ function compareStatements(migration, record, exceptionsByVersion) {
       }
       return [];
     }
-    if (canonicalFile === canonicalLedger) return [];
-    if (
-      !PINNED_REPLAY_REASONS.has(exc.reason)
-      || (exc.reason === 'endpoint-literal-update' && fileMarkers.size === 0)
-    ) {
+    if (!PINNED_REPLAY_REASONS.has(exc.reason) || (exc.reason === 'endpoint-literal-update' && fileMarkers.size === 0)) {
       return diffStatements(fileStmts, ledgerStmts, version);
+    }
+    return [];
+  }
+
+  const hasFileSha256Annotation = ledgerStmts.some((s) => /^--\s*file-sha256:/i.test(s));
+  if (hasFileSha256Annotation && !ledgerStmts.some((s) => SOURCE_ANNOTATION_RE.test(s))) {
+    const validHashes = ledgerStmts
+      .map((s) => FILE_SHA_ANNOTATION_RE.exec(s)?.[1])
+      .filter(Boolean);
+    if (validHashes.length === 0) {
+      return [`${version}: marcador file-sha256 invalido`];
+    }
+    if (!validHashes.some((h) => h === fileSha256)) {
+      return [`${version}: hash de arquivo divergente`];
+    }
+    return [];
+  }
+
+  const sqlSha256Markers = collectHashMarkers(ledgerStmts, 'ledger');
+  const hasSqlSha256Annotation = sqlSha256Markers.size > 0
+    && !ledgerStmts.some((s) => SOURCE_ANNOTATION_RE.test(s));
+
+  if (hasSqlSha256Annotation) {
+    if (sqlSha256Markers.has('MALFORMED')) {
+      return [`${version}: marcador sql-sha256 invalido`];
+    }
+    if (sqlSha256Markers.size > 1) {
+      return [`${version}: hashes SQL conflitantes`];
+    }
+    const [sqlSha] = sqlSha256Markers;
+    const fileCanonical = canonicalStatements(fileStmts);
+    const expectedSqlSha = sha256(fileCanonical);
+    if (sqlSha !== expectedSqlSha) {
+      return [`${version}: hash SQL divergente`];
     }
     return [];
   }
@@ -513,7 +686,19 @@ function compareStatements(migration, record, exceptionsByVersion) {
     return [`${version}: fonte divergente`];
   }
 
-  return diffStatements(fileStmts, ledgerStmts, version);
+  const slug = fileName?.match(FILE_NAME_RE)?.[2];
+  if (slug && ledgerName && slug !== ledgerName) {
+    return [`${version}: nome divergente (arquivo: ${slug}, ledger: ${escapeLogName(ledgerName)})`];
+  }
+
+  const diffs = diffStatements(fileStmts, ledgerStmts, version);
+  if (diffs.length > 0) {
+    const stmts = ledgerStmts ?? [];
+    if (ledgerName) diffs.push(`  ledger_name="${ledgerName}"`);
+    diffs.push(`  ledger_statements_sha256=${ledgerStatementsSha256(stmts)}`);
+    diffs.push(`  ledger_sql_sha256=${sha256(canonicalStatements(stmts))}`);
+  }
+  return diffs;
 }
 
 function compare(migrations, records, exceptionsByVersion) {
@@ -532,6 +717,11 @@ function compare(migrations, records, exceptionsByVersion) {
     const { version } = record;
     if (record.name != null && !/^[a-z0-9][a-z0-9_-]*$/.test(record.name)) {
       errors.push(`name malformado no ledger para ${record.version}`);
+      if (byFileVersion.has(version)) {
+        const ledgerEscaped = escapeLogName(record.name);
+        errors.push(`ledger="${ledgerEscaped}"`);
+      }
+      // records without a matching file are reported in the withoutFile section below
     }
   }
 
@@ -541,10 +731,20 @@ function compare(migrations, records, exceptionsByVersion) {
   }
   if (withoutFile.length) {
     errors.push('Registro no banco sem arquivo no repo (DDL fora do Git):');
-    errors.push(...withoutFile.map((record) => {
+    for (const record of withoutFile) {
       const label = exceptionsByVersion.has(record.version) ? ' [excecao]' : '';
-      return `  ${record.version}${label}  ${record.name ?? '(sem nome)'}`;
-    }));
+      const stmts = record.statements ?? [];
+      const nameField = record.name != null ? `"${escapeLogName(record.name)}"` : 'null';
+      const normField =
+        record.name != null
+          ? `"${escapeLogName(normalizeRecordName(record.version, record.name))}"`
+          : 'null';
+      errors.push(
+        `  version=${record.version}${label} ledger_name=${nameField} normalized_name=${normField}`,
+      );
+      errors.push(`  ledger_statements_sha256=${ledgerStatementsSha256(stmts)}`);
+      errors.push(`  ledger_sql_sha256=${sha256(canonicalStatements(stmts))}`);
+    }
   }
 
   for (const migration of migrations) {
@@ -561,7 +761,7 @@ function compare(migrations, records, exceptionsByVersion) {
     const migration = byFileVersion.get(version);
     if (!migration) continue;
     const exc = exceptionsByVersion.get(version);
-    if (exc && (!recStmts || recStmts.length === 0)) {
+    if (exc && exc.kind === NAME_ONLY_KIND && (!recStmts || recStmts.length === 0)) {
       legacyFixed.push(`${version}: ${describeException(exc)}`);
     } else if (!exc && !recName && (!recStmts || recStmts.length === 0)) {
       warnings.push(`${version}: sem nome e sem SQL no ledger, sem excecao registrada`);
@@ -571,14 +771,14 @@ function compare(migrations, records, exceptionsByVersion) {
   return { errors, applyPending, warnings, legacyFixed };
 }
 
-function validateLocalMigrations(migrations) {
+function validateLocalMigrations(migrations, exceptionsByVersion) {
   const errors = [];
   const seenVersions = new Map();
   const seenNames = new Map();
   for (const migration of migrations) {
-    const { version, fileName, filePath, statements } = migration;
+    const { version, fileName, filePath, statements, hasSql, hasContent, fileSha256 } = migration;
     if (seenVersions.has(version)) {
-      errors.push(`version duplicada: ${version} em ${fileName} e ${seenVersions.get(version)}`);
+      errors.push(`versao duplicada ${version} em ${fileName} e ${seenVersions.get(version)}`);
     } else {
       seenVersions.set(version, fileName);
     }
@@ -588,11 +788,34 @@ function validateLocalMigrations(migrations) {
     } else {
       seenNames.set(baseName, fileName);
     }
-    if (statements.length === 0) {
+    if (!hasSql) {
+      const exc = exceptionsByVersion?.get(version);
+      const isEmpty = !hasContent;
       if (!fs.existsSync(filePath)) {
         errors.push(`arquivo nao encontrado: ${filePath}`);
+      } else if (isEmpty) {
+        errors.push(`arquivo vazio ou sem SQL: ${fileName}`);
+        if (exc?.kind === COMMENT_ONLY_KIND) {
+          errors.push(`excecao comment-only nao pode cobrir arquivo vazio ou sem SQL`);
+        }
       } else {
-        errors.push(`arquivo vazio ou sem statements validos: ${fileName}`);
+        // has content but no executable SQL (comment-only file)
+        if (exc?.kind === COMMENT_ONLY_KIND) {
+          if (exc.file_sha256 !== fileSha256) {
+            errors.push(`file_sha256 divergente do manifesto: ${version}`);
+          }
+          // allowed — validated against ledger in compareStatements
+        } else if (exc?.kind === NAME_ONLY_KIND) {
+          errors.push(`name-and-file-pinned exige SQL executavel: ${fileName}`);
+        } else {
+          errors.push(`arquivo vazio ou somente comentarios sem excecao exata: ${fileName}`);
+        }
+      }
+    } else {
+      // hasSql is true
+      const exc = exceptionsByVersion?.get(version);
+      if (exc?.kind === COMMENT_ONLY_KIND) {
+        errors.push(`excecao comment-only nao pode cobrir SQL executavel: ${fileName}`);
       }
     }
   }
@@ -613,9 +836,6 @@ function validateLedger(records) {
     } else {
       seenVersions.set(version, true);
     }
-    if (!name || typeof name !== 'string') {
-      errors.push(`registro sem name valido: ${version}`);
-    }
   }
   return errors;
 }
@@ -630,7 +850,7 @@ function main() {
     return 1;
   }
 
-  const localValidationErrors = validateLocalMigrations(local.migrations);
+  const localValidationErrors = validateLocalMigrations(local.migrations, local.exceptionsByVersion);
   if (localValidationErrors.length) {
     console.error('\nFALHA: migrations locais invalidas:');
     printErrors(localValidationErrors.map((e) => `  ${e}`));
@@ -638,7 +858,7 @@ function main() {
   }
 
   if (!url) {
-    console.log(`OK: ${local.migrations.length} migrations locais validas (sem DESTINO_URL, ledger nao consultado).`);
+    console.log(`OK: estrutura local validada — ${local.migrations.length} migrations locais validas (sem DESTINO_URL, ledger nao consultado).`);
     return 0;
   }
 
