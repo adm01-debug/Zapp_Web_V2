@@ -34,9 +34,6 @@ export const OPEN_TASK_STATUSES: WorkItemStatus[] = ['backlog', 'todo', 'doing',
 export const nextBestActionKey = (contactId: string | null | undefined) =>
   ['next-best-action', contactId] as const;
 
-export const nextBestActionKey = (contactId: string | null | undefined) =>
-  ['next-best-action', contactId] as const;
-
 /** Motor de sugestão da "Próxima melhor ação" — extraído de NextBestActionEngine
  * para ser reutilizável na aba IA (§2.7) e na aba CRM 360° (§2.5) sem duplicar a lógica. */
 export function useNextBestAction(contactId: string, contactName: string) {
