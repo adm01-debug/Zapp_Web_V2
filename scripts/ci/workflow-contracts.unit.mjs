@@ -511,9 +511,9 @@ function ancestrais(grafo, job) {
   return vistos;
 }
 
-test('E69: test/security/e2e/mutation-mapa não esperam o lint (rodam em paralelo)', () => {
+test('E69: unit-tests/node-scripts não esperam o typecheck (rodam em paralelo)', () => {
   const grafo = grafoDeNeeds(wf['ci.yml']);
-  for (const job of ['test', 'security', 'e2e', 'mutation-mapa']) {
+  for (const job of ['unit-tests', 'node-scripts']) {
     assert.ok(grafo.has(job), `job ${job} sumiu do ci.yml`);
     const anc = [...ancestrais(grafo, job)];
     assert.deepEqual(
@@ -526,6 +526,6 @@ test('E69: test/security/e2e/mutation-mapa não esperam o lint (rodam em paralel
 
 test('E69: o build continua atrás do lint E do test', () => {
   const anc = ancestrais(grafoDeNeeds(wf['ci.yml']), 'build');
-  assert.ok(anc.has('lint-and-typecheck'), 'build deixou de esperar o lint');
-  assert.ok(anc.has('test'), 'build deixou de esperar o test');
+  assert.ok(anc.has('typecheck'), 'build deixou de esperar o lint');
+  assert.ok(anc.has('unit-tests'), 'build deixou de esperar o test');
 });
