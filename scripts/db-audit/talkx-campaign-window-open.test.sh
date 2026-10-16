@@ -309,8 +309,9 @@ BEGIN
 END;
 $legacy$;
 SQL
-grep -q '^DROP FUNCTION IF EXISTS public.talkx_campaign_window_open' "$migration" \
-  || fail '(0b) a migration nao tem o DROP FUNCTION antes do CREATE'
+# O mutante e o MESMO arquivo real, com a linha do DROP removida aqui em runtime.
+# Que a migration tem o DROP ja esta provado pelo bloco positivo (ela aplica sobre
+# o contrato TABLE anterior) — nada aqui confere texto de arquivo.
 no_drop_migration="$(mktemp "${TMPDIR:-/tmp}/talkx-window-open-sem-drop-XXXXXX.sql")"
 grep -v '^DROP FUNCTION IF EXISTS public.talkx_campaign_window_open' "$migration" > "$no_drop_migration"
 set +e
