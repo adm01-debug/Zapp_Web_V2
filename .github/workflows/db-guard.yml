@@ -1519,6 +1519,10 @@ jobs:
       # get_profile_id_for_user(auth.uid()) e os dois formatos de rollback executavel.
       # SKIP_DOCKER_SHIM=1 porque o teste cria roles globais anon/authenticated/service_role.
       - name: Provar leitura de reacoes pelo profile_id (N-142)
+        env:
+          N142_REACTIONS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/n142-message-reactions-select-user-id.test.sh
       # N-142 (P3 · seguranca): message_reactions.user_id guarda profiles.id, mas a
       # policy message_reactions_select_policy comparava com auth.uid() (auth user
       # uuid) — o autor nunca via a propria reacao. O teste aplica a migration real
@@ -1792,6 +1796,10 @@ jobs:
       # Inicia container proprio e roda CREATE ROLE anon/authenticated/service_role
       # (globais ao cluster) -> SKIP_DOCKER_SHIM="1", como os blocos vizinhos.
       - name: Provar o remetente de grupo em messages (t_35d5aa82)
+        env:
+          MESSAGES_GROUP_SENDER_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/messages-group-sender.test.sh
       - name: Provar o remetente de grupo em messages (t_313f15cd)
         env:
           MESSAGES_GROUP_SENDER_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
