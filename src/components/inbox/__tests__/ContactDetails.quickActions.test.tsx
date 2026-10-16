@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, beforeAll, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ContactDetails } from '../ContactDetails';
 import type { Conversation } from '@/types/chat';
 
@@ -42,6 +43,9 @@ vi.mock('@/integrations/supabase/client', () => ({
     from: h.from,
     functions: { invoke: h.invoke },
     auth: { getUser: vi.fn(async () => ({ data: { user: null }, error: null })) },
+    // A seção "Entrega de mensagens" (16/10/2026) consulta a RPC no mount;
+    // aqui ela responde vazio — este teste não mede entrega.
+    rpc: vi.fn(async () => ({ data: null, error: null })),
   },
 }));
 vi.mock('sonner', () => ({ toast: h.toast }));
@@ -102,6 +106,21 @@ async function clickUndo() {
 const invokeCalls = () =>
   h.invoke.mock.calls.map((c) => (c[1] as { body: Record<string, unknown> }).body);
 
+/**
+ * O painel real vive dentro de um provider de query na aplicação; a seção
+ * "Entrega de mensagens" (16/10/2026) consulta a RPC `delivery_stats` no mount,
+ * então o teste monta o mesmo contexto (antes o painel passava sem provider
+ * porque todas as seções que consultam estavam desligadas por flag/mock).
+ */
+function renderPainel() {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(
+    <QueryClientProvider client={qc}>
+      <ContactDetails conversation={conversation} onClose={() => {}} />
+    </QueryClientProvider>,
+  );
+}
+
 describe('ContactDetails — ações rápidas persistem (cartão #241)', () => {
   beforeAll(() => {
     // jsdom não implementa Element.scrollTo — ContactDetails rola o painel no mount.
@@ -119,7 +138,7 @@ describe('ContactDetails — ações rápidas persistem (cartão #241)', () => {
   });
 
   it('"Arquivar" usa a semântica do archiveContact (assigned_to: null); Desfazer restaura o valor anterior real', async () => {
-    render(<ContactDetails conversation={conversation} onClose={() => {}} />);
+    renderPainel();
     openMais();
     fireEvent.click(screen.getByText('Arquivar'));
     await waitFor(() => expect(h.update).toHaveBeenCalledWith({ assigned_to: null }));
@@ -139,7 +158,7 @@ describe('ContactDetails — ações rápidas persistem (cartão #241)', () => {
   });
 
   it('"Bloquear" impede novas mensagens pelo fluxo real (update-block-status na edge) e grava a tag', async () => {
-    render(<ContactDetails conversation={conversation} onClose={() => {}} />);
+    renderPainel();
     openMais();
     fireEvent.click(screen.getByText('Bloquear'));
     await waitFor(() =>
@@ -160,7 +179,7 @@ describe('ContactDetails — ações rápidas persistem (cartão #241)', () => {
       contacts: { assigned_to: 'agent-9', whatsapp_connection_id: null },
       whatsapp_connections: null,
     };
-    render(<ContactDetails conversation={conversation} onClose={() => {}} />);
+    renderPainel();
     openMais();
     fireEvent.click(screen.getByText('Bloquear'));
     await waitFor(() => expect(h.toast.error).toHaveBeenCalled());
@@ -169,7 +188,7 @@ describe('ContactDetails — ações rápidas persistem (cartão #241)', () => {
   });
 
   it('a seção "Tags" e a ação "Marcar VIP" não existem mais no painel', () => {
-    render(<ContactDetails conversation={conversation} onClose={() => {}} />);
+    renderPainel();
     expect(screen.queryByTestId('sidebar-section-tags')).toBeNull();
     expect(screen.queryByText('Marcar VIP')).toBeNull();
   });
