@@ -17,6 +17,8 @@ import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/re
 
 const mocks = vi.hoisted(() => ({
   updateMutateAsync: vi.fn(),
+  fetchVariants: vi.fn(),
+  fetchVersionHistory: vi.fn(),
   templates: [
     {
       id: 'tpl_1', name: 'Promoção do mês', description: 'Oferta de outubro', category: 'geral',
@@ -53,8 +55,8 @@ vi.mock('@/hooks/integrations/useTalkXTemplates', () => ({
     deleteTemplate: { mutate: vi.fn() },
     duplicateTemplate: { mutate: vi.fn(), mutateAsync: vi.fn() },
     testTemplate: vi.fn(),
-    fetchVersionHistory: vi.fn().mockResolvedValue([]),
-    fetchVariants: vi.fn().mockResolvedValue([]),
+    fetchVersionHistory: mocks.fetchVersionHistory,
+    fetchVariants: mocks.fetchVariants,
     saveVariant: vi.fn(),
     deleteVariant: vi.fn(),
     countVariantRecipients: vi.fn(),
@@ -63,18 +65,21 @@ vi.mock('@/hooks/integrations/useTalkXTemplates', () => ({
 
 import { TalkXTemplateEditor } from '../TalkXTemplateEditor';
 
-const renderEditor = () => render(
+const renderEditor = (ttab?: 'conteudo' | 'ab' | 'historico') => render(
   <TalkXTemplateEditor
     templates={mocks.templates as never}
     isLoading={false}
     editing={mocks.templates[0] as never}
     onClose={vi.fn()}
+    {...(ttab ? { initialTtab: ttab } : {})}
   />,
 );
 
 beforeEach(() => {
   cleanup();
   vi.clearAllMocks();
+  mocks.fetchVariants.mockResolvedValue([]);
+  mocks.fetchVersionHistory.mockResolvedValue([]);
   vi.stubGlobal('confirm', vi.fn(() => true));
 });
 
@@ -107,5 +112,31 @@ describe('X094 — campos do editor (descrição) e trilha dentro do shell', () 
     expect(trilha).toHaveTextContent('Talk X');
     expect(trilha).toHaveTextContent('Campanhas');
     expect(trilha).toHaveTextContent('Templates');
+  });
+});
+
+describe('X094 — sub-aba do endereço (`ttab=conteudo|ab|historico`)', () => {
+  it('ttab=ab abre as variações A/B do template já carregadas', async () => {
+    renderEditor('ab');
+
+    const adicionar = await screen.findByRole('button', { name: '+ Adicionar variante A' });
+    expect(adicionar).toBeInTheDocument();
+    expect(mocks.fetchVariants).toHaveBeenCalledWith('tpl_1');
+  });
+
+  it('ttab=historico abre o histórico do template já carregado', async () => {
+    renderEditor('historico');
+
+    expect(await screen.findByText('Nenhuma versão salva.')).toBeInTheDocument();
+    expect(mocks.fetchVersionHistory).toHaveBeenCalledWith('tpl_1');
+  });
+
+  it('ttab=conteudo (padrão) deixa os dois painéis fechados', () => {
+    renderEditor('conteudo');
+
+    expect(screen.queryByRole('button', { name: /Adicionar variante A/ })).not.toBeInTheDocument();
+    expect(screen.queryByText('Nenhuma versão salva.')).not.toBeInTheDocument();
+    expect(mocks.fetchVariants).not.toHaveBeenCalled();
+    expect(mocks.fetchVersionHistory).not.toHaveBeenCalled();
   });
 });
