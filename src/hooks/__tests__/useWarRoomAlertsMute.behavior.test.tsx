@@ -47,8 +47,14 @@ vi.mock('@/integrations/supabase/client', () => ({
         eq: vi.fn().mockReturnValue({
           order: vi.fn().mockReturnValue({
             limit: vi.fn().mockResolvedValue({ data: [], error: null }),
-            // O monitor de SLA lê as violações paginadas (R2-MOD-074).
+            // O monitor de SLA lê as violações paginadas (R2-MOD-074), agora
+            // restritas ao ciclo atual: `.eq().or(...).order().range()`.
             range: vi.fn().mockResolvedValue({ data: [], error: null }),
+          }),
+          or: vi.fn().mockReturnValue({
+            order: vi.fn().mockReturnValue({
+              range: vi.fn().mockResolvedValue({ data: [], error: null }),
+            }),
           }),
         }),
         or: vi.fn().mockResolvedValue({ data: [], error: null }),
@@ -70,9 +76,12 @@ function wrapper() {
   );
 }
 
-const alertaCritico = {
-  new: { id: 'x1', alert_type: 'critical', title: 't', message: 'm', source: null, is_read: false, created_at: new Date().toISOString() },
-};
+// Um id por caso: o aviso é deduplicado POR ALERTA (`claimNotificationEvent`),
+// então repetir o mesmo id entre casos faria o segundo "não tocar" sem que a
+// regra de mudo/silêncio fosse a causa.
+const alertaCritico = (id: string) => ({
+  new: { id, alert_type: 'critical', title: 't', message: 'm', source: null, is_read: false, created_at: new Date().toISOString() },
+});
 
 const tocou = () => audios.some((a) => a.play.mock.calls.length > 0);
 
@@ -87,7 +96,7 @@ describe('useWarRoomAlerts — mudo do painel e horário de silêncio', () => {
     renderHook(() => useWarRoomAlerts(), { wrapper: wrapper() });
     await waitFor(() => expect(h.state.handler).toBeTruthy());
 
-    act(() => { h.state.handler!(alertaCritico); });
+    act(() => { h.state.handler!(alertaCritico('mute-toca')); });
 
     await waitFor(() => expect(tocou()).toBe(true));
   });
@@ -97,7 +106,7 @@ describe('useWarRoomAlerts — mudo do painel e horário de silêncio', () => {
     renderHook(() => useWarRoomAlerts(), { wrapper: wrapper() });
     await waitFor(() => expect(h.state.handler).toBeTruthy());
 
-    act(() => { h.state.handler!(alertaCritico); });
+    act(() => { h.state.handler!(alertaCritico('mute-desligado')); });
     await new Promise((r) => setTimeout(r, 20));
 
     expect(tocou()).toBe(false);
@@ -108,7 +117,7 @@ describe('useWarRoomAlerts — mudo do painel e horário de silêncio', () => {
     renderHook(() => useWarRoomAlerts(true), { wrapper: wrapper() });
     await waitFor(() => expect(h.state.handler).toBeTruthy());
 
-    act(() => { h.state.handler!(alertaCritico); });
+    act(() => { h.state.handler!(alertaCritico('mute-silencio')); });
     await new Promise((r) => setTimeout(r, 20));
 
     expect(tocou()).toBe(false);

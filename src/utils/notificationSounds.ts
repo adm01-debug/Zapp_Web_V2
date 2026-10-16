@@ -74,15 +74,20 @@ export const requestNotificationPermission = async (): Promise<boolean> => {
 export const showBrowserNotification = (
   title: string,
   body: string,
-  options?: { icon?: string; tag?: string; onClick?: () => void }
+  options?: { icon?: string; tag?: string; requireInteraction?: boolean; onClick?: () => void }
 ) => {
   if ('Notification' in window && Notification.permission === 'granted') {
     const notification = new Notification(title, {
       body, icon: options?.icon || '/favicon.ico', badge: '/favicon.ico', tag: options?.tag || 'notification',
+      requireInteraction: options?.requireInteraction ?? false,
     });
     if (options?.onClick) {
       notification.onclick = () => { window.focus(); options.onClick?.(); notification.close(); };
     }
-    setTimeout(() => notification.close(), 5000);
+    // Aviso que exige interação (alerta crítico) fica fixo até o clique, como no
+    // caminho via Service Worker; os demais fecham sozinhos em 5 s.
+    if (!options?.requireInteraction) {
+      setTimeout(() => notification.close(), 5000);
+    }
   }
 };

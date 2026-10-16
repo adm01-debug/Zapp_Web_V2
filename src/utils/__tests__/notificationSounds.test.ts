@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // Mock AudioContext
 const mockOscillator = {
@@ -117,6 +117,66 @@ describe('notificationSounds', () => {
       } finally {
         vi.useRealTimers();
       }
+    });
+  });
+
+  describe('showBrowserNotification', () => {
+    const NotificationOriginal = (globalThis as unknown as { Notification?: unknown }).Notification;
+
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+      vi.unstubAllGlobals();
+      (globalThis as unknown as { Notification?: unknown }).Notification = NotificationOriginal;
+    });
+
+    function instalaNotificacaoFalsa() {
+      const criadas: Array<{ titulo: string; opcoes: Record<string, unknown>; fechada: boolean }> = [];
+      class FakeNotification {
+        static permission = 'granted';
+        onclick: (() => void) | null = null;
+        fechada = false;
+        titulo: string;
+        opcoes: Record<string, unknown>;
+        constructor(titulo: string, opcoes: Record<string, unknown>) {
+          this.titulo = titulo;
+          this.opcoes = opcoes;
+          criadas.push({ titulo, opcoes, fechada: false });
+        }
+        close() {
+          this.fechada = true;
+          const reg = criadas.find((c) => c.titulo === this.titulo);
+          if (reg) reg.fechada = true;
+        }
+      }
+      vi.stubGlobal('Notification', FakeNotification);
+      return criadas;
+    }
+
+    it('alerta crítico fica FIXO (requireInteraction) e não fecha em 5 s', async () => {
+      const { showBrowserNotification } = await import('../notificationSounds');
+      const criadas = instalaNotificacaoFalsa();
+      showBrowserNotification('⚠️ Crise', 'fila acima do limite', {
+        tag: 'warroom-a-1',
+        requireInteraction: true,
+      });
+      expect(criadas).toHaveLength(1);
+      expect(criadas[0].opcoes).toMatchObject({ requireInteraction: true });
+      vi.advanceTimersByTime(30_000);
+      expect(criadas[0].fechada).toBe(false);
+    });
+
+    it('aviso comum fecha sozinho em 5 s', async () => {
+      const { showBrowserNotification } = await import('../notificationSounds');
+      const criadas = instalaNotificacaoFalsa();
+      showBrowserNotification('⚠️ Aviso', 'quase no limite', { tag: 'warroom-a-2' });
+      expect(criadas).toHaveLength(1);
+      expect(criadas[0].opcoes).toMatchObject({ requireInteraction: false });
+      vi.advanceTimersByTime(5_000);
+      expect(criadas[0].fechada).toBe(true);
     });
   });
 });
