@@ -1,39 +1,44 @@
-Especialista: worker (sql) (area-sql-banco)
+Especialista: workersql
+Executor do refazer: senior (area-sql-banco)
 
-## Como resolvi o motivo da retomada
-Motivo: a entrega de t_007f8fb0 (v2/anon-truncate-17-tabelas-2610102042c8e0 @ b6f5c02a5) quebrava, empilhada sobre dia/2026-10-11, o item `node: docs/DB-INVENTORY.md cobre o catálogo do banco, sem mentir`.
+Aviso do juiz sobre arquivos fora da lista:
+- scripts/db-audit/enqueue-connection-scope.test.sh é indispensável porque a própria recusa exigiu prova SQL que falha sem a correção, incluindo DORA fora da fila em g_fila, rollback executado e tipos/claim de grupo. Sem esse arquivo, o defeito de banco ficaria provado só por leitura de SQL, que o revisor recusou.
+- src/adapters/evolutionAdapter.ts é indispensável por typecheck: o contrato NormalizedRealtimeMessage já consumido pelo front ganhou whatsapp_group_id no tipo gerado de messages; o adaptador real que constrói esse shape precisava preencher o campo como null no caminho legado de Evolution, sem mudar comportamento visual.
 
-Reproduzi na ponta atual de dia/2026-10-11 (616782983) com o cherry-pick dos dois commits da entrega (7e1a91cbb + b6f5c02a5 -> dd633e7a3 + dbb12e45f) e o comando que produz o item:
-`node --test --test-reporter=tap scripts/ci/db-inventory-doc.unit.mjs`
--> RED: `not ok 3 - docs/DB-INVENTORY.md cobre o catálogo do banco, sem mentir`, com
-`"sicoob_contact_mapping" está como "roadmap", mas o repositório diz "parcial"` e `"sicoob_contact_mapping" não lista nenhum consumidor (o repositório cita em 1 arquivo(s))`.
+Ponto 1: rollback real e executável da migration de grupo.
+- O que mudei: supabase/migrations/20261011155946_enqueue_group_outbound_message.sql agora traz, no cabeçalho, o rollback executável que recria public.claim_outbound_message com o corpo anterior completo, remove a RPC nova, os índices, o CHECK e a coluna whatsapp_group_id. O teste extrai esse bloco do próprio arquivo e executa no Postgres descartável.
+- Prova vermelha antes: com a migration anterior e os testes novos, o script falhou em C1a antes de chegar ao rollback: [FAIL] C1a DORA fora da fila nao enfileira em g_fila sem conexao explicita (sem oraculo): deveria falhar, mas passou.
+- Prova verde depois: bash scripts/db-audit/enqueue-connection-scope.test.sh -> [PASS] E1 a coluna whatsapp_group_id foi removida; [PASS] E2 a RPC de grupo foi removida; [PASS] E3 os indices de grupo foram removidos; [PASS] E3b o CHECK de destino unico foi removido; [PASS] E4 claim volta ao corpo so-de-contato (sem whatsapp_group_id); [OK] rollback da migration de grupo executado e verificado.
 
-Causa: o teste NOVO que a entrega criou, `scripts/db-audit/anon-privileges-contact-messages.test.sh`, cita `sicoob_contact_mapping` (uma das 17 tabelas revogadas). A guarda lê o repositório por varredura textual; como aquele arquivo cita 17 objetos (abaixo de `LIMITE_ESPELHO` = 30), ele passa a contar como consumidor de ferramental e muda o status medido da tabela de `roadmap` para `parcial`. O documento ficou desalinhado do repositório — o teste e a migration da entrega estão corretos, e nenhuma asserção foi afrouxada.
+Ponto 2: prova SQL do acesso ao grupo por fila/conexão, sem oracle e sem mock.
+- O que mudei: na RPC public.enqueue_group_outbound_message, a visibilidade do grupo agora nega usuário comum fora da fila quando a conexão do grupo, ou a conexão resolvida para grupo sem conexão, tem vínculo em public.whatsapp_connection_queues. A resposta é message_group_not_authorized, igual a grupo inexistente, para não enumerar grupos. Mantive a guarda L7 da conexão efetivamente usada no envio quando ela difere da conexão própria do grupo.
+- O que mudei no teste: scripts/db-audit/enqueue-connection-scope.test.sh agora cria g_fila, g_free e g_sem_conn; cobre DORA fora da fila com conexão nula e com conn_fila, CARLA membro da fila, ADM, grupo sem conexão, conexão sem fila, idempotência, claim/complete e regressão do contato.
+- Prova vermelha antes: com a migration anterior e os testes novos, DORA enfileirou em g_fila sem conexão explícita e o script parou com [FAIL] C1a DORA fora da fila nao enfileira em g_fila sem conexao explicita (sem oraculo): deveria falhar, mas passou.
+- Prova verde depois: bash scripts/db-audit/enqueue-connection-scope.test.sh -> [PASS] C1a DORA fora da fila nao enfileira em g_fila sem conexao explicita (sem oraculo); [PASS] C1b DORA fora da fila nao enfileira em g_fila nem escolhendo a propria conexao da fila; [PASS] C1c as recusas de visibilidade de grupo nao gravaram mensagens; [PASS] C2 CARLA enfileira mensagem para o grupo -- permitido, 1 linha; [PASS] C2b ADM (admin/supervisor) enfileira no grupo da fila -- permitido; [PASS] C16 DORA envia para grupo de conexao sem fila -- permitido; [OK] enfileiramento e delivery de grupo (whatsapp_group_id) verificado.
 
-## O que mudou e por quê
-- `docs/DB-INVENTORY.md` (linha do `sicoob_contact_mapping`): `roadmap` / `—` -> `parcial` / `scripts/db-audit/anon-privileges-contact-messages.test.sh`. É a aplicação da regra do próprio documento ao novo consumidor de ferramental; `parcial` significa exatamente "só `scripts/`/`tests/`/`e2e/`/`.github/` citam". Nenhum objeto do banco foi criado ou alterado.
+Ponto 3: types.ts reflete o novo contrato de mensagens/RPC.
+- O que mudei: src/integrations/supabase/types.ts agora expõe messages.whatsapp_group_id em Row/Insert/Update, a relação messages_whatsapp_group_id_fkey para whatsapp_groups, a RPC enqueue_group_outbound_message e o retorno com whatsapp_group_id. src/adapters/evolutionAdapter.ts recebeu o campo whatsapp_group_id: null para manter o shape NormalizedRealtimeMessage tipado no caminho existente.
+- Prova: bun run typecheck -> $ tsc -b --force, exit 0.
+- Observação do fluxo de geração: tentei validar o fluxo local com supabase db start && bash scripts/db-audit/gen-types.sh --local .tmp/types.local.generated.ts; ele falhou antes desta migration, em uma migration legada de cron job inexistente no banco local descartável. Não usei produção nem DESTINO_URL.
 
-## Arquivos no diff (5 arquivos — a contagem/soma exata vem no bloco FATOS MEDIDOS PELO FECHAR)
-- `docs/DB-INVENTORY.md` — única mudança DESTA rodada (revisa a linha do `sicoob_contact_mapping`).
-- `supabase/migrations/20261011003020_revoke_anon_privileges_contact_messages.sql` — cherry-pick da entrega (7e1a91cbb), intocado.
-- `scripts/db-audit/anon-privileges-contact-messages.test.sh` — cherry-pick da entrega (7e1a91cbb), intocado; é o teste `.sh` que passou a citar `sicoob_contact_mapping` e causou o desalinhamento.
-- `.github/workflows/db-guard.yml` — cherry-pick da entrega (b6f5c02a5), intocado.
-- `.tmp/relato.md` — este relato (arquivo versionado no branch do dia).
-Os 4 primeiros vêm do cherry-pick; só o `docs/DB-INVENTORY.md` é escrito nesta rodada.
+Ponto transversal: invariantes de estrutura e segurança da migration.
+- O que mudei: a coluna nova recebeu FK para public.whatsapp_groups, índice de FK, índice único parcial de idempotência por grupo, CHECK que impede contact_id e whatsapp_group_id simultâneos em mensagens novas, e a RPC nova usa SECURITY DEFINER com SET search_path = pg_catalog, public e EXECUTE só para authenticated.
+- Prova verde: bash scripts/db-audit/enqueue-connection-scope.test.sh -> [PASS] D1 whatsapp_group_id e FK para whatsapp_groups; [PASS] D2 indice unico parcial de idempotencia de grupo existe; [PASS] D3 RPC de grupo e SECURITY DEFINER com search_path fixo; [PASS] D4 RPC de grupo so tem EXECUTE para authenticated; [PASS] D5 RPC de grupo fixa search_path em pg_catalog,public; [PASS] D6 CHECK impede mensagem com contact_id e whatsapp_group_id ao mesmo tempo; [PASS] D7 CHECK recusa destino duplo na mesma mensagem.
 
-## Prova
-- vermelho antes: `node --test --test-reporter=tap scripts/ci/db-inventory-doc.unit.mjs` (sem a mudança) -> `not ok 3 - docs/DB-INVENTORY.md cobre o catálogo do banco, sem mentir` + `"sicoob_contact_mapping" está como "roadmap", mas o repositório diz "parcial"`
-- verde depois: `node --test --test-reporter=tap scripts/ci/db-inventory-doc.unit.mjs` -> nenhum `not ok` (15/15 `ok`, item 3 incluído)
-- `zapp-verify . --rapido` -> `VERIFY: VERDE SEM BANCO (101s)`; `OK db_guard 0s / OK tipos 100s / OK lint 0s / OK migrations 1s`
+Arquivos do diff:
+.tmp/relato.md
+scripts/db-audit/enqueue-connection-scope.test.sh
+src/adapters/evolutionAdapter.ts
+src/integrations/supabase/types.ts
+supabase/migrations/20261011155946_enqueue_group_outbound_message.sql
 
-## O que NÃO fiz e por quê
-- Não rodei o `~/arquitetura-v2/integrador/ci_espelho.sh`: o HERMES-GUARD bloqueia a execução desse script do integrador. Reproduzi o item exatamente como ele é gerado — o mesmo `node --test` sobre o mesmo arquivo — em RED (depois do cherry-pick) e GREEN (depois da correção).
-- Não mexi no `.test.sh` da entrega, na migration nem em `LIMITE_ESPELHO`: a causa é só o desalinhamento do documento; baixar o limite ou esconder o nome da tabela no teste seria afrouxar a medida.
-- Rodei também a suíte node inteira do espelho (`scripts/ci/*.unit.mjs`, `scripts/edge-deploy/*.unit.mjs`, `scripts/db-audit/*.test.mjs`, `scripts/talkx/*.unit.mjs`): saíram dos 3 do baseline (1 contrato + 2 Talk X) também 5 testes do `lint-ratchet.unit.mjs`, que falham aqui porque o HERMES-GUARD barra os `git` de escrita que eles usam dentro do teste — artefato do meu ambiente, não do diff (no ambiente do integrador, sem guarda, o baseline não os lista).
-- Não toquei `supabase/schema-manifest.json` nem `scripts/db-audit/grants-baseline.json` (retratos do banco oficial, regenerados na integração) — segue como pendência registrada pelo cartão pai.
+Comandos de verificação executados:
+- bash scripts/db-audit/enqueue-connection-scope.test.sh 2>&1 | tee .tmp/green-enqueue-group.log -> exit 0; terminou com [OK] contrato de escopo de conexao no enfileiramento verificado, [OK] enfileiramento e delivery de grupo (whatsapp_group_id) verificado e [OK] rollback da migration de grupo executado e verificado.
+- bun run typecheck 2>&1 | tee .tmp/typecheck.log -> exit 0; saída: $ tsc -b --force.
+- git diff --cached --check -> exit 0.
+- varredura dos arquivos do diff pelo identificador do banco de produção -> prod-id-ausente-nos-arquivos-do-diff.
+- hermes-tarefa-fechar "fix(banco): corrige refazer envio de grupo" .tmp/relato.md -> verificação rápida OK db_guard; OK tipos; OK lint; OK migrations.
 
-## Pontos do refazer (O QUE FAZER do cartão)
-- Ponto 1: parti do commit da entrega com `git cherry-pick` (7e1a91cbb + b6f5c02a5 -> dd633e7a3 + dbb12e45f) sobre a ponta de dia/2026-10-11 (616782983), sem recomeçar.
-- Ponto 2: reproduzi o vermelho no mesmo comando e corrigi a causa — `docs/DB-INVENTORY.md`, linha do `sicoob_contact_mapping`: `roadmap`/`—` -> `parcial`/`scripts/db-audit/anon-privileges-contact-messages.test.sh`; nenhuma asserção foi afrouxada.
-- Ponto 3: provei com `node --test --test-reporter=tap scripts/ci/db-inventory-doc.unit.mjs` (15/15 `ok`, sem `not ok`) e `zapp-verify . --rapido` -> `VERIFY: VERDE SEM BANCO (101s)`. SHA dos commits: dd633e7a3 (cherry-pick da migration/teste), dbb12e45f (cherry-pick do db-guard) e 63c1d24b5 (a correção).
-
+O que não fiz:
+- Não toquei produção, não rodei DESTINO_URL e não fiz deploy/push.
+- Não mexi em CI, guardas ou manifestos para “fazer passar”.
