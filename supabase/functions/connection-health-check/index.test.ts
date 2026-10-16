@@ -1,4 +1,4 @@
-import { handleConnectionHealthCheck } from './index.ts';
+import { handleConnectionHealthCheck, evaluateOpenConnectionHealth, parseOwnerJid, parseSilenceMinutes, inboxSilenceDedupeKey } from './index.ts';
 
 // ---------------------------------------------------------------------------
 // SL-053 / F3 E23-E29 do plano multi-conexão (E24/E25/E26/E28).
@@ -54,11 +54,25 @@ interface Fake {
   statusById: Record<string, string | null>;
   /** token por instância como o Vault devolveria (get_instance_token) */
   tokens: Record<string, string | null>;
+  /** corpos POST capturados (Resend) */
+  bodies: Array<unknown>;
+  /** última mensagem recebida por conexão (camada 3 / caixa muda) */
+  lastInbound: Array<{ created_at: string }>;
+  /** admins para o e-mail de queda (opt-in desliga quando vazio) */
+  adminProfiles: Array<Record<string, unknown>>;
+  /** pushes gravados em notifications */
+  pushNotifications: Array<unknown>;
+  /** deletes no warroom (testemunha do auto-resolve) */
+  alertDeletes: Array<unknown>;
+  /** dentro do horário comercial? (RPC is_within_business_hours) */
+  withinHours: boolean;
   /** get_instance_token falha (leitura do Vault indisponível) */
   tokenRpcError: boolean;
   alerts: Array<Record<string, unknown>>;
   healthLogs: Array<Record<string, unknown>>;
   connUpdates: Array<Record<string, unknown>>;
+  /** tabelas alvo de CADA insert (testemunha do espelho: push vai a `notifications`) */
+  insertTables: string[];
   calls: Array<{ path: string; apikey: string | null }>;
   rpcCalls: string[];
   fetchImpl: (call: { path: string; apikey: string | null }) => Response | Promise<Response>;
@@ -70,9 +84,16 @@ function baseFake(): Fake {
     statusById: {},
     tokens: {},
     tokenRpcError: false,
+    bodies: [],
+    lastInbound: [],
+    adminProfiles: [],
+    pushNotifications: [],
+    alertDeletes: [],
+    withinHours: false,
     alerts: [],
     healthLogs: [],
     connUpdates: [],
+    insertTables: [],
     calls: [],
     rpcCalls: [],
     fetchImpl: () => jsonResponse({ instance: { state: 'open' } }),
@@ -112,11 +133,31 @@ function result(
     return { data: null, error: null };
   }
   if (table === 'connection_health_logs' && op === 'insert' && pending) {
+    fake.insertTables.push(table);
     fake.healthLogs.push(pending);
     return { data: null, error: null };
   }
   if (table === 'warroom_alerts' && op === 'insert' && pending) {
+    fake.insertTables.push(table);
     fake.alerts.push(pending);
+    return { data: null, error: null };
+  }
+  if (table === 'warroom_alerts' && op === 'delete') {
+    fake.alertDeletes.push(filters);
+    return { data: null, error: null };
+  }
+  if (table === 'messages' && op === 'select') {
+    return { data: fake.lastInbound[0] ?? null, error: null };
+  }
+  if (table === 'profiles' && op === 'select') {
+    return { data: fake.adminProfiles, error: null };
+  }
+  if (table === 'notifications' && op === 'insert' && pending) {
+    fake.insertTables.push(table);
+    fake.pushNotifications.push(pending);
+    return { data: null, error: null };
+  }
+  if (table === 'global_settings' && op === 'select') {
     return { data: null, error: null };
   }
   if (op === 'select' && table === 'whatsapp_connections') {
@@ -199,6 +240,10 @@ function makeDeps(fake: Fake): any {
           const instance = params?.p_instance_id as string;
           return Promise.resolve({ data: fake.tokens[instance] ?? null, error: null });
         }
+        // PE-87: dentro/fora do horário comercial (contracheque da "caixa muda").
+        if (name === 'is_within_business_hours') {
+          return Promise.resolve({ data: fake.withinHours, error: null });
+        }
         return Promise.resolve({ data: null, error: null });
       },
       auth: {
@@ -223,6 +268,7 @@ async function run(fake: Fake, req?: Request, deps?: unknown): Promise<Response>
     const path = new URL(String(input)).pathname;
     const apikey = ((init?.headers ?? {}) as Record<string, string>).apikey ?? null;
     fake.calls.push({ path, apikey });
+    fake.bodies.push((init as { body?: unknown } | undefined)?.body ?? null);
     return Promise.resolve(fake.fetchImpl({ path, apikey }));
   }) as typeof fetch;
   try {
@@ -248,19 +294,26 @@ Deno.test('E24: cada conexão consulta o provedor com o token DELA, nunca com a 
   assert(res.status === 200, `esperado 200, recebido ${res.status}`);
 
   // No flavor GO a instância é escolhida pela CREDENCIAL, então duas conexões =
-  // duas chamadas, cada uma com o token da sua instância.
+  // duas consultas de estado, cada uma com o token da sua instância. (A camada
+  // de identidade/owner faz chamadas extras à parte — não entram aqui.)
+  const stateCalls = fake.calls.filter((c) => c.path.includes('/instance/status'));
   assert(
-    fake.calls.length === 2,
-    `esperado uma consulta por conexão (2), recebido ${fake.calls.length}: ${JSON.stringify(fake.calls)}`,
+    stateCalls.length === 2,
+    `esperado uma consulta de estado por conexão (2), recebido ${stateCalls.length}: ${JSON.stringify(fake.calls)}`,
   );
-  const apikeys = fake.calls.map((c) => c.apikey).sort();
+  const apikeys = stateCalls.map((c) => c.apikey).sort();
   assert(
     JSON.stringify(apikeys) === JSON.stringify(['tok-da-inst-b', 'tok-da-padrao']),
     `cada chamada tem de levar o token da própria instância, recebido ${JSON.stringify(apikeys)}`,
   );
+  // A regra "nunca a chave global" vale para a ROTA DE ESTADO (por instância,
+  // auth "instance" no evolution-go-routes). A camada de identidade usa a rota
+  // ADMIN de listagem (/instance/fetchInstances → /instance/all, auth "admin"):
+  // ela leva a chave do servidor e não personifica outra instância — por isso
+  // fica fora desta asserção (filtrar só stateCalls, não todas as chamadas).
   assert(
-    !fake.calls.some((c) => c.apikey === 'test-evolution-key' || c.apikey === 'tok-legado-da-padrao'),
-    `a credencial global/legada não pode ser usada numa rota de instância: ${JSON.stringify(fake.calls)}`,
+    !stateCalls.some((c) => c.apikey === 'test-evolution-key' || c.apikey === 'tok-legado-da-padrao'),
+    `a rota de estado (por instância) não pode usar a credencial global/legada: ${JSON.stringify(stateCalls)}`,
   );
 
   // E24: as duas instâncias têm estado independente — a segunda não é 'error'.
@@ -569,12 +622,19 @@ Deno.test('alvo único: verifica SÓ a instância pedida, não varre as demais',
   const res = await run(fake, makeCronRequestWithBody({ instanceName: 'inst_b' }), makeDeps(fake));
   assert(res.status === 200, `esperado 200, recebido ${res.status}`);
 
-  // Uma única consulta, e ela é da instância pedida (no flavor GO a instância é
-  // identificada pela CREDENCIAL, então o alvo aparece no apikey).
-  assert(fake.calls.length === 1, `esperado 1 consulta (só o alvo), recebido ${fake.calls.length}`);
+  // Uma única consulta de estado, e ela é da instância pedida (no flavor GO a
+  // instância é identificada pela CREDENCIAL, então o alvo aparece no apikey).
+  // (A camada de identidade/owner faz uma chamada ADMIN à parte — não entra
+  // nesta contagem; ela nunca carrega credencial de outra instância.)
+  const stateCalls = fake.calls.filter((c) => c.path.includes('/instance/status'));
+  assert(stateCalls.length === 1, `esperado 1 consulta de estado (só o alvo), recebido ${stateCalls.length}`);
   assert(
-    fake.calls[0].apikey === 'tok-b',
-    `a consulta tem de ser da instância pedida (token do alvo): ${JSON.stringify(fake.calls)}`,
+    stateCalls[0].apikey === 'tok-b',
+    `a consulta tem de ser da instância pedida (token do alvo): ${JSON.stringify(stateCalls)}`,
+  );
+  assert(
+    !fake.calls.some((c) => c.apikey === 'tok-a' || c.apikey === 'tok-c'),
+    `nenhuma chamada pode levar credencial de outra instância: ${JSON.stringify(fake.calls)}`,
   );
   // Só a instância pedida foi logada/atualizada; as outras não foram tocadas.
   const logadas = fake.healthLogs.map((l) => l.instance_id);
@@ -644,7 +704,10 @@ Deno.test('sem alvo: varredura com concorrência LIMITADA (no máximo 3 em voo)'
   const res = await run(fake, makeRequest(), makeDeps(fake));
   assert(res.status === 200, `esperado 200, recebido ${res.status}`);
 
-  assert(fake.calls.length === 7, `todas as 7 instâncias têm de ser consultadas: ${fake.calls.length}`);
+  // 7 consultas de ESTADO (uma por instância). A camada de identidade/owner faz
+  // uma chamada ADMIN à parte por conexão — não entra nesta contagem.
+  const stateCalls = fake.calls.filter((c) => c.path.includes('/instance/status'));
+  assert(stateCalls.length === 7, `todas as 7 instâncias têm de ser consultadas: ${stateCalls.length}`);
   assert(pico === 3, `pico de concorrência deve ser exatamente 3, foi ${pico}`);
   assert(emVoo === 0, `nenhuma consulta pode ficar pendente: ${emVoo}`);
 
@@ -655,5 +718,211 @@ Deno.test('sem alvo: varredura com concorrência LIMITADA (no máximo 3 em voo)'
     JSON.stringify(corpo.connections?.map((c) => c.instance_id)) ===
       JSON.stringify(fake.rows.map((r) => r.instance_id)),
     `resultado por conexão fora de ordem: ${JSON.stringify(corpo.connections)}`,
+  );
+});
+
+// ---------------------------------------------------------------------------
+// R2-CONEX (paridade V3→V2, rodada 2): camadas 2/3 da avaliação, degrau de
+// leitura, caixa muda (PE-87), opt-in/e-mail fail-closed e espelho do CI.
+//
+// O degrau lê nomes que EXISTEM no V2 (`notifications`, `profiles`,
+// `is_within_business_hours`); `app_notifications` e
+// `connection_alert_preferences` NÃO existem — o teste do espelho testemunha
+// isso pelo comportamento (nenhum insert nessas tabelas, nenhum rpc de
+// preferência) e o guard `supabase-usage-guard` prova o resto no CI.
+// ---------------------------------------------------------------------------
+
+Deno.test('R2 degrau (unidade): fantasma/abandonada → disconnected; webhook parado → degraded; nova → healthy', () => {
+  const agora = new Date('2026-10-16T12:00:00.000Z');
+
+  // O ramo fantasma existe no contrato (na prática o provedor nunca devolve
+  // known+null — por isso o caminho de handler é defensivo e este ramo é
+  // coberto aqui, no nível da função pura).
+  const fantasma = evaluateOpenConnectionHealth({
+    owner: { known: true, ownerJid: null },
+    lastActivityAt: null,
+    now: agora,
+  });
+  assert(
+    fantasma.healthStatus === 'disconnected' && fantasma.dbStatus === 'disconnected' &&
+      fantasma.reason === 'phantom_session',
+    `fantasma tem de derrubar para disconnected: ${JSON.stringify(fantasma)}`,
+  );
+
+  const abandonada = evaluateOpenConnectionHealth({
+    owner: { known: false, ownerJid: null },
+    lastActivityAt: new Date(agora.getTime() - 7 * 3600_000),
+    now: agora,
+  });
+  assert(
+    abandonada.healthStatus === 'disconnected' && abandonada.dbStatus === 'disconnected' &&
+      abandonada.reason === 'stale_session',
+    `abandonada há 7h tem de derrubar: ${JSON.stringify(abandonada)}`,
+  );
+
+  const muda = evaluateOpenConnectionHealth({
+    owner: { known: true, ownerJid: '5511999999999@s.whatsapp.net' },
+    lastActivityAt: new Date(agora.getTime() - 45 * 60_000),
+    now: agora,
+  });
+  assert(
+    muda.healthStatus === 'degraded' && muda.dbStatus === 'connected' && muda.reason === 'webhook_silent',
+    `webhook parado há 45min é degraded SEM derrubar o status: ${JSON.stringify(muda)}`,
+  );
+
+  const nova = evaluateOpenConnectionHealth({
+    owner: { known: false, ownerJid: null },
+    lastActivityAt: null,
+    now: agora,
+  });
+  assert(
+    nova.healthStatus === 'healthy' && nova.dbStatus === 'connected' && nova.reason === null,
+    `conexão nova sem histórico nunca vira inativa: ${JSON.stringify(nova)}`,
+  );
+});
+
+Deno.test('R2 degrau (unidade): parseOwnerJid entende v2 e v3; vazio é desconhecido', () => {
+  const v2 = parseOwnerJid([{ instanceName: 'a', ownerJid: '5511@s.whatsapp.net' }]);
+  assert(v2.known && v2.ownerJid === '5511@s.whatsapp.net', `formato v2: ${JSON.stringify(v2)}`);
+  const v3 = parseOwnerJid({ instance: { owner: '5522@s.whatsapp.net' } });
+  assert(v3.known && v3.ownerJid === '5522@s.whatsapp.net', `formato v3: ${JSON.stringify(v3)}`);
+  const semDono = parseOwnerJid({ instance: { state: 'open' } });
+  assert(!semDono.known && semDono.ownerJid === null, `sem dono é desconhecido: ${JSON.stringify(semDono)}`);
+  const listaVazia = parseOwnerJid([]);
+  assert(!listaVazia.known && listaVazia.ownerJid === null, `lista vazia é desconhecida: ${JSON.stringify(listaVazia)}`);
+});
+
+Deno.test('R2 caixa muda (unidade): limiar fora da faixa volta ao padrão; chave estável por conexão', () => {
+  assert(parseSilenceMinutes(60) === 60, 'valor válido passa');
+  assert(parseSilenceMinutes('15') === 15, 'texto numérico passa');
+  assert(parseSilenceMinutes(0) === 10, 'zero volta ao padrão de 10min');
+  assert(parseSilenceMinutes(2000) === 10, 'acima de 24h volta ao padrão');
+  assert(parseSilenceMinutes('abc') === 10, 'texto inválido volta ao padrão');
+  assert(parseSilenceMinutes(null) === 10, 'ausente volta ao padrão');
+  assert(
+    inboxSilenceDedupeKey('c1') === 'inbox-silent:v1:c1' && inboxSilenceDedupeKey('c1') === inboxSilenceDedupeKey('c1'),
+    'chave estável por conexão',
+  );
+  assert(inboxSilenceDedupeKey('c1') !== inboxSilenceDedupeKey('c2'), 'conexões distintas, chaves distintas');
+});
+
+function r2Conn(id: string, instance: string): ConnRow {
+  return { id, instance_id: instance, phone_number: null };
+}
+
+Deno.test('R2 camada 3 (handler): sessão abandonada há 7h derruba para disconnected com alerta critical', async () => {
+  const fake = baseFake();
+  fake.rows = [r2Conn('c1', 'inst-c1')];
+  fake.statusById = { c1: 'connected' };
+  fake.tokens = { 'inst-c1': 'tok-c1' };
+  fake.lastInbound = [{ created_at: new Date(Date.now() - 7 * 3600_000).toISOString() }];
+  fake.withinHours = false;
+
+  const res = await run(fake, makeRequest(), makeDeps(fake));
+  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  assert(
+    fake.healthLogs.length === 1 && fake.healthLogs[0].status === 'disconnected',
+    `log tem de registrar a queda: ${JSON.stringify(fake.healthLogs)}`,
+  );
+  const quedas = fake.alerts.filter((a) => String(a.dedupe_key) === 'conn-down:v1:c1');
+  assert(
+    quedas.length === 1 && quedas[0].alert_type === 'critical',
+    `queda gera UM alerta critical de sessão abandonada: ${JSON.stringify(fake.alerts)}`,
+  );
+  // O motivo do degrau (stale_session) viaja na resposta, não na linha da warroom.
+  const corpoQueda = await res.json() as { connections?: Array<{ reason?: string }> };
+  assert(
+    corpoQueda.connections?.[0]?.reason === 'stale_session',
+    `resposta tem de carregar reason=stale_session: ${JSON.stringify(corpoQueda)}`,
+  );
+  assert(fake.statusById['c1'] === 'disconnected', 'o CAS aplica a queda no status');
+  // Fail-closed: sem opt-ins, nada de push nem e-mail.
+  assert(fake.pushNotifications.length === 0, 'sem opt-in não há push');
+  assert(!fake.calls.some((c) => c.path.includes('/emails')), 'sem opt-in o Resend não é chamado');
+});
+
+Deno.test('R2 camada 3 (handler): webhook parado gera UM alerta warning e não derruba o status', async () => {
+  const fake = baseFake();
+  fake.rows = [r2Conn('c1', 'inst-c1')];
+  fake.statusById = { c1: 'connecting' };
+  fake.tokens = { 'inst-c1': 'tok-c1' };
+  fake.lastInbound = [{ created_at: new Date(Date.now() - 45 * 60_000).toISOString() }];
+  fake.withinHours = false;
+
+  await run(fake, makeRequest(), makeDeps(fake)); // 1ª detecção
+  await run(fake, makeRequest(), makeDeps(fake)); // 2ª detecção do mesmo episódio
+
+  assert(
+    fake.healthLogs.length === 2 && fake.healthLogs[0].status === 'degraded',
+    `primeira detecção é degraded: ${JSON.stringify(fake.healthLogs)}`,
+  );
+  const avisos = fake.alerts.filter((a) => String(a.dedupe_key) === 'conn-degraded:v1:c1');
+  assert(
+    avisos.length === 1,
+    `duas detecções do mesmo episódio produzem UM alerta, recebido ${avisos.length}: ${JSON.stringify(fake.alerts)}`,
+  );
+  assert(
+    avisos[0].alert_type === 'warning',
+    `alerta é warning de webhook parado: ${JSON.stringify(avisos[0])}`,
+  );
+  assert(fake.statusById['c1'] === 'connected', 'degraded não derruba o status da conexão');
+  assert(fake.pushNotifications.length === 0, 'sem opt-in não há push');
+  assert(!fake.calls.some((c) => c.path.includes('/emails')), 'sem opt-in não há e-mail');
+});
+
+Deno.test('R2 caixa muda (handler): silêncio além do limiar alerta; mensagem nova auto-resolve', async () => {
+  const fake = baseFake();
+  fake.rows = [r2Conn('c1', 'inst-c1')];
+  fake.statusById = { c1: 'connected' };
+  fake.tokens = { 'inst-c1': 'tok-c1' };
+  fake.lastInbound = [{ created_at: new Date(Date.now() - 20 * 60_000).toISOString() }];
+  fake.withinHours = true;
+
+  await run(fake, makeRequest(), makeDeps(fake));
+  const mudas = fake.alerts.filter((a) => String(a.dedupe_key) === 'inbox-silent:v1:c1');
+  assert(
+    mudas.length === 1 && mudas[0].alert_type === 'warning',
+    `silêncio de 20min (limiar 10min) alerta: ${JSON.stringify(fake.alerts)}`,
+  );
+  assert(
+    fake.pushNotifications.length === 0 && !fake.calls.some((c) => c.path.includes('/emails')),
+    'caixa muda sem opt-in não dispara push nem e-mail',
+  );
+
+  // Mensagem nova resolve sozinha.
+  fake.lastInbound = [{ created_at: new Date().toISOString() }];
+  await run(fake, makeRequest(), makeDeps(fake));
+  assert(
+    fake.alertDeletes.some((fs) =>
+      (fs as Array<[string, string]>).some(([c, v]) => c === 'dedupe_key' && v === 'inbox-silent:v1:c1')
+    ),
+    `mensagem nova tem de auto-resolver o alerta: ${JSON.stringify(fake.alertDeletes)}`,
+  );
+});
+
+Deno.test('R2 espelho (handler): alerta usa tabelas reais; inexistentes nunca são tocadas', async () => {
+  const fake = baseFake();
+  fake.rows = [r2Conn('c1', 'inst-c1')];
+  fake.statusById = { c1: 'connected' };
+  fake.tokens = { 'inst-c1': 'tok-c1' };
+  fake.lastInbound = [{ created_at: new Date(Date.now() - 7 * 3600_000).toISOString() }];
+  fake.withinHours = false;
+
+  const res = await run(fake, makeRequest(), makeDeps(fake));
+  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  // Positivo: o pipeline do alerta escreve onde o V2 tem tabela.
+  assert(fake.insertTables.includes('warroom_alerts'), `alerta vai à warroom: ${JSON.stringify(fake.insertTables)}`);
+  assert(
+    fake.insertTables.includes('connection_health_logs'),
+    `log vai à connection_health_logs: ${JSON.stringify(fake.insertTables)}`,
+  );
+  // Negativo (o motivo da recusa 1): os nomes que quebraram o guard não existem.
+  assert(
+    !fake.insertTables.includes('app_notifications'),
+    `tabela inexistente não pode receber insert: ${JSON.stringify(fake.insertTables)}`,
+  );
+  assert(
+    !fake.rpcCalls.some((n) => n.includes('preference')),
+    `nenhum rpc de preferência (tabela ainda não existe): ${JSON.stringify(fake.rpcCalls)}`,
   );
 });
