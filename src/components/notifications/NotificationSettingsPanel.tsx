@@ -20,7 +20,18 @@ export function NotificationSettingsPanel() {
 
   const handleTestSound = async () => {
     setIsTestingSound(true);
-    previewSound(settings.messageSoundType, settings.soundVolume);
+    // `previewSound` devolve `false` quando o navegador recusou tocar (sem WebAudio/áudio
+    // bloqueado). Sem este aviso o clique em "Testar som" parecia ter funcionado: quem estava
+    // sem som não tinha como saber. Este botão não grava preferência nenhuma.
+    if (!previewSound(settings.messageSoundType, settings.soundVolume)) {
+      setIsTestingSound(false);
+      toast({
+        title: '🔇 O navegador não deixou tocar o som',
+        description: 'Libere o áudio desta aba e clique em "Testar som" de novo.',
+        variant: 'destructive',
+      });
+      return;
+    }
     setTimeout(() => setIsTestingSound(false), 1000);
   };
 

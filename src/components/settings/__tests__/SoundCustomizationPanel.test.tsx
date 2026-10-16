@@ -21,7 +21,9 @@ const h = vi.hoisted(() => ({
   row: {} as Record<string, unknown>,
   upsert: vi.fn(),
   upload: vi.fn(),
-  previewSound: vi.fn(),
+  // `previewSound` devolve boolean (t_3fd6b3a8): `true` = o navegador tocou. O mock precisa do
+  // ramo tocado para os casos de gravação; a recusa (`false`) tem casos próprios (11 a 13).
+  previewSound: vi.fn(() => true),
   toastFalha: vi.fn(),
 }));
 
@@ -127,6 +129,8 @@ vi.mock('@/components/ui/slider', () => ({
     />
   ),
 }));
+
+import { toast as toastSonner } from 'sonner';
 
 import { SoundCustomizationPanel } from '../SoundCustomizationPanel';
 
@@ -341,5 +345,61 @@ describe('SoundCustomizationPanel — grava no hook canônico dos alertas', () =
       expect((screen.getByTestId('sound-volume-slider') as HTMLInputElement).value).toBe('10'),
     );
     expect(screen.getByText('10%')).toBeInTheDocument();
+  });
+
+  // ---------------------------------------------------------------------------
+  // t_6367b145 — `previewSound` devolve `false` quando o navegador recusou tocar
+  // (sem WebAudio/áudio bloqueado). Antes o painel seguia como se tivesse tocado e
+  // gravava a preferência. Estes casos provam os DOIS ramos do retorno na tela REAL.
+  // ---------------------------------------------------------------------------
+  it('11. navegador recusando (false): avisa e a troca do som NÃO é gravada', async () => {
+    h.previewSound.mockReturnValue(false);
+    renderPainel();
+    await esperarPainelCarregado();
+
+    fireEvent.change(selectDa('message'), { target: { value: 'bell' } });
+
+    await waitFor(() =>
+      expect(vi.mocked(toastSonner.error)).toHaveBeenCalledWith(
+        expect.stringContaining('não deixou tocar o som'),
+      ),
+    );
+    // A preferência fica exatamente a que o hook canônico já tinha: 'chime'.
+    expect(selectDa('message').value).toBe('chime');
+    expect(h.upsert).not.toHaveBeenCalled();
+  });
+
+  it('12. navegador recusando (false) na prévia: avisa e não marca o cartão como tocando', async () => {
+    h.previewSound.mockReturnValue(false);
+    renderPainel();
+    await esperarPainelCarregado();
+
+    expect(botoesPlay()).toHaveLength(5);
+    fireEvent.click(botoesPlay()[0]);
+
+    await waitFor(() =>
+      expect(vi.mocked(toastSonner.error)).toHaveBeenCalledWith(
+        expect.stringContaining('não deixou tocar o som'),
+      ),
+    );
+    // Nada tocou: o cartão não vira "pausar" e nenhuma preferência é gravada.
+    expect(botoesPlay()).toHaveLength(5);
+    expect(h.upsert).not.toHaveBeenCalled();
+  });
+
+  it('13. navegador tocando (true): sem aviso, prévia normal e troca gravada como antes', async () => {
+    h.previewSound.mockReturnValue(true);
+    renderPainel();
+    await esperarPainelCarregado();
+
+    fireEvent.click(botoesPlay()[0]);
+    await waitFor(() => expect(h.previewSound).toHaveBeenCalledWith('chime', 60));
+    expect(vi.mocked(toastSonner.error)).not.toHaveBeenCalled();
+
+    fireEvent.change(selectDa('message'), { target: { value: 'bell' } });
+
+    await waitFor(() => expect(h.upsert).toHaveBeenCalledTimes(1));
+    expect(h.upsert.mock.calls[0][0]).toMatchObject({ message_sound_type: 'bell' });
+    expect(vi.mocked(toastSonner.error)).not.toHaveBeenCalled();
   });
 });
