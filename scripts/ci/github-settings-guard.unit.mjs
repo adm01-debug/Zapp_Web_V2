@@ -14,7 +14,7 @@ const SCRIPT = join(dirname(fileURLToPath(import.meta.url)), 'github-settings-gu
 const TITULO = '[settings-guard] perimeter regression detected';
 
 const CONTEXTS_OK =
-  "['🔍 Lint & TypeCheck','🧪 Unit Tests','🏗️ Build','🔒 Security Audit','Contrato DB offline','🎭 E2E Tests (Playwright)']";
+  "['🔍 Lint & TypeCheck','🧪 Unit Tests','🏗️ Build','🔒 Security Audit','Contrato DB offline','🎭 E2E Tests (Playwright)','CodeQL']";
 const PROT_OK = `send({ required_status_checks: { strict: true, contexts: ${CONTEXTS_OK} }, enforce_admins: { enabled: true }, required_linear_history: { enabled: true }, allow_force_pushes: { enabled: false } })`;
 const PROT_REGRESSAO = `send({ required_status_checks: { strict: false, contexts: ${CONTEXTS_OK} }, enforce_admins: { enabled: true }, required_linear_history: { enabled: true }, allow_force_pushes: { enabled: false } })`;
 const REPO_OK =
