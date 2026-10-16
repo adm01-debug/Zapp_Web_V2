@@ -50,7 +50,7 @@ Storage.
 | `useTransferConversation`          | `useTeamChatMutations.ts`    | rpc     | `transfer_team_conversation_ownership` |
 | `useDeleteConversation`            | `useTeamChatMutations.ts`    | tabela  | `team_conversations`                   |
 | `useAddConversationMembers`        | `useTeamChatMembers.ts`      | tabela  | `team_conversation_members`            |
-| `useTeamMemberDetails`             | `useTeamMemberDetails.ts`    | rpc     | `get_team_profiles`                    |
+| `useTeamMemberDetails`             | `useTeamMemberDetails.ts`    | rpc     | `get_team_birthdays`                   |
 | `useTeamPerformance`               | `useTeamPerformance.ts`      | tabela  | `team_messages`                        |
 | `useParticipantStats`              | `useParticipantStats.ts`     | tabela  | `team_messages`                        |
 | `useActiveDepartments`             | `useActiveDepartments.ts`    | tabela  | `departments`                          |
@@ -85,6 +85,9 @@ a fábrica sem argumento devolve a raiz (não um `undefined` no lugar do id):
 - `queryKeys.members(conversationId, memberIds)` — o último elemento é
   `memberIds.join(',')`, como na chave histórica.
 - `queryKeys.memberProfile(profileId)`
+- `queryKeys.teamBirthdays()` — aniversários da equipe (RPC `get_team_birthdays`): a
+  RPC devolve a lista inteira de perfis ativos com dia/mês (nunca o ano), então a
+  conversa — direta ou grupo — filtra o que já veio em cache.
 - `queryKeys.performance(conversationId)`
 - `queryKeys.participantStats(conversationId)`
 - `queryKeys.departments.list()`
