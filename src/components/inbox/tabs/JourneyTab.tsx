@@ -15,6 +15,7 @@ import {
 import { KpiStrip } from './KpiStrip';
 import { SectionCard } from './SectionCard';
 import { ContactStatsStrip } from './ContactStatsStrip';
+import { JourneyHealthChip } from './journey/JourneyHealthChip';
 
 interface JourneyTabProps {
   contactId: string;
@@ -90,6 +91,8 @@ export function JourneyTab({ contactId }: JourneyTabProps) {
   const days = useMemo(() => data?.days ?? [], [data?.days]);
   const metrics = data?.metrics;
   const hasMore = data?.hasMore ?? false;
+  // K05: a frequência recente do chip sai da própria timeline carregada (nenhuma consulta nova).
+  const recentInteractions = useMemo(() => days.flatMap((day) => day.events.map((event) => event.at)), [days]);
   return (
     <div className="flex flex-col gap-4" data-testid="history-tab">
       <div className="flex items-center gap-3">
@@ -101,6 +104,8 @@ export function JourneyTab({ contactId }: JourneyTabProps) {
       </div>
 
       <SectionCard icon={BarChart3} title="Estatísticas do contato" subtitle="Independe do período abaixo" tone="blue">
+        {/* K05: faixa de saúde do relacionamento, no topo do bloco de estatísticas. */}
+        <JourneyHealthChip lastInteractionAt={metrics?.lastContactAt ?? null} recentInteractions={recentInteractions} />
         <ContactStatsStrip contactId={contactId} />
       </SectionCard>
 

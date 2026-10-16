@@ -172,4 +172,37 @@ describe('JourneyTab', () => {
     expect(screen.getAllByTestId('timeline-event')).toHaveLength(2);
     expect(screen.getByTestId('contact-stats-strip')).toBeInTheDocument();
   });
+
+  // K05: o chip de saúde do relacionamento é o primeiro item do bloco de estatísticas do contato.
+  it('mostra o chip de saúde do relacionamento no topo do bloco de estatísticas', () => {
+    const doisDiasAtras = new Date(Date.now() - 2 * 86_400_000).toISOString();
+    const umDiaAtras = new Date(Date.now() - 1 * 86_400_000).toISOString();
+    const diasRecentes: TimelineDay[] = [
+      {
+        date: new Date(Date.now() - 1 * 86_400_000).toISOString().slice(0, 10),
+        events: [
+          { id: 'msg-r1', at: umDiaAtras, kind: 'message_in', title: 'Mensagem recente' },
+          { id: 'msg-r2', at: doisDiasAtras, kind: 'message_out', title: 'Resposta recente' },
+        ],
+      },
+    ];
+    renderTab({ days: diasRecentes, metrics: { ...METRICS, lastContactAt: doisDiasAtras } });
+
+    const chip = screen.getByTestId('journey-health-chip');
+    expect(chip).toHaveTextContent('Ativo: 2 dias sem contato');
+    // a frequência recente sai da timeline carregada, sem consulta nova
+    expect(chip.getAttribute('title') ?? '').toContain('2 interações nos últimos 30 dias');
+    expect(chip.getAttribute('title') ?? '').toContain('Regra:');
+
+    // dentro do MESMO card das estatísticas do contato (o chip vem antes da faixa dos números)
+    const card = screen.getByTestId('contact-stats-strip').closest('section') as HTMLElement;
+    expect(within(card).getByTestId('journey-health-chip')).toBeInTheDocument();
+  });
+
+  it('sem contato registrado o chip não inventa número', () => {
+    renderTab({ metrics: { ...METRICS, lastContactAt: null }, days: [] });
+    const chip = screen.getByTestId('journey-health-chip');
+    expect(chip).toHaveTextContent('Sem contato registrado');
+    expect(chip).toHaveAttribute('data-level', 'inactive');
+  });
 });
