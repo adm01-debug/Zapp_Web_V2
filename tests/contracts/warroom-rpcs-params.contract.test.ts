@@ -1,10 +1,11 @@
 /**
- * War Room — contrato dos RPCs `warroom_agent_today` / `warroom_queue_stats`.
+ * War Room — contrato de parâmetros dos RPCs `warroom_agent_today` / `warroom_queue_stats`.
  *
- * Os dois RPCs agregam no banco e NÃO recebem parâmetros; chamada com argumento
- * desconhecido tem de ser rejeitada (o PostgREST não encontra a assinatura e
- * responde 404 em vez de executar). Isso impede que o cliente "filtre" pelo RPC
- * e leia parcial como total.
+ * Verdade exata (igual ao `types.ts` e à migration das RPCs):
+ * - `warroom_queue_stats()` não recebe nada;
+ * - `warroom_agent_today(p_date?)` recebe SÓ a data opcional (o hook nunca passa nada e usa o default = hoje).
+ * Qualquer outro argumento não resolve função (o PostgREST responde 404 em vez de executar).
+ * Isso impede que o cliente "filtre" pelo RPC e leia parcial como total.
  *
  * Roda contra o banco LOCAL da tarefa: exporte antes (valores de `zapp-db-local env`)
  *   SUPABASE_URL=<API_URL do conjunto> SUPABASE_SERVICE_ROLE_KEY=<SERVICE_ROLE_KEY do conjunto>
@@ -19,23 +20,28 @@ const URL = process.env.SUPABASE_URL;
 const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const TEM_BANCO = Boolean(URL && KEY);
 
-const RPCS = ['warroom_agent_today', 'warroom_queue_stats'] as const;
-
-describe('War Room — RPCs sem parâmetros rejeitam args desconhecidos', () => {
-  it.each(RPCS)('%s rejeita parâmetro desconhecido', async (fn) => {
+describe('War Room — RPCs rejeitam args desconhecidos', () => {
+  it.each(['warroom_agent_today', 'warroom_queue_stats'])('%s rejeita parâmetro desconhecido', async (fn) => {
     if (!TEM_BANCO) return;
-    const sb = createClient(URL as string, KEY as string);
-    const { error } = await sb.rpc(fn, { ativo: true });
-    // sem a correção (RPC aceitando o arg), error seria null e este teste falharia
-    expect(error, `${fn} aceitou parâmetro desconhecido`).not.toBeNull();
+    const sb = createClient(URL!, KEY!);
+    const { error } = await sb.rpc(fn, { ativo: true } as never);
+    expect(error, `${fn} deveria rejeitar parâmetro desconhecido`).not.toBeNull();
     expect(error?.message ?? '').toContain(fn);
   });
 
-  it.each(RPCS)('%s responde sem parâmetros', async (fn) => {
+  it.each(['warroom_agent_today', 'warroom_queue_stats'])('%s responde sem parâmetros', async (fn) => {
     if (!TEM_BANCO) return;
-    const sb = createClient(URL as string, KEY as string);
+    const sb = createClient(URL!, KEY!);
     const { data, error } = await sb.rpc(fn);
-    expect(error, `${fn} sem parâmetros deveria responder`).toBeNull();
+    expect(error, `${fn} deveria responder sem parâmetros`).toBeNull();
+    expect(Array.isArray(data)).toBe(true);
+  });
+
+  it('warroom_agent_today aceita SÓ p_date (o opcional do contrato)', async () => {
+    if (!TEM_BANCO) return;
+    const sb = createClient(URL!, KEY!);
+    const { data, error } = await sb.rpc('warroom_agent_today', { p_date: '2026-10-16' });
+    expect(error, 'p_date é o único parâmetro do contrato').toBeNull();
     expect(Array.isArray(data)).toBe(true);
   });
 });
