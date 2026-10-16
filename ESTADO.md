@@ -41,7 +41,11 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | B | 0 |
 | C | 3 |
 | D | 6 |
+<<<<<<< ours
 | E | 18 |
+=======
+| E | 17 |
+>>>>>>> theirs
 | **total** | **81** |
 
 ## Tabela
@@ -114,7 +118,11 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `public-api` | D | `supabase/config.toml:35` |
 | `recover-corrupted-audios` | E | — sem chamador no repositório — |
 | `recover-message-media` | E | — sem chamador no repositório — |
+<<<<<<< ours
 | `revoke-auth-sessions` | A | `src/hooks/ui/useDeviceDetection.ts:131` · `src/hooks/ui/useDeviceDetection.ts:162` · `src/hooks/ui/useDeviceDetection.ts:173` · `src/components/admin/ForceLogoutButton.tsx:39` |
+=======
+| `revoke-auth-sessions` | A | `src/hooks/ui/useDeviceDetection.ts:196` · `src/hooks/ui/useDeviceDetection.ts:227` · `src/hooks/ui/useDeviceDetection.ts:238` · `src/components/admin/ForceLogoutButton.tsx:39` |
+>>>>>>> theirs
 | `searchbox-budget-alert` | C | `supabase/migrations/20261002601230_searchbox_budget_alert_cron.sql:70` · `supabase/config.toml:68` |
 | `send-email` | A | `src/components/agents/InviteAgentDialog.tsx:40` |
 | `send-rate-limit-alert` | E | — sem chamador no repositório — |
@@ -135,7 +143,11 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `webhook-diagnostic` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:78` |
 | `whatsapp-webhook` | D | `supabase/config.toml:11` |
 
+<<<<<<< ours
 ## Órfãs (18) — GATE B
+=======
+## Órfãs (17) — GATE B
+>>>>>>> theirs
 
 Edge que existe em `supabase/functions/`, mas nenhum ponto do repositório a dispara: não há
 `invoke`/`/functions/v1` em `src/`, nem chamada de outra edge, nem agendador em
