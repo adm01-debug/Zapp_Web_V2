@@ -333,6 +333,11 @@ jobs:
           NOTIFY_DUE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/notify-due-tasks-authorization.test.sh
 
+      - name: Provar rearme de alarme quando remind_at muda
+        env:
+          TASKS_REARM_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/tasks-rearm-on-remind-change.test.sh
+
       # Item 265 (R2-AUTH-041): a consulta de custo do painel de IA recebia fim
       # nulo (janela aberta) e `created_at < NULL` eliminava todas as chamadas —
       # o relatório zerava enquanto o resumo de tokens mostrava os registros.
