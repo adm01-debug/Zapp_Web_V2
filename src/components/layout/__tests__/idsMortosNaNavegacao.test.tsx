@@ -35,6 +35,15 @@ vi.mock('@/hooks/ui/useSidebarCollapse', () => ({
   useSidebarCollapse: () => ({ collapsed: false, toggle: vi.fn() }),
 }));
 
+// HZ2-007/HZ5-19: os favoritos passaram a ser do usuário — o hook real só enxerga a
+// chave dele. Sem o mock de auth, não haveria dono e a lista viria vazia.
+const authState = vi.hoisted(() => ({ userId: 'e17-atendente' as string | null }));
+vi.mock('@/hooks/auth/useAuth', () => ({
+  useAuth: () => ({ profile: authState.userId ? { id: authState.userId } : null }),
+}));
+/** Chave de favoritos do dono logado (HZ2-007/HZ5-19: passou a ter o id do usuário). */
+const SIDEBAR_FAVORITES_KEY = `zapp.sidebar.favorites:${authState.userId}`;
+
 vi.mock('@/hooks/system/useUserRole', () => ({
   useUserRole: () => ({
     roles: ['supervisor'],
@@ -65,7 +74,7 @@ vi.mock('@/components/theme/HighContrastToggle', async (importOriginal) => ({
 }));
 
 // `useSidebarFavorites` NÃO é mockado de propósito: o ponto do cartão é justamente
-// o hook real lendo `sidebar-favorites` do localStorage.
+// o hook real lendo a chave do usuário em `localStorage`.
 import { Sidebar } from '@/components/layout/Sidebar';
 import { CommandPalette } from '@/components/CommandPalette';
 import { MobileDrawerMenu } from '@/components/mobile/MobileDrawerMenu';
@@ -123,7 +132,7 @@ beforeEach(() => {
 
 describe('E17 — Sidebar: favoritos gravados (sidebar-favorites) ignoram id morto', () => {
   it('mostra só o módulo vivo quando o id morto está favoritado junto', () => {
-    localStorage.setItem('sidebar-favorites', JSON.stringify([ID_MORTO, ID_VIVO]));
+    localStorage.setItem(SIDEBAR_FAVORITES_KEY, JSON.stringify([ID_MORTO, ID_VIVO]));
 
     renderSidebar();
 
@@ -137,7 +146,7 @@ describe('E17 — Sidebar: favoritos gravados (sidebar-favorites) ignoram id mor
   });
 
   it('não renderiza a seção Favoritos (e não lança) quando só o id morto está gravado', () => {
-    localStorage.setItem('sidebar-favorites', JSON.stringify([ID_MORTO]));
+    localStorage.setItem(SIDEBAR_FAVORITES_KEY, JSON.stringify([ID_MORTO]));
 
     expect(() => renderSidebar()).not.toThrow();
 
