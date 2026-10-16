@@ -2,7 +2,7 @@
 --
 -- O QUE SE PROVA AQUI
 --   O Modo Treinamento gravava a nota calculada no cliente (TrainingMode.tsx) num
---   UPDATE direto em public.training_sessions. A policy "Users can manage own
+--   UPDATE direto em public.training_sessions. A policy "Users can update own
 --   training sessions" permite UPDATE em QUALQUER coluna da própria sessão: um
 --   usuário authenticated que chamasse a API direto (fora da tela) virava a nota
 --   em 100 e fechava a própria avaliação de desempenho. A nota do cliente não pode
@@ -11,15 +11,17 @@
 --   Depois desta migration:
 --     1) a nota é CALCULADA no banco (public.calculate_training_score, porte fiel
 --        do avaliarTreinamento do TypeScript) a partir das respostas JÁ gravadas;
---     2) só a RPC public.complete_training_session(uuid) grava score/status/
---        completed_at, e só na sessão de quem chama (ou de admin/supervisor);
+--     2) só a RPC public.complete_training_session(uuid) grava score/feedback/
+--        status/completed_at, e só na sessão de quem chama (ou de admin/supervisor,
+--        o mesmo ramo da policy "Users can update own training sessions");
 --     3) o gatilho trg_training_sessions_nota_so_por_rpc barra a escrita direta de
---        score e a conclusão da sessão por qualquer papel de cliente, sem tirar
+--        score, feedback e completed_at, o nascimento de sessão já concluída e a
+--        entrada/saída de 'completed' por qualquer papel de cliente, sem tirar
 --        nenhum GRANT nem policy (o caminho oficial de servidor segue aberto).
 --
 -- COMO RODAR (banco local do cartão, banco descartável da tarefa:
 --   hermes-db-migrar supabase/migrations/20261015180324_training_score_rpc.sql
---   zapp-db-local psql . v2-261015145803c3 < supabase/tests/training_score_rpc.sql
+--   zapp-db-local psql . v2-2610161357218d < supabase/tests/training_score_rpc.sql
 -- O arquivo é uma transação única que termina em ROLLBACK: nada fica gravado.
 -- BLOCO 2 é o VERMELHO ANTES (sem o gatilho, o dono forja a nota e conclui a
 -- sessão na própria cara da API) e BLOCO 8 executa o Rollback da migration de
@@ -119,13 +121,14 @@ END
 $$;
 
 -- ============================================================================
--- Fixtures — 2 agentes e 6 sessões (2 com a mesma conversa "ok" do vitest,
+-- Fixtures — 2 agentes, 1 supervisor e 7 sessões (2 com a mesma conversa "ok" do vitest,
 -- 3 respostas completas, 3 respostas só com detalhe e 1 sem resposta do atendente)
 -- ============================================================================
 DO $$
 DECLARE
   v_uid_a   uuid := '11111111-1111-4111-8111-111111111111';
   v_uid_b   uuid := '22222222-2222-4222-8222-222222222222';
+  v_uid_c   uuid := '33333333-3333-4333-8333-333333333333';
   v_id_a    uuid;
   v_id_b    uuid;
   v_ok      constant text := 'ok';
@@ -140,7 +143,12 @@ BEGIN
   -- session_replication_role (o papel de conexão não é superusuário).
   INSERT INTO auth.users (id, email, raw_user_meta_data)
   VALUES (v_uid_a, 'agente.a@promobrindes.com.br', jsonb_build_object('name', 'Agente A (treinamento)')),
-         (v_uid_b, 'agente.b@promobrindes.com.br', jsonb_build_object('name', 'Agente B (treinamento)'));
+         (v_uid_b, 'agente.b@promobrindes.com.br', jsonb_build_object('name', 'Agente B (treinamento)')),
+         (v_uid_c, 'supervisor.c@promobrindes.com.br', jsonb_build_object('name', 'Supervisor C (treinamento)'));
+
+  -- Supervisor C: o ramo admin/supervisor da RPC espelha a policy
+  -- "Users can update own training sessions" (BLOCO 5b prova esse ramo).
+  INSERT INTO public.user_roles (user_id, role) VALUES (v_uid_c, 'supervisor');
 
   SELECT id INTO v_id_a FROM public.profiles WHERE user_id = v_uid_a;
   SELECT id INTO v_id_b FROM public.profiles WHERE user_id = v_uid_b;
@@ -183,6 +191,10 @@ BEGIN
      'in_progress', now()),
     -- sB1: sessão de OUTRO dono
     ('bbbbbbbb-0000-4000-8000-000000000001', v_id_b, 'Reclamação de entrega',
+     jsonb_build_array(jsonb_build_object('role','agent','content',v_ok)),
+     'in_progress', now()),
+    -- sB2: sessão de OUTRO dono para o supervisor concluir via RPC (BLOCO 5b)
+    ('bbbbbbbb-0000-4000-8000-000000000002', v_id_b, 'Reclamação de entrega',
      jsonb_build_array(jsonb_build_object('role','agent','content',v_ok)),
      'in_progress', now());
 END
@@ -255,7 +267,7 @@ BEGIN
   EXCEPTION WHEN insufficient_privilege THEN NULL;
   END;
 
-  -- (c) nasce a sessão já com nota
+  -- (c1) nasce a sessão já com nota
   BEGIN
     INSERT INTO public.training_sessions
       (id, profile_id, scenario_name, messages, score, status, started_at)
@@ -264,6 +276,32 @@ BEGIN
               WHERE user_id = '11111111-1111-4111-8111-111111111111'),
             'Reclamação de entrega', '[]'::jsonb, 100, 'completed', now());
     RAISE EXCEPTION '[FALHA] authenticated inseriu sessão já com nota';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  -- (c2) nasce a sessão já concluída, sem nota (score NULL): também é conclusão
+  -- sem passar pela RPC e o gatilho antigo deixava passar
+  BEGIN
+    INSERT INTO public.training_sessions
+      (id, profile_id, scenario_name, messages, status, started_at)
+    VALUES ('aaaaaaaa-0000-4000-8000-00000000000a',
+            (SELECT id FROM public.profiles
+              WHERE user_id = '11111111-1111-4111-8111-111111111111'),
+            'Reclamação de entrega', '[]'::jsonb, 'completed', now());
+    RAISE EXCEPTION '[FALHA] authenticated inseriu sessão já concluída sem nota';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  -- (c3) nasce a sessão com feedback/carimbo do servidor vindos do cliente
+  BEGIN
+    INSERT INTO public.training_sessions
+      (id, profile_id, scenario_name, messages, feedback, completed_at, status, started_at)
+    VALUES ('aaaaaaaa-0000-4000-8000-00000000000b',
+            (SELECT id FROM public.profiles
+              WHERE user_id = '11111111-1111-4111-8111-111111111111'),
+            'Reclamação de entrega', '[]'::jsonb,
+            'Excelente!', now(), 'in_progress', now());
+    RAISE EXCEPTION '[FALHA] authenticated inseriu sessão com feedback/carimbo';
   EXCEPTION WHEN insufficient_privilege THEN NULL;
   END;
 
@@ -277,6 +315,43 @@ BEGIN
        WHERE id = 'aaaaaaaa-0000-4000-8000-000000000002') <> 2 THEN
     RAISE EXCEPTION '[FALHA] o gatilho barrou o uso legítimo (atualizar mensagens)';
   END IF;
+
+  -- (e) sobrescreve o feedback gravado numa sessão já concluída (a sA0 foi
+  -- concluída no BLOCO 2): o gatilho antigo deixava passar
+  BEGIN
+    UPDATE public.training_sessions SET feedback = 'Excelente!'
+     WHERE id = 'aaaaaaaa-0000-4000-8000-000000000001';
+    RAISE EXCEPTION '[FALHA] authenticated sobrescreveu o feedback da sessão concluída';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  -- (f) mexe no carimbo de conclusão da sessão já concluída (soma 1h de propósito:
+  -- now() é o mesmo na transação inteira e não seria DISTINCT)
+  BEGIN
+    UPDATE public.training_sessions SET completed_at = completed_at + interval '1 hour'
+     WHERE id = 'aaaaaaaa-0000-4000-8000-000000000001';
+    RAISE EXCEPTION '[FALHA] authenticated mexeu no completed_at da sessão concluída';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  -- (g) reabre a sessão concluída (completed -> in_progress) sem a RPC
+  BEGIN
+    UPDATE public.training_sessions SET status = 'in_progress'
+     WHERE id = 'aaaaaaaa-0000-4000-8000-000000000001';
+    RAISE EXCEPTION '[FALHA] authenticated reabriu a sessão concluída';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  -- (h) grava feedback direto numa sessão ainda em andamento (negar por padrão:
+  -- feedback só nasce na RPC, em qualquer estado da sessão)
+  BEGIN
+    UPDATE public.training_sessions SET feedback = 'rascunho do cliente'
+     WHERE id = 'aaaaaaaa-0000-4000-8000-000000000002';
+    RAISE EXCEPTION '[FALHA] authenticated gravou feedback direto na sessão em andamento';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+
+  RAISE NOTICE 'BLOCO 3 verde: escrita direta de score/feedback/completed_at, nascimento concluído e saída de completed, tudo negado; mensagens seguem liberadas';
 END
 $$;
 
@@ -420,6 +495,55 @@ BEGIN
   END IF;
 END
 $$;
+
+-- ============================================================================
+-- BLOCO 5b — o ramo admin/supervisor da RPC: supervisor conclui sessão alheia
+-- (o BLOCO 5 provou o agente comum recusado); o ramo espelha a policy
+-- "Users can update own training sessions", que também libera admin/supervisor.
+-- Sessão inexistente devolve a MESMA mensagem, sem oráculo, em qualquer papel.
+-- ============================================================================
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claims',
+                  '{"sub":"33333333-3333-4333-8333-333333333333","role":"authenticated"}', true);
+
+DO $$
+DECLARE
+  v_res jsonb;
+  v_msg text;
+BEGIN
+  -- (a) supervisor conclui a sessão de OUTRO dono (sB2, do agente B)
+  v_res := public.complete_training_session('bbbbbbbb-0000-4000-8000-000000000002');
+  IF (v_res->>'score')::integer IS NULL THEN
+    RAISE EXCEPTION '[FALHA] a RPC do supervisor não devolveu nota: %', v_res;
+  END IF;
+
+  IF (SELECT score FROM public.training_sessions
+       WHERE id = 'bbbbbbbb-0000-4000-8000-000000000002') IS NULL
+     OR (SELECT status FROM public.training_sessions
+       WHERE id = 'bbbbbbbb-0000-4000-8000-000000000002') <> 'completed' THEN
+    RAISE EXCEPTION '[FALHA] a RPC do supervisor não gravou a nota da sessão alheia';
+  END IF;
+
+  -- (b) sessão inexistente: a MESMA mensagem do agente comum, sem oráculo
+  BEGIN
+    PERFORM public.complete_training_session('99999999-0000-4000-8000-000000000000');
+    RAISE EXCEPTION '[FALHA] a RPC do supervisor aceitou uma sessão inexistente';
+  EXCEPTION WHEN insufficient_privilege THEN
+    GET STACKED DIAGNOSTICS v_msg = MESSAGE_TEXT;
+  END;
+
+  IF v_msg IS DISTINCT FROM 'sessão de treinamento não encontrada ou não pertence ao usuário' THEN
+    RAISE EXCEPTION '[FALHA] a RPC do supervisor distinguiu sessão inexistente (oráculo): "%"', v_msg;
+  END IF;
+
+  RAISE NOTICE 'BLOCO 5b verde: supervisor conclui sessão alheia e sessão inexistente devolve a mesma recusa';
+END
+$$;
+
+-- Devolve as credenciais do agente A (os blocos seguintes não dependem delas,
+-- mas a sessão não pode vazar de um papel para outro sem declarar).
+SELECT set_config('request.jwt.claims',
+                  '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated"}', true);
 
 -- ============================================================================
 -- BLOCO 6 — anon não executa nada disso

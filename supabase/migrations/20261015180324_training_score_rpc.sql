@@ -29,10 +29,12 @@
 --      dono e sessão inexistente devolvem a MESMA mensagem/erro: a RPC não vira oráculo
 --      de existência de sessão.
 --   3) Gatilho `trg_training_sessions_nota_so_por_rpc` (BEFORE INSERT OR UPDATE) —
---      fecha a escrita direta: papel de cliente (`authenticated`, `anon`) não altera
---      `score` nem marca `status = 'completed'`; o caminho do servidor (a própria RPC,
---      cujo dono é `postgres`, e `service_role`) segue liberado. As demais colunas da
---      linha (por exemplo `messages`, gravada a cada resposta) continuam como estavam.
+--      fecha a escrita direta: papel de cliente (`authenticated`, `anon`) não grava
+--      `score`, `feedback` nem `completed_at`, não nasce sessão já concluída
+--      (`status = 'completed'` no INSERT) e não entra nem sai de `completed` por
+--      UPDATE direto; o caminho do servidor (a própria RPC, cujo dono é `postgres`,
+--      e `service_role`) segue liberado. As demais colunas da linha (por exemplo
+--      `messages`, gravada a cada resposta) continuam como estavam.
 --
 -- ACL (negar por padrão): as três funções nascem sem EXECUTE para PUBLIC/anon;
 -- `authenticated` só recebe `complete_training_session(uuid)`; o motor de nota é interno
@@ -184,19 +186,50 @@ BEGIN
   END IF;
 
   IF TG_OP = 'INSERT' THEN
+    -- Colunas de resultado só nascem pela RPC: nada de sessão já concluída, com
+    -- nota, feedback ou carimbo vindos do cliente (refazer 1: o ramo antigo só
+    -- checava score e deixava passar INSERT com status='completed').
     IF NEW.score IS NOT NULL THEN
       RAISE EXCEPTION 'a nota do treinamento é calculada no servidor: use a RPC complete_training_session'
+        USING ERRCODE = '42501';
+    END IF;
+    IF NEW.status IS NOT DISTINCT FROM 'completed' THEN
+      RAISE EXCEPTION 'a conclusão do treinamento é definida no servidor: use a RPC complete_training_session'
+        USING ERRCODE = '42501';
+    END IF;
+    IF NEW.feedback IS NOT NULL THEN
+      RAISE EXCEPTION 'o feedback do treinamento é definido no servidor: use a RPC complete_training_session'
+        USING ERRCODE = '42501';
+    END IF;
+    IF NEW.completed_at IS NOT NULL THEN
+      RAISE EXCEPTION 'a conclusão do treinamento é definida no servidor: use a RPC complete_training_session'
         USING ERRCODE = '42501';
     END IF;
     RETURN NEW;
   END IF;
 
+  -- UPDATE: o resultado (score/feedback/completed_at) só é escrito pela RPC,
+  -- em qualquer estado da sessão; a conclusão só entra pela RPC e nunca sai
+  -- por UPDATE direto (refazer 1: o ramo antigo deixava sobrescrever o
+  -- feedback/carimbo e reabrir uma sessão concluída).
   IF NEW.score IS DISTINCT FROM OLD.score THEN
     RAISE EXCEPTION 'a nota do treinamento é calculada no servidor: use a RPC complete_training_session'
       USING ERRCODE = '42501';
   END IF;
 
-  IF NEW.status IS DISTINCT FROM OLD.status AND NEW.status = 'completed' THEN
+  IF NEW.feedback IS DISTINCT FROM OLD.feedback THEN
+    RAISE EXCEPTION 'o feedback do treinamento é definido no servidor: use a RPC complete_training_session'
+      USING ERRCODE = '42501';
+  END IF;
+
+  IF NEW.completed_at IS DISTINCT FROM OLD.completed_at THEN
+    RAISE EXCEPTION 'a conclusão do treinamento é definida no servidor: use a RPC complete_training_session'
+      USING ERRCODE = '42501';
+  END IF;
+
+  IF NEW.status IS DISTINCT FROM OLD.status
+     AND (NEW.status IS NOT DISTINCT FROM 'completed'
+          OR OLD.status IS NOT DISTINCT FROM 'completed') THEN
     RAISE EXCEPTION 'a conclusão do treinamento é definida no servidor: use a RPC complete_training_session'
       USING ERRCODE = '42501';
   END IF;
