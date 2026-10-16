@@ -87,6 +87,12 @@ const ALLOWLIST = new Set([
   // meia-noite no DND, business_hours com days, fail-closed e autorização sob roles reais.
   // Passo de uma linha em db-guard.yml — promover pelo dono do workflow.
   'scripts/db-audit/talkx-campaign-window-open.test.sh',
+  // X103 (Fase 9, telas 02/03): estatisticas da biblioteca de segmentos —
+  // RPC talkx_segment_library_stats, retrato diario (talkx_segment_library_history)
+  // e rotina idempotente talkx_refresh_segment_library_history. PG 17 descartavel
+  // com papeis reais (anon/authenticated/service_role); passo de YAML a promover
+  // em db-guard.yml pelo dono do workflow (agente nao edita workflow).
+  'scripts/db-audit/talkx-segment-library-stats.test.sh',
   // #464 (CAIXA-7eb1): mede a divergência de replay do E27 (publicação supabase_realtime) nos
   // próprios arquivos, em PG 17 descartável — a mesma receita do talkx-settings-replay-idempotent.
   'scripts/db-audit/talkx-e27-replay-divergence.test.sh',
