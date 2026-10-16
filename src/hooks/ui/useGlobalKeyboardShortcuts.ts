@@ -1,8 +1,10 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from '@/lib/lazyToast';
+import { toggleMuteActive } from '@/hooks/communication/audioPlaybackBus';
 import { useCustomShortcuts } from './useCustomShortcuts';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
+import { VOLUME_CONTROL_ATTRIBUTE } from '@/hooks/ui/useVolumeRocker';
 
 // Os toasts dos atalhos saem pela fachada `@/lib/lazyToast`: o `import('sonner')`
 // do módulo mantém a lib (~9 KB gzip) fora do modulepreload do index.html
@@ -81,6 +83,16 @@ export function useGlobalKeyboardShortcuts(customActions?: GlobalShortcutAction[
     'toggle-notifications': () => {
       document.dispatchEvent(new CustomEvent('toggle-notifications'));
     },
+    // Mudo do áudio EM REPRODUÇÃO (paridade com o app antigo, doc 06). Sem áudio
+    // tocando a ação é inerte — melhor nem anunciar nada, como no V3.
+    'audio-toggle-mute': () => {
+      const resultado = toggleMuteActive();
+      if (!resultado) return;
+      toast.info(
+        resultado.muted ? '🔇 Áudio silenciado' : `🔊 Volume em ${resultado.volume}%`,
+        { duration: 1500 },
+      );
+    },
     // Etapa 77 — 7 atalhos do módulo de Tarefas (escopo em `defaultShortcuts`).
     // O registry só recorta escopo/guarda de input e avisa a tela; quem sabe o
     // que fazer com cada um é o `TasksModule`.
@@ -118,8 +130,18 @@ export function useGlobalKeyboardShortcuts(customActions?: GlobalShortcutAction[
     // Etapa 77: view corrente — atalho com `scope` só vale na view dele.
     const view = viewAtual();
 
+    // O `M` global (mudo do áudio em reprodução) cede o toque ao controle de
+    // volume quando o FOCO já está nele: ali quem responde é o `useVolumeRocker`
+    // (E16) — e no gatilho dos ALERTAS o `M` muda o mudo dos ALERTAS, não o das
+    // mídias. Como este handler captura na janela e faz `stopPropagation`, sem
+    // esta saída o atalho local ficaria inalcançável (e o das mídias mudaria o
+    // mudo errado, com o foco no controle dos alertas).
+    const cedeAoControleDeVolume = event.target instanceof Element
+      && event.target.closest(`[${VOLUME_CONTROL_ATTRIBUTE}]`) !== null;
+
     for (const shortcut of shortcuts) {
       if (shortcut.scope && !shortcut.scope.includes(view)) continue;
+      if (cedeAoControleDeVolume && shortcut.id === 'audio-toggle-mute') continue;
 
       const binding = getActiveBinding(shortcut);
       
