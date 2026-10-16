@@ -224,8 +224,11 @@ drainOfflineQueueOnReconnect(offlineSendQueue, deliverQueuedOfflineMessage, {
 
 // O evento `online` não cobre um reload que já começa conectado nem a fila que
 // esperou o usuário voltar a entrar: drena no boot e a cada novo login.
+// O `auth` é opcional de propósito: este módulo é puxado no import por telas
+// como o alerta de chamada, e teste que mocka o supabase sem `.auth` não pode
+// quebrar na importação. Com auth real o comportamento é o mesmo de antes.
 drenarFilaDoUsuarioAtual();
-supabase.auth.onAuthStateChange((event) => {
+supabase.auth?.onAuthStateChange?.((event) => {
   if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') drenarFilaDoUsuarioAtual();
 });
 
