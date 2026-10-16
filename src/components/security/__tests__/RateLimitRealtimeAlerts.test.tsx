@@ -17,6 +17,7 @@ const supabaseMock = vi.hoisted(() => {
   const state = {
     selectResult: { data: [] as Alerta[], error: null as null | { message: string } },
     updateResult: { error: null as null | { message: string } },
+    updatePayload: null as Record<string, unknown> | null,
     fromCalls: 0,
   };
   const from = vi.fn(() => {
@@ -29,9 +30,12 @@ const supabaseMock = vi.hoisted(() => {
           }),
         }),
       }),
-      update: () => ({
-        eq: () => Promise.resolve(state.updateResult),
-      }),
+      update: (payload: Record<string, unknown>) => {
+        state.updatePayload = payload;
+        return {
+          eq: () => Promise.resolve(state.updateResult),
+        };
+      },
     };
   });
   return { state, from };
@@ -39,7 +43,13 @@ const supabaseMock = vi.hoisted(() => {
 
 const toastError = vi.hoisted(() => vi.fn());
 
-vi.mock('@/integrations/supabase/client', () => ({ supabase: { from: supabaseMock.from } }));
+vi.mock('@/integrations/supabase/client', () => ({
+  supabase: {
+    from: supabaseMock.from,
+    // O dismiss grava `resolved_by` com o id da sessão.
+    auth: { getUser: () => Promise.resolve({ data: { user: { id: 'u-7' } } }) },
+  },
+}));
 vi.mock('@/hooks/system/useNotificationSettings', () => ({
   useNotificationSettings: () => ({
     settings: { soundVolume: 70, soundEnabled: false },
@@ -66,6 +76,7 @@ const alerta = (id: string, over: Partial<Alerta> = {}): Alerta => ({
 beforeEach(() => {
   supabaseMock.state.selectResult = { data: [], error: null };
   supabaseMock.state.updateResult = { error: null };
+  supabaseMock.state.updatePayload = null;
   supabaseMock.state.fromCalls = 0;
   supabaseMock.from.mockClear();
   toastError.mockClear();
@@ -103,6 +114,20 @@ describe('RateLimitRealtimeAlerts', () => {
     await waitFor(() => expect(screen.queryByText('Alerta a1')).not.toBeInTheDocument());
     expect(screen.getByText('Alerta a2')).toBeInTheDocument();
     expect(toastError).not.toHaveBeenCalled();
+  });
+
+  it('sucesso grava resolved_by com o id da sessão e resolved_at', async () => {
+    supabaseMock.state.selectResult = { data: [alerta('a1')], error: null };
+
+    render(<RateLimitRealtimeAlerts />);
+
+    await screen.findByText('Alerta a1');
+    fireEvent.click(screen.getByRole('button', { name: 'Dispensar alerta: Alerta a1' }));
+
+    await waitFor(() => expect(screen.queryByText('Alerta a1')).not.toBeInTheDocument());
+    // Quem dispensou (e quando) fica registrado no banco, não só escondido na tela.
+    expect(supabaseMock.state.updatePayload).toMatchObject({ is_resolved: true, resolved_by: 'u-7' });
+    expect(typeof supabaseMock.state.updatePayload?.resolved_at).toBe('string');
   });
 
   it('aba oculta não consulta os alertas', async () => {

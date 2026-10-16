@@ -25,13 +25,16 @@ vi.mock('@/hooks/system/useUserRole', () => ({
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          order: vi.fn(() => ({
-            limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+      select: vi.fn(() =>
+        Object.assign(Promise.resolve({ count: 0, error: null }), {
+          eq: vi.fn(() => ({
+            order: vi.fn(() => ({
+              limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+            })),
+            eq: vi.fn().mockResolvedValue({ count: 0, error: null }),
           })),
-        })),
-      })),
+        }),
+      ),
     })),
   },
 }));

@@ -6,6 +6,7 @@ import { useNotificationSettings } from '@/hooks/system/useNotificationSettings'
 import { toast } from 'sonner';
 import { useVisiblePolling } from '@/hooks/realtime/useVisiblePolling';
 import { playAlertSound } from '@/utils/securityAlertSound';
+import { resolveSecurityAlert } from '@/lib/securityAlerts';
 import { Button } from '@/components/ui/button';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -101,13 +102,11 @@ export function RateLimitRealtimeAlerts() {
   const refresh = useVisiblePolling(fetchAlerts, 15_000);
 
   const handleDismiss = async (alertId: string) => {
-    const { error } = await supabase
-      .from('security_alerts')
-      .update({ is_resolved: true, resolved_at: new Date().toISOString() })
-      .eq('id', alertId);
+    // O card só some quando o update confirma; senão o usuário pensa que resolveu
+    // e o alerta volta no polling. O `resolved_by` fica gravado com quem dispensou.
+    const { error } = await resolveSecurityAlert(alertId);
 
     if (error) {
-      // O card só some quando o update confirma; senão o usuário pensa que resolveu e o alerta volta no polling.
       toast.error('Não foi possível dispensar o alerta. Tente novamente.');
       return;
     }
