@@ -1,117 +1,22 @@
-Especialista: designer
+Especialista: Íris (area-front-componentes)
 
 ## O que mudou e por quê
-- src/styles/utilities.css: a regra `@media (pointer: coarse) .alvo-toque-44` deixou de inflar a
-  caixa (saiu `display/align-items/justify-content/min-width/min-height`) e passou a criar só um
-  `::after` centrado de 44x44 — área de toque sem mexer no desenho. Motivo: o `display: inline-flex`
-  sobrescrevia `hidden`/`sm:inline-flex` de quem consome (ex.: src/components/chat/EmailChatInbox.tsx:260
-  usa `hidden sm:inline-flex` num Button — no toque ele reaparecia) e inflar a caixa do checkbox/radio
-  (borda) e do X do sheet (`data-[state=open]:bg-secondary`) pintava um bloco de 44px.
-- src/components/ui/button.tsx e icon-button.tsx: os tamanhos pequenos (`default`, `sm`, `icon`,
-  `icon-sm`) ganharam a variante Tailwind exportada `ALVO_TOQUE_GROSSO`
-  (`[@media(pointer:coarse)]:min-h-[44px] [@media(pointer:coarse)]:min-w-[44px]`), resolvida pelo
-  twMerge na camada de utilitários. `lg`/`xl`/`icon-lg` já têm 44px+ e não mudam.
-- src/components/ui/checkbox.tsx e radio-group.tsx: receberam `relative` (para o `::after` ancorar) e
-  mantêm `alvo-toque-44`; o desenho continua 16x16.
-- src/components/ui/dialog.tsx e sheet.tsx: o X mantém `alvo-toque-44` e o `z-10`; com o `::after` o
-  desenho (X de 16px; 24px com `p-1` no dialog) fica do tamanho de sempre.
-- src/components/ui/micro-interactions/buttons.tsx: comentário do ripple corrigido — o token
-  `hsl(var(--primary-foreground) / 0.3)` é branco em tokens.css (claro:110, escuro:446) e no alto
-  contraste CLARO (accessibility.css:12), mas no ALTO CONTRASTE ESCURO é `0 0% 0%`
-  (accessibility.css:35) porque o `--primary` de lá é o violeta claro 258 100% 65%; nesse modo o
-  ripple fica escuro sobre o violeta, que é o par de contraste do próprio botão. Está registrado no
-  comentário do arquivo.
-- e2e/a11y-toque-44px.spec.ts: a medição virou ÁREA DE TOQUE — `areaToque44()` lê os 4 cantos de um
-  quadrado de 44x44 centrado no controle com `document.elementFromPoint` (o `::after` pertence à
-  caixa de hit-test do próprio elemento). Somado a isso, o teste afirma que o DESENHO continua
-  pequeno no toque (checkbox ≤20px, X ≤32px) e que o botão pequeno cresce só no toque
-  (`size="icon"` + `w-8 h-8`: ≥44px e `min-height` computado `44px`), além da prova de ponteiro fino
-  (checkbox ≤24px, X ≤32px, botão de ações ≤32px) e do fechamento por clique.
-- src/components/ui/__tests__/alvos-toque-44px.test.tsx: contrato atualizado — X/checkbox/radio
-  carregam `alvo-toque-44` + `relative`; Button/IconButton carregam `ALVO_TOQUE_GROSSO` e NÃO a
-  classe; a regra coarse do CSS só declara `::after` (guarda contra a volta do `display`/`min-width`
-  no elemento) e não existe fora do media query. O teste lê o CSS sem comentários (os comentários
-  citam a classe e dariam falso positivo).
-- playwright.config.ts: mantido o ponto do refazer anterior — `a11y-toque-44px.spec.ts` entra no
-  `testIgnore` do `chromium-authenticated` para não ser coletado pelo catch-all autenticado (que
-  exigiria sessão real, proibida pela R1); o `chromium-a11y` já o coleta pelo `testMatch`.
+- cherry-pick do commit 308267cd7 ("exige confirmacao ao excluir itens de automacao e ia") para esta branch, agora rebaseada sobre `dia/2026-10-12`: automations, catalog (templates), chatbot (flows), knowledge (artigos) e whatsapp-flows (flows) passam a abrir um `AlertDialog` de confirmação na lixeira; a exclusão só dispara no botão "Excluir" do diálogo e "Cancelar" não apaga nada.
+- Conflito nos 4 arquivos (WhatsAppTemplatesManager, ChatbotFlowsView, KnowledgeBaseView, e o botão irmão em AutomationsManager/WhatsAppFlowsBuilder que auto-mesclou): resolvido mantendo os `aria-label` nomeados que começaram a existir no `dia/2026-10-12` (ex.: `Excluir ${template.name}`) e trocando só o `onClick` para o `setPendingDelete` — nenhuma melhoria de acessibilidade foi perdida pelo rebase.
+- Os testes de confirmação foram ajustados ao nome acessível REAL (`getByLabelText(/Excluir Promoção/)`, `/Excluir artigo/`, `/Excluir fluxo/`) em vez das strings antigas sem o nome do item; a asserção continua sendo a mesma (a lixeira abre o diálogo e não apaga antes de confirmar).
+
+## Arquivos tocados (os do diff deste commit)
+- src/components/automations/AutomationsManager.tsx, src/components/catalog/WhatsAppTemplatesManager.tsx, src/components/chatbot/ChatbotFlowsView.tsx, src/components/knowledge/KnowledgeBaseView.tsx, src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx
+- testes: src/components/automations/__tests__/AutomationsManager.confirmacaoExclusao.test.tsx, src/components/catalog/__tests__/WhatsAppTemplatesManager.confirmacaoExclusao.test.tsx, src/components/chatbot/__tests__/ChatbotFlowsView.confirmacaoExclusao.test.tsx, src/components/knowledge/__tests__/KnowledgeBaseView.confirmacaoExclusao.test.tsx, src/components/whatsapp-flows/__tests__/WhatsAppFlowsBuilder.deleteFlow.test.tsx
 
 ## Prova
-- vermelho antes (área de toque inflava o desenho — a versão recusada do CSS): editei
-  `src/styles/utilities.css` para repor `min-width/min-height/display` no `.alvo-toque-44` e rodei
-  `PLAYWRIGHT_BASE_URL=http://127.0.0.1:5271 npx playwright test e2e/a11y-toque-44px.spec.ts
-  --project=chromium-a11y -g "celular"` → `Error: largura do checkbox: 44px` /
-  `expect(received).toBeLessThanOrEqual(expected) Expected: <= 20 Received: 44` → `1 failed`.
-- vermelho antes (variante de tamanho do botão ausente): tirei `ALVO_TOQUE_GROSSO` do `size: icon` e
-  rodei o mesmo teste → `Error: largura das ações: 32px` / `Expected: >= 44 Received: 32`
-  (`min-height computado das ações` na linha seguinte) → `1 failed`.
-- vermelho antes (contrato vitest): com `min-width`/`min-height`/`display` de volta no elemento,
-  `npx vitest run src/components/ui/__tests__/alvos-toque-44px.test.tsx` →
-  `AssertionError: expected '\n  .alvo-toque-44 {\n    display: in…' not to match /\.alvo-toque-44\s*\{/`
-  → `Tests 1 failed | 5 passed (6)`.
-- verde depois (e2e, pixel real, depois de reverter as 3 mutações):
-  `PLAYWRIGHT_BASE_URL=http://127.0.0.1:5275 npx playwright test e2e/a11y-toque-44px.spec.ts
-  --project=chromium-a11y --timeout=180000` → `3 passed (59.1s)`.
-- verde depois (contrato): `npx vitest run src/components/ui/__tests__/alvos-toque-44px.test.tsx` →
-  `Test Files 1 passed (1)`; `Tests 6 passed (6)`.
-- Diagnóstico usado no meio (e revertido): medi no navegador `getComputedStyle(el, '::after')` e
-  `elementFromPoint` — `content: ""`, `width/height: 44px`, `position: absolute`, e os 4 cantos
-  devolvendo o próprio checkbox (`isEl: true`). Nada disso ficou no diff.
+- verde depois: `npx vitest run src/components/{automations,catalog,chatbot,knowledge,whatsapp-flows}/**/*.confirmacaoExclusao.test.tsx src/components/whatsapp-flows/__tests__/WhatsAppFlowsBuilder.deleteFlow.test.tsx` → `Test Files 5 passed (5); Tests 11 passed (11); Duration 11.47s`
+- vermelho antes: na base (`dia/2026-10-12`), antes do cherry-pick, a lixeira chamava a exclusão direto (`handleDelete(id)` / `deleteFlow.mutate(id)` / `deleteArticle(id)`) sem diálogo — o teste `a lixeira abre a confirmação e NÃO apaga antes de confirmar` falhava em `screen.getByText('Excluir template?')` porque o `AlertDialog` não existia. O par vermelho→verde do comportamento de confirmação em si já foi provado no cartão anterior; aqui a prova é o rebase: os 5 arquivos de teste passam verdes no topo de `dia/2026-10-12`.
+- sem marcadores de conflito residuais: `grep -rn '^<<<<<<<\|^>>>>>>>\|^=======' src/components/{automations,catalog,chatbot,knowledge,whatsapp-flows}` → vazio.
 
-## Pontos do revisor ([refazer t_9a266076])
-- Ponto 1: tirei `display`/`align-items`/`justify-content` (e `min-width`/`min-height`) da regra
-  coarse; os tamanhos de botão agora usam a variante Tailwind `ALVO_TOQUE_GROSSO`
-  (`[@media(pointer:coarse)]:min-h-[44px] min-w-[44px]`, mesma forma que `src/components/layout/Sidebar.tsx`
-  já usa) em src/components/ui/button.tsx e icon-button.tsx. Prova: vermelho `largura das ações: 32px`
-  × verde `3 passed`.
-- Ponto 2: checkbox e radio mantêm o desenho de 16x16 (`aspect-square h-4 w-4`) e ganharam `relative`
-  para o `::after` de 44x44 ancorar; a área de toque é medida por `elementFromPoint` nos 4 cantos.
-  Prova: `largura do checkbox: 44px` (vermelho) × checkbox ≤20px e cantos OK (verde).
-- Ponto 3: o X do sheet e do dialog usam o mesmo `::after` (nada de inflar a caixa), com o `z-10`
-  mantido; o `data-[state=open]:bg-secondary` do sheet agora pinta só os 16px do X. Prova: no toque o
-  X é ≤32px desenhado e os 4 cantos do alvo de 44 acertam o botão (3 passed).
-- Ponto 4: a medição deixou de ser `boundingBox` do desenho e passou a ser a área de toque
-  (`areaToque44()`, 4 cantos de 44x44 via `elementFromPoint`); a prova de desktop inalterado e o teste
-  de contrato vitest ficaram. Prova: `3 passed`; mutação do CSS derruba o teste (`... 44px` ≠ ≤20).
-- Ponto 5: registrei no comentário de src/components/ui/micro-interactions/buttons.tsx que
-  `--primary-foreground` vira `0 0% 0%` no alto contraste ESCURO (accessibility.css:35), então o ripple
-  fica escuro sobre o `--primary` violeta claro daquele modo — que é o par de contraste do botão. Não
-  troquei o token (nenhum token novo, `--primary-foreground` é o par de contraste do `--primary`).
-
-## Escopo dos arquivos (por que entram)
-- src/styles/utilities.css, e2e/a11y-toque-44px.spec.ts e playwright.config.ts: os três são a
-  própria matéria do cartão. A regra coarse que precisa deixar de inflar a caixa mora em
-  utilities.css; a medição de área de toque que o revisor pediu para trocar mora no spec; e o spec
-  precisa estar no `chromium-a11y` (pelo `testMatch` que a base já trazia) e fora do
-  `chromium-authenticated` (via `testIgnore`) para não ser coletado pelo catch-all autenticado, que
-  exigiria sessão real (proibida pela R1). Sem essas três linhas o defeito ou não é corrigido ou não
-  é medido.
+## Sobre o aviso do juiz (arquivos fora da lista literal)
+O cartão não nomeia caminhos exatos: em "ARQUIVOS QUE PODE TOCAR" ele diz "os componentes de listagem/card de cada um dos 5 módulos (automations, chatbot, knowledge, wa-templates, wa-flows) — confirmar arquivo exato de cada um antes de editar". Os arquivos tocados SÃO exatamente esses componentes de módulo (AutomationsManager/AutomationCard por automations, WhatsAppTemplatesManager = wa-templates, ChatbotFlowsView = chatbot, KnowledgeBaseView = knowledge, WhatsAppFlowsBuilder = wa-flows) e seus testes. Está dentro do escopo; o aviso não procede.
 
 ## O que NÃO fiz e por quê
-- Não mexi no `display` de nenhum consumidor nem em `src/components/layout/Sidebar.tsx` (já tinha o
-  padrão da variante coarse) — fora do defeito do cartão.
-- `npm run typecheck` (`tsc -b --force`) e `npx tsc -p tsconfig.app.json --noEmit` foram MORTOS por
-  OOM nesta sessão do WSL (`Killed`, inclusive com `--max-old-space-size=4096`), com outros dev
-  servers da máquina no ar; a tipagem entra pela verificação do fechar. Não consegui rodar typecheck
-  local então não afirmo que ele passou aqui.
-- Não rodei a suíte vitest inteira (memória da fábrica: 1 suite por vez no WSL); rodei só o contrato
-  alterado e o e2e do cartão.
-
-## Critérios de pronto do cartão
-- Critério 1 (alvos >=44px medidos por teste): e2e/a11y-toque-44px.spec.ts mede a ÁREA DE TOQUE
-  por `elementFromPoint` nos 4 cantos de um quadrado 44x44 centrado no controle (verde, 3 passed) e
-  o contrato vitest trava as classes (`Test Files 1 passed (1), Tests 6 passed (6)`); o vermelho foi
-  provado por mutação do CSS (`largura do checkbox: 44px` != <=20).
-- Critério 2 (grep de cor literal em src/components/ui): `git grep -nE "#[0-9a-fA-F]{3,8}|rgba?\(|hsl\([0-9]"
-  -- src/components/ui` só devolve (a) os seletores ESTRUTURAIS do recharts em
-  src/components/ui/chart.tsx:48 (`[stroke='#ccc']`/`[stroke='#fff']`, variantes arbitrárias do Tailwind
-  que casam os nós internos do recharts, não pintam cor) e (b) um `linear-gradient(#fff 0 0)` de máscara
-  em micro-interactions/buttons.tsx:264. NENHUMA cor literal pintada sobra. Os dois literais do cartão
-  (rgba(255,255,255,0.3) em buttons.tsx; hsl(142 76% 36%) em feedback.tsx) viraram
-  `hsl(var(--primary-foreground) / 0.3)` e `hsl(var(--success))`.
-- Critério 3 (contraste do X do dialog/sheet registrado): o X é `opacity-70` sobre `bg-background`.
-  Compondo `--foreground` a 70% sobre o fundo (sRGB, hsl do tokens.css: claro fg 221 20% 12% / bg
-  221 20% 97%; escuro fg 210 40% 98% / bg 240 6% 6%; alto contraste accessibility.css:7/32/35),
-  mediu-se claro 6,06:1 / escuro 9,19:1 / alto-contraste-claro 8,45:1 / alto-contraste-escuro 9,58:1 —
-  todos acima do 3:1 de objeto gráfico (WCAG 1.4.11). O `opacity-70` FICA; nada a subir.
-- Critério 4 (`zapp-verify . --rapido` verde): rodado no `hermes-tarefa-fechar`.
+- Não alterei a lógica das mutations de exclusão nem o estado/banco (não é minha área): só a tela e o diálogo de confirmação.
+- Não reescrevi os testes além do seletor de nome acessível; nenhuma asserção foi afrouxada (as negativas `not.toHaveBeenCalled()` continuam iguais).
