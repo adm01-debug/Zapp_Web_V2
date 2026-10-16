@@ -19,9 +19,12 @@
  *
  *   2) CONTRA O COMPORTAMENTO — cada evento enumerado atravessa o handler REAL
  *      (handleEvolutionWebhook) com um envelope mínimo e uma instância própria, e
- *      a prova declarada tem de bater: evento com handler toca o banco (um
- *      Supabase FALSO, em 127.0.0.1, registra cada requisição) e evento que só
- *      registra log não toca. Nenhum banco real, nenhuma rede fora de 127.0.0.1.
+ *      a prova declarada tem de bater: todo evento consulta o limiter
+ *      persistente (RPC `consume_rate_limit`, t_0b69c58a — o rate-limit
+ *      sobrevive ao reinício do isolate); além dele, evento com handler toca
+ *      o banco (um Supabase FALSO, em 127.0.0.1, registra cada requisição) e
+ *      evento que só registra log não toca mais nada. Nenhum banco real,
+ *      nenhuma rede fora de 127.0.0.1.
  *      Os nomes de evento enviados são os canônicos do roteador (dotted), que é o
  *      que `normalizeEventName` produz a partir do que a Evolution manda
  *      (maiúsculas do v2 e nomes da GO, como `message`/`calloffer`).
@@ -241,7 +244,7 @@ function withEnv(vars: Record<string, string | undefined>, fn: () => Promise<voi
   });
 }
 
-Deno.test("SL-149 comportamento: cada evento enumerado é despachado pelo roteador real (e só os de log não tocam o banco)", async () => {
+Deno.test("SL-149 comportamento: cada evento enumerado é despachado pelo roteador real (e só os de log param no rate-limit)", async () => {
   const falso = iniciarSupabaseFalso();
   const token = "tok-sl149-do-teste";
   try {
@@ -272,19 +275,28 @@ Deno.test("SL-149 comportamento: cada evento enumerado é despachado pelo rotead
               }),
             }),
           );
-          const depois = falso.requisicoes.length;
+          const novas = falso.requisicoes.slice(antes);
+          // O rate-limit é persistente (t_0b69c58a): todo evento consulta o
+          // decisor ANTES do roteamento. Só o que passa dele é roteamento real.
+          const CAMINHO_LIMITER = "/rpc/consume_rate_limit";
+          const aoLimiter = novas.filter((r) => r.caminho.includes(CAMINHO_LIMITER));
+          const aoDominio = novas.filter((r) => !r.caminho.includes(CAMINHO_LIMITER));
 
           assertEquals(res.status, 200, `${caso.evento}: roteador respondeu ${res.status}`);
+          assert(
+            aoLimiter.length >= 1,
+            `${caso.evento} não consultou o limiter persistente (${caso.rota}): nenhuma chamada a ${CAMINHO_LIMITER}`,
+          );
           if (caso.prova === "toca-banco") {
             assert(
-              depois > antes,
-              `${caso.evento} não chegou ao handler (${caso.rota}): nenhuma requisição ao banco`,
+              aoDominio.length > 0,
+              `${caso.evento} não chegou ao handler (${caso.rota}): nenhum acesso ao banco além do rate-limit`,
             );
           } else {
             assertEquals(
-              depois,
-              antes,
-              `${caso.evento} deveria só registrar log, mas tocou o banco (${caso.rota})`,
+              aoDominio.length,
+              0,
+              `${caso.evento} deveria só registrar log, mas tocou o banco além do rate-limit (${caso.rota})`,
             );
           }
         }

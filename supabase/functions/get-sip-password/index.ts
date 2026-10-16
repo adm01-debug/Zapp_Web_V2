@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, checkRateLimit, getClientIP } from "../_shared/validation.ts";
+import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, enforceRateLimit, getClientIP } from "../_shared/validation.ts";
 
 // T15: o front não conhece mais a linha — host/usuário/porta vêm daqui. Os
 // defaults são os valores que estavam hardcoded no front; a variável de
@@ -24,8 +24,12 @@ export async function handleGetSipPassword(req: Request): Promise<Response> {
 
   try {
     const ip = getClientIP(req);
-    const rl = checkRateLimit(`sip-pwd:${ip}`, 10, 60_000);
-    if (!rl.allowed) return errorResponse("Rate limit exceeded", 429, req);
+    const rl = await enforceRateLimit(`sip-pwd:${ip}`, 10, 60_000);
+    if (!rl.allowed) {
+      const limited = errorResponse("Rate limit exceeded", 429, req);
+      limited.headers.set("Retry-After", "60");
+      return limited;
+    }
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       return errorResponse('Unauthorized', 401, req);

@@ -7,7 +7,7 @@ import {
   requireEnv,
   isAllowedOrigin,
   Logger,
-  checkRateLimit,
+  enforceRateLimit,
   getClientIP,
 } from "../_shared/validation.ts";
 import { ApprovePasswordResetSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
@@ -43,7 +43,7 @@ export interface ApproveResetEmailClient {
 
 export interface ApproveResetDeps {
   env?: (name: string) => string;
-  checkRateLimit?: (key: string, maxRequests: number, windowMs: number) => { allowed: boolean };
+  enforceRateLimit?: (key: string, maxRequests: number, windowMs: number) => Promise<{ allowed: boolean }>;
   caller?: ApproveResetCallerClient;
   admin?: ApproveResetAdminClient;
   emailClient?: ApproveResetEmailClient;
@@ -84,11 +84,15 @@ export async function handleApprovePasswordResetRequest(
 
   const log = new Logger("approve-password-reset");
   const env = deps.env ?? requireEnv;
-  const rateLimit = deps.checkRateLimit ?? checkRateLimit;
+  const rateLimit = deps.enforceRateLimit ?? enforceRateLimit;
 
   const ip = getClientIP(req);
-  const rl = rateLimit(`approve-reset:${ip}`, 10, 60_000);
-  if (!rl.allowed) return errorResponse("Rate limit exceeded", 429, req);
+  const rl = await rateLimit(`approve-reset:${ip}`, 10, 60_000);
+  if (!rl.allowed) {
+    const limited = errorResponse("Rate limit exceeded", 429, req);
+    limited.headers.set("Retry-After", "60");
+    return limited;
+  }
 
   try {
     const authHeader = req.headers.get("Authorization");
