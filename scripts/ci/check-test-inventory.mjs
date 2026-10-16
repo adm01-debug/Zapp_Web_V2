@@ -27,7 +27,7 @@ function read(rel) {
   return readFileSync(join(root, rel), 'utf8');
 }
 
-// ── Allowlist com prazo (W54) ─────────────────────────────────────────────────
+// ── Allowlist com prazo (W54) ────────────────────────────────────────────
 // Cada entrada tem `desde` (AAAA-MM-DD) e `motivo`. Falha se (hoje - desde) > 30 dias.
 // Regra idêntica à quarentena E87: allowlist sem prazo é um `skip` com outro nome.
 // W53: todos os itens anteriores promovidos; ambas as Metas vazias.
@@ -49,14 +49,6 @@ const ALLOWLIST_META = new Map([
 const ALLOWLIST_NODE_META = new Map([
   ['scripts/catalog/validate-plan.test.mjs', { desde: '2026-10-16', motivo: 'teste de plano editorial, sem CI runner adequado; revisão em 30 dias' }],
   ['scripts/db-tests/run-all.unit.mjs', { desde: '2026-10-16', motivo: 'suite de DB removida do CI mínimo 16/10/2026; workflows db-guard e branch-hygiene deletados; revisão em 30 dias' }],
-  ['scripts/lib/seguranca-processo.test.mjs', { desde: '2026-10-16', motivo: 'utilitário de lib sem runner dedicado no CI mínimo 16/10/2026; revisão em 30 dias' }],
-  ['scripts/qa/prova-visao-classificadores.unit.mjs', { desde: '2026-10-16', motivo: 'suite QA visual removida do CI mínimo 16/10/2026; revisão em 30 dias' }],
-  ['scripts/talkx/lado-a-lado.unit.mjs', { desde: '2026-10-16', motivo: 'suite TalkX removida do CI mínimo 16/10/2026; revisão em 30 dias' }],
-  ['scripts/talkx/v4-status.unit.mjs', { desde: '2026-10-16', motivo: 'suite TalkX removida do CI mínimo 16/10/2026; revisão em 30 dias' }],
-  ['scripts/team-chat-db-validate.unit.mjs', { desde: '2026-10-16', motivo: 'validação team-chat removida do CI mínimo 16/10/2026; revisão em 30 dias' }],
-  ['scripts/ui-audit/contacts-navy-header.unit.mjs', { desde: '2026-10-16', motivo: 'auditoria UI removida do CI mínimo 16/10/2026; revisão em 30 dias' }],
-  ['scripts/ui-audit/layout-guard.unit.mjs', { desde: '2026-10-16', motivo: 'auditoria UI removida do CI mínimo 16/10/2026; revisão em 30 dias' }],
-  ['scripts/ui-audit/view-container-padding.unit.mjs', { desde: '2026-10-16', motivo: 'auditoria UI removida do CI mínimo 16/10/2026; revisão em 30 dias' }],
 ]);
 
 // Sets derivados para compatibilidade com .has() em orfaosDoInventario e orfaosNode.
@@ -84,7 +76,7 @@ export function verificarPrazosAllowlist(hoje = hojeISO()) {
   return problemas;
 }
 
-// ── 1. .test.ts: disco vs ci.yml ───────────────────────────────────────────────
+// ── 1. .test.ts: disco vs ci.yml ────────────────────────────────────────────
 
 const testTsOnDisk = spawnSync(resolverExecutavel('git'), ['ls-files', 'supabase/functions'], { cwd: root, encoding: 'utf8' })
   .stdout
@@ -97,7 +89,7 @@ const ciYaml = read('.github/workflows/ci.yml');
 const CI_TS_GLOB = "supabase/functions/**/*.test.ts";
 const ciUsesGlob = ciYaml.includes(CI_TS_GLOB);
 
-// ── 2. .test.sh: disco vs db-guard.yml ────────────────────────────────────────
+// ── 2. .test.sh: disco vs db-guard.yml ────────────────────────────────────
 
 const testShOnDisk = spawnSync(resolverExecutavel('git'), ['ls-files', 'scripts/db-audit'], { cwd: root, encoding: 'utf8' })
   .stdout
@@ -109,7 +101,7 @@ const testShInGuard = new Set(
   [...dbGuardYaml.matchAll(/\bscripts\/db-audit\/\S+\.test\.sh\b/g)].map(m => m[0])
 );
 
-// ── 3. Suites Node: disco vs passos de workflow ───────────────────────────────
+// ── 3. Suites Node: disco vs passos de workflow ──────────────────────────
 // O caminho da suite conta como coberto quando aparece dentro de um bloco `run:` de algum
 // workflow — exatamente onde o runner a executa (com `node --test` ou direto com `node`).
 // Citação em comentário, nome de etapa ou `env:` NÃO conta: é o que separa registro de execução.
@@ -174,7 +166,7 @@ export function suitesNodeOrfas() {
   return orfaosNode(suitesNodeNoDisco(), padroesNodeDosWorkflows());
 }
 
-// ── 4. Detectar órfãos ────────────────────────────────────────────────────────
+// ── 4. Detectar órfãos ────────────────────────────────────────────
 
 /**
  * Roda o inventário inteiro e devolve a lista de órfãos (`[]` = tudo coberto).
@@ -208,7 +200,7 @@ export function orfaosDoInventario() {
   return orphans;
 }
 
-// ── 5. Reportar ───────────────────────────────────────────────────────────────
+// ── 5. Reportar ────────────────────────────────────────────────
 
 function principal() {
   const prazos = verificarPrazosAllowlist();

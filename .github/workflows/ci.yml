@@ -128,7 +128,14 @@ jobs:
         run: bun install --frozen-lockfile --ignore-scripts
 
       - name: 🧩 Run Node CI scripts tests
-        run: node --test scripts/ci/*.unit.mjs
+        run: |
+          node --test \
+            scripts/ci/*.unit.mjs \
+            scripts/lib/*.test.mjs \
+            scripts/qa/*.unit.mjs \
+            scripts/talkx/*.unit.mjs \
+            scripts/*.unit.mjs \
+            scripts/ui-audit/*.unit.mjs
         env:
           CI: true
 
