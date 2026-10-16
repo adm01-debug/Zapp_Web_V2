@@ -252,6 +252,56 @@ export function paridadeDeNomes(
   };
 }
 
+/** Resultado da varredura de paridade de nomes do manifest. */
+export interface VarreduraParidade {
+  /** Tabelas do manifest cuja paridade de nomes foi verificada (e bateu). */
+  comparadas: string[];
+  /** Tabelas sem tolerancia aplicavel cujo conjunto de nomes divergiu. */
+  divergencias: string[];
+}
+
+/**
+ * Compara os nomes de policy resolvidos das migrations com os nomes que o
+ * manifest registra, tabela a tabela.
+ *
+ * Tolerancia de transito: `schema-manifest.json` e artefato DERIVADO
+ * (`types-sync`, `docs/MIGRATIONS.md`) e o que pode estar atrasado e o conjunto
+ * de NOMES da tabela tocada por migration POSTERIOR ao snapshot. Uma migration
+ * que DROP + CREATE o MESMO nome (padrao das migrations de endurecimento de
+ * RLS) nao atrasa o manifest: os nomes resolvidos continuam batendo com o dump
+ * e a paridade e verificada normalmente. So a tabela cujo nome realmente mudou
+ * fica de fora (sem virar divergencia, porque a culpa e do snapshot velho).
+ */
+export function varrerParidade(
+  estado: PolicyState,
+  nomesDoManifest: Map<string, string[]>,
+  emTransito: Set<string>,
+): VarreduraParidade {
+  const comparadas: string[] = [];
+  const divergencias: string[] = [];
+  for (const tabela of [...nomesDoManifest.keys()].sort()) {
+    const resolvidas = policiesOn(estado, tabela).map((p) => p.name).sort();
+    const manifest = [...(nomesDoManifest.get(tabela) ?? [])].sort();
+    const bate = JSON.stringify(resolvidas) === JSON.stringify(manifest);
+    if (emTransito.has(`public.${tabela}`)) {
+      // Tolerancia de transito: o snapshot pode estar atrasado nos NOMES desta
+      // tabela. Mas so a tabela cujo nome REALMENTE mudou fica de fora: quando
+      // os nomes batem, a paridade foi verificada e a tabela conta para a
+      // cobertura (sem isso, cada migration nova de endurecimento derruba a
+      // razao — o vermelho do empilhamento).
+      if (bate) comparadas.push(tabela);
+      continue;
+    }
+    comparadas.push(tabela);
+    if (!bate) {
+      divergencias.push(
+        `${tabela}: migrations=${JSON.stringify(resolvidas)} manifest=${JSON.stringify(manifest)}`,
+      );
+    }
+  }
+  return { comparadas, divergencias };
+}
+
 /** `true` quando o primeiro `(` e o último `)` envolvem a expressão inteira. */
 function parensEnvolvemTudo(expr: string): boolean {
   let profundidade = 0;

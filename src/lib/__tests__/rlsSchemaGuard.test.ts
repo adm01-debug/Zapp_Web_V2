@@ -13,6 +13,7 @@ import {
   resolvePolicyState,
   snapshotDoManifest,
   tabelasComPolicyPosterior,
+  varrerParidade,
   type ComandoRls,
 } from './helpers/rlsSchema';
 
@@ -103,37 +104,148 @@ describe('Guarda: o resolvedor reflete o schema real (nao e um espelho)', () => 
     // Para TODA tabela do schema public, os nomes de policy resolvidos das
     // migrations sao exatamente os que o dump do banco real registra. Se uma
     // migration criar/derrubar policy e o manifest nao acompanhar, este teste
-    // fica vermelho. As tabelas com migration de policy POSTERIOR ao snapshot
-    // ficam de fora: o manifest e artefato derivado, sincronizado pelo
-    // `types-sync` depois que a migration chega ao banco oficial — e
-    // `docs/MIGRATIONS.md` proibe commitá-lo junto da migration (sem essa
-    // tolerancia, um cartao de RLS legitimo travaria em vermelho ate o bot).
+    // fica vermelho. Tabela com migration de policy POSTERIOR ao snapshot cujo
+    // conjunto de NOMES mudou fica de fora: o manifest e artefato derivado,
+    // sincronizado pelo `types-sync` depois que a migration chega ao banco
+    // oficial — e `docs/MIGRATIONS.md` proibe commitá-lo junto da migration
+    // (sem essa tolerancia, um cartao de RLS legitimo travaria em vermelho ate
+    // o bot). Tabela em transito com os MESMOS nomes continua comparada: o
+    // padrao DROP + CREATE o mesmo nome (endurecimento de RLS) nao atrasa o
+    // manifest e nao pode derrubar a cobertura (varrerParidade).
     const emTransito = tabelasComPolicyPosterior(snapshotDoManifest());
-    const divergencias: string[] = [];
-    const tabelas = new Set<string>();
-    for (const chave of Object.keys(
-      JSON.parse(readFileSync(join(process.cwd(), 'supabase', 'schema-manifest.json'), 'utf8'))
-        .policies as Record<string, string>,
-    )) {
-      tabelas.add(chave.split('.')[0]);
+    const manifesto = JSON.parse(
+      readFileSync(join(process.cwd(), 'supabase', 'schema-manifest.json'), 'utf8'),
+    ) as { policies?: Record<string, string> };
+    const nomesDoManifest = new Map<string, string[]>();
+    for (const chave of Object.keys(manifesto.policies ?? {})) {
+      const tabela = chave.split('.')[0];
+      nomesDoManifest.set(tabela, manifestPolicyNames(tabela));
     }
-    let comparadas = 0;
-    for (const tabela of [...tabelas].sort()) {
-      if (emTransito.has(`public.${tabela}`)) continue;
-      comparadas += 1;
-      const resolvidas = policiesOn(ESTADO, tabela)
-        .map((p) => p.name)
-        .sort();
-      const manifest = manifestPolicyNames(tabela);
-      if (JSON.stringify(resolvidas) !== JSON.stringify(manifest)) {
-        divergencias.push(
-          `${tabela}: migrations=${JSON.stringify(resolvidas)} manifest=${JSON.stringify(manifest)}`,
-        );
-      }
-    }
+    const { comparadas, divergencias } = varrerParidade(ESTADO, nomesDoManifest, emTransito);
     expect(divergencias).toEqual([]);
     // O filtro nao pode esvaziar o guarda: sem paridade comparada, nao ha prova.
-    expect(comparadas / tabelas.size).toBeGreaterThan(0.9);
+    expect(comparadas.length / nomesDoManifest.size).toBeGreaterThan(0.9);
+  });
+});
+
+describe('Guarda: o transito de NOME preservado nao derruba a cobertura', () => {
+  // Caso do cartao t_f1367ee4 (presets de filtro salvos do inbox): a migration
+  // faz DROP + CREATE da MESMA policy, em uma tabela cujo snapshot do manifest e
+  // anterior. A regra antiga pulava a tabela inteira so por ela estar em
+  // transito: a 16a tabela em transito levou a razao de 144/159 (0,9057) para
+  // 143/159 (0,8994) e reprovou a entrega empilhada, embora os nomes resolvidos
+  // batessem com o manifest. O transito existe porque o manifest pode estar
+  // atrasado NOS NOMES; nome preservado nao atrasa nada.
+  const BASE = `
+    CREATE POLICY "leitura" ON public.widget FOR SELECT TO authenticated USING (owner_id = auth.uid());
+    CREATE POLICY "escrita" ON public.widget FOR UPDATE TO authenticated USING (owner_id = auth.uid());
+  `;
+
+  it('tabela em transito com os nomes preservados e comparada e conta para a cobertura', () => {
+    const estado = resolvePolicyState([
+      { name: '20260101000000_base.sql', sql: BASE },
+      {
+        name: '20261013235907_endurece.sql',
+        sql: `
+          DROP POLICY IF EXISTS "leitura" ON public.widget;
+          CREATE POLICY "leitura" ON public.widget FOR SELECT TO authenticated
+            USING (owner_id = auth.uid() AND archived_at IS NULL);
+        `,
+      },
+    ]);
+    const nomesDoManifest = new Map([['widget', ['escrita', 'leitura']]]);
+
+    const { comparadas, divergencias } = varrerParidade(
+      estado,
+      nomesDoManifest,
+      new Set(['public.widget']),
+    );
+
+    expect(divergencias).toEqual([]);
+    expect(comparadas).toEqual(['widget']);
+  });
+
+  it('tabela em transito que RENOMEIA policy continua tolerada, sem virar divergencia', () => {
+    const estado = resolvePolicyState([
+      { name: '20260101000000_base.sql', sql: BASE },
+      {
+        name: '20261013235907_renomeia.sql',
+        sql: `ALTER POLICY "leitura" ON public.widget RENAME TO leitura_v2;`,
+      },
+    ]);
+    const nomesDoManifest = new Map([['widget', ['escrita', 'leitura']]]);
+
+    const { comparadas, divergencias } = varrerParidade(
+      estado,
+      nomesDoManifest,
+      new Set(['public.widget']),
+    );
+
+    // A culpa e do snapshot velho, nao da migration: nao reprova...
+    expect(divergencias).toEqual([]);
+    // ...e a tabela nao entra na conta da cobertura.
+    expect(comparadas).toEqual([]);
+  });
+
+  it('a fronteira de 0,9 nao reprova a entrega quando o transito legitimo preserva o nome', () => {
+    // Mesmos numeros do empilhamento (159 tabelas no manifest do snapshot): 15
+    // tabelas em transito que RENOMEIAM policy (tolerancia do types-sync vale) e
+    // 1 em transito que PRESERVA o nome (o padrao do cartao). Regra antiga:
+    // 143/159 = 0,8994 — o vermelho. Regra nova: 144/159 = 0,9057 — verde.
+    const nomesDoManifest = new Map<string, string[]>();
+    const migrations: { name: string; sql: string }[] = [];
+    for (let i = 0; i < 159; i += 1) {
+      const tabela = `t${String(i).padStart(3, '0')}`;
+      nomesDoManifest.set(tabela, ['leitura']);
+      migrations.push({
+        name: `2026010100${String(i).padStart(3, '0')}_base.sql`,
+        sql: `CREATE POLICY "leitura" ON public.${tabela} FOR SELECT TO authenticated USING (true);`,
+      });
+    }
+    const emTransito = new Set<string>();
+    for (let i = 0; i < 15; i += 1) {
+      const tabela = `t${String(i).padStart(3, '0')}`;
+      emTransito.add(`public.${tabela}`);
+      migrations.push({
+        name: `2026101300${String(i).padStart(4, '0')}_renomeia.sql`,
+        sql: `ALTER POLICY "leitura" ON public.${tabela} RENAME TO leitura_v2;`,
+      });
+    }
+    emTransito.add('public.t158');
+    migrations.push({
+      name: '20261013235907_preserva.sql',
+      sql: `
+        DROP POLICY IF EXISTS "leitura" ON public.t158;
+        CREATE POLICY "leitura" ON public.t158 FOR SELECT TO authenticated USING (owner_id = auth.uid());
+      `,
+    });
+
+    const { comparadas, divergencias } = varrerParidade(
+      resolvePolicyState(migrations),
+      nomesDoManifest,
+      emTransito,
+    );
+
+    expect(divergencias).toEqual([]);
+    // Regra antiga (pula TODA tabela em transito): 143/159 = 0,8994 — o vermelho.
+    const comparadasAntigas = [...nomesDoManifest.keys()].filter(
+      (tabela) => !emTransito.has(`public.${tabela}`),
+    ).length;
+    expect(comparadasAntigas / nomesDoManifest.size).toBeLessThan(0.9);
+    // Regra nova: t158 e verificado e conta; as 15 que renomeiam continuam fora.
+    expect(comparadas.length / nomesDoManifest.size).toBeGreaterThan(0.9);
+    expect(comparadas).toHaveLength(144);
+  });
+
+  it('tabela FORA do transito com nome divergente continua reprovando (guarda nao afrouxou)', () => {
+    const estado = resolvePolicyState([{ name: '20260101000000_base.sql', sql: BASE }]);
+    const nomesDoManifest = new Map([['widget', ['escrita', 'leitura', 'removida']]]);
+
+    const { comparadas, divergencias } = varrerParidade(estado, nomesDoManifest, new Set());
+
+    expect(comparadas).toEqual(['widget']);
+    expect(divergencias).toHaveLength(1);
+    expect(divergencias[0]).toContain('removida');
   });
 });
 
