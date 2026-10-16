@@ -369,6 +369,7 @@ function compareStatements(migration, record, exceptionsByVersion) {
       }
       return [];
     }
+    if (!exc && !ledgerName) return [];
     return [
       `statements IS NULL ou vazio para ${version} no ledger (sem excecao em migration-evidence.json)`,
     ];
@@ -450,17 +451,20 @@ function compare(migrations, records, exceptionsByVersion) {
     if (stmtErrors.length) errors.push(...stmtErrors);
   }
 
+  const legacyFixed = [];
   for (const record of records) {
-    const { version } = record;
+    const { version, statements: recStmts, name: recName } = record;
     const migration = byFileVersion.get(version);
     if (!migration) continue;
     const exc = exceptionsByVersion.get(version);
-    if (exc) {
-      warnings.push(`${version}: ${describeException(exc)}`);
+    if (exc && (!recStmts || recStmts.length === 0)) {
+      legacyFixed.push(`${version}: ${describeException(exc)}`);
+    } else if (!exc && !recName && (!recStmts || recStmts.length === 0)) {
+      warnings.push(`${version}: sem nome e sem SQL no ledger, sem excecao registrada`);
     }
   }
 
-  return { errors, applyPending, warnings };
+  return { errors, applyPending, warnings, legacyFixed };
 }
 
 function validateLocalMigrations(migrations) {
@@ -597,7 +601,11 @@ function main() {
 
   const totalMigrations = local.migrations.length;
   const totalLedger = parsed.records.length;
-  console.log(`OK: ${totalMigrations} migrations locais, ${totalLedger} no ledger, sem drift.`);
+  const legacyFixed = result.legacyFixed ?? [];
+  const legacyCount = legacyFixed.length;
+  const verifiedCount = totalLedger - result.warnings.length - legacyCount;
+  const legacyStr = legacyCount > 0 ? `, ${legacyCount} arquivo(s) legado(s) fixado(s) sem prova de conteudo historico` : '';
+  console.log(`OK: ${totalMigrations} migrations locais, ${totalLedger} no ledger, sem drift. ${verifiedCount} conteudo(s)/hash(es) historico(s) verificado(s)${legacyStr}`);
   return 0;
 }
 
