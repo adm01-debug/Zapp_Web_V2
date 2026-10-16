@@ -71,7 +71,11 @@ const ALLOWLIST = new Set([
   // saude do worker, autorizacao dono/admin). Migration real em PostgreSQL 17
   // descartavel; passo de YAML fica para o dono do workflow.
   'scripts/db-audit/talkx-monitor-panel.test.sh',
-  // --- .test.sh — prova em container descartável (docker); passo de YAML
+  // #126 (R3-DELTA-009): prova em container descartável que a purga LGPD (que grava
+  // updated_at) NAO vira "falha recente" (failure_rate_15m / outcome_unknown_24h) na saude do
+  // motor. Roda sozinho (docker postgres:17-alpine); o passo em db-guard.yml fica com o dono
+  // do workflow (agente nao edita workflow).
+  'scripts/db-audit/talkx-purge-nao-falsa-falha.test.sh',  // --- .test.sh — prova em container descartável (docker); passo de YAML
   // a promover em db-guard.yml pelo dono do workflow (agente não edita workflow).
   // Item 293 (R2-DB-005): prova que a associação reminders→conversation_tasks preserva a
   // identidade da origem (título+dono+contato+horários) com bijeção. Promover quando o
