@@ -4,30 +4,42 @@ import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Handlers do canal realtime (`postgres_changes`): é o INSERT em warroom_alerts que
-// invalidava a query da página e rearmava o monitor de SLA (R2-MOD-074).
+// invalidava a query da página e rearmava o monitor de SLA (R2-MOD-074). O UPDATE
+// marca o alerta dispensado em outro cliente.
 const handlersRealtime: Array<(payload: { new: unknown }) => void> = [];
+const handlersUpdate: Array<(payload: { new: unknown }) => void> = [];
+
+const mockShowNotification = vi.hoisted(() => vi.fn());
+const pushPermission = vi.hoisted(() => ({ valor: 'granted' as string }));
+const mockToastError = vi.hoisted(() => vi.fn());
 
 const mockFrom = vi.fn();
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: (...args: unknown[]) => mockFrom(...args),
-    channel: vi.fn().mockReturnValue({
-      on: vi.fn((_evento: unknown, _filtro: unknown, handler: (payload: { new: unknown }) => void) => {
-        handlersRealtime.push(handler);
-        return { subscribe: vi.fn().mockReturnValue({ unsubscribe: vi.fn() }) };
-      }),
-      subscribe: vi.fn().mockReturnValue({ unsubscribe: vi.fn() }),
+    channel: vi.fn(() => {
+      const canal: Record<string, unknown> = {};
+      canal.on = vi.fn((_tipo: string, filtro: { event?: string }, handler: (payload: { new: unknown }) => void) => {
+        if (filtro?.event === 'UPDATE') handlersUpdate.push(handler);
+        else handlersRealtime.push(handler);
+        return canal;
+      });
+      canal.subscribe = vi.fn().mockReturnValue({ unsubscribe: vi.fn() });
+      return canal;
     }),
     removeChannel: vi.fn(),
   },
 }));
 vi.mock('@/hooks/auth/useAuth', () => ({
-  useAuth: () => ({ user: { id: 'user-1' } }),
+  useAuth: () => ({ user: { id: 'user-1' }, profile: { id: 'prof-1' } }),
+}));
+vi.mock('sonner', () => ({
+  toast: { error: (...args: unknown[]) => mockToastError(...args), success: vi.fn(), info: vi.fn() },
 }));
 vi.mock('@/hooks/system/usePushNotifications', () => ({
   usePushNotifications: () => ({
-    showNotification: vi.fn(),
-    permission: 'granted',
+    showNotification: mockShowNotification,
+    permission: pushPermission.valor,
   }),
 }));
 
@@ -68,6 +80,7 @@ describe('useWarRoomAlerts', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     handlersRealtime.length = 0;
+    handlersUpdate.length = 0;
     mockFrom.mockImplementation((table: string) => {
       if (table === 'warroom_alerts') {
         return {
@@ -253,6 +266,7 @@ describe('useWarRoomAlerts — monitor de SLA (R2-MOD-074)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     handlersRealtime.length = 0;
+    handlersUpdate.length = 0;
     alertas = Array.from({ length: PAGINA_ALERTAS }, (_, i) => ({
       id: `outro-${i}`,
       alert_type: 'warning',
@@ -344,5 +358,120 @@ describe('useWarRoomAlerts — monitor de SLA (R2-MOD-074)', () => {
 
     expect(criados).toHaveLength(0);
     expect(erroNoConsole).toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Dispensar alerta (erro não pode passar em silêncio), tipo desconhecido
+// (não pode soar/pushar) e o bipe duplo do crítico (o 2º som é AGENDADO,
+// não disparado no mesmo tick — antes os dois `play()` colapsavam num só).
+// ---------------------------------------------------------------------------
+describe('useWarRoomAlerts — dispensar, tipo desconhecido e bipe duplo', () => {
+  let updatePayloads: Array<Record<string, unknown>>;
+  let updateErro: { code: string; message: string } | null;
+
+  const totalDePlays = () => audiosCriados.reduce((n, a) => n + a.play.mock.calls.length, 0);
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    handlersRealtime.length = 0;
+    handlersUpdate.length = 0;
+    pushPermission.valor = 'granted';
+    updatePayloads = [];
+    updateErro = null;
+    mockFrom.mockImplementation((tabela: string) => {
+      if (tabela === 'warroom_alerts') {
+        return {
+          select: () => ({
+            eq: () => ({
+              order: () => ({
+                limit: () =>
+                  Promise.resolve({
+                    data: [
+                      { id: 'a1', alert_type: 'warning', title: 'A', message: 'M', source: null, is_read: false, created_at: '2026-10-15T00:00:00Z' },
+                    ],
+                    error: null,
+                  }),
+              }),
+            }),
+          }),
+          update: (payload: Record<string, unknown>) => {
+            updatePayloads.push(payload);
+            return { eq: () => Promise.resolve({ error: updateErro }) };
+          },
+          insert: () => Promise.resolve({ error: null }),
+        };
+      }
+      return { select: () => ({ eq: () => Promise.resolve({ data: [], error: null }) }) };
+    });
+  });
+
+  it('grava dismissed_by com o perfil do operador (não o auth.uid)', async () => {
+    const { result } = renderHook(() => useWarRoomAlerts(), { wrapper: createWrapper() });
+    await waitFor(() => expect(result.current.alerts).toHaveLength(1));
+
+    const invalidar = vi.spyOn(cliente!, 'invalidateQueries');
+    await act(async () => { await result.current.dismissAlert('a1'); });
+
+    expect(updatePayloads[0]).toEqual({ is_read: true, dismissed_by: 'prof-1' });
+    expect(invalidar).toHaveBeenCalledWith({ queryKey: ['warroom-alerts'] });
+  });
+
+  it('erro ao dispensar avisa o operador e mantém o alerta na lista', async () => {
+    updateErro = { code: '42501', message: 'permission denied for table warroom_alerts' };
+
+    const { result } = renderHook(() => useWarRoomAlerts(), { wrapper: createWrapper() });
+    await waitFor(() => expect(result.current.alerts).toHaveLength(1));
+
+    const invalidar = vi.spyOn(cliente!, 'invalidateQueries');
+    invalidar.mockClear();
+    await act(async () => { await result.current.dismissAlert('a1'); });
+
+    expect(mockToastError).toHaveBeenCalledTimes(1);
+    expect(invalidar).not.toHaveBeenCalled();
+    expect(result.current.alerts).toHaveLength(1);
+  });
+
+  it('tipo de alerta desconhecido entra na lista sem tocar som nem push', async () => {
+    const { result } = renderHook(() => useWarRoomAlerts(), { wrapper: createWrapper() });
+    await waitFor(() => expect(handlersRealtime.length).toBeGreaterThan(0));
+    expect(result.current).toBeTruthy();
+
+    const antes = totalDePlays();
+    act(() => {
+      handlersRealtime.forEach((h) => h({ new: { id: 'x1', alert_type: 'tipo-que-nao-existe', title: 't', message: 'm' } }));
+    });
+
+    expect(totalDePlays()).toBe(antes);
+    expect(mockShowNotification).not.toHaveBeenCalled();
+  });
+
+  it('crítico toca bipe duplo: um som na hora e outro 400 ms depois', async () => {
+    renderHook(() => useWarRoomAlerts(), { wrapper: createWrapper() });
+    await waitFor(() => expect(handlersRealtime.length).toBeGreaterThan(0));
+
+    const antes = totalDePlays();
+    vi.useFakeTimers();
+    try {
+      act(() => {
+        handlersRealtime.forEach((h) => h({ new: { id: 'c1', alert_type: 'critical', title: 't', message: 'm' } }));
+      });
+      expect(totalDePlays()).toBe(antes + 1);
+
+      act(() => { vi.advanceTimersByTime(400); });
+      expect(totalDePlays()).toBe(antes + 2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('UPDATE em outro cliente invalida a lista', async () => {
+    renderHook(() => useWarRoomAlerts(), { wrapper: createWrapper() });
+    await waitFor(() => expect(handlersUpdate.length).toBeGreaterThan(0));
+
+    const invalidar = vi.spyOn(cliente!, 'invalidateQueries');
+    act(() => { handlersUpdate.forEach((h) => h({ new: { id: 'a1', is_read: true } })); });
+
+    expect(invalidar).toHaveBeenCalledWith({ queryKey: ['warroom-alerts'] });
   });
 });

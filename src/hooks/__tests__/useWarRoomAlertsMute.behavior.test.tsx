@@ -12,8 +12,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 const h = vi.hoisted(() => {
   const state: { handler: null | ((p: { new: unknown }) => void) } = { handler: null };
   const channelObj: Record<string, unknown> = {};
-  channelObj.on = vi.fn((_e: string, _f: unknown, cb: (p: { new: unknown }) => void) => {
-    state.handler = cb;
+  channelObj.on = vi.fn((_tipo: string, filtro: { event?: string }, cb: (p: { new: unknown }) => void) => {
+    // O canal tem dois handlers (INSERT e UPDATE); só o INSERT toca/push.
+    if (filtro?.event === 'INSERT') state.handler = cb;
     return channelObj;
   });
   channelObj.subscribe = vi.fn(() => ({ unsubscribe: vi.fn() }));
@@ -36,6 +37,9 @@ let quiet = false;
 
 vi.mock('@/hooks/system/useNotificationSettings', () => ({
   useNotificationSettings: () => ({ settings: settingsState, isQuietHours: () => quiet }),
+}));
+vi.mock('@/hooks/auth/useAuth', () => ({
+  useAuth: () => ({ user: { id: 'user-1' }, profile: { id: 'prof-1' } }),
 }));
 vi.mock('@/hooks/system/usePushNotifications', () => ({
   usePushNotifications: () => ({ showNotification: vi.fn(), permission: 'denied' }),
