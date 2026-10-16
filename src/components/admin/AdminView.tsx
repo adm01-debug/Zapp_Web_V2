@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   Shield, Users, Search, Crown, UserCog, User, History, RefreshCw,
-  UserPlus, Building, Eye, Loader2, Brain,
+  UserPlus, Building, Eye, Loader2, Brain, CalendarClock,
+  type LucideIcon,
 } from 'lucide-react';
 import { useUserRole, AppRole } from '@/hooks/system/useUserRole';
 import { AdminCRMDashboard } from './AdminCRMDashboard';
@@ -19,6 +20,7 @@ import { PlaybooksManager } from './PlaybooksManager';
 import { SupervisorCopilot } from './SupervisorCopilot';
 import { TrainingMode } from './TrainingMode';
 import { CrisisRoom } from './CrisisRoom';
+import { CronJobsTab } from './CronJobsTab';
 import { useAdminData, accessLevelConfig, type UserWithRole } from './useAdminData';
 import { AdminUsersTable } from './AdminUsersTable';
 import { AdminAuditTable } from './AdminAuditTable';
@@ -43,6 +45,8 @@ function normalizarLimiteChats(valor: number): number {
 
 type GoogleServiceKey = 'google_sheets' | 'google_docs' | 'google_calendar' | 'google_drive';
 
+type AdminTab = 'users' | 'audit' | 'crm' | 'playbooks' | 'copilot' | 'training' | 'crisis' | 'cron';
+
 // SL-160/P2-3.4: a integração com Google Calendar não existe no produto (não há OAuth
 // nem sincronização em src/ ou supabase/functions — só a tela de demonstração, fora dos
 // grupos principais da navegação). A permissão `google_calendar` era oferecida aqui e
@@ -57,7 +61,7 @@ const googleServiceOptions: ReadonlyArray<{ key: GoogleServiceKey; label: string
 
 export function AdminView() {
   const { isAdmin, isSupervisor, loading: roleLoading } = useUserRole();
-  const [activeTab, setActiveTab] = useState<'users' | 'audit' | 'crm' | 'playbooks' | 'copilot' | 'training' | 'crisis'>('users');
+  const [activeTab, setActiveTab] = useState<AdminTab>('users');
   const [searchTerm, setSearchTerm] = useState('');
   const [editingUser, setEditingUser] = useState<UserWithRole | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -159,6 +163,20 @@ export function AdminView() {
     );
   }
 
+  // A aba "Tarefas agendadas" é SÓ de admin: as RPCs que ela usa
+  // (`admin_list_cron_jobs`/`admin_toggle_cron_job`) recusam quem não é admin — um
+  // supervisor não deve nem ver a aba (evita abrir uma tela que só daria acesso negado).
+  const abas: ReadonlyArray<readonly [AdminTab, LucideIcon, string]> = [
+    ['users', Users, `Usuários (${users.length})`],
+    ['audit', History, 'Auditoria'],
+    ['crm', Building, 'CRM 360°'],
+    ['playbooks', Shield, 'Playbooks'],
+    ['copilot', Brain, 'Copilot IA'],
+    ['training', Users, 'Treinamento'],
+    ['crisis', Shield, 'Sala de Crise'],
+    ...(isAdmin ? ([['cron', CalendarClock, 'Tarefas agendadas']] as const) : []),
+  ];
+
   return (
     <div className="space-y-6 relative bg-background w-full min-w-0">
       <AuroraBorealis />
@@ -176,7 +194,7 @@ export function AdminView() {
       </motion.div>
 
       <div role="tablist" aria-label="Seções da administração" className="flex gap-2 flex-wrap">
-        {([['users', Users, `Usuários (${users.length})`], ['audit', History, 'Auditoria'], ['crm', Building, 'CRM 360°'], ['playbooks', Shield, 'Playbooks'], ['copilot', Brain, 'Copilot IA'], ['training', Users, 'Treinamento'], ['crisis', Shield, 'Sala de Crise']] as const).map(([tab, Icon, label], index, lista) => (
+        {abas.map(([tab, Icon, label], index, lista) => (
           <Button
             key={tab}
             id={`tab-${tab}`}
@@ -411,6 +429,10 @@ export function AdminView() {
       ) : activeTab === 'crisis' ? (
         <SectionErrorBoundary key="crisis" sectionName="Sala de Crise">
           <CrisisRoom />
+        </SectionErrorBoundary>
+      ) : activeTab === 'cron' ? (
+        <SectionErrorBoundary key="cron" sectionName="Tarefas agendadas">
+          <CronJobsTab />
         </SectionErrorBoundary>
       ) : null}
       </div>
