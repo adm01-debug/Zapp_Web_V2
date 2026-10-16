@@ -95,21 +95,23 @@ export function AudioMessagePlayer({ audioUrl, messageId, isSent, existingTransc
     switch (transcriptionStatus) {
       case 'processing':
         return (
-          <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className={cn('flex items-center gap-1.5 px-2 py-1 rounded-full text-3xs font-medium', isSent ? 'border border-primary/40 text-primary' : 'bg-primary/10 text-primary')}>
+          <motion.div role="status" aria-live="polite" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className={cn('flex items-center gap-1.5 px-2 py-1 rounded-full text-3xs font-medium', isSent ? 'border border-primary/40 text-primary' : 'bg-primary/10 text-primary')}>
             <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}><Sparkles className="w-3 h-3" /></motion.div>
             <span>Transcrevendo...</span>
           </motion.div>
         );
       case 'completed':
         return transcription ? (
-          <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className={cn('flex items-center gap-1 px-2 py-1 rounded-full text-3xs font-medium', isSent ? 'bg-success/20 text-success' : 'bg-success/10 text-success')}>
+          <motion.div role="status" aria-live="polite" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className={cn('flex items-center gap-1 px-2 py-1 rounded-full text-3xs font-medium', isSent ? 'bg-success/20 text-success' : 'bg-success/10 text-success')}>
             <CheckCircle2 className="w-3 h-3" /><span>Transcrito</span>
           </motion.div>
         ) : null;
       case 'failed':
         return (
-          <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className={cn('flex items-center gap-1 px-2 py-1 rounded-full text-3xs font-medium cursor-pointer', isSent ? 'bg-destructive/20 text-destructive' : 'bg-destructive/10 text-destructive')} onClick={handleTranscribe}>
-            <AlertCircle className="w-3 h-3" /><span>Falhou - Tentar novamente</span>
+          <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}>
+            <button type="button" aria-label="Tentar transcrever novamente" onClick={handleTranscribe} className={cn('flex items-center gap-1 px-2 py-1 rounded-full text-3xs font-medium cursor-pointer', isSent ? 'bg-destructive/20 text-destructive' : 'bg-destructive/10 text-destructive')}>
+              <AlertCircle className="w-3 h-3" /><span>Falhou - Tentar novamente</span>
+            </button>
           </motion.div>
         );
       default: return null;
@@ -157,6 +159,8 @@ export function AudioMessagePlayer({ audioUrl, messageId, isSent, existingTransc
         </motion.div>
         <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
           <Button variant="ghost" size="icon" className={cn('w-8 h-8 relative', showTranscription && transcription ? 'text-primary' : (isSent ? 'text-primary' : 'text-muted-foreground'))}
+            aria-label={transcription ? 'Mostrar/ocultar transcrição' : 'Transcrever áudio'}
+            aria-expanded={transcription ? showTranscription : undefined}
             onClick={() => { if (!transcription && !isProcessing) void handleTranscribe(); else setShowTranscription(!showTranscription); }} disabled={isProcessing} title={transcription ? 'Mostrar/ocultar transcrição' : 'Transcrever áudio'}>
             {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
             {transcription && !showTranscription && <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-success" />}
@@ -165,7 +169,7 @@ export function AudioMessagePlayer({ audioUrl, messageId, isSent, existingTransc
       </div>
 
       <AnimatePresence>
-        {(transcriptionStatus === 'processing' || transcriptionStatus === 'failed') && (
+        {(transcriptionStatus === 'processing' || transcriptionStatus === 'failed' || transcriptionStatus === 'completed') && (
           <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }}>{getStatusIndicator()}</motion.div>
         )}
       </AnimatePresence>

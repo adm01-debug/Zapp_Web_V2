@@ -7,7 +7,6 @@ import { SwipeableMessage } from '@/components/mobile/SwipeableMessage';
 import { DeletedMessagePlaceholder } from '../DeletedMessagePlaceholder';
 import { HighlightedText } from './HighlightedText';
 import { Message, InteractiveButton } from '@/types/chat';
-import { TypingIndicator } from '../TypingIndicator';
 import { MessageReactions, QuickReactionBar } from '../MessageReactions';
 import { MessageHoverToolbar } from './MessageHoverToolbar';
 import { MessageImage } from '../ImagePreview';
