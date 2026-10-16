@@ -42,9 +42,13 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | C | 3 |
 | D | 6 |
 <<<<<<< ours
+<<<<<<< ours
 | E | 18 |
 =======
 | E | 17 |
+>>>>>>> theirs
+=======
+| E | 18 |
 >>>>>>> theirs
 | **total** | **81** |
 
@@ -62,7 +66,11 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `ai-kb-ingest` | A | `src/hooks/integrations/useKnowledgeBase.ts:126` · `src/hooks/integrations/useKnowledgeBase.ts:197` |
 | `ai-proxy` | A | `src/hooks/ui/useUniversityHelp.ts:130` · `src/hooks/inbox/useObjectionDetector.ts:90` · `src/hooks/inbox/useObjectionDetector.ts:164` · `src/components/settings/ai-providers/useAIProviders.ts:121` · `src/components/admin/SupervisorCopilot.tsx:89` · `supabase/functions/talkx-ai/index.ts:589` |
 | `ai-suggest-reply` | A | `src/components/inbox/AISuggestions.tsx:101` |
+<<<<<<< ours
 | `ai-transcribe-audio` | A | `src/components/inbox/AudioMessagePlayer.tsx:62` · `supabase/functions/_shared/evolution-webhook-messages.ts:983` |
+=======
+| `ai-transcribe-audio` | A | `src/components/inbox/AudioMessagePlayer.tsx:66` · `supabase/functions/_shared/evolution-webhook-messages.ts:983` |
+>>>>>>> theirs
 | `approve-password-reset` | A | `src/components/security/PasswordResetRequestsPanel.tsx:54` · `src/components/security/PasswordResetRequestsPanel.tsx:66` |
 | `auth-login` | A | `src/lib/serverLogin.ts:87` · `supabase/config.toml:39` |
 | `auto-close-conversations` | E | — sem chamador no repositório — |
@@ -74,11 +82,16 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `classify-sticker` | A | `src/hooks/sticker-picker/useStickerPicker.ts:148` · `src/components/inbox/chat/MessageBubble.tsx:325` · `supabase/functions/_shared/evolution-webhook-messages.ts:960` |
 | `cleanup-rate-limit-logs` | E | — sem chamador no repositório — |
 <<<<<<< ours
+<<<<<<< ours
 | `connection-health-check` | A | `src/hooks/system/useDiagnosticsData.ts:244` · `src/components/monitoring/hooks/useMonitoringActions.ts:17` · `src/components/diagnostics/ConnectionHealthPanel.tsx:78` · `src/components/connections/ConnectionsView.tsx:100` · `supabase/migrations/20260924100800_schedule_connection_health_check_cron.sql:16` · `supabase/migrations/20260930250000_reschedule_cron_secrets_l5.sql:56` · `supabase/migrations/20260930390000_endurece_l5_contrato_e_jobs.sql:87` · `supabase/migrations/20260930430000_cron_sem_dml_direto_v2.sql:116` · `supabase/config.toml:23` |
 | `create-user` | E | — sem chamador no repositório — |
 =======
 | `connection-health-check` | A | `src/hooks/system/useDiagnosticsData.ts:241` · `src/components/monitoring/hooks/useMonitoringActions.ts:17` · `src/components/diagnostics/ConnectionHealthPanel.tsx:78` · `supabase/migrations/20260924100800_schedule_connection_health_check_cron.sql:16` · `supabase/migrations/20260930250000_reschedule_cron_secrets_l5.sql:56` · `supabase/migrations/20260930390000_endurece_l5_contrato_e_jobs.sql:87` · `supabase/migrations/20260930430000_cron_sem_dml_direto_v2.sql:116` · `supabase/config.toml:23` |
 | `create-user` | A | `src/components/admin/useAdminData.ts:334` · `src/components/admin/useAdminData.ts:341` |
+>>>>>>> theirs
+=======
+| `connection-health-check` | A | `src/hooks/system/useDiagnosticsData.ts:244` · `src/components/monitoring/hooks/useMonitoringActions.ts:17` · `src/components/diagnostics/ConnectionHealthPanel.tsx:78` · `src/components/connections/ConnectionsView.tsx:112` · `supabase/migrations/20260924100800_schedule_connection_health_check_cron.sql:16` · `supabase/migrations/20260930250000_reschedule_cron_secrets_l5.sql:56` · `supabase/migrations/20260930390000_endurece_l5_contrato_e_jobs.sql:87` · `supabase/migrations/20260930430000_cron_sem_dml_direto_v2.sql:116` · `supabase/config.toml:23` |
+| `create-user` | E | — sem chamador no repositório (a guarda não enxerga o wrapper `invokeEdge`; chamador real: `src/components/admin/useAdminData.ts:334`) — |
 >>>>>>> theirs
 | `crm-integration` | A | `src/lib/crmIntegration.ts:20` · `supabase/config.toml:55` |
 | `csp-report` | D | `supabase/config.toml:58` |
@@ -94,6 +107,7 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `elevenlabs-webhook` | D | `supabase/config.toml:29` |
 | `evolution-api` | A | `src/hooks/groups/actions.ts:51` · `src/hooks/groups/actions.ts:121` · `src/components/monitoring/MonitoringConnectionsList.tsx:38` · `src/components/monitoring/MonitoringConnectionsList.tsx:54` |
 <<<<<<< ours
+<<<<<<< ours
 | `evolution-sync` | A | `src/components/connections/ConnectionsView.tsx:74` |
 | `evolution-webhook` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:30` · `src/components/monitoring/hooks/useMonitoringActions.ts:59` · `supabase/functions/webhook-diagnostic/index.ts:131` · `supabase/functions/webhook-diagnostic/index.ts:253` · `supabase/functions/webhook-diagnostic/index.ts:263` · `supabase/functions/evolution-api/index.ts:474` · `supabase/functions/evolution-api/index.ts:540` · `supabase/functions/evolution-api/index.ts:701` · `supabase/functions/_shared/evolution-go-routes.ts:221` · `supabase/functions/_shared/evolution-sync-actions.ts:227` · `supabase/functions/_shared/evolution-sync-actions.ts:300` · `supabase/config.toml:8` |
 =======
@@ -102,6 +116,10 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 <<<<<<< ours
 >>>>>>> theirs
 =======
+>>>>>>> theirs
+=======
+| `evolution-sync` | A | `src/components/connections/ConnectionsView.tsx:86` |
+| `evolution-webhook` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:30` · `src/components/monitoring/hooks/useMonitoringActions.ts:59` · `supabase/functions/webhook-diagnostic/index.ts:131` · `supabase/functions/webhook-diagnostic/index.ts:253` · `supabase/functions/webhook-diagnostic/index.ts:263` · `supabase/functions/evolution-api/index.ts:474` · `supabase/functions/evolution-api/index.ts:540` · `supabase/functions/evolution-api/index.ts:701` · `supabase/functions/_shared/evolution-go-routes.ts:221` · `supabase/functions/_shared/evolution-sync-actions.ts:227` · `supabase/functions/_shared/evolution-sync-actions.ts:300` · `supabase/config.toml:8` |
 >>>>>>> theirs
 | `external-db-bridge` | E | — sem chamador no repositório — |
 | `external-db-proxy` | A | `src/lib/externalProxy.ts:33` |
@@ -127,9 +145,13 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `recover-corrupted-audios` | E | — sem chamador no repositório — |
 | `recover-message-media` | E | — sem chamador no repositório — |
 <<<<<<< ours
+<<<<<<< ours
 | `revoke-auth-sessions` | A | `src/hooks/ui/useDeviceDetection.ts:131` · `src/hooks/ui/useDeviceDetection.ts:162` · `src/hooks/ui/useDeviceDetection.ts:173` · `src/components/admin/ForceLogoutButton.tsx:39` |
 =======
 | `revoke-auth-sessions` | A | `src/hooks/ui/useDeviceDetection.ts:196` · `src/hooks/ui/useDeviceDetection.ts:227` · `src/hooks/ui/useDeviceDetection.ts:238` · `src/components/admin/ForceLogoutButton.tsx:39` |
+>>>>>>> theirs
+=======
+| `revoke-auth-sessions` | A | `src/hooks/ui/useDeviceDetection.ts:131` · `src/hooks/ui/useDeviceDetection.ts:162` · `src/hooks/ui/useDeviceDetection.ts:173` · `src/components/admin/ForceLogoutButton.tsx:39` |
 >>>>>>> theirs
 | `searchbox-budget-alert` | C | `supabase/migrations/20261002601230_searchbox_budget_alert_cron.sql:70` · `supabase/config.toml:68` |
 | `send-email` | A | `src/components/agents/InviteAgentDialog.tsx:40` |
@@ -152,9 +174,13 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `whatsapp-webhook` | D | `supabase/config.toml:11` |
 
 <<<<<<< ours
+<<<<<<< ours
 ## Órfãs (18) — GATE B
 =======
 ## Órfãs (17) — GATE B
+>>>>>>> theirs
+=======
+## Órfãs (18) — GATE B
 >>>>>>> theirs
 
 Edge que existe em `supabase/functions/`, mas nenhum ponto do repositório a dispara: não há
@@ -182,3 +208,5 @@ mantém a lista honesta.
 - `talkx-scheduler`
 - `talkx-storage-purge`
 - `voice-copilot-action`
+
+> Nota: `create-user` é disparada pelo wrapper `invokeEdge('create-user', body)` em `src/components/admin/useAdminData.ts:334` — chamador que a guarda não reconhece como `invoke(...)` direto. Por isso ela aparece nesta lista; a tabela traz a nota na própria linha.

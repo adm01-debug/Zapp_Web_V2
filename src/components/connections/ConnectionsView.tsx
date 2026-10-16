@@ -87,6 +87,18 @@ export function ConnectionsView() {
   const connectedCount = connections.filter((c) => c.status === 'connected').length;
   const offlineCount = connections.filter((c) => c.status !== 'connected').length;
 
+  // Conexão com o desconectar em voo: a view mantém o id para o cartão mostrar o
+  // estado `disconnecting` (botão pulsando) e o diálogo aguardar até terminar.
+  const [disconnectingId, setDisconnectingId] = useState<string | null>(null);
+  const handleDisconnectWithState = async (connection: Parameters<typeof handleDisconnect>[0]) => {
+    setDisconnectingId(connection.id);
+    try { await handleDisconnect(connection); }
+    finally { setDisconnectingId(null); }
+  };
+
+  const connectedCount = connections.filter((c) => c.status === 'connected').length;
+  const offlineCount = connections.filter((c) => c.status !== 'connected').length;
+
   const handleSyncHistory = async (connection: { id: string; instance_id?: string | null }) => {
     if (!connection.instance_id) return;
     setSyncingHistory(connection.id);
