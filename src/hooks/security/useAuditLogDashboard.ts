@@ -146,7 +146,13 @@ async function contarUsuariosUnicos(
 async function buscarPagina(filtros: AuditLogFiltros): Promise<{ logs: AuditLogRow[]; error: string | null }> {
   const base = supabase.from('audit_logs').select(AUDIT_LOG_COLUMNS) as unknown as LeituraBuilder;
   const query = aplicarFiltros(base, filtros) as LeituraBuilder;
-  const { data, error } = await (query.order('created_at', { ascending: false }).limit(AUDIT_LOG_PAGE) as unknown as PromiseLike<{
+  // Ordem determinística: `created_at` não é único (ação em lote grava várias linhas no
+  // mesmo instante), então o desempate é por `id` — sem ele a "página das 200 mais
+  // recentes" poderia mudar de conteúdo entre duas recargas.
+  const { data, error } = await (query
+    .order('created_at', { ascending: false })
+    .order('id', { ascending: false })
+    .limit(AUDIT_LOG_PAGE) as unknown as PromiseLike<{
     data: AuditLogRow[] | null;
     error: { message: string } | null;
   }>);
@@ -163,10 +169,11 @@ async function buscarNomes(logs: AuditLogRow[]): Promise<Record<string, string>>
     log.warn('Nomes de autor indisponíveis:', error.message);
     return {};
   }
+  // O tipo gerado de `profiles` só enxerga `name` não nulo; a linha real pode vir com o nome
+  // ainda em branco, então a leitura é tratada como possivelmente nula.
+  const perfis = (data ?? []) as { id: string | null; name: string | null }[];
   return Object.fromEntries(
-    (data ?? [])
-      .filter((perfil): perfil is { id: string; name: string | null } => Boolean(perfil?.id))
-      .map((perfil) => [perfil.id, perfil.name ?? '']),
+    perfis.filter((perfil) => Boolean(perfil.id)).map((perfil) => [perfil.id, perfil.name ?? '']),
   );
 }
 

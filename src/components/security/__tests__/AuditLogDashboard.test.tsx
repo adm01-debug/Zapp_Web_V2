@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { AuditLogDashboard } from '../AuditLogDashboard';
-import { fakeAuditLog } from '@/test/mocks/auditLogsServer';
+import { fakeAuditLog, type FakeProfileRow, type FakeRealtime } from '@/test/mocks/auditLogsServer';
 
 const mockLogs = [
   { id: '1', action: 'login', entity_type: 'user', entity_id: 'u1', user_id: 'uid1', details: null, ip_address: '192.168.1.1', user_agent: 'Chrome', created_at: new Date().toISOString() },
@@ -16,16 +16,16 @@ const mockLogs = [
 // devolve as linhas pedidas e registra as chamadas do builder para os testes.
 const estado = vi.hoisted(() => ({
   dados: [] as unknown[],
-  perfis: [] as Array<{ id: string; name: string | null }>,
+  perfis: [] as FakeProfileRow[],
   erro: null as { message: string } | null,
-  realtime: null as
-    | { emitirInsert: (linha: unknown) => void; canais: string[]; assinantes: () => number }
-    | null,
+  realtime: null as FakeRealtime | null,
   chamadas: {
     select: '' as string,
     eq: [] as Array<[string, unknown]>,
     in: [] as Array<[string, unknown[]]>,
     like: [] as Array<[string, string]>,
+    // Ordem pedida pela consulta da lista (sem contagem e com limite).
+    ordemDaLista: [] as string[],
   },
 }));
 
@@ -43,6 +43,7 @@ vi.mock('@/integrations/supabase/client', async () => {
           error: estado.erro,
           registrar: (consulta) => {
             if (consulta.table === 'audit_logs' && !consulta.contagem) estado.chamadas.select = consulta.colunas;
+            if (consulta.table === 'audit_logs' && consulta.limit !== null) estado.chamadas.ordemDaLista = consulta.order;
             consulta.eq.forEach((e) => estado.chamadas.eq.push(e));
             consulta.in.forEach((e) => estado.chamadas.in.push(e));
             consulta.like.forEach((e) => estado.chamadas.like.push(e));
@@ -111,6 +112,12 @@ describe('AuditLogDashboard', () => {
       expect(estado.chamadas.select).toContain('id');
       expect(estado.chamadas.select).toContain('action');
       expect(estado.chamadas.select).toContain('created_at');
+    });
+
+    it('a lista de 200 pede ordem determinística, com desempate por id', async () => {
+      render(<AuditLogDashboard />);
+
+      await waitFor(() => expect(estado.chamadas.ordemDaLista).toEqual(['created_at:desc', 'id:desc']));
     });
   });
 
@@ -418,16 +425,19 @@ describe('t_638c8a1a — "+detalhes" abre o JSON de details', () => {
     const botoes = await screen.findAllByRole('button', { name: '+detalhes' });
     expect(botoes).toHaveLength(2);
 
-    const primeiro = botoes[0];
+    // A lista é ordenada por `created_at desc` com desempate por `id desc` (HZ1-08), então o
+    // teste escolhe a linha pela ação em vez de assumir "o primeiro botão".
+    const linha = screen.getByText('delete').closest('div[class*="bg-muted/30"]') as HTMLElement;
+    const primeiro = within(linha).getByRole('button', { name: '+detalhes' });
     expect(primeiro).toHaveAttribute('aria-expanded', 'false');
     // Antes de clicar o JSON não está na tela.
     expect(screen.queryByText(/"reason": "test"/)).toBeNull();
 
     fireEvent.click(primeiro);
 
-    const aberto = screen.getByRole('button', { name: '−detalhes' });
+    const aberto = within(linha).getByRole('button', { name: '−detalhes' });
     expect(aberto).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByText(/"reason": "test"/)).toBeInTheDocument();
+    expect(within(linha).getByText(/"reason": "test"/)).toBeInTheDocument();
 
     // Clicar de novo recolhe.
     fireEvent.click(aberto);
