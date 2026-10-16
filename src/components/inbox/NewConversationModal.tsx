@@ -38,23 +38,27 @@ export function NewConversationModal({ open, onOpenChange, onConversationStarted
 
         <div className="space-y-4 pt-2">
           <div className="grid grid-cols-2 gap-2">
-            <Button variant={mode === 'search' ? 'default' : 'outline'} size="sm"
+            <Button variant={mode === 'search' ? 'default' : 'outline'} size="sm" aria-pressed={mode === 'search'}
               onClick={() => { setMode('search'); setSelectedContact(null); }}
               className={cn(mode === 'search' && 'bg-primary')}>
               <Search className="w-4 h-4 mr-1" />Contato existente
             </Button>
-            <Button variant={mode === 'new' ? 'default' : 'outline'} size="sm"
+            <Button variant={mode === 'new' ? 'default' : 'outline'} size="sm" aria-pressed={mode === 'new'}
               onClick={() => { setMode('new'); setSelectedContact(null); }}
               className={cn(mode === 'new' && 'bg-primary')}>
               <UserPlus className="w-4 h-4 mr-1" />Novo contato
             </Button>
           </div>
 
+          {connections.length === 0 && (
+            <p className="text-xs text-destructive" role="status">Nenhuma conexão WhatsApp conectada</p>
+          )}
+
           {connections.length > 1 && (
             <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Conexão WhatsApp</Label>
+              <Label htmlFor="new-conversation-connection" className="text-xs text-muted-foreground">Conexão WhatsApp</Label>
               <Select value={selectedConnection} onValueChange={setSelectedConnection}>
-                <SelectTrigger className="h-9" aria-label="Conexão WhatsApp"><SelectValue /></SelectTrigger>
+                <SelectTrigger id="new-conversation-connection" className="h-9" aria-label="Conexão WhatsApp"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {connections.map(c => (
                     <SelectItem key={c.id} value={c.id}>
@@ -70,7 +74,7 @@ export function NewConversationModal({ open, onOpenChange, onConversationStarted
             <div className="space-y-3">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input placeholder="Buscar por nome ou telefone..." value={searchQuery}
+                <Input aria-label="Buscar por nome ou telefone" placeholder="Buscar por nome ou telefone..." value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)} className="pl-9" />
               </div>
               {isLoading ? (
@@ -101,20 +105,20 @@ export function NewConversationModal({ open, onOpenChange, onConversationStarted
 
           {mode === 'new' && (
             <div className="space-y-3">
-              <div><Label className="text-xs">Telefone *</Label><Input placeholder="+5511999999999" value={newPhone} onChange={(e) => setNewPhone(e.target.value)} /></div>
-              <div><Label className="text-xs">Nome (opcional)</Label><Input placeholder="Nome do contato" value={newName} onChange={(e) => setNewName(e.target.value)} /></div>
+              <div><Label htmlFor="new-conversation-phone" className="text-xs">Telefone *</Label><Input id="new-conversation-phone" placeholder="+5511999999999" value={newPhone} onChange={(e) => setNewPhone(e.target.value)} /></div>
+              <div><Label htmlFor="new-conversation-name" className="text-xs">Nome (opcional)</Label><Input id="new-conversation-name" placeholder="Nome do contato" value={newName} onChange={(e) => setNewName(e.target.value)} /></div>
             </div>
           )}
 
           <div className="space-y-1">
-            <Label className="text-xs">Mensagem</Label>
-            <Textarea placeholder="Digite a primeira mensagem..." value={messageText} onChange={(e) => setMessageText(e.target.value)} rows={3} />
+            <Label htmlFor="new-conversation-message" className="text-xs">Mensagem</Label>
+            <Textarea id="new-conversation-message" placeholder="Digite a primeira mensagem..." value={messageText} onChange={(e) => setMessageText(e.target.value)} rows={3} />
           </div>
 
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
             <Button onClick={handleSend}
-              disabled={isSending || (!selectedContact && mode === 'search') || (!newPhone.trim() && mode === 'new') || !messageText.trim()}
+              disabled={isSending || connections.length === 0 || (!selectedContact && mode === 'search') || (!newPhone.trim() && mode === 'new') || !messageText.trim()}
               className="bg-primary hover:bg-primary/90">
               {isSending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-4 h-4 mr-2" />}
               Enviar

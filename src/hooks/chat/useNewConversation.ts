@@ -5,6 +5,14 @@ import { toast } from 'sonner';
 import { sendOutboundMessage } from '@/services/outbound-message.service';
 import { escapeOrFilterValue } from '@/lib/postgrestFilters';
 import { invalidateContactsAggregates } from '@/hooks/crm/contactsAggregates';
+import { log } from '@/lib/logger';
+
+/** Avatares são enfeite: falha no lote nunca bloqueia envio nem fechamento. */
+function refreshAvatarsInBackground() {
+  void supabase.functions
+    .invoke('batch-fetch-avatars')
+    .then(undefined, (avatarError: unknown) => log.warn('batch-fetch-avatars falhou', avatarError));
+}
 
 interface ContactResult {
   id: string;
@@ -86,6 +94,7 @@ export function useNewConversation(
   const handleSend = async () => {
     if (!messageText.trim()) { toast.error('Digite uma mensagem'); return; }
     setIsSending(true);
+    let contactCreated = false;
     try {
       let contactId = selectedContact?.id;
       if (mode === 'new' && !contactId) {
@@ -96,15 +105,22 @@ export function useNewConversation(
         const { data: newContact, error } = await supabase.from('contacts').insert({
           name: newName.trim() || cleanedNewPhone, phone: cleanedNewPhone,
           whatsapp_connection_id: selectedConnection || null,
-        }).select('id').single();
+        }).select('id').maybeSingle();
         if (error) {
           if (error.code === '23505') { toast.error('Já existe um contato com este número de telefone.'); setIsSending(false); return; }
           throw error;
         }
+        if (!newContact) {
+          // Sem a linha de volta (RLS devolve vazio): o insert rodou, então o contato existe.
+          toast.error('Contato criado, mensagem não enviada');
+          setIsSending(false);
+          return;
+        }
         contactId = newContact.id;
+        contactCreated = true;
         // Criar contato no chat muda a quantidade (e o tipo default "cliente") dos contadores.
         invalidateContactsAggregates(queryClient);
-        await supabase.functions.invoke('batch-fetch-avatars');
+        refreshAvatarsInBackground();
       }
       if (!contactId) { toast.error('Selecione um contato'); setIsSending(false); return; }
       await sendOutboundMessage({
@@ -112,11 +128,11 @@ export function useNewConversation(
         whatsappConnectionId: selectedConnection || null,
       });
       toast.success('Mensagem enviada!');
-      await supabase.functions.invoke('batch-fetch-avatars');
+      refreshAvatarsInBackground();
       onConversationStarted?.(contactId);
       onClose?.();
       resetForm();
-    } catch { toast.error('Erro ao enviar mensagem'); }
+    } catch { toast.error(contactCreated ? 'Contato criado, mensagem não enviada' : 'Erro ao enviar mensagem'); }
     finally { setIsSending(false); }
   };
 

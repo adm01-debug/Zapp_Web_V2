@@ -6,6 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useQuickReplies, QuickReplyTemplate, CreateTemplateInput } from '@/hooks/chat/useQuickReplies';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -28,6 +32,7 @@ export function QuickRepliesManager({ onSelect, compact = false }: QuickRepliesM
 
   const [activeTab, setActiveTab] = useState('all');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<QuickReplyTemplate | null>(null);
   const [editingTemplate, setEditingTemplate] = useState<QuickReplyTemplate | null>(null);
 
   const copyToClipboard = async (content: string): Promise<boolean> => {
@@ -78,6 +83,17 @@ export function QuickRepliesManager({ onSelect, compact = false }: QuickRepliesM
 
   const closeDialog = () => { setShowCreateDialog(false); setEditingTemplate(null); };
 
+  const confirmDelete = () => {
+    if (pendingDelete) void deleteTemplate(pendingDelete.id);
+    setPendingDelete(null);
+  };
+
+  const requestDelete = (id: string) => {
+    const template = displayedTemplates.find((t) => t.id === id) ?? templates?.find((t) => t.id === id);
+    if (template) setPendingDelete(template);
+    else void deleteTemplate(id);
+  };
+
   if (compact) {
     return (
       <div className="space-y-2">
@@ -88,14 +104,21 @@ export function QuickRepliesManager({ onSelect, compact = false }: QuickRepliesM
         <ScrollArea className="h-[200px]">
           <div className="space-y-1">
             {displayedTemplates.map((template) => (
-              <motion.button key={template.id} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} onClick={() => handleSelect(template)} className="w-full p-2 text-left rounded-lg hover:bg-muted/50 transition-colors group">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-sm truncate">{template.title}</span>
-                  <Star className={cn("w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity", isFavorite(template.id) && "opacity-100 fill-yellow-400 text-warning")}
-                    onClick={(e) => { e.stopPropagation(); toggleFavorite(template.id); }} />
-                </div>
-                <p className="text-xs text-muted-foreground truncate">{template.content}</p>
-              </motion.button>
+              <div key={template.id} className="flex items-center gap-1 rounded-lg hover:bg-muted/50 transition-colors group">
+                <motion.button type="button" whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} onClick={() => handleSelect(template)} className="flex-1 min-w-0 p-2 text-left rounded-lg">
+                  <span className="font-medium text-sm truncate block">{template.title}</span>
+                  <p className="text-xs text-muted-foreground truncate">{template.content}</p>
+                </motion.button>
+                <button
+                  type="button"
+                  aria-pressed={isFavorite(template.id)}
+                  aria-label={isFavorite(template.id) ? `Remover ${template.title} dos favoritos` : `Favoritar ${template.title}`}
+                  onClick={() => toggleFavorite(template.id)}
+                  className="shrink-0 p-1.5 rounded-md hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <Star className={cn("w-3.5 h-3.5", isFavorite(template.id) && "fill-yellow-400 text-warning")} aria-hidden="true" />
+                </button>
+              </div>
             ))}
           </div>
         </ScrollArea>
@@ -129,7 +152,7 @@ export function QuickRepliesManager({ onSelect, compact = false }: QuickRepliesM
         <TabsContent value={activeTab} className="mt-4">
           <QuickReplyCardList templates={displayedTemplates} groupedByCategory={groupedByCategory} isLoading={isLoading} activeTab={activeTab} searchQuery={searchQuery}
             isFavorite={isFavorite} onSelect={handleSelect} onToggleFavorite={toggleFavorite} onCopy={handleCopy}
-            onEdit={(t) => setEditingTemplate(t)} onDelete={(id) => deleteTemplate(id)} onShowCreate={() => setShowCreateDialog(true)} />
+            onEdit={(t) => setEditingTemplate(t)} onDelete={requestDelete} onShowCreate={() => setShowCreateDialog(true)} />
         </TabsContent>
       </Tabs>
 
@@ -141,6 +164,21 @@ export function QuickRepliesManager({ onSelect, compact = false }: QuickRepliesM
         onCreate={async (data) => { await createTemplate(data); }}
         onUpdate={async (id, data) => { await updateTemplate({ id, ...data }); }}
       />
+
+      <AlertDialog open={!!pendingDelete} onOpenChange={(open) => { if (!open) setPendingDelete(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir resposta rápida?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingDelete ? `"${pendingDelete.title}" será excluída. Esta ação não pode ser desfeita.` : ''}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
