@@ -121,6 +121,17 @@ vi.mock('@/integrations/supabase/client', () => {
       },
       auth: { getSession: async () => ({ data: { session: null } }) },
       storage: { from: () => ({ upload: estado.upload, getPublicUrl: estado.getPublicUrl }) },
+      // R2-INB-044: o hook real assina o canal realtime do catálogo. O duble do
+      // cliente precisa oferecer `channel`/`removeChannel` como o cliente real —
+      // o tempo real em si é exercitado em useAudioMemes.realtime.test.tsx.
+      channel: () => {
+        const canal: Record<string, unknown> = { topic: 'audio-memes-realtime-fake' };
+        canal.on = () => canal;
+        canal.subscribe = () => canal;
+        canal.unsubscribe = () => undefined;
+        return canal;
+      },
+      removeChannel: () => undefined,
     },
     SUPABASE_URL: 'http://localhost:54321',
     SUPABASE_ANON_KEY: 'anon-de-teste',
