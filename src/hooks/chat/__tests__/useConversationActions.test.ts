@@ -137,6 +137,7 @@ vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn(), info: vi.f
 vi.mock('@/lib/undoToast', () => ({ undoToast: vi.fn() }));
 
 import { useConversationActions } from '@/hooks/chat/useConversationActions';
+import { supabase as clienteSupabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { undoToast } from '@/lib/undoToast';
 import { queryClient } from '@/lib/queryClient';
@@ -403,6 +404,58 @@ describe('useConversationActions', () => {
       expect(toast.error).not.toHaveBeenCalledWith('Erro ao transferir conversa');
       expect(invalidateSpy).toHaveBeenCalled();
       invalidateSpy.mockRestore();
+    });
+
+    it('usa o rpc atual do cliente com o this do cliente (harness que troca supabase.rpc)', async () => {
+      const rpcOriginal = clienteSupabase.rpc;
+      let thisCapturado: unknown = 'nao-chamado';
+      const rpcNovo = vi.fn(function (
+        this: unknown,
+        name: string,
+        args: Record<string, unknown>,
+      ) {
+        thisCapturado = this;
+        transferRpcCalls.push({ name, args });
+        return Promise.resolve({ data: 'event-novo', error: null });
+      });
+      (clienteSupabase as unknown as Record<string, unknown>).rpc = rpcNovo;
+      try {
+        const { result } = await withProfileReady();
+        await act(async () => {
+          await result.current.transferContact('contact-1', 'agent', 'agent-2');
+        });
+        expect(rpcNovo).toHaveBeenCalledTimes(1);
+        expect(thisCapturado).toBe(clienteSupabase);
+        expect(rpcNovo.mock.calls[0][0]).toBe('transfer_conversation');
+        expect(toast.success).toHaveBeenCalledWith('Chat transferido para outro atendente');
+      } finally {
+        (clienteSupabase as unknown as Record<string, unknown>).rpc = rpcOriginal;
+      }
+    });
+
+    it('conflito só resolve depois da invalidação (sem janela silenciosa)', async () => {
+      transferRpcResult = { data: null, error: { code: '40001', message: 'dono mudou' } };
+      let resolver!: () => void;
+      const pendente = new Promise<void>((r) => { resolver = r; });
+      const invalidateSpy = vi
+        .spyOn(queryClient, 'invalidateQueries')
+        .mockReturnValue(pendente as unknown as Promise<void>);
+      try {
+        const { result } = await withProfileReady();
+        let resolvido = false;
+        const promessa = result.current
+          .transferContact('contact-1', 'agent', 'agent-2', undefined, 'agent-velho')
+          .then(() => { resolvido = true; });
+        await Promise.resolve();
+        await Promise.resolve();
+        expect(invalidateSpy).toHaveBeenCalled();
+        expect(resolvido).toBe(false);
+        resolver();
+        await promessa;
+        expect(resolvido).toBe(true);
+      } finally {
+        invalidateSpy.mockRestore();
+      }
     });
   });
 

@@ -41,8 +41,12 @@ interface TransferArgs {
  * adiciona é a migration do PK-03 e ela ainda não foi integrada neste workspace.
  * O cast sai quando o `types.ts` for regenerado do banco com a migration
  * aplicada (mesmo padrão de src/hooks/analytics/useAIUsageDashboard.ts).
+ * A leitura de `supabase.rpc` acontece a cada chamada (nunca em referência
+ * capturada no topo do módulo) e o `this` é o próprio cliente via `.call`:
+ * o harness de revisão troca `supabase.rpc` por mock e a chamada destacada
+ * perdia o vínculo e ignorava a troca (TypeError fora do Isolado).
  */
-const transferRpc = supabase.rpc as unknown as (
+type TransferRpc = (
   fn: 'transfer_conversation',
   args: TransferArgs,
 ) => PromiseLike<{ data: string | null; error: RpcError }>;
@@ -74,13 +78,17 @@ function conflitoDeDono(error: RpcError): boolean {
  * a tela não continuar mostrando o responsável antigo. Mesmas chaves REAIS da
  * reatribuição de agentes (src/hooks/crm/useAgentReassignment.ts), que é o outro
  * caminho que mexe em `contacts.assigned_to`, mais a chave por contato.
+ * Encadeada no mesmo fluxo (await): quem aguarda `transferContact` só continua
+ * depois do refetch agendado, sem janela silenciosa.
  */
-function invalidarListaEContato(contactId: string) {
-  void queryClient.invalidateQueries({ queryKey: ['contact-sidebar', contactId] });
-  void queryClient.invalidateQueries({ queryKey: conversationTabCountsKey(contactId) });
-  for (const queryKey of CHAVES_AFETADAS_POR_REATRIBUICAO) {
-    void queryClient.invalidateQueries({ queryKey: [...queryKey] });
-  }
+async function invalidarListaEContato(contactId: string): Promise<void> {
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: ['contact-sidebar', contactId] }),
+    queryClient.invalidateQueries({ queryKey: conversationTabCountsKey(contactId) }),
+    ...CHAVES_AFETADAS_POR_REATRIBUICAO.map((queryKey) =>
+      queryClient.invalidateQueries({ queryKey: [...queryKey] }),
+    ),
+  ]);
 }
 
 export function useConversationActions() {
@@ -346,14 +354,19 @@ export function useConversationActions() {
       p_note: trimmedNote || null,
     };
 
+    // Chamada direta ao método (leitura de `supabase.rpc` a cada tentativa,
+    // com o `this` do cliente): não captura referência no topo do módulo.
+    const chamarTransferencia = (a: TransferArgs) =>
+      (supabase.rpc as unknown as TransferRpc).call(supabase, 'transfer_conversation', a);
+
     let { error } = expectedAgentId === undefined
-      ? await transferRpc('transfer_conversation', args)
-      : await transferRpc('transfer_conversation', { ...args, p_expected_agent_id: expectedAgentId });
+      ? await chamarTransferencia(args)
+      : await chamarTransferencia({ ...args, p_expected_agent_id: expectedAgentId });
 
     // Chamada tolerante: o banco da tarefa pode ainda não ter a migration do
     // PK-03. Sem o parâmetro a transferência segue como antes (sem o CAS).
     if (error && expectedAgentId !== undefined && assinaturaSemDonoEsperado(error)) {
-      ({ error } = await transferRpc('transfer_conversation', args));
+      ({ error } = await chamarTransferencia(args));
     }
 
     if (error) {
@@ -362,7 +375,7 @@ export function useConversationActions() {
       // diálogo cujo alvo já não faz sentido (e quem chamou não refaria o refetch).
       if (conflitoDeDono(error)) {
         toast.error('Esta conversa mudou de responsável. Atualizamos a lista.');
-        invalidarListaEContato(contactId);
+        await invalidarListaEContato(contactId);
         return;
       }
       // Rejeita (não só toast): quem chamou precisa saber que falhou — a sidebar
