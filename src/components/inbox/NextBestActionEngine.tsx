@@ -40,7 +40,11 @@ export function NextBestActionEngine({ contactId, contactName }: NextBestActionP
   };
 
   if (loading) {
-    return <div className="space-y-2">{[1,2].map(i => <div key={i} className="h-16 bg-muted/20 rounded-xl animate-pulse" />)}</div>;
+    return (
+      <div className="space-y-2" role="status" aria-label="Carregando próximas ações">
+        {[1,2].map(i => <div key={i} className="h-16 bg-muted/20 rounded-xl motion-safe:animate-pulse" />)}
+      </div>
+    );
   }
 
   return (

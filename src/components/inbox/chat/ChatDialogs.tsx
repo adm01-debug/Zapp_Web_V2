@@ -78,7 +78,7 @@ export function ChatDialogs({
       {dialogs.realtimeTranscription && (
         <Suspense fallback={null}>
           <div className="px-3 mb-2">
-            <RealtimeTranscription onTranscript={(text, isFinal) => { if (isFinal) onSetInputValue((prev: string) => prev + ' ' + text); }} onStatusChange={() => {}} className="w-full" />
+            <RealtimeTranscription onTranscript={(text, isFinal) => { if (isFinal) onSetInputValue((prev: string) => (prev ? `${prev} ${text}` : text)); }} onStatusChange={() => {}} className="w-full" />
           </div>
         </Suspense>
       )}
