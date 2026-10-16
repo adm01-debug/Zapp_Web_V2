@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +15,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { useContactNotes, contactNotesKey, type ContactNote } from '@/hooks/crm/useContactNotes';
 
 interface Note {
   id: string;
@@ -29,10 +31,9 @@ interface ContactNotesProps {
 }
 
 export function ContactNotes({ contactId, className }: ContactNotesProps) {
-  const { profile } = useAuth();
-  const currentProfileId = profile?.id ?? null;
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const { notes: rawNotes, isLoading, refetch, currentProfileId } = useContactNotes(contactId);
   const [newNote, setNewNote] = useState('');
   const [adding, setAdding] = useState(false);
   const [showInput, setShowInput] = useState(false);
@@ -43,37 +44,18 @@ export function ContactNotes({ contactId, className }: ContactNotesProps) {
     return () => { isMountedRef.current = false; };
   }, []);
 
-  const fetchNotes = useCallback(async () => {
-    const { data } = await supabase
-      .from('contact_notes')
-      .select('id, content, created_at, author_id')
-      .eq('contact_id', contactId)
-      .order('created_at', { ascending: false })
-      .limit(20);
-
-    if (!isMountedRef.current) return;
-
-    if (data) {
-      // Fetch author names
-      const authorIds = [...new Set(data.map(n => n.author_id))];
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, name')
-        .in('id', authorIds);
-
-      if (!isMountedRef.current) return;
-
-      const profileMap = new Map(profiles?.map(p => [p.id, p.name]) || []);
-
-      setNotes(data.map(n => ({
-        ...n,
-        author_name: profileMap.get(n.author_id) || 'Agente',
-      })));
-    }
-    setLoading(false);
-  }, [contactId]);
-
-  useEffect(() => { fetchNotes(); }, [fetchNotes]);
+  // Mesma fonte de dados da aba Notas (`useContactNotes` → `contactNotesKey`): a nota
+  // criada no popover de colaboração invalida essa chave e aparece aqui sem recarregar.
+  const notes: Note[] = useMemo(
+    () => rawNotes.map((n) => ({
+      id: n.id,
+      content: n.content,
+      created_at: n.created_at,
+      author_id: n.author_id,
+      author_name: n.author?.name || 'Agente',
+    })),
+    [rawNotes],
+  );
 
   const handleAdd = async () => {
     if (!newNote.trim()) return;
@@ -101,7 +83,7 @@ export function ContactNotes({ contactId, className }: ContactNotesProps) {
         setShowInput(false);
       }
       toast.success('Nota adicionada');
-      fetchNotes();
+      void queryClient.invalidateQueries({ queryKey: contactNotesKey(contactId, user?.id) });
     } catch {
       toast.error('Erro ao adicionar nota');
     } finally {
@@ -134,11 +116,14 @@ export function ContactNotes({ contactId, className }: ContactNotesProps) {
       toast.error('Não foi possível excluir a nota', {
         description: 'A nota é de outro autor ou já não existe. A lista foi atualizada.',
       });
-      void fetchNotes();
+      void refetch();
       return;
     }
 
-    setNotes(prev => prev.filter(n => n.id !== noteId));
+    queryClient.setQueryData<ContactNote[]>(
+      contactNotesKey(contactId, user?.id),
+      (prev) => (prev ?? []).filter((n) => n.id !== noteId),
+    );
     toast.success('Nota excluída');
   };
 
@@ -195,7 +180,7 @@ export function ContactNotes({ contactId, className }: ContactNotesProps) {
       </AnimatePresence>
 
       {/* Notes list */}
-      {loading ? (
+      {isLoading ? (
         <div className="space-y-2">
           {[1, 2].map(i => (
             <div key={i} className="p-3 rounded-lg bg-muted/20 animate-pulse space-y-2">
