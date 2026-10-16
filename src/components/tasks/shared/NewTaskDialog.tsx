@@ -1,12 +1,12 @@
 /**
  * Modal "Nova tarefa" (seção 3.4 do plano, imagem 04) — casco mínimo.
  *
- * A etapa 160 (campo "Lembrete") monta aqui o seu campo; a etapa 164 (bloco
- * "Destino da tarefa") monta o aviso fixo. O casco existe para os dois serem
- * montados no modal real, aberto pelo botão do cabeçalho e pelo atalho `N`. As
- * demais seções (título, contato, prioridade, prazo, coerência, prévia) entram
- * por cima em seus próprios cartões, sem reescrever isto — o estado do lembrete
- * é local e sobe pelo `onChange` do `RemindField`.
+ * Aqui vivem as etapas 159 (campo Prazo), 160 (campo Lembrete), 163 (coerência
+ * prazo x lembrete) e 164 (bloco "Destino da tarefa"): o casco existe para os
+ * campos serem montados no modal real, aberto pelo botão do cabeçalho e pelo
+ * atalho `N`. As demais seções (título, contato, prioridade, prévia) entram por
+ * cima sem reescrever isto — o estado de cada campo é local e sobe pelo
+ * `onChange` respectivo.
  */
 import { useState } from 'react';
 import {
@@ -16,12 +16,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { DestinationBlock } from './new-task/DestinationBlock';
+import { PrazoField } from './new-task/PrazoField';
 import { RemindField } from './new-task/RemindField';
+import { CoerenciaLembrete } from './new-task/CoerenciaLembrete';
+import { DestinationBlock } from './new-task/DestinationBlock';
 
 export interface NewTaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Prazo inicial (ISO), quando o modal abre a partir de um dia/contexto. */
+  defaultDueDate?: string | null;
   /** Lembrete inicial (ISO), quando o modal abre a partir de um contexto. */
   defaultRemindAt?: string | null;
   /** Relógio dos atalhos; injetável nos testes. Padrão: agora. */
@@ -31,9 +35,11 @@ export interface NewTaskDialogProps {
 export function NewTaskDialog({
   open,
   onOpenChange,
+  defaultDueDate = null,
   defaultRemindAt = null,
   now,
 }: NewTaskDialogProps) {
+  const [dueDate, setDueDate] = useState<string | null>(defaultDueDate);
   const [remindAt, setRemindAt] = useState<string | null>(defaultRemindAt);
 
   return (
@@ -47,8 +53,14 @@ export function NewTaskDialog({
           <DialogDescription>Capture agora. Organize o próximo passo.</DialogDescription>
         </DialogHeader>
 
+        <PrazoField value={dueDate} onChange={setDueDate} now={now} />
         <RemindField value={remindAt} onChange={setRemindAt} now={now} />
-
+        <CoerenciaLembrete
+          remindAt={remindAt}
+          dueDate={dueDate}
+          now={now}
+          onAjustar={setRemindAt}
+        />
         <DestinationBlock />
       </DialogContent>
     </Dialog>
