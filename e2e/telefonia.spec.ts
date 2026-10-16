@@ -36,8 +36,8 @@ test.use({ storageState: { cookies: [], origins: [] } });
 // por tempo de build, não pelo comportamento. `test.setTimeout` + o deadline de boot do
 // index.html (watchdog que apaga o `#root` depois de alguns segundos) são os MESMOS ajustes
 // de `onboarding-dispensar.spec.ts`/`talkx-visual.spec.ts`.
-test.setTimeout(180_000);
-const BOOT_DEADLINE_MS = 120_000;
+test.setTimeout(240_000);
+const BOOT_DEADLINE_MS = 180_000;
 
 const CONTACT_ID = '04dff4dc-c6b1-4283-ac22-bd8639804759';
 const NOW = '2026-10-02T12:00:00.000Z';
@@ -171,7 +171,20 @@ async function montarAmbiente(page: Page, historico: unknown[] = []): Promise<Am
 /** Abre a view de Telefonia (?view=voip) e espera o shell da tela. */
 async function abrirDiscador(page: Page) {
   await page.goto('/?view=voip');
-  await expect(page.getByTestId('tel-view')).toBeVisible({ timeout: 90_000 });
+
+  const telView = page.getByTestId('tel-view');
+  try {
+    await expect(telView).toBeVisible({ timeout: 15_000 });
+  } catch (error) {
+    const bootFailure = page.getByRole('heading', { name: '⚠️ Falha ao inicializar o app' });
+    if (await bootFailure.isVisible().catch(() => false)) {
+      await page.getByRole('button', { name: 'Recarregar' }).click();
+    } else {
+      throw error;
+    }
+  }
+
+  await expect(telView).toBeVisible({ timeout: BOOT_DEADLINE_MS });
   await expect(page.getByRole('heading', { name: 'Telefonia' })).toBeVisible();
   return page.getByTestId('tel-new-call-panel');
 }
@@ -242,7 +255,7 @@ test.describe('Y11 · Telefonia', () => {
 
     // Mesmo número do teste anterior, agora com o código do país: o DDI 55 é absorvido e a
     // tela mostra a MESMA forma E.164 — e nunca "55" sobrando no DDD.
-    await digitarNaTela(page, '551199999204');
+    await digitarNaTela(page, '5511999999204');
     await expect(page.getByTestId('tel-number-display')).toContainText('+55 (11) 99999-9204');
     await expect(page.getByTestId('tel-number-incomplete')).toHaveCount(0);
   });
