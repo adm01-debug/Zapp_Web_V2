@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { HOVER_REVEAL, HOVER_REVEAL_TAP } from './hoverActions';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { SmilePlus, X } from 'lucide-react';
@@ -143,7 +144,7 @@ export function MessageReactions({
               'hover:bg-muted/80 text-muted-foreground hover:text-foreground',
               isReacting && 'opacity-50 cursor-not-allowed',
               reactionsList.length === 0
-                ? 'opacity-0 group-hover:opacity-100'
+                ? HOVER_REVEAL
                 : 'opacity-60 hover:opacity-100'
             )}
           >
@@ -246,7 +247,7 @@ export function QuickReactionBar({
       data-pending={isReacting ? 'true' : 'false'}
       aria-busy={isReacting}
       className={cn(
-        'absolute -top-9 flex items-center opacity-0 group-hover:opacity-100 transition-all duration-200 z-20',
+        `absolute -top-9 flex items-center ${HOVER_REVEAL_TAP} transition-all duration-200 z-20`,
         showPicker && 'opacity-100',
         isSent ? 'right-0' : 'left-0'
       )}

@@ -5,6 +5,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import { HOVER_REVEAL_TAP } from './hoverActions';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Music, Search, Plus, Star, Trash2, Loader2, Upload, X, Play, Pause, Volume2, Tag, Check, ChevronDown } from 'lucide-react';
 import { useAudioMemes, formatDuration, type AudioMemeItem, type PendingUpload } from '@/hooks/communication/useAudioMemes';
@@ -175,7 +176,7 @@ export function AudioMemePicker({ onSendAudio, disabled }: AudioMemePickerProps)
                           {meme.use_count > 0 && <span className="text-3xs text-muted-foreground/50">{meme.use_count}x</span>}
                         </div>
                       </div>
-                      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className={`flex items-center gap-0.5 ${HOVER_REVEAL_TAP} transition-opacity`}>
                         <button onClick={(e) => toggleFavorite(e, meme)} className="p-1 rounded hover:bg-muted">
                           <Star className={cn('w-3.5 h-3.5 transition-colors', meme.is_favorite ? 'fill-primary text-primary' : 'text-muted-foreground')} />
                         </button>

@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
+import { HOVER_REVEAL_TAP } from '../hoverActions';
 import { Reply, Forward, Copy, MoreVertical, Trash2, CheckCheck, EyeOff, Pencil, History } from 'lucide-react';
 import { Message } from '@/types/chat';
 import { TextToSpeechButton } from '../TextToSpeechButton';
@@ -111,7 +112,7 @@ export function MessageHoverToolbar({
 
   return (
     <div className={cn(
-      "absolute top-1/2 -translate-y-1/2 flex items-center opacity-0 group-hover:opacity-100 transition-all duration-200 z-10",
+      `absolute top-1/2 -translate-y-1/2 flex items-center ${HOVER_REVEAL_TAP} transition-all duration-200 z-10`,
       menuOpen && "opacity-100",
       isSent ? "right-full mr-1.5" : "left-full ml-1.5"
     )}>
