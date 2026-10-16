@@ -141,9 +141,11 @@ describe('PriorityPill — prioridade com o rótulo de workItemLabels e uma cor 
     const media = classes('medium');
     const baixa = classes('low');
 
-    expect(alta).toContain('--warning-text');
+    expect(alta).toContain('--destructive-text');
     expect(urgente).toContain('--destructive-text');
-    expect(media).toContain('text-primary');
+    // D12: a "Média" é âmbar — a cor da própria prioridade, não a primária.
+    expect(media).toContain('--warning-text');
+    expect(media).not.toContain('text-primary');
     expect(baixa).toContain('text-muted-foreground');
 
     // quatro prioridades, quatro classes distintas

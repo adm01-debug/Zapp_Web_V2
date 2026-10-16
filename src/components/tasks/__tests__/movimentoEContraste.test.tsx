@@ -175,9 +175,13 @@ describe('Etapa 80 — contraste AA dos estados (E.3)', () => {
   }
 
   it('o texto dos chips de prioridade usa o par de TEXTO (não a cor de preenchimento)', () => {
+    const { container: media } = render(<PriorityChip priority="medium" />);
+    expect(media.firstElementChild?.className).toContain('text-[hsl(var(--warning-text))]');
+    expect(media.firstElementChild?.className).not.toMatch(/(^|\s)text-warning(\s|$)/);
+
     const { container: high } = render(<PriorityChip priority="high" />);
-    expect(high.firstElementChild?.className).toContain('text-[hsl(var(--warning-text))]');
-    expect(high.firstElementChild?.className).not.toMatch(/(^|\s)text-warning(\s|$)/);
+    expect(high.firstElementChild?.className).toContain('text-[hsl(var(--destructive-text))]');
+    expect(high.firstElementChild?.className).not.toMatch(/(^|\s)text-destructive(\s|$)/);
 
     const { container: urgent } = render(<PriorityChip priority="urgent" />);
     expect(urgent.firstElementChild?.className).toContain('text-[hsl(var(--destructive-text))]');
