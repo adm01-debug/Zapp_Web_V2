@@ -31,7 +31,8 @@
     }
   },
   "checks": {
-    "build": "passed (9.27s)",
+    "build": "passed after integrating main (8.85s)",
+    "edge_after_main_integration": { "passed": 97, "failed": 0, "lockfile": "frozen", "scope": "ai-feature-flags restored coverage plus copilot-live, auth-login and talkx-scheduler" },
     "node_ci": {
       "total": 961,
       "passed": 944,
@@ -96,7 +97,7 @@
     "Planejar backups de linhas afetadas e ativação controlada de cron; scheduled jobs não são efeitos inertes.",
     "Auth-login novo depende de consume_login_gate ainda pendente; deploy isolado pode impedir login.",
     "Resolver e repetir testes amplos frontend/Edge e typecheck sem ampliar baseline.",
-    "Main fbd422204a integrada no checkpoint; repetir gates completos antes de merge. Esse avanço externo reduziu testes ai-feature-flags e exige revisão adicional da cobertura preservada.",
+    "Main fbd422204a integrada; testes ai-feature-flags anteriores restaurados e cenários copilot-live separados, 97 testes focados passaram. Repetir gates completos antes de merge.",
     "Executar smoke autenticado com empresa conhecida, matriz de permissões e Playwright responsivo/acessível.",
     "Após gates: merge, DDL com registro transacional verdadeiro, deploy explícito de funções, validar fontes/runtime/ledger e reconciliar árvore principal."
   ],
