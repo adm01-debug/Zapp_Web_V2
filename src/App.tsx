@@ -46,6 +46,14 @@ const TeamChatNotificationsListener = lazy(() =>
   import("@/components/team-chat/TeamChatNotificationsListener")
     .then(m => ({ default: m.TeamChatNotificationsListener }))
 );
+// HZ1-10: aviso de alerta de segurança no app inteiro (antes só dentro da
+// Central de Segurança). Mesmo slot e mesmo motivo do listener do Team Chat:
+// overlay de efeito, no chunk lazy, para o `sonner` que ele alcança não voltar
+// ao grafo estático do entry.
+const SecurityPushNotificationsListener = lazy(() =>
+  import("@/components/notifications/SecurityPushNotificationsListener")
+    .then(m => ({ default: m.SecurityPushNotificationsListener }))
+);
 // O viewport de toasts do sonner é overlay: nenhum toast existe no first paint e
 // o `toast()` bufferiza chamadas feitas antes do mount (Observer do pacote), então
 // nada se perde na janela de carregamento. Estático, ele colocava a lib (~9 KB
@@ -73,6 +81,7 @@ function DeferredProviders() {
       <IncomingCallAlert />
       <OutboundCallDialog />
       <TeamChatNotificationsListener />
+      <SecurityPushNotificationsListener />
       {/* EasterEggsProvider is purely a keyboard/shake listener. No children needed. */}
       <EasterEggsProvider>{null}</EasterEggsProvider>
       <Sonner />
