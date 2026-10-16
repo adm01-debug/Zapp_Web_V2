@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { createPortal } from 'react-dom';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { X, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -23,6 +23,26 @@ export function VideoFullscreen({ url, onClose }: VideoFullscreenProps) {
   // os MESMOS do resto do app (D2). O botão de mute local que existia nesta barra foi
   // substituído pelo `MediaVolumeControl` (E22) para não haver dois controles do mesmo.
   const { muted } = useMediaElementVolume(videoRef);
+  // U2 — a sobreposição é um diálogo: entra com o foco no "Fechar" e, ao sair,
+  // devolve o foco a quem a abriu. O gesto de entrada respeita reduzir movimento.
+  const reduzirMovimento = useReducedMotion();
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const gatilhoRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    gatilhoRef.current = document.activeElement as HTMLElement | null;
+    closeButtonRef.current?.focus();
+    return () => {
+      gatilhoRef.current?.focus?.();
+    };
+  }, []);
+
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.key !== 'Escape') return;
+    // Esc é do diálogo: não pode vazar para o painel de baixo (inbox fecha por baixo).
+    e.stopPropagation();
+    onClose();
+  };
 
   const cycleSpeed = () => {
     const speeds = [1, 1.25, 1.5, 1.75, 2, 0.5, 0.75];
@@ -55,11 +75,15 @@ export function VideoFullscreen({ url, onClose }: VideoFullscreenProps) {
   return createPortal(
     <motion.div
       ref={playerRef}
-      initial={{ opacity: 0 }}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Vídeo em tela cheia"
+      initial={reduzirMovimento ? false : { opacity: 0 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
+      exit={reduzirMovimento ? { opacity: 1 } : { opacity: 0 }}
       className="fixed inset-0 z-50 bg-background flex items-center justify-center"
       onClick={onClose}
+      onKeyDown={handleKeyDown}
     >
       <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
@@ -73,6 +97,7 @@ export function VideoFullscreen({ url, onClose }: VideoFullscreenProps) {
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
           <Button
             variant="secondary" size="sm"
+            aria-label={`Velocidade de reprodução: ${playbackRate}x`}
             className={cn("h-9 px-3 font-semibold text-xs", playbackRate < 1 && "bg-destructive/20 hover:bg-destructive/30 text-destructive")}
             onClick={(e) => { e.stopPropagation(); cycleSpeed(); }}
           >
@@ -82,13 +107,12 @@ export function VideoFullscreen({ url, onClose }: VideoFullscreenProps) {
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
           <Button
             variant="secondary" size="icon" aria-label="Baixar" disabled className="opacity-50 cursor-not-allowed"
-            onClick={(e) => { e.stopPropagation(); void import('sonner').then(({ toast }) => toast.error('🔒 Download bloqueado por política de segurança')); }}
           >
             <Download className="w-4 h-4" />
           </Button>
         </motion.div>
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-          <Button variant="secondary" size="icon" aria-label="Fechar" onClick={onClose}>
+          <Button ref={closeButtonRef} variant="secondary" size="icon" aria-label="Fechar" onClick={onClose}>
             <X className="w-4 h-4" />
           </Button>
         </motion.div>

@@ -66,6 +66,7 @@ vi.mock('framer-motion', () => {
       img: semMovimento('img'),
     },
     AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+    useReducedMotion: () => false,
   };
 });
 
