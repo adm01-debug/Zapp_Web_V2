@@ -67,6 +67,19 @@ async function mockDashboardVazio(page: Page): Promise<void> {
   await page.route(/\/rest\/v1\/conversation_events/, (route) => json(route, []));
 }
 
+// Servidor frio: o webServer do Playwright responde antes do Vite terminar a
+// primeira compilação e o watchdog de boot (8s) mostra a tela de falha. Com o
+// servidor já quente, um reload monta o app — sem isso o 1º teste da suite
+// falha com "element(s) not found" mesmo com o código correto.
+async function gotoPronto(page: Page, url: string, alvo: string): Promise<void> {
+  await page.goto(url);
+  const falhaBoot = page.getByRole('heading', { name: /Falha ao inicializar/i });
+  if (await falhaBoot.isVisible().catch(() => false)) {
+    await page.reload();
+  }
+  await expect(page.getByTestId(alvo)).toBeVisible({ timeout: 60_000 });
+}
+
 test.describe('N-079 — a11y button-name e aria-progressbar-name', () => {
   test.beforeEach(async ({ page }) => {
     await bloquearRedeReal(page, { redeBarrada: [] } as unknown as Registro);
@@ -79,12 +92,14 @@ test.describe('N-079 — a11y button-name e aria-progressbar-name', () => {
   // ?view=tasks
   // ---------------------------------------------------------------------------
   test.describe('?view=tasks', () => {
+    // Mesmo custo de boot do dashboard (shell mockada + 60s de espera):
+    // sem isso o mobile-390 estoura os 30s padrão em máquina carregada.
+    test.setTimeout(90_000);
     for (const vp of VIEWPORTS) {
       test(`button-name e aria-progressbar-name zeram em ${vp.name}`, async ({ page }) => {
         await page.setViewportSize({ width: vp.width, height: vp.height });
         await mockTarefasVazios(page);
-        await page.goto('/?view=tasks');
-        await expect(page.getByTestId('tasks-module')).toBeVisible({ timeout: 60_000 });
+        await gotoPronto(page, '/?view=tasks', 'tasks-module');
         await expect(page.getByTestId('tasks-mode')).toBeVisible();
 
         const vios = await violacoesAxe(page, 'body', REGRAS_AXE);
@@ -102,8 +117,7 @@ test.describe('N-079 — a11y button-name e aria-progressbar-name', () => {
       test(`button-name e aria-progressbar-name zeram em ${vp.name}`, async ({ page }) => {
         await page.setViewportSize({ width: vp.width, height: vp.height });
         await mockDashboardVazio(page);
-        await page.goto('/?view=dashboard');
-        await expect(page.getByTestId('dash-tabs')).toBeVisible({ timeout: 60_000 });
+        await gotoPronto(page, '/?view=dashboard', 'dash-tabs');
 
         const vios = await violacoesAxe(page, 'body', REGRAS_AXE);
         expect(vios).toEqual([]);

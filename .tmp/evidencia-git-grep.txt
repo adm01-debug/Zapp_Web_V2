@@ -1,13 +1,34 @@
-== git grep -n 'size="icon"\|SelectTrigger' src/components/gmail ==
+Ponto 3 — git grep dos caminhos do MESMO defeito (button-name / aria-progressbar-name
+sem nome acessível) em outros módulos. NENHUM foi corrigido neste cartão (fora do
+título); ficam como comentário para cartões próprios.
 
-src/components/gmail/EmailComposer.tsx:395:            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsMinimized(!isMinimized)} aria-label={isMinimized ? 'Expandir compositor' : 'Minimizar compositor'}>
-src/components/gmail/EmailComposer.tsx:398:            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onClose} aria-label="Fechar e manter rascunho">
-src/components/gmail/EmailComposer.tsx:475:                    size="icon"
-src/components/gmail/EmailRichTextEditor.tsx:73:    <Button type="button" variant="ghost" size="icon" className={cn('h-7 w-7', active && 'bg-primary/15 text-primary')} aria-label={label} aria-pressed={active} disabled={disabled} onClick={action}>{icon}</Button>
-src/components/gmail/EmailThreadView.tsx:200:        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={onBack}>
-src/components/gmail/EmailThreadView.tsx:230:                  size="icon"
-src/components/gmail/EmailThreadView.tsx:245:                  size="icon"
-src/components/gmail/GmailInboxView.tsx:7:import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-src/components/gmail/GmailInboxView.tsx:98:          <Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger className="w-[120px] h-8 text-xs" aria-label="Filtro de status"><SelectValue placeholder="Status" /></SelectTrigger><SelectContent><SelectItem value="all">Todos</SelectItem><SelectItem value="open">Aberto</SelectItem><SelectItem value="pending">Pendente</SelectItem><SelectItem value="resolved">Resolvido</SelectItem><SelectItem value="archived">Arquivado</SelectItem></SelectContent></Select>
-src/components/gmail/__tests__/GmailInboxView.test.tsx:28:  SelectTrigger: ({ children, ...props }: { children: ReactNode; [key: string]: unknown }) => <div {...props}>{children}</div>,
-src/components/gmail/__tests__/GmailStatusFilter.a11y.test.tsx:13: * status. A correção rotula o `SelectTrigger` com
+== Botões size="icon" sem aria-label (candidatos a button-name) ==
+src/components/dashboard/war-room/WarRoomAlertRow.tsx:35 — Button X sem aria-label
+  (só renderiza com alerta real; o mock do e2e retorna conversation_events vazio)
+src/components/dashboard/WarRoomDashboard.tsx:76,77,78 — 3 icon buttons com Tooltip
+  mas sem aria-label (som, auto-refresh, tela cheia)
+src/components/dashboard/SentimentAlertsDashboard.tsx:29 — icon button refresh sem aria-label
+(+ dezenas de outros size="icon" em calls/campaigns/catalog/admin — fora de Tarefas/Dashboard)
+
+== Progress sem nome acessível (candidatos a aria-progressbar-name) ==
+src/components/dashboard/SatisfactionAgentRanking.tsx:55 — <Progress value={agent.csat}>
+src/components/dashboard/war-room/WarRoomQueueRow.tsx:41 — <Progress value={utilizationPercent}>
+src/components/dashboard/war-room/WarRoomAgentCard.tsx:45 — <Progress value={utilizationPercent}>
+src/components/dashboard/DashboardWidgetRenderer.tsx:260 — <Progress value={progressPercent}>
+(nenhum dos 4 tem aria-label/aria-labelledby; só renderizam com dados reais, que o
+mock do e2e não retorna — por isso a régua N-079 não os cobre)
+
+== Dentro do cartão (cobertos pela régua) ==
+src/components/tasks/shared/ModeSwitcher.tsx — aria-label={label} (mutação: sem ele,
+  tasks mobile falha button-name; ver .tmp/e2e-vermelho.log)
+src/components/tasks/shared/TasksHeaderMenu.tsx:65 — aria-label="Mais opções do módulo" (OK)
+
+== Não confirmado (citado em levantamento anterior, NÃO existe nesta base) ==
+src/components/metas/GoalsListItem.tsx — pasta src/components/metas/ não existe em
+  dia/2026-10-16; item retirado da lista.
+
+== 2a passada — goto com espera de boot (flakiness, só NESTE spec) ==
+gotoPronto definido em e2e/a11y-tarefas-dashboard.spec.ts:74 e chamado em :102 e :120
+(dentro do loop de 2 viewports = 4 execuções). Único chamador: este spec.
+Outros specs têm tratamento próprio (ex.: retry 3x em e2e/tarefas-linha-de-base.spec.ts:227)
+e NÃO foram tocados (fora do título).
