@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
-# RLS de scheduled_messages e whisper_messages: agendar e sussurrar só com contato visível
-# e permissão de envio.
+# RLS de scheduled_messages e whisper_messages: agendar só com contato visível e permissão
+# de envio; sussurrar só com contato visível.
 #
 # Cartão t_d3c1981f (auditoria de paridade V3->V2, achado chat-2, CONFIRMADO no banco vivo
 # em 11/10/2026): as policies de INSERT/UPDATE de public.scheduled_messages só exigiam
 # created_by = o perfil do chamador (ou admin/supervisor) e o UPDATE não tinha WITH CHECK;
 # o INSERT de public.whisper_messages só exigia sender_id = perfil do chamador. Nenhum dos
-# dois olhava a visibilidade do CONTATO nem a permissão de envio. O job enviador de
-# agendadas (AG2) roda com privilégio de serviço e entrega em contato que o agente não vê.
+# dois olhava a visibilidade do CONTATO; scheduled_messages também não olhava a permissão
+# de envio. O job enviador de agendadas (AG2) roda com privilégio de serviço e entrega em
+# contato que o agente não vê.
 #
 # Roda em PostgreSQL 17 descartável, com o estado VIGENTE das policies (as antigas) e os
 # helpers REAIS (is_contact_visible_to_user, user_has_permission, is_admin_or_supervisor),
@@ -21,14 +22,16 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration="$repo_root/supabase/migrations/20261011154648_rls_scheduled_whisper_visibility.sql"
 postgres_image="${SCHEDULED_WHISPER_RLS_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-v2-sched-whisper-rls-$$"
-tmp_dir="$(mktemp -d /tmp/zapp-v2-sched-whisper-rls.XXXXXX)"
+tmp_parent="$repo_root/.tmp"
+mkdir -p "$tmp_parent"
+tmp_dir="$(mktemp -d "$tmp_parent/zapp-v2-sched-whisper-rls.XXXXXX")"
 
 cleanup() {
   if [[ "$container_name" =~ ^zapp-v2-sched-whisper-rls-[0-9]+$ ]]; then
     docker rm -f "$container_name" >/dev/null 2>&1 || true
   fi
   case "$tmp_dir" in
-    /tmp/zapp-v2-sched-whisper-rls.*) rm -rf -- "$tmp_dir" ;;
+    "$repo_root"/.tmp/zapp-v2-sched-whisper-rls.*) rm -rf -- "$tmp_dir" ;;
   esac
 }
 trap cleanup EXIT INT TERM
@@ -45,6 +48,32 @@ psql_script() {
 psql_file() {
   docker exec -i "$container_name" psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres \
     -c 'SET search_path = public, auth' -f - < "$1"
+}
+
+extract_rollback_sql() {
+  python3 - "$migration" "$tmp_dir/rollback.sql" <<'PY'
+from pathlib import Path
+import sys
+
+migration = Path(sys.argv[1])
+out = Path(sys.argv[2])
+lines = migration.read_text(encoding="utf-8").splitlines()
+in_block = False
+sql = []
+for line in lines:
+    if line.startswith("-- Rollback (SQL executável"):
+        in_block = True
+        continue
+    if not in_block:
+        continue
+    if not line.startswith("--   "):
+        break
+    sql.append(line.removeprefix("--   "))
+
+if not sql:
+    raise SystemExit("rollback SQL não encontrado na migration")
+out.write_text("BEGIN;\n" + "\n".join(sql) + "\nCOMMIT;\n", encoding="utf-8")
+PY
 }
 
 expect_value() {
@@ -352,4 +381,27 @@ expect_value 'sussurro existente intacto' '1' \
 expect_value 'as linhas da brecha (RED) continuam no banco, sem alteração pela migration' '2' \
   "SELECT count(*) FROM public.scheduled_messages WHERE content IN ('red-agendou-invisivel','red-sem-permissao')"
 
-printf 'OK: agendar e sussurrar exigem contato visível e permissão; supervisor passa; anônimo não vê nada; linhas existentes intactas\n'
+# ── ROLLBACK: o bloco do cabeçalho é executável e restaura as policies antigas ────────
+extract_rollback_sql
+psql_file "$tmp_dir/rollback.sql" >/dev/null
+
+psql_script "$as_u1 INSERT INTO public.scheduled_messages (contact_id, content, scheduled_at, created_by) VALUES ('$C2','rollback-agendou-invisivel', now(), '$P1')" >/dev/null
+expect_value 'rollback restaura INSERT antigo de agendamento para contato invisível' '1' \
+  "SELECT count(*) FROM public.scheduled_messages WHERE content='rollback-agendou-invisivel'"
+psql_script "$as_u2 INSERT INTO public.scheduled_messages (contact_id, content, scheduled_at, created_by) VALUES ('$C1','rollback-sem-permissao', now(), '$P2')" >/dev/null
+expect_value 'rollback restaura INSERT antigo sem send_messages' '1' \
+  "SELECT count(*) FROM public.scheduled_messages WHERE content='rollback-sem-permissao'"
+psql_script "$as_u1 INSERT INTO public.whisper_messages (contact_id, sender_id, target_agent_id, content) VALUES ('$C2','$P1','$P1','rollback-sussurro-invisivel')" >/dev/null
+expect_value 'rollback restaura INSERT antigo de sussurro para contato invisível' '1' \
+  "SELECT count(*) FROM public.whisper_messages WHERE content='rollback-sussurro-invisivel'"
+
+# Reaplica a migration para provar idempotência do DROP/CREATE POLICY e voltar ao estado protegido.
+psql_file "$migration" >/dev/null
+expect_refused 'reapós rollback: agente NÃO agenda para contato invisível' "$as_u1" \
+  "INSERT INTO public.scheduled_messages (contact_id, content, scheduled_at, created_by) VALUES ('$C2','x', now(), '$P1')"
+expect_refused 'reapós rollback: usuário SEM send_messages NÃO agenda para contato visível' "$as_u2" \
+  "INSERT INTO public.scheduled_messages (contact_id, content, scheduled_at, created_by) VALUES ('$C1','x', now(), '$P2')"
+expect_refused 'reapós rollback: agente NÃO sussurra em contato invisível' "$as_u1" \
+  "INSERT INTO public.whisper_messages (contact_id, sender_id, target_agent_id, content) VALUES ('$C2','$P1','$P1','x')"
+
+printf 'OK: agendar exige contato visível e permissão; sussurrar exige contato visível; supervisor passa; anônimo não vê nada; linhas existentes intactas; rollback executável\n'
