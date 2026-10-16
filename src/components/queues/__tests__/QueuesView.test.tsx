@@ -18,6 +18,13 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { axe } from 'vitest-axe';
 import { MemoryRouter } from 'react-router-dom';
 
+// Métrica REAL que a RPC `rpc_queue_goal_metrics()` devolve (cartão t_549f87e1). Desde PM-02 os
+// alertas da tela saem destes valores, e não mais da conta `membros ativos / aguardando`.
+const mockMetrics = vi.hoisted(() => [
+  { queue_id: 'q1', queue_name: 'Suporte', coverage: 'completa', contacts_open: 15, waiting_contacts: 15, avg_wait_minutes: null, assignment_rate: 20, received_contacts: 20, assigned_contacts: 4, messages_pending: null },
+  { queue_id: 'q2', queue_name: 'Vendas', coverage: 'completa', contacts_open: 0, waiting_contacts: 0, avg_wait_minutes: null, assignment_rate: 100, received_contacts: 0, assigned_contacts: 0, messages_pending: 0 },
+]);
+
 const mockQueues = [
   { id: 'q1', name: 'Suporte', color: '#3B82F6', is_active: true, max_wait_time_minutes: 30, priority: 1, description: null, created_at: '', updated_at: '' },
   { id: 'q2', name: 'Vendas', color: '#10B981', is_active: true, max_wait_time_minutes: 15, priority: 2, description: null, created_at: '', updated_at: '' },
@@ -54,6 +61,7 @@ vi.mock('@/integrations/supabase/client', () => ({
       subscribe: vi.fn().mockReturnValue({ unsubscribe: vi.fn() }),
     }),
     removeChannel: vi.fn(),
+    rpc: vi.fn().mockResolvedValue({ data: mockMetrics, error: null }),
     from: vi.fn().mockImplementation((table: string) => {
       if (table === 'queues') {
         return {
