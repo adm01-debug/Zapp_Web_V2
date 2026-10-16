@@ -24,13 +24,24 @@ export function localDayKey(value: string | Date | null | undefined): string | n
  * `yyyy-MM-dd` -> `Date` na meia-noite **local**.
  * Não use `new Date('2026-09-30')`: o padrão da linguagem interpreta a chave como meia-noite
  * UTC e, em UTC-3, o rótulo sai com o dia anterior.
+ *
+ * A chave precisa ser um dia de calendário **existente**: `2026-02-31` e `2026-13-01` devolvem
+ * `null` (o `Date` rolaria para 03/03 e 01/01/2027 e o filtro agendaria um dia que ninguém escolheu).
  */
 export function parseDayKey(key: string | null | undefined): Date | null {
   if (!key) return null;
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(key);
   if (!m) return null;
-  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
-  return Number.isNaN(d.getTime()) ? null : d;
+  const ano = Number(m[1]);
+  const mes = Number(m[2]);
+  const dia = Number(m[3]);
+  const d = new Date(ano, mes - 1, dia);
+  if (Number.isNaN(d.getTime())) return null;
+  // O formato sozinho não garante dia existente: `new Date(ano, mes - 1, dia)` ROLA o estouro do
+  // calendário (2026-02-31 vira 03/03, mês 13 vira janeiro do ano seguinte, mês 00 vira dezembro do
+  // anterior). Só vale a chave que volta igual ao que foi pedido.
+  if (d.getFullYear() !== ano || d.getMonth() !== mes - 1 || d.getDate() !== dia) return null;
+  return d;
 }
 
 /**

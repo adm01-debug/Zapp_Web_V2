@@ -37,6 +37,19 @@ describe('parseDayKey — chave yyyy-MM-dd lida no fuso local', () => {
     expect(parseDayKey('2026-09')).toBeNull();
     expect(parseDayKey(null)).toBeNull();
   });
+
+  it('rejeita dia inexistente no calendario em vez de rolar para o mes seguinte', () => {
+    // `new Date(2026, 1, 31)` rola para 03/03 e `new Date(2026, 8, 31)` para 01/10.
+    expect(parseDayKey('2026-02-31')).toBeNull();
+    expect(parseDayKey('2026-09-31')).toBeNull();
+    expect(parseDayKey('2026-04-31')).toBeNull();
+  });
+
+  it('rejeita mes fora de 01-12 em vez de rolar o ano', () => {
+    // `new Date(2026, 12, 01)` rola para 01/01/2027 e `new Date(2026, -1, 10)` para 10/12/2025.
+    expect(parseDayKey('2026-13-01')).toBeNull();
+    expect(parseDayKey('2026-00-10')).toBeNull();
+  });
 });
 
 describe('calendarDayKey — dia de um timestamp gravado sem hora', () => {

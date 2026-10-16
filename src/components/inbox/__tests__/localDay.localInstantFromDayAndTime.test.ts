@@ -3,9 +3,9 @@
  * não tinha teste na V2 (a V3 tinha `ScheduleMessageDialog.timezone`, 4 casos).
  *
  * Cobre hora vazia/malformada, valor fora da faixa (25:00, 12:60) e o dia de
- * calendário inexistente (2026-02-31) — este último é o que a auditoria pediu para
- * rejeitar e a implementação NÃO rejeita (o `parseDayKey` só valida o formato, não o
- * dia real), por isso fica como `it.fails` com o motivo.
+ * calendário inexistente (2026-02-31). Este último é o que a auditoria pediu para
+ * rejeitar: `parseDayKey` passou a conferir o dia real (o `new Date(ano, mês-1, dia)`
+ * rolava 31/02 para 03/03) e o caso deixou de ser `it.fails`.
  */
 import { describe, it, expect } from 'vitest';
 import { localInstantFromDayAndTime } from '@/lib/localDay';
@@ -59,9 +59,25 @@ describe('localInstantFromDayAndTime — instante local (U7)', () => {
     expect(fim?.getMinutes()).toBe(59);
   });
 
-  // A auditoria pediu rejeitar data inválida do calendário; a implementação só valida o
-  // formato (yyyy-MM-dd) e deixa o rollover do Date acontecer. Bug real do produto.
-  it.fails('rejeita dia de calendário inexistente (2026-02-31)', () => {
+  // A auditoria pediu rejeitar data inválida do calendário (rollover do Date).
+  it('rejeita dia de calendário inexistente (2026-02-31)', () => {
     expect(localInstantFromDayAndTime('2026-02-31', '10:00')).toBeNull();
+  });
+
+  it('rejeita datas que não existem no calendário (2023-02-29, 2026-04-31, 2026-13-01)', () => {
+    // 2023 não é bissexto, abril tem 30 dias e o mês 13 não existe: o `Date` rolaria para
+    // 01/03, 01/05 e 01/01/2027 e o agendamento cairia num dia que o usuário não escolheu.
+    expect(localInstantFromDayAndTime('2023-02-29', '10:00')).toBeNull();
+    expect(localInstantFromDayAndTime('2026-04-31', '10:00')).toBeNull();
+    expect(localInstantFromDayAndTime('2026-13-01', '10:00')).toBeNull();
+  });
+
+  it('continua aceitando 29/02 de ano bissexto (2024-02-29)', () => {
+    const d = localInstantFromDayAndTime('2024-02-29', '10:00');
+    expect(d).not.toBeNull();
+    expect(d!.getFullYear()).toBe(2024);
+    expect(d!.getMonth()).toBe(1); // fevereiro
+    expect(d!.getDate()).toBe(29);
+    expect(d!.getHours()).toBe(10);
   });
 });
