@@ -262,7 +262,7 @@ function queryLedger(ledgerRetryDelays) {
     let output;
     let exitCode;
     try {
-      withPsqlEnvironment((env) => {
+      withPsqlEnvironment(url, (env) => {
         output = execFileSync(PSQL_BIN, ['-X', '-At', url], {
           input: LEDGER_QUERY,
           env,
@@ -281,9 +281,13 @@ function queryLedger(ledgerRetryDelays) {
         || /could not connect/i.test(stderr)
         || /ECONNREFUSED/i.test(stderr)
       );
+      const errText = (stderr || err.message || 'erro desconhecido').split('\n')[0];
       if (!isTransportFailure || attempt >= retryDelays.length) {
+        console.error(`\nFALHA: falha ao consultar schema_migrations via psql: ${errText}`);
         return { output: output ?? '', exitCode };
       }
+      const total = retryDelays.length + 1;
+      console.warn(`\nAVISO: falha transitoria de conexao (tentativa ${attempt + 1}/${total}): ${errText}`);
       continue;
     }
     return { output, exitCode: 0 };

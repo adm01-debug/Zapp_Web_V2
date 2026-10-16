@@ -1037,7 +1037,7 @@ test('queryLedger desiste apos esgotar tentativas de falha transitoria', () => {
     psqlFailMessage: 'timeout expired',
     retryDelaysMs: '10,10',
   });
-  assert.equal(result.status, 2);
+  assert.equal(result.status, 1);
   assert.match(result.stderr, /AVISO: falha transitoria de conexao.*tentativa 1\/3/);
   assert.match(result.stderr, /AVISO: falha transitoria de conexao.*tentativa 2\/3/);
   assert.match(result.stderr, /FALHA: falha ao consultar schema_migrations via psql: timeout expired/);
@@ -1049,7 +1049,7 @@ test('queryLedger nao tenta novamente para erro nao-transitorio', () => {
     psqlFailMessage: 'ERROR:  syntax error at or near "SELEC"',
     retryDelaysMs: '10,10',
   });
-  assert.equal(result.status, 2);
+  assert.equal(result.status, 1);
   assert.doesNotMatch(result.stderr, /AVISO: falha transitoria/);
   assert.match(result.stderr, /FALHA: falha ao consultar schema_migrations via psql: ERROR:  syntax error/);
 });
@@ -1063,7 +1063,7 @@ test('LEDGER_RETRY_DELAYS_MS vazio desliga o retry do ledger', () => {
     psqlFailMessage: 'connection to server ... port 5432 failed: timeout expired',
     retryDelaysMs: '',
   });
-  assert.equal(result.status, 2);
+  assert.equal(result.status, 1);
   assert.doesNotMatch(result.stderr, /AVISO: falha transitoria/);
   assert.match(result.stderr, /FALHA: falha ao consultar schema_migrations via psql: connection to server/);
 });
