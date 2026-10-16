@@ -125,7 +125,7 @@ export default defineConfig({
       // As specs do módulo MAPA (E71-E74) ficam de fora: usam sessão FALSA e não
       // podem depender do login real — ver o projeto `chromium-mapa` abaixo.
       name: 'chromium-authenticated',
-      testIgnore: /auth\.spec\.ts|auth\.setup\.ts|conversation\.spec\.ts|messaging\.spec\.ts|location-picker\.spec\.ts|contact-address\.spec\.ts|contact-map-pin\.spec\.ts|contacts-snapshots\.spec\.ts|a11y-contraste\.spec\.ts|talkx-launch\.spec\.ts|telefonia\.spec\.ts/,
+      testIgnore: /auth\.spec\.ts|auth\.setup\.ts|conversation\.spec\.ts|messaging\.spec\.ts|location-picker\.spec\.ts|contact-address\.spec\.ts|contact-map-pin\.spec\.ts|contacts-snapshots\.spec\.ts|a11y-contraste\.spec\.ts|talkx-launch\.spec\.ts|telefonia\.spec\.ts|tarefas-linha-de-base\.spec\.ts/,
       retries: RETRIES_LOGADOS,
       dependencies: ['setup'],
       use: {
@@ -152,6 +152,17 @@ export default defineConfig({
       name: 'chromium-contacts-visual',
       testMatch: /contacts-snapshots\.spec\.ts/,
       use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      // Etapa 003 do PLANO_TAREFAS_NIVEL_DESIGN_200_ETAPAS: linha de base visual do
+      // módulo de Tarefas (Lista/Quadro/Agenda/QuickAdd/painel em 360/768/1280, claro e
+      // escuro). Sessão FALSA (`installFakeSession`), `conversation_tasks` mockado em
+      // memória com os dados da semente da etapa 004 e a rede real barrada — DESLOGADO:
+      // sem `setup`, sem secrets e sem banco. O `storageState` VAZIO é explícito, para
+      // nenhuma sessão salva alimentar esta régua.
+      name: 'chromium-tarefas-linha-de-base',
+      testMatch: /tarefas-linha-de-base\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'], storageState: { cookies: [], origins: [] } },
     },
     {
       // E98/a11y: axe-core na tela de contatos com sessao FALSA (installFakeSession)

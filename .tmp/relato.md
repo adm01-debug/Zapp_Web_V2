@@ -24,6 +24,9 @@ src/hooks/chat/snoozeDurations.ts
 src/hooks/chat/useConversationActions.ts
 src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx
 
+## Estabilidade sob carga (critério de pronto)
+Medição desta sessão, com a máquina carregada (load average ~17–30): em ~12 aberturas do app (`page.goto('/?view=tasks')`) **1 falhou** no vigia de boot do React ("O React não montou em 8s") — taxa ≈ 8%. Nenhuma dessas falhas é da rota: o app não monta, então nenhuma rota é consultada. Mitigação no spec: `entraEmTarefas` tenta **até 3 vezes** (recarrega a cada falha) antes de desistir do passo; na rodada limpa registraram-se `1 passed (1.1m)`. As rotas seguem sendo a única causa determinística de erro (cada superfície só existe no DOM quando alcançada).
+
 ## O que NÃO fiz e por quê
 - Não mudei código fora do escopo do snooze nem toquei em migration, Edge Function, CI ou dependência.
 - Não removi, pulei nem afrouxei teste: a mudança no teste só faz o mock aceitar o encadeamento real usado pelo código de produção.
