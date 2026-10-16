@@ -13,7 +13,7 @@
  *  5. Comandos de barra sem argumento (`/snooze`, `/priority`) terminavam em silêncio.
  *  6. `/archive` gravava `assigned_to = null` (devolvia à fila) e dizia "Conversa Arquivada".
  */
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Message } from '@/types/chat';
 
@@ -28,25 +28,39 @@ const db = vi.hoisted(() => ({
     filter: { column: string; value: unknown };
   }[],
   messagesResult: { error: null as unknown, data: [{ id: 'msg-1' }] as unknown[] | null },
-  contactsResult: { error: null as unknown },
+  contactsResult: { error: null as unknown, data: [{ id: 'contact-1' }] as unknown[] | null },
+  contactsSelectResult: {
+    error: null as unknown,
+    data: [{ id: 'contact-1', conversation_status: 'open' }] as unknown[] | null,
+  },
 }));
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    from: (table: string) => ({
-      update: (payload: Record<string, unknown>) => ({
-        eq: (column: string, value: unknown) => {
-          db.updates.push({ table, payload, filter: { column, value } });
-          const result = table === 'contacts' ? db.contactsResult : db.messagesResult;
+    from: (table: string) => {
+      const depoisDoFiltro = (result: unknown) => ({
+        // `.select('id')` devolve as linhas afetadas; o objeto também é "awaitável".
+        select: () => Promise.resolve(result),
+        then: (res: (v: unknown) => unknown) => Promise.resolve(result).then(res),
+      });
+      return {
+        // Leitura do status atual (helper canônico de arquivamento).
+        select: (_columns: string) => ({
+          in: (_column: string, _value: unknown) =>
+            Promise.resolve(table === 'contacts' ? db.contactsSelectResult : { error: null, data: null }),
+        }),
+        update: (payload: Record<string, unknown>) => {
+          const registrar = (column: string, value: unknown) => {
+            db.updates.push({ table, payload, filter: { column, value } });
+            return table === 'contacts' ? db.contactsResult : db.messagesResult;
+          };
           return {
-            // `.select('id')` devolve as linhas afetadas; o objeto também é "awaitável"
-            // porque o ramo /archive aguarda o retorno de `.eq(...)` direto.
-            select: () => Promise.resolve(result),
-            then: (res: (v: unknown) => unknown) => Promise.resolve(result).then(res),
+            eq: (column: string, value: unknown) => depoisDoFiltro(registrar(column, value)),
+            in: (column: string, value: unknown) => depoisDoFiltro(registrar(column, value)),
           };
         },
-      }),
-    }),
+      };
+    },
   },
 }));
 
@@ -151,7 +165,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   db.updates = [];
   db.messagesResult = { error: null, data: [{ id: MESSAGE_ID }] };
-  db.contactsResult = { error: null };
+  db.contactsResult = { error: null, data: [{ id: 'contact-1' }] };
 });
 
 afterEach(() => {
@@ -284,17 +298,22 @@ describe('comandos de barra — nunca terminam em silêncio', () => {
     expect(informativos[0].variant).toBeUndefined();
   });
 
-  it('/archive grava o estado de FSM (conversation_status), não assigned_to', async () => {
+  it('/archive grava o estado de FSM (conversation_status), não assigned_to, e pelo helper canônico', async () => {
     const utils = montar();
 
     await act(async () => {
       utils.result.current.handleSlashCommand({ id: 'archive', label: 'Arquivar', description: '' } as never);
-      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect(db.updates.some((u) => u.table === 'contacts')).toBe(true);
     });
 
     const archive = db.updates.find((u) => u.table === 'contacts');
     expect(archive?.payload).toMatchObject({ conversation_status: 'archived' });
     expect(archive?.payload.assigned_to).toBeUndefined();
+    // Escrita agrupada por id (helper canônico), não `.eq` por contato.
+    expect(archive?.filter).toEqual({ column: 'id', value: ['contact-1'] });
     expect(toasts().some((t) => (t.title ?? '').includes('Arquivada'))).toBe(true);
   });
 });

@@ -2,6 +2,10 @@ import { useState, useRef, useEffect, useCallback, type Dispatch, type SetStateA
 import { log } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { undoToast } from '@/lib/undoToast';
+import {
+  archiveConversations,
+  restoreConversationStatuses,
+} from '@/hooks/inbox/conversationArchive';
 import { normalizeOperationalPriority } from '@/lib/ai-vocabulary';
 import { Message, InteractiveMessage, InteractiveButton, LocationMessage } from '@/types/chat';
 import { SlashCommand } from '../SlashCommands';
@@ -541,18 +545,22 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
       case 'star': (isFavorite(contactId) ? unfavoriteContact : favoriteContact)(contactId); break;
       case 'archive': {
         void (async () => {
-          // ADR-005: arquivar conversa é o estado de FSM em `conversation_status` — o MESMO que
-          // o arquivamento em massa usa. `assigned_to = null` devolvia à fila e não arquivava,
-          // então o aviso "Conversa Arquivada" era falso.
-          const { error } = await supabase
-            .from('contacts')
-            .update({ conversation_status: 'archived', updated_at: new Date().toISOString() })
-            .eq('id', contactId);
-          if (error) {
+          // Semântica única (helper canônico): arquivar é o estado de FSM em
+          // `conversation_status` — o MESMO que a lista, o painel de detalhes e o
+          // lote usam. `assigned_to = null` devolvia à fila e não arquivava.
+          try {
+            const anteriores = await archiveConversations([contactId]);
+            toast({ title: '📦 Conversa Arquivada', description: 'A conversa foi arquivada.' });
+            undoToast({
+              message: 'Conversa arquivada',
+              icon: '📦',
+              onUndo: async () => {
+                await restoreConversationStatuses(anteriores);
+              },
+            });
+          } catch (error) {
             log.error('Failed to archive contact:', error);
             toast({ title: 'Erro ao arquivar', description: 'Não foi possível arquivar a conversa.', variant: 'destructive' });
-          } else {
-            toast({ title: '📦 Conversa Arquivada', description: 'A conversa foi arquivada.' });
           }
         })();
         break;
