@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useVisiblePolling } from '@/hooks/realtime/useVisiblePolling';
 import { toast } from 'sonner';
 import { isAccessDeniedError } from '@/lib/rlsError';
 
@@ -10,6 +11,21 @@ export interface ConnectionStatus {
   phone_number: string | null;
   created_at: string;
   updated_at: string;
+  /** Saúde gravada pela verificação automática do cron — exibida sem reexecutar a sonda. */
+  health_status: string | null;
+  last_health_check: string | null;
+  health_response_ms: number | null;
+}
+
+/** Última linha de `connection_health_logs`: é o heartbeat do cron, não uma
+ * invocação feita pelo navegador. */
+export interface ConnectionHealthLog {
+  id: string;
+  instance_id: string;
+  status: string;
+  response_time_ms: number | null;
+  error_message: string | null;
+  checked_at: string;
 }
 
 export interface MessageDiagnostic {
@@ -21,12 +37,11 @@ export interface MessageDiagnostic {
   pending: number;
   deliveryRate: number;
   failureRate: number;
+  /** Só id, horário e motivo: sem trecho de conteúdo e sem nome do contato. */
   recentFailures: Array<{
     id: string;
-    content: string;
-    status: string;
     created_at: string;
-    contact_name: string;
+    motivo: string;
   }>;
 }
 
@@ -40,6 +55,9 @@ export interface SystemHealth {
   dbLatency: number | null;
   storageLatency: number | null;
   realtimeCheckedAt: string | null;
+  /** Instante do último check registrado pelo cron; `null` = nenhum registro. */
+  lastHealthCheckAt: string | null;
+  healthCheckLogs: ConnectionHealthLog[];
   contactsCount: number;
   messagesCount: number;
   connectionsCount: number;
@@ -79,6 +97,36 @@ function classifyHealth(
   if (latency < healthyBelowMs) return 'healthy';
   if (latency < degradedBelowMs) return 'degraded';
   return 'down';
+}
+
+/** O cron `connection-health-check` roda a cada 5 min e deixa o rastro em
+ * `connection_health_logs`. A saúde do backend é lida desse rastro: invocar a Edge
+ * pelo navegador criaria tráfego falso e poderia disparar e-mail de alerta. */
+const HEARTBEAT_SAUDAVEL_MS = 15 * 60 * 1000;
+const HEARTBEAT_DEGRADADO_MS = 60 * 60 * 1000;
+
+/** Sem registro não se mede: devolve "unknown" em vez de "saudável". */
+function classifyHeartbeat(
+  error: ProbeError | null,
+  lastCheckedAt: string | null,
+  agora: number,
+): HealthStatus {
+  if (error) return isAuthorizationError(error) ? 'unauthorized' : 'down';
+  if (!lastCheckedAt) return 'unknown';
+  const idade = agora - Date.parse(lastCheckedAt);
+  if (!Number.isFinite(idade)) return 'unknown';
+  if (idade < HEARTBEAT_SAUDAVEL_MS) return 'healthy';
+  if (idade < HEARTBEAT_DEGRADADO_MS) return 'degraded';
+  return 'down';
+}
+
+/** Falha de coleta não vira número: o painel precisa dizer que falhou em vez de
+ * publicar "0 mensagens / 0% de falha" quando a leitura foi recusada. */
+function erroDeColeta(error: ProbeError | null): string {
+  const code = String(error?.code ?? error?.statusCode ?? error?.status ?? '');
+  return code
+    ? `A coleta de diagnósticos foi recusada ou falhou (código ${code}).`
+    : 'A coleta de diagnósticos falhou; os números exibidos podem estar desatualizados.';
 }
 
 /** Realtime não se mede por latência de leitura: assina um canal e espera o ack do servidor.
@@ -134,30 +182,24 @@ export function useDiagnosticsData() {
   const [messageDiag, setMessageDiag] = useState<MessageDiagnostic | null>(null);
   const [health, setHealth] = useState<SystemHealth | null>(null);
   const [errorLogs, setErrorLogs] = useState<ErrorLog[]>([]);
+  // Uma coleta recusada/falha não pode virar zero: fica registrada e visível.
+  const [coletaFalhou, setColetaFalhou] = useState<ErrorLog | null>(null);
 
   const fetchConnections = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('whatsapp_connections')
-      .select('id, instance_id, status, phone_number, created_at, updated_at')
+      .select('id, instance_id, status, phone_number, created_at, updated_at, health_status, last_health_check, health_response_ms')
       .order('created_at', { ascending: false });
-    if (data) setConnections(data as ConnectionStatus[]);
+    if (error) throw error;
+    setConnections((data ?? []) as ConnectionStatus[]);
   };
 
   const fetchMessageDiagnostics = async () => {
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
-    // Optimize by grouping or reducing query count if possible, 
-    // but head: true is already quite fast for counts.
-    // However, we can use a single query for statuses if we fetch data, 
-    // but for large datasets head: true is better.
-    const [
-      { count: totalCount },
-      { count: sentCount },
-      { count: deliveredCount },
-      { count: readCount },
-      { count: failedCount },
-      { count: pendingCount },
-    ] = await Promise.all([
+    // Contagens da JANELA de 24 h (indexadas) são exatas: alimentam taxas que
+    // não podem mentir. O que não pode existir é COUNT exato da tabela inteira.
+    const contagens = await Promise.all([
       supabase.from('messages').select('id', { count: 'exact', head: true }).gte('created_at', since).eq('sender', 'agent'),
       supabase.from('messages').select('id', { count: 'exact', head: true }).gte('created_at', since).eq('sender', 'agent').eq('status', 'sent'),
       supabase.from('messages').select('id', { count: 'exact', head: true }).gte('created_at', since).eq('sender', 'agent').eq('status', 'delivered'),
@@ -166,34 +208,36 @@ export function useDiagnosticsData() {
       supabase.from('messages').select('id', { count: 'exact', head: true }).gte('created_at', since).eq('sender', 'agent').eq('status', 'sending'),
     ]);
 
-    const { data: failures } = await supabase
+    // Qualquer leitura recusada (RLS) aborta o agregado: sem zeros silenciosos.
+    const erroContagem = contagens.find((r) => r.error)?.error ?? null;
+    if (erroContagem) throw erroContagem;
+
+    const [
+      { count: totalCount },
+      { count: sentCount },
+      { count: deliveredCount },
+      { count: readCount },
+      { count: failedCount },
+      { count: pendingCount },
+    ] = contagens;
+
+    // A tabela `messages` não guarda o texto do erro: o motivo exibido é o status
+    // devolvido pelo provedor. Nada de trecho de conteúdo nem de nome de contato.
+    const { data: failures, error: falhasError } = await supabase
       .from('messages')
-      .select('id, content, status, created_at, contact_id')
+      .select('id, status, created_at')
       .eq('sender', 'agent')
       .eq('status', 'failed')
       .order('created_at', { ascending: false })
+      .order('id', { ascending: false })
       .limit(10);
+    if (falhasError) throw falhasError;
 
-    const recentFailures: MessageDiagnostic['recentFailures'] = [];
-    if (failures && failures.length > 0) {
-      const contactIds = Array.from(new Set(failures.map(f => f.contact_id).filter((id): id is string => id !== null)));
-      const { data: contacts } = await supabase
-        .from('contacts')
-        .select('id, name')
-        .in('id', contactIds);
-      
-      const contactMap = new Map(contacts?.map(c => [c.id, c.name]) || []);
-
-      for (const f of failures) {
-        recentFailures.push({
-          id: f.id,
-          content: f.content,
-          status: f.status || 'unknown',
-          created_at: f.created_at,
-          contact_name: contactMap.get(f.contact_id!) || 'Desconhecido',
-        });
-      }
-    }
+    const recentFailures: MessageDiagnostic['recentFailures'] = (failures ?? []).map((f) => ({
+      id: f.id,
+      created_at: f.created_at,
+      motivo: f.status || 'desconhecido',
+    }));
 
     const total = totalCount || 0;
     const sent = sentCount || 0;
@@ -211,11 +255,17 @@ export function useDiagnosticsData() {
   };
 
   const fetchSystemHealth = async () => {
+    // Sonda LEVE: a latência vem de `select id limit 1`, não de um COUNT de
+    // tabela inteira (que cresce com o volume e falsifica o status do banco).
+    // O total de contatos aproveita a mesma ida ao banco, estimado (plano).
     const dbStart = performance.now();
     let contactsCount: number | null = null;
     let dbError: ProbeError | null = null;
     try {
-      const { count, error } = await supabase.from('contacts').select('*', { count: 'exact', head: true });
+      const { count, error } = await supabase
+        .from('contacts')
+        .select('id', { count: 'estimated' })
+        .limit(1);
       contactsCount = count ?? null;
       dbError = error ?? null;
     } catch (err) {
@@ -234,29 +284,44 @@ export function useDiagnosticsData() {
     }
     const storageLatency = storageError ? null : Math.round(performance.now() - storageStart);
 
-    const { count: messagesCount } = await supabase.from('messages').select('*', { count: 'exact', head: true });
-    const { count: connectionsCount, error: connectionsError } = await supabase.from('whatsapp_connections').select('id', { count: 'exact', head: true });
-    // A contagem não pode virar "0 conexões" em silêncio: falha de coleta é erro de banco.
-    if (!dbError && connectionsError) dbError = connectionsError as ProbeError;
+    // Totais ESTIMADOS: não varrem a tabela inteira a cada ciclo de polling.
+    const { count: messagesCount, error: messagesCountError } = await supabase
+      .from('messages').select('id', { count: 'estimated', head: true });
+    if (messagesCountError) throw messagesCountError;
+    const { count: connectionsCount, error: connectionsCountError } = await supabase
+      .from('whatsapp_connections').select('id', { count: 'estimated', head: true });
+    if (connectionsCountError) throw connectionsCountError;
 
     const realtime = await probeRealtime();
 
-    let edgeFunctionsStatus: HealthStatus = 'healthy';
+    // Backend vivo = rastro deixado pelo cron. O navegador não dispara a sonda:
+    // cada invocação da Edge gera tráfego falso e pode mandar e-mail de alerta.
+    let healthCheckLogs: ConnectionHealthLog[] = [];
+    let heartbeatError: ProbeError | null = null;
     try {
-      const { error } = await supabase.functions.invoke('connection-health-check');
-      if (error) edgeFunctionsStatus = 'degraded';
-    } catch {
-      edgeFunctionsStatus = 'degraded';
+      const { data, error } = await supabase
+        .from('connection_health_logs')
+        .select('id, instance_id, status, response_time_ms, error_message, checked_at')
+        .order('checked_at', { ascending: false })
+        .order('id', { ascending: false })
+        .limit(20);
+      if (error) heartbeatError = error;
+      else healthCheckLogs = (data ?? []) as ConnectionHealthLog[];
+    } catch (err) {
+      heartbeatError = err as ProbeError;
     }
+    const lastHealthCheckAt = healthCheckLogs[0]?.checked_at ?? null;
 
     setHealth({
       database: classifyHealth(dbError, dbLatency, 500, 2000),
       storage: classifyHealth(storageError, storageLatency, 1000, 3000),
       realtime: realtime.status,
-      edgeFunctions: edgeFunctionsStatus,
+      edgeFunctions: classifyHeartbeat(heartbeatError, lastHealthCheckAt, Date.now()),
       dbLatency,
       storageLatency,
       realtimeCheckedAt: realtime.checkedAt,
+      lastHealthCheckAt,
+      healthCheckLogs,
       contactsCount: contactsCount || 0,
       messagesCount: messagesCount || 0,
       connectionsCount: connectionsCount || 0,
@@ -266,12 +331,15 @@ export function useDiagnosticsData() {
   const fetchErrorLogs = async () => {
     const logs: ErrorLog[] = [];
 
-    const { data: failedMsgs } = await supabase
+    // Só id, horário e motivo: o log não expõe conteúdo nem contato.
+    const { data: failedMsgs, error: failedError } = await supabase
       .from('messages')
-      .select('id, content, created_at, contact_id')
+      .select('id, status, created_at')
       .eq('status', 'failed')
       .order('created_at', { ascending: false })
+      .order('id', { ascending: false })
       .limit(20);
+    if (failedError) throw failedError;
 
     if (failedMsgs) {
       for (const msg of failedMsgs) {
@@ -279,17 +347,18 @@ export function useDiagnosticsData() {
           id: `msg-${msg.id}`,
           type: 'message',
           severity: 'error',
-          message: 'Falha no envio de mensagem',
-          details: `Mensagem "${msg.content?.slice(0, 50)}..." falhou ao enviar`,
+          message: `Falha no envio da mensagem ${msg.id}`,
+          details: `Motivo informado pelo provedor: ${msg.status || 'desconhecido'}`,
           timestamp: new Date(msg.created_at),
         });
       }
     }
 
-    const { data: disconnected } = await supabase
+    const { data: disconnected, error: disconnectedError } = await supabase
       .from('whatsapp_connections')
       .select('id, instance_id, status, updated_at')
       .neq('status', 'connected');
+    if (disconnectedError) throw disconnectedError;
 
     if (disconnected) {
       for (const conn of disconnected) {
@@ -304,10 +373,13 @@ export function useDiagnosticsData() {
       }
     }
 
-    const { count: orphanCount } = await supabase
+    // Órfãos: excluído não é órfão — senão o painel alarma por dado já removido.
+    const { count: orphanCount, error: orphanError } = await supabase
       .from('contacts')
-      .select('*', { count: 'exact', head: true })
-      .is('whatsapp_connection_id', null);
+      .select('id', { count: 'exact', head: true })
+      .is('whatsapp_connection_id', null)
+      .is('deleted_at', null);
+    if (orphanError) throw orphanError;
 
     if (orphanCount && orphanCount > 0) {
       logs.push({
@@ -321,11 +393,13 @@ export function useDiagnosticsData() {
     }
 
     const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-    const { count: stuckCount } = await supabase
+    const { count: stuckCount, error: stuckError } = await supabase
       .from('messages')
-      .select('*', { count: 'exact', head: true })
+      .select('id', { count: 'exact', head: true })
       .eq('status', 'sending')
-      .lt('created_at', fiveMinAgo);
+      .lt('created_at', fiveMinAgo)
+      .or('is_deleted.is.null,is_deleted.eq.false');
+    if (stuckError) throw stuckError;
 
     if (stuckCount && stuckCount > 0) {
       logs.push({
@@ -352,18 +426,25 @@ export function useDiagnosticsData() {
         fetchErrorLogs(),
       ]);
       setLastRefresh(new Date());
+      setColetaFalhou(null);
+    } catch (err) {
+      // Nada de número falso: a falha da coleta vira registro VISÍVEL no painel.
+      setColetaFalhou({
+        id: 'collect-error',
+        type: 'system',
+        severity: 'error',
+        message: 'Falha ao coletar os diagnósticos',
+        details: erroDeColeta(err as ProbeError),
+        timestamp: new Date(),
+      });
     } finally {
       setRefreshing(false);
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => { fetchAll(); }, [fetchAll]);
-
-  useEffect(() => {
-    const interval = setInterval(fetchAll, 30000);
-    return () => clearInterval(interval);
-  }, [fetchAll]);
+  // Polling só com a aba visível e a rede no ar — uma leitura por vez.
+  useVisiblePolling(fetchAll, 30_000);
 
   const handleRefresh = async () => {
     toast.info('Atualizando diagnósticos...');
@@ -371,14 +452,17 @@ export function useDiagnosticsData() {
     toast.success('Diagnósticos atualizados!');
   };
 
-  const errorCount = errorLogs.filter(l => l.severity === 'error' || l.severity === 'critical').length;
-  const warningCount = errorLogs.filter(l => l.severity === 'warning').length;
+  // A falha de coleta entra no topo (é a mais nova) e conta como erro crítico.
+  const logsVisiveis = coletaFalhou ? [coletaFalhou, ...errorLogs] : errorLogs;
+  const errorCount = logsVisiveis.filter(l => l.severity === 'error' || l.severity === 'critical').length;
+  const warningCount = logsVisiveis.filter(l => l.severity === 'warning').length;
   const connectedCount = connections.filter(c => c.status === 'connected').length;
 
   return {
     loading, refreshing, lastRefresh,
-    connections, messageDiag, health, errorLogs,
+    connections, messageDiag, health, errorLogs: logsVisiveis,
     handleRefresh,
     errorCount, warningCount, connectedCount,
+    collectionError: coletaFalhou?.details ?? null,
   };
 }
