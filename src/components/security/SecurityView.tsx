@@ -12,6 +12,7 @@ import { PasskeysPanel } from './PasskeysPanel';
 import { SecurityNotificationsPanel } from './SecurityNotificationsPanel';
 import { BlockedIPsPanel } from './BlockedIPsPanel';
 import { IPWhitelistPanel } from './IPWhitelistPanel';
+import { LoginBlockedLogPanel } from './LoginBlockedLogPanel';
 import { GeoBlockingPanel } from './GeoBlockingPanel';
 import { PasswordResetRequestsPanel } from './PasswordResetRequestsPanel';
 import { RateLimitRealtimeAlerts } from './RateLimitRealtimeAlerts';
@@ -132,6 +133,7 @@ export function SecurityView() {
                 <div className="space-y-6">
                   <BlockedIPsPanel />
                   <IPWhitelistPanel />
+                  <LoginBlockedLogPanel />
                 </div>
               </TabsContent>
 
