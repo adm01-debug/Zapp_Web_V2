@@ -3,6 +3,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/ui/use-toast';
 import { log } from '@/lib/logger';
 import { MAX_PTT_DURATION_SEC } from '@/lib/audio/pttLimits';
+import {
+  escolherMimeGravacao,
+  formatoDeUpload,
+  mensagemErroGravacao,
+  mimeBase,
+} from '@/lib/audio/gravacaoFormato';
 
 interface UseAudioRecorderOptions {
   onRecordingComplete?: (audioBlob: Blob, audioUrl: string) => void;
@@ -20,6 +26,10 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  // G9: mime REAL com que esta captura está gravando (decidido na montagem do
+  // MediaRecorder). Rotula o blob emitido; `null` quando o navegador não
+  // informou formato nenhum.
+  const mimeGravacaoRef = useRef<string | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const mountedRef = useRef(false);
@@ -93,15 +103,34 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
       streamRef.current = stream;
       chunksRef.current = [];
       
+      // G9: escolhe o mime que ESTE navegador sabe gravar (webm/opus, mp4, ogg).
+      // Sem nenhum suportado, cria o recorder sem mimeType (padrão do navegador)
+      // e lê o formato real de `recorder.mimeType` logo abaixo.
+      const mimeEscolhido = escolherMimeGravacao();
+
       let mediaRecorder: MediaRecorder;
       try {
-        mediaRecorder = new MediaRecorder(stream, {
-          mimeType: 'audio/webm;codecs=opus'
-        });
+        mediaRecorder = new MediaRecorder(
+          stream,
+          mimeEscolhido ? { mimeType: mimeEscolhido } : undefined,
+        );
       } catch (error) {
         stream.getTracks().forEach((track) => track.stop());
         streamRef.current = null;
         throw error;
+      }
+
+      // O mime que rotula o blob sai do recorder REAL. Se nem a lista nem o
+      // navegador informarem formato, avisa em pt-BR em vez de gravar um áudio
+      // rotulado como webm que pode não tocar.
+      const mimeReal = mimeBase(mediaRecorder.mimeType || mimeEscolhido || '');
+      mimeGravacaoRef.current = mimeReal || null;
+      if (!mimeReal) {
+        toast({
+          title: 'Formato de áudio não suportado',
+          description: 'Este navegador não informou um formato de gravação compatível; o áudio pode não ser enviado corretamente.',
+          variant: 'destructive',
+        });
       }
       
       mediaRecorderRef.current = mediaRecorder;
@@ -116,7 +145,9 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
         if (!mountedRef.current) {
           return;
         }
-        const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        const audioBlob = new Blob(chunksRef.current, {
+          type: mimeGravacaoRef.current ?? 'audio/webm',
+        });
         const url = URL.createObjectURL(audioBlob);
         setAudioUrl(url);
         onRecordingCompleteRef.current?.(audioBlob, url);
@@ -140,7 +171,7 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
       log.error('Error starting recording:', error);
       toast({
         title: 'Erro ao gravar',
-        description: 'Não foi possível acessar o microfone.',
+        description: mensagemErroGravacao(error),
         variant: 'destructive',
       });
     }
@@ -157,12 +188,15 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
   }, [releaseCapture]);
 
   const uploadAudio = useCallback(async (blob: Blob, conversationId: string) => {
-    const fileName = `${conversationId}/${Date.now()}.webm`;
+    // G9: extensão e Content-Type saem do mime REAL do blob (mp4/m4a no Safari),
+    // em vez do webm fixo que rotulava mal o objeto.
+    const { contentType, extensao } = formatoDeUpload(blob.type);
+    const fileName = `${conversationId}/${Date.now()}.${extensao}`;
     
     const { error } = await supabase.storage
       .from('audio-messages')
       .upload(fileName, blob, {
-        contentType: 'audio/webm',
+        contentType,
       });
     
     if (error) {

@@ -2,6 +2,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Message, MessageInsert } from '@/types/chat';
 import { getLogger } from '@/lib/logger';
 import { sendOutboundMessage, type OutboundMessageType } from './outbound-message.service';
+import { formatoDeUpload } from '@/lib/audio/gravacaoFormato';
 
 const log = getLogger('ChatService');
 
@@ -109,10 +110,13 @@ export class ChatService {
   }
 
   static async uploadAudio(contactId: string, blob: Blob) {
-    const fileName = `${contactId}/${Date.now()}.webm`;
+    // G9: o blob do gravador do inbox pode ser mp4/m4a (Safari) ou ogg: a
+    // extensão e o Content-Type saem do mime real, não de um webm fixo.
+    const { contentType, extensao } = formatoDeUpload(blob.type);
+    const fileName = `${contactId}/${Date.now()}.${extensao}`;
     const { error: uploadError } = await supabase.storage
       .from('audio-messages')
-      .upload(fileName, blob, { contentType: 'audio/webm' });
+      .upload(fileName, blob, { contentType });
 
     if (uploadError) throw uploadError;
 
