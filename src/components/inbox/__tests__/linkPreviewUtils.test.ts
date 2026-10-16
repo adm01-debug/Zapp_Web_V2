@@ -28,6 +28,12 @@ describe('isImageUrl', () => {
     expect(isImageUrl('https://exemplo.com/foto.png?w=200')).toBe(true);
   });
 
+  it('ignora extensão que aparece só na query string', () => {
+    expect(isImageUrl('https://x.com/p?f=.png')).toBe(false);
+    expect(isImageUrl('https://x.com/redireciona?url=foto.jpg')).toBe(false);
+    expect(isImageUrl('https://x.com/#foto.png')).toBe(false);
+  });
+
   it('recusa o que não é imagem', () => {
     expect(isImageUrl('https://exemplo.com/pagina')).toBe(false);
     expect(isImageUrl('https://exemplo.com/video.mp4')).toBe(false);
@@ -106,12 +112,17 @@ describe('getDomain', () => {
 // ── getFavicon ────────────────────────────────────────────────────────────────
 
 describe('getFavicon', () => {
-  it('monta o favicon a partir da origem (sem caminho)', () => {
-    expect(getFavicon('https://www.exemplo.com/pagina?a=1'))
-      .toBe('https://www.exemplo.com/favicon.ico');
+  it('monta o favicon a partir da origem (sem caminho) quando o domínio é permitido', () => {
+    expect(getFavicon('https://www.youtube.com/watch?v=abc123'))
+      .toBe('https://www.youtube.com/favicon.ico');
   });
 
-  it('preserva o esquema e a porta', () => {
+  it('devolve vazio para domínio fora da lista permitida', () => {
+    expect(getFavicon('https://www.exemplo.com/pagina?a=1')).toBe('');
+    expect(getFavicon('https://evil.example/a')).toBe('');
+  });
+
+  it('preserva o esquema e a porta quando é a própria origem do app', () => {
     expect(getFavicon('http://localhost:3000/x')).toBe('http://localhost:3000/favicon.ico');
   });
 

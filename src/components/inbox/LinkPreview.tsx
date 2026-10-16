@@ -4,7 +4,7 @@ import { ExternalLink, Play, Globe, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   isImageUrl, isVideoUrl, isYouTubeUrl, getYouTubeThumbnail,
-  getDomain, getFavicon, extractLinks, escapeHtml,
+  getDomain, getFavicon, extractLinks, escapeHtml, isAllowedMediaHost,
   type LinkMetadata,
 } from './linkPreviewUtils';
 
@@ -26,9 +26,11 @@ export function LinkPreview({ url, className, compact = false, showRemove, onRem
   const { metadata, error } = useMemo<{ metadata: LinkMetadata | null; error: boolean }>(() => {
     if (!isSafeUrl(url)) return { metadata: null, error: true };
     try {
-      if (isImageUrl(url)) return { metadata: { url, type: 'image', image: url, title: url.split('/').pop() || 'Image' }, error: false };
+      if (isImageUrl(url) && isAllowedMediaHost(url)) return { metadata: { url, type: 'image', image: url, title: url.split('/').pop() || 'Image' }, error: false };
       if (isVideoUrl(url)) return { metadata: { url, type: 'video', title: url.split('/').pop() || 'Video' }, error: false };
       if (isYouTubeUrl(url)) return { metadata: { url, type: 'video', title: 'YouTube Video', image: getYouTubeThumbnail(url) || undefined, siteName: 'YouTube', favicon: 'https://www.youtube.com/favicon.ico' }, error: false };
+      // Imagem/favicon de host fora da lista permitida não vira `<img>`: cai no
+      // card genérico (ícone + domínio), sem requisição ao host do remetente.
       return { metadata: { url, type: 'website', title: getDomain(url), siteName: getDomain(url), favicon: getFavicon(url) }, error: false };
     } catch { return { metadata: null, error: true }; }
   }, [url]);
