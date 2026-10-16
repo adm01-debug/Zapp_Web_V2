@@ -125,55 +125,75 @@ export function useConversationActions() {
   }, [snoozes, agora]);
 
   const pinConversation = useCallback(async (contactId: string) => {
-    if (!profileId) return;
+    if (!profileId) {
+      toast.error('Não foi possível fixar a conversa: perfil não carregado');
+      return;
+    }
     const { error } = await supabase
       .from('pinned_conversations')
       .insert({ contact_id: contactId, pinned_by: profileId, position: 0 });
-    if (!error) {
-      setPinnedIds(prev => new Set([...prev, contactId]));
-      toast.success('Conversa fixada');
+    if (error) {
+      toast.error('Erro ao fixar conversa');
+      return;
     }
+    setPinnedIds(prev => new Set([...prev, contactId]));
+    toast.success('Conversa fixada');
   }, [profileId]);
 
   const unpinConversation = useCallback(async (contactId: string) => {
-    if (!profileId) return;
+    if (!profileId) {
+      toast.error('Não foi possível desafixar a conversa: perfil não carregado');
+      return;
+    }
     const { error } = await supabase
       .from('pinned_conversations')
       .delete()
       .eq('contact_id', contactId)
       .eq('pinned_by', profileId);
-    if (!error) {
-      setPinnedIds(prev => { const n = new Set(prev); n.delete(contactId); return n; });
-      toast.success('Conversa desafixada');
+    if (error) {
+      toast.error('Erro ao desafixar conversa');
+      return;
     }
+    setPinnedIds(prev => { const n = new Set(prev); n.delete(contactId); return n; });
+    toast.success('Conversa desafixada');
   }, [profileId]);
 
   const favoriteContact = useCallback(async (contactId: string) => {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) {
+      toast.error('Não foi possível favoritar: sessão não carregada');
+      return;
+    }
     const { error } = await supabase
       .from('favorite_contacts')
       .insert({ contact_id: contactId, user_id: user.id });
-    if (!error) {
-      setFavoriteIds(prev => new Set([...prev, contactId]));
-      _favBus.dispatchEvent(new CustomEvent('change'));
-      toast.success('Contato favoritado');
+    if (error) {
+      toast.error('Erro ao favoritar contato');
+      return;
     }
+    setFavoriteIds(prev => new Set([...prev, contactId]));
+    _favBus.dispatchEvent(new CustomEvent('change'));
+    toast.success('Contato favoritado');
   }, []);
 
   const unfavoriteContact = useCallback(async (contactId: string) => {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) {
+      toast.error('Não foi possível remover o favorito: sessão não carregada');
+      return;
+    }
     const { error } = await supabase
       .from('favorite_contacts')
       .delete()
       .eq('contact_id', contactId)
       .eq('user_id', user.id);
-    if (!error) {
-      setFavoriteIds(prev => { const n = new Set(prev); n.delete(contactId); return n; });
-      _favBus.dispatchEvent(new CustomEvent('change'));
-      toast.success('Favorito removido');
+    if (error) {
+      toast.error('Erro ao remover favorito');
+      return;
     }
+    setFavoriteIds(prev => { const n = new Set(prev); n.delete(contactId); return n; });
+    _favBus.dispatchEvent(new CustomEvent('change'));
+    toast.success('Favorito removido');
   }, []);
 
   const snoozeConversation = useCallback(async (contactId: string, duration: string) => {
@@ -245,18 +265,44 @@ export function useConversationActions() {
     toast.success('Conversa adiada');
   }, [profileId]);
 
+  // Arquivar é mudar o ESTADO da conversa, não tirar o responsável: a RPC
+  // set_conversation_status é a mesma usada pelo CloseConversationDialog e é o
+  // campo lido pelo chip "Arquivadas" (chipCounts.isArchived). O UPDATE direto
+  // em contacts.assigned_to que existia aqui não gravava conversation_status
+  // (a conversa continuava na lista), zerava o atendente sem trilha e só dava
+  // para desfazer enquanto o toast estava vivo.
+  const setConversationStatus = useCallback(async (contactId: string, next: 'archived' | 'open') => {
+    const { error } = await supabase.rpc('set_conversation_status', {
+      p_contact_id: contactId,
+      p_next: next,
+    });
+    if (error) throw error;
+    // Mesmo evento do CloseConversationDialog: o useRealtimeMessages aplica o
+    // patch otimista em memória, então o chip/lista reagem sem esperar refetch.
+    window.dispatchEvent(
+      new CustomEvent('zapp:contact-status-changed', {
+        detail: { contactId, status: next },
+      })
+    );
+  }, []);
+
   const archiveContact = useCallback(async (contactId: string) => {
-    const { data: original } = await supabase.from('contacts').select('assigned_to').eq('id', contactId).single();
-    const { error } = await supabase.from('contacts').update({ assigned_to: null }).eq('id', contactId);
-    if (error) { toast.error('Erro ao arquivar conversa'); return; }
+    try {
+      await setConversationStatus(contactId, 'archived');
+    } catch {
+      toast.error('Erro ao arquivar conversa');
+      return;
+    }
     undoToast({
       message: 'Conversa arquivada',
       icon: '📦',
       onUndo: async () => {
-        await supabase.from('contacts').update({ assigned_to: original?.assigned_to ?? null }).eq('id', contactId);
+        // Reabre pela mesma RPC. Sem reabrir nada o toast de desfazer mentiria
+        // ("Arquivamento desfeito") — undoToast já avisa e reoferece em erro.
+        await setConversationStatus(contactId, 'open');
       },
     });
-  }, []);
+  }, [setConversationStatus]);
 
   /**
    * Reabre conversa RESOLVIDA/ARQUIVADA pela RPC `reopen_conversation`
