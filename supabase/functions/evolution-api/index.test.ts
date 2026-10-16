@@ -536,7 +536,10 @@ Deno.test("E45: a lista de ações do schema cobre toda ação que o handler imp
   const actions = new Set(
     [...source.matchAll(/action === '([^']+)'/g)].map((m) => m[1]),
   );
-  assert(actions.size > 100, `sanidade: esperava >100 ações no handler (achou ${actions.size})`);
+  // SL-075 E43 removeu as ações sem equivalente GO (>40 ações); o teto caiu de
+  // >100 para >50, mesmo número da sanidade análoga em
+  // _shared/__tests__/evolution-control-authz.test.ts (57 ações restantes).
+  assert(actions.size > 50, `sanidade: esperava >50 ações no handler (achou ${actions.size})`);
   for (const action of actions) {
     assert(
       EvolutionApiRequestSchema.safeParse({ action, instanceName: "PRINCIPAL" }).success,
@@ -613,6 +616,51 @@ for (const [action, extra] of NEGADAS) {
   });
 }
 
+// ─── SL-075 E43: ações sem equivalente na Evolution GO ──────────────────────
+// Lista gerada por script (ação × translateV2ToGo → null), não por heurística.
+const REMOVED_GOLESS_ACTIONS = [
+  // integrações do painel removidas na E43
+  "set-chatwoot", "get-chatwoot", "delete-chatwoot",
+  "set-typebot", "get-typebot", "delete-typebot",
+  "typebot-sessions", "typebot-change-status", "start-typebot",
+  "set-openai", "get-openai", "delete-openai",
+  "set-dify", "get-dify", "delete-dify",
+  "set-flowise", "get-flowise", "delete-flowise",
+  "set-evolution-bot", "get-evolution-bot", "delete-evolution-bot",
+  // infra/eventos e demais rotas v2 sem equivalente GO
+  "set-rabbitmq", "get-rabbitmq", "set-sqs", "get-sqs",
+  "create-template", "find-templates", "delete-template",
+  "set-evoai", "get-evoai", "delete-evoai",
+  "set-n8n", "get-n8n", "delete-n8n",
+  "set-kafka", "get-kafka", "set-nats", "get-nats", "set-pusher", "get-pusher",
+  "set-proxy", "get-proxy", "get-catalog", "get-collections", "offer-call",
+  "set-presence", "set-settings", "get-settings", "get-webhook",
+  "send-template", "mark-unread",
+  "find-chats", "find-messages", "find-status-messages",
+  "invite-info", "toggle-ephemeral",
+];
+for (const action of REMOVED_GOLESS_ACTIONS) {
+  Deno.test(`E43: '${action}' (sem equivalente GO) cai em 'Unknown action' 404 sem I/O no provedor`, async () => {
+    const fake = createFakeEvolution();
+    Deno.env.set("EVOLUTION_API_URL", fake.url);
+    try {
+      const res = await handleEvolutionApi(
+        controlRequest(action, { instanceName: "PRINCIPAL" }),
+        {
+          callerClient: makeCallerClient({ isAdminOrSupervisor: true }),
+          supabase: makeServiceClient(),
+        },
+      );
+      const json = await res.json();
+      assertEquals(res.status, 404, `'${action}' deve cair no 'Unknown action' do handler (veio ${res.status})`);
+      assertEquals(json?.error, "Unknown action");
+      assertEquals(fake.posts.length, 0, `'${action}' não pode produzir I/O no provedor`);
+    } finally {
+      await fake.stop();
+    }
+  });
+}
+
 Deno.test("TRA-002/#18: set-webhook (proxy) de OUTRA conexão usa o token DELA", async () => {
   const c = await chamarComToken("set-webhook", { instanceName: "CONN_B", url: "https://x/functions/v1/evolution-webhook", enabled: true }, "token-da-CONN_B");
   try {
@@ -644,225 +692,21 @@ Deno.test("TRA-002/#18: instância PADRÃO sem token no Vault mantém o fallback
   }
 });
 
-// ─── Config da instância (get-settings / set-settings) ─────────────────────────
-// GO_GAPS §Sem equivalente: a GO não tem /settings/set|find; o equivalente é
-// /instance/advanced-settings (rota de INSTÂNCIA — o GO resolve a instância pelo
-// token). O v2 mantém as rotas clássicas. RED: as actions passavam intactas →
-// GO 404; a leitura voltava vazia e a tela desligava todos os interruptores.
-
-interface SettingsRequest {
-  path: string;
-  method: string;
-  apikey: string | null;
-  body: unknown;
-}
-
-/** Fake que registra path + método + credencial + corpo de cada request. */
-function createSettingsFake(respond: (req: SettingsRequest) => Response) {
-  const requests: SettingsRequest[] = [];
-  const server = Deno.serve({ hostname: "127.0.0.1", port: 0, onListen() {} }, async (req) => {
-    const record: SettingsRequest = {
-      path: new URL(req.url).pathname,
-      method: req.method,
-      apikey: req.headers.get("apikey"),
-      body: req.method === "POST" ? await req.json().catch(() => null) : null,
-    };
-    requests.push(record);
-    return respond(record);
-  });
-  const addr = server.addr;
-  if (addr.transport !== "tcp") throw new Error("settings-fake: esperava listener TCP");
-  return { url: `http://127.0.0.1:${addr.port}`, requests, stop: () => server.shutdown() };
-}
-
-async function chamarSettings(
-  action: string,
-  instanceName: string,
-  fake: ReturnType<typeof createSettingsFake>,
-  opts: { flavor?: string; token?: string | null; admin?: boolean; fields?: Record<string, unknown> } = {},
-) {
+// E43: ação removida que era 'read' nega agente sem papel (deny-by-default)
+Deno.test("E43: ação removida que era 'read' nega agente sem papel (deny-by-default)", async () => {
+  const fake = createFakeEvolution();
   Deno.env.set("EVOLUTION_API_URL", fake.url);
-  Deno.env.set("EVOLUTION_API_FLAVOR", opts.flavor ?? "go");
-  resetInstanceTokenCache();
-  const supabase: any = {
-    from: () => makeQuery(),
-    rpc: (fn: string) => fn === "get_instance_token"
-      ? Promise.resolve({ data: opts.token === undefined ? "token-da-instancia" : opts.token, error: null })
-      : Promise.resolve({ data: null, error: null }),
-  };
-  const res = await handleEvolutionApi(
-    controlRequest(action, { instanceName, ...(opts.fields ?? {}) }),
-    { callerClient: makeCallerClient({ isAdminOrSupervisor: opts.admin ?? true }), supabase },
-  );
-  return { res, requests: fake.requests, stop: () => fake.stop() };
-}
-
-const SETTINGS_OK = {
-  rejectCall: true,
-  msgCall: "mensagem",
-  groupsIgnore: false,
-  alwaysOnline: false,
-  readMessages: true,
-  readStatus: false,
-  syncFullHistory: true,
-};
-
-Deno.test("GO: get-settings lê /instance/advanced-settings com o token DA conexão e devolve os campos no topo", async () => {
-  const fake = createSettingsFake(() =>
-    new Response(JSON.stringify(SETTINGS_OK), { status: 200, headers: { "Content-Type": "application/json" } }));
-  const c = await chamarSettings("get-settings", "CONN_B", fake, { token: "token-da-CONN_B" });
-  try {
-    assertEquals(c.requests.length, 1);
-    assertEquals(c.requests[0].method, "GET");
-    assertEquals(c.requests[0].path, "/instance/advanced-settings");
-    assertEquals(c.requests[0].apikey, "token-da-CONN_B");
-    assertEquals(c.res.status, 200);
-    assertEquals(await c.res.json(), SETTINGS_OK);
-  } finally {
-    await c.stop();
-  }
-});
-
-Deno.test("GO: get-settings desembrulha `data` da GO para o topo (a tela lê no topo)", async () => {
-  const fake = createSettingsFake(() =>
-    new Response(JSON.stringify({ data: { rejectCall: true, readMessages: true } }), {
-      status: 200, headers: { "Content-Type": "application/json" },
-    }));
-  const c = await chamarSettings("get-settings", "CONN_B", fake, { token: "token-da-CONN_B" });
-  try {
-    assertEquals(c.res.status, 200);
-    assertEquals(await c.res.json(), { rejectCall: true, readMessages: true });
-  } finally {
-    await c.stop();
-  }
-});
-
-Deno.test("GO: get-settings com 2xx SEM campos conhecidos FALHA — nunca objeto vazio", async () => {
-  // Fail-closed (espelha R2-API-014): corpo vazio viraria interruptores desligados.
-  const fake = createSettingsFake(() =>
-    new Response(JSON.stringify({ status: "success" }), { status: 200, headers: { "Content-Type": "application/json" } }));
-  const c = await chamarSettings("get-settings", "CONN_B", fake, { token: "token-da-CONN_B" });
-  try {
-    const json = await c.res.json();
-    assertEquals(c.res.status, 200, "convenção do proxy: HTTP 200 + { error:true }");
-    assertEquals(json?.error, true);
-    assert(Number(json?.status) >= 500, `corpo deve trazer status >= 500 (veio ${json?.status})`);
-  } finally {
-    await c.stop();
-  }
-});
-
-Deno.test("GO: get-settings com corpo não-JSON FALHA (não engole o parse)", async () => {
-  const fake = createSettingsFake(() =>
-    new Response("<html>boom</html>", { status: 200, headers: { "Content-Type": "text/html" } }));
-  const c = await chamarSettings("get-settings", "CONN_B", fake, { token: "token-da-CONN_B" });
-  try {
-    const json = await c.res.json();
-    assertEquals(c.res.status, 200);
-    assertEquals(json?.error, true);
-    assert(Number(json?.status) >= 500, `corpo deve trazer status >= 500 (veio ${json?.status})`);
-  } finally {
-    await c.stop();
-  }
-});
-
-Deno.test("GO: get-settings propaga erro do provedor (HTTP 500 da GO)", async () => {
-  const fake = createSettingsFake(() =>
-    new Response(JSON.stringify({ message: "instance offline" }), { status: 500, headers: { "Content-Type": "application/json" } }));
-  const c = await chamarSettings("get-settings", "CONN_B", fake, { token: "token-da-CONN_B" });
-  try {
-    const json = await c.res.json();
-    assertEquals(c.res.status, 200);
-    assertEquals(json?.error, true);
-    assertEquals(json?.status, 500);
-    assert(String(json?.message).includes("instance offline"), `mensagem do provedor deve aparecer: ${json?.message}`);
-  } finally {
-    await c.stop();
-  }
-});
-
-Deno.test("GO: set-settings grava /instance/advanced-settings com os campos e o token DA conexão", async () => {
-  const fake = createSettingsFake(() =>
-    new Response(JSON.stringify({ status: "success" }), { status: 200, headers: { "Content-Type": "application/json" } }));
-  Deno.env.set("EVOLUTION_API_URL", fake.url);
-  Deno.env.set("EVOLUTION_API_FLAVOR", "go");
-  resetInstanceTokenCache();
-  const supabase: any = {
-    from: () => makeQuery(),
-    rpc: (fn: string) => fn === "get_instance_token"
-      ? Promise.resolve({ data: "token-da-CONN_B", error: null })
-      : Promise.resolve({ data: null, error: null }),
-  };
   try {
     const res = await handleEvolutionApi(
-      controlRequest("set-settings", { instanceName: "CONN_B", ...SETTINGS_OK }),
-      { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase },
+      controlRequest("get-settings", { instanceName: "PRINCIPAL" }),
+      {
+        callerClient: makeCallerClient({ isAdminOrSupervisor: false }),
+        supabase: makeServiceClient(),
+      },
     );
-    const json = await res.json();
-    assertEquals(res.status, 200, `gravação deve ser sucesso: ${JSON.stringify(json)}`);
-    assertEquals(fake.requests.length, 1);
-    assertEquals(fake.requests[0].method, "POST");
-    assertEquals(fake.requests[0].path, "/instance/advanced-settings");
-    assertEquals(fake.requests[0].apikey, "token-da-CONN_B");
-    assertEquals(fake.requests[0].body, SETTINGS_OK);
+    assertEquals(res.status, 403, "leitura removida deve negar agente pelo classifyEvolutionAction");
+    assertEquals(fake.posts.length, 0);
   } finally {
     await fake.stop();
-  }
-});
-
-Deno.test("GO: set-settings de OUTRA conexão sem token no Vault nega e não chega ao provedor", async () => {
-  const fake = createSettingsFake(() =>
-    new Response(JSON.stringify({ status: "success" }), { status: 200, headers: { "Content-Type": "application/json" } }));
-  try {
-    const res = await (async () => {
-      Deno.env.set("EVOLUTION_API_URL", fake.url);
-      Deno.env.set("EVOLUTION_API_FLAVOR", "go");
-      resetInstanceTokenCache();
-      const supabase: any = {
-        from: () => makeQuery(),
-        rpc: (fn: string) => fn === "get_instance_token"
-          ? Promise.resolve({ data: null, error: null })
-          : Promise.resolve({ data: null, error: null }),
-      };
-      return await handleEvolutionApi(
-        controlRequest("set-settings", { instanceName: "CONN_B", ...SETTINGS_OK }),
-        { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase },
-      );
-    })();
-    assertEquals(fake.requests.length, 0, "sem token da conexão não pode haver I/O no provedor");
-    assertEquals(res.status, 200);
-    assertEquals((await res.json())?.error, true);
-  } finally {
-    await fake.stop();
-  }
-});
-
-Deno.test("v2: get-settings mantém GET /settings/find/{instance} com a chave global", async () => {
-  const fake = createSettingsFake(() =>
-    new Response(JSON.stringify(SETTINGS_OK), { status: 200, headers: { "Content-Type": "application/json" } }));
-  const c = await chamarSettings("get-settings", "PRINCIPAL", fake, { flavor: "v2" });
-  try {
-    assertEquals(c.requests.length, 1);
-    assertEquals(c.requests[0].method, "GET");
-    assertEquals(c.requests[0].path, "/settings/find/PRINCIPAL");
-    assertEquals(c.requests[0].apikey, "test-evolution-key");
-    assertEquals(c.res.status, 200);
-  } finally {
-    await c.stop();
-  }
-});
-
-Deno.test("v2: set-settings mantém POST /settings/set/{instance} com a chave global", async () => {
-  const fake = createSettingsFake(() =>
-    new Response(JSON.stringify({ status: "success" }), { status: 200, headers: { "Content-Type": "application/json" } }));
-  const c = await chamarSettings("set-settings", "PRINCIPAL", fake, { flavor: "v2", fields: SETTINGS_OK });
-  try {
-    assertEquals(c.requests.length, 1);
-    assertEquals(c.requests[0].method, "POST");
-    assertEquals(c.requests[0].path, "/settings/set/PRINCIPAL");
-    assertEquals(c.requests[0].apikey, "test-evolution-key");
-    assertEquals(c.requests[0].body, SETTINGS_OK);
-  } finally {
-    await c.stop();
   }
 });
