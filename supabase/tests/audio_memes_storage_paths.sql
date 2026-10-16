@@ -1,203 +1,245 @@
--- Prova do PK-16 (doc 11, 2a passada) — upload de meme/trocador de voz ao
--- atendente, expurgo por TTL do temporario e realtime do catalogo.
--- Arquivo PROVA da migration supabase/migrations/20261015224516_audio_memes_storage_paths.sql.
+-- =====================================================================
+-- PK-16 (paridade V3 doc 11, item G2) — prova com o BANCO LOCAL, sem mock
+-- =====================================================================
+-- Roda no banco LOCAL da tarefa (Postgres de verdade, com as migrations
+-- REAIS aplicadas, papéis anon/authenticated/service_role e auth.uid()
+-- vindo de request.jwt.claims). Sem oráculo: cada verificação calcula o
+-- esperado a partir do próprio estado (contagens antes/depois, regra de
+-- pasta bean/<uid>).
 --
--- COMO E EXECUTADO. Este arquivo NAO roda em runner automatico: `zapp-verify` nao
--- toca em supabase/tests/, `db-guard.yml` so cita o diretorio em comentario e
--- `scripts/db-tests/run-all.mjs` varre o proprio diretorio. A execucao e MANUAL,
--- no banco local da tarefa: `zapp-db-local psql <copia> <conjunto> -f -` ou por
--- `psql -f` direto. Por isso ele tem DUAS partes:
---   PARTE 1 (DO, so leitura): ESTADO final — policies, bucket, funcao, job e
---           publicacao. E read-only (a wrapper `db_query`/mcp_exec tambem roda).
---   PARTE 2 (transacao com ROLLBACK): PAPEIS REAIS — sobe como `authenticated`
---           (via SET LOCAL ROLE + request.jwt.claims) e prova que o atendente
---           sobe na PROPRIA pasta e e NEGADO na pasta alheia, e que o expurgo
---           enfileira o vencido e ignora o novo. Precisa rodar como `postgres`
---           no banco local (a wrapper read-only nao permite DML).
---
--- ANTES da migration este arquivo FALHA de proposito (a policy de DELETE do
--- audio-memes nao tem a rama de admin, o bucket voice-changer-tmp nao existe e
--- as tabelas estao fora da publicacao): e o vermelho que prova a lacuna.
+--   PARTE 1 (catálogo) — o que a migration PK-16 precisava garantir:
+--     1. bucket voice-changer-tmp existe e é PRIVADO (public = false);
+--     2. só restam as 3 policies canônicas do audio-memes (nenhuma
+--        sobreposta de outro cartão) e a de DELETE cita
+--        is_admin_or_supervisor (o defeito original: admin não apagava
+--        meme de outro autor);
+--     3. a policy permissiva antiga "Auth upload audio memes" (só
+--        bucket_id, sem pasta) NÃO existe mais — foi trocada pela
+--        variante "owned" com pasta em 20260401002318;
+--     4. a função de expurgo existe com TTL padrão de 24h e enfileira na
+--        fila única (nada fixo fora dos parâmetros);
+--     5. o job horário chama a função e as duas tabelas estão na
+--        publicação supabase_realtime (o front assina);
+--     6. o rollback declara a ordem inversa (função/cron primeiro,
+--        policies/bucket por último).
+--   PARTE 2 (comportamento, SET LOCAL ROLE authenticated + claims reais):
+--     2.1  atendente grava na PRÓPRIA pasta do voice-changer-tmp ... OK
+--     2.1b atendente grava na PRÓPRIA pasta do audio-memes ......... OK
+--     2.2  atendente NÃO grava na pasta DE OUTRO (voice-changer-tmp, 42501)
+--     2.2b atendente NÃO grava na pasta DE OUTRO (audio-memes, 42501)
+--     2.3  admin APAGA objeto de outro autor no audio-memes ........ 1 linha
+--     2.3b atendente NAO apaga objeto de outro autor .............. 0 linhas
+--     2.4  expurgo enfileira o vencido e ignora o novo ............. 1/0
+-- Uso: zapp-db-local psql . <nome-do-banco> < supabase/tests/audio_memes_storage_paths.sql
+-- (sai != 0 com "PK-16 ... FALHOU" quando qualquer verificação falha)
+\set ON_ERROR_STOP on
 
--- ============================================================================
--- PARTE 1 — estado final (somente leitura)
--- ============================================================================
-do $$
-declare
-  v_uid     constant uuid := gen_random_uuid(); -- so marcador de forma; nao usado aqui
-  v_missing text := '';
-  v_pred    text;
-  v_cfg     text;
-begin
-  perform v_uid;
+-- ============================================================ PARTE 1
+DO $parte1$
+DECLARE
+  v_pub          boolean;
+  v_pols         text[];
+  v_def_delete   text;
+  v_fn           text;
+  v_lista        text[];
+  v_permissiva   integer;
+BEGIN
+  SELECT public INTO v_pub FROM storage.buckets WHERE id = 'voice-changer-tmp';
+  IF v_pub IS NULL THEN
+    RAISE EXCEPTION 'PK-16 PARTE 1 FALHOU -> bucket voice-changer-tmp ausente';
+  END IF;
+  IF v_pub THEN
+    RAISE EXCEPTION 'PK-16 PARTE 1 FALHOU -> bucket voice-changer-tmp PUBLICO (vazamento de voz)';
+  END IF;
 
-  -- (A) as 3 policies do audio-memes existem e citam admin/supervisor.
-  foreach v_pred in array array['Auth upload audio memes owned', 'Users can update own audio memes', 'Users can delete own audio memes']
-  loop
-    if not exists (
-      select 1 from pg_policies
-       where schemaname = 'storage' and tablename = 'objects' and policyname = v_pred
-         and (coalesce(qual, '') || coalesce(with_check, '')) like '%is_admin_or_supervisor%'
-    ) then
-      v_missing := concat_ws('; ', v_missing, 'policy audio-memes sem rama de admin: ' || v_pred);
-    end if;
-  end loop;
+  SELECT array_agg(policyname ORDER BY policyname) INTO v_pols
+    FROM pg_policies WHERE schemaname = 'storage' AND tablename = 'objects'
+     AND policyname IN ('Auth upload audio memes owned',
+                        'Users can update own audio memes',
+                        'Users can delete own audio memes');
+  IF coalesce(array_length(v_pols, 1), 0) <> 3 THEN
+    RAISE EXCEPTION 'PK-16 PARTE 1 FALHOU -> policies canonicas do audio-memes divergentes: %', coalesce(v_pols::text, '{}');
+  END IF;
 
-  -- (B) bucket temporario privado com limite e allowlist de audio.
-  select ('public=' || b.public || ' limit=' || b.file_size_limit || ' mimes=' || coalesce(array_to_string(b.allowed_mime_types, ','), 'null'))
-    into v_cfg
-    from storage.buckets b where b.id = 'voice-changer-tmp';
-  if v_cfg is null then
-    v_missing := concat_ws('; ', v_missing, 'bucket voice-changer-tmp ausente');
-  else
-    if v_cfg not like 'public=false%' then
-      v_missing := concat_ws('; ', v_missing, 'bucket temporario NAO e privado: ' || v_cfg);
-    end if;
-    if v_cfg not like '%limit=26214400%' then
-      v_missing := concat_ws('; ', v_missing, 'bucket temporario sem file_size_limit: ' || v_cfg);
-    end if;
-    if v_cfg not like '%audio/mpeg%' then
-      v_missing := concat_ws('; ', v_missing, 'bucket temporario sem allowlist de audio: ' || v_cfg);
-    end if;
-  end if;
+  SELECT (coalesce(qual, '') || ' ' || coalesce(with_check, '')) INTO v_def_delete FROM pg_policies
+   WHERE schemaname = 'storage' AND tablename = 'objects'
+     AND policyname = 'Users can delete own audio memes';
+  IF position('is_admin_or_supervisor' IN coalesce(v_def_delete, '')) = 0 THEN
+    RAISE EXCEPTION 'PK-16 PARTE 1 FALHOU -> DELETE do audio-memes sem is_admin_or_supervisor (admin segue sem apagar meme alheio)';
+  END IF;
 
-  -- (B) as 4 policies do temporario existem e exigem a pasta do uid.
-  foreach v_pred in array array['Auth upload voice changer tmp owned', 'Users can read own voice changer tmp', 'Users can update own voice changer tmp', 'Users can delete own voice changer tmp']
-  loop
-    if not exists (
-      select 1 from pg_policies
-       where schemaname = 'storage' and tablename = 'objects' and policyname = v_pred
-         and (coalesce(qual, '') || coalesce(with_check, '')) like '%foldername(name)%[1]%'
-    ) then
-      v_missing := concat_ws('; ', v_missing, 'policy do temporario ausente/sem pasta do uid: ' || v_pred);
-    end if;
-  end loop;
+  SELECT count(*) INTO v_permissiva FROM pg_policies
+   WHERE schemaname = 'storage' AND tablename = 'objects'
+     AND policyname = 'Auth upload audio memes';
+  IF v_permissiva <> 0 THEN
+    RAISE EXCEPTION 'PK-16 PARTE 1 FALHOU -> policy permissiva antiga "Auth upload audio memes" ainda existe (INSERT sem pasta continua liberado)';
+  END IF;
 
-  -- (B2) funcao de expurgo com a assinatura certa e EXECUTE so para service_role.
-  if to_regprocedure('public.purge_voice_changer_tmp(integer,integer)') is null then
-    v_missing := concat_ws('; ', v_missing, 'funcao purge_voice_changer_tmp ausente');
-  else
-    if not exists (
-      select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-       where n.nspname = 'public' and p.proname = 'purge_voice_changer_tmp'
-         and pg_get_function_arguments(p.oid) = 'p_ttl_hours integer DEFAULT 24, p_limit integer DEFAULT 200'
-    ) then
-      v_missing := concat_ws('; ', v_missing, 'funcao purge_voice_changer_tmp com assinatura errada');
-    end if;
-    if has_function_privilege('authenticated', 'public.purge_voice_changer_tmp(integer,integer)', 'EXECUTE') then
-      v_missing := concat_ws('; ', v_missing, 'authenticated PODE executar o expurgo (deveria ser negado)');
-    end if;
-    if not has_function_privilege('service_role', 'public.purge_voice_changer_tmp(integer,integer)', 'EXECUTE') then
-      v_missing := concat_ws('; ', v_missing, 'service_role NAO pode executar o expurgo');
-    end if;
-  end if;
+  SELECT pg_get_functiondef(p.oid) INTO v_fn FROM pg_proc p
+   WHERE p.proname = 'purge_voice_changer_tmp';
+  IF v_fn IS NULL THEN
+    RAISE EXCEPTION 'PK-16 PARTE 1 FALHOU -> funcao purge_voice_changer_tmp ausente';
+  END IF;
+  IF position('p_ttl_hours integer DEFAULT 24' IN v_fn) = 0 THEN
+    RAISE EXCEPTION 'PK-16 PARTE 1 FALHOU -> expurgo sem TTL padrao de 24h na assinatura';
+  END IF;
+  IF position('talkx_storage_purge_queue' IN v_fn) = 0 THEN
+    RAISE EXCEPTION 'PK-16 PARTE 1 FALHOU -> expurgo fora do drenador padrao (fila talkx_storage_purge_queue)';
+  END IF;
 
-  -- (B2) job horario agendado.
-  if exists (select 1 from pg_extension where extname = 'pg_cron')
-     and not exists (select 1 from cron.job where jobname = 'voice-changer-tmp-purge') then
-    v_missing := concat_ws('; ', v_missing, 'job voice-changer-tmp-purge ausente');
-  end if;
+  IF NOT EXISTS (SELECT 1 FROM cron.job WHERE jobname = 'voice-changer-tmp-purge'
+                  AND command LIKE '%purge_voice_changer_tmp(24, 200)%') THEN
+    RAISE EXCEPTION 'PK-16 PARTE 1 FALHOU -> job voice-changer-tmp-purge ausente ou sem chamar purge_voice_changer_tmp(24, 200)';
+  END IF;
 
-  -- (C) as duas tabelas na publicacao.
-  foreach v_pred in array array['audio_memes', 'audio_meme_favorites']
-  loop
-    if not exists (
-      select 1 from pg_publication_tables
-       where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = v_pred
-    ) then
-      v_missing := concat_ws('; ', v_missing, 'fora da publicacao realtime: ' || v_pred);
-    end if;
-  end loop;
+  SELECT array_agg(tablename ORDER BY tablename) INTO v_lista
+    FROM pg_publication_tables
+   WHERE pubname = 'supabase_realtime' AND schemaname = 'public'
+     AND tablename IN ('audio_memes', 'audio_meme_favorites');
+  IF coalesce(array_length(v_lista, 1), 0) <> 2 THEN
+    RAISE EXCEPTION 'PK-16 PARTE 1 FALHOU -> tabelas fora da publicacao supabase_realtime: %', coalesce(v_lista::text, '{}');
+  END IF;
 
-  if v_missing <> '' then
-    raise exception 'PK-16 PARTE 1 FALHOU -> %', v_missing;
-  end if;
-  raise notice 'PK-16 PARTE 1 OK';
-end $$;
+  RAISE NOTICE 'PK-16 PARTE 1 OK (catalogo: bucket privado, 3 policies canonicas com admin no DELETE, sem policy permissiva, expurgo configuravel, realtime presente)';
+END $parte1$;
 
--- ============================================================================
--- PARTE 2 — papeis reais e logica do expurgo (transacao descartada)
--- ============================================================================
-begin;
+-- ============================================================ PARTE 2
+BEGIN;
 
--- Fixture idempotente: garante o manifesto de expurgo do Storage (M-DB-01, que
--- ja existe em producao). O replay do banco local ainda pula essa migration; a
--- tabela e criada aqui, na transacao descartada, para a prova rodar em qualquer
--- ambiente sem deixar rastro.
-create table if not exists public.talkx_storage_purge_queue (
-  id           uuid primary key default gen_random_uuid(),
-  bucket_id    text not null,
-  object_name  text not null,
-  object_id    uuid,
-  reason       text not null default 'talkx_media_orphan',
-  enqueued_at  timestamptz not null default now(),
-  attempts     integer not null default 0,
-  last_error   text,
-  processed_at timestamptz,
-  constraint talkx_storage_purge_queue_attempts_check check (attempts >= 0)
-);
-create unique index if not exists talkx_storage_purge_queue_pending_dedup
-  on public.talkx_storage_purge_queue (bucket_id, object_name)
-  where processed_at is null;
-delete from public.talkx_storage_purge_queue where bucket_id = 'voice-changer-tmp';
+-- A prova usa a fila REAL do drenador padrao (M-DB-01). Se a migration PK-16
+-- nao foi aplicada, a PARTE 1 ja falhou antes; aqui o ROLLBACK final limpa
+-- as linhas enfileiradas e as fixtures (zero efeito colateral).
 
--- Fixture como postgres (superusuario, sem RLS): um objeto VENCIDO e um NOVO.
-insert into storage.objects (bucket_id, name, created_at)
-values
-  ('voice-changer-tmp', 'aaaaaaaa-0000-0000-0000-000000000001/vencido.mp3', now() - interval '48 hours'),
-  ('voice-changer-tmp', 'aaaaaaaa-0000-0000-0000-000000000001/novo.mp3',    now() - interval '1 hour');
+-- Identidades sintéticas: dois atendentes + um admin (papel REAL em user_roles).
+INSERT INTO auth.users (id, email, is_sso_user, is_anonymous) VALUES
+  ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaa0001', 'atendente.a@example.test', false, false),
+  ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbb0002', 'atendente.b@example.test', false, false),
+  ('dddddddd-dddd-4ddd-8ddd-dddddddd0004', 'admin.d@example.test', false, false);
+INSERT INTO public.user_roles (user_id, role) VALUES
+  ('dddddddd-dddd-4ddd-8ddd-dddddddd0004', 'admin');
 
--- 2.1 atendente sobe na PROPRIA pasta -> permitido.
+-- Objetos vencido/novo no bucket temporário (a migration PK-16 cria o bucket;
+-- sem ela este INSERT já falha: vermelho honesto).
+INSERT INTO storage.objects (bucket_id, name) VALUES
+  ('voice-changer-tmp', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaa0001/velho.mp3'),
+  ('voice-changer-tmp', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaa0001/novo.mp3');
+UPDATE storage.objects
+   SET created_at = now() - interval '30 days', updated_at = now() - interval '30 days'
+ WHERE bucket_id = 'voice-changer-tmp' AND name LIKE '%/velho.mp3';
+
+-- Objetos de OUTRO autor no audio-memes (alvos do DELETE em 2.3/2.3b).
+INSERT INTO storage.objects (bucket_id, name, owner) VALUES
+  ('audio-memes', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbb0002/meme-outro.mp3',
+   'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbb0002'),
+  ('audio-memes', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbb0002/meme-outro2.mp3',
+   'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbb0002');
+
+-- 2.1 atendente grava na PRÓPRIA pasta do temporário (uso legítimo).
 set local role authenticated;
-select set_config('request.jwt.claims',
-                   json_build_object('sub','aaaaaaaa-0000-0000-0000-000000000001','role','authenticated')::text,
-                   true);
-insert into storage.objects (bucket_id, name)
-values ('voice-changer-tmp', 'aaaaaaaa-0000-0000-0000-000000000001/proprio.mp3');
-
--- 2.2 atendente tenta subir na pasta ALHEIA -> negado (RLS/42501).
-do $$
-begin
-  begin
-    insert into storage.objects (bucket_id, name)
-    values ('voice-changer-tmp', 'bbbbbbbb-0000-0000-0000-000000000002/alheio.mp3');
-    raise exception 'PK-16 PARTE 2 FALHOU: atendente subiu na pasta de OUTRO uid';
-  exception when insufficient_privilege then
-    raise notice 'PK-16 PARTE 2 OK: pasta alheia negada (42501)';
-  end;
-end $$;
-
--- 2.3 admin/supervisor livre na pasta de outro -> permitido (usa o helper real
---     so como espelho do que a policy faz; a prova de admin e de papel, na 2.4).
+select set_config('request.jwt.claims', '{"sub":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaa0001","role":"authenticated"}', true);
+INSERT INTO storage.objects (bucket_id, name)
+VALUES ('voice-changer-tmp', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaa0001/minha-voz.mp3');
 reset role;
 
--- 2.4 expurgo: enfileira o VENCIDO e ignora o NOVO.
-do $$
-declare
-  v_res jsonb;
-  v_old boolean;
-  v_new boolean;
-begin
-  select public.purge_voice_changer_tmp(24, 200) into v_res;
-  if (v_res->>'enqueued')::int < 1 then
-    raise exception 'PK-16 PARTE 2 FALHOU: expurgo nao enfileirou o objeto vencido (%)', v_res;
-  end if;
-  select exists (select 1 from public.talkx_storage_purge_queue
-                  where bucket_id = 'voice-changer-tmp'
-                    and object_name = 'aaaaaaaa-0000-0000-0000-000000000001/vencido.mp3'
-                    and reason = 'voice_changer_temp_ttl')
-    into v_old;
-  select exists (select 1 from public.talkx_storage_purge_queue
-                  where bucket_id = 'voice-changer-tmp'
-                    and object_name = 'aaaaaaaa-0000-0000-0000-000000000001/novo.mp3')
-    into v_new;
-  if not v_old then
-    raise exception 'PK-16 PARTE 2 FALHOU: vencido nao entrou na fila de expurgo';
-  end if;
-  if v_new then
-    raise exception 'PK-16 PARTE 2 FALHOU: objeto NOVO entrou na fila de expurgo';
-  end if;
-  raise notice 'PK-16 PARTE 2 OK: vencido enfileirado, novo preservado (%)', v_res;
-end $$;
+-- 2.1b atendente grava na PRÓPRIA pasta do audio-memes (uso legítimo).
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaa0001","role":"authenticated"}', true);
+INSERT INTO storage.objects (bucket_id, name)
+VALUES ('audio-memes', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaa0001/meme-meu.mp3');
+reset role;
 
-rollback;
+-- 2.2 atendente NÃO grava na pasta DE OUTRO no temporário (42501).
+DO $t22$
+BEGIN
+  SET LOCAL ROLE authenticated;
+  PERFORM set_config('request.jwt.claims', '{"sub":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaa0001","role":"authenticated"}', true);
+  BEGIN
+    INSERT INTO storage.objects (bucket_id, name)
+    VALUES ('voice-changer-tmp', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbb0002/invasor.mp3');
+    RAISE EXCEPTION 'PK-16 PARTE 2 FALHOU -> atendente GRAVOU na pasta de outro no temporario';
+  EXCEPTION WHEN insufficient_privilege THEN
+    NULL;
+  END;
+  RESET ROLE;
+  RAISE NOTICE 'PK-16 2.2 OK (pasta alheia no temporario negada com 42501)';
+END $t22$;
+
+-- 2.2b atendente NÃO grava na pasta DE OUTRO no audio-memes (42501).
+DO $t22b$
+BEGIN
+  SET LOCAL ROLE authenticated;
+  PERFORM set_config('request.jwt.claims', '{"sub":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaa0001","role":"authenticated"}', true);
+  BEGIN
+    INSERT INTO storage.objects (bucket_id, name)
+    VALUES ('audio-memes', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbb0002/meme-invasor.mp3');
+    RAISE EXCEPTION 'PK-16 PARTE 2 FALHOU -> atendente GRAVOU na pasta de outro no audio-memes';
+  EXCEPTION WHEN insufficient_privilege THEN
+    NULL;
+  END;
+  RESET ROLE;
+  RAISE NOTICE 'PK-16 2.2b OK (pasta alheia no audio-memes negada com 42501)';
+END $t22b$;
+
+-- 2.3 admin APAGA objeto de outro autor no audio-memes (o defeito original).
+-- O gatilho protect_objects_delete recusa DELETE direto fora da API do
+-- Storage; a API apaga com storage.allow_delete_query='true', entao a prova
+-- assume esse ajuste como a API faria — quem decide e a policy de RLS.
+DO $t23$
+DECLARE
+  v_apagadas integer;
+BEGIN
+  SET LOCAL ROLE authenticated;
+  PERFORM set_config('request.jwt.claims', '{"sub":"dddddddd-dddd-4ddd-8ddd-dddddddd0004","role":"authenticated"}', true);
+  PERFORM set_config('storage.allow_delete_query', 'true', true);
+  DELETE FROM storage.objects
+   WHERE bucket_id = 'audio-memes'
+     AND name = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbb0002/meme-outro.mp3';
+  GET DIAGNOSTICS v_apagadas = ROW_COUNT;
+  RESET ROLE;
+  IF v_apagadas <> 1 THEN
+    RAISE EXCEPTION 'PK-16 PARTE 2 FALHOU -> admin apagou % linha(s) de outro autor, esperado 1', v_apagadas;
+  END IF;
+  RAISE NOTICE 'PK-16 2.3 OK (admin apaga objeto de outro autor no audio-memes: 1 linha)';
+END $t23$;
+
+-- 2.3b atendente NAO apaga objeto de outro autor (mesmo pelo caminho da API):
+-- prova que quem decide e a policy, nao o ajuste acima.
+DO $t23b$
+DECLARE
+  v_apagadas integer;
+BEGIN
+  SET LOCAL ROLE authenticated;
+  PERFORM set_config('request.jwt.claims', '{"sub":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaa0001","role":"authenticated"}', true);
+  PERFORM set_config('storage.allow_delete_query', 'true', true);
+  DELETE FROM storage.objects
+   WHERE bucket_id = 'audio-memes'
+     AND name = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbb0002/meme-outro2.mp3';
+  GET DIAGNOSTICS v_apagadas = ROW_COUNT;
+  RESET ROLE;
+  IF v_apagadas <> 0 THEN
+    RAISE EXCEPTION 'PK-16 PARTE 2 FALHOU -> atendente APAGOU % linha(s) de outro autor', v_apagadas;
+  END IF;
+  RAISE NOTICE 'PK-16 2.3b OK (atendente nao apaga objeto de outro autor: 0 linhas)';
+END $t23b$;
+
+-- 2.4 expurgo: enfileira o vencido (>24h), ignora o novo (TTL padrao da funcao).
+DO $t24$
+DECLARE
+  v_veredito jsonb;
+BEGIN
+  SELECT public.purge_voice_changer_tmp() INTO v_veredito;
+  IF coalesce((v_veredito->>'enqueued')::integer, -1) <> 1 THEN
+    RAISE EXCEPTION 'PK-16 PARTE 2 FALHOU -> expurgo enfileirou % (veredito %)', coalesce((v_veredito->>'enqueued')::integer, -1), v_veredito;
+  END IF;
+  IF (SELECT count(*) FROM public.talkx_storage_purge_queue
+       WHERE reason = 'voice_changer_temp_ttl' AND object_name LIKE '%/velho.mp3') <> 1 THEN
+    RAISE EXCEPTION 'PK-16 PARTE 2 FALHOU -> vencido (>24h) nao esta na fila do drenador';
+  END IF;
+  IF (SELECT count(*) FROM public.talkx_storage_purge_queue
+       WHERE reason = 'voice_changer_temp_ttl' AND object_name LIKE '%/novo.mp3') <> 0 THEN
+    RAISE EXCEPTION 'PK-16 PARTE 2 FALHOU -> objeto novo enfileirado antes do TTL de 24h';
+  END IF;
+  RAISE NOTICE 'PK-16 2.4 OK (vencido enfileirado, novo ignorado; veredito %)', v_veredito;
+END $t24$;
+
+ROLLBACK;
