@@ -4845,6 +4845,8 @@ export type Database = {
           ptt: boolean | null
           reply_to_id: string | null
           sender: string
+          sender_display_name: string | null
+          sender_participant_jid: string | null
           status: string | null
           status_updated_at: string | null
           transcription: string | null
@@ -4885,6 +4887,8 @@ export type Database = {
           ptt?: boolean | null
           reply_to_id?: string | null
           sender: string
+          sender_display_name?: string | null
+          sender_participant_jid?: string | null
           status?: string | null
           status_updated_at?: string | null
           transcription?: string | null
@@ -4925,6 +4929,8 @@ export type Database = {
           ptt?: boolean | null
           reply_to_id?: string | null
           sender?: string
+          sender_display_name?: string | null
+          sender_participant_jid?: string | null
           status?: string | null
           status_updated_at?: string | null
           transcription?: string | null
