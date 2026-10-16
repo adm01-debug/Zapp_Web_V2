@@ -232,6 +232,21 @@ describe('ContactActionButtons', () => {
     expect(emailTile().querySelector('[data-testid="contact-email-unread-badge"]')).not.toBeNull();
   });
 
+  // Cartão do CRM: sem CRM configurado o item do menu não podia sumir sem
+  // explicação (`ContactActionButtons.tsx`: `if (!isConfigured) return null`).
+  it('sem CRM configurado o item do menu explica ("CRM não configurado") em vez de sumir', () => {
+    const conversation = { id: 'conv-1', status: 'open', contact: { id: 'c1', name: 'Maria Silva' } } as never;
+    render(<ContactActionButtons contact={baseContact} conversation={conversation} onStartCall={onStartCall} />);
+
+    const maisTile = screen.getAllByTestId('contact-action-tile').find(t => t.querySelector('svg.lucide-ellipsis'))!;
+    openViaPointer(maisTile);
+
+    const item = screen.getByText('CRM não configurado').closest('[role="menuitem"]');
+    expect(item).not.toBeNull();
+    expect(item).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.queryByText('Sincronizar CRM')).not.toBeInTheDocument();
+  });
+
   it('U04 — contato sem e-mail cadastrado: hook ocioso (contactId null) e nenhum selo', () => {
     unreadEmailsMock.count = 4;
     render(<ContactActionButtons contact={{ ...baseContact, email: undefined }} onStartCall={onStartCall} />);

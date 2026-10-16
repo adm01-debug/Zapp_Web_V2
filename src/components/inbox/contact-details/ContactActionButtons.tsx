@@ -10,7 +10,6 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
 import { useSyncToCRM } from '@/hooks/integrations/useSyncToCRM';
 import type { Conversation } from '@/types/chat';
 import { RealtimeCollaboration } from '../RealtimeCollaboration';
@@ -30,7 +29,14 @@ interface ContactActionButtonsProps {
 
 function CrmSyncMenuItem({ conversation }: { conversation: Conversation }) {
   const { syncConversationAsync, isSyncing, isConfigured } = useSyncToCRM();
-  if (!isConfigured) return null;
+  // Sem CRM configurado o item não some sem explicação: fica desabilitado com o motivo.
+  if (!isConfigured) {
+    return (
+      <DropdownMenuItem disabled className="gap-2 text-xs">
+        <RefreshCw className="w-3.5 h-3.5 text-muted-foreground" />CRM não configurado
+      </DropdownMenuItem>
+    );
+  }
 
   const handleCrmSync = async () => {
     try {
@@ -128,7 +134,6 @@ const Tile = React.forwardRef<HTMLButtonElement, TileProps>(function Tile(
 export function ContactActionButtons({
   contact, conversation, hasExpandedSections, onCollapseAll, onQuickAction, onStartCall,
 }: ContactActionButtonsProps) {
-  const crmIntegrationEnabled = useCRMIntegrationEnabled();
   const videoCallEnabled = useFeatureFlag('video_call', false);
   // U04 — e-mails recebidos e ainda não lidos do contato (hook U02, D02/D03). O
   // número vira selo no ícone de E-mail e entra no nome acessível do botão. Só
@@ -222,7 +227,7 @@ export function ContactActionButtons({
             <DropdownMenuItem onClick={() => onQuickAction?.('block')} className="gap-2 text-xs text-destructive">
               <Ban className="w-3.5 h-3.5" />Bloquear
             </DropdownMenuItem>
-            {crmIntegrationEnabled && conversation && <CrmSyncMenuItem conversation={conversation} />}
+            {conversation && <CrmSyncMenuItem conversation={conversation} />}
             {hasExpandedSections && onCollapseAll && (
               <DropdownMenuItem onClick={onCollapseAll} className="gap-2 text-xs">
                 <ChevronsDownUp className="w-3.5 h-3.5 text-muted-foreground" />Recolher seções
