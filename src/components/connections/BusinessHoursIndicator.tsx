@@ -17,12 +17,14 @@ import { cn } from '@/lib/utils';
 /** Minutos desde a meia-noite para `HH:MM` (aceita `HH:MM:SS`). `null` = inválido. */
 export function minutosDoHorario(valor: string | null | undefined): number | null {
   if (typeof valor !== 'string') return null;
-  const m = /^(\d{1,2}):(\d{2})/.exec(valor.trim());
+  // Âncora total: sem `$` o prefixo `09:00` de `09:00xyz` (ou segundos
+  // inválidos em `09:00:99`) passava como válido. Minutos e segundos
+  // opcionais só aceitam `00`–`59`.
+  const m = /^(\d{1,2}):([0-5]\d)(?::([0-5]\d))?$/.exec(valor.trim());
   if (!m) return null;
   const horas = Number(m[1]);
-  const minutos = Number(m[2]);
-  if (horas > 23 || minutos > 59) return null;
-  return horas * 60 + minutos;
+  if (horas > 23) return null;
+  return horas * 60 + Number(m[2]);
 }
 
 export type TipoJanela = 'incompleta' | 'igual' | 'normal' | 'noturna';
@@ -95,8 +97,9 @@ export interface LinhaDeHorario {
 
 /**
  * Traduz a linha de `business_hours` do dia em estado do selo. Sem linha para
- * hoje não há configuração: a conexão é tratada como aberta (comportamento da
- * V2). Início igual ao fim é cadastro inválido — o selo não inventa "aberto".
+ * hoje não há expediente: a conexão é tratada como FECHADA (o pedido manda o
+ * selo "Fechado" com "Sem horário configurado"). Início igual ao fim é
+ * cadastro inválido — o selo não inventa "aberto".
  */
 export function resumoDoDia(
   dia: LinhaDeHorario | null | undefined,
@@ -104,7 +107,7 @@ export function resumoDoDia(
 ): ResumoDoDia {
   if (!dia) {
     return {
-      isOpen: true,
+      isOpen: false,
       motivo: 'sem-configuracao',
       viraODia: false,
       intervalo: null,
@@ -148,7 +151,9 @@ export function resumoDoDia(
 /**
  * A madrugada pertence ao dia anterior: uma janela noturna da véspera
  * (22:00→06:00 de sexta) mantém a conexão aberta no sábado cedo. A linha de
- * hoje decide primeiro; ontem só entra quando hoje não abre agora.
+ * hoje decide primeiro; ontem só entra quando hoje não abre agora — inclusive
+ * quando hoje nem tem linha (sem expediente próprio, a madrugada herdada
+ * ainda vale).
  */
 export function resumoDoHorario(
   hoje: LinhaDeHorario | null | undefined,
@@ -156,7 +161,7 @@ export function resumoDoHorario(
   ontem: LinhaDeHorario | null | undefined = null,
 ): ResumoDoDia {
   const resultadoDeHoje = resumoDoDia(hoje, agoraMinutos);
-  if (resultadoDeHoje.isOpen || !hoje) return resultadoDeHoje;
+  if (resultadoDeHoje.isOpen) return resultadoDeHoje;
 
   const fimDeOntem = minutosDoHorario(ontem?.close_time);
   const madrugadaDeOntem =
@@ -192,12 +197,15 @@ async function fetchBusinessHoursStatus(connectionId: string): Promise<ResumoDoD
   // madrugada de hoje. Nada de single(): o header
   // "Accept: application/vnd.pgrst.object+json" faria o PostgREST responder
   // 406 sempre que não existe configuração para o dia (caso normal, não erro).
+  // Ordem + limite determinísticos: sem `order` a paginação padrão do
+  // PostgREST poderia truncar antes de devolver as duas linhas.
   const diaAnterior = (currentDay + 6) % 7;
   const { data: rows, error } = await supabase
     .from('business_hours')
     .select('*')
     .eq('whatsapp_connection_id', connectionId)
     .in('day_of_week', [diaAnterior, currentDay])
+    .order('day_of_week', { ascending: true })
     .limit(2);
 
   // Lança o erro em vez de engolir: só assim o retry com backoff do

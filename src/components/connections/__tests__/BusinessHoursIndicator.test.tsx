@@ -53,7 +53,14 @@ vi.mock('@/integrations/supabase/client', () => ({
           h.filters.push(['in', ...args]);
           return builder;
         },
-        limit: () => builder,
+        order: (...args: unknown[]) => {
+          h.filters.push(['order', ...args]);
+          return builder;
+        },
+        limit: (...args: unknown[]) => {
+          h.filters.push(['limit', ...args]);
+          return builder;
+        },
         then: (resolve: (value: unknown) => void) =>
           resolve({ data: h.rows, error: h.error }),
       };
@@ -105,14 +112,37 @@ beforeEach(() => {
 });
 
 describe('BusinessHoursIndicator — estados do selo', () => {
-  it('sem linha para hoje, assume aberto e diz que não há horário configurado', async () => {
+  it('sem linha para hoje, mostra “Fechado” e diz que não há horário configurado', async () => {
     const { container } = setup();
-    expect(await screen.findByText('Aberto')).toBeTruthy();
+    expect(await screen.findByText('Fechado')).toBeTruthy();
+    expect(screen.queryByText('Aberto')).toBeNull();
 
     const trigger = container.querySelector('div')!;
     fireEvent.pointerEnter(trigger);
     fireEvent.pointerMove(trigger);
     expect(await screen.findByText('Sem horário configurado')).toBeTruthy();
+  });
+
+  it('sem linha para hoje, a madrugada herdada de ontem ainda abre', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      vi.setSystemTime(new Date('2026-10-17T02:00:00-03:00')); // sábado, 02:00 em São Paulo
+      h.rows = [
+        { day_of_week: 5, is_open: true, open_time: '22:00:00', close_time: '06:00:00' },
+      ];
+
+      const { container } = setup();
+      expect(await screen.findByText('Aberto')).toBeTruthy();
+
+      const trigger = container.querySelector('div')!;
+      fireEvent.pointerEnter(trigger);
+      fireEvent.pointerMove(trigger);
+      expect(
+        await screen.findByText('Janela de ontem: 22:00 - 06:00 (vira o dia)'),
+      ).toBeTruthy();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('dia marcado como fechado mostra “Fechado” e o motivo', async () => {
@@ -221,13 +251,15 @@ describe('BusinessHoursIndicator — estados do selo', () => {
     }
   });
 
-  it('lê a conexão e os dois dias (hoje e ontem) de uma vez', async () => {
+  it('lê a conexão e os dois dias (hoje e ontem) de uma vez, com ordem e limite', async () => {
     setup();
     await waitFor(() =>
       expect(h.filters.some((f) => f[0] === 'in' && f[1] === 'day_of_week')).toBe(true),
     );
     expect(h.filters).toContainEqual(['eq', 'whatsapp_connection_id', 'conn-1']);
     expect(h.filters.find((f) => f[0] === 'in')?.[2]).toEqual([DIA_ONTEM, DIA_HOJE]);
+    expect(h.filters).toContainEqual(['order', 'day_of_week', { ascending: true }]);
+    expect(h.filters).toContainEqual(['limit', 2]);
   });
 
   it('showLabel=false esconde o texto e mantém só o ícone', async () => {
@@ -254,9 +286,18 @@ describe('regra de horário comercial (função pura)', () => {
   it('lê HH:MM e HH:MM:SS e recusa valor inválido', () => {
     expect(minutosDoHorario('09:30')).toBe(570);
     expect(minutosDoHorario('22:15:00')).toBe(1335);
+    expect(minutosDoHorario('9:05')).toBe(545);
     expect(minutosDoHorario('25:00')).toBeNull();
     expect(minutosDoHorario('')).toBeNull();
     expect(minutosDoHorario(null)).toBeNull();
+  });
+
+  it('rejeita texto colado ao horário e segundos inválidos', () => {
+    expect(minutosDoHorario('09:00xyz')).toBeNull();
+    expect(minutosDoHorario('9:05abc')).toBeNull();
+    expect(minutosDoHorario('09:00:99')).toBeNull();
+    expect(minutosDoHorario('09:60')).toBeNull();
+    expect(classificarJanela('09:00xyz', '18:00')).toBe('incompleta');
   });
 
   it('classifica janela normal, noturna e inválida', () => {
@@ -294,6 +335,35 @@ describe('regra de horário comercial (função pura)', () => {
     expect(resumo.motivo).toBe('horario-invalido');
     expect(resumo.isOpen).toBe(false);
     expect(resumo.intervalo).toBeNull();
+  });
+
+  it('janela igual no selo: “Fechado” com o aviso de horário inválido, nunca “vira o dia” da própria linha', async () => {
+    h.rows = [
+      { day_of_week: DIA_HOJE, is_open: true, open_time: '09:00:00', close_time: '09:00:00' },
+    ];
+    const { container } = setup();
+    expect(await screen.findByText('Fechado')).toBeTruthy();
+    expect(screen.queryByText('Aberto')).toBeNull();
+
+    const trigger = container.querySelector('div')!;
+    fireEvent.pointerEnter(trigger);
+    fireEvent.pointerMove(trigger);
+    expect(
+      await screen.findByText(
+        'Horário de hoje inválido: início e fim iguais — ajuste em Horário de Atendimento',
+      ),
+    ).toBeTruthy();
+  });
+
+  it('janela igual nunca vira motivo fora/dentro da própria linha', () => {
+    const sozinha = resumoDoHorario(
+      { is_open: true, open_time: '09:00', close_time: '09:00' },
+      10 * 60,
+      null,
+    );
+    expect(sozinha.motivo).toBe('horario-invalido');
+    expect(sozinha.isOpen).toBe(false);
+    expect(sozinha.viraODia).toBe(false);
   });
 
   it('fim de semana fechado: motivo "fechado-hoje"', () => {
