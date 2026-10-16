@@ -469,6 +469,11 @@ jobs:
           TALKX_BLACKLIST_POLICY_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-blacklist-policy-forward-only.test.sh
 
+      - name: Simular trilha de auditoria da blacklist Talk X (N-107)
+        env:
+          TALKX_BLACKLIST_AUDIT_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-blacklist-audit-trigger.test.sh
+
       - name: Simular edição de limites de campanha via RPC Talk X (V09)
         env:
           TALKX_UPDATE_LIMITS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
