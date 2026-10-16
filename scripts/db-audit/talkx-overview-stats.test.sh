@@ -21,6 +21,18 @@
 #   (i) assinatura antiga de 2 args DROPada (sem ambiguidade 42725) + ACL nova;
 #   (j) migration replayavel (segunda aplicacao nao falha).
 #
+# ESTENDE para a X073 (leitura/conversao/receita/taxa por segmento/funil de 5
+# degraus) aplicando a X073 REAL depois da X072:
+#   x073_current  -> current.read=2, conversions=1, revenue=100, taxa 20.0,
+#                    segment_conversion_rate_pct=0.0 (conversao sem segmento excluida);
+#   x073_funnel   -> funil 5/4/2/1/1 (100.0/80.0/40.0/20.0/20.0 % sobre enviadas);
+#   x073_daily    -> serie diaria com conversions (soma 1) e zero-fill;
+#   x073_previous -> previous com os mesmos campos novos;
+#   x073_segment  -> taxa por segmento conta 1/3 (33.3) apos a conversao de segmento;
+#   x073_no_data  -> fonte nunca alimentada devolve null (nao 0): conversions/revenue/
+#                    read e o 5o degrau do funil;
+#   x073_rollback -> as linhas '-- Rollback' restauram o corpo X072.
+#
 # AUSENCIA DE MEDICAO CONTA COMO FALHA: cada caso registra sua execucao em
 # CASES_SEEN e o harness FALHA no fim se algum caso esperado nao tiver rodado.
 
@@ -28,6 +40,7 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration="$repo_root/supabase/migrations/20261002631230_talkx_v4_x072_overview_stats.sql"
+migration_x073="$repo_root/supabase/migrations/20261011000014_talkx_v4_x073_overview_stats_reads_conversions.sql"
 postgres_image="${TALKX_OVERVIEW_STATS_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="talkx-overview-stats-test-$$"
 test_password="talkx_overview_stats_test_only"
@@ -46,6 +59,8 @@ declare -a CASES_EXPECTED=(
   base_current base_previous base_active daily dedup audience_source
   department channel_email channel_whatsapp previous_null rls_agent
   old_signature_dropped replay
+  x073_current x073_funnel x073_daily x073_previous x073_segment
+  x073_no_data x073_rollback
 )
 case_done() { CASES_SEEN["$1"]=1; }
 
@@ -137,14 +152,30 @@ CREATE TABLE public.talkx_recipients (
   sent_at timestamptz,
   delivered_at timestamptz,
   replied_at timestamptz,
+  read_at timestamptz,
+  segment_id uuid,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE (campaign_id, contact_id)
 );
 
+-- X073: conversoes registradas (colunas reais de 20261002691230).
+CREATE TABLE public.talkx_conversions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  campaign_id uuid NOT NULL REFERENCES public.talkx_campaigns(id) ON DELETE CASCADE,
+  recipient_id uuid REFERENCES public.talkx_recipients(id) ON DELETE SET NULL,
+  link_id uuid,
+  value numeric(12,2) NOT NULL DEFAULT 0,
+  source text NOT NULL DEFAULT 'manual',
+  currency text NOT NULL DEFAULT 'BRL',
+  occurred_at timestamptz NOT NULL DEFAULT now(),
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
 -- RLS espelhando o modulo (20260409000457, 96ecc54a).
 ALTER TABLE public.talkx_campaigns ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.talkx_recipients ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.talkx_conversions ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY talkx_campaigns_select_own ON public.talkx_campaigns
   FOR SELECT TO authenticated
@@ -153,6 +184,14 @@ CREATE POLICY talkx_campaigns_select_own ON public.talkx_campaigns
     OR public.is_admin_or_supervisor(auth.uid())
   );
 CREATE POLICY talkx_recipients_select_own ON public.talkx_recipients
+  FOR SELECT TO authenticated
+  USING (EXISTS (
+    SELECT 1 FROM public.talkx_campaigns tc
+    WHERE tc.id = campaign_id
+      AND (tc.created_by = (SELECT id FROM public.profiles WHERE user_id = auth.uid() LIMIT 1)
+           OR public.is_admin_or_supervisor(auth.uid()))
+  ));
+CREATE POLICY talkx_conversions_select_own ON public.talkx_conversions
   FOR SELECT TO authenticated
   USING (EXISTS (
     SELECT 1 FROM public.talkx_campaigns tc
@@ -207,7 +246,7 @@ $$;
 GRANT EXECUTE ON FUNCTION public.talkx_overview_stats(timestamptz, timestamptz) TO authenticated, service_role;
 
 GRANT USAGE ON SCHEMA public, auth TO anon, authenticated, service_role;
-GRANT SELECT ON public.profiles, public.talkx_campaigns, public.talkx_recipients TO authenticated, service_role;
+GRANT SELECT ON public.profiles, public.talkx_campaigns, public.talkx_recipients, public.talkx_conversions TO authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.is_admin_or_supervisor(uuid), auth.uid(), auth.role()
   TO authenticated, service_role;
 SQL
@@ -217,6 +256,11 @@ SQL
 # ---------------------------------------------------------------------------
 psql_test < "$migration" >/dev/null || fail 'X072 nao aplicou'
 pass '(0) X072 aplicada sobre a assinatura antiga de 2 argumentos'
+
+# X073 recria a MESMA assinatura (6 args) acrescentando read/conversions/revenue,
+# taxas de conversao e o funil de 5 degraus. Aplica depois da X072 (usa talkx_analytics_scope).
+psql_test < "$migration_x073" >/dev/null || fail 'X073 nao aplicou'
+pass '(0) X073 aplicada (recria talkx_overview_stats com leitura/conversao/funil)'
 
 # ---------------------------------------------------------------------------
 # (i) assinatura antiga DROPada + ACL
@@ -402,6 +446,120 @@ case_done rls_agent
 pass '(h) RLS: agente ve so as proprias (sent=2); admin ve todas (sent=7)'
 
 # ---------------------------------------------------------------------------
+# X073: leitura (read), conversoes, receita, taxa por segmento e funil de 5 degraus
+# ---------------------------------------------------------------------------
+# Fixture (completa o cenario do cartao sobre a campanha C ja existente):
+#   5 enviadas (a1..a5), 4 entregues (a2,a3 passam a entregues; a4,a5 ja eram),
+#   2 lidas (a4,a5), 1 resposta (a5), 1 conversao de R$100 de a4.
+#   a1..a3 TEM segmento; a4,a5 NAO tem. A conversao e de a4 (sem segmento) e por
+#   isso NAO pode entrar na taxa por segmento.
+psql_q "UPDATE public.talkx_recipients SET delivered_at = now() - interval '2 days' + interval '1 hour'
+        WHERE campaign_id = '50000000-0000-0000-0000-000000000003'
+          AND contact_id IN ('30000000-0000-0000-0000-0000000000a2','30000000-0000-0000-0000-0000000000a3')" >/dev/null
+psql_q "UPDATE public.talkx_recipients SET read_at = now() - interval '2 days' + interval '3 hours'
+        WHERE campaign_id = '50000000-0000-0000-0000-000000000003'
+          AND contact_id IN ('30000000-0000-0000-0000-0000000000a4','30000000-0000-0000-0000-0000000000a5')" >/dev/null
+psql_q "UPDATE public.talkx_recipients SET segment_id = '60000000-0000-0000-0000-0000000000c1'
+        WHERE campaign_id = '50000000-0000-0000-0000-000000000003'
+          AND contact_id IN ('30000000-0000-0000-0000-0000000000a1','30000000-0000-0000-0000-0000000000a2','30000000-0000-0000-0000-0000000000a3')" >/dev/null
+psql_q "INSERT INTO public.talkx_conversions (campaign_id, recipient_id, value, source, occurred_at)
+        SELECT '50000000-0000-0000-0000-000000000003', r.id, 100.00, 'manual', now() - interval '2 days'
+        FROM public.talkx_recipients r
+        WHERE r.campaign_id = '50000000-0000-0000-0000-000000000003'
+          AND r.contact_id = '30000000-0000-0000-0000-0000000000a4'" >/dev/null
+
+# Escopo dos casos X073: a campanha C (equipe d1, 5 enviadas). A janela win5 sem
+# filtro soma 7 (entra a campanha E do agente, 'contacts'), por isso o cartao — 
+# 5/4/2/1/1 — e medido sobre a equipe d1 (so a campanha C).
+win5x="now() - interval '5 days', now(), NULL, '40000000-0000-0000-0000-000000000001'"
+
+x_sent="$(psql_q "SELECT public.talkx_overview_stats($win5x)->'current'->>'sent'")"
+x_deliv="$(psql_q "SELECT public.talkx_overview_stats($win5x)->'current'->>'delivered'")"
+x_read="$(psql_q "SELECT public.talkx_overview_stats($win5x)->'current'->>'read'")"
+x_conv="$(psql_q "SELECT public.talkx_overview_stats($win5x)->'current'->>'conversions'")"
+x_rev="$(psql_q "SELECT (public.talkx_overview_stats($win5x)->'current'->>'revenue')::numeric = 100.00")"
+x_rate="$(psql_q "SELECT public.talkx_overview_stats($win5x)->'current'->>'conversion_rate_pct'")"
+x_seg="$(psql_q "SELECT public.talkx_overview_stats($win5x)->'current'->>'segment_conversion_rate_pct'")"
+[[ "$x_sent" == '5' ]] || fail "X073 current.sent esperado 5 [obtido: $x_sent]"
+[[ "$x_deliv" == '4' ]] || fail "X073 current.delivered esperado 4 [obtido: $x_deliv]"
+[[ "$x_read" == '2' ]] || fail "X073 current.read esperado 2 [obtido: $x_read]"
+[[ "$x_conv" == '1' ]] || fail "X073 current.conversions esperado 1 [obtido: $x_conv]"
+[[ "$x_rev" == 't' ]] || fail "X073 current.revenue esperado 100,00 [obtido: $x_rev]"
+[[ "$x_rate" == '20.0' ]] || fail "X073 conversion_rate_pct esperado 20.0 [obtido: $x_rate]"
+[[ "$x_seg" == '0.0' ]] || fail "X073 segment_conversion_rate_pct esperado 0.0 (conversao de destinatario SEM segmento nao entra) [obtido: $x_seg]"
+case_done x073_current
+pass '(X073) current: sent=5, read=2, conversions=1, revenue=100, taxa 20.0, taxa-segmento 0.0 (sem segmento excluido)'
+
+# funil de 5 degraus: sent/delivered/read/replied/conversions = 5/4/2/1/1 (100/80/40/20/20 %)
+f_len="$(psql_q "SELECT jsonb_array_length(public.talkx_overview_stats($win5x)->'current'->'funnel')")"
+f_steps="$(psql_q "SELECT string_agg(e->>'step', ',' ORDER BY ord) FROM jsonb_array_elements(public.talkx_overview_stats($win5x)->'current'->'funnel') WITH ORDINALITY AS t(e,ord)")"
+f_counts="$(psql_q "SELECT string_agg(e->>'count', ',' ORDER BY ord) FROM jsonb_array_elements(public.talkx_overview_stats($win5x)->'current'->'funnel') WITH ORDINALITY AS t(e,ord)")"
+f_pcts="$(psql_q "SELECT string_agg(e->>'pct', ',' ORDER BY ord) FROM jsonb_array_elements(public.talkx_overview_stats($win5x)->'current'->'funnel') WITH ORDINALITY AS t(e,ord)")"
+[[ "$f_len" == '5' ]] || fail "X073 funil deveria ter 5 degraus [obtido: $f_len]"
+[[ "$f_steps" == 'sent,delivered,read,replied,conversions' ]] || fail "X073 ordem dos degraus do funil errada [obtido: $f_steps]"
+[[ "$f_counts" == '5,4,2,1,1' ]] || fail "X073 contagem do funil esperada 5,4,2,1,1 [obtido: $f_counts]"
+[[ "$f_pcts" == '100.0,80.0,40.0,20.0,20.0' ]] || fail "X073 percentuais do funil esperados 100.0/80.0/40.0/20.0/20.0 [obtido: $f_pcts]"
+case_done x073_funnel
+pass '(X073) funil 5 degraus: 5/4/2/1/1 e 100.0/80.0/40.0/20.0/20.0 % sobre enviadas'
+
+# daily ganha conversions (com zero-fill como os demais campos)
+xd_sum="$(psql_q "SELECT sum((e->>'conversions')::int) FROM jsonb_array_elements(public.talkx_overview_stats($win5x)->'daily') e")"
+xd_all="$(psql_q "SELECT count(*) FROM jsonb_array_elements(public.talkx_overview_stats($win5x)->'daily') e WHERE (e->>'conversions') IS NOT NULL")"
+[[ "$xd_sum" == '1' ]] || fail "X073 soma de conversions na serie diaria esperada 1 [obtido: $xd_sum]"
+[[ "$xd_all" == "$exp_days" ]] || fail "X073 daily sem o campo conversions em todos os $exp_days pontos [obtido: $xd_all]"
+case_done x073_daily
+pass '(X073) daily com conversions (soma 1) e zero-fill em todos os pontos'
+
+# previous recebe os MESMOS campos novos
+xp_keys="$(psql_q "SELECT (s->'previous') ? 'read' AND (s->'previous') ? 'conversions' AND (s->'previous') ? 'revenue' AND (s->'previous') ? 'funnel' FROM (SELECT public.talkx_overview_stats($win5x) AS s) q")"
+xp_len="$(psql_q "SELECT jsonb_array_length(public.talkx_overview_stats($win5x)->'previous'->'funnel')")"
+[[ "$xp_keys" == 't' ]] || fail "X073 previous sem os campos novos (read/conversions/revenue/funnel)"
+[[ "$xp_len" == '5' ]] || fail "X073 funil do previous deveria ter 5 degraus [obtido: $xp_len]"
+case_done x073_previous
+pass '(X073) previous carrega os mesmos campos novos (read/conversions/revenue/funnel)'
+
+# taxa por segmento CONTA a conversao de destinatario COM segmento (nao e sempre 0)
+psql_q "INSERT INTO public.talkx_conversions (campaign_id, recipient_id, value, source, occurred_at)
+        SELECT '50000000-0000-0000-0000-000000000003', r.id, 30.00, 'manual', now() - interval '2 days'
+        FROM public.talkx_recipients r
+        WHERE r.campaign_id = '50000000-0000-0000-0000-000000000003'
+          AND r.contact_id = '30000000-0000-0000-0000-0000000000a1'" >/dev/null
+x_seg2="$(psql_q "SELECT public.talkx_overview_stats($win5x)->'current'->>'segment_conversion_rate_pct'")"
+x_conv2="$(psql_q "SELECT public.talkx_overview_stats($win5x)->'current'->>'conversions'")"
+[[ "$x_seg2" == '33.3' ]] || fail "X073 segment_conversion_rate_pct com 1/3 conversoes de segmento esperado 33.3 [obtido: $x_seg2]"
+[[ "$x_conv2" == '2' ]] || fail "X073 conversions apos a 2a conversao esperado 2 [obtido: $x_conv2]"
+case_done x073_segment
+pass '(X073) taxa por segmento: exclui conversao sem segmento (0.0) e conta a com segmento (33.3)'
+
+# fonte sem nenhum dado no escopo -> campo null (nao 0). Escopo: equipe do agente
+# (campanha E), que nunca teve leitura nem conversao.
+d2='40000000-0000-0000-0000-000000000002'
+nd_sent="$(psql_q "SELECT public.talkx_overview_stats($win5, NULL, '$d2')->'current'->>'sent'")"
+nd_conv="$(psql_q "SELECT jsonb_typeof(public.talkx_overview_stats($win5, NULL, '$d2')->'current'->'conversions')")"
+nd_rev="$(psql_q "SELECT jsonb_typeof(public.talkx_overview_stats($win5, NULL, '$d2')->'current'->'revenue')")"
+nd_read="$(psql_q "SELECT jsonb_typeof(public.talkx_overview_stats($win5, NULL, '$d2')->'current'->'read')")"
+nd_step5="$(psql_q "SELECT jsonb_typeof(e->'count') FROM jsonb_array_elements(public.talkx_overview_stats($win5, NULL, '$d2')->'current'->'funnel') WITH ORDINALITY AS t(e,ord) WHERE ord = 5")"
+[[ "$nd_sent" == '2' ]] || fail "X073 base sem dados: sent esperado 2 [obtido: $nd_sent]"
+[[ "$nd_conv" == 'null' ]] || fail "X073 base sem conversao: conversions deveria ser null (nao 0) [obtido: $nd_conv]"
+[[ "$nd_rev" == 'null' ]] || fail "X073 base sem conversao: revenue deveria ser null [obtido: $nd_rev]"
+[[ "$nd_read" == 'null' ]] || fail "X073 base sem leitura: read deveria ser null [obtido: $nd_read]"
+[[ "$nd_step5" == 'null' ]] || fail "X073 base sem conversao: 5o degrau do funil deveria ser null [obtido: $nd_step5]"
+case_done x073_no_data
+pass '(X073) campo cuja fonte nunca recebeu dado vem null: conversions/revenue/read e o 5o degrau do funil'
+
+# rollback de verdade: as linhas "-- Rollback (SQL ...)" recriam o corpo X072
+rb_sql="$(awk '/^-- Rollback \(SQL/{f=1;next} f&&/^--   /{sub(/^--   /,"");print;next} f{exit}' "$migration_x073")"
+printf '%s\n' "$rb_sql" | psql_test >/dev/null || fail 'X073 rollback nao executou'
+rb_read="$(psql_q "SELECT (public.talkx_overview_stats($win5x)->'current') ? 'read'")"
+rb_funnel="$(psql_q "SELECT (public.talkx_overview_stats($win5x)->'current') ? 'funnel'")"
+rb_six="$(psql_q "SELECT to_regprocedure('$six') IS NOT NULL")"
+[[ "$rb_read" == 'f' && "$rb_funnel" == 'f' ]] \
+  || fail "X073 rollback nao restaurou o corpo X072 [read=$rb_read funnel=$rb_funnel]"
+[[ "$rb_six" == 't' ]] || fail 'X073 rollback removeu a funcao de 6 argumentos'
+case_done x073_rollback
+pass '(X073) rollback executavel restaura o corpo X072 sem perder a assinatura de 6 args'
+
+# ---------------------------------------------------------------------------
 # (j) replay: segunda aplicacao nao falha
 # ---------------------------------------------------------------------------
 psql_test < "$migration" >/dev/null || fail '(j) X072 nao e replayavel (segunda aplicacao falhou)'
@@ -409,8 +567,11 @@ psql_test < "$migration" >/dev/null || fail '(j) X072 nao e replayavel (segunda 
   || fail '(j) replay duplicou/removeu a talkx_overview_stats'
 [[ "$(psql_q "SELECT to_regprocedure('public.talkx_overview_stats(timestamptz,timestamptz)') IS NULL")" == 't' ]] \
   || fail '(j) replay ressuscitou a assinatura antiga'
+psql_test < "$migration_x073" >/dev/null || fail '(j) X073 nao e replayavel (segunda aplicacao falhou)'
+[[ "$(psql_q "SELECT count(*) FROM pg_proc WHERE proname='talkx_overview_stats'")" == '1' ]] \
+  || fail '(j) replay da X073 duplicou/removeu a talkx_overview_stats'
 case_done replay
-pass '(j) X072 replayavel; 1 funcao viva e assinatura antiga segue removida'
+pass '(j) X072 e X073 replayaveis; 1 funcao viva e assinatura antiga segue removida'
 
 # ---------------------------------------------------------------------------
 # AUSENCIA DE MEDICAO CONTA COMO FALHA
