@@ -46,15 +46,16 @@ export function avaliarStatementsDoLedger({ bruto, statementsDoArquivo }) {
   }
   if (!Array.isArray(doLedger)) return { ok: false, motivo: 'statements do ledger nao e um array' };
   const normalizedLedger = doLedger.flatMap(splitStatements);
+  const normalizedArquivo = statementsDoArquivo.flatMap(splitStatements);
   if (normalizedLedger.length === 0) return { ok: false, motivo: 'array_length(statements, 1) = 0' };
-  if (normalizedLedger.length !== statementsDoArquivo.length) {
+  if (normalizedLedger.length !== normalizedArquivo.length) {
     return {
       ok: false,
-      motivo: `quantidade de statements difere: ledger=${normalizedLedger.length} arquivo=${statementsDoArquivo.length}`,
+      motivo: `quantidade de statements difere: ledger=${normalizedLedger.length} arquivo=${normalizedArquivo.length}`,
     };
   }
   for (let i = 0; i < normalizedLedger.length; i += 1) {
-    if (normalizedLedger[i] !== statementsDoArquivo[i]) {
+    if (normalizedLedger[i] !== normalizedArquivo[i]) {
       return { ok: false, motivo: `o statement ${i + 1} do ledger difere do arquivo` };
     }
   }
