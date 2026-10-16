@@ -1,5 +1,5 @@
 import { assertEquals, assert } from "https://deno.land/std@0.168.0/testing/asserts.ts";
-import { handleEvolutionApi, isInstanceGonePayload } from "./index.ts";
+import { handleEvolutionApi } from "./index.ts";
 import { EvolutionApiRequestSchema } from "../_shared/schemas.ts";
 import { createFakeEvolution } from "../_shared/__tests__/fake-evolution.ts";
 import { resetInstanceTokenCache } from "../_shared/evolution-instance-token.ts";
@@ -527,70 +527,6 @@ Deno.test("E45: ação global (list-instances) continua sem exigir instância", 
   }
 });
 
-// ─── SL-075 E43: ações sem equivalente na Evolution GO ──────────────────────
-// Lista gerada por script (ação × translateV2ToGo → null), não por heurística.
-const REMOVED_GOLESS_ACTIONS = [
-  // integrações do painel removidas na E43
-  "set-chatwoot", "get-chatwoot", "delete-chatwoot",
-  "set-typebot", "get-typebot", "delete-typebot",
-  "typebot-sessions", "typebot-change-status", "start-typebot",
-  "set-openai", "get-openai", "delete-openai",
-  "set-dify", "get-dify", "delete-dify",
-  "set-flowise", "get-flowise", "delete-flowise",
-  "set-evolution-bot", "get-evolution-bot", "delete-evolution-bot",
-  // infra/eventos e demais rotas v2 sem equivalente GO
-  "set-rabbitmq", "get-rabbitmq", "set-sqs", "get-sqs",
-  "create-template", "find-templates", "delete-template",
-  "set-evoai", "get-evoai", "delete-evoai",
-  "set-n8n", "get-n8n", "delete-n8n",
-  "set-kafka", "get-kafka", "set-nats", "get-nats", "set-pusher", "get-pusher",
-  "set-proxy", "get-proxy", "get-catalog", "get-collections", "offer-call",
-  "set-presence", "set-settings", "get-settings", "get-webhook",
-  "send-template", "mark-unread",
-  "find-chats", "find-messages", "find-status-messages",
-  "invite-info", "toggle-ephemeral",
-];
-for (const action of REMOVED_GOLESS_ACTIONS) {
-  Deno.test(`E43: '${action}' (sem equivalente GO) cai em 'Unknown action' 404 sem I/O no provedor`, async () => {
-    const fake = createFakeEvolution();
-    Deno.env.set("EVOLUTION_API_URL", fake.url);
-    try {
-      const res = await handleEvolutionApi(
-        controlRequest(action, { instanceName: "PRINCIPAL" }),
-        {
-          callerClient: makeCallerClient({ isAdminOrSupervisor: true }),
-          supabase: makeServiceClient(),
-        },
-      );
-      const json = await res.json();
-      assertEquals(res.status, 404, `'${action}' deve cair no 'Unknown action' do handler (veio ${res.status})`);
-      assertEquals(json?.error, "Unknown action");
-      assertEquals(fake.posts.length, 0, `'${action}' não pode produzir I/O no provedor`);
-    } finally {
-      await fake.stop();
-    }
-  });
-}
-
-// E43: ação removida que era 'read' nega agente sem papel (deny-by-default)
-Deno.test("E43: ação removida que era 'read' nega agente sem papel (deny-by-default)", async () => {
-  const fake = createFakeEvolution();
-  Deno.env.set("EVOLUTION_API_URL", fake.url);
-  try {
-    const res = await handleEvolutionApi(
-      controlRequest("get-settings", { instanceName: "PRINCIPAL" }),
-      {
-        callerClient: makeCallerClient({ isAdminOrSupervisor: false }),
-        supabase: makeServiceClient(),
-      },
-    );
-    assertEquals(res.status, 403, "leitura removida deve negar agente pelo classifyEvolutionAction");
-    assertEquals(fake.posts.length, 0);
-  } finally {
-    await fake.stop();
-  }
-});
-
 Deno.test("E45: a lista de ações do schema cobre toda ação que o handler implementa", async () => {
   // Guarda contra a única falha grave deste cartão: recusar em 422 uma ação que
   // o handler suporta. O fonte do handler é a fonte da verdade (mesma extração
@@ -600,7 +536,7 @@ Deno.test("E45: a lista de ações do schema cobre toda ação que o handler imp
   const actions = new Set(
     [...source.matchAll(/action === '([^']+)'/g)].map((m) => m[1]),
   );
-  assert(actions.size > 50, `sanidade: esperava >50 ações no handler (achou ${actions.size})`);
+  assert(actions.size > 100, `sanidade: esperava >100 ações no handler (achou ${actions.size})`);
   for (const action of actions) {
     assert(
       EvolutionApiRequestSchema.safeParse({ action, instanceName: "PRINCIPAL" }).success,
@@ -677,51 +613,6 @@ for (const [action, extra] of NEGADAS) {
   });
 }
 
-// ─── SL-075 E43: ações sem equivalente na Evolution GO ──────────────────────
-// Lista gerada por script (ação × translateV2ToGo → null), não por heurística.
-const REMOVED_GOLESS_ACTIONS = [
-  // integrações do painel removidas na E43
-  "set-chatwoot", "get-chatwoot", "delete-chatwoot",
-  "set-typebot", "get-typebot", "delete-typebot",
-  "typebot-sessions", "typebot-change-status", "start-typebot",
-  "set-openai", "get-openai", "delete-openai",
-  "set-dify", "get-dify", "delete-dify",
-  "set-flowise", "get-flowise", "delete-flowise",
-  "set-evolution-bot", "get-evolution-bot", "delete-evolution-bot",
-  // infra/eventos e demais rotas v2 sem equivalente GO
-  "set-rabbitmq", "get-rabbitmq", "set-sqs", "get-sqs",
-  "create-template", "find-templates", "delete-template",
-  "set-evoai", "get-evoai", "delete-evoai",
-  "set-n8n", "get-n8n", "delete-n8n",
-  "set-kafka", "get-kafka", "set-nats", "get-nats", "set-pusher", "get-pusher",
-  "set-proxy", "get-proxy", "get-catalog", "get-collections", "offer-call",
-  "set-presence", "set-settings", "get-settings", "get-webhook",
-  "send-template", "mark-unread",
-  "find-chats", "find-messages", "find-status-messages",
-  "invite-info", "toggle-ephemeral",
-];
-for (const action of REMOVED_GOLESS_ACTIONS) {
-  Deno.test(`E43: '${action}' (sem equivalente GO) cai em 'Unknown action' 404 sem I/O no provedor`, async () => {
-    const fake = createFakeEvolution();
-    Deno.env.set("EVOLUTION_API_URL", fake.url);
-    try {
-      const res = await handleEvolutionApi(
-        controlRequest(action, { instanceName: "PRINCIPAL" }),
-        {
-          callerClient: makeCallerClient({ isAdminOrSupervisor: true }),
-          supabase: makeServiceClient(),
-        },
-      );
-      const json = await res.json();
-      assertEquals(res.status, 404, `'${action}' deve cair no 'Unknown action' do handler (veio ${res.status})`);
-      assertEquals(json?.error, "Unknown action");
-      assertEquals(fake.posts.length, 0, `'${action}' não pode produzir I/O no provedor`);
-    } finally {
-      await fake.stop();
-    }
-  });
-}
-
 Deno.test("TRA-002/#18: set-webhook (proxy) de OUTRA conexão usa o token DELA", async () => {
   const c = await chamarComToken("set-webhook", { instanceName: "CONN_B", url: "https://x/functions/v1/evolution-webhook", enabled: true }, "token-da-CONN_B");
   try {
@@ -752,21 +643,6 @@ Deno.test("TRA-002/#18: instância PADRÃO sem token no Vault mantém o fallback
     await c.stop();
   }
 });
-
-// E43: ação removida que era 'read' nega agente sem papel (deny-by-default)
-Deno.test("E43: ação removida que era 'read' nega agente sem papel (deny-by-default)", async () => {
-  const fake = createFakeEvolution();
-  Deno.env.set("EVOLUTION_API_URL", fake.url);
-  try {
-    const res = await handleEvolutionApi(
-      controlRequest("get-settings", { instanceName: "PRINCIPAL" }),
-      {
-        callerClient: makeCallerClient({ isAdminOrSupervisor: false }),
-        supabase: makeServiceClient(),
-      },
-    );
-    assertEquals(res.status, 403, "leitura removida deve negar agente pelo classifyEvolutionAction");
-    assertEquals(fake.posts.length, 0);
 
 // ─── R2EXT-AGENDA: agenda/conversas/mídia fora da visibilidade + credencial ──
 // find-chats/find-contacts devolvem a instância inteira (sem remoteJid único
@@ -847,331 +723,242 @@ Deno.test("R2EXT-AGENDA: find-contacts com papel segue para o provedor (restrita
       "admin/supervisor deve alcançar o provedor",
     );
   } finally {
-
-// ═══ B2 (12/10/2026): ciclo de sessão robusto, telefone validado e INSTANCE_GONE ═══
-// RED: (1) connect/status/disconnect faziam fetch DIRETO ao provedor, sem `signal` e
-// sem catch — provedor pendurado segurava a função até o limite da plataforma e o
-// operador recebia 500 cru; (2) delete-instance devolvia 404 quando a instância já
-// não existia na Evolution GO, e o front abortava: a conexão fantasma ficava presa na
-// lista sem poder ser excluída; (3) create-connection gravava o telefone cru do
-// formulário em `phone_number` e aceitava o nome da instância cru no path/query.
-// GREEN: timeout tratado como falha de provedor (200 { error:true, status:0 });
-// INSTANCE_GONE apaga a linha local e reconcilia; telefone validado/normalizado
-// (DDI 55 + nono dígito) antes do INSERT e nome de instância travado por conjunto de
-// caracteres (422 no schema).
-
-/** Cliente service-role que REGISTRA o que o handler fez no banco (insert/delete) —
- *  sem isso não há como provar a remoção da linha local fantasma nem o valor que foi
- *  para `phone_number`. `global_settings` devolve 'true' (multi-conexão ligada e
- *  manutenção ausente) e o INSERT de `whatsapp_connections` devolve a linha, como o
- *  PostgREST faria. */
-function makeServiceRecorder(): {
-  client: any;
-  inserts: Array<{ table: string; values: Record<string, unknown> }>;
-  deletes: Array<{ table: string }>;
-} {
-  const inserts: Array<{ table: string; values: Record<string, unknown> }> = [];
-  const deletes: Array<{ table: string }> = [];
-  let lastInserted: Record<string, unknown> | null = null;
-  const chainFor = (table: string): any => {
-    const q: any = {
-      select: () => q,
-      eq: () => q,
-      neq: () => q,
-      not: () => q,
-      gte: () => q,
-      lt: () => q,
-      or: () => q,
-      order: () => q,
-      limit: () => q,
-      in: () => q,
-      update: () => q,
-      upsert: () => q,
-      insert: (values: Record<string, unknown>) => {
-        inserts.push({ table, values });
-        lastInserted = { id: `row-${table}`, ...values };
-        return q;
-      },
-      delete: () => {
-        deletes.push({ table });
-        return q;
-      },
-      maybeSingle: () => Promise.resolve({ data: table === "global_settings" ? { value: "true" } : null, error: null }),
-      single: () => Promise.resolve({ data: table === "whatsapp_connections" ? lastInserted : null, error: null }),
-    };
-    return q;
-  };
-  return {
-    client: {
-      from: (table: string) => chainFor(table),
-      rpc: (fn: string) => Promise.resolve({
-        data: fn === "get_instance_token" ? "vault-instance-token" : null,
-        error: null,
-      }),
-    },
-    inserts,
-    deletes,
-  };
-}
-
-/** Caller client com papel e id escolhidos por quem chama — o teto do ciclo de sessão
- *  é por usuário, então o teste do 429 precisa de um usuário só dele. */
-function makeCallerWithRole(isAdminOrSupervisor: boolean, userId: string): any {
-  return {
-    auth: { getUser: () => Promise.resolve({ data: { user: { id: userId } }, error: null }) },
-    rpc: (fn: string) => Promise.resolve({
-      data: fn === "is_admin_or_supervisor" ? isAdminOrSupervisor : null,
-      error: null,
-    }),
-  };
-}
-
-/** Evolution fake que REGISTRA método + path + corpo (é o que prova "não tocou o
- *  provedor") e responde o mínimo do ciclo de sessão. `instances` alimenta
- *  GET /instance/all (o mapa nome→id da GO). */
-function createSessionFake(instances: string[] = []) {
-  const requests: Array<{ method: string; path: string; body: Record<string, unknown> | null }> = [];
-  const server = Deno.serve({ hostname: "127.0.0.1", port: 0, onListen() {} }, async (req) => {
-    const path = new URL(req.url).pathname;
-    let body: Record<string, unknown> | null = null;
-    try {
-      body = JSON.parse(await req.text());
-    } catch {
-      body = null;
-    }
-    requests.push({ method: req.method, path, body });
-    const json = (payload: unknown, status = 200) =>
-      new Response(JSON.stringify(payload), { status, headers: { "Content-Type": "application/json" } });
-    if (path === "/instance/all") {
-      return json({ data: instances.map((name, i) => ({ name, id: `go-instance-${i}` })) });
-    }
-    if (path === "/instance/fetchInstances") return json([]);
-    return json({ status: "success" });
-  });
-  const addr = server.addr;
-  if (addr.transport !== "tcp") throw new Error("session-fake: esperava listener TCP");
-  return { url: `http://127.0.0.1:${addr.port}`, requests, stop: () => server.shutdown() };
-}
-
-Deno.test("B2-01: connect pendurado devolve erro amigável (status 0) em vez de 500 cru", async () => {
-  // O fake segura a resposta do POST /instance/connect além do nosso timeout — é o
-  // cenário exato do incidente (provedor pendurado).
-  const fake = createFakeEvolution({ mode: "timeout", timeoutDelayMs: 400 });
-  Deno.env.set("EVOLUTION_API_URL", fake.url);
-  Deno.env.set("EVOLUTION_API_FLAVOR", "go");
-  Deno.env.set("EVOLUTION_SESSION_TIMEOUT_MS", "60");
-  try {
-    const svc = makeServiceRecorder();
-    const res = await handleEvolutionApi(
-      controlRequest("connect", { instanceName: "PRINCIPAL" }),
-      { callerClient: makeCallerWithRole(true, "b2-admin-1"), supabase: svc.client },
-    );
-    assertEquals(res.status, 200, "falha de rede/timeout não pode virar 500 cru");
-    const json = await res.json();
-    assertEquals(json?.error, true);
-    assertEquals(json?.status, 0, "status 0 marca falha de rede/timeout, não erro do provedor");
-    assert(typeof json?.message === "string" && json.message.length > 0, "precisa de mensagem amigável");
-  } finally {
-    Deno.env.delete("EVOLUTION_SESSION_TIMEOUT_MS");
-    Deno.env.delete("EVOLUTION_API_FLAVOR");
     await fake.stop();
   }
 });
 
-Deno.test("B2-02: status com a Evolution inalcançável devolve erro amigável (status 0), não 500", async () => {
-  // Porta fechada: o fetch lança imediatamente — mesmo ramo de catch do timeout.
-  Deno.env.set("EVOLUTION_API_URL", "http://127.0.0.1:1");
-  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
-  try {
-    const svc = makeServiceRecorder();
-    const res = await handleEvolutionApi(
-      controlRequest("status", { instanceName: "PRINCIPAL" }),
-      { callerClient: makeCallerWithRole(true, "b2-admin-2"), supabase: svc.client },
-    );
-    assertEquals(res.status, 200, "queda de rede não pode virar 500 cru");
-    const json = await res.json();
-    assertEquals(json?.error, true);
-    assertEquals(json?.status, 0);
-    assert(typeof json?.message === "string" && json.message.length > 0);
-  } finally {
-    Deno.env.delete("EVOLUTION_API_FLAVOR");
-  }
-});
-
-Deno.test("B2-03: delete-instance com instância ausente na GO devolve INSTANCE_GONE e apaga a linha local", async () => {
-  // /instance/all responde vazio ⇒ a instância não existe mais na GO.
-  const fake = createSessionFake([]);
-  Deno.env.set("EVOLUTION_API_URL", fake.url);
-  Deno.env.set("EVOLUTION_API_FLAVOR", "go");
-  try {
-    const svc = makeServiceRecorder();
-    const res = await handleEvolutionApi(
-      controlRequest("delete-instance", { instanceName: "CX0ADMIN" }),
-      { callerClient: makeCallerWithRole(true, "b2-admin-3"), supabase: svc.client },
-    );
-    assertEquals(res.status, 200);
-    const json = await res.json();
-    assertEquals(json?.error, true);
-    assertEquals(json?.code, "INSTANCE_GONE", "estado a reconciliar, não 404 de erro");
-    assert(
-      svc.deletes.some((d) => d.table === "whatsapp_connections"),
-      "deve apagar a linha local fantasma",
-    );
-    assertEquals(fake.requests.length, 1, "sem id na GO não pode existir delete no provedor");
-    assertEquals(fake.requests[0].path, "/instance/all");
-  } finally {
-    Deno.env.delete("EVOLUTION_API_FLAVOR");
-    await fake.stop();
-  }
-});
-
-/** Fake que TEM a instância em /instance/all mas responde 404 no delete (ela sumiu
- *  entre a listagem e o delete). */
-function createGoneOnDeleteFake(instanceName: string) {
-  const server = Deno.serve({ hostname: "127.0.0.1", port: 0, onListen() {} }, (req) => {
-    const path = new URL(req.url).pathname;
-    const json = (payload: unknown, status = 200) =>
-      new Response(JSON.stringify(payload), { status, headers: { "Content-Type": "application/json" } });
-    if (path === "/instance/all") return json({ data: [{ name: instanceName, id: "go-instance-1" }] });
-    if (path.startsWith("/instance/delete/")) return json({ message: "Instance not found" }, 404);
-    return json({ status: "success" });
-  });
-  const addr = server.addr;
-  if (addr.transport !== "tcp") throw new Error("gone-on-delete-fake: esperava listener TCP");
-  return { url: `http://127.0.0.1:${addr.port}`, stop: () => server.shutdown() };
-}
-
-Deno.test("B2-04: delete-instance quando o provedor responde 404 também reconcilia (INSTANCE_GONE)", async () => {
-  const fake = createGoneOnDeleteFake("CX0ADMIN");
-  Deno.env.set("EVOLUTION_API_URL", fake.url);
-  Deno.env.set("EVOLUTION_API_FLAVOR", "go");
-  try {
-    const svc = makeServiceRecorder();
-    const res = await handleEvolutionApi(
-      controlRequest("delete-instance", { instanceName: "CX0ADMIN" }),
-      { callerClient: makeCallerWithRole(true, "b2-admin-4"), supabase: svc.client },
-    );
-    assertEquals(res.status, 200);
-    const json = await res.json();
-    assertEquals(json?.code, "INSTANCE_GONE");
-    assert(svc.deletes.some((d) => d.table === "whatsapp_connections"), "deve apagar a linha local");
-  } finally {
-    Deno.env.delete("EVOLUTION_API_FLAVOR");
-    await fake.stop();
-  }
-});
-
-Deno.test("B2-07: isInstanceGonePayload só reconhece ausência (404/mensagem), não erro comum", () => {
-  assert(isInstanceGonePayload({ error: true, status: 404 }));
-  assert(isInstanceGonePayload({ error: true, message: "Instance not found" }));
-  assert(isInstanceGonePayload({ error: true, message: "Instância não encontrada" }));
-  assertEquals(isInstanceGonePayload({ error: true, status: 500, message: "boom" }), false);
-  assertEquals(isInstanceGonePayload({ status: "success" }), false);
-});
-
-Deno.test("B2-05: create-connection recusa telefone inválido com 422 e NÃO toca o provedor", async () => {
-  const fake = createSessionFake(["principal"]);
+Deno.test("R2EXT-AGENDA: instance-info (v2) não devolve token/apikey/hash", async () => {
+  const fake = createInstanceReadFake(() => INSTANCIA_COM_CREDENCIAL);
   Deno.env.set("EVOLUTION_API_URL", fake.url);
   Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
   try {
-    const svc = makeServiceRecorder();
     const res = await handleEvolutionApi(
-      controlRequest("create-connection", { instanceName: "principal", name: "principal", phone_number: "1199" }),
-      { callerClient: makeCallerWithRole(true, "b2-admin-5"), supabase: svc.client },
-    );
-    assertEquals(res.status, 422);
-    const json = await res.json();
-    assertEquals(json?.error?.code, "VALIDATION_ERROR");
-    assertEquals(fake.requests.length, 0, "telefone inválido não pode chegar ao provedor");
-    assertEquals(svc.inserts.length, 0, "não pode inserir a linha da conexão");
-  } finally {
-    Deno.env.delete("EVOLUTION_API_FLAVOR");
-    await fake.stop();
-  }
-});
-
-Deno.test("B2-05b: create-connection normaliza o telefone (DDI 55 + nono dígito) antes do INSERT", async () => {
-  const fake = createSessionFake(["principal"]);
-  Deno.env.set("EVOLUTION_API_URL", fake.url);
-  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
-  try {
-    const svc = makeServiceRecorder();
-    const res = await handleEvolutionApi(
-      controlRequest("create-connection", { instanceName: "principal", name: "principal", phone_number: "+55 (11) 8765-4321" }),
-      { callerClient: makeCallerWithRole(true, "b2-admin-6"), supabase: svc.client },
+      controlRequest("instance-info", { instanceName: "PRINCIPAL" }),
+      { callerClient: makeCallerClient({ isAdminOrSupervisor: false }), supabase: makeServiceClient() },
     );
     assertEquals(res.status, 200);
-    const row = svc.inserts.find((i) => i.table === "whatsapp_connections");
-    assert(row, "deve inserir a linha da conexão");
-    assertEquals(row!.values.phone_number, "5511987654321", "DDD 11 + nono dígito + DDI 55, só-dígitos");
-    const createCall = fake.requests.find((r) => r.path === "/instance/create");
-    assert(createCall, "o create da instância precisa ter chegado ao provedor");
-    assertEquals(createCall!.body?.number, "5511987654321", "o provedor recebe o número normalizado, nunca o cru");
+    const texto = await res.text();
+    assertSemCredencial(texto, "instance-info v2");
+    assert(texto.includes("open"), "o dado legítimo (status) deve permanecer");
   } finally {
-    Deno.env.delete("EVOLUTION_API_FLAVOR");
     await fake.stop();
   }
 });
 
-Deno.test("B2-06: nome de instância fora do conjunto seguro é recusado pelo schema; o válido passa", () => {
-  assertEquals(
-    EvolutionApiRequestSchema.safeParse({ action: "status", instanceName: "../../instance/all" }).success,
-    false,
+Deno.test("R2EXT-AGENDA: instance-info (GO) não devolve token/apikey/hash", async () => {
+  // GO resolve o nome→UUID em /instance/all antes de /instance/info/{id}; o
+  // fake serve a lista em /instance/all (com o instanceId) e o objeto em
+  // /instance/info — os dois passam pela higienização.
+  const fake = createInstanceReadFake((path) =>
+    path === "/instance/all" ? { data: [INSTANCIA_COM_CREDENCIAL] } : INSTANCIA_COM_CREDENCIAL
   );
-  assertEquals(
-    EvolutionApiRequestSchema.safeParse({ action: "status", instanceName: "PRINCIPAL-1_x" }).success,
-    true,
-  );
-});
-
-Deno.test("B2-06b: list-instances com instanceName de injeção devolve 422 e não chama o provedor", async () => {
-  const fake = createSessionFake(["PRINCIPAL"]);
   Deno.env.set("EVOLUTION_API_URL", fake.url);
-  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  Deno.env.set("EVOLUTION_API_FLAVOR", "go");
   try {
     const res = await handleEvolutionApi(
-      controlRequest("list-instances", { instanceName: "../../instance/all" }),
-      { callerClient: makeCallerWithRole(true, "b2-admin-7"), supabase: makeServiceRecorder().client },
+      controlRequest("instance-info", { instanceName: "PRINCIPAL" }),
+      { callerClient: makeCallerClient({ isAdminOrSupervisor: false }), supabase: makeServiceClient() },
     );
-    assertEquals(res.status, 422);
-    assertEquals(fake.requests.length, 0, "nome de injeção não pode virar path no provedor");
+    assertEquals(res.status, 200);
+    const texto = await res.text();
+    assertSemCredencial(texto, "instance-info go");
+    assert(fake.gets.some((p) => p.startsWith("/instance/info/")), "deve consultar /instance/info");
   } finally {
-    Deno.env.delete("EVOLUTION_API_FLAVOR");
     await fake.stop();
   }
 });
 
-Deno.test("B2-08: teto por usuário corta o abuso do ciclo de sessão (429) sem tocar o provedor", async () => {
-  const fake = createSessionFake(["PRINCIPAL"]);
+Deno.test("R2EXT-AGENDA: list-instances (GO) não devolve token/apikey/hash", async () => {
+  const fake = createInstanceReadFake(() => ({ data: [INSTANCIA_COM_CREDENCIAL] }));
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "go");
+  try {
+    const res = await handleEvolutionApi(
+      controlRequest("list-instances", {}),
+      { callerClient: makeCallerClient({ isAdminOrSupervisor: false }), supabase: makeServiceClient() },
+    );
+    assertEquals(res.status, 200);
+    const texto = await res.text();
+    assertSemCredencial(texto, "list-instances go");
+    assert(fake.gets.includes("/instance/all"), "GO deve listar em /instance/all");
+  } finally {
+    await fake.stop();
+  }
+});
+
+Deno.test("R2EXT-AGENDA: list-instances (v2) não devolve token/apikey/hash", async () => {
+  // v2 devolve o array direto em /instance/fetchInstances: o strip precisa
+  // percorrer a lista (senão o token do item escaparia).
+  const fake = createInstanceReadFake(() => [INSTANCIA_COM_CREDENCIAL]);
   Deno.env.set("EVOLUTION_API_URL", fake.url);
   Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
   try {
-    const svc = makeServiceRecorder();
-    let saw429 = false;
-    let requestsAt429 = 0;
-    for (let i = 0; i < 15; i++) {
-      const res = await handleEvolutionApi(
-        controlRequest("disconnect", { instanceName: "PRINCIPAL" }),
-        { callerClient: makeCallerWithRole(true, "b2-rate-limit-user"), supabase: svc.client },
-      );
-      if (res.status === 429) {
-        saw429 = true;
-        requestsAt429 = fake.requests.length;
-        const json = await res.json();
-        assert(typeof json?.message === "string" && json.message.length > 0, "429 precisa de mensagem amigável");
-        break;
+    const res = await handleEvolutionApi(
+      controlRequest("list-instances", {}),
+      { callerClient: makeCallerClient({ isAdminOrSupervisor: false }), supabase: makeServiceClient() },
+    );
+    assertEquals(res.status, 200);
+    const texto = await res.text();
+    assertSemCredencial(texto, "list-instances v2");
+    assert(fake.gets.includes("/instance/fetchInstances"), "v2 deve listar em /instance/fetchInstances");
+  } finally {
+    await fake.stop();
+  }
+});
+
+// ─── R2EXT-STATUS: Publicar Status/Story é controle e corpo é saneado ────────
+// RED: `send-status` estava em `send` (sem contato-alvo, o gate negava por
+// acidente) e o corpo ia INTEIRO para /message/sendStatus — campos livres
+// (`allContacts`, `font`), texto sem teto e `statusJidList` com números de fora,
+// tudo sem trilha. GREEN: exige admin/supervisor, allowlist + teto, lista só da
+// empresa e linha em `audit_logs` (ator e tipo, jamais conteúdo/telefone).
+
+const CONN_ID = "11111111-1111-1111-1111-111111111111";
+const CONTATO_EMPRESA = "5511911111111";
+const NUMERO_DE_FORA = "5599999999999";
+
+/** Service client que serve a conexão/contatos e captura os inserts de auditoria. */
+function makeStatusServiceClient(opts: { contacts?: string[]; auditError?: { message: string } | null } = {}) {
+  const auditInserts: any[] = [];
+  const client: any = {
+    rpc: (fn: string) => fn === "get_instance_token"
+      ? Promise.resolve({ data: "vault-instance-token", error: null })
+      : Promise.resolve({ data: null, error: null }),
+    from: (table: string) => {
+      if (table === "whatsapp_connections") {
+        const q: any = {
+          select: () => q,
+          eq: () => q,
+          maybeSingle: () => Promise.resolve({ data: { id: CONN_ID }, error: null }),
+        };
+        return q;
       }
-    }
-    assert(saw429, "o 11º disconnect do mesmo usuário deve ser cortado com 429");
-    // E o corte acontece ANTES do provedor: depois do 429, nada novo chega à Evolution.
+      if (table === "contacts") {
+        const q: any = {
+          select: () => q,
+          eq: () => q,
+          limit: () => q,
+          then: (resolve: (v: unknown) => unknown) =>
+            resolve({ data: (opts.contacts ?? []).map((phone) => ({ phone })), error: null }),
+        };
+        return q;
+      }
+      if (table === "audit_logs") {
+        return {
+          insert: (row: any) => {
+            auditInserts.push(row);
+            return Promise.resolve({ data: null, error: opts.auditError ?? null });
+          },
+        };
+      }
+      return makeQuery();
+    },
+  };
+  return { client, auditInserts };
+}
+
+Deno.test("R2EXT-STATUS: agente (não-admin) publica status? 403 e ZERO I/O no provedor", async () => {
+  const fake = createFakeEvolution();
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  const svc = makeStatusServiceClient({ contacts: [CONTATO_EMPRESA] });
+  try {
     const res = await handleEvolutionApi(
-      controlRequest("disconnect", { instanceName: "PRINCIPAL" }),
-      { callerClient: makeCallerWithRole(true, "b2-rate-limit-user"), supabase: svc.client },
+      controlRequest("send-status", { instanceName: "PRINCIPAL", type: "text", content: "oi" }),
+      { callerClient: makeCallerClient({ isAdminOrSupervisor: false }), supabase: svc.client },
     );
-    assertEquals(res.status, 429);
-    assertEquals(fake.requests.length, requestsAt429, "429 não pode produzir I/O no provedor");
+    assertEquals(res.status, 403, "send-status é controle: agente não publica");
+    assert((await res.json())?.error === true);
+    assertEquals(fake.posts.length, 0, "nada pode chegar ao provedor");
+    assertEquals(svc.auditInserts.length, 0, "sem envio, sem trilha de publicação");
   } finally {
-    Deno.env.delete("EVOLUTION_API_FLAVOR");
+    await fake.stop();
+  }
+});
+
+Deno.test("R2EXT-STATUS: supervisor publica — allowlist, teto do texto, lista só da empresa e trilha", async () => {
+  const fake = createFakeEvolution();
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  const svc = makeStatusServiceClient({ contacts: [CONTATO_EMPRESA] });
+  const textoLongo = "a".repeat(2000);
+  try {
+    const res = await handleEvolutionApi(
+      controlRequest("send-status", {
+        instanceName: "PRINCIPAL",
+        type: "text",
+        content: textoLongo,
+        backgroundColor: "#ff0000",
+        allContacts: true,
+        font: 1,
+        statusJidList: [`${CONTATO_EMPRESA}@s.whatsapp.net`, `${NUMERO_DE_FORA}@s.whatsapp.net`],
+      }),
+      { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase: svc.client },
+    );
+    assertEquals(res.status, 200, "supervisor publica");
+
+    assertEquals(fake.posts.length, 1, "um único POST ao provedor");
+    const post = fake.posts[0];
+    assertEquals(post.path, "/message/sendStatus/PRINCIPAL");
+    const enviado = post.body;
+    assertEquals(enviado.type, "text");
+    assertEquals((enviado.content as string).length, 1024, "texto cortado no teto");
+    assertEquals(enviado.backgroundColor, "#ff0000");
+    assertEquals(enviado.statusJidList, [`${CONTATO_EMPRESA}@s.whatsapp.net`], "só o JID da empresa sobrevive");
+    assert(!("allContacts" in enviado), "campo livre allContacts descartado");
+    assert(!("font" in enviado), "campo livre font descartado");
+
+    assertEquals(svc.auditInserts.length, 1, "publicação exige trilha");
+    const trilha = svc.auditInserts[0];
+    assertEquals(trilha.action, "evolution_status_published");
+    assertEquals(trilha.user_id, "agent-1");
+    assertEquals(trilha.entity_id, CONN_ID);
+    assertEquals(trilha.details?.type, "text");
+    const serializado = JSON.stringify(trilha);
+    assert(!serializado.includes(textoLongo), "a trilha não guarda o conteúdo");
+    assert(!serializado.includes(CONTATO_EMPRESA), "a trilha não guarda telefone");
+  } finally {
+    await fake.stop();
+  }
+});
+
+Deno.test("R2EXT-STATUS: statusJidList só com números de fora nega (não cai no broadcast global)", async () => {
+  const fake = createFakeEvolution();
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  const svc = makeStatusServiceClient({ contacts: [CONTATO_EMPRESA] });
+  try {
+    const res = await handleEvolutionApi(
+      controlRequest("send-status", {
+        instanceName: "PRINCIPAL",
+        type: "text",
+        content: "oi",
+        statusJidList: [`${NUMERO_DE_FORA}@s.whatsapp.net`],
+      }),
+      { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase: svc.client },
+    );
+    assertEquals(res.status, 403, "lista sem nenhum destino da empresa não pode virar broadcast");
+    assert((await res.json())?.error === true);
+    assertEquals(fake.posts.length, 0, "não pode chegar ao provedor");
+    assertEquals(svc.auditInserts.length, 0, "sem publicação não há trilha");
+  } finally {
+    await fake.stop();
+  }
+});
+
+Deno.test("R2EXT-STATUS: falha da trilha NÃO publica o status (403/500 e zero I/O)", async () => {
+  const fake = createFakeEvolution();
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  const svc = makeStatusServiceClient({ contacts: [CONTATO_EMPRESA], auditError: { message: "audit down" } });
+  try {
+    const res = await handleEvolutionApi(
+      controlRequest("send-status", { instanceName: "PRINCIPAL", type: "text", content: "oi" }),
+      { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase: svc.client },
+    );
+    assert(res.status >= 400, "sem trilha o status é negado (fail-closed)");
+    assertEquals(fake.posts.length, 0, "não pode publicar sem registro");
+  } finally {
     await fake.stop();
   }
 });

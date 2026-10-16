@@ -3,8 +3,8 @@
  *
  * Antes o `InboxEmptyChat` era só ícone + frase. Agora ele lista, no slot
  * `action` do `ConversationEmptyState` (que segue sem atalhos — decisão
- * t_fced78b2), as teclas que a pessoa realmente usa para navegar a lista e
- * abrir a busca, lidas do `useCustomShortcuts`.
+ * t_fced78b2), as teclas que a pessoa realmente usa para abrir a busca —
+ * lidas do `useCustomShortcuts`.
  *
  * A prova: as teclas vêm do hook e MUDAM quando o atalho é remapeado — nada de
  * `kbd` fixo que continua mentindo depois de o usuário trocar a combinação.
@@ -42,7 +42,7 @@ function barraAtalhos(): HTMLElement {
 }
 
 describe('InboxEmptyChat — dicas dos atalhos reais', () => {
-  it('mantém o estado vazio compartilhado e lista os atalhos de navegação e busca', async () => {
+  it('mantém o estado vazio compartilhado e lista só o atalho que funciona', async () => {
     render(
       <>
         <AjustarAtalhos reset />
@@ -52,15 +52,18 @@ describe('InboxEmptyChat — dicas dos atalhos reais', () => {
 
     expect(screen.getByTestId('conversation-empty-state')).toBeInTheDocument();
 
-    await waitFor(() => expect(screen.getByText('Próxima conversa')).toBeInTheDocument());
-    expect(screen.getByText('Conversa anterior')).toBeInTheDocument();
-    expect(screen.getByText('Busca global')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('Busca global')).toBeInTheDocument());
 
-    // Teclas padrão do V2: Alt+↓ / Alt+↑ para navegar e Ctrl+K para buscar.
+    // t_3d996237: `prev-conversation`/`next-conversation` não têm executor —
+    // as dicas Alt+↑/↓ saíram da barra em vez de prometer tecla morta.
+    expect(screen.queryByText('Próxima conversa')).not.toBeInTheDocument();
+    expect(screen.queryByText('Conversa anterior')).not.toBeInTheDocument();
+
+    // Restou a tecla padrão que funciona: Ctrl+K para buscar.
     const barra = barraAtalhos();
-    expect(within(barra).getAllByText('Alt')).toHaveLength(2);
-    expect(within(barra).getByText('ArrowDown')).toBeInTheDocument();
-    expect(within(barra).getByText('ArrowUp')).toBeInTheDocument();
+    expect(within(barra).queryAllByText('Alt')).toHaveLength(0);
+    expect(within(barra).queryByText('ArrowDown')).not.toBeInTheDocument();
+    expect(within(barra).queryByText('ArrowUp')).not.toBeInTheDocument();
     expect(within(barra).getByText('Ctrl')).toBeInTheDocument();
     expect(within(barra).getByText('k')).toBeInTheDocument();
   });

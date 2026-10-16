@@ -20,7 +20,6 @@ export const AdvancedReportsView = lazyWithRetry(() => import('@/components/repo
 export const SecurityView = lazyWithRetry(() => import('@/components/security/SecurityView').then(m => ({ default: m.SecurityView })));
 export const TasksModule = lazyWithRetry(() => import('@/components/tasks/TasksModule').then(m => ({ default: m.TasksModule })));
 export const SystemFeaturesView = lazyWithRetry(() => import('@/components/docs/SystemFeaturesView').then(m => ({ default: m.SystemFeaturesView })));
-export const CampaignsView = lazyWithRetry(() => import('@/components/campaigns/CampaignsView').then(m => ({ default: m.CampaignsView })));
 export const ChatbotFlowsView = lazyWithRetry(() => import('@/components/chatbot/ChatbotFlowsView').then(m => ({ default: m.ChatbotFlowsView })));
 export const AutomationsManager = lazyWithRetry(() => import('@/components/automations/AutomationsManager').then(m => ({ default: m.AutomationsManager })));
 export const IntegrationsHub = lazyWithRetry(() => import('@/components/integrations/IntegrationsHub').then(m => ({ default: m.IntegrationsHub })));
@@ -54,6 +53,9 @@ export const CRM360ExplorerView = lazyWithRetry(() => import('@/components/crm36
 export const AIUsageDashboard = lazyWithRetry(() => import('@/components/admin/AIUsageDashboard').then(m => ({ default: m.AIUsageDashboard })));
 export const SearchInsightsView = lazyWithRetry(() => import('@/components/admin/SearchInsightsView').then(m => ({ default: m.SearchInsightsView })));
 export const TalkXView = lazyWithRetry(() => import('@/components/talkx/TalkXView'));
+// X055 — prancha de referência do Talk X: só alcançável por ?view=talkx-kit
+// (sem entrada em menu), em chunk lazy separado.
+export const TalkXKitView = lazyWithRetry(() => import('@/components/talkx/__dev__/TalkXKit').then(m => ({ default: m.TalkXKit })));
 export const MultiplixView = lazyWithRetry(() => import('@/components/multiplix/MultiplixView'));
 export const EvolutionMonitoringDashboard = lazyWithRetry(() => import('@/components/monitoring/EvolutionMonitoringDashboard').then(m => ({ default: m.EvolutionMonitoringDashboard })));
 export const AchievementsSystemLazy = lazyWithRetry(async () => {

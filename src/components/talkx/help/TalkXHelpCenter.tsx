@@ -73,10 +73,6 @@ export function TalkXHelpCenter({ route, onRouteChange, onClose }: TalkXHelpCent
   const list = useMemo(() => docs ?? [], [docs]);
   const search = useTalkXHelpSearch(list);
   const searchRef = useRef<HTMLInputElement | null>(null);
-  // Valores estáveis do estado da busca que o atalho de Esc usa (o objeto do
-  // hook é novo a cada render; assim o listener não se recria sem necessidade).
-  const searchQuery = search.query;
-  const setSearchQuery = search.setQuery;
 
   const topics = useMemo(() => groupHelpTopics(list), [list]);
   const guides = useMemo(() => helpGuides(list), [list]);
@@ -103,18 +99,15 @@ export function TalkXHelpCenter({ route, onRouteChange, onClose }: TalkXHelpCent
   // abrir a paleta global. O listener é de captura e para a propagação, então o
   // atalho global (que escuta na fase de borbulha) não chega a disparar; fora
   // da Ajuda este efeito não existe e o atalho segue intacto.
-  //
-  // X192: a Ajuda é uma tela com endereço próprio e Esc sai dela como em
-  // qualquer diálogo da casa — a tela aberta é a única coisa renderizada pelo
-  // módulo, então o Esc não fecha nada por baixo. Com a busca escrita, o
-  // primeiro Esc limpa a busca (mesma regra do campo) e não fecha a tela.
+  // T16-ESC: a Ajuda agora é uma tela roteada, não um Dialog. Mesmo assim, Esc
+  // mantém a mesma saída de teclado do modal antigo: fecha a Ajuda e deixa o pai
+  // restaurar o foco no botão que abriu a tela.
   useEffect(() => {
     const handleShortcut = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault();
         event.stopPropagation();
-        if (searchQuery) setSearchQuery('');
-        else onClose();
+        onClose();
         return;
       }
       if (!((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k')) return;
@@ -128,7 +121,7 @@ export function TalkXHelpCenter({ route, onRouteChange, onClose }: TalkXHelpCent
     };
     window.addEventListener('keydown', handleShortcut, true);
     return () => window.removeEventListener('keydown', handleShortcut, true);
-  }, [focusSearch, onClose, onRouteChange, route.article, route.topic, searchQuery, setSearchQuery]);
+  }, [focusSearch, onClose, onRouteChange, route.article, route.topic]);
 
   // O campo é o primeiro alvo da tela: ao voltar do artigo, o foco volta para ele.
   useEffect(() => {

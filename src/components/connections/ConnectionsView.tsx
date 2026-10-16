@@ -7,7 +7,6 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { PhoneInput } from '@/components/ui/phone-input';
 import { Label } from '@/components/ui/label';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription,
@@ -17,8 +16,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import { normalizeE164BR } from '@/lib/calls/phone';
-import { toast } from '@/hooks/ui/use-toast';
+import { toast } from 'sonner';
 import { BusinessHoursDialog } from './BusinessHoursDialog';
 import { ConnectionQueuesDialog } from './ConnectionQueuesDialog';
 import { InstanceSettingsDialog } from './InstanceSettingsDialog';
@@ -34,7 +32,6 @@ export function ConnectionsView() {
     connections, loading,
     isAddDialogOpen, setIsAddDialogOpen,
     qrCodeDialog, newConnection, setNewConnection, isCreating,
-    addConnectionError, clearAddConnectionError,
     syncingHistory, setSyncingHistory, evolutionLoading,
     handleAddConnection, handleShowQrCode, handleRefreshQrCode,
     handleCopyId, handleDisconnect, handleSetDefault, handleDelete, closeQrDialog,
@@ -57,52 +54,22 @@ export function ConnectionsView() {
   // criava a conexão inoperante (token perdido, QR da PRINCIPAL) que a trava
   // existe para impedir.
   const openAddConnectionDialog = () => {
-    // [refazer 1] P2: reabrir não pode mostrar o erro da tentativa anterior.
-    clearAddConnectionError();
     if (multiConnectionEnabled) setIsAddDialogOpen(true);
-  };
-
-  // [refazer 1] P2: fechar (por qualquer caminho do Dialog) e reabrir pelo
-  // gatilho também limpam: toda transição de aberto/fechado descarta o erro
-  // da tentativa anterior (o erro é definido com o diálogo já aberto, sem
-  // transição, então não é apagado na hora em que aparece).
-  const handleAddDialogOpenChange = (open: boolean) => {
-    clearAddConnectionError();
-    setIsAddDialogOpen(open);
   };
 
   const [businessHoursDialog, setBusinessHoursDialog] = useState({ open: false, connectionId: '', connectionName: '' });
   const [queuesDialog, setQueuesDialog] = useState({ open: false, connectionId: '', connectionName: '' });
   const [settingsDialog, setSettingsDialog] = useState({ open: false, instanceName: '', connectionName: '' });
 
-  // Conexão com o desconectar em voo: a view mantém o id para o cartão mostrar o
-  // estado `disconnecting` (botão pulsando) e o diálogo aguardar até terminar.
-  const [disconnectingId, setDisconnectingId] = useState<string | null>(null);
-  const handleDisconnectWithState = async (connection: Parameters<typeof handleDisconnect>[0]) => {
-    setDisconnectingId(connection.id);
-    try { await handleDisconnect(connection); }
-    finally { setDisconnectingId(null); }
-  };
-
-  const connectedCount = connections.filter((c) => c.status === 'connected').length;
-  const offlineCount = connections.filter((c) => c.status !== 'connected').length;
-
-  // Conexão com o desconectar em voo: a view mantém o id para o cartão mostrar o
-  // estado `disconnecting` (botão pulsando) e o diálogo aguardar até terminar.
-  const [disconnectingId, setDisconnectingId] = useState<string | null>(null);
-  const handleDisconnectWithState = async (connection: Parameters<typeof handleDisconnect>[0]) => {
-    setDisconnectingId(connection.id);
-    try { await handleDisconnect(connection); }
-    finally { setDisconnectingId(null); }
-  };
-
-  const connectedCount = connections.filter((c) => c.status === 'connected').length;
-  const offlineCount = connections.filter((c) => c.status !== 'connected').length;
+  // A Evolution GO recusa o histórico (200 com `notSupported`). Quando isso
+  // acontece, escondemos a ação em todos os cartões até a página recarregar.
+  const [historyNotSupported, setHistoryNotSupported] = useState(false);
+  const [checkingHealth, setCheckingHealth] = useState<string | null>(null);
 
   const handleSyncHistory = async (connection: { id: string; instance_id?: string | null }) => {
     if (!connection.instance_id) return;
     setSyncingHistory(connection.id);
-    toast({ title: 'Sincronizando histórico...', description: 'Isso pode levar alguns minutos.' });
+    toast('Sincronizando histórico...', { description: 'Isso pode levar alguns minutos.' });
     try {
       const { data, error } = await supabase.functions.invoke('evolution-sync', {
         body: { action: 'sync-all-messages', instanceName: connection.instance_id },
@@ -113,15 +80,14 @@ export function ConnectionsView() {
       // como se tivesse dado certo.
       if (data?.notSupported || data?.success === false) {
         setHistoryNotSupported(true);
-        toast({
-          title: 'Histórico não suportado',
+        toast.warning('Histórico não suportado', {
           description: data?.message || 'O provedor atual (Evolution GO) não suporta sincronização de histórico. Requer Evolution API v2.',
         });
         return;
       }
-      toast({ title: 'Sincronização concluída!', description: `${data?.totalSynced || 0} mensagens sincronizadas de ${data?.totalContacts || 0} contatos.` });
+      toast.success('Sincronização concluída!', { description: `${data?.totalSynced || 0} mensagens sincronizadas de ${data?.totalContacts || 0} contatos.` });
     } catch (e: unknown) {
-      toast({ title: 'Erro na sincronização', description: e instanceof Error ? e.message : 'Erro desconhecido', variant: 'destructive' });
+      toast.error('Erro na sincronização', { description: e instanceof Error ? e.message : 'Erro desconhecido' });
     } finally { setSyncingHistory(null); }
   };
 
@@ -132,9 +98,9 @@ export function ConnectionsView() {
     try {
       const { data, error } = await supabase.functions.invoke('connection-health-check', { method: 'POST', body: {} });
       if (error) throw error;
-      toast({ title: 'Health check concluído', description: `${data?.connections?.length || 0} conexão(ões) verificada(s).` });
+      toast.success('Health check concluído', { description: `${data?.connections?.length || 0} conexão(ões) verificada(s).` });
     } catch (e: unknown) {
-      toast({ title: 'Erro no health check', description: e instanceof Error ? e.message : 'Erro desconhecido', variant: 'destructive' });
+      toast.error('Erro no health check', { description: e instanceof Error ? e.message : 'Erro desconhecido' });
     } finally { setCheckingHealth(null); }
   };
 
@@ -145,7 +111,7 @@ export function ConnectionsView() {
       <PageHeader title="Conexões WhatsApp" subtitle="Gerencie múltiplas conexões WhatsApp via Evolution API"
         breadcrumbs={[{ label: 'Configurações' }, { label: 'Conexões' }]}
         actions={
-          <Dialog open={isAddDialogOpen} onOpenChange={handleAddDialogOpenChange}>
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
               <Button
                 className="bg-whatsapp hover:bg-whatsapp-dark text-primary-foreground"
@@ -158,20 +124,10 @@ export function ConnectionsView() {
             <DialogContent aria-describedby={undefined} className="sm:max-w-md">
               <DialogHeader><DialogTitle>Adicionar Nova Conexão</DialogTitle><DialogDescription>Crie uma nova instância para conectar ao WhatsApp</DialogDescription></DialogHeader>
               <div className="grid gap-4 py-4">
-                <div className="space-y-2"><Label>Nome da Conexão</Label><Input placeholder="Ex: WhatsApp Vendas" value={newConnection.name} onChange={(e) => { clearAddConnectionError(); setNewConnection({ ...newConnection, name: e.target.value }); }} /></div>
-                <div className="space-y-2"><Label>Número do WhatsApp</Label><PhoneInput value={newConnection.phone_number} onChange={(formatted) => { clearAddConnectionError(); setNewConnection({ ...newConnection, phone_number: formatted }); }} /></div>
-                {addConnectionError && (
-                  <p
-                    role="alert"
-                    data-testid="add-connection-error"
-                    className="flex items-start gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
-                  >
-                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-                    {addConnectionError}
-                  </p>
-                )}
+                <div className="space-y-2"><Label>Nome da Conexão</Label><Input placeholder="Ex: WhatsApp Vendas" value={newConnection.name} onChange={(e) => setNewConnection({ ...newConnection, name: e.target.value })} /></div>
+                <div className="space-y-2"><Label>Número do WhatsApp</Label><Input placeholder="+55 11 99999-0000" value={newConnection.phone_number} onChange={(e) => setNewConnection({ ...newConnection, phone_number: e.target.value })} /></div>
                 <div className="flex justify-end gap-2 pt-4">
-                  <Button variant="outline" onClick={() => { clearAddConnectionError(); setIsAddDialogOpen(false); }} disabled={isCreating}>Cancelar</Button>
+                  <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} disabled={isCreating}>Cancelar</Button>
                   <Button onClick={handleAddConnection} className="bg-whatsapp hover:bg-whatsapp-dark" disabled={isCreating}>
                     {isCreating ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Criando...</> : 'Adicionar'}
                   </Button>
@@ -231,15 +187,12 @@ export function ConnectionsView() {
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
-          { label: 'Total de Conexões', value: connections.length, color: 'text-primary',
-            sub: `${connections.length} instância${connections.length === 1 ? '' : 's'} configurada${connections.length === 1 ? '' : 's'}` },
-          { label: 'Conectadas', value: connectedCount, color: 'text-status-online',
-            sub: connectedCount > 0 ? 'Recebendo mensagens' : 'Nenhuma ativa' },
-          { label: 'Desconectadas', value: offlineCount, color: 'text-status-offline',
-            sub: offlineCount > 0 ? 'Precisam reconectar' : 'Tudo funcionando' },
+          { label: 'Total de Conexões', value: connections.length, color: 'text-primary' },
+          { label: 'Conectadas', value: connections.filter(c => c.status === 'connected').length, color: 'text-status-online' },
+          { label: 'Desconectadas', value: connections.filter(c => c.status !== 'connected').length, color: 'text-status-offline' },
         ].map((stat, i) => (
           <motion.div key={stat.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
-            <Card className="border border-secondary/20 bg-card card-glow-purple"><CardContent className="p-4"><p className="text-sm text-muted-foreground">{stat.label}</p><p className={cn('text-3xl font-bold', stat.color)}>{stat.value}</p><p className="text-xs text-muted-foreground mt-1">{stat.sub}</p></CardContent></Card>
+            <Card className="border border-secondary/20 bg-card card-glow-purple"><CardContent className="p-4"><p className="text-sm text-muted-foreground">{stat.label}</p><p className={cn('text-3xl font-bold', stat.color)}>{stat.value}</p></CardContent></Card>
           </motion.div>
         ))}
       </div>
@@ -264,8 +217,7 @@ export function ConnectionsView() {
             <StaggeredItem key={connection.id}>
               <ConnectionCard
                 connection={connection} syncingHistory={syncingHistory}
-                disconnecting={disconnectingId === connection.id}
-                onShowQrCode={handleShowQrCode} onCopyId={handleCopyId} onDisconnect={handleDisconnectWithState}
+                onShowQrCode={handleShowQrCode} onCopyId={handleCopyId} onDisconnect={handleDisconnect}
                 onSetDefault={handleSetDefault} onDelete={handleDelete}
                 onBusinessHours={(id, name) => setBusinessHoursDialog({ open: true, connectionId: id, connectionName: name })}
                 onQueues={(id, name) => setQueuesDialog({ open: true, connectionId: id, connectionName: name })}

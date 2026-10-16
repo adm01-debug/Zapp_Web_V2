@@ -6,41 +6,10 @@ Régua N217: a cobertura de linhas agregada dos 5 helpers abaixo não pode ficar
 |---|---|---|---|
 | ai-auth.ts | 27 | 59 | 45.8% |
 | ai-audio-authz.ts | 37 | 54 | 68.5% |
-<<<<<<< ours
 | cron-secret-auth.ts | 29 | 30 | 96.7% |
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-| evolution-control-authz.ts | 93 | 93 | 100.0% |
+| evolution-control-authz.ts | 127 | 178 | 71.3% |
 | voice-copilot-authz.ts | 25 | 25 | 100.0% |
-| **Total** | **211** | **261** | **80.8%** |
-=======
-| evolution-control-authz.ts | 123 | 123 | 100.0% |
-| voice-copilot-authz.ts | 25 | 25 | 100.0% |
-| **Total** | **241** | **291** | **82.8%** |
->>>>>>> theirs
-=======
-| evolution-control-authz.ts | 140 | 140 | 100.0% |
-| voice-copilot-authz.ts | 25 | 25 | 100.0% |
-| **Total** | **258** | **308** | **83.8%** |
->>>>>>> theirs
-=======
-| evolution-control-authz.ts | 140 | 140 | 100.0% |
-| voice-copilot-authz.ts | 25 | 25 | 100.0% |
-| **Total** | **258** | **308** | **83.8%** |
->>>>>>> theirs
-=======
-| evolution-control-authz.ts | 133 | 133 | 100.0% |
-| voice-copilot-authz.ts | 25 | 25 | 100.0% |
-| **Total** | **251** | **301** | **83.4%** |
->>>>>>> theirs
-=======
-| cron-secret-auth.ts | 48 | 51 | 94.1% |
-| evolution-control-authz.ts | 137 | 137 | 100.0% |
-| voice-copilot-authz.ts | 25 | 25 | 100.0% |
-| **Total** | **274** | **326** | **84.0%** |
->>>>>>> theirs
+| **Total** | **245** | **346** | **70.8%** |
 
 Testes medidos (só estes entram no `deno test` da régua):
 

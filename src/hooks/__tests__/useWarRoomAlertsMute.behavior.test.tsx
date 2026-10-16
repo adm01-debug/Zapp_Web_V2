@@ -117,4 +117,28 @@ describe('useWarRoomAlerts — mudo do painel e horário de silêncio', () => {
 
     expect(tocou()).toBe(false);
   });
+
+  it('crítico toca em DUAS batidas separadas (a segunda 250 ms depois da primeira)', async () => {
+    renderHook(() => useWarRoomAlerts(), { wrapper: wrapper() });
+    await waitFor(() => expect(h.state.handler).toBeTruthy());
+
+    act(() => { h.state.handler!(alertaCritico); });
+
+    // A dupla batida saía no mesmo tique: `play()` reinicia `currentTime`, então o
+    // operador ouvia UMA batida só. A primeira sai agora e a segunda 250 ms depois.
+    expect(audios[0].play).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(audios[0].play).toHaveBeenCalledTimes(2), { timeout: 1500 });
+  });
+
+  it('alerta que não é crítico toca UMA vez só', async () => {
+    renderHook(() => useWarRoomAlerts(), { wrapper: wrapper() });
+    await waitFor(() => expect(h.state.handler).toBeTruthy());
+
+    act(() => {
+      h.state.handler!({ new: { ...alertaCritico.new, id: 'x2', alert_type: 'sla_warning' } });
+    });
+    await new Promise((r) => setTimeout(r, 400));
+
+    expect(audios[0].play).toHaveBeenCalledTimes(1);
+  });
 });

@@ -7,6 +7,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import {
@@ -227,6 +228,13 @@ export function GroupsView() {
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
+                        <div onClick={(e) => e.stopPropagation()}>
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() => toggleGroupSelection(group.id)}
+                            aria-label={isSelected ? `Desmarcar ${group.name}` : `Selecionar ${group.name}`}
+                          />
+                        </div>
                         <Avatar className="w-12 h-12">
                           <AvatarImage src={group.avatar_url || undefined} alt={group.name || 'Grupo'} />
                           <AvatarFallback className="bg-whatsapp/10 text-whatsapp"><Users className="w-6 h-6" /></AvatarFallback>

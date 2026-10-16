@@ -18,7 +18,7 @@ import { PrimaryButton, GhostButton, Pill } from '@/components/dashboard/overvie
 import { cn } from '@/lib/utils';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import { useAudienceEstimate } from '@/hooks/integrations/useTalkXSegments';
-import { useCampaignEditor, explainDraftSaveError, completedRules, VARIABLES, MORE_VARIABLES, MESSAGE_LIMIT, MESSAGE_TEMPLATES, MEDIA_TYPES, CAMPAIGN_NAME_MIN_LENGTH, CAMPAIGN_NAME_MAX_LENGTH, type WizardStep } from './useCampaignEditor';
+import { useCampaignEditor, explainDraftSaveError, VARIABLES, MORE_VARIABLES, MESSAGE_LIMIT, MESSAGE_TEMPLATES, MEDIA_TYPES, CAMPAIGN_NAME_MIN_LENGTH, CAMPAIGN_NAME_MAX_LENGTH, type WizardStep } from './useCampaignEditor';
 import { TalkXContactSelector } from './TalkXContactSelector';
 import { TalkXAudienceFilters } from './TalkXAudienceFilters';
 import { TalkXWizardDelivery, TalkXWizardReview } from './TalkXWizardDelivery';
@@ -26,9 +26,7 @@ import { TalkXMessageEditor, type TalkXMessageEditorHandle } from './TalkXMessag
 import { TalkXLinksManager } from './links/TalkXLinksManager';
 import { buildTalkxLinkPlaceholder, useTalkXLinks } from '@/hooks/integrations/useTalkXLinks';
 import { useCRMAdminAccess } from '@/hooks/crm/useCRMAdminAccess';
-import { IconTile, WhatsAppBubble, OBJECTIVES, VARIABLE_KEYS, fmtInt, fmtPct, fmtAgo, personalizePreview, RailCard, MetaRow, fmtDateTime, TalkXWhatsAppDisconnectedState } from './talkxShared';
-import { useTalkXCampaignSummary } from '@/hooks/integrations/useTalkXCampaignSummary';
-import { TalkXErrorState } from './kit/states';
+import { IconTile, ModuleBreadcrumb, WhatsAppBubble, OBJECTIVES, VARIABLE_KEYS, fmtInt, fmtPct, fmtAgo, personalizePreview, RailCard, MetaRow, fmtDateTime, TalkXWhatsAppDisconnectedState } from './talkxShared';
 import { InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
 import { useContactCustomFields } from '@/hooks/crm/useContactCustomFields';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
@@ -50,13 +48,18 @@ interface Props {
   initial?: { segmentIds?: string[]; templateId?: string; step?: WizardStep };
   /** URL state is owned by TalkXView; this component only requests transitions. */
   routeStep?: WizardStep;
-  onRouteStepChange?: (step: WizardStep, replace?: boolean) => void;
+  /**
+   * X134 — quando o passo atual foi aberto pelo "Editar" da revisão, a rota
+   * carrega `return=N`; é para esse passo que o botão principal volta.
+   */
+  routeReturnTo?: WizardStep;
+  onRouteStepChange?: (step: WizardStep, replace?: boolean, returnTo?: WizardStep) => void;
   onDraftIdentity?: (campaignId: string) => void;
 }
 
 export type WizardState = ReturnType<typeof useCampaignEditor>;
 
-export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, routeStep, onRouteStepChange, onDraftIdentity }: Props) {
+export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, routeStep, routeReturnTo, onRouteStepChange, onDraftIdentity }: Props) {
   const ed = useCampaignEditor(campaign, onClose, initial);
   const { hasUnsavedChanges } = ed;
 
@@ -85,10 +88,10 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
     return 4;
   })() as WizardStep;
 
-  const requestStep = (requestedStep: WizardStep, replace = false) => {
+  const requestStep = (requestedStep: WizardStep, replace = false, returnTo?: WizardStep) => {
     const safeStep = Math.min(requestedStep, maximumAllowedStep) as WizardStep;
     ed.setStep(safeStep);
-    onRouteStepChange?.(safeStep, replace || safeStep !== requestedStep);
+    onRouteStepChange?.(safeStep, replace || safeStep !== requestedStep, returnTo);
   };
 
   // TL-138 — o stepper passa a ser navegável por teclado: as setas andam entre os
@@ -107,6 +110,13 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
     stepButtonRefs.current[targetIndex]?.focus();
     requestStep(STEPS[targetIndex].n);
   };
+
+  // X134 — "Editar" da revisão: abre o passo pedido deixando na rota o destino
+  // de volta (`step=N&return=4`), em vez de trocar só o estado local.
+  const openStepFromReview = (target: 1 | 2 | 3, returnTo: 4) => requestStep(target, false, returnTo);
+
+  /** O passo atual foi aberto pela revisão e o botão principal volta para lá. */
+  const returnTo = step < 4 ? routeReturnTo : undefined;
 
   // O estado da URL pode mudar por histórico do navegador ou por um link
   // copiado. Nunca aceita salto acima do último pré-requisito válido.
@@ -163,16 +173,14 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
 
   return (
     <div className="w-full min-w-0 space-y-4">
-      {/* E61: Breadcrumb */}
-      <nav className="flex items-center gap-1.5 text-2xs text-muted-foreground px-0.5">
-        <span>Talk X</span>
-        <span className="text-border">›</span>
-        <span>Campanhas</span>
-        <span className="text-border">›</span>
-        <span>{campaign ? `Editar ${campaign.name}` : 'Nova campanha'}</span>
-        <span className="text-border">›</span>
-        <span className="text-foreground font-medium">{STEPS.find(s => s.n === step)?.label}</span>
-      </nav>
+      {/* X053: a trilha saiu daqui para o componente do kit (nav com aria-label). */}
+      <ModuleBreadcrumb
+        items={(() => {
+          const nomeCampanha = campaign ? `Editar ${campaign.name}` : 'Nova campanha';
+          const stepLabel = STEPS.find((s) => s.n === step)?.label;
+          return stepLabel ? ['Talk X', 'Campanhas', nomeCampanha, stepLabel] : ['Talk X', 'Campanhas', nomeCampanha];
+        })()}
+      />
 
             {/* Header + stepper */}
       <div className="rounded-2xl bg-card border border-border/70 p-4 flex flex-col xl:flex-row xl:items-center gap-4">
@@ -218,7 +226,7 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
           {step === 1 && <StepAudience ed={ed} />}
           {step === 2 && <StepMessage ed={ed} />}
           {step === 3 && <TalkXWizardDelivery ed={ed} />}
-          {step === 4 && <TalkXWizardReview ed={ed} campaign={campaign} onLaunched={(id, status) => onLaunched?.(id, status)} onEditStep={requestStep} />}
+          {step === 4 && <TalkXWizardReview ed={ed} campaign={campaign} onLaunched={(id, status) => onLaunched?.(id, status)} onEditStep={openStepFromReview} />}
 
           {/* TL-138: rodapé fixo — Voltar / Salvar rascunho / Continuar sempre à vista */}
           <div className="sticky bottom-0 z-20 flex items-center justify-between gap-3 flex-wrap rounded-xl border border-border/70 bg-background/95 px-3 py-2.5 backdrop-blur">
@@ -242,9 +250,15 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
               )}
             </div>
             {step < 4 && (
-              <PrimaryButton size="lg" onClick={next} disabled={!ed.canProceed[step] || ed.saving}>
-                Continuar <ArrowRight className="w-4 h-4" />
-              </PrimaryButton>
+              returnTo ? (
+                <PrimaryButton size="lg" icon={ArrowLeft} onClick={() => requestStep(returnTo)} disabled={ed.saving}>
+                  Voltar à revisão
+                </PrimaryButton>
+              ) : (
+                <PrimaryButton size="lg" onClick={next} disabled={!ed.canProceed[step] || ed.saving}>
+                  Continuar <ArrowRight className="w-4 h-4" />
+                </PrimaryButton>
+              )
             )}
           </div>
         </div>
@@ -684,27 +698,6 @@ function SegmentPreviewCard({ segment, estimatedCount }: { segment: { id: string
 
 function WizardRail({ ed }: { ed: WizardState }) {
   const sample = ed.contacts?.[0];
-  // X131 — o resumo do rail vem do SERVIDOR (RPC de audiência), não de contagem
-  // local: "Público total" era `selectedContacts.length` e "Bloqueados por
-  // supressão" era 0 para segmento (e só existia depois de um save). Agora os
-  // três números saem do mesmo critério de elegibilidade/supressão do disparo.
-  // Regras: nunca chamar talkx_resolve_audience sem filtro. Origem sem
-  // segmento escolhido ou sem regras completas fica indisponível ('—').
-  // O Talk X passou a aceitar mais de um segmento (5680df621f substituiu
-  // `segmentId` por `segmentIds`): o resumo soma os segmentos escolhidos, que é
-  // o mesmo recorte que a RPC une em `p_segment_ids`.
-  const completed = completedRules(ed.audienceRules);
-  const hasCompleteRules = completed.groups.some((g) => g.rules.length > 0);
-  const summarySegmentIds = ed.audienceSource === 'segment' ? ed.segmentIds : [];
-  const summaryEnabled =
-    ed.audienceSource !== 'crm360' &&
-    (ed.audienceSource !== 'segment' || summarySegmentIds.length > 0) &&
-    (ed.audienceSource !== 'contacts' || hasCompleteRules);
-  const summary = useTalkXCampaignSummary({
-    rules: ed.audienceSource === 'contacts' ? completed : null,
-    segmentIds: ed.audienceSource === 'segment' && summarySegmentIds.length > 0 ? summarySegmentIds : null,
-    enabled: summaryEnabled,
-  });
   // Review da PR #909: sem os campos customizados reais do contato de
   // exemplo, o preview sempre mostrava "[variavel]" mesmo quando o envio
   // real (personalize()) já resolvia o dado verdadeiro de contact_custom_fields.
@@ -723,36 +716,13 @@ function WizardRail({ ed }: { ed: WizardState }) {
     return values;
   }, [sampleCustomFields]);
   const start = ed.isScheduled && ed.scheduledAt ? fmtDateTime(new Date(ed.scheduledAt).toISOString()) : 'Imediato';
-  // X131 (revisão) — o painel não pode exibir um número que diverge do que o
-  // disparo manda. A seleção manual do passo 1 viaja dentro do snapshot como
-  // `contact_ids` (`talkx_audience_query(v_rules, v_contact_ids, ...)`, X017), mas
-  // `talkx_resolve_audience` conta SÓ as regras: a assinatura da RPC não aceita
-  // ids. Então, na origem "contacts":
-  //  - sem regras completas: a RPC fica desabilitada, mas o público real é a
-  //    própria seleção -> contagem local (`ed.audienceTotal`, como era antes);
-  //  - com regras completas: o servidor contaria mais do que o público real (a
-  //    seleção estreita o recorte) -> '—' enquanto houver seleção manual;
-  //  - erro na RPC: '—', nunca `0`, que passaria por contagem real.
-  const manualSelection = ed.audienceSource === 'contacts' && ed.selectedContacts.length > 0;
-  const serverNumberOmitted = summary.isUnavailable || summary.isError || manualSelection;
-  const serverTile = (value: number) =>
-    (serverNumberOmitted ? '—' : summary.isLoading ? '…' : fmtInt(value));
-  const totalTile = manualSelection && !hasCompleteRules
-    ? fmtInt(ed.audienceTotal)
-    : serverTile(summary.total);
-  const showServerSubtitles = !serverNumberOmitted && summary.total > 0;
   return (
     <div className="space-y-4 min-w-0">
       <RailCard icon={Zap} title="Resumo da campanha" subtitle="Confira os detalhes da sua campanha antes de continuar.">
-        {summary.isError && (
-          <div className="mb-3">
-            <TalkXErrorState entity="o resumo da campanha" error={summary.error} onRetry={summary.refetch} />
-          </div>
-        )}
         <div className="grid grid-cols-2 gap-2.5">
-          <StatTile icon={Users} color="blue" label="Público total (estimado)" value={totalTile} />
-          <StatTile icon={Check} color="green" label="Elegíveis para envio" value={serverTile(summary.eligible)} sub={showServerSubtitles ? fmtPct(summary.eligible, summary.total) : undefined} subTone="text-dash-green" />
-          <StatTile icon={Ban} color="red" label="Bloqueados por supressão" value={serverTile(summary.suppressed)} sub={showServerSubtitles ? fmtPct(summary.suppressed, summary.total) : undefined} subTone="text-dash-red" />
+          <StatTile icon={Users} color="blue" label="Público total (estimado)" value={fmtInt(ed.audienceTotal)} />
+          <StatTile icon={Check} color="green" label="Elegíveis para envio" value={fmtInt(ed.eligibleCount)} sub={ed.audienceTotal > 0 ? fmtPct(ed.eligibleCount, ed.audienceTotal) : undefined} subTone="text-dash-green" />
+          <StatTile icon={Ban} color="red" label="Bloqueados por supressão" value={fmtInt(ed.suppressedCount)} sub={ed.audienceTotal > 0 ? fmtPct(ed.suppressedCount, ed.audienceTotal) : undefined} subTone="text-dash-red" />
           <StatTile icon={CalendarDays} color="violet" label="Início" value={start === 'Imediato' ? 'Imediato' : start.split(',')[0]} sub={start === 'Imediato' ? 'ao lançar' : start.split(',')[1]?.trim()} />
           <StatTile icon={Clock} color="amber" label="Duração estimada" value={ed.estimatedTime ?? '—'} sub={`~${ed.messagesPerMinute} msg/min`} />
           <StatTile icon={MessageSquare} color="green" label="Canal" value="WhatsApp" sub={ed.hasMedia ? `Texto + ${ed.mediaType}` : 'Mensagem única'} />

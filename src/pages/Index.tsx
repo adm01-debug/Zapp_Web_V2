@@ -20,7 +20,6 @@ import { AppShell } from '@/components/layout/AppShell';
 import { toast } from 'sonner';
 
 // Lazy load non-critical secondary components
-const CommandPalette = lazy(() => import('@/components/CommandPalette').then(m => ({ default: m.CommandPalette })));
 const WelcomeModal = lazy(() => import('@/components/onboarding/WelcomeModal').then(m => ({ default: m.WelcomeModal })));
 const OfflineIndicator = lazy(() => import('@/components/ui/offline-indicator').then(m => ({ default: m.OfflineIndicator })));
 const ConnectionToast = lazy(() => import('@/components/ui/offline-indicator').then(m => ({ default: m.ConnectionToast })));
@@ -135,7 +134,6 @@ const IndexContent = forwardRef<HTMLDivElement>(function IndexContent(_props, _r
         />
 
         <Suspense fallback={null}>
-          <CommandPalette onNavigate={setCurrentView} />
           <OfflineIndicator />
           <SupabaseConnectivityBanner />
           <ConnectionToast />

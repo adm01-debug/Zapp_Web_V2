@@ -1,40 +1,23 @@
-Especialista: Edgar (area-edge-api)
+Especialista: Íris (area-front-componentes)
 
 ## O que mudou e por quê
-`ESTADO.md` (18 linhas da tabela publicada) foi sincronizado com o que o repositório realmente tem. A entrega de
-ausência (#219) somou 241 linhas em `supabase/functions/_shared/evolution-webhook-messages.ts` e outras entregas
-empilhadas deslocaram linhas de outros arquivos; a tabela do ESTADO.md ficou velha e a guarda
-`scripts/ci/docs-estado-registry-convention.unit.mjs` passou a acusar. Recalculei cada linha com as MESMAS regras da
-guarda (`invoke('edge')` / `/functions/v1/edge` em `src/`; chamada de outra edge; agendador em
-`supabase/migrations/`; entrada em `supabase/config.toml`) e regravei grupo, âncoras, totais e a lista de órfãs.
+Cartão pedia enxertar na ponta viva (`dia/2026-10-14`) o commit revisado de `v2/t-0f01df80-2610090332235c` ("linhas com dado real e Editar que leva ao passo", TL-146) e **resolver os conflitos preservando o que já entrou na ponta**. Fiz o cherry-pick de `4716556cb4` e resolvi os 3 arquivos que conflitaram:
 
-## Verificação (comando -> linha de resultado)
-- `node --test --test-reporter=tap scripts/ci/docs-estado-registry-convention.unit.mjs` -> `# pass 11 | # fail 0`
-  (antes: `not ok 2 - ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge`)
-- `zapp-verify . --rapido` -> `OK db_guard 0s | OK tipos 33s | OK lint 0s | OK migrations 1s` |
-  `VERIFY: VERDE SEM BANCO (35s)`
-- `node --test` na bateria do espelho (`scripts/ci`, `scripts/edge-deploy`, `scripts/db-audit`, `scripts/talkx`) ->
-  `# pass 1366 | # fail 9`; as 11 falhas do ESTADO.md sumiram
-- `deno test --config scripts/ci/deno.json --frozen` -> `ok | 1908 passed (16 steps) | 0 failed | 3 ignored`
-- commit final do cartão: `a89758e2a7`
+- `src/components/talkx/TalkXWizardDelivery.tsx` (conflito em 5 pontos): mantive da ponta a revisão rica (X135 previsões, `templatePreviewInteractive`/CTA do template, `TalkXPreviewInteractive`, `TalkXNoData`) e trouxe do commit revisado o que a ponta não tinha: assinatura `onEditStep?: (step: 1 | 2 | 3, returnTo: 4) => void` (o botão "Editar" navega pela rota com o destino de volta e o passo aberto vira "Voltar à revisão"), o relativo do agendamento (`formatScheduleRelative` → "Hoje, 16:12 (tz)" + "Em 5 minutos") e a linha de Conformidade com o resultado real das checagens (supressão + consentimento). A linha "Segmentos selecionados" ficou com o **nome de cada segmento** e o sub **"N segmentos | X contatos"** (exigência do título) **mais** o total da união e a contagem por segmento que a ponta já mostrava — os nomes vêm de `ed.selectedSegments` (o wizard da ponta aceita mais de um segmento).
+- `src/components/talkx/kit/constants.ts`: conflito de comentário/ordem no catálogo `OBJECTIVES`; mantive o lado da ponta (mesmas descrições que já estavam vivas).
+- `src/components/talkx/__tests__/TalkXView.route.test.tsx`: o teste do commit revisado preenchia `selectedSegment` (singular, campo que a ponta não tem mais) — atualizei o fixture para `selectedSegments: [...]` do modelo vivo **mantendo a asserção idêntica** (`VIP` e `1 segmento | 1.200 contatos`).
+- `src/components/talkx/TalkXView.tsx` e `src/components/talkx/TalkXCampaignWizard.tsx`: auto-mesclados sem conflito — o `TalkXView` passa a rotear pelo passo de volta e o `TalkXCampaignWizard` é quem transforma o "Editar" em rota (com `return=4`) e troca o botão principal do passo aberto por "Voltar à revisão"; os dois vieram do commit revisado porque a ponta não os alterou nessas linhas.
+- `src/components/talkx/talkxWizardRoute.ts`: auto-mesclado sem conflito — é ele que passa a carregar o parâmetro `return` da rota (destino do "Voltar à revisão"), junto de `useCampaignEditor.ts` (que ganhou `formatScheduleRelative`, usado na linha de Agendamento) e do teste `__tests__/talkxWizardRoute.test.ts` (cobre o `return` na rota). Os três vieram inteiros do commit revisado porque a ponta não os alterou.
+- `src/components/talkx/__tests__/TalkXView.revisaoVolta.test.tsx`: o mock do editor do teste revisado não trazia `selectedSegments` (o wizard da ponta usa) e a revisão da ponta consome `useTalkXInsights`; acrescentei `selectedSegments: []` no mock e o mock de `useTalkXInsights` (mesma forma do `TalkXView.route.test.tsx`) — nenhuma asserção alterada.
 
-## Ponto 1 (partir do commit f50ef67ad com cherry-pick)
-Ponto 1 NÃO PROCEDE — rodei este MESMO comando de novo sem mudar o diff. Motivo: a entrega já está na base deste
-workspace; o `cherry-pick` seria vazio. Conferi por conteúdo: `supabase/functions/_shared/away-message-webhook.test.ts`
-e o trecho de ausência em `evolution-webhook-messages.ts` já estão aqui (por isso o diff do cartão aparece só em
-`ESTADO.md`: é o arquivo que o cartão manda corrigir — a tabela que a entrega desalinhou).
+Conferi os demais consumidores: `TalkXMultiSegmentos.test.tsx` (união + contagem por segmento) e `TalkXWizardReview.resumo.test.tsx` continuam passando — nada foi afrouxado.
 
-## Ponto 2 (reproduzir e corrigir a causa)
-Feito. Reproduzi (`not ok 2`) e corrijo a causa: as âncoras/grupos velhos do ESTADO.md. Medido 26 âncoras
-desatualizadas -> 0, 2 linhas com grupo errado -> 0, `create-user` sem chamador no repositório publicado como
-órfã (E), `talkx-link` com chamador de front publicado como A, totais `A 54 · B 0 · C 3 · D 6 · E 18 · total 81` e a
-lista de 18 órfãs regravadas.
+## Prova
+- vermelho antes (`npx vitest run .../TalkXView.route.test.tsx` com a árvore ainda em conflito): `Transform failed ... [PARSE_ERROR] Encountered diff marker ... TalkXWizardDelivery.tsx:213:1` e depois `TypeError: Cannot read properties of undefined (reading 'length')` em `TalkXCampaignWizard.tsx:713`.
+- verde depois (`npx vitest run src/components/talkx`): `Test Files 111 passed (111); Tests 958 passed (958)`.
 
-## Ponto 3 (provar VERDE e fechar citando o sha)
-Feito: guarda 11/11 verde, `zapp-verify . --rapido` verde e o commit `a89758e2a7` no topo da branch.
+FAIXA DO PAI: commit 4716556cb4 do cartão t-0f01df80 (branch v2/t-0f01df80-2610090332235c) — trazido por cherry-pick porque ESTE cartão manda enxertá-lo na ponta.
 
-## Achados fora do escopo (não corrigidos)
-- Continuam vermelhos, já na base do integrador (`.ci-base-e7d156b8a7...`): `FLAG_CHANGES.md contem todos os usos
-  de useCRMIntegrationEnabled` e 2 do Talk X (`delivery window in the campaign timezone`, `scheduler resume`).
-- `scripts/ci/lint-ratchet.unit.mjs` (6 itens) faz `git init` num repo temporário e a guarda desta sessão bloqueia
-  `git init`; não falha na base do integrador nem no CI.
+## O que NÃO fiz e por quê
+- Não mexi nas telas citadas na evidência (`TalkXCampaignScheduled.tsx`, `TalkXCampaignWizard.tsx`) além do que o próprio commit revisado já trazia: a `TalkXCampaignWizard.tsx` foi auto-mesclada e é ela que já implementa o "Voltar à revisão"; não havia conflito nela.
+- Não alterei valores, tetos nem escalas — a união/contagem por segmento veio da ponta e só ganhou o prefixo "N segmentos | X contatos" pedido no título.

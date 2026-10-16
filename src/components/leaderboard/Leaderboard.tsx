@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useLeaderboard } from '@/hooks/gamification/useLeaderboard';
-import { Trophy, RefreshCw, ChevronRight, AlertCircle } from 'lucide-react';
+import { Trophy, RefreshCw } from 'lucide-react';
 import { LeaderboardRow } from './LeaderboardHelpers';
 
 function LeaderboardSkeleton() {
@@ -23,7 +23,7 @@ function LeaderboardSkeleton() {
 }
 
 export function Leaderboard() {
-  const { agents, isLoading, isRefreshing, error, timeRange, setTimeRange, handleRefresh } = useLeaderboard();
+  const { agents, isLoading, isRefreshing, timeRange, setTimeRange, handleRefresh } = useLeaderboard();
 
   return (
     <div className="rounded-2xl p-5 border border-border/30 bg-card relative overflow-hidden">
@@ -34,7 +34,7 @@ export function Leaderboard() {
         </div>
         <div className="flex items-center gap-2">
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Button variant="ghost" size="icon" onClick={handleRefresh} disabled={isRefreshing} className="h-8 w-8">
+            <Button variant="ghost" size="icon" onClick={handleRefresh} disabled={isRefreshing} aria-label="Atualizar ranking" aria-pressed={isRefreshing} className="h-8 w-8">
               <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
             </Button>
           </motion.div>
@@ -49,33 +49,14 @@ export function Leaderboard() {
         </div>
       </div>
 
-      {isLoading ? <LeaderboardSkeleton /> : error ? (
-        /* Leitura falhou: é erro, NÃO o vazio do ranking (os dois eram a mesma tela antes). */
-        <div className="text-center py-8" role="alert" data-leaderboard-state="error">
-          <AlertCircle className="w-12 h-12 mx-auto mb-3 text-destructive/60" />
-          <p className="text-muted-foreground">Não foi possível carregar o ranking</p>
-          <p className="text-xs text-muted-foreground mt-1">Verifique a conexão e tente de novo</p>
-          <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isRefreshing} className="mt-4">
-            <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${isRefreshing ? 'motion-safe:animate-spin' : ''}`} />
-            {isRefreshing ? 'Tentando de novo…' : 'Tentar de novo'}
-          </Button>
-        </div>
-      ) : agents.length > 0 ? (
+      {isLoading ? <LeaderboardSkeleton /> : agents.length > 0 ? (
         <div className="space-y-2">{agents.map((agent, index) => <LeaderboardRow key={agent.id} agent={agent} index={index} />)}</div>
       ) : (
-        <div className="text-center py-8" data-leaderboard-state="empty">
+        <div className="text-center py-8">
           <Trophy className="w-12 h-12 mx-auto mb-3 text-muted-foreground/50" />
           <p className="text-muted-foreground">Nenhum agente no ranking ainda</p>
           <p className="text-xs text-muted-foreground mt-1">Os agentes aparecerão aqui conforme ganham XP</p>
         </div>
-      )}
-
-      {agents.length > 0 && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="mt-4 text-center">
-          <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary text-xs">
-            Ver ranking completo<ChevronRight className="w-3.5 h-3.5 ml-1" />
-          </Button>
-        </motion.div>
       )}
     </div>
   );

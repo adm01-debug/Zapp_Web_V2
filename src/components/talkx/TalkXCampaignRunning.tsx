@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer } from 'recharts';
 import { CHART_TICK_FONT_SIZE, CHART_TOOLTIP_FONT_SIZE } from '@/lib/chart-theme';
 import {
-  Users, ChevronLeft, RefreshCw, Activity, Send, Search,
+  ChevronLeft, RefreshCw, Activity, Send, Search,
 } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
@@ -17,8 +17,6 @@ import { toast } from 'sonner';
 import { useTalkX, type TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import { useTalkXResumeChecklist, type TalkXResumeChecklistItemKey } from '@/hooks/integrations/useTalkXResumeChecklist';
 import { TalkXResumeChecklist } from './tracking/TalkXResumeChecklist';
-import { TalkXServerResumePrecheck } from './tracking/TalkXServerResumePrecheck';
-import { useTalkXServerResumePrecheck } from '@/hooks/integrations/useTalkXServerResumePrecheck';
 import { IconTile, RailCard, MetaRow, fmtInt, fmtDateTime, InsightCard, TalkXQueryBoundary, TalkXSkeletonRows, type TalkXQueryLike } from './talkxShared';
 import { msToSeconds } from './talkxLimits';
 import { TalkXLiveKpiRow } from './tracking/TalkXLiveKpiRow';
@@ -28,7 +26,7 @@ import { talkXMessageSnapshotDisplay } from './talkxMessageSnapshot';
 import { recentMinuteSeries, averageRatePerMinute, estimateMinutesToFinish, type MinuteBucket } from './talkxRunningHistory';
 import { TalkXCampaignActionsCard } from './tracking/TalkXCampaignActionsCard';
 import { TalkXLimitsDialog } from './tracking/TalkXLimitsDialog';
-import { TalkXRecipientRowActions } from './tracking/TalkXRecipientRowActions';
+import { TalkXRecipientsTable } from './tracking/TalkXRecipientsTable';
 import {
   EMPTY_LIMITS_DRAFT, formatSendDays, limitsDraftFromCampaign,
   type TalkXCampaignWithRules, type TalkXLimitsDraft, type TalkXLimitsPayload,
@@ -240,8 +238,6 @@ function TabConfig({ c, connection }: { c: TalkXCampaignWithRules; connection: T
 }
 
 
-// ─── Tab: Destinatários ────────────────────────────────────────────────────────────────
-type RecipRow = { id: string; campaign_id: string; contact_id: string; personalized_message: string | null; status: string; segment_id: string | null; sent_at: string | null; delivered_at: string | null; error_message: string | null; manual_retry_count: number | null; created_at: string; contacts: { name: string; phone: string } | null };
 const STATUS_TONE: Record<string, string> = { sent: 'text-dash-green', failed: 'text-dash-red', pending: 'text-foreground-secondary', outcome_unknown: 'text-dash-amber' };
 const STATUS_LABEL: Record<string, string> = { sent: 'Enviado', failed: 'Falha', pending: 'Pendente', delivered: 'Entregue', outcome_unknown: 'Confirmação pendente' };
 /** Opções do filtro de status dos destinatários (mesma ordem do rótulo da coluna). */
@@ -275,90 +271,6 @@ function ListFilters({ search, onSearch, status, onStatus, options = RECIPIENT_S
           {options.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
         </SelectContent>
       </Select>
-    </div>
-  );
-}
-
-function TabRecipients({ campaignId, segmentName }: { campaignId: string; segmentName: SegmentNameResolver }) {
-  const qc = useQueryClient();
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [search, setSearch] = useState('');
-  const { data: recips, isLoading, isFetching, isError, error, refetch } = useQuery({
-    queryKey: ['talkx-running-recipients', campaignId],
-    queryFn: async () => {
-      const { data, error } = await fromTable('talkx_recipients')
-        .select('id, campaign_id, contact_id, segment_id, personalized_message, status, sent_at, delivered_at, error_message, manual_retry_count, created_at, contacts:contact_id(name, phone)')
-        .eq('campaign_id', campaignId).order('updated_at', { ascending: false }).limit(200);
-      // X047: sem isto a falha virava lista vazia (o `data ?? []` engolia o erro).
-      if (error) throw error;
-      return (data ?? []) as RecipRow[];
-    },
-    refetchInterval: 15_000,
-    staleTime: 10_000,
-  });
-
-  const filtered = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    return (recips ?? []).filter((r) => {
-      if (statusFilter !== 'all' && r.status !== statusFilter) return false;
-      if (!term) return true;
-      return (r.contacts?.name?.toLowerCase() ?? '').includes(term)
-        || (r.contacts?.phone?.toLowerCase() ?? '').includes(term);
-    });
-  }, [recips, statusFilter, search]);
-
-  return (
-    <div className="rounded-2xl bg-card border border-border/70 overflow-hidden">
-      {/* X047: carregando -> erro -> vazio -> conteúdo (cabeçalho e lista juntos) */}
-      <TalkXQueryBoundary
-        query={{ isLoading, isFetching, isError, error }}
-        entity="informações dos destinatários"
-        onRetry={() => { void refetch(); }}
-        skeleton={<div className="p-4"><TalkXSkeletonRows rows={5} /></div>}
-        isEmpty={(recips?.length ?? 0) === 0}
-        empty={(
-          <div className="p-8 text-center">
-            <Users className="w-7 h-7 mx-auto text-muted-foreground mb-2" />
-            <p className="text-xs font-semibold text-foreground">Nenhum destinatário nesta campanha.</p>
-          </div>
-        )}
-      >
-        <div className="px-4 py-3 border-b border-border/40 flex flex-wrap items-center justify-between gap-2">
-          <p className="text-[13px] font-bold text-foreground">Destinatários</p>
-          <div className="flex flex-wrap items-center gap-2">
-            <ListFilters search={search} onSearch={setSearch} status={statusFilter} onStatus={setStatusFilter} />
-            <p className="text-xs text-foreground-secondary">{`Mostrando ${filtered.length} de ${recips?.length ?? 0}`}</p>
-          </div>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[540px] border-collapse">
-            <thead><tr>
-              {['Contato', 'Telefone', 'Segmento', 'Status', 'Enviada em', 'Entregue em', ''].map((h) => (
-                <th key={h} className="text-left text-2xs font-semibold text-foreground-secondary px-4 py-2">{h}</th>
-              ))}
-            </tr></thead>
-            <tbody>
-              {filtered.length === 0 && (
-                <tr><td colSpan={7} className="px-4 py-6 text-center text-xs text-foreground-secondary">Nenhum destinatário para os filtros aplicados.</td></tr>
-              )}
-              {filtered.map((r, i) => (
-                <tr key={i} className="border-t border-border/40 hover:bg-muted/10">
-                  <td className="px-4 py-2.5 text-xs font-medium text-foreground truncate max-w-[180px]">{r.contacts?.name ?? '—'}</td>
-                  <td className="px-4 py-2.5 text-xs text-foreground-secondary font-mono">{r.contacts?.phone ?? '—'}</td>
-                  <td className="px-4 py-2.5 text-xs text-foreground-secondary truncate max-w-[160px]">{segmentName(r.segment_id) ?? '—'}</td>
-                  <td className={`px-4 py-2.5 text-xs font-semibold ${STATUS_TONE[r.status] ?? 'text-foreground-secondary'}`}>{STATUS_LABEL[r.status] ?? r.status}</td>
-                  <td className="px-4 py-2.5 text-2xs text-muted-foreground">{r.sent_at ? new Date(r.sent_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '—'}</td>
-                  <td className="px-4 py-2.5 text-2xs text-muted-foreground">{r.delivered_at ? new Date(r.delivered_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '—'}</td>
-                  <td className="px-4 py-2.5 text-2xs">
-                    <TalkXRecipientRowActions recipient={r} onActionDone={() => { void qc.invalidateQueries({ queryKey: ['talkx-running-recipients', campaignId] }); }} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {(recips?.length ?? 0) >= 200 && <p className="text-2xs text-muted-foreground text-center p-3">Mostrando 200 mais recentes.</p>}
-        </div>
-      </TalkXQueryBoundary>
     </div>
   );
 }
@@ -453,7 +365,7 @@ function TabMessages({ campaignId }: { campaignId: string }) {
                 <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-3xs text-muted-foreground">
                   {eventAt && <span>{message.delivered_at ? 'Entregue' : 'Enviada'} em {fmtDateTime(eventAt)}</span>}
                   {canExpand && (
-                    <button type="button" onClick={() => toggleExpanded(message.id)} className="font-semibold text-[hsl(var(--primary-text))] hover:underline">
+                    <button type="button" onClick={() => toggleExpanded(message.id)} className="font-semibold text-primary hover:underline">
                       {isExpanded ? 'Mostrar menos' : 'Ler mensagem completa'}
                     </button>
                   )}
@@ -473,7 +385,7 @@ function TabMessages({ campaignId }: { campaignId: string }) {
 
 // ─── Tab: Logs em Tempo Real (E80) ──────────────────────────────────────
 type LogEvent = { id: string; contact: string; phone: string; segmentId: string | null; status: string; ts: string; error?: string | null };
-const LOG_TONE: Record<string, string> = { sent: 'text-dash-green', failed: 'text-dash-red', skipped: 'text-foreground-secondary', delivered: 'text-[hsl(var(--primary-text))]' };
+const LOG_TONE: Record<string, string> = { sent: 'text-dash-green', failed: 'text-dash-red', skipped: 'text-foreground-secondary', delivered: 'text-primary' };
 const LOG_ICON: Record<string, string> = { sent: '✔', failed: '✘', skipped: '‒', delivered: '✔✔' };
 /** Status possíveis nos logs (a consulta exclui só `pending`). */
 const LOG_STATUS_OPTIONS: { value: string; label: string }[] = ['sent', 'delivered', 'failed', 'outcome_unknown', 'skipped']
@@ -669,7 +581,7 @@ function TabResults({ c, sentHistory, historyQuery, onRetryHistory }: {
             <p className="text-[13px] font-bold text-foreground mb-1">Tempo estimado para concluir</p>
             {etaMinutes !== null ? (
               <>
-                <p className="text-2xl font-bold text-[hsl(var(--primary-text))]">{etaMinutes} min</p>
+                <p className="text-2xl font-bold text-primary">{etaMinutes} min</p>
                 <p className="text-2xs text-foreground-secondary">Baseado no ritmo atual ({avgRateText})</p>
               </>
             ) : (
@@ -716,8 +628,6 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
   const campaign = useMemo(() => sending.find((c) => c.id === selectedId) ?? null, [sending, selectedId]);
   // X159: o "Checklist para retomar" só monta os 5 itens quando a campanha está pausada.
   const resumeChecklist = useTalkXResumeChecklist(campaign);
-  // N-097: pré-checagem de retomada no servidor (can_resume + blockers), só com a campanha pausada.
-  const { precheck: serverPrecheck } = useTalkXServerResumePrecheck(campaign);
   // X159: o atalho de cada item leva à aba onde ele se resolve nesta tela.
   const handleChecklistNavigate = useCallback((key: TalkXResumeChecklistItemKey) => {
     setActiveTab(key === 'templates' ? 'messages' : key === 'segments' ? 'recipients' : 'config');
@@ -939,7 +849,7 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
                   onClick={() => setActiveTab(t.id)}
                   className={`px-3.5 py-2 text-xs font-medium whitespace-nowrap shrink-0 border-b-2 transition-colors
                     ${activeTab === t.id
-                      ? 'border-primary text-[hsl(var(--primary-text))]'
+                      ? 'border-primary text-primary'
                       : 'border-transparent text-foreground-secondary hover:text-foreground'}`}
                 >
                   {t.label}
@@ -952,21 +862,18 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
               {activeTab === 'overview' && (
                 <>
                   {campaign.status === 'paused' && (
-                    <>
-                      <TalkXServerResumePrecheck precheck={serverPrecheck} className="mb-3" />
-                      <TalkXResumeChecklist
-                        items={resumeChecklist.items}
-                        onToggle={resumeChecklist.toggle}
-                        onNavigate={handleChecklistNavigate}
-                        className="mb-4"
-                      />
-                    </>
+                    <TalkXResumeChecklist
+                      items={resumeChecklist.items}
+                      onToggle={resumeChecklist.toggle}
+                      onNavigate={handleChecklistNavigate}
+                      className="mb-4"
+                    />
                   )}
                   <TabOverview c={campaign} chartData={sentHistory?.buckets ?? []} replyGrowthPct={sentHistory?.replyGrowthPct ?? null} historyQuery={historyQuery} onRetryHistory={handleRetryHistory} />
                 </>
               )}
               {activeTab === 'config' && <TabConfig c={campaign} connection={connection ?? null} />}
-              {activeTab === 'recipients' && <TabRecipients campaignId={campaign.id} segmentName={segmentName} />}
+              {activeTab === 'recipients' && <TalkXRecipientsTable campaignId={campaign.id} segmentName={segmentName} />}
               {activeTab === 'messages' && <TabMessages campaignId={campaign.id} />}
               {activeTab === 'results' && <TabResults c={campaign} sentHistory={sentHistory?.buckets ?? []} historyQuery={historyQuery} onRetryHistory={handleRetryHistory} />}
               {activeTab === 'logs' && <TabLogs campaignId={campaign.id} active={activeTab === 'logs'} segmentName={segmentName} />}

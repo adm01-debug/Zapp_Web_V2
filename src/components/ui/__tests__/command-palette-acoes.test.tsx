@@ -11,6 +11,11 @@ vi.mock('@/integrations/supabase/client', () => ({
   supabase: { functions: { invoke: vi.fn().mockResolvedValue({ data: null, error: null }) } },
 }));
 
+// O host da paleta filtra os módulos pelo papel do usuário (X054); o papel não é o foco aqui.
+vi.mock('@/hooks/system/useUserRole', () => ({
+  useUserRole: () => ({ roles: ['admin'], permissions: [], loading: false, permissionsLoading: false }),
+}));
+
 /**
  * R2-INF-033 (#378) — três ações padrão da paleta (⌘K) eram exibidas sem executor:
  * "Nova conversa", "Respostas rápidas" e "Atalhos de teclado" não tinham `action` nem
@@ -139,7 +144,9 @@ describe('paleta → ajuda de atalhos, ponta a ponta (R2-INF-033)', () => {
 
     // O painel de ajuda REAL (KeyboardShortcutsDialog) fica visível: o efeito anunciado
     // pela entrada da paleta é a ajuda aberta, não o simples fechamento do diálogo.
-    expect(await screen.findByText('Enviar mensagem')).toBeInTheDocument();
+    // t_3d996237: o painel agora lista só atalhos com executor — a linha usada como
+    // prova é a de `toggle-sidebar`; 'Enviar mensagem' saiu da ajuda.
+    expect(await screen.findByText('Alternar barra lateral')).toBeInTheDocument();
     expect(screen.queryByPlaceholderText(/Buscar ou digitar comando/)).not.toBeInTheDocument();
   });
 });

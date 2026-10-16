@@ -168,10 +168,11 @@ test.describe('Talk X · lançamento com provedor falso', () => {
     // 1) LANÇAR — menu "Ações" da linha → "Iniciar agora" → confirmar.
     await menuAcoes().click();
     await page.getByRole('menuitem', { name: 'Iniciar agora', exact: true }).click();
-    // O TalkXConfirmDialog é um `alertdialog`.
+    // O TalkXLifecycleDialog (X051) é um `alertdialog`; o rótulo de confirmar
+    // do hook é "Confirmar envio".
     const confirmarInicio = page.getByRole('alertdialog');
     await expect(confirmarInicio).toBeVisible();
-    await confirmarInicio.getByRole('button', { name: 'Iniciar envio', exact: true }).click();
+    await confirmarInicio.getByRole('button', { name: 'Confirmar envio', exact: true }).click();
 
     await expect.poll(() => harness.envios.length, { timeout: 10_000 }).toBe(1);
     expect(harness.envios[0]).toEqual({ campaignId: CAMPAIGN_ID, action: 'start' });
@@ -207,6 +208,8 @@ test.describe('Talk X · lançamento com provedor falso', () => {
     await page.getByRole('button', { name: 'Cancelar campanha', exact: true }).click();
     const dialogoCancelar = page.getByRole('alertdialog');
     await expect(dialogoCancelar).toBeVisible();
+    // Este diálogo é o LOCAL do monitor (TalkXCampaignRunning), não o do hook —
+    // o rótulo do confirmar segue o de sempre.
     await dialogoCancelar.getByRole('button', { name: 'Confirmar cancelamento', exact: true }).click();
 
     await expect.poll(() => harness.envios.length, { timeout: 10_000 }).toBe(4);

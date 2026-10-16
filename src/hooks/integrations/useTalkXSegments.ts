@@ -81,11 +81,7 @@ export const RULE_FIELDS: { value: RuleField; label: string; kind: 'text' | 'arr
   { value: 'group_category', label: 'Grupo', kind: 'enum', category: 'basico', options: GROUP_CATEGORIES.map((c) => c.value) },
   { value: 'email', label: 'E-mail', kind: 'text', category: 'basico' },
   { value: 'channel_type', label: 'Canal de origem', kind: 'text', category: 'basico' },
-  // Nenhum fluxo de criação do Zapp grava public.contacts.lead_origin: o contato derivado do
-  // WhatsApp carrega a origem só na projeção em memória (evolutionAdapter), não na linha do banco,
-  // e o Zapp não edita contatos em massa. Enquanto houver contato sem valor, um filtro por origem
-  // devolveria sempre vazio — fica "em breve" (não selecionável) até existir gravação real.
-  { value: 'lead_origin', label: 'Origem do lead', kind: 'text', category: 'basico', comingSoon: true },
+  { value: 'lead_origin', label: 'Origem do lead', kind: 'text', category: 'basico' },
   { value: 'assigned_to', label: 'Responsável', kind: 'uuid', category: 'comercial' },
   // Tipos de contato e status de conversa vem das fontes canonicas: uma regra de segmento
   // nunca pode oferecer valor que o banco rejeita (a lista local tinha 'lead'/'sicoob_gifts',
@@ -286,7 +282,7 @@ const AUDIENCE_RPC_PAGE_LIMIT = 1000;
  * PostgREST filtrando só `phone not null`, o que superestimava o público.
  */
 export async function countAudience(rules: SegmentRules | null | undefined, segmentIds?: string[]): Promise<number> {
-  const rpc = supabase.rpc.bind(supabase) as unknown as TalkXAudienceRpc;
+  const rpc = supabase.rpc as unknown as TalkXAudienceRpc;
   const { data, error } = await rpc('talkx_resolve_audience', {
     p_rules: audienceRulesPayload(rules),
     p_segment_ids: segmentIds ?? null,
@@ -307,7 +303,7 @@ export interface AudienceContact { id: string; name: string; nickname: string | 
  * mascarado pelo servidor e a paginação percorre até `limit` (ou o fim da lista).
  */
 export async function resolveAudience(rules: SegmentRules | null | undefined, limit = 5000, segmentIds?: string[]): Promise<AudienceContact[]> {
-  const rpc = supabase.rpc.bind(supabase) as unknown as TalkXAudienceRpc;
+  const rpc = supabase.rpc as unknown as TalkXAudienceRpc;
   const target = Math.max(0, Math.floor(limit));
   const rows: AudienceContact[] = [];
   let after: string | null = null;
@@ -408,7 +404,7 @@ export function useSegmentLibraryStats() {
   return useQuery({
     queryKey: LIBRARY_STATS_QUERY_KEY,
     queryFn: async () => {
-      const rpc = supabase.rpc.bind(supabase) as unknown as TalkXLibraryStatsRpc;
+      const rpc = supabase.rpc as unknown as TalkXLibraryStatsRpc;
       const { data, error } = await rpc('talkx_segment_library_stats', { p_timezone: SEGMENT_TIMEZONE });
       if (error) throw new Error(error.message);
       return data as TalkXSegmentLibraryStats;
@@ -493,7 +489,7 @@ export async function applySegmentBulkAction(input: {
   // Falha fechada ANTES de chamar o servidor: entrada inválida não aplica nada.
   if (input.action === 'tag' && !tag) throw new Error('Informe a tag para aplicar em massa.');
 
-  const rpc = supabase.rpc.bind(supabase) as unknown as TalkXBulkRpc;
+  const rpc = supabase.rpc as unknown as TalkXBulkRpc;
   const results: TalkXSegmentBulkResult[] = [];
 
   for (let start = 0; start < ids.length; start += BULK_ACTION_MAX_IDS) {
@@ -527,9 +523,15 @@ export async function applySegmentBulkAction(input: {
 /* CRUD                                                               */
 /* ------------------------------------------------------------------ */
 
+/** Modo de visualização da biblioteca de segmentos: lista (uma coluna) ou grade. */
+export type TalkXSegmentsViewMode = 'list' | 'grid';
+
 export function useTalkXSegments() {
   const qc = useQueryClient();
   const { profile } = useAuth();
+  // Alternância lista/grade da biblioteca. O projeto não persiste preferência de
+  // modo (Contatos também guarda `viewMode` em estado local): fica na sessão.
+  const [viewMode, setViewMode] = useState<TalkXSegmentsViewMode>('list');
 
   const segmentsQuery = useQuery({
     queryKey: ['talkx-segments'],
@@ -626,6 +628,7 @@ export function useTalkXSegments() {
     libraryStatsError: libraryStatsQuery.error as Error | null,
     refetchLibraryStats: libraryStatsQuery.refetch,
     createSegment, updateSegment, deleteSegment, refreshEstimates,
+    viewMode, setViewMode,
     // X114 — seleção e ações em massa (RPC guardada talkx_segment_bulk_action).
     // `runBulkAction` devolve o resultado POR SEGMENTO; a tela decide o que
     // mostrar, mas item barrado pela guarda chega aqui com `succeeded: false`.

@@ -70,6 +70,13 @@ describe('SentimentAlertsDashboard — acessibilidade', () => {
     expect(evolucao?.tagName).toBe('H2');
   });
 
+  it('não renderiza nenhuma ação de exportação (exportar é bloqueado no app)', () => {
+    render(<SentimentAlertsDashboard />);
+
+    expect(screen.queryByText(/exporta/i)).toBeNull();
+    expect(screen.queryByRole('button', { name: /exporta/i })).toBeNull();
+  });
+
   it('a tela passa no axe sem violações (fora o botão de atualizar, de outro cartão)', async () => {
     const { container } = render(<SentimentAlertsDashboard />);
 

@@ -2,8 +2,8 @@ import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
+import { usePushNotifications } from '@/hooks/system/usePushNotifications';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
-import { showBrowserNotification } from '@/utils/notificationSounds';
 import { getLogger } from '@/lib/logger';
 import { getTeamChatNotificationBody, shouldNotifyTeamMessage } from '@/lib/teamChatRules';
 
@@ -136,6 +136,7 @@ export function playTeamChatSound(volume: number = 70) {
 export function useTeamChatNotifications(activeConversationId: string | null) {
   const { profile } = useAuth();
   const { settings: notifSettings, isQuietHours } = useNotificationSettings();
+  const { showNotification, permission } = usePushNotifications();
   const activeIdRef = useRef(activeConversationId);
 
   useEffect(() => {
@@ -193,11 +194,16 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
           playTeamChatSound(notifSettings.soundVolume);
         }
 
-        // Aviso de desktop pela API `Notification` direta (`showBrowserNotification`), como
-        // os hooks irmãos. O caminho antigo (`usePushNotifications.showNotification`) exigia
-        // Service Worker de aplicação e `config/service_worker.ts` o mantém DESLIGADO: a
-        // chamada devolvia `false` em silêncio e a mensagem só tocava o som.
-        if (notifSettings.browserNotifications && !isQuietHours()) {
+        // Show browser notification if enabled
+        // HZ3-001: o aviso depende SÓ da permissão do navegador já concedida — o
+        // `showNotification` publica pela inscrição do service worker LOCAL
+        // (`registration.showNotification`), que não precisa da assinatura de push.
+        // Exigir `isSubscribed` do `usePushNotifications` (que significa "alertas do
+        // navegador ligados", `state.isActive`, e só fica ligado com assinatura push)
+        // silenciava quem concedeu a permissão e não assinou o push: ficava só com o
+        // som. O liga/desliga de avisos do chat interno continua valendo por
+        // `notifSettings.browserNotifications`.
+        if (permission === 'granted' && notifSettings.browserNotifications && !isQuietHours()) {
           // Nome do remetente por RPC segura: para o agente a leitura direta de
           // `profiles` é barrada pela RLS (o título virava 'Colega').
           // `get_team_profiles()` é SECURITY DEFINER e já mascara email/telefone.
@@ -215,11 +221,16 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
 
           const body = getTeamChatNotificationBody(msg.media_type, msg.content);
 
-          showBrowserNotification(`💬 Teams: ${senderName}`, body, {
+          await showNotification({
+            title: `💬 Teams: ${senderName}`,
+            body,
             tag: `team-msg-${msg.conversation_id}`,
-            // O clique na notificação direta abre o módulo; a conversa específica é
-            // estado local da `TeamChatView`, fora deste hook.
-            onClick: () => { navigateToView('team-chat'); },
+            data: {
+              type: 'team_chat',
+              conversationId: msg.conversation_id,
+              messageId: msg.id,
+            },
+            requireInteraction: false,
           });
 
           log.debug('Team chat notification sent for message:', msg.id);
@@ -230,14 +241,14 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [profile, notifSettings.soundEnabled, notifSettings.soundVolume, notifSettings.browserNotifications, isQuietHours]);
+  }, [profile, notifSettings.soundEnabled, notifSettings.soundVolume, notifSettings.browserNotifications, permission, isQuietHours, showNotification]);
 
   /**
-   * Clique na notificação do chat interno. O aviso direto (acima) já trata o clique por
-   * `onClick`; este listener atende o clique que chega repassado pelo service worker
-   * como `NOTIFICATION_CLICK`, carregando o `data` dela (aqui, `type: 'team_chat'` e o
-   * `conversationId`). Nos dois caminhos: foca a janela e abre o módulo de Chat Interno.
-   * A seleção da conversa específica é estado local da `TeamChatView`, fora deste hook.
+   * Clique na notificação do chat interno: o service worker repassa o clique da
+   * notificação como `NOTIFICATION_CLICK` carregando o `data` dela (aqui,
+   * `type: 'team_chat'` e o `conversationId`). Foca a janela e abre o módulo de
+   * Chat Interno. A seleção da conversa específica é estado local da
+   * `TeamChatView`, fora deste hook.
    */
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;

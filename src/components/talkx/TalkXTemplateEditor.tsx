@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useRef, useSyncExternalStore } from 'react';
+import React, { useState, useMemo, useRef, useSyncExternalStore } from 'react';
 import {
   X, Check, Copy, ChevronLeft, ChevronRight, FileText, BarChart3, Image, Video, Music, Send, CheckCircle, XCircle, History, RotateCcw,
 } from 'lucide-react';
@@ -26,7 +26,6 @@ import { useTalkX } from '@/hooks/integrations/useTalkX';
 import { KpiCard } from './kit/kpi';
 import { PRESETS_DO_PRODUTO } from './kit/dialogPresets';
 import { useTalkXConfirm } from './kit/useTalkXConfirm';
-import { parseTalkXTemplateRoute, type TalkXTemplateTab } from './talkxTemplateRoute';
 import {
   IconTile, RailCard, TalkXSkeletonRows, TEMPLATE_CATEGORIES, TEMPLATE_STATUS,
   VARIABLE_KEYS, personalizePreview, fmtInt,
@@ -57,23 +56,20 @@ function usePainelLargo() {
 interface Props {
   templates: TalkXTemplate[];
   isLoading: boolean;
-  isError?: boolean;
-  error?: Error | null;
-  onRetry?: () => void;
   editing: TalkXTemplate | null;
   onClose: () => void;
   /** X091 — clique do widget "Em andamento" abre o monitor da campanha. */
   onOpenMonitor?: (campaignId: string) => void;
-  /** X094 — sub-aba pedida no endereço: `ttab=conteudo|ab|historico`. */
-  initialTtab?: TalkXTemplateTab;
-  /** X094 — troca de template feita na biblioteca lateral chega ao endereço. */
-  onActiveTemplateChange?: (templateId: string) => void;
 }
 
-export function TalkXTemplateEditor({ templates, isLoading, isError = false, error = null, onRetry, editing, onClose, onOpenMonitor, initialTtab = 'conteudo', onActiveTemplateChange }: Props) {
+export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, onOpenMonitor }: Props) {
   const {
     createTemplate, updateTemplate, duplicateTemplate, testTemplate, fetchVersionHistory, fetchVariants,
     saveVariant, deleteVariant, countVariantRecipients,
+    // X047 — a biblioteca desta tela é a MESMA consulta que o pai consome; o erro
+    // tem de chegar à tela. Antes o editor só recebia `isLoading` e, com a consulta
+    // falhando, caía no vazio ("Nenhum template") como se a base estivesse vazia.
+    isError: templatesIsError, error: templatesError, refetch: refetchTemplates,
   } = useTalkXTemplates();
   const messageEditorRef = useRef<TalkXMessageEditorHandle>(null);
   const { confirmar, dialogo } = useTalkXConfirm();
@@ -105,10 +101,9 @@ export function TalkXTemplateEditor({ templates, isLoading, isError = false, err
     tags: string[]; custom_variables: string[]; created_at: string;
   }>>([]);
   const [loadingVersions, setLoadingVersions] = useState(false);
-  const [showVersions, setShowVersions] = useState(initialTtab === 'historico');
+  const [showVersions, setShowVersions] = useState(false);
   const [variants, setVariants] = useState<TemplateVariant[]>([]);
-  // X094 — a sub-aba do endereço abre o painel correspondente já carregado.
-  const [showVariants, setShowVariants] = useState(initialTtab === 'ab');
+  const [showVariants, setShowVariants] = useState(false);
   const [savingVariant, setSavingVariant] = useState(false);
   // R2-MOD-024: respostas atrasadas não podem contaminar o template seguinte.
   // `activeTemplateIdRef` guarda o template REALMENTE ativo agora (independe do
@@ -220,9 +215,6 @@ export function TalkXTemplateEditor({ templates, isLoading, isError = false, err
     if (isDirty && !(await confirmar(PRESETS_DO_PRODUTO.descartarAlteracoes))) return;
     // A ref muda antes do estado para fechar a janela entre o clique e o efeito.
     activateTemplate(t.id);
-    // X094 — a ref sozinha não basta: o endereço da tela 05 é a fonte de verdade do
-    // template aberto e precisa acompanhar a troca feita aqui na biblioteca lateral.
-    onActiveTemplateChange?.(t.id);
     versionsTemplateIdRef.current = null;
     // R2-MOD-024: trocar de template zera o loading do historico. Sem isto, uma
     // resposta pendente de A descartada na troca para B prendia `loadingVersions`.
@@ -234,19 +226,6 @@ export function TalkXTemplateEditor({ templates, isLoading, isError = false, err
     setEName(t.name); setEDesc(t.description ?? ''); setECat(t.category);
     setEContent(t.content); setEMediaUrl(t.media_url ?? ''); setEMediaType(t.media_type ?? '');
     setEHasMedia(!!t.media_url); setEStatus(t.status); setETags(t.tags ?? []); setECustomVars(t.custom_variables ?? []);
-
-    // X094 — se a troca veio enquanto uma sub-aba estava no endereço, a tela não
-    // pode mostrar Conteúdo enquanto a URL ainda diz `ttab=ab|historico`: mantém
-    // a mesma sub-aba no novo template e carrega os dados dela.
-    const nextTab = parseTalkXTemplateRoute(window.location.search).route?.ttab ?? initialTtab;
-    if (nextTab === 'ab') {
-      setShowVariants(true);
-      void loadVariants(t.id);
-    }
-    else if (nextTab === 'historico') {
-      setShowVersions(true);
-      void fetchVersions(t.id);
-    }
   };
 
   // V26 — variáveis conhecidas do editor: as built-in + as personalizadas deste template.
@@ -382,17 +361,6 @@ export function TalkXTemplateEditor({ templates, isLoading, isError = false, err
     }
   };
 
-  // X094 — a sub-aba pedida no endereço abre o painel correspondente já carregado:
-  // `ttab=ab` traz as variantes e `ttab=historico` traz as versões do template aberto.
-  // Só a sub-aba do endereço monta o painel; reabrir o mesmo template não recarrega.
-  useEffect(() => {
-    const templateId = activeTemplateIdRef.current;
-    if (!templateId) return;
-    if (initialTtab === 'ab') void loadVariants(templateId);
-    else if (initialTtab === 'historico') void fetchVersions(templateId);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialTtab]);
-
   /** E46: restaura campos de uma versao anterior */
   const restoreVersion = async (v: typeof versions[0]) => {
     // R2-MOD-024: recusa restaurar histórico que não pertence ao template ativo.
@@ -466,7 +434,7 @@ export function TalkXTemplateEditor({ templates, isLoading, isError = false, err
                   <p className="text-2xs font-semibold text-foreground">v{v.version_number} · {v.name.slice(0, 20)}</p>
                   <p className="text-3xs text-muted-foreground">{new Date(v.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</p>
                 </div>
-                <button type="button" onClick={() => restoreVersion(v)} className="h-6 w-6 rounded flex items-center justify-center hover:bg-primary/10 text-muted-foreground hover:text-primary flex-shrink-0"><RotateCcw className="w-3 h-3" /></button>
+                <button type="button" onClick={() => { void restoreVersion(v); }} className="h-6 w-6 rounded flex items-center justify-center hover:bg-primary/10 text-muted-foreground hover:text-primary flex-shrink-0"><RotateCcw className="w-3 h-3" /></button>
               </div>
             ))}
           </div>
@@ -508,9 +476,9 @@ export function TalkXTemplateEditor({ templates, isLoading, isError = false, err
           {/* Lista compacta — X047: carregando -> erro -> vazio -> conteúdo */}
           <div className="flex-1 overflow-y-auto space-y-1">
             <TalkXQueryBoundary
-              query={{ isLoading, isError, error }}
+              query={{ isLoading, isError: templatesIsError, error: templatesError }}
               entity="os templates"
-              onRetry={onRetry}
+              onRetry={() => { void refetchTemplates(); }}
               skeleton={<TalkXSkeletonRows rows={5} />}
               isEmpty={libFiltered.length === 0}
               empty={<p className="text-2xs text-muted-foreground text-center pt-4">Nenhum template</p>}
@@ -551,15 +519,6 @@ export function TalkXTemplateEditor({ templates, isLoading, isError = false, err
           <KpiCard icon={BarChart3} color="violet" index={2} label="Melhor taxa de resposta" value={libStats?.best_reply?.reply_rate_pct ?? null} suffix="%" hint={libStats?.best_reply?.name ? `Template: ${libStats.best_reply.name}${libStats.best_reply.version ? ` v${libStats.best_reply.version}` : ''}` : 'Ranking só com base mínima de enviados'} />
           <KpiCard icon={Image} color="amber" index={3} label="Templates com mídia" value={libStats?.with_media ?? null} bars={libStats?.with_media_series ?? null} hint={libStats?.with_media != null && libStats.total ? `${Math.round((libStats.with_media / libStats.total) * 100)}% do total` : 'Templates com mídia'} />
         </div>
-        {/* X094 — trilha da tela 05: o editor é uma tela interna do módulo, no mesmo
-            desenho do breadcrumb do wizard. */}
-        <nav aria-label="Trilha de navegação" className="flex items-center gap-1.5 text-2xs text-muted-foreground px-0.5">
-          <span>Talk X</span>
-          <span className="text-border">›</span>
-          <span>Campanhas</span>
-          <span className="text-border">›</span>
-          <span className="text-foreground font-medium">Templates</span>
-        </nav>
         {/* Header */}
         <div className="rounded-2xl bg-card border border-border/70 p-4 flex flex-wrap items-center gap-3">
           <button
@@ -611,7 +570,7 @@ export function TalkXTemplateEditor({ templates, isLoading, isError = false, err
             <PrimaryButton
               icon={saving ? undefined : Check}
               onClick={save}
-              disabled={!eName.trim() || !eContent.trim() || saving}
+              className={cn((!eName.trim() || !eContent.trim() || saving) && 'opacity-50 pointer-events-none')}
             >
               {saving ? 'Salvando…' : 'Salvar template'}
             </PrimaryButton>
@@ -623,32 +582,19 @@ export function TalkXTemplateEditor({ templates, isLoading, isError = false, err
           <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr] gap-3">
             <div><Label className="text-xs text-foreground-secondary">Nome do Template</Label><Input value={eName} onChange={(e) => setEName(e.target.value)} placeholder="Boas-vindas" className="mt-1.5 h-10 bg-input/40 border-border/70" /></div>
             <div>
-              <Label htmlFor="talkx-template-categoria" className="text-xs text-foreground-secondary">Categoria</Label>
+              <Label className="text-xs text-foreground-secondary">Categoria</Label>
               <Select value={eCat} onValueChange={setECat}>
-                <SelectTrigger id="talkx-template-categoria" className="mt-1.5 h-10 bg-input/40 border-border/70"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="mt-1.5 h-10 bg-input/40 border-border/70"><SelectValue /></SelectTrigger>
                 <SelectContent>{TEMPLATE_CATEGORIES.map((c) => <SelectItem key={c} value={c} className="capitalize">{c}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>
-              <Label htmlFor="talkx-template-status" className="text-xs text-foreground-secondary">Status</Label>
+              <Label className="text-xs text-foreground-secondary">Status</Label>
               <Select value={eStatus} onValueChange={(v) => setEStatus(v as 'draft' | 'review' | 'approved')}>
-                <SelectTrigger id="talkx-template-status" className="mt-1.5 h-10 bg-input/40 border-border/70"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="mt-1.5 h-10 bg-input/40 border-border/70"><SelectValue /></SelectTrigger>
                 <SelectContent>{Object.entries(TEMPLATE_STATUS).map(([v, m]) => <SelectItem key={v} value={v}>{m.label}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-          </div>
-
-          {/* X094 — a descrição já existia no estado (e ia para o banco no save) mas
-              não tinha campo: não havia como escrevê-la em lugar nenhum. */}
-          <div>
-            <Label htmlFor="talkx-template-descricao" className="text-xs text-foreground-secondary">Descrição</Label>
-            <Input
-              id="talkx-template-descricao"
-              value={eDesc}
-              onChange={(e) => setEDesc(e.target.value)}
-              placeholder="Para que serve este template"
-              className="mt-1.5 h-10 bg-input/40 border-border/70"
-            />
           </div>
 
           {/* Mensagem (V26: mesmo editor do passo 2 do wizard) */}
@@ -676,7 +622,7 @@ export function TalkXTemplateEditor({ templates, isLoading, isError = false, err
             <p className="text-2xs text-foreground-secondary mb-1.5">Variáveis disponíveis</p>
             <div className="flex flex-wrap gap-1.5">
               {VARIABLE_KEYS.map((v) => (
-                <button key={v} type="button" onClick={() => insertAtCursor(v)} className="h-7 px-2 rounded-md text-2xs font-mono font-medium border border-primary/30 bg-primary/10 text-[hsl(var(--primary-text))] hover:bg-primary/20">{v}</button>
+                <button key={v} type="button" onClick={() => insertAtCursor(v)} className="h-7 px-2 rounded-md text-2xs font-mono font-medium border border-primary/30 bg-primary/10 text-primary-glow hover:bg-primary/20">{v}</button>
               ))}
             </div>
           </div>
@@ -706,7 +652,7 @@ export function TalkXTemplateEditor({ templates, isLoading, isError = false, err
           {/* E45: Variaveis customizadas */}
           <div>
             <p className="text-xs text-foreground-secondary mb-1.5">Variáveis personalizadas</p>
-            <p className="text-2xs text-muted-foreground mb-2">Defina variáveis próprias para este template. Serão inseridas como <span className="font-mono text-[hsl(var(--primary-text))]">{'{{'}var{'}}'}</span> na mensagem.</p>
+            <p className="text-2xs text-muted-foreground mb-2">Defina variáveis próprias para este template. Serão inseridas como <span className="font-mono text-primary-glow">{'{{'}var{'}}'}</span> na mensagem.</p>
             <div className="flex items-center gap-2 flex-wrap mb-2">
               {eCustomVars.map((v) => (
                 <span key={v} className="flex items-center gap-1 h-7 px-2 rounded-lg bg-violeta/10 border border-violeta/20 text-xs font-mono text-[hsl(var(--violeta-text))]">
@@ -740,7 +686,7 @@ export function TalkXTemplateEditor({ templates, isLoading, isError = false, err
                     setECustomVarInput('');
                   }
                 }}
-                className="h-7 px-2 rounded-md text-2xs font-medium border border-primary/30 bg-primary/10 text-[hsl(var(--primary-text))] hover:bg-primary/20 disabled:opacity-40"
+                className="h-7 px-2 rounded-md text-2xs font-medium border border-primary/30 bg-primary/10 text-primary-glow hover:bg-primary/20 disabled:opacity-40"
               >
                 + Inserir
               </button>
@@ -752,7 +698,7 @@ export function TalkXTemplateEditor({ templates, isLoading, isError = false, err
             <Label className="text-xs text-foreground-secondary">Tags</Label>
             <div className="flex items-center gap-2 mt-1.5 flex-wrap">
               {eTags.map((t) => (
-                <span key={t} className="flex items-center gap-1 h-7 px-2 rounded-lg bg-primary/10 border border-primary/20 text-xs font-medium text-[hsl(var(--primary-text))]">
+                <span key={t} className="flex items-center gap-1 h-7 px-2 rounded-lg bg-primary/10 border border-primary/20 text-xs font-medium text-primary-glow">
                   #{t}
                   <button type="button" onClick={() => setETags((p) => p.filter((x) => x !== t))} aria-label={`Remover tag ${t}`} className="hover:text-dash-red"><X className="w-3 h-3" /></button>
                 </span>

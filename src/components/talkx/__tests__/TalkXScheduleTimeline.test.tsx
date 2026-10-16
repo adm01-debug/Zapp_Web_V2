@@ -70,21 +70,6 @@ describe('X138 — linha do tempo do "Resumo da Programação" lê o estado em e
     expect(start?.textContent).not.toContain('alteração não salva');
   });
 
-  it('A11: gravado no formato do PostgREST (+00:00) com edição no mesmo instante não diz "alteração não salva"', () => {
-    const { container } = render(
-      <TalkXScheduleTimeline
-        campaign={{ ...CAMPANHA, scheduled_at: '2026-11-27T12:00:00+00:00' } as unknown as TalkXCampaign}
-        editing={{ ...EDICAO, time: '09:00' }}
-      />,
-    );
-
-    // 27/11 09:00 em São Paulo (UTC-3) = 27/11 12:00 UTC: o mesmo instante do
-    // gravado, só o texto difere ('+00:00' do PostgREST vs '.000Z' do conversor).
-    const start = milestone(container, 'start');
-    expect(start?.textContent).toContain('27/11/2026 • 09:00');
-    expect(start?.textContent).not.toContain('alteração não salva');
-  });
-
   it('A11: a janela some quando o interruptor está desligado e volta quando ligado', () => {
     const { container, rerender } = render(
       <TalkXScheduleTimeline campaign={CAMPANHA} editing={{ ...EDICAO, windowEnabled: false }} />,

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { AlertTriangle, TrendingDown, Activity, RefreshCw, Calendar, User, ShieldAlert, BarChart3, Users } from 'lucide-react';
+import { AlertTriangle, TrendingDown, Activity, RefreshCw, Calendar, User, BarChart3, Users } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -18,7 +18,6 @@ export function SentimentAlertsDashboard() {
       <div className="flex items-center justify-between">
         <div><h1 className="text-2xl font-bold">Alertas de Sentimento</h1><p className="text-muted-foreground">Monitore o sentimento dos clientes e alertas automáticos</p></div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" className="gap-2 opacity-50 cursor-not-allowed" disabled><ShieldAlert className="h-4 w-4 text-destructive" />Exportação Bloqueada</Button>
           <Select value={period} onValueChange={setPeriod}>
             <SelectTrigger className="w-40" aria-label="Filtrar período"><Calendar className="h-4 w-4 mr-2" /><SelectValue /></SelectTrigger>
             <SelectContent>

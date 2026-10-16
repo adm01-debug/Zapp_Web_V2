@@ -1,33 +1,30 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { safeGetItem, safeSetItem } from '@/lib/safeStorage';
 
 const STORAGE_KEY = 'screen-protection-enabled';
 
 function getStoredState(): boolean {
-  try {
-    const v = localStorage.getItem(STORAGE_KEY);
-    return v === null ? true : v === 'true';
-  } catch { return true; }
+  const v = safeGetItem(STORAGE_KEY);
+  return v === null ? true : v === 'true';
 }
 
 /**
  * Anti-screenshot & data exfiltration protection system.
- * Can be toggled on/off; state persists in localStorage.
+ * Can be toggled on/off; state persists no armazenamento local.
  */
 export function useScreenProtection() {
   const { user } = useAuth();
   const [enabled, setEnabled] = useState(getStoredState);
 
   const toggle = useCallback(() => {
-    const next = !enabled;
-    try {
-      localStorage.setItem(STORAGE_KEY, String(next));
-    } catch {
-      // armazenamento bloqueado (modo privado, política do navegador)
-    }
-    setEnabled(next);
-    window.dispatchEvent(new Event('screen-protection-change'));
-  }, [enabled]);
+    setEnabled(prev => {
+      const next = !prev;
+      safeSetItem(STORAGE_KEY, String(next));
+      window.dispatchEvent(new Event('screen-protection-change'));
+      return next;
+    });
+  }, []);
 
   // Listen for changes from other components
   useEffect(() => {
@@ -119,8 +116,6 @@ export function useScreenProtection() {
       if (overlay) return;
       overlay = document.createElement('div');
       overlay.id = 'screen-protection-overlay';
-      overlay.setAttribute('role', 'alert');
-      overlay.setAttribute('aria-live', 'assertive');
       overlay.style.cssText = `
         position: fixed; inset: 0; z-index: 99999;
         background: hsl(var(--background));

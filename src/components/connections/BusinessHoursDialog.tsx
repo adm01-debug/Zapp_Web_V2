@@ -14,7 +14,7 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2, Clock, MessageSquare, Save, Copy } from 'lucide-react';
-import { toast } from '@/hooks/ui/use-toast';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useBusinessHours, BusinessHour, AwayMessage } from '@/hooks/business/useBusinessHours';
 
@@ -92,7 +92,7 @@ export function BusinessHoursDialog({
         close_time: source.close_time,
       }))
     );
-    toast({ title: 'Horário copiado para todos os dias' });
+    toast.success('Horário copiado para todos os dias');
   };
 
   const applyWeekdayTemplate = () => {
@@ -104,7 +104,7 @@ export function BusinessHoursDialog({
         close_time: '18:00',
       }))
     );
-    toast({ title: 'Template de dias úteis aplicado' });
+    toast.success('Template de dias úteis aplicado');
   };
 
   return (

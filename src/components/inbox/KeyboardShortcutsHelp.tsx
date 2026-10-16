@@ -12,13 +12,16 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { useCustomShortcuts } from '@/hooks/ui/useCustomShortcuts';
+import { listarAtalhosEditaveis } from '@/hooks/shortcuts/defaultShortcuts';
 
 export function KeyboardShortcutsHelp() {
   const { shortcuts, formatShortcut } = useCustomShortcuts();
   
-  // Filter shortcuts relevant to inbox/selection
-  const inboxShortcuts = shortcuts.filter(s => 
-    s.category === 'selection' || 
+  // Só o que tem executor: atalho sem dono não entra na ajuda (E16) — era o
+  // caso de `prev-conversation`/`next-conversation` e de toda a categoria
+  // `selection`.
+  const inboxShortcuts = listarAtalhosEditaveis(shortcuts).filter(s =>
+    s.category === 'selection' ||
     s.id === 'global-search' ||
     s.id === 'next-conversation' ||
     s.id === 'prev-conversation'

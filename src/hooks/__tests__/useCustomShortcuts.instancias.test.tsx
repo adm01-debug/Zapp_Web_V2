@@ -173,11 +173,13 @@ describe('R2-PLAT-008 — atalhos personalizados em instâncias separadas', () =
   it('a tela de Configurações (pai + linhas, cada uma com sua instância) exibe a edição de fora', () => {
     const tela = render(<KeyboardShortcutsSettings />);
     // Quem edita é outra instância do hook (o registry global, o painel de ajuda).
+    // t_3d996237: a linha usada é a de `toggle-sidebar`, que TEM executor — os
+    // atalhos sem dono (`send-message` era o caso) saíram da tela.
     const outro = instancia();
-    act(() => { outro.result.current.updateShortcut('send-message', 'j', { ctrlKey: true }); });
+    act(() => { outro.result.current.updateShortcut('toggle-sidebar', 'j', { ctrlKey: true }); });
 
     expect(tela.getByText('Personalizado')).toBeDefined();
     expect(tela.getByText('j')).toBeDefined();
-    expect(tela.queryByText('Enter')).toBeNull();
+    expect(tela.queryByText('b')).toBeNull();
   });
 });

@@ -13,7 +13,6 @@ vi.mock('framer-motion', () => ({
     }),
   },
   AnimatePresence: ({ children }: { children: React.ReactNode }) => children,
-  useReducedMotion: () => false,
 }));
 
 const wrapper = ({ children }: { children: React.ReactNode }) => {
@@ -53,29 +52,23 @@ describe('ActivityHeatmap — acessibilidade', () => {
   });
 });
 
-describe('ActivityHeatmap — célula acessível e streak', () => {
-  // Datas em horário local: `new Date('2026-10-02')` é meia-noite UTC e, no
-  // fuso de Brasília, o rótulo sairia como 1º de outubro.
-  const diasLocais = [
-    { date: new Date(2026, 9, 1), count: 5, level: 1 as const },
-    { date: new Date(2026, 9, 2), count: 25, level: 2 as const },
-    { date: new Date(2026, 9, 3), count: 60, level: 3 as const },
-  ];
+describe('ActivityHeatmap — o rótulo bate com o dado da consulta', () => {
+  it('cada célula expõe a contagem do dia como "mensagens"', () => {
+    render(<ActivityHeatmap data={dadosDeTeste} />, { wrapper });
 
-  it('cada célula tem nome acessível com o dia e o valor e recebe foco pelo teclado', () => {
-    render(<ActivityHeatmap data={diasLocais} />, { wrapper });
-    const celula = screen.getByLabelText('2 de outubro de 2026: 25 mensagens');
-    expect(celula).toHaveAttribute('tabindex', '0');
-    expect(celula).toHaveAttribute('role', 'img');
+    // a consulta do componente conta `messages`; o rótulo não pode prometer
+    // outra métrica (antes a prop `metric` trocava o texto sem trocar a query)
+    expect(screen.getByLabelText(/^5 mensagens em \d{1,2} de \w+/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^25 mensagens em \d{1,2} de \w+/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^60 mensagens em \d{1,2} de \w+/)).toBeInTheDocument();
   });
 
-  it('streak conta até ontem quando hoje ainda não tem atividade', () => {
-    const comHojeZerado = [
-      { date: new Date(2026, 9, 1), count: 5, level: 1 as const },
-      { date: new Date(2026, 9, 2), count: 25, level: 2 as const },
-      { date: new Date(2026, 9, 3), count: 0, level: 0 as const },
-    ];
-    render(<ActivityHeatmap data={comHojeZerado} />, { wrapper });
-    expect(screen.getByText('2 dias')).toBeInTheDocument();
+  it('não exibe rótulo de métrica que a consulta não entrega', () => {
+    const { container } = render(<ActivityHeatmap data={dadosDeTeste} />, { wrapper });
+
+    expect(screen.queryByText(/conversas/i)).toBeNull();
+    expect(screen.queryByText(/resoluções/i)).toBeNull();
+    expect(container.querySelectorAll('[aria-label*="conversa"]').length).toBe(0);
+    expect(container.querySelectorAll('[aria-label*="resolu"]').length).toBe(0);
   });
 });

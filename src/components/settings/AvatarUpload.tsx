@@ -1,72 +1,34 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Camera, Loader2, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { parseSupabaseStorageObjectUrl } from '@/lib/storage_object_reference';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useActionFeedback } from '@/hooks/ui/useActionFeedback';
 import { getLogger } from '@/lib/logger';
 
 const log = getLogger('AvatarUpload');
 
-// Expiração curta: o perfil guarda só o caminho do arquivo e a URL assinada é
-// regerada a cada render, então não há motivo para uma validade longa.
-export const AVATAR_SIGNED_URL_TTL_SECONDS = 300;
-
-const AVATAR_BUCKET = 'avatars';
-
-function isStorageUrl(value: string): boolean {
-  return /^https?:\/\//i.test(value);
-}
-
 /**
- * Normaliza o valor guardado em profile.avatar_url para o caminho do objeto.
- * Avatares legados guardam a URL pública completa ('.../object/public/avatars/...?t=...');
- * com o bucket privado esse valor precisa virar caminho antes de assinar.
- * Aceita rotas /object/public/, /object/sign/ e /object/authenticated/, ignora a query
- * e restringe ao bucket `avatars`. Retorna null quando não dá para normalizar.
+ * Extrai o caminho do objeto no bucket `avatars` a partir da URL pública
+ * salva no perfil (ex.: .../object/public/avatars/<id>/avatar-<ts>.png?t=123).
  */
-function avatarObjectPath(value: string | null | undefined): string | null {
-  if (!value) return null;
-  if (!isStorageUrl(value)) return value;
-  return parseSupabaseStorageObjectUrl(value, [AVATAR_BUCKET], [])?.path ?? null;
+function avatarPathFromUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  const marcador = '/object/public/avatars/';
+  const inicio = url.indexOf(marcador);
+  if (inicio === -1) return null;
+  const caminho = url.slice(inicio + marcador.length).split('?')[0].split('#')[0];
+  return caminho ? decodeURIComponent(caminho) : null;
 }
 
 export function AvatarUpload() {
   const { user, profile, refreshProfile } = useAuth();
-  const queryClient = useQueryClient();
   const feedback = useActionFeedback();
   const [uploading, setUploading] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Gera URL assinada temporária a partir do caminho armazenado
-  useEffect(() => {
-    const raw = profile?.avatar_url;
-    // Legado: avatar_url pode ser a URL pública completa; normaliza para caminho.
-    // A limpeza (setAvatarUrl(null)) acontece dentro do callback assíncrono para
-    // não chamar setState de forma síncrona dentro do efeito.
-    const filePath = raw && user ? avatarObjectPath(raw) : null;
-    let cancelled = false;
-    (async () => {
-      if (!filePath || isStorageUrl(filePath)) {
-        if (!cancelled) setAvatarUrl(null);
-        return;
-      }
-      const { data, error } = await supabase.storage
-        .from('avatars')
-        .createSignedUrl(filePath, AVATAR_SIGNED_URL_TTL_SECONDS);
-      const signedUrl = data?.signedUrl ?? null;
-      if (!cancelled && !error && signedUrl) {
-        setAvatarUrl(signedUrl);
-      } else if (!cancelled) {
-        setAvatarUrl(null);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [profile?.avatar_url, user]);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -78,59 +40,43 @@ export function AvatarUpload() {
     }
 
     setUploading(true);
-    const ext = (file.name.split('.').pop() || '').toLowerCase();
-    const filePath = `${user.id}/avatar.${ext}`;
+    const ext = file.name.split('.').pop();
+    // Caminho único por upload: trocar a foto mais de uma vez não sobrescreve a anterior.
+    const filePath = `${user.id}/avatar-${Date.now()}.${ext}`;
+    const previousUrl = avatarUrl ?? profile?.avatar_url ?? null;
 
     await feedback.withFeedback(
       async () => {
-        // A foto vive em `avatars/<user_id>/avatar.<ext>`. Trocar a extensão
-        // (jpg -> webp) grava um arquivo NOVO e deixa o anterior na pasta; como o
-        // bucket é público, o órfão continua servível pela URL antiga. Listamos
-        // antes de subir para apagar só o formato que ficou para trás.
-        const { data: arquivosExistentes, error: erroDeListagem } = await supabase.storage
-          .from('avatars')
-          .list(user.id, { limit: 100 });
-        if (erroDeListagem) {
-          // Não dá para "sem resultados": sem a lista, cai na extensão que a URL
-          // do perfil já aponta — é o único candidato a órfão que conhecemos.
-          log.warn('Falha ao listar avatares antigos:', erroDeListagem);
-        }
-        const extAnterior = extensaoDaUrlDoAvatar(profile?.avatar_url);
-        const orfaos = erroDeListagem
-          ? (extAnterior && extAnterior !== ext ? [`${user.id}/avatar.${extAnterior}`] : [])
-          : (arquivosExistentes ?? [])
-              .filter((arquivo) => arquivo.name.startsWith('avatar.') && arquivo.name !== `avatar.${ext}`)
-              .map((arquivo) => `${user.id}/${arquivo.name}`);
-
-        // Upload to storage
+        // Upload to storage (sem upsert: cada envio grava um objeto novo)
         const { error: uploadError } = await supabase.storage
           .from('avatars')
-          .upload(filePath, file, { upsert: true });
+          .upload(filePath, file);
         if (uploadError) throw uploadError;
 
-        // Guarda o caminho do arquivo (não a URL assinada, que expira)
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(filePath);
+
+        const urlWithCache = `${publicUrl}?t=${Date.now()}`;
+
+        // Update profile
         const { error: updateError } = await supabase
           .from('profiles')
-          .update({ avatar_url: filePath })
+          .update({ avatar_url: urlWithCache })
           .eq('user_id', user.id);
         if (updateError) throw updateError;
 
+        setAvatarUrl(urlWithCache);
         await refreshProfile();
-        // O caminho é fixo (`<user.id>/avatar.<ext>`), então profile.avatar_url pode
-        // não mudar e o useEffect não roda de novo: reassina e atualiza a prévia aqui.
-        try {
-          const { data: signed, error: signError } = await supabase.storage
-            .from(AVATAR_BUCKET)
-            .createSignedUrl(filePath, AVATAR_SIGNED_URL_TTL_SECONDS);
-          if (!signError && signed?.signedUrl) {
-            setAvatarUrl(signed.signedUrl);
-          } else {
-            // Mantém a prévia via refreshProfile; a próxima renderização reassina.
-            log.warn('avatar_resign_after_upload_error', { error: signError?.message ?? 'sem URL assinada' });
-          }
-        } catch (thrown) {
-          // Mantém a prévia via refreshProfile; a próxima renderização reassina.
-          log.warn('avatar_resign_after_upload_error', { error: thrown instanceof Error ? thrown.message : 'desconhecido' });
+
+        // Remove o objeto antigo do bucket para não acumular fotos órfãs.
+        const previousPath = avatarPathFromUrl(previousUrl);
+        if (previousPath && previousPath !== filePath) {
+          const { error: removeError } = await supabase.storage
+            .from('avatars')
+            .remove([previousPath]);
+          if (removeError) log.warn('Falha ao remover avatar antigo do bucket', removeError);
         }
       },
       {
@@ -144,7 +90,7 @@ export function AvatarUpload() {
 
   const handleRemove = async () => {
     if (!user) return;
-
+    
     await feedback.withFeedback(
       async () => {
         const { error } = await supabase

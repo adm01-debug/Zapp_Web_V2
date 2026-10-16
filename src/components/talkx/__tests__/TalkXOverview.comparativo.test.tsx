@@ -16,7 +16,23 @@ import type { ReactNode } from 'react';
 
 const rpc = vi.hoisted(() => vi.fn());
 
-vi.mock('@/integrations/supabase/client', () => ({ supabase: { rpc, from: vi.fn() } }));
+vi.mock('@/integrations/supabase/client', () => ({
+  supabase: {
+    rpc,
+    from: vi.fn(),
+    // X051: a Visão geral monta o controlador único (`useTalkXLifecycle`), que
+    // abre o canal realtime pelo `useTalkX` real. O que se prova aqui continua
+    // sendo só a RPC dos KPIs; o canal precisa existir para a montagem não
+    // explodir (antes desta troca o canal nem era tocado por esta tela).
+    channel: vi.fn(() => {
+      const canal: Record<string, unknown> = {};
+      canal.on = () => canal;
+      canal.subscribe = () => canal;
+      return canal;
+    }),
+    removeChannel: vi.fn(),
+  },
+}));
 vi.mock('@/hooks/integrations/useTalkXInsights', () => ({
   useTalkXInsights: () => ({ data: undefined, isLoading: false, isError: false, error: null }),
 }));

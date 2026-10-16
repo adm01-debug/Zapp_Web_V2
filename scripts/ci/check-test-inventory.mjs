@@ -67,36 +67,24 @@ const ALLOWLIST = new Set([
   'scripts/db-audit/talkx-v23-draft-step.test.sh',
   'scripts/db-audit/talkx-v25-owner.test.sh',
   'scripts/db-audit/talkx-v26-template-version.test.sh',
-  // X140: painel do monitor TalkX (kpis, comparativo com ontem, serie com zeros,
-  // saude do worker, autorizacao dono/admin). Migration real em PostgreSQL 17
-  // descartavel; passo de YAML fica para o dono do workflow.
-  'scripts/db-audit/talkx-monitor-panel.test.sh',
   // --- .test.sh — prova em container descartável (docker); passo de YAML
   // a promover em db-guard.yml pelo dono do workflow (agente não edita workflow).
   // Item 293 (R2-DB-005): prova que a associação reminders→conversation_tasks preserva a
   // identidade da origem (título+dono+contato+horários) com bijeção. Promover quando o
   // docker descartável estiver disponível no runner do db-guard.yml.
   'scripts/db-audit/reminders-migracao-identidade.test.sh',
-  // login_gate_rpc: prova a RPC consume_login_gate (t_9d4452e2) em Postgres descartável.
-  'scripts/db-audit/login_gate_rpc.test.sh',
   'scripts/db-audit/pg-cron-escalonamento.test.sh',
   'scripts/db-audit/talkx-optout.test.sh',
   'scripts/db-audit/talkx-overview-stats.test.sh',
   'scripts/db-audit/talkx-campaign-segments.test.sh',
-  // X057b: prova em Postgres descartavel o contrato multi-segmentos da campanha Talk X (ordenacao, teto, dedupe e ACL);
-  // promover para db-guard.yml pelo dono do workflow quando o runner suportar o harness.
-  'scripts/db-audit/talkx-campaign-segments-rpc.test.sh',
   // N-118 (item t_f0720c47): versiona a prova SQL de talkx_campaign_window_open em PG 17
   // descartável (docker local) contra a migration 20261011000003 — fuso da campanha,
   // meia-noite no DND, business_hours com days, fail-closed e autorização sob roles reais.
   // Passo de uma linha em db-guard.yml — promover pelo dono do workflow.
   'scripts/db-audit/talkx-campaign-window-open.test.sh',
-  // X103 (Fase 9, telas 02/03): estatisticas da biblioteca de segmentos —
-  // RPC talkx_segment_library_stats, retrato diario (talkx_segment_library_history)
-  // e rotina idempotente talkx_refresh_segment_library_history. PG 17 descartavel
-  // com papeis reais (anon/authenticated/service_role); passo de YAML a promover
-  // em db-guard.yml pelo dono do workflow (agente nao edita workflow).
-  'scripts/db-audit/talkx-segment-library-stats.test.sh',
+  // N-110: prova SQL da RPC save_talkx_template_variants em PG 17 descartável — cria/atualiza
+  // variantes do template sob as roles reais (authenticated/anon), isolamento por dono e rollback.
+  'scripts/db-audit/talkx-save-template-variants.test.sh',
   // #464 (CAIXA-7eb1): mede a divergência de replay do E27 (publicação supabase_realtime) nos
   // próprios arquivos, em PG 17 descartável — a mesma receita do talkx-settings-replay-idempotent.
   'scripts/db-audit/talkx-e27-replay-divergence.test.sh',
@@ -128,14 +116,6 @@ const ALLOWLIST = new Set([
   // real e que a linha `-- Rollback:` da migration restaura — Postgres 17
   // descartável (docker). Passo de YAML a promover em db-guard.yml pelo dono do workflow.
   'scripts/db-audit/e44-whatsapp-connections-anon-grants.test.sh',
-  // #471 (DELTA-CRON-ANUAL): prova em Postgres 17 descartavel (docker, container proprio)
-  // que a migration 20261006202215 tira da agenda o job residual `vacuum-messages-post-expurgo`,
-  // deixa os outros 11 jobs intactos, reescreve apply_pg_cron_escalonamento() sem a linha dele e
-  // executa o proprio `-- Rollback:` da migration. Inicia container proprio (imagem padrao
-  // `postgres:17-alpine`, a mesma de POSTGRES_TEST_IMAGE) e conversa com ele por `docker exec`;
-  // o passo de uma linha no db-guard.yml pede SKIP_DOCKER_SHIM="1", como os passos do bloco E50
-  // deste repositorio, e e do dono do workflow (agente nao edita workflow).
-  'scripts/db-audit/cron-remocao-vacuum-messages.test.sh',
 ]);
 
 // Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em

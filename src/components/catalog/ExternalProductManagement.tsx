@@ -820,14 +820,14 @@ export const ExternalProductManagement: React.FC = () => {
             className="pl-9"
           />
           {search && (
-            <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => dispatch({ type: 'search', value: '' })}>
+            <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" aria-label="Limpar busca" onClick={() => dispatch({ type: 'search', value: '' })}>
               <X className="w-4 h-4" />
             </Button>
           )}
         </div>
 
         <Select value={categoryId} onValueChange={handleCategoryChange} disabled={coolingDown}>
-          <SelectTrigger className="w-[200px]">
+          <SelectTrigger className="w-[200px]" aria-label="Filtrar por categoria">
             <SelectValue placeholder="Categoria" />
           </SelectTrigger>
           <SelectContent>
@@ -851,7 +851,7 @@ export const ExternalProductManagement: React.FC = () => {
         </Select>
 
         <Select value={supplierId} onValueChange={(v) => dispatch({ type: 'supplier', id: v })} disabled={coolingDown}>
-          <SelectTrigger className="w-[170px]">
+          <SelectTrigger className="w-[170px]" aria-label="Filtrar por fornecedor">
             <SelectValue placeholder="Fornecedor" />
           </SelectTrigger>
           <SelectContent>
@@ -872,10 +872,10 @@ export const ExternalProductManagement: React.FC = () => {
         </div>
 
         <div className="flex border rounded-md">
-          <Button variant={viewMode === 'grid' ? 'secondary' : 'ghost'} size="icon" className="rounded-r-none" onClick={() => handleViewMode('grid')} title="Grade">
+          <Button variant={viewMode === 'grid' ? 'secondary' : 'ghost'} size="icon" className="rounded-r-none" aria-pressed={viewMode === 'grid'} onClick={() => handleViewMode('grid')} title="Grade">
             <Grid3X3 className="w-4 h-4" />
           </Button>
-          <Button variant={viewMode === 'list' ? 'secondary' : 'ghost'} size="icon" className="rounded-l-none" onClick={() => handleViewMode('list')} title="Lista">
+          <Button variant={viewMode === 'list' ? 'secondary' : 'ghost'} size="icon" className="rounded-l-none" aria-pressed={viewMode === 'list'} onClick={() => handleViewMode('list')} title="Lista">
             <List className="w-4 h-4" />
           </Button>
         </div>
