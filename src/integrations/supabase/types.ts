@@ -11804,6 +11804,10 @@ export type Database = {
           role: string
         }[]
       }
+      get_send_metrics: {
+        Args: { p_connection_id?: string; p_since?: string }
+        Returns: Json
+      }
       get_talkx_cron_secret: { Args: never; Returns: string }
       get_talkx_send_url: { Args: never; Returns: string }
       get_team_conversation_previews: {

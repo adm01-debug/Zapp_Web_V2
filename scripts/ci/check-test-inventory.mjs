@@ -188,8 +188,10 @@ const ALLOWLIST = new Set([
   // uma linha em db-guard.yml — `bash scripts/db-audit/message-attempts-log.test.sh` — a promover
   // pelo dono do workflow (agente nao edita workflow).
   'scripts/db-audit/message-attempts-log.test.sh',
-]);// Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em
-// workflow nenhum. Todas rodam offline (`node --test <arquivo>`); a promoção é uma linha em
+]);// Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em,
+]);
+
+// Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em// workflow nenhum. Todas rodam offline (`node --test <arquivo>`); a promoção é uma linha em
 // ci.yml/db-guard.yml — do dono do workflow (agente não edita workflow). R2-INF-013: as quatro
 // primeiras já existiam quando a auditoria (2026-10-03) apontou o defeito; as três de
 // ui-audit entraram depois (2026-10-05) e ficaram invisíveis pelo mesmo motivo.
