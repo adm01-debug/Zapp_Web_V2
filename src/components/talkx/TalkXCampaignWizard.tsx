@@ -689,16 +689,20 @@ function WizardRail({ ed }: { ed: WizardState }) {
   // supressão" era 0 para segmento (e só existia depois de um save). Agora os
   // três números saem do mesmo critério de elegibilidade/supressão do disparo.
   // Regras: nunca chamar talkx_resolve_audience sem filtro. Origem sem
-  // segmentId ou sem regras completas fica indisponível ('—').
+  // segmento escolhido ou sem regras completas fica indisponível ('—').
+  // O Talk X passou a aceitar mais de um segmento (5680df621f substituiu
+  // `segmentId` por `segmentIds`): o resumo soma os segmentos escolhidos, que é
+  // o mesmo recorte que a RPC une em `p_segment_ids`.
   const completed = completedRules(ed.audienceRules);
   const hasCompleteRules = completed.groups.some((g) => g.rules.length > 0);
+  const summarySegmentIds = ed.audienceSource === 'segment' ? ed.segmentIds : [];
   const summaryEnabled =
     ed.audienceSource !== 'crm360' &&
-    (ed.audienceSource !== 'segment' || !!ed.segmentId) &&
+    (ed.audienceSource !== 'segment' || summarySegmentIds.length > 0) &&
     (ed.audienceSource !== 'contacts' || hasCompleteRules);
   const summary = useTalkXCampaignSummary({
     rules: ed.audienceSource === 'contacts' ? completed : null,
-    segmentIds: ed.audienceSource === 'segment' && ed.segmentId ? [ed.segmentId] : null,
+    segmentIds: ed.audienceSource === 'segment' && summarySegmentIds.length > 0 ? summarySegmentIds : null,
     enabled: summaryEnabled,
   });
   // Review da PR #909: sem os campos customizados reais do contato de
@@ -719,6 +723,24 @@ function WizardRail({ ed }: { ed: WizardState }) {
     return values;
   }, [sampleCustomFields]);
   const start = ed.isScheduled && ed.scheduledAt ? fmtDateTime(new Date(ed.scheduledAt).toISOString()) : 'Imediato';
+  // X131 (revisão) — o painel não pode exibir um número que diverge do que o
+  // disparo manda. A seleção manual do passo 1 viaja dentro do snapshot como
+  // `contact_ids` (`talkx_audience_query(v_rules, v_contact_ids, ...)`, X017), mas
+  // `talkx_resolve_audience` conta SÓ as regras: a assinatura da RPC não aceita
+  // ids. Então, na origem "contacts":
+  //  - sem regras completas: a RPC fica desabilitada, mas o público real é a
+  //    própria seleção -> contagem local (`ed.audienceTotal`, como era antes);
+  //  - com regras completas: o servidor contaria mais do que o público real (a
+  //    seleção estreita o recorte) -> '—' enquanto houver seleção manual;
+  //  - erro na RPC: '—', nunca `0`, que passaria por contagem real.
+  const manualSelection = ed.audienceSource === 'contacts' && ed.selectedContacts.length > 0;
+  const serverNumberOmitted = summary.isUnavailable || summary.isError || manualSelection;
+  const serverTile = (value: number) =>
+    (serverNumberOmitted ? '—' : summary.isLoading ? '…' : fmtInt(value));
+  const totalTile = manualSelection && !hasCompleteRules
+    ? fmtInt(ed.audienceTotal)
+    : serverTile(summary.total);
+  const showServerSubtitles = !serverNumberOmitted && summary.total > 0;
   return (
     <div className="space-y-4 min-w-0">
       <RailCard icon={Zap} title="Resumo da campanha" subtitle="Confira os detalhes da sua campanha antes de continuar.">
@@ -728,9 +750,9 @@ function WizardRail({ ed }: { ed: WizardState }) {
           </div>
         )}
         <div className="grid grid-cols-2 gap-2.5">
-          <StatTile icon={Users} color="blue" label="Público total (estimado)" value={summary.isUnavailable ? '—' : summary.isLoading ? '…' : fmtInt(summary.total)} />
-          <StatTile icon={Check} color="green" label="Elegíveis para envio" value={summary.isUnavailable ? '—' : summary.isLoading ? '…' : fmtInt(summary.eligible)} sub={!summary.isUnavailable && summary.total > 0 ? fmtPct(summary.eligible, summary.total) : undefined} subTone="text-dash-green" />
-          <StatTile icon={Ban} color="red" label="Bloqueados por supressão" value={summary.isUnavailable ? '—' : summary.isLoading ? '…' : fmtInt(summary.suppressed)} sub={!summary.isUnavailable && summary.total > 0 ? fmtPct(summary.suppressed, summary.total) : undefined} subTone="text-dash-red" />
+          <StatTile icon={Users} color="blue" label="Público total (estimado)" value={totalTile} />
+          <StatTile icon={Check} color="green" label="Elegíveis para envio" value={serverTile(summary.eligible)} sub={showServerSubtitles ? fmtPct(summary.eligible, summary.total) : undefined} subTone="text-dash-green" />
+          <StatTile icon={Ban} color="red" label="Bloqueados por supressão" value={serverTile(summary.suppressed)} sub={showServerSubtitles ? fmtPct(summary.suppressed, summary.total) : undefined} subTone="text-dash-red" />
           <StatTile icon={CalendarDays} color="violet" label="Início" value={start === 'Imediato' ? 'Imediato' : start.split(',')[0]} sub={start === 'Imediato' ? 'ao lançar' : start.split(',')[1]?.trim()} />
           <StatTile icon={Clock} color="amber" label="Duração estimada" value={ed.estimatedTime ?? '—'} sub={`~${ed.messagesPerMinute} msg/min`} />
           <StatTile icon={MessageSquare} color="green" label="Canal" value="WhatsApp" sub={ed.hasMedia ? `Texto + ${ed.mediaType}` : 'Mensagem única'} />

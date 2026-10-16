@@ -136,11 +136,20 @@ describe('useTalkXCampaignSummary — resumo da campanha calculado no servidor (
     expect(rpcMock).not.toHaveBeenCalled();
   });
 
-  it('isUnavailable é false quando enabled=true (padrão)', () => {
+  it('isUnavailable é false quando enabled=true e o resumo vem mesmo do servidor', async () => {
     rpcMock.mockResolvedValue({ data: { eligible: 10, suppressed: 2 }, error: null });
 
     const { result } = renderHook(() => useTalkXCampaignSummary({ rules }), { wrapper });
-    // O hook começa com isLoading=true e isUnavailable=false antes da resolução.
+
+    // A asserção de isUnavailable valia sem esperar nada (o valor inicial já é
+    // false): agora ela vem depois do resultado, junto com o número que só
+    // pode ter vindo da RPC (10 elegíveis + 2 bloqueados = 12).
+    await waitFor(() => expect(result.current.total).toBe(12));
+    expect(result.current.eligible).toBe(10);
+    expect(result.current.suppressed).toBe(2);
     expect(result.current.isUnavailable).toBe(false);
+    expect(result.current.isError).toBe(false);
+    expect(result.current.error).toBeNull();
+    expect(result.current.isLoading).toBe(false);
   });
 });
