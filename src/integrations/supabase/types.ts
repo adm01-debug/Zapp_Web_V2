@@ -4643,6 +4643,7 @@ export type Database = {
           transcription_status: string | null
           updated_at: string
           whatsapp_connection_id: string | null
+          whatsapp_group_id: string | null
         }
         Insert: {
           agent_id?: string | null
@@ -4682,6 +4683,7 @@ export type Database = {
           transcription_status?: string | null
           updated_at?: string
           whatsapp_connection_id?: string | null
+          whatsapp_group_id?: string | null
         }
         Update: {
           agent_id?: string | null
@@ -4721,6 +4723,7 @@ export type Database = {
           transcription_status?: string | null
           updated_at?: string
           whatsapp_connection_id?: string | null
+          whatsapp_group_id?: string | null
         }
         Relationships: [
           {
@@ -4798,6 +4801,13 @@ export type Database = {
             columns: ["whatsapp_connection_id"]
             isOneToOne: false
             referencedRelation: "whatsapp_connections_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_whatsapp_group_id_fkey"
+            columns: ["whatsapp_group_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_groups"
             referencedColumns: ["id"]
           },
         ]
@@ -10904,6 +10914,7 @@ export type Database = {
           transcription_status: string | null
           updated_at: string
           whatsapp_connection_id: string | null
+          whatsapp_group_id: string | null
         }
         SetofOptions: {
           from: "*"
@@ -11114,6 +11125,64 @@ export type Database = {
         }
         Returns: string
       }
+      enqueue_group_outbound_message: {
+        Args: {
+          p_caption?: string
+          p_client_message_id: string
+          p_content: string
+          p_group_id: string
+          p_media_url?: string
+          p_message_type?: string
+          p_reply_to_id?: string
+          p_whatsapp_connection_id?: string
+        }
+        Returns: {
+          agent_id: string | null
+          audio_meme_id: string | null
+          caption: string | null
+          channel_connection_id: string | null
+          channel_type: string | null
+          client_message_id: string | null
+          contact_id: string | null
+          content: string
+          created_at: string
+          delivery_attempt_count: number
+          delivery_claim_expires_at: string | null
+          delivery_claim_token: string | null
+          delivery_claimed_at: string | null
+          delivery_claimed_by: string | null
+          delivery_last_claim_token: string | null
+          external_id: string | null
+          id: string
+          is_deleted: boolean | null
+          is_edited: boolean
+          is_read: boolean | null
+          link_preview: Json | null
+          media_filename: string | null
+          media_meta: Json | null
+          media_mimetype: string | null
+          media_size: number | null
+          media_type: string | null
+          media_url: string | null
+          message_type: string
+          ptt: boolean | null
+          reply_to_id: string | null
+          sender: string
+          status: string | null
+          status_updated_at: string | null
+          transcription: string | null
+          transcription_status: string | null
+          updated_at: string
+          whatsapp_connection_id: string | null
+          whatsapp_group_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "messages"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       enqueue_outbound_message: {
         Args: {
           p_caption?: string
@@ -11163,6 +11232,7 @@ export type Database = {
           transcription_status: string | null
           updated_at: string
           whatsapp_connection_id: string | null
+          whatsapp_group_id: string | null
         }
         SetofOptions: {
           from: "*"
@@ -11219,6 +11289,7 @@ export type Database = {
           transcription_status: string | null
           updated_at: string
           whatsapp_connection_id: string | null
+          whatsapp_group_id: string | null
         }
         SetofOptions: {
           from: "*"
@@ -11276,6 +11347,7 @@ export type Database = {
           transcription_status: string | null
           updated_at: string
           whatsapp_connection_id: string | null
+          whatsapp_group_id: string | null
         }
         SetofOptions: {
           from: "*"

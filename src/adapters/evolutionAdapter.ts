@@ -44,6 +44,7 @@ export function evolutionToRealtimeMessage(evo: EvolutionMessage): NormalizedRea
     updated_at: evo.created_at,
     external_id: evo.message_id,
     whatsapp_connection_id: null,
+    whatsapp_group_id: null,
     channel_connection_id: null,
     channel_type: 'whatsapp',
     is_edited: false,
