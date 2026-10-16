@@ -9,6 +9,17 @@ vi.mock('@/hooks/integrations/useTalkXInsights', () => ({
   useTalkXInsights: () => ({ data: [] }),
 }));
 
+// X051: a revisão do wizard passou a resolver o disparo pelo controlador único
+// (`useTalkXLifecycle` → `useTalkX`, que usa react-query). Sem a porta mockada
+// o render da revisão cai em "No QueryClient set"; nenhuma asserção deste
+// arquivo toca nas operações do ciclo de vida.
+vi.mock('@/hooks/integrations/useTalkX', () => ({
+  useTalkX: () => ({
+    startCampaign: vi.fn(), pauseCampaign: vi.fn(), cancelCampaign: vi.fn(),
+    updateCampaign: { mutateAsync: vi.fn() },
+  }),
+}));
+
 import { TalkXWizardReview } from '../TalkXWizardDelivery';
 import type { WizardState } from '../TalkXCampaignWizard';
 

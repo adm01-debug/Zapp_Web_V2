@@ -13,15 +13,30 @@ vi.mock('@/hooks/integrations/useTalkXInsights', () => ({
   useTalkXInsights: () => ({ data: undefined, isLoading: false, isError: false, error: null }),
 }));
 
+// X051: a revisão resolve o disparo pelo controlador único (`useTalkXLifecycle`
+// → `useTalkX`, que usa react-query). Sem a porta mockada o render cai em
+// "No QueryClient set"; o disparo aqui é exercitado pelo executor do wizard
+// (`ed.handleSave`), não pelas operações do hook.
+vi.mock('@/hooks/integrations/useTalkX', () => ({
+  useTalkX: () => ({
+    startCampaign: vi.fn(), pauseCampaign: vi.fn(), cancelCampaign: vi.fn(),
+    updateCampaign: { mutateAsync: vi.fn() },
+  }),
+}));
+
 import { TalkXWizardReview } from '@/components/talkx/TalkXWizardDelivery';
 import type { WizardState } from '@/components/talkx/TalkXCampaignWizard';
 
-// X136 (plano Talk X V4, Tela 09): o disparo confirma no modal do kit
-// (`TalkXConfirmDialog`), com as TRÊS confirmações DENTRO do modal, e
-// "Confirmar lançamento" só habilita com as três marcadas. Antes o modal era um
-// `Dialog` próprio que apenas repetia, como texto, o que estava marcado no
-// cartão de fora. Estes testes são a trava: sem o modal do kit (sem caixas
-// dentro dele e sem o texto do mock) eles quebram.
+// X136 (plano Talk X V4, Tela 09) — as TRÊS confirmações do disparo do mock 09
+// continuam sendo condição para lançar. O que mudou com o X051 é onde a caixa
+// fica e quem confirma: as três vivem no cartão "Confirmações obrigatórias" da
+// revisão (alimentam `ed.canProceed[4]`, que o editor exige em
+// `mode: 'launch'`) e a confirmação final é o diálogo único do ciclo de vida —
+// o modal próprio da tela saiu de cena, junto com a repetição das mesmas três
+// caixas dentro dele.
+//
+// Este arquivo era a trava do modal próprio; virou a trava do PORTÃO: sem as
+// três marcadas o lançamento não abre confirmação, não salva e não navega.
 
 /** `ed` mínimo para renderizar a revisão (mesmo formato de TalkXView.route.test). */
 function reviewEd(overrides: Record<string, unknown> = {}) {
@@ -48,7 +63,7 @@ function reviewEd(overrides: Record<string, unknown> = {}) {
 
 const modalOnLaunched = vi.fn();
 
-/** Abre o modal de disparo pelo botão da revisão e devolve o modal. */
+/** Abre a confirmação do disparo pelo botão da revisão e devolve o diálogo. */
 function openLaunchModal(ed: WizardState) {
   render(<TalkXWizardReview ed={ed} campaign={null} onLaunched={modalOnLaunched} />);
   fireEvent.click(screen.getByRole('button', { name: /(Lançar|Agendar) campanha/ }));
@@ -60,49 +75,47 @@ afterEach(() => {
   modalOnLaunched.mockClear();
 });
 
-describe('TalkXWizardReview — "Confirmar disparo?" pelo modal do kit (X136)', () => {
-  it('traz as três caixas DENTRO do modal e o texto do mock', () => {
-    const modal = openLaunchModal(reviewEd());
+describe('TalkXWizardReview — as três confirmações obrigatórias do disparo (X136)', () => {
+  it('mantém as três confirmações do mock 09 na revisão e é o conjunto delas que libera o lançamento', () => {
+    const { unmount } = render(
+      <TalkXWizardReview
+        ed={reviewEd({ canProceed: { 1: true, 2: true, 3: true, 4: false } })}
+        campaign={null}
+        onLaunched={modalOnLaunched}
+      />,
+    );
+
+    expect(screen.getByText('Confirmo que possuo o consentimento dos contatos.')).toBeInTheDocument();
+    expect(screen.getByText('Revisei e estou de acordo com o conteúdo da mensagem.')).toBeInTheDocument();
+    expect(screen.getByText('A lista de supressão foi aplicada corretamente.')).toBeInTheDocument();
+
+    const bloqueado = screen.getByRole('button', { name: 'Lançar campanha' }) as HTMLButtonElement;
+    expect(bloqueado.disabled).toBe(true);
+    fireEvent.click(bloqueado);
+    expect(screen.queryByRole('alertdialog')).toBeNull();
+    unmount();
+
+    // Com as três marcadas (`canProceed[4]`) o disparo libera.
+    const ed = reviewEd();
+    render(<TalkXWizardReview ed={ed} campaign={null} onLaunched={modalOnLaunched} />);
+    expect(screen.getByRole('button', { name: 'Lançar campanha' })).not.toHaveProperty('disabled', true);
+    fireEvent.click(screen.getByRole('button', { name: 'Lançar campanha' }));
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+    expect(ed.handleSave).not.toHaveBeenCalled();
+  });
+
+  it('confirma o disparo no diálogo único, com o texto do mock e sem repetir as caixas dentro dele', async () => {
+    const ed = reviewEd();
+    const modal = openLaunchModal(ed);
 
     expect(within(modal).getByText('Confirmar disparo?')).toBeInTheDocument();
-    expect(within(modal).getAllByRole('checkbox')).toHaveLength(3);
-    expect(
-      within(modal).getByText(/será enviada para 10 contatos\. Esta ação não pode ser desfeita\./),
-    ).toBeInTheDocument();
-  });
-
-  it('só habilita "Confirmar lançamento" com as três confirmações marcadas', () => {
-    const ed = reviewEd();
-    const modal = openLaunchModal(ed);
-
-    const confirmar = () => within(modal).getByRole('button', { name: 'Confirmar lançamento' }) as HTMLButtonElement;
-    const caixas = within(modal).getAllByRole('checkbox');
-
-    expect(confirmar().disabled).toBe(true);
-
-    fireEvent.click(caixas[0]);
-    fireEvent.click(caixas[1]);
-    expect(confirmar().disabled).toBe(true);
-
-    fireEvent.click(caixas[2]);
-    expect(confirmar().disabled).toBe(false);
-
-    // O botão bloqueado não dispara nada: o lançamento só sai com as três.
-    fireEvent.click(caixas[2]);
-    expect(confirmar().disabled).toBe(true);
-    fireEvent.click(confirmar());
-    expect(ed.handleSave).not.toHaveBeenCalled();
-    expect(modalOnLaunched).not.toHaveBeenCalled();
-  });
-
-  it('confirma o disparo e entrega o lançamento para a tela seguinte (monitor)', async () => {
-    const ed = reviewEd();
-    const modal = openLaunchModal(ed);
-
-    within(modal).getAllByRole('checkbox').forEach((caixa) => fireEvent.click(caixa));
+    expect(within(modal).getByText(/As mensagens começam a ser enviadas para a audiência selecionada\./)).toBeInTheDocument();
+    expect(within(modal).getByText('10 contatos')).toBeInTheDocument();
+    // as três caixas não moram mais no modal (ficaram no cartão da revisão)
+    expect(within(modal).queryAllByRole('checkbox')).toHaveLength(0);
 
     await act(async () => {
-      within(modal).getByRole('button', { name: 'Confirmar lançamento' }).click();
+      within(modal).getByRole('button', { name: 'Confirmar envio' }).click();
     });
 
     expect(ed.handleSave).toHaveBeenCalledTimes(1);
@@ -110,11 +123,10 @@ describe('TalkXWizardReview — "Confirmar disparo?" pelo modal do kit (X136)', 
     expect(modalOnLaunched).toHaveBeenCalledWith('campaign-9', 'sending');
   });
 
-  it('cancelar fecha o modal sem lançar', () => {
+  it('cancelar fecha a confirmação sem lançar', () => {
     const ed = reviewEd();
     const modal = openLaunchModal(ed);
 
-    within(modal).getAllByRole('checkbox').forEach((caixa) => fireEvent.click(caixa));
     fireEvent.click(within(modal).getByRole('button', { name: 'Cancelar' }));
 
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
@@ -122,10 +134,17 @@ describe('TalkXWizardReview — "Confirmar disparo?" pelo modal do kit (X136)', 
     expect(modalOnLaunched).not.toHaveBeenCalled();
   });
 
-  it('pede "Confirmar agendamento" e avisa da data quando o envio é agendado', () => {
-    const modal = openLaunchModal(reviewEd({ isScheduled: true, scheduledAt: '2026-10-20T14:30' }));
+  it('pede o envio agendado avisando da data e salva com `schedule`', async () => {
+    const ed = reviewEd({ isScheduled: true, scheduledAt: '2026-10-20T14:30' });
+    const modal = openLaunchModal(ed);
 
-    expect(within(modal).getByRole('button', { name: 'Confirmar agendamento' })).toBeDisabled();
-    expect(within(modal).getByText(/20\/10\/2026 14:30/)).toBeInTheDocument();
+    expect(within(modal).getByText('20/10/2026 14:30 (America/Sao_Paulo)')).toBeInTheDocument();
+
+    await act(async () => {
+      within(modal).getByRole('button', { name: 'Confirmar envio' }).click();
+    });
+
+    expect(ed.handleSave).toHaveBeenCalledWith('schedule');
+    expect(modalOnLaunched).toHaveBeenCalledWith('campaign-9', 'scheduled');
   });
 });
