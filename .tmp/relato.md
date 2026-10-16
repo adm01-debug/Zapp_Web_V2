@@ -1,36 +1,32 @@
-Especialista: worker (sql) (area-sql-banco)
+Especialista: senior (area-sql-banco)
 
-## O que este cartão pediu e como resolvi o motivo (conflito)
-Cartão [retomar]: a entrega anterior (`v2/sec-y25-01-insert-alvo-2610090601f8e4`, commit `b7f32d7ee`) foi aprovada mas CONFLITAVA com a ponta de `dia/2026-10-12`. Trouxe os commits por `git cherry-pick b7f32d7ee` para o workspace novo (cuja base JÁ é a ponta atual `dia/2026-10-12`).
+## Ponto 1: rebase/retomada sobre a ponta atual, conflito resolvido, teste do cartão no CI/db-audit e verificação
+- Trabalho anterior: trouxe o commit `b7f32d7ee` para o workspace novo com `git cherry-pick -n` sobre `dia/2026-10-12`.
+- Conflito: o cherry-pick conflitou em `.github/workflows/db-guard.yml`; resolvi preservando a ponta atual e reaplicando só o passo exigido pelo inventário para `scripts/db-audit/sec-y25-01-insert-alvo.test.sh`, sem trazer outro trecho do workflow antigo.
+- Correção preservada: `supabase/migrations/20261009090603_sec_y25_01_insert_alvo.sql` mantém as policies/gatilho que amarram `deal_activities.deal_id`, `calls.contact_id` e `conversation_tasks.contact_id` ao alvo permitido.
+- Ajuste feito nesta retomada: admin/supervisor agora só relaxa o ALVO, nunca o AUTOR. `performed_by` e `agent_id` precisam ser o perfil de `auth.uid()`; `created_by` continua `current_profile_id()`.
+- Teste do cartão: `scripts/db-audit/sec-y25-01-insert-alvo.test.sh` roda PostgreSQL descartável com papéis reais (`authenticated`, `anon`, `service_role`, `postgres`), prova o estado anterior vulnerável, aplica a migration real, executa o rollback extraído do cabeçalho e reaplica a correção.
 
-Conflito único: `.github/workflows/db-guard.yml`, porque os DOIS lados acrescentaram passos no fim do job. Resolvi PRESERVANDO os dois lados: os passos da ponta (N-002 trava de escalada em profiles, N-136 runbook de recriação) e o passo desta entrega (SEC-Y25-01). Nada foi perdido nem sobrescrito. Os outros dois arquivos (a migration e o teste) entraram sem conflito.
+## Provas do ponto 1
+- Vermelho sem correção de alvo: `SEC_Y25_CORRECAO="$PWD/.tmp/sec_y25_mutant_sem_alvo.sql" scripts/db-audit/sec-y25-01-insert-alvo.test.sh` -> `[FAIL] B1 agente B não grava atividade no negócio do agente A deveria falhar`.
+- Vermelho contra a regressão apontada na retomada (admin falsificando autor): `SEC_Y25_CORRECAO="$PWD/.tmp/sec_y25_mutant_admin_spoof.sql" scripts/db-audit/sec-y25-01-insert-alvo.test.sh` -> `[FAIL] B6b admin não falsifica performed_by de outro perfil deveria falhar`.
+- Verde do teste do cartão: `scripts/db-audit/sec-y25-01-insert-alvo.test.sh` -> `[PASS] B6b admin não falsifica performed_by de outro perfil`, `[PASS] B11b admin não falsifica agent_id de outro perfil`, `[PASS] B11c admin não falsifica created_by de outro perfil`, `[PASS] C1/C1b/C2/C4` para rollback/reaplicação e resumo `[OK] SEC-Y25-01: INSERT de deal_activities, calls e conversation_tasks amarrado ao alvo`.
+- Inventário do meu teste: `.github/workflows/db-guard.yml` agora chama `bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/sec-y25-01-insert-alvo.test.sh`. `node scripts/ci/check-test-inventory.mjs` não listou este teste como órfão; o comando segue vermelho por 6 órfãos preexistentes fora deste diff (`department-invite-contract-audit-vocabulary`, `ia-usage-outbox-duravel`, `talkx-conversion-defaults`, `team-chat-department-transfer-guards`, `team-chat-media-contract`, `team-direct-conversation-race`).
+- `zapp-verify . --rapido` -> `OK db_guard`, `OK tipos`, `OK lint`, `OK migrations`, `VERIFY: VERDE SEM BANCO (7s)`.
+- `zapp-verify full .` foi executado e NÃO ficou verde por falha fora do diff: `FALHOU testes 772s`, `Test Files 1 failed | 1314 passed (1315)`, `Tests 1 failed | 11901 passed | 25 expected fail | 14 todo (11941)`, erro em `src/components/inbox/__tests__/RealtimeInboxView.selectedMessagesError.test.tsx` (`TypeError: The "event" argument must be an instance of Event. Received an instance of Event`). Rodei o arquivo isolado com `bunx vitest run src/components/inbox/__tests__/RealtimeInboxView.selectedMessagesError.test.tsx` e ele também falhou pelo mesmo erro de WebSocket/undici; nenhum arquivo de `src/components/inbox/**` está no diff deste cartão.
 
-## Confirmei no código ATUAL que o defeito ainda existe
-Antes de mexer, `git grep` na ponta atual (`15929a99c`, antes do cherry-pick): não há nenhuma migration `sec_y25_01` na base, e as policies de INSERT correntes ainda validam SÓ o autor, nunca o alvo — exatamente o defeito do achado SEC-RLS_TAREFAS_EMAIL_LIGACOES-01:
-- `deal_activities`: "Authenticated can insert deal activities" em `20260317222442_f3acf46c-...:125` (checa só `performed_by`, não o `deal_id`).
-- `calls`: "Users can insert calls" em `20260317222534_cc94813a-...:94` (checa só `agent_id`, não o `contact_id`); o alvo também muda por UPDATE em `upsert_my_call` (`20260926800000_calls_telefonia_v2.sql`).
-- `conversation_tasks`: `tasks_insert_own` em `20260928140000_tasks_unify_reminders_kanban.sql:139` (checa só `created_by`).
-Como o defeito segue vivo, a entrega de código é necessária (não é caso de "já corrigido, fechar sem commit").
+## Arquivos no diff
+`.github/workflows/db-guard.yml`
+`.tmp/relato.md`
+`scripts/db-audit/sec-y25-01-insert-alvo.test.sh`
+`supabase/migrations/20261009090603_sec_y25_01_insert_alvo.sql`
 
-## O que a correção faz (migration trazida)
-`supabase/migrations/20261009090603_sec_y25_01_insert_alvo.sql` (nome com data futura em relação à última da dia, `20261009000118`):
-- `deal_activities`: só aceita `deal_id` de negócio do próprio agente (`sales_deals.assigned_to` = perfil do chamador) ou admin/supervisor.
-- `calls` e `conversation_tasks`: exigem `contact_id` visível ao chamador por `is_contact_visible_to_user` (o mesmo predicado de `contact_notes`), com contato nulo ainda permitido (número desconhecido / tarefa pessoal).
-- `calls` ganha gatilho BEFORE UPDATE que barra a troca de `contact_id` para contato fora do alcance (fecha o caminho do `ON CONFLICT DO UPDATE` da RPC `upsert_my_call`); o caminho de sistema (`postgres`/`service_role`) é preservado.
-- Cabeçalho com ROLLBACK documentado e executável (formato do repo).
-Também entrou `scripts/db-audit/sec-y25-01-insert-alvo.test.sh` e o passo correspondente em `.github/workflows/db-guard.yml`.
-
-## Prova
-- vermelho antes: bloco A do teste roda as policies correntes e o ataque PASSA — `[PASS] A1 agente B grava atividade na trilha do negócio do agente A`, idem A2/A3 (calls e conversation_tasks).
-- verde depois: com a migration aplicada, os mesmos ataques falham e os fluxos legítimos seguem — `[PASS] B1..B3` (negados), `B5..B11` (legítimos passam), `B12` anon negado pelo RLS, `B13` service_role liberado, `B16/B17` (upsert/UPDATE do alvo negados), `B18..B21` (troca para contato próprio, status, caminho de sistema passam).
-- rollback do cabeçalho extraído do próprio arquivo e executado (bloco C): após o rollback o ataque volta a passar (`C1`) e reaplicar a correção volta a barrar (`C2`, idempotente).
-- conjunto: `bash scripts/db-audit/sec-y25-01-insert-alvo.test.sh` → `[OK] SEC-Y25-01: INSERT de deal_activities, calls e conversation_tasks amarrado ao alvo` (exit 0).
-- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (93s)`.
-
-## Ressalva ao aviso automático "SEM DDL/migration" do fechar
-Não procede. O cartão termina com a linha de regras permanentes ("sem DDL/Edge/dependência nova salvo se o pedido original exigia"), e o PEDIDO ORIGINAL deste cartão é exatamente uma migration de banco: "Uma migration nova (com ROLLBACK documentado conforme o padrão do repo)" que corrige as policies de INSERT. A migration está no escopo declarado em ARQUIVOS QUE PODE TOCAR ("uma migration nova em supabase/migrations/"). Repito o MESMO comando de fechar sem alterar o diff.
-
-## O que NÃO fiz e por quê
-- Não apliquei nada em produção (regra permanente: migration só no repositório).
-- Não editei as migrations antigas das policies (correção = migration nova).
-- Não mexi em `schema-manifest.json`: nenhuma coluna/tipo mudou (só policy e função/trigger), então o manifesto não é afetado; o portão de migrations da verificação ficou verde.
+## Verificações executadas
+- `bash -n scripts/db-audit/sec-y25-01-insert-alvo.test.sh` -> exit 0.
+- `SEC_Y25_CORRECAO="$PWD/.tmp/sec_y25_mutant_sem_alvo.sql" scripts/db-audit/sec-y25-01-insert-alvo.test.sh` -> falhou como esperado em B1.
+- `SEC_Y25_CORRECAO="$PWD/.tmp/sec_y25_mutant_admin_spoof.sql" scripts/db-audit/sec-y25-01-insert-alvo.test.sh` -> falhou como esperado em B6b.
+- `scripts/db-audit/sec-y25-01-insert-alvo.test.sh` -> `[OK] SEC-Y25-01: INSERT de deal_activities, calls e conversation_tasks amarrado ao alvo`.
+- `node scripts/ci/check-test-inventory.mjs` -> vermelho só por 6 órfãos preexistentes; `sec-y25-01-insert-alvo.test.sh` não aparece na lista.
+- `git diff --check` -> exit 0.
+- `zapp-verify . --rapido` -> verde sem banco.
+- `zapp-verify full .` -> vermelho em teste de inbox fora do diff; log em `.tmp/zapp-verify-full.log`.

@@ -42,15 +42,15 @@
 
 BEGIN;
 
--- 1. deal_activities: só negócio do próprio agente, ou admin/supervisor.
+-- 1. deal_activities: autor sempre é o próprio perfil; admin/supervisor só relaxa o alvo.
 DROP POLICY IF EXISTS "Authenticated can insert deal activities" ON public.deal_activities;
 CREATE POLICY "Authenticated can insert deal activities" ON public.deal_activities
   FOR INSERT TO authenticated
   WITH CHECK (
-    public.is_admin_or_supervisor(auth.uid())
-    OR (
-      performed_by = public.get_profile_id_for_user(auth.uid())
-      AND deal_id IN (
+    performed_by = public.get_profile_id_for_user(auth.uid())
+    AND (
+      public.is_admin_or_supervisor(auth.uid())
+      OR deal_id IN (
         SELECT deal.id
         FROM public.sales_deals AS deal
         WHERE deal.assigned_to = public.get_profile_id_for_user(auth.uid())
@@ -58,15 +58,16 @@ CREATE POLICY "Authenticated can insert deal activities" ON public.deal_activiti
     )
   );
 
--- 2. calls: contato visível ao chamador (ou sem contato); autor obrigatório.
+-- 2. calls: autor sempre é o próprio perfil; admin/supervisor só relaxa o alvo.
 DROP POLICY IF EXISTS "Users can insert calls" ON public.calls;
 CREATE POLICY "Users can insert calls" ON public.calls
   FOR INSERT TO authenticated
   WITH CHECK (
-    public.is_admin_or_supervisor(auth.uid())
-    OR (
-      agent_id IN (SELECT profile.id FROM public.profiles AS profile WHERE profile.user_id = auth.uid())
-      AND (contact_id IS NULL OR public.is_contact_visible_to_user(contact_id, auth.uid()))
+    agent_id = public.get_profile_id_for_user(auth.uid())
+    AND (
+      public.is_admin_or_supervisor(auth.uid())
+      OR contact_id IS NULL
+      OR public.is_contact_visible_to_user(contact_id, auth.uid())
     )
   );
 
