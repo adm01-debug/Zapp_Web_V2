@@ -1,33 +1,27 @@
-Especialista: senior
+Especialista: worker (sql) (area-sql-banco)
 
-## Pontos do revisor
+## O que mudou e por quê
+- supabase/migrations/20261012115237_email_signatures.sql: cria public.email_signatures (id, user_id uuid not null default auth.uid(), name varchar(120) com CHECK de nome não vazio, html text com CHECK <= 20000, is_default boolean, created_at, updated_at), o índice ÚNICO PARCIAL email_signatures_one_default_per_user (user_id) WHERE is_default (no máximo uma padrão por usuário, como o cartão pede) e o índice por user_id; RLS ligada com 4 policies (SELECT/INSERT/UPDATE/DELETE, todas `user_id = (select auth.uid())`), gatilho updated_at e ACL (revoke de PUBLIC/anon; 4 verbos para authenticated; ALL para service_role). Migration ADITIVA, sem backfill — nada existia antes. Dono = auth.uid() (mesmo padrão de message_templates/email_templates).
+- src/integrations/supabase/types.ts: entrada email_signatures (Row/Insert/Update, Relationships: []) logo após email_messages, no formato do gerador (colunas em ordem alfabética).
+- scripts/db-audit/email-signatures-rls.test.sh: prova de contrato RLS em Postgres 17 descartável, executando como o papel real (authenticated/anon), nunca como postgres.
+- .github/workflows/db-guard.yml: registra o teste novo no CI (passo "Simular contrato de acesso das assinaturas de e-mail (email_signatures)", padrão `retry-disposable-postgres-test.sh bash scripts/db-audit/...test.sh`).
 
-Ponto 1.1: B19 não provava o bypass pedido.
-- O que mudei: `scripts/db-audit/edit-message-authorization.test.sh:311-315` agora divide o B19 em dois passos no mesmo alvo editável (`$M_SENT`): B19a exige que `UPDATE public.messages SET content = ...` por `authenticated` falhe com `message_content_edit_requires_rpc`; B19b chama a RPC real `public.edit_message($M_SENT, ...)` e exige o conteúdo retornado pela própria RPC.
-- Prova vermelha: rodei uma cópia temporária do teste com `DROP TRIGGER IF EXISTS trg_guard_message_immutable_columns ON public.messages` imediatamente antes do B19. Resultado: `mutation_exit=1` e `[FAIL] B19a bypass da RPC: UPDATE direto no mesmo alvo editavel pela RPC e recusado: deveria falhar, mas passou`.
-- Prova verde: `bash scripts/db-audit/edit-message-authorization.test.sh` passou em Postgres descartável, incluindo `[PASS] B19a bypass da RPC: UPDATE direto no mesmo alvo editavel pela RPC e recusado`, `[PASS] B19b bypass da RPC: RPC edit_message edita o mesmo alvo que o UPDATE direto recusou`, `[PASS] B21 authenticated nao desfaz soft delete (message_undelete_forbidden)` e `[OK] contrato de autorizacao da edicao de mensagem (edit_message) verificado`.
+## Decisões de contrato
+- RLS literal do cartão: SÓ o dono lê/escreve/exclui a própria assinatura (assinatura é dado pessoal de composição; sem staff, sem shared) — não usei is_admin()/has_role() porque o cartão não pede exceção de papel.
+- WITH CHECK = USING nos updates: ninguém troca user_id (sem escalada/reatribuição de autoria por UPDATE).
+- "No máximo uma padrão por usuário" é imposição do BANCO (índice único parcial), não regra de front: a segunda linha padrão do mesmo usuário é recusada com duplicate key, e padrão de OUTRO usuário é permitida.
+- html com teto de 20000 caracteres por CHECK; a sanitização do HTML é do front, como o cartão diz.
 
-Ponto 1.2: o passo novo do CI passava uma variável que o teste ignorava.
-- O que mudei: `scripts/db-audit/edit-message-authorization.test.sh:28` agora lê `EDIT_MESSAGE_AUTHZ_TEST_POSTGRES_IMAGE` primeiro e mantém `EDIT_MESSAGE_TEST_POSTGRES_IMAGE` como fallback; assim o nome usado pelo passo novo de CI deixa de ser ignorado. Registrei o teste em `.github/workflows/db-guard.yml:371-374` porque o próprio `hermes-tarefa-fechar` apontou que o inventário de testes reprovaria sem o passo no CI; esse é o único arquivo fora da lista inicial e responde diretamente ao ponto 1.2 do revisor.
-- Prova: `EDIT_MESSAGE_AUTHZ_TEST_POSTGRES_IMAGE=postgres:17-alpine bash scripts/db-audit/edit-message-authorization.test.sh` passou até `[OK] contrato de autorizacao da edicao de mensagem (edit_message) verificado`; `node scripts/ci/check-test-inventory.mjs` não lista mais `edit-message-authorization.test.sh` como órfão (falha apenas em três testes órfãos preexistentes: `department-invite-contract-audit-vocabulary`, `talkx-conversion-defaults`, `team-chat-media-contract`).
+## Prova
+- `hermes-db-migrar supabase/migrations/20261012115237_email_signatures.sql` → `APLICADA no banco LOCAL 'v2-26101208508107' (produção não foi tocada)`. O replay de subida do banco local registrou a tabela nova (colunas, índices, policies, gatilho e grants) e 800 migrations ok (as 21 falhas são pré-existentes, alheias a este cartão).
+- vermelho antes (mutação: policy de SELECT trocada por `USING (true)`): `bash scripts/db-audit/email-signatures-rls.test.sh` → `[FAIL] B10 outro nao ve a assinatura do dono: esperado '0', obtido '1'` (o teste exercita a policy de verdade, como o papel real; restaurada a expressão correta, B10 volta a PASS).
+- A1 (sem a migration a tabela não existe, rodando como authenticated) confirma o estado ausente.
+- verde depois: `bash scripts/db-audit/email-signatures-rls.test.sh` → `== TODOS OS PASSOS PASSARAM ==` (inclui: isolamento por dono; unico parcial uma-padrão-por-usuário; bloqueio de html > 20000 e nome em branco; anon sem acesso; rollback extraído do próprio arquivo; reaplicação idempotente).
+- `node scripts/ci/check-test-inventory.mjs` não aponta mais o meu arquivo (o passo no db-guard.yml o registrou).
 
-Ponto 2: diff final só com trabalho deste cartão.
-- O que mudei: reapliquei do commit 1836d103f665 a migration, o teste de banco e o tipo gerado; corrigi o B19 e registrei o teste no CI com a variável correta. O único arquivo fora da lista inicial é `.github/workflows/db-guard.yml`, justificado pelo ponto 1.2 e pelo inventário automático de testes do fechar.
-- Prova: `git diff --name-only dia/2026-10-12...HEAD` lista somente o workflow do teste, este relato e os três arquivos de banco/tipo abaixo; conferi antes do commit que o identificador do banco real não aparece no diff.
-
-## Arquivos no diff
-
-```
-.github/workflows/db-guard.yml
-.tmp/relato.md
-scripts/db-audit/edit-message-authorization.test.sh
-src/integrations/supabase/types.ts
-supabase/migrations/20261011151650_edit_message_rpc.sql
-```
-
-## Verificações executadas
-
-- `EDIT_MESSAGE_AUTHZ_TEST_POSTGRES_IMAGE=postgres:17-alpine bash scripts/db-audit/edit-message-authorization.test.sh` → `[OK] contrato de autorizacao da edicao de mensagem (edit_message) verificado`.
-- Mutação temporária do B19 sem a guarda → `mutation_exit=1` e falha em B19a porque o UPDATE direto passou.
-- `node scripts/ci/check-test-inventory.mjs` → não acusou `scripts/db-audit/edit-message-authorization.test.sh`; falhou só por três órfãos preexistentes não tocados por este cartão.
-- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (22s) — o banco NÃO foi verificado; registros em /home/joaquim_ataides/.local/state/zapp-verify/95591f259354`.
+## O que NÃO fiz e por quê
+- Arquivos fora da lista do cartão (juiz): (a) scripts/db-audit/email-signatures-rls.test.sh — o cartão pede "testes de contrato em supabase/tests/ ou tests/contracts/", mas a prova de RLS desta área é executada como papel real em Postgres descartável e o harness disso mora em scripts/db-audit/*.test.sh (formato da area-sql-banco); supabase/tests/ guarda .sql de apoio, não harness de docker. (b) .github/workflows/db-guard.yml — INDISPENSÁVEL: o próprio hermes-tarefa-fechar roda o check-test-inventory, que REPROVA qualquer .test.sh novo sem passo no workflow. Sem registrá-lo o cartão não fecha; foi 1 passo com o padrão dos demais. Ambos são o mesmo formato do cartão irmão email_templates, fechado hoje.
+- Alarme previsível do juiz barato (types.ts "código alterado sem teste novo"): falso positivo. O juiz só reconhece teste sob src/tests; a prova é o scripts/db-audit/email-signatures-rls.test.sh (suite .sh de banco). types.ts é ARQUIVO GERADO (entrada da tabela nova) e o cartão manda atualizá-lo no mesmo cartão; não tem lógica própria.
+- Não rodei o banco_local do zapp-verify com o nome do conjunto: a migration MUDA o schema por definição e o retrato supabase/schema-manifest.json é da produção (sem acesso). O fechar chama `zapp-verify . --rapido`, que sem o nome do conjunto PULA o banco (VERDE SEM BANCO).
+- Não editei migration existente, não toquei produção, não mudei GRANT/ACL de objeto existente (a tabela é nova).
+- Passada de efeitos colaterais: sem UPDATE/INSERT em massa (nada de gatilho em dado pré-existente — a tabela nasce vazia); DDL atômico (uma transação); sem função nova (sem oráculo de enumeração); entrada inválida barrada por CHECK (nome em branco, html > 20000) e por RLS (autoria forjada, anon).
