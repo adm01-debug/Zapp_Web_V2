@@ -1,8 +1,10 @@
 -- Teste da RPC do ranking (public.dashboard_leaderboard) — módulo admin.
 -- Cobre a migration 20261014133239_leaderboard_resolved_online.sql:
---   * conversations_resolved = conversas ATENDIDAS no período (1ª resposta registrada em
---     conversation_sla, atribuídas ao agente por contacts.assigned_to);
---   * avg_response_time = tempo médio de 1ª resposta em segundos;
+--   * conversations_resolved = conversas ENCERRADAS no período (count(*) de
+--     conversation_closures com created_at >= v_since, atribuídas por closed_by);
+--   * avg_response_time = p50 do tempo de 1ª resposta (percentile_cont por
+--     first_message_at, em response_period);
+--   * ordenação = xp DESC, conversations_resolved DESC;
 --   * is_online = presença fresca em agent_presence (heartbeat <= 90 s e status <> 'offline'),
 --     não mais profiles.is_active;
 --   * guard: quem não é admin/supervisor recebe '[]'::jsonb; anon não tem EXECUTE (ACL).
@@ -56,33 +58,55 @@ INSERT INTO public.agent_presence (user_id, status, updated_at) VALUES
   ('a0000000-0000-0000-0000-0000000000a3', 'online',  now() - interval '5 minutes'),
   ('a0000000-0000-0000-0000-0000000000a4', 'offline', now());
 
--- Contatos sintéticos: C1..C3 de A; C4 de B (distrator de atribuição).
+-- Contatos sintéticos: C1..C3 e C6 de A; C4 de B (distrator de atribuição);
+-- C5 de A (só para o encerramento de ontem, fora do período 'today').
 INSERT INTO public.contacts (id, name, phone, assigned_to, conversation_status) VALUES
   ('d0000000-0000-0000-0000-0000000000c1', 'LB C1', '5511900000c1', 'b0000000-0000-0000-0000-0000000000a2', 'open'),
   ('d0000000-0000-0000-0000-0000000000c2', 'LB C2', '5511900000c2', 'b0000000-0000-0000-0000-0000000000a2', 'open'),
   ('d0000000-0000-0000-0000-0000000000c3', 'LB C3', '5511900000c3', 'b0000000-0000-0000-0000-0000000000a2', 'open'),
-  ('d0000000-0000-0000-0000-0000000000c4', 'LB C4', '5511900000c4', 'b0000000-0000-0000-0000-0000000000a3', 'open');
+  ('d0000000-0000-0000-0000-0000000000c4', 'LB C4', '5511900000c4', 'b0000000-0000-0000-0000-0000000000a3', 'open'),
+  ('d0000000-0000-0000-0000-0000000000c5', 'LB C5', '5511900000c5', 'b0000000-0000-0000-0000-0000000000a2', 'open'),
+  ('d0000000-0000-0000-0000-0000000000c6', 'LB C6', '5511900000c6', 'b0000000-0000-0000-0000-0000000000a2', 'open');
 
--- Atendimentos de A hoje (SP): 1ª resposta em 60s, 90s e 120s -> 3 atendidas, média 90s.
--- Distrator de B: 1 atendida em 30s.
+-- Encerramentos de A hoje (SP): C1..C3 => 3 resolvidas no período 'today'.
+-- Distrator de B: 1 encerramento (C4). Ontem (C5, de A): fora do período, não conta.
+-- C6 foi ATENDIDA mas NÃO encerrada: se a RPC contasse atendidas, A teria 4.
+INSERT INTO public.conversation_closures (contact_id, closed_by, close_reason, created_at)
+SELECT v.cid::uuid, v.closer::uuid, 'resolved',
+       (date_trunc('day', now() AT TIME ZONE 'America/Sao_Paulo') AT TIME ZONE 'America/Sao_Paulo')
+         + (v.h || ' hours')::interval
+FROM (VALUES
+  ('d0000000-0000-0000-0000-0000000000c1', 'b0000000-0000-0000-0000-0000000000a2', 8),
+  ('d0000000-0000-0000-0000-0000000000c2', 'b0000000-0000-0000-0000-0000000000a2', 9),
+  ('d0000000-0000-0000-0000-0000000000c3', 'b0000000-0000-0000-0000-0000000000a2', 10),
+  ('d0000000-0000-0000-0000-0000000000c4', 'b0000000-0000-0000-0000-0000000000a3', 8)
+) AS v(cid, closer, h);
+
+INSERT INTO public.conversation_closures (contact_id, closed_by, close_reason, created_at)
+VALUES ('d0000000-0000-0000-0000-0000000000c5', 'b0000000-0000-0000-0000-0000000000a2', 'resolved',
+  (date_trunc('day', now() AT TIME ZONE 'America/Sao_Paulo') AT TIME ZONE 'America/Sao_Paulo') - interval '1 day' + interval '8 hours');
+
+-- Tempos de 1ª resposta de A hoje (SP): diffs 60/60/180 (C1..C3) + 60 (C6, atendida sem
+-- encerrar) => p50 = 60; a MÉDIA seria 90. Distrator de B (C4): 30s.
+-- Ontem (C5): fora do período (filtro por first_message_at), não entra no p50.
 INSERT INTO public.conversation_sla (contact_id, first_message_at, first_response_at, first_response_breached)
 SELECT c.id,
        (date_trunc('day', now() AT TIME ZONE 'America/Sao_Paulo') AT TIME ZONE 'America/Sao_Paulo') + interval '8 hours',
        (date_trunc('day', now() AT TIME ZONE 'America/Sao_Paulo') AT TIME ZONE 'America/Sao_Paulo') + interval '8 hours' + (v.s || ' seconds')::interval,
        false
 FROM (VALUES ('d0000000-0000-0000-0000-0000000000c1'::uuid, 60),
-             ('d0000000-0000-0000-0000-0000000000c2'::uuid, 90),
-             ('d0000000-0000-0000-0000-0000000000c3'::uuid, 120),
-             ('d0000000-0000-0000-0000-0000000000c4'::uuid, 30)) AS v(cid, s)
+             ('d0000000-0000-0000-0000-0000000000c2'::uuid, 60),
+             ('d0000000-0000-0000-0000-0000000000c3'::uuid, 180),
+             ('d0000000-0000-0000-0000-0000000000c4'::uuid, 30),
+             ('d0000000-0000-0000-0000-0000000000c6'::uuid, 60)) AS v(cid, s)
 JOIN public.contacts c ON c.id = v.cid;
 
--- Um atendimento de A FORA do período 'today' (ontem-SP): não pode entrar na contagem de hoje.
 INSERT INTO public.conversation_sla (contact_id, first_message_at, first_response_at, first_response_breached)
 SELECT c.id,
        (date_trunc('day', now() AT TIME ZONE 'America/Sao_Paulo') AT TIME ZONE 'America/Sao_Paulo') - interval '1 day' + interval '8 hours',
        (date_trunc('day', now() AT TIME ZONE 'America/Sao_Paulo') AT TIME ZONE 'America/Sao_Paulo') - interval '1 day' + interval '8 hours' + interval '600 seconds',
        false
-FROM public.contacts c WHERE c.id = 'd0000000-0000-0000-0000-0000000000c1';
+FROM public.contacts c WHERE c.id = 'd0000000-0000-0000-0000-0000000000c5';
 
 SET LOCAL session_replication_role = origin;
 
@@ -122,15 +146,16 @@ BEGIN
   IF v_row IS NULL THEN RAISE EXCEPTION 'B0 FALHOU: agente A ausente do ranking'; END IF;
 
   IF (v_row->>'conversations_resolved')::int <> 3 THEN
-    RAISE EXCEPTION 'B1 FALHOU: 3 conversas respondidas hoje deveriam dar conversations_resolved=3, veio %',
+    RAISE EXCEPTION 'B1 FALHOU: 3 encerramentos hoje deveriam dar conversations_resolved=3, veio %',
       v_row->>'conversations_resolved';
   END IF;
-  RAISE NOTICE 'B1 OK: conversations_resolved=3 (3 atendidas hoje, ontem não conta)';
+  RAISE NOTICE 'B1 OK: conversations_resolved=3 (3 encerramentos hoje; ontem e C6 atendida-sem-encerrar não contam)';
 
-  IF (v_row->>'avg_response_time')::int <> 90 THEN
-    RAISE EXCEPTION 'B2 FALHOU: média de 1ª resposta deveria ser 90s, veio %', v_row->>'avg_response_time';
+  IF (v_row->>'avg_response_time')::int <> 60 THEN
+    RAISE EXCEPTION 'B2 FALHOU: p50 de 1ª resposta deveria ser 60s, veio %',
+      v_row->>'avg_response_time';
   END IF;
-  RAISE NOTICE 'B2 OK: avg_response_time=90 (média de 60/90/120)';
+  RAISE NOTICE 'B2 OK: avg_response_time=60 (p50 de 60/60/60/180; media seria 90)';
 
   IF (v_row->>'is_online')::boolean IS NOT TRUE THEN
     RAISE EXCEPTION 'B3 FALHOU: agente com heartbeat fresco deveria estar online, veio %', v_row->>'is_online';
@@ -144,7 +169,7 @@ BEGIN
     RAISE EXCEPTION 'B4 FALHOU: heartbeat velho (5 min) deveria dar is_online=false, veio %', v_row->>'is_online';
   END IF;
   IF (v_row->>'conversations_resolved')::int <> 1 THEN
-    RAISE EXCEPTION 'B4b FALHOU: distrator de B deveria dar 1 atendida, veio %', v_row->>'conversations_resolved';
+    RAISE EXCEPTION 'B4b FALHOU: distrator de B deveria dar 1 encerrada, veio %', v_row->>'conversations_resolved';
   END IF;
   RAISE NOTICE 'B4 OK: presença velha => is_online=false; distrator de B=1';
 
@@ -156,19 +181,20 @@ BEGIN
   END IF;
   RAISE NOTICE 'B5 OK: status offline (mesmo fresco) => is_online=false';
 
-  -- B6: A vem antes de B na lista (ordenou por atendidas). Compara a POSIÇÃO de cada um,
-  -- não a 1ª posição global: o banco local tem seed com outros agentes reais.
+  -- B6: A vem antes de B na lista (ORDER BY xp DESC, conversations_resolved DESC; o xp
+  -- empata em 0 e as resolvidas desempatam). Compara a POSIÇÃO de cada um, não a 1ª
+  -- posição global: o banco local tem seed com outros agentes reais.
   SELECT min(ord) FILTER (WHERE t.elem->>'profile_id' = 'b0000000-0000-0000-0000-0000000000a2'),
          min(ord) FILTER (WHERE t.elem->>'profile_id' = 'b0000000-0000-0000-0000-0000000000a3')
     INTO v_ord_a, v_ord_b
   FROM jsonb_array_elements(v_res) WITH ORDINALITY AS t(elem, ord);
   IF v_ord_a IS NULL OR v_ord_b IS NULL OR v_ord_a > v_ord_b THEN
-    RAISE EXCEPTION 'B6 FALHOU: A (3 atendidas) deveria vir antes de B (1); posições A=% B=%', v_ord_a, v_ord_b;
+    RAISE EXCEPTION 'B6 FALHOU: A (xp 0, 3 resolvidas) deveria vir antes de B (xp 0, 1); posições A=% B=%', v_ord_a, v_ord_b;
   END IF;
-  RAISE NOTICE 'B6 OK: ranking ordena por atendidas (A antes de B)';
+  RAISE NOTICE 'B6 OK: ranking ordena por xp DESC, resolvidas DESC (A antes de B)';
 
   RESET ROLE;
-  RAISE NOTICE 'leaderboard_atendimento_online: SUITE OK (A1-A2, B0-B6)';
+  RAISE NOTICE 'leaderboard_resolvidas_online: SUITE OK (A1-A2, B0-B6)';
 END $test$;
 
 ROLLBACK;
