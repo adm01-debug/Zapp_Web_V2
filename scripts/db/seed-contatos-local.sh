@@ -98,11 +98,18 @@ case "$URL" in
   *supabase.co*|*pooler.supabase.com*|*supabase.in*)
     echo "RECUSADO: a URL aponta para Supabase/producao. Este script so roda em banco LOCAL." >&2; exit 3 ;;
 esac
-URL_SEM_FRAGMENTO="${URL%%#*}"
+# Trava do '#' ANTES de separar a query (recusa da rodada 3): o libpq NAO trata '#' como
+# fragmento - medido com psql 16, `...#?host=192.0.2.1` conecta em 192.0.2.1 -, entao conferir
+# so o texto antes do '#' deixava a cauda (`&host=`) chegar ao driver. A trava avalia exatamente
+# a string que vai ao psql, por isso a URL inteira e recusada.
+case "$URL" in
+  *\#*)
+    echo "RECUSADO: '#' na URL do banco. O libpq nao trata '#' como fragmento - o texto depois do '#' e lido como parametro de conexao -, entao a trava e o psql veriam strings diferentes. Remova o '#' da URL." >&2; exit 3 ;;
+esac
 QUERY=""
-case "$URL_SEM_FRAGMENTO" in
-  *\?*) QUERY="${URL_SEM_FRAGMENTO#*\?}"; URL_BASE="${URL_SEM_FRAGMENTO%%\?*}" ;;
-  *) URL_BASE="$URL_SEM_FRAGMENTO" ;;
+case "$URL" in
+  *\?*) QUERY="${URL#*\?}"; URL_BASE="${URL%%\?*}" ;;
+  *) URL_BASE="$URL" ;;
 esac
 # Trava da query em DUAS camadas (recusa da rodada 2): o libpq DECODIFICA percent-encoding no
 # NOME do parametro, entao `?%68ost=10.1.2.3` chegava ao driver como `host=` e passava por baixo
