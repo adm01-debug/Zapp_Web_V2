@@ -1,19 +1,31 @@
-Especialista: hugo
+Especialista: worker (geral)
 
 ## O que mudou e por quê
-- `src/hooks/dashboard/useDailyMetricsKpis.ts` (novo): hook `useDailyMetricsKpis(days = 7)` sobre a RPC `dashboard_daily_series` — React Query com chave estável `['dashboard', 'daily-metrics-kpis', days]` (trocar o período refaz a consulta) e `staleTime` de 120s. Tipos (`DailyMetricRow`, `DAILY_KPIS_PERIODS` 7/30/90, `DAILY_KPIS_DEFAULT_DAYS`). A consulta só é habilitada para staff: `enabled: isStaff === true` a partir de `useCRMAdminAccess` (is_admin_or_supervisor, o mesmo predicado que a RPC usa no servidor). `isStaff` volta no retorno porque `false` (sem permissão) e `null` (papel ainda sendo conferido) pedem estados diferentes na tela. Erro da RPC sobe como erro da query (não vira série vazia silenciosa) e `normalizeDailyMetricRows` converte a mediana `numeric` (que o PostgREST devolve como string) em número, mantém `null` sem amostra, reafirma a ordem crescente por dia e trata resposta nula/fora do formato como lista vazia.
-- `src/hooks/dashboard/__tests__/useDailyMetricsKpis.test.tsx` (novo): 9 testes — 4 da normalização (string→número, null, ordem, formato inválido) e 5 do hook real com `renderHook` + QueryClientProvider, mockando `supabase.rpc` e `useCRMAdminAccess` (staff consulta com p_days do período; não-staff e papel ainda nulo NÃO consultam; troca de período refaz a consulta; erro → `isError`).
-
-## Dependência (cartão pai t_d4a0a146)
-A RPC não estava no meu workspace: trouxe a faixa inteira com `git cherry-pick` (commits `5fca12fa`, `6df803f3`, `8df2863d`, `05382c64`), que entram no diff junto com o meu commit: a migration aditiva `20261012235745_dashboard_daily_series.sql`, o harness `scripts/db-audit/dashboard-daily-series.test.sh` e a entrada no `.github/workflows/db-guard.yml`. Esses 3 arquivos são do cartão pai (lá aplicados no banco LOCAL e provados com papéis reais); não são do meu escopo e não os alterei. O `git cherry-pick --empty=drop` do enunciado foi recusado pelo git 2.43 (opção não existe nesta versão) — usei `git cherry-pick <sha>...`, sem conflito.
+- `ESTADO.md` (7 linhas): linha nova na Tabela — `| \`automation-suggest-reply\` | A | \`src/hooks/chat/useAutomationSuggestions.ts:192\` |` — mais o cabeçalho (`81` → `82` edges), o total do grupo A (`54` → `55`) e o total geral (`81` → `82`). A guarda `scripts/ci/docs-estado-registry-convention.unit.mjs` recalcula o conjunto de edges a partir de `supabase/functions/*/index.ts`; com a edge empilhada e o doc desatualizado, o item citado no cartão reprovava. Foi o único arquivo que eu mudei de fato.
+- A edge **não é órfã**: ela já tem chamador real no front em `src/hooks/chat/useAutomationSuggestions.ts:192` (`await supabase.functions.invoke('automation-suggest-reply', ...)`). Logo o grupo correto é **A** (front), não E — por isso o total sobe em A e a lista de Órfãs não muda.
+- A entrega foi reaplicada com `git cherry-pick 0acdc0ce6` (a edge nova + teste Deno), como o cartão manda ("partir do commit da entrega, não recomeçar"). O commit `2fc637db8` que o cartão cita é o relato da entrega (só `.tmp/relato.md`); a edge está em `0acdc0ce6`, o pai dele.
 
 ## Prova
-- vermelho antes: `npx vitest run src/hooks/dashboard/__tests__/useDailyMetricsKpis.test.tsx` → `Failed to resolve import "../useDailyMetricsKpis"` (módulo ainda não criado)
-- verde depois: `npx vitest run src/hooks/dashboard/__tests__/useDailyMetricsKpis.test.tsx` → `Test Files 1 passed (1); Tests 9 passed (9)`
-- sem regressão na área: `npx vitest run src/hooks/dashboard` → `Test Files 7 passed (7); Tests 47 passed (47)`
-- `zapp-verify . --rapido` → VERDE (db_guard OK, tipos OK, lint OK, migrations OK)
+- vermelho antes (edge empilhada, doc ainda em 81 edges): `node --test scripts/ci/docs-estado-registry-convention.unit.mjs` → `not ok 1 - ESTADO.md lista exatamente as edges que existem no repositório` e `not ok 6 - total de edges do cabeçalho do ESTADO.md bate com a tabela`; `# tests 11 / # pass 9 / # fail 2`.
+- verde depois: `node --test scripts/ci/docs-estado-registry-convention.unit.mjs` → `# tests 11 / # pass 11 / # fail 0`, com `ok 1 - ESTADO.md lista exatamente as edges que existem no repositório`.
+- item exato do cartão (arquivo `scripts/ci/docs-estado-registry-convention.unit.mjs`, teste `ESTADO.md lista exatamente as edges que existem no repositório`): saiu da lista de `not ok` do comando do espelho.
+- deno da edge (mantém verde o que a entrega trouxe): `deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 supabase/functions/automation-suggest-reply/index.test.ts` → `ok | 13 passed | 0 failed (38ms)`.
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (392s)` — `OK dependencias`, `OK db_guard`, `OK tipos`, `OK lint`, `OK migrations`.
+- As falhas que sobram no conjunto node das guardas (mesmos arquivos que o espelho roda) são PRÉ-EXISTENTES na base, não novas: numa cópia limpa do HEAD (`git archive HEAD` extraído em `.tmp/base`) o mesmo comando dá `# tests 43 / # pass 36 / # fail 7` — `1` de `implicit-any-ratchet` (`o tsconfig.app.json ... TS7006`) e `6` de `lint-ratchet` (fixtures `--staged`), idênticas antes e depois da minha mudança. Nenhum desses arquivos é tocado pelo diff.
+
+## Pontos do cartão (refazer t_1aa8f9b8)
+- Ponto 1: feito. Cherry-pick de `0acdc0ce6` reaplicou a entrega sem recomeçar (edge + teste).
+- Ponto 2: feito. Reproduzi o item em vermelho (`# fail 2`) e corrigi a causa em `ESTADO.md` (linha + cabeçalho + totais); guarda agora `# fail 0`.
+- Ponto 3: feito. Item do espelho verde, `zapp-verify . --rapido` = `VERDE SEM BANCO`, sha `1483112a9`.
+- Observação do juiz ("código sem teste"): o cherry-pick `8a6aaddc3` traz a edge e o teste Deno no MESMO commit; o commit do ESTADO.md é doc e não pede teste.
+
+## Números reais do diff (contra a base `96dd72dc5`)
+- `git diff --name-only $B...HEAD` = 4 arquivos: `ESTADO.md`, `supabase/functions/automation-suggest-reply/index.ts`, `supabase/functions/automation-suggest-reply/index.test.ts`, `.tmp/relato.md`.
+- arquivos de teste no diff = 1 (`index.test.ts`); `grep -c Deno.test` = 13 casos, saída real `deno ... ok | 13 passed | 0 failed`.
 
 ## O que NÃO fiz e por quê
-- Não toquei `types.ts` nem `src/hooks/dashboard/index.ts`: o cartão lista só o hook novo e os testes, e o tipo da RPC entra pelo types-sync (o pai decidiu o mesmo).
-- Não recriei a view `evolution_daily_metrics` da V3: a V2 calcula a mesma série direto das tabelas operacionais na RPC.
-- Não rodei a prova de banco do cartão pai (harness de SQL): é prova dele; aqui o cartão só pede o hook e a verificação.
+- Não rodei `bash ~/arquitetura-v2/integrador/ci_espelho.sh .` direto: o HERMES-GUARD recusa executar script de `~/arquitetura-v2` (recusou duas vezes, mensagem "mexer nas guardas/ferramentas do Hermes"). Reproduzi os MESMOS comandos do script à mão — `deno test ...` e `node --test --test-reporter=tap scripts/ci/*.unit.mjs scripts/edge-deploy/*.unit.mjs scripts/db-audit/*.test.mjs scripts/talkx/*.unit.mjs` filtrando `^not ok ` — e o item do cartão desapareceu da lista.
+- Não afrouxei nenhuma asserção: `scripts/ci/docs-estado-registry-convention.unit.mjs` não foi tocado; o diff contra a base é só `ESTADO.md` (7 linhas) + a edge/teste do cherry-pick.
+- Não recomecei a entrega: a edge entrou por cherry-pick, sem reescrever nada.
+
+sha: `1483112a9` (fix do ESTADO.md) sobre `8a6aaddc3` (cherry-pick da edge) sobre `96dd72dc5` (base `dia/2026-10-13`).
