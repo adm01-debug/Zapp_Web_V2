@@ -542,7 +542,7 @@ function compareStatements(migration, record, exceptionsByVersion) {
       );
     }
     if (ledgerStmts && ledgerStmts.length > 0) {
-      const hasRealSql = ledgerStmts.some((s) => SQL_STARTERS.has(s.trim().toLowerCase().split(/\s/)[0]));
+      const hasRealSql = ledgerStmts.some(looksLikeSqlEvidence);
       if (hasRealSql) {
         errs.push(`${version}: name-and-file-pinned exige ledger sem SQL/hash historico`);
       }
@@ -816,6 +816,12 @@ function validateLocalMigrations(migrations, exceptionsByVersion) {
       const exc = exceptionsByVersion?.get(version);
       if (exc?.kind === COMMENT_ONLY_KIND) {
         errors.push(`excecao comment-only nao pode cobrir SQL executavel: ${fileName}`);
+      }
+      if (
+        (exc?.kind === NAME_ONLY_KIND || exc?.kind === PINNED_REPLAY_KIND) &&
+        exc.file_sha256 !== fileSha256
+      ) {
+        errors.push(`file_sha256 divergente do manifesto: ${version}`);
       }
     }
   }
