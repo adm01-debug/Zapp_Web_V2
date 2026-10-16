@@ -385,8 +385,9 @@ export default function RateLimitDashboard() {
                 </Alert>
               )}
 
-              {!error && (
-                <div className="rounded-md border">
+              {/* Erro em banner, POR CIMA da tabela: as linhas já carregadas
+                  continuam visíveis (nunca some com dado disponível). */}
+              <div className="rounded-md border">
                   <Table>
                     <TableHeader>
                       <TableRow>

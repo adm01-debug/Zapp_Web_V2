@@ -102,6 +102,7 @@ function likePattern(term: string): string {
 }
 
 const TIMEOUT_MESSAGE = 'Tempo esgotado ao carregar os logs de rate limit.';
+const STATS_MESSAGE = 'Não foi possível carregar as estatísticas de rate limit.';
 
 function errorMessage(cause: unknown): string {
   if (cause instanceof Error && cause.message) return cause.message;
@@ -141,6 +142,8 @@ export function useRateLimitLogs(enabled = true) {
 
   // Listagem: filtro, ordem e recorte de página são resolvidos no SERVIDOR
   // (`range` + `count: 'exact'`), não cortando um lote fixo no cliente.
+  // Devolve `true` quando a listagem vale; em erro ou descarte devolve `false`
+  // e nunca limpa as linhas já mostradas (o erro aparece no banner, por cima).
   const fetchPage = useCallback(async (signal: AbortSignal) => {
     const timeout = AbortSignal.timeout(15_000);
     const requestSignal = AbortSignal.any([signal, timeout]);
@@ -168,45 +171,58 @@ export function useRateLimitLogs(enabled = true) {
 
       const { data, count, error: queryError } = await query.abortSignal(requestSignal);
 
-      // Resposta obsoleta (filtro trocado ou desmontagem): não sobrescreve o estado novo.
-      if (signal.aborted) return;
-      // Tempo esgotado: a consulta foi cortada, mas o chamador precisa ver o
-      // motivo — uma tela vazia em silêncio é indistinguível de "não há log".
-      if (timeout.aborted) { setError(TIMEOUT_MESSAGE); return; }
+      // Resposta obsoleta (filtro trocado ou desmontagem): silencia, sem tocar
+      // em nenhum estado — pintar aqui ressuscitaria dado velho na tela nova.
+      if (signal.aborted) return false;
+      // Sinal do chamador vivo + sinal combinado cortado: só o timeout de 15 s
+      // pode ter cortado. Checa o COMBINADO (a causa), não o `timeout` isolado,
+      // e preserva as linhas já mostradas.
+      if (requestSignal.aborted) { setError(TIMEOUT_MESSAGE); return false; }
       if (queryError) throw queryError;
 
       setLogs(data ?? []);
       setTotal(count ?? 0);
       setError(null);
+      return true;
     } catch (cause) {
-      if (signal.aborted) return;
-      setError(timeout.aborted ? TIMEOUT_MESSAGE : errorMessage(cause));
+      if (signal.aborted) return false;
+      setError(requestSignal.aborted ? TIMEOUT_MESSAGE : errorMessage(cause));
+      return false;
     } finally {
       if (!signal.aborted) setLoading(false);
     }
   }, [filters]);
 
-  // Estatística: janela recente separada da listagem. O erro dela é deixado subir
-  // para o `useVisiblePolling`, que mantém o último retrato bom; o erro que o
-  // chamador vê é o da listagem (`fetchPage`).
+  // Estatística: janela recente separada da listagem. O erro dela aparece no
+  // `error` (não é só registrado): o poller engole exceção, então ela é
+  // convertida em estado aqui — sem limpar a estatística anterior.
   const fetchStats = useCallback(async (signal: AbortSignal) => {
     const requestSignal = AbortSignal.any([signal, AbortSignal.timeout(15_000)]);
-    const { data, error: queryError } = await supabase
-      .from('rate_limit_logs')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .order('id', { ascending: false })
-      .limit(STATS_WINDOW)
-      .abortSignal(requestSignal);
+    try {
+      const { data, error: queryError } = await supabase
+        .from('rate_limit_logs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .order('id', { ascending: false })
+        .limit(STATS_WINDOW)
+        .abortSignal(requestSignal);
 
-    if (requestSignal.aborted) return;
-    if (queryError) throw queryError;
-    setStats(calculateStats(data ?? []));
+      if (signal.aborted || requestSignal.aborted) return;
+      if (queryError) throw queryError;
+      setStats(calculateStats(data ?? []));
+    } catch (cause) {
+      if (signal.aborted || requestSignal.aborted) return;
+      if (cause instanceof Error && cause.message) setError(cause.message);
+      else setError(STATS_MESSAGE);
+    }
   }, []);
 
   const refresh = useCallback(async (signal: AbortSignal) => {
-    await fetchPage(signal);
+    const pageOk = await fetchPage(signal);
     if (signal.aborted) return;
+    // Listagem com erro já expôs o motivo; a estatística tenta no próximo ciclo
+    // em vez de sobrescrever o erro da listagem.
+    if (!pageOk) return;
     await fetchStats(signal);
   }, [fetchPage, fetchStats]);
 
