@@ -124,7 +124,7 @@ arquivos do repositório, pela regra da seção anterior — cada linha carrega 
 | `email_labels` | Etiquetas das contas de e-mail conectadas | ativo | `src/hooks/integrations/useGmail.ts`, `supabase/functions/_shared/gmail-helpers.ts`, `e2e/fixtures/email-navy.ts` |
 | `email_messages` | Mensagens de e-mail (remetente, destinatários, corpo e estado) | ativo | `src/components/email/__tests__/EmailVolumeMedicao.test.tsx`, `src/components/gmail/__tests__/EmailThreadView.test.tsx`, `src/hooks/gmail/__tests__/useContactUnreadEmails.test.tsx` … |
 | `email_threads` | Conversas de e-mail, vinculadas ao contato quando identificado | ativo | `src/components/admin/GmailWebhookMonitor.tsx`, `src/components/admin/__tests__/GmailWebhookMonitor.falha-consulta.test.tsx`, `src/components/email/__tests__/EmailVolumeMedicao.test.tsx` … |
-| `entity_versions` | Versionamento genérico de entidades (tipo, id e cópia dos dados) | ativo | `src/hooks/system/useVersions.ts` |
+| `entity_versions` | Versionamento genérico de entidades (tipo, id e cópia dos dados) | roadmap | — |
 | `favorite_contacts` | Contatos favoritados por usuário | ativo | `src/components/inbox/chat/useChatPanelHandlers.ts`, `src/hooks/chat/__tests__/useConversationActions.test.ts`, `src/hooks/chat/useConversationActions.ts` … |
 | `feature_flags` | Chaves de funcionalidade ligadas/desligadas | ativo | `src/hooks/contacts/__tests__/ContactsView.v2Flags.test.tsx`, `src/hooks/contacts/__tests__/useContactsV2Flags.test.tsx`, `src/hooks/contacts/useContactsV2Flags.ts` … |
 | `followup_executions` | Execuções de sequência de follow-up, com passo atual e estado | ativo | `src/components/settings/FollowUpExecutionsHistory.tsx` |
