@@ -85,3 +85,26 @@ describe('deriveSystemHealth — nota 0-100 do painel', () => {
     expect(atencao.tone).toBe('warning');
   });
 });
+
+describe('deriveSystemHealth — conexão sem credencial (fail-closed)', () => {
+  it('connected + no_credentials conta como fora do ar, nunca como saudável', () => {
+    const r = deriveSystemHealth(
+      signals({ connections: [connected, { status: 'connected', healthStatus: 'no_credentials' }] }),
+    );
+    // Sem sinal novo: continuam 3 itens e a nota sai de 40+30+30.
+    expect(r.items).toHaveLength(3);
+    const conn = r.items.find((i) => i.id === 'connections')!;
+    expect(conn.score).toBe(20); // (1 + 0) / 2 * 40
+    expect(conn.status).toBe('warn');
+    expect(conn.summary).toContain('fora do ar');
+  });
+
+  it('só no_credentials: o sinal de conexões zera', () => {
+    const r = deriveSystemHealth(
+      signals({ connections: [{ status: 'connected', healthStatus: 'no_credentials' }] }),
+    );
+    const conn = r.items.find((i) => i.id === 'connections')!;
+    expect(conn.score).toBe(0);
+    expect(conn.status).toBe('bad');
+  });
+});

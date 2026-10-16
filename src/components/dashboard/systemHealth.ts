@@ -70,6 +70,10 @@ function connectionSignal(connections: SystemHealthSignals['connections']): Sign
   let degraded = 0;
   for (const conn of connections) {
     if (conn.status !== 'connected') continue;
+    // Sem credencial própria a conexão não autentica (sonda grava health_status
+    // "no_credentials" sem tocar no status, fail-closed): conta como fora do ar,
+    // nunca como saudável.
+    if (conn.healthStatus === 'no_credentials') continue;
     if (conn.healthStatus === 'degraded') degraded += 1;
     else healthy += 1;
   }

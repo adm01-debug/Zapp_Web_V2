@@ -98,6 +98,23 @@ describe('ConnectionCard — "Checar agora" por conexão (staff)', () => {
   });
 });
 
+describe('ConnectionCard — selo Sem credencial (fail-closed)', () => {
+  it('mostra o Badge quando health_status é no_credentials', () => {
+    renderCard({}, { status: 'connected', health_status: 'no_credentials' });
+    expect(screen.getByText('Sem credencial')).toBeTruthy();
+  });
+
+  it('não mostra o selo quando a conexão tem credencial', () => {
+    renderCard({}, { status: 'connected', health_status: 'healthy' });
+    expect(screen.queryByText('Sem credencial')).toBeNull();
+  });
+
+  it('não mostra o selo quando health_status é nulo', () => {
+    renderCard({}, { status: 'connected', health_status: null });
+    expect(screen.queryByText('Sem credencial')).toBeNull();
+  });
+});
+
 describe('ConnectionCard — histórico não suportado (Evolution GO)', () => {
   it('esconde "Sincronizar Histórico" quando historyNotSupported', () => {
     renderCard({ historyNotSupported: true });

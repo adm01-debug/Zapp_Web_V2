@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {
   Smartphone, MoreVertical, Trash2, Copy, QrCode, Wifi, WifiOff,
-  Star, Clock, Loader2, RefreshCw, History, Link2, Settings,
+  Star, Clock, Loader2, RefreshCw, History, Link2, Settings, KeyRound,
   BatteryCharging, BatteryLow, BatteryMedium, BatteryFull, FileClock, HeartPulse,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -94,6 +94,11 @@ export function ConnectionCard({
                     <StatusIcon className={cn('w-3 h-3 mr-1', connection.status === 'connecting' && 'animate-spin')} />
                     {status.label}
                   </Badge>
+                  {connection.health_status === 'no_credentials' && (
+                    <Badge variant="outline" className="text-xs border-warning/30 text-warning">
+                      <KeyRound className="w-3 h-3 mr-1" />Sem credencial
+                    </Badge>
+                  )}
                   <BusinessHoursIndicator connectionId={connection.id} />
                 </div>
                 <div className="flex items-center gap-2">
