@@ -940,6 +940,14 @@ jobs:
           TEAM_MEMBERSHIP_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-membership-bootstrap-owner.test.sh
 
+      # SEC-RLS_TAREFAS_EMAIL_LIGACOES-04 (P3): os bloqueios de escrita de gmail_accounts eram
+      # PERMISSIVOS e qualquer policy permissiva os anulava. Bloco A prova o furo com a migration
+      # original; o bloco B aplica a migration nova (RESTRICTIVE) e prova os 3 writes barrados.
+      - name: Simular bloqueios RESTRICTIVE de escrita em gmail_accounts
+        env:
+          GMAIL_BLOCKS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/gmail-write-blocks-restrictive.test.sh
+
       # TC-005 / R2-AUTH-017 (item 56): o unico caminho de LEITURA do WhatsApp de departamento era
       # service_role-only e devolvia a chave em claro; a escrita nao auditava. Bloco A prova o
       # defeito, o bloco B prova a leitura segura (admin/supervisor, 3 colunas, sem chave), a
