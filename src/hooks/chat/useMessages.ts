@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { mapMessageRowToMessage } from '@/adapters/inboxAdapter';
+import { resolveInteractiveResponses } from '@/hooks/chat/interactiveResponses';
 import { useSupabaseRealtime } from '@/hooks/realtime/useSupabaseRealtime';
 import { contactMediaKey } from '@/hooks/chat/useContactMedia';
 import { contactMediaCountsKey } from '@/hooks/chat/useContactMediaCounts';
@@ -370,8 +371,15 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
     setMessages((prev) => prev.filter((m) => m.id !== messageId));
   }, [writeOverlay]);
 
+  // Resposta do cliente a botão/lista chega do canal só com o id tocado (`content`); o texto
+  // está no payload da mensagem interativa enviada. A resolução é derivada da lista carregada
+  // (snapshot + realtime + páginas antigas) — nenhum estado novo, nada de escrita no banco.
+  const messagesComResposta = useMemo(() => resolveInteractiveResponses(messages), [messages]);
+
   return {
-    messages,
+    // A lista sai com as respostas interativas resolvidas (id -> texto tocado): é aqui que
+    // a tela do chat lê as mensagens, tanto no snapshot quanto no realtime e nas páginas antigas.
+    messages: messagesComResposta,
     loading,
     loadingOlder,
     hasOlder,
