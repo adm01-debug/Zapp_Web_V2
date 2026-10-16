@@ -15,7 +15,6 @@ import { ContactPicker, type ContatoEscolhido } from '@/components/calls/Contact
 import { toast } from '@/hooks/ui/use-toast';
 import { Bot, Brain, Shield, Zap, BookOpen, ArrowRightLeft, Play } from 'lucide-react';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { CONFIANCA_PADRAO, normalizarConfianca } from '@/lib/chatbotConfianca';
 
 type ChatbotFlow = Database['public']['Tables']['chatbot_flows']['Row'];
 
@@ -23,6 +22,20 @@ const DEFAULT_NAME = 'Chatbot IA L1';
 const DEFAULT_WELCOME = 'Olá! Sou o assistente virtual. Como posso ajudá-lo hoje?';
 const DEFAULT_TRANSFER = 'Vou transferir você para um de nossos atendentes. Um momento, por favor.';
 const DEFAULT_TEST_MESSAGE = 'Olá, gostaria de saber o prazo de entrega.';
+
+const CONFIANCA_MIN = 30;
+const CONFIANCA_MAX = 95;
+const CONFIANCA_PADRAO = 60;
+
+/**
+ * Confiança fora da faixa do controle (30–95) não pode ser salva: volta ao
+ * valor salvo atual da conexão e, se não houver nenhum válido, ao padrão 60.
+ */
+function normalizarConfianca(valor: unknown, salva: unknown): number {
+  const reserva =
+    typeof salva === 'number' && salva >= CONFIANCA_MIN && salva <= CONFIANCA_MAX ? salva : CONFIANCA_PADRAO;
+  return typeof valor === 'number' && valor >= CONFIANCA_MIN && valor <= CONFIANCA_MAX ? valor : reserva;
+}
 
 interface FormValues {
   isActive: boolean;

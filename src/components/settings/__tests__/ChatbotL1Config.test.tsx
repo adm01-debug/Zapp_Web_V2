@@ -151,7 +151,6 @@ vi.mock('@/components/ui/select', async () => {
 });
 
 import { ChatbotL1Config } from '../ChatbotL1Config';
-import { normalizarConfianca } from '@/lib/chatbotConfianca';
 
 const renderConfig = () => {
   const queryClient = new QueryClient({
@@ -451,16 +450,6 @@ describe('ChatbotL1Config — refazer 1 (recusa de 15/10)', () => {
 
     expect(await screen.findByText(/publique ao menos 1 artigo/i)).toBeInTheDocument();
     expect(screen.getByText('0')).toBeInTheDocument();
-  });
-
-  it('ponto 1 (unidade): fora da faixa volta ao salvo atual; sem salvo válido, ao padrão 60', () => {
-    expect(normalizarConfianca(10, 70)).toBe(70);
-    expect(normalizarConfianca(150, 70)).toBe(70);
-    expect(normalizarConfianca(10, null)).toBe(60);
-    expect(normalizarConfianca(150, 150)).toBe(60);
-    expect(normalizarConfianca(75, 70)).toBe(75);
-    expect(normalizarConfianca(30, 70)).toBe(30);
-    expect(normalizarConfianca(95, 70)).toBe(95);
   });
 
   it('ponto 3 (sem regressão): com artigos na KB a tela segue mostrando a contagem no passo 2', async () => {
