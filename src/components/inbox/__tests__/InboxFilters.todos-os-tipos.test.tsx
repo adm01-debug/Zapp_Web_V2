@@ -30,7 +30,6 @@ vi.mock('@/hooks/business/useQueues', () => ({
 
 const SEM_FILTROS: InboxFiltersState = {
   status: [],
-  tags: [],
   agentId: null,
   dateRange: { from: null, to: null },
 };

@@ -366,7 +366,7 @@ describe('contadores dos chips com as mesmas opções da lista', () => {
         conversations={matriz}
         chipTab="all"
         onChipTabChange={() => {}}
-        countOpts={{ filters: { status: ['unread'], tags: [], agentId: null, dateRange: { from: null, to: null } } }}
+        countOpts={{ filters: { status: ['unread'], agentId: null, dateRange: { from: null, to: null } } }}
       />
     );
     expect(counter('all')).toBe('1');
