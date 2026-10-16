@@ -1,30 +1,34 @@
 /**
- * R3-07 (SL-163) — a chave que deduplica a notificação de conquista é do dia **do usuário**,
- * não do dia UTC.
+ * R3-07 (SL-163) — a chave que deduplica a notificação de conquista usa o dia do APP
+ * (`appDayKey`, America/Sao_Paulo), o mesmo recorte dos painéis — não o dia do aparelho
+ * (`localDayKey`) nem o dia UTC.
  *
- * Em fuso a LESTE de UTC o dia UTC de `startOfDay(agora)` é o dia ANTERIOR: em Berlin
- * (UTC+2 em outubro), 30/09/2026 00:00 local = 29/09 22:00 UTC, então
- * `start.toISOString().split('T')[0]` montava a chave com 29/09 enquanto o dia do usuário era
- * 30/09. Defeito latente em São Paulo (UTC-3), onde o host roda — por isso o fuso é forçado
- * aqui, como já é feito em `useTodayHourlyVolume.apptz.test.ts` e `WorkItemSheet.fuso.test.tsx`.
+ * O período já começa à 00:00 no fuso do app, mas a chave era extraída no fuso do
+ * APARELHO: a oeste de São Paulo a 00:00 do app ainda é o dia ANTERIOR no relógio do
+ * usuário — em Nova York (UTC-4 em outubro), 30/09/2026 00:00 em SP = 29/09 23:00 local,
+ * então `localDayKey(inicio)` devolvia 29/09 enquanto os painéis contavam o dia 30/09 e a
+ * conquista ficava deduplicada sob o dia errado. Defeito latente em São Paulo (UTC-3),
+ * onde o host roda — por isso o fuso é forçado aqui, como já é feito em
+ * `useTodayHourlyVolume.apptz.test.ts` e `WorkItemSheet.fuso.test.tsx`.
  *
- * O teste chama o hook REAL (`useGoalNotifications`) com `localDayKey` espionado (delegando para
- * a implementação real): antes da correção o hook nem passava pelo util — fatiaba o ISO em UTC
- * direto — e a asserção do espelho fica vermelha. A chave vive só num `useRef` do hook, então
- * não há como observá-la de fora: o espelho no colaborador (que EXECUTA o util de verdade, e o
- * valor devolvido é o que vai para a chave) é o que torna a correção visível.
+ * O teste chama o hook REAL (`useGoalNotifications`) com `appDayKey` espionado (delegando
+ * para a implementação real): antes da correção o hook nem passava pelo util do app — usava
+ * o dia do aparelho — e a asserção do espelho fica vermelha. A chave vive só num `useRef`
+ * do hook, então não há como observá-la de fora: o espelho no colaborador (que EXECUTA o
+ * util de verdade, e o valor devolvido é o que vai para a chave) é o que torna a correção
+ * visível. A asserção do dia do aparelho sobre o MESMO instante prova que o cenário
+ * diverge de verdade (sem ela, aparelho e app coincidiriam e o teste seria vazio).
  */
-process.env.TZ = 'Europe/Berlin';
+process.env.TZ = 'America/New_York';
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { startOfDay } from 'date-fns';
+import { appDayKey, appDayStart, localDayKey } from '@/lib/localDay';
 
 vi.mock('@/lib/localDay', async (importOriginal) => {
   const real = await importOriginal<typeof import('@/lib/localDay')>();
-  return { ...real, localDayKey: vi.fn(real.localDayKey) };
+  return { ...real, appDayKey: vi.fn(real.appDayKey), localDayKey: vi.fn(real.localDayKey) };
 });
-import { localDayKey } from '@/lib/localDay';
 
 vi.mock('@/hooks/auth/useAuth', () => ({
   useAuth: () => ({ user: { id: 'u1' }, loading: false }),
@@ -121,12 +125,12 @@ import { useGoalNotifications } from '@/hooks/analytics/useGoalNotifications';
 
 const TZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-/** 30/09/2026 22:30 no relógio do usuário (Berlin, UTC+2 em outubro). */
+/** 30/09/2026 22:30 no relógio do usuário (Nova York, UTC-4 em outubro). */
 const AGORA = new Date(2026, 8, 30, 22, 30, 0);
-/** O dia do usuário nesse instante... */
-const DIA_LOCAL = '2026-09-30';
-/** ...e o dia UTC do MESMO instante (o que a chave fatiava antes da correção). */
-const DIA_UTC_DO_MESMO_INSTANTE = '2026-09-29';
+/** O dia do app (SP) nesse instante: 30/09 22:30 em NY = 30/09 23:30 em SP. */
+const DIA_APP = '2026-09-30';
+/** O dia do APARELHO no início do período: 30/09 00:00 em SP = 29/09 23:00 em NY. */
+const DIA_APARELHO_DO_INICIO = '2026-09-29';
 
 const metaDiaria = {
   id: 'meta-1',
@@ -139,7 +143,7 @@ const metaDiaria = {
   is_active: true,
 };
 
-describe('useGoalNotifications — chave de conquista pelo dia local', () => {
+describe('useGoalNotifications — chave de conquista pelo dia do app', () => {
   beforeEach(() => {
     // Só o relógio é falso: os timers seguem reais (`waitFor` e o intervalo de
     // 5 min do hook não são afetados).
@@ -155,36 +159,41 @@ describe('useGoalNotifications — chave de conquista pelo dia local', () => {
     vi.useRealTimers();
   });
 
-  it(`a chave sai do dia LOCAL do início do período (TZ=${TZ})`, async () => {
+  it(`a chave sai do dia do APP no início do período (TZ=${TZ})`, async () => {
     renderHook(() => useGoalNotifications());
 
     // O mount já checa as metas: a conquista do dia é anunciada uma vez.
     await waitFor(() => expect(notificacoesEnviadas).toHaveLength(1));
 
-    const espiao = vi.mocked(localDayKey);
+    const espiao = vi.mocked(appDayKey);
     expect(espiao).toHaveBeenCalled();
     const inicio = espiao.mock.calls[0][0] as Date;
 
-    // O util recebeu o início do período (00:00 local de hoje)...
-    expect(inicio.getTime()).toBe(startOfDay(AGORA).getTime());
-    // ...cujo dia UTC é o ANTERIOR (era a chave antiga)...
-    expect(inicio.toISOString().split('T')[0]).toBe(DIA_UTC_DO_MESMO_INSTANTE);
-    // ...e cujo dia local é o dia do usuário (a chave correta).
-    expect(espiao.mock.results[0].value).toBe(DIA_LOCAL);
+    // O util recebeu o início do período no fuso do APP (00:00 em São Paulo = 29/09 23:00
+    // em Nova York) — o mesmo recorte dos painéis; antes era o relógio do aparelho.
+    expect(inicio.getTime()).toBe(appDayStart(0, AGORA).getTime());
+    // A chave é o dia do APP no INÍCIO do período (R3-07): 30/09 em SP...
+    expect(espiao.mock.results[0].value).toBe(DIA_APP);
+    // ...enquanto o dia do APARELHO no MESMO instante é o anterior (29/09 em NY): o
+    // cenário diverge de verdade, então o teste falha com `localDayKey` e passa com
+    // `appDayKey` — sem esta asserção ele seria vazio.
+    expect(localDayKey(inicio)).toBe(DIA_APARELHO_DO_INICIO);
+    expect(espiao.mock.results[0].value).not.toBe(localDayKey(inicio));
   });
 
-  it('a conquista é anunciada uma vez por dia local e volta no dia seguinte', async () => {
+  it('a conquista é anunciada uma vez por dia do app e volta no dia seguinte', async () => {
     const { result } = renderHook(() => useGoalNotifications());
     await waitFor(() => expect(notificacoesEnviadas).toHaveLength(1));
 
-    // Mesma conquista, mesmo dia local: não repete.
+    // Mesma conquista, mesmo dia do app: não repete.
     await act(async () => {
       await result.current.checkGoalProgress();
     });
     expect(notificacoesEnviadas).toHaveLength(1);
 
-    // Vira o dia LOCAL: nova conquista do período diário é anunciada.
-    vi.setSystemTime(new Date(2026, 9, 1, 0, 30, 0));
+    // Vira o dia do APP (01/10 00:30 em São Paulo = 30/09 23:30 em Nova York): nova conquista
+    // do período diário é anunciada. O recorte do dia é o do app, o mesmo dos painéis.
+    vi.setSystemTime(new Date('2026-10-01T03:30:00.000Z'));
     await act(async () => {
       await result.current.checkGoalProgress();
     });

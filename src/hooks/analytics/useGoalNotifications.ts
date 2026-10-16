@@ -5,8 +5,7 @@ import { useNotificationSettings } from '@/hooks/system/useNotificationSettings'
 import { playNotificationSound, showBrowserNotification } from '@/utils/notificationSounds';
 import { toast } from 'sonner';
 import { log } from '@/lib/logger';
-import { localDayKey } from '@/lib/localDay';
-import { startOfDay, startOfWeek, startOfMonth, endOfDay, endOfWeek, endOfMonth } from 'date-fns';
+import { appDayKey, appDayStart, appDayEnd, appWeekStart, appWeekEnd, appMonthStart, appMonthEnd } from '@/lib/localDay';
 import type { Json } from '@/integrations/supabase/types';
 
 interface GoalConfiguration {
@@ -20,7 +19,20 @@ interface GoalConfiguration {
   is_active: boolean;
 }
 
-type Period = 'daily' | 'weekly' | 'monthly';
+export type Period = 'daily' | 'weekly' | 'monthly';
+
+/**
+ * Recorte de cada período no fuso do APP (America/Sao_Paulo) e com a semana começando na SEGUNDA —
+ * o mesmo recorte do painel de Metas (`getDateRange`), para que a conquista anunciada aqui seja a
+ * que a tela mostra. Antes usava o `startOfWeek(weekStartsOn: 1)` sobre o relógio do aparelho.
+ */
+export function goalPeriodRange(period: Period, now: Date = new Date()) {
+  switch (period) {
+    case 'daily': return { start: appDayStart(0, now), end: appDayEnd(0, now) };
+    case 'weekly': return { start: appWeekStart(now), end: appWeekEnd(now) };
+    case 'monthly': return { start: appMonthStart(now), end: appMonthEnd(now) };
+  }
+}
 
 export function useGoalNotifications() {
   const { user } = useAuth();
@@ -75,18 +87,6 @@ export function useGoalNotifications() {
     }
   }, [user]);
 
-  const getDateRange = (period: Period) => {
-    const now = new Date();
-    switch (period) {
-      case 'daily':
-        return { start: startOfDay(now), end: endOfDay(now) };
-      case 'weekly':
-        return { start: startOfWeek(now, { weekStartsOn: 1 }), end: endOfWeek(now, { weekStartsOn: 1 }) };
-      case 'monthly':
-        return { start: startOfMonth(now), end: endOfMonth(now) };
-    }
-  };
-
   const checkGoalProgress = useCallback(async () => {
     if (!user) return;
 
@@ -126,7 +126,7 @@ export function useGoalNotifications() {
           
           if (!target || target === 0) continue;
 
-          const { start, end } = getDateRange(period);
+          const { start, end } = goalPeriodRange(period);
           let current = 0;
 
           // Calculate current progress based on goal type
@@ -202,16 +202,17 @@ export function useGoalNotifications() {
               continue;
           }
 
-          // R3-07: a chave é o dia **do usuário** (`localDayKey`). Fatiar o ISO em UTC
-          // (`start.toISOString().split('T')[0]`) devolvia o dia anterior a leste de UTC
-          // (em Berlin, 30/09 00:00 local = 29/09 22:00 UTC), então a conquista ficava
-          // deduplicada sob o dia errado.
+          // R3-07: a chave é o dia do APP (`appDayKey`, America/Sao_Paulo) — o mesmo
+          // recorte do período acima e dos painéis. Extrair o dia no fuso do APARELHO
+          // (`localDayKey`) devolvia o dia anterior a oeste de SP (em Nova York, 30/09
+          // 00:00 em SP = 29/09 23:00 local), então a conquista ficava deduplicada sob
+          // o dia errado.
           //
           // O mesmo dia compõe a chave durável do banco (`dedupe_key`, formato do
           // PB-14 `goal:v1:<meta>:<período>:<dia>`). É o dia do INÍCIO do período
           // (segunda da semana, dia 1º do mês): usar "hoje" reanunciaria a meta
           // semanal/mensal a cada dia.
-          const dayKey = localDayKey(start);
+          const dayKey = appDayKey(start);
           const achievedKey = `${goal.id}-${period}-${dayKey}`;
           const dedupeKey = `goal:v1:${goal.id}:${period}:${dayKey}`;
 

@@ -2,8 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
-import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { appDayStart, appDayEnd, appWeekStart, appWeekEnd, appMonthStart, appMonthEnd } from '@/lib/localDay';
 
 /**
  * Y07 — metas do Dashboard (`useGoalsDashboard`). O stub de cada tabela FILTRA
@@ -175,13 +174,13 @@ describe('useGoalsDashboard — funções de cor (limites)', () => {
 describe('useGoalsDashboard — recorte e leituras', () => {
   beforeEach(() => tabelas());
 
-  it('começa em "hoje" e o recorte cobre o dia local inteiro', async () => {
+  it('começa em "hoje" e o recorte cobre o dia do APP inteiro', async () => {
     const { result } = await esperarMetas();
 
     expect(result.current.period).toBe('today');
     const d = agora();
-    expect(result.current.dateRange.from.toISOString()).toBe(startOfDay(d).toISOString());
-    expect(result.current.dateRange.to.toISOString()).toBe(endOfDay(d).toISOString());
+    expect(result.current.dateRange.from.toISOString()).toBe(appDayStart(0, d).toISOString());
+    expect(result.current.dateRange.to.toISOString()).toBe(appDayEnd(0, d).toISOString());
   });
 
   it('a leitura de mensagens filtra pelo agente do perfil e pelo recorte do período', async () => {
@@ -192,8 +191,8 @@ describe('useGoalsDashboard — recorte e leituras', () => {
     expect(q?.filters).toEqual(
       expect.arrayContaining([
         { op: 'eq', col: 'agent_id', val: PERFIL },
-        { op: 'gte', col: 'created_at', val: startOfDay(agora()).toISOString() },
-        { op: 'lte', col: 'created_at', val: endOfDay(agora()).toISOString() },
+        { op: 'gte', col: 'created_at', val: appDayStart(0, agora()).toISOString() },
+        { op: 'lte', col: 'created_at', val: appDayEnd(0, agora()).toISOString() },
       ]),
     );
   });
@@ -205,12 +204,12 @@ describe('useGoalsDashboard — recorte e leituras', () => {
     await waitFor(() => expect(h.queries.filter((x) => x.table === 'messages').length).toBeGreaterThan(1));
 
     const d = agora();
-    expect(result.current.dateRange.from.toISOString()).toBe(startOfWeek(d, { locale: ptBR }).toISOString());
-    expect(result.current.dateRange.to.toISOString()).toBe(endOfWeek(d, { locale: ptBR }).toISOString());
+    expect(result.current.dateRange.from.toISOString()).toBe(appWeekStart(d).toISOString());
+    expect(result.current.dateRange.to.toISOString()).toBe(appWeekEnd(d).toISOString());
 
     await act(async () => result.current.setPeriod('month'));
-    await waitFor(() => expect(result.current.dateRange.to.toISOString()).toBe(endOfMonth(agora()).toISOString()));
-    expect(result.current.dateRange.from.toISOString()).toBe(startOfMonth(agora()).toISOString());
+    await waitFor(() => expect(result.current.dateRange.to.toISOString()).toBe(appMonthEnd(agora()).toISOString()));
+    expect(result.current.dateRange.from.toISOString()).toBe(appMonthStart(agora()).toISOString());
   });
 
   it('período desconhecido cai no recorte de hoje (não estoura nem devolve vazio)', async () => {
@@ -220,8 +219,8 @@ describe('useGoalsDashboard — recorte e leituras', () => {
     await waitFor(() => expect(result.current.period).toBe('trimestre'));
 
     const d = agora();
-    expect(result.current.dateRange.from.toISOString()).toBe(startOfDay(d).toISOString());
-    expect(result.current.dateRange.to.toISOString()).toBe(endOfDay(d).toISOString());
+    expect(result.current.dateRange.from.toISOString()).toBe(appDayStart(0, d).toISOString());
+    expect(result.current.dateRange.to.toISOString()).toBe(appDayEnd(0, d).toISOString());
   });
 
   it('conta só as mensagens cujo remetente é o agente', async () => {

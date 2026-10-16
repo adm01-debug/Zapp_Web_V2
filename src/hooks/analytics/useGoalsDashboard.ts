@@ -2,8 +2,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { startOfDay, endOfDay, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { appDayStart, appDayEnd, appWeekStart, appWeekEnd, appMonthStart, appMonthEnd } from '@/lib/localDay';
 import { MessageSquare, Users, CheckCircle2 } from 'lucide-react';
 
 export interface Goal {
@@ -30,13 +29,17 @@ const DEFAULT_GOALS = {
   resolution_rate: { daily: 80, weekly: 80, monthly: 85 },
 };
 
-function getDateRange(period: string) {
-  const now = new Date();
+/**
+ * Recorte de cada período do seletor no fuso do APP (America/Sao_Paulo) e com a semana começando
+ * na SEGUNDA — o mesmo recorte do SLA, do tempo real e do CSAT. Antes usava o `startOfWeek` com
+ * ptBR (domingo) e o relógio do aparelho: o mesmo atendente via números diferentes por painel.
+ */
+export function getDateRange(period: string, now: Date = new Date()) {
   switch (period) {
-    case 'today': return { from: startOfDay(now), to: endOfDay(now) };
-    case 'week': return { from: startOfWeek(now, { locale: ptBR }), to: endOfWeek(now, { locale: ptBR }) };
-    case 'month': return { from: startOfMonth(now), to: endOfMonth(now) };
-    default: return { from: startOfDay(now), to: endOfDay(now) };
+    case 'today': return { from: appDayStart(0, now), to: appDayEnd(0, now) };
+    case 'week': return { from: appWeekStart(now), to: appWeekEnd(now) };
+    case 'month': return { from: appMonthStart(now), to: appMonthEnd(now) };
+    default: return { from: appDayStart(0, now), to: appDayEnd(0, now) };
   }
 }
 

@@ -2,7 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { startOfDay, startOfMonth, startOfWeek, subDays } from 'date-fns';
+import { subDays } from 'date-fns';
+import { appDayStart, appWeekStart, appMonthStart } from '@/lib/localDay';
 
 /**
  * Dublê do PostgREST que reproduz o que importa para estes testes:
@@ -203,10 +204,10 @@ describe('useSLAMetrics', () => {
   });
 
   it.each([
-    ['today', () => startOfDay(new Date())],
-    ['week', () => startOfWeek(new Date(), { weekStartsOn: 1 })],
-    ['month', () => startOfMonth(new Date())],
-  ])('período "%s" mantém o recorte anterior (Hoje/Esta Semana/Este Mês)', async (periodo, esperado) => {
+    ['today', () => appDayStart(0)],
+    ['week', () => appWeekStart()],
+    ['month', () => appMonthStart()],
+  ])('período "%s" usa o recorte do app (Hoje/Esta Semana/Este Mês), não o relógio do aparelho', async (periodo, esperado) => {
     h.rows = [slaRow()];
 
     const { result } = renderHook(() => useSLAMetrics(periodo as 'today' | 'week' | 'month'), {
