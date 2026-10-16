@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { validateFile, FileValidationResult } from '@/utils/whatsappFileTypes';
 import { compressImage, formatCompressionInfo } from '@/utils/imageCompression';
-import { sendOutboundMessage, type OutboundMessageType } from '@/services/outbound-message.service';
+import { sendOutboundMessage, type OutboundMessageDeliveryResult, type OutboundMessageType } from '@/services/outbound-message.service';
 import {
   createStorageObjectId,
   removeStoredObjectBestEffort,
@@ -40,6 +40,19 @@ interface QueuedFile extends FilePreview {
   status: 'pending' | 'uploading' | 'sending' | 'done' | 'error';
   progress: number;
   error?: string;
+}
+
+/** O que `sendFileViaApi` entrega: mensagem despachada + onde a mídia ficou. */
+interface SentFile {
+  result: OutboundMessageDeliveryResult;
+  mediaUrl: string;
+  category: OutboundMessageType;
+  /**
+   * Verdadeiro quando este chamado reaproveitou um envio EM CURSO da mesma ação
+   * (duplo clique): o chamador NÃO repete aviso, `onFileSent` nem fechamento —
+   * o envio original já faz tudo isso.
+   */
+  deduped?: boolean;
 }
 
 const categoryOrder: Record<string, number> = { image: 0, video: 1, audio: 2, document: 3, sticker: 4 };
@@ -107,8 +120,14 @@ export function useFileUploadLogic(opts: {
   const [currentQueueIndex, setCurrentQueueIndex] = useState(0);
   // Objetos ja gravados + id logico por arquivo, ate a entrega confirmar. Sem isso o
   // retry refazia o upload (novo locator -> nova actionKey) e apagava o objeto que uma
-  // linha ja enfileirada referencia (R2-INB-006).
+  // linha ja enfileirada referencia (R2-INB-006). Ao lado, os envios EM CURSO por
+  // actionKey: o duplo clique (R3) espera o envio em curso em vez de subir e
+  // despachar de novo — sem ele, dois cliques viram dois objetos e duas mensagens.
   const pendingUploadsRef = useRef(new Map<string, PendingMediaUpload>());
+  const inflightUploadsRef = useRef(new Map<string, Promise<SentFile>>());
+  // Verdadeiro enquanto o `file-security-scanner` ainda não respondeu: a tela usa
+  // para segurar o formulário em vez de fechar no meio da verificação.
+  const [isScanning, setIsScanning] = useState(false);
 
   // Retry da fila sem auto-referência: o "Tentar novamente" do aviso de varredura
   // precisa reexecutar o envio, mas o lint de hooks proíbe citar `sendSingleQueueFile`
@@ -175,6 +194,8 @@ export function useFileUploadLogic(opts: {
    */
   const scanFile = useCallback(async (file: File): Promise<ScanResult> => {
     toast.info('Verificando arquivo…', { id: 'file-upload', duration: 30000 });
+    // A tela lê `isScanning` para segurar o formulário durante a espera.
+    setIsScanning(true);
     const formData = new FormData();
     formData.append('file', file, file.name);
     try {
@@ -189,6 +210,8 @@ export function useFileUploadLogic(opts: {
       // O próprio client pode lançar antes de virar {data,error}: mesma normalização,
       // cai em NETWORK_ERROR (passageiro, o usuário pode tentar de novo).
       return await parseScanInvocation({ data: null, error: err });
+    } finally {
+      setIsScanning(false);
     }
   }, []);
 
@@ -233,54 +256,78 @@ export function useFileUploadLogic(opts: {
     setIsDialogOpen(false);
   }, [filePreview, fileQueue, revokePreview]);
 
-  const sendFileViaApi = useCallback(async (file: File, category: string | undefined, cap?: string) => {
+  // `toastId` é o id do aviso na tela: o arquivo único usa 'file-upload'; cada item
+  // do lote usa o próprio id (`file-upload-<id>`) para um aviso não apagar o outro.
+  const sendFileViaApi = useCallback(async (
+    file: File,
+    category: string | undefined,
+    cap?: string,
+    toastId = 'file-upload',
+  ): Promise<SentFile> => {
     if (!contactId) throw new Error('Selecione uma conversa antes de enviar um arquivo.');
     const actionKey = mediaActionKey(contactId, file, category);
 
-    // Retry de resultado incerto reaproveita o objeto ja gravado e o id logico:
-    // reenviar o arquivo criaria outro objeto/locator e outra acao (R2-INB-006).
-    let pending = pendingUploadsRef.current.get(actionKey);
-    if (!pending) {
-      // Varredura ANTES de gravar/enviar. O aviso na tela sai do chamador (que conhece
-      // o id do toast e sabe repetir o envio): aqui só se decide seguir, avisar ou parar.
-      //  - bloqueio (malware/suspeito): lança e NADA é gravado nem enviado;
-      //  - falha passageira (timeout/indisponível/rede): lança e o usuário pode tentar de novo;
-      //  - scanned:false (servidor não varreu): avisa em voz baixa e o envio segue.
-      const scan = await scanFile(file);
-      if (scan.status === 'skipped') {
-        handleScanResult(scan, { fileName: file.name, toastId: 'file-upload' });
-      } else if (scan.status === 'error') {
-        throw new ScanBlockedError(scan);
-      }
-      const uploaded = await uploadFileToStorage(file);
-      pending = { ...uploaded, clientMessageId: createStorageObjectId() };
-      pendingUploadsRef.current.set(actionKey, pending);
+    // Envio EM CURSO da mesma ação (duplo clique, R3): espera o original em vez de
+    // subir e despachar de novo. Marca `deduped` para o chamador não repetir aviso,
+    // `onFileSent` nem fechamento — o envio original já faz tudo isso.
+    const inflight = inflightUploadsRef.current.get(actionKey);
+    if (inflight) {
+      const shared = await inflight;
+      return { ...shared, deduped: true };
     }
-    const { locatorUrl, storagePath, clientMessageId } = pending;
 
-    const messageContent = category === 'document' ? file.name : `[${category === 'image' ? 'Imagem' : category === 'video' ? 'Vídeo' : category === 'audio' ? 'Áudio' : category === 'sticker' ? 'Sticker' : 'Arquivo'}]`;
-    const messageType: OutboundMessageType = category === 'image' || category === 'video' || category === 'audio' || category === 'sticker'
-      ? category
-      : 'document';
-    try {
-      const result = await sendOutboundMessage({
-        contactId, content: messageContent, messageType, mediaUrl: locatorUrl,
-        caption: cap?.trim() || null, whatsappConnectionId: connectionId ?? null,
-        clientMessageId,
-      });
-      pendingUploadsRef.current.delete(actionKey);
-      return { result, mediaUrl: locatorUrl, category: messageType };
-    } catch (error) {
-      // `sendOutboundMessage` grava a linha ANTES de despachar: a falha depois do enqueue
-      // nao prova que o objeto ficou orfao. So remove quando a reconciliacao responder
-      // ZERO linhas; linha encontrada ou consulta falhando (estado indeterminado) mantem
-      // o objeto e o id para o retry (R2-INB-006).
-      const rowExists = await outboundRowExists(contactId, clientMessageId);
-      if (rowExists === false) {
-        await removeStoredObjectBestEffort('whatsapp-media', storagePath);
-        pendingUploadsRef.current.delete(actionKey);
+    const task: Promise<SentFile> = (async (): Promise<SentFile> => {
+      // Retry de resultado incerto reaproveita o objeto ja gravado e o id logico:
+      // reenviar o arquivo criaria outro objeto/locator e outra acao (R2-INB-006).
+      let pending = pendingUploadsRef.current.get(actionKey);
+      if (!pending) {
+        // Varredura ANTES de gravar/enviar. O aviso na tela sai do chamador (que conhece
+        // o id do toast e sabe repetir o envio): aqui só se decide seguir, avisar ou parar.
+        //  - bloqueio (malware/suspeito): lança e NADA é gravado nem enviado;
+        //  - falha passageira (timeout/indisponível/rede): lança e o usuário pode tentar de novo;
+        //  - scanned:false (servidor não varreu): avisa em voz baixa e o envio segue.
+        const scan = await scanFile(file);
+        if (scan.status === 'skipped') {
+          handleScanResult(scan, { fileName: file.name, toastId });
+        } else if (scan.status === 'error') {
+          throw new ScanBlockedError(scan);
+        }
+        const uploaded = await uploadFileToStorage(file);
+        pending = { ...uploaded, clientMessageId: createStorageObjectId() };
+        pendingUploadsRef.current.set(actionKey, pending);
       }
-      throw error;
+      const { locatorUrl, storagePath, clientMessageId } = pending;
+
+      const messageContent = category === 'document' ? file.name : `[${category === 'image' ? 'Imagem' : category === 'video' ? 'Vídeo' : category === 'audio' ? 'Áudio' : category === 'sticker' ? 'Sticker' : 'Arquivo'}]`;
+      const messageType: OutboundMessageType = category === 'image' || category === 'video' || category === 'audio' || category === 'sticker'
+        ? category
+        : 'document';
+      try {
+        const result = await sendOutboundMessage({
+          contactId, content: messageContent, messageType, mediaUrl: locatorUrl,
+          caption: cap?.trim() || null, whatsappConnectionId: connectionId ?? null,
+          clientMessageId,
+        });
+        pendingUploadsRef.current.delete(actionKey);
+        return { result, mediaUrl: locatorUrl, category: messageType };
+      } catch (error) {
+        // `sendOutboundMessage` grava a linha ANTES de despachar: a falha depois do enqueue
+        // nao prova que o objeto ficou orfao. So remove quando a reconciliacao responder
+        // ZERO linhas; linha encontrada ou consulta falhando (estado indeterminado) mantem
+        // o objeto e o id para o retry (R2-INB-006).
+        const rowExists = await outboundRowExists(contactId, clientMessageId);
+        if (rowExists === false) {
+          await removeStoredObjectBestEffort('whatsapp-media', storagePath);
+          pendingUploadsRef.current.delete(actionKey);
+        }
+        throw error;
+      }
+    })();
+    inflightUploadsRef.current.set(actionKey, task);
+    try {
+      return await task;
+    } finally {
+      inflightUploadsRef.current.delete(actionKey);
     }
   }, [contactId, connectionId, uploadFileToStorage, scanFile, handleScanResult]);
 
@@ -302,6 +349,8 @@ export function useFileUploadLogic(opts: {
       try {
         const sent = await sendFileViaApi(file, category, currentCaption);
         if (!mountedRef.current) return;
+        // Duplo clique (R3): o envio original já avisou, chamou `onFileSent` e fechou.
+        if (sent.deduped) return;
         toast.success('Arquivo enviado!', { id: 'file-upload' });
         if (sent) onFileSent?.({ ...sent.result, mediaUrl: sent.mediaUrl, messageType: sent.category });
         // Fecha SÓ depois do sucesso. Em falha, arquivo, legenda e o cache de upload
@@ -331,7 +380,10 @@ export function useFileUploadLogic(opts: {
     if (!queuedFile.validation.valid || !contactId) return false;
     setFileQueue(prev => prev.map((f, i) => i === index ? { ...f, status: 'uploading', progress: 0 } : f));
     try {
-      const sent = await sendFileViaApi(queuedFile.file, queuedFile.validation.category, undefined);
+      // Cada item avisa no próprio id: o erro/aviso de um não apaga o do outro.
+      const sent = await sendFileViaApi(queuedFile.file, queuedFile.validation.category, undefined, `file-upload-${queuedFile.id}`);
+      // Envio em curso reaproveitado (R3): o original atualiza estado e callbacks.
+      if (sent.deduped) return true;
       setFileQueue(prev => prev.map((f, i) => i === index ? { ...f, status: 'done', progress: 100 } : f));
       if (sent) onFileSent?.({ ...sent.result, mediaUrl: sent.mediaUrl, messageType: sent.category });
       return true;
@@ -479,6 +531,7 @@ export function useFileUploadLogic(opts: {
     isDialogOpen, filePreview, fileQueue, isMultiMode, caption, setCaption,
     uploading, uploadProgress, uploadStage, currentQueueIndex,
     apiLoading, canSend, validFilesCount, totalQueueProgress,
+    isScanning,
     handleClose, handleSendFile, handleSendAllFiles, handleFileChange,
     handleExternalFile, handleExternalFiles, removeFromQueue, retryQueueFile,
   };

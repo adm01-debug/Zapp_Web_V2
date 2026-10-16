@@ -1,6 +1,6 @@
-import { renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { useTalkXMediaUpload } from '../useTalkXMediaUpload';
+import { useTalkXMediaUpload, type TalkxMediaValue } from '../useTalkXMediaUpload';
 
 /**
  * HZ1-02 — o upload de mídia do Talk X também passa pelo `file-security-scanner`.
@@ -15,11 +15,16 @@ const mocks = vi.hoisted(() => ({
   upload: vi.fn(),
   remove: vi.fn(),
   scanInvoke: vi.fn(),
+  toastInfo: vi.fn(),
   profile: { id: '11111111-2222-3333-4444-555555555555' } as { id: string } | null,
 }));
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: { storage: { from: mocks.storageFrom }, functions: { invoke: mocks.scanInvoke } },
+}));
+
+vi.mock('sonner', () => ({
+  toast: { info: mocks.toastInfo, error: vi.fn(), success: vi.fn() },
 }));
 
 vi.mock('@/hooks/auth/useAuth', () => ({
@@ -110,6 +115,52 @@ describe('useTalkXMediaUpload — varredura antes de gravar no bucket', () => {
     const file = new File(['conteudo'], 'manual.pdf', { type: 'application/pdf' });
 
     await expect(result.current.upload(file)).resolves.toBeTruthy();
+    expect(mocks.upload).toHaveBeenCalledTimes(1);
+  });
+
+  it('scanned:false grava MAS avisa em voz baixa (nada de silêncio no Talk X)', async () => {
+    mocks.scanInvoke.mockResolvedValue({
+      data: {
+        success: true,
+        scanned: false,
+        verdict: 'unknown',
+        reason: 'too_large',
+        message: 'O arquivo não pôde ser verificado agora e será enviado mesmo assim.',
+        scanId: null,
+      },
+      error: null,
+    });
+
+    const { result } = renderHook(() => useTalkXMediaUpload());
+    const file = new File(['conteudo'], 'manual.pdf', { type: 'application/pdf' });
+
+    const value = await result.current.upload(file);
+
+    expect(mocks.upload).toHaveBeenCalledTimes(1);
+    expect(value.media_type).toBe('document');
+    // O envio segue, mas a tela conta que não houve verificação — em id próprio,
+    // para nenhum outro aviso apagar este antes de ser lido.
+    expect(mocks.toastInfo).toHaveBeenCalledTimes(1);
+    expect(mocks.toastInfo.mock.calls[0][0]).toContain('enviado mesmo assim');
+    expect(mocks.toastInfo.mock.calls[0][1]).toMatchObject({ id: 'talkx-media-scan' });
+  });
+
+  it('expõe scanning durante a varredura (a tela segura o formulário)', async () => {
+    let resolveScan!: (value: unknown) => void;
+    mocks.scanInvoke.mockReturnValue(new Promise((resolve) => { resolveScan = resolve; }));
+
+    const { result } = renderHook(() => useTalkXMediaUpload());
+    const file = new File(['conteudo'], 'manual.pdf', { type: 'application/pdf' });
+
+    let pending!: Promise<TalkxMediaValue>;
+    act(() => { pending = result.current.upload(file); });
+    await waitFor(() => expect(result.current.scanning).toBe(true));
+
+    await act(async () => {
+      resolveScan(CLEAN);
+      await pending;
+    });
+    expect(result.current.scanning).toBe(false);
     expect(mocks.upload).toHaveBeenCalledTimes(1);
   });
 });

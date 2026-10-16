@@ -232,4 +232,87 @@ describe('useFileUploadLogic — varredura antes do envio', () => {
     expect(skipCall, 'aviso discreto de "não verificado" não foi emitido').toBeTruthy();
     expect(skipCall?.[0]).toContain('enviado mesmo assim');
   });
+
+  it('lote com 2 skipped emite um aviso por arquivo, cada um no próprio id', async () => {
+    mocks.scanInvoke.mockResolvedValue({
+      data: {
+        success: true,
+        scanned: false,
+        verdict: 'unknown',
+        reason: 'no_key',
+        message: 'O arquivo não pôde ser verificado agora e será enviado mesmo assim.',
+        scanId: null,
+      },
+      error: null,
+    });
+
+    const hook = renderUpload();
+    act(() => {
+      hook.result.current.handleExternalFiles([document('a.pdf'), document('b.pdf')]);
+    });
+    await act(async () => {
+      await hook.result.current.handleSendAllFiles();
+    });
+    await waitFor(() => expect(mocks.sendOutboundMessage).toHaveBeenCalledTimes(2));
+
+    // Um aviso por arquivo, cada um no id do próprio item: o segundo não apaga o primeiro.
+    const skipAvisos = mocks.toastInfo.mock.calls.filter(
+      ([, o]) => typeof o?.id === 'string' && o.id.includes('scan'),
+    );
+    expect(skipAvisos.length).toBe(2);
+    expect(new Set(skipAvisos.map(([, o]) => o.id)).size).toBe(2);
+  });
+
+  it('durante a varredura expõe isScanning e mantém o formulário aberto (R3)', async () => {
+    let resolveScan!: (value: unknown) => void;
+    mocks.scanInvoke.mockReturnValueOnce(new Promise((resolve) => { resolveScan = resolve; }));
+
+    const hook = renderUpload();
+    act(() => {
+      hook.result.current.handleExternalFile(document());
+    });
+    let sending!: Promise<void>;
+    act(() => {
+      sending = hook.result.current.handleSendFile();
+    });
+    await waitFor(() => expect(hook.result.current.isScanning).toBe(true));
+
+    // A janela dos 30 s não fecha nem limpa o formulário no meio da verificação.
+    expect(hook.result.current.filePreview).toBeTruthy();
+    expect(hook.result.current.isDialogOpen).toBe(true);
+
+    await act(async () => {
+      resolveScan(CLEAN);
+      await sending;
+    });
+    await waitFor(() => expect(mocks.sendOutboundMessage).toHaveBeenCalledTimes(1));
+    expect(hook.result.current.isScanning).toBe(false);
+  });
+
+  it('duplo envio concorrente (R3) sobe e despacha uma única vez', async () => {
+    let resolveScan!: (value: unknown) => void;
+    mocks.scanInvoke.mockReturnValue(new Promise((resolve) => { resolveScan = resolve; }));
+
+    const onFileSent = vi.fn();
+    const hook = renderUpload(onFileSent);
+    act(() => {
+      hook.result.current.handleExternalFile(document());
+    });
+    let first!: Promise<void>;
+    let second!: Promise<void>;
+    act(() => {
+      first = hook.result.current.handleSendFile();
+      second = hook.result.current.handleSendFile();
+    });
+    await act(async () => {
+      resolveScan(CLEAN);
+      await Promise.all([first, second]);
+    });
+
+    // O segundo clique reaproveita o envio em curso: um scan, um objeto, uma mensagem.
+    await waitFor(() => expect(mocks.sendOutboundMessage).toHaveBeenCalledTimes(1));
+    expect(mocks.scanInvoke).toHaveBeenCalledTimes(1);
+    expect(mocks.upload).toHaveBeenCalledTimes(1);
+    expect(onFileSent).toHaveBeenCalledTimes(1);
+  });
 });

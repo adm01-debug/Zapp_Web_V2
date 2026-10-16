@@ -192,17 +192,17 @@ function fromBody(body: Record<string, unknown> | null | undefined): ScanResult 
 
 /**
  * O corpo de um `FunctionsHttpError` vive em `error.context` (um `Response`).
- * Clonamos antes de ler para que o chamador ainda possa consumir o original.
+ * Lê direto do corpo, sem `clone()`: o erro é nosso e ninguém mais consome o
+ * original — e o `clone()` quebrava no jsdom/undici, virando ramo morto.
  */
 async function readBodyFromInvokeError(error: unknown): Promise<Record<string, unknown> | null> {
   if (!error || typeof error !== 'object') return null;
   const ctx = (error as { context?: unknown }).context;
   if (!ctx) return null;
 
-  if (typeof Response !== 'undefined' && ctx instanceof Response) {
+  if (typeof (ctx as { text?: unknown }).text === 'function') {
     try {
-      const cloned = ctx.clone();
-      const text = await cloned.text();
+      const text = await (ctx as Response).text();
       if (!text) return null;
       return JSON.parse(text) as Record<string, unknown>;
     } catch {

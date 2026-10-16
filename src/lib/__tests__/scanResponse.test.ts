@@ -195,6 +195,35 @@ describe('parseScanInvocation — transporte e resposta degenerada', () => {
   });
 });
 
+describe('parseScanInvocation — corpo sem Response (sem clone)', () => {
+  it('lê o corpo de contexto com .text() mesmo sem ser instância de Response', async () => {
+    const body = {
+      error: true,
+      code: 'MALWARE_DETECTED',
+      message: 'Arquivo bloqueado: ameaça detectada.',
+      verdict: 'malicious',
+      scanId: 'scan-noclone',
+    };
+    // jsdom/undici nem sempre entrega um `Response` de verdade aqui (sem .clone):
+    // o parser tem de ler pelo .text() em vez de clonar.
+    const fakeContext = { status: 422, text: async () => JSON.stringify(body) };
+    const result = await parseScanInvocation({
+      data: null,
+      error: {
+        name: 'FunctionsHttpError',
+        message: 'Edge Function returned a non-2xx status code',
+        context: fakeContext,
+      },
+    });
+
+    expect(result.status).toBe('error');
+    if (result.status !== 'error') throw new Error('esperado erro');
+    expect(result.code).toBe('MALWARE_DETECTED');
+    expect(result.scanId).toBe('scan-noclone');
+    expect(isBlocking(result)).toBe(true);
+  });
+});
+
 describe('ScanBlockedError', () => {
   it('leva o resultado estruturado para cima sem perder código nem mensagem', () => {
     const result: ScanResult = {

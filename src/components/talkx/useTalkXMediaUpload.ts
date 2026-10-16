@@ -13,7 +13,8 @@
  * `createImageBitmap`; quando a API não existe — jsdom, navegador antigo — o
  * valor fica nulo em vez de inventar um número.
  */
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
+import { toast } from 'sonner';
 // Bucket privado: o acesso ao Storage fica aqui, como nos outros componentes de
 // `talkx/*` (TalkXAnalytics, TalkXSuppression, TalkXLiveMonitor) — o caminho é
 // montado a partir do profile (CAP-059).
@@ -187,11 +188,14 @@ export interface TalkXMediaUpload {
   upload: (file: File) => Promise<TalkxMediaValue>;
   /** Apaga do bucket o objeto de um valor já enviado (link `https://` é ignorado). */
   remove: (value: TalkxMediaValue) => Promise<void>;
+  /** Verdadeiro enquanto o `file-security-scanner` ainda não respondeu. */
+  scanning: boolean;
 }
 
 export function useTalkXMediaUpload(): TalkXMediaUpload {
   const { profile } = useAuth();
   const profileId = profile?.id;
+  const [scanning, setScanning] = useState(false);
 
   const upload = useCallback(async (file: File): Promise<TalkxMediaValue> => {
     const check = validateTalkxMediaFile(file);
@@ -204,9 +208,13 @@ export function useTalkXMediaUpload(): TalkXMediaUpload {
 
     // Varredura de segurança ANTES de gravar no bucket (HZ1-02: a mídia vai para o
     // cliente). Bloqueio e falha de varredura lançam: nada é gravado e o dropzone mostra
-    // a mensagem no alerta em linha (por isso não há toast aqui — evita aviso duplicado).
+    // a mensagem no alerta em linha (por isso o bloqueio não tem toast aqui — evita
+    // aviso duplicado). O "não verificado" (falha-aberto) SEGUE gravando, mas avisa em
+    // voz baixa em id próprio: no sucesso o dropzone não mostra nada, e sem este aviso
+    // a falta de verificação passaria em silêncio.
     const scanForm = new FormData();
     scanForm.append('file', file, file.name);
+    setScanning(true);
     const scan = await (async () => {
       try {
         const { data, error } = await supabase.functions.invoke('file-security-scanner', {
@@ -218,9 +226,18 @@ export function useTalkXMediaUpload(): TalkXMediaUpload {
         });
       } catch (err) {
         return await parseScanInvocation({ data: null, error: err });
+      } finally {
+        setScanning(false);
       }
     })();
     if (scan.status === 'error') throw new ScanBlockedError(scan);
+    if (scan.status === 'skipped') {
+      toast.info(scan.message, {
+        id: 'talkx-media-scan',
+        description: `Arquivo: ${file.name}`,
+        duration: 8000,
+      });
+    }
 
     const dimensions = mediaType === 'image' || mediaType === 'video' ? await readMediaDimensions(file) : null;
     const objectPath = talkxMediaObjectPath(profileId, file.name);
@@ -245,5 +262,5 @@ export function useTalkXMediaUpload(): TalkXMediaUpload {
     await supabase.storage.from(TALKX_MEDIA_BUCKET).remove([objectPath]);
   }, []);
 
-  return { upload, remove };
+  return { upload, remove, scanning };
 }
