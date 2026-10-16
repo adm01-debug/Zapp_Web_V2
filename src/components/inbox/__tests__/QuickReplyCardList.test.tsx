@@ -144,6 +144,6 @@ describe('QuickReplyCardList — ações', () => {
   it('marca o cartão favorito com o realce visual', () => {
     setup({ isFavorite: vi.fn().mockReturnValue(true) });
     const card = screen.getByText('Boas-vindas').closest('div.p-3') as HTMLElement;
-    expect(card.className).toContain('border-yellow-400/30');
+    expect(card.className).toContain('border-warning/30');
   });
 });

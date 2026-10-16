@@ -53,13 +53,14 @@ const SNOOZE_OPTIONS: { value: string; label: string }[] = [
   { value: 'nextweek', label: 'Próxima semana' },
 ];
 
+// Cores de canal: só tokens do sistema (U6), mantendo matizes distintas.
 const CHANNEL_BADGE_CONFIG: Record<string, { Icon: LucideIcon; bg: string }> = {
-  instagram: { Icon: Instagram, bg: 'bg-[hsl(330,80%,55%)]' },
-  messenger: { Icon: Facebook, bg: 'bg-[hsl(220,70%,55%)]' },
-  telegram: { Icon: Send, bg: 'bg-[hsl(200,70%,50%)]' },
-  webchat: { Icon: Globe, bg: 'bg-[hsl(215,15%,45%)]' },
-  email: { Icon: Mail, bg: 'bg-[hsl(220,70%,55%)]' },
-  linkedin: { Icon: Linkedin, bg: 'bg-[hsl(201,100%,35%)]' },
+  instagram: { Icon: Instagram, bg: 'bg-violeta' },
+  messenger: { Icon: Facebook, bg: 'bg-info' },
+  telegram: { Icon: Send, bg: 'bg-teal' },
+  webchat: { Icon: Globe, bg: 'bg-muted-foreground' },
+  email: { Icon: Mail, bg: 'bg-rosa' },
+  linkedin: { Icon: Linkedin, bg: 'bg-kpi-blue' },
 };
 
 interface VirtualizedRealtimeListProps {

@@ -66,7 +66,7 @@ function QueueFileItem({ queuedFile, onRemove, onRetry, disabled }: { queuedFile
       <div className="flex items-center gap-3">
         <div className="flex-shrink-0">
           {queuedFile.preview ? (
-            <img src={queuedFile.preview} alt="Preview" className="w-12 h-12 object-cover rounded"  loading="lazy" decoding="async"/>
+            <img src={queuedFile.preview} alt={`Pré-visualização de ${queuedFile.file.name}`} className="w-12 h-12 object-cover rounded"  loading="lazy" decoding="async"/>
           ) : (
             <div className="w-12 h-12 bg-primary/10 rounded flex items-center justify-center text-primary">
               {getCategoryIcon(queuedFile.validation.category || 'document')}
@@ -97,6 +97,10 @@ function QueueFileItem({ queuedFile, onRemove, onRetry, disabled }: { queuedFile
               </motion.span>
             )}
           </div>
+          {/* U4: motivo da falha/arquivo inválido em texto, não só o selo "Erro/Inválido". */}
+          {isError && (queuedFile.validation.error || queuedFile.error) && (
+            <p className="mt-1 text-xs text-destructive">{queuedFile.validation.error || queuedFile.error}</p>
+          )}
           {(queuedFile.status === 'uploading' || queuedFile.status === 'sending') && <Progress value={queuedFile.progress} className="h-1 mt-2" aria-label={`Progresso de ${queuedFile.file.name}`} />}
         </div>
         {queuedFile.status === 'error' && queuedFile.validation.valid && (
@@ -117,7 +121,7 @@ function QueueFileItem({ queuedFile, onRemove, onRetry, disabled }: { queuedFile
             </Button>
           </motion.div>
         )}
-        <Button variant="ghost" size="icon" className="flex-shrink-0 h-7 w-7" onClick={onRemove} disabled={disabled} aria-label={`Remover ${queuedFile.file.name}`}><X className="w-3 h-3" /></Button>
+        <Button variant="ghost" size="icon" className="flex-shrink-0 h-10 w-10" onClick={onRemove} disabled={disabled} aria-label={`Remover ${queuedFile.file.name}`}><X className="w-4 h-4" /></Button>
       </div>
     </motion.div>
   );
@@ -141,6 +145,8 @@ export const FileUploader = forwardRef<FileUploaderRef, FileUploaderProps>(({
   } = useFileUploadLogic({ instanceName, recipientNumber, contactId, connectionId, onFileSelect, onFileSent, fileInputRef });
 
   const failedCount = fileQueue.filter(f => f.status === 'error').length;
+  // U4: resumo da fila anunciado por leitor de tela ("2 de 3 enviados, 1 falhou").
+  const doneCount = fileQueue.filter(f => f.status === 'done').length;
 
   useImperativeHandle(ref, () => ({
     handleExternalFile,
@@ -162,7 +168,7 @@ export const FileUploader = forwardRef<FileUploaderRef, FileUploaderProps>(({
         <TooltipContent side="top">Anexar arquivo</TooltipContent>
       </Tooltip>
 
-      <Dialog open={isDialogOpen} onOpenChange={handleClose}>
+      <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open && !uploading) handleClose(); }}>
         <DialogContent aria-describedby={undefined} className="sm:max-w-lg max-h-[85vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -173,6 +179,13 @@ export const FileUploader = forwardRef<FileUploaderRef, FileUploaderProps>(({
               {isMultiMode ? `${validFilesCount} de ${fileQueue.length} arquivos válidos` : 'Formatos suportados: imagens, vídeos, áudios e documentos'}
             </DialogDescription>
           </DialogHeader>
+
+          {/* U4: região viva com o resumo do lote ("2 de 3 enviados, 1 falhou"). */}
+          {isMultiMode && (
+            <p className="sr-only" role="status" aria-live="polite">
+              {`${doneCount} de ${fileQueue.length} enviados${failedCount > 0 ? `, ${failedCount} falhou${failedCount > 1 ? 's' : ''}` : ''}`}
+            </p>
+          )}
 
           {isMultiMode && fileQueue.length > 0 && (
             <div className="flex-1 overflow-y-auto space-y-3 py-2 max-h-[40vh]">
@@ -194,14 +207,14 @@ export const FileUploader = forwardRef<FileUploaderRef, FileUploaderProps>(({
             <div className="space-y-4">
               {filePreview.preview && filePreview.file.type === 'application/pdf' && (
                 <div className="border rounded-lg overflow-hidden bg-muted/30">
-                  <iframe src={`${filePreview.preview}#toolbar=0&navpanes=0`} className="w-full h-[280px] border-0" title="PDF Preview" />
+                  <iframe src={`${filePreview.preview}#toolbar=0&navpanes=0`} className="w-full h-[280px] border-0" title={`Pré-visualização do PDF ${filePreview.file.name}`} />
                 </div>
               )}
               <div className="relative border rounded-lg p-4 bg-muted/50">
                 <div className="flex items-start gap-4">
                   <div className="flex-shrink-0">
                     {filePreview.preview && filePreview.file.type !== 'application/pdf' ? (
-                      <img src={filePreview.preview} alt="Preview" className="w-20 h-20 object-cover rounded-lg"  loading="lazy" decoding="async"/>
+                      <img src={filePreview.preview} alt={`Pré-visualização de ${filePreview.file.name}`} className="w-20 h-20 object-cover rounded-lg"  loading="lazy" decoding="async"/>
                     ) : (
                       <div className="w-20 h-20 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
                         {getCategoryIcon(filePreview.validation.category || 'document')}

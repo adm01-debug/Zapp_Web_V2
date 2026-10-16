@@ -249,7 +249,7 @@ export function StickerPreview({ url, isSent }: StickerPreviewProps) {
   return (
     <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 300, damping: 20 }} className="relative">
       {!isLoaded && <div className="w-[120px] h-[120px] bg-muted animate-pulse rounded-lg" />}
-      <motion.img src={url} alt="Sticker" onLoad={() => setIsLoaded(true)} whileHover={{ scale: 1.1 }} className={cn("max-w-[120px] max-h-[120px] object-contain", !isLoaded && "hidden")} />
+      <motion.img src={url} alt="Figurinha" onLoad={() => setIsLoaded(true)} whileHover={{ scale: 1.1 }} className={cn("max-w-[120px] max-h-[120px] object-contain", !isLoaded && "hidden")} />
     </motion.div>
   );
 }
