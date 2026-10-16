@@ -6,6 +6,7 @@ import {
   enforceRateLimit,
 } from "../_shared/validation.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { FILE_SECURITY_SCANNER_V1 } from "../_shared/contract-schemas.ts";
 
 /**
  * File Security Scanner — varredura (VirusTotal) dos arquivos que o AGENTE envia.
@@ -42,8 +43,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 
 export const CONTRACT = "file-security-scanner";
 
-/** Teto de envio: a API `/api/v3/files` do VirusTotal recusa acima de 32 MiB. */
-export const MAX_SCAN_FILE_BYTES = 32 * 1024 * 1024;
+/** Teto de envio, vindo do contrato `file-security-scanner@v1` e aplicado no portão do upload. */
+export const MAX_SCAN_FILE_BYTES = FILE_SECURITY_SCANNER_V1.maxBytes;
 
 /** Cota por usuário: cada arquivo desconhecido é uma chamada paga ao provedor. */
 export const SCANNER_RATE_LIMIT_MAX = 5;

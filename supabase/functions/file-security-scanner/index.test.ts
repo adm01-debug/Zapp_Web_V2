@@ -23,6 +23,7 @@ import {
   validateScanUpload,
   verdictFromStats,
 } from "./index.ts";
+import { FILE_SECURITY_SCANNER_V1 } from "../_shared/contract-schemas.ts";
 
 function assert(condition: unknown, message = "condição falhou"): asserts condition {
   if (!condition) throw new Error(message);
@@ -591,9 +592,18 @@ Deno.test("M28: contadores e veredito — sem contadores não há veredito", () 
   assert(VT_POLL_MAX_ATTEMPTS > 0, "o polling precisa de pelo menos uma tentativa");
 });
 
-Deno.test("M28 [refazer 1]: um único motor malicioso já bloqueia (fronteira fail-closed)", () => {
+Deno.test("M28: [refazer 1] um único motor malicioso já bloqueia (fronteira fail-closed)", () => {
   assert(
     verdictFromStats({ malicious: 1, suspicious: 0 }) === "malicious",
     "1 motor malicioso tinha de ser malicious, não clean",
+  );
+});
+
+Deno.test("M28: [refazer 1] teto do upload vem do contrato file-security-scanner@v1", () => {
+  assert(
+    MAX_SCAN_FILE_BYTES === FILE_SECURITY_SCANNER_V1.maxBytes &&
+      FILE_SECURITY_SCANNER_V1.name === "file-security-scanner@v1" &&
+      FILE_SECURITY_SCANNER_V1.maxBytes === 32 * 1024 * 1024,
+    "teto do upload saiu do contrato v1",
   );
 });
