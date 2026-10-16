@@ -1,5 +1,7 @@
 Especialista: worker (hooks) — apoio em telas
 
+Nota ao juiz/portão: diff intencionalmente só-relato — ordem do cartão ("SÓ O RELATO", sem código-fonte): o conteúdo TL-108 já está na dia/2026-10-13 via 840a2b1c09 e a entrega anterior e591c760a era vazia; re-aplicar código criaria duplicata. Os "Ponto k" citam commit/arquivo/linha na branch do dia, não neste diff.
+
 Retomar TL-108 [refazer 2]: o pedido original (commit aprovado d153a8443) já está na branch do dia dia/2026-10-13 via 840a2b1c09; a entrega anterior e591c760a era vazia. Nenhum código-fonte foi alterado neste cartão — só este relato.
 
 Ponto 1 — preset `removerSupressao` já na dia com textos + details com nome do contato.
