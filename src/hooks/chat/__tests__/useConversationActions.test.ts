@@ -408,13 +408,15 @@ describe('useConversationActions', () => {
 
     it('usa o rpc atual do cliente com o this do cliente (harness que troca supabase.rpc)', async () => {
       const rpcOriginal = clienteSupabase.rpc;
-      let thisCapturado: unknown = 'nao-chamado';
       const rpcNovo = vi.fn(function (
         this: unknown,
         name: string,
         args: Record<string, unknown>,
       ) {
-        thisCapturado = this;
+        // Sem alias de `this`: a comparação direta prova o vínculo sem violar o lint.
+        if (this !== clienteSupabase) {
+          return Promise.resolve({ data: null, error: { code: 'BIND', message: 'this perdido' } });
+        }
         transferRpcCalls.push({ name, args });
         return Promise.resolve({ data: 'event-novo', error: null });
       });
@@ -425,7 +427,6 @@ describe('useConversationActions', () => {
           await result.current.transferContact('contact-1', 'agent', 'agent-2');
         });
         expect(rpcNovo).toHaveBeenCalledTimes(1);
-        expect(thisCapturado).toBe(clienteSupabase);
         expect(rpcNovo.mock.calls[0][0]).toBe('transfer_conversation');
         expect(toast.success).toHaveBeenCalledWith('Chat transferido para outro atendente');
       } finally {
