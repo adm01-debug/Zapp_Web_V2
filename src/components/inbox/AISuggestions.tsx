@@ -197,7 +197,8 @@ export function AISuggestions({ messages, contactName, contactId, onSelectSugges
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-6 w-6"
+                aria-label="Fechar sugestões"
+                className="h-6 w-6 [@media(pointer:coarse)]:min-w-[44px] [@media(pointer:coarse)]:min-h-[44px]"
                 onClick={() => setIsOpen(false)}
               >
                 <X className="h-4 w-4" />
