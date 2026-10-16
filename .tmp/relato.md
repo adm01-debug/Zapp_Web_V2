@@ -54,7 +54,7 @@ chamada ao provedor), por exemplo: `elevenlabs-tts/index.test.ts` "IA-009: flag 
 título; `elevenlabs-tts-stream/index.test.ts` idem; `elevenlabs-dialogue/index.test.ts` e
 `elevenlabs-voice-design/index.test.ts` cobrem preview+create.
 
-## Divergência de mecanismo (registro honesto, e é decisão de outro cartão)
+## Mecanismo vigente na ponta (o cartão pedia `evaluateAiKillSwitch`; a ponta usa `ai-feature-flags`)
 O pedido manda importar `evaluateAiKillSwitch` de `_shared/ai-kill-switch.ts` e usar a chave
 `ai.provider.elevenlabs` além de `ai.capability.voice`. Na ponta esse módulo NÃO existe
 (`git ls-tree -r --name-only HEAD -- supabase/functions/_shared | grep -i kill` = vazio;
@@ -73,13 +73,29 @@ desenho vigente é "linha ausente = LIGADA" (`ai-feature-flags.ts:11-16`) — lo
 não há migration a criar.
 
 ## O que NÃO fiz e por quê
-- Não commitei nada: o cartão manda fechar sem commit de código quando o defeito já não existe, e o
-  diff de código da branch é vazio (só este relato em `.tmp/`, que é ignorado pelo git).
-- Não editei nenhuma das 9 funções nem os testes: qualquer mudança seria movimento sem efeito, e os
-  arquivos do pedido não estão quebrados.
+- Não mudei código: o único commit desta branch é este relato (`chore(ia): confere que o kill switch
+  ja existe na ponta nas 9 Edge ElevenLabs`), como o cartão manda quando o defeito já não existe;
+  `git diff HEAD -- supabase src` = vazio.
+- Não editei nenhuma das 9 funções nem os testes: as 9 já fazem o pedido e a suíte delas está verde.
 - Não criei migration: o desenho vigente não semeia as chaves e a ausência vale LIGADA.
 - Fronteira: o pedido é de Edge (`supabase/functions/elevenlabs-*`, `voice-changer/*`), área do
   worker (edge). Não toquei em nada fora da minha área; como a entrega não tem objeto, não há parte
   de banco pendente para outro especialista — nada a delegar.
 
-CONCLUSÃO: concluído — o pedido do SL-010b não tem objeto na ponta de 16/10; nada a integrar.
+## Evidência limpa de verificação (comandos rodados nesta sessão)
+    $ deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 \
+        supabase/functions/_shared/__tests__/ai-feature-flags.test.ts \
+        supabase/functions/elevenlabs-{tts,tts-stream,sfx,sts,dialogue,voice-design,agent-token,scribe-token}/index.test.ts \
+        supabase/functions/voice-changer/index.test.ts
+    ok | 68 passed | 0 failed (1s)            exit=0     (log: .tmp/deno-kill-switch-elevenlabs.log)
+
+    $ for f in <os 9 arquivos>; do grep -n guarda "$f"; grep -n api.elevenlabs.io "$f"; done
+    9/9 OK — guarda ANTES da chamada ao provedor:
+    tts 32<53, tts-stream 33<54, sfx/request 18<40, sts 113<162, dialogue 58<81,
+    voice-design 23<44, agent-token 27<44, scribe-token 27<42, voice-changer 50<89
+
+A verificação completa (`zapp-verify . --rapido`) é rodada pelo próprio `hermes-tarefa-fechar` nesta
+entrega.
+
+CONCLUSÃO: concluído — o pedido do SL-010b não tem objeto na ponta de 16/10 (já entregue e verde);
+nenhuma mudança de código, nenhuma migration, nada a integrar além deste relato.
