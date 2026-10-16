@@ -95,6 +95,23 @@ export function formatGoalMetricValue(value: number): string {
 }
 
 /**
+ * `types.ts` é gerado do banco e ainda não conhece esta RPC (ela nasceu na migration
+ * 20261015232316); o cast some quando a regeneração rodar. Mesmo padrão de useAIUsageDashboard.ts.
+ */
+type PendingDatabaseRpc = (
+  fn: string,
+  args?: Record<string, unknown>,
+) => Promise<{ data: unknown; error: { message: string } | null }>;
+
+/** Busca as métricas reais das filas. Lança quando a RPC falha — quem chama decide o que fazer. */
+export async function fetchQueueGoalMetrics(): Promise<QueueGoalMetricsRow[]> {
+  const rpc = supabase.rpc as unknown as PendingDatabaseRpc;
+  const { data, error } = await rpc('rpc_queue_goal_metrics');
+  if (error) throw error;
+  return (Array.isArray(data) ? data : []) as QueueGoalMetricsRow[];
+}
+
+/**
  * Métricas reais das filas (RPC do PM-02). A visibilidade é do SERVIDOR: staff vê todas as filas
  * ativas, quem não é staff vê só as filas em que é membro ativo, e quem não é nem uma coisa nem
  * outra recebe zero linhas. Por isso a tela não filtra por papel — ela mostra o que a RPC devolve.
@@ -105,11 +122,10 @@ export function useQueueGoalMetrics() {
 
   const fetchMetrics = useCallback(async () => {
     try {
-      const { data, error } = await supabase.rpc('rpc_queue_goal_metrics');
-      if (error) throw error;
+      const rows = await fetchQueueGoalMetrics();
 
       const metricsMap: Record<string, QueueGoalMetricsRow> = {};
-      ((data ?? []) as QueueGoalMetricsRow[]).forEach((row) => {
+      rows.forEach((row) => {
         metricsMap[row.queue_id] = row;
       });
 

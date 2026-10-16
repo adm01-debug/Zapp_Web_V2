@@ -19,12 +19,12 @@
  */
 import { useCallback, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
 import { useVisiblePolling } from '@/hooks/realtime/useVisiblePolling';
 import {
   crossedGoalBands,
+  fetchQueueGoalMetrics,
   formatGoalMetricValue,
   goalMetricPercent,
   QUEUE_GOAL_METRICS,
@@ -87,9 +87,7 @@ export function useQueueGoalAlerts() {
 
     let rows: QueueGoalMetricsRow[];
     try {
-      const { data, error } = await supabase.rpc('rpc_queue_goal_metrics');
-      if (error) throw error;
-      rows = (data ?? []) as QueueGoalMetricsRow[];
+      rows = await fetchQueueGoalMetrics();
     } catch (error) {
       // Sem métrica real não há aviso: anunciar limite a partir de conta inventada é pior que ficar mudo.
       log.warn('Não foi possível medir as metas das filas:', error);
