@@ -27,7 +27,6 @@ export function useContactsViewState() {
   const [isMergeOpen, setIsMergeOpen] = useState(false);
   const [isCompareOpen, setIsCompareOpen] = useState(false);
   const [groupByCompany, setGroupByCompany] = useState(false);
-  const [isBulkTagOpen, setIsBulkTagOpen] = useState(false);
   const [detailContact, setDetailContact] = useState<typeof filteredContacts[0] | null>(null);
 
   const handleApplyPreset = useCallback((preset: FilterPreset) => {
@@ -108,7 +107,6 @@ export function useContactsViewState() {
     isMergeOpen, setIsMergeOpen,
     isCompareOpen, setIsCompareOpen,
     groupByCompany, setGroupByCompany,
-    isBulkTagOpen, setIsBulkTagOpen,
     detailContact, setDetailContact,
     handleApplyPreset, handleToggleSelect, handleSelectAll,
     handleContactClick,

@@ -34,7 +34,7 @@ function toolbarProps(overrides: Partial<React.ComponentProps<typeof ContactTool
     filterTag: '', setFilterTag: noop, filterDateRange: '', setFilterDateRange: noop,
     uniqueCompanies: [], uniqueJobTitles: [], uniqueTags: [], onApplyPreset: noop,
     groupByCompany: false, setGroupByCompany: noop, selectedIds: [] as string[],
-    onBulkTag: noop, onCompare: vi.fn(), onMerge: noop, canMerge: true,
+    onCompare: vi.fn(), onMerge: noop, canMerge: true,
     viewMode: 'grid' as ContactViewMode, setViewMode: noop, gridColumns: 4, setGridColumns: noop,
     totalCount: 0, crmIntegrationEnabled: false, onOpenCRM: noop,
     ...overrides,
@@ -48,9 +48,9 @@ describe('ContactToolbar (etapa 82)', () => {
     expect(values).toEqual(['name_asc', 'name_desc', 'created_desc', 'created_asc', 'updated_desc']);
   });
 
-  it('Comparar só aparece com 2 ou mais selecionados', () => {
+  it('com 1 selecionado não há ação de lote e Comparar só aparece com 2 ou mais', () => {
     const { rerender } = render(<ContactToolbar {...toolbarProps({ selectedIds: ['a'] })} />);
-    expect(screen.getByRole('button', { name: /Tags \(1\)/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Tags/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Comparar/ })).not.toBeInTheDocument();
 
     const props = toolbarProps({ selectedIds: ['a', 'b'] });

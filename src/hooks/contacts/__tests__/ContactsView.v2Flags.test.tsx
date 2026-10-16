@@ -52,14 +52,12 @@ const h = vi.hoisted(() => {
       dialogs: fn(),
       merge: fn(),
       compare: fn(),
-      bulkTag: fn(),
       stats: fn(),
       tabs: fn(),
       toolbar: fn(),
       results: fn(),
       content: fn(),
       detail: fn(),
-      bulkActions: fn(),
       crm: fn(),
     },
     estado: {
@@ -73,8 +71,6 @@ const h = vi.hoisted(() => {
       setIsCompareOpen: fn(),
       groupByCompany: false,
       setGroupByCompany: fn(),
-      isBulkTagOpen: false,
-      setIsBulkTagOpen: fn(),
       detailContact: {
         id: 'contato-1',
         name: 'Cliente de teste',
@@ -169,8 +165,6 @@ vi.mock('@/integrations/supabase/client', () => ({
 
 vi.mock('@/components/contacts/useContactsViewState', () => ({ useContactsViewState: () => h.estado }));
 vi.mock('@/components/contacts/contactPermissions', () => ({
-  canChangeSelectedContactsType: () => true,
-  canDeleteSelectedContacts: () => true,
   canMergeContacts: () => true,
 }));
 vi.mock('@/hooks/crm/useExternalContact360Batch', () => ({ useExternalContact360Batch: () => ({ lookup: () => null }) }));
@@ -183,14 +177,12 @@ vi.mock('@/hooks/system/useUserRole', () => ({ useUserRole: () => ({ isSuperviso
 vi.mock('@/components/contacts/ContactDialogs', () => ({ ContactDialogs: (p: unknown) => h.areas.dialogs(p) }));
 vi.mock('@/components/contacts/ContactMergeDialog', () => ({ ContactMergeDialog: (p: unknown) => h.areas.merge(p) }));
 vi.mock('@/components/contacts/ContactCompareDialog', () => ({ ContactCompareDialog: (p: unknown) => h.areas.compare(p) }));
-vi.mock('@/components/contacts/ContactBulkTagDialog', () => ({ ContactBulkTagDialog: (p: unknown) => h.areas.bulkTag(p) }));
 vi.mock('@/components/contacts/ContactStatsCards', () => ({ ContactStatsCards: (p: unknown) => h.areas.stats(p) }));
 vi.mock('@/components/contacts/ContactTypeTabs', () => ({ ContactTypeTabs: (p: unknown) => h.areas.tabs(p) }));
 vi.mock('@/components/contacts/ContactToolbar', () => ({ ContactToolbar: (p: unknown) => h.areas.toolbar(p) }));
 vi.mock('@/components/contacts/ContactResultsSummary', () => ({ ContactResultsSummary: (p: unknown) => h.areas.results(p) }));
 vi.mock('@/components/contacts/ContactContentArea', () => ({ ContactContentArea: (p: unknown) => h.areas.content(p) }));
 vi.mock('@/components/contacts/ContactDetailPanel', () => ({ ContactDetailPanel: (p: unknown) => h.areas.detail(p) }));
-vi.mock('@/components/contacts/BulkActionsBar', () => ({ BulkActionsBar: (p: unknown) => h.areas.bulkActions(p) }));
 vi.mock('@/components/contacts/ContactCRMDialog', () => ({ ContactCRMDialog: (p: unknown) => h.areas.crm(p) }));
 
 import { ContactsView } from '@/components/contacts/ContactsView';
@@ -200,14 +192,12 @@ const TELA_ATUAL = [
   'area-dialogs',
   'area-merge',
   'area-compare',
-  'area-bulk-tag',
   'area-stats',
   'area-tabs',
   'area-toolbar',
   'area-results',
   'area-content',
   'area-detail',
-  'area-bulk-actions',
 ];
 
 /** Marca cada área com um elemento, para ler a tela montada. */
@@ -216,14 +206,12 @@ function marcarAreas() {
     [h.areas.dialogs, 'area-dialogs'],
     [h.areas.merge, 'area-merge'],
     [h.areas.compare, 'area-compare'],
-    [h.areas.bulkTag, 'area-bulk-tag'],
     [h.areas.stats, 'area-stats'],
     [h.areas.tabs, 'area-tabs'],
     [h.areas.toolbar, 'area-toolbar'],
     [h.areas.results, 'area-results'],
     [h.areas.content, 'area-content'],
     [h.areas.detail, 'area-detail'],
-    [h.areas.bulkActions, 'area-bulk-actions'],
   ];
   for (const [spy, id] of mapa) {
     spy.mockImplementation(() => <span data-testid={id} />);

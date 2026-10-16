@@ -589,7 +589,7 @@ Módulo `?view=contacts`. Plano de referência: `docs/audits/PLANO_CONTATOS_100_
 | Página e estado | `ContactsView.tsx`, `useContactsViewState.ts` (vista, colunas, diálogos, atalhos), `useContactsCRUD.ts` (busca, CRUD, seleção, filtros) |
 | Topo | `ContactStatsCards.tsx` + `ContactKpiCard.tsx` (4 KPIs), `ContactTypeTabs.tsx` (Todos + 6 tipos), `ContactToolbar.tsx`, `ContactSearchWithSuggestions.tsx`, `ContactAdvancedFilters.tsx`, `FilterPresets.tsx`, `ContactViewSwitcher.tsx` |
 | Vistas | `ContactContentArea.tsx` → `ContactCard.tsx` (Cards), `ContactListItem.tsx` / `ContactGroupedList.tsx` (Lista), `ContactsTable.tsx` (Tabela), `ContactKanbanView.tsx` (Pipeline), `ContactMapView.tsx` + `ContactRegionMap.tsx` + `contactRegionGeo.ts` + `getRegionFromPhone.ts` (Mapa), `ContactAnalyticsDashboard.tsx` (Analytics), `ContactEmptyState.tsx`, `ContactsSkeleton.tsx`, `ContactResultsSummary.tsx` (contagem, selecionar todos, paginação) |
-| Ações | `BulkActionsBar.tsx` (tag, atribuir, tipo, excluir em lote), `ContactDialogs.tsx` (criar, editar, excluir, botão flutuante "Novo contato"), `ContactForm.tsx` + `useContactFormValidation.ts`, `ContactBulkTagDialog.tsx`, `ContactCompareDialog.tsx`, `ContactMergeDialog.tsx` |
+| Ações | `ContactDialogs.tsx` (criar, editar, excluir, botão flutuante "Novo contato"), `ContactForm.tsx` + `useContactFormValidation.ts`, `ContactCompareDialog.tsx`, `ContactMergeDialog.tsx` |
 | Detalhe | `ContactDetailPanel.tsx`, `ContactActivityTimeline.tsx`, `ContactNotes.tsx`, `ContactEngagementScore.tsx`, `ContactPurchaseHistory.tsx`, `CompanyLogo.tsx`, `HighlightText.tsx` |
 | CRM externo | `AdvancedCRMSearch.tsx`, `CRMContactCard.tsx`, `CRMFiltersPanel.tsx`, `ContactCRMDialog.tsx` (atrás de flag; enriquecimento fora do plano, decisão D5) |
 | Fonte de verdade | `contactTypeConfig.tsx` (ícone/cor por tipo), `contactTypeOrder.ts` (ordem e `VALID_TAB_TYPES`), `contactPermissions.ts` (`can_delete`), `types.ts` |
@@ -601,8 +601,9 @@ Módulo `?view=contacts`. Plano de referência: `docs/audits/PLANO_CONTATOS_100_
 | `useContactsSearch` | lista paginada, busca, filtros, sort, toggle de legados (`localStorage` `contact-show-legacy`) | RPCs `search_contacts(..., include_legacy)`, `contacts_count_by_type(include_legacy)`, `get_last_message_dates` |
 | `useContactsKpi` | 4 KPIs, paginado de 1.000 em 1.000 com o mesmo critério da aba "Todos" | `contacts` (select) — `contactsAggregates.ts` |
 | `useContactsCRUD` | criar/editar (insert/update), excluir | RPC `delete_contact(p_id)` (soft-delete; erro ou `null` = falha) |
-| `BulkActionsBar` | ações em lote | RPC `delete_contacts(p_ids)`, update de `tags`/`assigned_to`/`contact_type` |
 | `ContactService` | detalhe e permissão | `getById`, RPC `can_delete_contacts` |
+
+> Sem ações em lote (CT-088, 15/10/2026): o Zapp Web não altera nem exclui contatos em massa — **edição em massa de contatos é feita no Singu**. Saíram a barra de ações em massa, o diálogo de tags em lote e a RPC `delete_contacts` do front; a seleção na lista continua, só para Comparar/Mesclar.
 
 ### Vistas, atalhos e permissões
 
@@ -611,7 +612,7 @@ Módulo `?view=contacts`. Plano de referência: `docs/audits/PLANO_CONTATOS_100_
 - Atalhos: `Ctrl/⌘+N` novo contato; `Ctrl/⌘+A` seleciona todos (fora de campos de texto); `Esc` fecha o detalhe → limpa a seleção → limpa a busca.
 - "Conversar" (card, lista, tabela, detalhe) abre o inbox com o contato; o corpo do item abre o detalhe.
 - Excluir: aparece só onde `can_delete` confirma (admin/supervisor ou responsável); a RPC repete a checagem.
-- Alterar tipo em massa e Mesclar: só admin/supervisor.
+- Mesclar: só admin/supervisor (edição em massa de contatos é feita no Singu).
 - Legados (`is_lid_legacy` ou telefone fora de `^[0-9]{10,15}$`) ficam ocultos por padrão; o switch "Mostrar legados" traz de volta e limpa a seleção.
 - Restaurar exclusão / reclassificar legado: `docs/runbooks/contatos-exclusao-e-legados.md`.
 

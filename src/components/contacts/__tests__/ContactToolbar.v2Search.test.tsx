@@ -109,7 +109,6 @@ function toolbarProps(
     groupByCompany: false,
     setGroupByCompany: noop,
     selectedIds: [],
-    onBulkTag: noop,
     onCompare: noop,
     onMerge: noop,
     canMerge: false,

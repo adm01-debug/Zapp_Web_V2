@@ -8,7 +8,7 @@
  * enquanto o canônico — o que as telas usam de fato — seguia vivo:
  *
  *   par                cópia removida (sem importador)                 canônico que ficou
- *   BulkActionsBar     src/components/BulkActionsBar.tsx               src/components/contacts/BulkActionsBar.tsx
+ *   BulkActionsBar     src/components/BulkActionsBar.tsx               (o canônico src/components/contacts/BulkActionsBar.tsx saiu no CT-088)
  *   TrendIndicator     src/components/dashboard/TrendIndicator.tsx     src/components/dashboard/metrics/TrendIndicator.tsx
  *   MetricComparison   src/components/dashboard/MetricComparison.tsx   src/components/dashboard/metrics/MetricComparison.tsx
  *   MiniSparkline      src/components/dashboard/MiniSparkline.tsx      src/components/dashboard/metrics/MiniSparkline.tsx
@@ -54,7 +54,6 @@ const REFERENCIAS_PROIBIDAS = [
 ];
 
 const CANONICOS = [
-  'src/components/contacts/BulkActionsBar.tsx',
   'src/components/dashboard/metrics/TrendIndicator.tsx',
   'src/components/dashboard/metrics/MetricComparison.tsx',
   'src/components/dashboard/metrics/MiniSparkline.tsx',

@@ -64,7 +64,6 @@ function toolbarProps(adminAccess: boolean | null | undefined, onMerge = noop) {
     groupByCompany: false,
     setGroupByCompany: noop,
     selectedIds: SELECAO,
-    onBulkTag: noop,
     onCompare: noop,
     onMerge,
     canMerge: canMergeContacts(adminAccess),

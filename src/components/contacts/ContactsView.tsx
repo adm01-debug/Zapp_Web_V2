@@ -7,13 +7,10 @@ import { ScrollToTopButton } from '@/components/ui/scroll-to-top';
 import { useLayoutScroll } from '@/contexts/LayoutScrollContext';
 import { useContactsV2Flags, contactsV2AreasLigadas } from '@/hooks/contacts/useContactsV2Flags';
 import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
-import { useUserRole } from '@/hooks/system/useUserRole';
-import { BulkActionsBar } from '@/components/contacts/BulkActionsBar';
 import { ContactStatsCards } from './ContactStatsCards';
 import { ContactTypeTabs } from './ContactTypeTabs';
 import { ContactMergeDialog } from './ContactMergeDialog';
 import { ContactCompareDialog } from './ContactCompareDialog';
-import { ContactBulkTagDialog } from './ContactBulkTagDialog';
 import { ContactDialogs } from './ContactDialogs';
 import { ContactToolbar } from './ContactToolbar';
 import { ContactDetailPanel } from './ContactDetailPanel';
@@ -21,7 +18,7 @@ import { ContactContentArea } from './ContactContentArea';
 import { ContactResultsSummary } from './ContactResultsSummary';
 import { ContactCRMDialog } from './ContactCRMDialog';
 import { useContactsViewState } from './useContactsViewState';
-import { canChangeSelectedContactsType, canDeleteSelectedContacts, canMergeContacts } from './contactPermissions';
+import { canMergeContacts } from './contactPermissions';
 export function ContactsView() {
   const crmIntegrationEnabled = useCRMIntegrationEnabled();
 
@@ -47,7 +44,7 @@ export function ContactsView() {
     crud, viewMode, setViewMode, gridColumns, setGridColumns,
     isMergeOpen, setIsMergeOpen,
     isCompareOpen, setIsCompareOpen, groupByCompany, setGroupByCompany,
-    isBulkTagOpen, setIsBulkTagOpen, detailContact, setDetailContact,
+    detailContact, setDetailContact,
     handleApplyPreset, handleToggleSelect, handleSelectAll,
     handleContactClick,
   } = useContactsViewState();
@@ -77,36 +74,10 @@ export function ContactsView() {
     invalidateContactAggregates,
   } = crud;
 
-  const { isSupervisor } = useUserRole();
   const crmContacts = useMemo(() => filteredContacts.map(c => ({ id: c.id, phone: c.phone })), [filteredContacts]);
   const { lookup } = useExternalContact360Batch(crmContacts);
   const getCRMData = (phone: string) => lookup(phone) ?? null;
   const layoutScrollRef = useLayoutScroll();
-
-  /**
-   * `can_delete` chega do banco por contato (RPC `can_delete_contacts`). A seleção
-   * sobrevive à troca de página/filtro, então um contato selecionado pode não estar
-   * na lista carregada agora: nesse caso não há informação sobre ele e o botão NÃO
-   * deve ser bloqueado -- mesma semântica do item avulso (`undefined` = segue
-   * visível). Antes, o cálculo era feito sobre a página visível e desabilitava o
-   * botão com a mensagem errada ("nenhum pode ser excluído") só por paginar.
-   */
-  const canDeleteSelection = useMemo(
-    () => canDeleteSelectedContacts(selectedIds, filteredContacts),
-    [filteredContacts, selectedIds],
-  );
-
-  /**
-   * "Alterar tipo em massa" usa o mesmo predicado do banco que a exclusão
-   * (`can_edit_contact`: admin/supervisor OU responsável pelo contato) — o
-   * UPDATE de `contacts` é governado pela policy "Users can update their
-   * assigned contacts". Mesma semântica da exclusão em lote: um conhecido com
-   * permissão habilita; seleção sem informação não bloqueia.
-   */
-  const canChangeTypeSelection = useMemo(
-    () => canChangeSelectedContactsType(selectedIds, filteredContacts),
-    [filteredContacts, selectedIds],
-  );
 
   /**
    * Mesclar não tem permissão por contato: a RPC `merge_contacts_atomic` recusa
@@ -159,13 +130,6 @@ export function ContactsView() {
         open={isCompareOpen} onOpenChange={setIsCompareOpen}
         contacts={filteredContacts.filter(c => selectedIds.includes(c.id))}
       />
-      <ContactBulkTagDialog
-        open={isBulkTagOpen} onOpenChange={setIsBulkTagOpen}
-        contactIds={selectedIds} allTags={uniqueTags}
-        onComplete={() => { setSelectedIds([]); refetch(); invalidateContactAggregates(); }}
-        onPartialComplete={(refused) => { setSelectedIds(refused); refetch(); invalidateContactAggregates(); }}
-      />
-
       <ContactStatsCards
         totalAll={contactCountByType['all'] ?? 0}
         fornecedoresAll={contactCountByType['fornecedor'] ?? 0}
@@ -189,7 +153,6 @@ export function ContactsView() {
         onApplyPreset={handleApplyPreset}
         groupByCompany={groupByCompany} setGroupByCompany={setGroupByCompany}
         selectedIds={selectedIds}
-        onBulkTag={() => setIsBulkTagOpen(true)}
         onCompare={() => setIsCompareOpen(true)}
         canMerge={canMerge}
         onMerge={() => setIsMergeOpen(true)}
@@ -261,17 +224,6 @@ export function ContactsView() {
         />
       )}
 
-      <BulkActionsBar
-        selectedIds={selectedIds}
-        onClearSelection={() => setSelectedIds([])}
-        onActionComplete={() => { setSelectedIds([]); refetch(); invalidateContactAggregates(); }}
-        onPartialComplete={(refused) => { setSelectedIds(refused); refetch(); invalidateContactAggregates(); }}
-        onCountersChanged={invalidateContactAggregates}
-        availableTags={uniqueTags}
-        canDeleteSelection={canDeleteSelection}
-        canChangeType={isSupervisor}
-        canChangeTypeSelection={canChangeTypeSelection}
-      />
     </div>
     </MotionConfig>
   );

@@ -229,16 +229,16 @@
 | 6.3 | Avatar de contato | ✅ | Campo `avatar_url` |
 | 6.4 | Atribuição de contato a agente | ✅ | Campo `assigned_to` |
 | 6.5 | Atribuição a fila | ✅ | Campo `queue_id` |
-| 6.6 | Tags/etiquetas em contatos | ✅ | Coluna `contacts.tags` (`text[]`), `ContactBulkTagDialog.tsx` |
+| 6.6 | Tags/etiquetas em contatos | ✅ | Coluna `contacts.tags` (`text[]`) |
 | 6.7 | Notas privadas por contato | ✅ | Tabela `contact_notes`, `ContactNotes.tsx` |
 | 6.8 | Tipo de contato (cliente, fornecedor, transportadora, colaborador, prestador de serviço, parceiro) | ✅ | Campo `contact_type` (CHECK `chk_contact_type`), `contactTypeConfig.tsx` |
-| 6.9 | Exclusão (soft-delete) | ✅ | Coluna `deleted_at`, RPCs `delete_contact`/`delete_contacts` |
+| 6.9 | Exclusão (soft-delete) | ✅ | Coluna `deleted_at`, RPC `delete_contact` (item único; em massa é no Singu) |
 | 6.10 | Mesclagem de duplicados | ✅ | `src/components/contacts/ContactMergeDialog.tsx` |
 | 6.11 | Comparação de contatos | ✅ | `src/components/contacts/ContactCompareDialog.tsx` |
 | 6.12 | Busca e filtros avançados | ✅ | `ContactSearchWithSuggestions.tsx`, `ContactAdvancedFilters.tsx` |
 | 6.13 | Filtros salvos | ✅ | `src/components/contacts/FilterPresets.tsx` |
 | 6.14 | Paginação incremental | ✅ | `ContactsView.tsx` (`loadMore`/`loadPrevious`) |
-| 6.15 | Ações em bulk | ✅ | `src/components/contacts/BulkActionsBar.tsx` |
+| 6.15 | Edição em massa | ➖ fora do Zapp | **Edição em massa de contatos é feita no Singu** — remoção no Zapp Web em CT-088 (15/10/2026); a seleção na lista fica, só para Comparar/Mesclar |
 | 6.16 | Vistas cards / lista / tabela / kanban / mapa | ✅ | `src/components/contacts/ContactViewSwitcher.tsx` |
 | 6.16 | Versionamento de registros | ✅ | `src/components/VersionHistory.tsx` |
 
