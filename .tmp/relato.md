@@ -113,9 +113,9 @@ scripts/db-audit/assume-return-conversation.test.sh
 src/integrations/supabase/types.ts
 supabase/migrations/20261011094027_assume_return_conversation.sql
 
-Faixa (`git log --oneline dia/2026-10-15..HEAD`):
-e6b1495557 fix(ci): fixa a imagem do contrato assumir/devolver no DB Guard
-07282faa9e fix(db): reabre conversa resolvida ao assumir
+Faixa (`git log --oneline dia/2026-10-15..HEAD`; a contagem real vem no bloco FATOS MEDIDOS): 1 commit
+`fix(db)` com o trabalho anterior trazido por cherry-pick, 1 commit `fix(ci)` com a minha correcao e os
+commits `docs(db)` do proprio relato.
 
 Verificacoes executadas (saida real, nesta arvore):
 - `TMPDIR="$PWD/.tmp" ASSUME_RETURN_TEST_POSTGRES_IMAGE=postgres:17-alpine bash scripts/db-audit/assume-return-conversation.test.sh`
