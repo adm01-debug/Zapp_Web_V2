@@ -9,13 +9,12 @@ interface PeriodSelectProps {
 
 /**
  * T35: filtro de período. Componente controlado de proposito - quem guarda o estado
- * e a URL (T36), nao ele. Altura h-10 (40px), igual aos chips ao lado (aceite: 3
- * controles 40 +-2 na mesma linha).
+ * e a URL (T36), nao ele. Altura h-11 no celular (44px), h-10 no desktop (40px).
  */
 export function PeriodSelect({ value, onValueChange, className }: PeriodSelectProps) {
   return (
     <Select value={value} onValueChange={(v) => onValueChange(v as PeriodoValue)}>
-      <SelectTrigger className={`h-10 w-[150px] text-xs ${className ?? ''}`} aria-label="Período">
+      <SelectTrigger className={`h-11 md:h-10 w-[150px] text-xs ${className ?? ''}`} aria-label="Período">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

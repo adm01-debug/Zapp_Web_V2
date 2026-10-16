@@ -90,7 +90,9 @@ describe('useTalkX', () => {
 
   it('exposes all mutation functions', () => {
     const { result } = renderHook(() => useTalkX(), { wrapper: createWrapper() });
-    expect(result.current.createCampaign).toBeDefined();
+    // HZ2-012: `createCampaign` era código morto — nenhum componente de `src/`
+    // chamava (a criação passa pelo wizard, via `useCampaignEditor`); foi removido.
+    expect('createCampaign' in result.current).toBe(false);
     expect(result.current.updateCampaign).toBeDefined();
     expect(result.current.deleteCampaign).toBeDefined();
     expect(result.current.addRecipients).toBeDefined();

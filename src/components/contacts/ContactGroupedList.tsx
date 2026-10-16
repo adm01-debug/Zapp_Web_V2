@@ -72,7 +72,7 @@ export function ContactGroupedList({
                   <Building className="w-3.5 h-3.5 text-primary" />
                 )}
               </div>
-              <span className="text-sm font-semibold text-foreground flex-1 text-left truncate">
+              <span className="text-xs font-semibold text-foreground uppercase tracking-wider flex-1 text-left truncate">
                 {company}
               </span>
               <Badge variant="secondary" className="text-3xs h-5 px-2 font-medium">
@@ -94,7 +94,7 @@ export function ContactGroupedList({
                   transition={{ duration: 0.2 }}
                   className="overflow-hidden"
                 >
-                  <div className="border-t border-border/20 space-y-1 p-1">
+                  <div className="border-t border-border/20 space-y-2 p-1">
                     {members.map((contact, index) => (
                       <ContactListItem
                         key={contact.id}

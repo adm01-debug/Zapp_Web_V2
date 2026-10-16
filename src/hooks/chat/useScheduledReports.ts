@@ -4,6 +4,11 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { toast } from 'sonner';
 import { log } from '@/lib/logger';
 
+// Mesma forma simples de `src/lib/emailRecipients.ts` (SIMPLE_EMAIL_RE): exige
+// domínio com ponto e recusa espaços, vírgula, `;` e `<>`.
+const EMAIL_RE = /^[^\s<>@,;]+@[^\s<>@,;]+\.[^\s<>@,;]+$/;
+const MAX_RECIPIENTS = 20;
+
 interface ScheduledReport {
   id: string;
   name: string;
@@ -40,7 +45,7 @@ function calculateNextSendAt(frequency: string): string {
 }
 
 export function useScheduledReports() {
-  const { user } = useAuth();
+  const { profile } = useAuth();
   const [reports, setReports] = useState<ScheduledReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -66,8 +71,10 @@ export function useScheduledReports() {
 
   const addRecipient = useCallback(() => {
     const email = recipientInput.trim();
-    if (!email || !email.includes('@')) { toast.error('Digite um email válido'); return; }
-    if (editingReport.recipients?.includes(email)) { toast.error('Email já adicionado'); return; }
+    const recipients = editingReport.recipients || [];
+    if (!EMAIL_RE.test(email)) { toast.error('Digite um email válido'); return; }
+    if (recipients.some(r => r.toLowerCase() === email.toLowerCase())) { toast.error('Email já adicionado'); return; }
+    if (recipients.length >= MAX_RECIPIENTS) { toast.error('Limite de 20 destinatários por relatório'); return; }
     setEditingReport(prev => ({ ...prev, recipients: [...(prev.recipients || []), email] }));
     setRecipientInput('');
   }, [recipientInput, editingReport.recipients]);
@@ -90,7 +97,7 @@ export function useScheduledReports() {
         format: editingReport.format || 'pdf',
         is_active: editingReport.is_active ?? true,
         next_send_at: calculateNextSendAt(editingReport.frequency || 'weekly'),
-        created_by: user?.id || null,
+        created_by: profile?.id || null,
       };
 
       if (editingReport.id) {
@@ -112,7 +119,7 @@ export function useScheduledReports() {
     } finally {
       setIsSaving(false);
     }
-  }, [editingReport, user?.id, fetchReports]);
+  }, [editingReport, profile, fetchReports]);
 
   const handleDelete = useCallback(async (id: string) => {
     try {
@@ -130,9 +137,11 @@ export function useScheduledReports() {
     try {
       const { error } = await supabase.from('scheduled_reports').update({ is_active: isActive }).eq('id', id);
       if (error) throw error;
+      toast.success(isActive ? 'Relatório ativado!' : 'Relatório desativado!');
       fetchReports();
     } catch (err) {
       log.error('Error toggling report:', err);
+      toast.error('Erro ao ativar/desativar relatório');
     }
   }, [fetchReports]);
 

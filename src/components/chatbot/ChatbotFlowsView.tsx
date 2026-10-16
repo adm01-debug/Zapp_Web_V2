@@ -15,17 +15,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import {
   Bot, Plus, Edit2, Trash2, Play, Pause, Copy, Zap, MessageSquare,
   GitBranch, Clock, ArrowRight, Loader2, Settings, BarChart3,
   HelpCircle, Tag, Users, Send, ChevronRight, Activity,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ChatbotFlowEditor } from './ChatbotFlowEditor';
+import { ChatbotHonestNotice } from './ChatbotHonestNotice';
+import { SectionErrorBoundary } from '@/components/ui/section-error-boundary';
 const ChatbotExecutionsDashboard = lazy(() => import('./ChatbotExecutionsDashboard').then(m => ({ default: m.ChatbotExecutionsDashboard })));
 
 const triggerLabels: Record<string, { label: string; icon: React.ComponentType<{ className?: string }> }> = {
@@ -37,10 +40,15 @@ const triggerLabels: Record<string, { label: string; icon: React.ComponentType<{
 };
 
 export function ChatbotFlowsView() {
+  // CT-70 — com "reduzir movimento" ligado, os cards entram já no estado final.
+  const prefersReducedMotion = useReducedMotion();
   const { flows, isLoading, createFlow, updateFlow, deleteFlow, toggleFlow } = useChatbotFlows();
   const [showCreate, setShowCreate] = useState(false);
   const [editingFlow, setEditingFlow] = useState<ChatbotFlow | null>(null);
   const [search, setSearch] = useState('');
+  // Exclusão de fluxo é irreversível: o clique abre a confirmação e só o
+  // "Excluir" do diálogo dispara a mutation (cancelar não apaga nada).
+  const [pendingDelete, setPendingDelete] = useState<ChatbotFlow | null>(null);
 
   type TriggerType = 'keyword' | 'first_message' | 'menu' | 'webhook' | 'schedule';
   const [form, setForm] = useState({
@@ -110,6 +118,7 @@ export function ChatbotFlowsView() {
       </div>
 
       <Tabs defaultValue="flows" className="flex-1 flex flex-col min-h-0">
+        <ChatbotHonestNotice />
         <TabsList className="bg-muted/50 w-fit">
           <TabsTrigger value="flows" className="gap-2"><Bot className="w-4 h-4" />Fluxos</TabsTrigger>
           <TabsTrigger value="executions" className="gap-2"><Activity className="w-4 h-4" />Execuções</TabsTrigger>
@@ -170,9 +179,9 @@ export function ChatbotFlowsView() {
                   <motion.div
                     key={flow.id}
                     layout
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
+                    initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.95 }}
+                    animate={prefersReducedMotion ? undefined : { opacity: 1, scale: 1 }}
+                    exit={prefersReducedMotion ? undefined : { opacity: 0, scale: 0.95 }}
                   >
                     <Card className={cn(
                       'border-secondary/30 hover:border-primary/30 transition-all',
@@ -193,6 +202,7 @@ export function ChatbotFlowsView() {
                           </div>
                           <Switch
                             checked={flow.is_active}
+                            aria-label={`Ativar ${flow.name}`}
                             onCheckedChange={checked => toggleFlow.mutate({ id: flow.id, is_active: checked })}
                           />
                         </div>
@@ -237,15 +247,18 @@ export function ChatbotFlowsView() {
                           </span>
                           <div className="flex items-center gap-1">
                             <Button size="icon" variant="ghost" className="h-7 w-7"
+                              aria-label={`Editar fluxo ${flow.name}`}
                               onClick={() => setEditingFlow(flow)}>
                               <Edit2 className="w-3.5 h-3.5" />
                             </Button>
                             <Button size="icon" variant="ghost" className="h-7 w-7"
+                              aria-label={`Duplicar fluxo ${flow.name}`}
                               onClick={() => handleDuplicate(flow)}>
                               <Copy className="w-3.5 h-3.5" />
                             </Button>
                             <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive"
-                              onClick={() => deleteFlow.mutate(flow.id)}>
+                              aria-label={`Excluir fluxo ${flow.name}`}
+                              onClick={() => setPendingDelete(flow)}>
                               <Trash2 className="w-3.5 h-3.5" />
                             </Button>
                           </div>
@@ -262,9 +275,11 @@ export function ChatbotFlowsView() {
         </TabsContent>
 
         <TabsContent value="executions" className="flex-1 min-h-0 mt-4">
-          <Suspense fallback={<Skeleton className="h-96 w-full" />}>
-            <ChatbotExecutionsDashboard />
-          </Suspense>
+          <SectionErrorBoundary sectionName="Execuções do chatbot">
+            <Suspense fallback={<Skeleton className="h-96 w-full" />}>
+              <ChatbotExecutionsDashboard />
+            </Suspense>
+          </SectionErrorBoundary>
         </TabsContent>
       </Tabs>
 
@@ -292,7 +307,7 @@ export function ChatbotFlowsView() {
             <div>
               <Label>Tipo de gatilho</Label>
               <Select value={form.trigger_type} onValueChange={(v: string) => setForm(f => ({ ...f, trigger_type: v as TriggerType }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger aria-label="Tipo de gatilho"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="keyword">Palavra-chave</SelectItem>
                   <SelectItem value="first_message">Primeira mensagem</SelectItem>
@@ -320,6 +335,25 @@ export function ChatbotFlowsView() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={pendingDelete !== null} onOpenChange={(open) => { if (!open) setPendingDelete(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir fluxo de chatbot?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingDelete ? <>O fluxo <span className="font-semibold text-foreground">&quot;{pendingDelete.name}&quot;</span> será removido. </> : null}
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => { if (pendingDelete) deleteFlow.mutate(pendingDelete.id); setPendingDelete(null); }}
+            >Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

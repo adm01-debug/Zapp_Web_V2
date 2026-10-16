@@ -48,6 +48,24 @@ function randomFraction(): number {
 }
 
 /**
+ * Timer da cadeia de retry de `openContactChat` que ainda está agendado.
+ *
+ * `openContactChat` não é um hook: não existe cleanup de componente para
+ * pendurar a limpeza, então o handle vive no módulo. Sem ele o `clearTimeout`
+ * não tinha onde ser chamado e a cadeia seguia disparando o evento até 15
+ * vezes depois de a inbox já ter aberto o contato — o último timer ficava
+ * pendente atravessando o teardown do jsdom (falha latente da suíte).
+ */
+let retryTimer: ReturnType<typeof setTimeout> | null = null;
+
+function clearRetryTimer(): void {
+  if (retryTimer !== null) {
+    clearTimeout(retryTimer);
+    retryTimer = null;
+  }
+}
+
+/**
  * CT-06 — abre a conversa do contato no inbox a partir do toast de sucesso.
  *
  * Não existe rota `?view=inbox&contact=<id>`: o inbox recebe a conversa por
@@ -63,20 +81,29 @@ export function openContactChat(contactId: string): void {
   // derruba o processo — era isso que reprovava o `test:coverage` do CI.
   if (typeof window === 'undefined') return;
   const appWindow = window as Window & { __pendingOpenContactId?: string };
+  // Uma chamada nova cancela a cadeia anterior: duas cadeias concorrentes
+  // disputariam o mesmo `__pendingOpenContactId`.
+  clearRetryTimer();
   appWindow.__pendingOpenContactId = contactId;
   if (new URLSearchParams(window.location.search).get('view') !== 'inbox') {
     navigateToView('inbox');
   }
   let attempts = 0;
   const tryDispatch = () => {
+    retryTimer = null;
     attempts++;
     // O timer sobrevive ao ambiente (teardown do jsdom): reavaliar antes de
     // tocar o DOM evita o ReferenceError e encerra a cadeia de retry.
     if (typeof window === 'undefined') return;
     window.dispatchEvent(new CustomEvent('open-contact-chat', { detail: { contactId } }));
-    if (attempts < 15) setTimeout(tryDispatch, 200);
+    // A inbox limpa `__pendingOpenContactId` ao consumir o evento
+    // (useRealtimeInbox): isso é a confirmação de entrega. Confirmada, a
+    // cadeia para aqui — não há por que redisparar o evento nem deixar timer
+    // pendente para o teardown do jsdom.
+    if (appWindow.__pendingOpenContactId !== contactId) return;
+    if (attempts < 15) retryTimer = setTimeout(tryDispatch, 200);
   };
-  setTimeout(tryDispatch, 150);
+  retryTimer = setTimeout(tryDispatch, 150);
 }
 
 export function useContactSearch(
@@ -86,6 +113,13 @@ export function useContactSearch(
   const [contactSearch, setContactSearch] = useState('');
   const [contactResults, setContactResults] = useState<ContactResult[]>([]);
   const [searchingContacts, setSearchingContacts] = useState(false);
+  // A consulta pode falhar (rede/RLS). Falha NÃO é lista vazia: sem este
+  // estado a tela anunciava "Nenhum contato encontrado" para quem não
+  // conseguiu perguntar nada, e não havia como tentar de novo.
+  const [contactSearchError, setContactSearchError] = useState(false);
+  // `retryContactSearch` só muda o número da tentativa; o efeito abaixo refaz
+  // a mesma consulta.
+  const [searchAttempt, setSearchAttempt] = useState(0);
   // CT-14/CT-17 — quando o dialog abre a partir de uma conversa (chat, perfil
   // do contato), o contato já vem escolhido e continua trocável.
   const [selectedContact, setSelectedContact] = useState<ContactResult | null>(presetContact ?? null);
@@ -113,30 +147,49 @@ export function useContactSearch(
       if (step !== 'selectContact') {
         setContactResults([]);
         setSearchingContacts(false);
+        setContactSearchError(false);
         return;
       }
 
       setSearchingContacts(true);
-      const data = await fetchCatalogContactResults(query);
-      if (!cancelled) {
-        setContactResults(data);
-        setSearchingContacts(false);
+      try {
+        const data = await fetchCatalogContactResults(query);
+        if (!cancelled) {
+          setContactResults(data);
+          setContactSearchError(false);
+        }
+      } catch {
+        // `fetchCatalogContactResults` já logou a causa; aqui só marcamos o
+        // estado para a tela pedir "Tentar de novo" em vez de dizer que a
+        // busca deu em nada.
+        if (!cancelled) {
+          setContactResults([]);
+          setContactSearchError(true);
+        }
+      } finally {
+        if (!cancelled) setSearchingContacts(false);
       }
     }, hasQuery ? 300 : 0);
     return () => {
       cancelled = true;
       clearTimeout(timeout);
     };
-  }, [contactSearch, step]);
+  }, [contactSearch, step, searchAttempt]);
+
+  const retryContactSearch = useCallback(() => {
+    setSearchAttempt((n) => n + 1);
+  }, []);
 
   const resetContactSelection = useCallback(() => {
     setSelectedContact(null);
     setContactSearch('');
+    setContactSearchError(false);
   }, []);
 
   return {
     contactSearch, setContactSearch,
-    contactResults, searchingContacts,
+    contactResults, searchingContacts, contactSearchError,
+    retryContactSearch,
     selectedContact, setSelectedContact,
     resetContactSelection,
   };

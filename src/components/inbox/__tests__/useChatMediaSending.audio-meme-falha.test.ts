@@ -1,14 +1,17 @@
 /**
  * #350 (R2-INB-058) — o `handleSendAudioMeme` do inbox engolia a falha do envio:
  * o `try/catch` fazia o toast e NÃO relançava, então a Promise resolvia sempre.
- * O `VoiceChangerPicker` só preserva a prévia da voz transformada (popover
- * aberto + `transformedUrl` em tela) quando `onSendAudio` REJEITA — logo, na
- * prática a prévia continuava sendo descartada quando o envio falhava.
+ * O consumidor do hook (`AudioMemePicker`) só preserva a figurinha de áudio
+ * quando o envio REJEITA.
  *
- * Aqui o hook REAL é chamado (`renderHook`, com o `sendOutboundMessage` mockado
- * apenas na fronteira: é a chamada de rede, não o código sob teste) e também
- * ligado ao `VoiceChangerPicker` REAL — a mesma fiação de
- * ChatPanel.tsx → ChatInputArea → ChatInputToolbars → VoiceChangerPicker.
+ * A voz do VoiceChangerPicker NÃO passa mais por este hook: ela entrega o Blob
+ * ao caminho do áudio gravado (`onAudioSend`, bucket privado). Aqui o hook REAL
+ * é chamado (`renderHook`, com o `sendOutboundMessage` mockado apenas na
+ * fronteira: é a chamada de rede, não o código sob teste) e também ligado ao
+ * `AudioMemePicker` REAL (a mesma fiação de ChatPanel.tsx → ChatInputArea →
+ * ChatInputToolbars); o `VoiceChangerPicker` REAL é exercitado com a fiação do
+ * caminho privado para provar que a falha preserva a prévia (#350) e que o
+ * picker não toca em bucket nenhum.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import React, { type ReactNode } from 'react';
@@ -22,7 +25,7 @@ const estado = vi.hoisted(() => ({
   onOpenChange: undefined as ((v: boolean) => void) | undefined,
   onOpenChangeRaiz: undefined as ((v: boolean) => void) | undefined,
   upload: vi.fn(),
-  getPublicUrl: vi.fn(),
+  createSignedUrl: vi.fn(),
   contatoConnectionId: 'conn-1' as string | null,
   instanceId: 'inst-1' as string | null,
   rpcs: [] as string[],
@@ -42,6 +45,7 @@ vi.mock('framer-motion', () => ({
     }),
   },
   AnimatePresence: ({ children }: { children: ReactNode }) => children,
+  useReducedMotion: () => false,
 }));
 
 // Radix Popover não abre de forma confiável sob jsdom: o pass-through guarda a
@@ -118,8 +122,11 @@ vi.mock('@/integrations/supabase/client', () => {
         estado.rpcs.push(nome);
         return { data: null, error: null };
       },
-      auth: { getSession: async () => ({ data: { session: null } }) },
-      storage: { from: () => ({ upload: estado.upload, getPublicUrl: estado.getPublicUrl }) },
+      auth: {
+        getSession: async () => ({ data: { session: null } }),
+        getUser: async () => ({ data: { user: { id: 'u1' } } }),
+      },
+      storage: { from: () => ({ upload: estado.upload, createSignedUrl: estado.createSignedUrl }) },
     },
     SUPABASE_URL: 'http://localhost:54321',
     SUPABASE_ANON_KEY: 'anon-de-teste',
@@ -136,10 +143,13 @@ const AUDIO_URL = 'https://cdn.test/audio-meme.mp3';
 const TRANSFORMED_URL = 'blob:mock-voz-transformada';
 const PUBLIC_URL = 'https://cdn.test/voz-transformada.mp3';
 
-/** Fiação real do painel: o hook do inbox alimenta o picker de voz. */
-function FluxoInbox() {
-  const { handleSendAudioMeme } = useChatMediaSending(CONTATO, TELEFONE);
-  return React.createElement(VoiceChangerPicker, { onSendAudio: handleSendAudioMeme });
+/** Fiação do painel para a voz: o `VoiceChangerPicker` entrega o Blob
+    transformado ao MESMO caminho do áudio gravado (`onAudioSend` →
+    `handlers.handleAudioSend`), que sobe no bucket privado na pasta do contato e
+    devolve `false` quando o envio falha. O picker não sobe mais nada em
+    `audio-memes/voice-changer/...` (bucket público). */
+function FluxoVoz({ onSendAudioBlob }: { onSendAudioBlob: (blob: Blob) => void | boolean | Promise<void | boolean> }) {
+  return React.createElement(VoiceChangerPicker, { onSendAudioBlob });
 }
 
 /** Mesma fiação, para o outro picker que recebe o hook (`AudioMemePicker`). */
@@ -207,7 +217,7 @@ describe('handleSendAudioMeme sinaliza a falha do envio (#350)', () => {
     rejeicoesNaoTratadas.length = 0;
     process.on('unhandledRejection', guardarRejeicaoNaoTratada);
     estado.upload.mockReset().mockResolvedValue({ error: null });
-    estado.getPublicUrl.mockReset().mockReturnValue({ data: { publicUrl: PUBLIC_URL } });
+    estado.createSignedUrl.mockReset().mockResolvedValue({ data: { signedUrl: PUBLIC_URL }, error: null });
     estado.contatoConnectionId = 'conn-1';
     estado.instanceId = 'inst-1';
 
@@ -321,8 +331,8 @@ describe('handleSendAudioMeme sinaliza a falha do envio (#350)', () => {
 
   // Percorre o caminho REAL do VoiceChangerPicker (renderiza → abre → grava →
   // para → transforma), parando com a prévia transformada na tela.
-  async function chegarNaPrevia(): Promise<HTMLButtonElement> {
-    render(React.createElement(FluxoInbox));
+  async function chegarNaPrevia(onSendAudioBlob: (blob: Blob) => void | boolean | Promise<void | boolean>): Promise<HTMLButtonElement> {
+    render(React.createElement(FluxoVoz, { onSendAudioBlob }));
     act(() => {
       estado.onOpenChange?.(true);
     });
@@ -350,19 +360,19 @@ describe('handleSendAudioMeme sinaliza a falha do envio (#350)', () => {
   }
 
   it('envio falhando: a prévia continua em tela e o popover permanece aberto', async () => {
-    estado.enviar.mockRejectedValueOnce(new Error('envio recusado pela API'));
-    const enviar = await chegarNaPrevia();
+    const onSendAudioBlob = vi.fn().mockRejectedValue(new Error('envio recusado pela API'));
+    const enviar = await chegarNaPrevia(onSendAudioBlob);
 
     await act(async () => {
       fireEvent.click(enviar);
     });
 
-    expect(estado.enviar).toHaveBeenCalledTimes(1);
-    expect(estado.enviar.mock.calls[0][0]).toMatchObject({
-      contactId: CONTATO,
-      messageType: 'audio',
-      mediaUrl: PUBLIC_URL,
-    });
+    expect(onSendAudioBlob).toHaveBeenCalledTimes(1);
+    expect(onSendAudioBlob.mock.calls[0][0]).toBeInstanceOf(Blob);
+    // O upload do caminho privado (bucket + pasta do contato) é do áudio
+    // gravado: o picker não sobe mais nada por conta própria.
+    expect(estado.upload).not.toHaveBeenCalled();
+    expect(estado.getPublicUrl).not.toHaveBeenCalled();
     // A prévia da voz transformada sobrevive à falha...
     expect(estado.popoverAberto).toBe(true);
     expect(screen.getByText('Enviar')).toBeInTheDocument();
@@ -373,14 +383,15 @@ describe('handleSendAudioMeme sinaliza a falha do envio (#350)', () => {
   });
 
   it('envio confirmado: o popover fecha e a prévia sai de tela', async () => {
-    estado.enviar.mockResolvedValueOnce({ id: 'msg-1' });
-    const enviar = await chegarNaPrevia();
+    const onSendAudioBlob = vi.fn().mockResolvedValue(undefined);
+    const enviar = await chegarNaPrevia(onSendAudioBlob);
 
     await act(async () => {
       fireEvent.click(enviar);
     });
 
-    expect(estado.enviar).toHaveBeenCalledTimes(1);
+    expect(onSendAudioBlob).toHaveBeenCalledTimes(1);
+    expect(onSendAudioBlob.mock.calls[0][0]).toBeInstanceOf(Blob);
     expect(estado.popoverAberto).toBe(false);
     expect(screen.queryByText('Enviar')).not.toBeInTheDocument();
     expect(estado.toastSonner.success).toHaveBeenCalled();
@@ -417,5 +428,49 @@ describe('handleSendAudioMeme sinaliza a falha do envio (#350)', () => {
     );
     // A rejeição do envio é tratada no ponto de chamada do picker.
     expect(rejeicoesNaoTratadas).toHaveLength(0);
+  });
+});
+
+/**
+ * PK-28 · paridade doc 06 — a citação junto da figurinha/emoji/áudio-meme.
+ *
+ * O servidor cita qualquer tipo (`message-delivery` · `providerPayload.quoted`);
+ * o que faltava era o cliente mandar o id da resposta quando o compositor estava
+ * respondendo e o envio saía por um destes pickers.
+ */
+describe('useChatMediaSending — PK-28: citação da resposta', () => {
+  it('o áudio meme sai citando a mensagem respondida', async () => {
+    const { result } = renderHook(() => useChatMediaSending(CONTATO, TELEFONE));
+
+    await act(async () => {
+      await result.current.handleSendAudioMeme(AUDIO_URL, 'reply-meme-1');
+    });
+
+    expect(estado.enviar).toHaveBeenCalledWith(
+      expect.objectContaining({ messageType: 'audio', replyToId: 'reply-meme-1' }),
+    );
+  });
+
+  it('o emoji de imagem sai citando a mensagem respondida', async () => {
+    const { result } = renderHook(() => useChatMediaSending(CONTATO, TELEFONE));
+
+    await act(async () => {
+      await result.current.handleSendCustomEmoji(PUBLIC_URL, 'reply-emoji-1');
+    });
+
+    expect(estado.enviar).toHaveBeenCalledWith(
+      expect.objectContaining({ messageType: 'image', replyToId: 'reply-emoji-1' }),
+    );
+  });
+
+  it('sem resposta pendente o payload não ganha o campo (contrato antigo intacto)', async () => {
+    const { result } = renderHook(() => useChatMediaSending(CONTATO, TELEFONE));
+
+    await act(async () => {
+      await result.current.handleSendAudioMeme(AUDIO_URL);
+    });
+
+    expect(estado.enviar).toHaveBeenCalled();
+    expect(estado.enviar.mock.lastCall?.[0]).not.toHaveProperty('replyToId');
   });
 });

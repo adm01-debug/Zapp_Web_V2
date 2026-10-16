@@ -6,7 +6,6 @@ import { z } from "https://esm.sh/zod@3.23.8";
 // E45: a lista de ações válidas do `evolution-api` NÃO é reescrita aqui — vem
 // dos conjuntos que o próprio handler usa para autorizar (fonte única).
 import { CONTROL_ACTIONS, READ_ACTIONS, SEND_ACTIONS } from "./evolution-control-authz.ts";
-// Mesma política de origem do CORS de validation.ts (sem importá-lo: ver nota em validationErrorResponse).
 import { allowedOriginFor } from "./cors-origins.ts";
 
 export { z };
@@ -152,10 +151,77 @@ export const AiClassifyTicketsSchema = z.object({
 });
 
 // ─── ElevenLabs schemas ──────────────────────────────────────
+// SL-008 (achado B4) — lista FECHADA de vozes e modelos. Antes o cliente escolhia
+// `voiceId`/`modelId`/`voice_id` livremente (qualquer texto de até 100 caracteres):
+// dava para acionar uma voz clonada da conta compartilhada e o modelo mais caro.
+// A lista abaixo é o catálogo que a interface oferece — `ELEVENLABS_VOICES` em
+// `src/components/inbox/VoiceSelector.tsx` mais as vozes de diálogo de
+// `src/components/voice/ElevenLabsDialogue.tsx` — e o contrato
+// `tests/contracts/schemas.contract.test.ts` falha se a interface ganhar uma voz
+// que não esteja aqui.
+export const ELEVENLABS_VOICE_IDS = [
+  'TY3h8ANhQUsJaa0Bga5F', // Voz Principal (padrão do sistema)
+  'EXAVITQu4vr4xnSDxMaL', // Sarah
+  'CwhRBWXzGAHq8TQ4Fs17', // Roger
+  'FGY2WhTYpPnrIDTdsKH5', // Laura
+  'IKne3meq5aSn9XLyUdCD', // Charlie
+  'JBFqnCBsd6RMkjVDRZzb', // George
+  'XrExE9yKIg1WjnnlVkGX', // Matilda
+  'pFZP5JQG7iQjIQuC4Bku', // Lily
+  'onwK4e9ZLuTAKqWW03F9', // Daniel
+  'nPczCjzI2devNBz1zQrb', // Brian
+  'cgSgspJ2msm6clMCkdW9', // Jessica
+  'cjVigY5qzO86Huf0OWal', // Eric (diálogo)
+] as const;
+
+/** Modelos aceitos em `elevenlabs-tts` (eleven_v3) e `elevenlabs-tts-stream` (eleven_flash_v2_5). */
+export const ELEVENLABS_TTS_MODEL_IDS = ['eleven_v3', 'eleven_flash_v2_5'] as const;
+
+/** Modelo aceito em `elevenlabs-sts` (speech-to-speech). */
+export const ELEVENLABS_STS_MODEL_IDS = ['eleven_multilingual_sts_v2'] as const;
+
+export const ELEVENLABS_VOICE_NOT_ALLOWED = 'Voz não permitida: escolha uma voz da lista da interface.';
+export const ELEVENLABS_MODEL_NOT_ALLOWED = 'Modelo não permitido: escolha um modelo da lista da interface.';
+
+const ELEVENLABS_VOICE_SET: ReadonlySet<string> = new Set<string>(ELEVENLABS_VOICE_IDS);
+const ELEVENLABS_TTS_MODEL_SET: ReadonlySet<string> = new Set<string>(ELEVENLABS_TTS_MODEL_IDS);
+const ELEVENLABS_STS_MODEL_SET: ReadonlySet<string> = new Set<string>(ELEVENLABS_STS_MODEL_IDS);
+
+/** Voz aceita: id do catálogo da interface. Ausente, tipo errado ou fora da lista é recusado. */
+export function isAllowedElevenLabsVoiceId(value: unknown): value is string {
+  return typeof value === 'string' && ELEVENLABS_VOICE_SET.has(value);
+}
+
+export function isAllowedElevenLabsTtsModel(value: unknown): value is string {
+  return typeof value === 'string' && ELEVENLABS_TTS_MODEL_SET.has(value);
+}
+
+export function isAllowedElevenLabsStsModel(value: unknown): value is string {
+  return typeof value === 'string' && ELEVENLABS_STS_MODEL_SET.has(value);
+}
+
+/**
+ * Resolve os campos de `elevenlabs-sts` — a função lê `FormData`, não passa por
+ * schema zod, então a mesma lista fechada vale aqui. Devolve `{ ok: false }` com a
+ * mensagem de recusa para o handler responder 400 ANTES de chamar o provedor;
+ * `modelId` ausente cai no modelo do produto (o cliente não escolhe modelo).
+ */
+export function resolveElevenLabsStsInputs(
+  voiceId: unknown,
+  modelId: unknown,
+): { ok: true; voiceId: string; modelId: string } | { ok: false; error: string } {
+  if (!isAllowedElevenLabsVoiceId(voiceId)) return { ok: false, error: ELEVENLABS_VOICE_NOT_ALLOWED };
+  if (modelId === undefined || modelId === null || modelId === '') {
+    return { ok: true, voiceId, modelId: ELEVENLABS_STS_MODEL_IDS[0] };
+  }
+  if (!isAllowedElevenLabsStsModel(modelId)) return { ok: false, error: ELEVENLABS_MODEL_NOT_ALLOWED };
+  return { ok: true, voiceId, modelId };
+}
+
 export const ElevenLabsTTSSchema = z.object({
   text: z.string().min(1, "Text is required").max(5000),
-  voiceId: z.string().max(100).optional(),
-  modelId: z.string().max(100).optional(),
+  voiceId: z.string().max(100).refine(isAllowedElevenLabsVoiceId, { message: ELEVENLABS_VOICE_NOT_ALLOWED }).optional(),
+  modelId: z.string().max(100).refine(isAllowedElevenLabsTtsModel, { message: ELEVENLABS_MODEL_NOT_ALLOWED }).optional(),
   languageCode: z.string().max(10).optional(),
   applyTextNormalization: z.string().max(20).optional(),
 });
@@ -168,7 +234,7 @@ export const ElevenLabsSFXSchema = z.object({
 
 export const ElevenLabsDialogueSchema = z.object({
   script: z.array(z.object({
-    voice_id: z.string().min(1, "voice_id is required").max(100),
+    voice_id: z.string().min(1, "voice_id is required").max(100).refine(isAllowedElevenLabsVoiceId, { message: ELEVENLABS_VOICE_NOT_ALLOWED }),
     text: z.string().min(1, "text is required").max(5000),
   })).min(1, "Script is required"),
   languageCode: z.string().max(10).optional().default('pt'),
@@ -556,8 +622,7 @@ export function parseBody<T>(schema: z.ZodSchema<T>, data: unknown):
 /**
  * Resposta canônica de falha de validação — 422 Unprocessable Entity.
  * Corpo: { error: { code: 'VALIDATION_ERROR', message, fields: FieldError[] } }
- * Sem import de validation.ts (mantém o módulo importável em Node p/ testes); a origem do
- * CORS vem de cors-origins.ts, a mesma política de getCorsHeaders.
+ * Sem import de validation.ts (mantém o módulo importável em Node p/ testes).
  */
 export function validationErrorResponse(
   source: { issues?: FieldError[]; error?: string } | z.ZodError | FieldError[],
@@ -680,25 +745,91 @@ export const EVOLUTION_API_ACTIONS: readonly string[] = [
 // `''`, caía na checagem do E17 e seguia o mesmo caminho — `null` continua
 // equivalente a "ausente". O que passa a ser recusado é o TIPO errado
 // (`{instanceName: 5}` virava `"5"` e mirava uma instância inexistente).
+// E17/B2 (12/10/2026): o NOME da instância vira path/query da URL que vai ao
+// provedor (`/instance/delete/${instance}`, `?instanceName=${instance}`). Sem um
+// conjunto de caracteres, um nome com `/`, `?`, `#` ou espaço reescrevia a rota
+// (path traversal / injeção de query). O app só gera `[a-z0-9_]` (front
+// generateInstanceName) e as conexões legadas são alfanuméricas; o conjunto
+// aceita também `-` e maiúsculas para não quebrar nomes já gravados. Recusa
+// (422) em vez de escapar-e-seguir: nome fora do conjunto é payload inválido.
+export const INSTANCE_NAME_PATTERN = /^[A-Za-z0-9_-]{1,128}$/;
+
 export const EvolutionApiRequestSchema = z.object({
   action: z.enum(EVOLUTION_API_ACTIONS as [string, ...string[]], {
     errorMap: () => ({ message: 'Ação desconhecida: não é uma ação suportada pelo evolution-api.' }),
   }).nullish(),
   instanceName: z.string().max(200).nullish(),
   instance: z.string().max(200).nullish(),
-}).passthrough();
+}).passthrough().superRefine((value, ctx) => {
+  const raw = (value as { instanceName?: unknown; instance?: unknown });
+  const candidate = raw.instanceName ?? raw.instance;
+  if (typeof candidate !== 'string' || candidate.length === 0) return;
+  if (INSTANCE_NAME_PATTERN.test(candidate)) return;
+  ctx.addIssue({
+    code: z.ZodIssueCode.custom,
+    path: [raw.instanceName != null ? 'instanceName' : 'instance'],
+    message: 'Nome de instância inválido — use apenas letras, números, "-" e "_" (até 128 caracteres).',
+  });
+});
 
 /**
  * Ações globais — as ÚNICAS que não operam sobre uma instância (E17).
  * `list-instances` lista todas as instâncias da GO; `bootstrap-instance-token`
- * migra o token legado para o Vault. Todas as demais exigem o alvo.
+ * migra o token legado para o Vault; `reconcile-instances` compara o provedor
+ * com whatsapp_connections (só leitura, só nomes). Todas as demais exigem o alvo.
  */
 export const EVOLUTION_API_INSTANCE_FREE_ACTIONS: readonly string[] = [
   'list-instances',
   'bootstrap-instance-token',
+  'reconcile-instances',
 ];
 
 /** `instance` (instanceName) é obrigatória para a ação? */
 export function evolutionApiRequiresInstance(action: string): boolean {
   return !EVOLUTION_API_INSTANCE_FREE_ACTIONS.includes(action);
+}
+
+// ─── Telefone brasileiro (create-connection) ─────────────────
+// Mesma regra do V3 (src/lib/phoneUtils.ts): 67 DDDs válidos + nono dígito do
+// celular antigo (DDD + 8 dígitos iniciando em 6-9). A saída é E.164 só-dígitos
+// COM o DDI 55 — o formato canônico do resto do Edge
+// (`_shared/messaging/phone.ts`). Recusa (nunca trunca/corrige em silêncio)
+// qualquer coisa fora disso: é o que impede gravar `phone_number` inválido e só
+// descobrir no pareamento.
+export const VALID_BR_DDDS: ReadonlySet<string> = new Set([
+  '11', '12', '13', '14', '15', '16', '17', '18', '19',
+  '21', '22', '24', '27', '28',
+  '31', '32', '33', '34', '35', '37', '38',
+  '41', '42', '43', '44', '45', '46',
+  '47', '48', '49',
+  '51', '53', '54', '55',
+  '61', '62', '63', '64', '65', '66', '67', '68', '69',
+  '71', '73', '74', '75', '77', '79',
+  '81', '82', '83', '84', '85', '86', '87', '88', '89',
+  '91', '92', '93', '94', '95', '96', '97', '98', '99',
+]);
+
+export type BrazilianPhoneResult =
+  | { ok: true; value: string }
+  | { ok: false; message: string };
+
+/** Normaliza/valida um telefone brasileiro para E.164 só-dígitos (DDI 55). */
+export function normalizeBrazilianPhone(raw: unknown): BrazilianPhoneResult {
+  const digits = String(raw ?? '').replace(/\D/g, '');
+  if (!digits) return { ok: false, message: 'Telefone é obrigatório.' };
+  let national = digits;
+  if (national.startsWith('55') && (national.length === 12 || national.length === 13)) {
+    national = national.slice(2);
+  }
+  if (national.length !== 10 && national.length !== 11) {
+    return { ok: false, message: 'Telefone inválido: informe DDD + número (10 ou 11 dígitos).' };
+  }
+  const ddd = national.slice(0, 2);
+  if (!VALID_BR_DDDS.has(ddd)) {
+    return { ok: false, message: `Telefone inválido: DDD ${ddd} não existe.` };
+  }
+  if (national.length === 10 && '6789'.includes(national[2])) {
+    national = `${national.slice(0, 2)}9${national.slice(2)}`;
+  }
+  return { ok: true, value: `55${national}` };
 }

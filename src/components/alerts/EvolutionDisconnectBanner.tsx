@@ -4,6 +4,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { WifiOff, RefreshCw, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useConnectionAlertPreferences } from '@/hooks/system/useConnectionAlertPreferences';
 
 interface DisconnectedInstance {
   id: string;
@@ -17,6 +18,11 @@ export function EvolutionDisconnectBanner() {
   const [dismissed, setDismissed] = useState(false);
   const [reconnecting, setReconnecting] = useState<string | null>(null);
   const reduceMotion = useReducedMotion() ?? false;
+  // PD-38: o aviso de conexao caida respeita a preferencia do usuario. O TIPO
+  // `alert_on_disconnected` e o interruptor mestre (os canais push/e-mail so escolhem
+  // por onde o aviso sai). Enquanto a leitura esta em voo o padrao e LIGADO, igual a
+  // coluna no banco — assim um aviso real nao e escondido por uma resposta pendente.
+  const { preferences } = useConnectionAlertPreferences();
 
   const fetchStatus = async () => {
     const { data } = await supabase
@@ -58,8 +64,16 @@ export function EvolutionDisconnectBanner() {
       // R2-API-042: a Edge Function responde HTTP 200 também nas falhas LÓGICAS — o erro vem no
       // CORPO (`{ error: true, message }`), não no campo `error` do invoke. Olhando só o
       // transporte, o banner anunciava "Reconectando..." como se a solicitação tivesse sido aceita.
+      // O motivo tem de chegar ao operador: é a edge que sabe da janela de manutenção
+      // (`global_settings.whatsapp_maintenance_until` — o front não a lê, o SELECT dessa tabela é
+      // admin/supervisor) e põe o bloqueio da Meta na mensagem. Com o texto genérico, um bloqueio
+      // virava "Erro ao reconectar" e o operador insistia no login em loop, que é justamente o que
+      // estende o bloqueio (docs/runbooks/bloqueio-meta.md).
       if (data?.error) {
-        throw new Error(typeof data.error === 'string' ? data.error : data.message ?? 'Falha ao reconectar');
+        toast.error(
+          typeof data.error === 'string' ? data.error : data.message ?? `Erro ao reconectar ${conn.instance_id}`,
+        );
+        return;
       }
       toast.success(`Reconectando ${conn.instance_id}... Escaneie o QR Code na tela de conexões.`);
     } catch {
@@ -69,7 +83,8 @@ export function EvolutionDisconnectBanner() {
     }
   };
 
-  if (disconnected.length === 0 || dismissed) return null;
+  // PD-38: tipo desligado, a faixa nao aparece — independentemente do canal.
+  if (disconnected.length === 0 || dismissed || !preferences.alert_on_disconnected) return null;
 
   return (
     <AnimatePresence>

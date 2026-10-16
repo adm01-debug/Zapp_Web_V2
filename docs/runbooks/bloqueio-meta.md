@@ -16,11 +16,13 @@
 ## O que NÃO fazer
 
 - **Não clicar em "Reconectar"/"Gerar QR"/"Reiniciar" repetidamente.** Login em loop durante um
-  bloqueio ativo tende a estender o bloqueio, não encurtá-lo. O sistema trava essas ações
-  automaticamente via `global_settings.whatsapp_maintenance_until` (edge `evolution-api`
-  recusa `connect`/`restart-instance`/`disconnect`/`create-instance` enquanto a janela estiver
-  no futuro) — se algum botão ainda funcionar, é sinal de que a trava expirou ou não foi
-  configurada, não motivo para insistir manualmente.
+  bloqueio ativo tende a estender o bloqueio, não encurtá-lo. O sistema recusa essas ações no
+  servidor enquanto `global_settings.whatsapp_maintenance_until` estiver no futuro: a edge
+  `evolution-api` barra `connect`/`restart-instance`/`disconnect`/`create-instance`/
+  `create-connection` e devolve `{ error: true, message }` com o motivo e o fim da janela. **Os
+  botões continuam visíveis** — o que existe é a recusa da edge, anunciada com esse motivo (faixa
+  global de conexões e lista de conexões). Recusa sem motivo ("Erro ao reconectar") é falha de
+  transporte, não licença para insistir; nenhuma mensagem é perdida por causa da janela.
 - **Não trocar de aparelho/reinstalar o WhatsApp** no celular vinculado durante o bloqueio.
 - **Não criar uma segunda instância "provisória"** sem decisão explícita — ver E04 no plano
   (swap de instância é operação de negócio, não técnica).
@@ -36,21 +38,38 @@
    update global_settings set value = '<ISO até quando o bloqueio deve valer + folga>'
    where key = 'whatsapp_maintenance_until';
    ```
-   Isso desabilita os botões de reconectar/QR/reiniciar/criar-instância na UI e bloqueia essas
-   ações na edge `evolution-api` (mensagem clara em vez de erro genérico).
+   Isso bloqueia as ações na edge `evolution-api` (recusa com o motivo, no lugar de erro genérico).
+   A UI **não** desabilita os botões: `global_settings` só é legível por admin/supervisor, então
+   quem informa o motivo é a própria edge. Botão desabilitado, aviso sumido ou silêncio são outra
+   coisa (falha de transporte/tela), nunca sinal verde.
 3. **Avisar o time** que o WhatsApp está fora e por quê (mensagens não param de chegar, só não
    são entregues — conferir depois quem escreveu sem resposta).
 4. **Decidir sobre número reserva** (swap de instância) — só com decisão explícita, ver E04 do
    plano multi-conexão. Não é reversível sem custo (clientes veem outro remetente).
 5. **Diagnosticar a causa** enquanto espera: volume de conversas iniciadas por agente sem
    resposta, uso de verificação de número em massa, re-logins recentes (`connection_health_logs`).
-6. **Ao voltar:** confirmar `/instance/status` com `connected:true` estável por alguns minutos
-   antes de desligar a janela de manutenção. Primeiras horas: preferir só responder, evitar
-   iniciar conversa nova e evitar disparo de campanha (Talk X) — ver E05 do plano.
+6. **Ao voltar — retomada gradual (E05 do plano):** confirmar `/instance/status` com
+   `connected:true` estável por alguns minutos antes de desligar a janela de manutenção.
+   - primeiras 2 h: **só responder** — nenhuma conversa iniciada pelo agente ("Nova conversa");
+   - primeiras 72 h: **sem campanha** (Talk X) e teto de conversas novas iniciadas por hora.
+   - A chave `global_settings.whatsapp_warmup_until` prevista no plano **não tem leitor no
+     sistema**: `global_settings` só é legível por admin/supervisor (o agente não lê no navegador)
+     e nenhum caminho de envio consulta a chave — a rampa acima é regra do time, não do sistema.
+     Levar o bloqueio para o servidor (RPC/edge de envio, que rodam com service role) é pendência
+     do trilho de servidor.
 7. **Desligar a manutenção:**
    ```sql
    update global_settings set value = null where key = 'whatsapp_maintenance_until';
    ```
+
+## Envio com a conexão fora (E02)
+
+O envio já é barrado no banco: `enqueue_outbound_message` exige conexão `connected` e levanta
+`no_connected_whatsapp_connection` (ou `selected_whatsapp_connection_unavailable` quando o id
+informado não serve) — `supabase/migrations/20260930200000_enforce_enqueue_connection_scope.sql`.
+Nenhuma mensagem fica presa em `sending`; o compositor mostra o erro do envio. O que o sistema não
+faz é avisar o agente **antes** de ele tentar enviar: o motivo (inclusive o bloqueio da Meta) chega
+pela mensagem da edge, e a faixa global de conexões repassa esse motivo em vez do texto genérico.
 
 ## Verificar se a volta é real
 

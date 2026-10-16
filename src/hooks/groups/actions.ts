@@ -32,6 +32,61 @@ function motivosDaRecusa(payload: unknown): unknown {
   return recusa?.message ?? recusa?.error;
 }
 
+/**
+ * Idempotência do envio em massa.
+ *
+ * A mesma ação (grupo + texto) reaproveita o `client_message_id` por até 2 min, então
+ * um clique repetido, um retry de rede ou o reenvio imediato da MESMA mensagem ao MESMO
+ * grupo não criam uma segunda linha na fila: a RPC
+ * `enqueue_group_outbound_message` encontra o par (whatsapp_group_id, client_message_id)
+ * no índice único `messages_group_client_msg_uq` e devolve a linha existente.
+ *
+ * O mapa é de memória, como em `outbound-message.service`: depois de recarregar a aba a
+ * composição é uma ação nova. A chave tem vida CURTA — sem o TTL, o mesmo texto enviado
+ * mais tarde (ex.: "bom dia") reaproveitaria um id já entregue e a fila o descartaria,
+ * sem nada sair. Entrada vencida é descartada na leitura; não há timer próprio.
+ */
+export const BROADCAST_ACTION_TTL_MS = 2 * 60 * 1000;
+
+interface BroadcastAction {
+  id: string;
+  /** Instante (epoch ms) depois do qual a chave não vale mais. */
+  expiresAt: number;
+}
+
+const broadcastActionIds = new Map<string, BroadcastAction>();
+
+function createClientMessageId(): string {
+  if (typeof crypto?.randomUUID !== 'function') {
+    throw new Error('Seu navegador não suporta identificadores de entrega seguros. Atualize-o e tente novamente.');
+  }
+  return crypto.randomUUID();
+}
+
+/** Chave da ação: o destino (grupo) e o texto compõem a identidade do envio. */
+function broadcastActionKey(groupId: string, content: string): string {
+  return `${groupId}\u0000${content}`;
+}
+
+function resolveBroadcastClientMessageId(groupId: string, content: string): string {
+  const key = broadcastActionKey(groupId, content);
+  const agora = Date.now();
+  const pendente = broadcastActionIds.get(key);
+  if (pendente && pendente.expiresAt > agora) return pendente.id;
+  const id = createClientMessageId();
+  broadcastActionIds.set(key, { id, expiresAt: agora + BROADCAST_ACTION_TTL_MS });
+  return id;
+}
+
+/** Resultado do envio em massa POR GRUPO (o que entrou na fila e o que falhou). */
+export interface GroupBroadcastResult {
+  groupId: string;
+  name: string;
+  status: 'queued' | 'failed';
+  /** Id da linha criada em `public.messages` (a trilha por grupo). */
+  messageId?: string;
+}
+
 export function useGroupActions({ connections, groups, selectedGroups, setGroups, setSelectedGroups, fetchGroups }: UseGroupActionsParams) {
   const feedback = useActionFeedback();
 
@@ -108,39 +163,56 @@ export function useGroupActions({ connections, groups, selectedGroups, setGroups
     );
   }, [feedback, fetchGroups]);
 
-  const handleBroadcast = useCallback(async (broadcastMessage: string): Promise<{ sent: number; failed: number } | null> => {
+  const handleBroadcast = useCallback(async (broadcastMessage: string): Promise<{ sent: number; failed: number; results: GroupBroadcastResult[] } | null> => {
     if (!broadcastMessage.trim()) { toast.error('Digite uma mensagem'); return null; }
     const groupsToSend = groups.filter(g => selectedGroups.has(g.id));
     if (groupsToSend.length === 0) { toast.error('Selecione pelo menos um grupo'); return null; }
 
-    let sent = 0, failed = 0;
-    for (const group of groupsToSend) {
-      const conn = connections.find(c => c.id === group.whatsapp_connection_id);
-      if (!conn?.instance_id) { failed++; continue; }
+    const texto = broadcastMessage;
+    // ENFILEIRA, não envia: cada grupo vira uma linha em `public.messages`
+    // (whatsapp_group_id + client_message_id estável) e quem entrega é a fila do
+    // servidor. Antes, o laço chamava a Evolution aqui dentro com 2 s de pausa:
+    // fechar a aba, trocar de rota ou perder a rede matava os grupos restantes sem
+    // registro e sem retomada. Agora a aba só enfileira — o que já entrou na fila
+    // não depende dela.
+    const results = await Promise.all(groupsToSend.map(async (group): Promise<GroupBroadcastResult> => {
       try {
-        const { data, error } = await supabase.functions.invoke('evolution-api', {
-          body: { action: 'send-text', instanceName: conn.instance_id, number: group.group_id, text: broadcastMessage },
+        const { data, error } = await supabase.rpc('enqueue_group_outbound_message', {
+          p_group_id: group.id,
+          p_client_message_id: resolveBroadcastClientMessageId(group.id, texto),
+          p_content: texto,
+          p_whatsapp_connection_id: group.whatsapp_connection_id ?? undefined,
         });
-        if (error) failed++;
-        else if (evolutionRecusou(data)) {
-          log.error(`Evolution recusou send-text para ${group.group_id}:`, motivosDaRecusa(data));
-          failed++;
-        } else sent++;
-        if (groupsToSend.indexOf(group) < groupsToSend.length - 1) await new Promise(r => setTimeout(r, 2000));
-      } catch { failed++; }
-    }
-    // R2-API-062 (#234): a tentativa só é preservada quando NENHUM envio deu certo
-    // (sent === 0). Qualquer envio bem-sucedido — inclusive falha parcial — encerra a
-    // tentativa e limpa a seleção, para que um novo clique não reenvie a mensagem aos
-    // grupos que já receberam.
+        if (error) throw error;
+        if (!data?.id) throw new Error('enqueue_group_sem_registro');
+        return { groupId: group.id, name: group.name, status: 'queued', messageId: data.id };
+      } catch (err) {
+        log.error(`Falha ao enfileirar o envio ao grupo ${group.name}:`, err);
+        return { groupId: group.id, name: group.name, status: 'failed' };
+      }
+    }));
+
+    const sent = results.filter(r => r.status === 'queued').length;
+    const failed = results.length - sent;
+    const nomesComFalha = results.filter(r => r.status === 'failed').map(r => r.name).join(', ');
+
+    // Auditoria SEM o texto da mensagem: o cliente registra só a contagem. Quem
+    // enviou (agent_id) e para qual grupo (whatsapp_group_id) ficam na própria
+    // linha de `public.messages`, que é a trilha por grupo.
+    log.info(`Broadcast de grupos: ${sent} enfileirado(s), ${failed} falha(s) de ${results.length} grupo(s) selecionado(s)`);
+
+    // R2-API-062 (#234): a tentativa só é preservada quando NENHUM grupo entrou na
+    // fila (sent === 0). Qualquer enfileiramento bem-sucedido — inclusive falha
+    // parcial — encerra a tentativa e limpa a seleção, para que um novo clique não
+    // reenvie a mensagem aos grupos que já estão na fila.
     if (sent > 0) setSelectedGroups(new Set());
     if (sent === 0) {
-      toast.warning(`Nenhum envio deu certo (${failed} falha(s)) — mensagem e seleção mantidas`);
+      toast.warning(`Nenhum grupo entrou na fila (${failed} falha(s)) — mensagem e seleção mantidas`);
     }
-    else if (failed > 0) toast.warning(`Enviado para ${sent} grupo(s), ${failed} falha(s)`);
-    else toast.success(`Mensagem enviada para ${sent} grupo(s)!`);
-    return { sent, failed };
-  }, [connections, groups, selectedGroups, setSelectedGroups]);
+    else if (failed > 0) toast.warning(`${sent} grupo(s) na fila, ${failed} falha(s): ${nomesComFalha}`);
+    else toast.success(`${sent} grupo(s) na fila — o envio continua mesmo se você fechar a aba`);
+    return { sent, failed, results };
+  }, [groups, selectedGroups, setSelectedGroups]);
 
   const handleCategoryChange = useCallback(async (groupId: string, category: string | null) => {
     const { error } = await supabase.from('whatsapp_groups').update({ category }).eq('id', groupId);

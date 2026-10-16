@@ -113,7 +113,7 @@ export function ElevenLabsDialogue() {
                 </div>
                 <div className="flex-1 space-y-2">
                   <Select value={line.voice_id} onValueChange={v => updateLine(line.id, 'voice_id', v)}>
-                    <SelectTrigger className="h-8 text-xs w-44">
+                    <SelectTrigger className="h-8 text-xs w-44" aria-label="Voz">
                       <Mic className="w-3 h-3 mr-1" />
                       <SelectValue />
                     </SelectTrigger>
@@ -132,7 +132,7 @@ export function ElevenLabsDialogue() {
                   />
                 </div>
                 {lines.length > 2 && (
-                  <Button size="icon" variant="ghost" className="h-7 w-7 mt-1 text-muted-foreground hover:text-destructive" onClick={() => removeLine(line.id)}>
+                  <Button size="icon" variant="ghost" className="h-7 w-7 mt-1 text-muted-foreground hover:text-destructive" onClick={() => removeLine(line.id)} aria-label={`Remover fala ${idx + 1}`}>
                     <Trash2 className="w-3.5 h-3.5" />
                   </Button>
                 )}

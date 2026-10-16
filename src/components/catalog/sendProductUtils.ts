@@ -9,6 +9,7 @@ import { isSnapshotProduct } from './catalogShared';
 // regras do envio real de campanha): {{nome}}/{{empresa}} resolvidos num
 // único passe contra o contato selecionado.
 import { personalizePreview, extractVariables } from '@/components/talkx/talkxShared';
+import { downloadFileWithPermission, notifyDownloadBlocked } from '@/lib/downloadFile';
 
 export type MessageTemplate = 'formal' | 'informal' | 'promo';
 export type SendMode = 'product' | 'variant';
@@ -175,25 +176,21 @@ export function collectAllImages(product: ExternalProduct): { url: string; label
  * O atributo `download` do `<a>` é IGNORADO quando a URL é cross-origin (as
  * fotos vêm de imagedelivery.net), então o clique só abriria a imagem numa
  * aba e o toast "Download iniciado" mentiria. Aqui a foto vira Blob via
- * `fetch` e desce por uma object URL (mesma técnica do export CSV, CT-20).
+ * `fetch` e desce pela porta única do app (`downloadFileWithPermission`).
  * Sem CORS/!ok devolve `false` — o chamador decide o aviso, sem prometer
  * download que não houve.
+ *
+ * Y29 / SEC-SAIDAS_DE_INFORMACAO-01: `canDownload` (de `useDownloadPermission`)
+ * é conferido ANTES do `fetch` — sem permissão não há requisição de mídia nem
+ * gravação; a função devolve `false` e avisa o usuário.
  */
-export async function downloadImageAsBlob(url: string, filename: string): Promise<boolean> {
+export async function downloadImageAsBlob(url: string, filename: string, canDownload: boolean): Promise<boolean> {
+  if (!canDownload) return notifyDownloadBlocked();
   try {
     const response = await fetch(url, { mode: 'cors' });
     if (!response.ok) return false;
     const blob = await response.blob();
-    const objectUrl = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = objectUrl;
-    anchor.download = filename;
-    anchor.rel = 'noopener';
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-    URL.revokeObjectURL(objectUrl);
-    return true;
+    return downloadFileWithPermission(blob, filename, { canDownload });
   } catch {
     return false;
   }

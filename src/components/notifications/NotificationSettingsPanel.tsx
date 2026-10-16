@@ -12,7 +12,7 @@ import { toast } from '@/hooks/ui/use-toast';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { PushNotificationCard } from './PushNotificationCard';
-import { NotificationTypeSection, SentimentAlertCard, QuietHoursCard } from './NotificationTypeCards';
+import { NotificationTypeSection, SentimentAlertCard, QuietHoursCard, ConnectionAlertPreferencesCard } from './NotificationTypeCards';
 
 export function NotificationSettingsPanel() {
   const { settings, updateSettings, resetSettings, isQuietHours } = useNotificationSettings();
@@ -28,7 +28,7 @@ export function NotificationSettingsPanel() {
     const granted = await requestNotificationPermission();
     toast({
       title: granted ? '✅ Permissão concedida' : '⚠️ Permissão negada',
-      description: granted ? 'Você receberá notificações do navegador.' : 'Ative as notificações nas configurações do navegador.',
+      description: granted ? 'Você receberá alertas do navegador enquanto o Zapp estiver aberto.' : 'Ative as notificações nas configurações do navegador.',
       variant: granted ? undefined : 'destructive',
     });
   };
@@ -52,11 +52,11 @@ export function NotificationSettingsPanel() {
                 {settings.soundEnabled ? <Volume2 className="w-5 h-5 text-primary" /> : <VolumeX className="w-5 h-5 text-muted-foreground" />}
               </div>
               <div>
-                <CardTitle className="text-lg">Sons de Notificação</CardTitle>
+                <CardTitle id="notif-sound-title" className="text-lg">Sons de Notificação</CardTitle>
                 <CardDescription>Configurações globais de áudio</CardDescription>
               </div>
             </div>
-            <Switch checked={settings.soundEnabled} onCheckedChange={(checked) => updateSettings({ soundEnabled: checked })} />
+            <Switch checked={settings.soundEnabled} onCheckedChange={(checked) => updateSettings({ soundEnabled: checked })} aria-labelledby="notif-sound-title" />
           </div>
         </CardHeader>
         {settings.soundEnabled && (
@@ -65,7 +65,7 @@ export function NotificationSettingsPanel() {
               <Label className="text-sm font-medium">Testar som</Label>
               <div className="flex gap-3 items-center">
                 <Button variant="outline" size="icon" onClick={handleTestSound} disabled={isTestingSound}
-                  className={cn("transition-all", isTestingSound && "bg-primary/10")}>
+                  className={cn("transition-all", isTestingSound && "bg-primary/10")} aria-label="Testar som">
                   <Play className={cn("w-4 h-4", isTestingSound && "animate-pulse")} />
                 </Button>
                 <span className="text-xs text-muted-foreground">
@@ -95,11 +95,11 @@ export function NotificationSettingsPanel() {
                 <Bell className="w-5 h-5 text-success" />
               </div>
               <div>
-                <CardTitle className="text-lg">Notificações do Navegador</CardTitle>
-                <CardDescription>Pop-ups mesmo com a aba minimizada</CardDescription>
+                <CardTitle id="notif-browser-title" className="text-lg">Notificações do Navegador</CardTitle>
+                <CardDescription>Avisos do navegador enquanto o Zapp estiver aberto</CardDescription>
               </div>
             </div>
-            <Switch checked={settings.browserNotifications} onCheckedChange={(checked) => updateSettings({ browserNotifications: checked })} />
+            <Switch checked={settings.browserNotifications} onCheckedChange={(checked) => updateSettings({ browserNotifications: checked })} aria-labelledby="notif-browser-title" />
           </div>
         </CardHeader>
         {settings.browserNotifications && (
@@ -112,6 +112,7 @@ export function NotificationSettingsPanel() {
       </Card>
 
       <SentimentAlertCard settings={settings} updateSettings={updateSettings} />
+      <ConnectionAlertPreferencesCard />
       <PushNotificationCard />
       <QuietHoursCard settings={settings} updateSettings={updateSettings} isQuietHours={isQuietHours} />
 

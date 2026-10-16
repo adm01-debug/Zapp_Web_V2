@@ -6,6 +6,7 @@ import { callCRMIntegration } from '@/lib/crmIntegration';
 import { useSearchHistory } from '@/hooks/system/useSearchHistory';
 import { useUserRole } from '@/hooks/system/useUserRole';
 import { escapeOrFilterValue } from '@/lib/postgrestFilters';
+import { escapeLikeWildcards } from '@/lib/emailThreadQuery';
 import { subDays, subMonths, startOfDay } from 'date-fns';
 
 export interface SearchResult {
@@ -27,6 +28,41 @@ export type DateFilter = 'all' | 'today' | '7days' | '30days' | '90days';
 export type MediaTypeFilter = 'all' | 'text' | 'image' | 'video' | 'audio' | 'document' | 'link';
 
 export interface TagSuggestion { id: string; name: string; color: string; }
+
+/** Mínimo de caracteres para a busca virar evento (abaixo disso é navegação, não consulta). */
+export const MIN_SEARCH_EVENT_TERM_LENGTH = 3;
+
+/**
+ * Filtro LEVE no cliente: termo que pareça e-mail, telefone/CPF/CNPJ ou token
+ * não é enviado. A RPC `log_search_event` descarta os MESMOS casos no servidor —
+ * esta é só a primeira barreira, para o dado nem sair do navegador.
+ */
+export function isLoggableSearchTerm(term: string): boolean {
+  const t = term.trim();
+  if (t.length < MIN_SEARCH_EVENT_TERM_LENGTH) return false;
+  if (t.includes('@')) return false;
+  if (t.replace(/\D/g, '').length >= 7) return false;
+  if (/[A-Za-z0-9._~+/=-]{32,}/.test(t)) return false;
+  return true;
+}
+
+interface LogSearchEventArgs {
+  p_term: string;
+  p_result_count: number;
+  p_clicked: boolean;
+}
+
+/**
+ * `log_search_event(text, integer, boolean)` nasce na migration desta trilha
+ * (`supabase/migrations/20261016112552_search_events.sql`) e ainda NÃO está em
+ * `src/integrations/supabase/types.ts` — arquivo GERADO pelo types-sync, que não
+ * é deste cartão. O cliente tipado recusaria o nome da função, então a chamada
+ * passa por este facade estreito.
+ */
+const searchEventsRpc = supabase as unknown as {
+  rpc(fn: 'log_search_event', args: LogSearchEventArgs):
+    PromiseLike<{ data: unknown; error: { message?: string } | null }>;
+};
 
 function getDateFilterStart(filter: DateFilter): Date | null {
   const now = new Date();
@@ -55,6 +91,44 @@ export function useGlobalSearchData(open: boolean) {
   const [showFilters, setShowFilters] = useState(false);
 
   const { history, addToHistory, removeFromHistory, clearHistory } = useSearchHistory();
+
+  /**
+   * Termo da última busca CONCLUÍDA: o clique reusa o MESMO termo e a contagem
+   * de resultados daquela busca (o evento de clique não é uma busca nova).
+   */
+  const lastSearchEvent = useRef<{ term: string; resultCount: number; clicked: boolean } | null>(null);
+  /** Último termo já registrado: uma chamada por termo, não por tecla nem por filtro. */
+  const lastLoggedTerm = useRef<string | null>(null);
+
+  /**
+   * Envia UM evento de busca para a RPC `log_search_event`, em segundo plano.
+   * Telemetria NUNCA atrapalha a busca: erro é registrado no log e nada mais —
+   * sem toast, sem mexer no resultado na tela e sem o termo no console.
+   */
+  const logSearchEvent = useCallback(async (term: string, resultCount: number, clicked: boolean) => {
+    if (!isLoggableSearchTerm(term)) return;
+    try {
+      const { error } = await searchEventsRpc.rpc('log_search_event', {
+        p_term: term,
+        p_result_count: resultCount,
+        p_clicked: clicked,
+      });
+      if (error) throw error;
+    } catch (error) {
+      log.error('Register search event error:', error);
+    }
+  }, []);
+
+  /**
+   * Clique num resultado: mouse e teclado passam pelo mesmo `handleSelect` do
+   * host (`GlobalSearch`), então o Enter conta igual ao clique.
+   */
+  const registerResultClick = useCallback(() => {
+    const last = lastSearchEvent.current;
+    if (!last || last.clicked) return;
+    last.clicked = true;
+    void logSearchEvent(last.term, last.resultCount, true);
+  }, [logSearchEvent]);
 
   useEffect(() => {
     if (open) {
@@ -116,9 +190,9 @@ export function useGlobalSearchData(open: boolean) {
         if (cleanQuery.length >= 2) {
           if (isLinkSearch) {
             textQuery = textQuery.or(`content.ilike.%http://%,content.ilike.%https://%,content.ilike.%www.%`);
-            textQuery = textQuery.ilike('content', `%${cleanQuery}%`);
+            textQuery = textQuery.ilike('content', `%${escapeLikeWildcards(cleanQuery)}%`);
           } else {
-            textQuery = textQuery.ilike('content', `%${cleanQuery}%`);
+            textQuery = textQuery.ilike('content', `%${escapeLikeWildcards(cleanQuery)}%`);
           }
         } else if (isLinkSearch) {
           textQuery = textQuery.or(`content.ilike.%http://%,content.ilike.%https://%,content.ilike.%www.%`);
@@ -153,7 +227,7 @@ export function useGlobalSearchData(open: boolean) {
           : 'contacts:contact_id (id, name, surname)';
         let audioQuery = supabase.from('messages')
           .select(`id, content, transcription, message_type, created_at, contact_id, ${contactSelect}`)
-          .not('transcription', 'is', null).ilike('transcription', `%${cleanQuery}%`)
+          .not('transcription', 'is', null).ilike('transcription', `%${escapeLikeWildcards(cleanQuery)}%`)
           .order('created_at', { ascending: false }).limit(15);
         if (dateStart) audioQuery = audioQuery.gte('created_at', dateStart.toISOString());
         if (tags.length > 0) audioQuery = audioQuery.overlaps('contacts.tags', tags);
@@ -181,7 +255,7 @@ export function useGlobalSearchData(open: boolean) {
       if (types.has('contact')) {
         let contactQuery = supabase.from('contacts').select('id, name, surname, phone, email, created_at, tags').eq('is_lid_legacy', false);
         if (cleanQuery.length >= 2) {
-          const q = escapeOrFilterValue(`%${cleanQuery}%`);
+          const q = escapeOrFilterValue(`%${escapeLikeWildcards(cleanQuery)}%`);
           contactQuery = contactQuery.or(`name.ilike.${q},surname.ilike.${q},phone.ilike.${q},email.ilike.${q}`);
         }
         // A tag entra na CONSULTA, antes do `.limit(10)`: filtrar em JS depois do
@@ -242,13 +316,21 @@ export function useGlobalSearchData(open: boolean) {
       if (requestId !== searchRequestId.current) return;
       setResults(searchResults);
       if (cleanQuery.length >= 2) addToHistory(cleanQuery, searchResults.length);
+      // Telemetria da trilha de busca: o resultado já está na tela quando a RPC
+      // sai (`void`). Uma vez por termo — mudar um filtro reexecuta a busca, mas
+      // o mesmo termo não conta duas vezes.
+      if (cleanQuery.length >= MIN_SEARCH_EVENT_TERM_LENGTH && cleanQuery !== lastLoggedTerm.current) {
+        lastLoggedTerm.current = cleanQuery;
+        lastSearchEvent.current = { term: cleanQuery, resultCount: searchResults.length, clicked: false };
+        void logSearchEvent(cleanQuery, searchResults.length, false);
+      }
     } catch (error) {
       log.error('Search error:', error);
       if (requestId === searchRequestId.current) setResults([]);
     } finally {
       if (requestId === searchRequestId.current) setIsLoading(false);
     }
-  }, [addToHistory, crmIntegrationEnabled, isSupervisor]);
+  }, [addToHistory, crmIntegrationEnabled, isSupervisor, logSearchEvent]);
 
   const handleSearch = useCallback((query: string) => {
     searchRequestId.current += 1;
@@ -265,6 +347,8 @@ export function useGlobalSearchData(open: boolean) {
       return () => window.clearTimeout(timer);
     } else {
       searchRequestId.current += 1;
+      lastSearchEvent.current = null;
+      lastLoggedTerm.current = null;
       const timer = window.setTimeout(() => {
         setResults([]);
         setIsLoading(false);
@@ -295,5 +379,6 @@ export function useGlobalSearchData(open: boolean) {
     mediaTypeFilter, setMediaTypeFilter, showFilters, setShowFilters,
     history, removeFromHistory, clearHistory,
     toggleType, handleSearch, handleTagSelect, removeTag, performSearch, resetFilters,
+    registerResultClick,
   };
 }

@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { log } from '@/lib/logger';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,6 +36,8 @@ interface TemplateWithVariablesProps {
 }
 
 export function TemplatesWithVariables({ templates, onUseTemplate, contactData }: TemplateWithVariablesProps) {
+  const { profile } = useAuth();
+  const agentName = profile?.name?.trim() || undefined;
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [editorOpen, setEditorOpen] = useState(false);
@@ -51,7 +54,7 @@ export function TemplatesWithVariables({ templates, onUseTemplate, contactData }
   const categories = useMemo(() => ['all', ...Array.from(new Set(templates.map(t => t.category)))], [templates]);
 
   const handleUseTemplate = (template: Template) => {
-    const processedContent = replaceVariables(template.content, contactData);
+    const processedContent = replaceVariables(template.content, contactData, undefined, agentName);
     onUseTemplate(processedContent, {});
     toast.success(`Template "${template.title}" aplicado!`);
   };
@@ -99,8 +102,8 @@ export function TemplatesWithVariables({ templates, onUseTemplate, contactData }
                       <div className="mt-1 text-xs text-muted-foreground line-clamp-2"><VariableHighlighter text={template.content} /></div>
                     </div>
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingTemplate(template); setEditorOpen(true); }}><Edit2 className="w-3 h-3" /></Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleUseTemplate(template)}><Copy className="w-3 h-3" /></Button>
+                      <Button variant="ghost" size="icon" aria-label="Editar template" className="h-7 w-7" onClick={() => { setEditingTemplate(template); setEditorOpen(true); }}><Edit2 className="w-3 h-3" /></Button>
+                      <Button variant="ghost" size="icon" aria-label="Usar template" className="h-7 w-7" onClick={() => handleUseTemplate(template)}><Copy className="w-3 h-3" /></Button>
                     </div>
                   </div>
                 </motion.div>
@@ -112,7 +115,7 @@ export function TemplatesWithVariables({ templates, onUseTemplate, contactData }
           </div>
         </ScrollArea>
       </CardContent>
-      <TemplateEditorDialog open={editorOpen} onOpenChange={setEditorOpen} template={editingTemplate} onSave={handleSave} />
+      <TemplateEditorDialog open={editorOpen} onOpenChange={setEditorOpen} template={editingTemplate} onSave={handleSave} agentName={agentName} />
     </Card>
   );
 }

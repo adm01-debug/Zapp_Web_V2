@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { NavigationService } from '@/services/navigation.service';
 
-const DEVELOPMENT_IDS = ['payments', 'meta-capi', 'google-calendar'];
+const DEVELOPMENT_IDS = ['meta-capi', 'google-calendar'];
 
 describe('NavigationService integration maturity', () => {
   it('keeps incomplete integrations out of production-ready groups', () => {
@@ -74,12 +74,16 @@ describe('NavigationService role gating', () => {
   it('lets a supervisor into every group except Admin and the advanced set', () => {
     expect(NavigationService.canAccess('security', ['supervisor'])).toBe(true);
     expect(NavigationService.canAccess('reports', ['supervisor'])).toBe(true);
+    // Ferramentas do supervisor: a visao `supervisao` e STAFF, entao o supervisor
+    // entra sem depender do `admin` (ADMIN_ONLY).
+    expect(NavigationService.canAccess('supervisao', ['supervisor'])).toBe(true);
     expect(NavigationService.canAccess('admin', ['supervisor'])).toBe(false);
     expect(NavigationService.canAccess('audit-logs', ['supervisor'])).toBe(false);
   });
 
   it('only an admin reaches Admin and the advanced set', () => {
     expect(NavigationService.canAccess('admin', ['admin'])).toBe(true);
+    expect(NavigationService.canAccess('supervisao', ['admin'])).toBe(true);
     expect(NavigationService.canAccess('audit-logs', ['admin'])).toBe(true);
   });
 
@@ -140,5 +144,61 @@ describe('F25 — Multiplix por permissao nomeada (multiplix.dispatch.create)', 
     expect(NavigationService.canAccess('wallet', ['supervisor'], [])).toBe(true);
     expect(NavigationService.canAccess('security', ['agent'], [])).toBe(false);
     expect(NavigationService.canAccess('admin', ['supervisor'], [])).toBe(false);
+  });
+});
+
+/**
+ * Ferramentas do supervisor (Fila, Copiloto, Sala de Crise, Playbooks e
+ * Treinamento) ficavam dentro da visao `admin` (ADMIN_ONLY): o publico a que se
+ * destinam — o supervisor — nao alcancava nenhuma delas, embora o AdminView ja
+ * aceitasse `isSupervisor`. A visao `supervisao` (STAFF: supervisor e admin)
+ * resolve isso; `admin` fica com Usuarios e Auditoria.
+ */
+describe('Visao supervisao — ferramentas do supervisor fora do gate ADMIN_ONLY', () => {
+  const navIds = () => [
+    ...NavigationService.getPrimaryNav().map(({ id }) => id),
+    ...NavigationService.getGroups().flatMap(({ items }) => items.map(({ id }) => id)),
+    ...NavigationService.getAdvancedNav().map(({ id }) => id),
+  ];
+
+  it('expoe a visao supervisao uma unica vez, no grupo Sistema, sem duplicar item de menu', () => {
+    const ids = navIds();
+    expect(ids.filter((id) => id === 'supervisao')).toHaveLength(1);
+
+    const sistema = NavigationService.getGroups().find(({ label }) => label === 'Sistema');
+    expect(sistema?.items.map(({ id }) => id)).toContain('supervisao');
+    expect(NavigationService.getViewLabel('supervisao')).toBe('Supervisão');
+  });
+
+  it('supervisor e admin alcancam supervisao; o atendente comum nao', () => {
+    expect(NavigationService.canAccess('supervisao', ['supervisor'])).toBe(true);
+    expect(NavigationService.canAccess('supervisao', ['admin'])).toBe(true);
+    expect(NavigationService.canAccess('supervisao', ['agent'])).toBe(false);
+    expect(NavigationService.canAccess('supervisao', ['special_agent'])).toBe(false);
+  });
+
+  it('a entrada aparece no menu do supervisor (filterNavItems) e some para o atendente', () => {
+    const sistema = NavigationService.getGroups().find(({ label }) => label === 'Sistema');
+
+    const doSupervisor = NavigationService.filterNavItems(sistema!.items, ['supervisor']).map(({ id }) => id);
+    expect(doSupervisor).toContain('supervisao');
+
+    const doAtendente = NavigationService.filterNavItems(sistema!.items, ['agent']).map(({ id }) => id);
+    expect(doAtendente).toEqual(['settings']);
+    expect(doAtendente).not.toContain('supervisao');
+  });
+
+  it('admin segue negado ao supervisor (Usuarios e Auditoria continuam so do admin)', () => {
+    expect(NavigationService.canAccess('admin', ['supervisor'])).toBe(false);
+    expect(NavigationService.canAccess('admin', ['admin'])).toBe(true);
+    const sistema = NavigationService.getGroups().find(({ label }) => label === 'Sistema');
+    const doSupervisor = NavigationService.filterNavItems(sistema!.items, ['supervisor']).map(({ id }) => id);
+    expect(doSupervisor).not.toContain('admin');
+  });
+
+  it('a Fila que a visao encaixa ja e alcancavel pelo supervisor (item `queues` existente)', () => {
+    expect(NavigationService.canAccess('queues', ['supervisor'])).toBe(true);
+    expect(NavigationService.canAccess('queues', ['admin'])).toBe(true);
+    expect(NavigationService.canAccess('queues', ['agent'])).toBe(false);
   });
 });

@@ -139,6 +139,14 @@ export function LocationMessageDisplay({ location, isSent }: LocationMessageDisp
   }, [location.address, location.latitude, location.longitude, mapboxToken, coordinate]);
   const displayAddress = location.address ?? (resolved?.key === coordinate ? resolved.address : null);
 
+  // `liveUntil` vem do provedor e pode chegar inválido; sem a checagem o balão
+  // anunciava "· até Invalid Date".
+  const liveUntilDate = location.liveUntil ? new Date(location.liveUntil) : null;
+  const liveUntilLabel =
+    liveUntilDate && !Number.isNaN(liveUntilDate.getTime())
+      ? liveUntilDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+      : null;
+
   const retry = () => { setMapError(null); setAttempt((n) => n + 1); };
 
   const openInMaps = () => {
@@ -167,10 +175,8 @@ export function LocationMessageDisplay({ location, isSent }: LocationMessageDisp
         )}>
           <Radio className="w-3 h-3 animate-pulse" />
           <span>Localização em tempo real</span>
-          {location.liveUntil && (
-            <span className="opacity-70">
-              · até {new Date(location.liveUntil).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-            </span>
+          {liveUntilLabel && (
+            <span className="opacity-70">· até {liveUntilLabel}</span>
           )}
         </div>
       )}

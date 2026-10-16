@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -101,6 +101,11 @@ describe('TalkXSegments · construtor com condição incompleta (X008)', () => {
     f.create.mockReset();
     f.update.mockReset();
     vi.mocked(toast.error).mockClear();
+  });
+
+  // X111: o construtor aberto vive no endereço; cada teste começa na biblioteca.
+  afterEach(() => {
+    window.history.replaceState(null, '', '/');
   });
 
   it('adicionar condição vazia mantém a contagem anterior', async () => {

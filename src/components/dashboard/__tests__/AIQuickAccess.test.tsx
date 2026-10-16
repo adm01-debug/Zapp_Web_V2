@@ -6,6 +6,11 @@ import { createElement } from 'react';
 // "Insights de IA" sem entrar em nenhuma query, e "Análises Recentes" era um
 // estado vazio fixo não ligado a dado real. Agora ambos leem
 // conversation_analyses — estes testes provam a ligação.
+//
+// t_76903c03: os cartões de IA levavam a `/sentiment-alerts`, rota que não
+// existe em AppRoutes (`path="*"` → NotFound). A tela real é a VIEW interna
+// `sentiment` (ViewRouter/VIEW_MAP). Os testes abaixo clicam nos cartões e
+// provam que a navegação vai para uma view que existe — nunca para a rota 404.
 
 const h = vi.hoisted(() => ({
   insights: vi.fn(),
@@ -20,28 +25,33 @@ vi.mock('@/hooks/analytics/useRecentAnalyses', () => ({
 vi.mock('@/hooks/analytics/useAIStats', () => ({ useAIStats: () => ({ data: undefined }) }));
 vi.mock('@/hooks/analytics/useActiveAIProvider', () => ({ useActiveAIProvider: () => ({ data: undefined }) }));
 vi.mock('@/hooks/system/useNavigationHistory', () => ({ navigateToView: vi.fn() }));
-vi.mock('react-router-dom', () => ({ useNavigate: () => vi.fn() }));
-vi.mock('../aiFeatures', () => ({
-  AI_FEATURES: [],
-  useAIFeatureNavigation: () => vi.fn(),
-}));
 
 // CardSelect (Radix) → <select> nativo para disparar a troca de período.
 vi.mock('../overview/DashboardCard', async (importOriginal) => {
   const mod = await importOriginal<typeof import('../overview/DashboardCard')>();
   return {
     ...mod,
-    CardSelect: ({ value, onValueChange, options, testid }: {
+    CardSelect: ({ value, onValueChange, options, testid, name }: {
       value: string; onValueChange: (v: string) => void;
-      options: { value: string; label: string }[]; testid?: string;
+      options: { value: string; label: string }[]; testid?: string; name: string;
     }) => createElement('select', {
-      'data-testid': testid, value,
+      'data-testid': testid, 'aria-label': name, value,
       onChange: (e: React.ChangeEvent<HTMLSelectElement>) => onValueChange(e.target.value),
     }, options.map(o => createElement('option', { key: o.value, value: o.value }, o.label))),
   };
 });
 
 import { AIQuickAccess } from '../AIQuickAccess';
+import { AI_FEATURES } from '../aiFeatures';
+import { navigateToView } from '@/hooks/system/useNavigationHistory';
+import { NavigationService } from '@/services/navigation.service';
+
+// Views que o ViewRouter realmente renderiza — a fonte real de "tela que existe".
+const VIEWS_REAIS = new Set([
+  ...NavigationService.getPrimaryNav().map((i) => i.id),
+  ...NavigationService.getGroups().flatMap((g) => g.items.map((i) => i.id)),
+  ...NavigationService.getAdvancedNav().map((i) => i.id),
+]);
 
 beforeEach(() => {
   h.insights.mockReset();
@@ -49,6 +59,7 @@ beforeEach(() => {
   h.insightsArgs.length = 0;
   h.insights.mockReturnValue({ data: { total: 0, negativePct: 0, topNegativeDepartment: null, avgSentimentScore: null } });
   h.recent.mockReturnValue({ data: [] });
+  vi.mocked(navigateToView).mockClear();
 });
 
 describe('AIQuickAccess — controles ligados a dado real', () => {
@@ -112,5 +123,32 @@ describe('AIQuickAccess — controles ligados a dado real', () => {
     expect(within(card).getByText('25%')).toBeInTheDocument();
     expect(within(card).getByText('Suporte')).toBeInTheDocument();
     expect(within(card).getByText('61')).toBeInTheDocument();
+  });
+});
+
+describe('AIQuickAccess — nenhum cartão leva a 404', () => {
+  it('todo cartão de IA aponta para uma view interna que existe (nunca rota de URL)', () => {
+    for (const feature of AI_FEATURES) {
+      expect(feature.action, `action ausente em ${feature.id}`).toBeTruthy();
+      expect(VIEWS_REAIS.has(feature.action as string), `view de ${feature.id}=${feature.action}`).toBe(true);
+    }
+  });
+
+  it('clicar em "Alertas de Sentimento" navega para a view sentimento', () => {
+    render(<AIQuickAccess />);
+    fireEvent.click(screen.getByTestId('ai-feature-sentiment'));
+    expect(navigateToView).toHaveBeenCalledWith('sentiment');
+  });
+
+  it('clicar em "Tendências de Sentimento" navega para a view sentimento', () => {
+    render(<AIQuickAccess />);
+    fireEvent.click(screen.getByTestId('ai-feature-trends'));
+    expect(navigateToView).toHaveBeenCalledWith('sentiment');
+  });
+
+  it('clicar em "Ver todas" das análises recentes navega para a view sentimento (não para rota 404)', () => {
+    render(<AIQuickAccess />);
+    fireEvent.click(within(screen.getByTestId('ai-recent-card')).getByTestId('ver-todas'));
+    expect(navigateToView).toHaveBeenCalledWith('sentiment');
   });
 });

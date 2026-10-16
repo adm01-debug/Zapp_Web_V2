@@ -212,7 +212,7 @@ describe('downloadImageAsBlob — CT-39 (download real, sem zip)', () => {
     const fetchMock = vi.fn().mockResolvedValue({ ok: true, blob: async () => blob });
     vi.stubGlobal('fetch', fetchMock);
 
-    await expect(downloadImageAsBlob('https://x/a.jpg', 'produto_1.jpg')).resolves.toBe(true);
+    await expect(downloadImageAsBlob('https://x/a.jpg', 'produto_1.jpg', true)).resolves.toBe(true);
 
     expect(fetchMock).toHaveBeenCalledWith('https://x/a.jpg', { mode: 'cors' });
     expect(createObjectURL).toHaveBeenCalledWith(blob);
@@ -228,7 +228,7 @@ describe('downloadImageAsBlob — CT-39 (download real, sem zip)', () => {
   it('sem CORS/resposta ok devolve false sem disparar click', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('CORS')));
 
-    await expect(downloadImageAsBlob('https://x/a.jpg', 'produto_1.jpg')).resolves.toBe(false);
+    await expect(downloadImageAsBlob('https://x/a.jpg', 'produto_1.jpg', true)).resolves.toBe(false);
 
     expect(clicked).toBeNull();
     expect(createObjectURL).not.toHaveBeenCalled();

@@ -1,8 +1,10 @@
 import { useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
-import { Reply, Forward, Copy, MoreVertical, Trash2, CheckCheck, EyeOff, Pencil } from 'lucide-react';
+import { HOVER_REVEAL_TAP } from '../hoverActions';
+import { Reply, Forward, Copy, MoreVertical, Trash2, CheckCheck, EyeOff, Pencil, History } from 'lucide-react';
 import { Message } from '@/types/chat';
 import { TextToSpeechButton } from '../TextToSpeechButton';
+import { MessageSendHistorySheet } from './MessageSendHistorySheet';
 import { useEvolutionApi } from '@/hooks/integrations/useEvolutionApi';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -38,6 +40,10 @@ export function MessageHoverToolbar({
   onEditStart, onMessageDeleted,
 }: MessageHoverToolbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  // SL-198 (inventário 061): o "Histórico de envio" (MessageSendHistorySheet) existia
+  // pronto e testado, mas nenhuma tela o importava — o agente nunca via as tentativas
+  // de entrega. O estado do sheet mora aqui, dono do menu "⋮" que o abre.
+  const [historyOpen, setHistoryOpen] = useState(false);
   const {
     deleteMessage,
     markMessageAsRead,
@@ -106,7 +112,7 @@ export function MessageHoverToolbar({
 
   return (
     <div className={cn(
-      "absolute top-1/2 -translate-y-1/2 flex items-center opacity-0 group-hover:opacity-100 transition-all duration-200 z-10",
+      `absolute top-1/2 -translate-y-1/2 flex items-center ${HOVER_REVEAL_TAP} transition-all duration-200 z-10`,
       menuOpen && "opacity-100",
       isSent ? "right-full mr-1.5" : "left-full ml-1.5"
     )}>
@@ -171,6 +177,17 @@ export function MessageHoverToolbar({
               <EyeOff className="w-4 h-4" /> Marcar como não lida
             </DropdownMenuItem>
 
+            {/* SL-198 (inventário 061): só a mensagem do agente tem envio para
+                acompanhar — a recebida não ganha a entrada. */}
+            {message.sender === 'agent' && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => setHistoryOpen(true)}>
+                  <History className="w-4 h-4" /> Histórico de envio
+                </DropdownMenuItem>
+              </>
+            )}
+
             <DropdownMenuSeparator />
             <DropdownMenuItem className="gap-2 cursor-pointer text-destructive" onClick={handleDelete}>
               <Trash2 className="w-4 h-4" />
@@ -179,6 +196,8 @@ export function MessageHoverToolbar({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      <MessageSendHistorySheet message={message} open={historyOpen} onOpenChange={setHistoryOpen} />
     </div>
   );
 }

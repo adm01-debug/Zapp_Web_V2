@@ -36,6 +36,18 @@ const SEGREDOS = {
 // Campos que a auditoria proibe no diretorio de saida (criterio f do cartao).
 const CAMPOS_PROIBIDOS_NO_OUT = ['"access_token"', '"refresh_token"', '"user"'];
 
+// Resposta sintetica de `ai_usage_logs` para a leitura correlacionada pelo RUN_ID
+// (a versao atual do roteiro le o ledger e confere o consumo do run): tres linhas,
+// o mesmo numero de chamadas que o cenario faz.
+const CONSUMO_FALSO = JSON.stringify(
+  Array.from({ length: 3 }, (_, i) => ({
+    request_id: `run-sintetico-${i}`,
+    function_name: 'classify-audio-meme',
+    status: 'success',
+    model: 'modelo-sintetico',
+  })),
+);
+
 const CURL_FALSO = `#!/usr/bin/env bash
 # curl falso da prova: nunca toca a rede. Grava o proprio argv (um por linha),
 # captura o stdin recebido e devolve respostas sinteticas conforme a URL.
@@ -56,7 +68,13 @@ url=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     -o) out="$2"; shift 2 ;;
-    -w|-X|-H|--config|--data|--data-binary|--data-raw|--data-ascii) shift 2 ;;
+    --config)
+      # O curl de verdade leria o arquivo; aqui ele e' lido e registrado para
+      # PROVAR que a credencial realmente viajou no --config privado (e nao
+      # apenas desapareceu do roteiro).
+      [[ -r "$2" ]] && cat -- "$2" >> "\${CURL_CFG_LOG:?CURL_CFG_LOG ausente}"
+      shift 2 ;;
+    -w|-X|-H|--data|--data-binary|--data-raw|--data-ascii) shift 2 ;;
     http://*|https://*) url="$1"; shift ;;
     *) shift ;;
   esac
@@ -79,7 +97,7 @@ elif [[ "$url" == *"/functions/v1/"* ]]; then
   printf '%s' '{"category":"meme","confidence":0.99}' > "$out"
   printf '200'
 elif [[ "$url" == *"/rest/v1/ai_usage_logs"* ]]; then
-  printf '%s' '[{"request_id":"run-sintetico","status":"success","model":"fake"},{"request_id":"run-sintetico","status":"success","model":"fake"},{"request_id":"run-sintetico","status":"success","model":"fake"}]' > "$out"
+  printf '%s' '${CONSUMO_FALSO}' > "$out"
   printf '200'
 else
   printf '%s' '{"ok":true}' > "$out"
@@ -112,8 +130,10 @@ function cenario(t) {
 
   const argvLog = join(raiz, 'argv.log');
   const stdinLog = join(raiz, 'stdin.log');
+  const cfgLog = join(raiz, 'curl-cfg.log');
   writeFileSync(argvLog, '');
   writeFileSync(stdinLog, '');
+  writeFileSync(cfgLog, '');
 
   const jqReal = execFileSync('bash', ['-c', 'command -v jq'], { encoding: 'utf8' }).trim();
   assert.ok(jqReal, 'jq real nao encontrado no PATH (o script sob teste exige jq)');
@@ -127,7 +147,7 @@ function cenario(t) {
 
   const tmpprivModeInicial = statSync(tmppriv).mode & 0o7777;
 
-  return { raiz, fakebin, tmppriv, tmpprivModeInicial, outdir, argvLog, stdinLog, jqReal };
+  return { raiz, fakebin, tmppriv, tmpprivModeInicial, outdir, argvLog, stdinLog, cfgLog, jqReal };
 }
 
 function rodar(c, { falhaLogin = false } = {}) {
@@ -142,6 +162,7 @@ function rodar(c, { falhaLogin = false } = {}) {
     PATH: `${c.fakebin}:${process.env.PATH}`,
     ARGV_LOG: c.argvLog,
     CURL_STDIN_LOG: c.stdinLog,
+    CURL_CFG_LOG: c.cfgLog,
     JQ_REAL: c.jqReal,
   };
   if (falhaLogin) env.PROVA_FALHA_LOGIN = '1';
@@ -202,6 +223,19 @@ test('sucesso: nenhum segredo em argv, corpo do login por stdin, saida redigida 
   assert.ok(
     stdin.includes(EMAIL),
     'o corpo do login (email) nao chegou ao curl por stdin; deveria ir por --data-binary @-',
+  );
+
+  // Prova positiva: as credenciais VIAJARAM no --config privado do curl. Nao
+  // basta terem sumido do argv — um roteiro que nao manda credencial nenhuma
+  // tambem nao vaza argv e derrubaria a prova por outro motivo.
+  const cfg = readFileSync(c.cfgLog, 'utf8');
+  assert.ok(
+    cfg.includes(SEGREDOS.anonKey),
+    'o --config do curl nao recebeu a anon key: o cabecalho apikey deveria sair de -H e ir por --config',
+  );
+  assert.ok(
+    cfg.includes(SEGREDOS.accessToken),
+    'o --config do curl nao recebeu o access token: o cabecalho Authorization deveria sair de -H e ir por --config',
   );
 
   assert.deepEqual(

@@ -41,4 +41,19 @@ describe('ContactAnalyticsDashboard — escopo dos agregados', () => {
     expect(screen.getByText('3 nesta página')).toBeInTheDocument();
     expect(screen.queryByText('3 total')).not.toBeInTheDocument();
   });
+
+  // RD-086: Analytics é a terceira "visão extra" e precisa do mesmo estado
+  // vazio claro. Sem contato, o aviso substitui os cartões de gráfico.
+  it('sem contatos mostra "Sem dados" no lugar dos cartões', () => {
+    render(<ContactAnalyticsDashboard contacts={[]} />);
+    expect(screen.getByTestId('contact-analytics-empty')).toBeInTheDocument();
+    expect(screen.getByText('Sem dados')).toBeInTheDocument();
+    expect(screen.queryByText('Distribuição por Tipo')).not.toBeInTheDocument();
+  });
+
+  it('com contatos esconde o aviso de vazio e mantém os cartões', () => {
+    render(<ContactAnalyticsDashboard contacts={syntheticPage(25)} />);
+    expect(screen.queryByTestId('contact-analytics-empty')).not.toBeInTheDocument();
+    expect(screen.getByText('Distribuição por Tipo')).toBeInTheDocument();
+  });
 });

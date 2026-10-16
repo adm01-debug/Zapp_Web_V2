@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -42,13 +42,17 @@ type Resposta = { data: unknown; error: unknown };
  * Builder thenable do PostgREST: serve tanto para `.maybeSingle()` quanto para a
  * cadeia `.order(...).limit(...)` usada em agent_achievements, em qualquer ordem.
  */
-function consulta(resposta: Resposta | Promise<Resposta>) {
+function consulta(resposta: Resposta | Promise<Resposta>, lista?: unknown[]) {
   const promessa = Promise.resolve(resposta);
   const builder: Record<string, unknown> = {
     select: () => builder,
     eq: () => builder,
     order: () => builder,
     limit: () => builder,
+    // A leitura paginada usa `.range(from, to)`; com `lista`, cada chamada devolve
+    // a fatia pedida (é assim que a página de 20 chega ao componente).
+    range: (from: number, to: number) =>
+      Promise.resolve(lista ? { data: lista.slice(from, to + 1), error: null } : resposta),
     maybeSingle: () => promessa,
     then: (ok: (v: Resposta) => unknown, err?: (e: unknown) => unknown) => promessa.then(ok, err),
   };
@@ -59,13 +63,17 @@ interface Cenario {
   profile?: Resposta;
   stats?: Resposta;
   achievements?: Resposta;
+  /** Lista completa de conquistas para a leitura paginada por `.range()`. */
+  achievementsLista?: unknown[];
 }
 
 function responder(cenario: Cenario) {
   mockFrom.mockImplementation((tabela: string) => {
     if (tabela === 'profiles') return consulta(cenario.profile ?? { data: { id: 'p1' }, error: null });
     if (tabela === 'agent_stats') return consulta(cenario.stats ?? { data: null, error: null });
-    if (tabela === 'agent_achievements') return consulta(cenario.achievements ?? { data: [], error: null });
+    if (tabela === 'agent_achievements') {
+      return consulta(cenario.achievements ?? { data: [], error: null }, cenario.achievementsLista);
+    }
     return consulta({ data: [], error: null });
   });
 }
@@ -196,6 +204,34 @@ describe('AchievementsSystem (view Conquistas)', () => {
 
     expect(await screen.findByText('Resposta Relâmpago')).toBeInTheDocument();
     expect(screen.queryByText('Carregando conquistas...')).toBeNull();
+    semProgressoSimulado();
+  });
+
+  it('agente com 25 conquistas vê "25" e carrega as 25 pelo "ver mais"', async () => {
+    const conquistas = Array.from({ length: 25 }, (_, i) => ({
+      ...conquistaReal,
+      id: `a${i + 1}`,
+      achievement_name: `Conquista ${i + 1}`,
+    }));
+
+    responder({
+      stats: { data: { ...statsDaConta, achievements_count: 25 }, error: null },
+      achievementsLista: conquistas,
+    });
+
+    renderizar();
+
+    // O total no cabeçalho é o do servidor (agent_stats.achievements_count), não o
+    // tamanho da página de 20 — era aqui que a tela mostrava "20" para 25 conquistas.
+    expect(await screen.findByText('25 conquistas desbloqueadas')).toBeInTheDocument();
+    expect(screen.getByText('Mostrando 20 de 25')).toBeInTheDocument();
+    expect(screen.queryByText('Conquista 25')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: /ver mais conquistas/i }));
+
+    expect(await screen.findByText('Conquista 25')).toBeInTheDocument();
+    expect(screen.queryByText('Mostrando 20 de 25')).toBeNull();
+    expect(screen.queryByRole('button', { name: /ver mais conquistas/i })).toBeNull();
     semProgressoSimulado();
   });
 });

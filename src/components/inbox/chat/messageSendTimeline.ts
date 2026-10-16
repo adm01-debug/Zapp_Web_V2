@@ -163,6 +163,26 @@ export function buildMessageSendTimeline(message: MessageSendFields): SendTimeli
   return steps;
 }
 
+/** Estado de envio de UMA mensagem do agente para as pilulas do resumo (paridade V3). */
+export type EstadoDeEnvio = 'queued' | 'inFlight' | 'failed';
+
+/**
+ * Classifica UMA mensagem com a MESMA regua de `summarizeDeliveryProgress`: finais
+ * `sent`/`delivered`/`read` = confirmado, `failed` = falha, `delivery_claimed_at` com data
+ * ISO valida = em voo, o resto = na fila. Mensagem que nao e do agente nao entra no resumo,
+ * entao nunca casa com pilula (volta `confirmed`). Mora aqui (e nao no `.tsx`) porque a regra
+ * da casa (`react-refresh/only-export-components`) nao deixa um arquivo exportar componente
+ * E funcao pura. Para dados reais o resultado e identico ao mapeamento anterior: o claim
+ * gravado pelo worker e sempre ISO valido ou nulo, e o painel so consulta mensagens do agente.
+ */
+export function estadoDeEnvio(message: MessageSendFields): EstadoDeEnvio | 'confirmed' {
+  if (message.sender !== undefined && message.sender !== null && message.sender !== 'agent') return 'confirmed';
+  const status = message.status ?? 'sending';
+  if (status === 'failed') return 'failed';
+  if (STATUS_FINAL[status]) return 'confirmed';
+  return isoTexte(message.delivery_claimed_at) !== null ? 'inFlight' : 'queued';
+}
+
 /** Resumo da conversa para a barra de falhas/progresso (item 062, metade de cliente). */
 export function summarizeDeliveryProgress(messages: readonly MessageSendFields[]): DeliveryProgress {
   const progress: DeliveryProgress = { total: 0, queued: 0, inFlight: 0, failed: 0, confirmed: 0 };

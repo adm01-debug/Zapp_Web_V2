@@ -1,4 +1,4 @@
-import { emailCompanySocials, escapeIlikeExact, externalParticipantEmail, handleCRMIntegrationRequest, resolveContactLookup, resolveContactLookupBatch } from './index.ts';
+import { distinctCompanyNames, distinctNameSuggestions, emailCompanySocials, escapeIlikeExact, externalParticipantEmail, handleCRMIntegrationRequest, MAX_NAME_SUGGESTIONS, resolveContactLookup, resolveContactLookupBatch } from './index.ts';
 
 function assertStatus(actual: number, expected: number) {
   if (actual !== expected) throw new Error(`expected HTTP ${expected}, got ${actual}`);
@@ -480,6 +480,23 @@ function withLinkFetch(routes: LinkRoute[]) {
   globalThis.fetch = ((input: RequestInfo | URL) => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : (input as Request).url;
     const parsed = new URL(url);
+    // R2-AUTH-022: `requireAuth` consulta a política de rede (RPC service_role)
+    // antes de liberar o handler; o stub responde "allow" no caminho feliz.
+    if (parsed.pathname === '/rest/v1/rpc/resolve_network_policy') {
+      seen.push(url);
+      return Promise.resolve(new Response(JSON.stringify([
+        { allowed: true, reason: null, rate_limit_max_requests: 30, rate_limit_window_seconds: 60 },
+      ]), { status: 200, headers: { 'content-type': 'application/json' } }));
+    }
+    // R2-AUTH-004: `requireAuth` lê `profiles.is_active` por `user_id` (igualdade
+    // exata) antes de liberar o handler; o stub responde "ativo" no caminho feliz.
+    if (url.includes('/rest/v1/profiles') && url.includes('select=is_active')) {
+      seen.push(url);
+      return Promise.resolve(new Response(JSON.stringify({ is_active: true }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }));
+    }
     const route = routes.find((candidate) => candidate.match === parsed.pathname);
     if (!route) {
       seen.push(url);
@@ -651,4 +668,172 @@ Deno.test('matriz de permissões: sem permissão a resposta é 403 e não 404 pa
       stub.restore();
     }
   });
+});
+
+// ── PM-38 · sugestões estreitas de empresa e cargo (formulário de contato) ────
+//
+// O formulário pede as sugestões de EMPRESA e CARGO. A ação antiga
+// (`rpc`→`search_contacts_advanced`) é admin-only e devolve LINHAS de contato
+// inteiras só para extrair um texto: o atendente recebia 403 e o supervisor
+// pagava dezenas de páginas. A ação estreita responde SÓ strings distintas sob
+// `view_contacts`. Estes testes dirigem o HANDLER REAL por papel — atendente
+// com/sem permissão e credencial de serviço —, com a rede dublada na fronteira.
+
+const NAMES_ROTA_EMPRESAS: LinkRoute = {
+  match: '/rest/v1/companies',
+  body: [
+    { nome_fantasia: 'ACME', nome_crm: 'ACME LTDA', razao_social: 'ACME LTDA' },
+    { nome_fantasia: null, nome_crm: 'Beta', razao_social: 'Beta ME' },
+    { nome_fantasia: '  ACME  ', nome_crm: null, razao_social: null },
+    { nome_fantasia: 'Gama', nome_crm: null, razao_social: null },
+  ],
+};
+const NAMES_ROTA_CARGOS: LinkRoute = {
+  match: '/rest/v1/contacts',
+  body: [
+    { cargo: 'Vendedor' }, { cargo: 'Gerente' }, { cargo: ' Vendedor ' }, { cargo: null }, { cargo: '' },
+  ],
+};
+
+function namesRequest(action: string): Request {
+  return new Request('https://stub.supabase.co/functions/v1/crm-integration', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', Authorization: 'Bearer token-sintetico-do-atendente' },
+    body: JSON.stringify({ action }),
+  });
+}
+
+function stringList(value: unknown): string[] | null {
+  return Array.isArray(value) && value.every((item) => typeof item === 'string') ? value as string[] : null;
+}
+
+Deno.test('sugestões: atendente SEM view_contacts recebe 403 e o CRM externo não é lido', async () => {
+  await withLinkEnv(async () => {
+    const stub = withLinkFetch([LINK_ROTA_AUTH, LINK_ROTA_RATE, LINK_PERMISSAO_NEGADA]);
+    try {
+      const response = await handleCRMIntegrationRequest(namesRequest('companyNames'));
+      assertStatus(response.status, 403);
+      const leituras = stub.seen.filter((url) => /companies|salespeople|\/rest\/v1\/contacts/.test(url));
+      if (leituras.length > 0) throw new Error(`sem permissão a Edge não pode ler o CRM: ${leituras.join(', ')}`);
+    } finally {
+      stub.restore();
+    }
+  });
+});
+
+Deno.test('sugestões de empresa: atendente COM view_contacts recebe só strings distintas, sem linha de contato', async () => {
+  await withLinkEnv(async () => {
+    const stub = withLinkFetch([LINK_ROTA_AUTH, LINK_ROTA_RATE, LINK_PERMISSAO_CONCEDIDA, NAMES_ROTA_EMPRESAS]);
+    try {
+      const response = await handleCRMIntegrationRequest(namesRequest('companyNames'));
+      assertStatus(response.status, 200);
+      const raw = await response.text();
+      const body = JSON.parse(raw) as { data?: unknown };
+      const nomes = stringList(body.data);
+      if (!nomes) throw new Error(`a resposta não é uma lista de strings: ${raw}`);
+      if (JSON.stringify([...nomes].sort()) !== JSON.stringify(['ACME', 'Beta', 'Gama'])) {
+        throw new Error(`nomes inesperados (dedupe/trim/vazio): ${JSON.stringify(nomes)}`);
+      }
+      if (/phone|telefone|contato/i.test(raw)) throw new Error('a resposta vazou campo de contato');
+      const contatos = stub.seen.filter((url) => /\/rest\/v1\/contacts/.test(url));
+      if (contatos.length > 0) throw new Error(`a sugestão não pode ler contatos: ${contatos.join(', ')}`);
+    } finally {
+      stub.restore();
+    }
+  });
+});
+
+Deno.test('sugestões de cargo: lê contacts.cargo (não salespeople.role) e devolve só strings, sem linha de contato', async () => {
+  await withLinkEnv(async () => {
+    const stub = withLinkFetch([LINK_ROTA_AUTH, LINK_ROTA_RATE, LINK_PERMISSAO_CONCEDIDA, NAMES_ROTA_CARGOS]);
+    try {
+      const response = await handleCRMIntegrationRequest(namesRequest('roleNames'));
+      assertStatus(response.status, 200);
+      const raw = await response.text();
+      const body = JSON.parse(raw) as { data?: unknown };
+      const cargos = stringList(body.data);
+      if (!cargos) throw new Error(`a resposta não é uma lista de strings: ${raw}`);
+      if (JSON.stringify([...cargos].sort()) !== JSON.stringify(['Gerente', 'Vendedor'])) {
+        throw new Error(`cargos inesperados (dedupe/trim/vazio): ${JSON.stringify(cargos)}`);
+      }
+      const leituras = stub.seen.filter((url) => /\/rest\/v1\/(contacts|salespeople)/.test(url));
+      if (leituras.length === 0) throw new Error('a ação de cargo não leu o CRM externo');
+      if (leituras.some((url) => /salespeople/.test(url))) {
+        throw new Error(`a ação de cargo ainda lê salespeople: ${leituras.join(', ')}`);
+      }
+      // A leitura é estreita: só `cargo`, nunca nome/telefone/e-mail do contato.
+      if (!leituras.some((url) => /select=cargo(&|$)/.test(decodeURIComponent(url)))) {
+        throw new Error(`a leitura não pediu só cargo: ${leituras.join(', ')}`);
+      }
+      if (leituras.some((url) => /name|phone|email|telefone/i.test(decodeURIComponent(url)))) {
+        throw new Error(`a leitura pediu coluna de contato: ${leituras.join(', ')}`);
+      }
+    } finally {
+      stub.restore();
+    }
+  });
+});
+
+Deno.test('sugestões de cargo: credencial de cron não pode ler as sugestões', async () => {
+  Deno.env.set('SUPABASE_SERVICE_ROLE_KEY', 'test-service-key');
+  Deno.env.set('SUPABASE_URL', 'https://sb-testref.supabase.co');
+  Deno.env.set('CRON_SECRET', 'test-cron-secret');
+  const response = await handleCRMIntegrationRequest(new Request('https://edge.invalid', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-cron-secret': 'test-cron-secret' },
+    body: JSON.stringify({ action: 'roleNames' }),
+  }));
+  assertStatus(response.status, 403);
+});
+
+Deno.test('sugestões: credencial de serviço não pode ler as sugestões', async () => {
+  await withLinkEnv(async () => {
+    const response = await handleCRMIntegrationRequest(new Request('https://stub.supabase.co/functions/v1/crm-integration', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', Authorization: `Bearer ${LINK_ENV.SUPABASE_SERVICE_ROLE_KEY}` },
+      body: JSON.stringify({ action: 'roleNames' }),
+    }));
+    assertStatus(response.status, 400);
+  });
+});
+
+Deno.test('sugestões: parâmetro extra é recusado para a leitura estreita não virar o `select` genérico', async () => {
+  await withLinkEnv(async () => {
+    const stub = withLinkFetch([LINK_ROTA_AUTH, LINK_ROTA_RATE, LINK_PERMISSAO_CONCEDIDA, NAMES_ROTA_CARGOS]);
+    try {
+      const response = await handleCRMIntegrationRequest(new Request('https://stub.supabase.co/functions/v1/crm-integration', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', Authorization: 'Bearer token-sintetico-do-atendente' },
+        body: JSON.stringify({ action: 'roleNames', table: 'contacts' }),
+      }));
+      assertStatus(response.status, 400);
+    } finally {
+      stub.restore();
+    }
+  });
+});
+
+Deno.test('sugestões: projeção deduplica, descarta vazio e respeita o teto (nunca devolve objeto)', () => {
+  const cargos = distinctNameSuggestions(
+    [{ role: 'A' }, { role: ' A ' }, { role: '' }, { role: null }, { role: 'B' }],
+    (row) => row.role,
+  );
+  if (JSON.stringify([...cargos].sort()) !== JSON.stringify(['A', 'B'])) {
+    throw new Error(`dedupe/trim/vazio falhou: ${JSON.stringify(cargos)}`);
+  }
+  const muitos = Array.from({ length: MAX_NAME_SUGGESTIONS + 25 }, (_, index) => ({ role: `Cargo ${index}` }));
+  const cortado = distinctNameSuggestions(muitos, (row) => row.role);
+  if (cortado.length !== MAX_NAME_SUGGESTIONS) throw new Error(`o teto não foi respeitado: ${cortado.length}`);
+  if (!cortado.every((item) => typeof item === 'string')) throw new Error('a projeção devolveu algo que não é string');
+});
+
+Deno.test('sugestões: nome da empresa usa fantasia → CRM → razão, sem campo vazio', () => {
+  const nomes = distinctCompanyNames([
+    { nome_fantasia: '', nome_crm: 'Só CRM', razao_social: 'Razao' },
+    { nome_fantasia: null, nome_crm: null, razao_social: 'Só Razao' },
+    { nome_fantasia: '   ', nome_crm: ' ', razao_social: '   ' },
+  ]);
+  if (JSON.stringify([...nomes].sort()) !== JSON.stringify(['Só CRM', 'Só Razao'])) {
+    throw new Error(`prioridade de nome falhou: ${JSON.stringify(nomes)}`);
+  }
 });

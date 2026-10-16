@@ -20,7 +20,7 @@ export const CATEGORY_LABELS: Record<string, { emoji: string; label: string }> =
   'surpresa': { emoji: '😲', label: 'Surpresa' },
   'pensativo': { emoji: '🤔', label: 'Pensativo' },
   'cumprimento': { emoji: '👋', label: 'Cumprimento' },
-  'despedida': { emoji: '👋', label: 'Despedida' },
+  'despedida': { emoji: '🫡', label: 'Despedida' },
   'concordância': { emoji: '👍', label: 'Concordância' },
   'negação': { emoji: '🙅', label: 'Negação' },
   'sono': { emoji: '😴', label: 'Sono' },

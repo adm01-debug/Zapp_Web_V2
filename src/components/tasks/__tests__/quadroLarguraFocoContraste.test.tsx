@@ -219,8 +219,15 @@ function trilhoEcolunas() {
   return { trilho, colunas: Array.from(trilho.querySelectorAll<HTMLElement>('[data-board-column]')) };
 }
 
-describe('E16 — as 5 colunas cabem na largura total (1440) e viram carrossel abaixo', () => {
-  it('o piso das colunas + os vãos cabem em 1440 (sidebar aberta) e não cabem em 1024', () => {
+describe('E16 — as 5 colunas cabem nas faixas da grade e o trilho não rola de lado', () => {
+  // Etapa 099: o "carrossel abaixo de 1024/alto de 1440" desta suíte foi
+  // substituído pelo responsivo de 3 faixas (grade). O piso legível de 200px
+  // continua sendo o mesmo; o que mudou é QUEM distribui a largura — a grelha
+  // (md: 2 faixas, lg: 3, xl: 5) — e onde o piso é solto (`xl:min-w-0`, porque
+  // 5×200+48 não caberia em 1280 com a sidebar aberta). A conta da cascata do
+  // `min-w` em cada faixa está no teste da etapa 099
+  // (`quadroResponsivoAbas.test.tsx`); aqui fica a conta do piso do conjunto.
+  it('o piso das colunas + os vãos cabem em 768/1024/1440 — e é o xl que solta o piso em 1280', () => {
     renderQuadro({ todo: [item()] });
     const { trilho, colunas } = trilhoEcolunas();
     expect(colunas).toHaveLength(5);
@@ -228,38 +235,47 @@ describe('E16 — as 5 colunas cabem na largura total (1440) e viram carrossel a
     const gap = gapDe(trilho.className);
     const pisos = colunas.map(c => pisoDeLargura(c.className));
     expect(new Set(pisos).size, `as 5 colunas têm pisos diferentes: ${pisos.join('/')}`).toBe(1);
-    const piso = pisos[0] * colunas.length + gap * (colunas.length - 1);
+    const piso = pisos[0];
+    expect(piso, 'o piso legível da coluna').toBe(200);
 
     const sidebar = tokenPx(tokensCss, 'sidebar-w');
     const gutter = tokenPx(tokensCss, 'layout-gutter');
+    const sobra = (largura: number) => largura - sidebar - gutter * 2;
+    const conjunto = (faixas: number) => piso * faixas + gap * (faixas - 1);
 
-    // 1440 com a sidebar aberta: no pior caso com gutter dos DOIS lados do conteúdo…
-    const guttersLaterais = gutter * 2;
-    const totalComGutters = sidebar + guttersLaterais + piso;
-    expect(totalComGutters).toBe(1376);
-    expect(
-      totalComGutters,
-      `em 1440 com sidebar (${sidebar}px) + 2×gutter (${guttersLaterais}px), as 5 colunas pedem ${piso}px = ${totalComGutters}px`,
-    ).toBeLessThanOrEqual(1440);
-    // …e, depois da E05/E14 (`layout:'full'`, sem gutter), sobra ainda mais espaço.
-    expect(sidebar + piso, `em 1440 com sidebar: ${sidebar + piso}px`).toBeLessThanOrEqual(1440);
-    // Abaixo de 1024 o piso não cabe — é exatamente por isso que o trilho precisa rolar.
-    expect(sidebar + piso, 'o carrossel de ≤1024 depende de o piso não caber').toBeGreaterThan(1024);
+    // 1440 com a sidebar aberta e gutter dos DOIS lados do conteúdo (o caso mais apertado
+    // da E16 original): as cinco colunas continuam cabendo.
+    expect(sidebar + gutter * 2 + conjunto(5), `em 1440: ${sidebar + gutter * 2 + conjunto(5)}px`)
+      .toBeLessThanOrEqual(1440);
+
+    // 768 (md = 2 faixas) e 1024 (lg = 3 faixas): o piso de 200px cabe em cada faixa.
+    expect(conjunto(2), `em 768 com sidebar: as 2 faixas pedem ${conjunto(2)}px de ${sobra(768)}px`)
+      .toBeLessThanOrEqual(sobra(768));
+    expect(conjunto(3), `em 1024 com sidebar: as 3 faixas pedem ${conjunto(3)}px de ${sobra(1024)}px`)
+      .toBeLessThanOrEqual(sobra(1024));
+
+    // 1280 (xl = 5 faixas): com o piso de md o conjunto ESTOURARIA — é exatamente
+    // por isso que a coluna solta o piso em xl (`xl:min-w-0`).
+    expect(conjunto(5), `sem soltar o piso em xl: ${conjunto(5)}px de ${sobra(1280)}px`)
+      .toBeGreaterThan(sobra(1280));
   });
 
-  it('o trilho rola como carrossel e as colunas crescem juntas até preenchê-lo', () => {
+  it('o trilho é grade que quebra linha (não é mais o carrossel) e nenhuma coluna fixa a largura', () => {
     renderQuadro({ todo: [item()] });
     const { trilho, colunas } = trilhoEcolunas();
 
-    // O trilho é a válvula de escape: é ele que rola (com snap) quando o piso não cabe.
-    expect(trilho.className).toMatch(/(^|\s)overflow-x-auto(\s|$)/);
-    expect(trilho.className).toMatch(/(^|\s)snap-x(\s|$)/);
+    // Quem distribui a largura agora é a grelha — o trilho deixou de ser a
+    // válvula de escape do `overflow-x-auto`/snap da etapa 094.
+    expect(trilho.className).toMatch(/(^|\s)grid(\s|$)/);
+    expect(trilho.className).not.toMatch(/(^|\s)overflow-x-auto(\s|$)/);
+    expect(trilho.className).not.toMatch(/(^|\s)snap-x(\s|$)/);
     expect(trilho.className).toMatch(/(^|\s)min-w-0(\s|$)/);
 
-    // Nenhuma coluna fixa a largura: todas crescem juntas até preencher o trilho.
+    // Nenhuma coluna fixa a largura e todas soltam o piso na faixa do xl, onde
+    // quem manda é o `minmax(0,1fr)` da grelha.
     for (const [i, coluna] of colunas.entries()) {
-      expect(coluna.className, `coluna ${i} precisa ser flexível`).toMatch(/(^|\s)(flex-1|grow)(\s|$)/);
       expect(coluna.className, `coluna ${i} não pode fixar a largura`).not.toMatch(/(^|\s)shrink-0(\s|$)/);
+      expect(coluna.className, `coluna ${i} precisa soltar o piso em xl`).toMatch(/(^|\s)xl:min-w-0(\s|$)/);
     }
   });
 });

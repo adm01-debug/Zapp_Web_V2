@@ -1,7 +1,15 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useIsMobile } from '@/hooks/ui/use-mobile';
+import { AuthService } from '@/services/auth.service';
+import { log } from '@/lib/logger';
+import {
+  inboxDraftStorageKey,
+  purgeLegacyInboxDrafts,
+  readInboxDraft,
+  removeInboxDraft,
+  writeInboxDraft,
+} from '@/lib/inboxDraftSession';
 
-const DRAFT_KEY_PREFIX = 'chat_draft_';
 /** Limite de caracteres do editor de mensagem — fonte única (contador, botão e envio). */
 export const CHAR_LIMIT = 4096;
 
@@ -52,6 +60,31 @@ interface UseChatInputLogicParams {
   signatureName?: string;
 }
 
+/**
+ * SEC-FRONTEND-03 (auditoria de 07/10/2026): dono do rascunho. O rascunho é do
+ * USUÁRIO, não do navegador — sem identidade legível (cliente de auth mockado em
+ * teste isolado, storage bloqueado) nada é gravado: a falha é fechada, nunca um
+ * rascunho sem dono voltando para outra conta.
+ */
+function useDraftOwnerId(): string | null {
+  const [ownerId, setOwnerId] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const session = await AuthService.getSession();
+        if (!cancelled) setOwnerId(session?.user?.id ?? null);
+      } catch (err) {
+        log.warn('[useChatInputLogic] sessão indisponível para o escopo do rascunho', err);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  return ownerId;
+}
+
 export function useChatInputLogic({
   inputValue, contactId, editingMessage, inputRef, fileUploaderRef, onSend, onPasteFiles,
   signatureEnabled, signatureName,
@@ -60,6 +93,13 @@ export function useChatInputLogic({
   const [showMarkdownPreview, setShowMarkdownPreview] = useState(false);
   const [sendAnimation, setSendAnimation] = useState(false);
   const isMobile = useIsMobile();
+  const ownerId = useDraftOwnerId();
+  /**
+   * SEC-FRONTEND-03: a chave do rascunho leva o dono
+   * (`zapp.inbox.draft:<userId>:<contactId>`). Sem usuário identificado — ou sem
+   * contato — não existe chave, e sem chave não há gravação nem leitura.
+   */
+  const draftKey = inboxDraftStorageKey(ownerId, contactId);
 
   const hasText = inputValue.trim().length > 0;
   // R2-INB-016 (item 312): contador e botão medem o payload real do envio — corpo do editor
@@ -82,30 +122,34 @@ export function useChatInputLogic({
 
   useEffect(() => { autoResize(); }, [inputValue, autoResize]);
 
+  // O rascunho antigo (`chat_draft_<contato>`, sem dono) sai sem leitura na montagem:
+  // o texto gravado antes deste cartão não pertence a ninguém identificável.
+  useEffect(() => { purgeLegacyInboxDrafts(); }, []);
+
   // Auto-save drafts
   useEffect(() => {
-    if (!contactId || editingMessage) return;
+    if (!draftKey || editingMessage) return;
     const timer = setTimeout(() => {
-      try {
-        if (inputValue.trim()) {
-          localStorage.setItem(`${DRAFT_KEY_PREFIX}${contactId}`, inputValue);
-        } else {
-          localStorage.removeItem(`${DRAFT_KEY_PREFIX}${contactId}`);
-        }
-      } catch { /* storage unavailable */ }
+      if (inputValue.trim()) {
+        writeInboxDraft(draftKey, inputValue);
+      } else {
+        removeInboxDraft(draftKey);
+      }
     }, 500);
     return () => clearTimeout(timer);
-  }, [inputValue, contactId, editingMessage]);
+  }, [inputValue, draftKey, editingMessage]);
 
-  // Restore draft on contact change
+  // Restore draft on contact change (and once the owner identity is known)
   useEffect(() => {
     if (!contactId || editingMessage) return;
-    let draft: string | null = null;
-    try { draft = localStorage.getItem(`${DRAFT_KEY_PREFIX}${contactId}`); } catch { /* storage unavailable */ }
+    const draft = readInboxDraft(draftKey);
     if (draft && !inputValue) {
       setNativeValue(inputRef, draft);
     }
-  }, [contactId]);
+  // inputValue/editingMessage/inputRef fora das deps de propósito: restaurar só na troca de
+  // contato ou de dono — com `inputValue` aqui, apagar o campo ressuscitaria o rascunho.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contactId, draftKey]);
 
   // Paste images
   const handlePaste = useCallback((e: React.ClipboardEvent) => {
@@ -138,11 +182,11 @@ export function useChatInputLogic({
   const handleSendWithAnimation = useCallback(() => {
     if (!hasText || isOverLimit) return;
     setSendAnimation(true);
-    try { localStorage.removeItem(`${DRAFT_KEY_PREFIX}${contactId}`); } catch { /* storage unavailable */ }
+    removeInboxDraft(draftKey);
     if (isMobile && navigator.vibrate) navigator.vibrate(50);
     onSend();
     setTimeout(() => setSendAnimation(false), 400);
-  }, [hasText, isOverLimit, contactId, isMobile, onSend]);
+  }, [hasText, isOverLimit, draftKey, isMobile, onSend]);
 
   return {
     showRichToolbar, setShowRichToolbar,

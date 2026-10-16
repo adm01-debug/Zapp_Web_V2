@@ -9,10 +9,13 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-export type SentimentLevel = 'positive' | 'neutral' | 'negative' | 'critical';
+import { sentimentLevel, type SentimentLevel } from '@/lib/sentiment-level';
+
+export type { SentimentLevel };
 
 interface SentimentIndicatorProps {
-  sentiment: SentimentLevel;
+  /** Valor CRU do banco (pt-BR canônico ou legado EN); desconhecido cai em neutro. */
+  sentiment: SentimentLevel | string | null | undefined;
   score?: number; // 0-100
   compact?: boolean;
   showLabel?: boolean;
@@ -70,7 +73,10 @@ export function SentimentIndicator({
   showLabel = false,
   animated = true,
 }: SentimentIndicatorProps) {
-  const config = sentimentConfig[sentiment];
+  // Traduz o valor cru (pt-BR ou legado EN) no nível da UI; desconhecido não
+  // some com o componente nem indexa `sentimentConfig` indefinido.
+  const level = sentimentLevel(sentiment) ?? 'neutral';
+  const config = sentimentConfig[level];
   const Icon = config.icon;
 
   if (compact) {
@@ -114,8 +120,8 @@ export function SentimentIndicator({
       )}
     >
       <motion.div
-        animate={sentiment === 'critical' ? { scale: [1, 1.2, 1] } : {}}
-        transition={{ duration: 0.5, repeat: sentiment === 'critical' ? Infinity : 0 }}
+        animate={level === 'critical' ? { scale: [1, 1.2, 1] } : {}}
+        transition={{ duration: 0.5, repeat: level === 'critical' ? Infinity : 0 }}
       >
         <Icon className={cn("w-3.5 h-3.5", config.color)} />
       </motion.div>
@@ -138,9 +144,10 @@ export function SentimentIndicator({
 // Compact emoji-only indicator for list views
 export const SentimentEmoji = forwardRef<
   HTMLSpanElement,
-  { sentiment: SentimentLevel; animated?: boolean; className?: string }
+  { sentiment: SentimentLevel | string | null | undefined; animated?: boolean; className?: string }
 >(({ sentiment, animated = true, className }, ref) => {
-  const config = sentimentConfig[sentiment];
+  const level = sentimentLevel(sentiment) ?? 'neutral';
+  const config = sentimentConfig[level];
 
   return (
     <TooltipProvider>
@@ -154,7 +161,7 @@ export const SentimentEmoji = forwardRef<
             transition={{ type: 'spring', stiffness: 300 }}
             className={cn(
               'text-sm cursor-help',
-              sentiment === 'critical' && 'animate-pulse',
+              level === 'critical' && 'motion-safe:animate-pulse',
               className
             )}
           >

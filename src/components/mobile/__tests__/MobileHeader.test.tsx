@@ -20,3 +20,24 @@ describe('MobileHeader — rótulo da view no cabeçalho mobile', () => {
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Pipeline');
   });
 });
+
+describe('MobileHeader — botões do cabeçalho com 44 px no celular', () => {
+  it('os 3 botões (menu, busca, notificações) têm área mínima de 44×44', () => {
+    render(
+      <MobileHeader
+        {...baseProps}
+        currentView="tasks"
+        onSearchOpen={vi.fn()}
+        onNotificationsOpen={vi.fn()}
+      />,
+    );
+
+    const menuBtn = screen.getByRole('button', { name: 'Abrir menu' });
+    const searchBtn = screen.getByRole('button', { name: 'Buscar' });
+    const notifBtn = screen.getByRole('button', { name: 'Notificações' });
+
+    expect(menuBtn).toHaveClass('w-11', 'h-11');
+    expect(searchBtn).toHaveClass('w-11', 'h-11');
+    expect(notifBtn).toHaveClass('w-11', 'h-11');
+  });
+});

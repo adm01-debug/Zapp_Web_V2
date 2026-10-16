@@ -194,3 +194,25 @@ describe('NotificationsPopover — R2-PLAT-005 (#443)', () => {
     expect(screen.queryByText(/não foi possível atualizar as notifica/i)).toBeNull();
   });
 });
+
+/**
+ * U12 — o botão de notificações no modo expandido tinha 28 px de área
+ * clicável, abaixo do mínimo de 44 px para ponteiro grosso
+ * (pointer: coarse). O botão visível continua com 28 px e só sob
+ * ponteiro de toque cresce para 44 px
+ * ([@media(pointer:coarse)]:min-w/min-h) — com mouse nada muda.
+ */
+describe('NotificationsPopover — área clicável ≥ 44 px só sob toque (pointer: coarse)', () => {
+  it('no modo expandido mantém 28 px no desktop e cresce só sob (pointer: coarse)', () => {
+    supa.limit.mockResolvedValue({ data: [], error: null });
+    render(popoverUi(makeQc()));
+    const btn = screen.getByRole('button', { name: /^Notificações/ });
+    const tokens = btn.className.split(/\s+/);
+    expect(tokens).toContain('w-[28px]');
+    expect(tokens).toContain('h-[28px]');
+    expect(tokens).toContain('[@media(pointer:coarse)]:min-w-[44px]');
+    expect(tokens).toContain('[@media(pointer:coarse)]:min-h-[44px]');
+    expect(tokens).not.toContain('min-w-[44px]');
+    expect(tokens).not.toContain('min-h-[44px]');
+  });
+});

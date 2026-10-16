@@ -5,8 +5,7 @@ import { useNotificationSettings } from '@/hooks/system/useNotificationSettings'
 import { playNotificationSound, showBrowserNotification } from '@/utils/notificationSounds';
 import { toast } from 'sonner';
 import { log } from '@/lib/logger';
-import { localDayKey } from '@/lib/localDay';
-import { startOfDay, startOfWeek, startOfMonth, endOfDay, endOfWeek, endOfMonth } from 'date-fns';
+import { goalPeriodRange, localDayKey } from '@/lib/localDay';
 import type { Json } from '@/integrations/supabase/types';
 
 interface GoalConfiguration {
@@ -22,6 +21,14 @@ interface GoalConfiguration {
 
 type Period = 'daily' | 'weekly' | 'monthly';
 
+// A janela de cada período vem da MESMA função do painel (`goalPeriodRange`), para o aviso
+// de conquista e a tela contarem o mesmo recorte — inclusive a semana de segunda a domingo.
+const PERIOD_TO_WINDOW: Record<Period, 'today' | 'week' | 'month'> = {
+  daily: 'today',
+  weekly: 'week',
+  monthly: 'month',
+};
+
 export function useGoalNotifications() {
   const { user } = useAuth();
   const { settings, isQuietHours } = useNotificationSettings();
@@ -31,10 +38,11 @@ export function useGoalNotifications() {
   const createNotification = useCallback(async (
     title: string,
     message: string,
-    metadata: { goal_id: string; goal_type: string; period: string; current: number; target: number }
-  ) => {
-    if (!user) return;
-    
+    metadata: { goal_id: string; goal_type: string; period: string; current: number; target: number },
+    dedupeKey: string
+  ): Promise<boolean> => {
+    if (!user) return false;
+
     try {
       const jsonMetadata: Json = {
         goal_id: metadata.goal_id,
@@ -44,31 +52,35 @@ export function useGoalNotifications() {
         target: metadata.target
       };
 
-      await supabase
+      // `notifications.dedupe_key` é única por usuário no banco
+      // (`ux_notifications_user_dedupe_key`, IA-047). Quem grava primeiro manda;
+      // a recarga ou a 2ª aba bate no índice e recebe 23505 — conflito é SUCESSO
+      // silencioso: não é erro e o anúncio (toast/som/navegador) não se repete.
+      const { error } = await supabase
         .from('notifications')
         .insert([{
           user_id: user.id,
           title,
           message,
           type: 'goal',
-          metadata: jsonMetadata
+          metadata: jsonMetadata,
+          dedupe_key: dedupeKey
         }]);
+
+      if (error) {
+        if (error.code === '23505') return false;
+        log.error('Error creating notification:', error);
+      }
+
+      // Falha que NÃO é duplicata (ex.: escrita negada pelo banco) mantém o
+      // anúncio: o toast é o único canal que o usuário vê, e o hook já anunciava
+      // mesmo quando a gravação falhava.
+      return true;
     } catch (error) {
       log.error('Error creating notification:', error);
+      return true;
     }
   }, [user]);
-
-  const getDateRange = (period: Period) => {
-    const now = new Date();
-    switch (period) {
-      case 'daily':
-        return { start: startOfDay(now), end: endOfDay(now) };
-      case 'weekly':
-        return { start: startOfWeek(now, { weekStartsOn: 1 }), end: endOfWeek(now, { weekStartsOn: 1 }) };
-      case 'monthly':
-        return { start: startOfMonth(now), end: endOfMonth(now) };
-    }
-  };
 
   const checkGoalProgress = useCallback(async () => {
     if (!user) return;
@@ -109,8 +121,12 @@ export function useGoalNotifications() {
           
           if (!target || target === 0) continue;
 
-          const { start, end } = getDateRange(period);
+          const { from: start, to: end } = goalPeriodRange(PERIOD_TO_WINDOW[period]);
           let current = 0;
+          // Metas percentuais sem denominador no período (Taxa de Resolução sem
+          // atendimento) não têm o que comparar com o alvo: `hasData` fica false
+          // e a meta é pulada em vez de virar "0% cumprido".
+          let hasData = true;
 
           // Calculate current progress based on goal type
           switch (goal.goal_type) {
@@ -126,9 +142,13 @@ export function useGoalNotifications() {
               break;
             }
             case 'conversations_resolved': {
+              // `conversation_sla` não tem coluna de atendente: o escopo vem do contato
+              // (`contacts.assigned_to`). Sem o `!inner` o PostgREST contava as conversas
+              // resolvidas da ORGANIZAÇÃO inteira e a meta pessoal fechava sozinha.
               const { count } = await supabase
                 .from('conversation_sla')
-                .select('*', { count: 'exact', head: true })
+                .select('id, contacts!inner(assigned_to)', { count: 'exact', head: true })
+                .eq('contacts.assigned_to', profile.id)
                 .not('resolved_at', 'is', null)
                 .gte('resolved_at', start.toISOString())
                 .lte('resolved_at', end.toISOString());
@@ -149,26 +169,32 @@ export function useGoalNotifications() {
               break;
             }
             case 'resolution_rate': {
-              // Mesmo cálculo do painel (useGoalsDashboard): percentual de
-              // conversas analisadas com status 'resolvido' no período.
+              // Mesmo cálculo do painel (useGoalsDashboard): conversas encerradas
+              // sobre as atendidas no período, pelo campo canônico
+              // `contacts.conversation_status`. Não sai de `conversation_analyses`
+              // — só quem foi analisado tem registro lá, e isso divergia do painel.
               const { count: total, error: totalError } = await supabase
-                .from('conversation_analyses')
+                .from('contacts')
                 .select('*', { count: 'exact', head: true })
-                .eq('analyzed_by', profile.id)
+                .eq('assigned_to', profile.id)
                 .gte('created_at', start.toISOString())
                 .lte('created_at', end.toISOString());
               if (totalError) throw totalError;
 
               const { count: resolved, error: resolvedError } = await supabase
-                .from('conversation_analyses')
+                .from('contacts')
                 .select('*', { count: 'exact', head: true })
-                .eq('analyzed_by', profile.id)
-                .eq('status', 'resolvido')
+                .eq('assigned_to', profile.id)
+                .eq('conversation_status', 'resolved')
                 .gte('created_at', start.toISOString())
                 .lte('created_at', end.toISOString());
               if (resolvedError) throw resolvedError;
 
-              current = total && total > 0 ? Math.round(((resolved || 0) / total) * 100) : 0;
+              // 0/0 não é 0%: sem atendimento no período não há taxa. Marca a
+              // ausência de dado para não dar a meta por cumprida nem anunciar.
+              if (!total) { hasData = false; break; }
+
+              current = Math.round(((resolved || 0) / total) * 100);
               break;
             }
             case 'response_time':
@@ -185,30 +211,53 @@ export function useGoalNotifications() {
               continue;
           }
 
+          // Sem dado no período não há o que comparar com o alvo: pula sem
+          // anunciar conquista (nem registrar dedupe).
+          if (!hasData) continue;
+
           // R3-07: a chave é o dia **do usuário** (`localDayKey`). Fatiar o ISO em UTC
           // (`start.toISOString().split('T')[0]`) devolvia o dia anterior a leste de UTC
           // (em Berlin, 30/09 00:00 local = 29/09 22:00 UTC), então a conquista ficava
           // deduplicada sob o dia errado.
-          const achievedKey = `${goal.id}-${period}-${localDayKey(start)}`;
+          //
+          // O mesmo dia compõe a chave durável do banco (`dedupe_key`, formato do
+          // PB-14 `goal:v1:<meta>:<período>:<dia>`). É o dia do INÍCIO do período
+          // (segunda da semana, dia 1º do mês): usar "hoje" reanunciaria a meta
+          // semanal/mensal a cada dia.
+          const dayKey = localDayKey(start);
+          const achievedKey = `${goal.id}-${period}-${dayKey}`;
+          const dedupeKey = `goal:v1:${goal.id}:${period}:${dayKey}`;
+
+          // MENOR é melhor no tempo de resposta: cumprir é ficar ABAIXO do alvo.
+          // `current === 0` é ausência de medição (`agent_stats` nulo), não tempo
+          // zero — sem essa guarda a meta seria dada por cumprida sem dado nenhum.
+          const achieved = goal.goal_type === 'response_time'
+            ? current > 0 && current <= target
+            : current >= target;
 
           // Check if goal was achieved
-          if (current >= target && !achievedGoals.current.has(achievedKey)) {
+          if (achieved && !achievedGoals.current.has(achievedKey)) {
             achievedGoals.current.add(achievedKey);
 
             const periodLabel = period === 'daily' ? 'diária' : period === 'weekly' ? 'semanal' : 'mensal';
             const goalLabel = getGoalLabel(goal.goal_type);
-            
-            const title = `🎯 Meta ${periodLabel} alcançada!`;
-            const message = `Você atingiu sua meta de ${goalLabel}: ${current}/${target}`;
 
-            // Create notification in database
-            await createNotification(title, message, {
+            const title = `🎯 Meta ${periodLabel} alcançada!`;
+            const message = goal.goal_type === 'response_time'
+              ? `Você atingiu sua meta de ${goalLabel}: ${current} (alvo: até ${target})`
+              : `Você atingiu sua meta de ${goalLabel}: ${current}/${target}`;
+
+            // Grava no banco com a chave estável. `false` = o aviso já existia
+            // (outra carga/aba gravou primeiro): não se anuncia de novo.
+            const announced = await createNotification(title, message, {
               goal_id: goal.id,
               goal_type: goal.goal_type,
               period,
               current,
               target
-            });
+            }, dedupeKey);
+
+            if (!announced) continue;
 
             // Show toast
             toast.success(title, { description: message });
