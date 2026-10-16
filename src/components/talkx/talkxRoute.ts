@@ -34,6 +34,8 @@ export type ParsedTalkXRoute = TalkXTabRoute & {
   campaign?: string;
   segment?: string;
   template?: string;
+  /** Item aberto rejeitado (vazio/duplicado): o endereço precisa ser reescrito sem ele. */
+  malformedOpen: TalkXOpenKind[];
   /** O wizard mantém um dono só (talkxWizardRoute.ts); o sinal de normalização
    * dele vive dentro de `wizard`, separado do sinal deste parser. */
   wizard: ParsedTalkXWizardRoute;
@@ -94,7 +96,9 @@ export function parseTalkXRoute(search: string): ParsedTalkXRoute {
   const campaign = readOpenTarget(params, 'campaign');
   const segment = readOpenTarget(params, 'segment');
   const template = readOpenTarget(params, 'template');
-  if (campaign.malformed || segment.malformed || template.malformed) needsNormalization = true;
+  const malformed = { campaign: campaign.malformed, segment: segment.malformed, template: template.malformed };
+  const malformedOpen = OPEN_TARGETS.filter((kind) => malformed[kind]);
+  if (malformedOpen.length) needsNormalization = true;
 
   return {
     tab,
@@ -102,6 +106,7 @@ export function parseTalkXRoute(search: string): ParsedTalkXRoute {
     campaign: campaign.id,
     segment: segment.id,
     template: template.id,
+    malformedOpen,
     wizard: parseTalkXWizardRoute(search),
     needsNormalization,
   };
@@ -127,6 +132,18 @@ export function goTab(tab: string, sub?: string): void {
 
 export function replaceTalkXTabRoute(route: TalkXTabRoute): void {
   window.history.replaceState(null, '', formatTalkXTabRoute(new URL(window.location.href), route));
+}
+
+/**
+ * X052/TL-109 — normaliza só o item aberto rejeitado (vazio/duplicado): remove do
+ * endereço exatamente os parâmetros malformados e preserva os válidos (inclusive
+ * `campaign`, que é do roteamento de tela). `replace` de propósito: corrigir um
+ * endereço ambíguo não pode criar entrada nova no histórico.
+ */
+export function replaceTalkXOpenRouteCleanup(malformed: readonly TalkXOpenKind[]): void {
+  const url = new URL(window.location.href);
+  for (const kind of malformed) url.searchParams.delete(kind);
+  window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
 }
 
 export function formatTalkXOpenRoute(current: URL, target: TalkXOpenTarget): string {
