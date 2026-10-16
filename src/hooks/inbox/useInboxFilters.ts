@@ -1,6 +1,7 @@
 import { useMemo, useCallback, useState } from 'react';
 import { useUrlFilters } from '@/hooks/system/useUrlFilters';
 import { InboxFiltersState } from '@/components/inbox/InboxFilters';
+import { FILTER_OPTIONS } from '@/components/inbox/ContactTypeFilter';
 import { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
 import { parseISO } from 'date-fns';
 import { localDayKey } from '@/lib/localDay';
@@ -27,29 +28,143 @@ interface UseInboxFiltersProps {
   snoozedIds?: Set<string>;
 }
 
+/** Estado da inbox que o usuário espera reencontrar ao reabrir a tela. */
+interface InboxFilterPrefs {
+  chipTab: ChipTab;
+  mainTab: MainTab;
+  subTab: SubTab | null;
+  queueId: string | null;
+  contactType: string | null;
+}
+
+const CHIP_TABS: readonly ChipTab[] =
+  ['all', 'unread', 'attending', 'waiting', 'resolved', 'archived'];
+const DEFAULT_CHIP: ChipTab = 'attending';
+
+/** Sem identidade o filtro não é guardado — o rascunho vive só nesta sessão. */
+const NO_OWNER = '';
+
+/**
+ * Convenção da casa: `zapp.<area>:<dono>` em localStorage — o filtro é do
+ * usuário, não do navegador (mesmo escopo do histórico de busca e dos rascunhos).
+ */
+export function inboxFiltersStorageKey(userId: string): string {
+  return `zapp.inbox.filters:${userId}`;
+}
+
+/** Chips derivam mainTab/subTab (compat com os filtros existentes). */
+function tabsForChip(tab: ChipTab): { mainTab: MainTab; subTab: SubTab | null } {
+  return {
+    mainTab: tab === 'resolved' ? 'resolved' : 'open',
+    subTab: tab === 'attending' ? 'attending' : tab === 'waiting' ? 'waiting' : null,
+  };
+}
+
+/** `?type=` é o valor de partida do deep-link; 'all' equivale a nenhum filtro. */
+function contactTypeFromUrl(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const value = new URLSearchParams(window.location.search).get('type');
+    return value && value !== 'all' ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Valor desconhecido (versão antiga, dado adulterado) não vira filtro. */
+function normalizeContactType(value: unknown): string | null {
+  return typeof value === 'string' && value !== 'all' && FILTER_OPTIONS.some((o) => o.value === value)
+    ? value
+    : null;
+}
+
+/**
+ * Lê a preferência do dono. Storage hostil: JSON corrompido, raiz que não é
+ * objeto e campo de valor desconhecido caem no padrão, campo a campo.
+ */
+function readStoredPrefs(storageKey: string | null): Partial<InboxFilterPrefs> | null {
+  if (!storageKey) return null;
+  try {
+    const raw = localStorage.getItem(storageKey);
+    if (!raw) return null;
+    const parsed: unknown = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+    const data = parsed as Record<string, unknown>;
+    return {
+      chipTab:
+        typeof data.chipTab === 'string' && (CHIP_TABS as readonly string[]).includes(data.chipTab)
+          ? (data.chipTab as ChipTab)
+          : DEFAULT_CHIP,
+      queueId: typeof data.queueId === 'string' && data.queueId.length > 0 ? data.queueId : null,
+      contactType: normalizeContactType(data.contactType),
+    };
+  } catch {
+    return null;
+  }
+}
+
 export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInboxFiltersProps) {
-  const [chipTab, setChipTabState] = useState<ChipTab>('attending');
-  const [mainTab, setMainTab] = useState<MainTab>('open');
-  const [subTab, setSubTab] = useState<SubTab | null>('attending');
+  const storageKey = profileId ? inboxFiltersStorageKey(profileId) : null;
+  const ownerKey = storageKey ?? NO_OWNER;
+
+  // Preferência do dono lida do storage; muda quando a identidade aparece (o
+  // perfil carrega assíncrono depois do primeiro render).
+  const storedPrefs = useMemo(() => readStoredPrefs(storageKey), [storageKey]);
+  // Rascunho por dono: o que este usuário mexeu na sessão precede o storage, e a
+  // troca de conta no mesmo navegador não reaproveita o estado do anterior.
+  const [draft, setDraft] = useState<Record<string, InboxFilterPrefs>>({});
+
+  const basePrefs = useMemo<InboxFilterPrefs>(() => {
+    const chipTab = storedPrefs?.chipTab ?? DEFAULT_CHIP;
+    return {
+      chipTab,
+      ...tabsForChip(chipTab),
+      queueId: storedPrefs?.queueId ?? null,
+      // O tipo do deep-link manda; sem ele, vale o que o dono guardou.
+      contactType: contactTypeFromUrl() ?? storedPrefs?.contactType ?? null,
+    };
+  }, [storedPrefs]);
+
+  const prefs = draft[ownerKey] ?? basePrefs;
+  const { chipTab, mainTab, subTab, queueId: selectedQueueId, contactType: selectedContactType } = prefs;
+
+  /**
+   * Aplica a mudança sobre o estado vivo do dono e persiste só o que sobrevive
+   * ao reload (chip, fila, tipo) — mainTab/subTab são derivados do chip.
+   */
+  const applyPrefs = useCallback((patch: Partial<InboxFilterPrefs>) => {
+    setDraft((prev) => {
+      const atual = prev[ownerKey] ?? basePrefs;
+      const next = { ...atual, ...patch };
+      if (storageKey) {
+        try {
+          localStorage.setItem(
+            storageKey,
+            JSON.stringify({ chipTab: next.chipTab, queueId: next.queueId, contactType: next.contactType }),
+          );
+        } catch { /* storage unavailable */ }
+      }
+      return { ...prev, [ownerKey]: next };
+    });
+  }, [basePrefs, ownerKey, storageKey]);
+
+  const [showAll, setShowAll] = useState(false);
+
+  const { filters: urlFilters, setFilters: setUrlFilters, clearFilters: clearUrlFilters } = useUrlFilters();
+
   // Chips derivam mainTab/subTab (compat com filtros existentes). setMainTab/setSubTab
   // seguem expostos à parte — RealtimeInboxView usa setMainTab('search') no deep-link
   // de contato pendente, fora do ciclo de vida dos chips.
   const setChipTab = useCallback((tab: ChipTab) => {
-    setChipTabState(tab);
-    setMainTab(tab === 'resolved' ? 'resolved' : 'open');
-    setSubTab(tab === 'attending' ? 'attending' : tab === 'waiting' ? 'waiting' : null);
-  }, []);
-  const [showAll, setShowAll] = useState(false);
-  const [selectedQueueId, setSelectedQueueId] = useState<string | null>(null);
-  const [selectedContactType, setSelectedContactType] = useState<string | null>(() => {
-    const typeFromUrl = new URLSearchParams(window.location.search).get('type');
-    return typeFromUrl && typeFromUrl !== 'all' ? typeFromUrl : null;
-  });
+    applyPrefs({ chipTab: tab, ...tabsForChip(tab) });
+  }, [applyPrefs]);
 
-  const { filters: urlFilters, setFilters: setUrlFilters, clearFilters: clearUrlFilters } = useUrlFilters();
+  const setMainTab = useCallback((tab: MainTab) => applyPrefs({ mainTab: tab }), [applyPrefs]);
+  const setSubTab = useCallback((tab: SubTab | null) => applyPrefs({ subTab: tab }), [applyPrefs]);
+  const setSelectedQueueId = useCallback((id: string | null) => applyPrefs({ queueId: id }), [applyPrefs]);
 
   const handleContactTypeChange = useCallback((value: string | null) => {
-    setSelectedContactType(value);
+    applyPrefs({ contactType: value && value !== 'all' ? value : null });
     const params = new URLSearchParams(window.location.search);
     if (value && value !== 'all') {
       params.set('type', value);
@@ -57,7 +172,7 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
       params.delete('type');
     }
     window.history.replaceState(null, '', params.toString() ? `?${params}` : window.location.pathname + window.location.hash);
-  }, []);
+  }, [applyPrefs]);
 
   // Convert URL filters to InboxFiltersState
   const filters = useMemo<InboxFiltersState>(() => ({
