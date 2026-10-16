@@ -291,6 +291,15 @@ export function existeView(nome) {
 }
 
 // Artefato de monitoramento = algo que checa a URL de fora: workflow agendado ou script.
+// "monitor" sozinho é amplo demais: scripts de auditoria internos (ex.: Talk X Monitor Panel)
+// não medem uptime do front e não podem transformar o SLO de front em REAL/PARCIAL.
+const ARTEFATO_MONITOR_EXTERNO =
+  /(uptime|health[-_.]?check|external[-_.]?monitor|monitor[-_.]?externo|front[-_.]?(monitor|uptime)|monitor[-_.]?front|version[-_.]?json)/i;
+
+export function nomesIndicamArtefatoMonitor(nomes) {
+  return nomes.some((n) => ARTEFATO_MONITOR_EXTERNO.test(n));
+}
+
 export function existeArtefatoMonitor() {
   const nomes = [];
   const dirWf = path.join(RAIZ, '.github/workflows');
@@ -302,7 +311,7 @@ export function existeArtefatoMonitor() {
       if (fs.statSync(p).isDirectory()) nomes.push(...fs.readdirSync(p));
     }
   }
-  return nomes.some((n) => /uptime|monitor|health-check/i.test(n));
+  return nomesIndicamArtefatoMonitor(nomes);
 }
 
 const IGNORAR_SRC = /(__tests__|__fixtures__|__mocks__|node_modules|\.test\.|\.spec\.)/;
@@ -474,6 +483,11 @@ test('fixture I3: com o artefato de monitoramento presente, o REAL passa', () =>
   const fixt = tabela('| Front disponível | 99,9 % | monitor externo em /version.json | REAL |') + secaoXrid('não');
   const amb = { ...OK, existeArtefatoMonitor: () => true };
   assert.deepEqual(analisar(fixt, amb), []);
+});
+
+test('fixture I3: auditoria Talk X Monitor Panel não conta como monitor externo de uptime', () => {
+  assert.equal(nomesIndicamArtefatoMonitor(['talkx-monitor-panel.test.sh']), false);
+  assert.equal(nomesIndicamArtefatoMonitor(['uptime-check.mjs']), true);
 });
 
 test('fixture I2: caminho citado que não existe é acusado', () => {
