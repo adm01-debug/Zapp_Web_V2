@@ -430,11 +430,14 @@ jobs:
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/gamification-marco-nao-bloqueia-envio.test.sh
 
 <<<<<<< ours
+<<<<<<< ours
       - name: Simular INSERT de evento de conversa com autor e contato visivel (N-143)
         env:
           CONVEVENTS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/conversation-events-insert-autor-visivel.test.sh
 =======
+=======
+>>>>>>> theirs
       # t_d7ef14d6 (Gmail com token revogado): a migration 20261014023912_gmail_accounts_sync_backoff
       # acrescenta error_count/next_attempt_at a public.gmail_accounts para a espera crescente do
       # gmail-cron-sync. Prova em PostgreSQL 17 descartavel: as colunas antes/depois com
@@ -445,6 +448,9 @@ jobs:
         env:
           GMAIL_BACKOFF_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/gmail-accounts-sync-backoff.test.sh
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 
       - name: Simular vinculo de time na reacao em mensagem (#1265)

@@ -224,9 +224,6 @@ export async function handleGmailOAuth(req: Request, deps: GmailOAuthDeps): Prom
             last_error: null,
             error_count: 0,
             next_attempt_at: null,
-            // cursor de sync antigo é descartado: 'pending' refaz o sync do zero
-            // e um historyId velho só renderia 404 de histórico no próximo ciclo
-            history_id: null,
           }, { onConflict: "email_address" })
           .select()
           .single();

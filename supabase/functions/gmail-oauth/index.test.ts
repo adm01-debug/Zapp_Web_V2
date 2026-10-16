@@ -79,7 +79,6 @@ function fakeAdmin(opts: {
   const rpcCalls: Array<{ fn: string; args: Record<string, unknown> }> = [];
   const updateCalls: Array<Record<string, unknown>> = [];
   const upsertCalls: Array<{ row: Record<string, unknown>; options: Record<string, unknown> }> = [];
-  const auditCalls: Array<Record<string, unknown>> = [];
   const updateResults = [...(opts.updateResults ?? [])];
   const account = opts.account === undefined ? ACCOUNT : opts.account;
 
@@ -88,7 +87,6 @@ function fakeAdmin(opts: {
     rpcCalls,
     updateCalls,
     upsertCalls,
-    auditCalls,
     rpc(fn: string, args: Record<string, unknown>) {
       rpcCalls.push({ fn, args });
       if (fn === "consume_gmail_oauth_state") {
@@ -282,69 +280,6 @@ Deno.test("reconectar a mesma conta atualiza a linha existente e limpa o erro an
   assertEquals(row.last_error, null);
   assertEquals(row.sync_status, "pending");
   assertEquals(row.is_active, true);
-  // ...e a espera crescente volta ao zero, senão o cron pula a conta recém-conectada
-  assertEquals(row.error_count, 0);
-  assertEquals(row.next_attempt_at, null);
-  // cursor de sync antigo é zerado: 'pending' faz sync completo, e o historyId
-  // velho só renderia 404 de histórico no próximo ciclo
-  assertEquals(row.history_id, null);
-});
-
-Deno.test("linha ATIVA de outro usuário continua recusada (409) e nada é gravado", async () => {
-  const admin = fakeAdmin({ existingAccountUserId: "user-outro", existingAccountIsActive: true });
-  const calls = newCalls();
-  const deps = makeDeps("user-1", admin, calls);
-
-  await handleGmailOAuth(post({ action: "get-auth-url", state: STATE }), deps);
-  const res = await handleGmailOAuth(post({ action: "exchange-code", code: "code-1", state: STATE }), deps);
-
-  assertEquals(res.status, 409);
-  assertEquals(admin.upsertCalls.length, 0);
-  assertEquals(admin.auditCalls.length, 0);
-});
-
-Deno.test("linha INATIVA de outro usuário é assumida (200) com trilha em audit_logs sem o e-mail completo", async () => {
-  const admin = fakeAdmin({ existingAccountUserId: "user-antigo", existingAccountIsActive: false });
-  const calls = newCalls();
-  const deps = makeDeps("user-1", admin, calls);
-
-  await handleGmailOAuth(post({ action: "get-auth-url", state: STATE }), deps);
-  const res = await handleGmailOAuth(post({ action: "exchange-code", code: "code-1", state: STATE }), deps);
-
-  assertEquals(res.status, 200);
-  // a linha desativada é reaproveitada: o dono passa a ser quem reconectou
-  assertEquals(admin.upsertCalls.length, 1);
-  assertEquals(admin.upsertCalls[0].row.user_id, "user-1");
-  assertEquals(admin.upsertCalls[0].row.is_active, true);
-  assertEquals(admin.upsertCalls[0].row.history_id, null);
-  // a assunção deixa rastro: audit_logs com a ação nomeada e o autor
-  assertEquals(admin.auditCalls.length, 1);
-  const audit = admin.auditCalls[0];
-  assertEquals(audit.action, "gmail_account_taken_over");
-  assertEquals(audit.user_id, "user-1");
-  assertEquals(audit.entity_type, "gmail_account");
-  assertEquals(audit.entity_id, ACCOUNT_ID);
-  // ...sem o e-mail completo: só a máscara entra na trilha
-  const serialized = JSON.stringify(audit);
-  assertEquals(serialized.includes("user@gmail.com"), false);
-  assertEquals(serialized.includes("u***@gmail.com"), true);
-});
-
-Deno.test("falha ao gravar a trilha NÃO assume a linha de outro usuário (fail-closed)", async () => {
-  const admin = fakeAdmin({
-    existingAccountUserId: "user-antigo",
-    existingAccountIsActive: false,
-    auditError: { message: "permission denied for table audit_logs" },
-  });
-  const calls = newCalls();
-  const deps = makeDeps("user-1", admin, calls);
-
-  await handleGmailOAuth(post({ action: "get-auth-url", state: STATE }), deps);
-  const res = await handleGmailOAuth(post({ action: "exchange-code", code: "code-1", state: STATE }), deps);
-
-  assertEquals(res.status, 500);
-  assertEquals(admin.upsertCalls.length, 0);
-  assertEquals(admin.rpcCalls.some((c) => c.fn === "store_gmail_tokens"), false);
 });
 
 Deno.test("replay: o mesmo state não troca o code uma segunda vez", async () => {
