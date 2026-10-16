@@ -12,6 +12,9 @@
  * - foto + nome de quem agiu -> `SenderAvatar`; ações do robô/IA
  *   (`actor.kind === 'system'`) aparecem como "Sistema" com ícone, sem foto;
  * - horário à esquerda -> `event.at` (vazio quando o instante não é completo).
+ *   A dica (K09) desse horário mostra a data e a hora completas no fuso local
+ *   ("quarta-feira, 7 de outubro de 2026, 16:10") e abre no mouse e no FOCO do
+ *   teclado; sem instante completo não há dica nem parada de teclado.
  *
  * O CARTÃO INTEIRO É UM BOTÃO (`<button type="button">`): clique, Enter e
  * Espaço abrem o episódio chamando `onOpen(event.target)` — é o alvo que diz o
@@ -30,9 +33,11 @@
  */
 import { useState } from 'react';
 import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { Bot, ChevronDown, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SenderAvatar } from '@/components/inbox/tabs/SenderAvatar';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { CATEGORY_META, safeEventText } from '@/lib/journey/model';
 import type { JourneyBadgeTone, JourneyEvent, JourneyTarget } from '@/lib/journey/model';
 import { CARD_INTERACTIVE, CHEVRON_REVEAL, Collapse, FadeSlideIn } from './motion';
@@ -49,12 +54,27 @@ const BADGE_CLASS: Record<JourneyBadgeTone, string> = {
 /** Só um instante ISO completo tem hora para exibir (data parcial não tem). */
 const INSTANTE_ISO = /^\d{4}-\d{2}-\d{2}T/;
 
+/** `at` completo -> `Date` no fuso local; `null` quando não é instante completo. */
+function instanteDoEvento(at: string): Date | null {
+  if (!INSTANTE_ISO.test(at)) return null;
+  const instante = new Date(at);
+  return Number.isNaN(instante.getTime()) ? null : instante;
+}
+
 /** Horário `HH:mm` no fuso local — `''` quando `at` não é um instante completo. */
 function horaDoEvento(at: string): string {
-  if (!INSTANTE_ISO.test(at)) return '';
-  const instante = new Date(at);
-  if (Number.isNaN(instante.getTime())) return '';
-  return format(instante, 'HH:mm');
+  const instante = instanteDoEvento(at);
+  return instante ? format(instante, 'HH:mm') : '';
+}
+
+/**
+ * Data e hora completas no fuso local do navegador — a dica (K09) do horário.
+ * `null` quando `at` não é um instante completo: sem dica, a coluna do horário
+ * não vira parada de teclado.
+ */
+function dataHoraCompleta(at: string): string | null {
+  const instante = instanteDoEvento(at);
+  return instante ? format(instante, "EEEE, d 'de' MMMM 'de' yyyy, HH:mm", { locale: ptBR }) : null;
 }
 
 /** Rótulo do grupo de um episódio agrupado (`count > 1`). */
@@ -114,6 +134,7 @@ export function JourneyEventCard({
   const meta = CATEGORY_META[event.category];
   const Icone = meta.icon;
   const hora = horaDoEvento(event.at);
+  const dicaCompleta = dataHoraCompleta(event.at);
   const resumo = safeEventText(event.summary);
   const detalhes = event.details ?? [];
   const agrupado = (event.count ?? 1) > 1;
@@ -133,14 +154,35 @@ export function JourneyEventCard({
 
   return (
     <li data-testid="journey-event" className="relative flex gap-2.5">
-      {/* horário à esquerda */}
-      <time
-        data-testid="journey-event-time"
-        dateTime={event.at || undefined}
-        className="w-9 shrink-0 pt-3 text-right text-2xs tabular-nums text-muted-foreground"
-      >
-        {hora || '—'}
-      </time>
+      {/* horário à esquerda; a dica (K09) abre a data e a hora completas.
+          O `TooltipProvider` local mantém o cartão autossuficiente: em produção o
+          `AppProviders` já monta um, mas quem renderiza o cartão fora dele (teste,
+          snippet) também precisa da dica funcionando. */}
+      {dicaCompleta ? (
+        <TooltipProvider delayDuration={200}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <time
+                data-testid="journey-event-time"
+                dateTime={event.at}
+                tabIndex={0}
+                className="w-9 shrink-0 rounded pt-3 text-right text-2xs tabular-nums text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              >
+                {hora || '—'}
+              </time>
+            </TooltipTrigger>
+            <TooltipContent>{dicaCompleta}</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ) : (
+        <time
+          data-testid="journey-event-time"
+          dateTime={event.at || undefined}
+          className="w-9 shrink-0 pt-3 text-right text-2xs tabular-nums text-muted-foreground"
+        >
+          {hora || '—'}
+        </time>
+      )}
 
       {/* trilho vertical + ponto na cor da categoria */}
       <div className="relative flex w-3 shrink-0 justify-center">

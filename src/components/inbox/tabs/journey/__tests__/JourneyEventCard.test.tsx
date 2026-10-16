@@ -212,3 +212,61 @@ describe('JourneyEventCard — S061–S069', () => {
     }
   });
 });
+
+/**
+ * K09 — a dica com a DATA e a HORA completas no fuso local.
+ *
+ * O horário da coluna esquerda mostra só `HH:mm`; quem precisa do dia inteiro
+ * (leitor de tela, dúvida sobre "que dia foi isso?") passa o mouse ou o foco
+ * do teclado pelo horário e recebe a data completa.
+ *
+ * O instante do caso é SEM fuso de propósito (`new Date` lê como hora local),
+ * então o texto esperado é o mesmo em qualquer fuso onde o teste rodar. O cartão
+ * monta o próprio `TooltipProvider` (a dica funciona mesmo sem o provider global
+ * do `AppProviders`), por isso o teste renderiza o cartão direto.
+ */
+describe('JourneyEventCard — K09: dica com a data e hora completas', () => {
+  const DATA_COMPLETA = 'quarta-feira, 7 de outubro de 2026, 14:32';
+
+  function renderComDica(props: Partial<Parameters<typeof JourneyEventCard>[0]> = {}) {
+    return render(
+      <ul>
+        <JourneyEventCard event={evento()} actorName="Maria" actorAvatarUrl={null} onOpen={vi.fn()} {...props} />
+      </ul>,
+    );
+  }
+
+  it('(11) passar o mouse pelo horário mostra a data e a hora completas no fuso local', async () => {
+    renderComDica();
+
+    fireEvent.pointerMove(screen.getByTestId('journey-event-time'), { pointerType: 'mouse' });
+
+    expect(await screen.findByRole('tooltip')).toHaveTextContent(DATA_COMPLETA);
+  });
+
+  it('(12) o horário recebe foco e a dica sai no foco (não só no mouse)', async () => {
+    renderComDica();
+    const tempo = screen.getByTestId('journey-event-time');
+
+    expect(tempo).toHaveAttribute('tabindex', '0');
+
+    fireEvent.focus(tempo);
+
+    const dica = await screen.findByRole('tooltip');
+    expect(dica).toHaveTextContent(DATA_COMPLETA);
+    // o leitor de tela lê a data completa ao chegar no horário
+    expect(tempo).toHaveAttribute('aria-describedby', dica.id);
+  });
+
+  it('(13) instante incompleto não vira parada de teclado nem dica', async () => {
+    renderComDica({ event: evento({ at: '2026-10-07' }) });
+    const tempo = screen.getByTestId('journey-event-time');
+
+    fireEvent.focus(tempo);
+    fireEvent.pointerMove(tempo, { pointerType: 'mouse' });
+
+    expect(tempo).toHaveTextContent('—');
+    expect(tempo).not.toHaveAttribute('tabindex');
+    expect(screen.queryByRole('tooltip')).toBeNull();
+  });
+});
