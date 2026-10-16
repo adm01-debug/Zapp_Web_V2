@@ -189,7 +189,12 @@ const ALLOWLIST = new Set([
   // pelo dono do workflow (agente nao edita workflow).
   'scripts/db-audit/message-attempts-log.test.sh',
 ]);// Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em,
-]);
+  // R2-AUTH-036 (Sala de Crise): prova em Postgres 17 descartavel (docker) que a
+  // RPC crisis_room_snapshot() mede as 4 metricas num agregado unico (sem o corte
+  // de 1.000 linhas do PostgREST) e nega agente comum/anon/service_role com
+  // excecao, nunca com zeros. Passo de YAML a promover em db-guard.yml pelo dono
+  // do workflow (REGISTRO PENDENTE).
+  'scripts/db-audit/crisis-room-snapshot.test.sh',]);
 
 // Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em// workflow nenhum. Todas rodam offline (`node --test <arquivo>`); a promoção é uma linha em
 // ci.yml/db-guard.yml — do dono do workflow (agente não edita workflow). R2-INF-013: as quatro

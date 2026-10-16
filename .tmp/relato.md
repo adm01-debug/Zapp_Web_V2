@@ -1,39 +1,19 @@
-Especialista: senior
+Especialista: worker (sql) (area-sql-banco) — perfil workersql (t_7d403167)
 
-Ponto 1 — comentarios do SQL contradiziam a reabertura de `resolved`
-O que mudou: em `supabase/migrations/20261011094027_assume_return_conversation.sql`, o contrato das RPCs registra que conversa `resolved` pode ser reaberta por Assumir, gravando `open`, enquanto `archived` continua bloqueada.
-Prova: `TMPDIR="$PWD/.tmp" bash scripts/db-audit/assume-return-conversation.test.sh` chama as RPCs reais; no trabalho anterior saiu 0 com `[OK] DEPOIS: admin assume conversa resolved e reabre como open = true|...|open` e `[OK] DEPOIS: auditoria da reabertura guarda previous_status resolved = resolved|open`. Neste refazer final eu rodei o mesmo teste novamente; resultado listado em "Verificacoes executadas".
+## O que mudou e por quê
+- `supabase/migrations/20261013140359_crisis_room_snapshot.sql` (nova): cria `public.crisis_room_snapshot() RETURNS jsonb` (STABLE, SECURITY DEFINER, `search_path = public, pg_temp`), as 4 métricas da Sala de Crise num agregado único no banco. Corrige os dois defeitos da ponte no navegador: (1) o corte silencioso de 1.000 linhas do PostgREST transformava operação grande em número pequeno; (2) o SLA contava estouros de todo o histórico. Regras espelham `src/components/admin/CrisisRoom.tsx`: pendência = `sender='contact'` nos últimos 60 min SEM resposta posterior (`sender='agent'`) na mesma conversa; agentes ativos = presença REAL (`agent_presence` com heartbeat de 75 s, mesmo corte do `useAgentPresenceMap`) restrita a contas habilitadas (`profiles.is_active` e papel de atendimento) — nunca `profiles.is_active` sozinho; SLA = `first_response_breached` E (`first_response_at IS NULL` OU criado nas últimas 24 h), fuso America/Sao_Paulo; `queue_ratio` = contatos pendentes / agentes online, **NULL** quando não há agente online. Devolve `unanswered_messages`, `unanswered_conversations`, `online_agents`, `total_agents`, `sla_breached`, `queue_ratio`, `window_minutes`, `sla_window_hours`, `cycle_date_sp`, `generated_at`. Barreira explícita: não admin/supervisor recebe exceção (42501), sem zeros. ACL: `REVOKE ALL ... FROM PUBLIC, anon, service_role` + `GRANT EXECUTE ... TO authenticated`. `-- Rollback:` executável (`drop function if exists`), provado no teste.
+- `scripts/db-audit/crisis-room-snapshot.test.sh` (novo): prova em PostgreSQL 17 descartável (docker) aplicando a migration REAL e chamando a RPC como o PAPEL real (authenticated + claim `sub`, anon, service_role), nunca como postgres para julgar autorização.
+- `src/integrations/supabase/types.ts`: registra `crisis_room_snapshot: { Args: never; Returns: Json }` para o hook chamar tipado. É tipo declarativo — sem comportamento em runtime, sem teste cabível; a prova do defeito é `scripts/db-audit/crisis-room-snapshot.test.sh`, no MESMO commit (o fechar acusou "código sem teste" só por ver `src/**`; rodado de novo como manda o aviso).
+- `scripts/ci/check-test-inventory.mjs`: entrada na ALLOWLIST do `.test.sh` novo (REGISTRO PENDENTE do passo em `db-guard.yml`, que é do dono do workflow — agente não edita workflow).
 
-Ponto 2 — faltava teste de Assumir em `archived`
-O que mudou: em `scripts/db-audit/assume-return-conversation.test.sh`, a assercao `assumir conversa arquivada (conversation_not_active)` chama `public.assume_conversation('$C_ARCH')` contra Postgres descartavel.
-Prova: o teste de banco real continua exercitando esse caminho; se a RPC reabrisse `archived`, a chamada `check_error` falharia por nao receber o erro esperado.
+## Prova (vermelho antes, verde depois)
+- verde: `bash scripts/db-audit/crisis-room-snapshot.test.sh` → `[OK] ... (20 cenarios aprovados).` — 20 PASS, 0 FAIL.
+- vermelho antes: o teste começa exigindo que a RPC NÃO exista antes da migration (`[PASS] vermelho antes: public.crisis_room_snapshot() ainda nao existia`) e o cenário anti-corte mede a consulta no formato antigo como `1000` contra o agregado real `1502`.
+- `hermes-db-migrar supabase/migrations/20261013140359_crisis_room_snapshot.sql` → `APLICADA no banco LOCAL 'v2-2610131358fffb' (produção não foi tocada).`
 
-Ponto 3 — aviso do juiz `backfill_dispara_gatilho`
-O que mudou: nao adicionei backfill. A migration cria as duas RPCs e o teste preserva a prova de que a chamada toca so a linha alvo por PK.
-Prova: o teste compara `updated_at` antes/depois da linha alvo e de uma linha vizinha e exige mudanca apenas na conversa alterada pela RPC.
+## Arquivos fora da lista do cartão (indispensáveis)
+- `scripts/db-audit/crisis-room-snapshot.test.sh` e `scripts/ci/check-test-inventory.mjs`: o cartão pede prova com o PAPEL real (authenticated/anon/service_role). A única forma no repositório é `.test.sh` em PostgreSQL 17 descartável (docker) — a suíte `supabase/tests/*.sql` roda como service_role no MCP e não prova autorização. A entrada na ALLOWLIST é obrigatória para o `check-test-inventory` não reprovar o `.test.sh` como órfão. Sem os dois, o critério de prova do cartão fica sem como ser cumprido.
 
-Ponto 4 — rollback exato e executavel
-O que mudou: em `supabase/migrations/20261011094027_assume_return_conversation.sql`, o rollback no topo remove exatamente as duas funcoes criadas (`assume_conversation(uuid)` e `return_conversation_to_queue(uuid)`).
-Prova: o teste extrai o bloco `-- Rollback:` do proprio arquivo, aplica no Postgres descartavel e confere que as funcoes foram removidas.
-
-Ponto 5 — env do passo novo no DB Guard
-O que mudou: em `.github/workflows/db-guard.yml`, no passo `Simular assumir e devolver conversa por fila`, acrescentei apenas o env `ASSUME_RETURN_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}`. O script le `ASSUME_RETURN_TEST_POSTGRES_IMAGE`, entao o DB Guard passa a usar a mesma imagem pinada do job, como o passo vizinho `TALK_ME_TEST_POSTGRES_IMAGE`.
-Prova: o diff mostra somente esse env no passo; `node --test scripts/ci/check-test-inventory.mjs` mantem `scripts/db-audit/assume-return-conversation.test.sh` registrado no workflow. O comando ainda pode listar orfaos preexistentes fora deste cartao, mas nao este teste.
-
-Arquivos alterados (`git diff --name-only dia/2026-10-13...HEAD`):
-- .github/workflows/db-guard.yml
-- .tmp/relato.md
-- scripts/db-audit/assume-return-conversation.test.sh
-- src/integrations/supabase/types.ts
-- supabase/migrations/20261011094027_assume_return_conversation.sql
-
-Conferencia de escopo:
-- 5 arquivos no diff, sendo 1 teste de banco: `scripts/db-audit/assume-return-conversation.test.sh`.
-- Nao mexi nos pontos 1 a 3 aprovados alem de reaplicar o commit de partida; a unica correcao deste refazer final e o env do passo de CI.
-
-Verificacoes executadas:
-- `bash -n scripts/db-audit/assume-return-conversation.test.sh` — exit 0.
-- `TMPDIR="$PWD/.tmp" bash scripts/db-audit/assume-return-conversation.test.sh` — exit 0; mostrou `[OK] DEPOIS: admin assume conversa resolved e reabre como open = true|...|open`, `[OK] DEPOIS: assumir conversa arquivada (conversation_not_active)`, `[OK] ROLLBACK: functions removidas = <null>|<null>` e `[OK] MUTACAO F: bloquear resolved no assumir faz o contrato FALHAR (resolved precisa reabrir)`.
-- `node --test scripts/ci/check-test-inventory.mjs` — exit 1 por 6 orfaos preexistentes fora deste cartao (`department-invite-contract-audit-vocabulary`, `ia-usage-outbox-duravel`, `talkx-conversion-defaults`, `team-chat-department-transfer-guards`, `team-chat-media-contract`, `team-direct-conversation-race`); o teste deste cartao, `assume-return-conversation.test.sh`, nao aparece na lista.
-- `zapp-verify . --rapido` — exit 0: `VERIFY: VERDE SEM BANCO (241s)`; banco local coberto pelo teste Docker acima.
-- `git diff --stat dia/2026-10-13...HEAD` — 5 arquivos, 910 insercoes e 108 remocoes; 1 arquivo de teste.
+## O que NÃO fiz e por quê
+- Não liguei o `.test.sh` a `.github/workflows/db-guard.yml` (workflow é do dono; passo de uma linha, REGISTRO PENDENTE).
+- Não toquei `CrisisRoom.tsx`: a troca das consultas do hook é o cartão filho t_ac0acb5c (área src/**, não é minha).
