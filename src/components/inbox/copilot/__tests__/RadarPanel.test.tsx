@@ -8,8 +8,7 @@
  * CV-058: DND mode.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, act } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, act, fireEvent } from '@testing-library/react';
 import { RadarPanel } from '../RadarPanel';
 import { renderHook } from '@testing-library/react';
 import { useRadarPanel } from '@/hooks/copilot/useRadarPanel';
@@ -44,10 +43,10 @@ describe('RadarPanel CV-051', () => {
     expect(screen.getByLabelText(/Expandir painel RADAR/i)).toBeTruthy();
   });
 
-  it('chama onToggleCollapsed ao clicar em recolher', async () => {
+  it('chama onToggleCollapsed ao clicar em recolher', () => {
     const fn = vi.fn();
     render(<RadarPanel {...baseProps} onToggleCollapsed={fn} />);
-    await userEvent.click(screen.getByLabelText(/Recolher painel RADAR/i));
+    fireEvent.click(screen.getByLabelText(/Recolher painel RADAR/i));
     expect(fn).toHaveBeenCalledOnce();
   });
 });
@@ -72,19 +71,19 @@ describe('RadarPanel CV-052 modos', () => {
     expect(screen.getByRole('region', { name: /B·R·I·N·D·E/i })).toBeTruthy();
   });
 
-  it('chama onSetMode ao clicar em Foco', async () => {
+  it('chama onSetMode ao clicar em Foco', () => {
     const fn = vi.fn();
     render(<RadarPanel {...baseProps} onSetMode={fn} />);
-    await userEvent.click(screen.getByRole('button', { name: /Foco/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Foco/i }));
     expect(fn).toHaveBeenCalledWith('focus');
   });
 });
 
 describe('RadarPanel CV-053 cartões recolhíveis', () => {
-  it('chama onToggleCard ao clicar no header do cartão Stage', async () => {
+  it('chama onToggleCard ao clicar no header do cartão Stage', () => {
     const fn = vi.fn();
     render(<RadarPanel {...baseProps} onToggleCard={fn} />);
-    await userEvent.click(screen.getByRole('button', { name: /Etapa da venda/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Etapa da venda/i }));
     expect(fn).toHaveBeenCalledWith('stage');
   });
 
@@ -118,17 +117,17 @@ describe('RadarPanel CV-058 DND', () => {
     expect(screen.getByText(/RADAR silenciado/i)).toBeTruthy();
   });
 
-  it('botão "Retomar" chama onClearDnd', async () => {
+  it('botão "Retomar" chama onClearDnd', () => {
     const fn = vi.fn();
     render(<RadarPanel {...baseProps} isDnd={true} onClearDnd={fn} />);
-    await userEvent.click(screen.getByText('Retomar'));
+    fireEvent.click(screen.getByText('Retomar'));
     expect(fn).toHaveBeenCalledOnce();
   });
 
-  it('botão silenciar chama onEnableDnd com conversationId', async () => {
+  it('botão silenciar chama onEnableDnd com conversationId', () => {
     const fn = vi.fn();
     render(<RadarPanel {...baseProps} isDnd={false} onEnableDnd={fn} conversationId="conv-1" />);
-    await userEvent.click(screen.getByLabelText(/Silenciar RADAR/i));
+    fireEvent.click(screen.getByLabelText(/Silenciar RADAR/i));
     expect(fn).toHaveBeenCalledWith('conv-1');
   });
 });

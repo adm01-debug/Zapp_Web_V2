@@ -145,7 +145,7 @@ export function SuggestionsCard({ suggestions, loading, collapsed, onToggle, onU
       )}
       {best && (
         <div className="pt-1 space-y-1">
-          {suggestions.map((s, i) => (
+          {suggestions.map((s: LiveSuggestion, i: number) => (
             <div key={s.id} className="flex items-start gap-1.5 rounded bg-muted/40 p-1.5">
               <span className="shrink-0 text-[10px] font-bold text-muted-foreground">{i + 1}.</span>
               <p
@@ -203,7 +203,7 @@ export function AlertsCard({ alerts, collapsed, onToggle }: AlertsCardProps) {
         <p className="pt-1 text-[10px] text-muted-foreground italic">Sem alertas ativos.</p>
       ) : (
         <ul className="pt-1 space-y-1">
-          {alerts.map((a, i) => (
+          {alerts.map((a: string, i: number) => (
             <li key={i} className="flex items-start gap-1.5 rounded bg-amber-500/10 px-2 py-1 text-[11px] text-amber-700 dark:text-amber-300">
               <AlertCircle className="h-3 w-3 shrink-0 mt-0.5" />
               {a}
@@ -229,7 +229,7 @@ export function ProductsCard({ products, collapsed, onToggle }: ProductsCardProp
         <p className="pt-1 text-[10px] text-muted-foreground italic">Aguardando análise de produto...</p>
       ) : (
         <ul className="pt-1 space-y-0.5">
-          {products.map((p, i) => (
+          {products.map((p: string, i: number) => (
             <li key={i} className="rounded bg-muted/40 px-2 py-1 text-[11px]">{p}</li>
           ))}
         </ul>
@@ -256,7 +256,7 @@ export function DecisionMakerCard({ decisionRole, stakeholders, collapsed, onTog
           {decisionRole && (
             <p className="text-[11px]">Papel: <span className="font-semibold">{decisionRole}</span></p>
           )}
-          {stakeholders?.map((s, i) => (
+          {stakeholders?.map((s: { name: string; role?: string }, i: number) => (
             <div key={i} className="rounded bg-muted/40 px-2 py-1 text-[11px]">
               <span className="font-medium">{s.name}</span>
               {s.role && <span className="text-muted-foreground"> · {s.role}</span>}
