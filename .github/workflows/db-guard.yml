@@ -433,6 +433,10 @@ jobs:
         env:
           PROFILES_CAN_DOWNLOAD_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/profiles-can-download-authorization.test.sh
+      - name: Simular higiene de grants (EXECUTE de PUBLIC + policies duplicadas)
+        env:
+          HIGIENE_GRANTS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/higiene-grants-public-policies.test.sh
 
       - name: Simular permissao send_messages imposta na RPC de envio (L9)
         env:
