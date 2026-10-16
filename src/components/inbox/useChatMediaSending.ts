@@ -52,20 +52,36 @@ export function useChatMediaSending(contactId: string, contactPhone: string | un
         return fallbackConn.instance_id;
       }
     } catch (err) {
+      // Propaga: engolir aqui devolvia '' (a mesma resposta de "sem conexao") e o
+      // chamador tratava falha de rede como ausencia de instancia.
       log.error('Failed to resolve WhatsApp instance:', err);
+      throw err;
     }
     return '';
   }, [contactId, instanceName]);
 
   const initResolve = useCallback(async () => {
-    if (!resolvedRef.current) {
-      resolvedRef.current = true;
+    if (resolvedRef.current) return;
+    resolvedRef.current = true;
+    try {
       await resolveInstance();
+    } catch (err) {
+      // initResolve roda de efeito, sem quem trate a rejeicao: o erro ja esta
+      // logado e o caminho interativo (ensureInstance) tenta de novo.
+      log.warn('Falha ao resolver a instancia na inicializacao:', err);
     }
   }, [resolveInstance]);
 
   const ensureInstance = useCallback(async (): Promise<string | null> => {
-    const resolved = instanceName || await resolveInstance();
+    let resolved = instanceName;
+    if (!resolved) {
+      try {
+        resolved = await resolveInstance();
+      } catch (err) {
+        log.warn('Instancia do WhatsApp nao resolvida:', err);
+        resolved = '';
+      }
+    }
     if (!resolved || !contactPhone) {
       toast({ title: 'Erro', description: CONEXAO_WHATSAPP_INDISPONIVEL });
       return null;
@@ -86,16 +102,28 @@ export function useChatMediaSending(contactId: string, contactPhone: string | un
         ...(replyToId ? { replyToId } : {}),
       });
 
-      // Auto-save sticker
-      supabase.from('stickers').select('id').eq('image_url', stickerUrl).maybeSingle().then(async ({ data: existing }) => {
-        if (!existing) {
+      // Auto-save da figurinha: best-effort. Antes a cadeia `.then(async ...)` nao
+      // tinha catch e uma falha aqui virava rejeicao nao tratada (o envio ja
+      // tinha acontecido).
+      void (async () => {
+        try {
+          const { data: existing, error } = await supabase
+            .from('stickers').select('id').eq('image_url', stickerUrl).maybeSingle();
+          if (error) {
+            log.warn('Nao foi possivel verificar a figurinha enviada:', error);
+            return;
+          }
+          if (existing) return;
           const { data: { user } } = await supabase.auth.getUser();
-          await supabase.from('stickers').insert({
+          const { error: insertError } = await supabase.from('stickers').insert({
             name: `Enviada ${new Date().toLocaleDateString('pt-BR')}`,
             image_url: stickerUrl, category: 'enviadas', is_favorite: false, use_count: 1, uploaded_by: user?.id || null,
           });
+          if (insertError) log.warn('Nao foi possivel salvar a figurinha enviada:', insertError);
+        } catch (err) {
+          log.warn('Nao foi possivel salvar a figurinha enviada:', err);
         }
-      });
+      })();
 
       toast({ title: 'Figurinha enviada!' });
     } catch {

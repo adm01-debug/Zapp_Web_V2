@@ -6,6 +6,7 @@ import { useMessages } from '@/hooks/chat/useMessages';
 import type { Database } from '@/integrations/supabase/types';
 import { Conversation, Message } from '@/types/chat';
 import { log } from '@/lib/logger';
+import { createStorageObjectId } from '@/lib/storage_object_upload';
 import { normalizeOperationalPriority } from '@/lib/ai-vocabulary';
 import { toast } from '@/hooks/ui/use-toast';
 import { formatDocumentTitle } from '@/lib/productName';
@@ -173,7 +174,7 @@ export default function ChatPopup() {
     async (blob: Blob): Promise<boolean> => {
       if (!contactId) return false;
       try {
-        const fileName = `${contactId}/audio_${Date.now()}.webm`;
+        const fileName = `${contactId}/audio_${createStorageObjectId()}.webm`;
         const { error: uploadError } = await supabase.storage
           .from('whatsapp-media')
           .upload(fileName, blob, { contentType: blob.type || 'audio/webm' });

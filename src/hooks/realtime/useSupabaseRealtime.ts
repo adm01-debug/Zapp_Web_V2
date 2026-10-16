@@ -143,7 +143,15 @@ function acquireSharedChannel(
           ...(filter !== undefined ? { filter } : {}),
         },
         (payload) => {
-          for (const callback of [...listeners.values()]) callback(payload);
+          // Um ouvinte que lanca nao pode calar os demais nem derrubar o canal:
+          // antes o erro subia pela cadeia do RealtimeClient e abortava a rodada.
+          for (const callback of [...listeners.values()]) {
+            try {
+              callback(payload);
+            } catch (error) {
+              log.error(`Realtime listener failed (${channelName}):`, error);
+            }
+          }
         },
       )
       .subscribe((status, error) => {
