@@ -196,6 +196,15 @@ Deno.test("G5: provedor pendurado estoura o prazo -> 504 e linha no ledger", asy
       );
 
       assert(res.status === 504, `esperado 504 no estouro de prazo, veio ${res.status}`);
+      const corpo504 = await res.text();
+      assert(
+        !corpo504.includes("xi-key-de-teste"),
+        "corpo do 504 não pode vazar a chave do provedor",
+      );
+      assert(
+        !corpo504.includes("api.elevenlabs.io"),
+        "corpo do 504 não pode vazar detalhe do provedor",
+      );
       const row = ledgerRows(stub.calls).find((r) => r.function_name === "elevenlabs-tts");
       assert(row !== undefined, "a tentativa abortada tem de deixar linha no ledger");
       assert(row.status === "error", `status esperado error, veio ${String(row.status)}`);
@@ -412,6 +421,43 @@ Deno.test("TTS: 500 do provedor vira 500 genérico sem vazar detalhe interno", a
       assert(!text.includes("XYZ"), "detalhe interno do 500 não pode vazar");
       assert(!text.includes("ElevenLabs API error"), "mensagem interna não pode vazar");
       assert(text.includes("Internal server error"), `corpo genérico esperado, veio ${text}`);
+      const row500 = ledgerRows(stub.calls).find((r) => r.function_name === "elevenlabs-tts");
+      assert(row500 !== undefined, "500 do provedor tem de deixar linha de erro no ledger");
+      assert(row500.status === "error", `status esperado error, veio ${String(row500.status)}`);
+      assert(
+        row500.error_message === "ElevenLabs HTTP 500",
+        `error_message esperado ElevenLabs HTTP 500, veio ${String(row500.error_message)}`,
+      );
+      const meta500 = row500.metadata as Record<string, unknown>;
+      assert(meta500.http_status === 500, `http_status esperado 500, veio ${String(meta500.http_status)}`);
+    } finally {
+      stub.restore();
+    }
+  });
+});
+
+Deno.test("TTS: fetch rejeitando com erro interno vira 500 genérico + ledger error com http_status null", async () => {
+  await withEnv(ENV_OK, async () => {
+    const stub = withFetch([
+      ROTA_AUTH,
+      ROTA_RATE_LIMIT,
+      ROTA_FLAG_ON,
+      {
+        match: PROVIDER,
+        make: () => Promise.reject(new Error("segredo-interno-xyz")),
+      },
+    ]);
+    try {
+      const res = await handleElevenLabsTts(ttsRequest({ text: "oi" }));
+      assert(res.status === 500, `esperado 500 genérico, veio ${res.status}`);
+      const text = await res.text();
+      assert(!text.includes("segredo-interno-xyz"), "erro interno do fetch não pode vazar");
+      assert(text.includes("Internal server error"), `corpo genérico esperado, veio ${text}`);
+      const row = ledgerRows(stub.calls).find((r) => r.function_name === "elevenlabs-tts");
+      assert(row !== undefined, "falha do fetch tem de deixar linha de erro no ledger");
+      assert(row.status === "error", `status esperado error, veio ${String(row.status)}`);
+      const meta = row.metadata as Record<string, unknown>;
+      assert(meta.http_status === null, "falha sem resposta tem http_status nulo");
     } finally {
       stub.restore();
     }
