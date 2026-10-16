@@ -115,6 +115,13 @@ const ALLOWLIST = new Set([
   // real e que a linha `-- Rollback:` da migration restaura — Postgres 17
   // descartável (docker). Passo de YAML a promover em db-guard.yml pelo dono do workflow.
   'scripts/db-audit/e44-whatsapp-connections-anon-grants.test.sh',
+  // #174 (t_ae0a55a6): prova em Postgres 17 descartavel (docker, container proprio) que a RPC
+  // set_default_whatsapp_connection (migration 20261006234158_whatsapp_default_connection_rpc_atomica.sql)
+  // troca a conexao padrao do WhatsApp numa transacao, serializada por advisory lock, autorizada por
+  // is_admin_or_supervisor(auth.uid()) e valida o pos-estado (exatamente uma padrao); o bloco A mostra o
+  // defeito no caminho antigo (dois UPDATE) e o bloco B prova a RPC, o fail-closed e o gatilho de
+  // updated_at. O passo de uma linha no db-guard.yml e do dono do workflow (agente nao edita workflow).
+  'scripts/db-audit/whatsapp-default-connection-atomicity.test.sh',
 ]);
 
 // Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em
