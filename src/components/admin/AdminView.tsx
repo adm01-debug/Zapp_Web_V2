@@ -14,6 +14,7 @@ import {
   UserPlus, Building, Eye, Loader2, Brain,
 } from 'lucide-react';
 import { useUserRole, AppRole } from '@/hooks/system/useUserRole';
+import { isAppRole } from '@/lib/appRole';
 import { AdminCRMDashboard } from './AdminCRMDashboard';
 import { PlaybooksManager } from './PlaybooksManager';
 import { SupervisorCopilot } from './SupervisorCopilot';
@@ -323,7 +324,7 @@ export function AdminView() {
             <div className="space-y-2"><Label htmlFor="add_senha">Senha *</Label><Input id="add_senha" type="password" placeholder="Mínimo 6 caracteres" value={newUser.password} onChange={(e) => setNewUser(p => ({ ...p, password: e.target.value }))} /></div>
             <div className="space-y-2">
               <Label htmlFor="role">Role</Label>
-              <Select value={newUser.role} onValueChange={(v) => setNewUser(p => ({ ...p, role: v as AppRole }))}>
+              <Select value={newUser.role} onValueChange={(v) => setNewUser(p => ({ ...p, role: isAppRole(v) ? v : p.role }))}>
                 <SelectTrigger id="role"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {(Object.keys(roleIconMap) as AppRole[]).map((key) => {
