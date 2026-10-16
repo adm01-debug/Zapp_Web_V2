@@ -483,6 +483,46 @@ test('usage guard honra .schema() separado do .from()/.rpc() por comentario', ()
   }
 });
 
+test('usage guard trata migration so ADITIVA de colunas como neutra na projecao', () => {
+  // Reproducao do empilhamento do cartao t_4943a390 (entrega a5d85742e): a
+  // migration 20261011000020_talkx_templates_channel_media_archive.sql so faz
+  // ALTER TABLE ... ADD COLUMN e DROP/ADD CONSTRAINT, com o cabecalho
+  // `-- Rollback:` que o hermes-db-migrar exige citando `drop column`/`drop
+  // constraint`. Nada disso e CREATE/DROP de relacao ou de funcao, entao a
+  // projecao forward-only tem de ficar IGUAL a da base e o caller de
+  // talkx_templates continua atendido (exit 0). Se qualquer dessas formas virar
+  // DDL de remocao, o caller valido vira orfao — o falso positivo que a
+  // bisseccao do empilhamento atribuiu a esta entrega.
+  const ADITIVA =
+    '-- Rollback: devolve public.talkx_templates ao estado anterior: dropa as 2 constraints e as 8 colunas criadas por esta migration.\n'
+    + '-- Rollback (SQL executavel, na ordem):\n'
+    + '--   alter table public.talkx_templates drop constraint if exists talkx_templates_channel_check;\n'
+    + '--   alter table public.talkx_templates drop column if exists channel;\n'
+    + '--\n'
+    + 'alter table public.talkx_templates\n'
+    + "  add column if not exists channel text not null default 'whatsapp',\n"
+    + '  add column if not exists archived_at timestamptz;\n'
+    + 'alter table public.talkx_templates drop constraint if exists talkx_templates_channel_check;\n'
+    + "alter table public.talkx_templates add constraint talkx_templates_channel_check check (channel = 'whatsapp');\n";
+  const caller = { 'c.ts': "supabase.from('talkx_templates').select('*');\n" };
+  const comAditiva = runGuard({
+    catalog: { tables: ['talkx_templates'] },
+    migrations: { '20261011000020_add.sql': ADITIVA },
+    callers: caller,
+  });
+  assert.equal(comAditiva.status, 0, comAditiva.stdout + comAditiva.stderr);
+  assert.match(comAditiva.stdout, /projecao forward-only: 1 relacoes, 0 funcoes/);
+  // Controle negativo: a MESMA base com um DROP TABLE de verdade reprova — prova
+  // que o harness detecta remocao e que o verde acima nao e tautologico.
+  const comDrop = runGuard({
+    catalog: { tables: ['talkx_templates'] },
+    migrations: { '20261011000020_drop.sql': 'DROP TABLE public.talkx_templates;\n' },
+    callers: caller,
+  });
+  assert.equal(comDrop.status, 1, comDrop.stdout + comDrop.stderr);
+  assert.match(comDrop.stderr, /\.from\('talkx_templates'\)/);
+});
+
 test('usage guard nao deixa passar alvo de outro schema escondido por comentario', () => {
   // `public.x` existe (criado na janela) e `ops.x` NAO. O alvo real do caller e
   // ops.x, entao o guard tem de acusar; se o comentario fizer o `public` voltar,
