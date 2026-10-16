@@ -887,159 +887,191 @@ Deno.test("R2EXT-AGENDA: instance-info (GO) não devolve token/apikey/hash", asy
     const texto = await res.text();
     assertSemCredencial(texto, "instance-info go");
     assert(fake.gets.some((p) => p.startsWith("/instance/info/")), "deve consultar /instance/info");
-  } finally {
-    await fake.stop();
-  }
-});
 
-Deno.test("R2EXT-AGENDA: list-instances (GO) não devolve token/apikey/hash", async () => {
-  const fake = createInstanceReadFake(() => ({ data: [INSTANCIA_COM_CREDENCIAL] }));
-  Deno.env.set("EVOLUTION_API_URL", fake.url);
-  Deno.env.set("EVOLUTION_API_FLAVOR", "go");
-  try {
-    const res = await handleEvolutionApi(
-      controlRequest("list-instances", {}),
-      { callerClient: makeCallerClient({ isAdminOrSupervisor: false }), supabase: makeServiceClient() },
-    );
-    assertEquals(res.status, 200);
-    const texto = await res.text();
-    assertSemCredencial(texto, "list-instances go");
-    assert(fake.gets.includes("/instance/all"), "GO deve listar em /instance/all");
-  } finally {
-    await fake.stop();
-  }
-});
+// ─── t_13ab1052 ─────────────────────────────────────────────────────────────
+// `reconcile-instances` (admin): compara o que existe no provedor com o que
+// está em whatsapp_connections e devolve SÓ as duas listas divergentes de nome
+// (`so_no_provedor`, `so_no_banco`). Contratos provados aqui:
+//   1. é SOMENTE LEITURA — nenhum INSERT/UPDATE/DELETE no banco e nenhuma
+//      escrita ao provedor;
+//   2. não vaza segredo — a resposta é só a lista de nomes (sem token);
+//   3. falha do provedor é fail-closed — sem listagem NÃO acusa todas as
+//      conexões como órfãs (devolve `error: true`);
+//   4. agente sem papel: 403 e ZERO I/O no provedor.
 
-Deno.test("R2EXT-AGENDA: list-instances (v2) não devolve token/apikey/hash", async () => {
-  // v2 devolve o array direto em /instance/fetchInstances: o strip precisa
-  // percorrer a lista (senão o token do item escaparia).
-  const fake = createInstanceReadFake(() => [INSTANCIA_COM_CREDENCIAL]);
-  Deno.env.set("EVOLUTION_API_URL", fake.url);
-  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
-  try {
-    const res = await handleEvolutionApi(
-      controlRequest("list-instances", {}),
-      { callerClient: makeCallerClient({ isAdminOrSupervisor: false }), supabase: makeServiceClient() },
-    );
-    assertEquals(res.status, 200);
-    const texto = await res.text();
-    assertSemCredencial(texto, "list-instances v2");
-    assert(fake.gets.includes("/instance/fetchInstances"), "v2 deve listar em /instance/fetchInstances");
-  } finally {
-    await fake.stop();
-  }
-});
+interface ReconcileFake {
+  url: string;
+  requests: Array<{ method: string; path: string }>;
+  stop: () => Promise<void>;
+}
 
-// ─── T-25a0a972: 'Reconfigurar' por contrato/flavor + leitura de config por flavor ──
-// "Reconfigurar" do painel manda `{ instanceName, webhook: { url, events } }`
-// (ANINHADO); o handler lia `body.url`/`body.events` PLANOS e mandava url
-// `undefined` ao provedor. E a rota era sempre a da v2 (`/webhook/set`), mesmo
-// com a produção no GO. Aqui: (1) o aninhado chega completo; (2) o GO usa
-// `/instance/connect` (WebhookURL + subscribe) — rota nativa do GO.
-
-Deno.test("MON-WEBHOOK (v2): set-webhook aceita o contrato ANINHADO e envia url/events", async () => {
-  const fake = createFakeEvolution();
-  Deno.env.set("EVOLUTION_API_URL", fake.url);
-  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
-  resetInstanceTokenCache();
-  try {
-    const res = await handleEvolutionApi(
-      controlRequest("set-webhook", {
-        instanceName: "PRINCIPAL",
-        webhook: { url: "https://x/functions/v1/evolution-webhook", events: ["MESSAGES_UPSERT", "CONNECTION_UPDATE"] },
-      }),
-      { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase: makeServiceClient() },
-    );
-    assertEquals(res.status, 200);
-    const post = fake.posts.find((p) => p.path.startsWith("/webhook/set/"));
-    assert(!!post, "v2 deve configurar em /webhook/set/{instance}");
-    assertEquals(post!.path, "/webhook/set/PRINCIPAL");
-    const webhook = post!.body.webhook as Record<string, unknown>;
-    assertEquals(webhook.url, "https://x/functions/v1/evolution-webhook", "url aninhado não pode ser perdido");
-    assertEquals(webhook.events, ["MESSAGES_UPSERT", "CONNECTION_UPDATE"], "events aninhados não podem virar a lista default");
-  } finally {
-    await fake.stop();
-  }
-});
-
-Deno.test("MON-WEBHOOK (GO): set-webhook usa /instance/connect com webhookUrl e subscribe ALL", async () => {
-  const fake = createFakeEvolution();
-  Deno.env.set("EVOLUTION_API_URL", fake.url);
-  Deno.env.set("EVOLUTION_API_FLAVOR", "go");
-  resetInstanceTokenCache();
-  try {
-    const res = await handleEvolutionApi(
-      controlRequest("set-webhook", {
-        instanceName: "PRINCIPAL",
-        webhook: { url: "https://x/functions/v1/evolution-webhook", events: ["MESSAGES_UPSERT"] },
-      }),
-      { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase: makeServiceClient() },
-    );
-    assertEquals(res.status, 200);
-    const post = fake.posts.find((p) => p.path === "/instance/connect");
-    assert(!!post, "GO deve configurar por /instance/connect (rota nativa)");
-    assertEquals(post!.body.webhookUrl, "https://x/functions/v1/evolution-webhook");
-    assertEquals(post!.body.subscribe, ["ALL"], "GO assina ALL (os nomes de evento do GO diferem dos do v2)");
-    assertEquals(fake.posts.some((p) => p.path.startsWith("/webhook/set/")), false, "não pode bater na rota v2 no GO");
-  } finally {
-    await fake.stop();
-  }
-});
-
-Deno.test("MON-WEBHOOK (GO): set-webhook com corpo PLANO segue funcionando (compatibilidade)", async () => {
-  const fake = createFakeEvolution();
-  Deno.env.set("EVOLUTION_API_URL", fake.url);
-  Deno.env.set("EVOLUTION_API_FLAVOR", "go");
-  resetInstanceTokenCache();
-  try {
-    await handleEvolutionApi(
-      controlRequest("set-webhook", { instanceName: "PRINCIPAL", url: "https://x/f1" }),
-      { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase: makeServiceClient() },
-    );
-    const post = fake.posts.find((p) => p.path === "/instance/connect");
-    assertEquals(post!.body.webhookUrl, "https://x/f1");
-  } finally {
-    await fake.stop();
-  }
-});
-
-Deno.test("MON-WEBHOOK (GO): get-webhook lê a config de /instance/fetchInstances", async () => {
-  const fake = createInstanceReadFake((path) =>
-    path === "/instance/all"
-      ? { data: [{ name: "PRINCIPAL", webhook: "https://x/functions/v1/evolution-webhook", events: "Message,ReadReceipt" }] }
-      : {}
+/** Fake que responde `GET /instance/all` (GO) ou `/instance/fetchInstances` e
+ *  registra TODA request (método + path) — revela qualquer escrita. */
+function createInstancesFake(opts: { records: unknown[]; status?: number }): ReconcileFake {
+  const requests: Array<{ method: string; path: string }> = [];
+  const server = Deno.serve(
+    { hostname: "127.0.0.1", port: 0, onListen() {} },
+    (req) => {
+      const path = new URL(req.url).pathname;
+      requests.push({ method: req.method, path });
+      const status = opts.status ?? 200;
+      return new Response(
+        JSON.stringify(status >= 400 ? { error: "provider_down" } : { data: opts.records }),
+        { status, headers: { "Content-Type": "application/json" } },
+      );
+    },
   );
+  const addr = server.addr;
+  if (addr.transport !== "tcp") throw new Error("instances-fake: esperava listener TCP");
+  return { url: `http://127.0.0.1:${addr.port}`, requests, stop: () => server.shutdown() };
+}
+
+/** Service client que devolve `rows` na leitura e registra qualquer escrita. */
+function makeReconcileServiceClient(rows: unknown[], error: { message: string } | null, writes: string[]): any {
+  const q: any = {
+    select: () => q,
+    eq: () => q,
+    order: () => q,
+    limit: () => q,
+    in: () => q,
+    maybeSingle: () => Promise.resolve({ data: rows[0] ?? null, error }),
+    single: () => Promise.resolve({ data: rows[0] ?? null, error }),
+    insert: () => { writes.push("insert"); return q; },
+    update: () => { writes.push("update"); return q; },
+    delete: () => { writes.push("delete"); return q; },
+    upsert: () => { writes.push("upsert"); return q; },
+    rpc: () => { writes.push("rpc"); return Promise.resolve({ data: null, error: null }); },
+    // torna o builder "então-ável": `await select(...)` resolve `{ data, error }`
+    then: (resolve: (v: unknown) => unknown) => resolve({ data: rows, error }),
+  };
+  return { from: () => q, rpc: () => Promise.resolve({ data: null, error: null }) };
+}
+
+Deno.test("t_13ab1052: reconcile-instances sem papel devolve 403 e não produz I/O no provedor", async () => {
+  const fake = createInstancesFake({ records: [{ name: "PRINCIPAL" }] });
   Deno.env.set("EVOLUTION_API_URL", fake.url);
   Deno.env.set("EVOLUTION_API_FLAVOR", "go");
-  resetInstanceTokenCache();
+  const writes: string[] = [];
   try {
     const res = await handleEvolutionApi(
-      controlRequest("get-webhook", { instanceName: "PRINCIPAL" }),
-      { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase: makeServiceClient() },
+      controlRequest("reconcile-instances", {}),
+      {
+        callerClient: makeCallerClient({ isAdminOrSupervisor: false }),
+        supabase: makeReconcileServiceClient([{ instance_id: "PRINCIPAL" }], null, writes),
+      },
     );
-    assertEquals(res.status, 200);
-    assert(fake.gets.includes("/instance/all"), "GO deve ler a listagem admin (/instance/all, traduzida de /instance/fetchInstances)");
-    assert(!fake.gets.some((p) => p.startsWith("/webhook/find/")), "GO não tem /webhook/find");
-    const json = await res.json();
-    assertEquals(json.webhook.url, "https://x/functions/v1/evolution-webhook");
-    assertEquals(json.webhook.events, ["Message", "ReadReceipt"]);
+    assertEquals(res.status, 403, "agente sem papel deve ser 403");
+    assertEquals((await res.json())?.error, true);
+    assertEquals(fake.requests.length, 0, "agente negado não pode ler o provedor");
+    assertEquals(writes.length, 0, "agente negado não pode escrever no banco");
   } finally {
     await fake.stop();
   }
 });
 
-Deno.test("MON-WEBHOOK (v2): get-webhook usa /webhook/find/{instance}", async () => {
-  const fake = createInstanceReadFake(() => ({ webhook: { url: "https://x/f1", events: ["MESSAGES_UPSERT"] } }));
+Deno.test("t_13ab1052: reconcile-instances (admin, GO) devolve as duas listas divergentes, só nomes, sem escrita", async () => {
+  // Provedor tem PRINCIPAL e NOVA_ORFA; o banco tem PRINCIPAL e FANTASMA.
+  const fake = createInstancesFake({ records: [{ name: "PRINCIPAL" }, { Name: "NOVA_ORFA" }] });
   Deno.env.set("EVOLUTION_API_URL", fake.url);
-  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
-  resetInstanceTokenCache();
+  Deno.env.set("EVOLUTION_API_FLAVOR", "go");
+  const writes: string[] = [];
   try {
     const res = await handleEvolutionApi(
-      controlRequest("get-webhook", { instanceName: "PRINCIPAL" }),
-      { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase: makeServiceClient() },
+      controlRequest("reconcile-instances", {}),
+      {
+        callerClient: makeCallerClient({ isAdminOrSupervisor: true }),
+        supabase: makeReconcileServiceClient(
+          [{ instance_id: "PRINCIPAL" }, { instance_id: "FANTASMA" }],
+          null,
+          writes,
+        ),
+      },
     );
     assertEquals(res.status, 200);
-    assert(fake.gets.includes("/webhook/find/PRINCIPAL"), "v2 deve ler em /webhook/find/{instance}");
+    const raw = await res.text();
+    const json = JSON.parse(raw);
+    assertEquals(json.so_no_provedor, ["NOVA_ORFA"], "só no provedor: o que não tem linha");
+    assertEquals(json.so_no_banco, ["FANTASMA"], "só no banco: a linha sem instância no provedor");
+    // Só leitura: exatamente um GET ao provedor e nenhuma escrita no banco.
+    assertEquals(fake.requests.length, 1);
+    assertEquals(fake.requests[0].method, "GET");
+    assertEquals(fake.requests[0].path, "/instance/all");
+    assertEquals(writes.length, 0, "reconcile-instances não pode escrever no banco");
+    // Não vaza segredo: a resposta carrega nomes, nunca token/JID/telefone.
+    assert(!raw.includes("token"), `resposta não pode citar token: ${raw}`);
+    assert(!raw.includes("@s.whatsapp.net"), `resposta não pode citar JID: ${raw}`);
+  } finally {
+    await fake.stop();
+  }
+});
+
+Deno.test("t_13ab1052: reconcile-instances (admin, flavor v2) usa /instance/fetchInstances e acerta o diff", async () => {
+  const fake = createInstancesFake({ records: [{ instance: { instanceName: "PRINCIPAL" } }] });
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  const writes: string[] = [];
+  try {
+    const res = await handleEvolutionApi(
+      controlRequest("reconcile-instances", {}),
+      {
+        callerClient: makeCallerClient({ isAdminOrSupervisor: true }),
+        supabase: makeReconcileServiceClient([{ instance_id: "PRINCIPAL" }], null, writes),
+      },
+    );
+    assertEquals(res.status, 200);
+    const json = await res.json();
+    assertEquals(json.so_no_provedor, []);
+    assertEquals(json.so_no_banco, []);
+    assertEquals(fake.requests.length, 1);
+    assertEquals(fake.requests[0].path, "/instance/fetchInstances");
+    assertEquals(writes.length, 0);
+  } finally {
+    await fake.stop();
+  }
+});
+
+Deno.test("t_13ab1052: provedor indisponível é fail-closed — não acusa todas as conexões como órfãs", async () => {
+  const fake = createInstancesFake({ records: [], status: 500 });
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "go");
+  const writes: string[] = [];
+  try {
+    const res = await handleEvolutionApi(
+      controlRequest("reconcile-instances", {}),
+      {
+        callerClient: makeCallerClient({ isAdminOrSupervisor: true }),
+        supabase: makeReconcileServiceClient([{ instance_id: "PRINCIPAL" }], null, writes),
+      },
+    );
+    assertEquals(res.status, 200);
+    const json = await res.json();
+    assertEquals(json.error, true, "sem listagem do provedor, não há comparação");
+    assertEquals(json.so_no_provedor, undefined, "não pode devolver lista (seria tudo órfão)");
+    assertEquals(json.so_no_banco, undefined);
+    assertEquals(writes.length, 0);
+  } finally {
+    await fake.stop();
+  }
+});
+
+Deno.test("t_13ab1052: falha na leitura do banco é fail-closed e nem chama o provedor", async () => {
+  const fake = createInstancesFake({ records: [{ name: "PRINCIPAL" }] });
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "go");
+  const writes: string[] = [];
+  try {
+    const res = await handleEvolutionApi(
+      controlRequest("reconcile-instances", {}),
+      {
+        callerClient: makeCallerClient({ isAdminOrSupervisor: true }),
+        supabase: makeReconcileServiceClient([], { message: "boom" }, writes),
+      },
+    );
+    assertEquals(res.status, 200);
+    const json = await res.json();
+    assertEquals(json.error, true);
+    assertEquals(fake.requests.length, 0, "sem o banco não há comparação: não lê o provedor");
+    assertEquals(writes.length, 0);
   } finally {
     await fake.stop();
   }

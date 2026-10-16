@@ -92,25 +92,31 @@ export const CONTROL_ACTIONS: ReadonlySet<string> = new Set([
   'set-evoai', 'delete-evoai',
   'set-n8n', 'delete-n8n',
   'set-kafka', 'set-nats', 'set-pusher',
-  // R2EXT-AGENDA: leituras de dado instance-wide (fora da visibilidade do
-  // agente) e de configuração/credencial do provedor passam a exigir
-  // admin/supervisor. Diferente de `send`, não há alvo de conversa único para
-  // resolver visibilidade (find-chats/find-contacts/find-messages devolvem a
-  // instância inteira — ADR R1EXT-F3) e nenhuma tela da V2 as chama.
-  'find-chats', 'find-contacts', 'find-messages', 'find-status-messages',
-  'get-media-base64',
-  // configuração da instância/conexão
-  'get-settings', 'get-webhook',
-  // perfil da conta/conexão (config) e de número arbitrário (fora da carteira)
-  'fetch-profile', 'fetch-profile-picture', 'fetch-business-profile',
-  // etiquetas/templates e integrações do provedor (config/credenciais)
-  'find-labels', 'find-templates',
+  // ─── LEITURAS de integração/configuração que DEVOLVEM credenciais da
+  // instância (no flavor v2 a resposta carrega apiKey/secret/password
+  // configurados) e não têm NENHUMA tela de atendente como consumidora —
+  // prova por `git grep` em src/ (a string da ação só aparece no teste de
+  // exaustividade). Antes eram 'read' (qualquer autenticado as disparava).
   'get-chatwoot', 'get-typebot', 'typebot-sessions',
   'get-openai', 'get-dify', 'get-flowise', 'get-evolution-bot',
-  'get-rabbitmq', 'get-sqs', 'get-proxy', 'get-evoai', 'get-n8n',
-  'get-kafka', 'get-nats', 'get-pusher',
-  // catálogo de loja (configuração comercial)
-  'get-catalog', 'get-collections',
+  'get-rabbitmq', 'get-sqs', 'get-proxy', 'get-evoai',
+  'get-n8n', 'get-kafka', 'get-nats', 'get-pusher',
+  // ─── Consultas sem tela consumidora (histórico, catálogo, mídia, contatos,
+  // templates): restringem a superfície de leitura a admin/supervisor.
+  'find-chats', 'find-messages', 'find-templates', 'find-contacts',
+  'get-catalog', 'get-collections', 'get-media-base64',
+  // check-numbers sonda números na Meta (sem tela consumidora) e é gatilho de
+  // bloqueio da Meta — não volta a 'read'.
+  'check-numbers',
+  // group-participants: declarado só no hook useEvolutionGroups, sem tela que o
+  // consuma.
+  'group-participants',
+  // reconcile-instances: compara o que existe no provedor com o que está em
+  // whatsapp_connections e devolve as duas listas divergentes (só nomes, nunca
+  // tokens). É leitura, mas enxerga a topologia de TODAS as conexões: fica em
+  // CONTROL (admin/supervisor), mais restrita que 'list-instances', que é
+  // 'read'. NUNCA importa: nenhuma linha é criada.
+  'reconcile-instances',
 ]);
 
 /**
@@ -144,27 +150,36 @@ export const SEND_ACTIONS: ReadonlySet<string> = new Set([
 
 /**
  * Leituras: GETs e consultas (POST de find/check) que não alteram estado no
- * provedor E não entregam dado fora da visibilidade do agente nem configuração
- * do provedor. Continuam liberadas para qualquer usuário autenticado —
- * inclusive `status` (sonda o estado da instância na GO e espelha em
- * whatsapp_connections; o valor gravado vem da resposta do provedor, não do
- * chamador) e `list-instances` (única ação realmente global do handler). O
- * corpo de `instance-info`/`list-instances` é higienizado de token/apikey/hash
- * antes de sair (R2EXT-AGENDA).
+ * provedor E que têm consumidor real no front (`git grep` em src/). Continuam
+ * liberadas para qualquer usuário autenticado — inclusive `status` (sonda o
+ * estado da instância na GO e espelha em whatsapp_connections; o valor gravado
+ * vem da resposta do provedor, não do chamador) e `get-settings`/`get-webhook`
+ * (lidos pela tela de conexão). As leituras sem tela consumidora foram movidas
+ * para CONTROL_ACTIONS (get-* de integração, find-chats/messages/templates,
+ * find-contacts, get-catalog/collections, get-media-base64, check-numbers,
+ * group-participants).
  */
 export const READ_ACTIONS: ReadonlySet<string> = new Set([
   // instância (triagem/higienizadas no handler)
   'list-instances',
   'status',
   'instance-info',
-  // consultas ao provedor sem alvo de conversa e sem configuração
-  'check-numbers',
-  // grupos (leitura) — consumidas pelas telas de grupo
+  // settings / webhook
+  'get-settings',
+  'get-webhook',
+  // chat / mensagens (consultas) — consumido por useWhatsAppStatus
+  'find-status-messages',
+  // grupos (leitura)
   'list-groups',
   'group-info',
-  'group-participants',
   'group-invite-code',
   'invite-info',
+  // perfil
+  'fetch-profile',
+  'fetch-profile-picture',
+  'fetch-business-profile',
+  // labels
+  'find-labels',
 ]);
 
 /**

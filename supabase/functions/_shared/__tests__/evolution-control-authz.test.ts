@@ -59,11 +59,11 @@ Deno.test("classifyEvolutionAction - envios diretos e mutações de conversa sã
   assert(SEND_ACTIONS.has("send-ptv"));
 });
 
-Deno.test("classifyEvolutionAction - leituras não sensíveis seguem liberadas a autenticados", () => {
+Deno.test("classifyEvolutionAction - leituras com consumidor no front seguem liberadas a autenticados", () => {
   for (const action of [
-    "status", "list-instances", "instance-info",
-    "check-numbers",
-    "list-groups", "group-info", "group-participants", "group-invite-code", "invite-info",
+    "status", "get-settings", "get-webhook", "find-status-messages",
+    "list-instances", "fetch-profile", "instance-info", "list-groups",
+    "group-info", "invite-info", "fetch-business-profile", "find-labels",
   ]) {
     assertEquals(classifyEvolutionAction(action), "read", `${action} deve ser read`);
     assert(READ_ACTIONS.has(action), `${action} deve estar em READ_ACTIONS`);
@@ -103,6 +103,44 @@ Deno.test("R2EXT-AGENDA: leitura instance-wide e configuração do provedor exig
     assert(CONTROL_ACTIONS.has(action), `${action} deve estar em CONTROL_ACTIONS`);
     assert(!READ_ACTIONS.has(action), `${action} não pode continuar em READ_ACTIONS`);
   }
+});
+
+
+Deno.test("classifyEvolutionAction - leituras SEM tela consumidora viram control (agent 403, admin 200)", () => {
+  // get-* de integração devolvem credenciais configuradas (apiKey/secret) e as
+  // consultas abaixo não têm nenhuma tela de atendente consumidora (prova por
+  // `git grep` em src/). Antes eram 'read' — qualquer autenticado as disparava.
+  for (const action of [
+    "get-chatwoot", "get-typebot", "typebot-sessions", "get-openai",
+    "get-dify", "get-flowise", "get-evolution-bot", "get-rabbitmq", "get-sqs",
+    "get-proxy", "get-evoai", "get-n8n", "get-kafka", "get-nats", "get-pusher",
+    "find-chats", "find-messages", "find-templates", "find-contacts",
+    "get-catalog", "get-collections", "get-media-base64", "check-numbers",
+    "group-participants",
+  ]) {
+    assertEquals(classifyEvolutionAction(action), "control", `${action} deve ser control`);
+    assert(CONTROL_ACTIONS.has(action), `${action} deve estar em CONTROL_ACTIONS`);
+    assert(!READ_ACTIONS.has(action), `${action} não pode estar em READ_ACTIONS`);
+    // Agente sem papel: 403. Admin/supervisor: conserva a operação.
+    // `assert(!denied.allowed)` vem ANTES de ler `.status`: só o estreitamento
+    // da união (asserts expr) torna o campo visível para o type-check do deno.
+    const denied = decideControlAuthz(false);
+    assert(!denied.allowed, `${action}: agent deve ser negado`);
+    assertEquals(denied.status, 403);
+    assert(decideControlAuthz(true).allowed, `${action}: admin deve passar`);
+  }
+});
+
+Deno.test("classifyEvolutionAction - reconcile-instances é control (admin 200, agent 403)", () => {
+  // A tela de Conexões só oferece a reconciliação ao admin; a ação enxerga a
+  // topologia de todas as conexões, então entra em CONTROL_ACTIONS.
+  assertEquals(classifyEvolutionAction("reconcile-instances"), "control");
+  assert(CONTROL_ACTIONS.has("reconcile-instances"));
+  assert(!READ_ACTIONS.has("reconcile-instances"));
+  const denied = decideControlAuthz(false);
+  assert(!denied.allowed);
+  assertEquals(denied.status, 403);
+  assert(decideControlAuthz(true).allowed);
 });
 
 Deno.test("decideControlAuthz - admin/supervisor conserva a operação", () => {
