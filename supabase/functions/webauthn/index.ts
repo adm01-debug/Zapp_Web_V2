@@ -1,5 +1,5 @@
-import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, getClientIP, enforceRateLimit } from "../_shared/validation.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, getCorsHeaders, enforceRateLimit, getClientIP } from "../_shared/validation.ts";
 import { WebAuthnActionSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import {
   verifyAuthenticationAssertion,
@@ -40,36 +40,6 @@ function getRpId(origin: string): string {
   try { return new URL(origin).hostname; } catch { return 'localhost'; }
 }
 
-/**
- * Desafio que o autenticador assinou. O login sem e-mail depende disso: a
- * cerimônia NÃO é buscada por usuário (não há usuário conhecido antes da
- * asserção), mas pelo VALOR de `clientDataJSON.challenge`. Devolve null quando o
- * campo falta ou é inválido (falha fechada, sem lançar).
- */
-function extractClientChallenge(clientDataJSONB64: string | undefined): string | null {
-  if (!clientDataJSONB64) return null;
-  try {
-    const parsed = JSON.parse(new TextDecoder().decode(base64URLDecode(clientDataJSONB64)));
-    return typeof parsed?.challenge === 'string' && parsed.challenge.length > 0 ? parsed.challenge : null;
-  } catch {
-    return null;
-  }
-}
-
-/**
- * UV obrigatório: a flag 0x04 (User Verified) precisa estar no byte 32 do
- * `authenticatorData`. Presença (0x01) sozinha não basta para entrar por passkey.
- */
-function hasUserVerification(authenticatorDataB64: string | undefined): boolean {
-  if (!authenticatorDataB64) return false;
-  try {
-    const flags = base64URLDecode(authenticatorDataB64);
-    return flags.length >= 37 && (flags[32] & 0x04) !== 0;
-  } catch {
-    return false;
-  }
-}
-
 // ── Seams de injeção (paridade com auth-login) ─────────────────────────────
 // `verify-authentication` é o caminho de ENTRADA (login) da passkey: o handler
 // recebe as dependências que fazem efeito (client service_role, rate limit e a
@@ -89,6 +59,7 @@ export interface WebAuthnAdminClient {
   from: (table: string) => any;
   auth: {
     admin: {
+      listUsers: () => PromiseLike<{ data: { users: Array<{ id: string; email?: string | null }> } | null }>;
       getUserById: (id: string) => PromiseLike<{ data: { user: WebAuthnAccount | null } | null; error: unknown }>;
       generateLink: (params: { type: string; email: string }) => PromiseLike<{
         data: { properties?: { hashed_token?: string } } | null;
@@ -193,50 +164,28 @@ function credentialRefusalResponse(req: Request, lock: LockPayload): Response {
 }
 
 export async function handleWebAuthn(req: Request, deps: WebAuthnDeps = {}): Promise<Response> {
-
-/** Página do GoTrue admin por vez (200 é o teto do `perPage`). */
-const USERS_PAGE_SIZE = 200;
-/** Trava o custo da varredura: até 25 páginas (5.000 contas) por chamada. */
-const USERS_MAX_PAGES = 25;
-
-export interface WebAuthnInjected {
-  supabaseAdmin?: SupabaseClient;
-  supabaseUrl?: string;
-  anonKey?: string;
-  /** Injetável no teste; em produção usa o limiter persistente de `_shared/validation.ts`. */
-  enforceRateLimit?: typeof enforceRateLimit;
-}
-
-/**
- * Resolve o id do auth user pelo e-mail varrendo TODAS as páginas do admin API.
- * `listUsers()` sem argumentos devolvia só a 1ª página (50 contas): uma conta além
- * dela era tratada como inexistente (passkey nunca oferecida). A varredura é limitada
- * por `USERS_MAX_PAGES`; falha de leitura não autoriza nada (retorna null).
- */
-export async function findUserIdByEmail(supabaseAdmin: SupabaseClient, email: string): Promise<string | null> {
-  const wanted = email.trim().toLowerCase();
-  for (let page = 1; page <= USERS_MAX_PAGES; page++) {
-    const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: USERS_PAGE_SIZE });
-    if (error) return null;
-    const users = data?.users ?? [];
-    const match = users.find((u) => (u.email ?? '').toLowerCase() === wanted);
-    if (match) return match.id;
-    if (users.length < USERS_PAGE_SIZE) return null;
-  }
-  return null;
-}
-
-export async function handleWebAuthn(req: Request, _injected?: WebAuthnInjected): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
 
   const log = new Logger("webauthn");
-  const limiter = _injected?.enforceRateLimit ?? enforceRateLimit;
+  const rateLimit = deps.enforceRateLimit ?? enforceRateLimit;
+  const verifyAssertion = deps.verifyAuthenticationAssertion ?? verifyAuthenticationAssertion;
 
   try {
-    const supabaseUrl = _injected?.supabaseUrl ?? requireEnv('SUPABASE_URL');
-    const supabaseAnonKey = _injected?.anonKey ?? requireEnv('SUPABASE_ANON_KEY');
-    const supabaseAdmin = _injected?.supabaseAdmin ?? createClient(supabaseUrl, requireEnv('SUPABASE_SERVICE_ROLE_KEY'));
+    const admin: WebAuthnAdminClient = deps.admin
+      ?? (createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY')) as unknown as WebAuthnAdminClient);
+
+    // R2-AUTH-022: MESMA trava de rede do auth-login, na fronteira do endpoint e
+    // ANTES de ler o body — negação 403 (ou 503 indecidível) curto-circuita tudo.
+    const policy = await resolveNetworkPolicy(req, 'webauthn', {
+      rpc: admin,
+      defaultMaxRequests: IP_LIMIT_DEFAULT_MAX,
+      defaultWindowSeconds: IP_LIMIT_DEFAULT_WINDOW_SECONDS,
+    });
+    if (!policy.allowed) {
+      log.done(policy.status, policy.status === 403 ? { reason: policy.reason } : {});
+      return networkPolicyDenialResponse(policy, req);
+    }
 
     const rawBody = await req.json();
     const parsed = parseBody(WebAuthnActionSchema, rawBody);
@@ -350,20 +299,18 @@ export async function handleWebAuthn(req: Request, _injected?: WebAuthnInjected)
         let authUserId: string | null = null;
 
         if (userEmail) {
-          authUserId = await findUserIdByEmail(supabaseAdmin, userEmail);
-          if (authUserId) {
-            const { data: credentials } = await supabaseAdmin.from('passkey_credentials').select('credential_id, transports').eq('user_id', authUserId);
-            // Conta sem passkey registrada → allowCredentials vazio, INDISTINGUÍVEL de
-            // e-mail inexistente: o corpo não revela se a conta existe.
-            allowCredentials = (credentials || []).map(cred => ({
+          const { data: userData } = await admin.auth.admin.listUsers();
+          const user = userData?.users?.find(u => u.email === userEmail);
+          if (user) {
+            authUserId = user.id;
+            const { data: credentials } = await admin.from('passkey_credentials').select('credential_id, transports').eq('user_id', user.id);
+            allowCredentials = (credentials || []).map((cred: { credential_id: string; transports: string[] | null }) => ({
               id: cred.credential_id, type: 'public-key', transports: cred.transports || ['internal', 'hybrid'],
             }));
           }
         }
 
-        const challenge = generateChallenge();
-        await admin.from('webauthn_challenges').insert({ user_id: null, challenge, type: 'authentication' });
-        await admin.rpc('cleanup_expired_challenges', {});
+        await admin.from('webauthn_challenges').insert({ user_id: authUserId, challenge, type: 'authentication' });
 
         log.done(200, { action });
         return jsonResponse({
@@ -414,84 +361,42 @@ export async function handleWebAuthn(req: Request, _injected?: WebAuthnInjected)
           return credentialRefusalResponse(req, lockPayload(null));
         }
 
+        const { data: challengeData } = await admin.from('webauthn_challenges')
+          .select('challenge, expires_at').eq('user_id', storedCred.user_id).eq('type', 'authentication')
+          .order('created_at', { ascending: false }).limit(1).single();
+
         const cr = credResponse as Record<string, string>;
+        const challengeUsable = !!challengeData
+          && (!challengeData.expires_at || new Date(challengeData.expires_at).getTime() >= nowMs);
 
-        // Conta: consulta pontual por id (nunca listagem) — necessária para o
-        // limite por e-mail e para as travas de conta.
-        const account = await fetchAccount(admin, storedCred.user_id);
-
-        // Rate limit PERSISTENTE por e-mail: além do teto por IP, a mesma conta não
-        // pode ser bombardeada depois que a credencial é conhecida.
-        if (account?.email) {
-          const emailRl = await rateLimit(
-            `webauthn:email:${account.email.toLowerCase()}`,
-            policy.rateLimitMaxRequests,
-            policy.rateLimitWindowSeconds * 1000,
-          );
-          if (!emailRl.allowed) return errorResponse('Rate limit exceeded', 429, req);
-        }
-
-        // Desafio pelo VALOR assinado (`clientDataJSON.challenge`), não por usuário:
-        // é o que faz o login sem e-mail funcionar. TTL de 5 min via `expires_at`.
-        const challengeValue = extractClientChallenge(cr.clientDataJSON);
-        let challengeRow: { challenge?: string; expires_at?: string | null } | null = null;
-        if (challengeValue) {
-          const { data } = await admin.from('webauthn_challenges')
-            .select('challenge, expires_at').eq('challenge', challengeValue).eq('type', 'authentication')
-            .single();
-          challengeRow = data as { challenge?: string; expires_at?: string | null } | null;
-        }
-        const challengeUsable = !!challengeRow && !!challengeValue
-          && (!challengeRow.expires_at || new Date(challengeRow.expires_at).getTime() >= nowMs);
-
-        // UV obrigatório (flag 0x04): presença (0x01) sozinha não entra.
-        const uvOk = hasUserVerification(cr.authenticatorData);
-
-        let assertion: AssertionResult;
-        if (challengeUsable && uvOk && challengeValue) {
-          assertion = await verifyAssertion({
+        const assertion = challengeUsable
+          ? await verifyAssertion({
             clientDataJSON: cr.clientDataJSON,
             authenticatorData: cr.authenticatorData,
             signature: cr.signature,
             storedPublicKey: storedCred.public_key,
             storedCounter: Number(storedCred.counter ?? 0),
-            challenge: challengeValue,
+            challenge: challengeData!.challenge,
             rpId,
             expectedOrigin: origin,
-          });
-        } else {
-          assertion = { ok: false, reason: !challengeUsable ? 'challenge missing or expired' : 'user verification flag not set' };
-        }
+          })
+          : { ok: false as const, reason: 'challenge missing or expired' };
 
-        // Uso ÚNICO: o desafio é consumido aqui, dê certo ou não a asserção.
-        if (challengeValue) {
-          await admin.from('webauthn_challenges').delete().eq('challenge', challengeValue);
-        }
-
-        if (assertion.ok === false) {
-          const reason = assertion.reason;
-          log.warn('WebAuthn authentication rejected', { reason });
+        if (!assertion.ok) {
+          log.warn('WebAuthn authentication rejected', { reason: assertion.reason });
           const lock = await recordFailedAttempt(admin, storedCred.user_id, ip, req.headers.get('user-agent'), log);
-          log.done(401, { isLocked: lock.isLocked, attempts: lock.attempts, reason });
+          log.done(401, { isLocked: lock.isLocked, attempts: lock.attempts, reason: assertion.reason });
           return credentialRefusalResponse(req, lock);
         }
 
         // Conta ativa: usuário existe e não está banido/desativado no Auth.
+        const account = await fetchAccount(admin, storedCred.user_id);
         if (!account) {
           log.done(401, { reason: 'account_not_found' });
           return credentialRefusalResponse(req, lockPayload(null));
         }
         if (isBanned(account, nowMs)) {
           log.done(403, { reason: 'account_disabled' });
-          return errorResponse('Account disabled', 403, req);
-        }
-
-        // profiles.is_active (R2-AUTH-023): cobre a janela em que o PD-03 ainda não
-        // refletiu o banimento no Auth. MESMO 403 do banido, sem emitir sessão.
-        const { data: profileData } = await admin.from('profiles')
-          .select('is_active').eq('user_id', storedCred.user_id).single();
-        if ((profileData as { is_active?: boolean } | null)?.is_active === false) {
-          log.done(403, { reason: 'account_inactive' });
           return errorResponse('Account disabled', 403, req);
         }
 
