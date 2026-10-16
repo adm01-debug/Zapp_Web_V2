@@ -27,6 +27,16 @@ export interface TalkMeWaitingContact {
   position: number;
 }
 
+export interface TalkMePendingMessage {
+  messageId: string;
+  sender: string;
+  content: string;
+  messageType: string;
+  mediaUrl: string | null;
+  caption: string | null;
+  createdAt: string;
+}
+
 export interface TalkMeClaimResult {
   contactId: string;
   queueId: string;
