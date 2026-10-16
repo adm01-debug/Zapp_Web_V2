@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { removeRealtimeChannel, setRealtimeChannelStatus, toChannelHealth } from './realtimeStatusStore';
 import { log } from '@/lib/logger';
 
 interface RealtimeConfig<T extends { [key: string]: any }> {
@@ -127,6 +128,9 @@ function acquireSharedChannel(
     // Estado anterior do canal, para distinguir o SUBSCRIBED inicial (nada a
     // revalidar) do SUBSCRIBED que segue uma queda.
     let lastStatus: string | null = null;
+    // Antes de abrir o socket: sem canal saudável ainda, o agregado não pode
+    // dizer "conectado" (nem acusar queda) — ver realtimeStatusStore.
+    setRealtimeChannelStatus(key, 'connecting');
     const physicalTopic = `zapp:${key}`;
     const channel: RealtimeChannel = supabase
       .channel(physicalTopic)
@@ -143,6 +147,11 @@ function acquireSharedChannel(
         },
       )
       .subscribe((status, error) => {
+        // Canal já liberado (unmount) não é mais o dono desta chave: reportar
+        // aqui sujaria o agregado com um erro de um canal que não existe mais.
+        if (sharedChannels.get(key) === entry) {
+          setRealtimeChannelStatus(key, toChannelHealth(status));
+        }
         if (status === 'SUBSCRIBED') {
           log.debug(`Realtime subscribed: ${channelName}`);
           if (
@@ -188,6 +197,7 @@ function acquireSharedChannel(
       const latest = sharedChannels.get(key);
       if (latest !== current || latest.listeners.size > 0) return;
       sharedChannels.delete(key);
+      removeRealtimeChannel(key);
       void supabase.removeChannel(latest.channel);
     }, CHANNEL_RELEASE_GRACE_MS);
   };

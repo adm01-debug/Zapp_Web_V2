@@ -8,6 +8,7 @@ import { BulkActionsToolbar } from './BulkActionsToolbar';
 import { InboxFilters } from './InboxFilters';
 import { FILTER_OPTIONS } from './ContactTypeFilter';
 import { StatusChips } from './conversation-list/StatusChips';
+import { RealtimeStatusBadge } from './RealtimeStatusBadge';
 import type { useConversationActions } from '@/hooks/chat/useConversationActions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -334,6 +335,7 @@ export function ConversationListSidebar({
             <div className="flex items-center gap-1.5 mt-1">
               <span className={cn('w-2 h-2 rounded-full shrink-0', inbox.isOnline ? 'bg-success' : 'bg-destructive')} />
               <span className="text-[13px] text-muted-foreground truncate">{inbox.cachedConversations.length.toLocaleString('pt-BR')} conversas</span>
+              <RealtimeStatusBadge className="ml-auto shrink-0" />
             </div>
           </div>
         )}
