@@ -232,6 +232,23 @@ O comparador agora verifica também o `ledger_sql_sha256` das exceções, além 
 hash integral do array. A passagem do guard não transforma metadados legados sem
 SQL em prova de conteúdo histórico nem atesta dados de negócio.
 
+**Mudança concorrente de base:** às 18:59 UTC, `025d0258dc` reintegrou o lote de
+880 cartões e trouxe a implementação integral do comparador, que já preserva SQL
+e valida esses hashes. Ela foi mantida; os sete testes novos desta revisão passam
+também nessa implementação (83 testes no total). Os aliases redundantes
+`sql-sha256` foram removidos do manifesto: duplicavam `ledger_statements_sha256`
+e não pertencem ao contrato estrito do comparador reintegrado.
+
+Isso **não** atesta a sincronização do novo lote. Na coleta posterior, o banco
+continua com 818 versões e a nova main contém 1.036 arquivos, incluindo 218 arquivos
+pendentes (217 versões únicas). Há colisão em `20261011010000` e duas migrations já
+aplicadas (`20261003182707`, `20261003192707`) foram editadas pelo lote. Elas exigem
+reconciliação forward-only; não se deve atualizar o ledger para mascarar esse delta.
+Os runs `38951565459` (CI) e `38951565429` (Edge) falharam respectivamente no lockfile
+congelado e no manifesto de deploy desatualizado. Nenhum DDL foi aplicado por esta
+sincronização. As evidências de paridade anteriores referem-se à base `24338a598c`,
+não ao lote reintegrado.
+
 Em 31/08/2026, o run vivo `33383636827`, já na `main` e após validar o
 fingerprint do projeto oficial, confirmou paridade de versões `317/317` e
 detectou seis diferenças entre o replay local e a representação histórica do
