@@ -1,14 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { localDayKey } from '@/lib/localDay';
-import { RESULT_LABEL, toResult } from '@/lib/calls/callStatus';
-import { rotulosDoEncerramento } from '@/lib/journey/mappers';
 import { startOfDay, subDays } from 'date-fns';
 
 export type TimelineEventKind =
-  | 'message_in' | 'message_out' | 'note' | 'transfer' | 'assign' | 'file' | 'task' | 'deal' | 'close' | 'reopen' | 'call';
+  | 'message_in' | 'message_out' | 'note' | 'transfer' | 'assign' | 'file' | 'task' | 'deal' | 'close' | 'reopen';
 
-export type TimelineTypeFilter = 'all' | 'messages' | 'notes' | 'tasks' | 'transfers' | 'files' | 'deals' | 'calls';
+export type TimelineTypeFilter = 'all' | 'messages' | 'notes' | 'tasks' | 'transfers' | 'files' | 'deals';
 
 export interface TimelineEvent {
   id: string;
@@ -18,10 +16,6 @@ export interface TimelineEvent {
   subtitle?: string;
   pill?: { label: string; tone: 'success' | 'warning' | 'primary' | 'muted' | 'destructive' };
   count?: number;
-  /** Nota escrita na transferência (`conversation_events.metadata.note`), cortada em 120. */
-  note?: string;
-  /** A mesma nota SEM corte — para o detalhe do episódio. */
-  noteFull?: string;
 }
 
 export interface TimelineDay {
@@ -51,23 +45,8 @@ export interface RawEventRow {
   id: string;
   event_type: string;
   created_at: string;
-  /**
-   * `conversation_events.metadata` (jsonb). A transferência grava a nota do atendente em
-   * `metadata.note`; mapa aberto porque a coluna é jsonb.
-   */
-  metadata?: Record<string, unknown> | null;
-  /**
-   * Nomes já resolvidos (agente/fila) para a linha "De → Para". O hook busca os nomes pelos ids
-   * antes de montar a timeline; sem nome (RLS), o id fica no lugar — mesma decisão do mapeador.
-   */
   from_agent_name?: string | null;
   to_agent_name?: string | null;
-  from_queue_name?: string | null;
-  to_queue_name?: string | null;
-  /** Encerramento: motivo, resultado e classificação já em rótulo (`conversation_closures`). */
-  closure_reason?: string | null;
-  closure_outcome?: string | null;
-  closure_classification?: string | null;
 }
 
 export interface RawNoteRow {
@@ -105,19 +84,6 @@ export interface RawActivityRow {
   created_at: string | null;
 }
 
-/** Linha crua de `calls` — colunas reais conferidas em useCalls.ts/useCallHistory.ts. */
-export interface RawCallRow {
-  id: string;
-  /** `inbound` = recebida · `outbound` = realizada (pode vir ausente em linha antiga). */
-  direction: string | null;
-  status: string;
-  /** Instante da ligação (a tabela `calls` não tem `created_at` como data do evento). */
-  started_at: string;
-  duration_seconds: number | null;
-  answered_at: string | null;
-  ended_at: string | null;
-}
-
 export interface TimelineRawRows {
   messages: RawMessageRow[];
   events: RawEventRow[];
@@ -125,8 +91,6 @@ export interface TimelineRawRows {
   tasks: RawTaskRow[];
   deals: RawDealRow[];
   activities: RawActivityRow[];
-  /** Ligações do contato (`calls`). Opcional: os testes puros de buildTimeline não precisam dele. */
-  calls?: RawCallRow[];
   /** mensagens da janela anterior (mesma duração), só para o delta de tempo médio de resposta. */
   previousMessages?: RawMessageRow[];
 }
@@ -138,7 +102,6 @@ const TYPE_KINDS: Record<Exclude<TimelineTypeFilter, 'all'>, TimelineEventKind[]
   transfers: ['transfer', 'assign'],
   files: ['file'],
   deals: ['deal', 'close', 'reopen'],
-  calls: ['call'],
 };
 
 const ASSIGN_TYPES = new Set(['assign', 'unassign']);
@@ -147,18 +110,6 @@ const TRANSFER_TYPES = new Set(['transfer', 'queue_transfer', 'overload_reassign
 function truncate(text: string | null | undefined, max = 120): string | undefined {
   if (!text) return undefined;
   return text.length > max ? `${text.slice(0, max)}…` : text;
-}
-
-/**
- * Duração legível da ligação a partir de `calls.duration_seconds`.
- * Ausente/zero não rende texto (ligação perdida não tem duração a mostrar).
- */
-function formatCallDuration(seconds: number | null | undefined): string | undefined {
-  if (seconds == null || seconds <= 0) return undefined;
-  const min = Math.floor(seconds / 60);
-  const sec = seconds % 60;
-  if (min === 0) return `${sec}s`;
-  return sec === 0 ? `${min}min` : `${min}min ${sec}s`;
 }
 
 /**
@@ -248,43 +199,6 @@ function eventKindFor(eventType: string): TimelineEventKind | null {
   return null;
 }
 
-/** Mesmo teto de corte do resto do app para a linha da timeline. */
-const NOTA_MAX = 120;
-
-/**
- * Nota escrita na transferência (`conversation_events.metadata.note`): devolve o texto cortado
- * em 120 (`curto`, para a linha) e o texto completo (`completo`, para o detalhe). Nota
- * vazia/ausente → `null`; sem nota, o evento sai exatamente como antes.
- */
-function comentarioDoEvento(
-  metadata: RawEventRow['metadata'],
-): { curto: string; completo: string } | null {
-  const bruto = metadata && typeof metadata['note'] === 'string' ? String(metadata['note']) : '';
-  const completo = bruto.replace(/\s+/g, ' ').trim();
-  if (!completo) return null;
-  const curto = completo.length <= NOTA_MAX ? completo : `${completo.slice(0, NOTA_MAX).trimEnd()}…`;
-  return { curto, completo };
-}
-
-/**
- * Linha de apoio do evento de conversa: transferência/atribuição mostram "De → Para" (com fila
- * quando não há agente); o encerramento mostra o que o atendente registrou no fechamento. Sem
- * dado nenhum, o subtítulo não é emitido (nada de linha vazia).
- */
-function subtituloDoEvento(kind: TimelineEventKind, e: RawEventRow): string | undefined {
-  if (kind === 'close') {
-    const partes = [
-      e.closure_reason ? `Motivo: ${e.closure_reason}` : null,
-      e.closure_outcome ? `Resultado: ${e.closure_outcome}` : null,
-      e.closure_classification ? `Classificação: ${e.closure_classification}` : null,
-    ].filter((p): p is string => !!p);
-    return partes.length ? partes.join(' · ') : undefined;
-  }
-  const de = e.from_agent_name ?? e.from_queue_name;
-  const para = e.to_agent_name ?? e.to_queue_name;
-  return de && para ? `De: ${de} · Para: ${para}` : undefined;
-}
-
 /** Une as fontes, agrupa rajadas de mensagens e ordena — função pura, testável sem rede. */
 export function buildTimeline(
   rows: TimelineRawRows,
@@ -317,31 +231,13 @@ export function buildTimeline(
     ...rows.events
       .map((e) => ({ e, kind: eventKindFor(e.event_type) }))
       .filter((x): x is { e: RawEventRow; kind: TimelineEventKind } => x.kind !== null)
-      .map(({ e, kind }): TimelineEvent => {
-        const nota = comentarioDoEvento(e.metadata);
-        return {
-          id: `event-${e.id}`,
-          at: e.created_at,
-          kind,
-          title: kind === 'transfer' ? 'Transferência' : kind === 'assign' ? 'Atribuição' : kind === 'close' ? 'Conversa encerrada' : 'Conversa reaberta',
-          subtitle: subtituloDoEvento(kind, e),
-          note: nota?.curto,
-          noteFull: nota?.completo,
-        };
-      }),
-    ...(rows.calls ?? []).map((c): TimelineEvent => {
-      const result = toResult(c);
-      const resultado = result ? RESULT_LABEL[result] : undefined;
-      const duracao = formatCallDuration(c.duration_seconds);
-      const subtitle = [resultado, duracao].filter((p): p is string => !!p).join(' · ');
-      return {
-        id: `call-${c.id}`,
-        at: c.started_at,
-        kind: 'call',
-        title: c.direction === 'inbound' ? 'Chamada recebida' : c.direction === 'outbound' ? 'Chamada realizada' : 'Chamada',
-        subtitle: subtitle || undefined,
-      };
-    }),
+      .map(({ e, kind }): TimelineEvent => ({
+        id: `event-${e.id}`,
+        at: e.created_at,
+        kind,
+        title: kind === 'transfer' ? 'Transferência' : kind === 'assign' ? 'Atribuição' : kind === 'close' ? 'Conversa encerrada' : 'Conversa reaberta',
+        subtitle: e.from_agent_name && e.to_agent_name ? `De: ${e.from_agent_name} · Para: ${e.to_agent_name}` : undefined,
+      })),
   ]
     .filter((e) => e.at)
     .sort((a, b) => b.at.localeCompare(a.at));
@@ -368,7 +264,7 @@ export function buildTimeline(
   return {
     days: [...days.entries()].map(([date, dayEvents]) => ({ date, events: dayEvents })),
     metrics: {
-      total: rows.messages.length + rows.events.length + rows.tasks.length + rows.notes.length + rows.deals.length + rows.activities.length + (rows.calls?.length ?? 0),
+      total: rows.messages.length + rows.events.length + rows.tasks.length + rows.notes.length + rows.deals.length + rows.activities.length,
       lastContactAt,
       avgResponseMin: averageResponseMinutes(rows.messages),
       avgResponsePrevMin: rows.previousMessages ? averageResponseMinutes(rows.previousMessages) : null,
@@ -408,89 +304,32 @@ export function useConversationHistoryTimeline(
         .limit(fetchLimit);
       const eventsQuery = supabase
         .from('conversation_events')
-        .select('id, event_type, created_at, metadata, from_agent_id, to_agent_id, from_queue_id, to_queue_id, closure_id')
+        .select('id, event_type, created_at')
         .eq('contact_id', cid)
         .order('created_at', { ascending: false })
         .limit(fetchLimit);
       const notesQuery = supabase.from('contact_notes').select('id, content, created_at').eq('contact_id', cid).order('created_at', { ascending: false }).limit(fetchLimit);
       const tasksQuery = supabase.from('conversation_tasks').select('id, title, status, completed_at, created_at').eq('contact_id', cid).order('created_at', { ascending: false }).limit(fetchLimit);
       const dealsQuery = supabase.from('sales_deals').select('id, title, value, status, created_at').eq('contact_id', cid).order('created_at', { ascending: false }).limit(fetchLimit);
-      const callsQuery = supabase.from('calls').select('id, direction, status, started_at, duration_seconds, answered_at, ended_at').eq('contact_id', cid).order('started_at', { ascending: false }).limit(fetchLimit);
 
-      const [messagesRes, eventsRes, notesRes, tasksRes, dealsRes, callsRes] = await Promise.all([
+      const [messagesRes, eventsRes, notesRes, tasksRes, dealsRes] = await Promise.all([
         sinceIso ? messagesQuery.gte('created_at', sinceIso) : messagesQuery,
         sinceIso ? eventsQuery.gte('created_at', sinceIso) : eventsQuery,
         sinceIso ? notesQuery.gte('created_at', sinceIso) : notesQuery,
         sinceIso ? tasksQuery.gte('created_at', sinceIso) : tasksQuery,
         sinceIso ? dealsQuery.gte('created_at', sinceIso) : dealsQuery,
-        sinceIso ? callsQuery.gte('started_at', sinceIso) : callsQuery,
       ]);
       if (messagesRes.error) throw messagesRes.error;
       if (eventsRes.error) throw eventsRes.error;
       if (notesRes.error) throw notesRes.error;
       if (tasksRes.error) throw tasksRes.error;
       if (dealsRes.error) throw dealsRes.error;
-      if (callsRes.error) throw callsRes.error;
 
       const dealIds = (dealsRes.data ?? []).map((d) => d.id);
       const activitiesRes = dealIds.length
         ? await supabase.from('deal_activities').select('id, deal_id, description, activity_type, created_at').in('deal_id', dealIds).order('created_at', { ascending: false }).limit(fetchLimit)
         : { data: [] as RawActivityRow[], error: null };
       if (activitiesRes.error) throw activitiesRes.error;
-
-      // O evento bruto só traz ids: sem resolver os nomes, "De → Para" nunca aparecia e o
-      // encerramento ficava sem motivo/resultado. Consultamos só o que os eventos apontam —
-      // contato sem transferência/encerramento não paga consulta nova.
-      const eventos = eventsRes.data ?? [];
-      const idsDe = (valores: Array<string | null>) => Array.from(new Set(valores.filter((v): v is string => !!v)));
-
-      const agenteIds = idsDe(eventos.flatMap((e) => [e.from_agent_id, e.to_agent_id]));
-      const filaIds = idsDe(eventos.flatMap((e) => [e.from_queue_id, e.to_queue_id]));
-      const encerramentoIds = idsDe(eventos.map((e) => e.closure_id));
-
-      const [agentesRes, filasRes, encerramentosRes] = await Promise.all([
-        agenteIds.length
-          ? supabase.from('profiles').select('id, name').in('id', agenteIds)
-          : { data: [] as Array<{ id: string; name: string | null }>, error: null },
-        filaIds.length
-          ? supabase.from('queues').select('id, name').in('id', filaIds)
-          : { data: [] as Array<{ id: string; name: string | null }>, error: null },
-        encerramentoIds.length
-          ? supabase.from('conversation_closures').select('id, close_reason, outcome, classification').in('id', encerramentoIds)
-          : { data: [] as Array<{ id: string; close_reason: string | null; outcome: string | null; classification: string | null }>, error: null },
-      ]);
-      if (agentesRes.error) throw agentesRes.error;
-      if (filasRes.error) throw filasRes.error;
-      if (encerramentosRes.error) throw encerramentosRes.error;
-
-      const nomeDeAgente = new Map<string, string | null>((agentesRes.data ?? []).map((p) => [p.id, p.name]));
-      const nomeDeFila = new Map<string, string | null>((filasRes.data ?? []).map((q) => [q.id, q.name]));
-      const encerramentos = encerramentosRes.data ?? [];
-      const porId = new Map<string, { id: string; close_reason: string | null; outcome: string | null; classification: string | null }>();
-      for (const c of encerramentos) porId.set(c.id, c);
-
-      const eventosEnriquecidos: RawEventRow[] = eventos.map((e) => {
-        const encerramento = e.closure_id ? porId.get(e.closure_id) : undefined;
-        const rotulos = rotulosDoEncerramento(
-          encerramento
-            ? { closeReason: encerramento.close_reason, outcome: encerramento.outcome, classification: encerramento.classification }
-            : null,
-        );
-        return {
-          id: e.id,
-          event_type: e.event_type,
-          created_at: e.created_at,
-          metadata: e.metadata as Record<string, unknown> | null,
-          // Sem nome (RLS negou), o id fica no lugar — mesma decisão do mapeador da jornada.
-          from_agent_name: e.from_agent_id ? nomeDeAgente.get(e.from_agent_id) ?? e.from_agent_id : null,
-          to_agent_name: e.to_agent_id ? nomeDeAgente.get(e.to_agent_id) ?? e.to_agent_id : null,
-          from_queue_name: e.from_queue_id ? nomeDeFila.get(e.from_queue_id) ?? e.from_queue_id : null,
-          to_queue_name: e.to_queue_id ? nomeDeFila.get(e.to_queue_id) ?? e.to_queue_id : null,
-          closure_reason: rotulos.motivo,
-          closure_outcome: rotulos.resultado,
-          closure_classification: rotulos.classificacao,
-        };
-      });
 
       // Truncamento real: alguma fonte devolveu mais linhas do que a tela mostra (pedimos limit+1).
       // Sem isto, hasMore sairia só do comprimento da amostra e o "Carregar mais" pararia na janela.
@@ -500,18 +339,16 @@ export function useConversationHistoryTimeline(
         (notesRes.data?.length ?? 0) > limit ||
         (tasksRes.data?.length ?? 0) > limit ||
         (dealsRes.data?.length ?? 0) > limit ||
-        (callsRes.data?.length ?? 0) > limit ||
         (activitiesRes.data?.length ?? 0) > limit;
 
       const timeline = buildTimeline(
         {
           messages: (messagesRes.data ?? []) as RawMessageRow[],
-          events: eventosEnriquecidos,
+          events: (eventsRes.data ?? []) as RawEventRow[],
           notes: (notesRes.data ?? []) as RawNoteRow[],
           tasks: (tasksRes.data ?? []) as RawTaskRow[],
           deals: (dealsRes.data ?? []) as RawDealRow[],
           activities: (activitiesRes.data ?? []) as RawActivityRow[],
-          calls: (callsRes.data ?? []) as RawCallRow[],
         },
         { type, limit },
       );

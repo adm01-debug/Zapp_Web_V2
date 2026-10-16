@@ -1,8 +1,9 @@
 /**
- * SL-198 (item 061 do inventário de paridade) — os DOIS desenhos da lacuna "sem
+ * SL-198 (itens 061-062 do inventário de paridade) — os TRÊS desenhos da lacuna "sem
  * `MessageAttemptsTimeline`/`MessageSendHistorySheet`":
  *   `MessageAttemptsTimeline` — a linha do tempo vertical de envio de uma mensagem;
- *   `MessageSendHistorySheet` — o "Histórico de envio" (Sheet do sistema) com a timeline dentro.
+ *   `MessageSendHistorySheet` — o "Histórico de envio" (Sheet do sistema) com a timeline dentro;
+ *   `ChatQueueProgress` — a barra de falhas/progresso de fila da conversa (metade de cliente do 062).
  *
  * O CÁLCULO (quais passos, com que horário, o que conta como fila/falha) está em
  * `./messageSendTimeline` — colunas reais de `public.messages`, nenhuma inventada, e nenhuma
@@ -19,6 +20,7 @@ import { cn } from '@/lib/utils';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import {
   buildMessageSendTimeline,
+  summarizeDeliveryProgress,
   type MessageSendFields,
   type SendTimelineState,
   type SendTimelineStep,
@@ -117,3 +119,47 @@ export function MessageSendHistorySheet({ message, open, onOpenChange, className
   );
 }
 
+export interface ChatQueueProgressProps {
+  messages: readonly MessageSendFields[];
+  className?: string;
+}
+
+/**
+ * Barra de falhas e progresso de fila da conversa (o `ChatQueueProgress` do V3).
+ * Só aparece quando há fila ou falha: mensagem entregue não gera banner nenhum (o cartão pede
+ * "sem toasts repetidos").
+ */
+export function ChatQueueProgress({ messages, className }: ChatQueueProgressProps) {
+  const progress = summarizeDeliveryProgress(messages);
+  const pendentes = progress.queued + progress.inFlight + progress.failed;
+  if (progress.total === 0 || pendentes === 0) return null;
+
+  const fatia = (n: number) => `${(n / progress.total) * 100}%`;
+
+  return (
+    <div className={cn('space-y-1.5', className)}>
+      <div
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={progress.total}
+        aria-valuenow={progress.confirmed}
+        aria-label={`Progresso de envio: ${progress.confirmed} de ${progress.total} confirmadas, ${progress.failed} com falha`}
+        className="flex h-1.5 w-full overflow-hidden rounded-full bg-muted"
+      >
+        <span className="h-full bg-success" style={{ width: fatia(progress.confirmed) }} />
+        <span className="h-full bg-info" style={{ width: fatia(progress.inFlight) }} />
+        <span className="h-full bg-destructive" style={{ width: fatia(progress.failed) }} />
+      </div>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-2xs text-muted-foreground">
+        {progress.queued > 0 && <span>{progress.queued} na fila</span>}
+        {progress.inFlight > 0 && <span>{progress.inFlight} em envio</span>}
+        {progress.failed > 0 && (
+          <span className="text-[hsl(var(--destructive-text))]">
+            {progress.failed} falha{progress.failed === 1 ? '' : 's'}
+          </span>
+        )}
+        {progress.confirmed > 0 && <span>{progress.confirmed} confirmada{progress.confirmed === 1 ? '' : 's'}</span>}
+      </div>
+    </div>
+  );
+}

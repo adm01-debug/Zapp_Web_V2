@@ -127,7 +127,7 @@ describe('MediaLibraryAdmin — limpeza de objeto órfão (item 343)', () => {
 
     await waitFor(() => expect(mocks.upload).toHaveBeenCalledTimes(1));
     const caminhoEnviado = mocks.upload.mock.calls[0][0] as string;
-    expect(caminhoEnviado).toMatch(/^user-1\/bulk_\d+_[0-9a-f-]+\.mp3$/);
+    expect(caminhoEnviado).toMatch(/^bulk_/);
 
     // O MESMO objeto que subiu tem de ser removido — não outro caminho.
     await waitFor(() => expect(mocks.remove).toHaveBeenCalledWith([caminhoEnviado]));
@@ -174,7 +174,7 @@ describe('MediaLibraryAdmin — limpeza de objeto órfão (item 343)', () => {
 
     await waitFor(() => expect(mocks.upload).toHaveBeenCalledTimes(1));
     const caminhoEnviado = mocks.upload.mock.calls[0][0] as string;
-    expect(caminhoEnviado).toMatch(/^user-1\/ai_gen_\d+_[0-9a-f-]+\.mp3$/);
+    expect(caminhoEnviado).toMatch(/^ai_gen_/);
     expect(caminhoEnviado).toMatch(/\.mp3$/);
 
     await waitFor(() => expect(mocks.remove).toHaveBeenCalledWith([caminhoEnviado]));

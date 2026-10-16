@@ -13,7 +13,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { StepProgress, Step } from '@/components/ui/step-progress';
 import { nodeTypes, AddNodeDialog, EditNodeDialog } from './ChatbotNodeDialogs';
-import { ChatbotHonestNotice } from './ChatbotHonestNotice';
 import {
   EDGE_CONDITIONS, DEFAULT_CONDITION_OPERATOR, conditionOperatorLabel, findIncompleteNodes,
 } from './chatbotNodeConfig';
@@ -111,7 +110,6 @@ export function ChatbotFlowEditor({ flow, onSave, onClose }: Props) {
       <div className="flex-1 flex">
         <ScrollArea className="flex-1 p-6">
           <div className="min-h-full space-y-3">
-            <ChatbotHonestNotice />
             <AnimatePresence mode="popLayout">
               {nodes.map((node, index) => {
                 const config = nodeTypes[node.type] || nodeTypes.message;

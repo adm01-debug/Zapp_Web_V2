@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type mapboxgl from 'mapbox-gl';
-import { MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { loadMapbox } from '@/lib/mapboxLoader';
 import {
@@ -12,7 +11,6 @@ import {
   MAPBOX_MAP_LOAD_TIMEOUT_MS,
 } from '@/lib/mapboxToken';
 import { BRAZIL_CENTER, regionCoordinates } from './contactRegionGeo';
-import { plural } from '@/lib/plural';
 
 export interface RegionBubble {
   region: string;
@@ -151,7 +149,7 @@ export function ContactRegionMap({ regions, preciseContacts = [], selectedRegion
       const size = bubbleSize(count, maxCount);
       const el = document.createElement('button');
       el.type = 'button';
-      el.title = `${region} · ${plural(count, 'contato', 'contatos')}`;
+      el.title = `${region} · ${count} contato${count !== 1 ? 's' : ''}`;
       el.setAttribute('aria-label', el.title);
       el.style.width = `${size}px`;
       el.style.height = `${size}px`;
@@ -210,16 +208,6 @@ export function ContactRegionMap({ regions, preciseContacts = [], selectedRegion
             <Button size="sm" variant="outline" onClick={() => { setMapError(null); setAttempt((n) => n + 1); }}>
               Tentar novamente
             </Button>
-          </div>
-        )}
-        {plotted.length === 0 && preciseContacts.length === 0 && (
-          <div
-            data-testid="contact-regiao-empty"
-            className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-muted/95 px-4 text-center"
-          >
-            <MapPin className="w-6 h-6 text-muted-foreground" aria-hidden="true" />
-            <p className="text-sm font-semibold text-foreground">Sem coordenadas</p>
-            <p className="text-caption max-w-xs">Nenhum contato com DDD conhecido ou endereço confirmado nesta página.</p>
           </div>
         )}
       </div>

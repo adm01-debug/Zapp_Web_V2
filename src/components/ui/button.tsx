@@ -4,16 +4,6 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-/**
- * t_17d91156 / refazer t_9a266076 — alvo de toque de 44x44 em ponteiro grosso.
- * Só os tamanhos pequenos (abaixo de 44px) precisam disto; `lg`/`xl`/`icon-lg` já têm
- * h-11/h-12/h-12. É variante Tailwind (não a classe `.alvo-toque-44` do utilitários.css):
- * o Button tem `overflow-hidden`, que recortaria o `::after` de 44px usado no X/checkbox.
- * `min-h`/`min-w` não brigam com `h-10`/`h-8` no `twMerge`, e em ponteiro fino nada muda.
- */
-export const ALVO_TOQUE_GROSSO =
-  "[@media(pointer:coarse)]:min-h-[44px] [@media(pointer:coarse)]:min-w-[44px]";
-
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden",
   {
@@ -33,12 +23,12 @@ const buttonVariants = cva(
         success: "bg-success text-success-foreground hover:bg-success/90 hover:shadow-glow-success-md",
       },
       size: {
-        default: `h-10 px-4 py-2 ${ALVO_TOQUE_GROSSO}`,
-        sm: `h-9 rounded-md px-3 ${ALVO_TOQUE_GROSSO}`,
+        default: "h-10 px-4 py-2",
+        sm: "h-9 rounded-md px-3",
         lg: "h-11 rounded-md px-8",
         xl: "h-12 rounded-lg px-10 text-base",
-        icon: `h-10 w-10 ${ALVO_TOQUE_GROSSO}`,
-        "icon-sm": `h-8 w-8 ${ALVO_TOQUE_GROSSO}`,
+        icon: "h-10 w-10",
+        "icon-sm": "h-8 w-8",
         "icon-lg": "h-12 w-12",
       },
     },

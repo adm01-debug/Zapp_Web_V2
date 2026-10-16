@@ -71,12 +71,6 @@ vi.mock('@/utils/notificationSounds', () => ({
   requestNotificationPermission: (...args: unknown[]) => h.requestNotificationPermission(...args),
 }));
 
-// Sem usuário/perfil: a checagem de responsabilidade cai no fallback (avisa) e o nome do canal
-// segue o caso anônimo — é o cenário em que este teste (desativação com aviso pendente) roda.
-vi.mock('@/hooks/auth/useAuth', () => ({
-  useAuth: () => ({ user: null, profile: null }),
-}));
-
 const { useTranscriptionNotifications } = await import('@/hooks/communication/useTranscriptionNotifications');
 
 const payloadCompleto = {

@@ -21,7 +21,6 @@ migrations=(
   "$repo_root/supabase/migrations/20261002451230_talkx_owner_responsible_unify.sql"
   "$repo_root/supabase/migrations/20260930410000_talkx_settings_replay_idempotent.sql"
   "$repo_root/supabase/migrations/20261002551230_talkx_limits_ritmo.sql"
-  "$repo_root/supabase/migrations/20261009031223_talkx_multiplix_consumo_compartilhado.sql"
 )
 
 cleanup() { docker rm -f "$container_name" >/dev/null 2>&1 || true; }
@@ -93,8 +92,7 @@ CREATE TABLE public.whatsapp_connections (
 );
 INSERT INTO public.whatsapp_connections (id, status, instance_id) VALUES
   ('50000000-0000-0000-0000-000000000001', 'connected', 'evolution-live'),
-  ('50000000-0000-0000-0000-000000000002', 'connected', 'evolution-live-2'),
-  ('50000000-0000-0000-0000-000000000003', 'connected', 'evolution-live-3');
+  ('50000000-0000-0000-0000-000000000002', 'connected', 'evolution-live-2');
 CREATE TABLE public.talkx_campaigns (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   name text NOT NULL,
@@ -169,14 +167,6 @@ CREATE TABLE public.multiplix_recipients (
   dispatch_id uuid NOT NULL,
   sent_at timestamptz
 );
--- MX04: a fila nova (um item por mensagem) — e desta tabela que o worker atual
--- carimba o envio (`record_multiplix_item_sent`), sem tocar no recipient.
-CREATE TABLE public.multiplix_delivery_items (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  dispatch_id uuid NOT NULL,
-  recipient_id uuid NOT NULL,
-  sent_at timestamptz
-);
 
 GRANT USAGE ON SCHEMA public, auth TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.talkx_campaigns TO authenticated;
@@ -235,52 +225,6 @@ echo "(3b) campaign_pace devolve o orçamento da conexão da campanha"
 pace_minute_sent=$(psql_test -Atqc "SET request.jwt.claim.role = 'service_role'; SELECT (public.talkx_campaign_pace('60000000-0000-0000-0000-000000000001') ->> 'minute_sent')::int")
 [[ "$pace_minute_sent" == '6' ]] || fail "campaign_pace minute_sent esperado 6, obtido $pace_minute_sent"
 
-# (3c) MX04: o motor NOVO carimba a fila por item, não o recipient. Sem a fonte
-# corrigida a mensagem do item desaparecia do minuto/dia compartilhados.
-echo "(3c) Multiplix por item entra no minuto e no dia do teto compartilhado"
-psql_test >/dev/null <<'SQL'
-INSERT INTO public.multiplix_dispatches (id, whatsapp_connection_id)
-VALUES ('70000000-0000-0000-0000-000000000003', '50000000-0000-0000-0000-000000000003');
--- recipients 1..4: enviados só pela fila nova (recipient.sent_at continua NULL).
-INSERT INTO public.multiplix_recipients (id, dispatch_id)
-SELECT ('71000000-0000-0000-0000-0000000000' || lpad(g::text, 2, '0'))::uuid,
-       '70000000-0000-0000-0000-000000000003'
-  FROM generate_series(1, 4) AS g;
--- recipient 5: tem item enviado E recipient.sent_at carimbado (legado + item no
--- mesmo destinatário) — vale UMA mensagem, não duas.
-INSERT INTO public.multiplix_recipients (id, dispatch_id, sent_at)
-VALUES ('71000000-0000-0000-0000-000000000005', '70000000-0000-0000-0000-000000000003',
-        statement_timestamp() - interval '5 seconds');
--- recipient 6: só caminho legado (sem item) — vale UMA mensagem.
-INSERT INTO public.multiplix_recipients (id, dispatch_id, sent_at)
-VALUES ('71000000-0000-0000-0000-000000000006', '70000000-0000-0000-0000-000000000003',
-        statement_timestamp() - interval '5 seconds');
-INSERT INTO public.multiplix_delivery_items (dispatch_id, recipient_id, sent_at)
-SELECT '70000000-0000-0000-0000-000000000003'::uuid, recipient.id, statement_timestamp() - interval '5 seconds'
-  FROM public.multiplix_recipients AS recipient
- WHERE recipient.dispatch_id = '70000000-0000-0000-0000-000000000003'
-   AND recipient.sent_at IS NULL
-UNION ALL
-SELECT '70000000-0000-0000-0000-000000000003'::uuid, '71000000-0000-0000-0000-000000000005'::uuid, statement_timestamp() - interval '5 seconds';
-SQL
-# 5 itens (4 só-item + 1 do destinatário duplo) + 1 destinatário só-legado = 6
-# mensagens. Dupla contagem daria 7.
-conn3_minute_sent=$(psql_test -Atqc "SET request.jwt.claim.role = 'service_role'; SELECT (public.talkx_connection_send_budget('50000000-0000-0000-0000-000000000003') ->> 'minute_sent')::int")
-[[ "$conn3_minute_sent" == '6' ]] || fail "minute_sent esperado 6 (5 itens + 1 legado, sem dupla contagem), obtido $conn3_minute_sent"
-
-# (3d) teto por minuto (6) fechado pelos dois motores na mesma conexão.
-echo "(3d) minute_remaining=0 com o teto fechado pelos dois motores"
-conn3_minute_remaining=$(psql_test -Atqc "SET request.jwt.claim.role = 'service_role'; SELECT (public.talkx_connection_send_budget('50000000-0000-0000-0000-000000000003') ->> 'minute_remaining')::int")
-[[ "$conn3_minute_remaining" == '0' ]] || fail "minute_remaining esperado 0, obtido $conn3_minute_remaining"
-
-# (3e) a fonte do dia é a MESMA para os dois motores: o consumo que o Multiplix lê
-# (multiplix_connection_daily_usage) bate com o day_sent do Talk X.
-echo "(3e) consumo diário compartilhado igual nos dois motores"
-conn3_day_sent=$(psql_test -Atqc "SET request.jwt.claim.role = 'service_role'; SELECT (public.talkx_connection_send_budget('50000000-0000-0000-0000-000000000003') ->> 'day_sent')::int")
-conn3_daily_usage_sent=$(psql_test -Atqc "SET request.jwt.claim.role = 'service_role'; SELECT (public.multiplix_connection_daily_usage('50000000-0000-0000-0000-000000000003') ->> 'sent')::int")
-[[ "$conn3_day_sent" == '6' ]] || fail "day_sent esperado 6, obtido $conn3_day_sent"
-[[ "$conn3_daily_usage_sent" == '6' ]] || fail "multiplix_connection_daily_usage.sent esperado 6, obtido $conn3_daily_usage_sent"
-
 # (4) perfil fast com send_interval_min=0 -> gravado no mínimo do perfil (3000).
 echo "(4) fast com intervalo 0 clampa para 3000"
 psql_test >/dev/null <<'SQL'
@@ -306,16 +250,4 @@ err=$(psql_test -Atqc "
   ROLLBACK;" 2>&1 | grep -oE 'talkx_max_per_minute_acima_do_teto|22023' | head -1 || true)
 [[ "$err" == *"talkx_max_per_minute_acima_do_teto"* || "$err" == *"22023"* ]] || fail "max_per_minute=7 deveria rejeitar com 22023, obtido: $err"
 
-# (6) MX04: a fonte compartilhada fecha para quem não é service_role — nem o
-# helper novo (ACL) nem as duas RPCs (auth.role()).
-echo "(6) sem service_role a fonte compartilhada NÃO é executável"
-helper_err=$(psql_test -Atqc "
-  SET ROLE authenticated;
-  SELECT public.talkx_multiplix_connection_sent_count('50000000-0000-0000-0000-000000000003', statement_timestamp() - interval '1 minute');" 2>&1 | grep -oE 'permission denied|42501' | head -1 || true)
-[[ -n "$helper_err" ]] || fail "authenticated executou talkx_multiplix_connection_sent_count (ACL frouxa)"
-budget_err=$(psql_test -Atqc "
-  SET request.jwt.claim.role = 'authenticated';
-  SELECT public.talkx_connection_send_budget('50000000-0000-0000-0000-000000000003');" 2>&1 | grep -oE 'service_role_required|42501|permission denied' | head -1 || true)
-[[ -n "$budget_err" ]] || fail "authenticated executou talkx_connection_send_budget sem service_role"
-
-printf 'PASS: Talk X limits/pace — budget por minuto e por dia (Talk X + Multiplix, recipients legado E fila por item, sem dupla contagem), perfil deriva e clampa ritmo, max_per_minute com teto\n'
+printf 'PASS: Talk X limits/pace — budget por minuto e por dia (Talk X + Multiplix), perfil deriva e clampa ritmo, max_per_minute com teto\n'

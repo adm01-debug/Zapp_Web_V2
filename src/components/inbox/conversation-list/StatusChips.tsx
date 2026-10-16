@@ -1,13 +1,11 @@
 import { useMemo } from 'react';
-import { Archive } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
 
 export type MainTab = 'open' | 'resolved' | 'search';
 export type SubTab = 'attending' | 'waiting';
-export type ChipTab = 'all' | 'unread' | 'attending' | 'waiting' | 'resolved' | 'archived';
+export type ChipTab = 'all' | 'unread' | 'attending' | 'waiting' | 'resolved';
 
 interface StatusChipsProps {
   conversations: ConversationWithMessages[];
@@ -21,7 +19,6 @@ const COUNTER_TONE: Record<ChipTab, { active: string; inactive: string }> = {
   attending: { active: 'bg-muted text-foreground', inactive: 'bg-muted text-foreground' },
   waiting: { active: 'bg-warning/20 text-warning', inactive: 'bg-warning/20 text-warning' },
   resolved: { active: 'bg-muted text-foreground', inactive: 'bg-muted text-foreground' },
-  archived: { active: 'bg-muted text-foreground', inactive: 'bg-muted text-foreground' },
 };
 
 export function StatusChips({ conversations, chipTab, onChipTabChange }: StatusChipsProps) {
@@ -33,11 +30,7 @@ export function StatusChips({ conversations, chipTab, onChipTabChange }: StatusC
 
   const counts = useMemo(() => {
     const profileId = profile?.id;
-    // Arquivadas saem dos contadores de lista ativa: o status persiste em
-    // contacts.conversation_status ('archived'), não no proxy "sem mensagens".
-    const openConversations = conversations.filter(
-      c => c.messages.length > 0 && c.contact.conversation_status !== 'archived'
-    );
+    const openConversations = conversations.filter(c => c.messages.length > 0);
 
     const attending = openConversations.filter(c => profileId != null && c.contact.assigned_to === profileId);
     const waiting = openConversations.filter(c => !c.contact.assigned_to);
@@ -46,7 +39,6 @@ export function StatusChips({ conversations, chipTab, onChipTabChange }: StatusC
       return (c.unreadCount ?? 0) > 0 || unreadMessages > 0;
     });
     const resolved = conversations.filter(c => c.messages.length === 0);
-    const archived = conversations.filter(c => c.contact.conversation_status === 'archived');
 
     return {
       all: openConversations.length,
@@ -54,21 +46,19 @@ export function StatusChips({ conversations, chipTab, onChipTabChange }: StatusC
       attending: attending.length,
       waiting: waiting.length,
       resolved: resolved.length,
-      archived: archived.length,
     };
   }, [conversations, profile?.id]);
 
-  const chips: { id: ChipTab; label: string; count: number; icon?: LucideIcon }[] = [
+  const chips: { id: ChipTab; label: string; count: number }[] = [
     { id: 'all', label: 'Todas', count: counts.all },
     { id: 'unread', label: 'Não lidas', count: counts.unread },
     { id: 'attending', label: 'Em atendimento', count: counts.attending },
     { id: 'waiting', label: 'Aguardando', count: counts.waiting },
     { id: 'resolved', label: 'Resolvidas', count: counts.resolved },
-    { id: 'archived', label: 'Arquivadas', count: counts.archived, icon: Archive },
   ];
 
   return (
-    <div className="flex flex-wrap gap-1.5 px-4 pb-3" data-testid="status-chips" role="tablist" aria-label="Filtros de conversa">
+    <div className="flex flex-wrap gap-1.5 px-4 pb-3" data-testid="status-chips">
       {chips.map(chip => {
         const isActive = chipTab === chip.id;
         const tone = COUNTER_TONE[chip.id];
@@ -76,17 +66,14 @@ export function StatusChips({ conversations, chipTab, onChipTabChange }: StatusC
           <button
             key={chip.id}
             data-testid={`status-chip-${chip.id}`}
-            role="tab"
-            aria-selected={isActive}
             onClick={() => onChipTabChange(chip.id)}
             className={cn(
               'h-7 px-2.5 rounded-lg text-xs font-medium border transition-all flex items-center',
               isActive
-                ? 'status-chip-active bg-accent border-primary/50 text-foreground'
+                ? 'bg-accent border-primary/50 text-foreground'
                 : 'bg-muted/40 border-border text-muted-foreground hover:bg-muted/70'
             )}
           >
-            {chip.icon ? <chip.icon className="h-3 w-3 mr-1" aria-hidden="true" /> : null}
             {chip.label}
             <span
               className={cn(

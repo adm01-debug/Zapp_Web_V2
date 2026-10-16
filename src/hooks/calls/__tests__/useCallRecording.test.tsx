@@ -79,7 +79,10 @@ describe('useCallRecording — a Edge entrega BYTES (TEL-RECORDING-001)', () => 
 
       await waitFor(() => expect(result.current.disponivel).toBe(true));
 
-      expect(result.current.blob).toBeInstanceOf(Blob);
+      // `Response.blob()` devolve o Blob do fetch do Node, não o do jsdom: `toBeInstanceOf(Blob)`
+      // compara dois construtores diferentes e falha no CI. A marca do objeto é a mesma nos dois.
+      expect(Object.prototype.toString.call(result.current.blob)).toBe('[object Blob]');
+      expect(result.current.blob?.type).toBe(tipo);
       expect(result.current.blob?.size).toBe(BYTES_DE_AUDIO.byteLength);
       const bytesDoBlob = new Uint8Array(await result.current.blob!.arrayBuffer());
       expect(Array.from(bytesDoBlob)).toEqual(Array.from(BYTES_DE_AUDIO));

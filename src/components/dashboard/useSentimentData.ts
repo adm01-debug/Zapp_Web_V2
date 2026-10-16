@@ -56,34 +56,6 @@ export interface AgentSentimentData {
   trend: number | null;
 }
 
-/**
- * Lê TODAS as análises da janela do período.
- *
- * HZ2-003: o PostgREST corta toda resposta em 1000 linhas e o select do painel
- * não paginava — uma janela com mais de 1000 análises alimentava as médias, o
- * gráfico diário e o ranking de agentes com apenas uma fatia. Agora a leitura
- * página até a última linha. A ordem ganhou `id` como desempate para nenhuma
- * linha empatada em `created_at` cair entre duas páginas.
- */
-async function fetchAllAnalyses(startDate: string): Promise<ConversationAnalysis[]> {
-  const PAGE = 1000;
-  const todas: ConversationAnalysis[] = [];
-  for (let from = 0; ; from += PAGE) {
-    const { data, error } = await supabase
-      .from('conversation_analyses')
-      .select('id, contact_id, sentiment, sentiment_score, created_at, analyzed_by')
-      .gte('created_at', startDate)
-      .order('created_at', { ascending: false })
-      .order('id', { ascending: false })
-      .range(from, from + PAGE - 1);
-
-    if (error) throw error;
-    const pagina = (data ?? []) as ConversationAnalysis[];
-    todas.push(...pagina);
-    if (pagina.length < PAGE) return todas;
-  }
-}
-
 export function useSentimentData(period: string) {
   const [alerts, setAlerts] = useState<SentimentAlert[]>([]);
   const [analyses, setAnalyses] = useState<ConversationAnalysis[]>([]);
@@ -117,8 +89,14 @@ export function useSentimentData(period: string) {
 
       setAlerts(formattedAlerts);
 
-      const analysisData = await fetchAllAnalyses(startDate);
-      setAnalyses(analysisData);
+      const { data: analysisData, error: analysisError } = await supabase
+        .from('conversation_analyses')
+        .select('id, contact_id, sentiment, sentiment_score, created_at, analyzed_by')
+        .gte('created_at', startDate)
+        .order('created_at', { ascending: false });
+
+      if (analysisError) throw analysisError;
+      setAnalyses((analysisData || []) as ConversationAnalysis[]);
 
       const { data: agentsData, error: agentsError } = await supabase
         .from('profiles')

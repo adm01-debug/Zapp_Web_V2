@@ -27,12 +27,7 @@ const memesDoBackend = [
 const supabaseMock = vi.hoisted(() => ({ rpc: vi.fn() }));
 
 vi.mock('@/integrations/supabase/client', () => ({
-  supabase: {
-    rpc: supabaseMock.rpc,
-    // R2-INB-044 — o hook abre canal de realtime com o picker aberto.
-    channel: vi.fn(() => ({ on: vi.fn().mockReturnThis(), subscribe: vi.fn().mockReturnThis() })),
-    removeChannel: vi.fn(),
-  },
+  supabase: { rpc: supabaseMock.rpc },
 }));
 
 vi.mock('sonner', () => ({

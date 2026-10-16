@@ -4,8 +4,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { fromTable } from '@/lib/supabaseHelpers';
 import { toast } from 'sonner';
 import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
-import { TALKX_OVERVIEW_STATS_KEY } from './useTalkXOverviewStats';
-import { fetchAllTalkXPages } from '@/hooks/talkx/paginacao';
 
 // A função é introduzida pela migration desta mesma mudança. O types-sync gera
 // a assinatura canônica somente depois que o banco canônico receber a migration.
@@ -51,7 +49,6 @@ export interface TalkXCampaign {
   audience_source?: 'contacts' | 'segment' | 'crm360';
   audience_filters?: Record<string, unknown>;
   segment_id?: string | null;
-  segment_ids?: string[] | null;
   template_id?: string | null;
   // V26 — versão do template (talkx_template_versions.id) que originou a
   // mensagem. Opcional até o types-sync canônico após a migration da coluna.
@@ -73,24 +70,7 @@ export interface TalkXCampaign {
   // Introduzido por 20260912130000. Opcional até o types-sync canônico após
   // aplicar a migration; o editor usa 1 como revisão de linhas legadas.
   revision?: number;
-  // N-102: dias da semana permitidos para envio (0=dom, 6=sáb; nulo=todos).
-  send_weekdays?: number[] | null;
-  // N-102: respeitar a janela "não perturbe" (dnd_hours) do setting.
-  respect_dnd?: boolean | null;
-  // Recorrência (migration 20261006232024). Opcionais até o types-sync canônico.
-  // `null` = não repete. Só diária/semanal existem; "Personalizado" é futuro.
-  recurrence_frequency?: TalkXRecurrenceFrequency | null;
-  // 0 = domingo … 6 = sábado (extract(dow)); obrigatório quando semanal.
-  recurrence_weekdays?: number[] | null;
-  recurrence_end_at?: string | null;
-  // Controle da série: gravado só pelo servidor, nunca enviado pelo front.
-  recurrence_series_id?: string | null;
-  recurrence_next_campaign_id?: string | null;
-  recurrence_closed_at?: string | null;
-  recurrence_closed_reason?: string | null;
 }
-
-export type TalkXRecurrenceFrequency = 'daily' | 'weekly';
 
 export interface TalkXRecipient {
   id: string;
@@ -101,7 +81,6 @@ export interface TalkXRecipient {
   sent_at: string | null;
   delivered_at: string | null;
   error_message: string | null;
-  manual_retry_count: number | null;
   created_at: string;
   contacts?: {
     name: string;
@@ -139,58 +118,6 @@ function assertTalkXActionAccepted(data: unknown): asserts data is TalkXActionRe
 }
 
 type CampaignPayload = Omit<Partial<TalkXCampaign>, 'id' | 'created_at' | 'updated_at'>;
-
-/**
- * Colunas gerenciadas pelo servidor da recorrência (refazer 2, Ponto 2): série,
- * próximo elo e encerramento nunca saem do front — só a RPC de avanço os escreve.
- */
-const RECURRENCE_MANAGED_KEYS = [
-  'recurrence_series_id',
-  'recurrence_next_campaign_id',
-  'recurrence_closed_at',
-  'recurrence_closed_reason',
-] as const;
-
-/** Colunas editáveis da recorrência (só existem depois da migration canônica). */
-const RECURRENCE_EDITABLE_KEYS = [
-  'recurrence_frequency',
-  'recurrence_weekdays',
-  'recurrence_end_at',
-] as const;
-
-/**
- * Detecta erro de coluna de recorrência inexistente (migration canônica ainda
- * não aplicada): PostgREST devolve PGRST204/"schema cache" e o PG direto
- * "column ... does not exist". Qualquer erro citando `recurrence_*` indica
- * exatamente isso, pois essas colunas só nascem na migration canônica.
- */
-export function isMissingRecurrenceColumnError(error: unknown): boolean {
-  const message =
-    typeof error === 'string'
-      ? error
-      : error instanceof Error
-        ? error.message
-        : typeof error === 'object' && error !== null && 'message' in error
-          ? String((error as { message: unknown }).message)
-          : '';
-  return /recurrence_(frequency|weekdays|end_at|series_id|next_campaign_id|closed_at|closed_reason)/i.test(
-    message,
-  );
-}
-
-/** Remove do payload as colunas gerenciadas pelo servidor (nunca editadas no front). */
-export function stripRecurrenceManagedColumns<T extends Record<string, unknown>>(updates: T): T {
-  const clean = { ...updates };
-  for (const key of RECURRENCE_MANAGED_KEYS) delete clean[key as keyof T];
-  return clean;
-}
-
-/** Remove do payload todas as colunas de recorrência (fallback sem migration). */
-function stripAllRecurrenceColumns<T extends Record<string, unknown>>(updates: T): T {
-  const clean = stripRecurrenceManagedColumns(updates);
-  for (const key of RECURRENCE_EDITABLE_KEYS) delete clean[key as keyof T];
-  return clean;
-}
 
 export type TalkXDraftSaveResult = {
   campaignId: string;
@@ -257,7 +184,6 @@ export function useTalkX() {
             if (pending.size === 0) return;
             // Novo mapa: eventos que chegarem durante o flush formam o próximo lote.
             pendingUpdatesRef.current = new Map();
-            queryClient.invalidateQueries({ queryKey: [TALKX_OVERVIEW_STATS_KEY] });
             queryClient.setQueryData<TalkXCampaign[]>(['talkx-campaigns'], (old) => {
               if (!old) return old;
               return old.map((c) => {
@@ -273,7 +199,6 @@ export function useTalkX() {
         { event: 'INSERT', schema: 'public', table: 'talkx_campaigns' },
         () => {
           queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
-          queryClient.invalidateQueries({ queryKey: [TALKX_OVERVIEW_STATS_KEY] });
         }
       )
       .subscribe((status) => {
@@ -292,34 +217,47 @@ export function useTalkX() {
     queryKey: ['talkx-recipients', selectedCampaignId],
     queryFn: async () => {
       if (!selectedCampaignId) return [];
-      // HZ2-012 — sem `.range()` o PostgREST devolvia só a primeira fatia (teto
-      // de linhas do projeto) e a tela mostrava uma campanha com menos
-      // destinatários do que ela tem. Ordem com desempate (`id`) porque a fatia
-      // é calculada sobre a lista ordenada.
-      return fetchAllTalkXPages<TalkXRecipient>((from, to) => supabase
+      const { data, error } = await supabase
         .from('talkx_recipients')
         .select('*, contacts:contact_id(name, nickname, phone, company, avatar_url)')
         .eq('campaign_id', selectedCampaignId)
-        .order('created_at', { ascending: true })
-        .order('id', { ascending: true })
-        .range(from, to));
+        .order('created_at');
+      if (error) throw error;
+      return (data ?? []) as unknown as TalkXRecipient[];
     },
     enabled: !!selectedCampaignId,
   });
 
+  const createCampaign = useMutation({
+    mutationFn: async (campaign: CampaignPayload) => {
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .single();
+      if (profileError) throw profileError;
+      if (!profile?.id) throw new Error('Perfil ativo não encontrado para criar a campanha.');
+
+      const { data, error } = await fromTable('talkx_campaigns')
+        .insert({ ...campaign, created_by: profile.id })
+        .select()
+        .single();
+      if (error) throw error;
+      return data as unknown as TalkXCampaign;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
+      toast.success('Campanha Talk X criada!');
+    },
+    onError: (e: Error) => toast.error(`Erro: ${e.message}`),
+  });
+
   const updateCampaign = useMutation({
     mutationFn: async ({ id, ...updates }: CampaignPayload & { id: string }) => {
-      // Ponto 2: sem a migration canônica o update com recurrence_* falharia e
-      // derrubaria também o agendamento simples (mesma chamada). Tenta com
-      // recorrência; se o backend disser que a coluna não existe, retenta uma
-      // única vez sem nenhuma coluna de recorrência.
-      const payload = stripRecurrenceManagedColumns(updates);
-      const attempt = (body: typeof payload) =>
-        fromTable('talkx_campaigns').update(body).eq('id', id).select().single();
-      let { data, error } = await attempt(payload);
-      if (error && isMissingRecurrenceColumnError(error)) {
-        ({ data, error } = await attempt(stripAllRecurrenceColumns(payload)));
-      }
+      const { data, error } = await fromTable('talkx_campaigns')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
       if (error) throw error;
       return data as unknown as TalkXCampaign;
     },
@@ -344,7 +282,7 @@ export function useTalkX() {
       creationKey: string | null;
       payload: CampaignPayload;
     }) => {
-      const rpc = supabase.rpc.bind(supabase) as unknown as PendingDatabaseRpc;
+      const rpc = supabase.rpc as unknown as PendingDatabaseRpc;
       const { data, error } = await rpc('save_talkx_campaign_draft', {
         p_campaign_id: campaignId,
         p_expected_revision: expectedRevision,
@@ -369,7 +307,7 @@ export function useTalkX() {
       expectedRevision: number | null;
       limits: Record<string, unknown>;
     }) => {
-      const rpc = supabase.rpc.bind(supabase) as unknown as PendingDatabaseRpc;
+      const rpc = supabase.rpc as unknown as PendingDatabaseRpc;
       const { data, error } = await rpc('update_talkx_campaign_limits', {
         p_campaign_id: id,
         p_expected_revision: expectedRevision,
@@ -387,7 +325,7 @@ export function useTalkX() {
     mutationFn: async (id: string) => {
       // X026: a exclusão passa pela RPC (draft ou scheduled, sem envio). O delete
       // direto no PostgREST só alcançava rascunho e não deixava rastro/autorização.
-      const rpc = supabase.rpc.bind(supabase) as unknown as PendingDatabaseRpc;
+      const rpc = supabase.rpc as unknown as PendingDatabaseRpc;
       const { error } = await rpc('delete_talkx_campaign', { p_campaign_id: id });
       if (error) throw new Error(error.message);
     },
@@ -405,7 +343,7 @@ export function useTalkX() {
    */
   const duplicateCampaign = useMutation({
     mutationFn: async (id: string) => {
-      const rpc = supabase.rpc.bind(supabase) as unknown as PendingDatabaseRpc;
+      const rpc = supabase.rpc as unknown as PendingDatabaseRpc;
       const { data, error } = await rpc('duplicate_talkx_campaign', { p_campaign_id: id });
       if (error) throw new Error(error.message);
       const row = Array.isArray(data) ? data[0] : data;
@@ -430,7 +368,7 @@ export function useTalkX() {
       // Compatibilidade do hook antigo: destinatários agora só podem ser
       // gravados pelo snapshot transacional. Insert direto violaria o trigger
       // de integridade e permitiria contador/audiência divergentes.
-      const rpc = supabase.rpc.bind(supabase) as unknown as PendingDatabaseRpc;
+      const rpc = supabase.rpc as unknown as PendingDatabaseRpc;
       const { error } = await rpc('replace_talkx_draft_recipients', {
         p_campaign_id: campaignId,
         p_contact_ids: contactIds,
@@ -442,9 +380,6 @@ export function useTalkX() {
       queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
       toast.success('Audiência atualizada!');
     },
-    // HZ2-012 — o hook antigo engolia a falha: a tela dizia "Audiência
-    // atualizada!" só no caminho de sucesso, mas o erro subia sem aviso nenhum.
-    onError: (e: Error) => toast.error(`Erro ao atualizar a audiência: ${e.message}`),
   });
 
   /**
@@ -459,7 +394,7 @@ export function useTalkX() {
       campaignId: string;
       contactIds: string[];
     }) => {
-      const rpc = supabase.rpc.bind(supabase) as unknown as PendingDatabaseRpc;
+      const rpc = supabase.rpc as unknown as PendingDatabaseRpc;
       const { data, error } = await rpc('replace_talkx_draft_recipients', {
         p_campaign_id: campaignId,
         p_contact_ids: contactIds,
@@ -471,8 +406,6 @@ export function useTalkX() {
       queryClient.invalidateQueries({ queryKey: ['talkx-recipients'] });
       queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
     },
-    // HZ2-012 — sem `onError` a RPC que recusa (campanha já em envio) falhava muda.
-    onError: (e: Error) => toast.error(`Erro ao substituir a audiência: ${e.message}`),
   });
 
   /**
@@ -490,7 +423,7 @@ export function useTalkX() {
       campaignId: string;
       expectedRevision: number;
     }) => {
-      const rpc = supabase.rpc.bind(supabase) as unknown as PendingDatabaseRpc;
+      const rpc = supabase.rpc as unknown as PendingDatabaseRpc;
       const { data, error } = await rpc('snapshot_talkx_campaign_audience', {
         p_campaign_id: campaignId,
         p_expected_revision: expectedRevision,
@@ -539,15 +472,6 @@ export function useTalkX() {
     queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
   }, [queryClient]);
 
-  const sendTest = useCallback(async (connectionId: string, templateContent: string, phone: string, mediaUrl?: string | null, mediaType?: string | null, idempotencyKey?: string | null) => {
-    const { data, error } = await supabase.functions.invoke('talkx-send', {
-      body: { action: 'test', connectionId, templateContent, phone, mediaUrl, mediaType, idempotencyKey },
-    });
-    if (error) throw error;
-    assertTalkXActionAccepted(data);
-    return data as { success: boolean; provider_message_id?: string };
-  }, []);
-
   return {
     campaigns: campaignsQuery.data || [],
     isLoading: campaignsQuery.isLoading,
@@ -559,6 +483,7 @@ export function useTalkX() {
     recipientsLoading: recipientsQuery.isLoading,
     selectedCampaignId,
     setSelectedCampaignId,
+    createCampaign,
     updateCampaign,
     updateCampaignLimits,
     saveDraftCampaign,
@@ -570,7 +495,6 @@ export function useTalkX() {
     startCampaign,
     pauseCampaign,
     cancelCampaign,
-    sendTest,
     refetchCampaigns: campaignsQuery.refetch,
   };
 }

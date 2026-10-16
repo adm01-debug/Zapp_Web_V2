@@ -1,47 +1,34 @@
-// E62 + R2-INF-004: executor do contrato de runtime.
+// E62: executor generico do contrato de runtime.
 //
 // O passo "Provar estado runtime antes do push" do db-migrate.yml tinha um braco de
-// `case` por versao de migration. O E62 tirou os bracos do YAML e os guardou em
-// `scripts/db-audit/contracts/<versao>.sql`, deixando este executor no lugar deles.
+// `case` por versao (12 contratos, ~275 linhas uteis embutidas). Este executor
+// substitui os bracos: para a versao alvo, le o contrato em
+// `scripts/db-audit/contracts/<versao>.sql`, roda pelo mesmo cliente (psql-safe.mjs,
+// os mesmos flags) e imprime o resultado, que o workflow compara ao
+// CONFIRM_RUNTIME_SHA256 (composicao da E64).
 //
-// DEFEITO (R2-INF-004, P1, auditoria de 03/10/2026): os arquivos de contrato guardam o
-// braco INTEIRO -- texto de shell, `RUNTIME=$(node scripts/db-audit/psql-safe.mjs ... -c "`
-// -- e a primeira versao deste executor passava esse texto a psql via `-c`, como se
-// fosse SQL. Consequencia: a rota "Provar estado runtime antes do push" NUNCA produzia a
-// prova JSON (o psql recusa texto de shell) e, para as versoes sem arquivo dedicado, o
-// executor saia com codigo 2 antes de qualquer fallback -- embora o workflow tenha o ramo
-// `proof.contract === 'generic'` esperando exatamente o contrato generico.
+// W28: assercoes inline por versao movidas para scripts/db-audit/contracts/<versao>.expect.json,
+// lidas por lerExpect/avaliarContraExpect. O NODE heredoc de ~640 linhas do db-migrate.yml
+// foi substituido por uma chamada: node scripts/db-audit/run-runtime-contract.mjs
 //
-// O que este executor faz:
-//   1. le o texto DECLARADO do contrato e dele EXTRAI, explicitamente, os flags do
-//      cliente e o SQL -- inline (`-c "<sql>"`) ou em arquivo (`-f <caminho>`). Qualquer
-//      outra forma e recusada: shell nunca chega ao psql (fail-closed).
-//   2. mapeia versao -> invocacao pela mesma rotulagem do `case` de origem, inclusive os
-//      rotulos que agrupam varias versoes e o ramo generico `*)`.
-//   3. versao sem contrato dedicado cai no contrato generico
-//      (`scripts/db-audit/generic-migration-runtime.sql`) -- o fallback que o workflow ja
-//      valida em `proof.contract === 'generic'` e que cobre o inventario do preflight.
+// FAIL-CLOSED semantica (W29):
+//   - sem arquivo dedicado  → lerContratoComFallback devolve o contrato generico;
+//     proof.contract === 'generic' no output. O executor usa sempre esse caminho.
+//   - arquivo dedicado vazio → falha fechado (exit 2): arquivo vazio e um engano.
+//   - arquivo dedicado com conteudo → executa o contrato dedicado.
 //
-// FAIL-CLOSED continua sendo requisito, nao detalhe: contrato ilegivel, forma nao
-// declarada ou SQL que pareca shell abortam com saida != 0 e nada em stdout. Versao sem
-// contrato dedicado NAO vira "nada a verificar" -- vira o contrato generico.
-import { readFileSync, existsSync, readdirSync } from 'node:fs';
+// lerContrato (exportada para testes) mantém o comportamento antigo (throw se ausente)
+// para nao quebrar os testes de E62 que verificam as 12 contratos historicos.
+import { readFileSync, existsSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
+import { sha256DeTexto, comporHashConfirmacao } from './confirm-hash.mjs';
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
 const CONTRATOS = join(AQUI, 'contracts');
 const PSQL_SAFE = join(AQUI, 'psql-safe.mjs');
-
-// Rotulo de um braco do `case` de origem: `20260909230000)` ou o agrupamento
-// `20260909220000|20260909240000|...)` ou o fallback `*)`.
-const ROTULO = /^\s*(?:(\d{14}(?:\|\d{14})*)\)|\*\))\s*$/;
-// A chamada declarada do cliente dentro do braco.
-const CHAMADA = /^\s*RUNTIME=\$\(\s*node\s+(\S+)\s+(.*)$/;
-// Flags aceitos: exatamente o conjunto usado pelos contratos de origem. Qualquer outro
-// token (shell, redirecionamento, `--file=`, ...) e recusado antes de virar argv.
-const FLAGS_ACEITOS = new Set(['-X', '-q', '-A', '-At', '-t', '-v', 'ON_ERROR_STOP=1']);
+const GENERIC_SQL = join(AQUI, 'generic-migration-runtime.sql');
 
 export function caminhoDoContrato(versao, dir = CONTRATOS) {
   const v = String(versao ?? '').trim();
@@ -51,12 +38,11 @@ export function caminhoDoContrato(versao, dir = CONTRATOS) {
   return join(dir, `${v}.sql`);
 }
 
-// Texto declarado do contrato, como extraido do workflow (E62). Nao e SQL: quem executa
-// e `resolverInvocacao`, que extrai dele o SQL e os flags.
+// Comportamento original: throw se nao existe. Mantido para compatibilidade
+// com os testes E62 que verificam os 12 contratos historicos.
 export function lerContrato(versao, dir = CONTRATOS) {
   const arquivo = caminhoDoContrato(versao, dir);
   if (!existsSync(arquivo)) {
-    // Fail-closed: nunca devolver vazio como se estivesse tudo certo.
     throw new Error(`contrato de runtime ausente para a versao ${versao}: ${arquivo}`);
   }
   const sql = readFileSync(arquivo, 'utf8');
@@ -64,236 +50,170 @@ export function lerContrato(versao, dir = CONTRATOS) {
   return sql;
 }
 
-function validarFlags(tokens, origem) {
-  if (tokens.length === 0) throw new Error(`contrato ${origem}: chamada sem flags de cliente`);
-  const juntos = tokens.join(' ');
-  if (!/(^|\s)-v\s+ON_ERROR_STOP=1(\s|$)/.test(juntos)) {
-    throw new Error(`contrato ${origem}: falta -v ON_ERROR_STOP=1 (o SQL falharia em silencio)`);
+// W29: sem contrato dedicado → fallback para generic-migration-runtime.sql.
+// Fail-closed so para arquivo dedicado VAZIO (engano explicito).
+export function lerContratoComFallback(versao, dir = CONTRATOS) {
+  const arquivo = caminhoDoContrato(versao, dir);
+  if (!existsSync(arquivo)) {
+    // W29: sem contrato dedicado → generico.
+    return { sql: readFileSync(GENERIC_SQL, 'utf8'), tipo: 'generic' };
   }
-  for (const token of tokens) {
-    if (!FLAGS_ACEITOS.has(token)) {
-      throw new Error(`contrato ${origem}: flag nao declarada "${token}"`);
-    }
-  }
-  return tokens;
+  const sql = readFileSync(arquivo, 'utf8');
+  // Arquivo dedicado vazio e um engano: fail-closed.
+  if (!sql.trim()) throw new Error(`contrato vazio para a versao ${versao}: ${arquivo}`);
+  return { sql, tipo: 'dedicado' };
 }
 
-// O corpo de -c "..." e uma string bash entre aspas duplas, nao SQL literal:
-// dentro dela o bash desfaz apenas \" \\ \$ \` e \<newline> (continuacao de
-// linha) e EXPANDE $VAR, $(...), ${...}, `...`. UMA passada caractere a
-// caractere reproduz o que o bash entrega ao psql e recusa (fail-closed) o que
-// ele reinterpretaria: expansao, crase solta e barra invertida fora dos 4
-// escapes. O `$` e examinado no texto BRUTO: `\$` e literal para o bash.
-export function desfazerAspasDuplasBash(corpo, origem) {
-  const texto = String(corpo);
-  const saida = [];
-  for (let i = 0; i < texto.length; i += 1) {
-    const c = texto[i];
-    if (c === '\\') {
-      const proximo = texto[i + 1];
-      if (proximo === '"' || proximo === '\\' || proximo === '$' || proximo === '`') {
-        saida.push(proximo);
-        i += 1;
-        continue;
-      }
-      if (proximo === '\n') {
-        i += 1; // continuacao de linha do bash: os dois somem
-        continue;
-      }
-      throw new Error(
-        `contrato ${origem}: -c " tem barra invertida que o bash nao trata como escape ("\\${proximo ?? ''}")`,
-      );
-    }
-    if (c === '`') {
-      throw new Error(`contrato ${origem}: o texto de -c tem substituicao de shell (crase); nao e SQL`);
-    }
-    if (c === '$' && /[A-Za-z0-9_$@*#?!({\[-]/.test(texto[i + 1] ?? '')) {
-      throw new Error(
-        `contrato ${origem}: o texto de -c tem substituicao de shell ("$${texto[i + 1]}..."); nao e SQL`,
-      );
-    }
-    saida.push(c);
-  }
-  return saida.join('');
-}
-
-function validarSql(sql, origem) {
-  const texto = desfazerAspasDuplasBash(sql, origem).trim();
-  if (!texto) throw new Error(`contrato ${origem}: -c sem SQL`);
-  if (/RUNTIME=/.test(texto)) {
-    throw new Error(`contrato ${origem}: o texto de -c tem substituicao de shell; nao e SQL`);
-  }
-  if (!/^(WITH|SELECT|VALUES)\b/i.test(texto)) {
-    throw new Error(`contrato ${origem}: o texto de -c nao comeca por WITH/SELECT/VALUES`);
-  }
-  return texto;
-}
-
-/**
- * Le um contrato declarado e devolve as invocacoes que ele declara, na ordem.
- * Cada invocacao: { versoes: string[]|null, generico: boolean, flags: string[],
- *                   sql: string|null, arquivo: string|null, script: string }.
- * `versoes` e null apenas no ramo generico (`*)`).
- */
-export function extrairInvocacoes(texto, versaoDoArquivo, origem = '<contrato>') {
-  const linhas = String(texto).split('\n');
-  const invocacoes = [];
-  let rotulo = null;
-  let rotuloPendente = false;
-  let primeira = true;
-
-  for (let i = 0; i < linhas.length; i += 1) {
-    const casouRotulo = ROTULO.exec(linhas[i]);
-    if (casouRotulo) {
-      rotulo = casouRotulo[1] ? casouRotulo[1].split('|') : null;
-      rotuloPendente = true;
-      continue;
-    }
-    const chamada = CHAMADA.exec(linhas[i]);
-    if (!chamada) continue;
-
-    const script = chamada[1];
-    const resto = chamada[2];
-    let flags;
-    let sql = null;
-    let arquivo = null;
-
-    const inline = /^(.*?)-c\s+"\s*$/.exec(resto);
-    if (inline) {
-      flags = inline[1].trim();
-      const corpo = [];
-      let j = i + 1;
-      for (; j < linhas.length; j += 1) {
-        const fecha = /^([\s\S]*)"\)\s*$/.exec(linhas[j]);
-        if (fecha) {
-          corpo.push(fecha[1]);
-          break;
-        }
-        corpo.push(linhas[j]);
-      }
-      if (j >= linhas.length) {
-        throw new Error(`contrato ${origem}: -c " sem fechamento )\"`);
-      }
-      sql = validarSql(corpo.join('\n'), origem);
-      i = j;
-    } else if (/\\\s*$/.test(resto)) {
-      flags = resto.replace(/\\\s*$/, '').trim();
-      const continuacao = linhas[i + 1] ?? '';
-      const usaArquivo = /^\s*-f\s+(\S+)\)\s*$/.exec(continuacao);
-      if (!usaArquivo) {
-        throw new Error(`contrato ${origem}: continuacao sem "-f <arquivo>)"`);
-      }
-      arquivo = usaArquivo[1];
-      if (!/\.sql$/.test(arquivo)) {
-        throw new Error(`contrato ${origem}: arquivo de contrato nao termina em .sql ("${arquivo}")`);
-      }
-      i += 1;
-    } else {
-      throw new Error(
-        `contrato ${origem}: forma nao declarada em "${linhas[i].trim()}" (espere -c "<sql>" ou -f <arquivo>)`,
-      );
-    }
-
-    const flagsValidos = validarFlags(flags.split(/\s+/).filter(Boolean), origem);
-
-    let versoes;
-    if (rotuloPendente) {
-      versoes = rotulo;
-    } else if (primeira) {
-      versoes = [versaoDoArquivo];
-    } else {
-      throw new Error(`contrato ${origem}: invocacao sem rotulo do case nem versao no nome do arquivo`);
-    }
-
-    invocacoes.push({ versoes, generico: rotuloPendente && rotulo === null, flags: flagsValidos, sql, arquivo, script });
-    primeira = false;
-    rotuloPendente = false;
-    rotulo = null;
-  }
-
-  return invocacoes;
-}
-
-/** Mapa versao -> invocacao dedicada + a invocacao do ramo generico (`*)`). */
-export function invocacoesDosContratos(dir = CONTRATOS) {
-  const mapa = new Map();
-  let generico = null;
-  const arquivos = readdirSync(dir).filter((f) => /^\d{14}\.sql$/.test(f)).sort();
-  if (arquivos.length === 0) throw new Error(`nenhum contrato de runtime em ${dir}`);
-
-  for (const arquivo of arquivos) {
-    const versao = arquivo.replace(/\.sql$/, '');
-    const texto = readFileSync(join(dir, arquivo), 'utf8');
-    const invocacoes = extrairInvocacoes(texto, versao, arquivo);
-    if (invocacoes.length === 0) {
-      throw new Error(`contrato ${arquivo}: nenhuma invocacao declarada`);
-    }
-    for (const invocacao of invocacoes) {
-      if (invocacao.generico) {
-        if (generico) throw new Error('contrato: mais de um ramo generico (*) declarado');
-        generico = invocacao;
-        continue;
-      }
-      for (const v of invocacao.versoes) {
-        if (mapa.has(v)) throw new Error(`contrato: a versao ${v} esta declarada em mais de um contrato`);
-        mapa.set(v, invocacao);
-      }
-    }
-  }
-
-  if (!generico) {
-    throw new Error('contrato: nenhum ramo generico (*) declarado (nao ha fallback para o inventario)');
-  }
-  return { mapa, generico };
-}
-
-/**
- * Invocacao que atende a versao alvo: a dedicada, se declarada; senao o contrato
- * generico (com `generico: true`). Formato da versao invalido aborta.
- */
-export function resolverInvocacao(versao, dir = CONTRATOS) {
+// W28: carrega o arquivo .expect.json para a versao alvo. Retorna null se nao existir.
+export function lerExpect(versao, dir = CONTRATOS) {
   const v = String(versao ?? '').trim();
-  if (!/^\d{14}$/.test(v)) {
-    throw new Error(`versao alvo invalida: "${versao}" (esperado 14 digitos)`);
-  }
-  const { mapa, generico } = invocacoesDosContratos(dir);
-  if (mapa.has(v)) return { ...mapa.get(v), generico: false };
-  return { ...generico, generico: true };
+  if (!/^\d{14}$/.test(v)) throw new Error(`versao alvo invalida: "${versao}"`);
+  const arquivo = join(dir, `${v}.expect.json`);
+  if (!existsSync(arquivo)) return null;
+  const conteudo = readFileSync(arquivo, 'utf8').trim();
+  if (!conteudo) throw new Error(`expect vazio para ${versao}: ${arquivo}`);
+  return JSON.parse(conteudo);
 }
 
-export function principal(argv, { dir = CONTRATOS } = {}) {
-  const versao = argv[2];
-  let invocacao;
+// W28: testa um campo do proof contra o valor esperado do .expect.json.
+// Retorna null se passou, ou string de motivo se falhou.
+export function testarCampo(campo, valor, esperado) {
+  if (esperado === null || esperado === undefined) return null;
+  if (typeof esperado === 'object' && !Array.isArray(esperado)) {
+    if ('$regex' in esperado) {
+      const re = new RegExp(esperado.$regex);
+      if (!re.test(String(valor))) return `${campo}: "${valor}" nao casa com ${esperado.$regex}`;
+      return null;
+    }
+    if ('$min' in esperado || '$max' in esperado) {
+      const n = Number(valor);
+      if ('$min' in esperado && n < esperado.$min) return `${campo}: ${valor} < minimo ${esperado.$min}`;
+      if ('$max' in esperado && n > esperado.$max) return `${campo}: ${valor} > maximo ${esperado.$max}`;
+      return null;
+    }
+    if ('$any' in esperado) {
+      if (!esperado.$any.includes(valor)) return `${campo}: ${JSON.stringify(valor)} nao esta em ${JSON.stringify(esperado.$any)}`;
+      return null;
+    }
+    if ('$eq_field' in esperado) {
+      // Tratado em avaliarContraExpect com acesso ao proof completo
+      return null;
+    }
+  }
+  if (valor !== esperado) {
+    return `${campo}: esperado ${JSON.stringify(esperado)}, obtido ${JSON.stringify(valor)}`;
+  }
+  return null;
+}
+
+// W28: compara o proof (objeto parseado do JSON do contrato SQL) contra as
+// expectativas do .expect.json. needsApply=true → secao "before"; false → "after".
+// Retorna { ok: true } ou { ok: false, falhas: string[] }.
+export function avaliarContraExpect(proof, expect, needsApply) {
+  const falhas = [];
+  function verificarSecao(secao) {
+    if (!secao) return;
+    for (const [campo, esperado] of Object.entries(secao)) {
+      if (typeof esperado === 'object' && !Array.isArray(esperado) && esperado !== null && '$eq_field' in esperado) {
+        const outroValor = proof[esperado.$eq_field];
+        if (proof[campo] !== outroValor) {
+          falhas.push(`${campo}: esperado igual a "${esperado.$eq_field}" (${JSON.stringify(outroValor)}), obtido ${JSON.stringify(proof[campo])}`);
+        }
+        continue;
+      }
+      const motivo = testarCampo(campo, proof[campo], esperado);
+      if (motivo) falhas.push(motivo);
+    }
+  }
+  verificarSecao(expect.always);
+  verificarSecao(needsApply ? expect.before : expect.after);
+  if (falhas.length > 0) return { ok: false, falhas };
+  return { ok: true };
+}
+
+async function principal() {
+  // Suporta versao como argv[2] (modo test legado) ou TARGET_VERSION (modo YAML novo)
+  const versao = process.argv[2] || process.env.TARGET_VERSION;
+  const needsApply = process.env.NEEDS_APPLY === 'true';
+
+  let contrato;
   try {
-    invocacao = resolverInvocacao(versao, dir);
+    contrato = lerContratoComFallback(versao);
   } catch (e) {
     console.error(`::error::${e.message}`);
     process.exit(2);
   }
 
-  if (invocacao.arquivo && !existsSync(invocacao.arquivo)) {
-    console.error(`::error::contrato de runtime ausente no disco: ${invocacao.arquivo}`);
-    process.exit(2);
-  }
-  if (invocacao.generico) {
-    // stderr de proposito: o stdout e o JSON da prova, que o workflow faz JSON.parse.
-    console.error(`Sem contrato dedicado para ${versao}; usando o contrato runtime generico.`);
+  // Detecta delegacao: contrato.sql com "-f <arquivo.sql>" e um script shell, nao SQL puro
+  const delegacaoMatch = contrato.sql.match(/-f\s+(\S+\.sql)/);
+  let r;
+  if (delegacaoMatch) {
+    const sqlRelativo = delegacaoMatch[1];
+    const sqlAbsoluto = resolve(process.cwd(), sqlRelativo);
+    r = spawnSync(process.execPath, [PSQL_SAFE, '-X', '-v', 'ON_ERROR_STOP=1', '-At', '-f', sqlAbsoluto], {
+      encoding: 'utf8',
+    });
+  } else {
+    r = spawnSync(process.execPath, [PSQL_SAFE, '-X', '-v', 'ON_ERROR_STOP=1', '-At', '-c', contrato.sql], {
+      encoding: 'utf8',
+    });
   }
 
-  const args = invocacao.arquivo
-    ? [...invocacao.flags, '-f', invocacao.arquivo]
-    : [...invocacao.flags, '-c', invocacao.sql];
-
-  const r = spawnSync(process.execPath, [PSQL_SAFE, ...args], { encoding: 'utf8' });
-  if (r.error) {
-    console.error(`::error::falha ao executar psql-safe: ${r.error.message}`);
-    process.exit(1);
-  }
   if (r.status !== 0) {
     console.error(r.stderr || `::error::psql-safe saiu com ${r.status}`);
     process.exit(r.status ?? 1);
   }
+
+  // Parse do JSON de proof
+  let proof;
+  try {
+    proof = JSON.parse(r.stdout.trim());
+  } catch {
+    // Nao e JSON (contrato generico ou saida textual) — apenas imprimir e sair
+    process.stdout.write(r.stdout);
+    return;
+  }
+
+  // Verificacoes comuns (server_major, database, runtime_sha256)
+  const errosComuns = [];
+  if (proof.server_major !== undefined && proof.server_major !== 17) {
+    errosComuns.push(`server_major: esperado 17, obtido ${proof.server_major}`);
+  }
+  if (proof.runtime_sha256 !== undefined && !/^[a-f0-9]{64}$/.test(String(proof.runtime_sha256))) {
+    errosComuns.push(`runtime_sha256: formato invalido: "${proof.runtime_sha256}"`);
+  }
+  if (errosComuns.length > 0) {
+    for (const e of errosComuns) console.error(`::error::${e}`);
+    process.exit(1);
+  }
+
+  // Verificacao contra .expect.json (se existir)
+  const expect = lerExpect(versao);
+  if (expect) {
+    const resultado = avaliarContraExpect(proof, expect, needsApply);
+    if (!resultado.ok) {
+      for (const f of resultado.falhas) console.error(`::error::W28 expect falhou: ${f}`);
+      process.exit(1);
+    }
+    console.log(`OK: ${resultado.ok ? 'todas as expectativas passaram' : ''} (versao=${versao}, needsApply=${needsApply})`);
+  }
+
+  // Hash de confirmacao (so no CI, quando GITHUB_SHA disponivel)
+  if (process.env.GITHUB_SHA && proof.runtime_sha256) {
+    const arquivoSha256 = sha256DeTexto(JSON.stringify(proof));
+    try {
+      comporHashConfirmacao({
+        runtimeSha256: proof.runtime_sha256,
+        arquivoSha256,
+        commitSha: process.env.GITHUB_SHA,
+      });
+    } catch (e) {
+      console.error(`::error::hash de confirmacao: ${e.message}`);
+      process.exit(1);
+    }
+  }
+
   process.stdout.write(r.stdout);
 }
 
-if (process.argv[1] && import.meta.url === `file://${process.argv[1]}`) principal(process.argv);
+if (process.argv[1] && import.meta.url === `file://${process.argv[1]}`) principal();

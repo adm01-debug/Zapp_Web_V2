@@ -13,10 +13,10 @@
  *     quando o arrasto sai de cena (`pointer: coarse`); o caso dirige o fluxo
  *     inteiro por eventos de teclado (Enter no gatilho, ↓ para andar no menu,
  *     Enter para mover) e confere que a escrita chegou na fronteira (Supabase).
- *  3. **A faixa de colunas nomeia cada coluna.** Na tela estreita cada coluna
- *     tem uma aba com nome acessível (etapa 099: as abas substituíram as setas
- *     ‹ › e os 5 dots do carrossel), a aba da coluna à vista carrega
- *     `aria-selected` e aponta por `aria-controls` para o painel da coluna.
+ *  3. **A faixa de colunas nomeia cada coluna.** Na tela estreita as 5 colunas
+ *     viram um carrossel: cada coluna tem um dot com nome acessível
+ *     "Ir para <coluna>" (e o dot da coluna à vista carrega `aria-current`),
+ *     além das setas "Coluna anterior"/"Próxima coluna".
  *
  * LACUNA REGISTRADA (o `it.todo` no fim do arquivo): o CONTÊINER da coluna não
  * tem papel nem nome acessível — `BoardColumn.tsx` é uma `<div>` sem
@@ -45,11 +45,11 @@ import { TasksModule } from '@/components/tasks/TasksModule';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
 /**
- * Rótulos CURTOS das 5 colunas — o texto das abas da tela estreita (etapa 099).
- * É uma lista LITERAL de propósito: se ela vier de `KANBAN_COLUMNS`, o esperado
- * passa a ser uma cópia do código testado e a asserção vira tautologia.
+ * Rótulos das 5 colunas como o produto os chama (spec do Quadro). É uma lista
+ * LITERAL de propósito: se ela vier de `KANBAN_COLUMNS`, o esperado passa a ser
+ * uma cópia do código testado e a asserção vira tautologia.
  */
-const ABAS_DAS_COLUNAS = ['Entrada', 'A fazer', 'Fazendo', 'Aguardando', 'Concluído'];
+const ROTULOS_DAS_COLUNAS = ['Caixa de entrada', 'A fazer', 'Fazendo', 'Aguardando', 'Concluído'];
 
 /** O módulo guarda o último modo em `tasks-mode` (é ele que escolhe o Quadro). */
 function usarModoQuadro() {
@@ -200,31 +200,32 @@ describe('E22 — o menu "Mover para" do card opera só com teclado', () => {
   });
 });
 
-describe('E22/etapa 099 — as abas nomeiam cada coluna do Quadro (tela estreita)', () => {
-  it('cada coluna tem uma aba com nome acessível e a da coluna à vista fica marcada', async () => {
+describe('E22 — a faixa de colunas nomeia cada coluna do Quadro', () => {
+  it('cada coluna tem um dot com nome acessível e o da coluna à vista fica marcado', async () => {
     setSelectResult({ data: [], error: null });
     const devolverMidia = fingirMidia(TELA_ESTREITA);
     try {
       renderQuadro();
-      const abas = await screen.findByTestId('board-tabs');
+      await screen.findByTestId('board-dots');
 
-      // Etapa 099: as abas substituíram as setas ‹ › e os 5 dots do carrossel —
-      // a lista é LITERAL de propósito, para não virar cópia de `KANBAN_COLUMNS`.
-      const botoes = within(abas).getAllByRole('tab');
-      expect(botoes.map(b => b.textContent)).toEqual(ABAS_DAS_COLUNAS);
-
-      // A aba diz QUAL coluna está à vista (não só existe e é nomeada).
-      expect(within(abas).getByRole('tab', { name: 'Entrada' }))
-        .toHaveAttribute('aria-selected', 'true');
-      for (const rotulo of ABAS_DAS_COLUNAS.slice(1)) {
-        expect(within(abas).getByRole('tab', { name: rotulo }))
-          .toHaveAttribute('aria-selected', 'false');
+      for (const rotulo of ROTULOS_DAS_COLUNAS) {
+        expect(
+          screen.getByRole('button', { name: `Ir para ${rotulo}` }),
+          `dot da coluna "${rotulo}"`,
+        ).toBeTruthy();
       }
 
-      // A aba à vista aponta para o painel que monta a coluna.
-      const painel = screen.getByRole('tabpanel');
-      expect(within(abas).getByRole('tab', { name: 'Entrada' })).toHaveAttribute('aria-controls', painel.id);
-      expect(painel).toHaveAttribute('aria-labelledby', 'board-tab-backlog');
+      // O dot diz QUAL coluna está à vista (não só existe e é nomeado).
+      expect(screen.getByRole('button', { name: 'Ir para Caixa de entrada' }))
+        .toHaveAttribute('aria-current', 'true');
+      for (const rotulo of ROTULOS_DAS_COLUNAS.slice(1)) {
+        expect(screen.getByRole('button', { name: `Ir para ${rotulo}` }))
+          .not.toHaveAttribute('aria-current');
+      }
+
+      // As setas da faixa também são controles nomeados, com o limite de cada ponta.
+      expect(screen.getByRole('button', { name: 'Coluna anterior' })).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Próxima coluna' })).toBeEnabled();
     } finally {
       devolverMidia();
     }

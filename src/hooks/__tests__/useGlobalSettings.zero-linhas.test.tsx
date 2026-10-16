@@ -9,8 +9,6 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import type { ReactNode } from 'react';
 
 const mockOrder = vi.hoisted(() => vi.fn());
 const mockSelectAposUpdate = vi.hoisted(() => vi.fn());
@@ -36,16 +34,6 @@ const linhas = [
 ];
 
 describe('useGlobalSettings — zero linhas afetadas não é sucesso (R2-AUTH-030)', () => {
-  // O hook lê do cache do React Query (configuração compartilhada): cada render usa o
-  // próprio QueryClient, como o AppProviders monta na aplicação.
-  function renderGlobalSettings() {
-    const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
-    const wrapper = ({ children }: { children: ReactNode }) => (
-      <QueryClientProvider client={client}>{children}</QueryClientProvider>
-    );
-    return renderHook(() => useGlobalSettings(), { wrapper });
-  }
-
   beforeEach(() => {
     vi.clearAllMocks();
     mockEq.mockReturnValue({ select: mockSelectAposUpdate });
@@ -55,7 +43,7 @@ describe('useGlobalSettings — zero linhas afetadas não é sucesso (R2-AUTH-03
   it('rejeita a atualização quando nenhuma linha é atualizada e mantém o estado local', async () => {
     mockSelectAposUpdate.mockResolvedValue({ data: [], error: null });
 
-    const { result } = renderGlobalSettings();
+    const { result } = renderHook(() => useGlobalSettings());
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.getSetting('user_creation')).toBe('enabled');
 
@@ -70,7 +58,7 @@ describe('useGlobalSettings — zero linhas afetadas não é sucesso (R2-AUTH-03
   it('aceita a atualização e reflete o novo valor quando a linha é devolvida', async () => {
     mockSelectAposUpdate.mockResolvedValue({ data: [{ key: 'user_creation' }], error: null });
 
-    const { result } = renderGlobalSettings();
+    const { result } = renderHook(() => useGlobalSettings());
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     await act(async () => {

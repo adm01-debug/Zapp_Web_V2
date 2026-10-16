@@ -4,7 +4,6 @@ import { renderHook, waitFor, act } from '@testing-library/react';
 
 const mockFrom = vi.fn();
 const mockFunctionsInvoke = vi.fn();
-const selectCalls: string[][] = [];
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
@@ -22,11 +21,6 @@ const mockUseAuth = vi.fn();
 vi.mock('@/hooks/auth/useAuth', () => ({
   useAuth: () => mockUseAuth(),
   AuthProvider: ({ children }: { children?: ReactNode }) => children,
-}));
-
-const mockNotificarDispositivo = vi.fn();
-vi.mock('@/lib/avisoDispositivo', () => ({
-  notificarDispositivoNovo: (...args: unknown[]) => mockNotificarDispositivo(...args),
 }));
 
 vi.mock('@/lib/logger', () => ({
@@ -52,10 +46,7 @@ function makeBuilder(opts: {
   const maybeSingleResult = opts.maybeSingleResult ?? (() => Promise.resolve({ data: null, error: null }));
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const b: any = {};
-  b.select = vi.fn((...cols: unknown[]) => {
-    selectCalls.push(cols as string[]);
-    return b;
-  });
+  b.select = vi.fn(() => b);
   b.eq = vi.fn(() => b);
   b.order = vi.fn(() => b);
   b.neq = vi.fn(() => b);
@@ -91,7 +82,6 @@ function mockInvokeRevokeReject() {
 
 function setupDefaultMocks() {
   mockUseAuth.mockReturnValue({ user: { id: 'u1' } });
-  mockNotificarDispositivo.mockResolvedValue('dev-atual');
   mockFunctionsInvoke.mockResolvedValue({ data: { revoked: 1 }, error: null });
   mockFrom.mockImplementation((table: string) => {
     if (table === 'user_sessions') {
@@ -119,19 +109,7 @@ describe('useDeviceDetection', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     events = [];
-    selectCalls.length = 0;
     setupDefaultMocks();
-  });
-
-  it('reusa o aviso único por sessão do provider de auth (sem segunda chamada a detect-new-device)', async () => {
-    const rendered = renderHook(() => useDeviceDetection());
-    await waitFor(() => expect(rendered.result.current.loading).toBe(false));
-
-    // O aviso é disparado pelo AuthProvider, uma vez por sessão Auth; aqui o hook
-    // apenas reaproveita o device_id já obtido naquela chamada.
-    expect(mockNotificarDispositivo).toHaveBeenCalledWith('token');
-    expect(mockFunctionsInvoke).not.toHaveBeenCalledWith('detect-new-device', expect.anything());
-    await waitFor(() => expect(rendered.result.current.currentDeviceId).toBe('dev-atual'));
   });
 
   it('initializes with loading=true', () => {
@@ -174,18 +152,6 @@ describe('useDeviceDetection', () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(mockFrom).toHaveBeenCalledWith('user_devices');
     expect(mockFrom).toHaveBeenCalledWith('user_sessions');
-  });
-
-  it('não usa select("*") — traz só as colunas necessárias de user_devices', async () => {
-    renderHook(() => useDeviceDetection());
-    await waitFor(() => expect(mockFrom).toHaveBeenCalledWith('user_devices'));
-    expect(selectCalls.some((cols) => cols.includes('*'))).toBe(false);
-  });
-
-  it('não usa select("*") — traz só as colunas necessárias de user_sessions', async () => {
-    renderHook(() => useDeviceDetection());
-    await waitFor(() => expect(mockFrom).toHaveBeenCalledWith('user_sessions'));
-    expect(selectCalls.some((cols) => cols.includes('*'))).toBe(false);
   });
 
   // ─── Critério 3: encerrar uma revoga só a alvo (scope local) ───

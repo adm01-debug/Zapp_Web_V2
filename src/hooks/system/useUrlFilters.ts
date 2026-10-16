@@ -8,21 +8,21 @@ import { useSearchParams } from 'react-router-dom';
 
 export interface UrlFiltersState {
   status: string[];
+  tags: string[];
   agentId: string | null;
   dateFrom: string | null;
   dateTo: string | null;
+  search: string;
 }
 
 const PARAM_KEYS = {
   status: 'status',
+  tags: 'tags',
   agentId: 'agent',
   dateFrom: 'from',
   dateTo: 'to',
+  search: 'q',
 } as const;
-
-// Texto de busca (telefone/nome) não vai para a URL: um link copiado vazaria dado do contato.
-// Links antigos com ?q= são limpos em clearFilters.
-const LEGACY_SEARCH_KEY = 'q';
 
 export function useUrlFilters() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -30,12 +30,15 @@ export function useUrlFilters() {
   // Parse filters from URL
   const filters = useMemo<UrlFiltersState>(() => {
     const statusParam = searchParams.get(PARAM_KEYS.status);
+    const tagsParam = searchParams.get(PARAM_KEYS.tags);
 
     return {
       status: statusParam ? statusParam.split(',').filter(Boolean) : [],
+      tags: tagsParam ? tagsParam.split(',').filter(Boolean) : [],
       agentId: searchParams.get(PARAM_KEYS.agentId),
       dateFrom: searchParams.get(PARAM_KEYS.dateFrom),
       dateTo: searchParams.get(PARAM_KEYS.dateTo),
+      search: searchParams.get(PARAM_KEYS.search) || '',
     };
   }, [searchParams]);
 
@@ -50,6 +53,15 @@ export function useUrlFilters() {
           params.set(PARAM_KEYS.status, newFilters.status.join(','));
         } else {
           params.delete(PARAM_KEYS.status);
+        }
+      }
+
+      // Handle tags array
+      if (newFilters.tags !== undefined) {
+        if (newFilters.tags.length > 0) {
+          params.set(PARAM_KEYS.tags, newFilters.tags.join(','));
+        } else {
+          params.delete(PARAM_KEYS.tags);
         }
       }
 
@@ -80,6 +92,15 @@ export function useUrlFilters() {
         }
       }
 
+      // Handle search
+      if (newFilters.search !== undefined) {
+        if (newFilters.search) {
+          params.set(PARAM_KEYS.search, newFilters.search);
+        } else {
+          params.delete(PARAM_KEYS.search);
+        }
+      }
+
       return params;
     }, { replace: true });
   }, [setSearchParams]);
@@ -89,7 +110,6 @@ export function useUrlFilters() {
     setSearchParams(prev => {
       const params = new URLSearchParams(prev);
       Object.values(PARAM_KEYS).forEach(key => params.delete(key));
-      params.delete(LEGACY_SEARCH_KEY);
       return params;
     }, { replace: true });
   }, [setSearchParams]);
@@ -98,9 +118,11 @@ export function useUrlFilters() {
   const hasActiveFilters = useMemo(() => {
     return (
       filters.status.length > 0 ||
+      filters.tags.length > 0 ||
       filters.agentId !== null ||
       filters.dateFrom !== null ||
-      filters.dateTo !== null
+      filters.dateTo !== null ||
+      filters.search !== ''
     );
   }, [filters]);
 

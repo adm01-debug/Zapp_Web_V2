@@ -31,11 +31,7 @@ const { dispatches } = vi.hoisted(() => ({
 }));
 
 vi.mock('@/hooks/integrations/useMultiplixDispatches', () => ({
-  // Contrato atual: a lista entrega `{ rows, total }` (o total do servidor é o
-  // que rotula o caso parcial). Aqui o total acompanha as linhas, então a lista
-  // NÃO está parcial e não há página seguinte a pedir.
-  useMultiplixDispatchesList: () => ({ data: { rows: dispatches, total: dispatches.length }, refetch: vi.fn() }),
-  fetchMultiplixDispatchesPage: vi.fn(),
+  useMultiplixDispatchesList: () => ({ data: dispatches, refetch: vi.fn() }),
   useCreateMultiplixDispatch: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 
@@ -54,8 +50,9 @@ vi.mock('@/components/multiplix/MultiplixMonitor', () => ({
   ),
 }));
 
-// TL-006/F72: o mock do `MultiplixComposerDialog` deixou de existir (a
-// composição passou para a região 02 da própria tela).
+vi.mock('@/components/multiplix/MultiplixComposerDialog', () => ({
+  MultiplixComposerDialog: () => null,
+}));
 
 import MultiplixView from '@/components/multiplix/MultiplixView';
 

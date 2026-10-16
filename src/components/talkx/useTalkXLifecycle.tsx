@@ -31,9 +31,6 @@ import { useTalkX } from '@/hooks/integrations/useTalkX';
  * - Quando a ação falha, o erro fica em `error` e a intenção CONTINUA montada,
  *   então o diálogo segue aberto para a tela mostrar e o usuário tentar de novo.
  * - O hook não escreve evento de ciclo de vida: a trilha é do servidor (X024).
- * - `request` aceita `details` (linhas de contexto do diálogo) e, para `start`,
- *   `run` (executor próprio da tela): o `confirm()` chama `run()` e só fecha no
- *   aceite — `run()` devolvendo `false` mantém o diálogo aberto com erro.
  */
 
 /** `start` é o disparo (iniciar/launch); `resume` retoma uma campanha pausada. */
@@ -42,14 +39,6 @@ export type TalkXLifecycleKind = 'start' | 'pause' | 'resume' | 'cancel' | 'sche
 export interface TalkXLifecycleTarget {
   id: string;
   name?: string | null;
-  /** Total de destinatários, quando a tela já tem o número (ex.: wizard). */
-  total_recipients?: number;
-}
-
-/** Linha de resumo do pedido (rótulo/valor) exibida no diálogo único. */
-export interface TalkXLifecycleDetail {
-  label: string;
-  value: string;
 }
 
 export interface TalkXLifecycleRequest {
@@ -57,15 +46,6 @@ export interface TalkXLifecycleRequest {
   target: TalkXLifecycleTarget;
   /** Para `schedule`: instante ISO do agendamento. */
   scheduledAt?: string;
-  /** Linhas de contexto do pedido (segmento, destinatários, envio). */
-  details?: TalkXLifecycleDetail[];
-  /**
-   * Só para `kind: 'start'`: executor próprio da tela. Quando existir, o
-   * `confirm()` chama `run()` no lugar de `startCampaign(target.id)` — é o que
-   * deixa o wizard salvar o rascunho e criar o snapshot antes de iniciar.
-   * `run()` devolvendo `false` mantém o diálogo aberto com erro.
-   */
-  run?: () => Promise<boolean> | boolean;
 }
 
 export type TalkXLifecycleIntent = TalkXLifecycleRequest;
@@ -148,8 +128,6 @@ export const talkXLifecycleCopy: Record<TalkXLifecycleKind, TalkXLifecycleCopy> 
   },
 };
 
-const ENVIO_NAO_ACEITO = 'O envio não foi aceito. Tente novamente.';
-
 export function useTalkXLifecycle(): TalkXLifecycleController {
   const {
     startCampaign,
@@ -169,23 +147,12 @@ export function useTalkXLifecycle(): TalkXLifecycleController {
   const runAction = useCallback(
     async (current: TalkXLifecycleIntent, currentReason: string) => {
       switch (current.kind) {
-        case 'start': {
-          // Executor próprio da tela (wizard): salva o rascunho e cria o
-          // snapshot antes de iniciar. Sem `run`, vale o caminho padrão.
-          if (current.run) {
-            const accepted = await current.run();
-            if (!accepted) throw new Error(ENVIO_NAO_ACEITO);
-            return;
-          }
+        case 'start':
+        case 'resume': {
           const started = await startCampaign(current.target.id);
           // `startCampaign` engole o erro e devolve `false`; sem isto o
           // diálogo fecharia como se tivesse dado certo.
-          if (!started) throw new Error(ENVIO_NAO_ACEITO);
-          return;
-        }
-        case 'resume': {
-          const started = await startCampaign(current.target.id);
-          if (!started) throw new Error(ENVIO_NAO_ACEITO);
+          if (!started) throw new Error('O envio não foi aceito. Tente novamente.');
           return;
         }
         case 'pause':
@@ -194,23 +161,13 @@ export function useTalkXLifecycle(): TalkXLifecycleController {
         case 'cancel':
           await cancelCampaign(current.target.id);
           return;
-        case 'schedule': {
-          // A tela pode chegar sem a data (campo vazio ou não montado). Sem
-          // validar, `scheduled_at: current.scheduledAt ?? null` gravava
-          // `status: 'scheduled'` com data nula. Barra ANTES da mutação: o
-          // throw cai no `catch` do `confirm`, o erro fica em `error` e a
-          // intenção continua montada (o diálogo segue aberto).
-          const scheduledAt = current.scheduledAt?.trim();
-          if (!scheduledAt || Number.isNaN(Date.parse(scheduledAt))) {
-            throw new Error('Escolha a data e hora do agendamento.');
-          }
+        case 'schedule':
           await updateCampaign.mutateAsync({
             id: current.target.id,
             status: 'scheduled',
-            scheduled_at: scheduledAt,
+            scheduled_at: current.scheduledAt ?? null,
           });
           return;
-        }
       }
     },
     [startCampaign, pauseCampaign, cancelCampaign, updateCampaign],
@@ -280,7 +237,6 @@ export function TalkXLifecycleDialog({
 }) {
   const { intent, isPending, error, reason } = controller;
   const copy = intent ? talkXLifecycleCopy[intent.kind] : null;
-  const details = intent?.details ?? [];
 
   return (
     <AlertDialog
@@ -296,20 +252,6 @@ export function TalkXLifecycleDialog({
               <AlertDialogTitle>{copy.title}</AlertDialogTitle>
               <AlertDialogDescription>{copy.description}</AlertDialogDescription>
             </AlertDialogHeader>
-
-            {details.length > 0 && (
-              <dl className="grid gap-1.5 rounded-md border border-border/70 bg-muted/40 px-3 py-2 text-sm">
-                {details.map((detail, index) => (
-                  <div
-                    key={`${detail.label}-${index}`}
-                    className="flex items-start justify-between gap-3"
-                  >
-                    <dt className="text-muted-foreground">{detail.label}</dt>
-                    <dd className="text-right font-medium text-foreground">{detail.value}</dd>
-                  </div>
-                ))}
-              </dl>
-            )}
 
             {copy.requiresReason && (
               <textarea

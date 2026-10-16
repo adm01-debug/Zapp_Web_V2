@@ -191,48 +191,22 @@ export async function handleContactsUpsert(supabase: EvolutionDbClient, instance
   }
 }
 
-// Presença ("digitando") do CONTATO — PD-68.
-//
-// Segurança em duas camadas:
-// 1. EMISSOR AUTENTICADO: este handler só é alcançado pelo caminho já validado
-//    do evolution-webhook (gate R2-API-021 — assinatura HMAC/EVOLUTION_WEBHOOK_SECRET
-//    ou instanceToken por instância — roda ANTES de qualquer handler; ver
-//    evolution-webhook/index.ts). Aqui dentro o guard residual é fail-closed:
-//    sem instância registrada (getConnectionByInstance) ou sem contato
-//    correspondente, NADA é publicado.
-// 2. CANAL PRIVADO: o broadcast vai no canal `typing:<id>` com
-//    `{ config: { private: true } }`, então a Realtime aplica a RLS de
-//    `realtime.messages` (migration 20261013210002_realtime_canais_privados.sql) —
-//    quem pode assinar e quem pode enviar passa a ser decidido pelo banco, e um
-//    cliente anônimo/estranho não lê nem forja "digitando" alheio.
-//
-// Diferente de grupo (`@g.us`), o JID de difusão (`@broadcast`, inclui
-// `status@broadcast`) NÃO é contato: era a brecha por onde o broadcast público
-// vazava; agora é descartado antes de qualquer acesso ao banco.
 // deno-lint-ignore no-explicit-any
 export async function handlePresenceUpdate(supabase: EvolutionDbClient, instance: string, data: unknown) {
   const presenceData = isRecord(data) ? data : {};
-  const jid = ((presenceData.id as string) || (presenceData.remoteJid as string) || '').trim();
+  const jid = (presenceData.id as string) || (presenceData.remoteJid as string);
+  const presences = presenceData.presences as Record<string, Record<string, unknown>> | undefined;
 
   if (jid && !jid.endsWith('@g.us')) {
-    // O GO entrega dois envelopes aqui: ChatPresence {presences:{jid:{lastKnownPresence}}}
-    // com composing/paused, e Presence {status} com online/offline (às vezes
-    // available/unavailable). Antes só 'composing' era aproveitado. Colhemos
-    // TODOS os estados do evento e derivamos digitando e presença real.
-    const estados: string[] = [];
+    let isComposing = false;
     if (presences) {
       for (const [, pState] of Object.entries(presences)) {
-        const valor = pState?.lastKnownPresence ?? pState?.status;
-        if (typeof valor === 'string') estados.push(valor.toLowerCase());
+        if (pState?.lastKnownPresence === 'composing' || pState?.status === 'composing') { isComposing = true; break; }
       }
     } else {
-      const direto = presenceData.status ?? presenceData.lastKnownPresence;
-      if (typeof direto === 'string') estados.push(direto.toLowerCase());
+      const directStatus = presenceData.status as string || presenceData.lastKnownPresence as string;
+      isComposing = directStatus === 'composing';
     }
-
-    const isComposing = estados.includes('composing');
-    const online = estados.some((e) => e === 'online' || e === 'available');
-    const offline = estados.some((e) => e === 'offline' || e === 'unavailable');
 
     const phone = normalizePhone(jid);
     if (phone) {
@@ -240,53 +214,13 @@ export async function handlePresenceUpdate(supabase: EvolutionDbClient, instance
       if (connection) {
         const contact = await getContactByPhone(supabase, phone, connection.id);
         if (contact) {
-          // 'digitando' inalterado: todo evento de presença ainda avisa o front.
           const channel = supabase.channel(`typing:${contact.id}`);
           await channel.send({ type: 'broadcast', event: 'contact_typing', payload: { isTyping: isComposing, contactId: contact.id, timestamp: new Date().toISOString() } });
           supabase.removeChannel(channel);
-
-          // Presença ONLINE/OFFLINE real do contato (R2-INB-030 removia o que era
-          // falso; o real vindo do WhatsApp é permitido). Grava só o estado e os
-          // horários — nada além disso.
-          if (online || offline) {
-            const agora = new Date().toISOString();
-            const updateData: Record<string, unknown> = {
-              presence_status: online ? 'online' : 'offline',
-              presence_updated_at: agora,
-            };
-            if (offline) {
-              // "Visto por último" só avança na TRANSIÇÃO online -> offline:
-              // um contato que o WhatsApp já mandava como offline não reescreve
-              // (nem inventa) esse horário.
-              const { data: atual } = await supabase
-                .from('contacts')
-                .select('presence_status')
-                .eq('id', contact.id)
-                .maybeSingle();
-              if (atual?.presence_status === 'online') updateData.last_seen_at = agora;
-            }
-            await supabase.from('contacts').update(updateData).eq('id', contact.id);
-          }
         }
       }
     }
-  } else {
-    const directStatus = presenceData.status as string || presenceData.lastKnownPresence as string;
-    isComposing = directStatus === 'composing';
   }
-
-  const phone = normalizePhone(jid);
-  if (!phone) return;
-
-  const connection = await getConnectionByInstance(supabase, instance);
-  if (!connection) return;
-
-  const contact = await getContactByPhone(supabase, phone, connection.id);
-  if (!contact) return;
-
-  const channel = supabase.channel(`typing:${contact.id}`, { config: { private: true } });
-  await channel.send({ type: 'broadcast', event: 'contact_typing', payload: { isTyping: isComposing, contactId: contact.id, timestamp: new Date().toISOString() } });
-  supabase.removeChannel(channel);
 }
 
 // deno-lint-ignore no-explicit-any

@@ -7,8 +7,7 @@
  *   T3 — ordem das abas Lista/Quadro/Agenda (`ModeSwitcher`);
  *   T4 — destinos do menu "Mover para" (`WorkItemCard`/`MoveTargets`);
  *   T5 — `shortLabel` das colunas (`workItem.types`);
- *   T6 — o contêiner da linha das colunas é a faixa com vão (`.grid.gap-3` desde
- *        a etapa 099; antes era `.flex.gap-3` do carrossel).
+ *   T6 — o contêiner da linha das colunas é a faixa flex com vão (`.flex.gap-3`).
  *
  * Cada caso mede a ORDEM/RÓTULO que o componente REAL renderiza no DOM (nunca o
  * array do código): trocar a ordem ou o rótulo em produção fica vermelho. O
@@ -95,12 +94,10 @@ describe('Contratos visíveis das Tarefas (T1, T3, T4, T5, T6)', () => {
       expect(coluna.textContent, `coluna ${i}`).toContain(ROTULOS_DAS_COLUNAS[i]);
     });
 
-    // T6 — as 5 colunas são irmãs no MESMO contêiner, que é a faixa com o vão.
-    // Etapa 099: a faixa deixou de ser `flex` (carrossel) e virou `grid`, que é
-    // quem distribui as 5 faixas de largura igual e quebra linha quando não cabe.
+    // T6 — as 5 colunas são irmãs na MESMA linha, que é a faixa flex com o vão.
     const trilho = colunas[0].parentElement!;
     expect(trilho.children, 'as colunas e o trilho não podem se separar').toHaveLength(5);
-    expect(trilho.className).toMatch(/(^|\s)grid(\s|$)/);
+    expect(trilho.className).toMatch(/(^|\s)flex(\s|$)/);
     expect(trilho.className).toMatch(/(^|\s)gap-3(\s|$)/);
   });
 

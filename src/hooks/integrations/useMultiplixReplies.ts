@@ -81,15 +81,6 @@ export interface MultiplixRepliesResult {
 /** Teto de candidatos por telefone — o mesmo do funil VoIP (`findContactByPhone`). */
 const CONTACT_LOOKUP_LIMIT = 5;
 
-/** Telefones por lote: uma consulta cobre 50 destinatarios. */
-const CONTACT_LOOKUP_BATCH_SIZE = 50;
-
-/** Lotes simultaneos — no maximo 3 consultas em voo. */
-const CONTACT_LOOKUP_CONCURRENCY = 3;
-
-/** Teto de linhas por lote (50 telefones x 5 candidatos): pagina cheia = corte. */
-const CONTACT_LOOKUP_BATCH_LIMIT = CONTACT_LOOKUP_BATCH_SIZE * CONTACT_LOOKUP_LIMIT;
-
 const ATTRIBUTIONS: readonly MultiplixReplyAttribution[] = ['linked', 'inferred'];
 
 interface ByRecipientRow {
@@ -180,82 +171,40 @@ function compareRepliesDesc(a: MultiplixReply, b: MultiplixReply): number {
   return a.recipient_id.localeCompare(b.recipient_id);
 }
 
-/** Fatia a lista em lotes de `size` (o ultimo pode vir menor). */
-function chunk<T>(items: readonly T[], size: number): T[][] {
-  const batches: T[][] = [];
-  for (let i = 0; i < items.length; i += size) batches.push(items.slice(i, i + size));
-  return batches;
-}
-
 /**
- * Contatos de UM lote de telefones, na regra de `@/lib/calls/phone` (E.164
- * completo). Nenhum candidato, empate entre candidatos ou conjunto cortado
- * devolvem `null` — nunca um vinculo adivinhado.
+ * Contato do Zapp por telefone, na regra de `@/lib/calls/phone` (E.164 completo).
+ * Nenhum candidato, empate entre candidatos ou conjunto cortado devolvem `null`
+ * — nunca um vinculo adivinhado.
  *
- * O lote e uma consulta so (`.or` com as grafias de todos os telefones), e nao
- * uma por telefone: um disparo com centenas de destinatarios fazia centenas de
- * requisicoes simultaneas ao PostgREST. O que muda e o NUMERO de consultas, nao
- * a regra de unicidade: a pagina vem com `.order('id')` (conjunto determinista)
- * e continua valendo que uma pagina CHEIA nao afirma unicidade — no lote
- * truncado (teto de linhas) nenhum telefone dele recebe contato. A falha da
- * consulta NAO vira `contact_id` nulo em silencio: propaga.
- */
-async function resolveContactsInBatch(batch: readonly string[]): Promise<Map<string, string>> {
-  const byPhone = new Map<string, string>();
-  const variants = Array.from(new Set(batch.flatMap((e164) => phoneQueryVariants(e164))));
-  if (variants.length === 0) return byPhone;
-  const { data, error } = await supabase
-    .from('contacts')
-    .select('id, phone')
-    .or(variants.map((variant) => `phone.eq.${variant}`).join(','))
-    .order('id', { ascending: true })
-    .limit(CONTACT_LOOKUP_BATCH_LIMIT);
-  if (error) throw new Error(`Falha ao buscar o contato do retorno: ${error.message}`);
-  const candidates = (data ?? []) as { id: string; phone: string | null }[];
-  // Pagina cheia: pode haver candidato atras do teto do lote — sem o conjunto
-  // completo nao se afirma contato unico para NENHUM telefone do lote.
-  if (candidates.length >= CONTACT_LOOKUP_BATCH_LIMIT) return byPhone;
-  const grouped = new Map<string, { id: string; phone: string | null }[]>();
-  for (const row of candidates) {
-    const e164 = normalizeE164BR(row.phone);
-    if (e164 === null) continue;
-    const list = grouped.get(e164);
-    if (list) list.push(row);
-    else grouped.set(e164, [row]);
-  }
-  for (const e164 of batch) {
-    const rows = grouped.get(e164) ?? [];
-    // Teto por telefone: com 5 candidatos pode haver mais atras dele.
-    if (rows.length >= CONTACT_LOOKUP_LIMIT) continue;
-    const contactId = pickUniquePhoneMatch(rows, e164);
-    if (contactId !== null) byPhone.set(e164, contactId);
-  }
-  return byPhone;
-}
-
-/**
- * Contatos dos telefones dos retornos, resolvidos em lotes de 50 com no maximo
- * 3 lotes em voo (centenas de telefones = poucas consultas, nao centenas).
+ * Uma consulta POR telefone em vez de um `in`/`or` com todos: a resposta do
+ * PostgREST e capada em 1.000 linhas, e um corte silencioso num lote grande
+ * poderia transformar um telefone ambiguo em "unico" — abrindo a conversa de
+ * outro contato. Por isso a pagina vem com `.order('id')` (conjunto
+ * determinista) e uma pagina CHEIA nao afirma unicidade. A falha da consulta
+ * NAO vira `contact_id` nulo em silencio: propaga.
  */
 async function resolveContactIdsByPhone(phones: readonly (string | null)[]): Promise<Map<string, string>> {
   const wanted = Array.from(new Set(
     phones.map((phone) => normalizeE164BR(phone)).filter((e164): e164 is string => e164 !== null),
   ));
   const byPhone = new Map<string, string>();
-  const batches = chunk(wanted, CONTACT_LOOKUP_BATCH_SIZE);
-  let next = 0;
-  const workers = Array.from(
-    { length: Math.min(CONTACT_LOOKUP_CONCURRENCY, batches.length) },
-    async () => {
-      while (next < batches.length) {
-        const index = next;
-        next += 1;
-        const resolved = await resolveContactsInBatch(batches[index]);
-        resolved.forEach((contactId, phone) => byPhone.set(phone, contactId));
-      }
-    },
-  );
-  await Promise.all(workers);
+  await Promise.all(wanted.map(async (e164) => {
+    const variants = phoneQueryVariants(e164);
+    if (variants.length === 0) return;
+    const { data, error } = await supabase
+      .from('contacts')
+      .select('id, phone')
+      .or(variants.map((variant) => `phone.eq.${variant}`).join(','))
+      .order('id', { ascending: true })
+      .limit(CONTACT_LOOKUP_LIMIT);
+    if (error) throw new Error(`Falha ao buscar o contato do retorno: ${error.message}`);
+    const candidates = (data ?? []) as { id: string; phone: string | null }[];
+    // Pagina cheia: pode haver candidato atras do teto — sem o conjunto
+    // completo nao se afirma contato unico.
+    if (candidates.length >= CONTACT_LOOKUP_LIMIT) return;
+    const contactId = pickUniquePhoneMatch(candidates, e164);
+    if (contactId !== null) byPhone.set(e164, contactId);
+  }));
   return byPhone;
 }
 

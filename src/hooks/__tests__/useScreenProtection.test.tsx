@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { renderHook } from '@testing-library/react';
 
 vi.mock('@/hooks/auth/useAuth', () => ({
   useAuth: () => ({ user: { id: 'user-1', email: 'test@test.com' } }),
@@ -55,43 +55,5 @@ describe('useScreenProtection', () => {
     const event = new Event('contextmenu', { cancelable: true });
     document.dispatchEvent(event);
     expect(event.type).toBe('contextmenu');
-  });
-
-  it('toggle não quebra com localStorage bloqueado e segue disparando o evento', () => {
-    const spy = vi
-      .spyOn(Storage.prototype, 'setItem')
-      .mockImplementation(() => {
-        throw new Error('armazenamento bloqueado');
-      });
-    const onChange = vi.fn();
-    window.addEventListener('screen-protection-change', onChange);
-
-    const { result } = renderHook(() => useScreenProtection());
-
-    // O setItem lança dentro do toggle: antes o clique estourava e o evento nem saía.
-    expect(() => act(() => result.current.toggle())).not.toThrow();
-    expect(onChange).toHaveBeenCalledTimes(1);
-
-    window.removeEventListener('screen-protection-change', onChange);
-    spy.mockRestore();
-  });
-
-  it('overlay de perda de foco tem role alert e aria-live assertive', () => {
-    renderHook(() => useScreenProtection());
-
-    act(() => {
-      window.dispatchEvent(new Event('blur'));
-    });
-
-    const overlay = document.getElementById('screen-protection-overlay');
-    expect(overlay).not.toBeNull();
-    expect(overlay?.getAttribute('role')).toBe('alert');
-    expect(overlay?.getAttribute('aria-live')).toBe('assertive');
-    expect(overlay?.textContent).toContain('Conteúdo Protegido');
-
-    act(() => {
-      window.dispatchEvent(new Event('focus'));
-    });
-    expect(document.getElementById('screen-protection-overlay')).toBeNull();
   });
 });

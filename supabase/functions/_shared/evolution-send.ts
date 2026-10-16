@@ -96,67 +96,10 @@ export async function evoFetch(
   });
 }
 
-/**
- * Id da mensagem (WhatsApp/Evolution) em QUALQUER forma de resposta conhecida.
- *
- * A Evolution não é consistente entre endpoints (`/message/sendText`,
- * `/message/sendMedia`, `/message/sendWhatsAppAudio`, `/message/sendSticker`) e
- * versões. Sem o id, o chamador não consegue correlacionar um reenvio ao MESMO
- * `external_id` (vira 502/reconciliação com a mensagem já entregue). Formas
- * cobertas (porte da `src/lib/evolutionMessageId.ts` da V3 + o envelope GO):
- *   { key: { id } }, { key: "<id>" }, { messageId }, { keyId }, { id },
- *   { message: { key: { id } } }, { response: { key: { id } } },
- *   { data: { key: { id } } }, { result: { key: { id } } },
- *   { message: { message: { key: { id } } } } (retry do sendWhatsAppAudio) e
- *   { data: { Info: { ID } } } (Evolution GO).
- *
- * Null-safe: `null`, `undefined`, primitivos, `{ key: null }` e containers
- * aninhados ausentes devolvem `undefined` (nunca lança e nunca devolve string
- * vazia). Devolve o primeiro string não-vazio, com `trim`, ou `undefined`.
- */
+// v2 retorna key.id; GO retorna data.Info.ID.
 export function extractMessageId(data: unknown): string | undefined {
-  if (!data || typeof data !== "object") return undefined;
-  const raiz = data as Record<string, unknown>;
-  const candidatos: unknown[] = [];
-
-  // `key` pode ser o objeto Baileys padrão ({ id, remoteJid, fromMe }) ou, em
-  // algumas builds/respostas de erro, uma string crua — tratamos ambos.
-  const pushChaves = (container: Record<string, unknown> | null | undefined): void => {
-    if (!container || typeof container !== "object") return;
-    const key = container.key;
-    if (typeof key === "string") {
-      candidatos.push(key);
-    } else if (key && typeof key === "object") {
-      candidatos.push((key as Record<string, unknown>).id);
-    }
-    candidatos.push(container.messageId, container.keyId);
-    // GO envelopa o recibo em { data: { Info: { ID } } }; vem antes do `id`
-    // genérico para não perder para um `id` alheio à mensagem.
-    const info = container.Info;
-    if (info && typeof info === "object") {
-      candidatos.push((info as Record<string, unknown>).ID);
-    }
-    candidatos.push(container.id);
-  };
-
-  pushChaves(raiz);
-
-  // Um nível de aninhamento usado por mídia/áudio/figurinha; `message` ainda
-  // pode aparecer repetido no retry do sendWhatsAppAudio (dois níveis).
-  for (const k of ["message", "response", "data", "result"]) {
-    const interno = raiz[k];
-    if (!interno || typeof interno !== "object" || Array.isArray(interno)) continue;
-    pushChaves(interno as Record<string, unknown>);
-    const interno2 = (interno as Record<string, unknown>).message;
-    if (interno2 && typeof interno2 === "object" && !Array.isArray(interno2)) {
-      pushChaves(interno2 as Record<string, unknown>);
-    }
-  }
-
-  for (const c of candidatos) {
-    if (typeof c === "string" && c.trim().length > 0) return c.trim();
-  }
-  return undefined;
+  const d = data as { key?: { id?: string }; data?: { Info?: { ID?: string } } };
+  return d?.key?.id ?? d?.data?.Info?.ID;
 }
 
 // ── Extractors de resposta (v2 e GO) ─────────────────────────────────────────

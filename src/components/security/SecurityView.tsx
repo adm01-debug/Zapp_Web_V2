@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Shield, Key, Lock, Activity, Users, Bell, Smartphone, LayoutDashboard, Fingerprint, Globe, FileText, Gauge, ShieldAlert } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,10 +11,8 @@ import { PasskeysPanel } from './PasskeysPanel';
 import { SecurityNotificationsPanel } from './SecurityNotificationsPanel';
 import { BlockedIPsPanel } from './BlockedIPsPanel';
 import { IPWhitelistPanel } from './IPWhitelistPanel';
-import { LoginBlockedLogPanel } from './LoginBlockedLogPanel';
 import { GeoBlockingPanel } from './GeoBlockingPanel';
 import { PasswordResetRequestsPanel } from './PasswordResetRequestsPanel';
-import { AclAlertsPanel } from './AclAlertsPanel';
 import { RateLimitRealtimeAlerts } from './RateLimitRealtimeAlerts';
 import { RateLimitConfigPanel } from './RateLimitConfigPanel';
 import { AuditLogDashboard } from './AuditLogDashboard';
@@ -24,8 +21,7 @@ import { useUserRole } from '@/hooks/system/useUserRole';
 import { useSecurityPushNotifications } from '@/hooks/system/useSecurityPushNotifications';
 
 export function SecurityView() {
-  const navigate = useNavigate();
-  const { hasRole, isSupervisor } = useUserRole();
+  const { hasRole } = useUserRole();
   const isAdmin = hasRole('admin');
   const [activeTab, setActiveTab] = useState('overview');
   
@@ -52,8 +48,8 @@ export function SecurityView() {
           </div>
         </div>
 
-        {/* Realtime Alerts for Admin/Supervisor (mesmo gate do RateLimitDashboard) */}
-        {(isAdmin || isSupervisor) && <RateLimitRealtimeAlerts />}
+        {/* Realtime Alerts for Admin */}
+        {isAdmin && <RateLimitRealtimeAlerts />}
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
@@ -134,7 +130,6 @@ export function SecurityView() {
                 <div className="space-y-6">
                   <BlockedIPsPanel />
                   <IPWhitelistPanel />
-                  <LoginBlockedLogPanel />
                 </div>
               </TabsContent>
 
@@ -157,8 +152,7 @@ export function SecurityView() {
               <TabsContent value="admin">
                 <div className="space-y-6">
                   <PasswordResetRequestsPanel />
-                  <AclAlertsPanel />
-
+                  
                   <div className="grid gap-6 md:grid-cols-2">
                     <Card>
                       <CardHeader>
@@ -174,7 +168,7 @@ export function SecurityView() {
                         <Button 
                           variant="outline" 
                           className="mt-4"
-                          onClick={() => navigate('/admin/rate-limit')}
+                          onClick={() => window.location.href = '/admin/rate-limit'}
                         >
                           Ver Dashboard
                         </Button>
@@ -195,7 +189,7 @@ export function SecurityView() {
                         <Button 
                           variant="outline" 
                           className="mt-4"
-                          onClick={() => navigate('/admin/roles')}
+                          onClick={() => window.location.href = '/admin/roles'}
                         >
                           Gerenciar Roles
                         </Button>

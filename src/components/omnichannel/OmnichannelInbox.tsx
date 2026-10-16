@@ -15,10 +15,7 @@ import { ptBR } from 'date-fns/locale';
 import { EmailChatInbox } from '@/components/email/EmailChatInbox';
 import { RealtimeService } from '@/services/realtime.service';
 import { buildConversations, normalizeMessage } from '@/hooks/realtime/realtimeUtils';
-import { cn } from '@/lib/utils';
-import { escapeOrFilterValue } from '@/lib/postgrestFilters';
-import { escapeLikeWildcards } from '@/lib/emailThreadQuery';
-import { OmnichannelChatPanel } from './OmnichannelChatPanel';
+import { openContactChat } from '@/components/catalog/useSendProduct';
 import type {
   ConversationContact,
   ConversationWithMessages,
@@ -101,21 +98,17 @@ async function searchConversations(term: string): Promise<{
   conversations: ConversationWithMessages[];
   messagesTruncated: boolean;
 }> {
-  // O termo digitado é literal no `ilike`: `%` e `_` viram curinga sem o escape e a
-  // busca casaria tudo. `,` `(` `)` `"` `\` também quebram a gramática do `or=`, então
-  // o valor sai entre aspas por `escapeOrFilterValue` (os `%` das pontas continuam
-  // curingas intencionais do padrão).
-  const trimmed = term.trim();
-  if (trimmed.length < SEARCH_MIN_LENGTH) {
+  // `,` `(` `)` `%` `\` quebram a sintaxe do filtro `or=` do PostgREST.
+  const sanitized = term.replace(/[%,()\\]/g, ' ').trim();
+  if (sanitized.length < SEARCH_MIN_LENGTH) {
     return { conversations: [], messagesTruncated: false };
   }
-  const pattern = escapeOrFilterValue(`%${escapeLikeWildcards(trimmed)}%`);
 
   const { data: contacts, error } = await supabase
     .from('contacts')
     .select('*')
     .eq('is_lid_legacy', false)
-    .or(`name.ilike.${pattern},phone.ilike.${pattern}`)
+    .or(`name.ilike.%${sanitized}%,phone.ilike.%${sanitized}%`)
     .order('updated_at', { ascending: false })
     .limit(SEARCH_RESULT_LIMIT);
 
@@ -158,10 +151,6 @@ export function OmnichannelInbox() {
   const [channelStats, setChannelStats] = useState<Record<string, number>>({});
   const [connections, setConnections] = useState<ChannelConnectionRow[]>([]);
   const [connectionsError, setConnectionsError] = useState(false);
-  // Chat embutido (auditoria de UX 10/10): a linha abre o chat AQUI, não navega
-  // para a view `inbox`. Guardamos a conversa inteira (não só o id) para o painel
-  // ter a projeção canônica mesmo depois de a lista ser recarregada ou filtrada.
-  const [selectedConversation, setSelectedConversation] = useState<ConversationWithMessages | null>(null);
 
   const activeSearchTerm = search.trim().length >= SEARCH_MIN_LENGTH ? search.trim() : '';
 
@@ -314,13 +303,8 @@ export function OmnichannelInbox() {
         </div>
 
         {/* Channels tab (original content) */}
-        <TabsContent value="channels" className="flex-1 mt-0 min-h-0 overflow-hidden">
-          <div className="flex h-full min-h-0">
-            <div
-              data-testid="omnichannel-conversation-column"
-              className={cn('min-w-0 flex-1 overflow-auto', selectedConversation && 'hidden md:block')}
-            >
-              <div className="space-y-4 md:space-y-6 p-4">
+        <TabsContent value="channels" className="flex-1 mt-0 overflow-auto">
+          <div className="space-y-4 md:space-y-6 p-4">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3">
@@ -442,20 +426,15 @@ export function OmnichannelInbox() {
                         const showUnreadBadge = searchMessagesTruncated
                           ? unreadIsLowerBound
                           : unreadCount > 0;
-                        const isSelected = selectedConversation?.contact.id === rowContact.id;
                         return (
                           <motion.button
                             key={rowContact.id}
                             type="button"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
-                            onClick={() => setSelectedConversation(conversation)}
+                            onClick={() => openContactChat(rowContact.id)}
                             aria-label={`Abrir conversa de ${rowContact.name}${ariaUnread}`}
-                            aria-current={isSelected ? 'true' : undefined}
-                            className={cn(
-                              "flex w-full items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                              isSelected && "bg-muted",
-                            )}
+                            className="flex w-full items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                           >
                             <div className="relative">
                               <Avatar className="w-10 h-10">
@@ -534,20 +513,6 @@ export function OmnichannelInbox() {
                   </div>
                 </CardContent>
               </Card>
-            )}
-              </div>
-            </div>
-
-            {selectedConversation && (
-              <div
-                data-testid="omnichannel-inline-chat"
-                className="flex min-h-0 min-w-0 flex-1 flex-col border-l md:flex-none md:w-[420px] lg:w-[480px] xl:w-[560px]"
-              >
-                <OmnichannelChatPanel
-                  conversation={selectedConversation}
-                  onClose={() => setSelectedConversation(null)}
-                />
-              </div>
             )}
           </div>
         </TabsContent>

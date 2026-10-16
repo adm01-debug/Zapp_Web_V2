@@ -1,10 +1,9 @@
-import React, { useState, useMemo, useRef, useSyncExternalStore } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import {
-  X, Check, Copy, ChevronLeft, ChevronRight, FileText, BarChart3, Image, Video, Music, Send, CheckCircle, XCircle, History, RotateCcw,
+  X, Check, Copy, ChevronLeft, FileText, BarChart3, Image, Video, Music, Send, CheckCircle, XCircle, History, RotateCcw,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -12,67 +11,22 @@ import { PrimaryButton, GhostButton, Pill } from '@/components/dashboard/overvie
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useTalkXTemplates, type TalkXTemplate, type TemplateInput, type TemplateVariant } from '@/hooks/integrations/useTalkXTemplates';
-import { TalkXQueryBoundary } from './kit/states';
-import {
-  useTalkXTemplateLibraryStats,
-  useTalkXTemplateStats,
-  pointsDelta,
-  TALKX_TEMPLATE_STATS_PERIODS,
-  TALKX_STATS_MIN_BASE,
-} from '@/hooks/integrations/useTalkXTemplateStats';
 import { TalkXMessageEditor, type TalkXMessageEditorHandle } from './TalkXMessageEditor';
-import { TalkXMessagePreview } from './TalkXMessagePreview';
-import { useTalkX } from '@/hooks/integrations/useTalkX';
-import { KpiCard } from './kit/kpi';
-import { PRESETS_DO_PRODUTO } from './kit/dialogPresets';
-import { useTalkXConfirm } from './kit/useTalkXConfirm';
 import {
-  IconTile, RailCard, TalkXSkeletonRows, TEMPLATE_CATEGORIES, TEMPLATE_STATUS,
+  IconTile, RailCard, PhoneFrame, TalkXSkeletonRows, TEMPLATE_CATEGORIES, TEMPLATE_STATUS,
   VARIABLE_KEYS, personalizePreview, fmtInt,
 } from './talkxShared';
-
-/**
- * X193 — o corte de largura do painel do editor é o mesmo `xl` do Tailwind
- * (1280 px), lido pelo `matchMedia` (sem `setState` em efeito). Abaixo dele o
- * rail não cabe ao lado do editor e o painel vem pela gaveta.
- */
-const CONSULTA_PAINEL_LARGO = '(min-width: 1280px)';
-
-function assinarPainelLargo(aoMudar: () => void) {
-  if (typeof window.matchMedia !== 'function') return () => {};
-  const media = window.matchMedia(CONSULTA_PAINEL_LARGO);
-  media.addEventListener('change', aoMudar);
-  return () => media.removeEventListener('change', aoMudar);
-}
-
-function painelLargo() {
-  return typeof window.matchMedia !== 'function' || window.matchMedia(CONSULTA_PAINEL_LARGO).matches;
-}
-
-function usePainelLargo() {
-  return useSyncExternalStore(assinarPainelLargo, painelLargo, () => true);
-}
 
 interface Props {
   templates: TalkXTemplate[];
   isLoading: boolean;
   editing: TalkXTemplate | null;
   onClose: () => void;
-  /** X091 — clique do widget "Em andamento" abre o monitor da campanha. */
-  onOpenMonitor?: (campaignId: string) => void;
 }
 
-export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, onOpenMonitor }: Props) {
-  const {
-    createTemplate, updateTemplate, duplicateTemplate, testTemplate, fetchVersionHistory, fetchVariants,
-    saveVariant, deleteVariant, countVariantRecipients,
-    // X047 — a biblioteca desta tela é a MESMA consulta que o pai consome; o erro
-    // tem de chegar à tela. Antes o editor só recebia `isLoading` e, com a consulta
-    // falhando, caía no vazio ("Nenhum template") como se a base estivesse vazia.
-    isError: templatesIsError, error: templatesError, refetch: refetchTemplates,
-  } = useTalkXTemplates();
+export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: Props) {
+  const { createTemplate, updateTemplate, duplicateTemplate, testTemplate, fetchVersionHistory, fetchVariants, saveVariant, deleteVariant, countVariantRecipients } = useTalkXTemplates();
   const messageEditorRef = useRef<TalkXMessageEditorHandle>(null);
-  const { confirmar, dialogo } = useTalkXConfirm();
 
   // Inicializa campos do template sendo editado
   const [eName, setEName] = useState(editing?.name ?? '');
@@ -114,10 +68,6 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
   const versionsTemplateIdRef = useRef<string | null>(null);
   const [libSearch, setLibSearch] = useState('');
   const [libCat, setLibCat] = useState('all');
-  // X193: abaixo de 1280 px (xl) o painel direito não cabe ao lado do editor e
-  // passa a ser gaveta, aberta pelo botão do cabeçalho (mesmo corte do CSS).
-  const larguraLarga = usePainelLargo();
-  const [painelAberto, setPainelAberto] = useState(false);
 
   // Fonte única de troca: invalida callbacks antigos no mesmo tick, antes do render.
   const activateTemplate = (templateId: string) => {
@@ -127,47 +77,6 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
 
   // Template ativo derivado de activeTemplateId (pode diferir de editing apos carga da biblioteca)
   const activeTemplate = templates.find((t) => t.id === activeTemplateId) ?? editing;
-
-  // X091 — KPIs das telas 04 e 05 nas RPCs de métricas (X086). A faixa do topo usa
-  // os números da biblioteca; o card "Desempenho deste template" segue o template
-  // ATIVO (não a prop `editing`) e o período escolhido (7/30/90 dias).
-  const { stats: libStats } = useTalkXTemplateLibraryStats(30, 3);
-  const [statsDias, setStatsDias] = useState(30);
-  const { stats: templateStats } = useTalkXTemplateStats(activeTemplateId, statsDias);
-
-  // X091 — widget "Em andamento" do cabeçalho: a campanha em envio MAIS RECENTE
-  // (`status='sending'`, por `started_at`). Sem campanha em envio ele não aparece.
-  const { campaigns } = useTalkX();
-  const sendingCampaign = campaigns
-    .filter((c) => c.status === 'sending')
-    .sort((a, b) => new Date(b.started_at ?? b.created_at).getTime() - new Date(a.started_at ?? a.created_at).getTime())[0] ?? null;
-  const horaInicio = sendingCampaign
-    ? new Date(sendingCampaign.started_at ?? sendingCampaign.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-    : '';
-
-  const fmtPct1 = (n: number | null | undefined) =>
-    (n == null ? null : `${n.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`);
-  const fmtDelta1 = (n: number) => Math.abs(n).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-  /** Variação em pontos percentuais — nula abaixo da base mínima (A9) nos dois períodos. */
-  const pp = (cur: number | null | undefined, prev: number | null | undefined, invertida = false) => {
-    const delta = pointsDelta(cur, prev, templateStats?.sent, templateStats?.previous?.sent);
-    if (delta == null) return null;
-    const bom = invertida ? delta <= 0 : delta >= 0;
-    return { text: `${delta >= 0 ? '↑' : '↓'} ${fmtDelta1(delta)} p.p.`, tone: bom ? 'text-success' : 'text-destructive' };
-  };
-  const enviosDelta = (() => {
-    const cur = templateStats?.sent;
-    const prev = templateStats?.previous?.sent;
-    if (cur == null || prev == null || prev < TALKX_STATS_MIN_BASE || cur < TALKX_STATS_MIN_BASE) return null;
-    const variacao = ((cur - prev) / prev) * 100;
-    return { text: `${variacao >= 0 ? '↑' : '↓'} ${fmtDelta1(variacao)}%`, tone: variacao >= 0 ? 'text-success' : 'text-destructive' };
-  })();
-  const perfTiles = [
-    { label: 'Envios', value: templateStats?.sent == null ? null : fmtInt(templateStats.sent), delta: enviosDelta, hint: 'Mensagens enviadas com o template no período' },
-    { label: 'Taxa de resposta', value: fmtPct1(templateStats?.reply_rate_pct), delta: pp(templateStats?.reply_rate_pct, templateStats?.previous?.reply_rate_pct), hint: 'Destinatários que responderam ÷ enviados no período' },
-    { label: 'Taxa de conversão', value: fmtPct1(templateStats?.conversion_rate_pct), delta: pp(templateStats?.conversion_rate_pct, templateStats?.previous?.conversion_rate_pct), hint: 'Conversões das campanhas do template ÷ enviados no período' },
-    { label: 'Taxa de rejeição', value: fmtPct1(templateStats?.rejection_rate_pct), delta: pp(templateStats?.rejection_rate_pct, templateStats?.previous?.rejection_rate_pct, true), hint: 'Pedidos de saída (opt-out) de campanhas do template ÷ enviados. Falha de envio não é rejeição.' },
-  ];
 
   // Dirty-check: qualquer campo alterado em relação ao original
   const isDirty = activeTemplate
@@ -210,9 +119,9 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
     } finally { setSaving(false); }
   };
 
-  const loadTemplate = async (t: TalkXTemplate) => {
+  const loadTemplate = (t: TalkXTemplate) => {
     setVersions([]); setShowVersions(false);
-    if (isDirty && !(await confirmar(PRESETS_DO_PRODUTO.descartarAlteracoes))) return;
+    if (isDirty && !window.confirm('Tem alterações não salvas. Descartar?')) return;
     // A ref muda antes do estado para fechar a janela entre o clique e o efeito.
     activateTemplate(t.id);
     versionsTemplateIdRef.current = null;
@@ -288,14 +197,8 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
 
     const recipientCount = await countVariantRecipients(variant.id);
     if (!isActiveOrigin(templateId)) return;
-    if (recipientCount > 0) {
-      const confirmado = await confirmar({
-        ...PRESETS_DO_PRODUTO.excluirVariante,
-        details: [{ label: 'Envios', value: fmtInt(recipientCount) }],
-      });
-      if (!confirmado) return;
-      if (!isActiveOrigin(templateId)) return;
-    }
+    if (recipientCount > 0 && !window.confirm(`Variante usada em ${recipientCount} envio(s). Excluir apaga atribuição A/B. Continuar?`)) return;
+    if (!isActiveOrigin(templateId)) return;
 
     await deleteVariant(variant.id);
     if (!isActiveOrigin(templateId)) return;
@@ -362,10 +265,10 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
   };
 
   /** E46: restaura campos de uma versao anterior */
-  const restoreVersion = async (v: typeof versions[0]) => {
+  const restoreVersion = (v: typeof versions[0]) => {
     // R2-MOD-024: recusa restaurar histórico que não pertence ao template ativo.
     if (!isActiveOrigin(v.template_id)) return;
-    if (!(await confirmar(PRESETS_DO_PRODUTO.restaurarVersao))) return;
+    if (!confirm('Restaurar esta versão? Os campos atuais serão substituídos.')) return;
     setEName(v.name); setEDesc(v.description ?? ''); setECat(v.category); setEContent(v.content);
     setEStatus(v.status as 'draft'|'review'|'approved');
     setEMediaUrl(v.media_url ?? ''); setEMediaType(v.media_type ?? ''); setEHasMedia(!!v.media_url);
@@ -379,69 +282,6 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
     const matchQ = !q || t.name.toLowerCase().includes(q) || t.category.includes(q);
     return matchCat && matchQ;
   });
-
-  // X193 — o painel direito é o MESMO conteúdo nos dois caminhos: rail a partir
-  // de xl (1280) e conteúdo da gaveta abaixo dele. Uma fonte só, sem duplicar.
-  const painelLateral = (
-    <>
-      <RailCard icon={FileText} color="green" title="Pré-visualização" subtitle="Como aparece no WhatsApp">
-        {/* X088: a moldura do editor é o uso "frame" do MESMO renderizador do
-            cartão (`TalkXMessagePreview`) — formatação, mídia e tela cheia
-            iguais nos dois lugares. */}
-        <TalkXMessagePreview
-          variant="frame"
-          text={personalizePreview(eContent)}
-          mediaUrl={eHasMedia ? eMediaUrl : null}
-          mediaType={eHasMedia ? eMediaType : null}
-        />
-      </RailCard>
-      <div className="rounded-2xl bg-card border border-border/70 p-3">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <History className="w-3.5 h-3.5 text-foreground-secondary" />
-            <p className="text-xs font-semibold text-foreground">Variações A/B</p>
-          </div>
-          <button type="button" onClick={async () => { setShowVariants(!showVariants); if (!showVariants && activeTemplateId) { await loadVariants(activeTemplateId); } }} className="h-7 px-2 rounded-md text-2xs font-medium border border-border/60 bg-input/40 hover:bg-muted/50">{showVariants ? 'Ocultar' : (variants.length > 0 ? `${variants.length} variante(s)` : 'Adicionar variante')}</button>
-        </div>
-        {showVariants && (
-          <div className="space-y-2 mt-1 mb-3">
-            {variants.map((v) => (
-              <div key={v.id} className="rounded-xl border border-border/60 bg-input/20 p-2 space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="text-2xs font-bold text-primary flex items-center gap-1">Variante {v.label} · <input type="number" min={1} max={100} value={v.weight} onChange={(e) => setVariants(vs => vs.map(x => x.id === v.id ? {...x, weight: Math.max(1, Math.min(100, Number.parseInt(e.target.value)||1))} : x))} onBlur={(e) => void saveActiveVariant({ ...v, weight: Math.max(1, Math.min(100, Number.parseInt(e.target.value) || 1)) })} className="w-9 text-center bg-transparent border-b border-primary/40 outline-none text-2xs font-bold text-primary" />%</span>
-                  <button type="button" onClick={() => void removeVariant(v)} className="h-5 w-5 rounded flex items-center justify-center hover:bg-destructive/20 text-muted-foreground hover:text-destructive text-3xs">×</button>
-                </div>
-                <textarea value={v.content} onChange={(e) => setVariants(vs => vs.map(x => x.id === v.id ? {...x, content: e.target.value.slice(0, 1024)} : x))} onBlur={() => { if (v.content.trim()) void saveActiveVariant(v); }} className="w-full h-16 text-2xs bg-transparent border-0 resize-none outline-none text-foreground" placeholder="Conteúdo da variante..." />
-              </div>
-            ))}
-            {variants.length < 3 && (
-              <button type="button" disabled={savingVariant || !activeTemplateId} onClick={() => void addVariant()} className="w-full h-7 rounded-lg border border-dashed border-primary/40 text-2xs text-primary hover:bg-primary/5 disabled:opacity-50">+ Adicionar variante {(['A','B','C']).find(l => !variants.find(v => v.label === l))}</button>
-            )}
-            {variants.length > 0 && (
-              <p className={`text-3xs ${variants.reduce((s,v) => s + v.weight, 0) !== 100 ? 'text-dash-red' : 'text-muted-foreground'}`}>Peso total: {variants.reduce((s,v) => s + v.weight, 0)}% {variants.reduce((s,v) => s + v.weight, 0) !== 100 ? '⚠ deve ser 100%' : '✓'}</p>
-            )}
-          </div>
-        )}
-        <div className="flex items-center justify-between mb-2 pt-3 border-t border-border/50">
-          <p className="text-xs font-semibold text-foreground">Histórico</p>
-          <button type="button" onClick={() => { setShowVersions(!showVersions); if (!showVersions && activeTemplateId) void fetchVersions(activeTemplateId); }} className="h-7 px-2 rounded-md text-2xs font-medium border border-border/60 bg-input/40 hover:bg-muted/50">{showVersions ? 'Ocultar' : 'Ver versões'}</button>
-        </div>
-        {showVersions && (
-          <div className="space-y-1">
-            {loadingVersions ? <p className="text-2xs text-muted-foreground">Carregando...</p> : versions.length === 0 ? <p className="text-2xs text-muted-foreground">Nenhuma versão salva.</p> : versions.map((v) => (
-              <div key={v.id} className="flex items-start justify-between gap-1.5 py-1.5 border-b border-border/40 last:border-0">
-                <div className="min-w-0">
-                  <p className="text-2xs font-semibold text-foreground">v{v.version_number} · {v.name.slice(0, 20)}</p>
-                  <p className="text-3xs text-muted-foreground">{new Date(v.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</p>
-                </div>
-                <button type="button" onClick={() => { void restoreVersion(v); }} className="h-6 w-6 rounded flex items-center justify-center hover:bg-primary/10 text-muted-foreground hover:text-primary flex-shrink-0"><RotateCcw className="w-3 h-3" /></button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </>
-  );
 
   return (
     <div className="flex gap-4 min-w-0" style={{ minHeight: 'calc(100vh - 160px)' }}>
@@ -473,61 +313,48 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
               </button>
             ))}
           </div>
-          {/* Lista compacta — X047: carregando -> erro -> vazio -> conteúdo */}
+          {/* Lista compacta */}
           <div className="flex-1 overflow-y-auto space-y-1">
-            <TalkXQueryBoundary
-              query={{ isLoading, isError: templatesIsError, error: templatesError }}
-              entity="os templates"
-              onRetry={() => { void refetchTemplates(); }}
-              skeleton={<TalkXSkeletonRows rows={5} />}
-              isEmpty={libFiltered.length === 0}
-              empty={<p className="text-2xs text-muted-foreground text-center pt-4">Nenhum template</p>}
-            >
-              {libFiltered.map((t) => {
-                const sm = TEMPLATE_STATUS[t.status] ?? TEMPLATE_STATUS.draft;
-                return (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => { void loadTemplate(t); }}
-                    className={cn(
-                      'w-full text-left rounded-xl px-2 py-1.5 border transition-colors',
-                      activeTemplateId === t.id
-                        ? 'border-primary bg-primary/10'
-                        : 'border-border/50 hover:border-primary/30 hover:bg-muted/20',
-                    )}
-                  >
-                    <div className="flex items-center gap-1 mb-0.5">
-                      <span className={cn('w-1.5 h-1.5 rounded-full flex-shrink-0', sm.tone === 'success' ? 'bg-dash-green' : sm.tone === 'muted' ? 'bg-muted-foreground' : 'bg-dash-amber')} />
-                      <p className="text-2xs font-semibold text-foreground truncate flex-1">{t.name}</p>
-                    </div>
-                    <p className="text-3xs text-muted-foreground truncate">{t.category} · {fmtInt(t.use_count)} usos</p>
-                  </button>
-                );
-              })}
-            </TalkXQueryBoundary>
+            {isLoading
+              ? <TalkXSkeletonRows rows={5} />
+              : libFiltered.length === 0
+                ? <p className="text-2xs text-muted-foreground text-center pt-4">Nenhum template</p>
+                : libFiltered.map((t) => {
+                  const sm = TEMPLATE_STATUS[t.status] ?? TEMPLATE_STATUS.draft;
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => loadTemplate(t)}
+                      className={cn(
+                        'w-full text-left rounded-xl px-2 py-1.5 border transition-colors',
+                        activeTemplateId === t.id
+                          ? 'border-primary bg-primary/10'
+                          : 'border-border/50 hover:border-primary/30 hover:bg-muted/20',
+                      )}
+                    >
+                      <div className="flex items-center gap-1 mb-0.5">
+                        <span className={cn('w-1.5 h-1.5 rounded-full flex-shrink-0', sm.tone === 'success' ? 'bg-dash-green' : sm.tone === 'muted' ? 'bg-muted-foreground' : 'bg-dash-amber')} />
+                        <p className="text-2xs font-semibold text-foreground truncate flex-1">{t.name}</p>
+                      </div>
+                      <p className="text-3xs text-muted-foreground truncate">{t.category} · {fmtInt(t.use_count)} usos</p>
+                    </button>
+                  );
+                })
+            }
           </div>
         </div>
       </aside>
 
       {/* === COLUNA CENTRO: editor === */}
       <div className="flex-1 min-w-0 space-y-3">
-        {/* X091 — faixa de KPIs da tela 05 (números da biblioteca, RPC X086) */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <KpiCard icon={FileText} color="blue" index={0} label="Total de Templates" value={libStats?.total ?? null} bars={libStats?.created_series ?? null} comparison={{ current: libStats?.created_current_month ?? null, previous: libStats?.created_previous_month ?? null, kind: 'relative' }} hint="vs. mês anterior (templates criados)" />
-          <KpiCard icon={Check} color="green" index={1} label="Templates aprovados" value={libStats?.approved ?? null} bars={libStats?.approved_series ?? null} hint={libStats?.approved != null && libStats.total ? `${Math.round((libStats.approved / libStats.total) * 100)}% do total` : 'Aprovados entre os templates'} />
-          <KpiCard icon={BarChart3} color="violet" index={2} label="Melhor taxa de resposta" value={libStats?.best_reply?.reply_rate_pct ?? null} suffix="%" hint={libStats?.best_reply?.name ? `Template: ${libStats.best_reply.name}${libStats.best_reply.version ? ` v${libStats.best_reply.version}` : ''}` : 'Ranking só com base mínima de enviados'} />
-          <KpiCard icon={Image} color="amber" index={3} label="Templates com mídia" value={libStats?.with_media ?? null} bars={libStats?.with_media_series ?? null} hint={libStats?.with_media != null && libStats.total ? `${Math.round((libStats.with_media / libStats.total) * 100)}% do total` : 'Templates com mídia'} />
-        </div>
         {/* Header */}
-        <div className="rounded-2xl bg-card border border-border/70 p-4 flex flex-wrap items-center gap-3">
+        <div className="rounded-2xl bg-card border border-border/70 p-4 flex items-center gap-3">
           <button
             type="button"
             onClick={() => {
-              void (async () => {
-                if (isDirty && !(await confirmar(PRESETS_DO_PRODUTO.descartarAlteracoes))) return;
-                onClose();
-              })();
+              if (isDirty && !confirm('Descartar alterações?')) return;
+              onClose();
             }}
             aria-label="Voltar"
             className="h-9 w-9 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50 shrink-0"
@@ -539,30 +366,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
             <p className="text-xl font-bold font-display text-foreground">{editing ? 'Editar template' : 'Novo template'}</p>
             <p className="text-xs text-foreground-secondary">Personalize a mensagem e adicione variáveis</p>
           </div>
-          {sendingCampaign && (
-            <button
-              type="button"
-              onClick={() => onOpenMonitor?.(sendingCampaign.id)}
-              title={`Abrir o monitor de "${sendingCampaign.name}"`}
-              className="flex items-center gap-1.5 h-8 px-2.5 rounded-lg border border-border/60 bg-input/40 text-2xs font-medium text-foreground-secondary hover:text-foreground hover:border-primary/40 shrink-0"
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-success motion-safe:animate-pulse" aria-hidden="true" />
-              Em andamento · Talk X · Iniciada às {horaInicio}
-              <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
-            </button>
-          )}
           <div className="flex items-center gap-2 shrink-0">
-            {/* X193: abaixo de 1280 px (xl) o painel direito não cabe ao lado do
-                editor e vem por aqui; a partir de xl o rail segue valendo. */}
-            {!larguraLarga && (
-              <GhostButton
-                icon={History}
-                onClick={() => setPainelAberto(true)}
-                title="Abrir a pré-visualização, as variações e o histórico do template"
-              >
-                Prévia e histórico
-              </GhostButton>
-            )}
             {editing && (
               <GhostButton icon={Copy} onClick={() => { duplicateTemplate.mutate(activeTemplate ?? editing); onClose(); }}>Duplicar</GhostButton>
             )}
@@ -655,7 +459,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
             <p className="text-2xs text-muted-foreground mb-2">Defina variáveis próprias para este template. Serão inseridas como <span className="font-mono text-primary-glow">{'{{'}var{'}}'}</span> na mensagem.</p>
             <div className="flex items-center gap-2 flex-wrap mb-2">
               {eCustomVars.map((v) => (
-                <span key={v} className="flex items-center gap-1 h-7 px-2 rounded-lg bg-violeta/10 border border-violeta/20 text-xs font-mono text-[hsl(var(--violeta-text))]">
+                <span key={v} className="flex items-center gap-1 h-7 px-2 rounded-lg bg-violet-500/10 border border-violet-400/20 text-xs font-mono text-violet-300">
                   {'{{'}{v}{'}}'}
                   <button type="button" onClick={() => setECustomVars((p) => p.filter((x) => x !== v))} aria-label={`Remover variável ${v}`} className="hover:text-dash-red"><X className="w-3 h-3" /></button>
                 </span>
@@ -719,64 +523,129 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
             </div>
           </div>
         </section>
+      </div>
 
-        {/* X091 — "Desempenho deste template". Fica fora do rail para aparecer em
-            qualquer largura, segue o template ATIVO e o período do seletor. */}
-        <section className="rounded-2xl bg-card border border-border/70 p-4 space-y-3">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-[15px] font-bold text-foreground">Desempenho deste template</p>
-              <p className="text-xs text-foreground-secondary mt-0.5">
-                {activeTemplate ? `Envios, resposta, conversão e rejeição de "${activeTemplate.name}"` : 'Salve o template para acompanhar o desempenho'}
-              </p>
-            </div>
-            <Select value={String(statsDias)} onValueChange={(v) => setStatsDias(Number(v))}>
-              <SelectTrigger aria-label="Período do desempenho" className="h-8 w-[140px] bg-input/40 border-border/70 text-xs"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {TALKX_TEMPLATE_STATS_PERIODS.map((d) => <SelectItem key={d} value={String(d)}>Últimos {d} dias</SelectItem>)}
-              </SelectContent>
-            </Select>
+      {/* Variantes A/B — responsivo (xl:hidden, visível abaixo de xl) */}
+      {activeTemplateId && (
+        <div className="xl:hidden mt-4 rounded-2xl bg-card border border-border/70 p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <p className="text-xs font-semibold text-foreground">Variações A/B</p>
+            <button type="button"
+              onClick={async () => { setShowVariants(!showVariants); if (!showVariants && activeTemplateId) { await loadVariants(activeTemplateId); } }}
+              className="h-7 px-2 rounded-md text-2xs font-medium border border-border/60 bg-input/40 hover:bg-muted/50"
+            >{showVariants ? 'Ocultar' : variants.length > 0 ? variants.length + ' variante(s)' : 'Adicionar variante'}</button>
           </div>
-          {!activeTemplateId ? (
-            <p className="text-xs text-foreground-secondary">Salve o template para acompanhar o desempenho.</p>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-center">
-              {perfTiles.map((t) => (
-                <div key={t.label} className="rounded-xl bg-muted/30 border border-border/50 py-2 px-1" title={t.hint}>
-                  <p className="text-sm font-bold text-foreground tabular-nums">{t.value ?? 'Sem dados ainda'}</p>
-                  <p className="text-3xs text-foreground-secondary">{t.label}</p>
-                  {t.delta && <p className={cn('text-3xs font-semibold', t.delta.tone)}>{t.delta.text}</p>}
+          {showVariants && (
+            <div className="space-y-2 mt-1">
+              {variants.map((v) => (
+                <div key={v.id} className="rounded-xl border border-border/60 bg-input/20 p-2 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-2xs font-bold text-primary flex items-center gap-1">
+                      Variante {v.label} {'·'} <input type="number" min={1} max={100} value={v.weight}
+                        onChange={(e) => setVariants(vs => vs.map(x => x.id === v.id ? {...x, weight: Math.max(1, Math.min(100, Number.parseInt(e.target.value)||1))} : x))}
+                        onBlur={(e) => void saveActiveVariant({ ...v, weight: Math.max(1, Math.min(100, Number.parseInt(e.target.value) || 1)) })}
+                        className="w-9 text-center bg-transparent border-b border-primary/40 outline-none text-2xs font-bold text-primary" />%
+                    </span>
+                    <button type="button"
+                      onClick={() => void removeVariant(v)}
+                      className="h-5 w-5 rounded flex items-center justify-center hover:bg-destructive/20 text-muted-foreground hover:text-destructive text-3xs">x</button>
+                  </div>
+                  <textarea value={v.content}
+                    onChange={(e) => setVariants(vs => vs.map(x => x.id === v.id ? {...x, content: e.target.value.slice(0, 1024)} : x))}
+                    onBlur={() => { if (v.content.trim()) void saveActiveVariant(v); }}
+                    className="w-full h-16 text-2xs bg-transparent border-0 resize-none outline-none text-foreground"
+                    placeholder="Conteúdo da variante..." />
+                </div>
+              ))}
+              {variants.length < 3 && (
+                <button type="button" disabled={savingVariant || !activeTemplateId}
+                  onClick={() => void addVariant()}
+                  className="w-full h-7 rounded-lg border border-dashed border-primary/40 text-2xs text-primary hover:bg-primary/5 disabled:opacity-50">
+                  + Adicionar variante {(['A','B','C']).find(l => !variants.find(v => v.label === l))}
+                </button>
+              )}
+              {variants.length > 0 && (
+                <p className={"text-3xs " + (variants.reduce((s,v) => s + v.weight, 0) !== 100 ? 'text-dash-red' : 'text-muted-foreground')}>
+                  Peso total: {variants.reduce((s,v) => s + v.weight, 0)}% {variants.reduce((s,v) => s + v.weight, 0) !== 100 ? '⚠ deve ser 100%' : '✓'}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* === COLUNA DIREITA: preview === */}
+      <aside className="hidden xl:flex flex-col w-[300px] flex-shrink-0 gap-3">
+        <RailCard icon={FileText} color="green" title="Pré-visualização" subtitle="Como aparece no WhatsApp">
+          <PhoneFrame
+            text={personalizePreview(eContent)}
+            mediaUrl={eHasMedia ? eMediaUrl : null}
+            mediaType={eHasMedia ? eMediaType : null}
+          />
+        </RailCard>
+        <div className="rounded-2xl bg-card border border-border/70 p-3">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <History className="w-3.5 h-3.5 text-foreground-secondary" />
+              <p className="text-xs font-semibold text-foreground">Variações A/B</p>
+            </div>
+            <button type="button" onClick={async () => { setShowVariants(!showVariants); if (!showVariants && activeTemplateId) { await loadVariants(activeTemplateId); } }} className="h-7 px-2 rounded-md text-2xs font-medium border border-border/60 bg-input/40 hover:bg-muted/50">{showVariants ? 'Ocultar' : (variants.length > 0 ? `${variants.length} variante(s)` : 'Adicionar variante')}</button>
+          </div>
+          {showVariants && (
+            <div className="space-y-2 mt-1 mb-3">
+              {variants.map((v) => (
+                <div key={v.id} className="rounded-xl border border-border/60 bg-input/20 p-2 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-2xs font-bold text-primary flex items-center gap-1">Variante {v.label} · <input type="number" min={1} max={100} value={v.weight} onChange={(e) => setVariants(vs => vs.map(x => x.id === v.id ? {...x, weight: Math.max(1, Math.min(100, Number.parseInt(e.target.value)||1))} : x))} onBlur={(e) => void saveActiveVariant({ ...v, weight: Math.max(1, Math.min(100, Number.parseInt(e.target.value) || 1)) })} className="w-9 text-center bg-transparent border-b border-primary/40 outline-none text-2xs font-bold text-primary" />%</span>
+                    <button type="button" onClick={() => void removeVariant(v)} className="h-5 w-5 rounded flex items-center justify-center hover:bg-destructive/20 text-muted-foreground hover:text-destructive text-3xs">×</button>
+                  </div>
+                  <textarea value={v.content} onChange={(e) => setVariants(vs => vs.map(x => x.id === v.id ? {...x, content: e.target.value.slice(0, 1024)} : x))} onBlur={() => { if (v.content.trim()) void saveActiveVariant(v); }} className="w-full h-16 text-2xs bg-transparent border-0 resize-none outline-none text-foreground" placeholder="Conteúdo da variante..." />
+                </div>
+              ))}
+              {variants.length < 3 && (
+                <button type="button" disabled={savingVariant || !activeTemplateId} onClick={() => void addVariant()} className="w-full h-7 rounded-lg border border-dashed border-primary/40 text-2xs text-primary hover:bg-primary/5 disabled:opacity-50">+ Adicionar variante {(['A','B','C']).find(l => !variants.find(v => v.label === l))}</button>
+              )}
+              {variants.length > 0 && (
+                <p className={`text-3xs ${variants.reduce((s,v) => s + v.weight, 0) !== 100 ? 'text-dash-red' : 'text-muted-foreground'}`}>Peso total: {variants.reduce((s,v) => s + v.weight, 0)}% {variants.reduce((s,v) => s + v.weight, 0) !== 100 ? '⚠ deve ser 100%' : '✓'}</p>
+              )}
+            </div>
+          )}
+          <div className="flex items-center justify-between mb-2 pt-3 border-t border-border/50">
+            <p className="text-xs font-semibold text-foreground">Histórico</p>
+            <button type="button" onClick={() => { setShowVersions(!showVersions); if (!showVersions && activeTemplateId) void fetchVersions(activeTemplateId); }} className="h-7 px-2 rounded-md text-2xs font-medium border border-border/60 bg-input/40 hover:bg-muted/50">{showVersions ? 'Ocultar' : 'Ver versões'}</button>
+          </div>
+          {showVersions && (
+            <div className="space-y-1">
+              {loadingVersions ? <p className="text-2xs text-muted-foreground">Carregando...</p> : versions.length === 0 ? <p className="text-2xs text-muted-foreground">Nenhuma versão salva.</p> : versions.map((v) => (
+                <div key={v.id} className="flex items-start justify-between gap-1.5 py-1.5 border-b border-border/40 last:border-0">
+                  <div className="min-w-0">
+                    <p className="text-2xs font-semibold text-foreground">v{v.version_number} · {v.name.slice(0, 20)}</p>
+                    <p className="text-3xs text-muted-foreground">{new Date(v.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</p>
+                  </div>
+                  <button type="button" onClick={() => restoreVersion(v)} className="h-6 w-6 rounded flex items-center justify-center hover:bg-primary/10 text-muted-foreground hover:text-primary flex-shrink-0"><RotateCcw className="w-3 h-3" /></button>
                 </div>
               ))}
             </div>
           )}
-          {(activeTemplate?.tags ?? []).length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {(activeTemplate?.tags ?? []).map((t) => <Badge key={t} variant="outline" className="text-3xs">#{t}</Badge>)}
+        </div>
+        {editing && (
+          <RailCard icon={BarChart3} title="Desempenho" subtitle={`${fmtInt(editing.use_count)} usos totais`}>
+            <div className="grid grid-cols-2 gap-2 text-center">
+              {([['—', 'Taxa resposta'], ['—', 'Conversão'], ['—', 'Rejeição'], [fmtInt(editing.use_count), 'Envios']]).map(([v, l]) => (
+                <div key={l} className="rounded-xl bg-muted/30 border border-border/50 py-2 px-1">
+                  <p className="text-sm font-bold text-foreground tabular-nums">{v}</p>
+                  <p className="text-3xs text-foreground-secondary">{l}</p>
+                </div>
+              ))}
             </div>
-          )}
-        </section>
-      </div>
-
-      {/* X193 — abaixo de 1280 px (xl) o painel direito não cabe ao lado do editor:
-          vira gaveta aberta pelo botão do cabeçalho. A partir de xl vale o rail
-          (o `hidden xl:flex` abaixo), com largura menor em 1280 e cheia no 2xl. */}
-      {!larguraLarga && (
-        <Sheet open={painelAberto} onOpenChange={setPainelAberto}>
-          <SheetContent side="right" aria-describedby={undefined} className="w-[min(360px,92vw)] overflow-y-auto p-4">
-            <SheetTitle className="sr-only">Pré-visualização e histórico do template</SheetTitle>
-            <div className="mt-4 flex flex-col gap-3">{painelLateral}</div>
-          </SheetContent>
-        </Sheet>
-      )}
-
-      {/* === COLUNA DIREITA: preview === */}
-      <aside className="hidden xl:flex flex-col w-[260px] 2xl:w-[300px] flex-shrink-0 gap-3">
-        {painelLateral}
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {(editing.tags ?? []).map((t) => <Badge key={t} variant="outline" className="text-3xs">#{t}</Badge>)}
+            </div>
+          </RailCard>
+        )}
       </aside>
 
       {/* E47: Test Dialog */}
-      {dialogo}
       <Dialog open={showTest} onOpenChange={setShowTest}><DialogContent className="max-w-sm"><DialogHeader><DialogTitle>Testar template</DialogTitle><DialogDescription>Envia a mensagem personalizada para um número via WhatsApp.</DialogDescription></DialogHeader>
             <div>
               <Label className="text-xs text-foreground-secondary">Número de destino</Label>

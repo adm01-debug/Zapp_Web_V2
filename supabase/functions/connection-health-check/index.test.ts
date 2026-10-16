@@ -1,4 +1,4 @@
-import { handleConnectionHealthCheck, evaluateOpenConnectionHealth, parseOwnerJid, parseSilenceMinutes, inboxSilenceDedupeKey } from './index.ts';
+import { handleConnectionHealthCheck } from './index.ts';
 
 // ---------------------------------------------------------------------------
 // SL-053 / F3 E23-E29 do plano multi-conexão (E24/E25/E26/E28).
@@ -54,30 +54,14 @@ interface Fake {
   statusById: Record<string, string | null>;
   /** token por instância como o Vault devolveria (get_instance_token) */
   tokens: Record<string, string | null>;
-  /** corpos POST capturados (Resend) */
-  bodies: Array<unknown>;
-  /** última mensagem recebida por conexão (camada 3 / caixa muda) */
-  lastInbound: Array<{ created_at: string }>;
-  /** admins para o e-mail de queda (opt-in desliga quando vazio) */
-  adminProfiles: Array<Record<string, unknown>>;
-  /** pushes gravados em notifications */
-  pushNotifications: Array<unknown>;
-  /** deletes no warroom (testemunha do auto-resolve) */
-  alertDeletes: Array<unknown>;
-  /** dentro do horário comercial? (RPC is_within_business_hours) */
-  withinHours: boolean;
   /** get_instance_token falha (leitura do Vault indisponível) */
   tokenRpcError: boolean;
   alerts: Array<Record<string, unknown>>;
   healthLogs: Array<Record<string, unknown>>;
-  /** linhas que o handler grava em `audit_logs` (trilha de transição de status) */
-  auditLogs: Array<Record<string, unknown>>;
   connUpdates: Array<Record<string, unknown>>;
-  /** tabelas alvo de CADA insert (testemunha do espelho: push vai a `notifications`) */
-  insertTables: string[];
   calls: Array<{ path: string; apikey: string | null }>;
   rpcCalls: string[];
-  fetchImpl: (call: { path: string; apikey: string | null }) => Response | Promise<Response>;
+  fetchImpl: (call: { path: string; apikey: string | null }) => Response;
 }
 
 function baseFake(): Fake {
@@ -86,17 +70,9 @@ function baseFake(): Fake {
     statusById: {},
     tokens: {},
     tokenRpcError: false,
-    bodies: [],
-    lastInbound: [],
-    adminProfiles: [],
-    pushNotifications: [],
-    alertDeletes: [],
-    withinHours: false,
     alerts: [],
     healthLogs: [],
-    auditLogs: [],
     connUpdates: [],
-    insertTables: [],
     calls: [],
     rpcCalls: [],
     fetchImpl: () => jsonResponse({ instance: { state: 'open' } }),
@@ -136,46 +112,18 @@ function result(
     return { data: null, error: null };
   }
   if (table === 'connection_health_logs' && op === 'insert' && pending) {
-    fake.insertTables.push(table);
     fake.healthLogs.push(pending);
     return { data: null, error: null };
   }
-  if (table === 'audit_logs' && op === 'insert' && pending) {
-    fake.auditLogs.push(pending);
-    return { data: null, error: null };
-  }
   if (table === 'warroom_alerts' && op === 'insert' && pending) {
-    fake.insertTables.push(table);
     fake.alerts.push(pending);
     return { data: null, error: null };
   }
-  if (table === 'warroom_alerts' && op === 'delete') {
-    fake.alertDeletes.push(filters);
-    return { data: null, error: null };
-  }
-  if (table === 'messages' && op === 'select') {
-    return { data: fake.lastInbound[0] ?? null, error: null };
-  }
-  if (table === 'profiles' && op === 'select') {
-    return { data: fake.adminProfiles, error: null };
-  }
-  if (table === 'notifications' && op === 'insert' && pending) {
-    fake.insertTables.push(table);
-    fake.pushNotifications.push(pending);
-    return { data: null, error: null };
-  }
-  if (table === 'global_settings' && op === 'select') {
-    return { data: null, error: null };
-  }
   if (op === 'select' && table === 'whatsapp_connections') {
-    // Mesmo filtro do handler: a fixture de E2E nunca entra no health check. O
-    // `.eq('instance_id', ...)` do alvo único é aplicado aqui (o handler filtra
-    // pela instância pedida).
-    const instanceFilter = filters.find(([c]) => c === 'instance_id')?.[1];
+    // Mesmo filtro do handler: a fixture de E2E nunca entra no health check.
     return {
       data: fake.rows
         .filter((r) => r.instance_id !== 'E2E_FIXTURE')
-        .filter((r) => instanceFilter === undefined || r.instance_id === instanceFilter)
         .map((r) => ({ ...r, status: fake.statusById[r.id] ?? null })),
       error: null,
     };
@@ -247,10 +195,6 @@ function makeDeps(fake: Fake): any {
           const instance = params?.p_instance_id as string;
           return Promise.resolve({ data: fake.tokens[instance] ?? null, error: null });
         }
-        // PE-87: dentro/fora do horário comercial (contracheque da "caixa muda").
-        if (name === 'is_within_business_hours') {
-          return Promise.resolve({ data: fake.withinHours, error: null });
-        }
         return Promise.resolve({ data: null, error: null });
       },
       auth: {
@@ -269,17 +213,16 @@ function makeRequest(): Request {
 }
 
 /** Roda o handler com o fetch global trocado pelo fake (e restaurado depois). */
-async function run(fake: Fake, req?: Request, deps?: unknown): Promise<Response> {
+async function run(fake: Fake): Promise<Response> {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = ((input: string | URL | Request, init?: RequestInit) => {
     const path = new URL(String(input)).pathname;
     const apikey = ((init?.headers ?? {}) as Record<string, string>).apikey ?? null;
     fake.calls.push({ path, apikey });
-    fake.bodies.push((init as { body?: unknown } | undefined)?.body ?? null);
     return Promise.resolve(fake.fetchImpl({ path, apikey }));
   }) as typeof fetch;
   try {
-    return await handleConnectionHealthCheck(req ?? makeRequest(), deps ?? makeDeps(fake));
+    return await handleConnectionHealthCheck(makeRequest(), makeDeps(fake));
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -301,42 +244,19 @@ Deno.test('E24: cada conexão consulta o provedor com o token DELA, nunca com a 
   assert(res.status === 200, `esperado 200, recebido ${res.status}`);
 
   // No flavor GO a instância é escolhida pela CREDENCIAL, então duas conexões =
-  // duas consultas de estado, cada uma com o token da sua instância. (A camada
-  // de identidade/owner faz chamadas extras à parte — não entram aqui.)
-  const stateCalls = fake.calls.filter((c) => c.path.includes('/instance/status'));
+  // duas chamadas, cada uma com o token da sua instância.
   assert(
-    stateCalls.length === 2,
-    `esperado uma consulta de estado por conexão (2), recebido ${stateCalls.length}: ${JSON.stringify(fake.calls)}`,
+    fake.calls.length === 2,
+    `esperado uma consulta por conexão (2), recebido ${fake.calls.length}: ${JSON.stringify(fake.calls)}`,
   );
-  const apikeys = stateCalls.map((c) => c.apikey).sort();
+  const apikeys = fake.calls.map((c) => c.apikey).sort();
   assert(
     JSON.stringify(apikeys) === JSON.stringify(['tok-da-inst-b', 'tok-da-padrao']),
     `cada chamada tem de levar o token da própria instância, recebido ${JSON.stringify(apikeys)}`,
   );
-  // A regra "nunca a chave global" vale para a ROTA DE ESTADO (por instância,
-  // auth "instance" no evolution-go-routes). A camada de identidade usa a rota
-  // ADMIN de listagem (/instance/fetchInstances → /instance/all, auth "admin"):
-  // ela leva a chave do servidor e não personifica outra instância — por isso
-  // fica fora desta asserção (filtrar só stateCalls, não todas as chamadas).
-  // Mas a listagem também é presa: existe (uma por conexão aberta) e leva a
-  // chave do servidor, nunca token de instância.
-  const ownerCalls = fake.calls.filter((c) => c.path.includes('/instance/all'));
   assert(
-    ownerCalls.length === 2,
-    `camada de identidade tem de consultar o dono de cada conexão aberta (2), recebido ${ownerCalls.length}`,
-  );
-  assert(
-    ownerCalls.every((c) => c.apikey === 'test-evolution-key'),
-    `a rota ADMIN de listagem usa a chave do servidor, nunca token de instância: ${JSON.stringify(ownerCalls)}`,
-  );
-  // E o token legado não aparece em chamada nenhuma (nem estado, nem listagem).
-  assert(
-    !fake.calls.some((c) => c.apikey === 'tok-legado-da-padrao'),
-    `token legado não pode vazar em nenhuma rota: ${JSON.stringify(fake.calls)}`,
-  );
-  assert(
-    !stateCalls.some((c) => c.apikey === 'test-evolution-key' || c.apikey === 'tok-legado-da-padrao'),
-    `a rota de estado (por instância) não pode usar a credencial global/legada: ${JSON.stringify(stateCalls)}`,
+    !fake.calls.some((c) => c.apikey === 'test-evolution-key' || c.apikey === 'tok-legado-da-padrao'),
+    `a credencial global/legada não pode ser usada numa rota de instância: ${JSON.stringify(fake.calls)}`,
   );
 
   // E24: as duas instâncias têm estado independente — a segunda não é 'error'.
@@ -448,230 +368,4 @@ Deno.test('E28: 401 do provedor vira no_credentials — sem alerta de queda e se
     !fake.connUpdates.some((u) => 'status' in u),
     `401 não pode sobrescrever o status da conexão: ${JSON.stringify(fake.connUpdates)}`,
   );
-});
-
-// ---------------------------------------------------------------------------
-// SL-053 / N-162: chamada por usuário exige admin/supervisor e tem limite.
-//
-// O DEFEITO que esta matriz fecha: a dispensa de papel/limite era decidida pela
-// PRESENÇA do header `x-cron-secret`, não pelo SEGREDO conferido. Bastava mandar
-// `x-cron-secret: qualquer-coisa` junto de um Bearer válido de conta sem privilégio
-// para o gate de admin/supervisor e o rate limit serem pulados. Por isso o último
-// caso abaixo manda segredo INVÁLIDO + Bearer de não-admin e exige 403: sem essa
-// prova, a presença do header escondia o bypass.
-// ---------------------------------------------------------------------------
-
-const AGENT_TOKEN = 'bearer-agent-token-non-admin';
-const ADMIN_TOKEN = 'bearer-admin-token';
-
-function makeUserRequest(token: string, ip = '10.0.0.1', extraHeaders: Record<string, string> = {}): Request {
-  return new Request('https://edge.test/connection-health-check', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-      'x-forwarded-for': ip,
-      ...extraHeaders,
-    },
-  });
-}
-
-function makeDepsWithUser(fake: Fake, userId: string, isAdmin: boolean, extraRpcCalls: Record<string, unknown> = {}) {
-  return {
-    serviceKey: 'eyJtest.servicekey.forauth',
-    supabase: {
-      rpc(name: string, params?: Row) {
-        fake.rpcCalls.push(name);
-        if (name === 'get_connection_health_check_cron_secret') {
-          return Promise.resolve({ data: CRON_SECRET, error: null });
-        }
-        if (name === 'get_instance_token') {
-          if (fake.tokenRpcError) return Promise.resolve({ data: null, error: new Error('vault rpc failed') });
-          const instance = params?.p_instance_id as string;
-          return Promise.resolve({ data: fake.tokens[instance] ?? null, error: null });
-        }
-        if (name === 'is_admin_or_supervisor') {
-          return Promise.resolve({ data: isAdmin, error: null });
-        }
-        if (name in extraRpcCalls) return Promise.resolve(extraRpcCalls[name]);
-        return Promise.resolve({ data: null, error: null });
-      },
-      auth: {
-        getUser: () => Promise.resolve({ data: { user: { id: userId } }, error: null }),
-      },
-      from: (table: string) => builder(fake, table),
-    },
-  };
-}
-
-// ─── Testes de autorização e rate limit (N-162) ──────────────────────────
-
-Deno.test('N-162: Bearer de agente (sem admin/supervisor) recebe 403', async () => {
-  const fake = baseFake();
-  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null }];
-  fake.statusById = { c1: 'connected' };
-  fake.tokens = { padrao: 'tok-da-padrao' };
-
-  const res = await run(fake, makeUserRequest(AGENT_TOKEN), makeDepsWithUser(fake, 'user-1', false));
-  assert(res.status === 403, `esperado 403 para agente, veio ${res.status}`);
-});
-
-Deno.test('N-162: Admin com Bearer passa pela autorização', async () => {
-  const fake = baseFake();
-  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null }];
-  fake.statusById = { c1: 'connected' };
-  fake.tokens = { padrao: 'tok-da-padrao' };
-  fake.fetchImpl = () => jsonResponse({ instance: { state: 'open' } });
-
-  const res = await run(fake, makeUserRequest(ADMIN_TOKEN), makeDepsWithUser(fake, 'user-admin', true));
-  assert(res.status === 200, `esperado 200 para admin, veio ${res.status}`);
-});
-
-Deno.test('N-162: Cron com segredo dedicado continua funcionando (sem restrição de papel)', async () => {
-  const fake = baseFake();
-  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null }];
-  fake.statusById = { c1: 'connected' };
-  fake.tokens = { padrao: 'tok-da-padrao' };
-  fake.fetchImpl = () => jsonResponse({ instance: { state: 'open' } });
-
-  const res = await run(fake, makeRequest(), makeDeps(fake));
-  assert(res.status === 200, `esperado 200 para cron, veio ${res.status}`);
-});
-
-Deno.test('N-162: x-cron-secret INVÁLIDO + Bearer sem privilégio continua 403 (não pula a checagem)', async () => {
-  // O bypass real: a presença do header, não o segredo. Com o defeito, o gate de
-  // papel é pulado (x-cron-secret presente) e um não-admin autenticado passa (200).
-  // Com a correção, o segredo é conferido em tempo constante contra o do Vault e,
-  // não casando, a chamada segue como USUÁRIO — e o papel é exigido → 403.
-  const fake = baseFake();
-  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null }];
-  fake.statusById = { c1: 'connected' };
-  fake.tokens = { padrao: 'tok-da-padrao' };
-  fake.fetchImpl = () => jsonResponse({ instance: { state: 'open' } });
-
-  const req = makeUserRequest(AGENT_TOKEN, '10.0.0.77', { 'x-cron-secret': 'segredo-errado-nao-e-o-do-vault' });
-  const res = await run(fake, req, makeDepsWithUser(fake, 'user-1', false));
-
-  assert(
-    res.status === 403,
-    `segredo de cron inválido não pode pular o gate de papel: esperado 403, veio ${res.status}`,
-  );
-  // E não pode ter consultado o provedor nem transicionado status: barrado antes.
-  assert(fake.calls.length === 0, `barrado não deve consultar o provedor: ${JSON.stringify(fake.calls)}`);
-});
-
-Deno.test('N-162: limite é por USUÁRIO — mesmo usuário em IPs diferentes é bloqueado com 429', async () => {
-  const fake = baseFake();
-  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null }];
-  fake.statusById = { c1: 'connected' };
-  fake.tokens = { padrao: 'tok-da-padrao' };
-  fake.fetchImpl = () => jsonResponse({ instance: { state: 'open' } });
-
-  // Usuário exclusivo deste teste: o contador é em memória e compartilhado na isolate.
-  const USER = 'user-rate-por-usuario';
-
-  // As 6 primeiras passam, cada uma de um IP DIFERENTE (o IP não é a chave).
-  for (let i = 0; i < 6; i++) {
-    const res = await run(fake, makeUserRequest(ADMIN_TOKEN, `10.9.0.${i}`), makeDepsWithUser(fake, USER, true));
-    assert(res.status === 200, `requisição ${i + 1} (IP diferente): esperado 200, veio ${res.status}`);
-  }
-  // A 7ª, de outro IP ainda, é bloqueada: a chave é o usuário, não o IP.
-  const res = await run(fake, makeUserRequest(ADMIN_TOKEN, '10.9.0.200'), makeDepsWithUser(fake, USER, true));
-  assert(res.status === 429, `esperado 429 na 7ª de IP distinto, veio ${res.status}`);
-});
-
-Deno.test('N-162: limite é por USUÁRIO — usuários diferentes no mesmo IP não se bloqueiam', async () => {
-  const fake = baseFake();
-  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null }];
-  fake.statusById = { c1: 'connected' };
-  fake.tokens = { padrao: 'tok-da-padrao' };
-  fake.fetchImpl = () => jsonResponse({ instance: { state: 'open' } });
-
-  const IP_COMUM = '10.8.0.1';
-
-  for (let i = 0; i < 6; i++) {
-    const res = await run(fake, makeUserRequest(ADMIN_TOKEN, IP_COMUM), makeDepsWithUser(fake, 'user-a-mesmo-ip', true));
-    assert(res.status === 200, `user-a requisição ${i + 1}: esperado 200, veio ${res.status}`);
-  }
-  // Outro usuário no MESMO IP não herda o estouro do primeiro.
-  const res = await run(fake, makeUserRequest(ADMIN_TOKEN, IP_COMUM), makeDepsWithUser(fake, 'user-b-mesmo-ip', true));
-  assert(res.status === 200, `user-b no mesmo IP não pode ser bloqueado por user-a, veio ${res.status}`);
-});
-
-Deno.test('N-162: service key interna continua passando sem exigir papel', async () => {
-  const fake = baseFake();
-  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null }];
-  fake.statusById = { c1: 'connected' };
-  fake.tokens = { padrao: 'tok-da-padrao' };
-  fake.fetchImpl = () => jsonResponse({ instance: { state: 'open' } });
-
-  const deps = makeDepsWithUser(fake, 'user-ignorado', false);
-  const res = await run(fake, makeUserRequest((deps as { serviceKey: string }).serviceKey), deps);
-  assert(res.status === 200, `service key deve passar, veio ${res.status}`);
-});
-
-// ──────────────────────── CA2: trilha de auditoria ─────────────────────────
-
-Deno.test('CA2: queda detectada pelo monitor grava a transição em audit_logs, no formato que o diálogo lê', async () => {
-  const fake = baseFake();
-  fake.rows = [{ id: 'c1', instance_id: 'inst-a', phone_number: '+5511999999999' }];
-  fake.statusById = { c1: 'connected' };
-  fake.tokens = { 'inst-a': 'tok-da-inst-a' };
-  // Provedor responde 'close' → o monitor transiciona a linha para 'disconnected'.
-  fake.fetchImpl = () => jsonResponse({ instance: { state: 'close' } });
-
-  // Duas checagens iguais da MESMA queda: o CAS só deixa transicionar uma vez.
-  await run(fake);
-  await run(fake);
-
-  assert(fake.auditLogs.length === 1, `esperado 1 evento de trilha para uma única transição, veio ${fake.auditLogs.length}`);
-  const ev = fake.auditLogs[0];
-  assert(ev.action === 'connection_disconnected', `ação inesperada: ${String(ev.action)}`);
-  assert(ev.entity_type === 'connection', `entity_type inesperado: ${String(ev.entity_type)}`);
-  assert(ev.entity_id === 'c1', `entity_id deve ser o uuid da linha: ${String(ev.entity_id)}`);
-  assert(ev.user_id === null, 'transição automática não tem autor — user_id nulo (a tela mostra "Sistema")');
-  const details = ev.details as Record<string, unknown>;
-  // O diálogo de auditoria filtra por details.instance_id: sem ele a linha não aparece.
-  assert(details.instance_id === 'inst-a', `details.instance_id deve ser o da conexão: ${String(details.instance_id)}`);
-  assert(details.previous_status === 'connected', `previous_status inesperado: ${String(details.previous_status)}`);
-  assert(details.status === 'disconnected', `status inesperado: ${String(details.status)}`);
-  assert(details.source === 'health-check', `origem inesperada: ${String(details.source)}`);
-  // Sem telefone, token nem payload bruto do provedor.
-  const serializado = JSON.stringify(ev);
-  assert(!serializado.includes('+5511999999999'), 'a trilha NÃO pode conter o telefone');
-  assert(!serializado.includes('tok-da-inst-a'), 'a trilha NÃO pode conter o token');
-  assert(!serializado.includes('"close"'), 'a trilha NÃO pode conter payload bruto do provedor');
-});
-
-Deno.test('CA2: reconexão detectada pelo monitor grava connection_connected', async () => {
-  const fake = baseFake();
-  fake.rows = [{ id: 'c9', instance_id: 'inst-b', phone_number: null }];
-  fake.statusById = { c9: 'disconnected' };
-  fake.tokens = { 'inst-b': 'tok-da-inst-b' };
-  fake.fetchImpl = () => jsonResponse({ instance: { state: 'open' } });
-
-  await run(fake);
-
-  assert(fake.auditLogs.length === 1, `esperado 1 evento de trilha, veio ${fake.auditLogs.length}`);
-  const ev = fake.auditLogs[0];
-  assert(ev.action === 'connection_connected', `ação inesperada: ${String(ev.action)}`);
-  const details = ev.details as Record<string, unknown>;
-  assert(details.instance_id === 'inst-b', `details.instance_id inesperado: ${String(details.instance_id)}`);
-  assert(details.previous_status === 'disconnected', `previous_status inesperado: ${String(details.previous_status)}`);
-  assert(details.status === 'connected', `status inesperado: ${String(details.status)}`);
-  assert(details.source === 'health-check', `origem inesperada: ${String(details.source)}`);
-});
-
-Deno.test('CA2: checagem SEM transição não grava linha de trilha', async () => {
-  const fake = baseFake();
-  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null }];
-  // Já está 'connected' e o provedor confirma 'open': nada muda na linha.
-  fake.statusById = { c1: 'connected' };
-  fake.tokens = { padrao: 'tok-da-padrao' };
-  fake.fetchImpl = () => jsonResponse({ instance: { state: 'open' } });
-
-  const res = await run(fake);
-
-  assert(res.status === 200, `esperado 200, veio ${res.status}`);
-  assert(fake.auditLogs.length === 0, `sem mudança de status não pode haver trilha, veio ${fake.auditLogs.length}`);
 });

@@ -11,31 +11,11 @@ export const playNotificationSound = vi.fn();
 export const showBrowserNotification = vi.fn();
 export const requestNotificationPermission = vi.fn();
 export const toast = vi.fn();
-export const sonnerToast = { error: vi.fn(), success: vi.fn(), info: vi.fn(), warning: vi.fn() };
+export const sonnerToast = { error: vi.fn(), success: vi.fn(), info: vi.fn() };
 export const invoke = vi.fn();
-/** Ação "Abrir conversa" dos toasts — o clique precisa levar o CONTATO_ID, não só o rótulo. */
-export const openContactChat = vi.fn();
-/** `supabase.removeChannel`: prova que a assinatura NÃO é derrubada no re-render. */
-export const removeChannel = vi.fn();
-/** Tópicos pedidos a `supabase.channel`, na ordem — prova o canal único por montagem. */
-export const channelTopics: string[] = [];
-/** Spies estáveis do logger: o teste confere o que foi registrado (erro sem dado pessoal). */
-export const loggerSpies = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
-/** Quando preenchido, a consulta a `contacts` rejeita — prova o try/catch do handler. */
-export const contactsQuery: { erro: Error | null } = { erro: null };
-/** Com `pendente`, a consulta a `sla_configurations` só responde quando o teste chamar `liberar()`. */
-export const slaQuery: { pendente: boolean; liberar: (() => void) | null } = {
-  pendente: false,
-  liberar: null,
-};
-/** Regras devolvidas pela consulta a `sla_rules` (a política `notify_on_warning` vem delas). */
-export const slaRulesQuery: { rows: unknown[]; erro: Error | null } = { rows: [], erro: null };
 
 /** Resultado do dedupe de notificacoes; o teste pode desligar para cobrir o caminho silencioso. */
 export const dedupeResult = { valor: true };
-
-/** Chamadas do dedupe, com a chave e o TTL — é o que prova a janela de 24h. */
-export const dedupeCalls: Array<{ key: string; ttlMs?: number }> = [];
 
 /** Callbacks entregues pelos canais do Realtime, na ordem em que foram registrados. */
 export const callbacks: Array<(payload: unknown) => unknown> = [];
@@ -88,44 +68,19 @@ export function supabaseMock() {
   };
   canal.subscribe = () => ({ unsubscribe: vi.fn() });
 
-  /** Resposta por tabela — o mesmo veredito serve para `maybeSingle()`, `single()` e o `await` da cadeia. */
-  const responder = async (tabela: string) => {
-    if (tabela === 'contacts' && contactsQuery.erro) throw contactsQuery.erro;
-    if (tabela === 'sla_configurations' && slaQuery.pendente) {
-      await new Promise<void>((resolve) => {
-        slaQuery.liberar = resolve;
-      });
-    }
-    if (tabela === 'sla_rules') {
-      if (slaRulesQuery.erro) return { data: null, error: slaRulesQuery.erro };
-      return { data: slaRulesQuery.rows, error: null };
-    }
-    return { data: contactRow, error: null };
-  };
-
-  /** Construtor encadeável: `.select().eq().order()` aguardado devolve a resposta da tabela. */
-  const chain = (tabela: string): Record<string, unknown> => {
-    const builder: Record<string, unknown> = {
-      eq: () => builder,
-      order: () => builder,
-      maybeSingle: () => responder(tabela),
-      single: () => responder(tabela),
-      then: (resolve: (v: unknown) => unknown, reject: (e: unknown) => unknown) =>
-        responder(tabela).then(resolve, reject),
-    };
-    return builder;
-  };
-
   return {
     supabase: {
-      channel: (topico: string) => {
-        channelTopics.push(topico);
-        return canal;
-      },
-      removeChannel,
+      channel: () => canal,
+      removeChannel: vi.fn(),
       functions: { invoke: (...args: unknown[]) => invoke(...args) },
-      from: (tabela: string) => ({
-        select: () => chain(tabela),
+      from: () => ({
+        select: () => ({
+          eq: () => ({
+            maybeSingle: async () => ({ data: contactRow, error: null }),
+            single: async () => ({ data: contactRow, error: null }),
+          }),
+          order: () => ({ limit: async () => ({ data: [], error: null }) }),
+        }),
         insert: async () => ({ error: null }),
         update: () => ({ eq: async () => ({ error: null }) }),
       }),
@@ -138,25 +93,16 @@ export function authMock() {
 }
 
 export function loggerMock() {
-  return { getLogger: () => loggerSpies, log: loggerSpies };
+  const logger = () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() });
+  return { getLogger: logger, log: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() } };
 }
 
 export function toastMock() {
   return { toast };
 }
 
-/** Mock da ação "Abrir conversa"; registrado só pelos testes que a exercitam (o de sentimento usa a real). */
-export function sendProductMock() {
-  return { openContactChat: (...args: unknown[]) => openContactChat(...args) };
-}
-
 export function dedupeMock() {
-  return {
-    claimNotificationEvent: (key: string, ttlMs?: number) => {
-      dedupeCalls.push({ key, ttlMs });
-      return dedupeResult.valor;
-    },
-  };
+  return { claimNotificationEvent: () => dedupeResult.valor };
 }
 
 export function sonnerMock() {
@@ -167,23 +113,9 @@ export function resetAlertKit() {
   playNotificationSound.mockClear();
   showBrowserNotification.mockClear();
   invoke.mockClear();
-  openContactChat.mockClear();
-  removeChannel.mockClear();
-  loggerSpies.debug.mockClear();
-  loggerSpies.info.mockClear();
-  loggerSpies.warn.mockClear();
-  loggerSpies.error.mockClear();
-  channelTopics.length = 0;
-  contactsQuery.erro = null;
-  slaQuery.pendente = false;
-  slaQuery.liberar = null;
-  slaRulesQuery.rows = [];
-  slaRulesQuery.erro = null;
   sonnerToast.error.mockClear();
   sonnerToast.info.mockClear();
-  sonnerToast.warning.mockClear();
   dedupeResult.valor = true;
-  dedupeCalls.length = 0;
   callbacks.length = 0;
   settingsCfg.soundEnabled = true;
   settingsCfg.newMessageSound = true;

@@ -21,27 +21,6 @@ export const AVAILABILITY_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 /** Teto da consulta de health logs; acima dele a janela fica parcial. */
 export const HEALTH_LOGS_LIMIT = 2000;
 
-/** Erros de leitura expostos por fonte (conexões, logs, mensagens). */
-export interface MonitoringErrors {
-  connections: string | null;
-  logs: string | null;
-  messages: string | null;
-}
-
-/**
- * Traduz o motivo de um erro de consulta/ação para o texto mostrado na tela.
- * O motivo real (mensagem do PostgREST, rede, permissão) nunca é engolido.
- */
-export function motivoDeErro(err: unknown): string {
-  const bruto =
-    (err as { message?: string } | null)?.message ??
-    (typeof err === 'string' ? err : '');
-  if (/failed to fetch|networkerror|network request failed|load failed/i.test(bruto)) return 'falha de rede';
-  if (/timeout|timed out/i.test(bruto)) return 'tempo esgotado';
-  if (/permission denied|denied|not authorized/i.test(bruto)) return 'sem permissão';
-  return bruto || 'motivo desconhecido';
-}
-
 export interface DiagnosticResult {
   timestamp: string;
   diagnostics: Array<{

@@ -3,52 +3,19 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { z } from "https://esm.sh/zod@3.23.8";
 import { handleCors, errorResponse, jsonResponse, Logger, requireEnv } from "../_shared/validation.ts";
-import { ensureValidToken, gmailFetch, reconcileEmailThreads, recordGmailAccountFailure, runGmailFullSync, sanitizeGmailErrorMessage, syncLabels, syncMessageIds } from "../_shared/gmail-helpers.ts";
+import { ensureValidToken, gmailFetch, reconcileEmailThreads, runGmailFullSync, syncLabels, syncMessageIds } from "../_shared/gmail-helpers.ts";
 
 const GMAIL_RESOURCE_ID_RE = /^[0-9A-Za-z_-]{1,200}$/;
-// Cor de marcador do Gmail: o schema só garante o formato hex; a paleta exata é
-// validada pela própria API do Gmail (erro explícito devolvido ao chamador).
-const GMAIL_LABEL_HEX_RE = /^#[0-9a-fA-F]{6}$/;
-// O Gmail aceita nomes de marcador de até 225 caracteres.
-const GMAIL_LABEL_NAME_MAX = 225;
 
-const GmailLabelColorSchema = z.object({
-  backgroundColor: z.string().regex(GMAIL_LABEL_HEX_RE, "color.backgroundColor deve ser hex #RRGGBB"),
-  textColor: z.string().regex(GMAIL_LABEL_HEX_RE, "color.textColor deve ser hex #RRGGBB"),
-});
-
-export const GmailSyncActionSchema = z.object({
+const GmailSyncActionSchema = z.object({
   message_id: z.string().max(200).regex(GMAIL_RESOURCE_ID_RE).optional(),
   attachment_id: z.string().max(200).regex(GMAIL_RESOURCE_ID_RE).optional(),
-  action: z.enum(['sync-labels', 'sync-inbox', 'sync-incremental', 'get-thread', 'setup-watch', 'get-attachment', 'create-label', 'update-label', 'delete-label']),
+  action: z.enum(['sync-labels', 'sync-inbox', 'sync-incremental', 'get-thread', 'setup-watch', 'get-attachment']),
   account_id: z.string().uuid("account_id must be a valid UUID"),
   query: z.string().max(500).optional(),
   maxResults: z.number().int().min(1).max(200).optional(),
   thread_id: z.string().max(200).regex(GMAIL_RESOURCE_ID_RE).optional(),
   topic_name: z.string().max(500).optional(),
-  // Gerenciamento de marcadores do Gmail (create/update/delete-label).
-  label_id: z.string().max(200).regex(GMAIL_RESOURCE_ID_RE).optional(),
-  name: z.string().max(GMAIL_LABEL_NAME_MAX).optional(),
-  color: GmailLabelColorSchema.optional(),
-  label_list_visibility: z.enum(['labelShow', 'labelShowIfUnread', 'labelHide']).optional(),
-  message_list_visibility: z.enum(['show', 'hide']).optional(),
-}).superRefine((value, ctx) => {
-  if (value.action === 'create-label') {
-    if (!value.name || value.name.trim().length === 0) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['name'], message: 'name é obrigatório para criar um marcador' });
-    } else if (value.name !== value.name.trim()) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['name'], message: 'name não pode ter espaços nas pontas' });
-    }
-  }
-  if ((value.action === 'update-label' || value.action === 'delete-label') && !value.label_id) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['label_id'], message: 'label_id é obrigatório' });
-  }
-  if (
-    value.action === 'update-label' && value.name === undefined && value.color === undefined &&
-    value.label_list_visibility === undefined && value.message_list_visibility === undefined
-  ) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['action'], message: 'nada para atualizar neste marcador' });
-  }
 });
 
 const GMAIL_API = "https://gmail.googleapis.com/gmail/v1/users/me";
@@ -132,131 +99,6 @@ export async function runGmailIncrementalSync(
   return { status: 200, payload: { success: true, cursor_advanced: cursorAdvanced, changed_messages: changedMessageIds.size, deleted_messages: deletedMessageIds.size, synced: changedResult.synced, history_pages: pages } };
 }
 
-// ─── Gerenciamento de marcadores do Gmail (create/update/delete-label) ───────
-// Alcança paridade com a V3 (`useGmailLabels.ts`, ações createLabel/updateLabel/
-// deleteLabel). Os ids de sistema do Gmail não podem ser apagados pela API;
-// negamos antes de qualquer chamada externa. Cada mutação espelha a linha em
-// `email_labels` (upsert no create/update, delete na remoção), sempre escopada
-// por `gmail_account_id` — mesmo padrão de `syncLabels`.
-const SYSTEM_GMAIL_LABEL_IDS = new Set([
-  "INBOX", "SENT", "DRAFT", "DRAFTS", "SPAM", "TRASH", "STARRED", "IMPORTANT",
-  "UNREAD", "CHAT", "SCHEDULED",
-]);
-
-/** Marcador de sistema do Gmail: não pode ser apagado (INBOX, CATEGORY_*, ...). */
-export function isSystemGmailLabelId(labelId: string): boolean {
-  const upper = labelId.trim().toUpperCase();
-  return SYSTEM_GMAIL_LABEL_IDS.has(upper) || upper.startsWith("CATEGORY_");
-}
-
-export type GmailLabelMutationAction = "create-label" | "update-label" | "delete-label";
-
-export interface GmailLabelMutationInput {
-  name?: string;
-  label_id?: string;
-  color?: { backgroundColor: string; textColor: string };
-  label_list_visibility?: "labelShow" | "labelShowIfUnread" | "labelHide";
-  message_list_visibility?: "show" | "hide";
-}
-
-export interface GmailLabelMutationOutcome {
-  status: number;
-  payload: Record<string, unknown>;
-}
-
-interface GmailLabelResource {
-  id?: string;
-  name?: string;
-  type?: string;
-  color?: { backgroundColor?: string };
-  messagesTotal?: number;
-  messagesUnread?: number;
-}
-
-/** Chamada de mutação à API do Gmail (POST/PATCH/DELETE). DELETE responde 204. */
-async function gmailLabelFetch(
-  accessToken: string,
-  path: string,
-  init: { method: string; body?: unknown },
-): Promise<GmailLabelResource | null> {
-  const response = await fetch(`${GMAIL_API}${path}`, {
-    method: init.method,
-    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-    body: init.body === undefined ? undefined : JSON.stringify(init.body),
-  });
-  if (!response.ok) throw new Error(`Gmail API error (${response.status}): ${await response.text()}`);
-  if (response.status === 204) return null;
-  const text = await response.text();
-  return text ? (JSON.parse(text) as GmailLabelResource) : null;
-}
-
-/**
- * Cria, renomeia/apaga um marcador do Gmail e espelha o resultado em
- * `email_labels`. Erro do espelho local é propagado: o fluxo não declara
- * sucesso com o banco desatualizado (mesma regra de `syncLabels`).
- */
-export async function runGmailLabelMutation(
-  supabase: SupabaseClient,
-  accountId: string,
-  accessToken: string,
-  action: GmailLabelMutationAction,
-  input: GmailLabelMutationInput,
-): Promise<GmailLabelMutationOutcome> {
-  if (action === "create-label") {
-    const payload: Record<string, unknown> = { name: input.name };
-    if (input.label_list_visibility) payload.labelListVisibility = input.label_list_visibility;
-    if (input.message_list_visibility) payload.messageListVisibility = input.message_list_visibility;
-    if (input.color) payload.color = input.color;
-    const created = await gmailLabelFetch(accessToken, "/labels", { method: "POST", body: payload });
-    if (created?.id) {
-      const { error } = await supabase.from("email_labels").upsert({
-        gmail_account_id: accountId,
-        gmail_label_id: created.id,
-        name: created.name ?? input.name ?? "",
-        label_type: created.type === "system" ? "system" : "user",
-        color: created.color?.backgroundColor ?? null,
-        message_count: created.messagesTotal ?? 0,
-        unread_count: created.messagesUnread ?? 0,
-      }, { onConflict: "gmail_account_id,gmail_label_id" });
-      if (error) throw new Error("Failed to persist Gmail label locally");
-    }
-    return { status: 201, payload: { success: true, label: created } };
-  }
-
-  const labelId = input.label_id as string;
-
-  if (action === "update-label") {
-    const patch: Record<string, unknown> = {};
-    if (input.name !== undefined) patch.name = input.name;
-    if (input.color) patch.color = input.color;
-    if (input.label_list_visibility) patch.labelListVisibility = input.label_list_visibility;
-    if (input.message_list_visibility) patch.messageListVisibility = input.message_list_visibility;
-    const updated = await gmailLabelFetch(accessToken, `/labels/${encodeURIComponent(labelId)}`, {
-      method: "PATCH",
-      body: { id: labelId, ...patch },
-    });
-    const localPatch: Record<string, unknown> = {};
-    if (input.name !== undefined) localPatch.name = updated?.name ?? input.name;
-    if (input.color) localPatch.color = updated?.color?.backgroundColor ?? input.color.backgroundColor;
-    if (Object.keys(localPatch).length > 0) {
-      const { error } = await supabase.from("email_labels").update(localPatch)
-        .eq("gmail_account_id", accountId).eq("gmail_label_id", labelId);
-      if (error) throw new Error("Failed to persist Gmail label locally");
-    }
-    return { status: 200, payload: { success: true, label: updated } };
-  }
-
-  // delete-label
-  if (isSystemGmailLabelId(labelId)) {
-    return { status: 400, payload: { success: false, error: "Marcador de sistema não pode ser apagado" } };
-  }
-  await gmailLabelFetch(accessToken, `/labels/${encodeURIComponent(labelId)}`, { method: "DELETE" });
-  const { error } = await supabase.from("email_labels").delete()
-    .eq("gmail_account_id", accountId).eq("gmail_label_id", labelId);
-  if (error) throw new Error("Failed to remove Gmail label locally");
-  return { status: 200, payload: { success: true, deleted: true, label_id: labelId } };
-}
-
 export async function handleGmailSync(req: Request): Promise<Response> {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
@@ -294,13 +136,7 @@ export async function handleGmailSync(req: Request): Promise<Response> {
       .select("id, email_address, is_active, sync_status, token_expires_at, history_id, user_id")
       .eq("id", body.account_id).eq("user_id", user.id).eq("is_active", true).single();
 
-    // Conta do próprio usuário: o filtro por `user_id` é o que nega o não-dono.
-    // Negação explícita (403) — antes isto caía no throw genérico e o cliente
-    // recebia 500 "Internal server error", escondendo a recusa.
-    if (!account) {
-      log.done(403, { action: body.action });
-      return errorResponse("Gmail account not found or inactive", 403, req);
-    }
+    if (!account) throw new Error("Gmail account not found or inactive");
 
     const accessToken = await ensureValidToken(supabase, account, log);
 
@@ -322,12 +158,9 @@ export async function handleGmailSync(req: Request): Promise<Response> {
           log.done(200, { synced: result.synced });
           return jsonResponse({ success: true, ...result }, 200, req);
         } catch (err: unknown) {
-          try {
-            // token revogado/expirado vira 'reauth_required'; o resto 'error'.
-            await recordGmailAccountFailure(supabase, account.id, err, 1);
-          } catch (recordErr) {
-            log.error("Falha ao registrar o estado de erro da conta Gmail", { error: recordErr instanceof Error ? recordErr.message : String(recordErr) });
-          }
+          await supabase.from("gmail_accounts").update({
+            sync_status: "error", last_error: err instanceof Error ? err.message : String(err),
+          }).eq("id", account.id);
           throw err;
         }
       }
@@ -376,15 +209,6 @@ export async function handleGmailSync(req: Request): Promise<Response> {
         const data = await gmailFetch(accessToken, `/messages/${message_id}/attachments/${attachment_id}`);
         log.done(200); return jsonResponse({ data: data.data, size: data.size }, 200, req);
       }
-      // Paridade com a V3 `useGmailLabels.ts` (createLabel/updateLabel/deleteLabel).
-      case "create-label":
-      case "update-label":
-      case "delete-label": {
-        const outcome = await runGmailLabelMutation(supabase, account.id, accessToken, body.action, body);
-        log.done(outcome.status, { action: body.action });
-        return jsonResponse(outcome.payload, outcome.status, req);
-      }
-
       default:
         log.done(400);
         return errorResponse(`Unknown action: ${body.action}`, 400, req);
@@ -392,7 +216,7 @@ export async function handleGmailSync(req: Request): Promise<Response> {
   } catch (error) {
     log.error("Gmail Sync error", { error: error instanceof Error ? error.message : String(error) });
     log.done(500);
-    return errorResponse(error instanceof Error ? sanitizeGmailErrorMessage(error.message) : "Internal server error", 500, req);
+    return errorResponse(error instanceof Error ? error.message : "Internal server error", 500, req);
   }
 }
 

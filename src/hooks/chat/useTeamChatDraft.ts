@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { uploadTeamMedia } from '@/hooks/team-chat/uploadTeamMedia';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { getTeamChatFileSizeError, MAX_TEAM_CHAT_FILE_SIZE } from '@/lib/teamChatRules';
-import { teamDraftStorageKey } from '@/lib/teamChatDraftSession';
 import { getLogger } from '@/lib/logger';
 import { toast } from 'sonner';
 
@@ -11,8 +9,10 @@ const CHAR_LIMIT = 10000;
 
 const log = getLogger('TeamChatDraft');
 
-/** Reexportado para não quebrar quem importa a chave a partir do hook. */
-export { teamDraftStorageKey };
+/** Convenção da casa: `zapp.<area>:<userId>` — o rascunho é do usuário, não do navegador. */
+export function teamDraftStorageKey(userId: string, conversationId: string): string {
+  return `zapp.teamchat.draft:${userId}:${conversationId}`;
+}
 
 /**
  * Rascunhos gravados antes do escopo por usuário (`team_draft_<conv>`) vazavam
@@ -90,19 +90,6 @@ export function useTeamChatDraft({ conversationId, text, setText, onFileSent }: 
         e.preventDefault();
         const file = items[i].getAsFile();
         if (!file) return;
-
-        // HZ5-08: o mesmo limite/tipo do upload por arquivo. Antes, uma imagem
-        // colada de 60 MB ia direto para o storage (o bucket recusava e o usuário
-        // só via "Erro ao enviar imagem colada").
-        const fileError = getTeamChatFileSizeError(file.size);
-        if (fileError) {
-          toast.error(
-            fileError === 'too-large'
-              ? `Imagem muito grande. Máximo: ${MAX_TEAM_CHAT_FILE_SIZE / 1024 / 1024}MB`
-              : 'A imagem colada está vazia',
-          );
-          return;
-        }
 
         setPasteUploading(true);
         try {

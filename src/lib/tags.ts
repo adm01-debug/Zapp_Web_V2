@@ -1,6 +1,6 @@
 export function isWhatsAppTag(tag: string): boolean { return tag.toLowerCase().startsWith('wa:'); }
 
-function parseWhatsAppTag(tag: string): { labelId: string; displayName: string } | null {
+export function parseWhatsAppTag(tag: string): { labelId: string; displayName: string } | null {
   if (!isWhatsAppTag(tag)) return null;
   const parts = tag.split(':');
   if (parts.length < 3) return null;
@@ -13,4 +13,10 @@ export function getTagDisplayName(tag: string): string {
   return parsed ? parsed.displayName : tag;
 }
 
+export function normalizeTag(tag: string): string { return tag.trim(); }
+
+export function filterWATags(tags: string[]): string[] { return tags.filter(isWhatsAppTag); }
+
 export function filterCustomTags(tags: string[]): string[] { return tags.filter(t => !isWhatsAppTag(t)); }
+
+export type TagArray = string[];

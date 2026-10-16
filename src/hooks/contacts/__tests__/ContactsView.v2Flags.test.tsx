@@ -1,5 +1,4 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { MemoryRouter } from 'react-router-dom';
 import { render, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import type { Mock } from 'vitest';
@@ -233,9 +232,7 @@ function marcarAreas() {
 function createWrapper() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
   return ({ children }: { children: ReactNode }) => (
-    <QueryClientProvider client={client}>
-      <MemoryRouter>{children}</MemoryRouter>
-    </QueryClientProvider>
+    <QueryClientProvider client={client}>{children}</QueryClientProvider>
   );
 }
 

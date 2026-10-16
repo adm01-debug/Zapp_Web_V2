@@ -153,12 +153,6 @@ export interface RawEvent {
   closureId: string | null;
   /** `conversation_events.created_at`. */
   createdAt: string;
-  /**
-   * `conversation_events.metadata` (jsonb). A transferência grava aqui a nota escrita pelo
-   * atendente (`metadata.note`). Mapa aberto porque a coluna é jsonb e pode ganhar outras
-   * chaves; quem lê procura `note` e ignora o resto.
-   */
-  metadata?: Record<string, unknown> | null;
 }
 
 /** Proposta comercial (`sales_deals`). */

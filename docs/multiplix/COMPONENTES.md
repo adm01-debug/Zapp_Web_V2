@@ -11,7 +11,8 @@
 | Rota lazy | `src/pages/lazyViews.ts` | Exporta `MultiplixView` com `lazyWithRetry(() => import('@/components/multiplix/MultiplixView'))` |
 | Roteador | `src/pages/ViewRouter.tsx` | Mapeia `?view=multiplix` → `Views.MultiplixView` e bloqueia por `canAccess` |
 | Navegação | `src/services/navigation.service.ts` | Entrada primária `id: 'multiplix'`, permissão `multiplix.dispatch.create` |
-| Tela principal | `src/components/multiplix/MultiplixView.tsx` | Filtros de audiência (ramo/UF/busca), seleção de empresas, composição inline (região 02) e disparos recentes |
+| Tela principal | `src/components/multiplix/MultiplixView.tsx` | Filtros de audiência (ramo/UF/busca), seleção de empresas, disparos recentes |
+| Compositor | `src/components/multiplix/MultiplixComposerDialog.tsx` | Cria o rascunho do disparo a partir das empresas selecionadas |
 | Monitor | `src/components/multiplix/MultiplixMonitor.tsx` | Progresso ao vivo, lista de destinatários, pausar/retomar/cancelar |
 
 ## Front — dados (hooks e lib)

@@ -4,6 +4,10 @@ export interface FeedbackOptions {
   title?: string;
   description: string;
   duration?: number;
+  action?: {
+    label: string;
+    onClick: () => void;
+  };
 }
 
 export interface WithFeedbackOptions<T> {
@@ -13,6 +17,13 @@ export interface WithFeedbackOptions<T> {
   showLoading?: boolean;
   onSuccess?: (result: T) => void;
   onError?: (error: Error) => void;
+}
+
+export interface UndoableOptions<T> {
+  description: string;
+  undoDuration?: number;
+  onUndo: () => void;
+  onConfirm?: (result: T) => void;
 }
 
 export const FEEDBACK_ICONS: Record<FeedbackType, string> = {

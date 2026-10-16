@@ -2,12 +2,7 @@ import { forwardRef } from 'react';
 import type { ReactNode } from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { VolumeRocker } from '@/hooks/ui/useVolumeRocker';
-import { VOLUME_CONTROL_ATTRIBUTE } from '@/hooks/ui/useVolumeRocker';
 import { cn } from '@/lib/utils';
-
-/** Marca do gatilho para o registry global: com o foco AQUI, a tecla `M` é do
- *  `useVolumeRocker` (E16) — ver `VOLUME_CONTROL_ATTRIBUTE`. */
-const marcaDoControle = { [VOLUME_CONTROL_ATTRIBUTE]: '' } as const;
 
 export interface VolumeTriggerButtonProps {
   label: string;
@@ -57,7 +52,6 @@ export const VolumeTriggerButton = forwardRef<HTMLButtonElement, VolumeTriggerBu
       <button
         ref={ref}
         type="button"
-        {...marcaDoControle}
         onClick={rocker.handleTriggerClick}
         onPointerDown={rocker.handlePointerDown}
         onPointerUp={rocker.clearLongPress}

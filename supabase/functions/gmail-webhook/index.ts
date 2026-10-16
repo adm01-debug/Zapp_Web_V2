@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { z } from "https://esm.sh/zod@3.23.8";
 import { getCorsHeaders, jsonResponse, Logger, requireEnv } from "../_shared/validation.ts";
 import { verifyGmailOidcRequest } from "../_shared/hmac-validation.ts";
-import { extractAttachments, ensureValidToken, isGmailReauthError, recordGmailAccountFailure, resetGmailHistoryCursor } from "../_shared/gmail-helpers.ts";
+import { extractAttachments, resetGmailHistoryCursor } from "../_shared/gmail-helpers.ts";
 
 const GMAIL_API = "https://gmail.googleapis.com/gmail/v1/users/me";
 
@@ -16,6 +16,51 @@ const PubSubSchema = z.object({
   subscription: z.string().optional(),
 });
 
+// deno-lint-ignore no-explicit-any
+async function getTokens(supabase: any, accountId: string): Promise<{ access_token: string; refresh_token: string }> {
+  const { data, error } = await supabase.rpc("get_gmail_tokens", { p_account_id: accountId });
+  if (error || !data?.length) throw new Error("Failed to retrieve tokens");
+  return data[0];
+}
+
+// deno-lint-ignore no-explicit-any
+async function storeTokens(supabase: any, accountId: string, accessToken: string, refreshToken?: string | null) {
+  await supabase.rpc("store_gmail_tokens", {
+    p_account_id: accountId,
+    p_access_token: accessToken,
+    p_refresh_token: refreshToken ?? null,
+  });
+}
+
+// deno-lint-ignore no-explicit-any
+async function refreshToken(supabase: any, account: any, log: Logger): Promise<string> {
+  const GOOGLE_CLIENT_ID = requireEnv("GOOGLE_CLIENT_ID");
+  const GOOGLE_CLIENT_SECRET = requireEnv("GOOGLE_CLIENT_SECRET");
+
+  const storedTokens = await getTokens(supabase, account.id);
+
+  const response = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      refresh_token: storedTokens.refresh_token,
+      client_id: GOOGLE_CLIENT_ID,
+      client_secret: GOOGLE_CLIENT_SECRET,
+      grant_type: "refresh_token",
+    }),
+  });
+
+  if (!response.ok) throw new Error("Failed to refresh token");
+  const tokens = await response.json();
+
+  await storeTokens(supabase, account.id, tokens.access_token, tokens.refresh_token || null);
+  await supabase.from("gmail_accounts").update({
+    token_expires_at: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
+  }).eq("id", account.id);
+
+  log.info("Token refreshed");
+  return tokens.access_token;
+}
 
 function decodeBase64Url(data: string): string {
   const base64 = data.replace(/-/g, "+").replace(/_/g, "/");
@@ -120,19 +165,14 @@ export async function handleGmailWebhook(req: Request): Promise<Response> {
       return jsonResponse({ acknowledged: true }, 200, req);
     }
 
-    // Ensure valid access token (uma cópia do refresh, em _shared/gmail-helpers).
-    // Token revogado não pode virar "Failed to refresh token" genérico: a conta
-    // é marcada como reauth_required, o sync incremental para e o Pub/Sub
-    // recebe ACK (200) para não reentregar a mesma notificação.
+    // Ensure valid access token
     let accessToken: string;
-    try {
-      accessToken = await ensureValidToken(supabase, account, log);
-    } catch (tokenError) {
-      if (!isGmailReauthError(tokenError)) throw tokenError;
-      await recordGmailAccountFailure(supabase, account.id, tokenError, 1);
-      log.info("Gmail account requires reauth, skipping sync");
-      log.done(200, { reauth_required: true });
-      return jsonResponse({ acknowledged: true, reauth_required: true }, 200, req);
+    const now = new Date();
+    if (now >= new Date(account.token_expires_at)) {
+      accessToken = await refreshToken(supabase, account, log);
+    } else {
+      const storedTokens = await getTokens(supabase, account.id);
+      accessToken = storedTokens.access_token;
     }
 
     // Fetch history changes

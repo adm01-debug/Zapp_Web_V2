@@ -8,8 +8,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Activity, RefreshCw, Trash2, CalendarIcon, AlertTriangle } from "lucide-react";
 import { TelemetryCharts } from "@/components/admin/telemetry/TelemetryCharts";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ClientErrorsPanel } from "./admin-telemetria/ClientErrorsPanel";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -96,8 +94,8 @@ export default function AdminTelemetriaPage() {
         <div className="flex items-center gap-3">
           <Activity className="h-7 w-7 text-primary" />
           <div>
-            <h1 className="text-2xl font-bold">Telemetria</h1>
-            <p className="text-sm text-muted-foreground">Consultas ao banco externo e erros do navegador</p>
+            <h1 className="text-2xl font-bold">Telemetria de Queries</h1>
+            <p className="text-sm text-muted-foreground">Monitoramento de performance do banco externo</p>
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -109,13 +107,6 @@ export default function AdminTelemetriaPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="consultas" className="w-full">
-        <TabsList aria-label="Seção da telemetria">
-          <TabsTrigger value="consultas">Consultas</TabsTrigger>
-          <TabsTrigger value="navegador">Navegador</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="consultas" className="space-y-6 mt-4">
       {atualizacaoFalhou && (
         <div
           data-telemetria-leitura="stale"
@@ -142,7 +133,7 @@ export default function AdminTelemetriaPage() {
           {/* Filters */}
           <div className="flex items-center gap-3 flex-wrap">
             <Select value={severityFilter} onValueChange={(v) => setSeverityFilter(v as SeverityFilter)}>
-              <SelectTrigger className="w-44" aria-label="Filtro de severidade"><SelectValue placeholder="Severidade" /></SelectTrigger>
+              <SelectTrigger className="w-44"><SelectValue placeholder="Severidade" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas</SelectItem>
                 <SelectItem value="slow">🟡 Lentas</SelectItem>
@@ -151,7 +142,7 @@ export default function AdminTelemetriaPage() {
               </SelectContent>
             </Select>
             <Select value={timeFilter} onValueChange={(v) => setTimeFilter(v as TimeFilter)}>
-              <SelectTrigger className="w-44" aria-label="Filtro de período"><SelectValue placeholder="Período" /></SelectTrigger>
+              <SelectTrigger className="w-44"><SelectValue placeholder="Período" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="1h">Última hora</SelectItem>
                 <SelectItem value="6h">Últimas 6h</SelectItem>
@@ -195,12 +186,6 @@ export default function AdminTelemetriaPage() {
         isError={leituraFalhou}
         errorDetail={leituraFalhou ? telemetryReadFailureDetail(error) : undefined}
       />
-        </TabsContent>
-
-        <TabsContent value="navegador" className="space-y-6 mt-4">
-          <ClientErrorsPanel />
-        </TabsContent>
-      </Tabs>
     </div>
   );
 }

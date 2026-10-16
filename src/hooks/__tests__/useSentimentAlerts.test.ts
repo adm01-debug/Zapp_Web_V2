@@ -67,19 +67,24 @@ describe('useSentimentAlerts', () => {
     });
     mockFunctionsInvoke.mockResolvedValue({ data: { alerted: false }, error: null });
     mockFrom.mockReturnValue({
-      select: vi.fn(() => ({
+      select: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
           order: vi.fn().mockReturnValue({
             limit: vi.fn().mockResolvedValue({ data: [], error: null }),
           }),
         }),
-      })),
+      }),
     });
   });
 
   it('exposes checkAndTriggerAlert function', () => {
     const { result } = renderHook(() => useSentimentAlerts());
     expect(typeof result.current.checkAndTriggerAlert).toBe('function');
+  });
+
+  it('exposes getRecentAlerts function', () => {
+    const { result } = renderHook(() => useSentimentAlerts());
+    expect(typeof result.current.getRecentAlerts).toBe('function');
   });
 
   it('has default threshold of 30', () => {
@@ -195,6 +200,40 @@ describe('useSentimentAlerts', () => {
     });
     expect(outcome.triggered).toBe(true);
     expect(mockToastError).not.toHaveBeenCalled();
+  });
+
+  it('getRecentAlerts returns empty array on error', async () => {
+    mockFrom.mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          order: vi.fn().mockReturnValue({
+            limit: vi.fn().mockRejectedValue(new Error('DB error')),
+          }),
+        }),
+      }),
+    });
+    const { result } = renderHook(() => useSentimentAlerts());
+    const alerts = await result.current.getRecentAlerts();
+    expect(alerts).toEqual([]);
+  });
+
+  it('getRecentAlerts maps data correctly', async () => {
+    mockFrom.mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          order: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue({
+              data: [{ id: 'a1', entity_id: 'c1', created_at: '2024-01-01', action: 'sentiment_alert', details: { score: 10 } }],
+              error: null,
+            }),
+          }),
+        }),
+      }),
+    });
+    const { result } = renderHook(() => useSentimentAlerts());
+    const alerts = await result.current.getRecentAlerts();
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0].contactId).toBe('c1');
   });
 
   it('toca o alerta de sentimento pela preferência de MENÇÃO, não pela de SLA', async () => {

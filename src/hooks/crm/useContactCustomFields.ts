@@ -53,13 +53,8 @@ export function useContactCustomFields(contactId: string | undefined) {
 
   const removeField = useCallback(async (fieldId: string) => {
     try {
-      const { data, error } = await ContactService.deleteCustomField(fieldId);
+      const { error } = await ContactService.deleteCustomField(fieldId);
       if (error) throw error;
-      // Com a RLS bloqueando, o delete afeta zero linhas SEM erro: sem esta checagem a
-      // tela tirava o campo e dizia "removido" com o registro ainda no banco.
-      if (!data || data.length === 0) {
-        throw new Error('Nada foi removido: o campo pode ter sido apagado por outra pessoa ou você não tem permissão.');
-      }
       setFields(prev => prev.filter(f => f.id !== fieldId));
     } catch (err) {
       log.error('Error removing custom field:', err);

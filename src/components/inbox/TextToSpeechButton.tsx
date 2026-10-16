@@ -2,7 +2,6 @@ import { Volume2, VolumeX, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { HOVER_REVEAL_TAP } from './hoverActions';
 
 interface TextToSpeechButtonProps {
   messageId: string;
@@ -58,7 +57,7 @@ export function TextToSpeechButton({
           size="icon"
           aria-label={label}
           className={cn(
-            `h-6 w-6 ${HOVER_REVEAL_TAP} transition-opacity`,
+            "h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity",
             (isThisPlaying || isThisLoading) && "opacity-100",
             className
           )}

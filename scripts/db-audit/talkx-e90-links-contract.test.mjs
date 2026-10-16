@@ -36,15 +36,8 @@ test('Talk X {{link}} resolves to a real per-recipient tracking URL at the real 
   // vercel.json) ou, sem o secret, do caminho direto da edge (?s=slug&r=recipient).
   assert.match(sender, /TALKX_LINK_BASE_URL/);
   assert.match(sender, /functions\/v1\/talkx-link/);
-  // X055/E90 (15/10): o parâmetro `r` passou a carregar o TOKEN OPACO, nunca o recipient_id cru
-  // (cartão t_51bf1772 / refazer t_cae6d61c: o id no link era IDOR). O contrato acompanha a regra
-  // nova e fica MAIS rígido: além das duas formas de URL, exige que `r` venha do token e proíbe
-  // explicitamente a forma antiga com o id cru.
-  assert.match(sender, /const rParam = encodeURIComponent\(token\)/);
-  assert.match(sender, /\/l\/\$\{encodeURIComponent\(params\.slug\)\}\?r=\$\{rParam\}/);
-  assert.match(sender, /\?s=\$\{encodeURIComponent\(params\.slug\)\}&r=\$\{rParam\}/);
-  assert.doesNotMatch(sender, /\?r=\$\{encodeURIComponent\(recipientId\)\}/,
-    'o link não pode levar o recipient_id cru: o `r` é o token opaco');
+  assert.match(sender, /\/l\/\$\{encodeURIComponent\(slug\)\}\?r=\$\{encodeURIComponent\(recipientId\)\}/);
+  assert.match(sender, /\?s=\$\{encodeURIComponent\(slug\)\}&r=\$\{encodeURIComponent\(recipientId\)\}/);
   const realCallIdx = recipientProcessor.indexOf('const personalized = personalize(');
   const trackingArgIdx = recipientProcessor.indexOf('trackingUrlFor(recipient.id as string)');
   assert.ok(realCallIdx > -1 && trackingArgIdx > -1, 'o call site real de personalize() e o argumento trackingUrlFor devem existir');

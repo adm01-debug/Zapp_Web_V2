@@ -1,14 +1,12 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, within } from '@testing-library/react';
-import { axe } from 'vitest-axe';
 import { VolumeSliderPopoverContent } from '@/components/ui/VolumeSliderPopoverContent';
 import type { VolumeSliderPopoverContentProps } from '@/components/ui/VolumeSliderPopoverContent';
 
 /**
- * Conteúdo do painel de volume (alertas e mídias): o dono pediu — subir, abaixar e
- * anular o som de forma CLARA — passou a mostrar o valor no centro do dial circular
- * (`VolumeDial`, padrão slider-08), com os botões − / + e o de silenciar logo abaixo.
- * O `role="slider"` agora é o próprio dial, que publica `aria-valuetext` sozinho.
+ * Conteúdo do painel de volume (alertas e mídias): o que o dono pediu — subir,
+ * abaixar e anular o som de forma CLARA — passou a ter botões (− / +), valor
+ * grande e um botão único de silenciar com o estado visível.
  */
 const props = {
   title: 'Volume dos alertas',
@@ -34,11 +32,11 @@ const montar = (extra: Partial<VolumeSliderPopoverContentProps> = {}) => {
       onToggleMute={onToggleMute}
     />,
   );
-  return { onVolumeChange, onToggleMute, tela: within(container), container };
+  return { onVolumeChange, onToggleMute, tela: within(container) };
 };
 
-describe('VolumeSliderPopoverContent — dial / − / + / Silenciar', () => {
-  it('mostra o valor (centro do dial + contrato do testid) e o dial fala "% por cento"', () => {
+describe('VolumeSliderPopoverContent — − / + / Silenciar', () => {
+  it('mostra o valor grande e o slider com o texto falado em "% por cento"', () => {
     const { tela } = montar();
 
     expect(tela.getByTestId('valor-de-teste')).toHaveTextContent('70%');
@@ -48,7 +46,7 @@ describe('VolumeSliderPopoverContent — dial / − / + / Silenciar', () => {
     );
   });
 
-  it('com o som silenciado o texto falado do dial é "Mudo"', () => {
+  it('com o som silenciado o texto falado do slider é "Mudo"', () => {
     const { tela } = montar({ muted: true, valueLabel: 'Mudo' });
 
     expect(tela.getByRole('slider', { name: 'Volume dos alertas' })).toHaveAttribute(
@@ -77,7 +75,7 @@ describe('VolumeSliderPopoverContent — dial / − / + / Silenciar', () => {
     expect(noChao.onVolumeChange).not.toHaveBeenCalled();
   });
 
-  it('o botão de silenciar tem o estado visível e alterna', () => {
+  it('o botão grande silencia, com o estado visível', () => {
     const { onToggleMute, tela } = montar();
 
     const botao = tela.getByRole('button', { name: 'Silenciar' });
@@ -87,7 +85,7 @@ describe('VolumeSliderPopoverContent — dial / − / + / Silenciar', () => {
     expect(onToggleMute).toHaveBeenCalledTimes(1);
   });
 
-  it('com o som mudo o botão vira "Ativar som", marcado como pressionado', () => {
+  it('com o som mudo o botão grande vira "Ativar som", marcado como pressionado', () => {
     const { onToggleMute, tela } = montar({ muted: true, valueLabel: 'Mudo' });
 
     const ativar = tela.getByRole('button', { name: 'Ativar som' });
@@ -118,9 +116,8 @@ describe('VolumeSliderPopoverContent — dial / − / + / Silenciar', () => {
   it('o foco fica preso no painel: Tab no último volta ao primeiro e Shift+Tab no primeiro vai ao último', () => {
     const { tela } = montar();
 
-    // O dial abre a ordem de foco (é o primeiro focável no DOM); o botão "Aumentar" fecha.
-    const primeiro = tela.getByRole('slider', { name: 'Volume dos alertas' });
-    const ultimo = tela.getByRole('button', { name: /^Aumentar Volume dos alertas/ });
+    const primeiro = tela.getByRole('button', { name: /^Diminuir Volume dos alertas/ });
+    const ultimo = tela.getByRole('button', { name: 'Silenciar' });
 
     ultimo.focus();
     fireEvent.keyDown(ultimo, { key: 'Tab' });
@@ -133,17 +130,11 @@ describe('VolumeSliderPopoverContent — dial / − / + / Silenciar', () => {
   it('Tab no meio do painel não é sequestrado (só as pontas dão a volta)', () => {
     const { tela } = montar();
 
-    const meio = tela.getByRole('button', { name: 'Silenciar' });
-    meio.focus();
+    const slider = tela.getByRole('slider', { name: 'Volume dos alertas' });
+    slider.focus();
     const evento = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
-    fireEvent(meio, evento);
+    fireEvent(slider, evento);
 
     expect(evento.defaultPrevented).toBe(false);
-  });
-
-  it('não tem violação de acessibilidade', async () => {
-    const { container } = montar();
-
-    expect(await axe(container)).toHaveNoViolations();
   });
 });

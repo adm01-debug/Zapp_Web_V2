@@ -43,8 +43,6 @@ interface Opcoes {
   isLoading?: boolean;
   filtersActive?: boolean;
   searchQuery?: string;
-  /** Etapa 043 (refazer 2): id recém-criado que entra na Caixa de entrada. */
-  destaqueId?: string | null;
 }
 
 function renderLista(byDue: BucketsByDue, over: Opcoes = {}) {
@@ -62,7 +60,6 @@ function renderLista(byDue: BucketsByDue, over: Opcoes = {}) {
         isLoading={over.isLoading ?? false}
         searchQuery={over.searchQuery ?? ''}
         filtersActive={over.filtersActive}
-        destaqueId={over.destaqueId}
         hasMounted={temMontado}
         {...acoes}
       />
@@ -144,7 +141,7 @@ describe('TasksListMode — etapa 86 (seções, vazios e portas do card)', () =>
   it('com filtro ativo o vazio é o "filter" e "Limpar filtros" desfaz', () => {
     const { onClearFilter } = renderLista(buckets(), { filtersActive: true });
 
-    expect(screen.getByText('Nenhum resultado')).toBeTruthy();
+    expect(screen.getByText('Nenhuma tarefa com esse filtro')).toBeTruthy();
     expect(screen.queryByText('Nada por aqui')).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: 'Limpar filtros' }));
@@ -178,41 +175,5 @@ describe('TasksListMode — etapa 86 (seções, vazios e portas do card)', () =>
 
     expect(container.querySelectorAll('.animate-shimmer')).toHaveLength(6);
     expect(screen.queryByText('Nada por aqui')).toBeNull();
-  });
-});
-
-/**
- * Etapa 043 (refazer 2) — criação otimista na captura: o item que acabou de
- * nascer entra pintado com o realce de 1,2 s. O `<TasksListMode>` só desenha o
- * realce quando o id recém-criado é o DESTE item (id de outro não vaza para cá);
- * quem conta os 1,2 s e limpa o id é o `TasksModule` (o teste de lá mede o tempo).
- */
-describe('TasksListMode — etapa 043 (refazer 2): realce do item recém-criado', () => {
-  beforeEach(cleanup);
-
-  it('pinta só o item do id recém-criado', () => {
-    const novo = item({ id: 'novo-1', title: 'Recém-criada' });
-    const antigo = item({ id: 't1', title: 'Antiga' });
-
-    renderLista(buckets({ noDue: [novo, antigo] }), { destaqueId: 'novo-1' });
-
-    const realces = screen.getAllByTestId('work-item-realce');
-    expect(realces).toHaveLength(1);
-    // o realce fica na MESMA caixa do cartão novo (o invólucro da seção), coberto
-    // pelo `pointer-events-none`, e não na do antigo
-    const caixaNova = screen.getByText('Recém-criada').closest('[data-testid="work-item-card"]')?.parentElement;
-    const caixaAntiga = screen.getByText('Antiga').closest('[data-testid="work-item-card"]')?.parentElement;
-    expect(caixaNova?.contains(realces[0])).toBe(true);
-    expect(caixaAntiga?.contains(realces[0])).toBe(false);
-
-    cleanup();
-
-    // Sem destaque (barra já limpa) e com o destaque de OUTRO id: nenhum realce.
-    renderLista(buckets({ noDue: [novo, antigo] }));
-    expect(screen.queryByTestId('work-item-realce')).toBeNull();
-    cleanup();
-
-    renderLista(buckets({ noDue: [novo, antigo] }), { destaqueId: 'inexistente' });
-    expect(screen.queryByTestId('work-item-realce')).toBeNull();
   });
 });

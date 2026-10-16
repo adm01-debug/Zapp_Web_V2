@@ -31,16 +31,12 @@ interface ClientOpts {
   connections?: Array<{ id: string; status: string | null }>;
   /** #121A: linha(s) de `talkx_settings` — `business_hours` chega como JSONB (objeto). */
   settings?: Array<{ key: string; value: unknown }>;
-  /** Resultado da RPC talkx_campaign_window_open por campaign id. */
-  windowOpen?: Record<string, boolean>;
 }
 
 interface ClientCtx {
   dueQueries: number;
   pausedQueries: number;
   events: Array<Record<string, unknown>>;
-  /** Chamadas feitas ao client.rpc, na ordem — a prova de que a janela foi consultada. */
-  rpcCalls: Array<{ name: string; args?: Record<string, unknown> }>;
 }
 
 /**
@@ -49,7 +45,7 @@ interface ClientCtx {
  * (thenable), sem tocar banco nenhum.
  */
 function makeClient(opts: ClientOpts): { client: unknown; ctx: ClientCtx } {
-  const ctx: ClientCtx = { dueQueries: 0, pausedQueries: 0, events: [], rpcCalls: [] };
+  const ctx: ClientCtx = { dueQueries: 0, pausedQueries: 0, events: [] };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function from(table: string): any {
     let status: string | null = null;
@@ -89,15 +85,7 @@ function makeClient(opts: ClientOpts): { client: unknown; ctx: ClientCtx } {
     b.catch = (rej: (e: unknown) => unknown) => Promise.resolve(resolveRows()).catch(rej);
     return b;
   }
-  return { client: { rpc: (name: string, args?: Record<string, unknown>) => {
-    ctx.rpcCalls.push({ name, args });
-    if (name === 'talkx_campaign_window_open' && args && args.p_campaign_id) {
-      const cid = args.p_campaign_id as string;
-      const open = opts.windowOpen?.[cid] ?? true;
-      return Promise.resolve({ data: open, error: null });
-    }
-    return Promise.resolve({ data: null, error: null });
-  }, from }, ctx };
+  return { client: { rpc: () => Promise.resolve({ data: null, error: null }), from }, ctx };
 }
 
 interface FetchOpts {
@@ -149,7 +137,6 @@ function makeDeps(o: {
   fetch?: typeof fetch;
   cronSecretValue?: string | null;
   timeoutMs?: number;
-  now?: Date;
 }): {
   supabase: unknown;
   serviceKey: string;
@@ -163,7 +150,7 @@ function makeDeps(o: {
     supabase: o.client,
     serviceKey: TEST_SERVICE_KEY,
     env: (key: string) => (key === "SUPABASE_URL" ? "https://supabase-test.example" : undefined),
-    now: o.now ?? NOW,
+    now: NOW,
     fetch: o.fetch,
     getCronSecret: () => Promise.resolve(o.cronSecretValue ?? null),
     timeoutMs: o.timeoutMs,
@@ -410,210 +397,4 @@ Deno.test("R2-INF-016: falha ao ler as campanhas agendadas → 500 sanitizado (s
   } finally {
     console.error = originalError;
   }
-});
-
-// --------------------------------------------------------------------------- N-102
-
-Deno.test("N-102: campanha fora de send_weekdays não é despachada", async () => {
-  const sunday = new Date("2026-10-11T09:00:00Z");
-  const campaign = { id: "c-weekday", name: "c-weekday", scheduled_at: "2026-10-01T00:00:00.000Z", status: "scheduled", send_weekdays: [1, 2, 3, 4, 5] };
-  const fake = makeFetch();
-  const { client, ctx } = makeClient({ due: [campaign as CampaignRow], windowOpen: { "c-weekday": false } });
-  const res = await handleTalkxScheduler(makeRequest({ cronSecret: TEST_CRON_SECRET }), makeDeps({ client, fetch: fake.impl, cronSecretValue: TEST_CRON_SECRET, now: sunday }));
-  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
-  // A prova é não haver POST ao talkx-send: sem a RPC o dispatch aconteceria e o
-  // fetch falso registraria 1 POST.
-  assert(fake.posts.length === 0, `fora de send_weekdays não pode despachar (${fake.posts.length} POST)`);
-  assert(
-    ctx.rpcCalls.some((c) => c.name === "talkx_campaign_window_open" && c.args?.p_campaign_id === "c-weekday"),
-    "o scheduler precisa consultar a janela antes de despachar",
-  );
-});
-
-Deno.test("N-102: campanha dentro de DND com respect_dnd=true não é despachada", async () => {
-  const saturday = new Date("2026-10-10T22:30:00Z");
-  const campaign = { id: "c-dnd", name: "c-dnd", scheduled_at: "2026-10-01T00:00:00.000Z", status: "scheduled", respect_dnd: true };
-  const fake = makeFetch();
-  const { client, ctx } = makeClient({ due: [campaign as CampaignRow], windowOpen: { "c-dnd": false } });
-  const res = await handleTalkxScheduler(makeRequest({ cronSecret: TEST_CRON_SECRET }), makeDeps({ client, fetch: fake.impl, cronSecretValue: TEST_CRON_SECRET, now: saturday }));
-  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
-  assert(fake.posts.length === 0, `dentro de DND com respect_dnd=true não pode despachar (${fake.posts.length} POST)`);
-  assert(
-    ctx.rpcCalls.some((c) => c.name === "talkx_campaign_window_open" && c.args?.p_campaign_id === "c-dnd"),
-    "o scheduler precisa consultar a janela antes de despachar",
-  );
-});
-
-Deno.test("N-102: campanha com respect_dnd=false é despachada mesmo dentro de DND", async () => {
-  const saturday = new Date("2026-10-10T22:30:00Z");
-  const campaign = { id: "c-nodnd", name: "c-nodnd", scheduled_at: "2026-10-01T00:00:00.000Z", status: "scheduled", respect_dnd: false };
-  const fake = makeFetch();
-  const { client, ctx } = makeClient({ due: [campaign as CampaignRow], windowOpen: { "c-nodnd": true } });
-  const res = await handleTalkxScheduler(makeRequest({ cronSecret: TEST_CRON_SECRET }), makeDeps({ client, fetch: fake.impl, cronSecretValue: TEST_CRON_SECRET, now: saturday }));
-  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
-  assert(fake.posts.length === 1, `esperado 1 POST start, recebido ${fake.posts.length}`);
-  assert(ctx.rpcCalls.some((c) => c.name === "talkx_campaign_window_open" && c.args?.p_campaign_id === "c-nodnd"), "a janela deve ser consultada mesmo quando abre");
-});
-
-Deno.test("N-102: p_at enviado à RPC é o relógio injetado, não o relógio real", async () => {
-  const injected = new Date("2026-10-11T09:00:00Z");
-  const campaign = { id: "c-now", name: "c-now", scheduled_at: "2026-10-01T00:00:00.000Z", status: "scheduled" };
-  const fake = makeFetch();
-  const { client, ctx } = makeClient({ due: [campaign as CampaignRow], windowOpen: { "c-now": true } });
-  const res = await handleTalkxScheduler(makeRequest({ cronSecret: TEST_CRON_SECRET }), makeDeps({ client, fetch: fake.impl, cronSecretValue: TEST_CRON_SECRET, now: injected }));
-  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
-  const call = ctx.rpcCalls.find((c) => c.name === "talkx_campaign_window_open");
-  assert(!!call, "a RPC talkx_campaign_window_open precisa ser chamada");
-  assert(
-    call.args?.p_at === injected.toISOString(),
-    `p_at deve ser o relógio injetado ${injected.toISOString()}, foi ${String(call.args?.p_at)}`,
-  );
-});
-
-// --------------------------------------------------------------------------- recorrência
-
-interface RecurrenceCall { rpc: string; args: Record<string, unknown> }
-
-/**
- * Client falso só para o passo de recorrência: registra os filtros aplicados na
- * consulta de campanhas 'completed' e as chamadas de RPC. As consultas de
- * agendadas/pausadas voltam vazias.
- */
-function makeRecurrenceClient(opts: {
-  completed?: CampaignRow[];
-  outcomes?: Record<string, { data?: unknown; error?: { message: string } | null }>;
-}): { client: unknown; filters: string[]; calls: RecurrenceCall[] } {
-  const filters: string[] = [];
-  const calls: RecurrenceCall[] = [];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function from(_table: string): any {
-    let status: string | null = null;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const b: Record<string, any> = {};
-    b.select = () => b;
-    b.lte = () => b;
-    b.in = () => b;
-    b.limit = () => b;
-    b.eq = (col: string, val: unknown) => { if (col === "status") status = String(val); return b; };
-    b.not = (col: string, op: string, val: unknown) => { filters.push(`not:${col}:${op}:${val}`); return b; };
-    b.is = (col: string, val: unknown) => { filters.push(`is:${col}:${val}`); return b; };
-    const rows = () => ({ data: status === "completed" ? (opts.completed ?? []) : [], error: null });
-    b.then = (res: (v: unknown) => unknown, rej?: (e: unknown) => unknown) => Promise.resolve(rows()).then(res, rej);
-    return b;
-  }
-  const rpc = (name: string, args: Record<string, unknown>) => {
-    calls.push({ rpc: name, args });
-    const configured = opts.outcomes?.[String(args.p_campaign_id)];
-    return Promise.resolve({ data: configured?.data ?? null, error: configured?.error ?? null });
-  };
-  return { client: { rpc, from }, filters, calls };
-}
-
-Deno.test("recorrência: só ocorrências 'completed' com frequência, sem sucessora e sem encerramento entram no passo", async () => {
-  const { client, filters } = makeRecurrenceClient({});
-  const res = await handleTalkxScheduler(
-    makeRequest({ cronSecret: TEST_CRON_SECRET }),
-    makeDeps({ client, cronSecretValue: TEST_CRON_SECRET }),
-  );
-  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
-  for (const expected of [
-    "not:recurrence_frequency:is:null",
-    "is:recurrence_next_campaign_id:null",
-    "is:recurrence_closed_at:null",
-  ]) {
-    assert(filters.includes(expected), `filtro ausente: ${expected}; aplicados: ${filters.join(", ")}`);
-  }
-});
-
-Deno.test("recorrência: cada ocorrência concluída chama a RPC uma vez e o tick reporta quantas foram agendadas", async () => {
-  const { client, calls } = makeRecurrenceClient({
-    completed: [{ id: "c-1" }, { id: "c-2" }],
-    outcomes: {
-      "c-1": { data: { scheduled: true, campaign_id: "n-1" } },
-      "c-2": { data: { scheduled: false, reason: "audience_exhausted" } },
-    },
-  });
-  const res = await handleTalkxScheduler(
-    makeRequest({ cronSecret: TEST_CRON_SECRET }),
-    makeDeps({ client, cronSecretValue: TEST_CRON_SECRET }),
-  );
-  const body = await res.json();
-  assert(calls.length === 2, `esperado 2 chamadas, recebido ${calls.length}`);
-  assert(calls.every((c) => c.rpc === "schedule_next_talkx_recurrence"), "RPC errada");
-  assert(calls.map((c) => c.args.p_campaign_id).join() === "c-1,c-2", "ids chamados fora do esperado");
-  assert(body.recurrence_scheduled === 1, `recurrence_scheduled inesperado: ${JSON.stringify(body)}`);
-});
-
-Deno.test("recorrência: falha da RPC numa série não derruba o tick nem impede as demais séries", async () => {
-  const originalError = console.error;
-  console.error = () => {};
-  try {
-    const { client, calls } = makeRecurrenceClient({
-      completed: [{ id: "c-1" }, { id: "c-2" }],
-      outcomes: {
-        "c-1": { error: { message: "boom" } },
-        "c-2": { data: { scheduled: true, campaign_id: "n-2" } },
-      },
-    });
-    const res = await handleTalkxScheduler(
-      makeRequest({ cronSecret: TEST_CRON_SECRET }),
-      makeDeps({ client, cronSecretValue: TEST_CRON_SECRET }),
-    );
-    const body = await res.json();
-    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
-    assert(calls.length === 2, `a segunda série deveria ser tentada; chamadas: ${calls.length}`);
-    assert(body.recurrence_scheduled === 1, `recurrence_scheduled inesperado: ${JSON.stringify(body)}`);
-  } finally {
-    console.error = originalError;
-  }
-});
-
-Deno.test("recorrência: a nova ocorrência dispara pelo caminho normal (agendada vencida → talkx-send start)", async () => {
-  const { client } = makeClient({ due: [dueRow("occurrence-2")] });
-  const fetcher = makeFetch();
-  await handleTalkxScheduler(
-    makeRequest({ cronSecret: TEST_CRON_SECRET }),
-    makeDeps({ client, fetch: fetcher.impl, cronSecretValue: TEST_CRON_SECRET }),
-  );
-  assert(fetcher.posts.length === 1, `esperado 1 POST, recebido ${fetcher.posts.length}`);
-  assert(fetcher.posts[0]?.body.campaignId === "occurrence-2" && fetcher.posts[0]?.body.action === "start", "POST inesperado");
-});
-
-Deno.test("recorrência: falha da RPC é sinalizada em recurrence_errors sem mascarar o tick (refazer 2, Ponto 3)", async () => {
-  const originalError = console.error;
-  console.error = () => {};
-  try {
-    const { client } = makeRecurrenceClient({
-      completed: [{ id: "c-1" }, { id: "c-2" }],
-      outcomes: {
-        "c-1": { error: { message: "boom" } },
-        "c-2": { data: { scheduled: true, campaign_id: "n-2" } },
-      },
-    });
-    const res = await handleTalkxScheduler(
-      makeRequest({ cronSecret: TEST_CRON_SECRET }),
-      makeDeps({ client, cronSecretValue: TEST_CRON_SECRET }),
-    );
-    const body = await res.json();
-    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
-    assert(body.recurrence_scheduled === 1, `recurrence_scheduled inesperado: ${JSON.stringify(body)}`);
-    assert(body.recurrence_errors === 1, `recurrence_errors deveria ser 1 (erro real nao pode virar "0 recorrências"): ${JSON.stringify(body)}`);
-  } finally {
-    console.error = originalError;
-  }
-});
-
-Deno.test("recorrência: tick limpo devolve recurrence_errors 0", async () => {
-  const { client } = makeRecurrenceClient({
-    completed: [{ id: "c-1" }],
-    outcomes: { "c-1": { data: { scheduled: true, campaign_id: "n-1" } } },
-  });
-  const res = await handleTalkxScheduler(
-    makeRequest({ cronSecret: TEST_CRON_SECRET }),
-    makeDeps({ client, cronSecretValue: TEST_CRON_SECRET }),
-  );
-  const body = await res.json();
-  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
-  assert(body.recurrence_scheduled === 1, `recurrence_scheduled inesperado: ${JSON.stringify(body)}`);
-  assert(body.recurrence_errors === 0, `recurrence_errors deveria ser 0: ${JSON.stringify(body)}`);
 });

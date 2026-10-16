@@ -16,7 +16,6 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { fireEvent } from '@testing-library/dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { MemoryRouter } from 'react-router-dom';
 import { addMonths, startOfMonth } from 'date-fns';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -99,9 +98,7 @@ function renderAgenda() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
-        <ScheduleCalendarView />
-      </MemoryRouter>
+      <ScheduleCalendarView />
     </QueryClientProvider>,
   );
 }

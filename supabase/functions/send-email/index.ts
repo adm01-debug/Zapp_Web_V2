@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, enforceRateLimit, getClientIP } from "../_shared/validation.ts";
+import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, checkRateLimit, getClientIP } from "../_shared/validation.ts";
 import { z, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 
 // R2-API-022 (P1): o relay `send-email` era um buraco de autorização — qualquer chamador
@@ -63,12 +63,8 @@ export async function handleSendEmailRequest(req: Request): Promise<Response> {
   const log = new Logger("send-email");
 
   const ip = getClientIP(req);
-  const rl = await enforceRateLimit(`send-email:${ip}`, 30, 60_000);
-  if (!rl.allowed) {
-    const limited = errorResponse("Rate limit exceeded", 429, req);
-    limited.headers.set("Retry-After", "60");
-    return limited;
-  }
+  const rl = checkRateLimit(`send-email:${ip}`, 30, 60_000);
+  if (!rl.allowed) return errorResponse("Rate limit exceeded", 429, req);
 
   try {
     // 1) Identidade obrigatória ANTES de ler o payload ou tocar em RESEND_API_KEY.

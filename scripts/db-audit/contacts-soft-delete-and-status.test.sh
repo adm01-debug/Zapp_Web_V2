@@ -37,9 +37,6 @@ migration_single_predicate="$repo_root/supabase/migrations/20260929780000_contac
 migration_guards="$repo_root/supabase/migrations/20260929790000_contacts_hijack_guards_only_on_change.sql"
 migration_hoisted="$repo_root/supabase/migrations/20260929810000_contacts_can_edit_contact_hoisted_params.sql"
 migration_can_delete_hoisted="$repo_root/supabase/migrations/20260929820000_contacts_can_delete_contacts_hoisted_params.sql"
-# SEC-RLS_CONTATOS_MENSAGENS-02/03 (oraculo de UUID): aplicada no meio do roteiro, depois do RED
-# que fixa o defeito de can_delete_contacts e antes do GREEN que prova o fechamento.
-migration_oraculo_uuid="$repo_root/supabase/migrations/20261009055051_sec_rls_02_03_oraculo_uuid_contato.sql"
 postgres_image="${CONTACTS_F1_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-v2-contacts-f1-test-$$"
 tmp_dir="$(mktemp -d /tmp/zapp-v2-contacts-f1-test.XXXXXX)"
@@ -568,52 +565,12 @@ expect_value '[f] can_edit_contact de 2 argumentos concorda com a de 5 nos 4 cas
   "$claims_agente SELECT string_agg(eq, ',') FROM (SELECT (public.can_edit_contact(v.a, v.q) = public.can_edit_contact(v.a, v.q, (SELECT array_agg(x) FROM public.get_visible_agent_ids(auth.uid()) x), (SELECT public.get_profile_id_for_user(auth.uid())), (SELECT public.is_admin_or_supervisor(auth.uid()))))::text AS eq FROM (VALUES ('10000000-0000-0000-0000-000000000001'::uuid, NULL::uuid), ('10000000-0000-0000-0000-000000000002'::uuid, NULL::uuid), ('10000000-0000-0000-0000-000000000003'::uuid, '50000000-0000-0000-0000-000000000001'::uuid), (NULL::uuid, '50000000-0000-0000-0000-000000000002'::uuid)) v(a,q)) t"
 
 # `can_delete_contacts` ignora contato ja excluido de proposito (a lista nao mostra excluidos).
-#
-# As assercoes deste bloco sao o **RED do SEC-RLS_CONTATOS_MENSAGENS-03**: o contato
-# 30000000-...-0005 e da FILA ALHEIA (invisivel para o agente -- o bloco [c] prova que ele ve 2
-# dos 5) e MESMO ASSIM a RPC devolvia linha para ele (can_delete=false). A EXISTENCIA da linha
-# era a resposta do oraculo: quem tem um uuid le "existe" (linha) x "nao existe" (sem linha).
-# A correcao entra logo abaixo (predicado de alcance no WHERE) e o GREEN esta no bloco seguinte.
-expect_value 'RED (SEC-03) can_delete_contacts: dono e membro de fila true, fila alheia false (linha DEVOLVIDA para contato invisivel)' 'true,true,false' \
+expect_value 'can_delete_contacts: dono e membro de fila true, fila alheia false' 'true,true,false' \
   "SET ROLE authenticated; SET request.jwt.claim.sub='$AGENTE'; SELECT string_agg(can_delete::text, ',' ORDER BY contact_id) FROM public.can_delete_contacts(ARRAY['30000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000004','30000000-0000-0000-0000-000000000005']::uuid[])"
-expect_value 'RED (SEC-03) can_delete_contacts: sem vinculo nenhum devolve false (linha DEVOLVIDA para todos os invisiveis)' 'false,false,false' \
+expect_value 'can_delete_contacts: sem vinculo nenhum devolve false' 'false,false,false' \
   "SET ROLE authenticated; SET request.jwt.claim.sub='20000000-0000-0000-0000-000000000077'; SELECT string_agg(can_delete::text, ',' ORDER BY contact_id) FROM public.can_delete_contacts(ARRAY['30000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000004','30000000-0000-0000-0000-000000000005']::uuid[])"
 expect_value 'admin recebe can_delete true em contato alheio' 'true' \
   "SET ROLE authenticated; SET request.jwt.claim.sub='$ADMIN'; SELECT string_agg(can_delete::text, ',') FROM public.can_delete_contacts(ARRAY['30000000-0000-0000-0000-000000000005']::uuid[])"
-
-# ── SEC-RLS_CONTATOS_MENSAGENS-03: o WHERE fecha o oraculo de UUID ──────────────────────────
-# A resposta de `can_delete_contacts` para "uuid inexistente" e para "uuid existente fora do
-# alcance" tem de ser a MESMA: nenhuma linha. A prova positiva (contato visivel continua
-# respondendo) fecha o par vermelho->verde com o papel real.
-INEXISTENTE_CONTATO='30000000-0000-0000-0000-0000000000ff'
-INVISIVEL_CONTATO='30000000-0000-0000-0000-000000000005'
-echo
-echo '── Aplicando a migration da correcao (SEC-RLS-02/03) ─────────────────────────────────────'
-psql_file "$migration_oraculo_uuid" >/dev/null
-
-expect_value 'GREEN (SEC-03) uuid INEXISTENTE nao retorna linha' '' \
-  "$claims_agente SELECT coalesce(string_agg(contact_id::text, ','), '') FROM public.can_delete_contacts(ARRAY['$INEXISTENTE_CONTATO']::uuid[])"
-expect_value 'GREEN (SEC-03) uuid EXISTENTE e FORA do alcance tambem nao retorna linha' '' \
-  "$claims_agente SELECT coalesce(string_agg(contact_id::text, ','), '') FROM public.can_delete_contacts(ARRAY['$INVISIVEL_CONTATO']::uuid[])"
-expect_value 'GREEN (SEC-03) as duas respostas sao IDENTICAS (sem oraculo)' 'iguais' \
-  "$claims_agente SELECT CASE WHEN a IS NOT DISTINCT FROM b THEN 'iguais' ELSE 'diferentes' END FROM (SELECT (SELECT string_agg(contact_id::text, ',') FROM public.can_delete_contacts(ARRAY['$INEXISTENTE_CONTATO']::uuid[])) AS a, (SELECT string_agg(contact_id::text, ',') FROM public.can_delete_contacts(ARRAY['$INVISIVEL_CONTATO']::uuid[])) AS b) t"
-expect_value 'GREEN (SEC-03) contato VISIVEL continua respondendo can_delete=true (dono e fila)' 'true,true' \
-  "$claims_agente SELECT string_agg(can_delete::text, ',' ORDER BY contact_id) FROM public.can_delete_contacts(ARRAY['30000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000004']::uuid[])"
-expect_value 'GREEN (SEC-03) ADMIN segue recebendo can_delete=true em contato alheio' 'true' \
-  "$claims_admin SELECT string_agg(can_delete::text, ',') FROM public.can_delete_contacts(ARRAY['$INVISIVEL_CONTATO']::uuid[])"
-# Fecho do argumento "a UI so pede ids da lista visivel": para o agente, o numero de linhas de
-# can_delete_contacts sobre TODOS os ids do banco e igual ao numero de contatos que ele ve.
-expect_value 'GREEN (SEC-03) can_delete_contacts sobre todos os ids = exatamente a lista visivel (agente)' '2|2' \
-  "$claims_agente SELECT (SELECT count(*) FROM public.contacts)::text || '|' || (SELECT count(*) FROM public.can_delete_contacts(ARRAY(SELECT id FROM public.contacts)::uuid[]))::text"
-expect_value 'GREEN (SEC-03) can_delete_contacts sobre todos os ids = exatamente a lista visivel (admin)' '5|5' \
-  "$claims_admin SELECT (SELECT count(*) FROM public.contacts)::text || '|' || (SELECT count(*) FROM public.can_delete_contacts(ARRAY(SELECT id FROM public.contacts)::uuid[]))::text"
-expect_value 'GREEN (SEC-03) contato sem dono/fila (invisivel) segue sem linha' '' \
-  "SET ROLE authenticated; SET request.jwt.claim.sub='$AGENTE'; SELECT coalesce(string_agg(contact_id::text, ','), '') FROM public.can_delete_contacts(ARRAY['30000000-0000-0000-0000-000000000003']::uuid[])"
-# Entrada invalida (nao muda com a correcao; fica coberta porque o WHERE mexe nos ids):
-expect_value 'GREEN (SEC-03) p_ids vazio devolve zero linhas' '0' \
-  "$claims_agente SELECT count(*) FROM public.can_delete_contacts('{}'::uuid[])"
-expect_value 'GREEN (SEC-03) p_ids NULL devolve zero linhas' '0' \
-  "$claims_agente SELECT count(*) FROM public.can_delete_contacts(NULL::uuid[])"
 
 # ── GREEN: etapa 14 (status canonico + FSM) ───────────────────────────────────────────────
 expect_value 'so existe UM CHECK de conversation_status' '1' \
@@ -789,7 +746,6 @@ psql_file "$migration_single_predicate" >/dev/null
 psql_file "$migration_guards" >/dev/null
 psql_file "$migration_hoisted" >/dev/null
 psql_file "$migration_can_delete_hoisted" >/dev/null
-psql_file "$migration_oraculo_uuid" >/dev/null
 expect_value 'reaplicacao nao duplica a coluna deleted_at' '1' \
   "SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND table_name='contacts' AND column_name='deleted_at'"
 expect_value 'reaplicacao mantem um unico CHECK de status' '1' \

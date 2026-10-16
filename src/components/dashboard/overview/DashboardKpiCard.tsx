@@ -4,7 +4,7 @@ import type { LucideIcon } from 'lucide-react';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import { motion, useMotionValue, animate, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { Skeleton, SkeletonRegion } from '@/components/ui/skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface CountUpProps {
   value: string;
@@ -34,7 +34,7 @@ const barsColorClass = {
   blue: 'bg-dash-blue',
   red: 'bg-dash-red',
   green: 'bg-dash-green',
-  violet: 'bg-violeta',
+  violet: 'bg-dash-violet',
   amber: 'bg-dash-amber',
 } as const;
 
@@ -42,7 +42,7 @@ const lineStrokeVar = {
   blue: 'hsl(var(--dash-blue))',
   red: 'hsl(var(--dash-red))',
   green: 'hsl(var(--dash-green))',
-  violet: 'hsl(var(--violeta))',
+  violet: 'hsl(var(--dash-violet))',
   amber: 'hsl(var(--dash-amber))',
 } as const;
 
@@ -144,7 +144,7 @@ const tileColorClass = {
   blue: 'bg-dash-tile-blue',
   red: 'bg-dash-tile-red',
   green: 'bg-dash-tile-green',
-  violet: 'bg-violeta',
+  violet: 'bg-dash-tile-violet',
   amber: 'bg-dash-tile-amber',
 } as const;
 
@@ -229,10 +229,9 @@ export function DashboardKpiCard({
   if (isLoading) {
     if (!hero) {
       return (
-        <SkeletonRegion
+        <div
           data-testid={testid ?? 'kpi-card'}
           className={cn('rounded-xl bg-card border border-border/70 p-3 flex flex-col gap-1.5', kpiCardHeightClass[size])}
-          label="Carregando indicador"
         >
           <div className="flex gap-3">
             <Skeleton className="w-[34px] h-[34px] rounded-lg shrink-0" />
@@ -243,14 +242,13 @@ export function DashboardKpiCard({
             </div>
             <Skeleton className="w-[55px] h-[28px] shrink-0 self-end" />
           </div>
-        </SkeletonRegion>
+        </div>
       );
     }
     return (
-      <SkeletonRegion
+      <div
         data-testid={testid ?? 'kpi-card'}
         className={cn('relative rounded-2xl bg-card border border-border/70 p-5 flex flex-col gap-3', kpiCardHeightClass.hero)}
-        label="Carregando indicador"
       >
         <div className="flex gap-4 items-start">
           <Skeleton className="w-14 h-14 rounded-2xl shrink-0" />
@@ -261,7 +259,7 @@ export function DashboardKpiCard({
           </div>
           <Skeleton className="w-[100px] h-[44px] shrink-0 self-center" />
         </div>
-      </SkeletonRegion>
+      </div>
     );
   }
 

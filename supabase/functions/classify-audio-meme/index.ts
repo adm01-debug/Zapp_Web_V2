@@ -2,7 +2,7 @@ import { handleCors, jsonResponse, Logger } from "../_shared/validation.ts";
 import { generateWithRouting } from "../_shared/ai-generate.ts";
 import { ClassifyAudioMemeSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { requireAiIdentity } from "../_shared/ai-auth.ts";
-import { extractAiRequestId, logAiUsage } from "../_shared/ai-usage.ts";
+import { logAiUsage } from "../_shared/ai-usage.ts";
 import {
   AiAudioInputError,
   toInlineAudio,
@@ -61,7 +61,7 @@ function normalizarCategoria(content: unknown): string {
   return AUDIO_CATEGORIES.includes(rawCategory) ? rawCategory : 'outros';
 }
 
-export async function handleClassifyAudioMeme(req: Request): Promise<Response> {
+Deno.serve(async (req) => {
   const cors = handleCors(req);
   if (cors) return cors;
 
@@ -70,7 +70,6 @@ export async function handleClassifyAudioMeme(req: Request): Promise<Response> {
   if (identity instanceof Response) return identity;
 
   const log = new Logger(FUNCTION_NAME);
-  const requestId = extractAiRequestId(req);
 
   /**
    * Modo LIMITADO (IA-131): classifica só pelo nome do arquivo e DIZ isso ao
@@ -100,7 +99,6 @@ ${REGRA_VIRAL}`;
       purpose: 'tagging',
       functionName: FUNCTION_NAME,
       userId: identity.userId,
-      requestId,
       messages: [{ role: 'user', content: prompt }],
       extraBody: { max_tokens: 20 },
       temperature: 0.1,
@@ -140,7 +138,6 @@ ${REGRA_VIRAL}`;
       await logAiUsage({
         functionName: FUNCTION_NAME,
         userId: identity.userId,
-        requestId,
         status: 'error',
         errorMessage: 'audio_url e file_name ausentes: nenhuma entrada para classificar.',
         purpose: 'tagging',
@@ -169,7 +166,6 @@ ${REGRA_VIRAL}`;
         await logAiUsage({
           functionName: FUNCTION_NAME,
           userId: identity.userId,
-          requestId,
           status: 'error',
           errorMessage: motivo,
           purpose: 'tagging',
@@ -204,7 +200,6 @@ ${REGRA_VIRAL}`;
         purpose: 'tagging',
         functionName: FUNCTION_NAME,
         userId: identity.userId,
-        requestId,
         messages: [{ role: 'user', content: contentParts }],
         need: { modality: 'audio_stt' },
         extraBody: { max_tokens: 20 },
@@ -248,7 +243,6 @@ ${REGRA_VIRAL}`;
     await logAiUsage({
       functionName: FUNCTION_NAME,
       userId: identity.userId,
-      requestId,
       status: 'error',
       errorMessage: motivo,
       purpose: 'tagging',
@@ -262,10 +256,4 @@ ${REGRA_VIRAL}`;
       req,
     );
   }
-}
-
-// Handler exportado para o teste Deno (`index.test.ts`), mas o `Deno.serve`
-// fica no nível do módulo, como no classify-sticker: os contratos vitest
-// capturam o handler stubando `Deno.serve` na importação, então ele não pode
-// ficar atrás de `import.meta.main`.
-Deno.serve(handleClassifyAudioMeme);
+});

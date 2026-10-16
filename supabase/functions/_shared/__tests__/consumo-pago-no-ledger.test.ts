@@ -57,7 +57,7 @@ const ELEVENLABS_SEM_CHAMADA_PAGA = ["elevenlabs-webhook"];
  * `classify-*`). São dívida DECLARADA: a lista é fechada de propósito — uma
  * função nova sem registro faz o teste falhar em vez de entrar aqui sozinha.
  */
-const PENDENTES_DECLARADAS = ["ai-transcribe-audio"];
+const PENDENTES_DECLARADAS = ["ai-transcribe-audio", "voice-changer"];
 
 async function listarFuncoes(): Promise<string[]> {
   const nomes: string[] = [];

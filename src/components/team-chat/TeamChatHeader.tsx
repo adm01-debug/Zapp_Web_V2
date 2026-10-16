@@ -1,9 +1,7 @@
-import { useState } from 'react';
 import { TeamConversation } from '@/hooks/team-chat/teamChatTypes';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { MoveDepartmentDialog } from './MoveDepartmentDialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   DropdownMenu,
@@ -16,7 +14,6 @@ import {
 import {
   ArrowLeft,
   ArrowLeftRight,
-  Building2,
   Users,
   User,
   UserPlus,
@@ -46,8 +43,6 @@ interface TeamChatHeaderProps {
   showStats?: boolean;
   isMuted?: boolean;
   canTransfer?: boolean;
-  /** Move a conversa de departamento (RPC guardada). Vem de `useTeamChatPanel`. */
-  canTransferDepartment?: boolean;
   isGroupCreator?: boolean;
   onBack: () => void;
   onToggleDetails?: () => void;
@@ -71,7 +66,6 @@ export function TeamChatHeader({
   showStats,
   isMuted,
   canTransfer,
-  canTransferDepartment,
   isGroupCreator,
   onBack,
   onToggleDetails,
@@ -86,9 +80,6 @@ export function TeamChatHeader({
   onLeaveGroup,
 }: TeamChatHeaderProps) {
   const isGroup = conversation.type === 'group';
-  // O diálogo fica montado com o cabeçalho para sobreviver ao erro do banco
-  // (fechar no erro esconderia o motivo de a conversa não ter mudado).
-  const [showMoveDepartment, setShowMoveDepartment] = useState(false);
 
   return (
     <div className="flex items-center justify-between px-3 md:px-5 h-[56px] md:h-[65px] pr-24 border-b border-border bg-card shrink-0" role="banner" aria-label="Cabeçalho da conversa">
@@ -235,12 +226,6 @@ export function TeamChatHeader({
                 Transferir departamento
               </DropdownMenuItem>
             )}
-            {canTransferDepartment && (
-              <DropdownMenuItem onClick={() => setShowMoveDepartment(true)}>
-                <Building2 className="w-4 h-4 mr-2" />
-                Mover para outro departamento
-              </DropdownMenuItem>
-            )}
             {isGroup && isGroupCreator && onRenameGroup && (
               <DropdownMenuItem onClick={onRenameGroup}>
                 <Pencil className="w-4 h-4 mr-2" />
@@ -289,14 +274,6 @@ export function TeamChatHeader({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-
-      {showMoveDepartment && (
-        <MoveDepartmentDialog
-          open={showMoveDepartment}
-          onOpenChange={setShowMoveDepartment}
-          conversation={conversation}
-        />
-      )}
     </div>
   );
 }

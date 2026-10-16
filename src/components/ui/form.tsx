@@ -23,12 +23,8 @@ const FormField = <
 >({
   ...props
 }: ControllerProps<TFieldValues, TName>) => {
-  // Valor estável: sem `useMemo` o objeto do contexto era recriado a cada render,
-  // avisando todos os campos do formulário sem necessidade.
-  const fieldValue = React.useMemo(() => ({ name: props.name }), [props.name]);
-
   return (
-    <FormFieldContext.Provider value={fieldValue}>
+    <FormFieldContext.Provider value={{ name: props.name }}>
       <Controller {...props} />
     </FormFieldContext.Provider>
   );
@@ -66,11 +62,9 @@ const FormItemContext = React.createContext<FormItemContextValue>({} as FormItem
 const FormItem = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => {
     const id = React.useId();
-    // Valor estável para os rótulos/controles do item (ver comentário em FormField).
-    const itemContextValue = React.useMemo(() => ({ id }), [id]);
 
     return (
-      <FormItemContext.Provider value={itemContextValue}>
+      <FormItemContext.Provider value={{ id }}>
         <div ref={ref} className={cn("space-y-2", className)} {...props} />
       </FormItemContext.Provider>
     );

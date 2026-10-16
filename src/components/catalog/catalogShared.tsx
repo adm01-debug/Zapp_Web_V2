@@ -381,19 +381,15 @@ interface KpiDef {
   label: string;
   icon: typeof Box;
   color: TileColor;
-  /** true só nos KPIs que têm filtro booleano real na listagem (`handleKpiSelect`).
-   * Os demais são números informativos: NÃO viram botão, para não oferecer um
-   * clique que não faz nada (E33). */
-  filtravel?: boolean;
 }
 
 const CATALOG_KPI_DEFS: KpiDef[] = [
   { key: 'total', label: 'Produtos no total', icon: Box, color: 'blue' },
-  { key: 'categories_root', label: 'Categorias', icon: Folder, color: 'violet' },
-  { key: 'suppliers_active', label: 'Fornecedores', icon: Users, color: 'amber' },
-  { key: 'in_stock', label: 'Em estoque', icon: PackageIcon, color: 'green', filtravel: true },
-  { key: 'featured', label: 'Em destaque', icon: StarIcon, color: 'red', filtravel: true },
-  { key: 'new_30d', label: 'Novidades', icon: SparklesIcon, color: 'blue', filtravel: true },
+  { key: 'categories_root', label: 'Categorias', icon: Folder, color: 'amber' },
+  { key: 'suppliers_active', label: 'Fornecedores', icon: Users, color: 'blue' },
+  { key: 'in_stock', label: 'Em estoque', icon: PackageIcon, color: 'green' },
+  { key: 'featured', label: 'Em destaque', icon: StarIcon, color: 'blue' },
+  { key: 'new_30d', label: 'Novidades', icon: SparklesIcon, color: 'amber' },
 ];
 
 interface CatalogKpiStripProps {
@@ -426,8 +422,14 @@ export function CatalogKpiStrip({ stats, loading, onSelect }: CatalogKpiStripPro
   }
   return (
     <div data-testid="catalog-kpi-strip" className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
-      {visible.map((d, i) => {
-        const card = (
+      {visible.map((d, i) => (
+        <button
+          key={d.key}
+          type="button"
+          onClick={() => onSelect?.(d.key)}
+          disabled={!onSelect}
+          className="text-left disabled:cursor-default"
+        >
           <KpiCard
             icon={d.icon}
             color={d.color}
@@ -436,24 +438,8 @@ export function CatalogKpiStrip({ stats, loading, onSelect }: CatalogKpiStripPro
             compact
             index={i}
           />
-        );
-        // Só os KPIs com filtro real são botão. Os informativos (Total,
-        // Categorias, Fornecedores) ficam sem handler e sem affordance de
-        // clique — antes todos eram botão e os três sem filtro pareciam
-        // clicáveis sem fazer nada.
-        if (!d.filtravel) return <div key={d.key}>{card}</div>;
-        return (
-          <button
-            key={d.key}
-            type="button"
-            onClick={() => onSelect?.(d.key)}
-            disabled={!onSelect}
-            className="text-left disabled:cursor-default"
-          >
-            {card}
-          </button>
-        );
-      })}
+        </button>
+      ))}
     </div>
   );
 }
@@ -904,10 +890,7 @@ export function AdvancedFilterChips({
           onClick={chip.onRemove}
           className={cn(
             'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border',
-            /* Y17-5 (achado 04): `text-primary` (preenchimento, L53) sobre
-               `bg-primary/10` media 3,15:1 no escuro; o par de texto do sistema
-               é `--primary-text`. */
-            'bg-primary/10 text-[hsl(var(--primary-text))] border-primary/30 hover:bg-primary/20 transition-colors',
+            'bg-primary/10 text-primary border-primary/30 hover:bg-primary/20 transition-colors',
             CATALOG_FOCUS_VISIBLE
           )}
         >

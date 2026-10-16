@@ -9,12 +9,10 @@ interface CallsKpiGridProps {
 }
 
 
-const TILES: { chave: keyof CallsKpi; rotulo: string; dica: string; formato?: (v: number) => string; alerta?: boolean }[] = [
+const TILES: { chave: keyof CallsKpi; rotulo: string; dica: string; formato?: (v: number) => string }[] = [
   { chave: 'total', rotulo: 'Total', dica: 'Ligacoes no periodo' },
   { chave: 'answered', rotulo: 'Atendidas', dica: 'Ligacoes atendidas' },
-  // T39 (fix): "Perdidas" e o unico KPI que exige acao — recebe o acento de
-  // atenção para o número ruim não se perder entre 5 tiles idênticos.
-  { chave: 'missed_inbound', rotulo: 'Perdidas', dica: 'Recebidas nao atendidas', alerta: true },
+  { chave: 'missed_inbound', rotulo: 'Perdidas', dica: 'Recebidas nao atendidas' },
   { chave: 'outbound', rotulo: 'Realizadas', dica: 'Ligacoes feitas por voce' },
   { chave: 'avg_talk_seconds', rotulo: 'Tempo medio', dica: 'Duracao media das atendidas', formato: formatarDuracao },
 ];
@@ -54,7 +52,6 @@ export function CallsKpiGrid({ period, channel, scope }: CallsKpiGridProps) {
           key={t.chave}
           rotulo={t.rotulo}
           dica={t.dica}
-          alerta={t.alerta}
           carregando={isLoading}
           valor={t.formato ? t.formato(data?.[t.chave] ?? 0) : (data?.[t.chave] ?? 0)}
         />

@@ -1,28 +1,20 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Shield, ArrowLeft, RotateCw } from 'lucide-react';
+import { Shield, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useMFA } from '@/hooks/auth/useMFA';
 import { MFAVerify } from '@/components/mfa/MFAVerify';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import { resolverDestinoPosLogin } from '@/lib/postLoginRedirect';
 
 type MfaStatus = 'checking' | 'verify' | 'done' | 'error';
 
 export default function TwoFactorAuth() {
   const navigate = useNavigate();
-  const location = useLocation();
-  // A tela pedida veio no state.from (o ProtectedRoute a repassa ao /2fa);
-  // concluido o desafio, o usuario volta para ela, nao para '/'.
-  const destinoPosLogin = resolverDestinoPosLogin(location);
   const { user, loading: authLoading } = useAuth();
   const { getAssuranceLevel } = useMFA();
   const [status, setStatus] = useState<MfaStatus>('checking');
-  // Nova leitura de assurance quando 'Tentar de novo' é acionado; quem lê é o
-  // efeito de baixo.
-  const [tentativa, setTentativa] = useState(0);
 
   useEffect(() => {
     if (authLoading || !user) return;
@@ -43,24 +35,7 @@ export default function TwoFactorAuth() {
     };
 
     void checkMFAStatus();
-  }, [user, authLoading, getAssuranceLevel, tentativa]);
-
-  // ÚNICO caminho de saída da tela: sempre encerra a sessão antes de voltar ao
-  // login. Sem o signOut a pessoa seguia em aal1, o useAuthForm a mandava ao
-  // destino e o ProtectedRoute a devolvia ao /2fa (ciclo preso, sem saída).
-  const sairParaLogin = useCallback(() => {
-    void supabase.auth
-      .signOut()
-      .catch(() => undefined)
-      .finally(() => navigate('/auth'));
-  }, [navigate]);
-
-  // 'Tentar de novo' existe só no estado de erro: refaz a leitura de assurance
-  // (rede/GoTrue podem ter voltado) sem derrubar a sessão.
-  const tentarDeNovo = useCallback(() => {
-    setStatus('checking');
-    setTentativa((n) => n + 1);
-  }, []);
+  }, [user, authLoading, getAssuranceLevel]);
 
   if (!authLoading && !user) {
     return <Navigate to="/auth" replace />;
@@ -68,7 +43,7 @@ export default function TwoFactorAuth() {
 
   // aal2 já verificado ou aal1 sem fator pendente — nada a desafiar aqui.
   if (status === 'done') {
-    return <Navigate to={destinoPosLogin} replace />;
+    return <Navigate to="/" replace />;
   }
 
   if (status === 'error') {
@@ -84,16 +59,16 @@ export default function TwoFactorAuth() {
           <p className="text-muted-foreground text-sm">
             Não foi possível confirmar o status da verificação em duas etapas.
           </p>
-          <div className="flex flex-col items-center gap-2 sm:flex-row sm:justify-center">
-            <Button size="sm" onClick={tentarDeNovo}>
-              <RotateCw className="w-4 h-4 mr-2" />
-              Tentar de novo
-            </Button>
-            <Button variant="ghost" size="sm" onClick={sairParaLogin}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Voltar para login
-            </Button>
-          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              void supabase.auth.signOut().then(() => navigate('/auth'));
+            }}
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Voltar para login
+          </Button>
         </motion.div>
       </div>
     );
@@ -124,9 +99,19 @@ export default function TwoFactorAuth() {
         <MFAVerify
           title="Verificação Necessária"
           description="Para continuar, verifique sua identidade com 2FA"
-          onSuccess={() => navigate(destinoPosLogin)}
-          onCancel={sairParaLogin}
+          onSuccess={() => navigate('/')}
+          onCancel={() => {
+            // Sign out and go back to login
+            supabase.auth.signOut().then(() => navigate('/auth'));
+          }}
         />
+
+        <div className="mt-4 text-center">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/auth')}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Voltar para login
+          </Button>
+        </div>
       </motion.div>
     </div>
   );

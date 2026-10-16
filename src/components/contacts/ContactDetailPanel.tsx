@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -7,7 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import {
   X, MessageSquare, Edit, Phone, Mail, Building, Briefcase,
-  Calendar, Tag, Clock, Zap, Package, Gauge,
+  Calendar, Tag, Clock, Zap, Package,
 } from 'lucide-react';
 import { ContactActivityTimeline } from './ContactActivityTimeline';
 import { ContactNotes } from './ContactNotes';
@@ -17,7 +18,6 @@ import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
 import { ContactEngagementScore } from './ContactEngagementScore';
-import { ContactHealthIndicator } from './ContactCard';
 import { CONTACT_TYPE_CONFIG } from './contactTypeConfig';
 // Guarda de WhatsApp: o mesmo critério que o resto do app usa para telefone
 // utilizável é o `normalizeE164BR` (src/lib/calls/phone.ts) — devolve `null`
@@ -45,13 +45,6 @@ interface ContactDetail {
   contact_type?: string | null;
   tags?: string[] | null;
   created_at: string;
-  /**
-   * Endereço e responsável entram na completude. A lista (`search_contacts`)
-   * devolve `address`; o responsável ainda NÃO vem nessa consulta — a chave
-   * ausente é "não avaliado" em `src/lib/contactHealth.ts` (não vira "falta").
-   */
-  address?: string | null;
-  assigned_to?: string | null;
 }
 
 interface ContactDetailPanelProps<T extends ContactDetail> {
@@ -157,7 +150,7 @@ export function ContactCatalogSendHistory({ contactId }: { contactId: string }) 
                   {row.variant_label && <p className="text-caption">{row.variant_label}</p>}
                 </div>
                 {row.status && (
-                  <Badge variant="secondary" className="text-3xs h-4 px-1.5 shrink-0">
+                  <Badge variant="secondary" className="text-[9px] h-4 px-1.5 shrink-0">
                     {SEND_STATUS_LABEL[row.status] || row.status}
                   </Badge>
                 )}
@@ -180,10 +173,12 @@ export function ContactDetailPanel<T extends ContactDetail>({
   const activity = useContactActivity(contact?.id);
   const activityReady = !!activity.data && !activity.isError;
 
-  // O Esc NÃO é tratado aqui: quem fecha o painel é o handler central de
-  // atalhos (`useContactsViewState`), que só fecha a camada de topo — com um
-  // diálogo Radix aberto por cima, o Esc é do diálogo e o painel fica. Ter um
-  // listener próprio aqui fechava as duas camadas com um único Esc.
+  useEffect(() => {
+    if (!contact) return;
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [contact, onClose]);
 
   if (!contact) return null;
 
@@ -228,7 +223,6 @@ export function ContactDetailPanel<T extends ContactDetail>({
             variant="ghost" size="icon"
             className="absolute top-3 right-3 w-8 h-8"
             onClick={onClose}
-            aria-label="Fechar detalhes do contato"
           >
             <X className="w-4 h-4" />
           </Button>
@@ -363,16 +357,6 @@ export function ContactDetailPanel<T extends ContactDetail>({
                   </div>
                 ))}
               </div>
-            </div>
-
-            {/* Completude do cadastro — indicador com a lista do que falta.
-                Só campos que a ficha realmente carrega entram na conta. */}
-            <div>
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                <Gauge className="w-3 h-3" />
-                Completude do cadastro
-              </h3>
-              <ContactHealthIndicator input={contact} size="md" />
             </div>
 
             {/* Tags */}

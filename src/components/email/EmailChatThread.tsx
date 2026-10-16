@@ -193,57 +193,20 @@ export function EmailChatThread({ accountId, thread, onBack, onToggleDetails, sh
     // Refresh will happen via react-query invalidation
   }, []);
 
-  // Arquivar, mover para a lixeira e restaurar chamam `mutateAsync`. Sem `catch`, a
-  // rejeição (Edge fora do ar, sessão expirada) virava rejeição não tratada: nenhum
-  // aviso e a ação travada. O aviso ao operador sai do `onError` do hook — uma fonte
-  // só para as mesmas ações em toda a tela (trilha do pai t_7f5d100e); aqui o cuidado é
-  // a tela continuar na conversa, o botão não disparar duas vezes e a falha não
-  // navegar (`onBack` só roda quando a ação conclui).
-  const [acaoEmAndamento, setAcaoEmAndamento] = useState<'arquivar' | 'lixeira' | 'restaurar' | null>(null);
-  const acaoEmAndamentoRef = useRef(false);
-
-  const executarAcaoDaConversa = useCallback(async (
-    nome: 'arquivar' | 'lixeira' | 'restaurar',
-    acao: () => Promise<unknown>,
-  ) => {
-    if (acaoEmAndamentoRef.current) return;
-    acaoEmAndamentoRef.current = true;
-    setAcaoEmAndamento(nome);
-    try {
-      await acao();
-    } catch {
-      // A mensagem de erro é do `onError` do hook; aqui a tela só não navega.
-      return;
-    } finally {
-      acaoEmAndamentoRef.current = false;
-      setAcaoEmAndamento(null);
-    }
+  const archiveThread = useCallback(async () => {
+    await modifyThreadLabels.mutateAsync({ thread_id: thread.gmail_thread_id, remove_labels: ['INBOX'] });
     onBack();
-  }, [onBack]);
+  }, [modifyThreadLabels, onBack, thread.gmail_thread_id]);
 
-  const archiveThread = useCallback(() => executarAcaoDaConversa('arquivar', () =>
-    modifyThreadLabels.mutateAsync({ thread_id: thread.gmail_thread_id, remove_labels: ['INBOX'] }),
-  ), [executarAcaoDaConversa, modifyThreadLabels, thread.gmail_thread_id]);
+  const deleteThread = useCallback(async () => {
+    await trashThread.mutateAsync(thread.gmail_thread_id);
+    onBack();
+  }, [onBack, thread.gmail_thread_id, trashThread]);
 
-  const deleteThread = useCallback(() => executarAcaoDaConversa('lixeira', () =>
-    trashThread.mutateAsync(thread.gmail_thread_id),
-  ), [executarAcaoDaConversa, thread.gmail_thread_id, trashThread]);
-
-  const restoreThread = useCallback(() => executarAcaoDaConversa('restaurar', () =>
-    modifyThreadLabels.mutateAsync({ thread_id: thread.gmail_thread_id, add_labels: ['INBOX'], remove_labels: ['TRASH'] }),
-  ), [executarAcaoDaConversa, modifyThreadLabels, thread.gmail_thread_id]);
-
-  // R2-COM-002: a seleção e os bytes são o MESMO estado — a prévia é uma chave só. A
-  // continuação assíncrona só aplica o resultado (bytes ou falha) se o anexo ainda for o
-  // selecionado: a resposta (ou o erro) de um anexo anterior, ou de uma prévia já fechada,
-  // é descartada em vez de sobrescrever a seleção atual.
-  const [attachmentPreview, setAttachmentPreview] = useState<{
-    attachment: (typeof threadAttachments)[number];
-    contentBase64: string | null;
-    falhou: boolean;
-  } | null>(null);
-
-  const closeAttachmentPreview = useCallback(() => setAttachmentPreview(null), []);
+  const restoreThread = useCallback(async () => {
+    await modifyThreadLabels.mutateAsync({ thread_id: thread.gmail_thread_id, add_labels: ['INBOX'], remove_labels: ['TRASH'] });
+    onBack();
+  }, [modifyThreadLabels, onBack, thread.gmail_thread_id]);
 
   // R2-COM-002: a seleção e os bytes são o MESMO estado — a prévia é uma chave só. A
   // continuação assíncrona só aplica o resultado (bytes ou falha) se o anexo ainda for o
@@ -345,17 +308,17 @@ export function EmailChatThread({ accountId, thread, onBack, onToggleDetails, sh
             </Tooltip>
             {thread.label_ids.includes('TRASH') ? (
               <Tooltip>
-                <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Restaurar da lixeira" onClick={() => void restoreThread()} disabled={modifyThreadLabels.isPending || acaoEmAndamento !== null}><RotateCcw className="h-4 w-4" /></Button></TooltipTrigger>
+                <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Restaurar da lixeira" onClick={() => void restoreThread()} disabled={modifyThreadLabels.isPending}><RotateCcw className="h-4 w-4" /></Button></TooltipTrigger>
                 <TooltipContent>Restaurar da lixeira</TooltipContent>
               </Tooltip>
             ) : (
               <>
                 <Tooltip>
-                  <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Arquivar" onClick={() => void archiveThread()} disabled={modifyThreadLabels.isPending || acaoEmAndamento !== null}><Archive className="h-4 w-4" /></Button></TooltipTrigger>
+                  <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Arquivar" onClick={() => void archiveThread()} disabled={modifyThreadLabels.isPending}><Archive className="h-4 w-4" /></Button></TooltipTrigger>
                   <TooltipContent>Arquivar</TooltipContent>
                 </Tooltip>
                 <Tooltip>
-                  <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => void deleteThread()} disabled={trashThread.isPending || acaoEmAndamento !== null} aria-label="Mover para lixeira"><Trash2 className="h-4 w-4" /></Button></TooltipTrigger>
+                  <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => void deleteThread()} disabled={trashThread.isPending} aria-label="Mover para lixeira"><Trash2 className="h-4 w-4" /></Button></TooltipTrigger>
                   <TooltipContent>Mover para lixeira</TooltipContent>
                 </Tooltip>
               </>

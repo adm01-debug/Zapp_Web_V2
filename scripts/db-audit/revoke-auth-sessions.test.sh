@@ -23,11 +23,16 @@ trap cleanup EXIT
 
 docker run --rm -d --name "$CNAME" -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=postgres postgres:17-alpine >/dev/null
 
-for _ in $(seq 1 60); do
-  docker exec "$CNAME" pg_isready -U postgres -d postgres >/dev/null 2>&1 && break
+# A imagem oficial do Postgres sobe um servidor TEMPORÁRIO para a inicialização e depois REINICIA. O pg_isready responde "pronto"
+# no temporário e a checagem seguinte cai na janela do reinício (exit 2, visto no CI do GitHub). Pronto de verdade = o log
+# mostrar "ready to accept connections" pela SEGUNDA vez e o pg_isready confirmar.
+pronto=0
+for _ in $(seq 1 90); do
+  if [ "$(docker logs "$CNAME" 2>&1 | grep -c 'ready to accept connections')" -ge 2 ] \
+     && docker exec "$CNAME" pg_isready -U postgres -d postgres >/dev/null 2>&1; then pronto=1; break; fi
   sleep 1
 done
-docker exec "$CNAME" pg_isready -U postgres -d postgres >/dev/null
+[ "$pronto" = 1 ] || { echo "[FALHOU] o PostgreSQL descartavel nao ficou pronto em 90 s"; exit 1; }
 
 # ---- fixtures: schema auth + public mínimo que a migration espera
 "${PSQL[@]}" <<'SQL'

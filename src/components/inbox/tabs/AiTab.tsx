@@ -36,7 +36,7 @@ export function AiTab({ conversation, messages, onUseSuggestion }: AiTabProps) {
   const contactName = conversation.contact.name;
   const [showAllActions, setShowAllActions] = useState(false);
 
-  const { data: latestAnalysis, isError: analysisError, refetch: refetchAnalysis } = useLatestAnalysis(contactId);
+  const { data: latestAnalysis } = useLatestAnalysis(contactId);
   const { actions: nextActions, loading: nextActionsLoading } = useNextBestAction(contactId, contactName);
   const { data: leadScoreData } = useContactLeadScore(contactId);
 
@@ -75,30 +75,10 @@ export function AiTab({ conversation, messages, onUseSuggestion }: AiTabProps) {
           <p className="text-[15px] font-semibold text-foreground">Assistente IA</p>
           <p className="text-[13px] text-muted-foreground truncate">Seu copiloto para conversas mais produtivas</p>
         </div>
-        {analysisError ? (
-          // Falha de leitura da análise não é "sem análise": dizer "Sem análise ainda"
-          // faria o atendente pensar que o contato nunca foi analisado.
-          <span
-            role="alert"
-            data-testid="analysis-error"
-            className="text-xs text-destructive shrink-0 inline-flex items-center gap-1.5"
-          >
-            <AlertTriangle className="w-3.5 h-3.5" />
-            Não foi possível carregar a análise
-            <button
-              type="button"
-              onClick={() => { void refetchAnalysis(); }}
-              className="font-semibold text-primary hover:underline"
-            >
-              Tentar novamente
-            </button>
-          </span>
-        ) : (
-          <span className="text-xs text-muted-foreground shrink-0 inline-flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-            {analysisStatusLabel}
-          </span>
-        )}
+        <span className="text-xs text-muted-foreground shrink-0 inline-flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+          {analysisStatusLabel}
+        </span>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">

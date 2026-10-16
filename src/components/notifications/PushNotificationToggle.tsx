@@ -18,10 +18,9 @@ export function PushNotificationToggle({ className }: { className?: string }) {
   // "enabled" means both sound and browser notifications are on
   const isEnabled = settings.soundEnabled || settings.browserNotifications;
 
-  // Padrão "Nome: estado — ação" (plano D03); o ponto azul do botão é explicado na dica.
   const label = isEnabled
-    ? 'Notificações: ligadas — clique para desligar'
-    : 'Notificações: desligadas — clique para ligar';
+    ? 'Desativar todas as notificações'
+    : 'Ativar todas as notificações';
 
   const handleToggle = () => {
     if (isEnabled) {
@@ -72,7 +71,6 @@ export function PushNotificationToggle({ className }: { className?: string }) {
       </TooltipTrigger>
       <TooltipContent side="right" sideOffset={8}>
         <p>{label}</p>
-        <p className="text-muted-foreground text-xs">ponto = ligado</p>
       </TooltipContent>
     </Tooltip>
   );

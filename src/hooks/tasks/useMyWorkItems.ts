@@ -209,7 +209,7 @@ export function useMyWorkItems(opts: UseMyWorkItemsOpts = {}) {
       const base = () => {
         let q = supabase
           .from('conversation_tasks')
-          .select('*, contact:contacts!conversation_tasks_contact_id_fkey(id,name,phone,avatar_url,contact_type)')
+          .select('*, contact:contacts!conversation_tasks_contact_id_fkey(id,name,phone,avatar_url)')
           .eq('created_by', profileId)   // RLS tambem filtra, mas explicito e mais rapido
           // B13: done so dos ultimos 30 dias; cancelled tratado logo abaixo.
           // `completed_at.is.null` cobre linhas `done` legadas sem carimbo de

@@ -80,8 +80,6 @@ export function useWarRoomAlerts(soundEnabled?: boolean) {
   const queryClient = useQueryClient();
   const { showNotification, permission } = usePushNotifications();
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  // Segunda batida do alerta crítico (`setTimeout`), para cancelar no desmonte.
-  const segundaBatida = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { settings, isQuietHours } = useNotificationSettings();
   // Sem valor explícito do chamador, o mudo vem da preferência do usuário (`user_settings`),
   // nunca de um `true` cravado.
@@ -137,11 +135,8 @@ export function useWarRoomAlerts(soundEnabled?: boolean) {
 
           // Play sound
           if (alert.alert_type === 'critical') {
-            // Dupla batida: `playAlertSound` reinicia o `currentTime`, então duas
-            // chamadas coladas soam como UMA batida. A segunda sai 250 ms depois.
             playAlertSound();
-            if (segundaBatida.current) clearTimeout(segundaBatida.current);
-            segundaBatida.current = setTimeout(() => playAlertSound(), 250);
+            playAlertSound(); // double beep for critical
           } else {
             playAlertSound();
           }
@@ -159,25 +154,13 @@ export function useWarRoomAlerts(soundEnabled?: boolean) {
       )
       .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, [queryClient, playAlertSound, permission, showNotification]);
 
-  // A segunda batida tem vida própria: este efeito (realtime) se refaz a cada mudança
-  // de identidade de `showNotification`/`playAlertSound`, e limpar o timer no cleanup
-  // dele engolia a segunda batida no meio do caminho.
-  useEffect(() => () => {
-    if (segundaBatida.current) { clearTimeout(segundaBatida.current); segundaBatida.current = null; }
-  }, []);
-
-  // Dismiss alert. Devolve o erro do banco: engolir aqui fazia a tela mostrar o
-  // alerta como dispensado quando o UPDATE tinha falhado (RLS/rede).
-  const dismissAlert = async (alertId: string): Promise<{ error: { message?: string } | null }> => {
-    const { error } = await supabase.from('warroom_alerts').update({ is_read: true }).eq('id', alertId);
-    if (error) return { error };
+  // Dismiss alert
+  const dismissAlert = async (alertId: string) => {
+    await supabase.from('warroom_alerts').update({ is_read: true }).eq('id', alertId);
     queryClient.invalidateQueries({ queryKey: ['warroom-alerts'] });
-    return { error: null };
   };
 
   // SLA breach monitor — checa a cada 60 s e cria no máximo UM alerta por incidente.

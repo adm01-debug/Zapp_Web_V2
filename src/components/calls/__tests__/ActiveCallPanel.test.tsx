@@ -64,27 +64,6 @@ describe('ActiveCallPanel (T62/T63)', () => {
     expect(screen.getByTestId('tel-active-status').textContent).toContain(rotulo);
   });
 
-  // T75: o rotulo pulsa enquanto a chamada nao foi atendida (Tocando/Conectando) e
-  // NAO pulsa nos demais estados. O pulso e do CSS (`motion-safe:animate-pulse`), por
-  // isso a prova olha a classe real do elemento que a tela pintou: nos estados sem
-  // pulso a classe e EXATAMENTE a de sempre (sem nenhuma animacao). 
-  it.each([
-    ['ringing_out', true],
-    ['connecting', true],
-    ['dialing', false],
-    ['ringing_in', false],
-    ['active', false],
-  ] as const)('o status em %s %s pulso motion-safe', (status, pulsando) => {
-    sessao = { ...sessao, status };
-    render(<ActiveCallPanel segundos={0} />);
-    const status_el = screen.getByTestId('tel-active-status');
-    if (pulsando) {
-      expect(status_el.className).toContain('motion-safe:animate-pulse');
-    } else {
-      expect(status_el.className).toBe('text-sm font-medium text-muted-foreground');
-    }
-  });
-
   it('mostra contato, numero e o badge do canal', () => {
     sessao = { status: 'active', channel: 'whatsapp', phone: '+5511988887777', name: 'João Silva' };
     render(<ActiveCallPanel segundos={0} />);

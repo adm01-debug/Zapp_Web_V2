@@ -12,16 +12,13 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { useCustomShortcuts } from '@/hooks/ui/useCustomShortcuts';
-import { listarAtalhosEditaveis } from '@/hooks/shortcuts/defaultShortcuts';
 
 export function KeyboardShortcutsHelp() {
   const { shortcuts, formatShortcut } = useCustomShortcuts();
   
-  // Só o que tem executor: atalho sem dono não entra na ajuda (E16) — era o
-  // caso de `prev-conversation`/`next-conversation` e de toda a categoria
-  // `selection`.
-  const inboxShortcuts = listarAtalhosEditaveis(shortcuts).filter(s =>
-    s.category === 'selection' ||
+  // Filter shortcuts relevant to inbox/selection
+  const inboxShortcuts = shortcuts.filter(s => 
+    s.category === 'selection' || 
     s.id === 'global-search' ||
     s.id === 'next-conversation' ||
     s.id === 'prev-conversation'
@@ -36,8 +33,7 @@ export function KeyboardShortcutsHelp() {
               <Button
                 variant="ghost"
                 size="icon"
-                aria-label="Atalhos de teclado"
-                className="w-8 h-8 text-muted-foreground hover:text-foreground [@media(pointer:coarse)]:min-w-[44px] [@media(pointer:coarse)]:min-h-[44px]"
+                className="w-8 h-8 text-muted-foreground hover:text-foreground"
               >
                 <Keyboard className="w-4 h-4" />
               </Button>

@@ -5,7 +5,6 @@ import { Sparkles, Loader2, Check, MessageCircle, HelpCircle, X } from 'lucide-r
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import { HOVER_REVEAL } from './hoverActions';
 import { useToast } from '@/hooks/ui/use-toast';
 import { useAiRequestGeneration } from '@/lib/aiRequest/context';
 
@@ -198,8 +197,7 @@ export function AISuggestions({ messages, contactName, contactId, onSelectSugges
               <Button
                 variant="ghost"
                 size="icon"
-                aria-label="Fechar sugestões"
-                className="h-6 w-6 [@media(pointer:coarse)]:min-w-[44px] [@media(pointer:coarse)]:min-h-[44px]"
+                className="h-6 w-6"
                 onClick={() => setIsOpen(false)}
               >
                 <X className="h-4 w-4" />
@@ -230,7 +228,7 @@ export function AISuggestions({ messages, contactName, contactId, onSelectSugges
                         <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                           {getLabel(suggestion.type)}
                         </span>
-                        <span className={`ml-auto ${HOVER_REVEAL} transition-opacity text-xs text-primary`}>
+                        <span className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity text-xs text-primary">
                           Usar ↵
                         </span>
                       </div>

@@ -53,30 +53,6 @@ const GOAL_LABELS: Record<string, { label: string; icon: React.ElementType; desc
   resolution_rate: { label: 'Taxa de Resolução', icon: CheckCircle2, description: 'Meta percentual de resolução' },
 };
 
-/** Teto das metas percentuais (taxa de resolução): 0% a 100%. */
-const MAX_PERCENT_TARGET = 100;
-
-/**
- * Regras de coerência das metas: a taxa percentual fica entre 0 e 100 e os alvos crescem com o
- * período (semanal >= diária, mensal >= semanal). Sem essa checagem o usuário salvava meta sem
- * sentido (ex.: taxa de 120%) e a barra do dashboard nunca fechava.
- */
-function validateGoal(goal: GoalConfig): string[] {
-  const errors: string[] = [];
-  const { daily_target: daily, weekly_target: weekly, monthly_target: monthly } = goal;
-
-  if (goal.goal_type === 'resolution_rate' && [daily, weekly, monthly].some((v) => v > MAX_PERCENT_TARGET)) {
-    errors.push('A taxa de resolução deve ficar entre 0% e 100%.');
-  }
-  if (weekly < daily) {
-    errors.push('A meta semanal não pode ser menor que a diária.');
-  }
-  if (monthly < weekly) {
-    errors.push('A meta mensal não pode ser menor que a semanal.');
-  }
-  return errors;
-}
-
 export function GoalsConfigDialog({ open, onOpenChange }: GoalsConfigDialogProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -204,9 +180,6 @@ export function GoalsConfigDialog({ open, onOpenChange }: GoalsConfigDialogProps
     saveMutation.mutate(goals);
   };
 
-  // Com meta incoerente o Salvar fica bloqueado e o motivo aparece junto do cartão da meta.
-  const hasInvalidGoals = goals.some((goal) => validateGoal(goal).length > 0);
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent aria-describedby={undefined} className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -232,9 +205,6 @@ export function GoalsConfigDialog({ open, onOpenChange }: GoalsConfigDialogProps
               const config = GOAL_LABELS[goal.goal_type];
               if (!config) return null;
               const Icon = config.icon;
-              const errors = validateGoal(goal);
-              const isRate = goal.goal_type === 'resolution_rate';
-              const exceedsMax = (value: number) => isRate && value > MAX_PERCENT_TARGET;
 
               return (
                 <Card key={goal.goal_type} className={!goal.is_active ? 'opacity-50' : ''}>
@@ -271,8 +241,6 @@ export function GoalsConfigDialog({ open, onOpenChange }: GoalsConfigDialogProps
                           id={`daily-${goal.goal_type}`}
                           type="number"
                           min={0}
-                          max={isRate ? MAX_PERCENT_TARGET : undefined}
-                          aria-invalid={exceedsMax(goal.daily_target) || goal.weekly_target < goal.daily_target}
                           value={goal.daily_target}
                           onChange={(e) => handleGoalChange(goal.goal_type, 'daily_target', Number.parseInt(e.target.value) || 0)}
                           disabled={!goal.is_active}
@@ -286,8 +254,6 @@ export function GoalsConfigDialog({ open, onOpenChange }: GoalsConfigDialogProps
                           id={`weekly-${goal.goal_type}`}
                           type="number"
                           min={0}
-                          max={isRate ? MAX_PERCENT_TARGET : undefined}
-                          aria-invalid={exceedsMax(goal.weekly_target) || goal.weekly_target < goal.daily_target || goal.monthly_target < goal.weekly_target}
                           value={goal.weekly_target}
                           onChange={(e) => handleGoalChange(goal.goal_type, 'weekly_target', Number.parseInt(e.target.value) || 0)}
                           disabled={!goal.is_active}
@@ -301,21 +267,12 @@ export function GoalsConfigDialog({ open, onOpenChange }: GoalsConfigDialogProps
                           id={`monthly-${goal.goal_type}`}
                           type="number"
                           min={0}
-                          max={isRate ? MAX_PERCENT_TARGET : undefined}
-                          aria-invalid={exceedsMax(goal.monthly_target) || goal.monthly_target < goal.weekly_target}
                           value={goal.monthly_target}
                           onChange={(e) => handleGoalChange(goal.goal_type, 'monthly_target', Number.parseInt(e.target.value) || 0)}
                           disabled={!goal.is_active}
                         />
                       </div>
                     </div>
-                    {errors.length > 0 && (
-                      <div role="alert" className="mt-3 space-y-1">
-                        {errors.map((message) => (
-                          <p key={message} className="text-xs text-destructive">{message}</p>
-                        ))}
-                      </div>
-                    )}
                   </CardContent>
                 </Card>
               );
@@ -326,7 +283,7 @@ export function GoalsConfigDialog({ open, onOpenChange }: GoalsConfigDialogProps
                 <RotateCcw className="w-4 h-4" />
                 Restaurar Padrões
               </Button>
-              <Button onClick={handleSave} disabled={saveMutation.isPending || hasInvalidGoals} className="gap-2">
+              <Button onClick={handleSave} disabled={saveMutation.isPending} className="gap-2">
                 <Save className="w-4 h-4" />
                 {saveMutation.isPending ? 'Salvando...' : 'Salvar Metas'}
               </Button>

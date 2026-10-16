@@ -1,17 +1,18 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { safeGetItem, safeSetItem } from '@/lib/safeStorage';
 
 const STORAGE_KEY = 'screen-protection-enabled';
 
 function getStoredState(): boolean {
-  const v = safeGetItem(STORAGE_KEY);
-  return v === null ? true : v === 'true';
+  try {
+    const v = localStorage.getItem(STORAGE_KEY);
+    return v === null ? true : v === 'true';
+  } catch { return true; }
 }
 
 /**
  * Anti-screenshot & data exfiltration protection system.
- * Can be toggled on/off; state persists no armazenamento local.
+ * Can be toggled on/off; state persists in localStorage.
  */
 export function useScreenProtection() {
   const { user } = useAuth();
@@ -20,7 +21,7 @@ export function useScreenProtection() {
   const toggle = useCallback(() => {
     setEnabled(prev => {
       const next = !prev;
-      safeSetItem(STORAGE_KEY, String(next));
+      localStorage.setItem(STORAGE_KEY, String(next));
       window.dispatchEvent(new Event('screen-protection-change'));
       return next;
     });

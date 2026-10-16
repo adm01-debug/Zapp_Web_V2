@@ -12,18 +12,6 @@ import { log } from '@/lib/logger';
  */
 const SET_CALL_AGENT_NOTES_RPC = 'set_call_agent_notes' as const;
 
-/** `calls.contact_id` é uuid. Mesmo padrão de `ehUuid` em `useWhisperCount`. */
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-/**
- * Um id que não é uuid (ex.: link direto com JID vindo do roteador) faria o
- * PostgREST responder 400 e a tela ficaria sem histórico. A guarda corta a
- * consulta antes de sair do navegador.
- */
-export function isValidUUID(value: string | null | undefined): boolean {
-  return typeof value === 'string' && UUID_RE.test(value);
-}
-
 export interface Call {
   id: string;
   contact_id: string | null;
@@ -84,28 +72,17 @@ export const useCalls = () => {
   }, []);
 
   // Get call history for a contact
-  const getContactCalls = useCallback(async (contactId: string, signal?: AbortSignal): Promise<Call[]> => {
-    // Id que não é uuid nem sai do navegador: o PostgREST devolveria 400.
-    if (!isValidUUID(contactId)) return [];
-    if (signal?.aborted) return [];
-
+  const getContactCalls = useCallback(async (contactId: string): Promise<Call[]> => {
     try {
-      const query = supabase
+      const { data, error } = await supabase
         .from('calls')
         .select('*')
         .eq('contact_id', contactId)
         .order('started_at', { ascending: false });
 
-      // Quando a consulta mora numa query do React Query, o `signal` vem do
-      // `queryFn`: ao trocar de contato (ou desmontar) o React Query aborta a
-      // busca antiga e a resposta atrasada não sobrescreve a nova.
-      const { data, error } = signal ? await query.abortSignal(signal) : await query;
-
-      if (signal?.aborted) return [];
       if (error) throw error;
       return (data || []) as Call[];
     } catch (error) {
-      if (signal?.aborted) return [];
       log.error('Error fetching contact calls:', error);
       return [];
     }

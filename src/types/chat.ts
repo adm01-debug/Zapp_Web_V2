@@ -30,14 +30,6 @@ export interface MessageReaction {
   createdAt?: string;
 }
 
-/**
- * Motivo pelo qual uma mensagem cai no tipo `unsupported`: o Zapp Web V2 não
- * renderiza enquete, visualização única nem contato compartilhado, e qualquer
- * outro tipo cru do WhatsApp que chegue sem tradução. O componente de fallback
- * (MessageBubbleUnsupported) escolhe o texto por este campo.
- */
-export type UnsupportedMessageKind = 'poll' | 'view_once' | 'contact' | 'other';
-
 export interface Message extends Partial<Omit<MessageRow, 'id' | 'content' | 'sender'>> {
   id: string;
   content: string;
@@ -45,15 +37,11 @@ export interface Message extends Partial<Omit<MessageRow, 'id' | 'content' | 'se
   sender: 'agent' | 'contact';
   senderName?: string;
   timestamp: Date;
-  type: 'text' | 'image' | 'video' | 'audio' | 'file' | 'document' | 'location' | 'interactive' | 'sticker' | 'unsupported';
-  /** Preenchido quando `type === 'unsupported'`: diz qual fallback mostrar. */
-  unsupportedKind?: UnsupportedMessageKind;
+  type: 'text' | 'image' | 'video' | 'audio' | 'file' | 'document' | 'location' | 'interactive' | 'sticker';
   mediaUrl?: string;
   isEdited?: boolean;
   replyTo?: { messageId: string; content: string; sender: 'agent' | 'contact'; type?: string } | null;
   buttonResponse?: { buttonId: string; buttonTitle: string; title?: string } | null;
-  /** Resposta do cliente a um item de lista (título da seção + título da linha tocada). */
-  listResponse?: { sectionTitle: string; itemTitle: string } | null;
   interactive?: InteractiveMessage | null;
   location?: LocationMessage | null;
   transcriptionStatus?: string | null;
@@ -71,8 +59,6 @@ export interface ConversationContact {
   email?: string | null;
   avatar_url?: string | null;
   avatar?: string | null;
-  /** Marcador de VIP/bloqueio (contacts.tags) — o hook de ações rápidas lê daqui.
-   *  Transitório: os cartões de VIP e bloqueio migram para is_vip/blocked_at. */
   tags?: string[] | null;
   company?: string | null;
   job_title?: string | null;
@@ -108,6 +94,7 @@ export interface Conversation {
   unreadCount: number;
   status: 'open' | 'closed' | 'pending' | 'waiting' | 'resolved';
   priority: 'low' | 'medium' | 'high';
+  tags: string[];
   createdAt: Date;
   updatedAt: Date;
   firstResponseAt?: Date | null;
@@ -131,8 +118,6 @@ export interface InteractiveButton {
   id: string;
   text?: string;
   title?: string;
-  // 'call' e o tipo canonico (CTA de ligacao); 'phone' e alias legado mantido
-  // porque mensagens ja persistidas usam 'phone'.
   type?: 'reply' | 'url' | 'call' | 'phone';
   url?: string;
   phoneNumber?: string;

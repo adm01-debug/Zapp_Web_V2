@@ -12,7 +12,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useExternalMutation } from '@/hooks/integrations/useExternalDB';
-import { isValidCnpj } from '@/lib/cnpjUtils';
 import { toast } from 'sonner';
 import { Building2, Save, Loader2 } from 'lucide-react';
 
@@ -71,20 +70,9 @@ export function CompanyFormDialog({ open, onOpenChange, company, onSuccess }: Co
     setForm(prev => ({ ...prev, [field]: value }));
   };
 
-  // Aviso enquanto digita, sem bloquear: o submit continua livre (o gate real
-  // acontece no handleSubmit).
-  const cnpjInvalido = form.cnpj.trim().length > 0 && !isValidCnpj(form.cnpj);
-
   const handleSubmit = async () => {
     if (!form.nome_fantasia.trim() && !form.razao_social.trim()) {
       toast.error('Preencha pelo menos o Nome Fantasia ou Razão Social.');
-      return;
-    }
-
-    // CNPJ é opcional, mas quando informado precisa ter dígitos verificadores
-    // válidos (isValidCnpj aceita com ou sem máscara).
-    if (form.cnpj.trim() && !isValidCnpj(form.cnpj)) {
-      toast.error('CNPJ inválido — confira os dígitos verificadores.');
       return;
     }
 
@@ -164,19 +152,7 @@ export function CompanyFormDialog({ open, onOpenChange, company, onSuccess }: Co
             {/* CNPJ */}
             <div className="space-y-1.5">
               <Label htmlFor="cnpj">CNPJ</Label>
-              <Input
-                id="cnpj"
-                value={form.cnpj}
-                onChange={e => handleChange('cnpj', e.target.value)}
-                placeholder="00.000.000/0000-00"
-                aria-invalid={cnpjInvalido || undefined}
-                aria-describedby={cnpjInvalido ? 'cnpj-erro' : undefined}
-              />
-              {cnpjInvalido && (
-                <p id="cnpj-erro" className="text-3xs text-destructive">
-                  CNPJ inválido — confira os dígitos verificadores.
-                </p>
-              )}
+              <Input id="cnpj" value={form.cnpj} onChange={e => handleChange('cnpj', e.target.value)} placeholder="00.000.000/0000-00" />
             </div>
 
             {/* Inscrição Estadual */}
@@ -199,9 +175,9 @@ export function CompanyFormDialog({ open, onOpenChange, company, onSuccess }: Co
 
             {/* Status */}
             <div className="space-y-1.5">
-              <Label htmlFor="status">Status</Label>
+              <Label>Status</Label>
               <Select value={form.status} onValueChange={v => handleChange('status', v)}>
-                <SelectTrigger id="status"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                 <SelectContent>
                   {STATUS_OPTIONS.map(s => (
                     <SelectItem key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</SelectItem>
@@ -212,9 +188,9 @@ export function CompanyFormDialog({ open, onOpenChange, company, onSuccess }: Co
 
             {/* Porte */}
             <div className="space-y-1.5">
-              <Label htmlFor="porte_rf">Porte RF</Label>
+              <Label>Porte RF</Label>
               <Select value={form.porte_rf} onValueChange={v => handleChange('porte_rf', v)}>
-                <SelectTrigger id="porte_rf"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                 <SelectContent>
                   {PORTE_OPTIONS.map(p => (
                     <SelectItem key={p} value={p}>{p}</SelectItem>

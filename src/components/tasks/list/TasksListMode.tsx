@@ -25,10 +25,6 @@ interface Props extends WorkItemCardActions {
   onDelete: (item: WorkItem) => void;
   onClearFilter: () => void;
   hasMounted: React.MutableRefObject<boolean>;
-  /** Etapa 043 (refazer 2): id recém-criado na captura — o card que entra na
-   *  Caixa de entrada ganha o realce de 1,2 s. Opcional: quem não manda nada
-   *  continua com a lista exatamente como era. */
-  destaqueId?: string | null;
 }
 
 interface SectionProps {
@@ -50,10 +46,9 @@ interface SectionProps {
   onMoveTo: Props['onMoveTo'];
   onDelete: Props['onDelete'];
   hasMounted: React.MutableRefObject<boolean>;
-  destaqueId?: string | null;
 }
 
-function Section({ title, items, olderItems = [], groups, hint, defaultOpen = true, headingClass = '', cardActions, onOpen, onToggleDone, onMoveTo, onDelete, hasMounted, destaqueId }: SectionProps) {
+function Section({ title, items, olderItems = [], groups, hint, defaultOpen = true, headingClass = '', cardActions, onOpen, onToggleDone, onMoveTo, onDelete, hasMounted }: SectionProps) {
   const [open, setOpen] = useState(defaultOpen);
   const [showOlder, setShowOlder] = useState(false);
   // Etapa 50: com reduced-motion as animacoes (entrada e saida) viram instantaneas.
@@ -72,20 +67,8 @@ function Section({ title, items, olderItems = [], groups, hint, defaultOpen = tr
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, height: 0, transition: { duration: reduceMotion ? 0 : 0.2 } }}
         transition={{ duration: reduceMotion ? 0 : 0.15, delay: reduceMotion ? 0 : Math.min(index, 12) * 0.02 }}
-        className="relative overflow-hidden"
+        className="overflow-hidden"
       >
-        {/* Etapa 043 (refazer 2): realce do item recém-criado — pinta e apaga em
-            1,2 s. Só opacidade (transform/opacity), com 0 s sob movimento reduzido. */}
-        {item.id === destaqueId && (
-          <motion.span
-            aria-hidden="true"
-            data-testid="work-item-realce"
-            initial={{ opacity: reduceMotion ? 0 : 1 }}
-            animate={{ opacity: 0 }}
-            transition={{ duration: reduceMotion ? 0 : 1.2 }}
-            className="pointer-events-none absolute inset-0 rounded-xl bg-primary/10"
-          />
-        )}
         <WorkItemCard
           item={item}
           mode="list"
@@ -173,7 +156,7 @@ function Section({ title, items, olderItems = [], groups, hint, defaultOpen = tr
 }
 
 export function TasksListMode({
-  byDue, isLoading, searchQuery, filtersActive, onOpen, onToggleDone, onMoveTo, onDelete, onClearFilter, hasMounted, destaqueId,
+  byDue, isLoading, searchQuery, filtersActive, onOpen, onToggleDone, onMoveTo, onDelete, onClearFilter, hasMounted,
   doingCount, onOpenContact, onRequestWaitingReason, onComplete, onReopen, onSnooze, onClearReminder, onOpenReminder,
 }: Props) {
   if (isLoading) {
@@ -199,12 +182,12 @@ export function TasksListMode({
 
   return (
     <div className="w-full min-w-0 space-y-6 pb-8">
-      <Section title="Atrasadas"   items={byDue.overdue}   headingClass="text-destructive" defaultOpen cardActions={cardActions} onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} destaqueId={destaqueId} />
-      <Section title="Hoje"        items={byDue.today}     headingClass="text-warning"     defaultOpen cardActions={cardActions} onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} destaqueId={destaqueId} />
-      <Section title="Amanhã"     items={byDue.tomorrow}  defaultOpen cardActions={cardActions} onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} destaqueId={destaqueId} />
-      <Section title="Próximas"   items={byDue.upcoming}  groups={groupUpcomingByDay(byDue.upcoming)} hint="Ordenado por prazo, depois prioridade" defaultOpen cardActions={cardActions} onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} destaqueId={destaqueId} />
-      <Section title="Sem prazo"   items={byDue.noDue}    defaultOpen={byDue.noDue.length <= 10} cardActions={cardActions} onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} destaqueId={destaqueId} />
-      <Section title="Concluídas (7 dias)" items={byDue.done7d} olderItems={byDue.doneOlder} headingClass="text-muted-foreground" defaultOpen={false} cardActions={cardActions} onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} destaqueId={destaqueId} />
+      <Section title="Atrasadas"   items={byDue.overdue}   headingClass="text-destructive" defaultOpen cardActions={cardActions} onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />
+      <Section title="Hoje"        items={byDue.today}     headingClass="text-warning"     defaultOpen cardActions={cardActions} onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />
+      <Section title="Amanhã"     items={byDue.tomorrow}  defaultOpen cardActions={cardActions} onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />
+      <Section title="Próximas"   items={byDue.upcoming}  groups={groupUpcomingByDay(byDue.upcoming)} hint="Ordenado por prazo, depois prioridade" defaultOpen cardActions={cardActions} onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />
+      <Section title="Sem prazo"   items={byDue.noDue}    defaultOpen={byDue.noDue.length <= 10} cardActions={cardActions} onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />
+      <Section title="Concluídas (7 dias)" items={byDue.done7d} olderItems={byDue.doneOlder} headingClass="text-muted-foreground" defaultOpen={false} cardActions={cardActions} onOpen={onOpen} onToggleDone={onToggleDone} onMoveTo={onMoveTo} onDelete={onDelete} hasMounted={hasMounted} />
     </div>
   );
 }

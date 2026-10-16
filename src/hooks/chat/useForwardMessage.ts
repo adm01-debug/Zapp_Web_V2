@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { log } from '@/lib/logger';
 import { toast } from '@/hooks/ui/use-toast';
@@ -91,10 +91,6 @@ export function useForwardMessage({
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
-  // Espelho sincrono: o catch so avisa quando o usuario ficou com a lista vazia
-  // (com dados de uma busca anterior na tela o aviso viraria ruido).
-  const contactsRef = useRef<Contact[]>([]);
-  const groupsRef = useRef<Group[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [activeTab, setActiveTab] = useState<'contacts' | 'groups'>('contacts');
@@ -109,14 +105,9 @@ export function useForwardMessage({
         .select('id, name, phone, avatar_url')
         .order('name');
       if (error) throw error;
-      const fetchedContacts = (data || []) as Contact[];
-      contactsRef.current = fetchedContacts;
-      setContacts(fetchedContacts);
+      setContacts((data || []) as Contact[]);
     } catch (error) {
       log.error('Error fetching contacts:', error);
-      if (contactsRef.current.length === 0) {
-        toast({ title: 'Nao foi possivel carregar os contatos', description: 'A lista ficou vazia. Tente novamente.', variant: 'destructive' });
-      }
     } finally {
       setIsLoading(false);
     }
@@ -129,14 +120,9 @@ export function useForwardMessage({
         .select('id, name, avatar_url, participant_count')
         .order('name');
       if (error) throw error;
-      const fetchedGroups = (data || []) as Group[];
-      groupsRef.current = fetchedGroups;
-      setGroups(fetchedGroups);
+      setGroups((data || []) as Group[]);
     } catch (error) {
       log.error('Error fetching groups:', error);
-      if (groupsRef.current.length === 0) {
-        toast({ title: 'Nao foi possivel carregar os grupos', description: 'A lista ficou vazia. Tente novamente.', variant: 'destructive' });
-      }
     }
   }, []);
 

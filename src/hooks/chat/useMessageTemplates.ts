@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/ui/use-toast';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -16,8 +16,6 @@ export interface Template {
 export function useMessageTemplates() {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  // Espelho sincrono: o catch so avisa quando a lista ficou vazia na tela.
-  const templatesRef = useRef<Template[]>([]);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -30,18 +28,13 @@ export function useMessageTemplates() {
         .select('*')
         .order('use_count', { ascending: false });
       if (error) throw error;
-      const fetchedTemplates = (data || []) as Template[];
-      templatesRef.current = fetchedTemplates;
-      setTemplates(fetchedTemplates);
+      setTemplates((data || []) as Template[]);
     } catch (err) {
       log.error('Error fetching templates:', err);
-      if (templatesRef.current.length === 0) {
-        toast({ title: 'Nao foi possivel carregar os templates', description: 'A lista ficou vazia. Tente novamente.', variant: 'destructive' });
-      }
     } finally {
       setIsLoading(false);
     }
-  }, [user, toast]);
+  }, [user]);
 
   const addTemplate = useCallback(async (template: { title: string; content: string; shortcut: string; category: string }) => {
     if (!user || !template.title || !template.content) {

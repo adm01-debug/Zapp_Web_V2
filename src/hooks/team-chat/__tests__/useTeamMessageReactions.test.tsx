@@ -1,6 +1,6 @@
 /**
- * Comportamento de `useTeamMessageReactions` — agregação por emoji, alternar
- * a própria reação via RPC, atualização otimista com desfazer no erro e Realtime por conversa.
+ * Comportamento de `useTeamMessageReactions` — agregação por emoji, alternar (inserir/apagar)
+ * a própria reação, atualização otimista com desfazer no erro e Realtime por conversa.
  * A fronteira mockada é o cliente Supabase (e o `toast`); o hook é o real.
  */
 import { act, renderHook, waitFor } from '@testing-library/react';
@@ -22,9 +22,10 @@ const estado = vi.hoisted(() => ({
   auth: { profile: { id: 'p1' } as { id: string } | null },
   linhas: [] as RowReaction[],
   erroSelecao: null as unknown,
+  erroEscrita: null as unknown,
   selecoes: [] as { coluna: string; valor: unknown }[],
-  rpcChamadas: [] as { nome: string; args: unknown }[],
-  rpcResposta: null as Promise<{ error: unknown }> | null,
+  escritas: [] as { tipo: 'insert' | 'delete'; dados?: unknown; id?: unknown }[],
+  insercao: null as Promise<{ error: unknown }> | null,
   eventos: [] as { nome: string; filtro?: string; callback: () => void }[],
   removeChannel: vi.fn(),
   toastError: vi.fn(),
@@ -40,35 +41,42 @@ vi.mock('sonner', () => ({
   },
 }));
 
-// O tópico ganha sufixo exclusivo por instância em produção; aqui ele volta ao
-// nome base para o teste seguir olhando só a conversa que assina.
-vi.mock('@/lib/realtimeTopic', () => ({
-  uniqueRealtimeTopic: (base: string) => base,
-}));
-
 vi.mock('@/integrations/supabase/client', () => {
   const criarBuilder = () => {
+    let modo: 'select' | 'delete' = 'select';
     const builder: Record<string, unknown> = {};
-    builder.select = () => builder;
-    builder.eq = (coluna: string, valor: unknown) => {
-      estado.selecoes.push({ coluna, valor });
+    builder.select = () => {
+      modo = 'select';
       return builder;
     };
+    builder.delete = () => {
+      modo = 'delete';
+      return builder;
+    };
+    builder.eq = (coluna: string, valor: unknown) => {
+      if (modo === 'delete') {
+        estado.escritas.push({ tipo: 'delete', id: { coluna, valor } as unknown });
+      } else {
+        estado.selecoes.push({ coluna, valor });
+      }
+      return builder;
+    };
+    builder.insert = (dados: unknown) => {
+      estado.escritas.push({ tipo: 'insert', dados });
+      return estado.insercao ?? Promise.resolve({ error: estado.erroEscrita });
+    };
     builder.then = (onFulfilled: (v: unknown) => unknown, onRejected?: (e: unknown) => unknown) =>
-      Promise.resolve({ data: estado.linhas, error: estado.erroSelecao }).then(
-        onFulfilled,
-        onRejected
-      );
+      Promise.resolve(
+        modo === 'delete'
+          ? { error: estado.erroEscrita }
+          : { data: estado.linhas, error: estado.erroSelecao },
+      ).then(onFulfilled, onRejected);
     return builder;
   };
 
   return {
     supabase: {
       from: () => criarBuilder(),
-      rpc: (nome: string, args: unknown) => {
-        estado.rpcChamadas.push({ nome, args });
-        return estado.rpcResposta ?? Promise.resolve({ error: null });
-      },
       channel: (nome: string) => {
         const canal: Record<string, unknown> = {};
         canal.on = (evento: string, config: { filter?: string }, callback: () => void) => {
@@ -105,10 +113,7 @@ function deferido<T>() {
   return { promise, resolver, rejeitar };
 }
 
-function render(
-  conversationId = 'c1',
-  queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-) {
+function render(conversationId = 'c1', queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })) {
   const wrapper = ({ children }: { children: React.ReactNode }) =>
     React.createElement(QueryClientProvider, { client: queryClient }, children);
   return { ...renderHook(() => useTeamMessageReactions(conversationId), { wrapper }), queryClient };
@@ -120,9 +125,10 @@ beforeEach(() => {
   estado.auth.profile = { id: 'p1' };
   estado.linhas = [];
   estado.erroSelecao = null;
+  estado.erroEscrita = null;
   estado.selecoes = [];
-  estado.rpcChamadas = [];
-  estado.rpcResposta = null;
+  estado.escritas = [];
+  estado.insercao = null;
   estado.eventos = [];
   estado.removeChannel.mockReset();
   estado.toastError.mockReset();
@@ -171,7 +177,7 @@ describe('leitura e agregação', () => {
     estado.erroSelecao = { message: 'permission denied' };
     const { result, queryClient } = render();
     await waitFor(() =>
-      expect(queryClient.getQueryState(['team-reactions', 'c1'])?.status).toBe('error')
+      expect(queryClient.getQueryState(['team-reactions', 'c1'])?.status).toBe('error'),
     );
     expect(queryClient.getQueryData(['team-reactions', 'c1'])).toBeUndefined();
     expect(result.current.reactions).toEqual([]);
@@ -180,7 +186,7 @@ describe('leitura e agregação', () => {
 });
 
 describe('alternar reação', () => {
-  it('chama a RPC toggle_team_reaction quando ainda não existe reação minha', async () => {
+  it('insere a reação quando ainda não existe', async () => {
     estado.linhas = [];
     const { result } = render();
     await waitFor(() => expect(result.current.reactions).toEqual([]));
@@ -189,14 +195,14 @@ describe('alternar reação', () => {
       result.current.toggle({ messageId: 'm1', emoji: '🎉' });
     });
 
-    await waitFor(() => expect(estado.rpcChamadas).toHaveLength(1));
-    expect(estado.rpcChamadas[0]).toEqual({
-      nome: 'toggle_team_reaction',
-      args: { p_message_id: 'm1', p_emoji: '🎉' },
+    await waitFor(() => expect(estado.escritas).toHaveLength(1));
+    expect(estado.escritas[0]).toEqual({
+      tipo: 'insert',
+      dados: { message_id: 'm1', profile_id: 'p1', emoji: '🎉', conversation_id: 'c1' },
     });
   });
 
-  it('chama a mesma RPC quando a reação já é minha', async () => {
+  it('apaga a reação quando ela já é minha', async () => {
     estado.linhas = [reacao({ id: 'rx9', emoji: '👍', profile_id: 'p1' })];
     const { result } = render();
     await waitFor(() => expect(result.current.reactions).toHaveLength(1));
@@ -205,17 +211,14 @@ describe('alternar reação', () => {
       result.current.toggle({ messageId: 'm1', emoji: '👍' });
     });
 
-    await waitFor(() => expect(estado.rpcChamadas).toHaveLength(1));
-    expect(estado.rpcChamadas[0]).toEqual({
-      nome: 'toggle_team_reaction',
-      args: { p_message_id: 'm1', p_emoji: '👍' },
-    });
+    await waitFor(() => expect(estado.escritas).toHaveLength(1));
+    expect(estado.escritas[0]).toEqual({ tipo: 'delete', id: { coluna: 'id', valor: 'rx9' } });
   });
 
   it('mostra a reação na hora, antes de a rede responder', async () => {
     estado.linhas = [];
-    const rpc = deferido<{ error: unknown }>();
-    estado.rpcResposta = rpc.promise;
+    const insercao = deferido<{ error: unknown }>();
+    estado.insercao = insercao.promise;
     const { result } = render();
     await waitFor(() => expect(result.current.reactions).toEqual([]));
 
@@ -224,23 +227,20 @@ describe('alternar reação', () => {
     });
 
     await waitFor(() => expect(emoji(result.current.aggregate('m1'), '🎉')).toBeDefined());
-    expect(emoji(result.current.aggregate('m1'), '🎉')).toMatchObject({
-      count: 1,
-      reactedByMe: true,
-    });
+    expect(emoji(result.current.aggregate('m1'), '🎉')).toMatchObject({ count: 1, reactedByMe: true });
     expect(result.current.isToggling).toBe(true);
 
     await act(async () => {
-      rpc.resolver({ error: null });
-      await rpc.promise;
+      insercao.resolver({ error: null });
+      await insercao.promise;
     });
     await waitFor(() => expect(result.current.isToggling).toBe(false));
   });
 
-  it('desfaz a reação otimista quando a RPC falha', async () => {
+  it('desfaz a reação otimista quando a escrita falha', async () => {
     estado.linhas = [];
-    const rpc = deferido<{ error: unknown }>();
-    estado.rpcResposta = rpc.promise;
+    const insercao = deferido<{ error: unknown }>();
+    estado.insercao = insercao.promise;
 
     const { result } = render();
     await waitFor(() => expect(result.current.reactions).toEqual([]));
@@ -251,8 +251,8 @@ describe('alternar reação', () => {
     await waitFor(() => expect(emoji(result.current.aggregate('m1'), '🎉')).toBeDefined());
 
     await act(async () => {
-      rpc.resolver({ error: { message: 'RLS negou' } });
-      await rpc.promise;
+      insercao.resolver({ error: { message: 'RLS negou' } });
+      await insercao.promise;
     });
 
     await waitFor(() => expect(estado.toastError).toHaveBeenCalledWith('Erro ao reagir'));
@@ -271,7 +271,7 @@ describe('alternar reação', () => {
     });
 
     await waitFor(() => expect(estado.toastError).toHaveBeenCalledWith('Erro ao reagir'));
-    expect(estado.rpcChamadas).toHaveLength(0);
+    expect(estado.escritas).toHaveLength(0);
   });
 });
 

@@ -7,7 +7,6 @@ interface Escrita {
   tipo: 'update' | 'upsert';
   payload: Record<string, unknown>;
   eq: Array<[string, unknown]>;
-  options?: Record<string, unknown>;
 }
 
 // Estado do Supabase falso: as leituras vem dos arrays abaixo, toda ESCRITA
@@ -18,7 +17,6 @@ const estado = vi.hoisted(() => ({
   autoClose: null as Record<string, unknown> | null,
   updateData: null as Array<{ key: unknown }> | null,
   updateError: null as { message: string } | null,
-  upsertError: null as { message: string } | null,
   escritas: [] as Escrita[],
   from: vi.fn(),
 }));
@@ -49,20 +47,9 @@ estado.from.mockImplementation((table: string) => ({
       },
     };
   },
-  upsert: (payload: Record<string, unknown>, options?: Record<string, unknown>) => {
-    estado.escritas.push({ table, tipo: 'upsert', payload, eq: [], options });
-    const erro = estado.upsertError;
-    if (!erro) {
-      // O upsert passa a existir na tabela falsa: o refetch do hook enxerga o
-      // valor gravado e o switch mostra o estado REAL, nao um otimismo local.
-      const idx = estado.globalRows.findIndex((r) => r.key === payload.key);
-      if (idx >= 0) {
-        estado.globalRows[idx] = { ...estado.globalRows[idx], value: payload.value };
-      } else {
-        estado.globalRows = [...estado.globalRows, linhaGlobal(payload.value as string)];
-      }
-    }
-    return { select: () => ({ single: async () => ({ data: erro ? null : payload, error: erro }) }) };
+  upsert: (payload: Record<string, unknown>) => {
+    estado.escritas.push({ table, tipo: 'upsert', payload, eq: [] });
+    return { select: () => ({ single: async () => ({ data: payload, error: null }) }) };
   },
 }));
 
@@ -113,7 +100,6 @@ beforeEach(() => {
   estado.autoClose = AUTO_CLOSE;
   estado.updateData = null;
   estado.updateError = null;
-  estado.upsertError = null;
   estado.escritas = [];
 });
 
@@ -130,10 +116,10 @@ describe('AutomationSettings — transcrição no contrato global_settings', () 
     await waitFor(() => expect(estado.escritas).toHaveLength(1));
     expect(estado.escritas[0]).toMatchObject({
       table: 'global_settings',
-      tipo: 'upsert',
-      payload: { key: CHAVE, value: 'false' },
-      options: { onConflict: 'key' },
+      tipo: 'update',
+      payload: { value: 'false' },
     });
+    expect(estado.escritas[0].eq).toEqual([['key', CHAVE]]);
   });
 
   it('ligar a transcrição grava value=true na mesma chave', async () => {
@@ -146,33 +132,8 @@ describe('AutomationSettings — transcrição no contrato global_settings', () 
     fireEvent.click(interruptor);
 
     await waitFor(() => expect(estado.escritas).toHaveLength(1));
-    expect(estado.escritas[0]).toMatchObject({
-      tipo: 'upsert',
-      payload: { key: CHAVE, value: 'true' },
-    });
-  });
-
-  it('primeiro uso (chave ausente): o clique grava via upsert, sem erro, e o switch reflete o valor real', async () => {
-    estado.globalRows = [];
-    renderAutomacao();
-
-    const interruptor = await switchTranscricao();
-    expect(interruptor).toBeChecked();
-
-    fireEvent.click(interruptor);
-
-    await waitFor(() => expect(estado.escritas).toHaveLength(1));
-    expect(estado.escritas[0]).toMatchObject({
-      table: 'global_settings',
-      tipo: 'upsert',
-      payload: { key: CHAVE, value: 'false' },
-    });
-    expect(toast.error).not.toHaveBeenCalled();
-
-    // O switch segue o valor lido da tabela (agora 'false'), nao um otimismo local.
-    await waitFor(() =>
-      expect(screen.getByRole('switch', { name: 'Transcrição automática' })).not.toBeChecked(),
-    );
+    expect(estado.escritas[0].payload).toEqual({ value: 'true' });
+    expect(estado.escritas[0].eq).toEqual([['key', CHAVE]]);
   });
 
   it('monta desligado somente com value=false; qualquer outro valor (inclusive ausente) e ligado', async () => {
@@ -206,7 +167,7 @@ describe('AutomationSettings — transcrição no contrato global_settings', () 
 
   it('falha na gravacao avisa o erro na tela e o switch nao fica confirmado', async () => {
     estado.globalRows = [linhaGlobal('true')];
-    estado.upsertError = { message: 'permission denied' };
+    estado.updateError = { message: 'permission denied' };
     renderAutomacao();
 
     const interruptor = await switchTranscricao();

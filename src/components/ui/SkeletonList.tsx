@@ -1,7 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
-import { SkeletonRegion } from '@/components/ui/skeleton';
 
 interface SkeletonListProps {
   /** Number of skeleton rows */
@@ -10,8 +9,6 @@ interface SkeletonListProps {
   variant?: 'list' | 'card' | 'table';
   /** Additional classes */
   className?: string;
-  /** Nome acessível da região de carregamento (pt-BR) */
-  label?: string;
 }
 
 const staggerContainer = {
@@ -34,10 +31,9 @@ function SkeletonPulse({ className }: { className?: string }) {
   );
 }
 
-export function SkeletonList({ count = 5, variant = 'list', className, label }: SkeletonListProps) {
+export function SkeletonList({ count = 5, variant = 'list', className }: SkeletonListProps) {
   if (variant === 'card') {
     return (
-      <SkeletonRegion label={label}>
       <motion.div
         variants={staggerContainer}
         initial="hidden"
@@ -65,13 +61,11 @@ export function SkeletonList({ count = 5, variant = 'list', className, label }: 
           </motion.div>
         ))}
       </motion.div>
-      </SkeletonRegion>
     );
   }
 
   if (variant === 'table') {
     return (
-      <SkeletonRegion label={label}>
       <motion.div
         variants={staggerContainer}
         initial="hidden"
@@ -99,13 +93,11 @@ export function SkeletonList({ count = 5, variant = 'list', className, label }: 
           </motion.div>
         ))}
       </motion.div>
-      </SkeletonRegion>
     );
   }
 
   // Default: list
   return (
-    <SkeletonRegion label={label}>
     <motion.div
       variants={staggerContainer}
       initial="hidden"
@@ -127,7 +119,6 @@ export function SkeletonList({ count = 5, variant = 'list', className, label }: 
         </motion.div>
       ))}
     </motion.div>
-    </SkeletonRegion>
   );
 }
 

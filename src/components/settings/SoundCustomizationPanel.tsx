@@ -16,7 +16,6 @@ import {
   type SoundTypeOption,
 } from '@/hooks/system/useNotificationSettings';
 import { previewSound } from '@/utils/notificationSounds';
-import { createStorageObjectId, sanitizeStorageFileName } from '@/lib/storage_object_upload';
 
 /**
  * A aba Sons lê E grava pelo MESMO hook que os alertas usam
@@ -121,7 +120,7 @@ export function SoundCustomizationPanel() {
     if (file.size > 2 * 1024 * 1024) { toast.error('Arquivo muito grande. Máximo: 2MB'); return; }
     try {
       const { supabase } = await import('@/integrations/supabase/client');
-      const { data, error } = await supabase.storage.from('audio-messages').upload(`custom-sounds/${createStorageObjectId()}-${sanitizeStorageFileName(file.name)}`, file);
+      const { data, error } = await supabase.storage.from('audio-messages').upload(`custom-sounds/${Date.now()}-${file.name}`, file);
       if (error) throw error;
       // Guarda o caminho devolvido pelo storage para não se perder. O arquivo é enviado,
       // NÃO vira preferência: os alertas tocam os 5 tipos do player (SOUND_CONFIGS).

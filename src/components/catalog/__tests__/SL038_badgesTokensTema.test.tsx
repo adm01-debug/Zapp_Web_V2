@@ -27,14 +27,6 @@
  * (`src/components/tasks/__tests__/quadroLarguraFocoContraste.test.tsx`).
  * O limiar de TEXTO (4,5:1) dos badges é o item SL-041 / CT-69 — decisão de
  * produto, fora deste cartão; aqui o alvo é o badge parar de usar cor crua.
- *
- * ATUALIZAÇÃO (SL-041 / CT-69): o par cru `--destructive`×`--destructive-foreground`
- * da badge Promo fechava só 3,78:1 (claro) / 3,00:1 (escuro) — abaixo dos 4,5:1 de
- * texto pequeno. O SL-041 trocou o FUNDO da Promo para `--destructive-text` (a tinta
- * desenhada para fechar AA) com o texto em `--background` — par invertido do tema,
- * aplicado via `bg-[hsl(var(--destructive-text))]` (arbitrary value, porque não existe
- * utilitário `bg-destructive-text` gerado). `tokenDaClasse` abaixo resolve esse formato
- * também, não só `bg-<token>`. Novo/Top não mudaram.
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import fs from 'node:fs';
@@ -124,20 +116,16 @@ function razaoToken(vars: Record<string, string>, fundo: string, texto: string):
 
 // ─── Classe RENDERIZADA → token do tema ──────────────────────────────────
 /**
- * `bg-success` → `success`; `text-success-foreground` → `success-foreground`;
- * `bg-[hsl(var(--destructive-text))]` → `destructive-text` (SL-041: a Promo usa
- * arbitrary value porque não existe utilitário `bg-destructive-text` gerado).
+ * `bg-success` → `success`; `text-success-foreground` → `success-foreground`.
  * Devolve `null` quando a classe não é uma variável do tema — é o caso da
  * paleta crua (`bg-emerald-500`), que não existe em `tokens.css`.
  */
 function tokenDaClasse(className: string, tipo: 'bg' | 'text'): string | null {
   for (const classe of className.split(/\s+/)) {
     const semVariante = classe.slice(classe.lastIndexOf(':') + 1);
-    const direto = semVariante.match(new RegExp(`^${tipo}-([a-z0-9-]+)$`));
-    const viaVar = semVariante.match(new RegExp(`^${tipo}-\\[hsl\\(var\\(--([a-z0-9-]+)\\)\\)\\]$`));
-    const token = direto ? direto[1] : viaVar ? viaVar[1] : null;
-    if (!token) continue;
-    if (claro[token] !== undefined) return token;
+    const m = semVariante.match(new RegExp(`^${tipo}-([a-z0-9-]+)$`));
+    if (!m) continue;
+    if (claro[m[1]] !== undefined) return m[1];
   }
   return null;
 }
@@ -153,7 +141,7 @@ const produto = (overrides: Partial<ExternalProduct> = {}): ExternalProduct => (
 const BADGES = [
   { rotulo: 'Novo', estado: { is_new: true }, esperado: { fundo: 'success', texto: 'success-foreground' } },
   { rotulo: 'Top', estado: { is_bestseller: true }, esperado: { fundo: 'warning', texto: 'warning-foreground' } },
-  { rotulo: 'Promo', estado: { is_on_sale: true }, esperado: { fundo: 'destructive-text', texto: 'background' } },
+  { rotulo: 'Promo', estado: { is_on_sale: true }, esperado: { fundo: 'destructive', texto: 'destructive-foreground' } },
 ] as const;
 
 /** Renderiza o card real e devolve a badge do estado pedido (o `<span>` do rótulo). */
@@ -224,15 +212,12 @@ describe('SL-038 — as badges de destaque seguem os tokens dos 4 temas', () => 
     // Medida registrada em 08/10/2026, na ordem [claro, escuro, claro+HC,
     // escuro+HC]. Antes desta correção os 3 badges pintavam a paleta crua
     // (2,54 / 2,80 / 3,67 em 3 dos 4 temas, CONTRASTE.md), os mesmos números em
-    // todos eles. Promo REMEDIDA em 09/10/2026 (SL-041): o SL-038 original
-    // pintava `--destructive`×`--destructive-foreground` (3,78 / 3,00 / 5,89 /
-    // 5,77 — abaixo de 4,5:1 nos 2 primeiros temas); o SL-041 trocou para
-    // `--destructive-text`×`--background`. Se um token mudar de valor, esta
-    // tabela falha DE PROPÓSITO: a medida precisa ser refeita.
+    // todos eles. Se um token mudar de valor, esta tabela falha DE PROPÓSITO:
+    // a medida precisa ser refeita.
     expect(medido).toEqual({
       Novo: [5.66, 7.8, 5.66, 7.8],
       Top: [7.15, 10.34, 7.15, 10.34],
-      Promo: [6.39, 6.54, 6.86, 7.14],
+      Promo: [3.78, 3.0, 5.89, 5.77],
     });
   });
 });

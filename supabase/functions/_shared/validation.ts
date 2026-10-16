@@ -11,21 +11,9 @@ export{
   createWebhookValidator 
 } from './hmac-validation.ts';
 
-// Política de rede (R2-AUTH-022 / 27.3): converte Request + endpoint canônico
-// na decisão da RPC public.resolve_network_policy e produz negação HTTP
-// consistente (403 negado / 503 indecidível). Integrada aqui no fluxo requireAuth.
-import {
-  resolveNetworkPolicy,
-  networkPolicyDenialResponse,
-  extractCountryCode,
-  type NetworkPolicyDecision,
-  type NetworkPolicyRpcClient,
-} from './request-policy.ts';
-import {
-  recordRateLimitDenial,
-  scheduleRateLimitDenial,
-  type RateLimitLogWriter,
-} from './rate-limit-log.ts';
+// Política de origem do CORS: fonte única em ./cors-origins.ts (também usada por schemas.ts).
+import { allowedOriginFor } from './cors-origins.ts';
+export { EXACT_ALLOWED_ORIGINS } from './cors-origins.ts';
 
 // ─── Structured Logger ─────────────────────────────────────────
 
@@ -105,30 +93,6 @@ export class Logger {
   }
 }
 
-// Endereco canonico de producao no CORS (ver docs/runbooks/deploy.md). So ele
-// entra na lista exata: os hosts que ja serviram o app fora do fluxo
-// GitHub -> Vercel entregavam build velho. URLs de deployment/preview deste
-// projeto (zappwebv2-<hash|branch>-juca1.vercel.app) continuam em
-// ORIGIN_PATTERNS; o alias padrao do projeto (zappwebv2-juca1.vercel.app)
-// deixa de ser aceito de proposito, para existir UM endereco canonico.
-const EXACT_ALLOWED_ORIGINS = new Set([
-  'https://zapp-web-v2.vercel.app',
-]);
-
-const ORIGIN_PATTERNS = [
-  /^https:\/\/zappwebv2-[a-z0-9-]+-juca1\.vercel\.app$/,
-  /^http:\/\/localhost(?::\d{1,5})?$/,
-  /^http:\/\/127\.0\.0\.1(?::\d{1,5})?$/,
-];
-
-/** Origens do projeto (canônica + padrões de preview/local). Exportado para que
- * edge functions que precisam montar um `redirectTo` do GoTrue usem a MESMA
- * allow-list do CORS, em vez de repetí-la (open-redirect por origem do chamador). */
-export function isAllowedOrigin(origin: string): boolean {
-  return EXACT_ALLOWED_ORIGINS.has(origin) ||
-    ORIGIN_PATTERNS.some((pattern) => pattern.test(origin));
-}
-
 /** Security headers applied to all responses */
 const SECURITY_HEADERS: Record<string, string> = {
   'X-Content-Type-Options': 'nosniff',
@@ -144,16 +108,15 @@ const SECURITY_HEADERS: Record<string, string> = {
 
 /** Build CORS + security headers with origin validation */
 export function getCorsHeaders(req?: Request): Record<string, string> {
-  const origin = req?.headers.get('origin') || '';
-  const allowedOrigin = isAllowedOrigin(origin) ? origin : 'https://zapp-web-v2.vercel.app';
+  const allowedOrigin = allowedOriginFor(req);
   const requestId = req?.headers.get('x-request-id') || crypto.randomUUID();
   return {
     ...SECURITY_HEADERS,
     'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
     'Access-Control-Allow-Headers':
-      'authorization, x-client-info, apikey, content-type, x-app-name, x-app-version, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version, x-hub-signature-256, x-signature, x-webhook-signature, x-evolution-signature, x-contract-version, x-request-id, x-correlation-id, traceparent',
-    'Access-Control-Expose-Headers': 'x-request-id, x-correlation-id, x-degraded',
+      'authorization, x-client-info, apikey, content-type, x-app-name, x-app-version, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version, x-hub-signature-256, x-signature, x-webhook-signature, x-evolution-signature, x-contract-version, x-request-id',
+    'Access-Control-Expose-Headers': 'x-request-id, x-degraded',
     'Access-Control-Max-Age': '86400',
     Vary: 'Origin',
     'X-Request-ID': requestId,
@@ -165,14 +128,14 @@ export const corsHeaders = getCorsHeaders();
 
 /** Standard JSON error response (with origin-validated CORS). */
 export function errorResponse(message: string, status = 400, req?: Request) {
-  const headers = req ? getCorsHeaders(req) : corsHeaders;
-  let body = message;
+  // W81: para 5xx delega ao internalErrorResponse — err.message nunca chega ao
+  // corpo da resposta (fecha CodeQL js/stack-trace-exposure em validation.ts).
   if (status >= 500) {
-    console.error(JSON.stringify({ level: 'error', source: 'edge', status, msg: message }));
-    body = 'Internal server error';
+    return internalErrorResponse(new Error(message), req, status);
   }
+  const headers = req ? getCorsHeaders(req) : corsHeaders;
   return new Response(
-    JSON.stringify({ error: body }),
+    JSON.stringify({ error: message }),
     { status, headers: { ...headers, 'Content-Type': 'application/json' } }
   );
 }
@@ -180,20 +143,21 @@ export function errorResponse(message: string, status = 400, req?: Request) {
 /** Serializes `err` for server-side logging only. Isolates err.message access
  * from the Response construction scope so CodeQL taint analysis does not trace
  * err.message → Response body (js/stack-trace-exposure). */
-function logServerError(err: unknown): void {
+function logServerError(err: unknown, status = 500): void {
   const msg = err instanceof Error ? err.message : String(err);
-  console.error(JSON.stringify({ level: 'error', source: 'edge', status: 500, msg }));
+  console.error(JSON.stringify({ level: 'error', source: 'edge', status, msg }));
 }
 
-/** Standard JSON 500 error response. Logs the real error server-side; nunca expõe
+/** Standard JSON 5xx error response. Logs the real error server-side; nunca expõe
  * stack trace ou detalhes internos ao client (fecha CodeQL js/stack-trace-exposure).
- * Use no lugar de errorResponse(err.message, 500, req) em todos os catch de 5xx. */
-export function internalErrorResponse(err: unknown, req?: Request): Response {
+ * Use no lugar de errorResponse(err.message, 5xx, req) em todos os catch de 5xx.
+ * O status é preservado (502, 503, etc.) mas o corpo é sempre genérico. */
+export function internalErrorResponse(err: unknown, req?: Request, status = 500): Response {
   const headers = req ? getCorsHeaders(req) : corsHeaders;
-  logServerError(err);
+  logServerError(err, status);
   return new Response(
     JSON.stringify({ error: 'Internal server error' }),
-    { status: 500, headers: { ...headers, 'Content-Type': 'application/json' } }
+    { status, headers: { ...headers, 'Content-Type': 'application/json' } }
   );
 }
 
@@ -236,6 +200,8 @@ export function jsonResponse(data: unknown, status = 200, req?: Request) {
           'x-degraded': [...degradacoes.entries()].map(([motivo, total]) => `${motivo}=${total}`).join(';'),
         }
       : {};
+  // codeql[js/stack-trace-exposure] -- `data` é controlado pelo caller (resposta de
+  // sucesso ou erro de roteamento estruturado, nunca stack trace interno).
   return new Response(
     JSON.stringify(data),
     { status, headers: { ...headers, 'Content-Type': 'application/json', ...degradado } }
@@ -304,12 +270,6 @@ interface RateLimitRpcClient {
   ) => PromiseLike<{ data: unknown; error: unknown }>;
 }
 let serviceClientPromise: Promise<RateLimitRpcClient> | null = null;
-/** Descarta o client service-role do limiter em cache — usado pelos testes para
- * isolar cenarios no mesmo processo `deno test` (um client criado com o env de
- * outro arquivo sobreviveria ao save/restore de env). Nunca chamado em prod. */
-export function resetRateLimitServiceClient(): void {
-  serviceClientPromise = null;
-}
 function getServiceClient(): Promise<RateLimitRpcClient> {
   if (!serviceClientPromise) {
     serviceClientPromise = import("https://esm.sh/@supabase/supabase-js@2.87.1").then(({ createClient }) =>
@@ -324,73 +284,15 @@ function getServiceClient(): Promise<RateLimitRpcClient> {
   return serviceClientPromise;
 }
 
-/**
- * Contexto opcional de uma chamada a `enforceRateLimit`, usado SÓ para registrar
- * a negação em `rate_limit_logs` (cartão t_6a08446c). Sem ele ainda grava, com o
- * que dá para derivar (`endpoint` = prefixo da chave, `ip` = "unknown"); com
- * `req` o registro fica completo (IP real, país do header confiável, user-agent).
- * O `writer` é injetável para teste.
- */
-export interface EnforceRateLimitContext {
-  req?: Request;
-  endpoint?: string;
-  ip?: string;
-  country?: string | null;
-  userAgent?: string | null;
-  writer?: RateLimitLogWriter;
-  /**
-   * Client da RPC `consume_rate_limit` injetável (padrão: service_role do
-   * `getServiceClient`). Só para teste offline do ramo persistente.
-   */
-  consumeRpc?: RateLimitRpcClient;
-}
-
-/**
- * Endpoint canônico derivado da chave do limiter quando o chamador não passa o
- * `req`. Todas as chaves de `enforceRateLimit` nascem como `<função>:...`
- * (ex.: `auth-login-email:<email>`), então o prefixo antes do primeiro `:` é
- * estável e NÃO vem do cliente. Sem prefixo, cai em "unknown".
- */
-function endpointFromRateLimitKey(key: string): string {
-  const prefix = key.split(":", 1)[0]?.trim();
-  return prefix || "unknown";
-}
-
-/**
- * Registra (fire-and-forget, best-effort) uma negação de rate limit (429) em
- * `rate_limit_logs`. Nunca atrasa nem derruba a resposta: `scheduleRateLimitDenial`
- * não é aguardado.
- */
-function recordRateLimitDenialFor(
-  key: string,
-  maxRequests: number,
-  ctx: EnforceRateLimitContext,
-): void {
-  const req = ctx.req;
-  const writer = ctx.writer ?? recordRateLimitDenial;
-  scheduleRateLimitDenial(writer, {
-    ip: ctx.ip ?? (req ? getClientIP(req) : "unknown"),
-    endpoint: ctx.endpoint ?? (req ? canonicalEndpointFromUrl(req) : endpointFromRateLimitKey(key)),
-    country: ctx.country ?? (req ? extractCountryCode(req) : null),
-    userAgent: ctx.userAgent ?? (req ? req.headers.get("user-agent") : null),
-    // O limite atingido é determinístico (config), não uma contagem adivinhada.
-    requestCount: maxRequests,
-    blocked: true,
-  });
-}
-
 export async function enforceRateLimit(
   key: string,
   maxRequests = 30,
   windowMs = 60_000
-): Promise<{ allowed: boolean; remaining: number; persistent: boolean; unavailable?: boolean }> {
+): Promise<{ allowed: boolean; remaining: number; persistent: boolean }> {
   const local = checkRateLimit(key, maxRequests, windowMs);
-  if (!local.allowed) {
-    recordRateLimitDenialFor(key, maxRequests, ctx);
-    return { ...local, persistent: false };
-  }
+  if (!local.allowed) return { ...local, persistent: false };
   try {
-    const client = ctx.consumeRpc ?? await getServiceClient();
+    const client = await getServiceClient();
     const { data, error } = await client.rpc("consume_rate_limit", {
       p_key: key,
       p_max: maxRequests,
@@ -398,12 +300,7 @@ export async function enforceRateLimit(
     });
     if (error) throw error;
     const row = (Array.isArray(data) ? data[0] : data) as { allowed?: unknown; remaining?: unknown } | null;
-    if (!row || typeof row.allowed !== "boolean") {
-      // A RPC respondeu, mas sem o contrato esperado: o contador persistente não
-      // vale. Marca `unavailable` para quem precisa falhar FECHADO (auth-login),
-      // sem mudar o comportamento de quem aceita o fallback local.
-      return { ...local, persistent: false, unavailable: true };
-    }
+    if (!row || typeof row.allowed !== "boolean") return { ...local, persistent: false };
     return {
       allowed: row.allowed,
       remaining: typeof row.remaining === "number" ? row.remaining : 0,
@@ -411,7 +308,7 @@ export async function enforceRateLimit(
     };
   } catch (err) {
     console.warn("[rate-limit] limiter persistente indisponivel; usando contador local:", String(err));
-    return { ...local, persistent: false, unavailable: true };
+    return { ...local, persistent: false };
   }
 }
 
@@ -435,166 +332,27 @@ export function requireEnv(name: string): string {
   return value;
 }
 
-/** Resultado de `auth.getUser()` (estrutural — não acopla a uma versão do supabase-js). */
-export type AuthUserResult = {
-  data: { user: { id: string } | null } | null;
-  error: unknown;
-};
-
-/** Resultado da leitura de `profiles.is_active` (estrutural; testável offline). */
-export type ProfileActiveResult = {
-  data: { is_active: boolean | null } | null;
-  error: unknown;
-};
-
-/** Leitura de `profiles.is_active` pelo `user_id` do usuário autenticado. */
-export type ProfileActiveLookup = (userId: string) => PromiseLike<ProfileActiveResult>;
-
-/**
- * Default de produção: resolve `profiles.is_active` por `user_id` (igualdade
- * EXATA em `profiles.user_id`, índice UNIQUE NOT NULL e o MESMO id de
- * `auth.users`). Nunca por `profiles.email` (nullable, sem UNIQUE garantido) nem
- * por `ilike` (curinga do PostgREST). O cast para o builder do supabase-js é
- * local e intencional: expor o builder na assinatura estoura a instanciação de
- * tipos (TS2589).
- */
-export function profileActiveFrom(client: RateLimitRpcClient): ProfileActiveLookup {
-  const c = client as unknown as {
-    from(table: string): {
-      select(columns: string): {
-        eq(column: string, value: string): {
-          maybeSingle(): PromiseLike<ProfileActiveResult>;
-        };
-      };
-    };
-  };
-  return (userId: string) =>
-    c.from("profiles").select("is_active").eq("user_id", userId).maybeSingle();
-}
-
-/**
- * Dependências injetáveis de `requireAuth` (para teste offline). Em produção
- * ficam ausentes e `requireAuth` usa o caminho real (esm.sh + env + service_role).
- */
-export interface RequireAuthOptions {
-  /** Valida o bearer e devolve o usuário (ou erro). Injectable p/ testar sem esm.sh/Deno.env. */
-  getUser?: (authHeader: string) => PromiseLike<AuthUserResult>;
-  /** Client service_role p/ a política de rede (R2-AUTH-022). Injectable p/ teste. */
-  policyRpc?: NetworkPolicyRpcClient;
-  /** Obtém o client de política quando `policyRpc` não é injetado (padrão: o
-   *  client service_role compartilhado de `getServiceClient`). Injectable p/
-   *  testar a falha de CRIAÇÃO do client sem tocar rede/env real. */
-  policyRpcFactory?: () => PromiseLike<NetworkPolicyRpcClient>;
-  /** Fallback de rate limit quando a RPC não tem regra p/ o endpoint (máximos atuais). */
-  defaultMaxRequests?: number;
-  defaultWindowSeconds?: number;
-  /** Leitura de `profiles.is_active` do usuário autenticado (R2-AUTH-004).
-   *  Injectable p/ teste; ausente em produção = client service_role real. */
-  getProfileActive?: ProfileActiveLookup;
-}
-
-/**
- * Endpoint canônico derivado de forma estável da URL da Edge Function
- * (R2-AUTH-022 / 27.3). A rota do gateway Supabase é `/functions/v1/<nome>`
- * (ou `/functions/v1/<nome>/...`); o identificador canônico é o NOME da função,
- * nunca algo derivado de body controlado pelo cliente. Domínio sem a barra
- * `functions/v1`: o primeiro segmento do path é o nome. Path sem segmento
- * devolve string vazia — `resolveNetworkPolicy` a trata como endpoint inválido
- * e falha fechado (503).
- */
-export function canonicalEndpointFromUrl(req: Request): string {
-  const url = new URL(req.url);
-  const segments = url.pathname.split("/").filter(Boolean);
-  let idx = 0;
-  if (segments[0] === "functions" && segments[1] === "v1") idx = 2;
-  return segments[idx] ?? "";
-}
-
-export async function requireAuth(
-  req: Request,
-  opts: RequireAuthOptions = {},
-): Promise<{ userId: string } | Response> {
+export async function requireAuth(req: Request): Promise<{ userId: string } | Response> {
   const authHeader = req.headers.get("Authorization") || req.headers.get("authorization");
   if (!authHeader || !authHeader.toLowerCase().startsWith("bearer ")) {
     return errorResponse("Missing Authorization bearer token", 401, req);
   }
-
-  // 1. Autenticação (401 para token ausente/inválido) — antes de qualquer efeito.
-  let userId: string;
   try {
-    const result: AuthUserResult = opts.getUser
-      ? await opts.getUser(authHeader)
-      : await (async (): Promise<AuthUserResult> => {
-          const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2.87.1");
-          const supabaseUrl = requireEnv("SUPABASE_URL");
-          const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_PUBLISHABLE_KEY") || "";
-          const client = createClient(supabaseUrl, anonKey, {
-            global: { headers: { Authorization: authHeader } },
-            auth: { persistSession: false },
-          });
-          const { data, error } = await client.auth.getUser();
-          return { data: data as AuthUserResult["data"], error };
-        })();
-    if (result.error || !result.data?.user) {
+    const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2.87.1");
+    const supabaseUrl = requireEnv("SUPABASE_URL");
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_PUBLISHABLE_KEY") || "";
+    const client = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: authHeader } },
+      auth: { persistSession: false },
+    });
+    const { data, error } = await client.auth.getUser();
+    if (error || !data?.user) {
       return errorResponse("Invalid or expired token", 401, req);
     }
-    userId = result.data.user.id;
+    return { userId: data.user.id };
   } catch (_err) {
     return errorResponse("Authentication failed", 401, req);
   }
-
-  // 2. Política de rede (R2-AUTH-022 / 27.3): JWT válido não basta quando a
-  //    política nega — 403 para bloqueio, 503 para decisão indisponível. A
-  //    consulta acontece aqui, uma única vez por requisição, ANTES de qualquer
-  //    efeito privilegiado do handler; consumidores de requireAuth herdam a
-  //    trava sem edição individual.
-  const endpoint = canonicalEndpointFromUrl(req);
-  // Criação do client de política (import dinâmico + env) e execução da RPC
-  // sob o mesmo guarda-chuva: qualquer exceção/rejeição aqui vira negação
-  // fechada 503 — requireAuth nunca rejeita a Promise por causa da política.
-  let decision: NetworkPolicyDecision;
-  try {
-    const rpc = opts.policyRpc ?? (await (opts.policyRpcFactory ?? getServiceClient)());
-    decision = await resolveNetworkPolicy(req, endpoint, {
-      rpc,
-      defaultMaxRequests: opts.defaultMaxRequests ?? 30,
-      defaultWindowSeconds: opts.defaultWindowSeconds ?? 60,
-      // Toda negação 403 deixa uma linha em `rate_limit_logs` (best-effort).
-      recordDenial: opts.rateLimitLogWriter ?? recordRateLimitDenial,
-    });
-  } catch {
-    decision = { allowed: false, status: 503 };
-  }
-  if (!decision.allowed) {
-    return networkPolicyDenialResponse(decision, req);
-  }
-
-  // 3. R2-AUTH-004 (item 6): perfil inativo/ausente NÃO opera. A checagem roda
-  //    DEPOIS da autenticação e da política de rede e ANTES de qualquer efeito
-  //    do handler; consumidores de requireAuth herdam a trava sem edição
-  //    individual. O perfil é resolvido por `profiles.user_id` (UNIQUE NOT NULL,
-  //    o MESMO id de auth.users) — igualdade exata, nunca por e-mail/ilike.
-  let profile: ProfileActiveResult;
-  try {
-    // Criação do client (import dinâmico + env) e execução do lookup sob o mesmo
-    // guarda-chuva: exceção/rejeição aqui vira negação fechada, nunca liberação.
-    const lookup = opts.getProfileActive ??
-      profileActiveFrom(await (opts.policyRpcFactory ?? getServiceClient)());
-    profile = await lookup(userId);
-  } catch {
-    // Fail-closed (indecidível): não dá para provar que o perfil está ativo.
-    return errorResponse("Service unavailable", 503, req);
-  }
-  if (profile.error) {
-    // Fail-closed: consulta que falhou não libera a operação.
-    return errorResponse("Service unavailable", 503, req);
-  }
-  // Ausente, inativo (`false`) ou `is_active` nulo: 403 neutro, o MESMO corpo da
-  // negação da política de rede — não revela existência nem estado do perfil.
-  if (!profile.data || profile.data.is_active !== true) {
-    return errorResponse("Access denied", 403, req);
-  }
-  return { userId };
 }
 
 export async function createAuthedClient(req: Request) {

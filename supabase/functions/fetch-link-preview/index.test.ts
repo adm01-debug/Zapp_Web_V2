@@ -63,19 +63,6 @@ function withFetch(routes: Route[]) {
       ? input.toString()
       : (input as Request).url;
     calls.push({ url, init });
-    // R2-AUTH-022: `requireAuth` passa a consultar a política de rede (RPC
-    // service_role) antes de liberar o handler. O stub responde "allow" para o
-    // caminho feliz destes casos, como já faz para `consume_rate_limit`.
-    if (url.includes("/rest/v1/rpc/resolve_network_policy")) {
-      return Promise.resolve(jsonResp([
-        { allowed: true, reason: null, rate_limit_max_requests: 30, rate_limit_window_seconds: 60 },
-      ]));
-    }
-    // R2-AUTH-004: `requireAuth` lê `profiles.is_active` por `user_id` (igualdade
-    // exata) antes de liberar o handler; o stub responde "ativo" no caminho feliz.
-    if (url.includes("/rest/v1/profiles") && url.includes("select=is_active")) {
-      return Promise.resolve(jsonResp({ is_active: true }));
-    }
     const route = routes.find((r) => url.includes(r.match));
     if (!route) return Promise.resolve(new Response("nao stubado", { status: 599 }));
     return Promise.resolve(route.make(init));

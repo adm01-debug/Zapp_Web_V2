@@ -18,7 +18,7 @@ vi.mock('@/integrations/supabase/client', () => ({
     },
   },
 }));
-vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() } }));
+vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 vi.mock('framer-motion', () => ({
   motion: { div: ({ children, ...props }: { children?: import("react").ReactNode } & Record<string, unknown>) => <div {...props}>{children}</div> },
   AnimatePresence: ({ children }: { children?: import("react").ReactNode }) => children,
@@ -26,12 +26,6 @@ vi.mock('framer-motion', () => ({
 
 import { ConnectionHealthPanel } from '@/components/diagnostics/ConnectionHealthPanel';
 import { toast } from 'sonner';
-
-/** O disparo manual passa por confirmação: abre o diálogo e confirma. */
-async function confirmarHealthCheck() {
-  fireEvent.click(screen.getByText('Executar Health Check'));
-  fireEvent.click(await screen.findByText('Verificar agora'));
-}
 
 describe('ConnectionHealthPanel', () => {
   afterEach(() => vi.useRealTimers());
@@ -66,39 +60,15 @@ describe('ConnectionHealthPanel', () => {
     mockInvoke.mockResolvedValue({ data: { connections: [] }, error: null });
     render(<ConnectionHealthPanel />);
     await waitFor(() => expect(screen.getByText('Executar Health Check')).toBeInTheDocument());
-    await confirmarHealthCheck();
-    await waitFor(() => { expect(mockInvoke).toHaveBeenCalledWith('connection-health-check'); expect(toast.success).toHaveBeenCalled(); });
-  });
-
-  it('só dispara depois da confirmação: cancelar não invoca a Edge', async () => {
-    render(<ConnectionHealthPanel />);
-    await waitFor(() => expect(screen.getByText('Executar Health Check')).toBeInTheDocument());
-
     fireEvent.click(screen.getByText('Executar Health Check'));
-    fireEvent.click(await screen.findByText('Cancelar'));
-
-    expect(mockInvoke).not.toHaveBeenCalled();
-  });
-
-  it('limita o disparo manual a 1 por minuto (a sonda manda e-mail de alerta)', async () => {
-    mockInvoke.mockResolvedValue({ data: { connections: [] }, error: null });
-    render(<ConnectionHealthPanel />);
-    await waitFor(() => expect(screen.getByText('Executar Health Check')).toBeInTheDocument());
-
-    await confirmarHealthCheck();
-    await waitFor(() => expect(mockInvoke).toHaveBeenCalledTimes(1));
-
-    await confirmarHealthCheck();
-
-    expect(mockInvoke).toHaveBeenCalledTimes(1);
-    expect(toast.info).toHaveBeenCalledWith(expect.stringContaining('Aguarde'));
+    await waitFor(() => { expect(mockInvoke).toHaveBeenCalledWith('connection-health-check'); expect(toast.success).toHaveBeenCalled(); });
   });
 
   it('shows error on failed health check', async () => {
     mockInvoke.mockResolvedValue({ data: null, error: new Error('fail') });
     render(<ConnectionHealthPanel />);
     await waitFor(() => expect(screen.getByText('Executar Health Check')).toBeInTheDocument());
-    await confirmarHealthCheck();
+    fireEvent.click(screen.getByText('Executar Health Check'));
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Erro ao executar health check'));
   });
 

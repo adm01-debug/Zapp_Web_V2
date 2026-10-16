@@ -8,11 +8,10 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
 import {
   MessageSquare, Users, Clock, CheckCircle2,
-  Sparkles, Target,
+  Sparkles, Target, Zap,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AnimatedBadge, StatCardWithGamification } from './GamificationEffects';
-import { useGoalsDashboard } from '@/hooks/analytics/useGoalsDashboard';
 import { Leaderboard } from '@/components/leaderboard/Leaderboard';
 import { DemoAchievements } from '@/components/gamification/DemoAchievements';
 import { TrainingMiniGames } from '@/components/gamification/TrainingMiniGames';
@@ -153,97 +152,13 @@ export function DashboardWidgetRenderer({ widget, stats }: { widget: DashboardWi
   }
 }
 
-/** Alvo de cada desafio = regra do jogo (o que a tela NÃO pode inventar é o
- *  valor alcançado: ele vem sempre do dado do dia). */
-const CHALLENGE_TARGETS = {
-  messages: 10,
-  resolved: 5,
-  responseSeconds: 180,
-} as const;
-
-type ChallengeKind = 'higher-is-better' | 'lower-is-better' | 'zero-is-best';
-
-export interface DailyChallenge {
-  id: string;
-  label: string;
-  target: number;
-  current: number | null;
-  /** 0–100, calculado do dado real. */
-  progress: number;
-  done: boolean;
-  /** false = a fonte não trouxe o dado do dia (nada é exibido como número). */
-  hasData: boolean;
-  /** Valor e meta já formatados (fonte da coluna direita do desafio). */
-  valueLabel: string;
-  targetLabel: string;
-}
-
-const clampPercent = (value: number) => Math.max(0, Math.min(100, Math.round(value)));
-
-function progressOf(input: { current: number | null; target: number; kind: ChallengeKind }) {
-  const { current, target, kind } = input;
-  if (current === null) return { progress: 0, done: false, hasData: false };
-  if (kind === 'zero-is-best') {
-    const done = current === 0;
-    return { progress: done ? 100 : clampPercent(100 - current * 10), done, hasData: true };
-  }
-  if (kind === 'lower-is-better') {
-    const done = current <= target;
-    // Proporcional: 180s de meta com 360s medidos = 50% do caminho andado.
-    return { progress: done ? 100 : clampPercent((target / Math.max(current, 1)) * 100), done, hasData: true };
-  }
-  const done = current >= target;
-  return { progress: clampPercent((current / target) * 100), done, hasData: true };
-}
-
-/**
- * Desafios do Dia com dado real do dia: mensagens enviadas pelo agente
- * (`useGoalsDashboard`, mesma fonte das Metas), conversas resolvidas e tempo
- * médio (`useDashboardKpi` via stats) e pendências na fila.
- */
-function buildDailyChallenges(stats: DashboardStats, sentMessagesToday: number | null): DailyChallenge[] {
-  const inputs = [
-    {
-      id: 'messages', label: 'Mensagens enviadas', target: CHALLENGE_TARGETS.messages,
-      kind: 'higher-is-better' as ChallengeKind, current: sentMessagesToday,
-      format: (v: number) => String(v),
-    },
-    {
-      id: 'resolved', label: 'Conversas resolvidas', target: CHALLENGE_TARGETS.resolved,
-      kind: 'higher-is-better' as ChallengeKind, current: stats.resolvedToday,
-      format: (v: number) => String(v),
-    },
-    {
-      id: 'response-time', label: 'Tempo médio de resposta', target: CHALLENGE_TARGETS.responseSeconds,
-      kind: 'lower-is-better' as ChallengeKind, current: stats.avgResponseTime,
-      format: (v: number) => formatResponseTime(v),
-    },
-    {
-      id: 'pending', label: 'Pendências na fila', target: 0,
-      kind: 'zero-is-best' as ChallengeKind, current: stats.pendingConversations,
-      format: (v: number) => String(v),
-    },
-  ];
-
-  return inputs.map(({ format, ...input }) => ({
-    ...input,
-    ...progressOf(input),
-    valueLabel: input.current === null ? '' : format(input.current),
-    targetLabel: input.kind === 'zero-is-best' ? '0' : format(input.target),
-  }));
-}
-
 function ChallengesWidget({ stats }: { stats: DashboardStats }) {
-  const { goals, isLoading } = useGoalsDashboard();
-  const sentMessagesToday = isLoading
-    ? null
-    : goals.find((goal) => goal.id === 'messages-sent')?.current ?? null;
-  const challenges = buildDailyChallenges(stats, sentMessagesToday);
-  const doneCount = challenges.filter((challenge) => challenge.done).length;
-  const hasDataToday = sentMessagesToday !== null
-    || stats.resolvedToday > 0
-    || stats.pendingConversations > 0
-    || stats.avgResponseTime !== null;
+  const challenges = [
+    { title: 'Responder 10 mensagens', progress: Math.min((stats.totalConversations / 10) * 100, 100), xp: 50, completed: stats.totalConversations >= 10 },
+    { title: 'Resolver 5 conversas', progress: Math.min((stats.resolvedToday / 5) * 100, 100), xp: 100, completed: stats.resolvedToday >= 5 },
+    { title: 'Tempo médio < 3min', progress: stats.avgResponseTime && stats.avgResponseTime < 180 ? 100 : 45, xp: 75, completed: stats.avgResponseTime !== null && stats.avgResponseTime < 180 },
+    { title: 'Sem pendências às 18h', progress: stats.pendingConversations === 0 ? 100 : Math.max(0, 100 - (stats.pendingConversations * 10)), xp: 150, completed: stats.pendingConversations === 0 },
+  ];
 
   return (
     <Card className="card-glow-gradient border-secondary/20 overflow-hidden bg-card">
@@ -259,65 +174,51 @@ function ChallengesWidget({ stats }: { stats: DashboardStats }) {
             </motion.div>
             <h2 className="font-display text-lg font-semibold text-foreground">Desafios do Dia</h2>
           </div>
-          {hasDataToday && (
-            <AnimatedBadge value={`${doneCount}/${challenges.length}`} variant="achievement" size="sm" />
-          )}
+          <AnimatedBadge value="2/4" variant="achievement" size="sm" />
         </div>
       </CardHeader>
       <CardContent className="p-4">
-        {!hasDataToday ? (
-          <div data-testid="challenges-sem-dados" className="flex flex-col items-center justify-center gap-2 min-h-[120px]">
-            <p className="text-sm font-medium text-foreground">Sem dados hoje</p>
-            <p className="text-xs text-muted-foreground text-center">Os desafios aparecem quando houver atendimento no dia.</p>
-          </div>
-        ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
           {challenges.map((challenge, i) => (
             <motion.div
-              key={challenge.id}
+              key={i}
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.1 + i * 0.05 }}
               whileHover={{ scale: 1.02 }}
               className={cn(
                 "p-4 rounded-xl border transition-all duration-300",
-                challenge.done
+                challenge.completed
                   ? "bg-success/10 border-success/30"
                   : "bg-muted/30 border-border/30 hover:border-primary/20"
               )}
             >
               <div className="flex items-start justify-between mb-2">
-                <p className="text-sm font-medium text-foreground">{challenge.label}</p>
-                {challenge.done && (
+                <p className="text-sm font-medium text-foreground">{challenge.title}</p>
+                {challenge.completed && (
                   <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 500 }}>
                     <CheckCircle2 className="w-5 h-5 text-success" />
                   </motion.div>
                 )}
               </div>
-              {challenge.hasData ? (
-                <>
-                  <div className="relative h-2 bg-muted rounded-full overflow-hidden mb-2">
-                    <motion.div
-                      className={cn("absolute inset-y-0 left-0 rounded-full", challenge.done ? "bg-success" : "bg-primary")}
-                      initial={{ width: 0 }}
-                      animate={{ width: `${challenge.progress}%` }}
-                      transition={{ duration: 1, delay: 0.2 + i * 0.1 }}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground">{challenge.progress}%</span>
-                    <span className="text-xs font-semibold text-foreground-secondary">
-                      {challenge.valueLabel} de {challenge.targetLabel}
-                    </span>
-                  </div>
-                </>
-              ) : (
-                <p className="text-xs text-muted-foreground">Sem dados hoje</p>
-              )}
+              <div className="relative h-2 bg-muted rounded-full overflow-hidden mb-2">
+                <motion.div
+                  className={cn("absolute inset-y-0 left-0 rounded-full", challenge.completed ? "bg-success" : "bg-primary")}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${challenge.progress}%` }}
+                  transition={{ duration: 1, delay: 0.2 + i * 0.1 }}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">{Math.round(challenge.progress)}%</span>
+                <div className="flex items-center gap-1">
+                  <Zap className="w-3 h-3 text-xp" />
+                  <span className="text-xs font-semibold text-xp">+{challenge.xp} XP</span>
+                </div>
+              </div>
             </motion.div>
           ))}
         </div>
-        )}
       </CardContent>
     </Card>
   );

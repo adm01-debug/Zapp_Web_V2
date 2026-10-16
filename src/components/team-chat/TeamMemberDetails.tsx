@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { useTeamMemberDetails, type MemberProfile } from '@/hooks/team-chat/useTeamMemberDetails';
+import { useTeamMemberDetails } from '@/hooks/team-chat/useTeamMemberDetails';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -12,19 +12,9 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { TeamConversation } from '@/hooks/chat/useTeamChat';
 import {
-  getRoleBadge, InfoRow,
+  getBirthdayInfo, getRoleBadge, InfoRow,
   DirectProfileHeader, GroupProfileHeader,
 } from './TeamMemberProfileHeader';
-import { getBirthdayInfo } from '@/lib/birthday';
-
-/**
- * HZ-28: so dia e mes chegam do banco (a RPC segura nao devolve o ano) — o texto da linha
- * "Aniversário" nunca mostra ano nem idade.
- */
-function formatBirthdayDayMonth(birthday: MemberProfile['birthday']): string | null {
-  const info = getBirthdayInfo(birthday);
-  return info ? format(info.date, "dd 'de' MMMM", { locale: ptBR }) : null;
-}
 
 function SectionHeader({ icon: Icon, label, open, onToggle }: { icon: React.ElementType; label: string; open: boolean; onToggle: () => void }) {
   return (
@@ -65,7 +55,7 @@ export function TeamMemberDetails({ conversation, onClose }: TeamMemberDetailsPr
                 <InfoRow icon={Phone} label="Telefone" value={memberProfile.phone} />
                 <InfoRow icon={Briefcase} label="Cargo" value={memberProfile.job_title} />
                 <InfoRow icon={Building2} label="Departamento" value={memberProfile.department} />
-                <InfoRow icon={Cake} label="Aniversário" value={formatBirthdayDayMonth(memberProfile.birthday)} />
+                <InfoRow icon={Cake} label="Aniversário" value={memberProfile.birthday ? format(new Date(memberProfile.birthday), "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : null} />
                 <InfoRow icon={Calendar} label="Membro desde" value={format(new Date(memberProfile.created_at), 'dd/MM/yyyy', { locale: ptBR })} />
               </div>
             </CollapsibleContent>
@@ -108,10 +98,8 @@ export function TeamMemberDetails({ conversation, onClose }: TeamMemberDetailsPr
             <CollapsibleContent>
               <div className="px-4 pb-3 space-y-2">
                 {groupMembers
-                  .flatMap(m => {
-                    const bInfo = getBirthdayInfo(m.birthday);
-                    return bInfo ? [{ ...m, bInfo }] : [];
-                  })
+                  .filter(m => m.birthday)
+                  .map(m => ({ ...m, bInfo: getBirthdayInfo(m.birthday) ?? { date: new Date(), age: 0, isToday: false, daysUntil: 365 } }))
                   .sort((a, b) => a.bInfo.daysUntil - b.bInfo.daysUntil)
                   .slice(0, 5)
                   .map(member => (

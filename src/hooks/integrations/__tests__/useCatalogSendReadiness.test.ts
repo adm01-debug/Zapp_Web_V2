@@ -6,7 +6,6 @@ import {
   fetchCatalogSendReadiness,
   normalizeCatalogPhone,
   useCatalogSendReadiness,
-  CONTACT_WITHOUT_CONNECTION_REASON,
   READINESS_UNAVAILABLE_REASON,
 } from '../useCatalogSendReadiness';
 
@@ -28,73 +27,33 @@ vi.mock('@/integrations/supabase/client', () => ({
 }));
 
 const CONTACT = { id: 'c1', phone: '+55 (41) 9 9999-8888' };
-/** Linha de `contacts` do contato: a conexão que o SERVIDOR usa no envio. */
-const CONTACT_WITH_CONNECTION = { data: { whatsapp_connection_id: 'conn-1' }, error: null };
-const CONTACT_WITHOUT_CONNECTION = { data: { whatsapp_connection_id: null }, error: null };
 const CONNECTED = { data: [{ id: 'conn-1' }], error: null };
 const NOTHING_BLOCKED = { data: [], error: null };
 
-function respond(contactRow: QueryResult, connections: QueryResult, blacklist: QueryResult) {
-  const contactBuilder = mockQuery(contactRow);
+function respond(connections: QueryResult, blacklist: QueryResult) {
   const connectionsBuilder = mockQuery(connections);
   const blacklistBuilder = mockQuery(blacklist);
-  mockFrom.mockImplementation((table: string) => {
-    if (table === 'contacts') return contactBuilder;
-    return table === 'whatsapp_connections' ? connectionsBuilder : blacklistBuilder;
-  });
-  return { contactBuilder, connectionsBuilder, blacklistBuilder };
+  mockFrom.mockImplementation((table: string) =>
+    table === 'whatsapp_connections' ? connectionsBuilder : blacklistBuilder);
+  return { connectionsBuilder, blacklistBuilder };
 }
-
-const tablesQueried = () => mockFrom.mock.calls.map((c) => c[0] as string);
 
 describe('fetchCatalogSendReadiness (CT-08)', () => {
   beforeEach(() => { mockFrom.mockReset(); });
 
-  it('bloqueia quando a conexão DO CONTATO não está conectada', async () => {
-    respond(CONTACT_WITH_CONNECTION, { data: [], error: null }, NOTHING_BLOCKED);
+  it('bloqueia quando nenhuma conexão de WhatsApp está conectada', async () => {
+    respond({ data: [], error: null }, NOTHING_BLOCKED);
 
     const readiness = await fetchCatalogSendReadiness(CONTACT);
 
     expect(readiness.blocked).toBe(true);
     expect(readiness.reason).toMatch(/conexão de WhatsApp/i);
-    // Sem conexão do contato ativa não há o que perguntar sobre supressão.
-    expect(tablesQueried()).toEqual(['contacts', 'whatsapp_connections']);
-  });
-
-  it('filtra a conexão pela do contato — conexão conectada de outro número não libera', async () => {
-    // O mock representa "conn-1 (a do contato) caída, conn-2 conectada": a
-    // consulta precisa ficar presa ao id da conexão do contato, senão qualquer
-    // conexão conectada da conta liberava o envio — e o servidor, que casa
-    // COALESCE(message.whatsapp_connection_id, contact.whatsapp_connection_id),
-    // deixava a mensagem presa em `sending`.
-    const { connectionsBuilder } = respond(CONTACT_WITH_CONNECTION, { data: [], error: null }, NOTHING_BLOCKED);
-
-    const readiness = await fetchCatalogSendReadiness(CONTACT);
-
-    expect(readiness.blocked).toBe(true);
-    const eqCalls = (connectionsBuilder.eq as ReturnType<typeof vi.fn>).mock.calls;
-    expect(eqCalls[0]).toEqual(['id', 'conn-1']);
-    expect(eqCalls).toContainEqual(['status', 'connected']);
-  });
-
-  it('bloqueia o contato sem conexão de WhatsApp definida', async () => {
-    respond(CONTACT_WITHOUT_CONNECTION, CONNECTED, NOTHING_BLOCKED);
-
-    const readiness = await fetchCatalogSendReadiness(CONTACT);
-
-    expect(readiness.blocked).toBe(true);
-    expect(readiness.reason).toBe(CONTACT_WITHOUT_CONNECTION_REASON);
-    expect(readiness.reason).toMatch(/não tem uma conexão/i);
-    // Sem conexão do contato não existe id para conferir em whatsapp_connections.
-    expect(tablesQueried()).toEqual(['contacts']);
+    // Sem conexão não há o que perguntar sobre supressão.
+    expect(mockFrom).toHaveBeenCalledTimes(1);
   });
 
   it('bloqueia quando o contato está suprimido, buscando pelo telefone só com dígitos', async () => {
-    const { blacklistBuilder } = respond(
-      CONTACT_WITH_CONNECTION,
-      CONNECTED,
-      { data: [{ id: 'b1', reason_code: 'opt_out' }], error: null },
-    );
+    const { blacklistBuilder } = respond(CONNECTED, { data: [{ id: 'b1', reason_code: 'opt_out' }], error: null });
 
     const readiness = await fetchCatalogSendReadiness(CONTACT);
 
@@ -107,15 +66,13 @@ describe('fetchCatalogSendReadiness (CT-08)', () => {
     expect(orFilter).toContain('expires_at.gt.');
   });
 
-  it('libera o envio com a conexão do contato conectada e contato fora da supressão', async () => {
-    const { connectionsBuilder } = respond(CONTACT_WITH_CONNECTION, CONNECTED, NOTHING_BLOCKED);
+  it('libera o envio com conexão conectada e contato fora da supressão', async () => {
+    const { connectionsBuilder } = respond(CONNECTED, NOTHING_BLOCKED);
 
     const readiness = await fetchCatalogSendReadiness(CONTACT);
 
     expect(readiness).toEqual({ blocked: false, reason: null });
-    const eqCalls = (connectionsBuilder.eq as ReturnType<typeof vi.fn>).mock.calls;
-    expect(eqCalls[0]).toEqual(['id', 'conn-1']);
-    expect(eqCalls[1]).toEqual(['status', 'connected']);
+    expect((connectionsBuilder.eq as ReturnType<typeof vi.fn>).mock.calls[0]).toEqual(['status', 'connected']);
   });
 
   it('normaliza o telefone mantendo só os dígitos', () => {
@@ -144,7 +101,7 @@ describe('useCatalogSendReadiness (CT-08 / R2-MOD-008)', () => {
   });
 
   it('enquanto consulta, marca checking e não libera', async () => {
-    respond(CONTACT_WITH_CONNECTION, CONNECTED, NOTHING_BLOCKED);
+    respond(CONNECTED, NOTHING_BLOCKED);
 
     const { result } = renderHook(() => useCatalogSendReadiness(CONTACT), { wrapper });
 
@@ -156,19 +113,8 @@ describe('useCatalogSendReadiness (CT-08 / R2-MOD-008)', () => {
     expect(result.current.unavailable).toBe(false);
   });
 
-  it('contato sem conexão de WhatsApp definida fica bloqueado, com motivo', async () => {
-    respond(CONTACT_WITHOUT_CONNECTION, CONNECTED, NOTHING_BLOCKED);
-
-    const { result } = renderHook(() => useCatalogSendReadiness(CONTACT), { wrapper });
-
-    await waitFor(() => expect(result.current.checking).toBe(false));
-    expect(result.current.blocked).toBe(true);
-    expect(result.current.unavailable).toBe(false);
-    expect(result.current.reason).toBe(CONTACT_WITHOUT_CONNECTION_REASON);
-  });
-
   it('falha da consulta impede prosseguir, com motivo do retry disponível', async () => {
-    respond({ data: null, error: { message: 'rede fora' } }, CONNECTED, NOTHING_BLOCKED);
+    respond({ data: null, error: { message: 'rede fora' } }, NOTHING_BLOCKED);
 
     const { result } = renderHook(() => useCatalogSendReadiness(CONTACT), { wrapper });
 
@@ -183,13 +129,13 @@ describe('useCatalogSendReadiness (CT-08 / R2-MOD-008)', () => {
   });
 
   it('retry refaz a consulta e libera quando a verificação volta a responder', async () => {
-    respond({ data: null, error: { message: 'rede fora' } }, CONNECTED, NOTHING_BLOCKED);
+    respond({ data: null, error: { message: 'rede fora' } }, NOTHING_BLOCKED);
 
     const { result } = renderHook(() => useCatalogSendReadiness(CONTACT), { wrapper });
     await waitFor(() => expect(result.current.unavailable).toBe(true));
 
     mockFrom.mockReset();
-    respond(CONTACT_WITH_CONNECTION, CONNECTED, NOTHING_BLOCKED);
+    respond(CONNECTED, NOTHING_BLOCKED);
 
     act(() => { result.current.retry(); });
 

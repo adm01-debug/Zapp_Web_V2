@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, createAuthedClient } from "../_shared/validation.ts";
+import { handleCors, errorResponse, jsonResponse, checkRateLimit, getClientIP, requireEnv, Logger, requireAuth, createAuthedClient } from "../_shared/validation.ts";
 import { AiSuggestReplySchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { extractUserIdFromRequest } from "../_shared/ai-usage.ts";
 import { generateWithRouting, type GenerateParams, type GenerateResult } from "../_shared/ai-generate.ts";
@@ -22,8 +22,6 @@ export interface AiSuggestReplyDeps {
   ) => Promise<Response | null>;
   /** Roteador de IA (default: `generateWithRouting`). */
   generate?: (params: GenerateParams) => Promise<GenerateResult>;
-  /** Busca artigos na KB para a última mensagem do cliente (default: RPC `search_knowledge_base` real). */
-  searchKnowledgeBase?: (query: string, maxResults: number) => Promise<{ data: Array<{ category?: string; title: string; content: string; rank: number }> | null } | null>;
 }
 
 export async function handleAiSuggestReply(
@@ -45,9 +43,9 @@ export async function handleAiSuggestReply(
   const userId = extractUserIdFromRequest(req);
 
   try {
-    // Limite POR USUÁRIO (contador compartilhado + cota diária, IA-043) via
-    // `enforceAiGuards`. O contador em memória por IP saiu: era por isolate,
-    // zerava no cold start e fazia colegas atrás do mesmo NAT dividirem a cota.
+    const ip = getClientIP(req);
+    const { allowed } = checkRateLimit(`suggest:${ip}`, 15, 60_000);
+    if (!allowed) return errorResponse("Rate limit exceeded. Please try again later.", 429, req);
 
     const parsed = parseBody(AiSuggestReplySchema, await req.json());
     if (!parsed.success) return validationErrorResponse(parsed, req);
@@ -56,40 +54,25 @@ export async function handleAiSuggestReply(
     // IA-048: identidade da requisição, ecoada no corpo (só eco — sem efeito novo).
     const requestId = parsed.data.requestId ?? null;
 
-    // Fetch Knowledge Base articles for context — only articles returned
-    // by search_knowledge_base para a última mensagem do cliente entram
-    // no prompt. Se retornar vazio, nenhum artigo entra.
+    // Fetch Knowledge Base articles for context
     let knowledgeContext = '';
     try {
       const supabaseUrl = requireEnv("SUPABASE_URL");
       const supabaseKey = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
       const supabase = createClient(supabaseUrl, supabaseKey);
 
-      const lastClientMessage = Array.isArray(messages)
-        ? [...messages].reverse().find((m) => m.sender !== 'agent')?.content
-        : null;
+      const { data: articles } = await supabase
+        .from('knowledge_base_articles')
+        .select('title, content, category')
+        .eq('is_published', true)
+        .limit(10);
 
-      if (lastClientMessage) {
-        // Seam `deps.searchKnowledgeBase` existe só para o teste rodar o
-        // handler real offline; o default é o RPC real. Erro no RPC: o
-        // contexto fica vazio de forma explícita — sem fallback para artigos
-        // publicados e sem resto parcial.
-        const searchKB = deps.searchKnowledgeBase ??
-          ((q: string, max: number) =>
-            supabase.rpc('search_knowledge_base', { search_query: q, max_results: max }));
-        const searchResult = await searchKB(lastClientMessage, 5) as
-          | { data?: Array<{ category?: string; title: string; content: string; rank: number }> | null; error?: unknown }
-          | null;
-        const relevantArticles = searchResult?.data;
-        if (searchResult && "error" in searchResult && (searchResult as { error?: unknown }).error) {
-          knowledgeContext = '';
-        } else if (relevantArticles && relevantArticles.length > 0) {
-          knowledgeContext = `\n\nBASE DE CONHECIMENTO DA EMPRESA (use como referência para suas respostas):\n${
-            relevantArticles.map((a: { category?: string; title: string; content: string; rank: number }) =>
-              `[${a.category || 'Geral'}] ${a.title} (relevância: ${(a.rank * 100).toFixed(0)}%):\n${a.content.substring(0, 800)}`
-            ).join('\n---\n')
-          }`;
-        }
+      if (articles && articles.length > 0) {
+        knowledgeContext = `\n\nBASE DE CONHECIMENTO DA EMPRESA (use como referência para suas respostas):\n${
+          articles.map((a: { category: string | null; title: string; content: string }) =>
+            `[${a.category || 'Geral'}] ${a.title}: ${a.content.substring(0, 500)}`
+          ).join('\n---\n')
+        }`;
       }
 
       // Este client roda com service_role (bypassa RLS). Sem esta checagem,
@@ -134,10 +117,7 @@ export async function handleAiSuggestReply(
       log.warn("Error fetching knowledge base", { error: e instanceof Error ? e.message : String(e) });
     }
 
-    // LGPD (doc 07, mesmo achado do log de voz): o nome do contato é dado pessoal
-    // vindo do corpo do pedido e não pode ficar no log da Edge (retenção fora do
-    // nosso controle de purga). Registro só a PRESENÇA do nome, nunca o texto.
-    log.info("Generating reply suggestions", { hasContactName: !!contactName, kbContext: knowledgeContext.length > 0 });
+    log.info("Generating reply suggestions", { contactName, kbContext: knowledgeContext.length > 0 });
 
     const firstName = contactName ? contactName.split(' ')[0] : null;
 
@@ -206,8 +186,8 @@ Responda APENAS em formato JSON com a seguinte estrutura:
       : await generateWithRouting({ ...generateParams, requestId });
 
     if (!response.ok || !data) {
-      if (response.status === 429) return errorResponse("Limite de requisicoes excedido. Tente novamente.", 429, req);
-      if (response.status === 402) return errorResponse("Creditos insuficientes. Adicione creditos.", 402, req);
+      if (response.status === 429) return errorResponse("Rate limit exceeded. Please try again later.", 429, req);
+      if (response.status === 402) return errorResponse("Payment required. Please add credits.", 402, req);
       throw new Error(`AI gateway error [${response.status}]`);
     }
 

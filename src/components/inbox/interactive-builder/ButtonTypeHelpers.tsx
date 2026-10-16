@@ -7,7 +7,7 @@ export function getButtonTypeIcon(type: InteractiveButton['type']) {
       return <MessageSquare className="w-4 h-4" />;
     case 'url':
       return <ExternalLink className="w-4 h-4" />;
-    case 'call':
+    case 'phone':
       return <Phone className="w-4 h-4" />;
   }
 }
@@ -18,7 +18,7 @@ export function getButtonTypeLabel(type: InteractiveButton['type']) {
       return 'Resposta Rápida';
     case 'url':
       return 'Abrir URL';
-    case 'call':
+    case 'phone':
       return 'Ligar';
   }
 }

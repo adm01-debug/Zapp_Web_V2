@@ -1,21 +1,6 @@
 import { useState, useCallback } from 'react';
 import { InteractiveMessage, InteractiveButton, InteractiveListSection } from '@/types/chat';
 import { toast } from '@/hooks/ui/use-toast';
-import { createStorageObjectId } from '@/lib/storage_object_upload';
-
-/**
- * Só aceita link absoluto com esquema `https://` e host parseável. Sem isso o
- * renderizador (InteractiveMessage.tsx) abre o que vier em `window.open`, o que
- * aceitaria link relativo, `javascript:` ou outro esquema.
- */
-export function isHttpsUrl(value?: string): boolean {
-  if (!value || !value.trim()) return false;
-  try {
-    return new URL(value.trim()).protocol === 'https:';
-  } catch {
-    return false;
-  }
-}
 
 export function useInteractiveMessage() {
   const [messageType, setMessageType] = useState<'buttons' | 'list'>('buttons');
@@ -45,10 +30,10 @@ export function useInteractiveMessage() {
     }
     const newButton: InteractiveButton = {
       type,
-      id: `btn_${createStorageObjectId()}`,
+      id: `btn_${Date.now()}`,
       title: '',
       ...(type === 'url' && { url: '' }),
-      ...(type === 'call' && { phoneNumber: '' }),
+      ...(type === 'phone' && { phoneNumber: '' }),
     };
     setButtons(prev => [...prev, newButton]);
   }, [buttons.length]);
@@ -61,23 +46,12 @@ export function useInteractiveMessage() {
     setButtons(prev => prev.filter((_, i) => i !== index));
   }, []);
 
-  // Sobe o botão para a primeira posição (a ordem enviada ao WhatsApp é a da
-  // lista). No primeiro botão não há para onde subir: devolve a lista intacta.
-  const moveButtonToFirst = useCallback((index: number) => {
-    setButtons(prev => {
-      if (index <= 0 || index >= prev.length) return prev;
-      const next = [...prev];
-      const [moved] = next.splice(index, 1);
-      return [moved, ...next];
-    });
-  }, []);
-
   const addSection = useCallback(() => {
     if (sections.length >= 10) {
       toast({ title: 'Limite atingido', description: 'Máximo de 10 seções por lista (limite WhatsApp)', variant: 'destructive' });
       return;
     }
-    const newSectionId = `section_${createStorageObjectId()}`;
+    const newSectionId = `section_${Date.now()}`;
     setSections(prev => [...prev, { title: '', rows: [] }]);
     setExpandedSections(prev => [...prev, newSectionId]);
   }, [sections.length]);
@@ -99,7 +73,7 @@ export function useInteractiveMessage() {
       }
       return prev.map((s, i) =>
         i === sectionIndex
-          ? { ...s, rows: [...s.rows, { id: `row_${createStorageObjectId()}`, title: '', description: '' }] }
+          ? { ...s, rows: [...s.rows, { id: `row_${Date.now()}`, title: '', description: '' }] }
           : s
       );
     });
@@ -122,22 +96,6 @@ export function useInteractiveMessage() {
           ? { ...s, rows: s.rows.filter((_, ri) => ri !== rowIndex) }
           : s
       )
-    );
-  }, []);
-
-  // Sobe/desce a linha uma posição por vez, trocando apenas de lugar os objetos
-  // da linha (id, título e descrição seguem com a linha). Nos extremos devolve
-  // a seção intacta.
-  const moveRow = useCallback((sectionIndex: number, rowIndex: number, direction: 'up' | 'down') => {
-    setSections(prev =>
-      prev.map((s, si) => {
-        if (si !== sectionIndex) return s;
-        const target = direction === 'up' ? rowIndex - 1 : rowIndex + 1;
-        if (target < 0 || target >= s.rows.length) return s;
-        const rows = [...s.rows];
-        [rows[rowIndex], rows[target]] = [rows[target], rows[rowIndex]];
-        return { ...s, rows };
-      })
     );
   }, []);
 
@@ -169,22 +127,12 @@ export function useInteractiveMessage() {
           toast({ title: 'Título muito longo', description: 'O título do botão deve ter no máximo 20 caracteres', variant: 'destructive' });
           return false;
         }
-        if (button.type === 'reply' && !button.id?.trim()) {
-          toast({ title: 'ID obrigatório', description: 'Botões de resposta precisam ter um identificador', variant: 'destructive' });
+        if (button.type === 'url' && !button.url) {
+          toast({ title: 'URL obrigatória', description: 'Botões de URL precisam ter um link', variant: 'destructive' });
           return false;
         }
-        if (button.type === 'url') {
-          if (!button.url) {
-            toast({ title: 'URL obrigatória', description: 'Botões de URL precisam ter um link', variant: 'destructive' });
-            return false;
-          }
-          if (!isHttpsUrl(button.url)) {
-            toast({ title: 'URL inválida', description: 'Use um endereço https:// válido (ex.: https://promobrindes.com.br)', variant: 'destructive' });
-            return false;
-          }
-        }
-        if (button.type === 'call' && !/^\d{8,15}$/.test((button.phoneNumber ?? '').replace(/\D/g, ''))) {
-          toast({ title: 'Telefone obrigatório', description: 'Botões de ligação precisam ter um número com 8 a 15 dígitos', variant: 'destructive' });
+        if (button.type === 'phone' && !button.phoneNumber) {
+          toast({ title: 'Telefone obrigatório', description: 'Botões de telefone precisam ter um número', variant: 'destructive' });
           return false;
         }
       }
@@ -238,7 +186,7 @@ export function useInteractiveMessage() {
     sections, expandedSections,
     resetForm, addButton, updateButton, removeButton,
     addSection, updateSection, removeSection,
-    addRowToSection, updateRow, removeRow, moveRow, moveButtonToFirst,
+    addRowToSection, updateRow, removeRow,
     toggleSection, getTotalRows,
     validate, buildMessage,
   };

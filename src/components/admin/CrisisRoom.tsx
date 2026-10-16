@@ -1,11 +1,10 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAgentPresenceMap } from '@/hooks/crm/useAgentPresence';
-import { useConnectionsHealth, type ConnectionHealth } from '@/hooks/connections/useConnectionsHealth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, Users, Clock, MessageSquare, TrendingUp, ShieldAlert, CheckCircle2, XCircle, Siren, Smartphone } from 'lucide-react';
+import { AlertTriangle, Users, Clock, MessageSquare, TrendingUp, ShieldAlert, CheckCircle2, XCircle, Siren } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface CrisisMetric {
@@ -18,42 +17,13 @@ interface CrisisMetric {
   icon: typeof AlertTriangle;
 }
 
-/**
- * Cartão "Canais no WhatsApp" — o eixo "canais ativos" do monitor de realtime
- * (paridade com o `ConnectionsHealthBlock` da `AdminRealtimeMonitorPage` da V3).
- *
- * Régua, com o número de conexões cadastradas como teto: TODAS conectadas = normal;
- * alguma fora do ar = atenção; NENHUMA conectada = crítico (a operação não recebe nem
- * envia). Sem conexão cadastrada — ou com a leitura pendente/falha — sai "não medido"
- * (—), como o estado vazio da V3: nem zero que parece medido, nem alarme falso.
- */
-function connectionsMetric(
-  connections: ConnectionHealth[],
-  loading: boolean,
-  error: string | null,
-): CrisisMetric {
-  const total = connections.length;
-  const online = connections.filter((connection) => connection.healthy).length;
-  const measured = !loading && !error && total > 0;
-  return {
-    label: 'Canais no WhatsApp',
-    value: measured ? online : null,
-    threshold: total,
-    unit: 'online',
-    severity: !measured ? 'ok' : online === 0 ? 'critical' : online < total ? 'warning' : 'ok',
-    icon: Smartphone,
-  };
-}
-
 export function CrisisRoom() {
-  const [crisisMetrics, setCrisisMetrics] = useState<CrisisMetric[]>([]);
+  const [metrics, setMetrics] = useState<CrisisMetric[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isCrisis, setIsCrisis] = useState(false);
   // Presença real dos usuários (`agent_presence`, com heartbeat). Cadastro habilitado
   // (`profiles.is_active`) é permissão de acesso, não presença — R2-AUTH-036/R2-MOD-030.
   const presence = useAgentPresenceMap();
-  // Estado global dos canais de WhatsApp: o app já mantém UMA assinatura de realtime
-  // (`useConnectionsHealth`); a Sala de Crise lê esse estado em vez de abrir canal próprio.
-  const connectionsHealth = useConnectionsHealth();
 
   const onlineUserIds = useMemo(
     () => new Set(
@@ -66,18 +36,6 @@ export function CrisisRoom() {
   // Chave estável do conjunto online: o mapa de presença é recriado a cada recompute
   // (stale/heartbeat), e sem isso o efeito refaria as consultas sem o conjunto mudar.
   const onlineKey = [...onlineUserIds].sort().join(',');
-
-  // O que a tela mostra: as quatro métricas de operação + os canais de WhatsApp.
-  const metrics = useMemo(
-    () => [
-      ...crisisMetrics,
-      connectionsMetric(connectionsHealth.connections, connectionsHealth.loading, connectionsHealth.error),
-    ],
-    [crisisMetrics, connectionsHealth.connections, connectionsHealth.loading, connectionsHealth.error],
-  );
-  // Crise = alguma métrica crítica, derivada do que está na tela. Antes o estado era
-  // recalculado só dentro do load e não enxergava o cartão de canais.
-  const isCrisis = useMemo(() => metrics.some((metric) => metric.severity === 'critical'), [metrics]);
 
   const loadMetrics = useCallback(async () => {
     setLoading(true);
@@ -177,7 +135,8 @@ export function CrisisRoom() {
       },
     ];
 
-    setCrisisMetrics(buildMetrics);
+    setMetrics(buildMetrics);
+    setIsCrisis(buildMetrics.some(m => m.severity === 'critical'));
     setLoading(false);
   }, [onlineKey]);
 

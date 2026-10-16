@@ -2,10 +2,9 @@ import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ExternalLink, Play, Globe, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { HOVER_REVEAL, HOVER_REVEAL_TAP } from './hoverActions';
 import {
   isImageUrl, isVideoUrl, isYouTubeUrl, getYouTubeThumbnail,
-  getDomain, getFavicon, extractLinks, escapeHtml, isAllowedMediaHost,
+  getDomain, getFavicon, extractLinks, escapeHtml,
   type LinkMetadata,
 } from './linkPreviewUtils';
 
@@ -27,11 +26,9 @@ export function LinkPreview({ url, className, compact = false, showRemove, onRem
   const { metadata, error } = useMemo<{ metadata: LinkMetadata | null; error: boolean }>(() => {
     if (!isSafeUrl(url)) return { metadata: null, error: true };
     try {
-      if (isImageUrl(url) && isAllowedMediaHost(url)) return { metadata: { url, type: 'image', image: url, title: url.split('/').pop() || 'Image' }, error: false };
+      if (isImageUrl(url)) return { metadata: { url, type: 'image', image: url, title: url.split('/').pop() || 'Image' }, error: false };
       if (isVideoUrl(url)) return { metadata: { url, type: 'video', title: url.split('/').pop() || 'Video' }, error: false };
       if (isYouTubeUrl(url)) return { metadata: { url, type: 'video', title: 'YouTube Video', image: getYouTubeThumbnail(url) || undefined, siteName: 'YouTube', favicon: 'https://www.youtube.com/favicon.ico' }, error: false };
-      // Imagem/favicon de host fora da lista permitida não vira `<img>`: cai no
-      // card genérico (ícone + domínio), sem requisição ao host do remetente.
       return { metadata: { url, type: 'website', title: getDomain(url), siteName: getDomain(url), favicon: getFavicon(url) }, error: false };
     } catch { return { metadata: null, error: true }; }
   }, [url]);
@@ -45,7 +42,7 @@ export function LinkPreview({ url, className, compact = false, showRemove, onRem
 
   if (metadata.type === 'image' && metadata.image && !imageError) return (
     <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className={cn("relative group rounded-xl overflow-hidden", className)}>
-      {showRemove && <button onClick={onRemove} className={`absolute top-2 right-2 z-10 p-1.5 rounded-full bg-background/50 text-primary-foreground ${HOVER_REVEAL_TAP} transition-opacity hover:bg-background/70`}><X className="w-4 h-4" /></button>}
+      {showRemove && <button onClick={onRemove} className="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-background/50 text-primary-foreground opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background/70"><X className="w-4 h-4" /></button>}
       <a href={url} target="_blank" rel="noopener noreferrer"><img src={metadata.image} alt={metadata.title || 'Image'} onError={() => setImageError(true)} className="max-w-full max-h-64 rounded-xl object-cover hover:scale-[1.02] transition-transform" /></a>
     </motion.div>
   );
@@ -55,7 +52,7 @@ export function LinkPreview({ url, className, compact = false, showRemove, onRem
       className={cn("flex items-center gap-2 p-2 rounded-lg bg-muted/50 hover:bg-muted/70 transition-colors group", className)}>
       {metadata.favicon && !imageError ? <img src={metadata.favicon} alt="" className="w-4 h-4 rounded" onError={() => setImageError(true)} /> : <Globe className="w-4 h-4 text-muted-foreground" />}
       <span className="text-sm font-medium truncate flex-1">{metadata.title || getDomain(url)}</span>
-      <ExternalLink className={`w-3 h-3 ${HOVER_REVEAL} transition-opacity text-muted-foreground`} />
+      <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground" />
     </motion.a>
   );
 
@@ -76,7 +73,7 @@ export function LinkPreview({ url, className, compact = false, showRemove, onRem
         {metadata.title && <h4 className="font-medium text-sm line-clamp-2 group-hover:text-primary transition-colors">{metadata.title}</h4>}
         {metadata.description && <p className="text-xs text-muted-foreground line-clamp-2">{metadata.description}</p>}
       </div>
-      {showRemove && <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); onRemove?.(); }} className={`absolute top-2 right-2 p-1.5 rounded-full bg-background/50 text-primary-foreground ${HOVER_REVEAL_TAP} transition-opacity hover:bg-background/70`}><X className="w-4 h-4" /></button>}
+      {showRemove && <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); onRemove?.(); }} className="absolute top-2 right-2 p-1.5 rounded-full bg-background/50 text-primary-foreground opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background/70"><X className="w-4 h-4" /></button>}
     </motion.a>
   );
 }

@@ -1,27 +1,20 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { Send, Search, Loader2, ListChecks, ChevronDown } from 'lucide-react';
+import { Send, Search, Loader2, ListChecks } from 'lucide-react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { ModuleHeader, StatusPill, fmtInt, fmtDateTime } from '@/components/talkx/talkxShared';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { useDebouncedCallback } from '@/lib/debounce';
 import {
-  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription,
-  AlertDialogFooter, AlertDialogAction, AlertDialogCancel,
-} from '@/components/ui/alert-dialog';
-import {
-  useMultiplixRamos, useMultiplixUfs, useMultiplixSearch, useMultiplixCount, MultiplixOverLimitError,
+  useMultiplixRamos, useMultiplixUfs, useMultiplixSearch, useMultiplixCount,
   type MultiplixSearchFilters, type MultiplixAudienceRow,
 } from '@/hooks/integrations/useMultiplixAudience';
-import { useMultiplixDispatchesList, useCreateMultiplixDispatch, fetchMultiplixDispatchesPage, type MultiplixDispatch } from '@/hooks/integrations/useMultiplixDispatches';
+import { useMultiplixDispatchesList } from '@/hooks/integrations/useMultiplixDispatches';
+import { MultiplixComposerDialog } from './MultiplixComposerDialog';
 import { MultiplixMonitor } from './MultiplixMonitor';
 
 const DISPATCH_STATUS: Record<string, { label: string; tone: 'success' | 'danger' | 'warning' | 'info' | 'violet' | 'muted' }> = {
@@ -35,31 +28,13 @@ const DISPATCH_STATUS: Record<string, { label: string; tone: 'success' | 'danger
   cancelled: { label: 'Cancelado', tone: 'danger' },
 };
 
-type RoleValue = 'cliente' | 'fornecedor' | 'transportadora';
-
-const ROLE_LABELS: Record<RoleValue, string> = {
+const ROLE_LABELS: Record<'cliente' | 'fornecedor' | 'transportadora', string> = {
   cliente: 'Cliente', fornecedor: 'Fornecedor', transportadora: 'Transportadora',
 };
-
-// E017: `multiplix_list_ramos` já devolve "Não informado" (COALESCE do ramo
-// vazio) e a busca aceita `p_ramo = 'Não informado'`. A opção é garantida aqui
-// porque a listagem é carregada uma vez e pode não trazer nenhuma empresa sem
-// ramo no momento do carregamento — sem isto o filtro perderia a linha.
-const RAMO_NAO_INFORMADO = 'Não informado';
-
-/** Busca de texto do combobox sem acento e sem caixa: "credito" acha "Crédito". */
-function normalizaFiltro(texto: string): string {
-  return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-}
 
 const DESTINO_LABELS: Record<string, string> = {
   contato_pessoa: 'Contato', telefone_empresa: 'Empresa · sem pessoa cadastrada', sem_destino: 'Sem destino',
 };
-
-const PLACEHOLDER_CHIPS = [
-  { token: '{{empresa}}', label: 'Empresa', acao: 'inserir a empresa' },
-  { token: '{{saudacao}}', label: 'Saudação', acao: 'inserir a saudação' },
-];
 
 const PAGE_SIZE = 50;
 // Maior pagina que o servidor aceita: `SearchParamsSchema.page_size` em
@@ -75,51 +50,23 @@ const POLICY_MAX_IDS = 10_000;
 // Paginas necessarias para materializar o teto de politica no maior tamanho de
 // pagina aceito — limite duro do laco de "Selecionar todos".
 const SELECT_ALL_MAX_PAGES = Math.ceil(POLICY_MAX_IDS / SERVER_PAGE_MAX);
-// Teto de opcoes do "Visualizar como" (regiao 03): a selecao pode ter ate
-// POLICY_MAX_IDS empresas, mas um <select> com milhares de SelectItem trava o
-// Radix (Collection) e nao serve pra nada (ninguem rola 10.000 opcoes) — a
-// previa e amostra, nao lista de destino.
-const PREVIEW_OPTIONS_MAX = 200;
 // Altura estimada da linha do publico (celula de 2 linhas + padding). O
 // virtualizador mede a linha montada (`measureElement`) e corrige o resto;
 // isto so evita salto no primeiro render.
 const AUDIENCE_ROW_ESTIMATE = 56;
-
-/** Etiqueta numerada de uma das três regiões simultâneas (01/02/03). */
-function StepLabel({ step, label }: { step: string; label: string }) {
-  return (
-    <div className="flex items-center gap-2">
-      <span className="grid h-5 w-5 place-items-center rounded-md border border-border text-3xs font-bold text-muted-foreground">
-        {step}
-      </span>
-      <span className="text-2xs font-bold uppercase tracking-widest text-muted-foreground">{label}</span>
-    </div>
-  );
-}
 
 export default function MultiplixView() {
   const { data: ramos, isLoading: loadingRamos } = useMultiplixRamos();
   const { data: ufs, isLoading: loadingUfs } = useMultiplixUfs();
   const search = useMultiplixSearch();
   const count = useMultiplixCount();
-  const createDispatch = useCreateMultiplixDispatch();
 
-  // E127: papéis não são exclusivos (há empresas cliente E fornecedor) — o
-  // filtro manda TODOS os marcados e a RPC casa por OU (`p_roles`).
-  const [roles, setRoles] = useState<RoleValue[]>([]);
+  const [role, setRole] = useState<'cliente' | 'fornecedor' | 'transportadora' | ''>('');
   const [ramo, setRamo] = useState('');
-  const [ramoOpen, setRamoOpen] = useState(false);
-  const [ramoBusca, setRamoBusca] = useState('');
   const [uf, setUf] = useState('');
   const [term, setTerm] = useState('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  // F72: a composição vive na região 02 da própria tela (antes, só dentro do
-  // MultiplixComposerDialog, que o Radix não montava fechado).
-  const [name, setName] = useState('');
-  const [messageTemplate, setMessageTemplate] = useState('');
-  const [previewCompanyId, setPreviewCompanyId] = useState('');
-  const [confirmStartOpen, setConfirmStartOpen] = useState(false);
-  const [overLimit, setOverLimit] = useState<{ count: number; limit: number | null; startNow: boolean } | null>(null);
+  const [composerOpen, setComposerOpen] = useState(false);
   const [monitorId, setMonitorId] = useState<string | null>(null);
   const [rows, setRows] = useState<MultiplixAudienceRow[]>([]);
   const [page, setPage] = useState(0);
@@ -177,104 +124,27 @@ export default function MultiplixView() {
   const paddingTop = virtualRows[0]?.start ?? 0;
   const paddingBottom = lastVirtualRow ? audienceVirtualizer.getTotalSize() - lastVirtualRow.end : 0;
 
-  // TL-043/F81 — o histórico é lido UMA página por vez: `recentRows` é a página
-  // 0 (refeita pelo polling do hook) e `olderRows` são as páginas que o
-  // operador pediu. O `total` EXATO do servidor (`meta.total` do
-  // `dispatch.list`) é o que torna o caso parcial visível ("50 de 137") — antes
-  // a página era jogada na tela como se fosse o histórico inteiro, sem rótulo e
-  // sem caminho para os disparos mais antigos (o único jeito de abrir o monitor
-  // é clicar numa linha desta lista).
-  const recentRows = useMemo(() => dispatches.data?.rows ?? [], [dispatches.data]);
-  const historyTotal = dispatches.data?.total ?? null;
-  const [olderRows, setOlderRows] = useState<MultiplixDispatch[]>([]);
-  const [loadingOlder, setLoadingOlder] = useState(false);
-  const [olderError, setOlderError] = useState<string | null>(null);
-  const historyRows = useMemo(() => {
-    // Um disparo criado depois da primeira página empurra o offset: o mesmo id
-    // pode voltar na página 0 E numa página antiga. A página 0 (`recentRows`,
-    // refeita pelo polling do hook a cada 10 s) é SEMPRE a mais nova, então ela
-    // VENCE: por isso ela é iterada PRIMEIRO e só a primeira escrita fica
-    // (`if (!has)` — o `Map` mantém a posição da primeira inserção, então a
-    // ordem "mais novo primeiro" é preservada e a página antiga nunca
-    // sobrescreve a versão nova).
-    const byId = new Map<string, MultiplixDispatch>();
-    for (const d of [...recentRows, ...olderRows]) if (!byId.has(d.id)) byId.set(d.id, d);
-    return [...byId.values()];
-  }, [recentRows, olderRows]);
-  const hasMoreHistory = historyTotal !== null && historyRows.length < historyTotal;
-
-  const loadOlder = async () => {
-    setLoadingOlder(true);
-    setOlderError(null);
-    try {
-      const page = await fetchMultiplixDispatchesPage(historyRows.length);
-      // Append por id: a página antiga pode repetir um disparo já carregado
-      // (`recentRows` empurra o offset a cada nova linha), e anexar sem filtrar
-      // duplicava a linha na lista. Filtra contra o que já está na tela
-      // (recentes + antigas); a página 0 continua vencendo no `historyRows`.
-      setOlderRows((prev) => {
-        const jaCarregados = new Set([...recentRows, ...prev].map((d) => d.id));
-        const novos = page.rows.filter((d) => !jaCarregados.has(d.id));
-        return [...prev, ...novos];
-      });
-    } catch (e) {
-      // Falha de leitura não vira lista vazia confirmada: o aviso fica na tela.
-      setOlderError(e instanceof Error ? e.message : 'Erro ao carregar os disparos mais antigos');
-    } finally {
-      setLoadingOlder(false);
-    }
-  };
-
   const filters: MultiplixSearchFilters = useMemo(() => ({
-    roles: roles.length ? roles : undefined,
+    roles: role ? [role] : undefined,
     ramo: ramo || undefined,
     uf: uf || undefined,
     search: term || undefined,
-  }), [roles, ramo, uf, term]);
-
-  // E128: combobox do ramo — a lista vem do servidor (566 valores) e a busca
-  // por texto é feita aqui, sem acento e sem caixa.
-  const ramoOpcoes = useMemo(() => {
-    const nomes = (ramos ?? []).map((r) => r.ramo_atividade);
-    if (!nomes.includes(RAMO_NAO_INFORMADO)) nomes.push(RAMO_NAO_INFORMADO);
-    return nomes;
-  }, [ramos]);
-
-  const ramoTotais = useMemo(
-    () => new Map((ramos ?? []).map((r) => [r.ramo_atividade, r.total])),
-    [ramos],
-  );
-
-  const ramosFiltrados = useMemo(() => {
-    const alvo = normalizaFiltro(ramoBusca.trim());
-    if (!alvo) return ramoOpcoes;
-    return ramoOpcoes.filter((nome) => normalizaFiltro(nome).includes(alvo));
-  }, [ramoOpcoes, ramoBusca]);
-
-  const rolesRotulo = roles.length === 0
-    ? 'Todos'
-    : roles.length === 1
-      ? ROLE_LABELS[roles[0]]
-      : `${ROLE_LABELS[roles[0]]} +${roles.length - 1}`;
-
-  const ramoRotulo = ramo === '' ? 'Todos' : ramo;
+  }), [role, ramo, uf, term]);
 
   const runSearch = () => {
     if (loadingAll) return;
     const searchVersion = searchVersionRef.current + 1;
     searchVersionRef.current = searchVersion;
     submittedFiltersRef.current = filters;
+    setSelected(new Set());
     setPage(0);
     setSubmittedFilters(filters);
-    // F73/E131: a seleção SOBREVIVE à troca de filtro (era `setSelected(new
-    // Set())` aqui) — o público é o que o operador marcou; o filtro é só a
-    // lente. Sem isto, cada troca de papel/ramo/UF apagava até 500 marcas.
     // P1 fix (Codex, review da PR #958): 'rows' antigo (de outro filtro)
     // ficava na tela e continuava clicavel enquanto a nova busca (page 0)
     // ainda estava em voo -- selecionar uma linha nesse intervalo mantinha
     // o company_id em 'selected' mesmo depois de 'rows' trocar para o novo
-    // resultado, e esse id fantasma podia ir parar num disparo real criado
-    // pelo rodapé. Limpa 'rows' de imediato, antes do mutate.
+    // resultado, e esse id fantasma podia ir parar num disparo real via
+    // MultiplixComposerDialog. Limpa 'rows' de imediato, antes do mutate.
     setRows([]);
     // P2 fix (Codex, 2a review da PR #958): sem este reset, lastPageFull=true
     // de uma busca anterior persiste durante o voo da nova page 0 -- se a
@@ -312,21 +182,6 @@ export default function MultiplixView() {
         setLastPageFull(data.length === PAGE_SIZE);
       } },
     );
-  };
-
-  // E126: busca com debounce. Depois da primeira consulta a lista se atualiza
-  // sozinha 300 ms após a última tecla; o botão "Buscar" continua valendo para
-  // os outros filtros. O callback lê o closure mais recente, então o termo
-  // efetivo é sempre o que está no campo quando o timer dispara.
-  const buscarAposDigitar = useDebouncedCallback(() => { if (hasSearched) runSearch(); }, 300);
-
-  const handleTermChange = (value: string) => {
-    setTerm(value);
-    if (hasSearched) buscarAposDigitar();
-  };
-
-  const toggleRole = (value: RoleValue) => {
-    setRoles((prev) => (prev.includes(value) ? prev.filter((r) => r !== value) : [...prev, value]));
   };
 
   const toggleRow = (companyId: string) => {
@@ -407,70 +262,6 @@ export default function MultiplixView() {
     }
   };
 
-  const busy = createDispatch.isPending;
-
-  // F78 (TL-010): a conta do disparo tem de ficar SEMPRE visivel —
-  // "N contatos x M blocos = N x M mensagens". N e a selecao da regiao 01 (cada
-  // empresa selecionada e um destino; o servidor devolve a contagem real de
-  // destinatarios depois de resolver o publico). M e o numero de blocos da
-  // composicao: hoje so existe o bloco de texto da regiao 02, e ele so conta
-  // quando tem conteudo — bloco vazio nao vira mensagem.
-  const contactCount = selected.size;
-  const blockCount = messageTemplate.trim() ? 1 : 0;
-  const messageCount = contactCount * blockCount;
-  const messageCountLabel = messageCount === 1 ? '1 mensagem' : `${messageCount} mensagens`;
-
-  // F78 (TL-010): titulo sugerido (publico + assunto), editavel e opcional.
-  const suggestedName = useMemo(() => {
-    const assunto = messageTemplate.trim().split(/\r?\n/)[0]?.trim().slice(0, 60) ?? '';
-    return ['Multiplix', `${contactCount} contato${contactCount === 1 ? '' : 's'}`, assunto]
-      .filter(Boolean)
-      .join(' · ');
-  }, [contactCount, messageTemplate]);
-
-  // F78 (TL-010): a exigencia de titulo continua sobre o titulo EFETIVO
-  // (digitado ou sugestao) — a edge exige `name` nao vazio.
-  const tituloEfetivo = name.trim() || suggestedName;
-  const canSubmit = messageTemplate.trim().length > 0 && selected.size > 0 && tituloEfetivo.length > 0;
-
-  // F08: manda os company_ids; a edge re-resolve sob o JWT e cria na transacao.
-  const submit = async (startNow: boolean, confirmOverLimit = false) => {
-    if (!canSubmit) return;
-    try {
-      const result = await createDispatch.mutateAsync({
-        name: tituloEfetivo,
-        messageTemplate: messageTemplate.trim(),
-        companyIds: Array.from(selected),
-        startNow,
-        confirmOverLimit,
-      });
-      toast.success(
-        startNow
-          ? `Disparo criado para ${result.recipientCount} contato(s). Envio iniciando…`
-          : `Disparo salvo como rascunho (${result.recipientCount} contato(s)).`,
-      );
-      setName('');
-      setMessageTemplate('');
-      setSelected(new Set());
-      dispatches.refetch();
-      setMonitorId(result.id);
-    } catch (e) {
-      // F17: acima do teto, o servidor recusa e devolve o numero real.
-      if (e instanceof MultiplixOverLimitError) {
-        setOverLimit({ count: e.count, limit: e.limit, startNow });
-        return;
-      }
-      toast.error(e instanceof Error ? e.message : 'Erro ao criar disparo');
-    }
-  };
-
-  const insertPlaceholder = (token: string) => setMessageTemplate((prev) => `${prev}${prev && !prev.endsWith(' ') ? ' ' : ''}${token}`);
-
-  // Regiao 03: previa derivada da selecao (sem efeito de sincronizacao).
-  const selectedRows = useMemo(() => rows.filter((r) => selected.has(r.company_id)), [rows, selected]);
-  const previewRow = selectedRows.find((r) => r.company_id === previewCompanyId) ?? selectedRows[0] ?? null;
-  const previewText = messageTemplate.replace(/\{\{\s*empresa\s*\}\}/gi, previewRow?.company_name ?? '{{empresa}}');
-
   if (monitorId) {
     return (
       <div className="min-h-full w-full min-w-0">
@@ -488,24 +279,15 @@ export default function MultiplixView() {
         subtitle="Envio em massa para fornecedores, transportadoras e clientes"
       />
 
-      {historyRows.length > 0 && (
-        <div className="rounded-2xl border border-border bg-card p-4">
-          <p className="text-sm font-semibold text-foreground mb-3 flex items-center gap-1.5">
-            <ListChecks className="w-4 h-4" />
-            <span>Disparos recentes</span>
-            {/* TL-043/F81: sem o total do servidor ao lado, a página de 50 se
-                passava pela história inteira. */}
-            {historyTotal !== null && (
-              <span className="text-xs font-normal text-muted-foreground tabular-nums">
-                {fmtInt(historyRows.length)} de {fmtInt(historyTotal)}
-              </span>
-            )}
-          </p>
-          {/* Lista todos os disparos carregados, com rolagem. Antes o `slice(0, 8)`
-              escondia do 9o em diante: o dado vinha do servidor e nao tinha
-              nenhum caminho de clique para o monitor. */}
-          <div className="divide-y divide-border/40 max-h-[22.5rem] overflow-auto">
-            {historyRows.map((d) => (
+      {(dispatches.data?.length ?? 0) > 0 && (
+        <div className="rounded-2xl border border-[--zapp-border] bg-[--zapp-surface-1] p-4">
+          <p className="text-sm font-semibold text-foreground mb-3 flex items-center gap-1.5"><ListChecks className="w-4 h-4" />Disparos recentes</p>
+          {/* Lista TODOS os disparos que a edge devolveu (ate o limite do fetch),
+              com rolagem. Antes o `slice(0, 8)` escondia do 9o em diante: o dado
+              vinha do servidor e nao tinha nenhum caminho de clique para o
+              monitor. */}
+          <div className="divide-y divide-border/40 max-h-[360px] overflow-auto">
+            {dispatches.data!.map((d) => (
               <button
                 key={d.id}
                 type="button"
@@ -513,436 +295,213 @@ export default function MultiplixView() {
                 className="w-full flex items-center gap-3 py-2.5 text-left hover:bg-muted/20 rounded-lg px-2 -mx-2"
               >
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">{d.name}</p>
+                  <p className="text-[13px] font-medium text-foreground truncate">{d.name}</p>
                   <p className="text-2xs text-muted-foreground">{fmtDateTime(d.created_at)} · {fmtInt(d.sent_count)}/{fmtInt(d.total_recipients)} enviadas</p>
                 </div>
                 <StatusPill status={d.status} map={DISPATCH_STATUS} />
               </button>
             ))}
           </div>
-          {olderError && <p className="mt-2 text-xs text-destructive">{olderError}</p>}
-          {hasMoreHistory && (
-            <div className="flex justify-center border-t border-border/40 pt-3">
-              <Button variant="outline" size="sm" onClick={loadOlder} disabled={loadingOlder}>
-                {loadingOlder ? <Loader2 className="h-4 w-4 motion-safe:animate-spin" aria-hidden="true" /> : null}
-                Carregar mais antigos
+        </div>
+      )}
+
+      <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-[--zapp-border] bg-[--zapp-surface-1] p-4">
+        <div className="flex flex-col gap-1">
+          <span className="text-xs text-muted-foreground">Público</span>
+          <Select value={role || 'all'} onValueChange={(v) => setRole(v === 'all' ? '' : (v as typeof role))}>
+            <SelectTrigger aria-label="Público" className="w-44"><SelectValue placeholder="Todos" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              {Object.entries(ROLE_LABELS).map(([value, label]) => (
+                <SelectItem key={value} value={value}>{label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <span className="text-xs text-muted-foreground">Ramo</span>
+          <Select value={ramo || 'all'} onValueChange={(v) => setRamo(v === 'all' ? '' : v)} disabled={loadingRamos}>
+            <SelectTrigger aria-label="Ramo" className="w-56"><SelectValue placeholder="Todos" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              {(ramos ?? []).map((r) => (
+                <SelectItem key={r.ramo_atividade} value={r.ramo_atividade}>
+                  {r.ramo_atividade} ({r.total})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <span className="text-xs text-muted-foreground">UF</span>
+          <Select value={uf || 'all'} onValueChange={(v) => setUf(v === 'all' ? '' : v)} disabled={loadingUfs}>
+            <SelectTrigger aria-label="UF" className="w-32"><SelectValue placeholder="Todas" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas</SelectItem>
+              {(ufs ?? []).map((u) => (
+                <SelectItem key={u.uf} value={u.uf}>{u.uf} ({u.total})</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex flex-1 flex-col gap-1">
+          <span className="text-xs text-muted-foreground">Buscar por nome</span>
+          <Input value={term} onChange={(e) => setTerm(e.target.value)} placeholder="Nome da empresa..." />
+        </div>
+
+        <Button onClick={runSearch} disabled={search.isPending || count.isPending || loadingAll}>
+          {search.isPending || count.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+          Buscar
+        </Button>
+      </div>
+
+      {count.data !== undefined && (
+        <div className="flex flex-wrap items-center gap-3">
+          <p className="text-sm text-muted-foreground">
+            <strong>{count.data}</strong> empresa(s) no filtro atual.
+            {rows.length > 0 && rows.length < count.data && ` Mostrando ${rows.length}.`}
+          </p>
+          {/* F74: o N e do SERVIDOR (`count`, F47) — nao o tamanho da pagina
+              carregada. */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => void selectAllResults()}
+            disabled={loadingAll || count.data === 0}
+          >
+            {loadingAll ? <Loader2 className="h-4 w-4 motion-safe:animate-spin" /> : <ListChecks className="h-4 w-4" />}
+            {count.data > 0 && selected.size >= Math.min(count.data, POLICY_MAX_IDS)
+              ? `Desmarcar os ${fmtInt(Math.min(count.data, POLICY_MAX_IDS))} resultados`
+              : `Selecionar todos os ${fmtInt(count.data)} resultados`}
+          </Button>
+        </div>
+      )}
+
+      {/* P2 fix (Codex, review da PR #958, 2 rounds): gate em 'hasSearched'
+          (liga na 1a busca, nunca desliga) -- 'search.isSuccess' reflete a
+          mutation COMPARTILHADA com loadMore, entao virava false a cada
+          pagina seguinte em andamento e escondia as linhas ja carregadas;
+          tambem nao dependia de count.data (RPC independente que pode falhar
+          sem que a busca em si tenha falhado). */}
+      {hasSearched && (
+        <div className="overflow-hidden rounded-2xl border border-[--zapp-border]">
+          {/* F74: o corpo da tabela renderiza so a janela visivel (+ overscan);
+              duas linhas-espaçadoras `aria-hidden` reservam a altura total para
+              a barra de rolagem. Sem isso, 5.000 linhas carregadas viram
+              5.000 <tr> no DOM e a rolagem trava. */}
+          <div ref={tableScrollRef} className="max-h-[480px] overflow-auto">
+            <Table>
+              <TableHeader className="sticky top-0 z-10 bg-card">
+                <TableRow>
+                  <TableHead className="w-10">
+                    <Checkbox
+                      checked={selectableRows.length > 0 && selectableRows.every((r) => selected.has(r.company_id))}
+                      onCheckedChange={toggleAllVisible}
+                      aria-label="Selecionar todas as empresas visíveis"
+                    />
+                  </TableHead>
+                  <TableHead>Empresa</TableHead>
+                  <TableHead>Ramo</TableHead>
+                  <TableHead>UF</TableHead>
+                  <TableHead>Destino</TableHead>
+                  <TableHead>Escopo</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paddingTop > 0 && (
+                  <TableRow aria-hidden="true" className="border-0 hover:bg-transparent">
+                    <TableCell colSpan={6} style={{ height: `${paddingTop}px`, padding: 0 }} />
+                  </TableRow>
+                )}
+                {virtualRows.map((virtualRow) => {
+                  const row = rows[virtualRow.index];
+                  if (!row) return null;
+                  return (
+                    <TableRow
+                      key={row.company_id}
+                      data-index={virtualRow.index}
+                      ref={audienceVirtualizer.measureElement}
+                    >
+                      <TableCell>
+                        <Checkbox
+                          checked={selected.has(row.company_id)}
+                          onCheckedChange={() => toggleRow(row.company_id)}
+                          aria-label={`Selecionar ${row.company_name}`}
+                        />
+                      </TableCell>
+                      <TableCell className="font-medium">{row.company_name}</TableCell>
+                      <TableCell>{row.ramo_atividade}</TableCell>
+                      <TableCell>{row.uf ?? '—'}</TableCell>
+                      <TableCell>
+                        {row.destino_e164 ? (
+                          <Badge variant="outline">{DESTINO_LABELS[row.destino_origem] ?? row.destino_origem}</Badge>
+                        ) : (
+                          <Badge variant="destructive">Sem WhatsApp</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{row.motivo_inclusao}</TableCell>
+                    </TableRow>
+                  );
+                })}
+                {paddingBottom > 0 && (
+                  <TableRow aria-hidden="true" className="border-0 hover:bg-transparent">
+                    <TableCell colSpan={6} style={{ height: `${paddingBottom}px`, padding: 0 }} />
+                  </TableRow>
+                )}
+                {rows.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center text-muted-foreground">
+                      Nenhuma empresa encontrada para este filtro.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+          {/* P2 fix v2 (Codex, 3a review da PR #958): lastPageFull agora e
+              guarda primario -- pagina curta (empresa removida apos snapshot
+              do count) definia lastPageFull=false mas count.data > rows.length
+              ainda mantinha o botao vísivel para sempre. Fix: lastPageFull &&
+              (count.data === undefined || rows.length < count.data). */}
+          {(rows.length > 0 || !search.isError) && lastPageFull && (count.data === undefined || rows.length < count.data) && (
+            <div className="flex justify-center border-t border-[--zapp-border] p-3">
+              <Button variant="outline" size="sm" onClick={loadMore} disabled={search.isPending || loadingAll}>
+                {search.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                {count.data !== undefined
+                  ? `Carregar mais (${count.data - rows.length} restante${count.data - rows.length === 1 ? '' : 's'})`
+                  : 'Carregar mais'}
               </Button>
             </div>
           )}
         </div>
       )}
 
-      {/* F72: as três regiões ficam simultâneas na tela (grid do protótipo). */}
-      <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,1fr)]">
-        {/* 01 PÚBLICO */}
-        <div
-          role="region"
-          aria-label="01 Público"
-          className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-border bg-card"
-        >
-          <div className="border-b border-border p-4">
-            <StepLabel step="01" label="PÚBLICO" />
-            <p className="mt-1.5 text-sm font-semibold text-foreground">Com quem vamos falar?</p>
-            <p className="text-2xs text-muted-foreground">Combine contatos, empresas e ramos.</p>
-          </div>
+      {search.error && (
+        <p className="text-sm text-destructive">{search.error.message}</p>
+      )}
 
-          <div className="flex flex-col gap-3 border-b border-border p-4">
-            <div className="flex flex-col gap-1">
-              <span className="text-xs text-muted-foreground">Público</span>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" aria-label="Público" aria-haspopup="listbox" className="h-10 w-full justify-between font-normal">
-                    <span className="truncate">{rolesRotulo}</span>
-                    <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent align="start" aria-label="Filtro de público" className="w-56 p-1">
-                  <div className="flex flex-col">
-                    <label className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted/40">
-                      <Checkbox checked={roles.length === 0} onCheckedChange={() => setRoles([])} aria-label="Todos os públicos" />
-                      Todos
-                    </label>
-                    {(Object.entries(ROLE_LABELS) as Array<[RoleValue, string]>).map(([value, label]) => (
-                      <label key={value} className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted/40">
-                        <Checkbox checked={roles.includes(value)} onCheckedChange={() => toggleRole(value)} aria-label={label} />
-                        {label}
-                      </label>
-                    ))}
-                  </div>
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <span className="text-xs text-muted-foreground">Ramo</span>
-              <Popover open={ramoOpen} onOpenChange={(next) => { setRamoOpen(next); if (!next) setRamoBusca(''); }}>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" role="combobox" aria-label="Ramo" disabled={loadingRamos} className="h-10 w-full justify-between font-normal">
-                    <span className="truncate">{ramoRotulo}</span>
-                    <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent align="start" aria-label="Filtro de ramo" className="w-72 p-0">
-                  {/* Filtro do cmdk desligado: a busca é feita aqui, sem acento e
-                      sem caixa, sobre os 566 valores que o servidor devolveu. */}
-                  <Command shouldFilter={false}>
-                    <CommandInput placeholder="Buscar ramo…" value={ramoBusca} onValueChange={setRamoBusca} />
-                    <CommandList>
-                      <CommandEmpty>Nenhum ramo encontrado</CommandEmpty>
-                      <CommandItem value="todos" onSelect={() => { setRamo(''); setRamoOpen(false); }}>
-                        Todos
-                      </CommandItem>
-                      {ramosFiltrados.map((nome) => (
-                        <CommandItem key={nome} value={nome} onSelect={() => { setRamo(nome); setRamoOpen(false); }}>
-                          <span className="truncate">{nome}</span>
-                          {ramoTotais.has(nome) && (
-                            <span className="ml-auto text-2xs text-muted-foreground tabular-nums">{fmtInt(ramoTotais.get(nome) ?? 0)}</span>
-                          )}
-                        </CommandItem>
-                      ))}
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <span className="text-xs text-muted-foreground">UF</span>
-              <Select value={uf || 'all'} onValueChange={(v) => setUf(v === 'all' ? '' : v)} disabled={loadingUfs}>
-                <SelectTrigger aria-label="UF" className="w-full"><SelectValue placeholder="Todas" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas</SelectItem>
-                  {(ufs ?? []).map((u) => (
-                    <SelectItem key={u.uf} value={u.uf}>{u.uf} ({u.total})</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <span className="text-xs text-muted-foreground">Buscar por nome</span>
-              <Input aria-label="Buscar por nome" value={term} onChange={(e) => handleTermChange(e.target.value)} placeholder="Nome da empresa..." />
-            </div>
-
-            <Button className="w-full" onClick={runSearch} disabled={search.isPending || count.isPending || loadingAll}>
-              {search.isPending || count.isPending ? <Loader2 className="h-4 w-4 motion-safe:animate-spin" /> : <Search className="h-4 w-4" />}
-              Buscar
-            </Button>
-          </div>
-
-          {!hasSearched && (
-            <p className="px-4 pt-3 text-sm text-muted-foreground" data-testid="multiplix-empty-hint">
-              Escolha os filtros e clique em Buscar para ver o público.
-            </p>
-          )}
-
-          {count.data !== undefined && (
-            <div className="flex flex-wrap items-center gap-2 px-4 pt-3">
-              <p className="text-sm text-muted-foreground">
-                <strong>{count.data}</strong> empresa(s) no filtro atual.
-                {rows.length > 0 && rows.length < count.data && ` Mostrando ${rows.length}.`}
-              </p>
-              {/* F74: o N e do SERVIDOR (`count`, F47) — nao o tamanho da pagina
-                  carregada. */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => void selectAllResults()}
-                disabled={loadingAll || count.data === 0}
-              >
-                {loadingAll ? <Loader2 className="h-4 w-4 motion-safe:animate-spin" /> : <ListChecks className="h-4 w-4" />}
-                {count.data > 0 && selected.size >= Math.min(count.data, POLICY_MAX_IDS)
-                  ? `Desmarcar os ${fmtInt(Math.min(count.data, POLICY_MAX_IDS))} resultados`
-                  : `Selecionar todos os ${fmtInt(count.data)} resultados`}
-              </Button>
-            </div>
-          )}
-
-          {/* P2 fix (Codex, review da PR #958, 2 rounds): gate em 'hasSearched'
-              (liga na 1a busca, nunca desliga) -- 'search.isSuccess' reflete a
-              mutation COMPARTILHADA com loadMore, entao virava false a cada
-              pagina seguinte em andamento e escondia as linhas ja carregadas;
-              tambem nao dependia de count.data (RPC independente que pode falhar
-              sem que a busca em si tenha falhado). */}
-          {hasSearched && (
-            <div className="mt-3 overflow-hidden rounded-2xl border border-border">
-              {/* F74: o corpo da tabela renderiza so a janela visivel (+ overscan);
-                  duas linhas-espaçadoras `aria-hidden` reservam a altura total para
-                  a barra de rolagem. Sem isso, 5.000 linhas carregadas viram
-                  5.000 <tr> no DOM e a rolagem trava. */}
-              <div ref={tableScrollRef} className="max-h-[30rem] overflow-auto">
-                <Table>
-                  <TableHeader className="sticky top-0 z-10 bg-card">
-                    <TableRow>
-                      <TableHead className="w-10">
-                        <Checkbox
-                          checked={selectableRows.length > 0 && selectableRows.every((r) => selected.has(r.company_id))}
-                          onCheckedChange={toggleAllVisible}
-                          aria-label="Selecionar todas as empresas visíveis"
-                        />
-                      </TableHead>
-                      <TableHead>Empresa</TableHead>
-                      <TableHead>Ramo</TableHead>
-                      <TableHead>UF</TableHead>
-                      <TableHead>Destino</TableHead>
-                      <TableHead>Escopo</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {paddingTop > 0 && (
-                      <TableRow aria-hidden="true" className="border-0 hover:bg-transparent">
-                        <TableCell colSpan={6} style={{ height: `${paddingTop}px`, padding: 0 }} />
-                      </TableRow>
-                    )}
-                    {virtualRows.map((virtualRow) => {
-                      const row = rows[virtualRow.index];
-                      if (!row) return null;
-                      return (
-                        <TableRow
-                          key={row.company_id}
-                          data-index={virtualRow.index}
-                          ref={audienceVirtualizer.measureElement}
-                        >
-                          <TableCell>
-                            <Checkbox
-                              checked={selected.has(row.company_id)}
-                              onCheckedChange={() => toggleRow(row.company_id)}
-                              aria-label={`Selecionar ${row.company_name}`}
-                            />
-                          </TableCell>
-                          <TableCell className="font-medium">{row.company_name}</TableCell>
-                          <TableCell>{row.ramo_atividade}</TableCell>
-                          <TableCell>{row.uf ?? '—'}</TableCell>
-                          <TableCell>
-                            {row.destino_e164 ? (
-                              <Badge variant="outline">{DESTINO_LABELS[row.destino_origem] ?? row.destino_origem}</Badge>
-                            ) : (
-                              <Badge variant="destructive">Sem WhatsApp</Badge>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-xs text-muted-foreground">{row.motivo_inclusao}</TableCell>
-                        </TableRow>
-                      );
-                    })}
-                    {paddingBottom > 0 && (
-                      <TableRow aria-hidden="true" className="border-0 hover:bg-transparent">
-                        <TableCell colSpan={6} style={{ height: `${paddingBottom}px`, padding: 0 }} />
-                      </TableRow>
-                    )}
-                    {rows.length === 0 && (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center text-muted-foreground">
-                          Nenhuma empresa encontrada para este filtro.
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-              {/* P2 fix v2 (Codex, 3a review da PR #958): lastPageFull agora e
-                  guarda primario -- pagina curta (empresa removida apos snapshot
-                  do count) definia lastPageFull=false mas count.data > rows.length
-                  ainda mantinha o botao vísivel para sempre. Fix: lastPageFull &&
-                  (count.data === undefined || rows.length < count.data). */}
-              {(rows.length > 0 || !search.isError) && lastPageFull && (count.data === undefined || rows.length < count.data) && (
-                <div className="flex justify-center border-t border-border p-3">
-                  <Button variant="outline" size="sm" onClick={loadMore} disabled={search.isPending || loadingAll}>
-                    {search.isPending ? <Loader2 className="h-4 w-4 motion-safe:animate-spin" /> : null}
-                    {count.data !== undefined
-                      ? `Carregar mais (${count.data - rows.length} restante${count.data - rows.length === 1 ? '' : 's'})`
-                      : 'Carregar mais'}
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {search.error && (
-            <p className="px-4 pb-3 text-sm text-destructive">{search.error.message}</p>
-          )}
-
-          <div className="mt-auto border-t border-border p-4">
-            <p className="text-sm text-foreground"><strong>{selected.size}</strong> empresa(s) selecionada(s)</p>
-            <p className="mt-1 text-2xs text-muted-foreground">Seleção limitada a {fmtInt(POLICY_MAX_IDS)} empresas por disparo.</p>
-          </div>
+      {selected.size > 0 && (
+        <div className="sticky bottom-4 flex items-center justify-between gap-4 self-center rounded-2xl border border-[--zapp-border] bg-[--zapp-surface-1] px-4 py-3 shadow-lg">
+          <span className="text-sm">
+            <strong>{selected.size}</strong> empresa(s) selecionada(s)
+          </span>
+          <Button onClick={() => setComposerOpen(true)}>Criar disparo</Button>
         </div>
+      )}
 
-        {/* 02 COMPOSIÇÃO */}
-        <div
-          role="region"
-          aria-label="02 Composição"
-          className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-border bg-card"
-        >
-          <div className="border-b border-border p-4">
-            <StepLabel step="02" label="COMPOSIÇÃO" />
-            <p className="mt-1.5 text-sm font-semibold text-foreground">Sua mensagem, do seu jeito.</p>
-            <p className="text-2xs text-muted-foreground">Escreva uma mensagem única para as empresas selecionadas.</p>
-          </div>
-
-          {/* F78 (TL-010): a conta do disparo fica SEMPRE visivel. */}
-          <p
-            data-testid="multiplix-contagem-mensagens"
-            aria-live="polite"
-            className="mx-4 mt-4 rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm text-foreground"
-          >
-            {`${contactCount} contato${contactCount === 1 ? '' : 's'} × ${blockCount} bloco${blockCount === 1 ? '' : 's'} = ${messageCountLabel}`}
-          </p>
-
-          <div className="flex flex-col gap-1 p-4">
-            <span className="text-xs text-muted-foreground">Nome do disparo (opcional)</span>
-            <Input aria-label="Nome do disparo" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Convite feira 2026" />
-            {/* F78 (TL-010): sem nome digitado sai o titulo sugerido. */}
-            <p className="text-xs text-muted-foreground">
-              Título sugerido: <span className="text-foreground">{suggestedName}</span>
-            </p>
-          </div>
-
-          <div className="flex flex-col gap-1 px-4 pb-4">
-            <span className="text-xs text-muted-foreground">Mensagem</span>
-            <Textarea
-              aria-label="Mensagem"
-              value={messageTemplate}
-              onChange={(e) => setMessageTemplate(e.target.value)}
-              placeholder="Olá {{empresa}}, {{saudacao}}!"
-              rows={7}
-            />
-            <div className="flex flex-wrap gap-2 pt-1">
-              {PLACEHOLDER_CHIPS.map((chip) => (
-                <Button
-                  key={chip.token}
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  aria-label={`${chip.acao} na mensagem`}
-                  onClick={() => insertPlaceholder(chip.token)}
-                >
-                  + {chip.label}
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          <p className="mt-auto px-4 pb-4 text-2xs text-muted-foreground">
-            Conversa individual, sem criar grupos. O mesmo texto é preparado uma vez e vale para as empresas selecionadas.
-          </p>
-        </div>
-
-        {/* 03 PRÉVIA & REVISÃO */}
-        <div
-          role="region"
-          aria-label="03 Prévia e revisão"
-          className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-border bg-card"
-        >
-          <div className="border-b border-border p-4">
-            <StepLabel step="03" label="PRÉVIA & REVISÃO" />
-            <p className="mt-1.5 text-sm font-semibold text-foreground">Veja antes de enviar.</p>
-            <p className="text-2xs text-muted-foreground">Confira a experiência de cada pessoa.</p>
-          </div>
-
-          <div className="border-b border-border p-4">
-            <span className="text-2xs font-bold uppercase tracking-widest text-muted-foreground">Visualizar como</span>
-            <Select
-              value={previewRow?.company_id ?? ''}
-              onValueChange={setPreviewCompanyId}
-              disabled={selectedRows.length === 0}
-            >
-              <SelectTrigger aria-label="Visualizar como" className="mt-1 w-full">
-                <SelectValue placeholder="Selecione uma empresa" />
-              </SelectTrigger>
-              <SelectContent>
-                {/* F74: a seleção pode ter até POLICY_MAX_IDS (10.000) empresas
-                    (selectAllResults) — um <select> com 10.000 opções trava o
-                    Radix (cada SelectItem se registra na Collection) e não é
-                    navegável por ninguém. A prévia é só uma amostra para
-                    revisão visual, não uma lista de destino: corta nas
-                    primeiras PREVIEW_OPTIONS_MAX. */}
-                {selectedRows.slice(0, PREVIEW_OPTIONS_MAX).map((r) => (
-                  <SelectItem key={r.company_id} value={r.company_id}>{r.company_name}</SelectItem>
-                ))}
-                {selectedRows.length > PREVIEW_OPTIONS_MAX && (
-                  <p className="px-2 py-1.5 text-xs text-muted-foreground">
-                    +{fmtInt(selectedRows.length - PREVIEW_OPTIONS_MAX)} empresa(s) selecionada(s) fora da amostra de prévia
-                  </p>
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex flex-col gap-3 p-4">
-            <p className="text-center text-2xs uppercase tracking-wider text-muted-foreground">Prévia da mensagem · não enviada</p>
-            {previewRow ? (
-              <div className="ml-3 rounded-xl border border-border bg-muted/20 p-3 text-sm text-foreground whitespace-pre-wrap break-words">
-                {previewText}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">Selecione ao menos uma empresa para ver a prévia.</p>
-            )}
-          </div>
-
-          <div className="mt-auto border-t border-border p-4">
-            <p className="text-2xs text-muted-foreground">Prévia local: as variáveis são substituídas no envio.</p>
-            <p className="mt-1 text-2xs text-muted-foreground">Os destinatários não se veem.</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Rodapé fixo: resumo do disparo + ações (antes viviam no diálogo). */}
-      <div className="sticky bottom-0 z-10 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card px-4 py-3 shadow-lg">
-        <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-foreground">{name.trim() || 'Novo disparo'}</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" disabled={busy || !canSubmit} onClick={() => void submit(false)}>
-            {busy ? <Loader2 className="h-4 w-4 motion-safe:animate-spin" /> : null}
-            Salvar rascunho
-          </Button>
-          <Button disabled={busy || !canSubmit} onClick={() => setConfirmStartOpen(true)}>
-            {busy ? <Loader2 className="h-4 w-4 motion-safe:animate-spin" /> : null}
-            Salvar e iniciar agora
-          </Button>
-        </div>
-      </div>
-
-      <AlertDialog open={confirmStartOpen} onOpenChange={setConfirmStartOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Iniciar disparo agora?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Isso envia mensagens reais no WhatsApp para {selected.size} empresa(s) — sem volta. Confirma?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={() => { setConfirmStartOpen(false); void submit(true); }}>
-              Iniciar agora
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog open={overLimit !== null} onOpenChange={(next) => { if (!next) setOverLimit(null); }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Disparo acima do teto de contatos</AlertDialogTitle>
-            <AlertDialogDescription>
-              A seleção gerou {overLimit?.count ?? 0} contato(s) elegível(is)
-              {overLimit?.limit ? `, acima do teto de ${overLimit.limit}` : ''}. Confirma criar o disparo com todos?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                const pending = overLimit;
-                setOverLimit(null);
-                if (pending) void submit(pending.startNow, true);
-              }}
-            >
-              Confirmar e criar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <MultiplixComposerDialog
+        open={composerOpen}
+        onOpenChange={setComposerOpen}
+        selectedCompanyIds={Array.from(selected)}
+        onCreated={(dispatchId) => {
+          setSelected(new Set());
+          dispatches.refetch();
+          setMonitorId(dispatchId);
+        }}
+      />
     </div>
   );
 }

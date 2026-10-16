@@ -3,18 +3,10 @@ import { toast } from 'sonner';
 import { log } from '@/lib/logger';
 import { PUSH_NOTIFICATIONS_ENABLED } from '@/config/service_worker';
 
-/**
- * Alertas do navegador (Notification local), NÃO push de servidor.
- *
- * O Zapp Web não tem Service Worker de aplicação (SERVICE_WORKER_ENABLED=false) e não
- * mantém servidor de push (VAPID/endpoint/assinatura no banco). O que este hook liga é
- * apenas o alerta local do próprio navegador, que só aparece com o Zapp aberto — por isso
- * não existe mais assinatura push criada, enviada ou registrada em log.
- */
-interface NotificationState {
+interface PushNotificationState {
   isSupported: boolean;
   permission: NotificationPermission;
-  isActive: boolean;
+  isSubscribed: boolean;
   isLoading: boolean;
 }
 
@@ -30,31 +22,54 @@ interface NotificationPayload {
   vibrate?: number[];
 }
 
+const VAPID_PUBLIC_KEY = 'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U';
+
+function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray.buffer;
+}
+
 export function usePushNotifications() {
-  const [state, setState] = useState<NotificationState>({
+  const [state, setState] = useState<PushNotificationState>({
     isSupported: false,
     permission: 'default',
-    isActive: false,
+    isSubscribed: false,
     isLoading: true,
   });
 
   useEffect(() => {
-    const checkSupport = () => {
-      // Sem Service Worker de aplicação e sem PushManager: só a API de Notification
-      // local do navegador é exigida.
+    const checkSupport = async () => {
       const isSupported = PUSH_NOTIFICATIONS_ENABLED &&
                           'Notification' in window &&
-                          'serviceWorker' in navigator;
+                          'serviceWorker' in navigator && 
+                          'PushManager' in window;
 
       if (!isSupported) {
         setState(prev => ({ ...prev, isSupported: false, isLoading: false }));
         return;
       }
 
+      const permission = Notification.permission;
+
+      let isSubscribed = false;
+      try {
+        const registration = await navigator.serviceWorker.ready;
+        const subscription = await registration.pushManager.getSubscription();
+        isSubscribed = !!subscription;
+      } catch (error) {
+        log.error('Error checking push subscription:', error);
+      }
+
       setState({
         isSupported: true,
-        permission: Notification.permission,
-        isActive: false,
+        permission,
+        isSubscribed,
         isLoading: false,
       });
     };
@@ -64,7 +79,7 @@ export function usePushNotifications() {
 
   const requestPermission = useCallback(async (): Promise<boolean> => {
     if (!state.isSupported) {
-      toast.error('Alertas do navegador estão desativados nesta versão');
+      toast.error('Notificações push estão desativadas nesta versão');
       return false;
     }
 
@@ -73,7 +88,7 @@ export function usePushNotifications() {
       setState(prev => ({ ...prev, permission }));
 
       if (permission === 'granted') {
-        toast.success('Permissão concedida para alertas do navegador!');
+        toast.success('Permissão concedida para notificações!');
         return true;
       } else if (permission === 'denied') {
         toast.error('Permissão negada. Você pode alterar nas configurações do navegador.');
@@ -87,33 +102,55 @@ export function usePushNotifications() {
     }
   }, [state.isSupported]);
 
-  const subscribe = useCallback(async (): Promise<boolean> => {
-    if (!state.isSupported) return false;
+  const subscribe = useCallback(async (): Promise<PushSubscription | null> => {
+    if (!state.isSupported) return null;
 
     try {
       if (state.permission !== 'granted') {
         const granted = await requestPermission();
-        if (!granted) return false;
+        if (!granted) return null;
       }
 
-      setState(prev => ({ ...prev, isActive: true }));
-      toast.success('Alertas com o navegador aberto ativados!');
-      return true;
+      const registration = await navigator.serviceWorker.ready;
+
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      });
+
+      setState(prev => ({ ...prev, isSubscribed: true }));
+      toast.success('Notificações push ativadas!');
+
+      log.debug('Push subscription:', JSON.stringify(subscription));
+
+      return subscription;
     } catch (error) {
-      log.error('Error enabling browser alerts:', error);
-      toast.error('Erro ao ativar alertas do navegador');
-      return false;
+      log.error('Error subscribing to push:', error);
+      toast.error('Erro ao ativar notificações push');
+      return null;
     }
   }, [state.isSupported, state.permission, requestPermission]);
 
   const unsubscribe = useCallback(async (): Promise<boolean> => {
     if (!state.isSupported) return false;
-    if (!state.isActive) return false;
 
-    setState(prev => ({ ...prev, isActive: false }));
-    toast.success('Alertas com o navegador aberto desativados');
-    return true;
-  }, [state.isSupported, state.isActive]);
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.getSubscription();
+
+      if (subscription) {
+        await subscription.unsubscribe();
+        setState(prev => ({ ...prev, isSubscribed: false }));
+        toast.success('Notificações push desativadas');
+        return true;
+      }
+      return false;
+    } catch (error) {
+      log.error('Error unsubscribing:', error);
+      toast.error('Erro ao desativar notificações');
+      return false;
+    }
+  }, [state.isSupported]);
 
   const showNotification = useCallback(async (payload: NotificationPayload): Promise<boolean> => {
     if (!state.isSupported || state.permission !== 'granted') {
@@ -123,7 +160,7 @@ export function usePushNotifications() {
 
     try {
       const registration = await navigator.serviceWorker.ready;
-
+      
       const options: NotificationOptions = {
         body: payload.body,
         icon: payload.icon || '/favicon.ico',
@@ -144,20 +181,16 @@ export function usePushNotifications() {
   }, [state.isSupported, state.permission]);
 
   const toggleSubscription = useCallback(async () => {
-    if (state.isActive) {
+    if (state.isSubscribed) {
       return unsubscribe();
     } else {
-      return subscribe();
+      const subscription = await subscribe();
+      return !!subscription;
     }
-  }, [state.isActive, subscribe, unsubscribe]);
+  }, [state.isSubscribed, subscribe, unsubscribe]);
 
   return {
-    isSupported: state.isSupported,
-    permission: state.permission,
-    // `isSubscribed` mantido para os consumidores existentes: agora significa
-    // "alertas do navegador ligados", não "assinatura push registrada".
-    isSubscribed: state.isActive,
-    isLoading: state.isLoading,
+    ...state,
     isEnabled: PUSH_NOTIFICATIONS_ENABLED,
     requestPermission,
     subscribe,

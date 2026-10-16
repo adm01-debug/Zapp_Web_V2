@@ -43,13 +43,9 @@ vi.mock('@/lib/logger', () => ({
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: () => ({
-      select: () =>
-        Object.assign(Promise.resolve({ count: 0, error: null }), {
-          eq: () => ({
-            order: () => ({ limit: () => Promise.resolve({ data: [], error: null }) }),
-            eq: () => Promise.resolve({ count: 0, error: null }),
-          }),
-        }),
+      select: () => ({
+        eq: () => ({ order: () => ({ limit: () => Promise.resolve({ data: [], error: null }) }) }),
+      }),
     }),
   },
 }));

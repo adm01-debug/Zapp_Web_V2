@@ -40,57 +40,6 @@ export interface ScheduledReportDeps {
   supabase?: any;
   /** Override do CRON_SECRET (facilita o teste sem tocar no env do processo). */
   cronSecret?: string;
-  /**
-   * Override da lista de domínios confiáveis (facilita o teste sem tocar no env
-   * do processo). Sem ele vale `TRUSTED_EMAIL_DOMAINS` e, na ausência desta, o
-   * domínio da empresa. Nunca é uma lista vazia = "permite todos": o default é
-   * fechado.
-   */
-  trustedDomains?: readonly string[];
-}
-
-/**
- * PD-23 / DD5 (docs 04–16): o relatório agendado só pode sair para o domínio da
- * empresa. Antes desta correção o handler mandava para qualquer string em
- * `recipients`, deixando dado do sistema vazar para fora.
- *
- * Mesma regra e MESMO default do allowlist de signup (GUC
- * `app.settings.trusted_domains`, migration 20260925140000, default
- * `promobrindes.com.br`, lista separada por vírgula, match exato de domínio e
- * falha fechada). PostgREST/Edge não leem GUC de banco e o cartão restringe os
- * arquivos a esta função (sem migration para expor a GUC por RPC), então a Edge
- * espelha a mesma convenção pelo env `TRUSTED_EMAIL_DOMAINS` — sem ela, vale o
- * domínio da empresa.
- */
-const DEFAULT_TRUSTED_EMAIL_DOMAINS = "promobrindes.com.br";
-
-/** Limite de destinatários por relatório: acima disso nada é enviado. */
-const MAX_RECIPIENTS_PER_REPORT = 20;
-
-/** Normaliza a lista de domínios: vírgula, trim, minúsculas, `@` inicial fora. */
-export function resolveTrustedDomains(raw: string | null | undefined): string[] {
-  const source = (raw ?? "").trim();
-  const list = source === "" ? DEFAULT_TRUSTED_EMAIL_DOMAINS : source;
-  return list
-    .split(",")
-    .map((domain) => domain.trim().toLowerCase().replace(/^@/, ""))
-    .filter((domain) => domain.length > 0);
-}
-
-/** E-mail sintaticamente válido (um único `@`, parte local e domínio não vazios). */
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-/**
- * Destinatário aceito só quando é e-mail válido E o domínio é exatamente um da
- * lista confiável (mesma checagem do trigger de signup). Tudo o que não passa é
- * recusado.
- */
-export function isTrustedRecipient(recipient: unknown, trustedDomains: readonly string[]): boolean {
-  if (typeof recipient !== "string") return false;
-  const value = recipient.trim().toLowerCase();
-  if (!EMAIL_PATTERN.test(value)) return false;
-  const domain = value.split("@")[1] ?? "";
-  return trustedDomains.includes(domain);
 }
 
 export async function handleScheduledReport(
@@ -208,22 +157,16 @@ export async function handleScheduledReport(
       }
       case "sla_compliance": {
         const { data: sla } = await supabase.from("conversation_sla").select("*").gte("created_at", weekAgo.toISOString());
-        // Mesma regra de elegibilidade do SLA de 1ª resposta do painel
-        // (src/hooks/sla/slaFirstResponse.ts): AVALIADA = conversa com desfecho
-        // (violada ou respondida no prazo); PENDENTE = sem desfecho, fora do
-        // numerador E do denominador; a violação manda sobre o carimbo. Sem
-        // nenhuma avaliada NÃO existe taxa (nunca 100%).
-        const tally = tallyFirstResponse(sla || []);
+        const total = sla?.length || 0;
+        const responseBreached = sla?.filter((s: Record<string, unknown>) => s.first_response_breached).length || 0;
+        const resolutionBreached = sla?.filter((s: Record<string, unknown>) => s.resolution_breached).length || 0;
         reportData = {
           title: "Cumprimento de SLA",
           period: `${weekAgo.toLocaleDateString("pt-BR")} - ${now.toLocaleDateString("pt-BR")}`,
-          evaluatedConversations: tally.evaluated,
-          onTimeResponses: tally.onTime,
-          responseBreaches: tally.breached,
-          pendingResponses: tally.pending,
-          responseComplianceRate: tally.evaluated > 0
-            ? `${Math.round((tally.onTime / tally.evaluated) * 100)}%`
-            : "N/A",
+          totalConversations: total,
+          responseComplianceRate: total > 0 ? `${Math.round(((total - responseBreached) / total) * 100)}%` : "N/A",
+          resolutionComplianceRate: total > 0 ? `${Math.round(((total - resolutionBreached) / total) * 100)}%` : "N/A",
+          responseBreaches: responseBreached, resolutionBreaches: resolutionBreached,
         };
         break;
       }
@@ -234,60 +177,7 @@ export async function handleScheduledReport(
     // R2-API-023 (P2): falha total não confirma o ciclo; parcial confirma o
     // ciclo com status próprio, para não reenviar a quem já recebeu no próximo
     // cron. A resposta registra só os destinatários recusados.
-    //
-    // PD-23 / DD5: antes de enviar, cada destinatário precisa ser e-mail válido
-    // E de domínio confiável; os demais são RECUSADOS. A recusa é registrada só
-    // em CONTAGEM (nunca o endereço, que é dado pessoal) no log e na resposta.
-    const trustedDomains = deps.trustedDomains
-      ?? resolveTrustedDomains(Deno.env.get("TRUSTED_EMAIL_DOMAINS"));
-    const declaredRecipients: string[] = Array.isArray(report.recipients) ? report.recipients : [];
-
-    // Limite por relatório: acima dele NADA é enviado (falha fechada).
-    if (declaredRecipients.length > MAX_RECIPIENTS_PER_REPORT) {
-      log.error("Relatório acima do limite de destinatários", {
-        reportId,
-        total: declaredRecipients.length,
-        limit: MAX_RECIPIENTS_PER_REPORT,
-      });
-      log.done(422, { total: declaredRecipients.length, limit: MAX_RECIPIENTS_PER_REPORT });
-      return jsonResponse({
-        success: false,
-        status: "failed",
-        delivered: 0,
-        failed: 0,
-        total: declaredRecipients.length,
-        rejected: 0,
-        last_sent_advanced: false,
-        error: "Relatório acima do limite de destinatários",
-      }, 422, req);
-    }
-
-    const recipients = declaredRecipients.filter((recipient) => isTrustedRecipient(recipient, trustedDomains));
-    const rejected = declaredRecipients.length - recipients.length;
-    if (rejected > 0) {
-      log.error("Destinatários recusados por domínio não confiável", {
-        reportId,
-        rejected,
-        total: declaredRecipients.length,
-      });
-    }
-
-    // Havia destinatários, mas nenhum é permitido: não há o que enviar. Não
-    // avança o ciclo (nada saiu) para que a configuração seja corrigida.
-    if (declaredRecipients.length > 0 && recipients.length === 0) {
-      log.done(422, { rejected, total: declaredRecipients.length });
-      return jsonResponse({
-        success: false,
-        status: "failed",
-        delivered: 0,
-        failed: 0,
-        total: declaredRecipients.length,
-        rejected,
-        last_sent_advanced: false,
-        error: "Nenhum destinatário permitido (domínio não confiável)",
-      }, 422, req);
-    }
-
+    const recipients: string[] = Array.isArray(report.recipients) ? report.recipients : [];
     const delivered: string[] = [];
     const failed: string[] = [];
     const missingApiKey = recipients.length > 0 && !resendApiKey;
@@ -325,7 +215,6 @@ export async function handleScheduledReport(
         delivered: delivered.length,
         failed: failed.length,
         total,
-        rejected,
         failed_recipients: failed,
         last_sent_advanced: false,
         error: missingApiKey
@@ -355,7 +244,6 @@ export async function handleScheduledReport(
         delivered: delivered.length,
         failed: failed.length,
         total,
-        rejected,
         failed_recipients: failed,
         last_sent_advanced: false,
         error: "Falha ao registrar o envio do relatório",
@@ -370,7 +258,6 @@ export async function handleScheduledReport(
         delivered: delivered.length,
         failed: failed.length,
         total,
-        rejected,
         failed_recipients: failed,
         last_sent_advanced: true,
         error: "Falha no envio para um ou mais destinatários",
@@ -384,7 +271,6 @@ export async function handleScheduledReport(
       delivered: delivered.length,
       failed: 0,
       total,
-      rejected,
       last_sent_advanced: true,
       reportData,
     }, 200, req);
@@ -396,31 +282,6 @@ export async function handleScheduledReport(
 
 if (import.meta.main) {
   Deno.serve((req) => handleScheduledReport(req));
-}
-
-/**
- * Elegibilidade ÚNICA do SLA de 1ª resposta, espelhando
- * `src/hooks/sla/slaFirstResponse.ts` (R2-SLA-001 / #458): a violação manda sobre o
- * carimbo; sem violação, o carimbo da resposta = no prazo; sem nenhum dos dois =
- * pendente, fora do numerador E do denominador. O painel e o histórico usam a mesma
- * regra; o relatório agendado passa a usá-la também.
- */
-function tallyFirstResponse(
-  rows: Array<Record<string, unknown>>,
-): { evaluated: number; onTime: number; breached: number; pending: number } {
-  const tally = { evaluated: 0, onTime: 0, breached: 0, pending: 0 };
-  for (const row of rows) {
-    if (row.first_response_breached) {
-      tally.breached++;
-      tally.evaluated++;
-    } else if (row.first_response_at) {
-      tally.onTime++;
-      tally.evaluated++;
-    } else {
-      tally.pending++;
-    }
-  }
-  return tally;
 }
 
 function calculateNextSend(frequency: string): string {
@@ -461,10 +322,9 @@ function formatKey(key: string): string {
   const map: Record<string, string> = {
     totalMessages: "Total de Mensagens", messagesReceived: "Mensagens Recebidas", messagesSent: "Mensagens Enviadas",
     newContacts: "Novos Contatos", totalAnalyses: "Análises Realizadas", avgSentiment: "Sentimento Médio",
-    avgSatisfaction: "Satisfação Média", evaluatedConversations: "Conversas Avaliadas",
-    onTimeResponses: "Respostas no Prazo", pendingResponses: "Sem 1ª Resposta (pendentes)",
-    responseComplianceRate: "Taxa de Resposta no Prazo",
-    responseBreaches: "Violações de Resposta",
+    avgSatisfaction: "Satisfação Média", totalConversations: "Total de Conversas",
+    responseComplianceRate: "Taxa de Resposta no Prazo", resolutionComplianceRate: "Taxa de Resolução no Prazo",
+    responseBreaches: "Violações de Resposta", resolutionBreaches: "Violações de Resolução",
   };
   return map[key] || key;
 }

@@ -1,12 +1,10 @@
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, enforceRateLimit } from "../_shared/validation.ts";
 import { ElevenLabsSFXSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { logAiUsageDetached } from "../_shared/ai-usage.ts";
-import { buildElevenLabsRequest, voiceAiDisabledResponse } from "./request.ts";
+import { buildElevenLabsRequest } from "./request.ts";
 import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 
-// `import.meta.main` (mesmo padrão de `elevenlabs-sts`): o handler pode ser
-// importado por teste sem subir o servidor.
-export async function handleElevenLabsSfx(req: Request): Promise<Response> {
+Deno.serve(async (req) => {
   const cors = handleCors(req);
   if (cors) return cors;
 
@@ -24,31 +22,12 @@ export async function handleElevenLabsSfx(req: Request): Promise<Response> {
     if (!parsed.success) return validationErrorResponse(parsed, req);
 
     const { prompt, duration, mode } = parsed.data;
-
-    // IA-009 / SL-010b (decisão do cartão t_98090b40): kill switch de voz/áudio
-    // lido no SERVIDOR antes de tocar o provedor pago (ver `request.ts`).
-    const aiOff = await voiceAiDisabledResponse(req);
-    if (aiOff) {
-      log.warn("IA de voz desativada por flag — provedor nao chamado");
-      return aiOff;
-    }
-
     const ELEVENLABS_API_KEY = requireEnv("ELEVENLABS_API_KEY");
 
     const isMusic = mode === "music";
     const spec = buildElevenLabsRequest({ prompt, duration, mode });
 
-    // LGPD (doc 07, mesmo achado do log de voz corrigido no `voice-agent`): o
-    // log registra só METADADOS do pedido — tamanho do prompt e um identificador
-    // curto da requisição —, NUNCA o texto digitado pelo usuário. O prompt pode
-    // conter dado pessoal e os logs de Edge ficam retidos fora do nosso controle
-    // de purga. O `Logger` já carimba o `rid` próprio na linha.
-    log.info("Generating audio", {
-      mode: isMusic ? "music" : "sfx",
-      prompt_length: prompt.length,
-      request_id: crypto.randomUUID().slice(0, 8),
-      seconds: duration || (isMusic ? 15 : 5),
-    });
+    log.info(`Generating ${isMusic ? "music" : "sfx"}: "${prompt}" (${duration || (isMusic ? 15 : 5)}s)`);
 
     const iniciadoEm = Date.now();
     const response = await fetch(spec.url, {
@@ -97,8 +76,4 @@ export async function handleElevenLabsSfx(req: Request): Promise<Response> {
     log.error("Unhandled error", { error: err instanceof Error ? err.message : String(err) });
     return errorResponse("Internal server error", 500, req);
   }
-}
-
-if (import.meta.main) {
-  Deno.serve(handleElevenLabsSfx);
-}
+});

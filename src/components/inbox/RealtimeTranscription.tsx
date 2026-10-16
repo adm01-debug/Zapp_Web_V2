@@ -14,37 +14,12 @@ interface RealtimeTranscriptionProps {
   className?: string;
 }
 
-/**
- * Mensagem real devolvida pela Edge Function. O `error.message` do
- * `functions.invoke` costuma ser o genérico "non-2xx"; o texto que distingue
- * chave inválida de sessão expirada está no corpo da resposta.
- */
-async function mensagemDoErro(error: unknown): Promise<string> {
-  const direta = (error as { message?: string } | null)?.message;
-  const contexto = (error as { context?: unknown } | null)?.context;
-  if (contexto && typeof (contexto as Response).json === 'function') {
-    try {
-      const resposta = typeof (contexto as Response).clone === 'function'
-        ? (contexto as Response).clone()
-        : (contexto as Response);
-      const corpo = await resposta.json() as { error?: unknown; message?: unknown } | null;
-      const msg = typeof corpo?.error === 'string' ? corpo.error : typeof corpo?.message === 'string' ? corpo.message : null;
-      if (msg) return msg;
-    } catch {
-      // corpo não-JSON: fica a mensagem direta
-    }
-  }
-  return direta || String(error);
-}
-
 export function RealtimeTranscription({ 
   onTranscript, 
   onStatusChange,
   className 
 }: RealtimeTranscriptionProps) {
   const [status, setStatus] = useState<'idle' | 'connecting' | 'connected' | 'error'>('idle');
-  /** Motivo do erro em tela: o toast some, isto fica. */
-  const [erro, setErro] = useState<string | null>(null);
   const tokenRef = useRef<string | null>(null); const connectingRef = useRef(false); const isMountedRef = useRef(true);
 
   const scribe = useScribe({
@@ -80,7 +55,6 @@ export function RealtimeTranscription({
     if (connectingRef.current || scribe.isConnected) return;
     connectingRef.current = true;
     setStatus('connecting');
-    setErro(null);
     onStatusChange?.('connecting');
 
     try {
@@ -88,24 +62,11 @@ export function RealtimeTranscription({
       const { data, error } = await supabase.functions.invoke('elevenlabs-scribe-token');
 
       if (error) {
-        // Duas falhas diferentes chegam com 401 e antes viravam a MESMA frase
-        // ("Chave da ElevenLabs inválida"), escondendo o caso comum: sessão
-        // vencida. A Edge separa os casos pela mensagem — `Invalid ElevenLabs
-        // API key` é a chave do provedor; `Missing Authorization` é o token da
-        // sessão. Aqui a orientação é a que resolve o problema do operador.
-        const errMsg = await mensagemDoErro(error);
-        const baixo = errMsg.toLowerCase();
-        const chaveInvalida = baixo.includes('invalid elevenlabs api key') || baixo.includes('invalid api key');
-        const sessaoVencida = !chaveInvalida && (
-          errMsg.includes('401')
-          || baixo.includes('missing authorization')
-          || baixo.includes('unauthorized')
-        );
-        throw new Error(chaveInvalida
-          ? 'Chave da ElevenLabs inválida. Atualize nas configurações.'
-          : sessaoVencida
-            ? 'Sessão expirada. Entre novamente para usar a transcrição em tempo real.'
-            : errMsg);
+        const errMsg = error?.message || String(error);
+        const isAuthError = errMsg.includes('401') || errMsg.toLowerCase().includes('invalid');
+        throw new Error(isAuthError 
+          ? 'Chave da ElevenLabs inválida. Atualize nas configurações.' 
+          : errMsg);
       }
 
       if (!data?.token) {
@@ -128,10 +89,9 @@ export function RealtimeTranscription({
       toast.success('Transcrição em tempo real ativada');
     } catch (error) {
       log.error('Failed to start realtime transcription:', error);
-      const msg = error instanceof Error ? error.message : 'Erro ao iniciar transcrição em tempo real';
-      if (isMountedRef.current) { setStatus('error'); setErro(msg); }
+      if (isMountedRef.current) setStatus('error');
       onStatusChange?.('error');
-      toast.error(msg);
+      toast.error('Erro ao iniciar transcrição em tempo real');
     } finally {
       connectingRef.current = false;
     }
@@ -140,7 +100,6 @@ export function RealtimeTranscription({
   const handleStop = useCallback(() => {
     scribe.disconnect();
     setStatus('idle');
-    setErro(null);
     onStatusChange?.('idle');
     tokenRef.current = null;
     toast.info('Transcrição em tempo real desativada');
@@ -182,9 +141,6 @@ export function RealtimeTranscription({
         </Button>
       </motion.div>
 
-      {/* Erro específico: chave inválida ≠ sessão expirada */}
-      {erro && <p role="alert" className="text-xs text-destructive">{erro}</p>}
-
       {/* Live Indicator & Partial Transcript */}
       <AnimatePresence>
         {isConnected && (
@@ -195,7 +151,7 @@ export function RealtimeTranscription({
             className="flex flex-col gap-2"
           >
             {/* Live indicator */}
-            <div className="flex items-center gap-2 text-xs text-muted-foreground" aria-live="polite">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <motion.div
                 animate={{ scale: [1, 1.2, 1] }}
                 transition={{ repeat: Infinity, duration: 1.5 }}
@@ -211,7 +167,6 @@ export function RealtimeTranscription({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 className="p-2 rounded-lg bg-muted/50 border border-border/30 text-sm italic text-muted-foreground"
-                aria-live="polite"
               >
                 "{scribe.partialTranscript}"
               </motion.div>

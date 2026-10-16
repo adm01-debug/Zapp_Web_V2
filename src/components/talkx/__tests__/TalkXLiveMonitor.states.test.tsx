@@ -27,9 +27,6 @@ const h = vi.hoisted(() => ({
   recipientsPending: false,
   rateError: null as Error | null,
   eventsError: null as Error | null,
-  liveStatus: 'live' as 'connecting' | 'live' | 'degraded' | 'offline',
-  panelPollMs: null as number | null,
-  monitorInterval: null as number | false | null,
   refetchRate: vi.fn(),
   refetchEvents: vi.fn(),
 }));
@@ -102,33 +99,13 @@ vi.mock('@/hooks/integrations/useTalkXConnectionStatus', () => ({
   useTalkXConnectionStatus: () => ({ status: null, label: null, loading: false }),
 }));
 
-vi.mock('@/hooks/integrations/useTalkXLiveChannel', () => ({
-  useTalkXLiveChannel: () => ({
-    status: h.liveStatus,
-    live: h.liveStatus === 'live',
-    degraded: h.liveStatus === 'degraded',
-    offline: h.liveStatus === 'offline',
-    panelPollMs: h.panelPollMs,
-    tablePollMs: h.panelPollMs,
-  }),
-}));
-
 vi.mock('@/hooks/integrations/useTalkXMonitor', () => ({
-  useTalkXMonitor: (
-    _campaignId: string,
-    _statusFilter?: string,
-    interval?: number | false,
-  ) => {
-    // Só a consulta do painel (a que recebe statusFilter) carrega o intervalo; a da
-    // Saúde da Campanha não passa o 3º argumento. Guardamos o do painel.
-    if (interval !== undefined) h.monitorInterval = interval;
-    return {
-      rateByMinute: [],
-      isLoading: false,
-      isError: h.rateError !== null,
-      refetch: h.refetchRate,
-    };
-  },
+  useTalkXMonitor: () => ({
+    rateByMinute: [],
+    isLoading: false,
+    isError: h.rateError !== null,
+    refetch: h.refetchRate,
+  }),
 }));
 
 import { TalkXLiveMonitor } from '../TalkXLiveMonitor';
@@ -158,9 +135,6 @@ beforeEach(() => {
   h.recipientsPending = false;
   h.rateError = null;
   h.eventsError = null;
-  h.liveStatus = 'live';
-  h.panelPollMs = null;
-  h.monitorInterval = null;
   h.refetchRate = vi.fn();
   h.refetchEvents = vi.fn();
 });
@@ -264,23 +238,5 @@ describe('matriz de estados — TalkXLiveMonitor (X047c)', () => {
 
     fireEvent.click(within(section).getByRole('button', { name: /Tentar novamente/ }));
     expect(h.refetchEvents).toHaveBeenCalled();
-  });
-
-  it('canal ao vivo (live=true): o componente desliga o polling do painel passando false', async () => {
-    h.liveStatus = 'live';
-    h.panelPollMs = null;
-    renderMonitor();
-
-    await waitFor(() => expect(screen.getByText('Campanha X047')).toBeTruthy());
-    expect(h.monitorInterval).toBe(false);
-  });
-
-  it('canal degradado (live=false): o componente passa o panelPollMs do canal ao painel', async () => {
-    h.liveStatus = 'degraded';
-    h.panelPollMs = 15_000;
-    renderMonitor();
-
-    await waitFor(() => expect(screen.getByText('Campanha X047')).toBeTruthy());
-    expect(h.monitorInterval).toBe(15_000);
   });
 });

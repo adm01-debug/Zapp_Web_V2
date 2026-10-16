@@ -8,68 +8,36 @@ import { ptBR } from 'date-fns/locale';
 // ─── Date Formatting ────────────────────────────────────────────────
 
 /**
- * Marcador único de "sem dado" para data inválida — a mesma linguagem usada
- * no resto da UI. O date-fns (`format`/`formatDistanceToNow`) lança
- * `RangeError: Invalid time value` quando recebe uma Data inválida, o que
- * derrubaria o componente inteiro; quem formata data nunca deixa isso passar.
+ * Format a date as relative time in Portuguese (e.g., "há 5 minutos")
  */
-const DATA_INVALIDA = '—';
-
-/**
- * Converte a entrada em `Date` só quando ela é uma data de verdade.
- * Devolve `null` para string vazia/só espaços, texto livre, `null`/`undefined`,
- * `Date` inválido ou número fora da faixa representável — casos em que o
- * construtor silenciosamente devolveria uma data errada (ex.: `null` → epoch)
- * ou `Invalid Date`.
- */
-function toValidDate(value: Date | string | number | null | undefined): Date | null {
-  if (value === null || value === undefined) return null;
-  if (typeof value === 'string' && value.trim() === '') return null;
-  const d = value instanceof Date ? value : new Date(value);
-  return Number.isNaN(d.getTime()) ? null : d;
+export function formatRelativeTime(date: Date | string | number): string {
+  const d = date instanceof Date ? date : new Date(date);
+  return formatDistanceToNow(d, { addSuffix: true, locale: ptBR });
 }
 
 /**
- * Format a date as relative time in Portuguese (e.g., "há 5 minutos").
- * `addSuffix: false` devolve só o intervalo ("5 minutos"), como o inbox lê.
- * Data inválida → `—`.
+ * Format a date as a smart label: "Hoje", "Ontem", or full date
  */
-export function formatRelativeTime(
-  date: Date | string | number | null | undefined,
-  options?: { addSuffix?: boolean }
-): string {
-  const d = toValidDate(date);
-  if (!d) return DATA_INVALIDA;
-  return formatDistanceToNow(d, { addSuffix: options?.addSuffix ?? true, locale: ptBR });
-}
-
-/**
- * Format a date as a smart label: "Hoje", "Ontem", or full date.
- * Data inválida → `—`.
- */
-export function formatSmartDate(date: Date | string | null | undefined): string {
-  const d = toValidDate(date);
-  if (!d) return DATA_INVALIDA;
+export function formatSmartDate(date: Date | string): string {
+  const d = date instanceof Date ? date : new Date(date);
   if (isToday(d)) return `Hoje, ${format(d, 'HH:mm', { locale: ptBR })}`;
   if (isYesterday(d)) return `Ontem, ${format(d, 'HH:mm', { locale: ptBR })}`;
   return format(d, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
 }
 
 /**
- * Format a date as short date (dd/MM/yyyy). Data inválida → `—`.
+ * Format a date as short date (dd/MM/yyyy)
  */
-export function formatShortDate(date: Date | string | null | undefined): string {
-  const d = toValidDate(date);
-  if (!d) return DATA_INVALIDA;
+export function formatShortDate(date: Date | string): string {
+  const d = date instanceof Date ? date : new Date(date);
   return format(d, 'dd/MM/yyyy', { locale: ptBR });
 }
 
 /**
- * Format a date as full datetime. Data inválida → `—`.
+ * Format a date as full datetime
  */
-export function formatFullDateTime(date: Date | string | null | undefined): string {
-  const d = toValidDate(date);
-  if (!d) return DATA_INVALIDA;
+export function formatFullDateTime(date: Date | string): string {
+  const d = date instanceof Date ? date : new Date(date);
   return format(d, "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR });
 }
 
@@ -128,10 +96,7 @@ export function getInitials(name: string, maxChars = 2): string {
     .split(/\s+/)
     .filter(Boolean)
     .slice(0, maxChars)
-    // `codePointAt(0)` + `fromCodePoint` pegam o primeiro CARACTERE (code
-    // point), não o primeiro par de surrogates: `word[0]` partia o emoji ao
-    // meio ("😀Ana" virava o caractere quebrado, não "😀").
-    .map((word) => String.fromCodePoint(word.codePointAt(0)!).toUpperCase())
+    .map((word) => word[0].toUpperCase())
     .join('');
 }
 

@@ -4,14 +4,11 @@ import { OpenDealsList } from './OpenDealsList';
 import { SectionCard } from './SectionCard';
 import { CommercialSummaryStrip } from './CommercialSummaryStrip';
 import { useContactCrm360 } from '@/hooks/crm/useContactCrm360';
-import type { ConversationTab } from '../chat/ConversationTabs';
 
 interface SalesViewTabProps {
   contactId: string;
   /** Perfil do agente logado — o ContactPurchasesPanel grava como `created_by`. */
   profileId: string | null;
-  /** Troca de aba no chat (origem: ConversationTabContent). "Ver no CRM →" usa `onTabChange('crm')`. */
-  onTabChange: (tab: ConversationTab) => void;
 }
 
 /**
@@ -19,7 +16,7 @@ interface SalesViewTabProps {
  * Os três blocos ficam sempre montados: o ContactPurchasesPanel detém o botão
  * "+ Novo", e sem ele um contato sem compras não teria onde registrar a primeira.
  */
-export function SalesViewTab({ contactId, profileId, onTabChange }: SalesViewTabProps) {
+export function SalesViewTab({ contactId, profileId }: SalesViewTabProps) {
   const { data: crm360, isLoading } = useContactCrm360(contactId);
 
   return (
@@ -29,12 +26,7 @@ export function SalesViewTab({ contactId, profileId, onTabChange }: SalesViewTab
         <p className="text-sm text-muted-foreground">Resumo comercial, compras e propostas deste contato.</p>
       </header>
 
-      <SectionCard
-        icon={CircleDollarSign}
-        title="Resumo comercial"
-        tone="blue"
-        action={{ label: 'Ver no CRM →', onClick: () => onTabChange('crm') }}
-      >
+      <SectionCard icon={CircleDollarSign} title="Resumo comercial" tone="blue">
         <CommercialSummaryStrip contactId={contactId} />
       </SectionCard>
 

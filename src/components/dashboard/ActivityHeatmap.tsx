@@ -31,13 +31,8 @@ interface ActivityData {
 interface ActivityHeatmapProps {
   title?: string;
   data?: ActivityData[];
+  metric?: 'messages' | 'conversations' | 'resolutions';
 }
-
-// A consulta abaixo conta as mensagens do período (`messages.created_at`) e nada
-// mais: é essa a métrica que a tela entrega. O rótulo é fixo para bater com o
-// dado — antes a prop `metric` trocava o texto ("conversas"/"resoluções") sem
-// trocar a consulta, e o tooltip mentia.
-const COUNT_LABEL = 'mensagens';
 
 const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 const MONTHS = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
@@ -52,13 +47,14 @@ const getLevelColor = (level: number, isDark: boolean = false) => {
 export const ActivityHeatmap = ({
   title = 'Atividade',
   data: propData,
+  metric = 'messages',
 }: ActivityHeatmapProps) => {
   const [selectedPeriod, setSelectedPeriod] = useState<'3m' | '6m' | '1y'>('3m');
   const [hoveredDay, setHoveredDay] = useState<ActivityData | null>(null);
 
   // Fetch real activity data from messages table
   const { data: realData } = useQuery({
-    queryKey: ['activity-heatmap', selectedPeriod],
+    queryKey: ['activity-heatmap', selectedPeriod, metric],
     queryFn: async () => {
       const days = selectedPeriod === '3m' ? 90 : selectedPeriod === '6m' ? 180 : 365;
       const startDate = subDays(new Date(), days);
@@ -149,6 +145,15 @@ export const ActivityHeatmap = ({
     return { total, activeDays, maxCount, avgCount, streak };
   }, [data]);
 
+  const getMetricLabel = () => {
+    switch (metric) {
+      case 'messages': return 'mensagens';
+      case 'conversations': return 'conversas';
+      case 'resolutions': return 'resoluções';
+      default: return 'atividades';
+    }
+  };
+
   // Get month labels
   const monthLabels = useMemo(() => {
     const labels: { month: string; weekIndex: number }[] = [];
@@ -177,7 +182,7 @@ export const ActivityHeatmap = ({
             <CardTitle className="text-lg">{title}</CardTitle>
           </div>
           <Select value={selectedPeriod} onValueChange={(v) => setSelectedPeriod(v as '3m' | '6m' | '1y')}>
-            <SelectTrigger className="w-[100px]" aria-label="Filtrar período">
+            <SelectTrigger className="w-[100px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -210,7 +215,7 @@ export const ActivityHeatmap = ({
         </div>
 
         {/* Heatmap */}
-        <div className="overflow-x-auto" role="region" aria-label="Mapa de atividade" tabIndex={0}>
+        <div className="overflow-x-auto">
           <div className="min-w-max">
             {/* Month labels */}
             <div className="flex mb-1 ml-8">
@@ -251,8 +256,6 @@ export const ActivityHeatmap = ({
                           <TooltipTrigger asChild>
                             <motion.div
                               whileHover={{ scale: 1.3 }}
-                              role="img"
-                              aria-label={`${day.count} ${COUNT_LABEL} em ${format(day.date, "d 'de' MMMM, yyyy", { locale: ptBR })}`}
                               className={`w-3 h-3 rounded-sm cursor-pointer ${getLevelColor(day.level)}`}
                               onMouseEnter={() => setHoveredDay(day)}
                               onMouseLeave={() => setHoveredDay(null)}
@@ -264,7 +267,7 @@ export const ActivityHeatmap = ({
                                 {format(day.date, "d 'de' MMMM, yyyy", { locale: ptBR })}
                               </div>
                               <div className="text-muted-foreground">
-                                {day.count} {COUNT_LABEL}
+                                {day.count} {getMetricLabel()}
                               </div>
                             </div>
                           </TooltipContent>

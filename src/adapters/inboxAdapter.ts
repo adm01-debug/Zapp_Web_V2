@@ -1,7 +1,6 @@
 import { Message, Conversation, ConversationContact, MessageRow } from '@/types/chat';
 import { RealtimeMessage, ConversationWithMessages, ConversationContact as RealtimeContact } from '@/hooks/chat/useRealtimeMessages';
 import { normalizeOperationalPriority } from '@/lib/ai-vocabulary';
-import { sentimentLevel } from '@/lib/sentiment-level';
 
 function parseLocation(content: string): Message['location'] | undefined {
   try {
@@ -106,6 +105,7 @@ export function mapRealtimeConversationToConversation(rc: ConversationWithMessag
     unreadCount: rc.unreadCount,
     status: 'open',
     priority,
+    tags: rc.contact.tags || [],
     createdAt: new Date(rc.contact.created_at),
     updatedAt: new Date(rc.contact.updated_at),
     firstResponseAt: slaOpen
@@ -114,6 +114,6 @@ export function mapRealtimeConversationToConversation(rc: ConversationWithMessag
         ? new Date(slaAnswered.first_response_at)
         : firstAgentMessage ? new Date(firstAgentMessage.created_at) : null,
     assignedTo: rc.contact.assigned_to ? { id: rc.contact.assigned_to, name: 'Atendente' } : null,
-    sentiment: sentimentLevel(rc.contact.ai_sentiment),
+    sentiment: rc.contact.ai_sentiment,
   };
 }

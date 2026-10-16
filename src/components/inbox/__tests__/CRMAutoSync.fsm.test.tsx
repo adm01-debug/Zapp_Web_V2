@@ -1,27 +1,18 @@
 /**
- * O auto-sync do navegador saiu deste caminho: quem enfileira o CRM é o gatilho
- * de banco `trg_enqueue_crm_sync_from_closure`
- * (`supabase/migrations/20260908180000_crm_contact_links_and_sync_outbox.sql:66-104`),
- * disparado em `conversation_closures` com idempotência `closure:<id>`.
+ * SL-071 (ADR-005, passo 3) — o auto-sync com o CRM dispara pelo estado PERSISTIDO
+ * (`contacts.conversation_status`).
  *
- * O que este arquivo guarda:
- * 1. renderizar uma conversa `resolved` — ou `open` — NÃO chama o CRM pelo navegador;
- * 2. o erro 409 da Edge ('Resolve the conversation before syncing') não gera
- *    segunda chamada ao re-renderizar — antes o `onError` zerava
- *    `lastSyncedStatus`/`lastSyncedId` e o objeto `conversation` novo (tempo
- *    real) reexecutava o efeito, sem backoff;
- * 3. a flag `inbox.status-fsm` não é mais consultada.
+ * Antes: com a flag `inbox.status-fsm` desligada (default `false` em
+ * `CRMAutoSync.tsx:58`), o componente comparava `conversation.status`, valor que a UI
+ * nunca produz como `resolved` (o encerramento grava em `contacts.conversation_status`)
+ * — o auto-sync só existia no papel. O mock da flag devolve `false`, como o banco sem
+ * a chave: depois da correção a flag não é consultada.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from '@testing-library/react';
 
 const mocks = vi.hoisted(() => ({
-  // Reproduz o caminho real do 409: a Edge responde 409, `callCRMIntegration`
-  // lança (`src/lib/crmIntegration.ts:24-37`) e o react-query chama o `onError`
-  // que o componente passou — era ali que os refs eram zerados.
-  syncConversation: vi.fn((_params: unknown, options?: { onError?: () => void }) => {
-    options?.onError?.();
-  }),
+  syncConversation: vi.fn(),
   useFeatureFlag: vi.fn(() => false),
 }));
 
@@ -33,44 +24,29 @@ vi.mock('@/lib/logger', () => ({ log: { info: vi.fn(), warn: vi.fn(), error: vi.
 
 import { CRMAutoSync } from '../CRMAutoSync';
 
-const conversa = (persistido: string | null, derivado = 'open') =>
+// `derivado` é o `conversation.status` que a UI mantém — nunca vira `resolved` aqui.
+const conversa = (persistido: string | null, derivado: string) =>
   ({
     id: 'conv-1',
     status: derivado,
     contact: { id: 'c1', name: 'Contato', conversation_status: persistido },
   }) as never;
 
-const mensagem = (id: string) => ({ id, content: 'ok', sender: 'contact' }) as never;
-
-describe('CRMAutoSync — o gatilho do navegador saiu (SL-071 + cartão do 409)', () => {
+describe('CRMAutoSync — sincroniza pelo conversation_status (SL-071)', () => {
   beforeEach(() => {
     mocks.syncConversation.mockClear();
     mocks.useFeatureFlag.mockClear();
   });
 
-  it('não dispara sync no navegador para conversa resolvida (a fila é do banco)', () => {
+  it('sincroniza quando contacts.conversation_status é resolved', () => {
     render(<CRMAutoSync conversation={conversa('resolved', 'open')} messages={[]} />);
 
-    expect(mocks.syncConversation).not.toHaveBeenCalled();
+    expect(mocks.syncConversation).toHaveBeenCalledTimes(1);
+    expect(mocks.syncConversation).toHaveBeenCalledWith({ contactId: 'c1' }, expect.anything());
   });
 
-  it('erro 409 não gera segunda chamada ao re-renderizar', () => {
-    const { rerender } = render(<CRMAutoSync conversation={conversa('resolved')} messages={[]} />);
-
-    // Re-render com objeto e lista de mensagens NOVOS: era o que reexecutava o
-    // efeito depois de o `onError` ter zerado os refs.
-    rerender(<CRMAutoSync conversation={conversa('resolved')} messages={[mensagem('m2')]} />);
-
-    expect(mocks.syncConversation).not.toHaveBeenCalled();
-  });
-
-  it('não sincroniza conversa em estado aberto (nem no re-render com objeto novo)', () => {
-    // [refazer 1] Teste restaurado: a rodada anterior apagou este caso ao
-    // reaproveitar o corpo dele no teste do 409 (o revisor pegou a divergência
-    // entre o relato e o diff). O estado aberto continua sem disparo no navegador.
-    const { rerender } = render(<CRMAutoSync conversation={conversa('open', 'open')} messages={[]} />);
-
-    rerender(<CRMAutoSync conversation={conversa('open', 'open')} messages={[mensagem('m3')]} />);
+  it('não sincroniza conversa em estado aberto', () => {
+    render(<CRMAutoSync conversation={conversa('open', 'open')} messages={[]} />);
 
     expect(mocks.syncConversation).not.toHaveBeenCalled();
   });

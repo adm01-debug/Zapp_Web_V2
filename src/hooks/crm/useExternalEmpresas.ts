@@ -1,11 +1,9 @@
 /**
  * useExternalEmpresas
- *
- * Fetches unique company names for the contact form autocomplete through the
- * narrow `companyNames` action of the crm-integration Edge Function, which is
- * allowed to `view_contacts` (attendants included) and returns only strings.
- * The old admin-only `search_contacts_advanced` RPC path is gone, so opening
- * the form no longer logs a 403 for attendants.
+ * 
+ * Fetches unique company names from the external CRM database
+ * using search_contacts_advanced RPC (SECURITY DEFINER) to bypass RLS.
+ * Direct queries to 'companies' table are blocked by RLS for anon role.
  */
  import { useQuery } from '@tanstack/react-query';
  import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';

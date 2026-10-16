@@ -2,10 +2,6 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { VoiceDictationButton } from '@/components/mobile/VoiceDictationButton';
 
-const { toastError } = vi.hoisted(() => ({ toastError: vi.fn() }));
-
-vi.mock('sonner', () => ({ toast: { error: toastError, success: vi.fn() } }));
-
 // Só a moldura visual é mockada (framer-motion/tooltip). O componente REAL e o
 // hook REAL (useSpeechToText) ficam de pé: é o indicador deles que está sob teste.
 
@@ -57,7 +53,6 @@ describe('VoiceDictationButton — troca de sessão de ditado', () => {
 
   beforeEach(() => {
     instances.length = 0;
-    toastError.mockClear();
     originalSR = (window as unknown as Record<string, unknown>).SpeechRecognition;
     (window as unknown as Record<string, unknown>).SpeechRecognition = MockSpeechRecognition;
     Object.defineProperty(navigator, 'vibrate', { value: vi.fn(), writable: true, configurable: true });
@@ -125,60 +120,5 @@ describe('VoiceDictationButton — troca de sessão de ditado', () => {
     });
 
     expect(screen.getByLabelText('Ditar mensagem')).toBeInTheDocument();
-  });
-
-  const AVISOS: Array<[string, string]> = [
-    ['not-allowed', 'Permissão do microfone negada. Libere o microfone nas configurações do navegador.'],
-    ['audio-capture', 'Nenhum microfone encontrado. Conecte um microfone e tente de novo.'],
-    ['no-speech', 'Nada foi ouvido. Fale mais perto do microfone e tente de novo.'],
-    ['network', 'O ditado falhou por rede. Verifique sua conexão e tente de novo.'],
-  ];
-
-  it.each(AVISOS)('avisa em pt-BR (toast + aria-live) no erro %s', (codigo, aviso) => {
-    render(<VoiceDictationButton onTranscript={vi.fn()} />);
-
-    fireEvent.click(screen.getByLabelText('Ditar mensagem'));
-    expect(instances).toHaveLength(1);
-
-    act(() => {
-      instances[0].onerror?.({ error: codigo });
-    });
-
-    // volta a ficar pronto para tentar de novo e explica o que houve
-    expect(screen.getByLabelText('Ditar mensagem')).toBeInTheDocument();
-    expect(toastError).toHaveBeenCalledTimes(1);
-    expect(toastError).toHaveBeenCalledWith(aviso);
-    expect(screen.getByRole('status')).toHaveTextContent(aviso);
-  });
-
-  it('não avisa quando o erro é da sessão anterior', () => {
-    render(<VoiceDictationButton onTranscript={vi.fn()} />);
-
-    fireEvent.click(screen.getByLabelText('Ditar mensagem'));
-    fireEvent.click(screen.getByLabelText('Parar ditado'));
-    fireEvent.click(screen.getByLabelText('Ditar mensagem'));
-    expect(instances).toHaveLength(2);
-
-    act(() => {
-      instances[0].onerror?.({ error: 'not-allowed' });
-    });
-
-    expect(toastError).not.toHaveBeenCalled();
-    expect(screen.getByRole('status')).toHaveTextContent('');
-  });
-
-  it('nova sessão limpa o aviso da anterior', () => {
-    render(<VoiceDictationButton onTranscript={vi.fn()} />);
-
-    fireEvent.click(screen.getByLabelText('Ditar mensagem'));
-    act(() => {
-      instances[0].onerror?.({ error: 'no-speech' });
-    });
-    expect(screen.getByRole('status')).toHaveTextContent('Nada foi ouvido');
-
-    // o operador tenta de novo: o aviso antigo não pode continuar na tela
-    fireEvent.click(screen.getByLabelText('Ditar mensagem'));
-    expect(screen.getByRole('status')).toHaveTextContent('');
-    expect(toastError).toHaveBeenCalledTimes(1);
   });
 });

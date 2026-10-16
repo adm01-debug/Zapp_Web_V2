@@ -13,7 +13,7 @@
  */
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { evoFetch, extractMessageId } from "../_shared/evolution-send.ts";
-import { DEFAULT_SCHEDULE_TIMEZONE, deliveryWindowStatus, type DndSetting } from "../_shared/talkx-window.ts";
+import { DEFAULT_SCHEDULE_TIMEZONE, deliveryWindowStatus } from "../_shared/talkx-window.ts";
 import { pauseReasonForWindow } from "../_shared/talkx-resume-policy.ts";
 import { resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
 import { liveTalkXInstanceId } from "../_shared/talkx-delivery-connection.ts";
@@ -209,17 +209,14 @@ export interface ProcessRecipientDeps {
   campaignId: string;
   campaign: Record<string, unknown>;
   businessHours: { start?: string; end?: string; days?: number[] } | null;
-  // N-118: configuração dnd_hours já parseada (passada pelo motor a cada
-  // destinatário, junto com businessHours).
-  dndSetting: DndSetting | null;
   initialInstanceId: string;
   instanceToken: string | null;
   evolutionUrl: string;
   evolutionKey: string;
   supabaseUrl: string;
   workerId: string;
-  trackingUrlFor: (recipientId: string) => Promise<string | undefined>;
-  linksByLabelFor: (recipientId: string) => Promise<Record<string, string>>;
+  trackingUrlFor: (recipientId: string) => string | undefined;
+  linksByLabelFor: (recipientId: string) => Record<string, string>;
   customFieldsByContact: Map<string, Record<string, string>>;
   log: Logger;
   correlationId: string;
@@ -279,7 +276,7 @@ export async function processRecipient(
   recipient: ProcessRecipientRow,
 ): Promise<ProcessResult> {
   const {
-    supabase, campaignId, businessHours, dndSetting, initialInstanceId, instanceToken,
+    supabase, campaignId, businessHours, initialInstanceId, instanceToken,
     evolutionUrl, evolutionKey, supabaseUrl, workerId,
     trackingUrlFor, linksByLabelFor, customFieldsByContact, log, correlationId,
     isRecipientSuppressed, mediaForSend,
@@ -400,8 +397,8 @@ export async function processRecipient(
           contact as { name?: string; nickname?: string; company?: string; phone?: string; vendedor?: string },
           customValues,
           typeof campaign.schedule_timezone === "string" ? campaign.schedule_timezone : DEFAULT_SCHEDULE_TIMEZONE,
-          await trackingUrlFor(recipient.id as string),
-          await linksByLabelFor(recipient.id as string),
+          trackingUrlFor(recipient.id as string),
+          linksByLabelFor(recipient.id as string),
         );
         calculatedMessage = personalized.text;
         recipientMissing = personalized.missing;
@@ -489,10 +486,10 @@ export async function processRecipient(
     // not begin a provider POST after the campaign has left `sending`.
     const { data: beforeSend, error: beforeSendError } = await supabase
       .from("talkx_campaigns")
-      .select("status, send_window_start, send_window_end, business_hours_only, schedule_timezone, send_weekdays, respect_dnd")
+      .select("status, send_window_start, send_window_end, business_hours_only, schedule_timezone")
       .eq("id", campaignId).single();
     if (beforeSendError) throw new Error(`talkx_campaign_state_lookup_failed: ${beforeSendError.message}`);
-    const beforeSendWindowStatus = beforeSend ? deliveryWindowStatus(beforeSend, new Date(), businessHours, dndSetting) : { allowed: false as const, reason: "campaign_not_found" };
+    const beforeSendWindowStatus = beforeSend ? deliveryWindowStatus(beforeSend, undefined, businessHours) : { allowed: false as const, reason: "campaign_not_found" };
     const { data: beforeSendConnection, error: beforeSendConnectionError } = await supabase
       .from("whatsapp_connections")
       .select("status, instance_id")

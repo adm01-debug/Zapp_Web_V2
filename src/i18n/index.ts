@@ -288,35 +288,11 @@ const resources = {
   },
 };
 
-// Códigos do i18n (`pt|en|es`) versus os das telas/banco (`pt-BR|en-US|es`):
-// normaliza num só lugar para o i18n nunca receber um código que não existe em
-// `resources` — antes, um `pt-BR` (valor que a aba Aparência grava no banco) caía
-// no fallback e a interface ficava sempre em português.
-export const normalizeLanguage = (value: unknown): string => {
-  if (typeof value !== 'string') return 'pt';
-
-  const base = value.trim().toLowerCase().split('-')[0];
-  return base === 'pt' || base === 'en' || base === 'es' ? base : 'pt';
-};
-
-// Caminho ÚNICO de troca de idioma: aplica no i18n e deixa o cache do navegador
-// (`localStorage['language']`, que é o que o boot lê) com o MESMO código normalizado.
-export const changeAppLanguage = (lang: string) => {
-  const normalizado = normalizeLanguage(lang);
-  void i18n.changeLanguage(normalizado);
-
-  try {
-    localStorage.setItem('language', normalizado);
-  } catch {
-    // Ambiente sem localStorage (SSR/teste): a troca em memória já valeu.
-  }
-};
-
 i18n
   .use(initReactI18next)
   .init({
     resources,
-    lng: normalizeLanguage(localStorage.getItem('language')),
+    lng: localStorage.getItem('language') || 'pt',
     fallbackLng: 'pt',
     interpolation: {
       escapeValue: false,
@@ -328,9 +304,8 @@ export default i18n;
 // Helper hook for language switching
 export const useLanguage = () => {
   const changeLanguage = (lang: string) => {
-    // Delega para o mesmo caminho usado pela aba Aparência: normalização e
-    // gravação do cache em um só lugar (nada de duas versões da mesma troca).
-    changeAppLanguage(lang);
+    i18n.changeLanguage(lang);
+    localStorage.setItem('language', lang);
   };
 
   return {

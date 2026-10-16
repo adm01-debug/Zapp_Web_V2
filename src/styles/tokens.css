@@ -55,6 +55,16 @@
     --font-display: 'Outfit', system-ui, sans-serif;
     --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
 
+    /* ===== TYPOGRAPHY SCALE (fluid clamp) ===== */
+    --text-xs: clamp(0.6875rem, 0.65rem + 0.1vw, 0.75rem);
+    --text-sm: clamp(0.8125rem, 0.78rem + 0.1vw, 0.875rem);
+    --text-base: clamp(0.875rem, 0.84rem + 0.15vw, 1rem);
+    --text-lg: clamp(1rem, 0.95rem + 0.2vw, 1.125rem);
+    --text-xl: clamp(1.125rem, 1.05rem + 0.3vw, 1.25rem);
+    --text-2xl: clamp(1.25rem, 1.15rem + 0.4vw, 1.5rem);
+    --text-3xl: clamp(1.5rem, 1.35rem + 0.6vw, 1.875rem);
+    --text-4xl: clamp(1.875rem, 1.7rem + 0.8vw, 2.25rem);
+
     /* ===== LINE HEIGHT SCALE ===== */
     --leading-none: 1;
     --leading-tight: 1.25;
@@ -193,6 +203,13 @@
     --wa-bubble: 94 78% 87%;
     --wa-bubble-foreground: 0 0% 0%;
 
+    /* ===== Catálogo — badge de destaque "Novo/Kit" (CT-40) =====
+       Cor de destaque das badges do módulo do catálogo (`src/components/catalog/`).
+       Substitui o `bg-violet-500` que estava solto em `ProductDetailDialog.tsx`
+       e `CatalogProductCard.tsx`. Mesma família de matiz (268 83%) já usada pela
+       `.catalog-badge--new` de `components.css`; o texto da badge usa
+       `text-primary-foreground`. Não duplicar este valor em outro arquivo. */
+    --badge-new: 268 83% 63%;
 
     /* ===== Sidebar ===== */
     --sidebar-background: 0 0% 100%;
@@ -335,22 +352,16 @@
     --kpi-tile-yellow-fg: 38 92% 62%;
 
     /* Dashboard — Navy Operational (medido de docs/design/dashboard-reference.png) */
-    /* TL-175B — texto secundário do tema CLARO. O valor medido do painel navy
-       (215 30% 78%) é um azul claro, feito para fundo escuro: no claro media 1,65:1
-       sobre --background e 1,77:1 sobre --card (axe `color-contrast` [serious] nos usos
-       de `text-foreground-secondary` do Talk X). Matiz e saturação do token continuam
-       os mesmos (215 30%) — só a luminosidade vai para 40%, o mesmo degrau que a folha
-       já usa no texto secundário do claro (`--muted-foreground` vale 221 10% 40%). Medido:
-       5,90:1 sobre --background e 6,34:1 sobre --card (pior caso 5,24:1 sobre --muted).
-       O valor navy passa a viver no tema escuro (.dark). */
-    --foreground-secondary: 215 30% 40%;
+    --foreground-secondary: 215 30% 78%;
     --dash-tile-blue: 221 88% 29%;
     --dash-tile-red: 349 62% 30%;
     --dash-tile-green: 156 73% 18%;
+    --dash-tile-violet: 260 69% 37%;
     --dash-tile-amber: 43 80% 24%;
     --dash-blue: 210 100% 57%;
     --dash-red: 357 94% 63%;
     --dash-green: 153 90% 42%;
+    --dash-violet: 282 95% 66%;
     --dash-amber: 45 90% 51%;
     --dash-yellow: 52 58% 56%;
 
@@ -359,37 +370,6 @@
     --chat-pattern-tile: 441px;
     --chat-pattern-rgb: 15 23 42;
     --chat-pattern-opacity: 0.047;
-
-    /* ===== CORES DE CATEGORIA (expansão de paleta, 10/10/2026) =====
-       O sistema só tinha 4 matizes realmente distinguíveis para CATEGORIA/TIPO:
-       azul (primary/secondary/info/accent/xp ~210-221°), laranja (warning/coins/
-       streak/rank-gold/rank-bronze ~24-45°), vermelho (destructive) e verde
-       (success/whatsapp/online). Estas 3 entram para diferenciar categoria de forma
-       estável entre telas (aprovado pelo Joaquim em 10/10). Uso sugerido:
-         violeta (265°) — nota, insight, conteúdo gerado por IA;
-         teal    (190°) — transferência, handoff, encaminhamento de conversa;
-         rosa    (335°) — categoria de alta visibilidade (destaque de tipo).
-       Cada cor tem par completo: --nome (preenchimento), --nome-foreground
-       (texto SOBRE o preenchimento) e --nome-text (a cor como TEXTO sobre fundo
-       claro — mesmo caso de --primary-text/--warning-text/--destructive-text).
-       Contraste WCAG 2.1 medido (fórmula do tests/contracts/contraste-aa-*):
-         claro  — o --nome-text sobre card/popover: violeta 11,2 / teal 6,2 / rosa 7,6:1;
-                  branco sobre o preenchimento: 7,1 / 5,6 / 4,6:1;
-                  preenchimento sobre o card: 7,1 / 5,6 / 4,6:1 (≥3 p/ componente).
-       Reconciliação do roxo: --kpi-tile-purple (258°) é acento dos TILES do
-       dashboard "Navy Operational" (valor medido de docs/design/dashboard-reference.png)
-       — continua como está para não repintar o dashboard. Consumidor novo de
-       "categoria roxa" usa --violeta.
-    */
-    --violeta: 265 80% 50%;
-    --violeta-foreground: 0 0% 100%;
-    --violeta-text: 265 75% 34%;
-    --teal: 190 90% 28%;
-    --teal-foreground: 0 0% 100%;
-    --teal-text: 190 90% 26%;
-    --rosa: 335 85% 48%;
-    --rosa-foreground: 0 0% 100%;
-    --rosa-text: 335 75% 36%;
 }
 
 /* ===== DARK MODE - Corporate Blue ===== */
@@ -441,10 +421,6 @@
     --secondary-foreground: 0 0% 100%;
     --muted: 240 4% 18%;
     --muted-foreground: 215 20% 75%;
-    /* TL-175B — no escuro o token continua o navy claro medido do painel (antes herdado
-       do `:root` por engano, o que o deixava ilegível no claro). Medido: 10,88:1 sobre
-       --background e 10,01:1 sobre --card. */
-    --foreground-secondary: 215 30% 78%;
     --accent: 240 5% 16%;
     --accent-foreground: 210 40% 98%;
     --destructive: 354 100% 68%;
@@ -549,22 +525,4 @@
 
     --chat-pattern-rgb: 148 163 184;
     --chat-pattern-opacity: 0.122;
-
-    /* ===== CORES DE CATEGORIA (tema escuro) — ver a seção no :root =====
-       No escuro o preenchimento clareia (L ~72-74) e o texto sobre ele é o tom
-       escuro da própria matiz — mesmo padrão do --destructive/--warning do escuro.
-       Contraste WCAG 2.1 medido:
-         o --nome-text sobre card/popover: violeta 7,2 / teal 12,1 / rosa 8,1:1;
-         foreground escuro sobre o preenchimento: 6,7 / 10,7 / 7,4:1;
-         preenchimento sobre o card: 6,5 / 11,6 / 7,5:1.
-    */
-    --violeta: 265 80% 74%;
-    --violeta-foreground: 265 60% 12%;
-    --violeta-text: 265 75% 76%;
-    --teal: 190 85% 72%;
-    --teal-foreground: 190 60% 10%;
-    --teal-text: 190 80% 76%;
-    --rosa: 335 80% 74%;
-    --rosa-foreground: 335 60% 12%;
-    --rosa-text: 335 75% 76%;
 }

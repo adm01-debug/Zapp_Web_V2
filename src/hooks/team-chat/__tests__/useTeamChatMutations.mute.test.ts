@@ -5,8 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
  * TC-007 (refazer 2) — prova executável do outro lado da fonte única: a mutação
- * real grava a preferência de mute na membership autenticada e revalida
- * `team-conversations`.
+ * real grava `team_conversation_members.is_muted` e revalida `team-conversations`.
  *
  * O painel (`src/components/team-chat/useTeamChatPanel.ts`) consome este escritor
  * pelo re-export `@/hooks/chat/useTeamChat`, não pelo módulo de implementação. Um
@@ -18,14 +17,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
  * de volta para `../useTeamChatMutations` zera o contador e o teste fica VERMELHO
  * — é assim que o defeito é detectado. O hook executado continua sendo o real:
  * o wrapper repassa para a implementação (`actual`).
- *
- * SL-016 (F44): a escrita passou a ser a RPC `set_team_member_pref` — o UPDATE
- * direto anterior não distinguia "silenciado" de "0 linhas afetadas" (sem
- * membership o RLS filtrava sem erro e a tela mostrava um mute inexistente).
  */
 const h = vi.hoisted(() => ({
-  rpc: vi.fn(),
   from: vi.fn(),
+  update: vi.fn(),
+  eq: vi.fn(),
   chamadasViaModuloDoPainel: 0,
 }));
 
@@ -34,7 +30,7 @@ vi.mock('@/hooks/auth/useAuth', () => ({
 }));
 vi.mock('@/hooks/ui/use-toast', () => ({ toast: vi.fn() }));
 vi.mock('@/integrations/supabase/client', () => ({
-  supabase: { rpc: h.rpc, from: h.from },
+  supabase: { from: h.from },
 }));
 
 // Tripwire do caminho do painel: só conta quando o hook chega pelo re-export
@@ -51,17 +47,22 @@ vi.mock('@/hooks/chat/useTeamChat', async (importOriginal) => {
 });
 
 import { useToggleMuteConversation } from '@/hooks/chat/useTeamChat';
-import { queryKeys } from '@/hooks/team-chat/queryKeys';
 
-describe('TC-007/SL-016 — escrita do mute usa a mesma membership lida pelo painel', () => {
+describe('TC-007 — escrita do mute usa a mesma membership lida pelo painel', () => {
   beforeEach(() => {
-    h.rpc.mockReset();
     h.from.mockReset();
-    h.rpc.mockResolvedValue({ data: null, error: null });
+    h.update.mockReset();
+    h.eq.mockReset();
     h.chamadasViaModuloDoPainel = 0;
+
+    h.eq
+      .mockReturnValueOnce({ eq: h.eq })
+      .mockResolvedValueOnce({ error: null });
+    h.update.mockReturnValue({ eq: h.eq });
+    h.from.mockReturnValue({ update: h.update });
   });
 
-  it('grava a preferência pela RPC set_team_member_pref e invalida team-conversations', async () => {
+  it('grava is_muted na membership autenticada e invalida team-conversations', async () => {
     const queryClient = new QueryClient({
       defaultOptions: { mutations: { retry: false }, queries: { retry: false } },
     });
@@ -77,30 +78,10 @@ describe('TC-007/SL-016 — escrita do mute usa a mesma membership lida pelo pai
       await result.current.mutateAsync({ conversationId: 'conv-a', muted: true });
     });
 
-    expect(h.rpc).toHaveBeenCalledWith('set_team_member_pref', {
-      p_conversation_id: 'conv-a',
-      p_is_muted: true,
-    });
-    // Sem escrita direta na tabela: a RPC é quem decide (e falha) sobre a
-    // membership ausente.
-    expect(h.from).not.toHaveBeenCalled();
-    expect(invalidate).toHaveBeenCalledWith({ queryKey: queryKeys.inbox() });
-  });
-
-  it('propaga o erro da RPC quando a membership não existe (not_member)', async () => {
-    h.rpc.mockResolvedValue({ data: null, error: { message: 'not_member' } });
-
-    const queryClient = new QueryClient({
-      defaultOptions: { mutations: { retry: false }, queries: { retry: false } },
-    });
-    const wrapper = ({ children }: { children: React.ReactNode }) =>
-      React.createElement(QueryClientProvider, { client: queryClient }, children);
-    const { result } = renderHook(() => useToggleMuteConversation(), { wrapper });
-
-    await act(async () => {
-      await expect(
-        result.current.mutateAsync({ conversationId: 'conv-inexistente', muted: true }),
-      ).rejects.toMatchObject({ message: 'not_member' });
-    });
+    expect(h.from).toHaveBeenCalledWith('team_conversation_members');
+    expect(h.update).toHaveBeenCalledWith({ is_muted: true });
+    expect(h.eq).toHaveBeenNthCalledWith(1, 'conversation_id', 'conv-a');
+    expect(h.eq).toHaveBeenNthCalledWith(2, 'profile_id', 'user-1');
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['team-conversations'] });
   });
 });

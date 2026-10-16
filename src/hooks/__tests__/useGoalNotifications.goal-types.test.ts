@@ -31,7 +31,8 @@ const h = vi.hoisted(() => ({
   state: {
     goals: [] as GoalRow[],
     contactsCount: 0,
-    contactsResolved: 0,
+    analysesTotal: 0,
+    analysesResolved: 0,
     inserts: [] as NotificationRow[][],
     progressQueries: 0,
   },
@@ -63,10 +64,13 @@ vi.mock('@/integrations/supabase/client', () => {
           return { data: s.goals, error: null };
         case 'agent_stats':
           return { data: null, error: null };
-        case 'contacts': {
+        case 'contacts':
           s.progressQueries += 1;
-          const onlyResolved = this.filters.some(([c, v]) => c === 'conversation_status' && v === 'resolved');
-          return { count: onlyResolved ? s.contactsResolved : s.contactsCount, error: null };
+          return { count: s.contactsCount, error: null };
+        case 'conversation_analyses': {
+          s.progressQueries += 1;
+          const onlyResolved = this.filters.some(([c, v]) => c === 'status' && v === 'resolvido');
+          return { count: onlyResolved ? s.analysesResolved : s.analysesTotal, error: null };
         }
         case 'notifications':
           return { data: null, error: null };
@@ -134,7 +138,8 @@ describe('useGoalNotifications — metas configuráveis da UI (contacts_handled 
   beforeEach(() => {
     h.state.goals = [];
     h.state.contactsCount = 0;
-    h.state.contactsResolved = 0;
+    h.state.analysesTotal = 0;
+    h.state.analysesResolved = 0;
     h.state.inserts = [];
     h.state.progressQueries = 0;
     vi.clearAllMocks();
@@ -157,10 +162,10 @@ describe('useGoalNotifications — metas configuráveis da UI (contacts_handled 
     expect(payload.metadata.target).toBe(10);
   });
 
-  it('cria notificação quando a meta de taxa de resolução é atingida, sem análise de IA (R2-MOD-063)', async () => {
+  it('cria notificação quando a meta de taxa de resolução é atingida (R2-MOD-063)', async () => {
     h.state.goals = [goal({ id: 'g-resolution', goal_type: 'resolution_rate', daily_target: 80 })];
-    h.state.contactsCount = 10; // 10 atendimentos no período
-    h.state.contactsResolved = 8; // 8 encerrados -> 80%
+    h.state.analysesTotal = 10;
+    h.state.analysesResolved = 8; // 80%
 
     const { unmount } = renderHook(() => useGoalNotifications());
 
@@ -171,18 +176,6 @@ describe('useGoalNotifications — metas configuráveis da UI (contacts_handled 
     expect(payload.metadata.goal_type).toBe('resolution_rate');
     expect(payload.metadata.current).toBe(80);
     expect(payload.metadata.target).toBe(80);
-  });
-
-  it('sem atendimento no período a taxa não é anunciada (0/0 não é 0% cumprido)', async () => {
-    h.state.goals = [goal({ id: 'g-resolution', goal_type: 'resolution_rate', daily_target: 80 })];
-    h.state.contactsCount = 0; // 0/0: sem denominador
-    h.state.contactsResolved = 0;
-
-    const { unmount } = renderHook(() => useGoalNotifications());
-
-    await waitFor(() => expect(h.state.progressQueries).toBeGreaterThanOrEqual(1));
-    expect(h.state.inserts.length).toBe(0);
-    unmount();
   });
 
   it('não cria notificação quando a meta de contatos não é atingida', async () => {

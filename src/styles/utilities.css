@@ -245,34 +245,3 @@
 .chip-active.chip-active {
   color: hsl(var(--primary-text));
 }
-
-/* ===== ALVO DE TOQUE 44px — SOMENTE EM PONTEIRO GROSSO (toque) =====
-   t_17d91156, ajustado no refazer t_9a266076. WCAG 2.5.5 (AAA) e Apple HIG pedem
-   44x44 CSS px de alvo para o toque; os primitivos da UI (fechar do dialog/sheet,
-   checkbox, radio) nascem com 16-24px, que é o tamanho certo para o mouse.
-   Aqui a ÁREA DE TOQUE ganha 44x44 APENAS quando o apontador é grosso, SEM alterar o
-   desenho: um `::after` centrado de 44x44 faz parte da caixa de hit-test do PRÓPRIO
-   controle (o toque acerta o elemento), mas não muda `display`, borda, fundo nem o
-   tamanho visível. Foi assim que o refazer corrigiu dois efeitos colaterais da versão
-   anterior: (a) `display: inline-flex` sobrescrevia `hidden`/`sm:hidden`/`flex`/`grid`
-   que o consumidor passa ao Button/IconButton (`hidden md:inline-flex`) e reexibia
-   botão escondido no celular; (b) inflar a caixa desenhada pintava um quadrado/círculo
-   de 44px com borda no checkbox/radio e um bloco de 44px no X do sheet
-   (`data-[state=open]:bg-secondary`).
-   Os BOTÕES pequenos (Button/IconButton) NÃO usam esta classe: ganham a variante
-   Tailwind `[@media(pointer:coarse)]:min-h-[44px] [@media(pointer:coarse)]:min-w-[44px]`
-   na cva, que o `twMerge` resolve com `h-8`/`h-10` e fica na camada de utilitários.
-   O elemento precisa estar posicionado para o `::after` ancorar nele: o X já é
-   `absolute`; o checkbox/radio trazem `relative`.
-   Prova em pixel real: e2e/a11y-toque-44px.spec.ts (Chromium, devices['Pixel 5']). */
-@media (pointer: coarse) {
-  .alvo-toque-44::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 44px;
-    height: 44px;
-    transform: translate(-50%, -50%);
-  }
-}

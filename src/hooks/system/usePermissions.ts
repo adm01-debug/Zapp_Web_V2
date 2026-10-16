@@ -21,23 +21,21 @@ export function usePermissions() {
   const [rolePermissions, setRolePermissions] = useState<RolePermission[]>([]);
   const [userPermissions, setUserPermissions] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   const fetchPermissions = useCallback(async () => {
-    const { data, error: permError } = await supabase
+    const { data, error } = await supabase
       .from('permissions')
       .select('*')
       .order('category', { ascending: true });
 
-    // Falha de leitura não é "sem permissão": lança para o loadAll registrar o erro.
-    if (permError) throw permError;
-
-    setPermissions(data ?? []);
+    if (!error && data) {
+      setPermissions(data);
+    }
     return data || [];
   }, []);
 
   const fetchRolePermissions = useCallback(async () => {
-    const { data, error: rpError } = await supabase
+    const { data, error } = await supabase
       .from('role_permissions')
       .select(`
         role,
@@ -50,9 +48,7 @@ export function usePermissions() {
         )
       `);
 
-    if (rpError) throw rpError;
-
-    if (data) {
+    if (!error && data) {
       const mapped = data.map(rp => ({
         role: rp.role as 'admin' | 'supervisor' | 'agent' | 'special_agent',
         permission_id: rp.permission_id,
@@ -64,20 +60,13 @@ export function usePermissions() {
   }, []);
 
   const fetchUserPermissions = useCallback(async () => {
-    if (!user) {
-      setUserPermissions([]);
-      return [];
-    }
+    if (!user) return [];
 
     // Get user's roles first
-    const { data: userRoles, error: rolesError } = await supabase
+    const { data: userRoles } = await supabase
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id);
-
-    // Antes o erro era engolido e as permissões ficavam vazias como se o usuário não
-    // tivesse nenhuma: lança para o loadAll poder tentar de novo e sinalizar a falha.
-    if (rolesError) throw rolesError;
 
     if (!userRoles || userRoles.length === 0) {
       setUserPermissions([]);
@@ -87,12 +76,10 @@ export function usePermissions() {
     const roles = userRoles.map(r => r.role);
 
     // Get permissions for those roles
-    const { data: perms, error: permsError } = await supabase
+    const { data: perms } = await supabase
       .from('role_permissions')
       .select('permissions(name)')
       .in('role', roles);
-
-    if (permsError) throw permsError;
 
     if (perms) {
       const permNames = perms
@@ -105,20 +92,6 @@ export function usePermissions() {
 
     return [];
   }, [user]);
-
-  /** Repete a leitura de permissões do usuário antes de desistir (falha transitória de rede). */
-  const fetchUserPermissionsWithRetry = useCallback(async () => {
-    const maxAttempts = 3;
-    let lastError: unknown;
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      try {
-        return await fetchUserPermissions();
-      } catch (err) {
-        lastError = err;
-      }
-    }
-    throw lastError instanceof Error ? lastError : new Error('Falha ao carregar as permissões do usuário');
-  }, [fetchUserPermissions]);
 
   /** Server-side permission check via SECURITY DEFINER RPC */
   const checkPermissionServer = useCallback(async (permissionName: string): Promise<boolean> => {
@@ -172,48 +145,27 @@ export function usePermissions() {
   useEffect(() => {
     const loadAll = async () => {
       setLoading(true);
-      setError(null);
-      try {
-        await Promise.all([
-          fetchPermissions(),
-          fetchRolePermissions(),
-          fetchUserPermissionsWithRetry()
-        ]);
-      } catch (err) {
-        // Permissões não carregaram: nega por padrão (userPermissions vazio) e sinaliza.
-        console.error('[usePermissions] falha ao carregar as permissões', err);
-        setUserPermissions([]);
-        setError(err instanceof Error ? err.message : 'Falha ao carregar as permissões');
-      } finally {
-        setLoading(false);
-      }
+      await Promise.all([
+        fetchPermissions(),
+        fetchRolePermissions(),
+        fetchUserPermissions()
+      ]);
+      setLoading(false);
     };
     void loadAll();
-  }, [fetchPermissions, fetchRolePermissions, fetchUserPermissionsWithRetry]);
+  }, [fetchPermissions, fetchRolePermissions, fetchUserPermissions]);
 
   return {
     permissions,
     rolePermissions,
     userPermissions,
     loading,
-    /** Mensagem quando as permissões não carregaram; `null` = leitura ok. A UI nega por padrão. */
-    error,
     hasPermission,
     hasAnyPermission,
     hasAllPermissions,
     checkPermissionServer,
     addPermissionToRole,
     removePermissionFromRole,
-    refetch: async () => {
-      setError(null);
-      try {
-        return await Promise.all([fetchPermissions(), fetchRolePermissions(), fetchUserPermissionsWithRetry()]);
-      } catch (err) {
-        console.error('[usePermissions] falha ao carregar as permissões', err);
-        setUserPermissions([]);
-        setError(err instanceof Error ? err.message : 'Falha ao carregar as permissões');
-        throw err;
-      }
-    }
+    refetch: () => Promise.all([fetchPermissions(), fetchRolePermissions(), fetchUserPermissions()])
   };
 }

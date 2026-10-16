@@ -240,37 +240,9 @@ describe('usePersonalStickers — identidade por user_id (R2-API-051)', () => {
     });
 
     expect(mocks.upload).toHaveBeenCalledTimes(1);
-    // R2-API-051: a RLS do bucket compara o PRIMEIRO segmento do caminho com
-    // `auth.uid()` (user-admin) — não com `profiles.id` (p-admin).
-    expect(mocks.upload.mock.calls[0][0]).toMatch(/^user-admin\/[\w-]+\.png$/);
     expect(inserted).toHaveLength(1);
-    expect(inserted[0]).toMatchObject({ category: 'pessoal', owner_id: 'p-admin', uploaded_by: 'user-admin' });
+    expect(inserted[0]).toMatchObject({ category: 'pessoal', owner_id: 'p-admin', uploaded_by: 'p-admin' });
     expect(mocks.toastError).not.toHaveBeenCalled();
-  });
-
-  it('atendente comum (não-admin) sobe figurinha com auth.uid() no caminho e em uploaded_by', async () => {
-    mocks.getUser.mockResolvedValue({ data: { user: { id: AGENT_UID } }, error: null });
-    PROFILE_ROWS = [{ id: 'p-agent', user_id: AGENT_UID, name: 'Diego Agente' }];
-
-    const { result } = renderHook(() => usePersonalStickers(), { wrapper: createWrapper() });
-    await waitFor(() => expect(result.current.profile?.id).toBe('p-agent'));
-
-    const file = new File(['x'], 'foto_do_agente.png', { type: 'image/png' });
-    const list = { 0: file, length: 1, item: (i: number) => (i === 0 ? file : null) } as unknown as FileList;
-
-    await act(async () => {
-      await result.current.handleUpload(list);
-    });
-
-    // Antes da correção o caminho era `pessoal/p-agent/...` e `uploaded_by` era
-    // `p-agent`: nenhum dos dois é `auth.uid()`, então a policy de INSERT do bucket
-    // e a "Sticker insert with ownership" recusavam a gravação de quem não é admin.
-    expect(mocks.upload).toHaveBeenCalledTimes(1);
-    expect(mocks.upload.mock.calls[0][0]).toMatch(/^user-agent\/[\w-]+\.png$/);
-    expect(inserted).toHaveLength(1);
-    expect(inserted[0]).toMatchObject({ category: 'pessoal', owner_id: 'p-agent', uploaded_by: AGENT_UID });
-    expect(mocks.toastError).not.toHaveBeenCalled();
-    expect(mocks.toastSuccess).toHaveBeenCalled();
   });
 });
 

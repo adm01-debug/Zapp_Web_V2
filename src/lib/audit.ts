@@ -21,8 +21,7 @@ export type AuditAction =
   | 'searchbox_cost_guard'
   | 'searchbox_budget_warning'
   | 'searchbox_selected'
-  | 'location_sent'
-  | 'unauthorized_access';
+  | 'location_sent';
 
 interface AuditLogParams {
   action: AuditAction;

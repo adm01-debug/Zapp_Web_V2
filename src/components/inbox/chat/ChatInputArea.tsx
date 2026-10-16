@@ -216,7 +216,6 @@ export function ChatInputArea(props: ChatInputAreaProps) {
               <CustomEmojiPicker onSendEmoji={onSendCustomEmoji} />
               <FileUploader ref={fileUploaderRef} instanceName={instanceName || ''} recipientNumber={contactPhone}
                 contactId={contactId} connectionId={undefined}
-                replyToId={replyToMessage?.id ?? null}
                 onFileSelect={(file, category) => toast({ title: 'Arquivo selecionado', description: `${file.name} (${category}) será enviado.` })}
                 onFileSent={() => toast({ title: 'Arquivo enviado!', description: 'O arquivo foi enviado com sucesso.' })}
               />

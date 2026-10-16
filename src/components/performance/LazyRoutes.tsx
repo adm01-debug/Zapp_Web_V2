@@ -1,7 +1,7 @@
 import React, { Suspense, lazy, ComponentType } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, Sparkles } from 'lucide-react';
-import { Skeleton, SkeletonRegion } from '@/components/ui/skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // Lazy loaded views
 export const LazyDashboardView = lazy(() => import('@/components/dashboard/DashboardView').then(m => ({ default: m.DashboardView })));
@@ -28,7 +28,7 @@ export function LazyLoadFallback({ type = 'default' }: LazyLoadFallbackProps) {
     switch (type) {
       case 'dashboard':
         return (
-          <SkeletonRegion className="p-6 space-y-6" label="Carregando painel">
+          <div className="p-6 space-y-6">
             <Skeleton className="h-16 w-full" />
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {[1, 2, 3, 4].map((i) => (
@@ -39,20 +39,20 @@ export function LazyLoadFallback({ type = 'default' }: LazyLoadFallbackProps) {
               <Skeleton className="h-64 lg:col-span-2" />
               <Skeleton className="h-64" />
             </div>
-          </SkeletonRegion>
+          </div>
         );
       case 'list':
         return (
-          <SkeletonRegion className="p-6 space-y-4" label="Carregando lista">
+          <div className="p-6 space-y-4">
             <Skeleton className="h-12 w-full" />
             {[1, 2, 3, 4, 5].map((i) => (
               <Skeleton key={i} className="h-16 w-full" />
             ))}
-          </SkeletonRegion>
+          </div>
         );
       case 'form':
         return (
-          <SkeletonRegion className="p-6 space-y-4 max-w-2xl mx-auto" label="Carregando formulário">
+          <div className="p-6 space-y-4 max-w-2xl mx-auto">
             <Skeleton className="h-10 w-48" />
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="space-y-2">
@@ -61,11 +61,11 @@ export function LazyLoadFallback({ type = 'default' }: LazyLoadFallbackProps) {
               </div>
             ))}
             <Skeleton className="h-10 w-32" />
-          </SkeletonRegion>
+          </div>
         );
       case 'chat':
         return (
-          <SkeletonRegion className="flex h-full" label="Carregando conversa">
+          <div className="flex h-full">
             <div className="w-80 border-r p-4 space-y-3">
               {[1, 2, 3, 4, 5].map((i) => (
                 <Skeleton key={i} className="h-16 w-full" />
@@ -80,7 +80,7 @@ export function LazyLoadFallback({ type = 'default' }: LazyLoadFallbackProps) {
               </div>
               <Skeleton className="h-14 w-full" />
             </div>
-          </SkeletonRegion>
+          </div>
         );
       default:
         return (

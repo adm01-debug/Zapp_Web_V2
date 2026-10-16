@@ -94,9 +94,6 @@ export interface EvolutionDbClient {
   from(table: string): EvolutionTableBuilder;
   rpc(fn: string, args?: Record<string, unknown>): PromiseLike<EvolutionQueryResult>;
   storage: { from(bucket: string): EvolutionStorageBucket };
-  // `options` carrega `{ config: { private: true } }` no client real — sem isso
-  // o canal público não passa pela RLS de realtime.messages (PD-68). Opcional
-  // para não quebrar os dublês que só exercitam o caminho público antigo.
-  channel(name: string, options?: Record<string, unknown>): EvolutionRealtimeChannel;
+  channel(name: string): EvolutionRealtimeChannel;
   removeChannel(channel: EvolutionRealtimeChannel): void;
 }

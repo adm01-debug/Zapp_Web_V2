@@ -19,7 +19,7 @@ export function WarRoomMetricCard({ icon: Icon, label, value, suffix, trend, ale
       whileHover={{ scale: 1.02 }}
       className={cn(
         "p-4 rounded-xl border bg-card transition-all",
-        critical && "border-destructive bg-destructive/10 motion-safe:animate-pulse",
+        critical && "border-destructive bg-destructive/10 animate-pulse",
         alert && !critical && "border-warning bg-warning/10",
         positive && "border-success/50"
       )}

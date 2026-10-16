@@ -2,12 +2,10 @@
  * CRM360ExplorerView — Full CRM 360° data explorer
  */
 import { useState, useCallback } from 'react';
-import { MotionConfig } from 'framer-motion';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Building2, Pencil } from 'lucide-react';
 import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
 import { CRM360StatsCards } from './CRM360StatsCards';
@@ -16,7 +14,6 @@ import { ContactFormDialog } from './ContactFormDialog';
 import { DataExplorerTable } from './DataExplorerTable';
 import { TABS } from './crm360TabsConfig';
 import { useUserRole } from '@/hooks/system/useUserRole';
-import { PageHeader } from '@/components/layout/PageHeader';
 
 export function CRM360ExplorerView() {
   const { isSupervisor, loading: roleLoading } = useUserRole();
@@ -40,26 +37,7 @@ export function CRM360ExplorerView() {
 
   const handleSuccess = useCallback(() => setRefreshKey(k => k + 1), []);
 
-  // Enquanto a permissão de supervisor é checada, mostra um esqueleto do
-  // conteúdo (mesmo padrão de QueuesView.tsx) em vez de tela em branco.
-  if (roleLoading) {
-    return (
-      <div className="space-y-4 h-full flex flex-col w-full min-w-0" role="status" aria-label="Carregando CRM 360">
-        <div className="flex items-center justify-between">
-          <div>
-            <Skeleton className="h-8 w-64 mb-2" />
-            <Skeleton className="h-4 w-96" />
-          </div>
-          <Skeleton className="h-6 w-24" />
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-24 w-full rounded-lg" />)}
-        </div>
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="flex-1 w-full min-h-[200px] rounded-lg" />
-      </div>
-    );
-  }
+  if (roleLoading) return null;
 
   if (!isSupervisor) {
     return (
@@ -88,14 +66,14 @@ export function CRM360ExplorerView() {
   }
 
   return (
-    <MotionConfig reducedMotion="user">
     <div className="space-y-4 h-full flex flex-col w-full min-w-0">
-      <PageHeader
-        title="CRM 360° Explorer"
-        subtitle="Acesso completo a todas as tabelas do banco de dados CRM externo"
-        breadcrumbs={[{ label: 'Gestão' }, { label: 'CRM 360°' }]}
-        topRight={<Badge variant="outline" className="text-xs">{TABS.length} tabelas</Badge>}
-      />
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2"><Building2 className="h-6 w-6 text-primary" />CRM 360° Explorer</h1>
+          <p className="text-sm text-muted-foreground mt-1">Acesso completo a todas as tabelas do banco de dados CRM externo</p>
+        </div>
+        <Badge variant="outline" className="text-xs">{TABS.length} tabelas</Badge>
+      </div>
 
       <CRM360StatsCards />
 
@@ -105,7 +83,7 @@ export function CRM360ExplorerView() {
             {TABS.map((tab) => {
               const Icon = tab.icon;
               return (
-                <TabsTrigger key={tab.id} value={tab.id} className="flex items-center gap-1 text-2xs px-2.5 py-1.5 whitespace-nowrap min-h-[44px]">
+                <TabsTrigger key={tab.id} value={tab.id} className="flex items-center gap-1 text-2xs px-2.5 py-1.5 whitespace-nowrap">
                   <Icon className="h-3 w-3" />{tab.label}
                   {tab.editable && <Pencil className="h-2.5 w-2.5 text-primary/60" />}
                 </TabsTrigger>
@@ -123,11 +101,11 @@ export function CRM360ExplorerView() {
                   <CardHeader className="py-2.5 px-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h2 className="text-sm font-semibold leading-none tracking-tight flex items-center gap-2">
+                        <CardTitle className="text-sm flex items-center gap-2">
                           {(() => { const Icon = tab.icon; return <Icon className="h-4 w-4 text-primary" />; })()}
                           {tab.label}
                           {tab.editable && <Badge variant="secondary" className="text-[9px] px-1.5 py-0"><Pencil className="h-2.5 w-2.5 mr-0.5" /> Editável</Badge>}
-                        </h2>
+                        </CardTitle>
                         <CardDescription className="text-2xs mt-0.5">{tab.description}</CardDescription>
                       </div>
                     </div>
@@ -150,6 +128,5 @@ export function CRM360ExplorerView() {
       <CompanyFormDialog open={companyDialogOpen} onOpenChange={setCompanyDialogOpen} company={editingCompany} onSuccess={handleSuccess} />
       <ContactFormDialog open={contactDialogOpen} onOpenChange={setContactDialogOpen} contact={editingContact} onSuccess={handleSuccess} />
     </div>
-    </MotionConfig>
   );
 }

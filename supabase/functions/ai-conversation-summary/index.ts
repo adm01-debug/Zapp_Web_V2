@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, createAuthedClient } from "../_shared/validation.ts";
+import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, checkRateLimit, getClientIP, createAuthedClient } from "../_shared/validation.ts";
 import { AiConversationSummarySchema, CONTEXT_CONTRACT_VERSION, CONTEXT_SUPERSEDED_REASON, contextCancelledEnvelope, measureConversationContext, parseBody, revalidateContextBeforeEffect, validationErrorResponse } from "../_shared/schemas.ts";
 import { normalizeSentiment, normalizeUrgency, urgencyToOperationalPriority } from "../_shared/ai-vocabulary.ts";
 import { normalizeScore } from "../_shared/ai-values.ts";
@@ -24,9 +24,10 @@ Deno.serve(async (req) => {
   const userId = extractUserIdFromRequest(req);
 
   try {
-    // Limite POR USUÁRIO (contador compartilhado + cota diária, IA-043) via
-    // `enforceAiGuards`. O contador em memória por IP saiu: era por isolate,
-    // zerava no cold start e fazia colegas atrás do mesmo NAT dividirem a cota.
+    const ip = getClientIP(req);
+    const { allowed } = checkRateLimit(`summary:${ip}`, 10, 60_000);
+    if (!allowed) return errorResponse("Rate limit exceeded. Please try again later.", 429, req);
+
     const parsed = parseBody(AiConversationSummarySchema, await req.json());
     if (!parsed.success) return validationErrorResponse(parsed, req);
 
@@ -65,8 +66,7 @@ Deno.serve(async (req) => {
         contactId: visibleContactId,
         // IA-061/IA-065: o resumo precisa do MESMO contexto profissional da
         // análise — `contact_type` (papel do interlocutor) sai daqui.
-        // A coluna de ETIQUETAS do contato saiu do prompt (migration em trilha separada).
-        contactColumns: 'name, company, ai_priority, ai_sentiment, notes, contact_type',
+        contactColumns: 'name, company, tags, ai_priority, ai_sentiment, notes, contact_type',
         analysisColumns: 'sentiment, summary, created_at',
       });
 

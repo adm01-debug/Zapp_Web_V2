@@ -2,79 +2,14 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/ui/use-toast';
 import { log } from '@/lib/logger';
-import { MAX_PTT_DURATION_SEC } from '@/lib/audio/pttLimits';
-import { convertAudioToMp3 } from '@/utils/audioToMp3';
 
 interface UseAudioRecorderOptions {
   onRecordingComplete?: (audioBlob: Blob, audioUrl: string) => void;
   maxDuration?: number; // in seconds
 }
 
-// Formatos aceitos pelo MediaRecorder, do mais leve/universal (webm+opus, Chrome e
-// Android) ao único que o Safari/iOS antigo grava (mp4/aac).
-const RECORDER_MIME_CANDIDATES = [
-  'audio/webm;codecs=opus',
-  'audio/webm',
-  'audio/mp4;codecs=aac',
-  'audio/mp4',
-] as const;
-
-/**
- * Primeiro formato que ESTE navegador aceita gravar, perguntando ao próprio
- * MediaRecorder. Sem `isTypeSupported` (navegador antigo) ou sem nenhum formato
- * da lista, devolve `undefined` — o MediaRecorder escolhe o padrão sozinho em vez
- * de a gravação falhar por causa de um mimeType fixo.
- */
-export function pickRecorderMime(): string | undefined {
-  if (typeof MediaRecorder === 'undefined' || typeof MediaRecorder.isTypeSupported !== 'function') {
-    return undefined;
-  }
-  for (const mime of RECORDER_MIME_CANDIDATES) {
-    try {
-      if (MediaRecorder.isTypeSupported(mime)) return mime;
-    } catch {
-      // isTypeSupported não deveria lançar; um aparelho teimoso não pode derrubar a gravação.
-    }
-  }
-  return undefined;
-}
-
-/** Extensão coerente com o tipo do blob enviado ao bucket. */
-function mimeToExtension(contentType: string): string {
-  const base = contentType.split(';')[0].trim().toLowerCase();
-  if (base === 'audio/mpeg') return 'mp3';
-  if (base === 'audio/mp4' || base === 'audio/aac') return 'm4a';
-  if (base === 'audio/ogg') return 'ogg';
-  return 'webm';
-}
-
-/**
- * Traduz a falha real (permissão, microfone ausente, formato) numa mensagem que
- * diz o que fazer. Antes toda falha virava 'Não foi possível acessar o microfone'.
- */
-export function describeRecorderError(error: unknown): string {
-  const name = error instanceof Error ? error.name : '';
-  switch (name) {
-    case 'NotAllowedError':
-    case 'SecurityError':
-      return 'Permissão de microfone negada. Autorize o acesso ao microfone no navegador e tente de novo.';
-    case 'NotFoundError':
-    case 'DevicesNotFoundError':
-      return 'Nenhum microfone encontrado. Conecte um microfone e tente de novo.';
-    case 'NotReadableError':
-    case 'TrackStartError':
-      return 'O microfone está em uso por outro aplicativo. Feche o outro aplicativo e tente de novo.';
-    case 'NotSupportedError':
-      return 'Este navegador não suporta a gravação de áudio no formato disponível. Atualize o navegador e tente de novo.';
-    default:
-      return 'Não foi possível acessar o microfone.';
-  }
-}
-
 export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
-  // PE-24: o padrão é o teto de PTT do WhatsApp (16 min) — antes era um 300 s solto,
-  // que cortava a gravação na metade do limite real.
-  const { onRecordingComplete, maxDuration = MAX_PTT_DURATION_SEC } = options;
+  const { onRecordingComplete, maxDuration = 300 } = options;
   
   const [isRecording, setIsRecording] = useState(false);
   const [duration, setDuration] = useState(0);
@@ -154,26 +89,12 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
       
       streamRef.current = stream;
       chunksRef.current = [];
-
-      // MediaRecorder ausente = navegador sem gravação de áudio: erro de formato,
-      // tratado abaixo, em vez de estourar um ReferenceError genérico.
-      if (typeof MediaRecorder === 'undefined') {
-        stream.getTracks().forEach((track) => track.stop());
-        streamRef.current = null;
-        const erro = new Error('MediaRecorder indisponível neste navegador');
-        erro.name = 'NotSupportedError';
-        throw erro;
-      }
-
-      // Formato perguntado ao navegador (Safari/iOS antigo não grava webm).
-      const mimeType = pickRecorderMime();
-
+      
       let mediaRecorder: MediaRecorder;
       try {
-        // Sem candidato suportado, deixa o navegador escolher o padrão dele.
-        mediaRecorder = mimeType
-          ? new MediaRecorder(stream, { mimeType })
-          : new MediaRecorder(stream);
+        mediaRecorder = new MediaRecorder(stream, {
+          mimeType: 'audio/webm;codecs=opus'
+        });
       } catch (error) {
         stream.getTracks().forEach((track) => track.stop());
         streamRef.current = null;
@@ -192,10 +113,7 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
         if (!mountedRef.current) {
           return;
         }
-        // O blob declara o tipo REAL da gravação (mp4/aac no Safari), não um webm fixo.
-        const audioBlob = new Blob(chunksRef.current, {
-          type: mediaRecorder.mimeType || mimeType || 'audio/webm',
-        });
+        const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' });
         const url = URL.createObjectURL(audioBlob);
         setAudioUrl(url);
         onRecordingCompleteRef.current?.(audioBlob, url);
@@ -219,7 +137,7 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
       log.error('Error starting recording:', error);
       toast({
         title: 'Erro ao gravar',
-        description: describeRecorderError(error),
+        description: 'Não foi possível acessar o microfone.',
         variant: 'destructive',
       });
     }
@@ -236,18 +154,12 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
   }, [releaseCapture]);
 
   const uploadAudio = useCallback(async (blob: Blob, conversationId: string) => {
-    // Formato de gravação muda por navegador (webm/opus no Chrome, mp4/aac no Safari).
-    // Normaliza para MP3 antes de subir — é o único que toca em todos os aparelhos —
-    // e, se a conversão não estiver disponível, sobe o próprio blob com o tipo real.
-    const normalizado = await convertAudioToMp3(blob, 'gravacao');
-    const uploadBlob = normalizado.ok ? normalizado.blob : blob;
-    const contentType = uploadBlob.type || 'audio/webm';
-    const fileName = `${conversationId}/${Date.now()}.${mimeToExtension(contentType)}`;
-
+    const fileName = `${conversationId}/${Date.now()}.webm`;
+    
     const { error } = await supabase.storage
       .from('audio-messages')
-      .upload(fileName, uploadBlob, {
-        contentType,
+      .upload(fileName, blob, {
+        contentType: 'audio/webm',
       });
     
     if (error) {

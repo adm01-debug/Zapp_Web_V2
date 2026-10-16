@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { MediaType, MAX_UPLOAD_SIZE_BYTES, MAX_UPLOAD_SIZE_MB, getBucket } from './useMediaLibrary';
 import { convertAudioToMp3 } from '@/utils/audioToMp3';
-import { removeStoredObjectBestEffort, requireUserStoragePath } from '@/lib/storage_object_upload';
+import { removeStoredObjectBestEffort } from '@/lib/storage_object_upload';
 
 const log = getLogger('useMediaUpload');
 
@@ -39,18 +39,9 @@ export function useMediaUpload(type: MediaType, onComplete: () => void) {
       return;
     }
 
-    // PK-16: `audio-memes` (e `stickers`/`emojis`) só aceitam a chave com a pasta do
-    // usuário. A sessão vem antes do estado de upload — sem ela o objeto cairia fora da
-    // policy e o Storage devolveria 42501.
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user?.id) {
-      toast.error('Sessão expirada: entre novamente para importar arquivos');
-      if (fileInputRef.current) fileInputRef.current.value = '';
-      return;
-    }
-
     setBulkUploading(true);
     setUploadProgress(0);
+    const { data: { user } } = await supabase.auth.getUser();
     let successCount = 0;
 
     for (let i = 0; i < sizedFiles.length; i++) {
@@ -65,7 +56,7 @@ export function useMediaUpload(type: MediaType, onComplete: () => void) {
         const payload: File | Blob = converted?.ok ? converted.blob : file;
         const contentType = converted?.ok ? 'audio/mpeg' : (file.type || 'application/octet-stream');
         const ext = converted?.ok ? 'mp3' : (file.name.split('.').pop() || (type === 'audio_memes' ? 'mp3' : 'webp'));
-        const storagePath = requireUserStoragePath(user.id, `bulk_${Date.now()}_${crypto.randomUUID()}.${ext}`);
+        const storagePath = `bulk_${Date.now()}_${crypto.randomUUID()}.${ext}`;
         const { error: uploadError } = await supabase.storage
           .from(bucket).upload(storagePath, payload, { contentType, cacheControl: '31536000' });
         if (uploadError) { log.error(`Upload error for ${file.name}:`, uploadError); continue; }

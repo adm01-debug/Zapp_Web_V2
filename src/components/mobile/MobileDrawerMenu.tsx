@@ -20,7 +20,6 @@ import {
 import { useUserRole } from '@/hooks/system/useUserRole';
 import { NavigationService } from '@/services/navigation.service';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
-import { safeGetJSON, safeSetJSON } from '@/lib/safeStorage';
 
 interface MobileDrawerMenuProps {
   isOpen: boolean;
@@ -64,13 +63,12 @@ const RECENTS_KEY = 'mobile-drawer-recents';
 const MAX_RECENTS = 5;
 
 function getRecents(): string[] {
-  const parsed = safeGetJSON<string[]>(RECENTS_KEY, []);
-  return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === 'string') : [];
+  try { return JSON.parse(localStorage.getItem(RECENTS_KEY) || '[]'); } catch { return []; }
 }
 function saveRecent(id: string) {
   const recents = getRecents().filter(r => r !== id);
   recents.unshift(id);
-  safeSetJSON(RECENTS_KEY, recents.slice(0, MAX_RECENTS));
+  localStorage.setItem(RECENTS_KEY, JSON.stringify(recents.slice(0, MAX_RECENTS)));
 }
 
 const listItemVariants = {
@@ -188,7 +186,7 @@ export function MobileDrawerMenu({
                 <div className="relative">
                   <Avatar className="w-9 h-9 ring-2 ring-primary/20">
                     <AvatarImage src={agentAvatar} alt={agentName} />
-                    <AvatarFallback className="bg-primary/15 text-[hsl(var(--primary-text))] text-xs font-bold">
+                    <AvatarFallback className="bg-primary/15 text-primary text-xs font-bold">
                       {initials}
                     </AvatarFallback>
                   </Avatar>
@@ -245,7 +243,7 @@ export function MobileDrawerMenu({
               {/* Recentes */}
               {!search.trim() && recentItems.length > 0 && (
                 <div className="mb-2">
-                  <p className="px-3 py-1.5 text-3xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                  <p className="px-3 py-1.5 text-3xs font-bold uppercase tracking-wider text-muted-foreground/70 flex items-center gap-1">
                     <Clock className="w-3 h-3" /> Recentes
                   </p>
                   {recentItems.map((item) => {
@@ -270,7 +268,7 @@ export function MobileDrawerMenu({
               )}
               {filteredSections.map((section, sectionIdx) => (
                 <div key={section.title} className="mb-2">
-                  <p className="px-3 py-1.5 text-3xs font-bold uppercase tracking-wider text-muted-foreground">
+                  <p className="px-3 py-1.5 text-3xs font-bold uppercase tracking-wider text-muted-foreground/70">
                     {section.title}
                   </p>
                   {section.items.map((item, itemIdx) => {
@@ -325,7 +323,6 @@ export function MobileDrawerMenu({
                   variant="ghost"
                   size="sm"
                   onClick={onLogout}
-                  aria-label="Sair da conta"
                   className="h-10 rounded-xl text-destructive hover:text-destructive hover:bg-destructive/10 touch-manipulation active:scale-[0.98]"
                 >
                   <LogOut className="w-4 h-4" />

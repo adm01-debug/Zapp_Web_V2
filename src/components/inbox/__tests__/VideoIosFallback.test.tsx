@@ -30,8 +30,6 @@ vi.mock('framer-motion', () => ({
     }),
   },
   AnimatePresence: ({ children }: { children?: React.ReactNode }) => children,
-  // VideoFullscreen (U2) lê `useReducedMotion` para o gesto de entrada.
-  useReducedMotion: () => false,
 }));
 
 // Foco no DOM do <video>: o hook de volume e a sonda de faixa de áudio entram stubados.

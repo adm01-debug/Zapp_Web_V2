@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { useVisiblePolling } from '@/hooks/realtime/useVisiblePolling';
 import { getLogger } from '@/lib/logger';
 
@@ -9,10 +9,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Wifi, WifiOff, RefreshCw, CheckCircle2, XCircle, AlertTriangle,
@@ -42,15 +38,11 @@ interface HealthLog {
   checked_at: string;
 }
 
-/** O disparo manual invoca a Edge (que pode mandar e-mail de alerta): 1 por minuto. */
-const MIN_INTERVALO_ENTRE_CHECKS_MS = 60_000;
-
 export function ConnectionHealthPanel() {
   const [connections, setConnections] = useState<ConnectionHealth[]>([]);
   const [recentLogs, setRecentLogs] = useState<HealthLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [checking, setChecking] = useState(false);
-  const ultimoDisparoRef = useRef(0);
 
   const fetchData = useCallback(async (signal: AbortSignal) => {
     const requestSignal = AbortSignal.any([signal, AbortSignal.timeout(15_000)]);
@@ -81,15 +73,6 @@ export function ConnectionHealthPanel() {
   const refresh = useVisiblePolling(fetchData);
 
   const runHealthCheck = async () => {
-    // Um disparo manual por minuto: o botão dispara a sonda de verdade (e o e-mail
-    // de alerta do backend), então clique repetido não pode virar enxurrada.
-    const agora = Date.now();
-    const falta = MIN_INTERVALO_ENTRE_CHECKS_MS - (agora - ultimoDisparoRef.current);
-    if (ultimoDisparoRef.current > 0 && falta > 0) {
-      toast.info(`Aguarde ${Math.ceil(falta / 1000)}s para disparar outro health check.`);
-      return;
-    }
-    ultimoDisparoRef.current = agora;
     setChecking(true);
     try {
       const { data, error } = await supabase.functions.invoke('connection-health-check');
@@ -121,7 +104,7 @@ export function ConnectionHealthPanel() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-6 h-6 motion-safe:animate-spin text-primary" />
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
       </div>
     );
   }
@@ -159,27 +142,10 @@ export function ConnectionHealthPanel() {
         </Card>
         <Card className="border-border/50">
           <CardContent className="pt-4 pb-3 flex items-center justify-center">
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button disabled={checking} className="w-full gap-2">
-                  {checking ? <Loader2 className="w-4 h-4 motion-safe:animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-                  {checking ? 'Verificando...' : 'Executar Health Check'}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Executar health check agora?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    A verificação consulta as conexões neste instante e pode enviar e-mail de alerta aos responsáveis.
-                    O monitor automático já roda a cada 5 minutos, e o disparo manual é limitado a 1 por minuto.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={runHealthCheck}>Verificar agora</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            <Button onClick={runHealthCheck} disabled={checking} className="w-full gap-2">
+              {checking ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+              {checking ? 'Verificando...' : 'Executar Health Check'}
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -232,7 +198,7 @@ export function ConnectionHealthPanel() {
                     <div className="flex items-center gap-2">
                       <span className="relative flex h-2 w-2">
                         {conn.status === 'connected' && (
-                          <span className="absolute inline-flex h-full w-full motion-safe:animate-ping rounded-full bg-success opacity-75" />
+                          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-75" />
                         )}
                         <span className={cn(
                           'relative inline-flex h-2 w-2 rounded-full',

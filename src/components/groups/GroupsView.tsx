@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion, MotionConfig, useReducedMotion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { FloatingParticles } from '@/components/dashboard/FloatingParticles';
 import { AuroraBorealis } from '@/components/effects/AuroraBorealis';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -7,7 +7,6 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import {
@@ -65,16 +64,10 @@ export function GroupsView() {
     setBroadcastMessage('');
   };
 
-  // Movimento reduzido (preferência do sistema): os fundos decorativos (aurora e partículas)
-  // têm laço infinito de opacidade — o `reducedMotion` do framer-motion não os corta, então
-  // eles só entram quando não há preferência. O `MotionConfig` cobre as demais animações.
-  const reduzido = useReducedMotion() ?? false;
-
   return (
-    <MotionConfig reducedMotion="user">
     <div className="space-y-4 sm:space-y-6 relative bg-background w-full min-w-0">
-      {!reduzido && <AuroraBorealis />}
-      {!reduzido && <FloatingParticles />}
+      <AuroraBorealis />
+      <FloatingParticles />
       <PageHeader
         title="Grupos WhatsApp"
         subtitle={`Gerencie seus grupos (${groups.length} grupos)`}
@@ -93,7 +86,7 @@ export function GroupsView() {
             </Button>
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                <Button className="bg-whatsapp hover:bg-whatsapp-dark text-primary-foreground">
                   <Plus className="w-4 h-4 mr-2" />
                   Adicionar Grupo
                 </Button>
@@ -118,7 +111,7 @@ export function GroupsView() {
                   <div className="space-y-2">
                     <Label htmlFor="connection">Conexão WhatsApp</Label>
                     <Select value={newGroup.whatsapp_connection_id} onValueChange={(value) => setNewGroup({ ...newGroup, whatsapp_connection_id: value })}>
-                      <SelectTrigger aria-label="Conexão WhatsApp"><SelectValue placeholder="Selecione uma conexão" /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder="Selecione uma conexão" /></SelectTrigger>
                       <SelectContent>
                         {connections.map((conn) => (
                           <SelectItem key={conn.id} value={conn.id}>{conn.name} ({conn.phone_number})</SelectItem>
@@ -129,7 +122,7 @@ export function GroupsView() {
                   <div className="space-y-2">
                     <Label>Categoria</Label>
                     <Select value={newGroup.category} onValueChange={(value) => setNewGroup({ ...newGroup, category: value })}>
-                      <SelectTrigger aria-label="Categoria do grupo"><SelectValue placeholder="Selecione uma categoria (opcional)" /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder="Selecione uma categoria (opcional)" /></SelectTrigger>
                       <SelectContent>
                         {GROUP_CATEGORIES.map((cat) => (
                           <SelectItem key={cat.value} value={cat.value}>
@@ -141,7 +134,7 @@ export function GroupsView() {
                   </div>
                   <div className="flex justify-end gap-2 pt-4">
                     <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancelar</Button>
-                    <Button onClick={onAddGroup} className="bg-primary hover:bg-primary/90">Adicionar</Button>
+                    <Button onClick={onAddGroup} className="bg-whatsapp hover:bg-whatsapp-dark">Adicionar</Button>
                   </div>
                 </div>
               </DialogContent>
@@ -157,7 +150,7 @@ export function GroupsView() {
           <Input placeholder="Buscar por nome ou ID do grupo..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
         </div>
         <Select value={categoryFilter || 'all'} onValueChange={(v) => setCategoryFilter(v === 'all' ? null : v)}>
-          <SelectTrigger aria-label="Filtrar por categoria" className="w-full sm:w-[220px]"><SelectValue placeholder="Todas as categorias" /></SelectTrigger>
+          <SelectTrigger className="w-full sm:w-[220px]"><SelectValue placeholder="Todas as categorias" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas as categorias</SelectItem>
             {GROUP_CATEGORIES.map(cat => (
@@ -228,13 +221,6 @@ export function GroupsView() {
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
-                        <div onClick={(e) => e.stopPropagation()}>
-                          <Checkbox
-                            checked={isSelected}
-                            onCheckedChange={() => toggleGroupSelection(group.id)}
-                            aria-label={isSelected ? `Desmarcar ${group.name}` : `Selecionar ${group.name}`}
-                          />
-                        </div>
                         <Avatar className="w-12 h-12">
                           <AvatarImage src={group.avatar_url || undefined} alt={group.name || 'Grupo'} />
                           <AvatarFallback className="bg-whatsapp/10 text-whatsapp"><Users className="w-6 h-6" /></AvatarFallback>
@@ -246,7 +232,7 @@ export function GroupsView() {
                       </div>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="w-8 h-8" aria-label={`Ações do grupo ${group.name}`} onClick={(e) => e.stopPropagation()}>
+                          <Button variant="ghost" size="icon" className="w-8 h-8" onClick={(e) => e.stopPropagation()}>
                             <MoreVertical className="w-4 h-4" />
                           </Button>
                         </DropdownMenuTrigger>
@@ -272,7 +258,7 @@ export function GroupsView() {
                     </div>
                     <div onClick={(e) => e.stopPropagation()}>
                       <Select value={group.category || 'none'} onValueChange={(v) => handleCategoryChange(group.id, v === 'none' ? null : v)}>
-                        <SelectTrigger aria-label={`Categoria de ${group.name}`} className="h-7 text-xs"><SelectValue placeholder="Sem categoria" /></SelectTrigger>
+                        <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Sem categoria" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="none">Sem categoria</SelectItem>
                           {GROUP_CATEGORIES.map(cat => (
@@ -313,7 +299,7 @@ export function GroupsView() {
               <Label>Mensagem</Label>
               <Textarea placeholder="Digite a mensagem para enviar a todos os grupos selecionados..." value={broadcastMessage} onChange={(e) => setBroadcastMessage(e.target.value)} rows={5} />
             </div>
-            <div className="p-3 rounded-lg bg-warning/10 border border-warning/20 text-sm text-[hsl(var(--warning-text))]">
+            <div className="p-3 rounded-lg bg-warning/10 border border-warning/20 text-sm text-warning">
               ⚠️ Intervalo de 2 segundos entre envios para evitar bloqueios.
             </div>
             <div className="flex justify-end gap-2">
@@ -327,6 +313,5 @@ export function GroupsView() {
         </DialogContent>
       </Dialog>
     </div>
-    </MotionConfig>
   );
 }

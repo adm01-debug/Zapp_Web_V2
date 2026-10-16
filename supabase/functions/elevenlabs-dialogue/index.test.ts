@@ -14,14 +14,11 @@
 // `/auth/v1/user` (requireAuth), `/rest/v1/rpc/consume_rate_limit`
 // (enforceRateLimit) e `api.elevenlabs.io` — este último é o alvo do achado e o
 // corpo enviado é capturado e conferido.
-// SL-008 (achado B4) — as vozes do diálogo vêm da lista fechada de
-// `_shared/schemas.ts`; os casos usam ids do catálogo da interface.
 import {
   handleElevenLabsDialogue,
   MAX_DIALOGUE_CHARS,
   MAX_DIALOGUE_VOICES,
 } from "./index.ts";
-import { ELEVENLABS_VOICE_IDS } from "../_shared/schemas.ts";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
@@ -50,19 +47,6 @@ function withFetch(routes: Route[]) {
       ? input.toString()
       : (input as Request).url;
     calls.push({ url, init });
-    // R2-AUTH-022: `requireAuth` passa a consultar a política de rede (RPC
-    // service_role) antes de liberar o handler. O stub responde "allow" para o
-    // caminho feliz destes casos, como já faz para `consume_rate_limit`.
-    if (url.includes("/rest/v1/rpc/resolve_network_policy")) {
-      return Promise.resolve(jsonResp([
-        { allowed: true, reason: null, rate_limit_max_requests: 30, rate_limit_window_seconds: 60 },
-      ]));
-    }
-    // R2-AUTH-004: `requireAuth` lê `profiles.is_active` por `user_id` (igualdade
-    // exata) antes de liberar o handler; o stub responde "ativo" no caminho feliz.
-    if (url.includes("/rest/v1/profiles") && url.includes("select=is_active")) {
-      return Promise.resolve(jsonResp({ is_active: true }));
-    }
     const route = routes.find((r) => url.includes(r.match));
     if (!route) return Promise.resolve(new Response("nao stubado", { status: 599 }));
     return Promise.resolve(route.make());
@@ -129,13 +113,7 @@ const ROTA_PROFILES: Route = {
   match: "/rest/v1/profiles",
   make: () => jsonResp([{ id: "30000000-0000-0000-0000-00000000000c" }]),
 };
-// IA-009 / SL-010b — o kill switch lê `ai.capability.voice` no SERVIDOR (via
-// PostgREST do supabase-js) ANTES de reservar limite e de tocar o provedor.
-const ROTA_FLAGS = (enabled: boolean): Route => ({
-  match: "/rest/v1/feature_flags",
-  make: () => jsonResp({ enabled }),
-});
-const ROTAS_OK = [ROTA_AUTH, ROTA_FLAGS(true), ROTA_RATE_LIMIT, ROTA_AUDIO, ROTA_LEDGER, ROTA_PROFILES];
+const ROTAS_OK = [ROTA_AUTH, ROTA_RATE_LIMIT, ROTA_AUDIO, ROTA_LEDGER, ROTA_PROFILES];
 
 function makeRequest(body: unknown, withAuth = true): Request {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -159,10 +137,9 @@ Deno.test("R2-API-024: corpo externo leva `inputs` (text/voice_id) e NÃO leva `
   await withEnv(ENV_OK, async () => {
     const stub = withFetch(ROTAS_OK);
     try {
-      const [vozA, vozB] = ELEVENLABS_VOICE_IDS;
       const res = await handleElevenLabsDialogue(makeRequest(dialogueBody([
-        { voice_id: vozA, text: "Bom dia" },
-        { voice_id: vozB, text: "Boa tarde" },
+        { voice_id: "voz-a", text: "Bom dia" },
+        { voice_id: "voz-b", text: "Boa tarde" },
       ])));
 
       assert(res.status === 200, `esperado 200, veio ${res.status}`);
@@ -176,8 +153,8 @@ Deno.test("R2-API-024: corpo externo leva `inputs` (text/voice_id) e NÃO leva `
       const payload = JSON.parse(String(externas[0].init?.body)) as Record<string, unknown>;
       assert(
         JSON.stringify(payload.inputs) === JSON.stringify([
-          { text: "Bom dia", voice_id: vozA },
-          { text: "Boa tarde", voice_id: vozB },
+          { text: "Bom dia", voice_id: "voz-a" },
+          { text: "Boa tarde", voice_id: "voz-b" },
         ]),
         `inputs (obrigatório do provedor) inesperado: ${JSON.stringify(payload)}`,
       );
@@ -206,7 +183,7 @@ Deno.test(`R2-API-024: mais de ${MAX_DIALOGUE_VOICES} vozes distintas -> 400 ant
     const stub = withFetch(ROTAS_OK);
     try {
       const script = Array.from({ length: MAX_DIALOGUE_VOICES + 1 }, (_, i) => ({
-        voice_id: ELEVENLABS_VOICE_IDS[i],
+        voice_id: `voz-${i}`,
         text: `fala ${i}`,
       }));
       const res = await handleElevenLabsDialogue(makeRequest(dialogueBody(script)));
@@ -233,8 +210,8 @@ Deno.test(`R2-API-024: texto somado acima de ${MAX_DIALOGUE_CHARS} caracteres ->
     try {
       const metade = "a".repeat(Math.ceil((MAX_DIALOGUE_CHARS + 1) / 2));
       const res = await handleElevenLabsDialogue(makeRequest(dialogueBody([
-        { voice_id: ELEVENLABS_VOICE_IDS[0], text: metade },
-        { voice_id: ELEVENLABS_VOICE_IDS[1], text: metade },
+        { voice_id: "voz-a", text: metade },
+        { voice_id: "voz-b", text: metade },
       ])));
 
       assert(res.status === 400, `esperado 400, veio ${res.status}`);
@@ -259,7 +236,7 @@ Deno.test("R2-API-024: no limite exato do contrato o diálogo segue para o prove
     try {
       const porFala = Math.floor(MAX_DIALOGUE_CHARS / MAX_DIALOGUE_VOICES);
       const script = Array.from({ length: MAX_DIALOGUE_VOICES }, (_, i) => ({
-        voice_id: ELEVENLABS_VOICE_IDS[i],
+        voice_id: `voz-${i}`,
         text: "b".repeat(porFala),
       }));
       const res = await handleElevenLabsDialogue(makeRequest(dialogueBody(script)));
@@ -279,31 +256,12 @@ Deno.test("R2-API-024: no limite exato do contrato o diálogo segue para o prove
   });
 });
 
-Deno.test("SL-008 (B4): voz fora da lista fechada -> 422 antes do POST ao provedor", async () => {
-  await withEnv(ENV_OK, async () => {
-    const stub = withFetch(ROTAS_OK);
-    try {
-      const res = await handleElevenLabsDialogue(makeRequest(dialogueBody([
-        { voice_id: "voz-clonada-fora-da-lista", text: "oi" },
-      ])));
-
-      assert(res.status === 422, `esperado 422, veio ${res.status}`);
-      assert(
-        callsTo(stub.calls, "api.elevenlabs.io").length === 0,
-        "voz recusada pela lista fechada não pode tocar o provedor",
-      );
-    } finally {
-      stub.restore();
-    }
-  });
-});
-
 Deno.test("R2-API-024: sem bearer continua 401 e não toca o provedor", async () => {
   await withEnv(ENV_OK, async () => {
     const stub = withFetch(ROTAS_OK);
     try {
       const res = await handleElevenLabsDialogue(
-        makeRequest(dialogueBody([{ voice_id: ELEVENLABS_VOICE_IDS[0], text: "oi" }]), false),
+        makeRequest(dialogueBody([{ voice_id: "voz-a", text: "oi" }]), false),
       );
       assert(res.status === 401, `esperado 401, veio ${res.status}`);
       assert(
@@ -341,8 +299,8 @@ Deno.test("SL-013: diálogo pago deixa UMA linha em ai_usage_logs (unidade carac
     const stub = withFetch(ROTAS_OK);
     try {
       const script = [
-        { voice_id: ELEVENLABS_VOICE_IDS[0], text: "Bom dia" }, // 7 caracteres
-        { voice_id: ELEVENLABS_VOICE_IDS[1], text: "Boa tarde" }, // 9 caracteres
+        { voice_id: "voz-a", text: "Bom dia" }, // 7 caracteres
+        { voice_id: "voz-b", text: "Boa tarde" }, // 9 caracteres
       ];
       const res = await handleElevenLabsDialogue(makeRequest(dialogueBody(script)));
       assert(res.status === 200, `esperado 200, veio ${res.status}`);
@@ -384,7 +342,6 @@ Deno.test("SL-013: falha do provedor também deixa linha (status error) e a unid
   await withEnv(ENV_OK, async () => {
     const stub = withFetch([
       ROTA_AUTH,
-      ROTA_FLAGS(true),
       ROTA_RATE_LIMIT,
       ROTA_PROFILES,
       ROTA_LEDGER,
@@ -392,7 +349,7 @@ Deno.test("SL-013: falha do provedor também deixa linha (status error) e a unid
     ]);
     try {
       const res = await handleElevenLabsDialogue(
-        makeRequest(dialogueBody([{ voice_id: ELEVENLABS_VOICE_IDS[0], text: "Bom dia" }])),
+        makeRequest(dialogueBody([{ voice_id: "voz-a", text: "Bom dia" }])),
       );
       assert(res.status === 500, `esperado 500 do provedor, veio ${res.status}`);
 
@@ -402,56 +359,6 @@ Deno.test("SL-013: falha do provedor também deixa linha (status error) e a unid
       const metadata = (linha!.metadata ?? {}) as Record<string, unknown>;
       assert(metadata.http_status === 500, `http_status inesperado: ${JSON.stringify(metadata)}`);
       assert(metadata.billing_quantity === 7, `caracteres do roteiro inesperados: ${String(metadata.billing_quantity)}`);
-    } finally {
-      stub.restore();
-    }
-  });
-});
-
-// ── IA-009 / SL-010b: kill switch da família de voz (chave ai.capability.voice) ──
-//
-// Caso NEGADO: com a capacidade de voz DESLIGADA no servidor, o diálogo responde
-// 503 e NÃO chama o provedor pago — e a recusa acontece ANTES de reservar limite
-// (`consume_rate_limit` não é chamado). Antes da correção o handler ignorava a
-// flag: chamava a ElevenLabs e devolvia 200, mesmo com a capacidade desligada.
-
-Deno.test("IA-009/SL-010b: capacidade de voz desligada -> 503, zero chamada ao provedor e sem consumir limite", async () => {
-  await withEnv(ENV_OK, async () => {
-    const stub = withFetch([
-      ROTA_AUTH,
-      ROTA_FLAGS(false),
-      ROTA_RATE_LIMIT,
-      ROTA_AUDIO,
-      ROTA_LEDGER,
-      ROTA_PROFILES,
-    ]);
-    try {
-      const res = await handleElevenLabsDialogue(
-        makeRequest(dialogueBody([{ voice_id: ELEVENLABS_VOICE_IDS[0], text: "Bom dia" }])),
-      );
-
-      assert(res.status === 503, `capacidade desligada deveria recusar com 503, veio ${res.status}`);
-      const payload = await res.json() as { code?: string };
-      assert(
-        payload.code === "AI_CAPABILITY_DISABLED",
-        `código inesperado no corpo: ${JSON.stringify(payload)}`,
-      );
-      assert(
-        callsTo(stub.calls, "api.elevenlabs.io").length === 0,
-        `capacidade desligada NÃO pode tocar o provedor: ${stub.calls.map((c) => c.url).join(", ")}`,
-      );
-      assert(
-        callsTo(stub.calls, "/rest/v1/rpc/consume_rate_limit").length === 0,
-        "capacidade desligada NÃO pode consumir rate limit (gate vem antes do limite)",
-      );
-      // A chave lida é a ÚNICA da família de voz (decisão SL-010b).
-      const flags = callsTo(stub.calls, "/rest/v1/feature_flags");
-      assert(flags.length === 1, `esperado 1 leitura da flag, veio ${flags.length}`);
-      assert(
-        flags[0].url.includes(encodeURIComponent("ai.capability.voice")) ||
-          flags[0].url.includes("ai.capability.voice"),
-        `a chave de capacidade inesperada: ${flags[0].url}`,
-      );
     } finally {
       stub.restore();
     }

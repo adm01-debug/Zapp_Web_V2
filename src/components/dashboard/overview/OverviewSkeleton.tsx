@@ -1,4 +1,4 @@
-import { Skeleton, SkeletonRegion } from '@/components/ui/skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 
 /**
  * Shapes com as mesmas alturas dos blocos reais da Visão Geral (28/70/32/73/95/259/220/173)
@@ -6,11 +6,7 @@ import { Skeleton, SkeletonRegion } from '@/components/ui/skeleton';
  */
 export function OverviewSkeleton() {
   return (
-    <SkeletonRegion
-      className="space-y-2.5 w-full min-w-0"
-      data-testid="overview-skeleton"
-      label="Carregando visão geral"
-    >
+    <div className="space-y-2.5 w-full min-w-0" data-testid="overview-skeleton">
       <Skeleton className="h-7 w-full rounded-lg" />
       <Skeleton className="h-[70px] w-full rounded-xl" />
       <Skeleton className="h-8 w-full rounded-lg" />
@@ -33,6 +29,6 @@ export function OverviewSkeleton() {
         <Skeleton className="h-[173px] w-full rounded-xl" />
         <Skeleton className="h-[173px] w-full rounded-xl" />
       </div>
-    </SkeletonRegion>
+    </div>
   );
 }

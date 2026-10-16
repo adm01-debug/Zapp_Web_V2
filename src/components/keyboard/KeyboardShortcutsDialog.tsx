@@ -16,7 +16,6 @@ import {
 } from 'lucide-react';
 import { useCustomShortcuts, type ShortcutBinding } from '@/hooks/ui/useCustomShortcuts';
 import { aplicarRotulos } from '@/hooks/shortcuts/shortcutLabels';
-import { listarAtalhosEditaveis } from '@/hooks/shortcuts/defaultShortcuts';
 import { TASK_SHORTCUT_LABELS } from '@/hooks/shortcuts/taskShortcutLabels';
 import { cn } from '@/lib/utils';
 
@@ -147,10 +146,7 @@ export function KeyboardShortcutsDialog({ open, onOpenChange }: KeyboardShortcut
   // que entra junto com este painel (chunk sob demanda) — fora do grafo de
   // entrada. Sem `TASK_SHORTCUT_LABELS` aqui, os textos voltam para o
   // `initial-js` e o budget de 340 KB estoura.
-  const rotulados = useMemo(
-    () => aplicarRotulos(listarAtalhosEditaveis(shortcuts), TASK_SHORTCUT_LABELS),
-    [shortcuts],
-  );
+  const rotulados = useMemo(() => aplicarRotulos(shortcuts, TASK_SHORTCUT_LABELS), [shortcuts]);
 
   const groupedShortcuts = {
     chat: rotulados.filter(s => s.category === 'chat'),

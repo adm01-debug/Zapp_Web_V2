@@ -143,9 +143,7 @@ export function ContactViewSwitcher({
               <DropdownMenuSeparator />
             </>
           )}
-          <DropdownMenuLabel className="text-xs text-muted-foreground">
-            Agrupamento{viewMode !== 'list' && ' (por empresa só na Lista)'}
-          </DropdownMenuLabel>
+          <DropdownMenuLabel className="text-xs text-muted-foreground">Agrupamento</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => onGroupByCompanyChange(!groupByCompany)} className="gap-2 text-xs">
             <span className={cn("w-3.5 h-3.5 flex items-center justify-center", groupByCompany ? "text-primary" : "text-transparent")}>

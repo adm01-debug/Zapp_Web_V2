@@ -4,14 +4,14 @@ import { TeamConversationList } from './TeamConversationList';
 import { TeamChatPanel } from './TeamChatPanel';
 import { TeamMemberDetails } from './TeamMemberDetails';
 import { NewConversationDialog } from './NewConversationDialog';
-import { Users, Plus } from 'lucide-react';
+import { MessageSquare, Users, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useActiveTeamChatConversation } from '@/hooks/chat/useTeamChatNotifications';
 import { Button } from '@/components/ui/button';
-import { ConversationEmptyState } from '@/components/shared/ConversationEmptyState';
+import { motion } from 'framer-motion';
 
 export function TeamChatView() {
-  const { data: conversations = [], isLoading: conversationsLoading } = useTeamConversations();
+  const { data: conversations = [] } = useTeamConversations();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showNewDialog, setShowNewDialog] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
@@ -35,7 +35,6 @@ export function TeamChatView() {
           selectedId={selectedId}
           onSelect={(id) => { setSelectedId(id); setShowDetails(false); }}
           onNewConversation={() => setShowNewDialog(true)}
-          loading={conversationsLoading}
         />
       </div>
 
@@ -52,11 +51,29 @@ export function TeamChatView() {
             showDetails={showDetails}
           />
         ) : (
-          <ConversationEmptyState
-            icon={Users}
-            title="Chat da Equipe"
-            description="Selecione uma conversa ou inicie uma nova para conversar com seus colegas"
-            action={(
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
+            className="flex items-center justify-center h-full"
+          >
+            <div className="text-center max-w-sm p-8">
+              <div className="relative w-20 h-20 mx-auto mb-5">
+                <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center shadow-sm">
+                  <Users className="w-9 h-9 text-primary/70" />
+                </div>
+                <motion.div
+                  animate={{ y: [0, -4, 0] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                  className="absolute -top-2 -right-2 w-8 h-8 rounded-xl bg-accent/20 flex items-center justify-center"
+                >
+                  <MessageSquare className="w-4 h-4 text-accent-foreground/60" />
+                </motion.div>
+              </div>
+              <h1 className="text-lg font-extrabold text-foreground mb-2">Chat da Equipe</h1>
+              <p className="text-muted-foreground text-sm leading-relaxed mb-5">
+                Selecione uma conversa ou inicie uma nova para conversar com seus colegas
+              </p>
               <Button
                 size="sm"
                 className="gap-2 rounded-xl shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 text-primary-foreground"
@@ -65,8 +82,8 @@ export function TeamChatView() {
                 <Plus className="w-4 h-4" />
                 Nova conversa
               </Button>
-            )}
-          />
+            </div>
+          </motion.div>
         )}
       </div>
 

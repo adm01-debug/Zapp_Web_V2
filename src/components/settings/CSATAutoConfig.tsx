@@ -112,7 +112,7 @@ export function CSATAutoConfig() {
               <Label className="text-sm font-medium">Ativar CSAT Automático</Label>
               <p className="text-xs text-muted-foreground">Enviar pesquisa ao resolver ticket</p>
             </div>
-            <Switch aria-label="Ativar CSAT Automático" checked={isEnabled} onCheckedChange={setIsEnabled} />
+            <Switch checked={isEnabled} onCheckedChange={setIsEnabled} />
           </div>
 
           <div className="space-y-2">
@@ -121,7 +121,6 @@ export function CSATAutoConfig() {
               Atraso após resolução (minutos)
             </Label>
             <Input
-              aria-label="Atraso após resolução em minutos"
               type="number"
               min={0}
               max={1440}
@@ -136,7 +135,7 @@ export function CSATAutoConfig() {
           <div className="space-y-2">
             <Label>Conexão WhatsApp</Label>
             <Select value={connectionId} onValueChange={setConnectionId}>
-              <SelectTrigger aria-label="Conexão WhatsApp">
+              <SelectTrigger>
                 <SelectValue placeholder="Selecione a conexão" />
               </SelectTrigger>
               <SelectContent>
@@ -155,7 +154,6 @@ export function CSATAutoConfig() {
               Modelo da Mensagem
             </Label>
             <Textarea
-              aria-label="Modelo da mensagem de notificação"
               rows={5}
               value={template}
               onChange={e => setTemplate(e.target.value)}

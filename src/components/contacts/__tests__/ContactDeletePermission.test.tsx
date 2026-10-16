@@ -76,26 +76,21 @@ describe('ContactListItem · item Excluir', () => {
 });
 
 describe('ContactCard · item Excluir', () => {
-  it('não renderiza o menu "⋮" quando can_delete é false (sem item exclusivo)', () => {
+  it('não oferece Excluir quando can_delete é false', async () => {
     render(<ContactCard {...itemProps(baseContact({ can_delete: false }))} />);
-
-    // "Conversar"/"Editar" agora vivem só no rodapé, então o menu fica com um
-    // único item possível, o Excluir; sem permissão ele nem é montado.
-    expect(document.querySelector('button[aria-haspopup="menu"]')).toBeNull();
-    expect(screen.queryByText('Excluir')).not.toBeInTheDocument();
-    // As ações do rodapé continuam disponíveis.
-    expect(screen.getByTitle('Conversar')).toBeInTheDocument();
-  });
-
-  it('oferece Excluir quando can_delete é true e chama onDelete no clique', async () => {
-    const onDelete = vi.fn();
-    render(<ContactCard {...itemProps(baseContact({ can_delete: true }), onDelete)} />);
 
     openMenu(trigger());
 
-    const item = await screen.findByText('Excluir');
-    fireEvent.click(item);
-    expect(onDelete).toHaveBeenCalledTimes(1);
-    expect(onDelete).toHaveBeenCalledWith(expect.objectContaining({ id: baseContact().id }));
+    await waitFor(() => expect(screen.getByText('Editar')).toBeInTheDocument());
+    expect(screen.queryByText('Excluir')).not.toBeInTheDocument();
+  });
+
+  it('oferece Excluir quando can_delete é true', async () => {
+    render(<ContactCard {...itemProps(baseContact({ can_delete: true }))} />);
+
+    openMenu(trigger());
+
+    await waitFor(() => expect(screen.getByText('Editar')).toBeInTheDocument());
+    expect(screen.getByText('Excluir')).toBeInTheDocument();
   });
 });

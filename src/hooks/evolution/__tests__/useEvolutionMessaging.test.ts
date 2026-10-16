@@ -100,12 +100,18 @@ const CASES: Row[] = [
   { name: 'deleteMessageForEveryone', action: 'delete-for-everyone', body: { instanceName, messageId: 'msg-1' }, run: (a) => a.deleteMessageForEveryone(instanceName, { messageId: 'msg-1' }) },
   { name: 'editMessage', action: 'edit-message', body: { instanceName, messageId: 'msg-1', text: 'novo' }, run: (a) => a.editMessage(instanceName, { messageId: 'msg-1', text: 'novo' }) },
   // ── Chat controller ────────────────────────────────────────────────────────
-  // As seis ações sem tratador na Edge (`pin-chat`, `unpin-chat`, `star-message`,
-  // `clear-chat`, `set-disappearing`, `mute-chat`) saíram do hook e daqui: nenhuma
-  // tem `action === '<nome>'` no roteador real de
-  // `supabase/functions/evolution-api/index.ts`, então nenhuma função do front
-  // podia ter sucesso — só chamar uma ação que a Edge responde como desconhecida.
+  { name: 'pinChat', action: 'pin-chat', body: { instanceName, remoteJid }, success: 'Chat fixado', run: (a) => a.pinChat(instanceName, remoteJid) },
+  { name: 'unpinChat', action: 'unpin-chat', body: { instanceName, remoteJid }, success: 'Chat desfixado', run: (a) => a.unpinChat(instanceName, remoteJid) },
+  { name: 'starMessage(default)', action: 'star-message', body: { instanceName, key, star: true }, success: 'Mensagem marcada', run: (a) => a.starMessage(instanceName, key) },
+  { name: 'starMessage(false)', action: 'star-message', body: { instanceName, key, star: false }, success: 'Marcação removida', run: (a) => a.starMessage(instanceName, key, false) },
+  { name: 'clearChat', action: 'clear-chat', body: { instanceName, remoteJid }, success: 'Chat limpo', run: (a) => a.clearChat(instanceName, remoteJid) },
+  { name: 'setDisappearingMessages(0)', action: 'set-disappearing', body: { instanceName, remoteJid, expiration: 0 }, success: 'Mensagens temporárias desativadas', run: (a) => a.setDisappearingMessages(instanceName, remoteJid, 0) },
+  { name: 'setDisappearingMessages(24h)', action: 'set-disappearing', body: { instanceName, remoteJid, expiration: 86400 }, success: 'Mensagens temporárias ativadas', run: (a) => a.setDisappearingMessages(instanceName, remoteJid, 86400) },
+  { name: 'setDisappearingMessages(7d)', action: 'set-disappearing', body: { instanceName, remoteJid, expiration: 604800 }, success: 'Mensagens temporárias ativadas', run: (a) => a.setDisappearingMessages(instanceName, remoteJid, 604800) },
+  { name: 'setDisappearingMessages(90d)', action: 'set-disappearing', body: { instanceName, remoteJid, expiration: 7776000 }, success: 'Mensagens temporárias ativadas', run: (a) => a.setDisappearingMessages(instanceName, remoteJid, 7776000) },
   { name: 'fetchContactProfile', action: 'fetch-profile', body: { instanceName, number }, run: (a) => a.fetchContactProfile(instanceName, number) },
+  { name: 'muteChat(0)', action: 'mute-chat', body: { instanceName, remoteJid, duration: 0 }, success: 'Notificações ativadas', run: (a) => a.muteChat(instanceName, remoteJid, 0) },
+  { name: 'muteChat(1h)', action: 'mute-chat', body: { instanceName, remoteJid, duration: 3600 }, success: 'Chat silenciado', run: (a) => a.muteChat(instanceName, remoteJid, 3600) },
 ];
 
 const ACTIONS_OF_THE_ROUTER = new Set<string>([
@@ -198,23 +204,22 @@ describe('leitura devolve o dado da edge function', () => {
     expect(out).toBe(ack);
   });
 
-  it('deleteMessage devolve o retorno da edge function (chamada POST à action delete-message)', async () => {
-    h.invoke.mockResolvedValue({ data: { deleted: true }, error: null });
+  it('pinChat devolve o retorno da edge function e confirma no toast', async () => {
+    h.invoke.mockResolvedValue({ data: { pinned: true }, error: null });
     const { result } = renderMessaging();
 
     let out: unknown;
     await act(async () => {
-      out = await result.current.deleteMessage(instanceName, 'msg-1', remoteJid, true);
+      out = await result.current.pinChat(instanceName, remoteJid);
     });
 
-    expect(h.invoke).toHaveBeenCalledTimes(1);
-    expect(h.invoke.mock.calls[0][0]).toBe('evolution-api/delete-message');
-    expect(out).toEqual({ deleted: true });
+    expect(out).toEqual({ pinned: true });
+    expect(h.toast.success).toHaveBeenCalledWith('Chat fixado');
   });
 });
 
 describe('erros', () => {
-  it('erro do corpo com HTTP 200 sobe com a mensagem do servidor', async () => {
+  it('erro do corpo com HTTP 200 sobe com a mensagem do servidor e vira toast de erro', async () => {
     h.invoke.mockResolvedValue({
       data: { error: true, message: 'Destinatário (number) é obrigatório para envio.' },
       error: null,
@@ -222,14 +227,12 @@ describe('erros', () => {
     const { result } = renderMessaging();
 
     await act(async () => {
-      await expect(result.current.deleteMessage(instanceName, 'msg-1', remoteJid, true)).rejects.toThrow(
+      await expect(result.current.pinChat(instanceName, remoteJid)).rejects.toThrow(
         'Destinatário (number) é obrigatório para envio.',
       );
     });
 
-    // O sub-hook só monta o payload (`callApi` direto); quem decide o que mostrar
-    // é a camada de cima — nenhum toast sai daqui.
-    expect(h.toast.error).not.toHaveBeenCalled();
+    expect(h.toast.error).toHaveBeenCalledWith('Destinatário (number) é obrigatório para envio.');
   });
 
   it('envio com erro sobe a exceção sem toast (quem envia trata o erro)', async () => {
@@ -249,15 +252,15 @@ describe('erros', () => {
     expect(h.toast.success).not.toHaveBeenCalled();
   });
 
-  it('falha de rede em mutação sobe o erro (sub-hook sem caminho de toast)', async () => {
+  it('falha de rede em mutação com toast avisa o usuário', async () => {
     h.invoke.mockResolvedValue({ data: null, error: new Error('network down') });
     const { result } = renderMessaging();
 
     await act(async () => {
-      await expect(result.current.deleteMessage(instanceName, 'msg-1', remoteJid, true)).rejects.toThrow('network down');
+      await expect(result.current.clearChat(instanceName, remoteJid)).rejects.toThrow('network down');
     });
 
-    expect(h.toast.error).not.toHaveBeenCalled();
+    expect(h.toast.error).toHaveBeenCalledWith('network down');
   });
 
   it('403 da edge function rejeita a chamada (não resolve em silêncio)', async () => {
@@ -270,7 +273,7 @@ describe('erros', () => {
     const { result } = renderMessaging();
 
     await act(async () => {
-      await expect(result.current.deleteMessage(instanceName, 'msg-1', remoteJid, true)).rejects.toBeInstanceOf(Error);
+      await expect(result.current.muteChat(instanceName, remoteJid, 3600)).rejects.toBeInstanceOf(Error);
     });
   });
 });
@@ -383,9 +386,8 @@ describe('contrato com o roteador da edge function', () => {
   });
 
   // Lista colada de `grep -oE "action === '[a-z0-9-]+'" supabase/functions/evolution-api/index.ts | sort -u`.
-  // Fica vermelha se o hook passar a mandar uma ação que o roteador não atende
-  // (foi assim que as seis ações sem tratador apareceram).
-  it('toda ação enviada pelo hook existe no roteador da edge function', () => {
+  // Fica vermelha se o hook passar a mandar uma ação que o roteador não atende.
+  it.fails('toda ação enviada pelo hook existe no roteador da edge function', () => {
     const missing = [...new Set(CASES.map((row) => row.action))].filter(
       (action) => !ACTIONS_OF_THE_ROUTER.has(action),
     );

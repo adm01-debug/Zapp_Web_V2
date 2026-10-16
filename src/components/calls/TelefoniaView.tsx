@@ -153,19 +153,6 @@ export function TelefoniaView() {
   // um estado local paralelo deixaria o painel aberto depois do clique.
   const resetSelection = () => setFilter('call', '');
 
-  // T90 — o botão "Fazer uma ligação" do estado vazio do histórico precisa
-  // ABRIR/focar o discador lateral; antes ele só chamava `limpar()`, que no
-  // histórico vazio não muda nada. Rola até o painel e foca o primeiro campo
-  // do discador (o `limpar` fica no "Limpar filtros", o outro botão do vazio).
-  const ladoRef = useRef<HTMLDivElement>(null);
-  const focarDiscador = useCallback(() => {
-    const el = ladoRef.current;
-    if (!el) return;
-    el.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' });
-    const alvo = el.querySelector<HTMLElement>('input') ?? el.querySelector<HTMLElement>('button') ?? el;
-    alvo.focus();
-  }, []);
-
   const getDirectionIcon = (direction: string, status: string) => {
     if (status === 'missed') return <PhoneMissed className="w-4 h-4 text-destructive" />;
     if (direction === 'inbound') return <PhoneIncoming className="w-4 h-4 text-success" />;
@@ -256,7 +243,7 @@ export function TelefoniaView() {
             <CallHistoryEmpty
               porFiltro={temFiltro}
               onLimparFiltros={() => limpar()}
-              onNovaLigacao={focarDiscador}
+              onNovaLigacao={() => limpar()}
             />
           ) : (
             <CallHistoryTable
@@ -275,7 +262,7 @@ export function TelefoniaView() {
           />
         </CallHistoryCard>
         {/* Painel lateral: discador ou detalhe da chamada selecionada */}
-        <div ref={ladoRef} tabIndex={-1} className="xl:sticky xl:top-4" data-testid="tel-side-panel">
+        <div className="xl:sticky xl:top-4" data-testid="tel-side-panel">
           <Card className="border-secondary/30">
             <CardContent className="p-6">
               {selectedCall ? (

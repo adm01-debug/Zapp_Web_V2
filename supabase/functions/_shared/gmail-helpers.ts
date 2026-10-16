@@ -31,27 +31,6 @@ interface GmailLabelList { labels?: Array<{ id: string; name: string; type: stri
 interface GmailTokens { access_token: string; refresh_token: string }
 interface GmailAccountForToken { id: string; token_expires_at: string }
 
-// ── Refresh do token do Gmail: UMA cópia em todo o projeto ────────────────
-// Todo caminho que renova o access_token passa por aqui: `ensureValidToken`
-// (gmail-cron-sync, gmail-sync, gmail-send, gmail-webhook) e o seam
-// `deps.google.refreshToken` do gmail-oauth. Antes existiam 4 POSTs duplicados
-// em oauth2.googleapis.com/token, e os dois edges com cópia própria engoliam o
-// corpo da recusa ("Failed to refresh token"), então o token revogado virava
-// erro genérico em vez de 'reauth_required'. O corpo do erro (invalid_grant /
-// unauthorized_client) é preservado na mensagem — é o que isGmailReauthError
-// usa — e nunca carrega token.
-export interface GmailRefreshedTokens { access_token: string; refresh_token?: string; expires_in: number }
-
-export async function requestGmailTokenRefresh(refreshToken: string, clientId: string, clientSecret: string): Promise<GmailRefreshedTokens> {
-  const response = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ refresh_token: refreshToken, client_id: clientId, client_secret: clientSecret, grant_type: "refresh_token" }),
-  });
-  if (!response.ok) throw new Error(`Gmail token refresh rejected (${response.status}): ${await response.text()}`);
-  return await response.json() as GmailRefreshedTokens;
-}
-
 export function getHeader(headers: Array<{ name: string; value: string }>, name: string): string {
   return headers.find(header => header.name.toLowerCase() === name.toLowerCase())?.value || "";
 }
@@ -130,16 +109,8 @@ export async function ensureValidToken(supabase: SupabaseClient, account: GmailA
     method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({ refresh_token: storedTokens.refresh_token, client_id: requireEnv("GOOGLE_CLIENT_ID"), client_secret: requireEnv("GOOGLE_CLIENT_SECRET"), grant_type: "refresh_token" }),
   });
-  if (!response.ok) {
-    // O corpo do Google distingue token revogado/expirado (invalid_grant) de
-    // falha transitória — sem ele a conta cairia em "error" mudo. O corpo do
-    // erro do refresh nunca carrega token.
-    const detail = await response.text();
-    throw new Error(`Gmail token refresh rejected (${response.status}): ${detail}`);
-  }
+  if (!response.ok) throw new Error("Failed to refresh token");
   const tokens = await response.json() as { access_token: string; refresh_token?: string; expires_in: number };
-
-  const tokens = await requestGmailTokenRefresh(storedTokens.refresh_token, requireEnv("GOOGLE_CLIENT_ID"), requireEnv("GOOGLE_CLIENT_SECRET"));
   const newExpiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
   await storeTokens(supabase, account.id, tokens.access_token, tokens.refresh_token || null);
   const { error } = await supabase.from("gmail_accounts").update({ token_expires_at: newExpiresAt }).eq("id", account.id);
@@ -181,45 +152,6 @@ export async function reconcileEmailThreads(supabase: SupabaseClient, accountId:
     }).eq("gmail_account_id", accountId).eq("id", threadId);
     if (update.error) throw new Error(`Failed to update local thread ${threadId}`);
   }
-}
-
-/**
- * Persiste no banco local o resultado de uma ação do Gmail que devolve a
- * mensagem com os `labelIds` atualizados (ex.: `trash`). Atualiza
- * `email_messages.label_ids/is_read/is_starred` da mensagem e recalcula
- * `label_ids/is_unread/is_starred/status` da thread dona — os mesmos campos
- * que o handler de `modify-thread-labels` mantém. Devolve `false` quando
- * alguma escrita local falha, para o handler responder
- * `local_persistence_failed` sem derrubar a ação que o Gmail já executou.
- */
-export async function persistGmailMessageLabels(
-  supabase: SupabaseClient,
-  accountId: string,
-  gmailMessageId: string,
-  labelIds: string[],
-  localThreadId: string | null,
-): Promise<boolean> {
-  const messageUpdate = await supabase.from("email_messages")
-    .update({ label_ids: labelIds, is_read: !labelIds.includes("UNREAD"), is_starred: labelIds.includes("STARRED") })
-    .eq("gmail_message_id", gmailMessageId).eq("gmail_account_id", accountId);
-  if (messageUpdate.error) return false;
-  if (!localThreadId) return true;
-
-  const { data: messages, error: readError } = await supabase.from("email_messages")
-    .select("label_ids,is_read,is_starred")
-    .eq("gmail_account_id", accountId).eq("thread_id", localThreadId);
-  if (readError) return false;
-  const rows = (messages || []) as Array<{ label_ids?: string[] | null; is_read?: boolean | null; is_starred?: boolean | null }>;
-  const aggregateLabels = [...new Set(rows.flatMap(row => row.label_ids || []))];
-  const threadUpdate = await supabase.from("email_threads")
-    .update({
-      label_ids: aggregateLabels,
-      is_unread: rows.some(row => !row.is_read),
-      is_starred: rows.some(row => row.is_starred),
-      status: aggregateLabels.includes("INBOX") ? "open" : "archived",
-    })
-    .eq("id", localThreadId).eq("gmail_account_id", accountId);
-  return !threadUpdate.error;
 }
 
 export async function syncMessageIds(supabase: SupabaseClient, accountId: string, accessToken: string, log: Logger, messageIds: string[]) {
@@ -346,54 +278,7 @@ export async function runGmailFullSync(supabase: SupabaseClient, accountId: stri
   const { error } = await supabase.from("gmail_accounts").update({
     sync_status: "synced", history_id: profile.historyId,
     last_sync_at: new Date().toISOString(), last_error: null,
-    // sincronizar de novo zera a espera crescente das falhas transitórias
-    error_count: 0, next_attempt_at: null,
   }).eq("id", accountId);
   if (error) throw new Error("Failed to persist Gmail sync cursor");
   return result;
-}
-
-// ── Classificação da falha de conta (R2/Gmail reauth) ──────────────────────
-// O refresh recusado pelo Google (`invalid_grant`, `unauthorized_client`) ou o
-// token revogado/expirado exigem RECONECTAR a conta — não é falha transitória.
-// Essas contas passam a `sync_status = 'reauth_required'` (estado explícito que
-// o front lê para dizer "reconecte"), e as demais falhas ficam em `error` com a
-// contagem de tentativas. Qualquer sincronização bem-sucedida volta a gravar
-// `synced` e limpa `last_error`.
-export type GmailAccountFailure = "reauth_required" | "error";
-
-export const GMAIL_REAUTH_MESSAGE = "Sessão do Gmail expirada — reconecte a conta";
-
-const GMAIL_REAUTH_MARKERS = ["invalid_grant", "unauthorized_client", "expired or revoked", "revoked"];
-
-export function isGmailReauthError(error: unknown): boolean {
-  const message = (error instanceof Error ? error.message : String(error ?? "")).toLowerCase();
-  return GMAIL_REAUTH_MARKERS.some(marker => message.includes(marker));
-}
-
-// `last_error` é exibido na interface: nunca leva token nem endereço/e-mail completo.
-export function sanitizeGmailErrorMessage(raw: string): string {
-  return String(raw ?? "")
-    .replace(/[^\s@]+@[^\s@]+/g, "[email]")
-    .replace(/\b(ya29\.[A-Za-z0-9._-]+|1\/\/[A-Za-z0-9._-]+)\b/g, "[token]")
-    .slice(0, 200);
-}
-
-export async function recordGmailAccountFailure(
-  supabase: SupabaseClient,
-  accountId: string,
-  error: unknown,
-  attempts: number,
-): Promise<GmailAccountFailure> {
-  const status: GmailAccountFailure = isGmailReauthError(error) ? "reauth_required" : "error";
-  const detail = sanitizeGmailErrorMessage(error instanceof Error ? error.message : String(error ?? ""));
-  const base = status === "reauth_required"
-    ? GMAIL_REAUTH_MESSAGE
-    : `${Math.max(1, attempts)} tentativa(s) de sincronização falharam`;
-  const lastError = detail && !base.includes(detail) ? `${base}: ${detail}` : base;
-  const { error: updateError } = await supabase.from("gmail_accounts")
-    .update({ sync_status: status, last_error: lastError })
-    .eq("id", accountId);
-  if (updateError) throw new Error("Failed to record Gmail account failure state");
-  return status;
 }

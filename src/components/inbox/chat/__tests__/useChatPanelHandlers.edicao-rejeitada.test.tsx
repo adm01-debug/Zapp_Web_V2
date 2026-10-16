@@ -21,9 +21,7 @@ const mocks = vi.hoisted(() => ({
   updateArgs: null as null | Record<string, unknown>,
   updateFilter: null as null | { column: string; value: unknown },
   // Resposta do builder aguardado: devolvida sem lançar exceção, como o PostgREST faz.
-  // `data` = linhas afetadas pelo UPDATE (`.select('id')`); ≥1 linha é o que o hook exige
-  // para considerar a edição registrada.
-  editResult: { error: null, data: [{ id: 'msg-1' }] } as { error: unknown; data?: unknown[] | null },
+  editResult: { error: null } as { error: unknown },
 }));
 
 vi.mock('@/integrations/supabase/client', () => ({
@@ -34,7 +32,7 @@ vi.mock('@/integrations/supabase/client', () => ({
         return {
           eq: (column: string, value: unknown) => {
             mocks.updateFilter = { column, value };
-            return { select: () => mocks.editResult };
+            return mocks.editResult;
           },
         };
       },
@@ -140,7 +138,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.updateArgs = null;
   mocks.updateFilter = null;
-  mocks.editResult = { error: null, data: [{ id: MESSAGE_ID }] };
+  mocks.editResult = { error: null };
 });
 
 describe('useChatPanelHandlers — edição rejeitada pelo banco', () => {
@@ -185,7 +183,7 @@ describe('useChatPanelHandlers — edição rejeitada pelo banco', () => {
 
 describe('useChatPanelHandlers — edição aceita e contrato preservado', () => {
   it('com { error: null } mantém o sucesso normal (toast de êxito e editor limpo)', async () => {
-    mocks.editResult = { error: null, data: [{ id: MESSAGE_ID }] };
+    mocks.editResult = { error: null };
 
     const utils = montar();
     await editarEEnviar(utils);
@@ -197,7 +195,7 @@ describe('useChatPanelHandlers — edição aceita e contrato preservado', () =>
   });
 
   it('chama a Evolution API com o alvo canônico antes de gravar localmente', async () => {
-    mocks.editResult = { error: null, data: [{ id: MESSAGE_ID }] };
+    mocks.editResult = { error: null };
 
     const utils = montar();
     await editarEEnviar(utils);

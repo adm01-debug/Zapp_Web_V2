@@ -34,9 +34,5 @@ export default function QueuesComparison() {
 
   if (!user) return null;
 
-  return (
-    <main>
-      <QueuesComparisonDashboard />
-    </main>
-  );
+  return <QueuesComparisonDashboard />;
 }
