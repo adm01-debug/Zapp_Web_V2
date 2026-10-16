@@ -4,7 +4,7 @@
 > `--check` e falha se este arquivo divergir do bloco `# docs:` de cada workflow.
 > Para mudar o que está aqui, mude o bloco no YAML.
 
-**11 workflows.**
+**14 workflows.**
 
 | Workflow | Arquivo | Gatilho | O que prova | Quando falha | Quem é avisado | Custo/sem (min) | Falha (7 d) |
 |---|---|---|---|---|---|---|---|
@@ -19,6 +19,9 @@
 | Talk X V4 placar regen (push) | [`talkx-status-regen.yml`](../../.github/workflows/talkx-status-regen.yml) | push | o placar do Talk X regenerado a partir dos dados atuais | o job fica vermelho e o placar nao e atualizado | autor do push | — | — |
 | Targeted Ledger Evidence | [`targeted-ledger-evidence.yml`](../../.github/workflows/targeted-ledger-evidence.yml) | dispatch | a evidencia do ledger de migrations para uma version especifica | o job aborta sem publicar evidencia | operador que disparou | — | — |
 | types-sync | [`types-sync.yml`](../../.github/workflows/types-sync.yml) | push na main, agendado e dispatch | os tipos gerados batem com o banco oficial (Gates 1 e 2) | PR em `automation/types-sync` ou issue `[types-sync]`; nunca passa com tipo divergente | PR de types e issue de gate | — | — |
+| Branch Hygiene Audit | [`branch-hygiene-audit.yml`](../../.github/workflows/branch-hygiene-audit.yml) | agendado (semanal) e dispatch | quais branches sao podaveis e quais PRs estao paradas ha mais de 7 dias | relatorio nao e publicado nem a issue e atualizada | issue `[branch-hygiene]` no repositorio | — | — |
+| E2E logado | [`e2e-logado.yml`](../../.github/workflows/e2e-logado.yml) | push na main e dispatch sobre main | o fluxo logado (Playwright com login real) contra producao | artefato do Playwright e issue/relatorio; nunca roda em PR de terceiro | issue de E2E e autor do push | — | — |
+| Notifica falha na main | [`notifica-falha-main.yml`](../../.github/workflows/notifica-falha-main.yml) | workflow_run (conclusao dos workflows principais na main) | abre issue quando qualquer workflow critico falha na main | sem aviso sobre as falhas dos workflows monitorados | issue de falha-main | — | — |
 
 ## Detalhe
 
@@ -98,6 +101,27 @@
 - **O que prova:** os tipos gerados batem com o banco oficial (Gates 1 e 2)
 - **Quando falha:** PR em `automation/types-sync` ou issue `[types-sync]`; nunca passa com tipo divergente
 - **Quem é avisado:** PR de types e issue de gate
+
+### Branch Hygiene Audit (`branch-hygiene-audit.yml`)
+
+- **Gatilho:** agendado (semanal) e dispatch
+- **O que prova:** quais branches sao podaveis e quais PRs estao paradas ha mais de 7 dias
+- **Quando falha:** relatorio nao e publicado nem a issue e atualizada
+- **Quem é avisado:** issue `[branch-hygiene]` no repositorio
+
+### E2E logado (`e2e-logado.yml`)
+
+- **Gatilho:** push na main e dispatch sobre main
+- **O que prova:** o fluxo logado (Playwright com login real) contra producao
+- **Quando falha:** artefato do Playwright e issue/relatorio; nunca roda em PR de terceiro
+- **Quem é avisado:** issue de E2E e autor do push
+
+### Notifica falha na main (`notifica-falha-main.yml`)
+
+- **Gatilho:** workflow_run (conclusao dos workflows principais na main)
+- **O que prova:** abre issue quando qualquer workflow critico falha na main
+- **Quando falha:** sem aviso sobre as falhas dos workflows monitorados
+- **Quem é avisado:** issue de falha-main
 
 ## O que NÃO é bug
 

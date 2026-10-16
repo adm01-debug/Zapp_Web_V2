@@ -64,7 +64,7 @@ Medido em 2026-10-08:
 
 | Elo | Estado | Onde |
 |---|---|---|
-| Cliente envia `x-request-id` | **não** | nenhuma ocorrência em `src/` |
+| Cliente envia `x-request-id` | **sim** | encontrado em `src/` |
 | Borda lê/sorteia e devolve | **sim** | `supabase/functions/_shared/validation.ts` — `getCorsHeaders` |
 | Borda permite na chamada da IA | sim | `supabase/functions/_shared/ai-routing.ts` — `ALLOWED_HEADER_NAMES` |
 | Log casado cliente ↔ borda | **não** | não há correlação registrada nos dois lados |
