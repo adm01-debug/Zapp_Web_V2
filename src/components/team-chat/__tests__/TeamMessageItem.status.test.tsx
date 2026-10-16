@@ -10,6 +10,9 @@
  *                estado `read` só vem do all_read da view);
  *  - lido com leitores nomeados (prop opcional `readBy`) -> tooltip nativa
  *    (title) e nome acessível "Lido por <nomes>";
+ *  - falha    -> ícone de alerta (lucide-circle-alert, alias Lucide de
+ *                AlertCircle) + nome acessível
+ *                "Falha no envio" na cor do texto do balão próprio;
  *  - mensagem de outro -> nenhum tick (não polui a conversa).
  *
  * O svg do tick é filho DIRETO do wrapper acessível (o seletor `[&>svg]` da
@@ -164,6 +167,28 @@ describe('TeamMessageItem — ticks de estado da mensagem própria (PE-69)', () 
     renderItem({ status: 'sending' });
     const el = screen.getByRole('img', { name: 'Enviando mensagem' });
     expect(el.querySelector('svg.lucide-clock')).toBeTruthy();
+  });
+
+  it('falha no envio: ícone de alerta, nome "Falha no envio" e a cor aplicada', () => {
+    const { container } = renderItem({ status: 'failed' });
+    const el = screen.getByRole('img', { name: 'Falha no envio' });
+    // Filho DIRETO do wrapper: é o que faz o seletor '[&>svg]' da cor alcançar o
+    // ícone (com o MessageStatus antigo o svg vinha aninhado e não era pintado).
+    // O import é `AlertCircle`, que na lucide-react 0.577 é o alias de
+    // `CircleAlert`: a classe que chega ao DOM é `lucide-circle-alert`.
+    expect(el.querySelector(':scope > svg.lucide-circle-alert')).toBeTruthy();
+    expect(el.getAttribute('title')).toBe('Falha no envio');
+    // A cor sai do DOM REAL e o token é conferido em tokens.css: classe inócua,
+    // apontando para token inexistente, é recusa conhecida.
+    const colorClass = [...el.classList].find((c) => c.includes('text-'));
+    expect(colorClass).toBeTruthy();
+    expect(colorClass).toContain('text-primary-foreground');
+    expect(colorClass).not.toContain('text-info');
+    const token = `--${(colorClass as string).replace(/.*text-/, '')}`;
+    const css = readFileSync(resolve(__dirname, '../../../styles/tokens.css'), 'utf8');
+    expect(css).toMatch(new RegExp(`${token}:\\s*\\d`));
+    // Não é estado de sucesso: nenhum traço de enviado/entregue na tela.
+    expect(container.querySelectorAll('svg.lucide-check, svg.lucide-check-check')).toHaveLength(0);
   });
 
   it('mensagem apagada não mostra tick', () => {
