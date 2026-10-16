@@ -1336,6 +1336,22 @@ jobs:
           EMAIL_RLS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/email-rls-sem-ramo-admin.test.sh
+      # DASHBOARD-03 (12/10/2026 · paridade V3 -> V2, doc 02-features-batch1): a
+      # RPC public.dashboard_daily_series(p_days) devolve a serie diaria de
+      # atividade (mensagens recebidas/enviadas, contatos novos, conversas
+      # abertas/resolvidas, contatos ativos e mediana de resposta) no fuso de
+      # America/Sao_Paulo. O contrato sobe postgres:17-alpine proprio, aplica a
+      # migration REAL e prova: numeros batem com a contagem manual, admin e
+      # supervisor leem, agente comum leva 42501, anon/PUBLIC sem EXECUTE,
+      # service_role le, p_days limitado a 90 (piso 1), dia sem movimento com
+      # mediana NULL, idempotencia e o Rollback remove a funcao. SKIP_DOCKER_SHIM
+      # porque o readiness usa `docker logs` e as roles anon/authenticated/
+      # service_role sao globais ao cluster (colidiriam com o shim do E47).
+      - name: Provar a serie diaria de KPIs do dashboard (DASHBOARD-03)
+        env:
+          DASHBOARD_DAILY_SERIES_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/dashboard-daily-series.test.sh
 
       # N-136 (P2 · banco, roteiro de recriacao): o runbook docs/runbooks/recriar-banco-local.md
       # documenta o comando para recriar o banco local do zero. O teste prova que o arquivo
