@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { NotificationSettings, SoundTypeOption } from '@/hooks/system/useNotificationSettings';
 import { playNotificationSound, SoundType, NotificationType } from '@/utils/notificationSounds';
+import { toast } from '@/hooks/ui/use-toast';
 import { cn } from '@/lib/utils';
 
 const SOUND_TYPES: { value: SoundTypeOption; label: string; description: string }[] = [
@@ -48,13 +49,29 @@ interface SoundSelectorProps {
 export function SoundSelector({ value, onChange, notificationType, label, soundVolume }: SoundSelectorProps) {
   const [isTesting, setIsTesting] = useState(false);
 
+  const tipo = TIPO_LABEL[notificationType] ?? notificationType;
+
   const handleTest = () => {
     setIsTesting(true);
-    playNotificationSound(notificationType, value as SoundType, soundVolume);
+    // Recusa do navegador = o player devolve `false` (sem WebAudio / áudio bloqueado nesta aba).
+    // Sem este aviso o clique em "Testar som de <tipo>" parecia ter tocado: quem estava sem som
+    // não tinha como saber. O retorno é lido como `unknown` e comparado ESTRITAMENTE com `false`
+    // de propósito: nesta base `playNotificationSound` ainda devolve `void` (a versão que devolve
+    // `boolean` está em entregas irmãs fora de dia/2026-10-16) e um teste frouxo (`!retorno`)
+    // mostraria o aviso em TODO clique, inclusive quando o som tocou. Este botão é só prévia —
+    // nenhuma preferência é gravada, então o aviso não mexe em `settings`.
+    const tocou: unknown = playNotificationSound(notificationType, value as SoundType, soundVolume);
+    if (tocou === false) {
+      setIsTesting(false);
+      toast({
+        title: '🔇 O navegador não deixou tocar o som',
+        description: `Libere o áudio desta aba e clique em "Testar som de ${tipo}" de novo.`,
+        variant: 'destructive',
+      });
+      return;
+    }
     setTimeout(() => setIsTesting(false), 1000);
   };
-
-  const tipo = TIPO_LABEL[notificationType] ?? notificationType;
 
   return (
     <div className="flex items-center gap-2">
