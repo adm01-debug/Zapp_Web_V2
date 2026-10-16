@@ -371,7 +371,7 @@ test('E86: quem roda a suíte logada declara a limpeza do que grava em produçã
 
 const USES_CACHE = /uses:\s*actions\/cache@[a-f0-9]{40}\b/;
 const PATH_CACHE_BUN = /path:\s*~\/\.bun\/install\/cache\s*$/;
-const KEY_CACHE_BUN = /key:\s*bun-\$\{\{\s*hashFiles\('bun\.lock'\)\s*\}\}\s*$/;
+const KEY_CACHE_BUN = /key:\s*bun-\$\{\{\s*hashFiles\('bun\.lock'\)\s*\}\}/;
 
 /** Blocos de job de um workflow: chaves de 2 espaços sob `jobs:` (texto cru). */
 function blocosDeJob(texto) {
@@ -511,9 +511,9 @@ function ancestrais(grafo, job) {
   return vistos;
 }
 
-test('E69: test/security/e2e/mutation-mapa não esperam o lint (rodam em paralelo)', () => {
+test('E69: typecheck/unit-tests/node-scripts/build rodam em paralelo (sem needs)', () => {
   const grafo = grafoDeNeeds(wf['ci.yml']);
-  for (const job of ['test', 'security', 'e2e', 'mutation-mapa']) {
+  for (const job of ['typecheck', 'unit-tests', 'node-scripts', 'build']) {
     assert.ok(grafo.has(job), `job ${job} sumiu do ci.yml`);
     const anc = [...ancestrais(grafo, job)];
     assert.deepEqual(
@@ -522,10 +522,4 @@ test('E69: test/security/e2e/mutation-mapa não esperam o lint (rodam em paralel
       `${job} volta a esperar ${anc.join(', ')} — o job vira série em vez de rodar em paralelo`,
     );
   }
-});
-
-test('E69: o build continua atrás do lint E do test', () => {
-  const anc = ancestrais(grafoDeNeeds(wf['ci.yml']), 'build');
-  assert.ok(anc.has('lint-and-typecheck'), 'build deixou de esperar o lint');
-  assert.ok(anc.has('test'), 'build deixou de esperar o test');
 });

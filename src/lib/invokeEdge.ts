@@ -33,8 +33,6 @@ import type { FunctionInvokeOptions, FunctionsResponse } from '@supabase/functio
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger, generateCorrelationId } from '@/lib/logger';
 
-const log = createLogger('edge-invoke');
-
 /** Cabeçalho canônico do id (compatível com a V3). */
 export const CORRELATION_HEADER = 'x-correlation-id';
 /** Cabeçalho que a Edge do V2 já lê e loga como `rid`. */
@@ -251,7 +249,7 @@ export async function invokeEdge<T = unknown>(
   });
 
   if (resposta.error) {
-    log.withCorrelation(correlationId).error(`Edge ${functionName} falhou`, {
+    createLogger('edge-invoke').withCorrelation(correlationId).error(`Edge ${functionName} falhou`, {
       status: statusOf(resposta.error),
       tipo: resposta.error.name,
     });
