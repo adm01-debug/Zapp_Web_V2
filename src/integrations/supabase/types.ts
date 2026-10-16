@@ -9823,6 +9823,7 @@ export type Database = {
       }
       whisper_messages: {
         Row: {
+          audio_path: string | null
           contact_id: string
           content: string
           created_at: string | null
@@ -9832,6 +9833,7 @@ export type Database = {
           target_agent_id: string
         }
         Insert: {
+          audio_path?: string | null
           contact_id: string
           content: string
           created_at?: string | null
@@ -9841,6 +9843,7 @@ export type Database = {
           target_agent_id: string
         }
         Update: {
+          audio_path?: string | null
           contact_id?: string
           content?: string
           created_at?: string | null
