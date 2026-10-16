@@ -573,7 +573,7 @@
 
 | # | Funcionalidade | Status | Arquivo Principal |
 |---|---------------|--------|-------------------|
-| 27.1 | PWA (manifest.json completo) | ✅ | `public/manifest.json` |
+| 27.1 | PWA (app instalável: `public/manifest.json` + tags no `index.html`) | ✅ | `index.html` |
 | 27.2 | Service Worker | ✅ | `public/sw.js` |
 | 27.3 | Navegação mobile (bottom nav) | ✅ | `src/components/mobile/MobileNavigation.tsx` |
 | 27.4 | Bottom Sheet | ✅ | `src/components/mobile/BottomSheet.tsx` |
@@ -806,14 +806,11 @@
 
 | Item | Valor |
 |------|-------|
-| Rota | `?view=talkx` → `TalkXView` |
-| Componentes | `src/components/talkx/TalkXView.tsx`, `src/components/talkx/TalkXCampaignWizard.tsx` |
-| Hook | `src/hooks/integrations/useTalkX.ts` |
-| Tabelas | `talkx_campaigns`, `talkx_recipients` |
+| Estado atual | Removido do produto em 2026-10-11 |
+| Sistema ativo | Talk X (`?view=talkx`) |
+| Tabelas históricas | `campaigns`, `campaign_contacts` |
 
-**Funcionalidades:** CRUD de campanhas, criação com seleção de contatos/segmentos, status (rascunho/agendada/enviando/concluída/cancelada/pausada), progresso do envio, monitor ao vivo, filtros por status e supressão.
-
-> **Nota (2026-10-11):** o módulo legado "Campanhas Clássicas" (rota `?view=campaigns`) foi removido — o Talk X (`?view=talkx`) é o sistema de Campanhas ativo.
+**Atualização (2026-10-11):** o módulo clássico de campanhas deixou de existir no front-end. O documento mantém apenas o registro histórico das tabelas; a rota, os componentes React e o hook do módulo clássico não são mais funcionalidades ativas.
 
 ---
 

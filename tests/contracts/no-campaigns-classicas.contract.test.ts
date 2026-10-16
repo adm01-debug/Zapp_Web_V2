@@ -1,9 +1,10 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const raiz = resolve(__dirname, '..', '..');
 const ler = (p: string) => readFileSync(resolve(raiz, p), 'utf8');
+const existe = (p: string) => existsSync(resolve(raiz, p));
 
 // Contrato da remoção de "Campanhas Clássicas" (o Talk X é o sistema de Campanhas ativo).
 // Este teste falha na base (ainda havia CampaignsView e a entrada de menu) e passa depois
@@ -22,5 +23,19 @@ describe('Campanhas Clássicas não existe mais no app', () => {
     expect(router).not.toMatch(/CampaignsView/);
     expect(lazy).not.toMatch(/CampaignsView/);
     expect(lazy).not.toMatch(/components\/campaigns/);
+  });
+
+  it('não mantém arquivos, hook ou testes do módulo clássico removido', () => {
+    expect(existe('src/components/campaigns')).toBe(false);
+    expect(existe('src/hooks/communication/useCampaigns.ts')).toBe(false);
+    expect(existe('src/hooks/__tests__/useCampaigns.test.tsx')).toBe(false);
+    expect(existe('tests/contracts/axe-campaigns.contract.test.ts')).toBe(false);
+  });
+
+  it('COMPLETE_SYSTEM_FEATURES não anuncia arquivos ativos removidos', () => {
+    const doc = ler('docs/COMPLETE_SYSTEM_FEATURES.md');
+    expect(doc).not.toMatch(/\?view=campaigns/);
+    expect(doc).not.toMatch(/CampaignsView|CampaignCreateDialog|CampaignABTesting/);
+    expect(doc).not.toMatch(/src\/components\/campaigns|src\/hooks\/communication\/useCampaigns\.ts/);
   });
 });
