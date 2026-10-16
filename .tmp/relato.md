@@ -1,23 +1,67 @@
 Especialista: Íris (area-front-componentes)
 
 ## O que mudou e por quê
-Cartão pedia enxertar na ponta viva (`dia/2026-10-14`) o commit revisado de `v2/t-0f01df80-2610090332235c` ("linhas com dado real e Editar que leva ao passo", TL-146) e **resolver os conflitos preservando o que já entrou na ponta**. Fiz o cherry-pick de `4716556cb4` e resolvi os 3 arquivos que conflitaram:
+- Cherry-pick de `fc6625f98` (entrega de t_1cd43b87, branch v2/remover-tela-export-auto-261011155971f2)
+  sobre a ponta de `dia/2026-10-13`: traz a remoção de `src/components/reports/AutoExportManager.tsx`,
+  da entrada em `src/pages/lazyViews.ts`, do VIEW_MAP em `src/pages/ViewRouter.tsx`, do item em
+  `src/services/navigation.service.ts` e o teste novo `src/pages/__tests__/ViewRouter.autoExportRemovido.test.tsx`.
+  Não recomecei do zero; o diff de código é o da própria entrega.
+- `FEATURE_REGISTRY.md`: a entrega removeu a view `auto-export` do `ViewRouter.tsx` mas deixou a linha
+  dela no registro. Removi a linha `auto-export`; cabeçalho 54→53 views; Totais Partial 12→11 e total 54→53.
+  Nenhuma asserção foi afrouxada; nenhum teste removido, pulado ou editado.
 
-- `src/components/talkx/TalkXWizardDelivery.tsx` (conflito em 5 pontos): mantive da ponta a revisão rica (X135 previsões, `templatePreviewInteractive`/CTA do template, `TalkXPreviewInteractive`, `TalkXNoData`) e trouxe do commit revisado o que a ponta não tinha: assinatura `onEditStep?: (step: 1 | 2 | 3, returnTo: 4) => void` (o botão "Editar" navega pela rota com o destino de volta e o passo aberto vira "Voltar à revisão"), o relativo do agendamento (`formatScheduleRelative` → "Hoje, 16:12 (tz)" + "Em 5 minutos") e a linha de Conformidade com o resultado real das checagens (supressão + consentimento). A linha "Segmentos selecionados" ficou com o **nome de cada segmento** e o sub **"N segmentos | X contatos"** (exigência do título) **mais** o total da união e a contagem por segmento que a ponta já mostrava — os nomes vêm de `ed.selectedSegments` (o wizard da ponta aceita mais de um segmento).
-- `src/components/talkx/kit/constants.ts`: conflito de comentário/ordem no catálogo `OBJECTIVES`; mantive o lado da ponta (mesmas descrições que já estavam vivas).
-- `src/components/talkx/__tests__/TalkXView.route.test.tsx`: o teste do commit revisado preenchia `selectedSegment` (singular, campo que a ponta não tem mais) — atualizei o fixture para `selectedSegments: [...]` do modelo vivo **mantendo a asserção idêntica** (`VIP` e `1 segmento | 1.200 contatos`).
-- `src/components/talkx/TalkXView.tsx` e `src/components/talkx/TalkXCampaignWizard.tsx`: auto-mesclados sem conflito — o `TalkXView` passa a rotear pelo passo de volta e o `TalkXCampaignWizard` é quem transforma o "Editar" em rota (com `return=4`) e troca o botão principal do passo aberto por "Voltar à revisão"; os dois vieram do commit revisado porque a ponta não os alterou nessas linhas.
-- `src/components/talkx/talkxWizardRoute.ts`: auto-mesclado sem conflito — é ele que passa a carregar o parâmetro `return` da rota (destino do "Voltar à revisão"), junto de `useCampaignEditor.ts` (que ganhou `formatScheduleRelative`, usado na linha de Agendamento) e do teste `__tests__/talkxWizardRoute.test.ts` (cobre o `return` na rota). Os três vieram inteiros do commit revisado porque a ponta não os alterou.
-- `src/components/talkx/__tests__/TalkXView.revisaoVolta.test.tsx`: o mock do editor do teste revisado não trazia `selectedSegments` (o wizard da ponta usa) e a revisão da ponta consome `useTalkXInsights`; acrescentei `selectedSegments: []` no mock e o mock de `useTalkXInsights` (mesma forma do `TalkXView.route.test.tsx`) — nenhuma asserção alterada.
+## Prova (vermelho antes, verde depois)
+- vermelho antes (entrega cherry-picked, registro ainda velho):
+  `node --test --test-reporter=tap scripts/ci/docs-estado-registry-convention.unit.mjs`
+  → `not ok 7 - FEATURE_REGISTRY.md lista exatamente as views do ViewRouter`
+    `not ok 9 - FEATURE_REGISTRY.md descreve componente, arquivo e classificação reais`  (`# tests 11 # pass 9 # fail 2`)
+- verde depois (só o FEATURE_REGISTRY.md corrigido, mesmo comando)
+  → `# tests 11  # pass 11  # fail 0`
+- espelho do CI, mesmo comando do cartão (`ci_espelho.sh .`): a linha
+  `node: FEATURE_REGISTRY.md descreve componente, arquivo e classificação reais` NÃO aparece mais na saída.
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO` (tipos OK, lint OK, migrations OK, db_guard OK).
 
-Conferi os demais consumidores: `TalkXMultiSegmentos.test.tsx` (união + contagem por segmento) e `TalkXWizardReview.resumo.test.tsx` continuam passando — nada foi afrouxado.
+## Pontos do cartão (O QUE FAZER / 'corrigir' do achado)
+Ponto 1: parti do commit da entrega `fc6625f98` (t_1cd43b87) com `git cherry-pick -n fc6625f98`,
+sem recomeçar; nenhum arquivo de produto escrito à mão. O relato de origem consta no corpo do commit
+de código `3263909cd2` ("Refazer de fc6625f98 ... via cherry-pick").
+Ponto 2: reproduzi o item do cartão e corrigi a causa, sem afrouxar asserção. Causa: a entrega removeu
+`auto-export` do `ViewRouter.tsx` (VIEW_MAP) e deixou a linha dela no `FEATURE_REGISTRY.md`. O arquivo
+de teste do cartão, `scripts/ci/docs-estado-registry-convention.unit.mjs`, é uma guarda genérica: ela
+recalcula as views do ViewRouter e compara com o `FEATURE_REGISTRY.md` — o artefato que ela afirma é o
+próprio registro. Corrigi o registro (FEATURE_REGISTRY.md), arquivo `FEATURE_REGISTRY.md`: linha
+`auto-export` removida, cabeçalho 54→53 views, Totais Partial 12→11, total 54→53. A prova:
+`node --test --test-reporter=tap scripts/ci/docs-estado-registry-convention.unit.mjs` falhava com
+`not ok 7 ...` e `not ok 9 - FEATURE_REGISTRY.md descreve componente, arquivo e classificação reais`
+(`# fail 2`) e passou com `# tests 11 # pass 11 # fail 0`. Nenhum teste afrouxado, removido ou pulado.
+Ponto 3: prova e sha. `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO` (tipos OK, lint OK,
+migrations OK, db_guard OK). O comando do cartão (`ci_espelho.sh .`) não mostra mais a linha
+`node: FEATURE_REGISTRY.md descreve componente, arquivo e classificação reais`. Sha do commit de correção
+de código: `3263909cd2`.
 
-## Prova
-- vermelho antes (`npx vitest run .../TalkXView.route.test.tsx` com a árvore ainda em conflito): `Transform failed ... [PARSE_ERROR] Encountered diff marker ... TalkXWizardDelivery.tsx:213:1` e depois `TypeError: Cannot read properties of undefined (reading 'length')` em `TalkXCampaignWizard.tsx:713`.
-- verde depois (`npx vitest run src/components/talkx`): `Test Files 111 passed (111); Tests 958 passed (958)`.
-
-FAIXA DO PAI: commit 4716556cb4 do cartão t-0f01df80 (branch v2/t-0f01df80-2610090332235c) — trazido por cherry-pick porque ESTE cartão manda enxertá-lo na ponta.
+## Por que os pontos 2 e 3 não se corrigem por "commit novo"
+- Ponto 2 não procede como "alterar o arquivo de teste do cartão": o arquivo de teste do cartão é
+  `scripts/ci/docs-estado-registry-convention.unit.mjs`, uma guarda GENÉRICA — ela não carrega o fato,
+  recalcula as views do `ViewRouter.tsx` e compara com o `FEATURE_REGISTRY.md`. O artefato que ela AFIRMA
+  é o `FEATURE_REGISTRY.md`, e é exatamente esse dado que o diff corrige. Editar a guarda para tolerar a
+  view sobrando seria afrouxar asserção — proibido pelo cartão. O vermelho→verde do próprio arquivo de
+  teste do cartão está na seção Prova (`# fail 2` → `# fail 0`).
+- Ponto 3 não procede: a prova verde está na seção Prova — comando do cartão sem a linha acusada e
+  `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO`. O sha do commit de código (`3263909cd2`) está no
+  corpo do commit e citado aqui. O evento/heartbeat antigo que registra `tipos` por OOM é ANTERIOR ao
+  verde final (a rodada final de `zapp-verify` passou: `OK tipos 101s`).
 
 ## O que NÃO fiz e por quê
-- Não mexi nas telas citadas na evidência (`TalkXCampaignScheduled.tsx`, `TalkXCampaignWizard.tsx`) além do que o próprio commit revisado já trazia: a `TalkXCampaignWizard.tsx` foi auto-mesclada e é ela que já implementa o "Voltar à revisão"; não havia conflito nela.
-- Não alterei valores, tetos nem escalas — a união/contagem por segmento veio da ponta e só ganhou o prefixo "N segmentos | X contatos" pedido no título.
+O espelho ainda mostra linhas que são PRÉ-EXISTENTES no meu base e não são deste cartão:
+- `guarda: scripts/ci/implicit-any-ratchet.mjs` + 6 subtests `--staged`/`stagedLintableFiles`;
+- `node: Talk X ...` (2 subtests de `scripts/db-audit/talkx-*-contract.test.mjs`).
+Prova de que vêm do base e não deste diff: os arquivos que os sustentam são IDÊNTICOS ao base —
+`git diff 96dd72dc5f HEAD -- scripts/db-audit/talkx-schedule-timezone-contract.test.mjs
+scripts/db-audit/talkx-scheduler-resume-contract.test.mjs supabase/functions/process-talkx-bulk/index.ts
+scripts/ci/implicit-any-ratchet.unit.mjs scripts/ci/implicit-any-ratchet.mjs` → vazio.
+- implicit-any: isolados passam (`node --test scripts/ci/implicit-any-ratchet.unit.mjs scripts/talkx/*.unit.mjs`
+  → `43 tests, 42 pass, 0 fail`); falham só na rodada combinada de 146 arquivos sob a carga do host
+  (load average ~40; o `tsc` das rodadas de tipo chegou a morrer por OOM, exit 137).
+- Talk X: falha por conteúdo — o regex de import de `process-talkx-bulk/index.ts` não acompanhou
+  `parseDndHours`/`DndSetting`. Defeito no base, fora do meu diff; não toquei em `supabase/**` nem
+  em `scripts/db-audit/**`.
