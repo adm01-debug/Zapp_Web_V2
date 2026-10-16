@@ -595,11 +595,8 @@ casa continua: nenhum agente faz push, abre PR ou mergeia por conta própria; cl
 - [x] **W88** · C · N-15 · `check-workflow-pins.mjs`: todo binário baixado por `curl` em `run:` (actionlint, zizmor,
   shellcheck) precisa de versão + sha256 declarados em `toolchain.json` e conferidos. Verificação: teste; mutação do
   hash → ❌.
-- [ ] **W89** · D+E ⚠️ · N-11 · SonarCloud (E10): ajustar o Quality Gate de New Code (duplicação ≤ 6 %, Reliability ≥ C)
-  com ratchet mensal, **ou** desinstalar; e desinstalar o app `Supabase for GitHub` (check `skipped` em todo push, sem
-  função desde 25/09). Verificação: HEAD da `main` sem check ❌/skipped de terceiro.
-- [ ] **W90** · D ⚠️ · N-33 · Inventário e poda dos GitHub Apps (E89): ≤ 2 revisores bot; remover os que só postam badge
-  ou aviso; registrar a lista no `CLAUDE.md`. Verificação: PR nova recebe ≤ 3 comentários de bot.
+- [~] **W89** · D+E ⚠️ · N-11 · **PARCIAL 2026-10-16** — SonarCloud: Quality Gate `success` no HEAD da PR (check não bloqueia); ajuste de thresholds (duplicação ≤ 6 %, Reliability ≥ C) requer dashboard SonarCloud — ação do Joaquim. `Supabase for GitHub`: check `Supabase Preview | skipped` ainda aparece em todo push apesar do "Automatic branching/Deploy" desligado em 25/09 — o **app precisa ser desinstalado** pelo Joaquim (Settings → Installed GitHub Apps → Supabase for GitHub → Uninstall). Verificação pendente: HEAD da `main` sem check ❌/skipped de terceiro.
+- [~] **W90** · D ⚠️ · N-33 · **PARCIAL 2026-10-16** — Apps inventariados via check runs da PR #1970: `CodeQL` (Advanced Security, required — manter), `SonarCloud` (code analysis — manter/ajustar), `Vercel` (deploy + review — manter), `cubic.dev` (posta PR diff badge/auto-fix button — candidato a remoção, só aviso), `Supabase for GitHub` (check `skipped` desde 25/09 — remover junto ao W89). Registrado em `CLAUDE.md`. **Pendente Joaquim:** desinstalar `cubic.dev` e `Supabase for GitHub` em Settings → Installed GitHub Apps para chegar a ≤ 3 comentários de bot por PR. Verificação: PR nova recebe ≤ 3 comentários de bot.
 
 ### Fase 8 — Observabilidade, higiene e documentação (W91–W100)
 
