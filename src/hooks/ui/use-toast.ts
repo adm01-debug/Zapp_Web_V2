@@ -69,16 +69,19 @@ function acaoDoSonner(action: ToastAction | undefined): AcaoSonner | undefined {
 }
 
 function opcoes(id: string, props: Toast): OpcoesSonner {
+  const limpar = () => {
+    abertos.delete(id);
+  };
   return {
     id,
     description: props.description,
     duration: props.duration,
     action: acaoDoSonner(props.action),
-    // O Sonner avisa quando o toast sai (autoClose ou clique): o registro não
-    // pode continuar contando um toast que já não está na tela.
-    onDismiss: () => {
-      abertos.delete(id);
-    },
+    // O Sonner avisa por dois caminhos: onAutoClose (sumiu sozinho pelo
+    // tempo) e onDismiss (dispensado por clique/arrasto/botão). Nos dois o
+    // registro não pode continuar contando um toast que já saiu da tela.
+    onDismiss: limpar,
+    onAutoClose: limpar,
   };
 }
 

@@ -89,11 +89,21 @@ describe("use-toast — adaptador sobre o Sonner", () => {
     expect(sonner.fechar).toHaveBeenLastCalledWith(b.id);
   });
 
-  it("toast que o Sonner fecha sozinho sai do registro e não é fechado de novo", () => {
+  it("toast que fecha sozinho pelo tempo (onAutoClose) sai do registro e não é fechado de novo", () => {
     toast({ title: "Some sozinho" });
     const opcoes = sonner.neutro.mock.calls[0][1];
 
-    opcoes.onDismiss(); // o Sonner avisa que o toast saiu (autoClose)
+    opcoes.onAutoClose(); // o Sonner avisa que o toast fechou sozinho pelo tempo
+
+    useToast().dismiss();
+    expect(sonner.fechar).not.toHaveBeenCalled();
+  });
+
+  it("toast dispensado pelo Sonner (onDismiss) sai do registro e não é fechado de novo", () => {
+    toast({ title: "Dispensado" });
+    const opcoes = sonner.neutro.mock.calls[0][1];
+
+    opcoes.onDismiss(); // o Sonner avisa que o toast foi dispensado (clique/arrasto/botão)
 
     useToast().dismiss();
     expect(sonner.fechar).not.toHaveBeenCalled();
