@@ -1,10 +1,10 @@
 -- message_reactions_agente_sem_chave_de_contato
--- Rollback: remove o gatilho de normalizacao, restaura os contact_id legados quando isso nao recria conflito, remove a tabela de apoio e a funcao.
--- Rollback (SQL executável, na ordem):
---   DROP TRIGGER IF EXISTS message_reactions_normalize_author ON public.message_reactions;
+-- Rollback: dropa o gatilho, devolve contact_id as linhas de agente que a migration anulou (sem sobrescrever chave ocupada por cliente), dropa a tabela de apoio e a funcao.
+-- Rollback (SQL executavel, na ordem):
+--   drop trigger if exists message_reactions_normalize_author on public.message_reactions;
 --   UPDATE public.message_reactions r SET contact_id = b.contact_id_original FROM public._rb_message_reactions_contato_20261007001008 b WHERE b.reaction_id = r.id AND NOT EXISTS (SELECT 1 FROM public.message_reactions c WHERE c.id <> r.id AND c.message_id = r.message_id AND c.contact_id = b.contact_id_original AND c.emoji = r.emoji);
---   DROP TABLE IF EXISTS public._rb_message_reactions_contato_20261007001008;
---   DROP FUNCTION IF EXISTS public.message_reactions_normalize_author();
+--   drop table if exists public._rb_message_reactions_contato_20261007001008;
+--   drop function if exists public.message_reactions_normalize_author();
 --
 -- R2-DB-021 / item 303 (P2). A tabela public.message_reactions mantinha DUAS
 -- unicidades independentes: (message_id, user_id, emoji) e (message_id, contact_id,

@@ -10,7 +10,7 @@
 #             reação de agente ao mesmo emoji na mesma mensagem colide na chave de
 #             contato (23505) e uma reação de cliente colide com a de agente.
 #   BLOCO B — migration 20261007001008 aplicada e o backfill conferido.
-#   ROLLBACK — extrai o bloco `-- Rollback:` do PRÓPRIO arquivo, executa sobre o estado
+#   ROLLBACK — extrai o bloco `-- Rollback (SQL executavel...)` do PRÓPRIO arquivo, executa sobre o estado
 #             que a migration produziu (legado + migration) e confere que dados, gatilho
 #             e tabela de apoio voltaram; o defeito reaparece.
 #   BLOCO C — reaplica a migration (idempotência) e prova o comportamento: duas
@@ -189,12 +189,10 @@ expect_value 'B: cenario de rollback tem cliente + 2 agentes no mesmo emoji' '3'
   "SELECT count(*)::text FROM public.message_reactions WHERE message_id='$M2' AND emoji='❤️';"
 
 printf '\n== ROLLBACK — bloco executavel extraido da propria migration ==\n'
-awk '
-  /^-- Rollback \(SQL executável, na ordem\):/ { in_rollback = 1; next }
-  in_rollback && /^--$/ { exit }
-  in_rollback && /^--   / { sub(/^--   /, ""); print }
-' "$migration" > "$tmp_dir/rollback.sql"
-[[ -s "$tmp_dir/rollback.sql" ]] || fail 'a migration nao tem bloco -- Rollback (SQL executável)'
+# Bloco '-- Rollback (SQL executavel, na ordem):' seguido de linhas '--   <sql>' (convencao do repo).
+awk '/^-- Rollback \(SQL executavel/ { on = 1; next } on && /^--   / { sub(/^--   /, ""); print; next } on { exit }' \
+  "$migration" > "$tmp_dir/rollback.sql"
+[[ -s "$tmp_dir/rollback.sql" ]] || fail 'a migration nao tem bloco -- Rollback (SQL executavel) com linhas --   <sql>'
 psql_file "$tmp_dir/rollback.sql" >/dev/null
 expect_value 'R: contact_id restaurado (agente x agente)' "$C1" \
   "SELECT contact_id::text FROM public.message_reactions WHERE message_id='$M1' AND user_id='$PA';"
