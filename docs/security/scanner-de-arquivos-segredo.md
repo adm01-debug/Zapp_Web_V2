@@ -48,3 +48,10 @@ registrada (quem liberou, qual arquivo pelo hash SHA-256, por quê, até quando)
 nunca um parâmetro da requisição: o chamador não consegue pedir `skip`/exceção
 para si mesmo. Sem registro válido da exceção, vale a regra padrão: sem veredito
 confiável, o envio bloqueia.
+
+Regra "nenhuma informação pode sair do sistema": o único dado que deixa o
+sistema é o próprio arquivo enviado ao provedor, que é o ato da varredura
+mandado pelo cartão; para log/auditoria vão só hash, veredito, `scanId` e
+tamanho — nome de cliente, telefone, conversa ou conteúdo, nunca. Esta exceção
+vale só para este scanner e para envios feitos por agente via esta edge: não
+autoriza liberar arquivo em outro fluxo nem por outro canal.
