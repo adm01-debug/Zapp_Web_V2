@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { AuditLogDashboard } from '../AuditLogDashboard';
+import { fakeAuditLog } from '@/test/mocks/auditLogsServer';
 
 const mockLogs = [
   { id: '1', action: 'login', entity_type: 'user', entity_id: 'u1', user_id: 'uid1', details: null, ip_address: '192.168.1.1', user_agent: 'Chrome', created_at: new Date().toISOString() },
@@ -11,9 +12,15 @@ const mockLogs = [
   { id: '5', action: 'export', entity_type: 'contact', entity_id: null, user_id: 'uid1', details: null, ip_address: '192.168.1.1', user_agent: 'Chrome', created_at: new Date().toISOString() },
 ];
 
-// Estado da consulta falsa: dados devolvidos e chamadas registradas do builder.
+// Estado das consultas: o servidor PostgREST falso (src/test/mocks/auditLogsServer)
+// devolve as linhas pedidas e registra as chamadas do builder para os testes.
 const estado = vi.hoisted(() => ({
   dados: [] as unknown[],
+  perfis: [] as Array<{ id: string; name: string | null }>,
+  erro: null as { message: string } | null,
+  realtime: null as
+    | { emitirInsert: (linha: unknown) => void; canais: string[]; assinantes: () => number }
+    | null,
   chamadas: {
     select: '' as string,
     eq: [] as Array<[string, unknown]>,
@@ -22,36 +29,44 @@ const estado = vi.hoisted(() => ({
   },
 }));
 
-type ResultadoConsulta = { data: unknown; error: null };
-type ConstrutorConsulta = PromiseLike<ResultadoConsulta> & {
-  eq: (coluna: string, valor: unknown) => ConstrutorConsulta;
-  in: (coluna: string, valores: unknown[]) => ConstrutorConsulta;
-  like: (coluna: string, padrao: string) => ConstrutorConsulta;
-};
+vi.mock('@/integrations/supabase/client', async () => {
+  const { createAuditLogsServer, createAuditLogsRealtime } = await import('@/test/mocks/auditLogsServer');
+  const realtime = createAuditLogsRealtime();
+  estado.realtime = realtime;
 
-vi.mock('@/integrations/supabase/client', () => ({
-  supabase: {
-    from: vi.fn(() => ({
-      select: vi.fn((cols: string) => {
-        estado.chamadas.select = cols;
-        return ({
-          order: vi.fn(() => ({
-            limit: vi.fn(() => {
-              const resultado = Promise.resolve({ data: estado.dados, error: null });
-              const construtor: ConstrutorConsulta = {
-                eq: (coluna, valor) => { estado.chamadas.eq.push([coluna, valor]); return construtor; },
-                in: (coluna, valores) => { estado.chamadas.in.push([coluna, valores]); return construtor; },
-                like: (coluna, padrao) => { estado.chamadas.like.push([coluna, padrao]); return construtor; },
-                then: resultado.then.bind(resultado),
-              };
-              return construtor;
-            }),
-          })),
+  return {
+    supabase: {
+      // Um servidor por consulta: lê o estado vivo do teste (dados/erro trocados no beforeEach).
+      from: (tabela: string) => {
+        const servidor = createAuditLogsServer(estado.dados as never, {
+          profiles: estado.perfis,
+          error: estado.erro,
+          registrar: (consulta) => {
+            if (consulta.table === 'audit_logs' && !consulta.contagem) estado.chamadas.select = consulta.colunas;
+            consulta.eq.forEach((e) => estado.chamadas.eq.push(e));
+            consulta.in.forEach((e) => estado.chamadas.in.push(e));
+            consulta.like.forEach((e) => estado.chamadas.like.push(e));
+          },
         });
-      }),
-    })),
-  },
-}));
+        return servidor.from(tabela);
+      },
+      channel: (nome: string) => realtime.channel(nome),
+      removeChannel: (canal: unknown) => realtime.removeChannel(canal),
+    },
+  };
+});
+
+// O estado é compartilhado entre os describes: zera tudo antes de cada teste para um
+// teste de erro (leitura falhando) não vazar para o seguinte.
+beforeEach(() => {
+  estado.dados = mockLogs;
+  estado.perfis = [];
+  estado.erro = null;
+  estado.chamadas.eq.length = 0;
+  estado.chamadas.in.length = 0;
+  estado.chamadas.like.length = 0;
+  estado.chamadas.select = '';
+});
 
 // Padrao do repo para Radix Select em jsdom (ver ContactToolbar.test.tsx): as
 // opcoes ficam no DOM e o clique dispara o onValueChange do Select pai via contexto.
@@ -79,6 +94,8 @@ describe('AuditLogDashboard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     estado.dados = mockLogs;
+    estado.perfis = [];
+    estado.erro = null;
     estado.chamadas.eq.length = 0;
     estado.chamadas.in.length = 0;
     estado.chamadas.like.length = 0;
@@ -280,6 +297,108 @@ describe('R2-AUTH-032 — papéis entram no contador sensível e nos filtros', (
       expect(estado.chamadas.in).toContainEqual(['entity_type', ['user', 'user_roles']])
     );
     expect(estado.chamadas.eq).not.toContainEqual(['entity_type', 'user']);
+  });
+
+  // HZ1-08: os totais vêm de contagem no servidor (não das 200 linhas da tela) e a
+  // aba acompanha INSERT por Realtime. Antes: `data.filter(...)` sobre a página.
+  describe('HZ1-08 — totais reais e Realtime', () => {
+    const agora = new Date().toISOString();
+    const maisDe24h = new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString();
+
+    const definirDados = (linhas: ReturnType<typeof fakeAuditLog>[]) => {
+      estado.dados = linhas;
+    };
+
+    /** 500 linhas na base: metade nas últimas 24 h; 1 em cada 5 é `delete` (sensível).
+     *  `u9` só aparece na linha mais antiga — fora da página de 200 da tela. */
+    const planilha = (total: number) =>
+      Array.from({ length: total }, (_, i) =>
+        fakeAuditLog({
+          id: `f${i}`,
+          action: i % 5 === 0 ? 'delete' : 'login',
+          user_id: i === total - 1 ? 'u9' : `u${i % 3}`,
+          created_at: i % 2 === 0 ? agora : maisDe24h,
+        }),
+      );
+
+    const valorDoCartao = (rotulo: string) => screen.getByText(rotulo).previousElementSibling?.textContent;
+
+    it('conta no servidor: 500 linhas na base e só 200 na tela; o cartão mostra as 500', async () => {
+      definirDados(planilha(500));
+
+      render(<AuditLogDashboard />);
+
+      await waitFor(() => expect(valorDoCartao('Total de Logs')).toBe('500'));
+    });
+
+    it('o cartão Hoje conta a janela de 24 h inteira, não só a página', async () => {
+      definirDados(planilha(500));
+
+      render(<AuditLogDashboard />);
+
+      await waitFor(() => expect(valorDoCartao('Hoje')).toBe('250'));
+    });
+
+    it('Ações Sensíveis conta no servidor a janela de 24 h', async () => {
+      definirDados(planilha(500));
+
+      render(<AuditLogDashboard />);
+
+      await waitFor(() => expect(valorDoCartao('Ações Sensíveis')).toBe('50'));
+    });
+
+    it('Usuários Únicos lê todas as páginas dos últimos 7 d, não a página da tela', async () => {
+      definirDados(planilha(500));
+
+      render(<AuditLogDashboard />);
+
+      // u0, u1, u2 e u9 aparecem nas 500 linhas (7 d); `u9` só nas que a lista não mostra.
+      await waitFor(() => expect(valorDoCartao('Usuários Únicos')).toBe('4'));
+    });
+
+    it('INSERT de audit_logs atualiza os totais sem recarregar a página', async () => {
+      definirDados([fakeAuditLog({ id: 'r1', action: 'login', user_id: 'uid1', created_at: agora })]);
+      render(<AuditLogDashboard />);
+      await waitFor(() => expect(valorDoCartao('Total de Logs')).toBe('1'));
+
+      definirDados([
+        ...(estado.dados as ReturnType<typeof fakeAuditLog>[]),
+        fakeAuditLog({ id: 'r2', action: 'role_granted', user_id: 'uid2', created_at: new Date().toISOString() }),
+      ]);
+      const inicio = performance.now();
+      estado.realtime?.emitirInsert(fakeAuditLog({ id: 'r2', action: 'role_granted', user_id: 'uid2' }));
+
+      await waitFor(() => expect(valorDoCartao('Ações Sensíveis')).toBe('1'));
+      expect(performance.now() - inicio).toBeLessThan(5000);
+    });
+
+    it('assina o canal audit-logs-dashboard e limpa ao desmontar', async () => {
+      const { unmount } = render(<AuditLogDashboard />);
+      await waitFor(() => expect(estado.realtime?.canais).toContain('audit-logs-dashboard'));
+
+      unmount();
+
+      await waitFor(() => expect(estado.realtime?.canais).toEqual([]));
+    });
+
+    it('mostra o nome do autor buscado em profiles', async () => {
+      definirDados([fakeAuditLog({ id: 'p1', action: 'login', user_id: 'uid1', created_at: agora })]);
+      estado.perfis = [{ id: 'uid1', name: 'Ana Souza' }];
+
+      render(<AuditLogDashboard />);
+
+      await waitFor(() => expect(screen.getByText('Ana Souza')).toBeInTheDocument());
+      expect(screen.queryByText('uid1')).toBeNull();
+    });
+
+    it('falha de leitura avisa e não zera os totais em silêncio', async () => {
+      estado.erro = { message: 'permission denied' };
+
+      render(<AuditLogDashboard />);
+
+      await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('permission denied'));
+      expect(valorDoCartao('Total de Logs')).toBe('—');
+    });
   });
 });
 
