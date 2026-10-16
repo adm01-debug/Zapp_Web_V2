@@ -229,6 +229,7 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null, 
       // ao `.or` de colunas que já existia — combinados com os filtros estruturais
       // (pasta, estado, período, anexos) e com os contatos que casam o termo —, então
       // assunto/remetente/trecho seguem sendo encontrados mesmo se a RPC truncar.
+      if (effectiveListQuery.threadStatus) query = query.eq('status', effectiveListQuery.threadStatus);
       const searchTerm = descriptor.search;
       if (searchTerm) {
         const matches = await collectEmailSearchThreadIds(async (after) => {
@@ -242,9 +243,6 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null, 
           if (error) throw error;
           return (data ?? []) as EmailThreadSearchMatch[];
         });
-        const pattern = escapeOrFilterValue(`%${escapeLikeWildcards(searchTerm)}%`);
-
-      if (effectiveListQuery.threadStatus) query = query.eq('status', effectiveListQuery.threadStatus);
       if (descriptor.search) {
         // O OR também casa contato pelo `contact_id` da própria thread — coluna,
         // não join, então thread sem contato não é excluída. Os ids vêm de uma
