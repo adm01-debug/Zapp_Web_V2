@@ -36,7 +36,7 @@ export function AiTab({ conversation, messages, onUseSuggestion }: AiTabProps) {
   const contactName = conversation.contact.name;
   const [showAllActions, setShowAllActions] = useState(false);
 
-  const { data: latestAnalysis } = useLatestAnalysis(contactId);
+  const { data: latestAnalysis, isError: latestAnalysisError, refetch: refetchLatestAnalysis, isFetching: latestAnalysisFetching } = useLatestAnalysis(contactId);
   const { actions: nextActions, loading: nextActionsLoading } = useNextBestAction(contactId, contactName);
   const { data: leadScoreData } = useContactLeadScore(contactId);
 
@@ -61,9 +61,11 @@ export function AiTab({ conversation, messages, onUseSuggestion }: AiTabProps) {
   const sentimentValue = normalizeSentiment(conversation.contact.ai_sentiment).value;
   const sentimentCfg = sentimentValue ? SENTIMENT_CONFIG[sentimentValue] : undefined;
 
-  const analysisStatusLabel = latestAnalysis
-    ? `Análise atualizada às ${format(new Date(latestAnalysis.created_at), 'HH:mm')}`
-    : 'Sem análise ainda';
+  const analysisStatusLabel = latestAnalysisError
+    ? 'Análise IA indisponível'
+    : latestAnalysis
+      ? `Análise atualizada às ${format(new Date(latestAnalysis.created_at), 'HH:mm')}`
+      : 'Sem análise ainda';
 
   return (
     <div className="flex flex-col gap-4" data-testid="ai-tab">
@@ -75,9 +77,21 @@ export function AiTab({ conversation, messages, onUseSuggestion }: AiTabProps) {
           <p className="text-[15px] font-semibold text-foreground">Assistente IA</p>
           <p className="text-[13px] text-muted-foreground truncate">Seu copiloto para conversas mais produtivas</p>
         </div>
-        <span className="text-xs text-muted-foreground shrink-0 inline-flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+        <span className={cn('text-xs shrink-0 inline-flex items-center gap-1.5', latestAnalysisError ? 'text-destructive' : 'text-muted-foreground')}>
+          {latestAnalysisError
+            ? <AlertTriangle className="w-3.5 h-3.5" />
+            : <span className="w-1.5 h-1.5 rounded-full bg-primary" />}
           {analysisStatusLabel}
+          {latestAnalysisError && (
+            <button
+              type="button"
+              onClick={() => refetchLatestAnalysis()}
+              disabled={latestAnalysisFetching}
+              className="font-semibold text-primary hover:underline disabled:opacity-50 disabled:no-underline"
+            >
+              {latestAnalysisFetching ? 'Tentando...' : 'Tentar de novo'}
+            </button>
+          )}
         </span>
       </div>
 

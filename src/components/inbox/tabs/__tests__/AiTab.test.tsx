@@ -45,8 +45,13 @@ const conversation: Conversation = {
   status: 'open',
 } as unknown as Conversation;
 
-function renderTab(overrides: { latestAnalysis?: unknown; actions?: unknown[]; leadScore?: unknown; sentiment?: string | null } = {}) {
-  mockUseLatestAnalysis.mockReturnValue({ data: overrides.latestAnalysis ?? null });
+function renderTab(overrides: { latestAnalysis?: unknown; latestAnalysisError?: boolean; latestAnalysisFetching?: boolean; refetchLatestAnalysis?: () => void; actions?: unknown[]; leadScore?: unknown; sentiment?: string | null } = {}) {
+  mockUseLatestAnalysis.mockReturnValue({
+    data: overrides.latestAnalysis ?? null,
+    isError: overrides.latestAnalysisError ?? false,
+    isFetching: overrides.latestAnalysisFetching ?? false,
+    refetch: overrides.refetchLatestAnalysis ?? vi.fn(),
+  });
   mockUseNextBestAction.mockReturnValue({ actions: overrides.actions ?? [], loading: false });
   mockUseContactLeadScore.mockReturnValue({ data: overrides.leadScore ?? null });
   mockFrom.mockReturnValue(chain());
@@ -69,6 +74,27 @@ describe('AiTab', () => {
   it('mostra "Sem análise ainda" quando não há análise recente', () => {
     renderTab();
     expect(screen.getByText('Sem análise ainda')).toBeInTheDocument();
+  });
+
+  it('erro ao carregar a análise mostra o aviso, não "sem análise ainda"', () => {
+    renderTab({ latestAnalysis: null, latestAnalysisError: true });
+    expect(screen.getByText('Análise IA indisponível')).toBeInTheDocument();
+    expect(screen.queryByText('Sem análise ainda')).not.toBeInTheDocument();
+  });
+
+  it('erro ao carregar a análise oferece "Tentar de novo" que refaz a leitura', () => {
+    const refetchLatestAnalysis = vi.fn();
+    renderTab({ latestAnalysis: null, latestAnalysisError: true, refetchLatestAnalysis });
+    const retry = screen.getByRole('button', { name: 'Tentar de novo' });
+    expect(retry).toBeInTheDocument();
+    fireEvent.click(retry);
+    expect(refetchLatestAnalysis).toHaveBeenCalledTimes(1);
+  });
+
+  it('sem erro não oferece "Tentar de novo"', () => {
+    renderTab();
+    expect(screen.queryByRole('button', { name: 'Tentar de novo' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Tentando...' })).not.toBeInTheDocument();
   });
 
   it('mostra o horário da última análise quando existe', () => {
