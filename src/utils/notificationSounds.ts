@@ -22,7 +22,7 @@ export const playNotificationSound = (
   notificationType: NotificationType,
   soundType: SoundType = 'chime',
   volume: number = 70
-) => {
+): boolean => {
   try {
     const ctx = getAudioContext();
     if (ctx.state === 'suspended') void ctx.resume();
@@ -55,13 +55,16 @@ export const playNotificationSound = (
         oscillator.stop(ctx.currentTime + duration);
       }, config.delays[index] * 1000);
     });
+    return true;
   } catch (error) {
     log.warn('Could not play notification sound:', error);
+    return false;
   }
 };
 
-export const previewSound = (soundType: SoundType, volume: number = 70) => {
-  playNotificationSound('message', soundType, volume);
+export const previewSound = (soundType: SoundType, volume: number = 70): boolean => {
+  // `false` = o navegador recusou tocar (sem WebAudio/áudio bloqueado); quem chama mostra o aviso.
+  return playNotificationSound('message', soundType, volume);
 };
 
 export const requestNotificationPermission = async (): Promise<boolean> => {

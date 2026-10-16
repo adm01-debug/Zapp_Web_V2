@@ -38,6 +38,13 @@ const CANONICAL_SOUNDS: { id: SoundTypeOption; name: string; description: string
 
 const CANONICAL_SOUND_IDS: string[] = CANONICAL_SOUNDS.map((s) => s.id);
 
+/** `previewSound` devolveu `false`: o navegador recusou tocar (sem WebAudio/áudio bloqueado). */
+const RECUSA_DO_NAVEGADOR =
+  'O navegador não deixou tocar o som. Libere o áudio desta aba e tente de novo.';
+/** Mesma recusa na TROCA do som: gravar aqui confirmaria um alerta que nunca vai tocar. */
+const RECUSA_DO_NAVEGADOR_NAO_GRAVOU =
+  'O navegador não deixou tocar o som, então a troca não foi gravada. Libere o áudio desta aba e tente de novo.';
+
 type CategoryKey = 'message' | 'mention' | 'sla' | 'goal' | 'transcription';
 
 /** Campo do hook canônico para cada categoria da tela (antes: `settings[`${cat}_sound_type`] as any`). */
@@ -84,12 +91,17 @@ export function SoundCustomizationPanel() {
   // Guardado só para mostrar que o arquivo foi ENVIADO — enviado não é aplicado.
   const [uploadedSoundPath, setUploadedSoundPath] = useState<string | null>(null);
 
-  /** Toca o som REAL (`previewSound`), no volume REAL dos alertas. Silêncio é o global. */
-  const playPreview = (categoria: string, soundId: SoundTypeOption) => {
-    if (!settings.soundEnabled) return;
-    previewSound(soundId, settings.soundVolume);
+  /**
+   * Toca o som REAL (`previewSound`), no volume REAL dos alertas. Silêncio é o global.
+   * Devolve `false` SÓ quando o navegador recusou tocar (sem WebAudio/áudio bloqueado).
+   */
+  const playPreview = (categoria: string, soundId: SoundTypeOption): boolean => {
+    // Interruptor da tela desligado não é recusa do navegador: não há o que avisar.
+    if (!settings.soundEnabled) return true;
+    if (!previewSound(soundId, settings.soundVolume)) return false;
     setPlayingSound(`${categoria}-${soundId}`);
     setTimeout(() => setPlayingSound(null), 500);
+    return true;
   };
 
   /** Mapeia a categoria da tela para o campo do hook canônico e grava nele. */
@@ -102,14 +114,16 @@ export function SoundCustomizationPanel() {
 
   const handleSoundChange = (category: string, soundId: string) => {
     if (!isCategoryKey(category) || !isSoundType(soundId)) return;
+    // Toca ANTES de gravar: com o navegador recusando o som, gravar confirmaria um alerta que
+    // nunca vai tocar. A tela avisa e a preferência fica a que estava (o hook canônico).
+    if (!playPreview(category, soundId)) { toast.error(RECUSA_DO_NAVEGADOR_NAO_GRAVOU); return; }
     // Grava na hora, no hook canônico: o alerta passa a tocar o som novo sem depender de "Salvar".
     aplicarSom(category, soundId);
-    playPreview(category, soundId);
   };
 
   const handlePlayPreview = (category: string, soundId: string) => {
     if (!isSoundType(soundId)) return;
-    playPreview(category, soundId);
+    if (!playPreview(category, soundId)) toast.error(RECUSA_DO_NAVEGADOR);
   };
 
   const getSoundValue = (category: CategoryKey): SoundTypeOption => settings[CATEGORY_SOUND_FIELD[category]];
