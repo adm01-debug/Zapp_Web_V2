@@ -988,6 +988,24 @@ jobs:
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-settings-rls.test.sh
 
+      # N-126b (fonte X083, parte 2 de 2 · a migration N-126a veio no cartao anterior): as
+      # colunas channel/icon/interactive/media_*/archived_at de public.talkx_templates
+      # existiam sem nenhum teste. O contrato aplica os ARQUIVOS de migration reais num
+      # PostgreSQL 17 descartavel — inclusive 20260908120000, que CRIA a tabela (nada de
+      # CREATE TABLE a mao) — e prova tipo/default/CHECK das 8 colunas, que a migration e
+      # so aditiva (media_type intacta) e que a leitura do papel authenticated nao muda.
+      # Inicia container proprio e roda CREATE ROLE anon/authenticated/service_role — as
+      # roles sao globais ao cluster, entao o docker-shim do E47 colidiria com as do shim.
+      # Ancorado no MEIO do job de proposito: o fim deste arquivo e do job
+      # replay-migrations (acrescentado depois do fork deste cartao) e o empilhamento ja
+      # enfiava este passo la dentro, reprovando a assercao "nao usa o docker-shim" de
+      # scripts/ci/replay-migrations-guard.unit.mjs.
+      - name: Provar as colunas novas de talkx_templates (N-126b)
+        env:
+          TALKX_TEMPLATE_COLUMNS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-template-columns.test.sh
+
       - name: Provar contrato de integridade de som em user_settings — NOT NULL e vocabulário fechado
         env:
           SOUND_INTEGRITY_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
