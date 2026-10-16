@@ -344,8 +344,8 @@ describe('GmailInboxView', () => {
 
   it('consulta da lista em andamento mostra o carregador', () => {
     config.threadsLoading = true;
-    const { container } = render(<GmailInboxView />);
-    expect(container.querySelector('.animate-spin')).not.toBeNull();
+    render(<GmailInboxView />);
+    expect(screen.getByRole('status', { name: 'Carregando emails' })).toBeInTheDocument();
     expect(screen.queryByText('Nenhum email nesta pasta')).not.toBeInTheDocument();
   });
 

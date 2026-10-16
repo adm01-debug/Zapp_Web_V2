@@ -115,7 +115,7 @@ export default function GmailInboxView() {
     if (accountsLoading) {
       return (
         <div className="flex flex-col items-center justify-center h-full py-20" role="status">
-          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground mb-4" />
+          <Loader2 aria-hidden="true" className="w-8 h-8 motion-safe:animate-spin text-muted-foreground mb-4" />
           <p className="text-sm text-muted-foreground">Verificando conta Gmail...</p>
         </div>
       );
@@ -151,7 +151,7 @@ export default function GmailInboxView() {
             {unreadCount > 0 && <Badge variant="default" className="text-3xs px-1.5 py-0">{unreadCount} novo{unreadCount > 1 ? 's' : ''}</Badge>}
           </div>
           <Button variant="default" size="sm" onClick={() => setShowComposer(true)}><Pencil className="w-3.5 h-3.5 mr-1" />Compor</Button>
-          <Button variant="outline" size="sm" onClick={() => syncInbox.mutate({})} disabled={syncInbox.isPending}><RefreshCw className={`w-3.5 h-3.5 mr-1 ${syncInbox.isPending ? 'animate-spin' : ''}`} />Sync</Button>
+          <Button variant="outline" size="sm" onClick={() => syncInbox.mutate({})} disabled={syncInbox.isPending}><RefreshCw className={`w-3.5 h-3.5 mr-1 ${syncInbox.isPending ? 'motion-safe:animate-spin' : ''}`} />Sync</Button>
         </div>
         <div className="flex items-center gap-2">
           <div className="relative flex-1"><Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" /><Input value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }} placeholder="Buscar emails..." className="h-8 pl-8 text-sm" /></div>
@@ -175,7 +175,7 @@ export default function GmailInboxView() {
             </div>
           )}
           <ScrollArea className="flex-1 min-h-0">
-            {threadsLoading ? <div className="flex items-center justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
+            {threadsLoading ? <div role="status" aria-busy="true" aria-live="polite" aria-label="Carregando emails" className="flex items-center justify-center py-16"><Loader2 aria-hidden="true" className="w-6 h-6 motion-safe:animate-spin text-muted-foreground" /></div>
             : threadsFailedWithoutData ? (
               <GenericEmptyState
                 icon={AlertTriangle}
