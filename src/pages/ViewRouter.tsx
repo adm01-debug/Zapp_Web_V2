@@ -90,6 +90,7 @@ const VIEW_MAP: Record<string, React.LazyExoticComponent<React.ComponentType<Rec
   'media-migration': Views.MediaMigrationTool,
   'crm360': Views.CRM360ExplorerView,
   'ai-usage': Views.AIUsageDashboard,
+  'search-insights': Views.SearchInsightsView,
   'sla': Views.SLADashboardView,
   'talkx': Views.TalkXView,
   'multiplix': Views.MultiplixView,
