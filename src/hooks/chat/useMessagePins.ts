@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -66,7 +66,14 @@ export interface UseMessagePinsResult {
   refetch: () => Promise<unknown>;
 }
 
-/** Lista as mensagens fixadas da conversa, com assinatura de realtime por contato.
+/** Lista as mensagens fixadas da conversa.
+ *
+ *  Sem assinatura de realtime: `public.message_pins` está fora da publicação
+ *  `supabase_realtime` (ver `scripts/db-audit/realtime-publication-baseline.json`),
+ *  então uma subscription seria morta e quebra a guarda de realtime do CI. A lista
+ *  revalida a cada pin/unpin (invalidação no `onSettled`) e ao remontar depois de `staleTime` (30 s)
+ *  (`staleTime`). Reavaliar o realtime quando a trilha de banco incluir a tabela
+ *  na publicação e na baseline.
  *
  *  Ordem determinística: `pinned_at` desc com `id` desc como desempate (duas
  *  fixações no mesmo instante não trocam de posição entre releituras). */
@@ -90,25 +97,6 @@ export function useMessagePins(contactId: string | null | undefined): UseMessage
     enabled: !!contactId,
     staleTime: 30_000,
   });
-
-  // Realtime no padrão do app (useMessageStatus/useMessageReactions): qualquer
-  // pin/unpin da conversa revalida a lista, inclusive o fixado por outro agente.
-  useEffect(() => {
-    if (!contactId) return;
-    const channel = supabase
-      .channel(`message-pins:${contactId}`)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'message_pins', filter: `contact_id=eq.${contactId}` },
-        () => {
-          void queryClient.invalidateQueries({ queryKey: messagePinsKey(contactId) });
-        },
-      )
-      .subscribe();
-    return () => {
-      void supabase.removeChannel(channel);
-    };
-  }, [contactId, queryClient]);
 
   const pinMutation = useMutation({
     mutationFn: async (messageId: string): Promise<string> => {
