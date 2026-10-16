@@ -385,6 +385,14 @@ expect_value 'A.8 (DEFEITO) a reacao ficou no Time B' '1' \
 expect_value 'A.9 (DEFEITO) e sumiu da conversa da propria mensagem (agregacao/realtime filtram por cid)' '0' \
   "SELECT count(*) FROM public.team_message_reactions WHERE conversation_id='$CONV_A';"
 
+# Recusa do refazer: existe trigger BEFORE UPDATE em recibos que preencheria read_at quando status='read'.
+# Este recibo legado divergente precisa ter APENAS o conversation_id reconciliado pelo backfill; read_at NULL
+# deve continuar NULL para a migration nao alterar dado fora do objetivo do cartao.
+expect_ok 'A.10 pre-condicao: prepara recibo legado divergente status=read com read_at NULL' \
+  "INSERT INTO public.team_message_receipts (message_id, profile_id, status, delivered_at, read_at, conversation_id) VALUES ('$MSG_B1','$P_ATILA','read',now(),NULL,'$CONV_A');"
+expect_value 'A.11 pre-condicao: recibo legado diverge e read_at segue NULL antes da migration' '1' \
+  "SELECT count(*) FROM public.team_message_receipts WHERE message_id='$MSG_B1' AND profile_id='$P_ATILA' AND status='read' AND read_at IS NULL AND conversation_id='$CONV_A';"
+
 printf '\n============ BLOCO B — migration aplicada ============\n'
 if [[ "${TEAM_CID_PRESTATE:-0}" = "1" ]]; then
   printf '>>> TEAM_CID_PRESTATE=1: bloco B roda SEM aplicar a migration (prova do vermelho)\n'
@@ -399,6 +407,8 @@ else
     "SELECT count(*) FROM (SELECT r.id FROM public.team_message_receipts r JOIN public.team_messages m ON m.id = r.message_id WHERE r.conversation_id IS DISTINCT FROM m.conversation_id UNION ALL SELECT r.id FROM public.team_message_reactions r JOIN public.team_messages m ON m.id = r.message_id WHERE r.conversation_id IS DISTINCT FROM m.conversation_id) x;"
   expect_value 'B.0b o recibo do Time A voltou para o Time A' '1' \
     "SELECT count(*) FROM public.team_message_receipts WHERE message_id='$MSG_A2' AND profile_id='$P_ATILA' AND conversation_id='$CONV_A';"
+  expect_value 'B.0c o backfill preservou read_at NULL em recibo legado status=read' '1' \
+    "SELECT count(*) FROM public.team_message_receipts WHERE message_id='$MSG_B1' AND profile_id='$P_ATILA' AND conversation_id='$CONV_B' AND status='read' AND read_at IS NULL;"
 fi
 
 psql_file "$tmp_dir/seed.sql" >/dev/null
