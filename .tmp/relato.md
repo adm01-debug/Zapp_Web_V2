@@ -22,6 +22,22 @@ FAIXA DO PAI: commit `a7fb842e4d` (`fix(lib): normalizeMediaUrl robusto e withRe
 - vermelho antes (mutação: `src/lib/retry.ts` revertido temporariamente à versão da base `dia/2026-10-16`, sem o padrão seguro/aborto do pai): `npx vitest run src/lib/__tests__/retry.politica.test.ts` → `Test Files 1 failed (1); Tests 2 failed | 13 passed (15)` — o teste falha sem a correção, pela razão certa. Produção restaurada em seguida (`git checkout HEAD -- src/lib/retry.ts`) e worktree confirmado limpo (`git status --short` vazio antes do commit do relato).
 - `zapp-verify . --rapido`: ver bloco FATOS MEDIDOS PELO FECHAR.
 
+## Arquivos do diff (`git diff --name-only dia/2026-10-16...HEAD`, colado do comando)
+- `.tmp/relato.md`
+- `src/lib/__tests__/abortError.test.ts` (faixa do pai)
+- `src/lib/__tests__/avatar-colors.test.ts`
+- `src/lib/__tests__/popupManager.test.ts`
+- `src/lib/__tests__/retry.padrao-seguro.test.ts` (faixa do pai)
+- `src/lib/__tests__/retry.politica.test.ts`
+- `src/lib/__tests__/retry.random.test.ts` (faixa do pai, +4 linhas)
+- `src/lib/__tests__/safeStorage.test.ts`
+- `src/lib/__tests__/supabaseHelpers.test.ts`
+- `src/lib/__tests__/webauthnUtils.test.ts`
+- `src/lib/abortError.ts` (faixa do pai)
+- `src/lib/retry.ts` (faixa do pai)
+- `src/utils/normalizeMediaUrl.ts` (faixa do pai)
+- `src/utils/__tests__/normalizeMediaUrl.test.ts` NÃO está no diff: citado na FAIXA DO PAI só para documentar que o conflito do cherry-pick foi resolvido mantendo a versão da base.
+
 ## O que NÃO fiz e por quê
 - `src/lib/lazyWithRetry.ts`: o cartão diz que depende do SH3 e manda esperar — não toquei.
 - Itens opcionais da recusa (comentário 'exatamente um dos pares da paleta' em `avatar-colors.test.ts`, dois comentários em `webauthnUtils.test.ts`): NÃO tocados — a recusa diz "sem recusa" e manda "não mexer em mais nada".
