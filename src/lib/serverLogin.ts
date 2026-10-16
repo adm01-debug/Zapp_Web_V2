@@ -13,16 +13,7 @@ export type ServerLoginResult =
   | { ok: true; accessToken: string; refreshToken: string }
   | { ok: true; mode: 'verify' }
   | { ok: false; unavailable: false; error: string; lock: ServerLoginLock }
-  | {
-      ok: false;
-      unavailable: false;
-      /** Rate limit da propria edge (muitas tentativas): nem servico fora nem lockout. */
-      rateLimited: true;
-      /** Espera que a resposta pediu (`Retry-After`), em segundos; null quando nao veio. */
-      retryAfterSeconds: number | null;
-      error: string;
-      lock: ServerLoginLock;
-    }
+  | { ok: false; unavailable: false; networkBlocked: true; retryable: boolean; error: string; lock: ServerLoginLock }
   | { ok: false; unavailable: true; error: string };
 
 /**
@@ -133,10 +124,9 @@ function parseLock(body: Record<string, unknown>): ServerLoginLock {
 /**
  * Login pela edge `auth-login` (ADR-006): o lockout e decidido no servidor.
  * 200 -> tokens para `supabase.auth.setSession`; 401/423 -> recusa com estado do lock.
- * 429 -> `rateLimited`, com a mensagem propria de "muitas tentativas" (nunca
- * "login indisponivel"): o rate limit da edge e respondido ANTES de olhar a senha,
- * entao nao e senha errada, nao e lockout e nao revela se a conta existe.
- * Qualquer outra resposta (edge fora, 5xx, corpo invalido) vira `unavailable`.
+ * 403 'Access denied' -> negacao da politica de rede (`networkBlocked`), distinta
+ * de senha errada e de lockout. Qualquer outra resposta (edge fora, 5xx, 429,
+ * corpo invalido) vira `unavailable`.
  * O chamador deve falhar fechado e nunca recorrer ao GoTrue diretamente, para que
  * o lockout continue sendo aplicado pela Edge.
  *
@@ -214,19 +204,34 @@ export async function serverLogin(
     };
   }
 
-  // Rate limit da propria edge (por IP ou por e-mail): ela responde 429 ANTES de
-  // conferir a senha, entao isto nao e senha errada, nao e lockout de conta e nao
-  // diz se o e-mail esta cadastrado. Estado proprio (`rateLimited`) para a pessoa
-  // ler "muitas tentativas" no lugar de "login indisponivel".
-  if (response.status === 429) {
-    const retryAfterSeconds = parseRetryAfterSeconds(response.headers);
+  // Negacao da politica de rede (R2-AUTH-022): a edge responde ANTES de olhar a
+  // senha, entao 403 aqui NAO e senha errada nem lockout. Reconhecido pelo corpo
+  // generico de networkPolicyDenialResponse — nunca por detalhe de IP/pais/regra.
+  if (response.status === 403 && body?.error === NETWORK_POLICY_DENIED_BODY) {
     return {
       ok: false,
       unavailable: false,
-      rateLimited: true,
-      retryAfterSeconds,
-      error: rateLimitedMessage(retryAfterSeconds),
-      lock: NO_LOCK_RATE_LIMITED,
+      networkBlocked: true,
+      retryable: false,
+      error: NETWORK_POLICY_DENIED_BODY,
+      lock: NO_LOCK,
+    };
+  }
+
+  // Contrato de networkPolicyDenialResponse para a politica INDISPONIVEL: 503 com
+  // corpo 'Service unavailable' (retentavel). ATENCAO: o errorResponse
+  // compartilhado mascara corpos 5xx para 'Internal server error'
+  // (_shared/validation.ts), entao hoje esse 503 chega mascarado e cai no ramo
+  // generico de indisponibilidade. So a Edge pode preservar o corpo — fora do
+  // escopo deste cartao (registrado no proprio cartao).
+  if (response.status === 503 && body?.error === NETWORK_POLICY_UNAVAILABLE_BODY) {
+    return {
+      ok: false,
+      unavailable: false,
+      networkBlocked: true,
+      retryable: true,
+      error: NETWORK_POLICY_UNAVAILABLE_BODY,
+      lock: NO_LOCK,
     };
   }
 

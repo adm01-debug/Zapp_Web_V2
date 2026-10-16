@@ -20,13 +20,11 @@ export interface SignInResult {
 }
 
 /**
- * Mensagem ao usuario barrado pela politica de rede (R2-AUTH-022). Neutra de
- * proposito: nao revela SE o barrado foi o IP ou o pais, nem a regra aplicada (o
- * corpo do 403 tambem nao revela). Decisao do dono (15/10): o texto anterior
- * nomeava a categoria que barrou e entregava isso ao usuario.
+ * Mensagem ao usuario barrado pela politica de rede. Segue generica de proposito:
+ * nao revela IP, pais nem a regra aplicada (o corpo do 403 tambem nao revela).
  */
 export const NETWORK_BLOCKED_MESSAGE =
-  'Não foi possível entrar a partir desta rede. Fale com o administrador.';
+  'Acesso bloqueado pela política de rede da empresa (endereço ou país não permitido). Se você deveria ter acesso, fale com o administrador.';
 
 /** Mensagem quando a politica de rede nao pode ser avaliada agora (retentavel). */
 export const NETWORK_UNAVAILABLE_MESSAGE =
@@ -124,28 +122,6 @@ export class AuthService {
       });
       return { error, via: 'edge', lock: null, unavailable: error !== null };
     }
-    return AuthService.loginFailure(result);
-  }
-
-  /**
-   * Reautenticacao (R2-AUTH-023): confere a senha NA EDGE, em modo `verify`, e
-   * NAO instala sessao nenhuma. O `setSession` antigo trocava a sessao do usuario
-   * por um token AAL1, rebaixando AAL2 -> AAL1 a cada acao sensivel (o usuario era
-   * jogado de volta para /2fa). A elevacao do 2o fator e feita na sessao CORRENTE
-   * (mfa.challenge + verify), pelo chamador.
-   */
-  static async verifyPassword(email: string, password: string): Promise<SignInResult> {
-    const result = await serverLogin(email, password, 'verify');
-    if (result.ok) return { error: null, via: 'edge', lock: null, unavailable: false };
-    return AuthService.loginFailure(result);
-  }
-
-  /**
-   * Traduz a recusa da Edge para o contrato de `SignInResult`, compartilhado por
-   * login e reautenticacao: senha errada, lockout, negacao de rede e
-   * indisponibilidade precisam continuar distinguiveis pelo chamador.
-   */
-  private static loginFailure(result: Extract<ServerLoginResult, { ok: false }>): SignInResult {
     if ('networkBlocked' in result) {
       // Nao e senha errada nem lockout: a politica de rede (IP/pais) barrou o
       // login antes de qualquer verificacao de senha. Mensagem generica — nunca
