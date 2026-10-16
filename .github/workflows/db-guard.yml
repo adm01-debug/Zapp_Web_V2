@@ -506,6 +506,10 @@ jobs:
         env:
           TALKX_BLACKLIST_AUDIT_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-blacklist-audit-trigger.test.sh
+      - name: Simular publicação Realtime da blacklist Talk X com escopo de colunas
+        env:
+          TALKX_BLACKLIST_REALTIME_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-blacklist-realtime.test.sh
 
       - name: Simular edição de limites de campanha via RPC Talk X (V09)
         env:
