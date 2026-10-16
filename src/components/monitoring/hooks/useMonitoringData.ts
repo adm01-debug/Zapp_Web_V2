@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { getLogger } from '@/lib/logger';
-import type { ConnectionInfo, HealthLog, MessageStats, UptimeInfo, SparklineData, InstanceUptime, TimePeriod } from './types';
-import { periodMs, periodBuckets, HEALTHY_STATUSES, SLA_WINDOW_MS, AVAILABILITY_WINDOW_MS, HEALTH_LOGS_LIMIT } from './types';
+import type { ConnectionInfo, HealthLog, MessageStats, UptimeInfo, SparklineData, InstanceUptime, TimePeriod, MonitoringErrors } from './types';
+import { periodMs, periodBuckets, HEALTHY_STATUSES, SLA_WINDOW_MS, AVAILABILITY_WINDOW_MS, HEALTH_LOGS_LIMIT, motivoDeErro } from './types';
 
 const log = getLogger('MonitoringData');
 
@@ -125,6 +125,10 @@ export function useMonitoringData(onConnectionsUpdate?: (c: ConnectionInfo[]) =>
   const [uptime, setUptime] = useState<UptimeInfo>({ percentage: null, totalChecks: 0, healthyChecks: 0, lastDowntime: null });
   const [sparklines, setSparklines] = useState<SparklineData>({ messages: [], latency: [], uptime: [] });
   const [instanceUptimes, setInstanceUptimes] = useState<InstanceUptime[]>([]);
+  // Erro por fonte: a tela precisa saber QUAL leitura falhou (senão mostra o estado
+  // antigo/vazio como se fosse medição) e o motivo, para o botão "Tentar de novo".
+  const [errors, setErrors] = useState<MonitoringErrors>({ connections: null, logs: null, messages: null });
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
 
   const fetchData = useCallback(async (period: TimePeriod = '12h') => {
     try {
@@ -142,8 +146,11 @@ export function useMonitoringData(onConnectionsUpdate?: (c: ConnectionInfo[]) =>
         supabase.from('messages').select('sender, created_at').gte('created_at', since.toISOString()).order('created_at', { ascending: true }),
       ]);
 
-      if (connRes.data) { setConnections(connRes.data as ConnectionInfo[]); onConnectionsUpdate?.(connRes.data as ConnectionInfo[]); }
-      if (logsRes.data) {
+      const nextErrors: MonitoringErrors = { connections: null, logs: null, messages: null };
+      if (connRes.error) nextErrors.connections = `Falha ao carregar conexões (${motivoDeErro(connRes.error)})`;
+      else if (connRes.data) { setConnections(connRes.data as ConnectionInfo[]); onConnectionsUpdate?.(connRes.data as ConnectionInfo[]); }
+      if (logsRes.error) nextErrors.logs = `Falha ao carregar logs de saúde (${motivoDeErro(logsRes.error)})`;
+      else if (logsRes.data) {
         const logs = logsRes.data as HealthLog[];
         setAvailabilityLogs(logs);
         setHealthLogsTruncated(logs.length >= HEALTH_LOGS_LIMIT);
@@ -151,7 +158,8 @@ export function useMonitoringData(onConnectionsUpdate?: (c: ConnectionInfo[]) =>
         setUptime(computeUptime(logs, now));
         setInstanceUptimes(computeInstanceUptimes(logs, now));
       }
-      if (msgRes.data) {
+      if (msgRes.error) nextErrors.messages = `Falha ao carregar mensagens (${motivoDeErro(msgRes.error)})`;
+      else if (msgRes.data) {
         const bucketCount = bucketCountForPeriod;
         const { startMs: windowStart, bucketSize } = messageWindow;
         const messageSinceMs = messageSince.getTime();
@@ -188,13 +196,22 @@ export function useMonitoringData(onConnectionsUpdate?: (c: ConnectionInfo[]) =>
         });
         setMessageStats({ incoming, outgoing, total: messagesInGraphWindow.length, hourlyData });
       }
-      if (logsRes.data && msgRes.data) setSparklines(computeSparklines(logsRes.data, msgRes.data, now, period));
+      if (logsRes.data && msgRes.data && !logsRes.error && !msgRes.error) setSparklines(computeSparklines(logsRes.data, msgRes.data, now, period));
+      // Só marca "atualizado agora" quando as três leituras vieram: meia leitura não é atualização.
+      if (!nextErrors.connections && !nextErrors.logs && !nextErrors.messages) setLastUpdatedAt(new Date());
+      setErrors(nextErrors);
     } catch (err) {
       log.error('Monitoring fetch error:', err);
+      const motivo = motivoDeErro(err);
+      setErrors({
+        connections: `Falha ao carregar conexões (${motivo})`,
+        logs: `Falha ao carregar logs de saúde (${motivo})`,
+        messages: `Falha ao carregar mensagens (${motivo})`,
+      });
     } finally {
       setLoading(false);
     }
   }, [onConnectionsUpdate]);
 
-  return { connections, healthLogs, availabilityLogs, healthLogsTruncated, loading, messageStats, uptime, sparklines, instanceUptimes, fetchData };
+  return { connections, healthLogs, availabilityLogs, healthLogsTruncated, loading, messageStats, uptime, sparklines, instanceUptimes, errors, lastUpdatedAt, fetchData };
 }

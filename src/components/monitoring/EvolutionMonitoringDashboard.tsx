@@ -48,16 +48,22 @@ function StatusSemaphore({ connections }: { connections: { status: string }[] })
   );
 }
 
-function LastUpdatedBadge() {
-  const [now, setNow] = useState(new Date());
+function LastUpdatedBadge({ updatedAt }: { updatedAt: Date | null }) {
+  const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 1000);
+    const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
+  // "Atualizado há X": diz a idade do dado exibido, não a hora do relógio.
+  const segundos = updatedAt ? Math.max(0, Math.round((now - updatedAt.getTime()) / 1000)) : null;
   return (
     <span className="text-3xs text-muted-foreground tabular-nums hidden md:inline-flex items-center gap-1">
       <Clock className="w-3 h-3" />
-      {now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+      {segundos === null
+        ? 'Aguardando primeira leitura'
+        : segundos < 60
+          ? `Atualizado há ${segundos}s`
+          : `Atualizado há ${Math.floor(segundos / 60)}min`}
     </span>
   );
 }
@@ -69,7 +75,7 @@ export function EvolutionMonitoringDashboard() {
     sparklines, instanceUptimes, notificationsEnabled, soundEnabled, setSoundEnabled, requestNotifications,
     period, changePeriod, autoRefresh, setAutoRefresh, countdown,
     runHealthCheck, testWebhookDelivery, checkWebhookConfig, reconfigureWebhook,
-    runDiagnostic,
+    runDiagnostic, errors, lastUpdatedAt, refetch,
   } = useEvolutionMonitoring();
 
   // Keyboard shortcuts
@@ -92,6 +98,7 @@ export function EvolutionMonitoringDashboard() {
 
   const activeConns = connections.filter(c => c.status === 'connected').length;
   const errLogs = healthLogs.filter(l => !['connected', 'healthy'].includes(l.status)).length;
+  const falhasLeitura = [errors.connections, errors.logs, errors.messages].filter((m): m is string => !!m);
 
   return (
     <div className="space-y-5 w-full min-w-0" role="main" aria-label="Painel de monitoramento Evolution API">
@@ -105,7 +112,7 @@ export function EvolutionMonitoringDashboard() {
             <div className="flex items-center gap-2">
               <h1 className="text-xl sm:text-2xl font-bold">Monitor Evolution</h1>
               <StatusSemaphore connections={connections} />
-              <LastUpdatedBadge />
+              <LastUpdatedBadge updatedAt={lastUpdatedAt} />
             </div>
             <p className="text-sm text-muted-foreground">
               Status, webhook e health checks em tempo real
@@ -193,6 +200,33 @@ export function EvolutionMonitoringDashboard() {
           </Button>
         </div>
       </div>
+
+      {/* Leitura falhou: diz QUAL fonte e o motivo, em vez de exibir estado antigo como medição */}
+      {falhasLeitura.length > 0 && (
+        <div
+          role="alert"
+          className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+        >
+          <div className="flex items-start gap-2 min-w-0">
+            <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+            <div className="min-w-0">
+              <p className="font-medium">Não foi possível atualizar o monitoramento</p>
+              <ul className="text-xs mt-0.5 space-y-0.5">
+                {falhasLeitura.map(f => <li key={f}>{f}</li>)}
+              </ul>
+              <p className="text-3xs mt-1">Os valores exibidos podem estar desatualizados.</p>
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 text-xs shrink-0"
+            onClick={() => { void refetch(); }}
+          >
+            <RefreshCw className="w-3 h-3 mr-1" />Tentar de novo
+          </Button>
+        </div>
+      )}
 
       <MonitoringStatsCards connections={connections} messageStats={messageStats} uptime={uptime} sparklines={sparklines} />
 
