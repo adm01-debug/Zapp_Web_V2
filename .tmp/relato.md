@@ -132,6 +132,13 @@ Verificacoes executadas (saida real, nesta arvore):
   `banco_local NÃO VERIFICADO: sem nome de conjunto` nao e falha, e o banco deste cartao foi coberto pelo
   teste Docker acima. O juiz barato roda no `hermes-tarefa-fechar`, depois deste commit.
 
+Nota sobre o detector de teste novo do `hermes-tarefa-fechar`: ele conta teste apenas em
+`src/**`/`tests/**`. O teste deste cartao e `scripts/db-audit/assume-return-conversation.test.sh`
+(contrato de banco rodado em Postgres 17 descartavel, o mesmo que o DB Guard executa) e e ele que
+prova o comportamento; `src/integrations/supabase/types.ts` e gerado a partir do schema. Por isso a
+primeira passada do fechar avisa "codigo alterado sem nenhum teste novo/alterado neste commit" — o
+aviso nao procede aqui, e a prova esta no log do contrato citado acima.
+
 O que NAO fiz, de proposito:
 - Nao criei teste novo de CI para a variavel de imagem: a recusa mandou nao mudar mais nada e a prova
   acima (`prova-refazer4.py`, vermelho/verde) cobre o ponto.
