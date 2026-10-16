@@ -311,6 +311,22 @@ Deno.test('E24: cada conexão consulta o provedor com o token DELA, nunca com a 
   // ADMIN de listagem (/instance/fetchInstances → /instance/all, auth "admin"):
   // ela leva a chave do servidor e não personifica outra instância — por isso
   // fica fora desta asserção (filtrar só stateCalls, não todas as chamadas).
+  // Mas a listagem também é presa: existe (uma por conexão aberta) e leva a
+  // chave do servidor, nunca token de instância.
+  const ownerCalls = fake.calls.filter((c) => c.path.includes('/instance/all'));
+  assert(
+    ownerCalls.length === 2,
+    `camada de identidade tem de consultar o dono de cada conexão aberta (2), recebido ${ownerCalls.length}`,
+  );
+  assert(
+    ownerCalls.every((c) => c.apikey === 'test-evolution-key'),
+    `a rota ADMIN de listagem usa a chave do servidor, nunca token de instância: ${JSON.stringify(ownerCalls)}`,
+  );
+  // E o token legado não aparece em chamada nenhuma (nem estado, nem listagem).
+  assert(
+    !fake.calls.some((c) => c.apikey === 'tok-legado-da-padrao'),
+    `token legado não pode vazar em nenhuma rota: ${JSON.stringify(fake.calls)}`,
+  );
   assert(
     !stateCalls.some((c) => c.apikey === 'test-evolution-key' || c.apikey === 'tok-legado-da-padrao'),
     `a rota de estado (por instância) não pode usar a credencial global/legada: ${JSON.stringify(stateCalls)}`,
