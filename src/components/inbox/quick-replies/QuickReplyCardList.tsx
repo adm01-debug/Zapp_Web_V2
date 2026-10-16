@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { QuickReplyTemplate } from '@/hooks/chat/useQuickReplies';
 import { cn } from '@/lib/utils';
+import { HOVER_REVEAL_TAP } from '../hoverActions';
 
 interface QuickReplyCardListProps {
   templates: QuickReplyTemplate[];
@@ -88,7 +89,7 @@ export function QuickReplyCardList({
                           <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{new Date(template.updated_at).toLocaleDateString('pt-BR')}</span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className={`flex items-center gap-1 ${HOVER_REVEAL_TAP} transition-opacity`}>
                         <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={(e) => { e.stopPropagation(); onToggleFavorite(template.id); }}>
                           <Star className={cn("w-4 h-4", isFavorite(template.id) && "fill-yellow-400 text-warning")} />
                         </Button>

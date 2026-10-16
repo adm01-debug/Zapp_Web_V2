@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { HOVER_REVEAL_TAP } from './hoverActions';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useMessageTemplates, type Template } from '@/hooks/chat/useMessageTemplates';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -116,7 +117,7 @@ export function MessageTemplates({ onSelectTemplate }: MessageTemplatesProps) {
                       <p className="text-sm text-muted-foreground line-clamp-2">{template.content}</p>
                       <span className="text-3xs text-muted-foreground mt-1 block">Usado {template.use_count}x</span>
                     </button>
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className={`flex gap-1 ${HOVER_REVEAL_TAP} transition-opacity`}>
                       <Button variant="ghost" size="icon" className="h-7 w-7" aria-label={`Editar template: ${template.title}`} onClick={() => setEditingTemplate(template)}><Edit2 className="h-3 w-3" /></Button>
                       <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" aria-label={`Excluir template: ${template.title}`} onClick={() => deleteTemplate(template.id)}><Trash2 className="h-3 w-3" /></Button>
                     </div>

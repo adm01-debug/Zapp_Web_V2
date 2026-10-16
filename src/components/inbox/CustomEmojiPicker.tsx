@@ -5,6 +5,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import { HOVER_REVEAL_TAP } from './hoverActions';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SmilePlus, Search, Plus, Star, Trash2, Loader2, X, Tag, Check, ChevronDown, Smile } from 'lucide-react';
 import { CATEGORY_LABELS, ALL_CATEGORIES, NATIVE_EMOJI_CATEGORIES } from './emojiConstants';
@@ -191,7 +192,7 @@ export function CustomEmojiPicker({ onSendEmoji, disabled }: CustomEmojiPickerPr
                             className={cn('relative aspect-square rounded-lg overflow-hidden group', 'bg-muted/20 hover:bg-muted/50 transition-colors', 'border border-transparent hover:border-primary/30', 'cursor-pointer')}
                             title={`${emoji.name} • ${CATEGORY_LABELS[emoji.category]?.label || emoji.category}`}>
                             <img src={emoji.image_url} alt={emoji.name} className="w-full h-full object-contain p-1" loading="lazy" />
-                            <div className="absolute inset-0 bg-background/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-between p-0.5">
+                            <div className={`absolute inset-0 bg-background/70 ${HOVER_REVEAL_TAP} transition-opacity flex flex-col items-center justify-between p-0.5`}>
                               <div className="flex items-center justify-between w-full">
                                 <button onClick={(e) => toggleFavorite(e, emoji)} className="p-0.5"><Star className={cn('w-3 h-3 transition-colors', emoji.is_favorite ? 'fill-primary text-primary' : 'text-muted-foreground')} /></button>
                                 <button onClick={(e) => handleDelete(e, emoji)} className="p-0.5"><Trash2 className="w-3 h-3 text-destructive" /></button>
