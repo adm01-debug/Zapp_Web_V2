@@ -434,7 +434,11 @@ export function RealtimeInboxView() {
                 />
               </div>
             )}
-            <InboxEmptyChat />
+            <InboxEmptyChat
+              waitingCount={inboxFilters.chipCounts?.waiting ?? 0}
+              unreadCount={inboxFilters.chipCounts?.unread ?? 0}
+              onNewConversation={() => inbox.setShowNewConversation(true)}
+            />
           </div>
         )}
       </div>
