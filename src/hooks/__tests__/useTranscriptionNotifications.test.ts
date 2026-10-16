@@ -39,6 +39,14 @@ vi.mock('@/utils/notificationSounds', () => ({
   requestNotificationPermission: vi.fn(),
 }));
 
+// O nome do canal passou a ser derivado do usuário (`transcription-notifications:<id>`). Aqui o
+// teste prova a inscrição SEM usuário, e por isso o nome base; o nome por usuário e a sua
+// estabilidade entre remontagens ficam em
+// src/hooks/communication/__tests__/useTranscriptionNotifications.filtros.test.ts.
+vi.mock('@/hooks/auth/useAuth', () => ({
+  useAuth: () => ({ user: null, profile: null }),
+}));
+
 // Must import AFTER mocks
 const { useTranscriptionNotifications } = await import('@/hooks/communication/useTranscriptionNotifications');
 const { renderHook } = await import('@testing-library/react');
