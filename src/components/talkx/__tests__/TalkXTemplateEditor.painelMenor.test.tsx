@@ -1,7 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, cleanup, within } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 /**
  * X193 (TL-176) — comportamento em telas menores.
@@ -26,16 +25,6 @@ const saveVariant = vi.fn();
 const deleteVariant = vi.fn();
 const countVariantRecipients = vi.fn();
 
-// O editor consome os KPIs (react-query real, X091) e o widget "Em andamento"
-// (campanhas): provider real + supabase/useTalkX mínimos, como nos demais testes
-// do editor (states/race).
-vi.mock('@/integrations/supabase/client', () => ({
-  supabase: { rpc: vi.fn().mockResolvedValue({ data: null, error: null }) },
-}));
-vi.mock('@/hooks/integrations/useTalkX', () => ({
-  useTalkX: () => ({ campaigns: [], isLoading: false, isError: false, error: null, isLive: false, refetchCampaigns: vi.fn() }),
-}));
-
 vi.mock('@/hooks/integrations/useTalkXTemplates', () => ({
   useTalkXTemplates: () => ({
     templates: [],
@@ -50,6 +39,18 @@ vi.mock('@/hooks/integrations/useTalkXTemplates', () => ({
     deleteVariant,
     countVariantRecipients,
   }),
+}));
+
+vi.mock('@/hooks/integrations/useTalkXTemplateStats', () => ({
+  useTalkXTemplateLibraryStats: () => ({ stats: null }),
+  useTalkXTemplateStats: () => ({ stats: null }),
+  pointsDelta: () => null,
+  TALKX_TEMPLATE_STATS_PERIODS: [7, 30, 90],
+  TALKX_STATS_MIN_BASE: 30,
+}));
+
+vi.mock('@/hooks/integrations/useTalkX', () => ({
+  useTalkX: () => ({ campaigns: [] }),
 }));
 
 import { TalkXTemplateEditor } from '../TalkXTemplateEditor';
@@ -96,14 +97,12 @@ const GATILHO = /prévia e histórico/i;
 
 function renderEditor() {
   return render(
-    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-      <TalkXTemplateEditor
-        templates={[template as never]}
-        isLoading={false}
-        editing={template as never}
-        onClose={vi.fn()}
-      />
-    </QueryClientProvider>,
+    <TalkXTemplateEditor
+      templates={[template as never]}
+      isLoading={false}
+      editing={template as never}
+      onClose={vi.fn()}
+    />,
   );
 }
 
