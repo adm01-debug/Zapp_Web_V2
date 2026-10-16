@@ -273,7 +273,7 @@ test('E68: browser do Playwright é cacheado e o download só roda em cache miss
     const chave = /^ {10}key:\s*(.+?)\s*$/m.exec(cache)?.[1] ?? '';
     const conjunto = /(?:^|[^a-z])pw-([cfw]+)-/.exec(chave)?.[1] ?? '';
     const instalados = Object.keys(LETRA)
-      .filter((b) => new RegExp(`install --with-deps[^\\n]*\\b${b}\\b`).test(texto))
+      .filter((b) => new RegExp(`install --with-deps[^\n]*\\b${b}\\b`).test(texto))
       .map((b) => LETRA[b])
       .sort()
       .join('');
@@ -373,7 +373,7 @@ test('E86: quem roda a suíte logada declara a limpeza do que grava em produçã
 
 const USES_CACHE = /uses:\s*actions\/cache@[a-f0-9]{40}\b/;
 const PATH_CACHE_BUN = /path:\s*~\/\.bun\/install\/cache\s*$/;
-const KEY_CACHE_BUN = /key:\s*bun-\$\{\{\s*hashFiles\('bun\.lock'\)\s*\}\}/;
+const KEY_CACHE_BUN = /key:\s*bun-\$\{\{\s*hashFiles\('bun\.lock'\)\s*\}\}\s*$/;
 
 /** Blocos de job de um workflow: chaves de 2 espaços sob `jobs:` (texto cru). */
 function blocosDeJob(texto) {
@@ -513,9 +513,9 @@ function ancestrais(grafo, job) {
   return vistos;
 }
 
-test('E69: typecheck/unit-tests/node-scripts/build rodam em paralelo (sem needs)', () => {
+test('E69: unit-tests/node-scripts não esperam o typecheck (rodam em paralelo)', () => {
   const grafo = grafoDeNeeds(wf['ci.yml']);
-  for (const job of ['typecheck', 'unit-tests', 'node-scripts', 'build']) {
+  for (const job of ['unit-tests', 'node-scripts']) {
     assert.ok(grafo.has(job), `job ${job} sumiu do ci.yml`);
     const anc = [...ancestrais(grafo, job)];
     assert.deepEqual(
@@ -524,4 +524,10 @@ test('E69: typecheck/unit-tests/node-scripts/build rodam em paralelo (sem needs)
       `${job} volta a esperar ${anc.join(', ')} — o job vira série em vez de rodar em paralelo`,
     );
   }
+});
+
+test('E69: o build continua atrás do lint E do test', () => {
+  const anc = ancestrais(grafoDeNeeds(wf['ci.yml']), 'build');
+  assert.ok(anc.has('typecheck'), 'build deixou de esperar o lint');
+  assert.ok(anc.has('unit-tests'), 'build deixou de esperar o test');
 });
