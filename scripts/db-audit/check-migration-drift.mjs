@@ -416,6 +416,8 @@ function compare(migrations, records, exceptionsByVersion) {
   const warnings = [];
   const byFileVersion = new Map(migrations.map((migration) => [migration.version, migration]));
   const byLedgerVersion = new Map(records.map((record) => [record.version, record]));
+  const withoutRecord = migrations.filter(({ version }) => !byLedgerVersion.has(version));
+  const withoutFile = records.filter(({ version }) => !byFileVersion.has(version));
 
   for (const record of records) {
     const { version } = record;
