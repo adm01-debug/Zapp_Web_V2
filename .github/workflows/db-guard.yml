@@ -1185,6 +1185,16 @@ jobs:
       - name: Provar o runbook de recriacao do banco local (N-136)
         run: bash scripts/db-audit/recriar-banco-local.test.sh
 
+      # N-142 (P3): message_reactions.user_id guarda public.profiles.id, nao auth.users.id.
+      # O harness executa a migration real, valida o vermelho sem ela, o verde com
+      # get_profile_id_for_user(auth.uid()) e os dois formatos de rollback executavel.
+      # SKIP_DOCKER_SHIM=1 porque o teste cria roles globais anon/authenticated/service_role.
+      - name: Provar leitura de reacoes pelo profile_id (N-142)
+        env:
+          N142_REACTIONS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/n142-message-reactions-select-user-id.test.sh
+
   # Gate do replay COMPLETO das migrations (cartao t_b6f4e82d). O replay-local.sh
   # existia e era provado so por harness offline; nenhum workflow o chamava, entao
   # nenhuma PR provava que o conjunto das migrations ainda aplica do zero. Aqui ele
