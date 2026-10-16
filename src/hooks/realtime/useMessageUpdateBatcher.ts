@@ -81,18 +81,21 @@ export function useMessageUpdateBatcher(
       };
 
       // `played` é evento discreto (áudio ouvido): não espera a janela do lote.
-      // A pendência do mesmo id é descartada — o update novo é o estado final.
+      // Mescla sobre a pendência do mesmo id — algum campo que só o update
+      // anterior trouxe (coluna grande/TOAST) não pode ser perdido.
       if (updatedMessage.status === 'played') {
+        const pendente = pendingUpdatesRef.current.get(updatedMessage.id);
         pendingUpdatesRef.current.delete(updatedMessage.id);
         if (pendingUpdatesRef.current.size === 0 && updateTimerRef.current) {
           clearTimeout(updateTimerRef.current);
           updateTimerRef.current = null;
         }
-        applyUpdates([rawUpdate]);
+        applyUpdates([{ ...pendente, ...rawUpdate }]);
         return;
       }
 
-      pendingUpdatesRef.current.set(updatedMessage.id, rawUpdate);
+      const existente = pendingUpdatesRef.current.get(updatedMessage.id);
+      pendingUpdatesRef.current.set(updatedMessage.id, { ...existente, ...rawUpdate });
       if (updateTimerRef.current) clearTimeout(updateTimerRef.current);
       updateTimerRef.current = setTimeout(flushPendingUpdates, 100);
     },

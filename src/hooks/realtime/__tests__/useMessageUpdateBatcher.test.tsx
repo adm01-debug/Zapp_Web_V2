@@ -200,4 +200,63 @@ describe('useMessageUpdateBatcher — `played` não espera a janela do lote', ()
 
     expect(contexto.conversationsRef.current[0].messages[0].status).toBe('played');
   });
+
+  it('segundo parcial sem os campos do primeiro não apaga o que já estava pendente', () => {
+    const contexto = setup([conversaCom(msg({ id: 'm1', status: 'sent' }))]);
+
+    act(() => {
+      // Primeiro UPDATE traz caption/media vindos do banco; o segundo traz
+      // só o status (TOAST). Sem mesclar pendência, o segundo sobrescreve
+      // o primeiro e caption/media voltam a null.
+      contexto.result.current.handleMessageUpdate({
+        new: {
+          id: 'm1',
+          contact_id: 'c1',
+          status: 'delivered',
+          caption: 'legenda do áudio',
+          media_url: 'https://cdn.exemplo/a.ogg',
+        } as unknown as RealtimeMessage,
+      } as never);
+      contexto.result.current.handleMessageUpdate({
+        new: { id: 'm1', contact_id: 'c1', status: 'read' } as unknown as RealtimeMessage,
+      } as never);
+      vi.advanceTimersByTime(100);
+    });
+
+    const atual = contexto.conversationsRef.current[0].messages[0];
+    expect(atual.status).toBe('read');
+    expect(atual.caption).toBe('legenda do áudio');
+    expect(atual.media_url).toBe('https://cdn.exemplo/a.ogg');
+  });
+
+  it('played imediato mescla com a pendência: status final + campos do anterior', () => {
+    const contexto = setup([conversaCom(msg({ id: 'm1', status: 'sent' }))]);
+
+    act(() => {
+      contexto.result.current.handleMessageUpdate({
+        new: {
+          id: 'm1',
+          contact_id: 'c1',
+          status: 'read',
+          caption: 'legenda do áudio',
+          media_url: 'https://cdn.exemplo/a.ogg',
+        } as unknown as RealtimeMessage,
+      } as never);
+      // `played` chega parcial (só o status): tem de sair na hora SEM perder
+      // caption/media que só o update pendente trouxe.
+      contexto.result.current.handleMessageUpdate({
+        new: { id: 'm1', contact_id: 'c1', status: 'played' } as unknown as RealtimeMessage,
+      } as never);
+    });
+
+    const atual = contexto.conversationsRef.current[0].messages[0];
+    expect(atual.status).toBe('played');
+    expect(atual.caption).toBe('legenda do áudio');
+    expect(atual.media_url).toBe('https://cdn.exemplo/a.ogg');
+
+    act(() => {
+      vi.advanceTimersByTime(200);
+    });
+    expect(contexto.commitConversations).toHaveBeenCalledTimes(1);
+  });
 });

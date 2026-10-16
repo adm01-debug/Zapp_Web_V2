@@ -33,6 +33,11 @@ vi.mock('@/lib/logger', () => ({
 import { useSupabaseRealtime, PERSISTED_CHANNEL_ERRORS, TRANSIENT_CHANNEL_WINDOW_MS } from '@/hooks/realtime/useSupabaseRealtime';
 import { log } from '@/lib/logger';
 
+// `navigator.onLine` é somente-leitura no jsdom: o teste de offline redefine
+// a propriedade e o afterEach restaura o valor original para não vazar
+// `onLine === false` para os testes seguintes do arquivo.
+const originalOnLineDescriptor = Object.getOwnPropertyDescriptor(window.navigator, 'onLine');
+
 function mount(channelName: string) {
   const onReconnect = vi.fn();
   const view = renderHook(() => useSupabaseRealtime({
@@ -70,6 +75,9 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers();
+  if (originalOnLineDescriptor) {
+    Object.defineProperty(window.navigator, 'onLine', originalOnLineDescriptor);
+  }
 });
 
 describe('useSupabaseRealtime — revalidacao apos queda', () => {
