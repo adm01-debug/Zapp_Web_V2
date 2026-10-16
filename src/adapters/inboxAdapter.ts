@@ -36,6 +36,44 @@ export function mapMessageRowToMessage(row: MessageRow): Message {
   };
 }
 
+/**
+ * #411: resolve a mensagem citada de `reply_to_id` contra o índice das mensagens
+ * JÁ CARREGADAS — sem nenhuma consulta por mensagem. Devolve `undefined` quando o
+ * id aponta para fora da lista carregada (a citada é mais antiga que a primeira
+ * página, ou foi apagada): o balão não desenha a citação e não mente sobre o
+ * conteúdo dela.
+ */
+export function resolveReplyTo(
+  replyToId: string | null | undefined,
+  index?: ReadonlyMap<string, Message>,
+): Message['replyTo'] {
+  if (!replyToId || !index) return undefined;
+  const quoted = index.get(replyToId);
+  if (!quoted) return undefined;
+  return {
+    messageId: quoted.id,
+    content: quoted.content ?? '',
+    sender: quoted.sender,
+    ...(quoted.type ? { type: quoted.type } : {}),
+  };
+}
+
+/**
+ * #411: preenche `replyTo` de TODA a lista a partir do índice dela mesma. É o ponto
+ * único chamado depois de montar/atualizar a lista (carga inicial, paginação e
+ * eventos de realtime), para que a citação acompanhe o que já está carregado —
+ * inclusive quando a citada chega DEPOIS, numa página mais antiga. Mensagem sem
+ * citação resolvida volta intacta (não apaga `replyTo` de quem já o tinha).
+ */
+export function withResolvedReplies(messages: Message[]): Message[] {
+  if (messages.length === 0) return messages;
+  const index = new Map(messages.map((message) => [message.id, message]));
+  return messages.map((message) => {
+    const replyTo = resolveReplyTo(message.reply_to_id, index);
+    return replyTo ? { ...message, replyTo } : message;
+  });
+}
+
 export function mapRealtimeContactToContact(rc: RealtimeContact): ConversationContact {
   return {
     ...rc,
