@@ -258,7 +258,7 @@ export function useGroupActions({ connections, groups, selectedGroups, setGroups
         .update({ group_category: category })
         .eq('phone', phone);
       if (catError) log.warn('Falha ao propagar a categoria aos contatos do grupo', {
-        groupId, phone, error: catError.message,
+        groupId, error: catError.message,
       });
     }
     setGroups(prev => prev.map(g => g.id === groupId ? { ...g, category } : g));

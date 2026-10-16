@@ -44,6 +44,7 @@ vi.mock('@/hooks/ui/useActionFeedback', () => ({
 }));
 
 import { useGroupActions, BROADCAST_ACTION_TTL_MS } from '@/hooks/groups/actions';
+import { log } from '@/lib/logger';
 
 const MENSAGEM = 'Aviso da semana: fechamos às 18h.';
 
@@ -215,5 +216,102 @@ describe('useGroupActions — envio em massa de grupos', () => {
     expect(mocks.rpc).not.toHaveBeenCalled();
     expect(mocks.toast.error).toHaveBeenNthCalledWith(1, 'Digite uma mensagem');
     expect(mocks.toast.error).toHaveBeenNthCalledWith(2, 'Selecione pelo menos um grupo');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// handleCategoryChange — a troca de categoria do grupo propaga aos contatos
+// por PHONE EXATO (o JID `12345-67890@g.us` é guardado em `contacts.phone` sem
+// o sufixo e com o hífen preservado, R2-INB-055) e a recusa do 2º UPDATE não é
+// mais engolida: resta um aviso no log e o estado local continua atualizado.
+// ---------------------------------------------------------------------------
+interface Filtro {
+  coluna: string;
+  valor: unknown;
+}
+
+describe('useGroupActions — categoria do grupo', () => {
+  const gruposFiltros: Filtro[] = [];
+  const contatosFiltros: Filtro[] = [];
+  const contatosLike = vi.fn();
+  let resultadoGrupo: { error: unknown } = { error: null };
+  let resultadoContato: { error: unknown } = { error: null };
+
+  function cadeia(filtros: Filtro[], resultado: () => { error: unknown }, comLike = false) {
+    const obj: Record<string, unknown> = {};
+    obj.eq = vi.fn((coluna: string, valor: unknown) => {
+      filtros.push({ coluna, valor });
+      return obj;
+    });
+    if (comLike) {
+      obj.like = vi.fn((coluna: string, valor: unknown) => {
+        contatosLike(coluna, valor);
+        return obj;
+      });
+    }
+    obj.then = (resolve: (v: unknown) => void, reject?: (e: unknown) => void) =>
+      Promise.resolve(resultado()).then(resolve, reject);
+    return obj;
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    gruposFiltros.length = 0;
+    contatosFiltros.length = 0;
+    contatosLike.mockClear();
+    resultadoGrupo = { error: null };
+    resultadoContato = { error: null };
+    mocks.from.mockImplementation((tabela: string) => {
+      if (tabela === 'whatsapp_groups') {
+        return { update: vi.fn(() => cadeia(gruposFiltros, () => resultadoGrupo)) };
+      }
+      if (tabela === 'contacts') {
+        return { update: vi.fn(() => cadeia(contatosFiltros, () => resultadoContato, true)) };
+      }
+      return { update: vi.fn(() => cadeia([], () => ({ error: null }))) };
+    });
+  });
+
+  function montarCategoria() {
+    const setGroups = vi.fn();
+    const utils = renderHook(() => useGroupActions({
+      connections: [], groups: [grupo('g1')], selectedGroups: new Set<string>(),
+      setGroups, setSelectedGroups: vi.fn(), fetchGroups: vi.fn(async () => {}),
+    }));
+    return { ...utils, setGroups };
+  }
+
+  it('propaga aos contatos por phone exato, sem curinga', async () => {
+    const { result } = montarCategoria();
+
+    await act(async () => { await result.current.handleCategoryChange('g1', 'orcamentos'); });
+
+    expect(gruposFiltros).toContainEqual({ coluna: 'id', valor: 'g1' });
+    expect(contatosFiltros).toContainEqual({ coluna: 'phone', valor: 'g1' });
+    expect(contatosLike).not.toHaveBeenCalled();
+  });
+
+  it('não engole a recusa do 2º UPDATE: avisa no log e mantém a categoria do grupo', async () => {
+    resultadoContato = { error: { message: 'permission denied' } };
+    const { result, setGroups } = montarCategoria();
+
+    await act(async () => { await result.current.handleCategoryChange('g1', 'orcamentos'); });
+
+    expect(log.warn).toHaveBeenCalled();
+    expect(mocks.toast.success).toHaveBeenCalledWith('Categoria atualizada');
+    expect(mocks.toast.error).not.toHaveBeenCalled();
+    const atualizador = setGroups.mock.calls[0][0] as (prev: WhatsAppGroup[]) => WhatsAppGroup[];
+    expect(atualizador([grupo('g1')])).toEqual([{ ...grupo('g1'), category: 'orcamentos' }]);
+  });
+
+  it('mantém o aviso de erro quando a própria gravação do grupo falha e não toca nos contatos', async () => {
+    resultadoGrupo = { error: { message: 'rls' } };
+    const { result, setGroups } = montarCategoria();
+
+    await act(async () => { await result.current.handleCategoryChange('g1', 'orcamentos'); });
+
+    expect(mocks.toast.error).toHaveBeenCalledWith('Erro ao atualizar categoria');
+    expect(contatosFiltros).toHaveLength(0);
+    expect(setGroups).not.toHaveBeenCalled();
   });
 });
