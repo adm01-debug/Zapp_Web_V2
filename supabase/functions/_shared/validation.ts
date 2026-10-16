@@ -26,6 +26,7 @@ import {
   scheduleRateLimitDenial,
   type RateLimitLogWriter,
 } from './rate-limit-log.ts';
+import { isAllowedOrigin, FALLBACK_ORIGIN } from './cors-origins.ts';
 
 // ─── Structured Logger ─────────────────────────────────────────
 

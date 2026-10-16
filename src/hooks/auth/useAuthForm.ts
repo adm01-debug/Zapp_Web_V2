@@ -223,7 +223,8 @@ export function useAuthForm() {
         options: { redirectTo: `${window.location.origin}/auth/callback` },
       });
       if (error) {
-        toast({ title: 'Erro ao conectar com Google', description: error.message, variant: 'destructive' });
+        console.error('[auth:google]', error);
+        toast({ title: 'Erro ao conectar com Google', description: 'Não foi possível conectar com o Google. Tente novamente.', variant: 'destructive' });
       }
     } catch {
       toast({ title: 'Login social indisponível', description: 'Tente novamente mais tarde.', variant: 'destructive' });
