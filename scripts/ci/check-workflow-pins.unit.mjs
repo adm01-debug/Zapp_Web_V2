@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { TOOLCHAIN_KEYS, findMutableActionRefs, findToolchainDrift, loadToolchain, main } from "./check-workflow-pins.mjs";
+import { TOOLCHAIN_KEYS, findMutableActionRefs, findToolchainDrift, findCurlBinaryViolations, loadToolchain, main } from "./check-workflow-pins.mjs";
 
 // Fonte única de versões do repositório (.github/toolchain.json), lida de verdade
 // pelo teste de integração no fim do arquivo.
@@ -18,8 +18,11 @@ const FONTE = {
   node: "24",
   go: "1.24.x",
   "supabase-cli": "2.116.0",
-  playwright: "1.63.0",
+  playwright: "1.64.1",
   "postgres-image": "postgres:17-alpine@sha256:" + "a".repeat(64),
+  actionlint: "1.7.7",
+  "actionlint-sha256-linux-amd64": "0".repeat(64),
+  zizmor: "0.9.0",
 };
 
 test("aceita action remota fixada por SHA completo", () => {
@@ -103,7 +106,7 @@ test("aceita workflow cujas versões de toolchain batem com a fonte única", () 
     "          node-version: '24'",
     "          deno-version: '2.9.5'",
     "          go-version: '1.24.x'",
-    "      - run: bunx playwright@1.63.0 install --with-deps chromium",
+    "      - run: ./node_modules/.bin/playwright install --with-deps chromium",
     "      postgres:",
     "        image: " + FONTE["postgres-image"],
   ].join("\n");
@@ -162,15 +165,15 @@ test("rejeita version literal dentro do passo supabase/setup-cli", () => {
   ]);
 });
 
-test("rejeita playwright@ fora da fonte única e aceita a versão da fonte", () => {
-  assert.deepEqual(
-    findToolchainDrift("        run: bunx playwright@1.63.0 install --with-deps chromium\n", "ci.yml", FONTE),
-    [],
-  );
-  assert.deepEqual(
-    findToolchainDrift("        run: bunx playwright@1.62.0 install --with-deps chromium\n", "e2e-talkx.yml", FONTE),
-    [{ file: "e2e-talkx.yml", line: 1, tool: "playwright", value: "1.62.0", expected: "1.63.0" }],
-  );
+test("Playwright: rejeita drift inclusive seletores flutuantes e scoped", () => {
+  const fonte = { ...FONTE, playwright: "1.64.1" };
+  assert.deepEqual(findToolchainDrift("run: bunx playwright@1.64.1 test", "ci.yml", fonte), []);
+  for (const pacote of ["playwright", "@playwright/test"]) {
+    for (const version of ["latest", "next", "1.63.0"]) {
+      assert.deepEqual(findToolchainDrift(`run: bunx ${pacote}@${version} test`, "ci.yml", fonte),
+        [{ file: "ci.yml", line: 1, tool: "playwright", value: version, expected: "1.64.1" }]);
+    }
+  }
 });
 
 test("rejeita imagem do serviço postgres divergente da fonte única", () => {
@@ -234,8 +237,98 @@ test("fonte única ausente falha apontando .github/toolchain.json", () => {
   }
 });
 
+// W88: binários baixados via curl (actionlint) e pip (zizmor)
+test("W88 aceita actionlint_version igual à fonte única", () => {
+  const source = '        actionlint_version="1.7.7"\n';
+  assert.deepEqual(findToolchainDrift(source, "ci.yml", FONTE), []);
+});
+
+test("W88 rejeita actionlint_version divergente da fonte única", () => {
+  const source = '        actionlint_version="1.6.0"\n';
+  assert.deepEqual(findToolchainDrift(source, "ci.yml", FONTE), [
+    { file: "ci.yml", line: 1, tool: "actionlint", value: "1.6.0", expected: "1.7.7" },
+  ]);
+});
+
+test("W88 aceita actionlint_sha256 igual à fonte única", () => {
+  const source = `        actionlint_sha256="${"0".repeat(64)}"\n`;
+  assert.deepEqual(findToolchainDrift(source, "ci.yml", FONTE), []);
+});
+
+test("W88 rejeita actionlint_sha256 divergente da fonte única", () => {
+  const source = `        actionlint_sha256="${"f".repeat(64)}"\n`;
+  assert.deepEqual(findToolchainDrift(source, "ci.yml", FONTE), [
+    { file: "ci.yml", line: 1, tool: "actionlint-sha256-linux-amd64", value: "f".repeat(64), expected: "0".repeat(64) },
+  ]);
+});
+
+test("W88 aceita zizmor pip pin igual à fonte única", () => {
+  const source = "        python3 -m pip install --quiet --break-system-packages --only-binary :all: zizmor==0.9.0\n";
+  assert.deepEqual(findToolchainDrift(source, "ci.yml", FONTE), []);
+});
+
+test("W88 rejeita zizmor pip pin divergente da fonte única", () => {
+  const source = "        python3 -m pip install --quiet --break-system-packages --only-binary :all: zizmor==0.8.0\n";
+  assert.deepEqual(findToolchainDrift(source, "ci.yml", FONTE), [
+    { file: "ci.yml", line: 1, tool: "zizmor", value: "0.8.0", expected: "0.9.0" },
+  ]);
+});
+
 test("os workflows reais do repositório batem com a fonte única", () => {
   const fonte = loadToolchain(RAIZ);
   assert.deepEqual(TOOLCHAIN_KEYS.filter((chave) => !(chave in fonte)), []);
   assert.equal(main(RAIZ), 0);
+});
+
+// W88: binários baixados por curl devem ter versão e sha256 em toolchain.json.
+test("W88: curl binary sem chave em toolchain gera violação", () => {
+  const source = `
+jobs:
+  lint:
+    steps:
+      - run: |
+          actionlint_version="1.7.7"
+          actionlint_sha256="023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757"
+          curl -sSL https://example.com/actionlint
+`;
+  const viols = findCurlBinaryViolations(source, "ci.yml", {});
+  assert.ok(viols.length >= 2, "deve reportar versão e sha256 ausentes");
+  assert.ok(viols.some((v) => v.field === "version"), "deve reportar versão ausente");
+  assert.ok(viols.some((v) => v.field === "sha256"), "deve reportar sha256 ausente");
+});
+
+test("W88: curl binary com versão errada em toolchain gera violação", () => {
+  const source = `
+      - run: |
+          actionlint_version="1.7.7"
+          actionlint_sha256="023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757"
+`;
+  const toolchain = { "actionlint-version": "1.7.6", "actionlint-sha256": "023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757" };
+  const viols = findCurlBinaryViolations(source, "ci.yml", toolchain);
+  assert.equal(viols.length, 1, "apenas a versão deve violar");
+  assert.equal(viols[0].field, "version");
+  assert.equal(viols[0].value, "1.7.7");
+});
+
+test("W88: mutação do sha256 → violação (W88 invariante central)", () => {
+  const source = `
+      - run: |
+          actionlint_version="1.7.7"
+          actionlint_sha256="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+`;
+  const toolchain = { "actionlint-version": "1.7.7", "actionlint-sha256": "023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757" };
+  const viols = findCurlBinaryViolations(source, "ci.yml", toolchain);
+  assert.equal(viols.length, 1, "sha256 mutado deve gerar violação");
+  assert.equal(viols[0].field, "sha256");
+});
+
+test("W88: versão e sha256 corretos → sem violação", () => {
+  const source = `
+      - run: |
+          actionlint_version="1.7.7"
+          actionlint_sha256="023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757"
+`;
+  const toolchain = { "actionlint-version": "1.7.7", "actionlint-sha256": "023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757" };
+  const viols = findCurlBinaryViolations(source, "ci.yml", toolchain);
+  assert.equal(viols.length, 0, "versão e sha256 corretos → sem violação");
 });

@@ -74,6 +74,12 @@ create table if not exists public.team_chat_media_acl_r2_db_020_rb (
   recorded_at timestamptz not null default now()
 );
 
+-- 20261009172324 já pode ter criado a tabela com só media_bucket.
+-- IF NOT EXISTS na tabela não acrescenta as colunas do backup ampliado.
+alter table public.team_chat_media_acl_r2_db_020_rb
+  add column if not exists media_path text,
+  add column if not exists media_type text;
+
 alter table public.team_chat_media_acl_r2_db_020_rb enable row level security;
 
 revoke all on public.team_chat_media_acl_r2_db_020_rb from public, anon, authenticated;

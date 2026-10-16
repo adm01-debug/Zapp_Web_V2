@@ -44,10 +44,17 @@ function toTeamMessage(row: TeamMessagePageRow): TeamMessage {
   };
 }
 
-export function useTeamMessages(conversationId: string | null) {
+export type TeamMessageEvent =
+  | { type: 'delete'; id: string }
+  | { type: 'update'; id: string; content: string; is_edited: boolean; updated_at: string }
+  | { type: 'resync' };
+
+export function useTeamMessages(conversationId: string | null, onEvent?: (event: TeamMessageEvent) => void) {
   const { profile } = useAuth();
   const queryClient = useQueryClient();
   const markedRef = useRef<string | null>(null);
+  const onEventRef = useRef(onEvent);
+  useEffect(() => { onEventRef.current = onEvent; }, [onEvent]);
 
   const query = useQuery({
     queryKey: queryKeys.messages(conversationId),
@@ -108,12 +115,23 @@ export function useTeamMessages(conversationId: string | null) {
     let jaInscrito = false;
     const channel = supabase
       .channel(`team-messages-${conversationId}` + uniqueRealtimeTopic(''))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'team_messages', filter: `conversation_id=eq.${conversationId}` }, revalidar)
+      .on<Database['public']['Tables']['team_messages']['Row']>('postgres_changes', { event: '*', schema: 'public', table: 'team_messages', filter: `conversation_id=eq.${conversationId}` }, payload => {
+        if (payload.eventType === 'DELETE' && payload.old.id) {
+          onEventRef.current?.({ type: 'delete', id: payload.old.id });
+        } else if (payload.eventType === 'UPDATE') {
+          const row = payload.new;
+          onEventRef.current?.({ type: 'update', id: row.id, content: row.content ?? '', is_edited: row.is_edited ?? false, updated_at: row.updated_at });
+        }
+        revalidar();
+      })
       .subscribe((status) => {
         // A queda do canal não avisa: o que ficou em memória envelhece. Só na
         // RE-inscrição (depois da primeira) a página corrente é refeita.
         if (status !== 'SUBSCRIBED') return;
-        if (jaInscrito) revalidar();
+        if (jaInscrito) {
+          onEventRef.current?.({ type: 'resync' });
+          revalidar();
+        }
         jaInscrito = true;
       });
     return () => { supabase.removeChannel(channel); };
@@ -166,5 +184,5 @@ export function useTeamMessages(conversationId: string | null) {
     return () => { cancelado = true; };
   }, [conversationId, profile, pagina]);
 
-  return { messages, isLoading: query.isLoading };
+  return { messages, isLoading: query.isLoading, isError: query.isError, refetch: query.refetch };
 }

@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "project_ref": "tnnnlkbymytvtqngbbqh",
+  "observed_on": "2026-10-16",
+  "source": "Supabase Management API get_edge_function; original source files",
+  "purpose": "archive-only; does not enable deployment",
+  "functions": [
+    {
+      "slug": "sicoob-bridge",
+      "status": "ACTIVE",
+      "verify_jwt": true,
+      "bundle_updated_at": 1790686672391,
+      "bundle_sha256": "44d1d9a9287d3d4b5ab1f38d34821363fee9fe83fb6fa6de16774ab7f61d1589",
+      "files": [
+        {
+          "remote_path": "functions/sicoob-bridge/index.ts",
+          "archived_path": "docs/edge-functions-recovered/sicoob-bridge/index.ts.txt",
+          "sha256": "246f8edb416b1db51540ba0183c847536beea800240cb133de50b7e061170c2f",
+          "bytes": 5598
+        },
+        {
+          "remote_path": "functions/_shared/validation.ts",
+          "archived_path": "docs/edge-functions-recovered/sicoob-shared/validation.ts.txt",
+          "sha256": "5b61ce7b48ee93c5c0e940ebf042557f83a94b5413fe2dfac9a8ee6932d92599",
+          "bytes": 11832
+        },
+        {
+          "remote_path": "functions/_shared/hmac-validation.ts",
+          "archived_path": "docs/edge-functions-recovered/sicoob-shared/hmac-validation.ts.txt",
+          "sha256": "f6a785a3da09e2b11a9d074ac8827295f8d32c0eec535547c5a6c08d367434da",
+          "bytes": 15388
+        },
+        {
+          "remote_path": "functions/_shared/schemas.ts",
+          "archived_path": "docs/edge-functions-recovered/sicoob-shared/schemas.ts.txt",
+          "sha256": "9478e32404108906f15bd2c903a225e12259f7179052738ebf5a843c71c329b4",
+          "bytes": 17046
+        }
+      ]
+    },
+    {
+      "slug": "sicoob-bridge-reply",
+      "status": "ACTIVE",
+      "verify_jwt": true,
+      "bundle_updated_at": 1790686672391,
+      "bundle_sha256": "7eb5c9123e4fac731759358f730c8d639f8d8ee63736b290e5b8e63f47132f22",
+      "files": [
+        {
+          "remote_path": "functions/sicoob-bridge-reply/index.ts",
+          "archived_path": "docs/edge-functions-recovered/sicoob-bridge-reply/index.ts.txt",
+          "sha256": "4cbe87b0edb091b79eeb452d9312cbac2cc9d286435d33d688b889b358fba432",
+          "bytes": 4121
+        },
+        {
+          "remote_path": "functions/_shared/validation.ts",
+          "archived_path": "docs/edge-functions-recovered/sicoob-shared/validation.ts.txt",
+          "sha256": "5b61ce7b48ee93c5c0e940ebf042557f83a94b5413fe2dfac9a8ee6932d92599",
+          "bytes": 11832
+        },
+        {
+          "remote_path": "functions/_shared/hmac-validation.ts",
+          "archived_path": "docs/edge-functions-recovered/sicoob-shared/hmac-validation.ts.txt",
+          "sha256": "f6a785a3da09e2b11a9d074ac8827295f8d32c0eec535547c5a6c08d367434da",
+          "bytes": 15388
+        },
+        {
+          "remote_path": "functions/_shared/schemas.ts",
+          "archived_path": "docs/edge-functions-recovered/sicoob-shared/schemas.ts.txt",
+          "sha256": "9478e32404108906f15bd2c903a225e12259f7179052738ebf5a843c71c329b4",
+          "bytes": 17046
+        }
+      ]
+    }
+  ]
+}

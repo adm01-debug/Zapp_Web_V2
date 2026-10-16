@@ -33,6 +33,7 @@ interface ClientOpts {
   settings?: Array<{ key: string; value: unknown }>;
   /** Resultado da RPC talkx_campaign_window_open por campaign id. */
   windowOpen?: Record<string, boolean>;
+  windowResult?: { data: unknown; error: unknown };
 }
 
 interface ClientCtx {
@@ -94,7 +95,7 @@ function makeClient(opts: ClientOpts): { client: unknown; ctx: ClientCtx } {
     if (name === 'talkx_campaign_window_open' && args && args.p_campaign_id) {
       const cid = args.p_campaign_id as string;
       const open = opts.windowOpen?.[cid] ?? true;
-      return Promise.resolve({ data: open, error: null });
+      return Promise.resolve(opts.windowResult ?? { data: [{ allowed: open, reason: null, next_window: null }], error: null });
     }
     return Promise.resolve({ data: null, error: null });
   }, from }, ctx };
@@ -471,6 +472,28 @@ Deno.test("N-102: p_at enviado à RPC é o relógio injetado, não o relógio re
 });
 
 // --------------------------------------------------------------------------- recorrência
+
+for (const [name, data, error] of [
+  ['boolean legado', true, null],
+  ['sem linha', [], null],
+  ['duas linhas', [{ allowed: true }, { allowed: true }], null],
+  ['allowed string', [{ allowed: 'true' }], null],
+  ['allowed ausente', [{}], null],
+  ['linha nula', [null], null],
+  ['erro RPC com dado permissivo', [{ allowed: true }], { message: 'unavailable' }],
+] as const) {
+  Deno.test(`janela canônica fecha diante de ${name}`, async () => {
+    const fake = makeFetch();
+    const { client } = makeClient({
+      due: [{ id: 'c-contract', status: 'scheduled', scheduled_at: '2026-10-01T00:00:00Z' }],
+      windowResult: { data, error },
+    });
+    const response = await handleTalkxScheduler(makeRequest({ cronSecret: TEST_CRON_SECRET }),
+      makeDeps({ client, fetch: fake.impl, cronSecretValue: TEST_CRON_SECRET }));
+    assert(response.status === 200, 'tick deve registrar janela fechada sem despachar');
+    assert(fake.posts.length === 0, 'resposta inválida não autoriza POST ao talkx-send');
+  });
+}
 
 interface RecurrenceCall { rpc: string; args: Record<string, unknown> }
 

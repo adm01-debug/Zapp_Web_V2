@@ -23,7 +23,7 @@ vi.mock('@/integrations/supabase/client', () => ({
   supabase: { from: () => ({ update: () => ({ eq: async () => ({ error: null }) }) }) },
 }));
 
-vi.mock('@/lib/logger', () => ({
+vi.mock('@/lib/logger', async (importOriginal) => ({ ...await importOriginal<typeof import('@/lib/logger')>(),
   log: { error: mocks.logError, debug: vi.fn(), warn: vi.fn(), info: vi.fn() },
 }));
 

@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useRef, useSyncExternalStore } from 'react';
+import React, { useEffect, useState, useMemo, useRef, useSyncExternalStore } from 'react';
+import type { TalkXTemplateTab } from './talkxTemplateRoute';
 import {
   X, Check, Copy, ChevronLeft, ChevronRight, FileText, BarChart3, Image, Video, Music, Send, CheckCircle, XCircle, History, RotateCcw,
 } from 'lucide-react';
@@ -56,13 +57,18 @@ function usePainelLargo() {
 interface Props {
   templates: TalkXTemplate[];
   isLoading: boolean;
+  isError?: boolean;
+  error?: Error | null;
+  onRetry?: () => void;
+  initialTtab?: TalkXTemplateTab;
+  onActiveTemplateChange?: (templateId: string) => void;
   editing: TalkXTemplate | null;
   onClose: () => void;
   /** X091 — clique do widget "Em andamento" abre o monitor da campanha. */
   onOpenMonitor?: (campaignId: string) => void;
 }
 
-export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, onOpenMonitor }: Props) {
+export function TalkXTemplateEditor({ templates, isLoading, isError, error, onRetry, initialTtab = 'conteudo', onActiveTemplateChange, editing, onClose, onOpenMonitor }: Props) {
   const {
     createTemplate, updateTemplate, duplicateTemplate, testTemplate, fetchVersionHistory, fetchVariants,
     saveVariant, deleteVariant, countVariantRecipients,
@@ -101,9 +107,9 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
     tags: string[]; custom_variables: string[]; created_at: string;
   }>>([]);
   const [loadingVersions, setLoadingVersions] = useState(false);
-  const [showVersions, setShowVersions] = useState(false);
+  const [showVersions, setShowVersions] = useState(initialTtab === 'historico');
   const [variants, setVariants] = useState<TemplateVariant[]>([]);
-  const [showVariants, setShowVariants] = useState(false);
+  const [showVariants, setShowVariants] = useState(initialTtab === 'ab');
   const [savingVariant, setSavingVariant] = useState(false);
   // R2-MOD-024: respostas atrasadas não podem contaminar o template seguinte.
   // `activeTemplateIdRef` guarda o template REALMENTE ativo agora (independe do
@@ -123,6 +129,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
   const activateTemplate = (templateId: string) => {
     activeTemplateIdRef.current = templateId;
     setActiveTemplateId(templateId);
+    onActiveTemplateChange?.(templateId);
   };
 
   // Template ativo derivado de activeTemplateId (pode diferir de editing apos carga da biblioteca)
@@ -281,6 +288,16 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
     if (!isActiveOrigin(templateId)) return;
     setVariants(vs);
   };
+
+  // O pai usa uma key por rota: carregamos a aba inicial uma única vez por
+  // editor, mantendo as guardas de origem contra respostas atrasadas.
+  useEffect(() => {
+    const templateId = activeTemplateIdRef.current;
+    if (!templateId) return;
+    if (initialTtab === 'ab') void loadVariants(templateId).catch(() => toast.error('Não foi possível carregar as variantes.'));
+    if (initialTtab === 'historico') void fetchVersions(templateId).catch(() => toast.error('Não foi possível carregar o histórico.'));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- ciclo de montagem por key do template/aba
+  }, []);
 
   const removeVariant = async (variant: TemplateVariant) => {
     const templateId = variant.template_id;
@@ -476,9 +493,9 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
           {/* Lista compacta — X047: carregando -> erro -> vazio -> conteúdo */}
           <div className="flex-1 overflow-y-auto space-y-1">
             <TalkXQueryBoundary
-              query={{ isLoading, isError: templatesIsError, error: templatesError }}
+              query={{ isLoading, isError: isError ?? templatesIsError, error: isError === undefined ? templatesError : error }}
               entity="os templates"
-              onRetry={() => { void refetchTemplates(); }}
+              onRetry={onRetry ?? (() => { void refetchTemplates(); })}
               skeleton={<TalkXSkeletonRows rows={5} />}
               isEmpty={libFiltered.length === 0}
               empty={<p className="text-2xs text-muted-foreground text-center pt-4">Nenhum template</p>}

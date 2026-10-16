@@ -197,6 +197,31 @@ test('aceita migration com nome e SQL equivalentes no ledger', () => {
   assert.match(result.stdout, /1 conteudo\(s\)\/hash\(es\) historico\(s\) verificado\(s\)/);
 });
 
+test('preserva ponto e virgula e comentarios dentro de corpo dollar-quoted', () => {
+  const sql = "CREATE FUNCTION public.demo() RETURNS text LANGUAGE plpgsql AS $body$\nBEGIN\n-- comentario do corpo\nRETURN 'a; b';\nEND;\n$body$;\n";
+  const result = runGuard({ files: { [FILE]: sql }, ledger: [ledgerRecord({ statements: [sql] })] });
+  assert.equal(result.status, 0, result.stderr);
+});
+
+test('preserva ponto e virgula dentro de string literal e identificador quoted', () => {
+  const sql = `CREATE TABLE public.demo ("a; b" text DEFAULT 'x; y');`;
+  const result = runGuard({ files: { [FILE]: sql }, ledger: [ledgerRecord({ statements: [sql] })] });
+  assert.equal(result.status, 0, result.stderr);
+});
+
+test('compara arquivo completo com ledger separado por statements', () => {
+  const statements = ['CREATE TABLE public.demo (id integer)', 'COMMENT ON TABLE public.demo IS \'a; b\''];
+  const result = runGuard({ files: { [FILE]: statements.join(';\n') + ';\n-- fim\n' }, ledger: [ledgerRecord({ statements })] });
+  assert.equal(result.status, 0, result.stderr);
+});
+
+test('continua rejeitando alteracao dentro de string dollar-quoted', () => {
+  const sql = 'SELECT $$a; b$$;';
+  const result = runGuard({ files: { [FILE]: sql }, ledger: [ledgerRecord({ statements: ['SELECT $$a; c$$;'] })] });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /SQL divergente/);
+});
+
 test('aceita registro legado sem name/statements, sem inventar evidencia', () => {
   const result = runGuard({ ledger: [ledgerRecord({ name: null, statements: null })] });
   assert.equal(result.status, 0, result.stderr);
@@ -212,6 +237,16 @@ test('fixa arquivo legado por hash sem chamar seus bytes de conteudo historico',
   assert.match(result.stdout, /0 conteudo\(s\)\/hash\(es\) historico\(s\) verificado\(s\)/);
   assert.match(result.stdout, /1 arquivo\(s\) legado\(s\) fixado\(s\) sem prova de conteudo historico/);
   assert.doesNotMatch(result.stderr, /ATENCAO/);
+});
+
+test('prosa em name-and-file-pinned nao incrementa conteudo historico verificado', () => {
+  const result = runGuard({
+    ledger: [ledgerRecord({ statements: ['Descricao historica sem SQL recuperado'] })],
+    evidence: [nameOnlyEvidence()],
+  });
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /0 conteudo\(s\)\/hash\(es\) historico\(s\) verificado\(s\)/);
+  assert.match(result.stdout, /1 arquivo\(s\) legado\(s\) fixado\(s\) sem prova de conteudo historico/);
 });
 
 test('name-and-file-pinned falha para arquivo/nome alterado ou SQL recuperado no ledger', () => {
@@ -664,6 +699,25 @@ test('aceita pinned-replay somente quando todas as dimensoes estao fixadas', () 
   });
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /1 conteudo\(s\)\/hash\(es\) historico\(s\) verificado\(s\)/);
+});
+
+test('endpoint-literal-update fixado por todos os hashes nao exige marker no SQL', () => {
+  const statements = [OTHER_SQL.trim()];
+  const result = runGuard({
+    ledger: [ledgerRecord({ statements })],
+    evidence: [pinnedEvidence({ statements, reason: 'endpoint-literal-update' })],
+  });
+  assert.equal(result.status, 0, result.stderr);
+});
+
+test('pinned-replay rejeita hash SQL do ledger falso mesmo com array integral correto', () => {
+  const statements = [OTHER_SQL.trim()];
+  const result = runGuard({
+    ledger: [ledgerRecord({ statements })],
+    evidence: [pinnedEvidence({ statements, overrides: { ledger_sql_sha256: '0'.repeat(64) } })],
+  });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /ledger_sql_sha256 divergente/);
 });
 
 test('pinned-replay falha para adulteracao independente de arquivo e SQL local', () => {

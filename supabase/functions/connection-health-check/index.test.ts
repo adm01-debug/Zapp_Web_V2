@@ -69,6 +69,7 @@ interface Fake {
   /** get_instance_token falha (leitura do Vault indisponível) */
   tokenRpcError: boolean;
   alerts: Array<Record<string, unknown>>;
+  alertInsertError?: { code: string; message: string };
   healthLogs: Array<Record<string, unknown>>;
   /** linhas que o handler grava em `audit_logs` (trilha de transição de status) */
   auditLogs: Array<Record<string, unknown>>;
@@ -146,6 +147,7 @@ function result(
   }
   if (table === 'warroom_alerts' && op === 'insert' && pending) {
     fake.insertTables.push(table);
+    if (fake.alertInsertError) return { data: null, error: fake.alertInsertError };
     fake.alerts.push(pending);
     return { data: null, error: null };
   }
@@ -363,6 +365,33 @@ Deno.test('E24: sem token próprio no Vault a instância não é consultada com 
     fake.healthLogs[0]?.status === 'no_credentials',
     `esperado health_status 'no_credentials', recebido ${JSON.stringify(fake.healthLogs)}`,
   );
+});
+
+Deno.test('webhook silencioso alerta mesmo sem transição de connected', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'inst-b', phone_number: null }];
+  fake.statusById = { c1: 'connected' };
+  fake.tokens = { 'inst-b': 'tok-inst-b' };
+  fake.lastInbound = [{ created_at: new Date(Date.now() - 45 * 60_000).toISOString() }];
+  const response = await run(fake);
+  const body = await response.json();
+  assert(body.connections.length === 1, 'a sonda deve executar o worker da conexão');
+  assert(body.alerts_created === 1, 'degradação deve criar alerta sem transição do socket');
+  assert(fake.alerts[0]?.alert_type === 'warning', 'degradação não é queda crítica');
+  assert(fake.alerts[0]?.dedupe_key === 'conn-degraded:v1:c1', 'episódio tem chave estável');
+  assert(fake.statusById.c1 === 'connected', 'silêncio não altera status do socket');
+});
+
+Deno.test('alerta já existente não é contado como criado nem dispara notificação', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'inst-b', phone_number: null }];
+  fake.statusById = { c1: 'connected' };
+  fake.tokens = { 'inst-b': 'tok-inst-b' };
+  fake.fetchImpl = () => jsonResponse({ state: 'close' });
+  fake.alertInsertError = { code: '23505', message: 'duplicate episode' };
+  const body = await (await run(fake)).json();
+  assert(body.alerts_created === 0, '23505 não é um novo alerta');
+  assert(fake.pushNotifications.length === 0 && !fake.calls.some(call => call.path === '/emails'), 'sem nova entrega');
 });
 
 Deno.test('E24: falha ao LER a credencial do Vault não usa a rede e registra o motivo', async () => {

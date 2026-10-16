@@ -18,8 +18,9 @@ const script = await readFile(new URL('scripts/db-audit/replay-local.sh', RAIZ),
 const inicio = dbGuard.indexOf('\n  replay-migrations:');
 assert.ok(inicio >= 0, 'db-guard.yml nao tem o job `replay-migrations`');
 const resto = dbGuard.slice(inicio + 1);
-const fim = resto.slice('  replay-migrations:'.length + 1).search(/\n  [a-z][a-z0-9_-]*:/u);
-const job = fim >= 0 ? resto.slice(0, fim + 1) : resto;
+const offset = '  replay-migrations:'.length + 1;
+const fim = resto.slice(offset).search(/\n  [a-z][a-z0-9_-]*:/u);
+const job = fim >= 0 ? resto.slice(0, offset + fim + 1) : resto;
 
 test('o job existe e tem teto de tempo declarado', () => {
   assert.match(job, /^  replay-migrations:\s*$/m);
@@ -30,7 +31,10 @@ test('roda o script de verdade (nao uma copia inline)', () => {
   assert.match(job, /run:\s*bash scripts\/db-audit\/replay-local\.sh\s*$/m);
 });
 
-test('so roda (as etapas caras) quando o PR toca uma migration', () => {
+test('dispatch executa replay completo; detecção de diff continua protegida', () => {
+  assert.match(dbGuard, /^  workflow_dispatch:/m);
+  assert.doesNotMatch(dbGuard, /^  (?:push|pull_request|merge_group):/m);
+  assert.match(job, /if \[ "\$\{\{ github.event_name \}\}" = "workflow_dispatch" \]; then\s+echo "mudou=true"/u);
   assert.match(job, /git diff --name-only[^\n]*supabase\/migrations/u, 'o gate olha o diff de supabase/migrations');
   assert.match(job, /id:\s*mudou\s*$/m, 'o passo precisa de id para os `if:` seguintes');
   assert.match(job, /echo "mudou=true" >> "\$GITHUB_OUTPUT"/u);
@@ -39,8 +43,9 @@ test('so roda (as etapas caras) quando o PR toca uma migration', () => {
 });
 
 test('nao usa o docker-shim (ele FINJE o docker e nao aplica migration)', () => {
-  assert.doesNotMatch(job, /docker-shim/u);
-  assert.doesNotMatch(job, /SKIP_DOCKER_SHIM/u);
+  const executavel = job.split('\n').filter((line) => !/^\s*#/.test(line)).join('\n');
+  assert.doesNotMatch(executavel, /docker-shim/u);
+  assert.doesNotMatch(executavel, /SKIP_DOCKER_SHIM/u);
 });
 
 test('a imagem fixada por digest vive num lugar SO (o script), nao no job', () => {

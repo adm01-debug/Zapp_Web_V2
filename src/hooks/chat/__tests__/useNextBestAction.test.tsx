@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { ReactNode } from 'react';
 
 type Row = Record<string, unknown>;
 interface TableConfig { rows: Row[]; error: { message: string } | null }
@@ -95,7 +97,7 @@ vi.mock('@/integrations/supabase/client', () => {
   return { supabase: { from: (table: string) => makeBuilder(table) } };
 });
 
-import { useNextBestAction, OPEN_TASK_STATUSES } from '@/hooks/chat/useNextBestAction';
+import { useNextBestAction, OPEN_TASK_STATUSES, nextBestActionKey } from '@/hooks/chat/useNextBestAction';
 
 const CONTACT = 'c1';
 
@@ -110,14 +112,52 @@ function emptyTables() {
 }
 
 async function render(contactId = CONTACT) {
-  const hook = renderHook(() => useNextBestAction(contactId, 'Maria Silva'));
+  const { wrapper } = querySetup();
+  const hook = renderHook(() => useNextBestAction(contactId, 'Maria Silva'), { wrapper });
   await waitFor(() => expect(hook.result.current.loading).toBe(false));
   return hook.result.current.actions;
+}
+
+function querySetup() {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  const wrapper = ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={client}>{children}</QueryClientProvider>
+  );
+  return { client, wrapper };
 }
 
 describe('useNextBestAction', () => {
   beforeEach(() => {
     emptyTables();
+  });
+
+  it('a invalidação do painel refaz a leitura e substitui a sugestão anterior', async () => {
+    const { client, wrapper } = querySetup();
+    const hook = renderHook(() => useNextBestAction(CONTACT, 'Maria Silva'), { wrapper });
+    await waitFor(() => expect(hook.result.current.actions[0]?.type).toBe('upsell'));
+    h.tables.conversation_tasks.rows = [{ id: 'nova', contact_id: CONTACT, status: 'todo' }];
+    await act(() => client.invalidateQueries({ queryKey: nextBestActionKey(CONTACT) }));
+    await waitFor(() => expect(hook.result.current.actions[0]?.type).toBe('complete_tasks'));
+    expect(hook.result.current.actions.some(action => action.type === 'upsell')).toBe(false);
+  });
+
+  it('trocar o contato não mostra recomendações armazenadas para o contato anterior', async () => {
+    const { wrapper } = querySetup();
+    h.tables.conversation_tasks.rows = [{ id: 't1', contact_id: CONTACT, status: 'todo' }];
+    const hook = renderHook(({ id }) => useNextBestAction(id, 'Maria Silva'), {
+      wrapper, initialProps: { id: CONTACT },
+    });
+    await waitFor(() => expect(hook.result.current.actions[0]?.type).toBe('complete_tasks'));
+    hook.rerender({ id: 'outro' });
+    expect(hook.result.current.actions.some(action => action.type === 'complete_tasks')).toBe(false);
+    await waitFor(() => expect(hook.result.current.actions[0]?.type).toBe('upsell'));
+  });
+
+  it('contato vazio não dispara consultas', () => {
+    const { wrapper } = querySetup();
+    const hook = renderHook(() => useNextBestAction('', ''), { wrapper });
+    expect(h.queries).toHaveLength(0);
+    expect(hook.result.current).toEqual({ actions: [], loading: false });
   });
 
   it('conta como abertas as tarefas do domínio atual do quadro (todo/doing/waiting) e ignora done/cancelled', async () => {

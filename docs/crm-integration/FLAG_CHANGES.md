@@ -10,6 +10,7 @@ Cada entrada lista a tela, o efeito e o risco quando a chave está ativa.
 
 | Tela | Arquivo | Efeito ao ligar | Risco |
 |------|---------|-----------------|-------|
+| Detalhes — inteligência | `src/components/inbox/contact-details/ContactIntelligencePanel.tsx` | Habilita inteligência do contato respeitando a flag de integração | Indisponibilidade do CRM deve preservar estados vazio e erro |
 | TalkX — seletor de contato | `src/components/talkx/TalkXContactSelector.tsx` | Mostra badge CRM com informações do CRM externo no seletor de contato | Se o CRM retornar dados inconsistentes, o badge exibe informações erradas |
 | Admin — Dashboard CRM | `src/components/admin/AdminCRMDashboard.tsx` | Renderiza o dashboard completo em vez do aviso "CRM externo não configurado" | Se a Edge do CRM estiver indisponível, o dashboard pode falhar silenciosamente |
 | Lista de contatos | `src/components/contacts/ContactsView.tsx` | Repassa `crmIntegrationEnabled` para componentes filhos que exibem dados CRM | Se a flag mudar dinamicamente, os filhos precisam reagir corretamente |

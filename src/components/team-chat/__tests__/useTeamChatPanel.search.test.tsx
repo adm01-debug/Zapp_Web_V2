@@ -97,7 +97,7 @@ describe('useTeamChatPanel — busca server-side (SL-082)', () => {
     expect(h.rpc).toHaveBeenCalledWith('search_team_messages', {
       p_conversation_id: 'conv-a',
       p_query: 'contrato',
-      p_limit: 50,
+      p_limit: 100,
     });
     // O termo não existe em nenhuma mensagem carregada: só o servidor podia achar.
     expect(result.current.filteredMessages.map(m => m.id)).toEqual(['m-antiga']);
@@ -191,7 +191,7 @@ describe('useTeamChatPanel — busca server-side (SL-082)', () => {
     expect(h.rpc).toHaveBeenLastCalledWith('search_team_messages', {
       p_conversation_id: 'conv-b',
       p_query: 'contrato',
-      p_limit: 50,
+      p_limit: 100,
     });
     expect(result.current.searchError).toBeNull();
     expect(result.current.isSearching).toBe(true);

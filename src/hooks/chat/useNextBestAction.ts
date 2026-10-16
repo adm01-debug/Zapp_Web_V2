@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { WorkItemStatus } from '@/hooks/tasks/workItem.types';
 import {
@@ -31,17 +31,17 @@ export interface NextAction {
  */
 export const OPEN_TASK_STATUSES: WorkItemStatus[] = ['backlog', 'todo', 'doing', 'waiting'];
 
+/** Prefixo compartilhado com a invalidação do painel por eventos de mensagens. */
+export const nextBestActionKey = (contactId: string) => ['next-best-action', contactId] as const;
+
 /** Motor de sugestão da "Próxima melhor ação" — extraído de NextBestActionEngine
  * para ser reutilizável na aba IA (§2.7) e na aba CRM 360° (§2.5) sem duplicar a lógica. */
 export function useNextBestAction(contactId: string, contactName: string) {
-  const [actions, setActions] = useState<NextAction[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const analyzeAndSuggest = async () => {
-      setLoading(true);
+  const query = useQuery({
+    queryKey: [...nextBestActionKey(contactId), contactName],
+    enabled: Boolean(contactId),
+    staleTime: 30_000,
+    queryFn: async () => {
       const suggestedActions: NextAction[] = [];
       // Leituras que falharam: ausência de dado não pode ser lida como ausência de urgência.
       const readFailures: string[] = [];
@@ -179,15 +179,16 @@ export function useNextBestAction(contactId: string, contactName: string) {
       const priorityOrder = { high: 0, medium: 1, low: 2 };
       suggestedActions.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
 
-      if (!cancelled) {
-        setActions(suggestedActions);
-        setLoading(false);
-      }
-    };
+      return suggestedActions;
+    },
+  });
 
-    void analyzeAndSuggest();
-    return () => { cancelled = true; };
-  }, [contactId, contactName]);
-
-  return { actions, loading };
+  const unavailable: NextAction[] = [{
+    type: 'data_unavailable',
+    label: 'Pendências não verificadas',
+    description: 'Não foi possível consultar este contato. Confirme as pendências manualmente.',
+    priority: 'high',
+    icon: AlertTriangle,
+  }];
+  return { actions: query.isError ? unavailable : (query.data ?? []), loading: query.isLoading };
 }

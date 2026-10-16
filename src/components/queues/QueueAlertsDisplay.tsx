@@ -91,7 +91,6 @@ export function QueueAlertsDisplay({ alerts, onDismiss, onNavigate }: QueueAlert
                   aria-label={`Dispensar alerta da fila ${alert.queueName}`}
                   className="w-6 h-6 opacity-60 hover:opacity-100"
                   onClick={() => onDismiss(alert)}
-                  aria-label={`Dispensar alerta ${alertLabels[alert.type]}`}
                 >
                   <X className="w-3 h-3" />
                 </Button>

@@ -14,8 +14,6 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/hooks/ui/use-toast';
 import { motion } from 'framer-motion';
 import { useUserRole } from '@/hooks/system/useUserRole';
 import { BusinessHoursIndicator } from './BusinessHoursIndicator';
@@ -38,7 +36,7 @@ interface ConnectionCardProps {
   disconnecting?: boolean;
   onShowQrCode: (c: WhatsAppConnection) => void;
   onCopyId: (id: string) => void;
-  onDisconnect: (c: WhatsAppConnection) => void | Promise<void>;
+  onDisconnect: (c: WhatsAppConnection) => void | boolean | Promise<void | boolean>;
   onSetDefault: (id: string) => void;
   onDelete: (c: WhatsAppConnection) => void;
   onBusinessHours: (id: string, name: string) => void;
@@ -71,12 +69,31 @@ export function ConnectionCard({
   const [disconnectError, setDisconnectError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [auditOpen, setAuditOpen] = useState(false);
+  const isDisconnectPending = disconnecting || disconnectPending;
+  const handleDisconnectDialogOpenChange = (open: boolean) => {
+    if (isDisconnectPending) return;
+    setDisconnectError(null);
+    setConfirmDisconnect(open);
+  };
 
   // Enquanto o desconectar está em voo (estado `disconnecting` vindo da view),
   // o diálogo fica aberto com o spinner; só fecha quando onDisconnect resolve.
   const handleConfirmDisconnect = async () => {
-    await onDisconnect(connection);
-    setConfirmDisconnect(false);
+    if (isDisconnectPending) return;
+    setDisconnectPending(true);
+    setDisconnectError(null);
+    try {
+      const result = await onDisconnect(connection);
+      if (result === false) {
+        setDisconnectError('Não foi possível desconectar. Tente novamente.');
+      } else {
+        setConfirmDisconnect(false);
+      }
+    } catch {
+      setDisconnectError('Não foi possível desconectar. Tente novamente.');
+    } finally {
+      setDisconnectPending(false);
+    }
   };
 
   return (
@@ -167,7 +184,7 @@ export function ConnectionCard({
                     disabled={disconnecting}
                     aria-busy={disconnecting}
                     className={cn(disconnecting && 'motion-safe:animate-pulse')}
-                    onClick={() => setConfirmDisconnect(true)}
+                    onClick={() => handleDisconnectDialogOpenChange(true)}
                   >
                     {disconnecting
                       ? <><Loader2 className="w-4 h-4 mr-2 motion-safe:animate-spin" />Desconectando…</>
@@ -221,7 +238,8 @@ export function ConnectionCard({
         onOpenChange={handleDisconnectDialogOpenChange}
         connectionName={connection.name}
         phoneNumber={connection.phone_number}
-        pending={disconnecting}
+        pending={isDisconnectPending}
+        errorMessage={disconnectError ?? undefined}
         onConfirm={handleConfirmDisconnect}
       />
       {isAdmin && (

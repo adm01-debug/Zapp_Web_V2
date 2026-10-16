@@ -617,16 +617,15 @@ export async function handleConnectionHealthCheck(
                     newStatus: dbStatus,
                   });
                   if (dbStatus === 'disconnected' && conn.status === 'connected') {
-                    alertsToCreate.push({ connection_id: conn.id, instance_id: conn.instance_id, phone: conn.phone_number });
+                    alertsToCreate.push({ connection_id: conn.id, instance_id: conn.instance_id, phone: conn.phone_number, kind: 'disconnected', reason: openReason });
                   }
                 }
               }
-              // Degradação pelo socket (webhook parado): entra no funil de alerta
-              // com o próprio tipo — o warroom registra 'warning' e o push/e-mail
-              // respeitam o opt-in de 'degraded'.
-              if (healthStatus === 'degraded' && openReason === 'webhook_silent') {
-                alertsToCreate.push({ connection_id: conn.id, instance_id: conn.instance_id, phone: conn.phone_number, kind: 'degraded', reason: openReason });
-              }
+            }
+            // Degradação não exige transição do socket: a conexão pode continuar
+            // connected enquanto deixa de receber mensagens.
+            if (healthStatus === 'degraded' && openReason === 'webhook_silent') {
+              alertsToCreate.push({ connection_id: conn.id, instance_id: conn.instance_id, phone: conn.phone_number, kind: 'degraded', reason: openReason });
             }
           } else {
             // E24/E28: 401/403 = a instancia nao autentica com a credencial que
@@ -654,6 +653,8 @@ export async function handleConnectionHealthCheck(
 
       results[index] = { instance_id: conn.instance_id, status: healthStatus, response_time_ms: responseTime, error: errorMessage, reason: openReason };
     };
+
+    await runWithConcurrency(connections as ConnRow[], HEALTH_CHECK_CONCURRENCY, checkConnection);
 
     // Trilha de auditoria das transições automáticas de status. Mesmo formato do
     // helper compartilhado dos cartões de conexão (`writeConnectionAuditLog`):
@@ -683,22 +684,29 @@ export async function handleConnectionHealthCheck(
       }
     }
 
-    for (const alert of alertsToCreate) {
+    const newAlerts: AlertToCreate[] = [];
+    for (const alert of dedupeAlerts(alertsToCreate)) {
       // Schema real de warroom_alerts: alert_type/title/message/source
       // (severity/description/metadata nao existem — o insert antigo falhava
       // com PGRST204 e o alerta critico nunca era gravado).
-      await supabase.from('warroom_alerts').insert({
+      const title = alert.kind === 'disconnected'
+        ? `Conexao ${alert.instance_id} desconectada`
+        : `Conexao ${alert.instance_id} degradada`;
+      const message = alert.kind === 'disconnected'
+        ? `A instancia ${alert.instance_id} perdeu conexao com o WhatsApp. Reconecte para evitar perda de mensagens.`
+        : `A instancia ${alert.instance_id}: ${REASON_LABEL[alert.reason ?? ''] ?? 'conexão degradada'}.`;
+      const { error } = await supabase.from('warroom_alerts').insert({
         alert_type: alert.kind === 'disconnected' ? 'critical' : 'warning',
         title,
         message,
         source: 'connection-health-check',
         dedupe_key: alertDedupeKey(alert),
-      }).then(({ error }) => {
-        // 23505 = episódio já registrado (idempotente); outro erro só loga.
-        if (error && (error as { code?: string }).code !== '23505') {
-          log.warn('Failed to create warroom alert', { error: error.message });
-        }
       });
+      // 23505 = episódio já registrado (idempotente); outro erro só loga.
+      if (!error) newAlerts.push(alert);
+      else if ((error as { code?: string }).code !== '23505') {
+        log.warn('Failed to create warroom alert', { error: error.message });
+      }
     }
 
     // warroom_alerts só aparece para quem está com o painel aberto. O alerta tem
@@ -719,10 +727,10 @@ export async function handleConnectionHealthCheck(
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
     await supabase.from('connection_health_logs').delete().lt('checked_at', sevenDaysAgo);
 
-    log.done(200, { checked: results.length, alerts: alertsToCreate.length });
+    log.done(200, { checked: results.length, alerts: newAlerts.length });
     return jsonResponse({
       success: true, checked_at: new Date().toISOString(),
-      connections: results, alerts_created: alertsToCreate.length,
+      connections: results, alerts_created: newAlerts.length,
     }, 200, req);
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';

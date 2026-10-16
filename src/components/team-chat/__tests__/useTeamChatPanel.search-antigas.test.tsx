@@ -148,7 +148,7 @@ describe('useTeamChatPanel — busca server-side, erro com retry e antigas recon
     // A antiga NÃO está em `messages` (janela carregada) e mesmo assim aparece.
     expect(result.current.messages.map(m => m.id)).toEqual(['m-nova']);
     expect(result.current.filteredMessages.map(m => m.id)).toEqual(['m-antiga']);
-    expect(result.current.searchError).toBe(false);
+    expect(result.current.searchError).toBeNull();
     expect(result.current.isSearchingMessages).toBe(false);
   });
 
@@ -173,7 +173,7 @@ describe('useTeamChatPanel — busca server-side, erro com retry e antigas recon
     act(() => { result.current.setShowSearch(true); result.current.setSearchQuery('segredo'); });
     await avancar();
 
-    expect(result.current.searchError).toBe(true);
+    expect(result.current.searchError).toMatch(/não foi possível buscar/i);
     expect(result.current.isSearchingMessages).toBe(false);
 
     f.state.rpcHandler = () => Promise.resolve({ data: [row('m-antiga', 'segredo antigo')], error: null });
@@ -181,7 +181,7 @@ describe('useTeamChatPanel — busca server-side, erro com retry e antigas recon
     await avancar(0);
 
     expect(f.state.rpcCalls).toHaveLength(2);
-    expect(result.current.searchError).toBe(false);
+    expect(result.current.searchError).toBeNull();
     expect(result.current.filteredMessages.map(m => m.id)).toEqual(['m-antiga']);
   });
 
@@ -222,6 +222,15 @@ describe('useTeamChatPanel — busca server-side, erro com retry e antigas recon
 
     expect(result.current.searchIsCapped).toBe(true);
     expect(result.current.filteredMessages).toHaveLength(100);
+  });
+
+  it('rejeição de rede vira erro recuperável, nunca promessa sem tratamento', async () => {
+    f.state.rpcHandler = () => Promise.reject(new Error('offline'));
+    const { result } = renderHook(() => useTeamChatPanel(conv));
+    act(() => result.current.setSearchQuery('segredo'));
+    await avancar();
+    expect(result.current.searchError).toMatch(/não foi possível buscar/i);
+    expect(result.current.isSearchingMessages).toBe(false);
   });
 
   it('expõe a falha de leitura e o refetch das mensagens', async () => {

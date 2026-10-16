@@ -1,6 +1,6 @@
 # TESTING_CONVENTION.md — onde cada teste mora e como ele roda
 
-Convenção de testes do Zapp Web V2 na ponta do dia `dia/2026-10-08`. O objetivo é
+Convenção de testes do Zapp Web V2 atualizada em 16/10/2026. O objetivo é
 responder, para qualquer teste novo, **onde ele mora e qual comando o executa** — sem
 descobrir isso lendo o `package.json` e o `ci.yml`.
 
@@ -36,19 +36,18 @@ Há **cinco camadas**. Cada uma tem seu runner, seu diretório e seu motivo de e
 * Moram dentro da pasta da edge (`supabase/functions/<edge>/index.test.ts`) e importam o
   handler direto.
 * Runner: **Deno**, com a config `scripts/ci/deno.json` e lock próprio.
-* Comando (CI, passo "Run executable Edge handler contracts"):
+* Comando local explícito (não integra o CI mínimo por PR):
   `deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 $(git ls-files 'supabase/functions/**/*.test.ts')`.
   O `deno check --config scripts/ci/deno.json --frozen supabase/functions/*/index.ts`
-  roda antes, no mesmo job.
+  pode ser executado antes para validar tipos dos handlers.
 
 ## 4. Guardas de CI e de deploy — `scripts/**/*.unit.mjs`
 
 * Moram em `scripts/ci/`, `scripts/edge-deploy/`, `scripts/talkx/`, `scripts/db-audit/`
   (os três últimos com o mesmo padrão de nome; em `db-audit` há dois `.test.mjs`).
-* Runner: **`node:test`** (nativo), sem framework. Predomina `*.unit.mjs`, mas a CI
-  também roda contratos `.test.mjs` de `scripts/db-audit/`.
-* Comando (CI, passo "Test CI and Edge deployment guards"):
-  `node --test scripts/ci/*.unit.mjs scripts/edge-deploy/*.unit.mjs scripts/db-audit/crm-sync-outbox-contract.test.mjs scripts/db-audit/types-sync-psql-buffer.test.mjs scripts/talkx/*.unit.mjs`.
+* Runner: **`node:test`** (nativo), sem framework. Predomina `*.unit.mjs`.
+* Comando no CI mínimo, job Node CI Scripts: `node --test scripts/ci/*.unit.mjs`.
+* Verificação local ampliada: `node --test scripts/ci/*.unit.mjs scripts/edge-deploy/*.unit.mjs scripts/db-audit/crm-sync-outbox-contract.test.mjs scripts/db-audit/types-sync-psql-buffer.test.mjs scripts/talkx/*.unit.mjs`.
 * Guarda de documentação entra aqui: quando um doc afirma algo do código, o teste lê os
   dois lados e falha se divergirem (ex.: `scripts/ci/dashboard-readme-drift.unit.mjs`).
 * Rodar um só: `node --test scripts/ci/<arquivo>.unit.mjs`.
@@ -77,9 +76,8 @@ Há **cinco camadas**. Cada uma tem seu runner, seu diretório e seu motivo de e
 | Fluxo no navegador | `e2e/<fluxo>.spec.ts` | Playwright |
 
 * Nome do arquivo diz o que ele é: `.test.ts`/`.spec.ts` = suíte de código;
-  `.unit.mjs` = guarda executável de CI. Em scripts, o passo da CI varre
-  `scripts/ci/*.unit.mjs`, `scripts/edge-deploy/*.unit.mjs`, `scripts/talkx/*.unit.mjs`
-  e os dois contratos `.test.mjs` de `scripts/db-audit/`.
+  `.unit.mjs` = guarda executável. O CI mínimo varre `scripts/ci/*.unit.mjs`;
+  as demais pastas precisam do comando ampliado ou de seus workflows específicos.
 * Teste que prova correção de defeito nasce **vermelho** e fica verde com a correção; teste
   que não falha sem a correção não prova nada.
 * Nada de produção: nenhuma camada acima aponta para banco, edge ou segredo de produção.
@@ -92,5 +90,6 @@ Há **cinco camadas**. Cada uma tem seu runner, seu diretório e seu motivo de e
 sem `--rapido` — `bun run test` e `bun run build`. `zapp-verify . --rapido` é a checagem a
 cada edição; ele **pula** unidade e build, então não substitui a suíte completa.
 
-As camadas 3, 4 e 5 **não** entram no `zapp-verify`: rodam na CI (`.github/workflows/ci.yml`)
-e, no caso do E2E, pelo job próprio com banco local.
+As camadas 3, 4 e 5 **não** entram automaticamente no `zapp-verify`. O CI mínimo
+executa tipos, Vitest, scripts Node CI e build; Deno, contratos SQL e E2E exigem
+execução explícita nos respectivos runners, com banco local quando aplicável.

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 
 // Regressão do bug de 25/09 (PR #764): fetchData era referenciado no
 // useEffect antes de sua declaração (const). Naquela versão isso não
@@ -61,6 +61,41 @@ describe('useSentimentData', () => {
     const { result } = renderHook(() => useSentimentData('7'));
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.alerts).toEqual([]);
+    expect(result.current.isError).toBe(true);
+    expect(result.current.error?.message).toBe('rpc indisponível');
+  });
+
+  it('não publica snapshot parcial e permite refazer após falha de perfis', async () => {
+    h.rpc.mockResolvedValue({ data: [{ id: 'alert-1', entity_id: 'c1', created_at: new Date().toISOString(), details: {} }], error: null });
+    h.profiles.mockResolvedValue({ data: null, error: new Error('perfis indisponíveis') });
+    const { result } = renderHook(() => useSentimentData('7'));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.isError).toBe(true);
+    expect(result.current.alerts).toEqual([]);
+    expect(result.current.analyses).toEqual([]);
+    h.profiles.mockResolvedValue({ data: [], error: null });
+    await act(async () => { await result.current.fetchData(); });
+    expect(result.current.isError).toBe(false);
+    expect(result.current.alerts).toHaveLength(1);
+  });
+
+  it('resposta atrasada do período anterior não sobrescreve o período atual', async () => {
+    let finishOld: (value: { data: never[]; error: Error | null }) => void = () => {};
+    h.rpc.mockImplementationOnce(() => new Promise(resolve => { finishOld = resolve; }));
+    const { result, rerender } = renderHook(({ period }) => useSentimentData(period), { initialProps: { period: '7' } });
+    rerender({ period: '30' });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    await act(async () => { finishOld({ data: [], error: new Error('falha obsoleta') }); });
+    expect(result.current.isError).toBe(false);
+    expect(result.current.loading).toBe(false);
+  });
+
+  it('sinaliza leitura possivelmente cortada quando alertas atingem o teto do servidor', async () => {
+    h.rpc.mockResolvedValue({ data: Array.from({ length: 1000 }, (_, index) => ({ id: String(index), entity_id: 'c1', created_at: new Date().toISOString(), details: {} })), error: null });
+    const { result } = renderHook(() => useSentimentData('7'));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.incomplete).toBe(true);
+    expect(result.current.isError).toBe(false);
   });
 
   it('mapeia os alertas da RPC (id/entity_id/created_at/details) para o shape do hook', async () => {

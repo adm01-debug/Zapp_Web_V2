@@ -14,11 +14,12 @@ o arquivo e o braco de origem tem o mesmo `sha256`.
 
 ## Como reexecutar um contrato sob demanda
 
-```bash
-node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At -c "$(cat scripts/db-audit/contracts/<versao>.sql)"
-```
+Não envie esses arquivos diretamente ao psql: os contratos históricos contêm
+invocações de shell. O executor extrai somente SQL e flags permitidos, sem eval:
 
-Em producao, o executor generico do workflow faz exatamente isso para a versao alvo.
+```bash
+node scripts/db-audit/run-runtime-contract.mjs <versao>
+```
 
 ## Contratos
 
@@ -38,6 +39,16 @@ Em producao, o executor generico do workflow faz exatamente isso para a versao a
 | `20260922220000` | `scripts/db-audit/contracts/20260922220000.sql` | 7 | 534–548 | `9251f8da09165d20...` |
 
 Total: **12** contratos, 275 linhas uteis extraidas do workflow.
+
+### Extensão do lote de 05/10, reconciliada em 16/10
+
+O 13º arquivo, `scripts/db-audit/contracts/20261004195051.sql`, delega ao SQL
+canônico `scripts/db-audit/generic-migration-runtime.sql` (o conteúdo anterior
+era idêntico a esse SQL, mas não tinha a invocação exigida pelo parser).
+SHA-256 do texto, sem newline final:
+`dfd9dc94af58553effe1ab820b4392800a6dd0619ad4b3cfaae35511a5a978f6`.
+Isso corrige a resolução de contratos sem alterar o SQL consultado nem afirmar
+que o lote novo de 880 cartões foi aplicado.
 
 ---
 

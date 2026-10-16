@@ -10,7 +10,7 @@
  *     historico acima, e acende o selo "Nova mensagem enviada";
  *   - o selo some sozinho ~1 s depois.
  */
-import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
+import { describe, it, expect, vi, afterAll, beforeAll, beforeEach } from 'vitest';
 import type { ComponentProps } from 'react';
 import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -49,7 +49,20 @@ class ResizeObserverMock {
 // jsdom nao implementa Element.scrollTo; o virtualizer o usa para ir ao fim.
 const scrollToSpy = vi.fn();
 
+const layoutProperties = ['clientHeight', 'clientWidth', 'offsetHeight'] as const;
+const originalLayout = layoutProperties.map(key => Object.getOwnPropertyDescriptor(HTMLElement.prototype, key));
+afterAll(() => {
+  layoutProperties.forEach((key, index) => {
+    const original = originalLayout[index];
+    if (original) Object.defineProperty(HTMLElement.prototype, key, original);
+  });
+});
+
+// O virtualizador real mede o viewport via clientHeight e cada linha via offsetHeight.
 beforeAll(() => {
+  Object.defineProperty(HTMLElement.prototype, 'clientHeight', { configurable: true, get() { return 600; } });
+  Object.defineProperty(HTMLElement.prototype, 'clientWidth', { configurable: true, get() { return 800; } });
+  Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { configurable: true, get() { return 120; } });
   (window as unknown as { ResizeObserver: typeof ResizeObserverMock }).ResizeObserver = ResizeObserverMock;
   (Element.prototype as unknown as { scrollTo: unknown }).scrollTo = scrollToSpy;
 });
@@ -65,6 +78,11 @@ vi.mock('@/services/realtime.service', () => ({
     subscribeToReactions: vi.fn(() => ({ topic: 'mock' })),
     removeChannel: vi.fn(async () => {}),
   },
+}));
+
+// Reações têm suíte própria; estas fixtures exercitam layout/rolagem sem rede.
+vi.mock('@/hooks/reactions/useBatchReactions', () => ({
+  ReactionsBatchProvider: ({ children }: { children: import('react').ReactNode }) => children,
 }));
 
 vi.mock('@/services/chat.service', () => ({

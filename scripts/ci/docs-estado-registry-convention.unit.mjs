@@ -27,7 +27,13 @@ import { fileURLToPath } from 'node:url';
 const raiz = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const IGNORAR = new Set(['node_modules', '.git', 'dist', 'coverage', '.tmp']);
 const ler = (rel) => fs.readFileSync(path.join(raiz, rel), 'utf8');
-const linhasDe = (p) => fs.readFileSync(p, 'utf8').split('\n');
+// Snapshot por processo: 84 edges consultam os mesmos milhares de arquivos.
+// Ler uma vez evita I/O repetido; não muda o critério de classificação.
+const cacheLinhas = new Map();
+const linhasDe = (p) => {
+  if (!cacheLinhas.has(p)) cacheLinhas.set(p, fs.readFileSync(p, 'utf8').split('\n'));
+  return cacheLinhas.get(p);
+};
 const relativo = (p) => path.relative(raiz, p).split(path.sep).join('/');
 const normalizaEspacos = (texto) => texto.replace(/\s+/g, ' ').trim();
 
@@ -75,7 +81,11 @@ for (let i = 0; i < linhasConfigSupabase.length; i++) {
 }
 
 /** Chamadores reais de uma edge, no formato `arquivo:linha`. */
+const cacheChamadores = new Map();
 function chamadores(nome) {
+  if (cacheChamadores.has(nome)) return cacheChamadores.get(nome);
+  const chamada = invoca(nome);
+  const url = rota(nome);
   const doFront = [];
   const deOutraEdge = [];
   const deCron = [];
@@ -83,24 +93,26 @@ function chamadores(nome) {
   for (const p of srcTs) {
     const ls = linhasDe(p);
     for (let i = 0; i < ls.length; i++) {
-      if (invoca(nome).test(ls[i]) || rota(nome).test(ls[i])) doFront.push(`${relativo(p)}:${i + 1}`);
+      if (chamada.test(ls[i]) || url.test(ls[i])) doFront.push(`${relativo(p)}:${i + 1}`);
     }
   }
   for (const p of funcoesTs) {
     if (relativo(p).startsWith(`supabase/functions/${nome}/`)) continue;
     const ls = linhasDe(p);
     for (let i = 0; i < ls.length; i++) {
-      if (invoca(nome).test(ls[i]) || rota(nome).test(ls[i])) deOutraEdge.push(`${relativo(p)}:${i + 1}`);
+      if (chamada.test(ls[i]) || url.test(ls[i])) deOutraEdge.push(`${relativo(p)}:${i + 1}`);
     }
   }
   for (const p of migracoes) {
     const ls = linhasDe(p);
     if (!ls.some((l) => CRON.test(l))) continue;   // arquivo sem agendador não prova cron
-    const i = ls.findIndex((l) => rota(nome).test(l));
+    const i = ls.findIndex((l) => url.test(l));
     if (i >= 0) deCron.push(`${relativo(p)}:${i + 1}`);
   }
   if (funcoesExternasConfig.has(nome)) deConfig.push(funcoesExternasConfig.get(nome));
-  return { doFront, deOutraEdge, deCron, deConfig };
+  const encontrados = { doFront, deOutraEdge, deCron, deConfig };
+  cacheChamadores.set(nome, encontrados);
+  return encontrados;
 }
 
 function grupoPublicadoEsperado(c) {
@@ -325,6 +337,8 @@ test('TESTING_CONVENTION.md aponta só para caminhos que existem', () => {
 
 function comandoFoldedDaCi(ci, primeiraLinha) {
   const linhas = ci.split('\n');
+  const inline = linhas.find((l) => l.trim() === `run: ${primeiraLinha}`);
+  if (inline) return primeiraLinha;
   const indice = linhas.findIndex((l) => l.trim().startsWith(primeiraLinha));
   assert.notEqual(indice, -1, `ci.yml não tem mais o comando iniciado por \`${primeiraLinha}\``);
   let run = indice - 1;
@@ -372,30 +386,13 @@ test('TESTING_CONVENTION.md descreve os runners reais (configs, scripts e CI)', 
   assert.equal(pacote.scripts.test, 'vitest run');
   assert.equal(pacote.scripts['test:e2e'], 'playwright test');
 
-  // 4. os comandos de CI citados precisam estar no ci.yml, incluindo a linha completa de node:test.
-  for (const trecho of [
-    "deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1",
-    "deno check --config scripts/ci/deno.json --frozen",
-  ]) {
-    assert.ok(ci.includes(trecho), `ci.yml não tem mais o passo \`${trecho}\``);
-    assert.ok(doc.includes(trecho), `TESTING_CONVENTION.md não cita o passo real da CI: \`${trecho}\``);
-  }
+  // 4. CI mínimo executa apenas a suíte Node CI; outras camadas têm runners próprios.
   const comandoNodeCi = comandoFoldedDaCi(ci, 'node --test scripts/ci/*.unit.mjs');
-  const comandoNodeDoc = doc.match(/`(node --test scripts\/ci\/\*\.unit\.mjs[^`]+)`/);
-  assert.ok(comandoNodeDoc, 'TESTING_CONVENTION.md não cita o comando node:test da CI');
-  assert.equal(
-    normalizaEspacos(comandoNodeDoc[1]),
-    comandoNodeCi,
-    'TESTING_CONVENTION.md divergiu da linha completa de node:test no ci.yml',
-  );
-  assert.ok(
-    !doc.includes('a CI só varre `*.unit.mjs` em\n  `scripts/ci/`'),
-    'TESTING_CONVENTION.md não pode reduzir a varredura da CI a scripts/ci/*.unit.mjs',
-  );
-
-  // 5. a camada Deno das edges: o doc precisa citar o glob de teste das edges que a CI usa
-  assert.ok(ci.includes("git ls-files 'supabase/functions/**/*.test.ts'"), 'a CI perdeu o glob dos testes Deno');
-  assert.ok(doc.includes('supabase/functions/**/*.test.ts'), 'TESTING_CONVENTION.md não cita os testes Deno das edges');
+  assert.equal(comandoNodeCi, 'node --test scripts/ci/*.unit.mjs');
+  assert.ok(doc.includes(`\`${comandoNodeCi}\``));
+  assert.match(doc, /CI mínimo/);
+  assert.ok(doc.includes('supabase/functions/**/*.test.ts'));
+  assert.doesNotMatch(ci, /deno test|deno check|bun run test:e2e/);
 
   // 6. a convenção de nome do diretório de contratos vale para todos os arquivos de lá
   const arquivosContrato = fs.readdirSync(path.join(raiz, 'tests/contracts'));

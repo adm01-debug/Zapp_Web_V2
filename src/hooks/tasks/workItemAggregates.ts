@@ -57,30 +57,6 @@ export function isOverdue(dueDate: string | null | undefined, now: Date = new Da
   return due < startOfDay(now);
 }
 
-/**
- * R2-MOD-058 — regra ÚNICA de "prazo vencido" do módulo de Tarefas. O app grava
- * dois tipos de prazo (`temHora`) e cada um vence de um jeito:
- *
- *  - **com hora marcada** (ex.: hoje às 9h): vence no INSTANTE — às 15h do mesmo
- *    dia já está atrasado;
- *  - **de dia inteiro** (23:59 e 00:00 locais, a convenção dos chips
- *    "Hoje/Amanhã/Próx. semana" e do QuickAdd da Agenda): vence quando o dia
- *    LOCAL termina — às 15h do mesmo dia ainda é "Hoje".
- *
- * Antes o badge do menu comparava o prazo com o instante e o módulo (KPI, seções
- * e chip) só com o início do dia: a mesma tarefa acendia o menu e não aparecia em
- * "Atrasadas" na lista que deveria explicá-la. Agora badge, `bucketByDue`
- * (KPI e grupos), `dueLabel` (o chip `DueChip`) e `dayGroupLabel` chamam esta
- * função — um veredito só.
- */
-export function isOverdue(dueDate: string | null | undefined, now: Date = new Date()): boolean {
-  if (dueDate == null) return false;
-  const due = new Date(dueDate);
-  if (Number.isNaN(due.getTime())) return false;   // data inválida não é atraso
-  if (temHora(dueDate)) return due.getTime() < now.getTime();
-  return due < startOfDay(now);
-}
-
 export function bucketByDue(items: WorkItem[], now: Date = new Date()): BucketsByDue {
   const tomorrowStart  = startOfDay(addDays(now, 1));
   const day2Start      = startOfDay(addDays(now, 2));

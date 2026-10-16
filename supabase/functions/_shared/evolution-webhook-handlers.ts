@@ -212,7 +212,33 @@ export async function handleContactsUpsert(supabase: EvolutionDbClient, instance
 // deno-lint-ignore no-explicit-any
 export async function handlePresenceUpdate(supabase: EvolutionDbClient, instance: string, data: unknown) {
   const presenceData = isRecord(data) ? data : {};
-  const jid = ((presenceData.id as string) || (presenceData.remoteJid as string) || '').trim();
+  const rawJid = presenceData.id ?? presenceData.remoteJid;
+  const jid = typeof rawJid === 'string' ? rawJid.trim() : '';
+  if (!jid || (!jid.endsWith('@s.whatsapp.net') && !jid.endsWith('@g.us'))) return;
+  const presences = isRecord(presenceData.presences) ? presenceData.presences : null;
+
+  if (jid.endsWith('@g.us')) {
+    const events = presences ? Object.entries(presences) : [[presenceData.participant ?? presenceData.participantJid, presenceData]];
+    const identified = events.flatMap(([participant, state]) => {
+      if (typeof participant !== 'string' || !participant.endsWith('@s.whatsapp.net') || !isRecord(state)) return [];
+      const status = state.lastKnownPresence ?? state.status;
+      return typeof status === 'string' ? [{ participant, isTyping: status.toLowerCase() === 'composing' }] : [];
+    });
+    if (!identified.length) return;
+    const connection = await getConnectionByInstance(supabase, instance);
+    if (!connection) return;
+    const contact = await getContactByPhone(supabase, jid.slice(0, -'@g.us'.length), connection.id);
+    if (!contact) return;
+    const channel = supabase.channel(`typing:${contact.id}`, { config: { private: true } });
+    try {
+      for (const event of identified) {
+        await channel.send({ type: 'broadcast', event: 'contact_typing', payload: {
+          ...event, typing: event.isTyping, contactId: contact.id, timestamp: new Date().toISOString(),
+        } });
+      }
+    } finally { supabase.removeChannel(channel); }
+    return;
+  }
 
   if (jid && !jid.endsWith('@g.us')) {
     // O GO entrega dois envelopes aqui: ChatPresence {presences:{jid:{lastKnownPresence}}}
@@ -222,6 +248,7 @@ export async function handlePresenceUpdate(supabase: EvolutionDbClient, instance
     const estados: string[] = [];
     if (presences) {
       for (const [, pState] of Object.entries(presences)) {
+        if (!isRecord(pState)) continue;
         const valor = pState?.lastKnownPresence ?? pState?.status;
         if (typeof valor === 'string') estados.push(valor.toLowerCase());
       }
@@ -241,7 +268,7 @@ export async function handlePresenceUpdate(supabase: EvolutionDbClient, instance
         const contact = await getContactByPhone(supabase, phone, connection.id);
         if (contact) {
           // 'digitando' inalterado: todo evento de presença ainda avisa o front.
-          const channel = supabase.channel(`typing:${contact.id}`);
+          const channel = supabase.channel(`typing:${contact.id}`, { config: { private: true } });
           await channel.send({ type: 'broadcast', event: 'contact_typing', payload: { isTyping: isComposing, contactId: contact.id, timestamp: new Date().toISOString() } });
           supabase.removeChannel(channel);
 
@@ -270,23 +297,7 @@ export async function handlePresenceUpdate(supabase: EvolutionDbClient, instance
         }
       }
     }
-  } else {
-    const directStatus = presenceData.status as string || presenceData.lastKnownPresence as string;
-    isComposing = directStatus === 'composing';
   }
-
-  const phone = normalizePhone(jid);
-  if (!phone) return;
-
-  const connection = await getConnectionByInstance(supabase, instance);
-  if (!connection) return;
-
-  const contact = await getContactByPhone(supabase, phone, connection.id);
-  if (!contact) return;
-
-  const channel = supabase.channel(`typing:${contact.id}`, { config: { private: true } });
-  await channel.send({ type: 'broadcast', event: 'contact_typing', payload: { isTyping: isComposing, contactId: contact.id, timestamp: new Date().toISOString() } });
-  supabase.removeChannel(channel);
 }
 
 // deno-lint-ignore no-explicit-any

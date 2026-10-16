@@ -62,7 +62,7 @@ const CAUSA_NO_CODIGO = /<!-- causa:/.test(codigo);
 
 /** Sobe o passo real contra `github`/`context`/`core` falsos e devolve as chamadas. */
 async function executar({ gates = {}, abertas = [], comentarios = [] }) {
-  const chamadas = { criadas: [], comentadas: [], labels: [], infos: [] };
+  const chamadas = { criadas: [], comentadas: [], labels: [], infos: [], atualizadas: [] };
   assert.ok(TITULO, 'nao consegui ler o titulo da issue do bloco real do passo');
 
   const paginar = ({ per_page = 30, page = 1 } = {}) => {
@@ -85,6 +85,7 @@ async function executar({ gates = {}, abertas = [], comentarios = [] }) {
         listComments: async (params) => paginar(params),
         createComment: async (p) => { chamadas.comentadas.push(p); return { data: {} }; },
         create: async (p) => { chamadas.criadas.push(p); return { data: {} }; },
+        update: async (p) => { chamadas.atualizadas.push(p); return { data: {} }; },
         createLabel: async (p) => { chamadas.labels.push(p); return { data: {} }; },
       },
     },
@@ -168,10 +169,10 @@ test('E20: issue aberta sem causa registrada comenta', async () => {
   assert.equal(c.comentadas.length, 1, 'sem marcador anterior nao ha como provar mesma causa');
 });
 
-test('E20: numa issue com 150 comentarios vale o ULTIMO, nao a primeira pagina', async () => {
-  const antigos = Array.from({ length: 148 }, (_v, i) => comentario('typescript', 48 + i));
+test('E20: antes da rotação vale o ULTIMO comentário, não a primeira página', async () => {
+  const antigos = Array.from({ length: 17 }, (_v, i) => comentario('typescript', 48 + i));
   const comentarios = [comentario('typescript', 40), ...antigos, comentario('usage-guard', 2)];
-  assert.equal(comentarios.length, 150);
+  assert.equal(comentarios.length, 19);
   const c = await executar({
     gates: { gate1: 'true', gate2: 'false' },
     abertas: [issueAberta()],
@@ -182,6 +183,16 @@ test('E20: numa issue com 150 comentarios vale o ULTIMO, nao a primeira pagina',
     0,
     'a causa do ULTIMO comentario (2h, igual) tem de suprimir; ler so a pagina 1 veria a causa antiga',
   );
+});
+
+test('W91: issue com 150 comentários é rotacionada preservando o vínculo', async () => {
+  const c = await executar({ gates: { gate1: 'false' }, abertas: [issueAberta()],
+    comentarios: Array.from({ length: 150 }, () => comentario('typescript', 2)) });
+  assert.equal(c.atualizadas.length, 1);
+  assert.equal(c.atualizadas[0].state, 'closed');
+  assert.equal(c.criadas.length, 1);
+  assert.match(c.criadas[0].body, /Continuação de #/);
+  assert.equal(c.comentadas.length, 1);
 });
 
 test('E20: o comentario de causa diferente tambem sai com o marcador', async () => {

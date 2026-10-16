@@ -27,6 +27,7 @@ import {
   type RateLimitLogWriter,
 } from './rate-limit-log.ts';
 import { isAllowedOrigin, FALLBACK_ORIGIN } from './cors-origins.ts';
+export { isAllowedOrigin } from './cors-origins.ts';
 
 // ─── Structured Logger ─────────────────────────────────────────
 
@@ -359,7 +360,8 @@ function recordRateLimitDenialFor(
 export async function enforceRateLimit(
   key: string,
   maxRequests = 30,
-  windowMs = 60_000
+  windowMs = 60_000,
+  ctx: EnforceRateLimitContext = {},
 ): Promise<{ allowed: boolean; remaining: number; persistent: boolean; unavailable?: boolean }> {
   const local = checkRateLimit(key, maxRequests, windowMs);
   if (!local.allowed) {
@@ -381,6 +383,7 @@ export async function enforceRateLimit(
       // sem mudar o comportamento de quem aceita o fallback local.
       return { ...local, persistent: false, unavailable: true };
     }
+    if (!row.allowed) recordRateLimitDenialFor(key, maxRequests, ctx);
     return {
       allowed: row.allowed,
       remaining: typeof row.remaining === "number" ? row.remaining : 0,
@@ -454,6 +457,8 @@ export function profileActiveFrom(client: RateLimitRpcClient): ProfileActiveLook
  * ficam ausentes e `requireAuth` usa o caminho real (esm.sh + env + service_role).
  */
 export interface RequireAuthOptions {
+  /** Registro de negações injetável; produção usa o writer canônico. */
+  rateLimitLogWriter?: RateLimitLogWriter;
   /** Valida o bearer e devolve o usuário (ou erro). Injectable p/ testar sem esm.sh/Deno.env. */
   getUser?: (authHeader: string) => PromiseLike<AuthUserResult>;
   /** Client service_role p/ a política de rede (R2-AUTH-022). Injectable p/ teste. */

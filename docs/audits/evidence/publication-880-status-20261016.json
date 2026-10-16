@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-16",
+  "status": "partial_corrections_not_ready_for_production",
+  "project_id": "tnnnlkbymytvtqngbbqh",
+  "pull_request": 1987,
+  "scope": "Assumida a publicação do lote de 880 cartões; checkpoint de correções e auditoria, sem declarar sincronização concluída.",
+  "production_writes_this_checkpoint": {
+    "database": false,
+    "edge_functions": false,
+    "frontend_deploy": false
+  },
+  "database": {
+    "live_migrations": 818,
+    "live_latest": "20261015230000",
+    "live_without_sql": 0,
+    "repository_files": 1036,
+    "pending": 218,
+    "pending_older_than_live_latest": 194,
+    "history_fixtures_restored": [
+      "20261003182707",
+      "20261003192707"
+    ],
+    "snapshot_comparison": "Após restaurar os dois históricos, comparador acusa somente arquivos pendentes; nenhuma divergência adicional de SQL aplicado.",
+    "chronological_replay": {
+      "files": 1036,
+      "passed": 1016,
+      "known_failures": 20,
+      "unexpected_failures": 0,
+      "limitation": "Replay cronológico anterior à restauração das fixtures; não simula o estado canônico existente seguido das pendências e não comprova todos os efeitos em produção."
+    }
+  },
+  "checks": {
+    "build": "passed after integrating main (8.85s)",
+    "edge_after_main_integration": { "passed": 97, "failed": 0, "lockfile": "frozen", "scope": "ai-feature-flags restored coverage plus copilot-live, auth-login and talkx-scheduler" },
+    "node_ci": {
+      "total": 961,
+      "passed": 944,
+      "failed": 0,
+      "skipped": 17
+    },
+    "frontend_targeted_agent": {
+      "suites": 31,
+      "passed": 143
+    },
+    "auth_login": {
+      "passed": 37,
+      "failed": 0
+    },
+    "edge_targeted_agent": {
+      "passed": 136,
+      "failed": 0
+    },
+    "edge_entrypoint_typecheck": {
+      "entrypoints": 84,
+      "passed": 84,
+      "note": "Verificação final dos 84 entrypoints passou antes da integração de fbd422204a; testes de integração posteriores registrados separadamente."
+    },
+    "frontend_full_initial": {
+      "files": 1812,
+      "failed_files": 170,
+      "passed_files": 1637,
+      "skipped_files": 5,
+      "total_tests": 15227,
+      "passed": 14697,
+      "failed": 466,
+      "expected_fail": 21,
+      "todo": 43,
+      "note": "Iniciada antes de parte das correções; não é uma validação final da árvore."
+    },
+    "edge_full_localhost": {
+      "passed": 2115,
+      "failed": 39,
+      "ignored": 3,
+      "note": "Uma das 39 falhas corrigida e revalidada em testes focados; demais continuam bloqueantes. Rede limitada a localhost/127.0.0.1."
+    },
+    "typescript_app": { "status": "failed", "diagnostics": 58, "database_contracts_or_cascades": 37, "other_typescript": 21, "baseline_increased": false },
+    "actionlint": "passed for five modified workflows",
+    "gitleaks_diff": "passed",
+    "edge_manifest": {
+      "functions": 84,
+      "source_files": 168,
+      "sha256": "7bbaadcce80a1aa8106d5b9b4f7635c79e58f5a4e288efb841bf5be72193604a"
+    },
+    "authz_coverage": {
+      "covered_lines": 241,
+      "total_lines": 344,
+      "percent": 70.1,
+      "minimum_percent": 50
+    }
+  },
+  "release_blockers": [
+    "Reconciliar 218 migrations pendentes com estado canônico; 194 são retroativas. Não executar db push --include-all sem ensaio específico.",
+    "Migration 20261006210406 sobrescreveria guarda fail-closed aplicada em 20261015220000. A versão final precisa preservar essa guarda E a confirmação de relançamento.",
+    "Resolver estratégia de versionamento das correções em migrations nunca aplicadas 20261011003008 e 20261012192938 antes da publicação definitiva.",
+    "Nova migration forward-only para fixtures de arquivos e confirmação/cópia dos objetos no Storage; arquivos históricos restaurados não movem objetos.",
+    "Planejar backups de linhas afetadas e ativação controlada de cron; scheduled jobs não são efeitos inertes.",
+    "Auth-login novo depende de consume_login_gate ainda pendente; deploy isolado pode impedir login.",
+    "Resolver e repetir testes amplos frontend/Edge e typecheck sem ampliar baseline.",
+    "Main fbd422204a integrada; testes ai-feature-flags anteriores restaurados e cenários copilot-live separados, 97 testes focados passaram. Repetir gates completos antes de merge.",
+    "Executar smoke autenticado com empresa conhecida, matriz de permissões e Playwright responsivo/acessível.",
+    "Após gates: merge, DDL com registro transacional verdadeiro, deploy explícito de funções, validar fontes/runtime/ledger e reconciliar árvore principal."
+  ],
+  "preserved_user_changes": {
+    "stash": "c759b1be56b071731f9a28b5b21025d756d55aa5",
+    "note": "Não descartado nem reaplicado automaticamente."
+  }
+}

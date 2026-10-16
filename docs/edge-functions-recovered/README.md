@@ -4,6 +4,14 @@ Cada `index.ts.txt` é **cópia fiel do `index.ts` publicado** naquela função,
 (Management API → corpo `ESZIP2.3` → source map embutido → `sourcesContent`), sem republicar nada.
 O `sha256` abaixo é do arquivo salvo aqui e foi conferido contra o `sourcesContent` publicado.
 
+**Reverificação em 16/10/2026:** os índices das duas funções Sicoob continuam
+idênticos byte a byte ao publicado. As três dependências históricas compartilhadas
+também foram recuperadas, sem transformação, em `sicoob-shared/*.ts.txt`; ambas
+as funções publicadas contêm exatamente os mesmos bytes dessas dependências.
+Os hashes, metadados de origem e caminhos estão em `sicoob-source-manifest.json`.
+Esse arquivo é evidência de recuperação, não manifesto de deploy. Nenhuma função
+foi republicada, removida ou reativada por esta recuperação.
+
 **Situação em 01/10/2026:** as duas do Sicoob seguem **no ar**; as duas de lockout foram
 **removidas de produção** (junto com as declarações em `supabase/config.toml` e em
 `scripts/edge-deploy/legacy-functions.json`) e os arquivos desta pasta ficam como histórico.
@@ -47,7 +55,7 @@ publicada no próximo deploy de escopo `all`. Trazer estes fontes para lá repub
 sem que ninguém tenha pedido — por isso a recuperação vive aqui, fora da árvore de deploy.
 
 As duas do Sicoob estão declaradas em `orphan_allowlist` no `supabase/deployment-manifest.json`:
-elas rodam sem fonte versionada e a atestação pós-deploy filtra o excedente remoto por essa lista
+elas rodam sem fonte na árvore de deploy (o fonte está arquivado aqui) e a atestação pós-deploy filtra o excedente remoto por essa lista
 (`manifest-lib.mjs`). Sem a declaração, **toda** publicação reprovava em
 `Remote function set mismatch` e o passo pós-deploy queimava 144 amostras (~24 min). As duas de
 lockout foram removidas de produção em 01/10/2026 e saíram das listas: `legacy-functions.json`

@@ -11,14 +11,13 @@ Reconciliação com o código desta data; o retrato de 05/09 abaixo continua com
   registrado no repositório que alcance as URLs de fora (`/version.json`, REST do Supabase,
   Evolution GO). Por isso a tabela de SLOs ganhou a coluna **Fonte hoje**, com `REAL`,
   `PARCIAL` ou `PENDENTE` por linha: nenhuma linha pode citar medição que não existe.
-- **`x-request-id` existe na borda, não ponta a ponta.** `supabase/functions/_shared/validation.ts`
+- **Atualização 16/10: `x-request-id` também é enviado pelo wrapper `src/lib/invokeEdge.ts`.** `supabase/functions/_shared/validation.ts`
   (`getCorsHeaders`) lê o `x-request-id` da requisição ou sorteia um `crypto.randomUUID()`,
   devolve em `X-Request-ID` e libera o header em `Access-Control-Expose-Headers`;
-  `supabase/functions/_shared/ai-routing.ts` o lista em `ALLOWED_HEADER_NAMES`. O front **não**
-  envia o header (nenhuma ocorrência em `src/`), então o id de correlação não nasce no cliente
-  e não há log casado entre os dois lados.
-- `db-live-guard.yml` passou a rodar **todo dia** (03:13 BRT), não só segunda: o SLO de drift
-  passou a ter amostra diária.
+  `supabase/functions/_shared/ai-routing.ts` o lista em `ALLOWED_HEADER_NAMES`. O wrapper do front
+  envia o header; isso não comprova que todas as chamadas já passam pelo wrapper nem uma medição
+  ponta a ponta em produção.
+- `db-live-guard.yml` roda semanalmente às segundas e por dispatch, conforme decisão de CI mínimo de 16/10.
 - Referências de arquivo corrigidas: o health check sob demanda mora em
   `src/hooks/system/useDiagnosticsData.ts:241` e
   `src/components/monitoring/hooks/useMonitoringActions.ts:17` (o antigo useDiagnosticsData.ts
@@ -53,7 +52,7 @@ cadência ou alerta; **PENDENTE** = a fonte citada ainda não existe no reposit�
 | Mensagem inbound visível | p95 < 5 s entre `messages.created_at` (timestamp do WhatsApp) e `now()` no INSERT | `ingest_inbound_message` grava o `created_at` do provedor; a view diária `slo_inbound_latency_daily` compara com `now()` | PENDENTE — a view `slo_inbound_latency_daily` não existe em `supabase/schema-manifest.json` (passo 4) |
 | Instância WhatsApp conectada | 99 % do tempo por instância | `connection_health_logs` (amostras `healthy` / total) | PARCIAL — amostra só quando alguém abre Diagnóstico/Monitoramento; o cron do passo 1 não existe |
 | Login funcional | 99,9 % | logs da edge `auth-login` (sem 5xx) + `login_attempts` (linhas com `locked_until`); as edges `check-account-lock`/`record-failed-login` foram removidas em 01/10/2026 | PARCIAL — logs e tabela existem; sem consulta nem alerta |
-| Schema sem drift | 100 % dos dias com `DB Live Guard` verde | GitHub Actions, workflow `db-live-guard.yml` | REAL — o workflow roda todo dia |
+| Schema sem drift | 100 % dos dias com `DB Live Guard` verde | GitHub Actions, workflow `db-live-guard.yml` | PARCIAL — execução semanal/manual; não comprova ausência diária de drift |
 
 Error budget de 99,9 % em 30 dias = **43 min**. Estourou o budget → congela feature e prioriza
 confiabilidade até o mês virar.
@@ -64,14 +63,14 @@ Medido em 2026-10-08:
 
 | Elo | Estado | Onde |
 |---|---|---|
-| Cliente envia `x-request-id` | **não** | nenhuma ocorrência em `src/` |
+| Cliente envia `x-request-id` | **sim** | `src/lib/invokeEdge.ts` — wrapper central de chamadas |
 | Borda lê/sorteia e devolve | **sim** | `supabase/functions/_shared/validation.ts` — `getCorsHeaders` |
 | Borda permite na chamada da IA | sim | `supabase/functions/_shared/ai-routing.ts` — `ALLOWED_HEADER_NAMES` |
 | Log casado cliente ↔ borda | **não** | não há correlação registrada nos dois lados |
 
 Correlação ponta a ponta exige que o cliente gere o id e o envie (e que ele apareça no log
-estruturado dos dois lados); hoje o id nasce na borda, então dois pedidos do mesmo usuário não
-seguem o mesmo id.
+estruturado dos dois lados). O wrapper gera o identificador no cliente; a cobertura completa
+dos call-sites e a correlação observada em produção ainda precisam de evidência.
 
 ## Próximos passos concretos (em ordem)
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { log } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { format, isWithinInterval } from 'date-fns';
@@ -89,9 +89,18 @@ export function useSentimentData(period: string) {
   const [analyses, setAnalyses] = useState<ConversationAnalysis[]>([]);
   const [agents, setAgents] = useState<AgentProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const [incomplete, setIncomplete] = useState(false);
+  const requestId = useRef(0);
 
   const fetchData = useCallback(async () => {
+    const currentRequest = ++requestId.current;
     setLoading(true);
+    setError(null);
+    setIncomplete(false);
+    setAlerts([]);
+    setAnalyses([]);
+    setAgents([]);
     const daysAgo = Number.parseInt(period);
     const startDate = appDayStart(daysAgo).toISOString();
 
@@ -102,9 +111,8 @@ export function useSentimentData(period: string) {
       // não-admin) via .from('audit_logs') direto recebia silenciosamente 0
       // linhas aqui mesmo tendo acesso normal a esta aba. A RPC devolve o
       // mesmo shape (id/entity_id/created_at/details), escopada só a
-      // action='sentiment_alert'. Cast local via 'any' até o types.ts
-      // (gerado, não sincronizado no self-hosted) conhecer essa RPC.
-      const { data: alertData, error: alertError } = await (supabase as any).rpc('dashboard_sentiment_alerts', { p_since: startDate }); // eslint-disable-line @typescript-eslint/no-explicit-any -- RPC nova (E39), types.ts ainda não sincronizado
+      // action='sentiment_alert'.
+      const { data: alertData, error: alertError } = await supabase.rpc('dashboard_sentiment_alerts', { p_since: startDate });
 
       if (alertError) throw alertError;
 
@@ -115,10 +123,7 @@ export function useSentimentData(period: string) {
         ...((entry.details || {}) as Record<string, unknown>),
       })) as SentimentAlert[];
 
-      setAlerts(formattedAlerts);
-
       const analysisData = await fetchAllAnalyses(startDate);
-      setAnalyses(analysisData);
 
       const { data: agentsData, error: agentsError } = await supabase
         .from('profiles')
@@ -126,17 +131,28 @@ export function useSentimentData(period: string) {
         .eq('is_active', true);
 
       if (agentsError) throw agentsError;
+      if (requestId.current !== currentRequest) return;
+      // Publica um snapshot só depois de todas as fontes confirmarem: um erro
+      // intermediário não mistura alertas novos com análises de outro período.
+      setAlerts(formattedAlerts);
+      setAnalyses(analysisData);
       setAgents((agentsData || []) as AgentProfile[]);
+      // Estas duas fontes ainda não paginam; atingir o teto do PostgREST não
+      // permite afirmar que a janela veio completa.
+      setIncomplete(formattedAlerts.length >= 1000 || (agentsData?.length ?? 0) >= 1000);
     } catch (error) {
+      if (requestId.current !== currentRequest) return;
       log.error('Error fetching sentiment data:', error);
+      setError(error instanceof Error ? error : new Error('Não foi possível carregar os dados de sentimento.'));
     } finally {
-      setLoading(false);
+      if (requestId.current === currentRequest) setLoading(false);
     }
   }, [period]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount/period-change padrão do dashboard, sem estado derivado de props para sincronizar.
     void fetchData();
+    return () => { requestId.current += 1; };
   }, [fetchData]);
 
   const stats = useMemo(() => {
@@ -216,7 +232,7 @@ export function useSentimentData(period: string) {
     }).filter(a => a.totalAnalyses > 0).sort((a, b) => (b.avgScore ?? -1) - (a.avgScore ?? -1));
   }, [analyses, agents, period]);
 
-  return { alerts, analyses, agents, loading, stats, dailyData, agentData, fetchData };
+  return { alerts, analyses, agents, loading, error, isError: error !== null, incomplete, stats, dailyData, agentData, fetchData };
 }
 
 export function getSentimentColor(score: number | null) {

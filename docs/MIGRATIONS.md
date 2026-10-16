@@ -206,6 +206,49 @@ elementos de evidencia permanecem intactos mesmo se divergirem do resumo esperad
 Essa proveniencia nao autoriza excecoes futuras por analogia: toda nova divergencia
 precisa de evidencia propria e hashes exatos, revisados em PR.
 
+### Reverificação em 16/10/2026
+
+O run vivo `38950534782` comparou a main `f240293b81` com o projeto canônico
+`tnnnlkbymytvtqngbbqh`. As 818 versões coincidiam, assim como catálogo, manifesto,
+grants, tipos e configuração de runtime, mas o comparador produzia falsos positivos:
+`parseMigrationFile` dividia o arquivo por `;` usando regex e removia comentários
+antes do lexer, corrompendo strings e corpos PL/pgSQL. A correção entrega o arquivo
+inteiro ao lexer e mantém strings e corpos dollar-quoted opacos. Testes de regressão
+cobrem strings, identificadores quoted, corpos, arrays de statements e diferenças reais.
+
+Uma nova coleta SELECT do ledger completo, sem escrita no banco, também confirmou:
+
+- As exceções de endpoint `20260319210215` e `20260319210228` já possuem todos os
+  hashes corretos. Não precisam de marker adicional dentro do arquivo SQL.
+- A exceção de `20260927600000` ficou obsoleta: nome e SQL canônico do arquivo e do
+  ledger agora coincidem (`9e4521edc6488ac691781acc3ddbf59570f74682c429d4daab813d372f5476a8`).
+  A exceção foi removida; **nenhum histórico foi reescrito** nesta sincronização.
+- `20261015220000` tem os mesmos tokens externos e internos do corpo PL/pgSQL,
+  incluindo strings/identificadores quoted, mas comentários/whitespace internos
+  diferentes. Uma exceção `format-only` fixa os quatro hashes exatos. Não houve
+  relaxamento global da comparação de corpos nem alteração da migration.
+
+O comparador agora verifica também o `ledger_sql_sha256` das exceções, além do
+hash integral do array. A passagem do guard não transforma metadados legados sem
+SQL em prova de conteúdo histórico nem atesta dados de negócio.
+
+**Mudança concorrente de base:** às 18:59 UTC, `025d0258dc` reintegrou o lote de
+880 cartões e trouxe a implementação integral do comparador, que já preserva SQL
+e valida esses hashes. Ela foi mantida; os sete testes novos desta revisão passam
+também nessa implementação (83 testes no total). Os aliases redundantes
+`sql-sha256` foram removidos do manifesto: duplicavam `ledger_statements_sha256`
+e não pertencem ao contrato estrito do comparador reintegrado.
+
+Isso **não** atesta a sincronização do novo lote. Na coleta posterior, o banco
+continua com 818 versões e a nova main contém 1.036 arquivos, incluindo 218 arquivos
+pendentes (217 versões únicas). Há colisão em `20261011010000` e duas migrations já
+aplicadas (`20261003182707`, `20261003192707`) foram editadas pelo lote. Elas exigem
+reconciliação forward-only; não se deve atualizar o ledger para mascarar esse delta.
+Os runs `38951565459` (CI) e `38951565429` (Edge) falharam respectivamente no lockfile
+congelado e no manifesto de deploy desatualizado. Nenhum DDL foi aplicado por esta
+sincronização. As evidências de paridade anteriores referem-se à base `24338a598c`,
+não ao lote reintegrado.
+
 Em 31/08/2026, o run vivo `33383636827`, já na `main` e após validar o
 fingerprint do projeto oficial, confirmou paridade de versões `317/317` e
 detectou seis diferenças entre o replay local e a representação histórica do

@@ -188,46 +188,11 @@ const esperados = [
   ['push na main (deploy e da Vercel)', CENARIOS.pushMain, false],
 ];
 
-test('E72: `dist` so sai em workflow_dispatch', () => {
-  const { expr, rodaEm, bloco } = upload('Upload build artifacts');
-  for (const [nome, ctx, esperado] of esperados) {
-    assert.equal(rodaEm(ctx), esperado, `${nome} nao pode publicar dist (if: ${expr})`);
-  }
-  assert.equal(rodaEm(CENARIOS.dispatch), true, `dispatch manual publica o dist (if: ${expr})`);
-  assert.equal(retencao(bloco), 3);
-});
-
-test('E72: `coverage-report` so na main (push), com 7 dias', () => {
-  const { expr, rodaEm, bloco } = upload('Upload coverage report');
-  assert.equal(rodaEm(CENARIOS.prVerde), false, `PR nao consome cobertura (if: ${expr})`);
-  assert.equal(rodaEm(CENARIOS.prVermelho), false, `PR vermelho tambem nao publica cobertura (if: ${expr})`);
-  assert.equal(rodaEm(CENARIOS.pushOutraBranch), false, `so a main publica cobertura (if: ${expr})`);
-  assert.equal(rodaEm(CENARIOS.dispatch), false, `dispatch tem de continuar sem artifact (if: ${expr})`);
-  assert.equal(rodaEm(CENARIOS.pushMain), true, `a main publica a cobertura (if: ${expr})`);
-  // `always()` combinado com os filtros mantem o upload quando a suite falha na
-  // main — que e' justamente quando a cobertura serve para diagnosticar.
-  assert.equal(rodaEm(CENARIOS.pushMainVermelho), true, `suite vermelha na main ainda publica (if: ${expr})`);
-  assert.equal(retencao(bloco), 7);
-});
-
-test('E72: `playwright-report` so quando o E2E falha', () => {
-  const { expr, rodaEm, bloco } = upload('Upload Playwright report');
-  for (const [nome, ctx] of [['PR verde', CENARIOS.prVerde], ['push na main verde', CENARIOS.pushMain]]) {
-    assert.equal(rodaEm(ctx), false, `${nome} nao pode publicar o report (if: ${expr})`);
-  }
-  assert.equal(rodaEm(CENARIOS.prVermelho), true, `falha publica o report (if: ${expr})`);
-  assert.equal(rodaEm(CENARIOS.pushMainVermelho), true, `falha na main publica o report (if: ${expr})`);
-  assert.equal(rodaEm(CENARIOS.cancelado), false, `run cancelado nao publica report (if: ${expr})`);
-  assert.equal(retencao(bloco), 3);
-});
-
-test('E72: PR verde cria 0 artifacts (a verificacao escrita no plano)', () => {
-  const uploads = todosOsUploads();
-  assert.ok(uploads.length >= 3, `esperava os 3 uploads do ci.yml, achei ${uploads.length}`);
-  const ligados = uploads.filter(({ expr }) => avaliar(expr, CENARIOS.prVerde));
-  assert.deepEqual(
-    ligados.map(({ nome }) => nome),
-    [],
-    'nenhum upload-artifact pode rodar num PR verde',
-  );
+// Decisão de 16/10: CI mínimo não publica dist, coverage ou relatórios E2E.
+// As fixtures acima continuam validando o avaliador de expressões históricas.
+test('CI mínimo: nenhum artifact de diagnóstico ou build é publicado pelo CI', () => {
+  assert.deepEqual(todosOsUploads(), []);
+  assert.match(ci, /run: bun run build/);
+  assert.match(ci, /run: bun vitest run --shard=/);
+  assert.doesNotMatch(ci, /upload-artifact@|download-artifact@/);
 });

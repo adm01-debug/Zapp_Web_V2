@@ -3,7 +3,6 @@ import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supa
 import { Logger, checkRateLimit, getClientIP, getCorsHeaders, handleCors } from "../_shared/validation.ts";
 import { proxyToEvolution, resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
 import { resolveInstanceToken } from "../_shared/evolution-instance-token.ts";
-import { goHistoryNotSupported } from "../_shared/evolution-sync-actions.ts";
 import { classifyEvolutionAction, decideControlAuthz, decideSendAuthz, sanitizeStatusPayload, type EvolutionAuthzDecision } from "../_shared/evolution-control-authz.ts";
 // E45 (SL-050): o corpo passa por schema (ação conhecida + instância alvo).
 import { EvolutionApiRequestSchema, evolutionApiRequiresInstance, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
@@ -14,7 +13,9 @@ import {
   resolveSessionApiKey,
   resolveSessionRoute,
   sessionStateFromV2,
+  formatPairingCode, pairingCodeFromResponse, pairingValidity, resolvePairingRoute,
 } from "../_shared/evolution-session-routes.ts";
+export { formatPairingCode, pairingCodeFromResponse, pairingValidity, resolvePairingRoute } from "../_shared/evolution-session-routes.ts";
 
 /** Dependências injetáveis nos testes (mesma forma das edges com guard). */
 export interface EvolutionApiDeps {
@@ -192,7 +193,7 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     // bloqueadas — reconectar em loop durante um bloqueio tende a estendê-lo.
     // create-instance entra na mesma trava (nasceria conectando outro número
     // durante a mesma janela de risco).
-    const MAINTENANCE_GATED_ACTIONS = new Set(['connect', 'restart-instance', 'disconnect', 'create-instance', 'create-connection']);
+    const MAINTENANCE_GATED_ACTIONS = new Set(['connect', 'pairing-code', 'restart-instance', 'disconnect', 'create-instance', 'create-connection']);
     if (MAINTENANCE_GATED_ACTIONS.has(action)) {
       const { data: maint } = await supabase.from('global_settings').select('value').eq('key', 'whatsapp_maintenance_until').maybeSingle();
       const until = maint?.value ? new Date(maint.value) : null;
@@ -505,6 +506,43 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     }
 
     if (action === 'list-instances') return await sanitizeInstanceResponse(await proxy(`/instance/fetchInstances${body.instanceName ? `?instanceName=${body.instanceName}` : ''}`, 'GET'));
+
+    if (action === 'pairing-code') {
+      const number = typeof body.number === 'string' && /^[+()\d\s-]+$/.test(body.number) ? body.number.replace(/\D/g, '') : '';
+      const reply = (value: unknown) => new Response(JSON.stringify(value), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      if (!/^[1-9]\d{7,14}$/.test(number)) return reply({ error: true, status: 422, message: 'Informe um número válido com DDI para parear.' });
+      const flavor = resolveEvolutionFlavor(Deno.env.get('EVOLUTION_API_FLAVOR'));
+      const route = resolvePairingRoute(flavor, instance, number, `${supabaseUrl}/functions/v1/evolution-webhook`);
+      const key = route.auth === 'instance' ? await resolveInstanceToken(supabase, instance) : evolutionApiKey;
+      if (!key) return reply({ error: true, status: 503, message: 'Credencial própria da instância não encontrada.' });
+      const requestProvider = async (path: string, method: string, payload?: unknown) => {
+        const response = await fetch(`${evolutionApiUrl}${path}`, {
+          method, headers: { apikey: key, 'Content-Type': 'application/json' },
+          ...(payload === undefined ? {} : { body: JSON.stringify(payload) }),
+          signal: AbortSignal.timeout(8000),
+        });
+        if (!response.ok) throw new Error('O provedor recusou o pareamento.');
+        return await response.json();
+      };
+      try {
+        let data = await requestProvider(route.path, route.method, route.body);
+        let code = pairingCodeFromResponse(flavor, data);
+        for (let attempt = 0; flavor === 'go' && !code && attempt < 3; attempt++) {
+          if (attempt > 0) await new Promise(resolve => setTimeout(resolve, 250));
+          data = await requestProvider('/instance/qr', 'GET');
+          code = pairingCodeFromResponse(flavor, data);
+        }
+        if (!code) return reply({ error: true, status: 409, message: 'O provedor ainda não retornou código de pareamento. Tente novamente.' });
+        const { error } = await supabase.from('whatsapp_connections')
+          .update({ status: 'qr_pending', instance_id: instance }).eq('instance_id', instance);
+        if (error) return reply({ error: true, status: 500, message: 'Não foi possível registrar o pareamento.' });
+        const formatted = formatPairingCode(code);
+        return reply({ status: 'qr_pending', pairingCode: formatted, code: formatted,
+          ...(typeof data?.count === 'number' ? { count: data.count } : {}), ...pairingValidity(data) });
+      } catch {
+        return reply({ error: true, status: 502, message: 'Não foi possível obter o código de pareamento do provedor.' });
+      }
+    }
 
     if (action === 'connect') {
       // R2-API-015: o ciclo de sessão escolhe rota, método e credencial pelo
@@ -857,11 +895,8 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       }
       return new Response(JSON.stringify(deleteBody), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
-    if (action === 'set-presence') return await proxy(`/instance/setPresence/${instance}`, 'POST', { presence: body.presence });
 
     // ─── 2. Settings ───
-    if (action === 'set-settings') return await proxy(`/settings/set/${instance}`, 'POST', { rejectCall: body.rejectCall, msgCall: body.msgCall, groupsIgnore: body.groupsIgnore, alwaysOnline: body.alwaysOnline, readMessages: body.readMessages, readStatus: body.readStatus, syncFullHistory: body.syncFullHistory });
-    if (action === 'get-settings') return await proxy(`/settings/find/${instance}`, 'GET');
 
     // ─── 3. Webhook ───
     if (action === 'set-webhook') {
@@ -1019,31 +1054,16 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       }
       return await proxy(`/message/sendStatus/${instance}`, 'POST', sanitized.payload);
     }
-    if (action === 'send-template') return await proxy(`/message/sendTemplate/${instance}`, 'POST', { number: body.number, template: body.template });
     if (action === 'mark-read') return await proxy(`/chat/markMessageAsRead/${instance}`, 'POST', { readMessages: body.readMessages || [body.key] });
-    if (action === 'mark-unread') return await proxy(`/chat/markMessageAsUnread/${instance}`, 'POST', { readMessages: body.readMessages || [body.key] });
     if (action === 'archive-chat') return await proxy(`/message/archiveChat/${instance}`, 'POST', { lastMessage: body.lastMessage, chat: body.chat, archive: body.archive ?? true });
     if (action === 'delete-message') return await proxy(`/message/delete/${instance}`, 'DELETE', { id: body.id, remoteJid: body.remoteJid, fromMe: body.fromMe });
     if (action === 'update-message') return await proxy(`/message/update/${instance}`, 'PUT', { number: body.number, key: body.key, text: body.text });
 
     // ─── 5. Chat ───
-    if (action === 'find-chats') return await proxy(`/chat/findChats/${instance}`, 'POST', { where: body.where || {} });
     // /chat/findMessages nao existe na Evolution GO (GO_GAPS D6): sem a guarda a
     // GO devolve 404 e o chamador engole o erro em Promise.allSettled, virando
     // "sem dados". Alem disso os 404 alimentavam o contador do circuit breaker.
-    if (action === 'find-messages') {
-      if (isGoFlavor) return goHistoryNotSupported('find-messages', corsHeaders);
-      return await proxy(`/chat/findMessages/${instance}`, 'POST', { where: body.where || {}, page: body.page, offset: body.offset });
-    }
 
-    if (action === 'find-status-messages') {
-      if (isGoFlavor) return goHistoryNotSupported('find-status-messages', corsHeaders);
-      const response = await proxy(`/chat/findMessages/${instance}`, 'POST', { where: { key: { remoteJid: 'status@broadcast' } }, page: body.page ?? 1, offset: body.offset ?? 200 });
-      const data = await response.json();
-      if (data?.error === true) return new Response(JSON.stringify(data), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-      const records = Array.isArray(data?.messages?.records) ? data.messages.records : [];
-      return new Response(JSON.stringify(records), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-    }
 
     if (action === 'find-contacts') return await proxy(`/chat/findContacts/${instance}`, 'POST', { where: body.where || {} });
     if (action === 'check-numbers') return await proxy(`/chat/whatsappNumbers/${instance}`, 'POST', { numbers: body.numbers });
@@ -1062,11 +1082,9 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     if (action === 'update-group-setting') return await proxy(`/group/updateSetting/${instance}`, 'PUT', { groupJid: body.groupJid, action: body.action });
     if (action === 'group-invite-code') return await proxy(`/group/inviteCode/${instance}?groupJid=${body.groupJid}`, 'GET');
     if (action === 'revoke-invite-code') return await proxy(`/group/revokeInviteCode/${instance}`, 'PUT', { groupJid: body.groupJid });
-    if (action === 'invite-info') return await proxy(`/group/inviteInfo/${instance}?inviteCode=${body.inviteCode}`, 'GET');
     if (action === 'accept-invite') return await proxy(`/group/acceptInviteCode/${instance}`, 'POST', { inviteCode: body.inviteCode });
     if (action === 'leave-group') return await proxy(`/group/leaveGroup/${instance}`, 'DELETE', { groupJid: body.groupJid });
     if (action === 'update-group-picture') return await proxy(`/group/updateGroupPicture/${instance}`, 'PUT', { groupJid: body.groupJid, image: body.image });
-    if (action === 'toggle-ephemeral') return await proxy(`/group/toggleEphemeral/${instance}`, 'POST', { groupJid: body.groupJid, expiration: body.expiration });
 
     // ─── 7. Profile ───
     // Com number → /chat/fetchProfile (traduzido p/ GO /user/info); sem number, própria conta.
@@ -1139,41 +1157,13 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     if (action === 'handle-label') return await proxy(`/label/handleLabel/${instance}`, 'POST', { number: body.number, labelId: body.labelId, action: body.action });
 
     // ─── 9-14. Integrations (Chatwoot, Typebot, OpenAI, Dify, Flowise, EvolutionBot) ───
-    if (action === 'set-chatwoot') return await proxy(`/chatwoot/set/${instance}`, 'POST', { enabled: body.enabled ?? true, accountId: body.accountId, token: body.token, url: body.url, signMsg: body.signMsg ?? true, reopenConversation: body.reopenConversation ?? true, conversationPending: body.conversationPending ?? false, nameInbox: body.nameInbox, mergeBrazilContacts: body.mergeBrazilContacts ?? true, importContacts: body.importContacts ?? true, importMessages: body.importMessages ?? true, daysLimitImportMessages: body.daysLimitImportMessages ?? 7, signDelimiter: body.signDelimiter, autoCreate: body.autoCreate ?? false });
-    if (action === 'get-chatwoot') return await proxy(`/chatwoot/find/${instance}`, 'GET');
-    if (action === 'delete-chatwoot') return await proxy(`/chatwoot/delete/${instance}`, 'DELETE');
 
-    if (action === 'set-typebot') return await proxy(`/typebot/set/${instance}`, 'POST', { enabled: body.enabled ?? true, url: body.url, typebot: body.typebot, expire: body.expire ?? 20, keywordFinish: body.keywordFinish ?? '#fim', delayMessage: body.delayMessage ?? 1000, unknownMessage: body.unknownMessage, listeningFromMe: body.listeningFromMe ?? false, stopBotFromMe: body.stopBotFromMe ?? true, keepOpen: body.keepOpen ?? false, debounceTime: body.debounceTime ?? 10, triggerType: body.triggerType, triggerOperator: body.triggerOperator, triggerValue: body.triggerValue });
-    if (action === 'get-typebot') return await proxy(`/typebot/find/${instance}`, 'GET');
-    if (action === 'delete-typebot') return await proxy(`/typebot/delete/${instance}`, 'DELETE');
-    if (action === 'typebot-sessions') return await proxy(`/typebot/fetchSessions/${instance}${body.typebotId ? `?typebotId=${body.typebotId}` : ''}`, 'GET');
-    if (action === 'typebot-change-status') return await proxy(`/typebot/changeStatus/${instance}`, 'POST', { remoteJid: body.remoteJid, status: body.status });
-    if (action === 'start-typebot') return await proxy(`/typebot/startTypebot/${instance}`, 'POST', { remoteJid: body.remoteJid, url: body.url, typebot: body.typebot, variables: body.variables });
 
-    if (action === 'set-openai') return await proxy(`/openai/set/${instance}`, 'POST', { enabled: body.enabled ?? true, openAiApiKey: body.openAiApiKey, expire: body.expire ?? 30, keywordFinish: body.keywordFinish ?? '#sair', delayMessage: body.delayMessage ?? 1000, listeningFromMe: body.listeningFromMe ?? false, stopBotFromMe: body.stopBotFromMe ?? true, speechToText: body.speechToText ?? false, botType: body.botType ?? 'chatCompletion', assistantId: body.assistantId, model: body.model ?? 'gpt-4o', systemMessage: body.systemMessage, maxTokens: body.maxTokens ?? 500, temperature: body.temperature ?? 0.7, triggerType: body.triggerType ?? 'all', triggerOperator: body.triggerOperator, triggerValue: body.triggerValue, functionUrl: body.functionUrl });
-    if (action === 'get-openai') return await proxy(`/openai/find/${instance}`, 'GET');
-    if (action === 'delete-openai') return await proxy(`/openai/delete/${instance}`, 'DELETE');
 
-    if (action === 'set-dify') return await proxy(`/dify/set/${instance}`, 'POST', { enabled: body.enabled ?? true, apiUrl: body.apiUrl, apiKey: body.apiKey, botType: body.botType ?? 'chatBot', expire: body.expire ?? 30, triggerType: body.triggerType ?? 'all', keywordFinish: body.keywordFinish, listeningFromMe: body.listeningFromMe ?? false, stopBotFromMe: body.stopBotFromMe ?? true, speechToText: body.speechToText ?? false });
-    if (action === 'get-dify') return await proxy(`/dify/find/${instance}`, 'GET');
-    if (action === 'delete-dify') return await proxy(`/dify/delete/${instance}`, 'DELETE');
 
-    if (action === 'set-flowise') return await proxy(`/flowise/set/${instance}`, 'POST', { enabled: body.enabled ?? true, apiUrl: body.apiUrl, apiKey: body.apiKey, chatflowId: body.chatflowId, expire: body.expire ?? 30, triggerType: body.triggerType, triggerValue: body.triggerValue });
-    if (action === 'get-flowise') return await proxy(`/flowise/find/${instance}`, 'GET');
-    if (action === 'delete-flowise') return await proxy(`/flowise/delete/${instance}`, 'DELETE');
 
-    if (action === 'set-evolution-bot') return await proxy(`/evolutionBot/set/${instance}`, 'POST', { enabled: body.enabled ?? true, expire: body.expire ?? 10, keywordFinish: body.keywordFinish ?? '#sair', delayMessage: body.delayMessage ?? 800, triggerType: body.triggerType, triggerOperator: body.triggerOperator, triggerValue: body.triggerValue, unknownMessage: body.unknownMessage, listeningFromMe: body.listeningFromMe ?? false, stopBotFromMe: body.stopBotFromMe ?? true, apiUrl: body.apiUrl, apiKey: body.apiKey });
-    if (action === 'get-evolution-bot') return await proxy(`/evolutionBot/find/${instance}`, 'GET');
-    if (action === 'delete-evolution-bot') return await proxy(`/evolutionBot/delete/${instance}`, 'DELETE');
 
     // ─── 15-25. Infrastructure (RabbitMQ, SQS, Templates, Block, PTV, Call, Presence, Catalog, Proxy, EvoAI, N8N, Kafka, NATS, Pusher) ───
-    if (action === 'set-rabbitmq') return await proxy(`/rabbitmq/set/${instance}`, 'POST', { enabled: body.enabled ?? true, events: body.events });
-    if (action === 'get-rabbitmq') return await proxy(`/rabbitmq/find/${instance}`, 'GET');
-    if (action === 'set-sqs') return await proxy(`/sqs/set/${instance}`, 'POST', { enabled: body.enabled ?? true, events: body.events });
-    if (action === 'get-sqs') return await proxy(`/sqs/find/${instance}`, 'GET');
-    if (action === 'create-template') return await proxy(`/template/create/${instance}`, 'POST', body);
-    if (action === 'find-templates') return await proxy(`/template/find/${instance}`, 'GET');
-    if (action === 'delete-template') return await proxy(`/template/delete/${instance}`, 'DELETE', body);
     if (action === 'update-block-status') return await proxy(`/chat/updateBlockStatus/${instance}`, 'POST', { number: body.number, status: body.status });
     if (action === 'send-ptv') {
       let videoSource = body.video || body.mediaUrl;
@@ -1182,24 +1172,7 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       }
       return await proxy(`/message/sendPtv/${instance}`, 'POST', { number: body.number, video: videoSource, delay: body.delay });
     }
-    if (action === 'offer-call') return await proxy(`/call/offerCall/${instance}`, 'POST', { number: body.number, isVideo: body.isVideo ?? false, callDuration: body.callDuration ?? 5 });
     if (action === 'send-chat-presence') return await proxy(`/chat/sendPresence/${instance}`, 'POST', { number: body.number, presence: body.presence, delay: body.delay ?? 1200 });
-    if (action === 'get-catalog') return await proxy(`/business/getCatalog/${instance}`, 'POST', { number: body.number, limit: body.limit, cursor: body.cursor });
-    if (action === 'get-collections') return await proxy(`/business/getCollections/${instance}`, 'POST', { number: body.number, limit: body.limit, cursor: body.cursor });
-    if (action === 'set-proxy') return await proxy(`/proxy/set/${instance}`, 'POST', { enabled: body.enabled ?? true, host: body.host, port: body.port, protocol: body.protocol, username: body.username, password: body.password });
-    if (action === 'get-proxy') return await proxy(`/proxy/find/${instance}`, 'GET');
-    if (action === 'set-evoai') return await proxy(`/evoai/set/${instance}`, 'POST', { enabled: body.enabled ?? true, apiUrl: body.apiUrl, apiKey: body.apiKey, agentId: body.agentId, expire: body.expire ?? 30, triggerType: body.triggerType ?? 'all', triggerOperator: body.triggerOperator, triggerValue: body.triggerValue, keywordFinish: body.keywordFinish, delayMessage: body.delayMessage ?? 1000, unknownMessage: body.unknownMessage, listeningFromMe: body.listeningFromMe ?? false, stopBotFromMe: body.stopBotFromMe ?? true, keepOpen: body.keepOpen ?? false, debounceTime: body.debounceTime ?? 10, speechToText: body.speechToText ?? false });
-    if (action === 'get-evoai') return await proxy(`/evoai/find/${instance}`, 'GET');
-    if (action === 'delete-evoai') return await proxy(`/evoai/delete/${instance}`, 'DELETE');
-    if (action === 'set-n8n') return await proxy(`/n8n/set/${instance}`, 'POST', { enabled: body.enabled ?? true, webhookUrl: body.webhookUrl, expire: body.expire ?? 30, triggerType: body.triggerType ?? 'all', triggerOperator: body.triggerOperator, triggerValue: body.triggerValue, keywordFinish: body.keywordFinish, delayMessage: body.delayMessage ?? 1000, unknownMessage: body.unknownMessage, listeningFromMe: body.listeningFromMe ?? false, stopBotFromMe: body.stopBotFromMe ?? true, keepOpen: body.keepOpen ?? false, debounceTime: body.debounceTime ?? 10 });
-    if (action === 'get-n8n') return await proxy(`/n8n/find/${instance}`, 'GET');
-    if (action === 'delete-n8n') return await proxy(`/n8n/delete/${instance}`, 'DELETE');
-    if (action === 'set-kafka') return await proxy(`/kafka/set/${instance}`, 'POST', { enabled: body.enabled ?? true, events: body.events });
-    if (action === 'get-kafka') return await proxy(`/kafka/find/${instance}`, 'GET');
-    if (action === 'set-nats') return await proxy(`/nats/set/${instance}`, 'POST', { enabled: body.enabled ?? true, events: body.events });
-    if (action === 'get-nats') return await proxy(`/nats/find/${instance}`, 'GET');
-    if (action === 'set-pusher') return await proxy(`/pusher/set/${instance}`, 'POST', { enabled: body.enabled ?? true, appId: body.appId, key: body.key, secret: body.secret, cluster: body.cluster, events: body.events });
-    if (action === 'get-pusher') return await proxy(`/pusher/find/${instance}`, 'GET');
 
     return new Response(JSON.stringify({ error: 'Unknown action', action }), {
       status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },

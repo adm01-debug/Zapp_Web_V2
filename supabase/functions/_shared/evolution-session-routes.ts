@@ -36,6 +36,40 @@ export interface SessionRoute {
   auth: SessionAuth;
 }
 
+/** Contratos: swagger GO /instance/connect (phone); API v2 GET connect?number=. */
+export function resolvePairingRoute(flavor: EvolutionFlavor, instance: string, phone: string, webhookUrl?: string): SessionRoute & { body?: Record<string, unknown> } {
+  const number = phone.replace(/\D/g, '');
+  if (flavor === 'v2') return { method: 'GET', path: `/instance/connect/${encodeURIComponent(instance)}?number=${number}`, auth: 'global' };
+  return { method: 'POST', path: '/instance/connect', auth: 'instance', body: { phone: number, webhookUrl, subscribe: ['ALL'], immediate: true } };
+}
+
+export function formatPairingCode(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const code = value.replace(/[\s-]/g, '').toUpperCase();
+  return /^[A-Z0-9]{8}$/.test(code) ? `${code.slice(0, 4)}-${code.slice(4)}` : null;
+}
+
+export function pairingCodeFromResponse(flavor: EvolutionFlavor, payload: unknown): string | null {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return null;
+  const outer = payload as Record<string, unknown>;
+  const data = flavor === 'go' && outer.data && typeof outer.data === 'object'
+    ? outer.data as Record<string, unknown> : outer;
+  for (const value of [data.pairingCode, data.code]) {
+    const formatted = formatPairingCode(value);
+    if (formatted) return formatted.replace('-', '');
+  }
+  return null;
+}
+
+export function pairingValidity(payload: unknown, now = Date.now()): { expiresInSeconds: number; expiresAt: string } {
+  const outer = payload && typeof payload === 'object' ? payload as Record<string, unknown> : {};
+  const data = outer.data && typeof outer.data === 'object' ? outer.data as Record<string, unknown> : outer;
+  const raw = Number(data.expiresIn ?? data.expires_in ?? data.validity ?? 60);
+  const seconds = data.validity !== undefined && raw > 1000 ? raw / 1000 : raw;
+  const expiresInSeconds = Number.isFinite(seconds) ? Math.max(15, Math.min(300, Math.floor(seconds))) : 60;
+  return { expiresInSeconds, expiresAt: new Date(now + expiresInSeconds * 1000).toISOString() };
+}
+
 /** Mesma regra do resto do repositório: qualquer valor diferente de 'v2' é GO. */
 export function resolveEvolutionFlavor(raw: string | null | undefined): EvolutionFlavor {
   return (raw ?? 'go') === 'v2' ? 'v2' : 'go';

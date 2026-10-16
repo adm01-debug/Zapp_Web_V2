@@ -95,14 +95,17 @@ export type ProfileLookup = (
   userId: string,
 ) => PromiseLike<{ data: { is_active: boolean | null } | null; error: unknown }>;
 
+export interface LoginAdminClient extends NetworkPolicyRpcClient {
+  auth: {
+    admin: {
+      signOut: (jwt: string, scope: 'local' | 'global' | 'others') => PromiseLike<{ error: unknown }>;
+    };
+  };
+}
+
 export interface AuthLoginDeps {
   admin: LoginAdminClient;
   anon: LoginAnonClient;
-  enforceRateLimit: (
-    key: string,
-    maxRequests: number,
-    windowMs: number,
-  ) => PromiseLike<{ allowed: boolean }>;
   // Injetável para o teste; o default de produção é `profileLookupFrom(admin)`.
   getProfileActive?: ProfileLookup;
 }
@@ -206,7 +209,7 @@ export async function handleLogin(req: Request, deps: AuthLoginDeps): Promise<Re
     // Política de rede (R2-AUTH-022 / 27.4): depois de CORS/método e ANTES de
     // ler/processar credenciais, consultar usuário, registrar tentativa ou
     // autenticar. A negação (403/503) responde sem tocar body, rate limit,
-    // GoTrue ou qualquer efeito.
+    // GoTrue. A única escrita permitida na negação é o registro de auditoria.
     const policy = await resolveNetworkPolicy(req, "auth-login", {
       rpc: deps.admin,
       defaultMaxRequests: IP_LIMIT_DEFAULT_MAX,
@@ -219,15 +222,19 @@ export async function handleLogin(req: Request, deps: AuthLoginDeps): Promise<Re
       // painel "Bloqueios de login". Só a negação por política (403) loga; o 503 de
       // decisão não. Best-effort: falha de log não muda a resposta ao cliente.
       if (policy.status === 403) {
-        const blockIp = getClientIP(req);
-        const { error: logBlockError } = await deps.admin.rpc("log_login_block", {
-          p_email: null,
-          p_ip: blockIp === "unknown" ? null : blockIp,
-          p_country_code: extractCountryCode(req),
-          p_reason: policy.reason,
-          p_user_agent: sanitizeString(req.headers.get("user-agent"), 512) ?? null,
-        });
-        if (logBlockError) log.error("log_login_block failed", { code: rpcErrorCode(logBlockError) });
+        try {
+          const blockIp = getClientIP(req);
+          const { error: logBlockError } = await deps.admin.rpc("log_login_block", {
+            p_email: null,
+            p_ip: blockIp === "unknown" ? null : blockIp,
+            p_country_code: extractCountryCode(req),
+            p_reason: policy.reason,
+            p_user_agent: sanitizeString(req.headers.get("user-agent"), 512) ?? null,
+          });
+          if (logBlockError) log.error("log_login_block failed", { code: rpcErrorCode(logBlockError) });
+        } catch {
+          log.error("log_login_block transport failed");
+        }
       }
       return networkPolicyDenialResponse(policy, req);
     }
@@ -275,27 +282,10 @@ export async function handleLogin(req: Request, deps: AuthLoginDeps): Promise<Re
     });
     if (gateError) {
       log.error("consume_login_gate failed", { code: rpcErrorCode(gateError) });
-      return errorResponse("Internal error", 500, req);
+      return errorResponse("Internal error", 503, req);
     }
-
-    const emailRl = await deps.enforceRateLimit(`auth-login-email:${email}`, EMAIL_LIMIT_MAX, EMAIL_LIMIT_WINDOW_MS);
-    // Fail-CLOSED na guarda por conta: se o contador persistente nao respondeu
-    // (RPC fora do ar ou contrato invalido), o limite por e-mail passaria apenas com
-    // o contador em memoria, que zera a cada cold start. Num login isso e a guarda de
-    // forca bruta por conta — na duvida, nega com indisponibilidade (503) em vez de
-    // aceitar. O login legitimo segue normal quando o banco responde.
-    if (emailRl.unavailable) {
-      log.error("rate limit persistente indisponivel; negando login por e-mail");
-      log.done(503, { reason: "rate_limit_unavailable" });
-      return errorResponse("Serviço de autenticação indisponível", 503, req);
-    }
-    if (!emailRl.allowed) return errorResponse("Rate limit exceeded", 429, req);
-
-    const { data: lockData, error: lockError } = await deps.admin.rpc("is_account_locked", { check_email: email });
-    if (lockError) {
-      log.error("is_account_locked failed", { code: rpcErrorCode(lockError) });
-      return errorResponse("Internal error", 500, req);
-    }
+    // O gate persistente já decidiu lockout + IP + e-mail na mesma transação.
+    // Não consumir um segundo contador nem reler lockout fora dessa decisão.
     const gateRow = (Array.isArray(gateData) ? gateData[0] : gateData) as GateRow | null;
     if (!gateRow || typeof gateRow.allowed !== "boolean") {
       log.error("consume_login_gate returned no row");

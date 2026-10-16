@@ -9,7 +9,7 @@
  *
  * Com getItemKey estável (useCallback deps [messages]), o loop não ocorre.
  */
-import { describe, it, expect, vi, beforeAll } from 'vitest';
+import { describe, it, expect, vi, afterAll, beforeAll } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Message } from '@/types/chat';
@@ -46,7 +46,20 @@ class ResizeObserverMock {
   disconnect() {}
 }
 
+const layoutProperties = ['clientHeight', 'clientWidth', 'offsetHeight'] as const;
+const originalLayout = layoutProperties.map(key => Object.getOwnPropertyDescriptor(HTMLElement.prototype, key));
+afterAll(() => {
+  layoutProperties.forEach((key, index) => {
+    const original = originalLayout[index];
+    if (original) Object.defineProperty(HTMLElement.prototype, key, original);
+  });
+});
+
+// O virtualizador real mede o viewport via clientHeight e cada linha via offsetHeight.
 beforeAll(() => {
+  Object.defineProperty(HTMLElement.prototype, 'clientHeight', { configurable: true, get() { return 600; } });
+  Object.defineProperty(HTMLElement.prototype, 'clientWidth', { configurable: true, get() { return 800; } });
+  Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { configurable: true, get() { return 120; } });
   (window as unknown as { ResizeObserver: typeof ResizeObserverMock }).ResizeObserver = ResizeObserverMock;
 });
 
@@ -61,6 +74,11 @@ vi.mock('@/services/realtime.service', () => ({
     subscribeToReactions: vi.fn(() => ({ topic: 'mock' })),
     removeChannel: vi.fn(async () => {}),
   },
+}));
+
+// Reações têm suíte própria; estas fixtures exercitam layout/rolagem sem rede.
+vi.mock('@/hooks/reactions/useBatchReactions', () => ({
+  ReactionsBatchProvider: ({ children }: { children: import('react').ReactNode }) => children,
 }));
 
 vi.mock('@/services/chat.service', () => ({
