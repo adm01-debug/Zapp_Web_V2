@@ -48,7 +48,7 @@ bun run test:e2e      # testes Playwright (banco local)
 bun run test:e2e -- --project=chromium  # filtrado por projeto
 ```
 
-## CI — 6 checks obrigatórios
+## CI — 7 checks obrigatórios
 
 Todo PR deve passar estes checks antes do merge:
 
@@ -60,6 +60,7 @@ Todo PR deve passar estes checks antes do merge:
 | `🔒 Security Audit` | `ci.yml` |
 | `Contrato DB offline` | `db-guard.yml` |
 | `🎭 E2E Tests (Playwright)` | `ci.yml` |
+| `CodeQL` | `codeql.yml` (GitHub Advanced Security) |
 
 `strict=true` está ligado: a branch do PR precisa estar atualizada com a `main` antes que os checks sejam aceitos.
 
