@@ -2,7 +2,7 @@ import type { AppRole } from './role.service';
 import type { LucideIcon } from 'lucide-react';
 import { 
   MessageSquare, MessagesSquare, Mail, User, BarChart3, Kanban, Sparkles, Settings,
-  Building2, Wallet, Package, CreditCard, LayoutDashboard, CalendarClock, UsersRound,
+  Building2, Wallet, Package, LayoutDashboard, CalendarClock, UsersRound,
   Bot, RefreshCw, Workflow, Brain, TrendingDown, Tags, FileText,
   FileBarChart, AlertTriangle, HeartPulse, Gauge, Target, Trophy,
   Link2, Plug, Inbox, PhoneCall, Activity, Calendar,
