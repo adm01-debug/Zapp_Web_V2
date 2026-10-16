@@ -1,11 +1,16 @@
 Especialista: worker (hooks)
+## FATOS MEDIDOS (16/10, comandos rodados neste workspace)
+- `npx vitest run src/hooks/contacts/__tests__/useContactsDataSource.test.ts` → `Test Files 1 passed, Tests 7 passed`
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (58s)` (sem migration no cartão; banco não verificado, esperado)
+- `jev-juiz pronto .tmp/relato.md` → `nada a apontar no diff (3 arquivos) nem no relato. Pode fechar.`
+- `git diff --stat dia/2026-10-16...HEAD` → 3 files changed, 258 insertions(+) (2 arquivos do cartão + `.tmp/relato.md`, artefato do fechar)
 ## O que mudou e por quê
 - src/hooks/contacts/useContactsDataSource.ts: `readBatchState` passa a considerar só consultas ATIVAS (`cache.findAll({ queryKey, type: 'active' })`) — um lote antigo que falhou (outra lista ou página) fica no cache até o gcTime, mas não prende mais o selo em 'indisponivel' quando o lote atual responde.
 - src/hooks/contacts/useContactsDataSource.ts: comentário de sincronia no `CONTACTS_SINGU_BATCH_QUERY_KEY` (`useExternalContact360Batch` não exporta a chave; as duas precisam andar juntas).
 - src/hooks/contacts/__tests__/useContactsDataSource.test.ts: teste novo "erro velho de outra lista não prende o aviso quando o lote atual responde" — monta o batch real do módulo, falha a primeira lista e troca para outra lista (chave nova) que responde.
 ## Prova
 - vermelho antes: `npx vitest run src/hooks/contacts/__tests__/useContactsDataSource.test.ts -t "erro velho de outra lista"` → `Tests 1 failed | 6 skipped (7)` (recebido `{ fonte: 'indisponivel' }` onde se esperava `{ fonte: 'singu', carregando: false }`).
-- verde depois: `npx vitest run src/hooks/contacts/__tests__/useContactsDataSource.test.ts` → `Test Files 1 passed (1); Tests 7 passed (7)`.
+- verde depois: `npx vitest run src/hooks/contacts/__tests__/useContactsDataSource.test.ts` → `Test Files 1 passed, Tests 7 passed`.
 - verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (58s)` (sem migration no cartão; banco não verificado, esperado).
 - juiz: `jev-juiz pronto .tmp/relato.md` → `nada a apontar no diff (3 arquivos) nem no relato. Pode fechar.`
 ## Pontos do revisor
