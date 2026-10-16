@@ -1,7 +1,7 @@
 -- whatsapp_default_connection_rpc_atomica
--- Rollback: dropa a RPC criada por esta migration. Ela so cria a funcao — nenhum dado, coluna,
--- policy, trigger ou GRANT de tabela e tocado — entao remover a funcao devolve o estado anterior inteiro.
--- Rollback (SQL executavel, na ordem):
+-- Rollback: a RPC e NOVA (criada por esta migration); o rollback dropa a
+-- funcao — GRANT/COMMENT morrem com ela, nenhuma tabela e alterada.
+-- Rollback (SQL executável, na ordem):
 --   drop function if exists public.set_default_whatsapp_connection(uuid);
 --
 
