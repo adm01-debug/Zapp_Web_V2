@@ -59,6 +59,7 @@ vi.mock('@/lib/logger', () => ({
 }));
 
 import { useGeoBlocking } from '@/hooks/system/useGeoBlocking';
+import type { AvaliacaoTrocaDeModo } from '@/hooks/system/useGeoBlocking';
 
 const SETTINGS = { id: 'cfg-1', mode: 'disabled' as const };
 const BRASIL = {
@@ -155,8 +156,8 @@ beforeEach(() => {
   });
 });
 
-async function montar() {
-  const { result, unmount } = renderHook(() => useGeoBlocking());
+async function montar(opcoes: { country?: string | null } = {}) {
+  const { result, unmount } = renderHook(() => useGeoBlocking(opcoes));
   await waitFor(() => expect(result.current.loading).toBe(false));
   return { result, unmount };
 }
@@ -206,7 +207,9 @@ describe('useGeoBlocking — leitura dos dados', () => {
 describe('useGeoBlocking — handleModeChange', () => {
   it('grava o modo com updated_by do usuário logado e updated_at ISO', async () => {
     enfileirarCiclo(SETTINGS, [BRASIL], [EUA]);
-    const { result } = await montar();
+    // O país do admin vai confirmado: a regra de recusa (PM-32) só deixa ativar
+    // whitelist/blacklist com o país do próprio admin fora de risco.
+    const { result } = await montar({ country: 'BR' });
     mocks.filas.geo_blocking_settings.push({ data: null, error: null });
 
     await act(async () => {
@@ -237,18 +240,21 @@ describe('useGeoBlocking — handleModeChange', () => {
 
   it('erro do PostgREST (RLS 42501) avisa e NÃO muda o modo na tela', async () => {
     enfileirarCiclo(SETTINGS, [], []);
-    const { result } = await montar();
+    const { result } = await montar({ country: 'BR' });
     mocks.filas.geo_blocking_settings.push({
       data: null,
       error: { code: '42501', message: 'permission denied for table geo_blocking_settings' },
     });
 
+    let avaliacao: AvaliacaoTrocaDeModo | null = null;
     await act(async () => {
-      await result.current.handleModeChange('blacklist');
+      avaliacao = await result.current.handleModeChange('blacklist');
     });
 
     expect(mocks.toastError).toHaveBeenCalledWith('Erro ao alterar modo');
     expect(mocks.toastSuccess).not.toHaveBeenCalled();
+    // Escrita falhou: o retorno não pode dizer que a troca foi permitida.
+    expect(avaliacao).toBeNull();
     // Estado otimista não pode mentir: o modo continua o que veio do banco.
     expect(result.current.settings?.mode).toBe('disabled');
   });
@@ -477,5 +483,115 @@ describe('useGeoBlocking — defeitos encontrados (não corrigidos neste cartão
     // DUAS violações) e manter a lista já carregada.
     expect.soft(mocks.toastError).toHaveBeenCalledWith('Erro ao carregar dados');
     expect(result.current.allowedCountries.map((c) => c.id)).toEqual(['ac-1']);
+  });
+});
+
+describe('useGeoBlocking — ativação que trancaria o próprio admin (recusada)', () => {
+  const COREA = {
+    id: 'bc-2',
+    country_code: 'KP',
+    country_name: 'Coreia do Norte',
+    created_at: '2026-10-08T08:00:00.000Z',
+  };
+
+  async function tentarTrocar(
+    result: { current: ReturnType<typeof useGeoBlocking> },
+    modo: 'disabled' | 'whitelist' | 'blacklist',
+  ): Promise<AvaliacaoTrocaDeModo> {
+    const caixa: { valor: AvaliacaoTrocaDeModo | null } = { valor: null };
+    await act(async () => {
+      caixa.valor = await result.current.handleModeChange(modo);
+    });
+    if (!caixa.valor) throw new Error('handleModeChange não devolveu avaliação');
+    return caixa.valor;
+  }
+
+  it('(a) país do próprio admin não confirmado: recusa ativar e não grava nada', async () => {
+    enfileirarCiclo(SETTINGS, [BRASIL], []);
+    const { result } = await montar();
+
+    const avaliacao = await tentarTrocar(result, 'whitelist');
+
+    expect(avaliacao.permitido).toBe(false);
+    expect(avaliacao.motivo).toBe('pais-nao-detectado');
+    expect(mocks.toastError).toHaveBeenCalledWith(avaliacao.mensagem);
+    expect(eventos('geo_blocking_settings', 'update')).toHaveLength(0);
+    expect(result.current.settings?.mode).toBe('disabled');
+    expect(mocks.toastSuccess).not.toHaveBeenCalled();
+  });
+
+  it('(b) whitelist sem o país do admin: recusa ativar e não grava', async () => {
+    enfileirarCiclo(SETTINGS, [EUA], []);
+    const { result } = await montar({ country: 'BR' });
+
+    const avaliacao = await tentarTrocar(result, 'whitelist');
+
+    expect(avaliacao.permitido).toBe(false);
+    expect(avaliacao.motivo).toBe('whitelist-sem-pais-do-admin');
+    expect(mocks.toastError).toHaveBeenCalledWith(avaliacao.mensagem);
+    expect(eventos('geo_blocking_settings', 'update')).toHaveLength(0);
+    expect(result.current.settings?.mode).toBe('disabled');
+  });
+
+  it('(c) blacklist com o país do admin: recusa ativar e não grava (código em minúsculas conta)', async () => {
+    enfileirarCiclo(SETTINGS, [], [EUA, BRASIL]);
+    const { result } = await montar({ country: 'br' });
+
+    const avaliacao = await tentarTrocar(result, 'blacklist');
+
+    expect(avaliacao.permitido).toBe(false);
+    expect(avaliacao.motivo).toBe('blacklist-com-pais-do-admin');
+    expect(mocks.toastError).toHaveBeenCalledWith(avaliacao.mensagem);
+    expect(eventos('geo_blocking_settings', 'update')).toHaveLength(0);
+    expect(result.current.settings?.mode).toBe('disabled');
+  });
+
+  it('permitido: whitelist com o país do admin ativa e grava', async () => {
+    enfileirarCiclo(SETTINGS, [BRASIL], []);
+    const { result } = await montar({ country: 'BR' });
+    mocks.filas.geo_blocking_settings.push({ data: null, error: null });
+
+    const avaliacao = await tentarTrocar(result, 'whitelist');
+
+    expect(avaliacao).toEqual({ permitido: true, motivo: null, mensagem: null });
+    expect(eventos('geo_blocking_settings', 'update')).toHaveLength(1);
+    expect(result.current.settings?.mode).toBe('whitelist');
+    expect(mocks.toastSuccess).toHaveBeenCalledWith('Modo alterado para: Whitelist (apenas permitidos)');
+  });
+
+  it('permitido: blacklist sem o país do admin ativa e grava', async () => {
+    enfileirarCiclo(SETTINGS, [], [EUA]);
+    const { result } = await montar({ country: 'BR' });
+    mocks.filas.geo_blocking_settings.push({ data: null, error: null });
+
+    const avaliacao = await tentarTrocar(result, 'blacklist');
+
+    expect(avaliacao.permitido).toBe(true);
+    expect(eventos('geo_blocking_settings', 'update')).toHaveLength(1);
+    expect(result.current.settings?.mode).toBe('blacklist');
+  });
+
+  it('desativar nunca é recusado, mesmo sem país confirmado', async () => {
+    enfileirarCiclo({ id: 'cfg-1', mode: 'whitelist' }, [BRASIL], []);
+    const { result } = await montar();
+    mocks.filas.geo_blocking_settings.push({ data: null, error: null });
+
+    const avaliacao = await tentarTrocar(result, 'disabled');
+
+    expect(avaliacao.permitido).toBe(true);
+    expect(result.current.settings?.mode).toBe('disabled');
+    expect(mocks.toastSuccess).toHaveBeenCalledWith('Modo alterado para: Desativado');
+  });
+
+  it('o motivo da recusa não revela os países das listas', async () => {
+    enfileirarCiclo(SETTINGS, [BRASIL], [EUA, COREA]);
+    const { result } = await montar({ country: 'KP' });
+
+    const avaliacao = await tentarTrocar(result, 'blacklist');
+
+    expect(avaliacao.motivo).toBe('blacklist-com-pais-do-admin');
+    for (const revelador of ['Brasil', 'BR', 'Estados Unidos', 'US', 'Coreia do Norte', 'KP']) {
+      expect(avaliacao.mensagem).not.toContain(revelador);
+    }
   });
 });
