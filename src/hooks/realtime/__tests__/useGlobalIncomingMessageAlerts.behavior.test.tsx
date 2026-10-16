@@ -195,9 +195,14 @@ describe('useGlobalIncomingMessageAlerts — aviso fora da inbox', () => {
     await waitFor(() => expect(toast).toHaveBeenCalledTimes(1));
 
     const args = toast.mock.calls[0][0] as { action: ReactElement<{ onClick: () => void }> };
-    act(() => args.action.props.onClick());
+    // O clique abre a conversa por `import()` (o módulo do catálogo puxa o
+    // `sonner` estaticamente e não pode entrar no bundle inicial), então a
+    // chamada chega num microtask — a asserção é a mesma, só espera o import.
+    await act(async () => {
+      args.action.props.onClick();
+    });
 
-    expect(h.openContactChat).toHaveBeenCalledWith('c1');
+    await waitFor(() => expect(h.openContactChat).toHaveBeenCalledWith('c1'));
   });
 });
 

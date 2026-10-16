@@ -20,7 +20,6 @@ import { getLogger } from '@/lib/logger';
 import { RealtimeService } from '@/services/realtime.service';
 import { toast } from '@/hooks/ui/use-toast';
 import { ToastAction } from '@/components/ui/toast';
-import { openContactChat } from '@/components/catalog/useSendProduct';
 import type { ConversationContact, RealtimeMessage } from '../chat/useRealtimeMessages';
 import { normalizeMessage } from './realtimeUtils';
 import { usePublishIncomingAlertIdentity } from './incomingAlertScope';
@@ -28,6 +27,22 @@ import { useRealtimeNotifications } from './useRealtimeNotifications';
 import { useSupabaseRealtime } from './useSupabaseRealtime';
 
 const log = getLogger('GlobalIncomingMessageAlerts');
+
+/**
+ * Abre a conversa do aviso.
+ *
+ * `openContactChat` (catálogo) vem por `import()` de propósito: aquele módulo
+ * importa `sonner` estaticamente, e este hook é montado no entry (`App.tsx`) —
+ * o import estático punha a lib no bundle inicial, medido por
+ * `src/__tests__/bundle-inicial.bundle.test.ts`. É o mesmo cuidado de
+ * `useRealtimeMessages` para o toast, e o módulo só é baixado quando alguém
+ * clica no aviso.
+ */
+function abrirConversaDoAviso(contactId: string): void {
+  void import('@/components/catalog/useSendProduct')
+    .then(({ openContactChat }) => openContactChat(contactId))
+    .catch((error) => log.error('Falha ao abrir a conversa do aviso:', error));
+}
 
 /**
  * Mesmo canal físico da inbox de propósito: `useSupabaseRealtime` compartilha
@@ -83,7 +98,7 @@ export function useGlobalIncomingMessageAlerts({
         title: `Nova mensagem de ${contact.name}`,
         description: message.content?.trim() || 'Mídia ou anexo sem texto',
         action: (
-          <ToastAction altText="Abrir a conversa" onClick={() => openContactChat(contact.id)}>
+          <ToastAction altText="Abrir a conversa" onClick={() => abrirConversaDoAviso(contact.id)}>
             Ver conversa
           </ToastAction>
         ),
