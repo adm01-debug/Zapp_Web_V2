@@ -1,4 +1,3 @@
-import { useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { log } from '@/lib/logger';
@@ -72,10 +71,7 @@ export function useConversationAnalyses(contactId: string | null) {
       : String(query.error)
     : null;
 
-  const refetch = useCallback(async () => {
-    // Mantém o contrato anterior: `refetch` nunca rejeita (o erro vem pelo `error`).
-    await query.refetch();
-  }, [query.refetch]);
+  const refetch = query.refetch;
 
   const saveAnalysis = async (
     analysis: Omit<ConversationAnalysis, 'id' | 'created_at' | 'analyzed_by'>

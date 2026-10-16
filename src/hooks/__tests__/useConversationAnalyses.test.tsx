@@ -147,11 +147,11 @@ describe('useConversationAnalyses', () => {
     await waitFor(() => expect(limitSpy).toHaveBeenCalledTimes(2));
   });
 
-  it('refetch não rejeita e recarrega', async () => {
+  it('refetch recarrega e não rejeita', async () => {
     const { Wrapper } = createWrapper();
     const { result } = renderHook(() => useConversationAnalyses(CONTACT_UUID), { wrapper: Wrapper });
     await waitFor(() => expect(result.current.analyses).toHaveLength(2));
-    await expect(result.current.refetch()).resolves.toBeUndefined();
+    await expect(result.current.refetch()).resolves.toBeTruthy();
     await waitFor(() => expect(limitSpy).toHaveBeenCalledTimes(2));
   });
 
