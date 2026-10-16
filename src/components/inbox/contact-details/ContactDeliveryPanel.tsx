@@ -27,7 +27,7 @@ interface ContactDeliveryPanelProps {
 }
 
 /** Hora cheia (ISO, UTC na RPC) no fuso de quem está olhando a tela. */
-export function hourLabel(iso: string): string {
+function hourLabel(iso: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return '--:00';
   return `${String(date.getHours()).padStart(2, '0')}:00`;

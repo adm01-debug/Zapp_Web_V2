@@ -53,12 +53,14 @@ export function useContactDeliveryStats(contactId: string, hours: number = DELIV
   const query = useQuery({
     queryKey: contactDeliveryStatsKey(contactId, hours),
     queryFn: async (): Promise<DeliveryStats | null> => {
-      const { data, error } = await supabase.rpc('delivery_stats', {
+      // cast temporário: types.ts gerado ainda não tem delivery_stats (RPC nova,
+      // migration 20261016102541) — o sync de types traz o tipo real depois.
+      const { data, error } = await (supabase as any).rpc('delivery_stats', { // eslint-disable-line @typescript-eslint/no-explicit-any -- cast temporário até sync de types
         p_contact_id: contactId,
         p_hours: hours,
       });
       if (error) throw error;
-      return (data ?? null) as DeliveryStats | null;
+      return (data ?? null) as unknown as DeliveryStats | null;
     },
     enabled: !!contactId,
     staleTime: 30_000,
