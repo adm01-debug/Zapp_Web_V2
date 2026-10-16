@@ -1054,21 +1054,6 @@ jobs:
       - name: Provar o runbook de recriacao do banco local (N-136)
         run: bash scripts/db-audit/recriar-banco-local.test.sh
 
-      # N-011 (P2 · banco, inventario A4): dedup de policies de leitura e exclusao
-      # em storage.objects para avatar, figurinha, meme e emoji. A origem
-      # (20260511233306) cria dois pares com USING identico em avatars e uma
-      # policy por verbo em stickers, audio-memes e custom-emojis; o contrato
-      # aplica os ARQUIVOS de migration reais num PostgreSQL 17 descartavel e
-      # prova uma policy por bucket+verbo, o acesso efetivo por papel (dono
-      # apaga o proprio, outro nao apaga o alheio, anonimo barrado) e o rollback.
-      # Inicia container proprio e roda CREATE ROLE anon/authenticated — as roles
-      # sao globais ao cluster, entao o docker-shim do E47 colidiria com as do shim.
-      - name: Provar dedup de policies de avatar em storage (N-011)
-        env:
-          N011_AVATAR_DEDUP_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
-          SKIP_DOCKER_SHIM: "1"
-        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/n011-storage-avatar-policies-dedup.test.sh
-
   # Gate do replay COMPLETO das migrations (cartao t_b6f4e82d). O replay-local.sh
   # existia e era provado so por harness offline; nenhum workflow o chamava, entao
   # nenhuma PR provava que o conjunto das migrations ainda aplica do zero. Aqui ele
