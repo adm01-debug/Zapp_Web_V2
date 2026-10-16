@@ -581,9 +581,12 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
       case 'quick': openDialog('quickReplies'); break;
       case 'summary': handleSetActiveTool('aiAssistant'); break;
       case 'produto': openDialog('catalogDirect'); break;
+      // L8 (paridade V3→V2, doc 11): o mesmo caminho do Alt+W do compositor
+      // (useChatPanelHandlers.ts:461) — o comando alterna, não liga só.
+      case 'whisper': toggleWhisper(); break;
       default: toast({ title: `Comando: ${command.label}`, description: command.description }); break;
     }
-  }, [closeDialog, openDialog, handleSetActiveTool, contactId, isFavorite, favoriteContact, unfavoriteContact, snoozeConversation, criarTarefaRef]);
+  }, [closeDialog, openDialog, handleSetActiveTool, contactId, isFavorite, favoriteContact, unfavoriteContact, snoozeConversation, criarTarefaRef, toggleWhisper]);
 
   // Contrato explícito (R2-INB-003): resolve só quando o transporte aceitou a
   // composição; rejeita quando o envio não foi confirmado — o builder mantém a

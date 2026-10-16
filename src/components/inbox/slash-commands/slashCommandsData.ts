@@ -1,6 +1,6 @@
 import {
   ArrowRight, CheckCircle, FileText, AlertTriangle,
-  Users, Clock, Star, Archive, Bell, Zap, MessageSquare, Package,
+  Users, Clock, Star, Archive, Bell, Zap, MessageSquare, Package, EyeOff,
 } from 'lucide-react';
 
 export interface SlashCommand {
@@ -11,7 +11,16 @@ export interface SlashCommand {
   icon: typeof ArrowRight;
   category: 'actions' | 'templates' | 'notes' | 'tags' | 'priority';
   color: string;
+  /**
+   * Letra do catálogo do comando. NÃO é um atalho de teclado: nenhum destes
+   * comandos é disparado por `⌘<letra>` — o hover da lista não a exibe mais
+   * (mostrava um atalho que não existia). O contrato de unicidade dela segue
+   * no teste de invariantes (U7); o atalho de verdade, quando existe, vai em
+   * `shortcutLabel`.
+   */
   shortcut?: string;
+  /** Atalho real, já implementado e testado. Sem ele o hover não mostra nada. */
+  shortcutLabel?: string;
   subCommands?: { id: string; label: string; value: string }[];
 }
 
@@ -33,6 +42,10 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   { id: 'quick', command: '/quick', label: 'Resposta Rápida', description: 'Usar uma resposta rápida salva', icon: Zap, category: 'templates', color: 'text-success', shortcut: 'K' },
   { id: 'summary', command: '/summary', label: 'Resumo IA', description: 'Gerar resumo da conversa com IA', icon: MessageSquare, category: 'actions', color: 'text-accent', shortcut: 'I' },
   { id: 'produto', command: '/produto', label: 'Catálogo', description: 'Buscar e enviar produto do catálogo', icon: Package, category: 'actions', color: 'text-success', shortcut: 'C' },
+  // L8 (paridade V3→V2, doc 11): o sussurro (nota interna) só existia por Alt+W
+  // no campo de mensagem. `shortcutLabel` é o atalho REAL — o hover da lista
+  // deixa de anunciar `⌘W`, que não dispara nada.
+  { id: 'whisper', command: '/whisper', label: 'Sussurro', description: 'Ligar ou desligar o modo sussurro (nota interna)', icon: EyeOff, category: 'actions', color: 'text-info', shortcut: 'W', shortcutLabel: 'Alt+W' },
 ];
 
 export const categoryColors: Record<string, string> = {

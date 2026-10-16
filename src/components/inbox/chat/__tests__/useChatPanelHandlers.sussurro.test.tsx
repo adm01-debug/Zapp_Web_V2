@@ -321,6 +321,19 @@ describe('sussurro do compositor — grava na nota interna e nunca no canal', ()
     expect(onSendMessage).toHaveBeenCalledTimes(1);
     expect(mocks.insercoes).toHaveLength(0);
   });
+  it('/whisper alterna o sussurro pelo mesmo caminho do Alt+W (L8)', () => {
+    const onSendMessage = vi.fn(async (_c: string, _r?: string | null): Promise<void> => {});
+    const { result } = montarHandlers({ onSendMessage });
+    const comando = { id: 'whisper', label: 'Sussurro', description: 'Ligar ou desligar o modo sussurro' };
+
+    expect(result.current.isWhisper).toBe(false);
+
+    act(() => result.current.handleSlashCommand(comando as never));
+    expect(result.current.isWhisper).toBe(true);
+
+    act(() => result.current.handleSlashCommand(comando as never));
+    expect(result.current.isWhisper).toBe(false);
+  });
 });
 
 describe('contador de sussurros (selo do cabeçalho)', () => {
