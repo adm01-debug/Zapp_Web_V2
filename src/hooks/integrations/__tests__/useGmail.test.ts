@@ -363,7 +363,8 @@ describe('useGmail', () => {
 
       await act(async () => { options.action?.onClick(); });
       await waitFor(() => expect(markReadCalls).toBe(2));
-      const retryBody = vi.mocked(callGmailFunction).mock.calls.at(-1)?.[1] as { action: string; message_ids: string[] };
+      const retryCalls = vi.mocked(callGmailFunction).mock.calls;
+      const retryBody = retryCalls[retryCalls.length - 1][1] as { action: string; message_ids: string[] };
       expect(retryBody.action).toBe('mark-read');
       expect(retryBody.message_ids).toEqual(['m2', 'm3']);
       unmount();
