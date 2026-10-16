@@ -31,7 +31,11 @@ const { dispatches } = vi.hoisted(() => ({
 }));
 
 vi.mock('@/hooks/integrations/useMultiplixDispatches', () => ({
-  useMultiplixDispatchesList: () => ({ data: dispatches, refetch: vi.fn() }),
+  // Contrato atual: a lista entrega `{ rows, total }` (o total do servidor é o
+  // que rotula o caso parcial). Aqui o total acompanha as linhas, então a lista
+  // NÃO está parcial e não há página seguinte a pedir.
+  useMultiplixDispatchesList: () => ({ data: { rows: dispatches, total: dispatches.length }, refetch: vi.fn() }),
+  fetchMultiplixDispatchesPage: vi.fn(),
   useCreateMultiplixDispatch: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 

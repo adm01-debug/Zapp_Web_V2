@@ -21,7 +21,7 @@ import {
   useMultiplixRamos, useMultiplixUfs, useMultiplixSearch, useMultiplixCount, MultiplixOverLimitError,
   type MultiplixSearchFilters, type MultiplixAudienceRow,
 } from '@/hooks/integrations/useMultiplixAudience';
-import { useMultiplixDispatchesList, useCreateMultiplixDispatch } from '@/hooks/integrations/useMultiplixDispatches';
+import { useMultiplixDispatchesList, useCreateMultiplixDispatch, fetchMultiplixDispatchesPage, type MultiplixDispatch } from '@/hooks/integrations/useMultiplixDispatches';
 import { MultiplixMonitor } from './MultiplixMonitor';
 
 const DISPATCH_STATUS: Record<string, { label: string; tone: 'success' | 'danger' | 'warning' | 'info' | 'violet' | 'muted' }> = {
@@ -176,6 +176,54 @@ export default function MultiplixView() {
   const lastVirtualRow = virtualRows[virtualRows.length - 1];
   const paddingTop = virtualRows[0]?.start ?? 0;
   const paddingBottom = lastVirtualRow ? audienceVirtualizer.getTotalSize() - lastVirtualRow.end : 0;
+
+  // TL-043/F81 — o histórico é lido UMA página por vez: `recentRows` é a página
+  // 0 (refeita pelo polling do hook) e `olderRows` são as páginas que o
+  // operador pediu. O `total` EXATO do servidor (`meta.total` do
+  // `dispatch.list`) é o que torna o caso parcial visível ("50 de 137") — antes
+  // a página era jogada na tela como se fosse o histórico inteiro, sem rótulo e
+  // sem caminho para os disparos mais antigos (o único jeito de abrir o monitor
+  // é clicar numa linha desta lista).
+  const recentRows = useMemo(() => dispatches.data?.rows ?? [], [dispatches.data]);
+  const historyTotal = dispatches.data?.total ?? null;
+  const [olderRows, setOlderRows] = useState<MultiplixDispatch[]>([]);
+  const [loadingOlder, setLoadingOlder] = useState(false);
+  const [olderError, setOlderError] = useState<string | null>(null);
+  const historyRows = useMemo(() => {
+    // Um disparo criado depois da primeira página empurra o offset: o mesmo id
+    // pode voltar na página 0 E numa página antiga. A página 0 (`recentRows`,
+    // refeita pelo polling do hook a cada 10 s) é SEMPRE a mais nova, então ela
+    // VENCE: por isso ela é iterada PRIMEIRO e só a primeira escrita fica
+    // (`if (!has)` — o `Map` mantém a posição da primeira inserção, então a
+    // ordem "mais novo primeiro" é preservada e a página antiga nunca
+    // sobrescreve a versão nova).
+    const byId = new Map<string, MultiplixDispatch>();
+    for (const d of [...recentRows, ...olderRows]) if (!byId.has(d.id)) byId.set(d.id, d);
+    return [...byId.values()];
+  }, [recentRows, olderRows]);
+  const hasMoreHistory = historyTotal !== null && historyRows.length < historyTotal;
+
+  const loadOlder = async () => {
+    setLoadingOlder(true);
+    setOlderError(null);
+    try {
+      const page = await fetchMultiplixDispatchesPage(historyRows.length);
+      // Append por id: a página antiga pode repetir um disparo já carregado
+      // (`recentRows` empurra o offset a cada nova linha), e anexar sem filtrar
+      // duplicava a linha na lista. Filtra contra o que já está na tela
+      // (recentes + antigas); a página 0 continua vencendo no `historyRows`.
+      setOlderRows((prev) => {
+        const jaCarregados = new Set([...recentRows, ...prev].map((d) => d.id));
+        const novos = page.rows.filter((d) => !jaCarregados.has(d.id));
+        return [...prev, ...novos];
+      });
+    } catch (e) {
+      // Falha de leitura não vira lista vazia confirmada: o aviso fica na tela.
+      setOlderError(e instanceof Error ? e.message : 'Erro ao carregar os disparos mais antigos');
+    } finally {
+      setLoadingOlder(false);
+    }
+  };
 
   const filters: MultiplixSearchFilters = useMemo(() => ({
     roles: roles.length ? roles : undefined,
@@ -440,15 +488,24 @@ export default function MultiplixView() {
         subtitle="Envio em massa para fornecedores, transportadoras e clientes"
       />
 
-      {(dispatches.data?.length ?? 0) > 0 && (
+      {historyRows.length > 0 && (
         <div className="rounded-2xl border border-border bg-card p-4">
-          <p className="text-sm font-semibold text-foreground mb-3 flex items-center gap-1.5"><ListChecks className="w-4 h-4" />Disparos recentes</p>
-          {/* Lista TODOS os disparos que a edge devolveu (ate o limite do fetch),
-              com rolagem. Antes o `slice(0, 8)` escondia do 9o em diante: o dado
-              vinha do servidor e nao tinha nenhum caminho de clique para o
-              monitor. */}
+          <p className="text-sm font-semibold text-foreground mb-3 flex items-center gap-1.5">
+            <ListChecks className="w-4 h-4" />
+            <span>Disparos recentes</span>
+            {/* TL-043/F81: sem o total do servidor ao lado, a página de 50 se
+                passava pela história inteira. */}
+            {historyTotal !== null && (
+              <span className="text-xs font-normal text-muted-foreground tabular-nums">
+                {fmtInt(historyRows.length)} de {fmtInt(historyTotal)}
+              </span>
+            )}
+          </p>
+          {/* Lista todos os disparos carregados, com rolagem. Antes o `slice(0, 8)`
+              escondia do 9o em diante: o dado vinha do servidor e nao tinha
+              nenhum caminho de clique para o monitor. */}
           <div className="divide-y divide-border/40 max-h-[22.5rem] overflow-auto">
-            {dispatches.data!.map((d) => (
+            {historyRows.map((d) => (
               <button
                 key={d.id}
                 type="button"
@@ -463,6 +520,15 @@ export default function MultiplixView() {
               </button>
             ))}
           </div>
+          {olderError && <p className="mt-2 text-xs text-destructive">{olderError}</p>}
+          {hasMoreHistory && (
+            <div className="flex justify-center border-t border-border/40 pt-3">
+              <Button variant="outline" size="sm" onClick={loadOlder} disabled={loadingOlder}>
+                {loadingOlder ? <Loader2 className="h-4 w-4 motion-safe:animate-spin" aria-hidden="true" /> : null}
+                Carregar mais antigos
+              </Button>
+            </div>
+          )}
         </div>
       )}
 
