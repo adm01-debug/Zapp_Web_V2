@@ -31,7 +31,7 @@ function setup(over: Partial<React.ComponentProps<typeof SummaryResult>> = {}) {
     ...over,
   };
   const utils = render(<SummaryResult {...props} />);
-  const iconButtons = () => Array.from(utils.container.querySelectorAll('button.h-6.w-6')) as HTMLElement[];
+  const iconButtons = () => Array.from(utils.container.querySelectorAll('button.h-8.w-8')) as HTMLElement[];
   return { ...utils, props, iconButtons };
 }
 
