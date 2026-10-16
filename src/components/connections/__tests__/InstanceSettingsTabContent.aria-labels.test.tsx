@@ -3,7 +3,6 @@ import { describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { from: vi.fn() } }));
-vi.mock('@/hooks/ui/use-toast', () => ({ toast: vi.fn() }));
 
 import { SettingsTabContent } from '../InstanceSettingsTabContent';
 
