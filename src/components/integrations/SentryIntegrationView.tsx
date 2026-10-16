@@ -94,11 +94,11 @@ export function SentryIntegrationView() {
               <Input type="number" step="0.01" min="0" max="1" value={config.tracesSampleRate} onChange={e => setConfig(p => ({ ...p, tracesSampleRate: Number(e.target.value) }))} />
             </div>
             <div className="flex items-center gap-2 mt-auto">
-              <Switch checked={config.enablePerformance} onCheckedChange={v => setConfig(p => ({ ...p, enablePerformance: v }))} />
+              <Switch checked={config.enablePerformance} onCheckedChange={v => setConfig(p => ({ ...p, enablePerformance: v }))} aria-label="Performance" />
               <Label className="text-xs">Performance</Label>
             </div>
             <div className="flex items-center gap-2 mt-auto">
-              <Switch checked={config.enableReplays} onCheckedChange={v => setConfig(p => ({ ...p, enableReplays: v }))} />
+              <Switch checked={config.enableReplays} onCheckedChange={v => setConfig(p => ({ ...p, enableReplays: v }))} aria-label="Session Replay" />
               <Label className="text-xs">Session Replay</Label>
             </div>
           </div>
