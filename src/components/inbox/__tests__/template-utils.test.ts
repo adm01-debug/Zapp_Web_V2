@@ -17,13 +17,17 @@ afterEach(() => {
 // ── AVAILABLE_VARIABLES ───────────────────────────────────────────────────────
 
 describe('AVAILABLE_VARIABLES', () => {
-  it('lista as 8 variáveis oferecidas ao usuário, sem chave repetida', () => {
+  it('lista as 7 variáveis oferecidas ao usuário, sem chave repetida', () => {
     const keys = AVAILABLE_VARIABLES.map((v) => v.key);
     expect(keys).toEqual([
       'nome', 'primeiro_nome', 'empresa', 'cargo',
-      'saudacao', 'data_atual', 'protocolo', 'atendente',
+      'saudacao', 'data_atual', 'atendente',
     ]);
     expect(new Set(keys).size).toBe(keys.length);
+  });
+
+  it('não oferece {{protocolo}}: não existe protocolo real e inventado é pior que nenhum', () => {
+    expect(AVAILABLE_VARIABLES.some((v) => v.key === 'protocolo')).toBe(false);
   });
 
   it('toda variável tem rótulo, exemplo e ícone', () => {
@@ -69,6 +73,26 @@ describe('replaceVariables — dados do contato', () => {
   });
 });
 
+describe('replaceVariables — texto do contato com $&, $$ e $1 não corrompe', () => {
+  it('nome "A$&B" entra LITERAL (antes, $& virava o próprio {{nome}})', () => {
+    expect(replaceVariables('Oi {{nome}}!', { name: 'A$&B' })).toBe('Oi A$&B!');
+  });
+
+  it('empresa com $$ e $1 entra literal', () => {
+    expect(replaceVariables('{{empresa}}', { company: 'Cia $$ e $1' })).toBe('Cia $$ e $1');
+  });
+
+  it('cargo com $` e $\' entra literal', () => {
+    expect(replaceVariables('{{cargo}}', { job_title: "$`x$'" })).toBe("$`x$'");
+  });
+
+  it('valor com $& não reintroduz a variável nem duplica o texto', () => {
+    const out = replaceVariables('{{primeiro_nome}}', { name: '$&ana' });
+    expect(out).toBe('$&ana');
+    expect(out).not.toContain('{{');
+  });
+});
+
 describe('replaceVariables — valores padrão e customizados', () => {
   it('{{saudacao}} segue o horário da manhã', () => {
     vi.setSystemTime(new Date('2026-01-06T09:00:00'));
@@ -89,12 +113,10 @@ describe('replaceVariables — valores padrão e customizados', () => {
     expect(replaceVariables('{{data_atual}}')).toBe('06/01/2026');
   });
 
-  it('{{protocolo}} tem 13 dígitos precedidos de #', () => {
-    expect(replaceVariables('{{protocolo}}')).toMatch(/^#\d{13}$/);
-  });
-
-  it('{{atendente}} cai no valor padrão', () => {
-    expect(replaceVariables('Falou {{atendente}}')).toBe('Falou Atendente');
+  it('{{protocolo}} fica PENDENTE e o texto não muda entre chamadas (nada aleatório)', () => {
+    const texto = 'Protocolo {{protocolo}} aberto';
+    expect(replaceVariables(texto)).toBe(texto);
+    expect(replaceVariables(texto)).toBe(replaceVariables(texto));
   });
 
   it('customValues sobrepõem os valores padrão', () => {
@@ -107,6 +129,27 @@ describe('replaceVariables — valores padrão e customizados', () => {
   it('variável desconhecida fica como estava no texto', () => {
     expect(replaceVariables('{{inexistente}} e {{nome}}', { name: 'Ana' }))
       .toBe('{{inexistente}} e Ana');
+  });
+});
+
+describe('replaceVariables — atendente real (agentName)', () => {
+  it('sem agentName, {{atendente}} fica PENDENTE (nada de "Atendente" genérico)', () => {
+    expect(replaceVariables('Falou {{atendente}}')).toBe('Falou {{atendente}}');
+  });
+
+  it('com agentName, {{atendente}} recebe o nome do atendente logado', () => {
+    expect(replaceVariables('Falou {{atendente}}', undefined, undefined, 'Maria Santos'))
+      .toBe('Falou Maria Santos');
+  });
+
+  it('agentName só com espaços não preenche (fica pendente)', () => {
+    expect(replaceVariables('Falou {{atendente}}', undefined, undefined, '   '))
+      .toBe('Falou {{atendente}}');
+  });
+
+  it('agentName convive com os dados do contato', () => {
+    const out = replaceVariables('{{atendente}} fala com {{nome}}', { name: 'Ana' }, undefined, 'Maria');
+    expect(out).toBe('Maria fala com Ana');
   });
 });
 
@@ -124,5 +167,10 @@ describe('extractVariables', () => {
   it('extrai várias, sem repetir e em minúsculas', () => {
     expect(extractVariables('{{Nome}} {{empresa}} {{nome}}'))
       .toEqual(['nome', 'empresa']);
+  });
+
+  it('detecta {{atendente}} e {{protocolo}} pendentes no texto', () => {
+    expect(extractVariables('{{atendente}} — {{protocolo}}'))
+      .toEqual(['atendente', 'protocolo']);
   });
 });
