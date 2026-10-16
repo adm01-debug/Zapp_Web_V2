@@ -16,6 +16,7 @@ const estado = vi.hoisted(() => ({
   invoke: null as { name: string; body: Record<string, unknown> } | null,
   invokeResult: { data: null as Record<string, unknown> | null, error: null as unknown },
   erroConexoes: false,
+  kbCount: 42,
 }));
 
 vi.mock('@/integrations/supabase/client', () => ({
@@ -62,7 +63,7 @@ vi.mock('@/integrations/supabase/client', () => ({
       }
       if (table === 'knowledge_base_articles') {
         return {
-          select: () => ({ eq: () => Promise.resolve({ count: 42, error: null }) }),
+          select: () => ({ eq: () => Promise.resolve({ count: estado.kbCount, error: null }) }),
         };
       }
       return { select: () => Promise.resolve({ data: [], error: null }) };
@@ -146,6 +147,7 @@ vi.mock('@/components/ui/select', async () => {
 });
 
 import { ChatbotL1Config } from '../ChatbotL1Config';
+import { normalizarConfianca } from '@/lib/chatbotConfianca';
 
 const renderConfig = () => {
   const queryClient = new QueryClient({
@@ -176,6 +178,7 @@ describe('ChatbotL1Config — interruptor acessível por nome', () => {
     estado.invoke = null;
     estado.invokeResult = { data: null, error: null };
     estado.erroConexoes = false;
+    estado.kbCount = 42;
   });
 
   it('o interruptor de ativar chatbot é alcançável pelo nome', async () => {
@@ -215,6 +218,7 @@ describe('ChatbotL1Config — fluxo por conexão', () => {
     estado.invoke = null;
     estado.invokeResult = { data: null, error: null };
     estado.erroConexoes = false;
+    estado.kbCount = 42;
   });
 
   it('sem conexão escolhida nada é lido e o Salvar fica desabilitado', async () => {
@@ -330,5 +334,105 @@ describe('ChatbotL1Config — simulação da resposta', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Não foi possível carregar as conexões de WhatsApp. Recarregue a página e tente de novo.',
     );
+  });
+});
+
+describe('ChatbotL1Config — refazer 1 (recusa de 15/10)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    estado.flow = null;
+    estado.eqsDeFluxo = [];
+    estado.updatePayload = null;
+    estado.insertPayload = null;
+    estado.invoke = null;
+    estado.invokeResult = { data: null, error: null };
+    estado.erroConexoes = false;
+    estado.kbCount = 42;
+  });
+
+  it('ponto 1: confiança salva fora da faixa volta ao padrão 60 em vez de gravar o valor inválido', async () => {
+    estado.flow = {
+      id: 'flow-1',
+      name: 'Bot do Comercial',
+      is_active: true,
+      trigger_type: 'ai_l1',
+      variables: { confidence_threshold: 150, welcome_message: 'Olá!', transfer_message: 'Transferindo...' },
+    };
+    renderConfig();
+    await escolherConexao('Comercial', 'conn-1');
+    await waitFor(() => {
+      expect(screen.getByLabelText('Nome do Bot')).toHaveValue('Bot do Comercial');
+    });
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Salvar Configuração' }));
+
+    await waitFor(() => {
+      expect(estado.updatePayload).not.toBeNull();
+    });
+    expect((estado.updatePayload?.variables as Record<string, unknown>).confidence_threshold).toBe(60);
+  });
+
+  it('ponto 1 (sem regressão): confiança dentro da faixa continua gravando o valor da tela', async () => {
+    estado.flow = {
+      id: 'flow-1',
+      name: 'Bot do Comercial',
+      is_active: true,
+      trigger_type: 'ai_l1',
+      variables: { confidence_threshold: 75, welcome_message: 'Olá!', transfer_message: 'Transferindo...' },
+    };
+    renderConfig();
+    await escolherConexao('Comercial', 'conn-1');
+    await waitFor(() => {
+      expect(screen.getByLabelText('Nome do Bot')).toHaveValue('Bot do Comercial');
+    });
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Salvar Configuração' }));
+
+    await waitFor(() => {
+      expect(estado.updatePayload).not.toBeNull();
+    });
+    expect((estado.updatePayload?.variables as Record<string, unknown>).confidence_threshold).toBe(75);
+  });
+
+  it('ponto 2: após criar o fluxo novo o Salvar fica desabilitado até o fluxo chegar', async () => {
+    renderConfig();
+    await escolherConexao('Suporte', 'conn-2');
+
+    const salvar = await screen.findByRole('button', { name: 'Salvar Configuração' });
+    expect(salvar).toBeEnabled();
+    fireEvent.click(salvar);
+
+    await waitFor(() => {
+      expect(estado.insertPayload).not.toBeNull();
+    });
+    // O mock não devolve o fluxo criado: sem o fluxo na tela, o botão segue
+    // bloqueado em vez de liberar um segundo insert duplicado.
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Salvar Configuração' })).toBeDisabled();
+    });
+  });
+
+  it('ponto 3: sem artigo na KB a tela recomenda publicar ao menos 1, sem mexer no contador', async () => {
+    estado.kbCount = 0;
+    renderConfig();
+
+    expect(await screen.findByText(/publique ao menos 1 artigo/i)).toBeInTheDocument();
+    expect(screen.getByText('0')).toBeInTheDocument();
+  });
+
+  it('ponto 1 (unidade): fora da faixa volta ao salvo atual; sem salvo válido, ao padrão 60', () => {
+    expect(normalizarConfianca(10, 70)).toBe(70);
+    expect(normalizarConfianca(150, 70)).toBe(70);
+    expect(normalizarConfianca(10, null)).toBe(60);
+    expect(normalizarConfianca(150, 150)).toBe(60);
+    expect(normalizarConfianca(75, 70)).toBe(75);
+    expect(normalizarConfianca(30, 70)).toBe(30);
+    expect(normalizarConfianca(95, 70)).toBe(95);
+  });
+
+  it('ponto 3 (sem regressão): com artigos na KB a tela segue mostrando a contagem no passo 2', async () => {
+    renderConfig();
+
+    expect(await screen.findByText(/IA analisa usando a Base de Conhecimento \(42 artigos\)/)).toBeInTheDocument();
   });
 });

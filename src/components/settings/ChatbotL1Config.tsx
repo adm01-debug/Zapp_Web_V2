@@ -15,6 +15,7 @@ import { ContactPicker, type ContatoEscolhido } from '@/components/calls/Contact
 import { toast } from '@/hooks/ui/use-toast';
 import { Bot, Brain, Shield, Zap, BookOpen, ArrowRightLeft, Play } from 'lucide-react';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { CONFIANCA_PADRAO, normalizarConfianca } from '@/lib/chatbotConfianca';
 
 type ChatbotFlow = Database['public']['Tables']['chatbot_flows']['Row'];
 
@@ -66,7 +67,7 @@ function valoresDoFluxo(flow: ChatbotFlow | null | undefined): FormValues {
   return {
     isActive: flow?.is_active ?? false,
     name: flow?.name ?? DEFAULT_NAME,
-    confidenceThreshold: typeof vars?.confidence_threshold === 'number' ? vars.confidence_threshold : 60,
+    confidenceThreshold: normalizarConfianca(vars?.confidence_threshold, CONFIANCA_PADRAO),
     welcomeMessage: typeof vars?.welcome_message === 'string' ? vars.welcome_message : DEFAULT_WELCOME,
     transferMessage: typeof vars?.transfer_message === 'string' ? vars.transfer_message : DEFAULT_TRANSFER,
   };
@@ -130,11 +131,19 @@ export function ChatbotL1Config() {
     setEdits({ key: formKey, values: { ...atuais, [field]: value } });
   };
 
+  // Conexão cujo fluxo acabou de ser CRIADO e ainda não voltou na leitura:
+  // o Salvar segue bloqueado até o fluxo chegar, para não empilhar um
+  // segundo insert duplicado. Amarrado à conexão (trocar de conexão libera).
+  const [fluxoCriadoEm, setFluxoCriadoEm] = useState('');
+
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (!connectionId) throw new Error('Escolha a conexão de WhatsApp.');
+      // Fora da faixa do controle não é gravado: volta ao valor salvo atual
+      // da conexão (ou ao padrão, se não houver).
+      const salvoAtual = valoresDoFluxo(flow).confidenceThreshold;
       const variables = {
-        confidence_threshold: form.confidenceThreshold,
+        confidence_threshold: normalizarConfianca(form.confidenceThreshold, salvoAtual),
         welcome_message: form.welcomeMessage,
         transfer_message: form.transferMessage,
       };
@@ -164,6 +173,9 @@ export function ChatbotL1Config() {
       }
     },
     onSuccess: () => {
+      // Criou agora (não havia fluxo) e a leitura ainda não voltou: trava o
+      // botão até o fluxo chegar. Atualização de fluxo existente não trava.
+      if (!flow?.id) setFluxoCriadoEm(connectionId);
       queryClient.invalidateQueries({ queryKey: ['chatbot-l1-flow'] });
       toast({ title: 'Chatbot IA salvo!', description: 'O assistente L1 foi configurado para esta conexão.' });
     },
@@ -388,13 +400,27 @@ export function ChatbotL1Config() {
             <p className="text-xs font-medium">Como funciona:</p>
             <div className="text-xs text-muted-foreground space-y-1">
               <p>1. 📩 Cliente envia mensagem</p>
-              <p>2. 🤖 IA analisa usando a Base de Conhecimento ({kbCount} artigos)</p>
+              {kbCount === 0 ? (
+                <p>2. 🤖 Publique ao menos 1 artigo na Base de Conhecimento para o robô ter o que responder.</p>
+              ) : (
+                <p>2. 🤖 IA analisa usando a Base de Conhecimento ({kbCount} artigos)</p>
+              )}
               <p>3. ✅ Se confiança ≥ {form.confidenceThreshold}% → Responde automaticamente</p>
               <p>4. 🔄 Se confiança {'<'} {form.confidenceThreshold}% → Transfere para humano</p>
             </div>
           </div>
 
-          <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending || !connectionId} className="w-full">
+          {/* Travado sem conexão, durante o salvamento e logo após criar o
+              fluxo novo (até a leitura trazer o fluxo e evitar duplicata). */}
+          <Button
+            onClick={() => saveMutation.mutate()}
+            disabled={
+              saveMutation.isPending ||
+              !connectionId ||
+              (fluxoCriadoEm !== '' && fluxoCriadoEm === connectionId && !flow?.id && !erroFluxo)
+            }
+            className="w-full"
+          >
             {saveMutation.isPending ? 'Salvando...' : 'Salvar Configuração'}
           </Button>
         </CardContent>
