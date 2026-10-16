@@ -1,45 +1,40 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Plus, Bookmark, Star, StarOff, Pencil, Trash2, Zap, BarChart3, X, MoreVertical, Users, Shield, Check, Database, Search,
-  RefreshCw, MessageCircle,
+  Archive, AlertTriangle, PowerOff, Tag,
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 import { PrimaryButton, GhostButton, Pill, ProgressBar, InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
 import { DashboardKpiCard, type KpiDelta } from '@/components/dashboard/overview/DashboardKpiCard';
 import { cn } from '@/lib/utils';
-import { useTalkXSegments, emptyRules, RULE_FIELDS, useAudienceEstimate, countAudience, type TalkXSegment, type TalkXSegmentLibraryStats, type TalkXSegmentLibraryMonth } from '@/hooks/integrations/useTalkXSegments';
-import { RailCard, MetaRow, TalkXEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, Th, Td, KpiCardSkeleton, TalkXConfirmDialog, fmtInt, fmtDateTime, fmtAgo, ModuleHeader } from './talkxShared';
+import { useTalkXSegments, emptyRules, RULE_FIELDS, useAudienceEstimate, countAudience, type TalkXSegment, type TalkXSegmentLibraryStats, type TalkXSegmentLibraryMonth, type TalkXSegmentBulkAction, type TalkXSegmentBulkResult } from '@/hooks/integrations/useTalkXSegments';
+import { RailCard, MetaRow, TalkXEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, Th, Td, KpiCardSkeleton, TalkXConfirmDialog, TalkXBulkBar, fmtInt, fmtDateTime, fmtAgo } from './talkxShared';
 import { TalkXQueryBoundary } from './kit/states';
 import { TalkXSegmentBuilder } from './segments/TalkXSegmentBuilder';
+import { SegmentSideList } from './segments/SegmentSideList';
 import type { SegmentBuilderContent } from './segments/segmentBuilderReducer';
 import { validateSegmentRules } from './segments/segmentValidation';
 import { parseTalkXSegmentsRoute, pushTalkXSegmentsRoute, replaceTalkXSegmentsRoute, type TalkXSegmentsRoute } from './segments/talkxSegmentsRoute';
 import { toast } from 'sonner';
 
 interface Props {
-  onUseCampaign: (segmentId: string) => void;
+  onUseCampaign: (segmentIds: string[]) => void;
 }
 
 /** Rascunho aberto no construtor (X099): o id é o do segmento em edição, ou null no novo. */
 interface EditingSeed extends SegmentBuilderContent { id: string | null }
 
-/** Abas superiores da tela 03 (T03-007 a T03-011). Só "Segmentos" tem conteúdo hoje; as demais
- *  chegam em X113 (Regras Avançadas, Audiências, Modelos) e X117 (Insights com IA). */
-const SEGMENT_TOP_TABS: { label: string; ready: boolean }[] = [
-  { label: 'Segmentos', ready: true },
-  { label: 'Regras Avançadas', ready: false },
-  { label: 'Audiências', ready: false },
-  { label: 'Modelos', ready: false },
-  { label: 'Insights com IA', ready: false },
-];
-
 export function TalkXSegments({ onUseCampaign }: Props) {
   const {
     segments, isLoading, isError, error, refetch, createSegment, updateSegment, deleteSegment,
     libraryStats = null, libraryStatsLoading = false, libraryStatsError = null, refetchLibraryStats = () => {},
-    refreshEstimates,
+    // X114 — seleção/ações em massa. Defaults só para os mocks de tela que
+    // injetam um hook mínimo: o hook real sempre devolve os seis.
+    selectedIds = [], toggleSelect = () => {}, selectAll = () => {}, clearSelection = () => {}, runBulkAction = async () => [], isBulkRunning = false,
   } = useTalkXSegments();
+  const [bulkResult, setBulkResult] = useState<TalkXSegmentBulkResult[] | null>(null);
+  const [bulkTag, setBulkTag] = useState('');
   const [search, setSearch] = useState('');
   const [filterOrigin, setFilterOrigin] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -49,6 +44,10 @@ export function TalkXSegments({ onUseCampaign }: Props) {
   const [deleting, setDeleting] = useState<TalkXSegment | null>(null);
   const [editing, setEditing] = useState<EditingSeed | null>(null);
   const [saving, setSaving] = useState(false);
+  // TL-134: gaveta "Meus segmentos" (<xl) e guarda de edição suja do construtor
+  // (o construtor registra a guarda via onGuardChange a cada render).
+  const [sideListOpen, setSideListOpen] = useState(false);
+  const builderGuardRef = useRef<((proceed: () => void) => void) | null>(null);
   // X111 — o construtor da tela 03 vive no endereço (?view=talkx&tab=segments&segment=<id>&mode=edit|new):
   // o link direto abre o segmento, o F5 mantém a tela e voltar/avançar do navegador fecham e reabrem.
   // `route` é o que o endereço pede; `editing` é a cópia que o usuário está editando na tela.
@@ -109,6 +108,34 @@ export function TalkXSegments({ onUseCampaign }: Props) {
 
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
 
+  /* X114 — seleção e ações em massa da biblioteca. O resultado vem POR SEGMENTO
+     do hook (RPC guardada): a tela nunca resume o lote como um veredito único. */
+  const pageIds = paged.map((s) => s.id);
+  const allPageSelected = pageIds.length > 0 && pageIds.every((id) => selectedIds.includes(id));
+  const nameOfSegment = (id: string) => segments.find((s) => s.id === id)?.name ?? id;
+
+  // "Selecionar todos" é o que está VISÍVEL (filtro + página), e mexe só nele:
+  // o que já estava escolhido em outra página continua escolhido.
+  const toggleAllOnPage = () => {
+    if (allPageSelected) pageIds.forEach((id) => toggleSelect(id));
+    else pageIds.filter((id) => !selectedIds.includes(id)).forEach((id) => toggleSelect(id));
+  };
+
+  const runBulk = async (action: TalkXSegmentBulkAction, tag?: string) => {
+    if (isBulkRunning || selectedIds.length === 0) return;
+    try {
+      const results = await runBulkAction({ action, ids: selectedIds, tag });
+      setBulkResult(results);
+      // Só o que NÃO foi aplicado segue selecionado: item barrado pela guarda
+      // fica à mão para conferir e refazer, sem reselecionar o lote inteiro.
+      const falhos = results.filter((r) => !r.succeeded).map((r) => r.segment_id);
+      clearSelection();
+      if (falhos.length > 0) selectAll(falhos);
+    } catch (e) {
+      toast.error(`Não foi possível aplicar a ação: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  };
+
   /** Nomes da biblioteca sem o próprio segmento em edição: base do aviso de nome repetido. */
   const existingNames = useMemo(
     () => segments.filter((s) => s.id !== activeEditing?.id).map((s) => s.name),
@@ -130,6 +157,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
   };
   // Fechar o construtor (cancelar ou publicar) devolve a tela e o endereço à biblioteca.
   const closeBuilder = () => {
+    builderGuardRef.current = null;
     setEditing(null);
     setRoute(null);
     replaceTalkXSegmentsRoute(null);
@@ -167,12 +195,60 @@ export function TalkXSegments({ onUseCampaign }: Props) {
 
   const toggleFav = async (s: TalkXSegment) => { await updateSegment.mutateAsync({ id: s.id, is_favorite: !s.is_favorite }); };
 
-  // T03-005 — o ↻ do cabeçalho da tela 03 refaz a lista e a estimativa do público.
-  const refreshAll = () => {
-    void refetch();
-    refetchLibraryStats();
-    refreshEstimates.mutate(segments);
+  // TL-134: a lista lateral troca de segmento/novo passando pela guarda de edição
+  // suja do construtor (diálogo quando há edição não salva; direto quando limpo).
+  const guardedOpenNew = () => {
+    setSideListOpen(false);
+    if (activeEditing && builderGuardRef.current) builderGuardRef.current(() => openNew());
+    else openNew();
   };
+  const guardedOpenEdit = (t: TalkXSegment) => {
+    setSideListOpen(false);
+    if (activeEditing && builderGuardRef.current) builderGuardRef.current(() => openEdit(t));
+    else openEdit(t);
+  };
+  // Estrela da lista: devolve a promessa para a lista desfazer se falhar (V55).
+  const setFavorite = (t: TalkXSegment, next: boolean) =>
+    updateSegment.mutateAsync({ id: t.id, is_favorite: next });
+  const sideListProps = {
+    segments,
+    isLoading,
+    isError,
+    error,
+    onRetry: () => { void refetch(); },
+    activeId: activeEditing?.id ?? null,
+    onSelect: guardedOpenEdit,
+    onNew: guardedOpenNew,
+    onEdit: guardedOpenEdit,
+    onUseCampaign: (id: string) => onUseCampaign([id]),
+    onToggleFavorite: setFavorite,
+    onToggleStatus: (t: TalkXSegment, next: 'active' | 'inactive') => {
+      updateSegment.mutate({ id: t.id, status: next });
+    },
+    onDelete: (t: TalkXSegment) => setDeleting(t),
+  };
+  // Excluir o segmento aberto no construtor fecha o construtor (volta à biblioteca).
+  const confirmDeleteDialog = (
+    <TalkXConfirmDialog
+      open={!!deleting}
+      onClose={() => setDeleting(null)}
+      onConfirm={() => {
+        if (!deleting) return;
+        const wasEditing = activeEditing?.id != null && activeEditing.id === deleting.id;
+        deleteSegment.mutate(deleting.id);
+        setDeleting(null);
+        if (selected?.id === deleting.id) setSelected(null);
+        if (wasEditing) closeBuilder();
+      }}
+      icon={Trash2}
+      iconColor="red"
+      tone="danger"
+      title="Excluir segmento"
+      description="O segmento sai da biblioteca e deixa de aparecer nas campanhas que o usam como público. Essa ação não pode ser desfeita."
+      entityName={deleting?.name}
+      confirmLabel="Excluir segmento"
+    />
+  );
 
   if (activeEditing) {
     return (
@@ -185,41 +261,8 @@ export function TalkXSegments({ onUseCampaign }: Props) {
           <span className="text-border">›</span>
           <span className="text-foreground font-medium">Segmentos</span>
         </nav>
-        {/* X111/T03-002 — cabeçalho próprio da tela 03 (o construtor deixa de ficar sob o
-            cabeçalho "Campanhas" da tela 02) + T03-005, o ↻ que refaz lista e estimativa. */}
-        <ModuleHeader
-          icon={MessageCircle}
-          color="green"
-          title="Segmentos"
-          subtitle="Crie, gerencie e utilize segmentos inteligentes para suas campanhas no Talk X."
-          right={
-            <GhostButton icon={RefreshCw} onClick={refreshAll} title="Atualizar lista e estimativa">
-              Atualizar
-            </GhostButton>
-          }
-        />
-        {/* X111/T03-007 a T03-011 — barra de abas superiores da tela 03. O mock desenha só a
-            barra: o conteúdo de "Regras Avançadas", "Audiências" e "Modelos" entra em X113 e o de
-            "Insights com IA" em X117, por isso as abas ainda sem conteúdo ficam desabilitadas
-            (a barra inteira é a mesma do mock, sem prometer navegação que não existe). */}
-        <nav aria-label="Abas superiores de segmentos" className="flex items-center gap-1 overflow-x-auto border-b border-border/60">
-          {SEGMENT_TOP_TABS.map((tab) => (
-            <button
-              key={tab.label}
-              type="button"
-              disabled={!tab.ready}
-              aria-current={tab.ready ? 'page' : undefined}
-              className={cn(
-                'h-9 px-3 text-xs font-medium whitespace-nowrap rounded-t-lg border-b-2 -mb-px transition-colors',
-                tab.ready
-                  ? 'text-foreground border-primary'
-                  : 'text-muted-foreground border-transparent opacity-60 cursor-not-allowed',
-              )}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
+        {/* TL-134 (X099): SEM `key` de propósito — a troca de segmento repõe o
+            rascunho pela ação `reset` do reducer, num `useEffect [initial]`. */}
         <TalkXSegmentBuilder
           initial={activeEditing}
           isNew={!activeEditing.id}
@@ -227,7 +270,20 @@ export function TalkXSegments({ onUseCampaign }: Props) {
           existingNames={existingNames}
           onSave={(draft) => void save(draft)}
           onCancel={closeBuilder}
+          onGuardChange={(g) => { builderGuardRef.current = g; }}
+          sideList={<SegmentSideList {...sideListProps} />}
+          sideListButton={(
+            <button
+              type="button"
+              onClick={() => setSideListOpen(true)}
+              className="xl:hidden h-9 px-3 rounded-lg border border-border/70 bg-input/40 inline-flex items-center gap-1.5 text-xs font-medium text-foreground-secondary hover:bg-muted/50 shrink-0"
+            >
+              <Bookmark className="w-3.5 h-3.5" />Meus segmentos
+            </button>
+          )}
         />
+        <SegmentSideList {...sideListProps} drawer open={sideListOpen} onOpenChange={setSideListOpen} />
+        {confirmDeleteDialog}
       </div>
     );
   }
@@ -272,6 +328,26 @@ export function TalkXSegments({ onUseCampaign }: Props) {
           rightSlot={<PrimaryButton icon={Plus} onClick={openNew}>Novo segmento</PrimaryButton>}
         />
 
+        <TalkXBulkBar
+          count={selectedIds.length}
+          onClear={clearSelection}
+          actions={
+            <>
+              <GhostButton size="sm" icon={Check} onClick={() => void runBulk('activate')}>Ativar</GhostButton>
+              <GhostButton size="sm" icon={PowerOff} onClick={() => void runBulk('deactivate')}>Desativar</GhostButton>
+              <GhostButton size="sm" icon={Archive} onClick={() => void runBulk('archive')}>Arquivar</GhostButton>
+              <input
+                type="text" value={bulkTag} onChange={(e) => setBulkTag(e.target.value)}
+                aria-label="Tag para aplicar em massa" placeholder="tag…"
+                className="h-8 w-28 rounded-lg border border-border/70 bg-input/40 px-2 text-xs text-foreground"
+              />
+              <GhostButton size="sm" icon={Tag} onClick={() => void runBulk('tag', bulkTag)}>Aplicar tag</GhostButton>
+            </>
+          }
+        />
+
+        {bulkResult && <BulkResultPanel results={bulkResult} nameOf={nameOfSegment} onClose={() => setBulkResult(null)} />}
+
         <section className="rounded-2xl bg-card border border-border/70 overflow-hidden">
           <TalkXQueryBoundary
             query={{ isLoading, isError, error }}
@@ -286,11 +362,13 @@ export function TalkXSegments({ onUseCampaign }: Props) {
             <div className="overflow-x-auto">
               <table className="w-full min-w-[820px] border-collapse">
                 <thead className="bg-muted/20 border-b border-border/60"><tr>
+                  <Th className="w-10"><input type="checkbox" checked={allPageSelected} onChange={toggleAllOnPage} aria-label="Selecionar todos os segmentos da página" className="w-3.5 h-3.5 accent-primary cursor-pointer" /></Th>
                   <Th className="w-8">⭐</Th><Th>Segmento</Th><Th>Origem</Th><Th>Critérios</Th><Th>Público estimado</Th><Th>Último uso</Th><Th>Público relativo</Th><Th className="text-right">Ações</Th>
                 </tr></thead>
                 <tbody>
                   {paged.map((s) => (
                     <tr key={s.id} className={cn('border-b border-border/40 hover:bg-muted/20 cursor-pointer transition-colors', selected?.id === s.id && 'bg-primary/5')} onClick={() => setSelected(s)}>
+                      <Td><div onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selectedIds.includes(s.id)} onChange={() => toggleSelect(s.id)} aria-label={`Selecionar ${s.name}`} className="w-3.5 h-3.5 accent-primary cursor-pointer" /></div></Td>
                       <Td><button type="button" onClick={(e) => { e.stopPropagation(); void toggleFav(s); }} aria-label={s.is_favorite ? 'Remover favorito' : 'Favoritar'} className="text-muted-foreground hover:text-dash-amber">{s.is_favorite ? <Star className="w-4 h-4 text-dash-amber fill-dash-amber" /> : <StarOff className="w-4 h-4" />}</button></Td>
                       <Td>
                         <p className="text-sm font-semibold text-foreground">{s.name}</p>
@@ -301,7 +379,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
                         <div className="flex flex-wrap gap-1 max-w-[280px]">
                           {(s.rules?.groups ?? []).flatMap((g) => g.rules).slice(0, 3).map((r, i) => {
                             const field = RULE_FIELDS.find((f) => f.value === r.field)?.label ?? r.field;
-                            return <span key={i} className="text-3xs px-1.5 py-0.5 rounded bg-primary/10 text-primary-glow border border-primary/20">{field}</span>;
+                            return <span key={i} className="text-3xs px-1.5 py-0.5 rounded bg-primary/10 text-[hsl(var(--primary-text))] border border-primary/20">{field}</span>;
                           })}
                           {(s.rules?.groups ?? []).flatMap((g) => g.rules).length > 3 && <span className="text-3xs text-muted-foreground">+{(s.rules?.groups ?? []).flatMap((g) => g.rules).length - 3}</span>}
                           {(s.rules?.groups ?? []).flatMap((g) => g.rules).length === 0 && <span className="text-2xs text-muted-foreground italic">Toda a base</span>}
@@ -318,7 +396,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-48">
                               <DropdownMenuItem onClick={() => { setSelected(s); }}><Users className="w-4 h-4 mr-2" />Ver detalhes</DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => onUseCampaign(s.id)}><Zap className="w-4 h-4 mr-2" />Usar em campanha</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => onUseCampaign([s.id])}><Zap className="w-4 h-4 mr-2" />Usar em campanha</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => openEdit(s)}><Pencil className="w-4 h-4 mr-2" />Editar</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => toggleFav(s)}>{s.is_favorite ? <StarOff className="w-4 h-4 mr-2" /> : <Star className="w-4 h-4 mr-2" />}{s.is_favorite ? 'Remover favorito' : 'Favoritar'}</DropdownMenuItem>
                               <DropdownMenuSeparator />
@@ -341,7 +419,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
       {/* Detail rail */}
       <div className="space-y-4 min-w-0">
         {selected ? (
-          <SegmentDetailRail s={selected} onEdit={() => openEdit(selected)} onCampaign={() => onUseCampaign(selected.id)} onClose={() => setSelected(null)} />
+          <SegmentDetailRail s={selected} onEdit={() => openEdit(selected)} onCampaign={() => onUseCampaign([selected.id])} onClose={() => setSelected(null)} />
         ) : (
           <RailCard icon={Bookmark} title="Selecione um segmento" subtitle="Clique em um segmento para ver os detalhes e ações disponíveis.">
             <p className="text-xs text-foreground-secondary">Os segmentos permitem direcionar suas campanhas para grupos específicos de contatos com base em regras de comportamento e dados do CRM.</p>
@@ -349,16 +427,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
         )}
       </div>
 
-      <TalkXConfirmDialog
-        open={!!deleting}
-        onClose={() => setDeleting(null)}
-        onConfirm={() => { if (deleting) { deleteSegment.mutate(deleting.id); setDeleting(null); setSelected(null); } }}
-        icon={Trash2} iconColor="red" tone="danger"
-        title="Excluir segmento?"
-        description="Será excluído permanentemente. Campanhas já criadas não serão afetadas."
-        entityName={deleting?.name}
-        confirmLabel="Excluir segmento" cancelLabel="Cancelar"
-      />
+      {confirmDeleteDialog}
     </div>
   );
 }
@@ -442,6 +511,68 @@ function LibraryKpis({ stats }: { stats: TalkXSegmentLibraryStats }) {
         />
       )}
     </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* X114 — feedback do lote (itens aplicados × itens não aplicados)     */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Motivo do item não aplicado, lido do veredito do servidor. A guarda de uso
+ * (P0001: segmento em campanha scheduled/sending/paused) é BLOQUEIO — o item é
+ * "não aplicável", nunca sucesso; os demais códigos são falha de aplicação.
+ */
+function motivoFalha(r: TalkXSegmentBulkResult): string {
+  const detalhe = r.error_message?.trim();
+  return r.error_code === 'P0001'
+    ? `Não aplicável — ${detalhe || 'bloqueado pela guarda de uso (segmento em campanha ativa).'}`
+    : `Falhou — ${detalhe || 'o servidor não aplicou este item.'}`;
+}
+
+/**
+ * Resumo do lote POR SEGMENTO: quantos entraram, quantos não, e o detalhamento
+ * item a item do que ficou de fora. Só o que falhou aparece na lista — item
+ * aplicado não é listado, e item bloqueado nunca conta como aplicado.
+ */
+function BulkResultPanel({ results, nameOf, onClose }: { results: TalkXSegmentBulkResult[]; nameOf: (id: string) => string; onClose: () => void }) {
+  const aplicados = results.filter((r) => r.succeeded);
+  const falhos = results.filter((r) => !r.succeeded);
+  return (
+    <section
+      data-testid="talkx-bulk-resultado" role="status" aria-live="polite" aria-label="Resultado da ação em massa"
+      className="rounded-xl border border-border/70 bg-card px-3.5 py-3 space-y-2"
+    >
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs font-semibold text-foreground">Resultado da ação em massa</span>
+        <Pill label={`${aplicados.length} aplicado${aplicados.length === 1 ? '' : 's'}`} tone={aplicados.length > 0 ? 'success' : 'muted'} />
+        {falhos.length > 0 && <Pill label={`${falhos.length} não aplicado${falhos.length === 1 ? '' : 's'}`} tone="danger" />}
+        <button
+          type="button" onClick={onClose} aria-label="Fechar resultado"
+          className="ml-auto h-7 w-7 rounded-md border border-border/70 bg-input/40 inline-flex items-center justify-center hover:bg-muted/50"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+      {falhos.length === 0 ? (
+        <p className="text-2xs text-foreground-secondary">Todos os itens selecionados foram aplicados.</p>
+      ) : (
+        <div className="space-y-1">
+          <p className="text-2xs text-foreground-secondary">Confira item a item o que não foi aplicado:</p>
+          <ul className="space-y-1">
+            {falhos.map((r) => (
+              <li key={r.segment_id} data-testid="talkx-bulk-item-falho" className="flex items-start gap-2 text-xs">
+                <AlertTriangle className="w-3.5 h-3.5 text-dash-amber mt-0.5 shrink-0" aria-hidden="true" />
+                <span>
+                  <span className="font-medium text-foreground">{nameOf(r.segment_id)}</span>
+                  <span className="text-foreground-secondary"> · {motivoFalha(r)}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </section>
   );
 }
 

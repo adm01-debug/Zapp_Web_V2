@@ -34,10 +34,19 @@ export interface TalkXSegmentBuilderProps {
   existingNames?: string[];
   onSave: (draft: SegmentBuilderContent) => void;
   onCancel: () => void;
+  /** TL-134: lista lateral (coluna 1, só xl) e botão que abre a gaveta (<xl). */
+  sideList?: React.ReactNode;
+  sideListButton?: React.ReactNode;
+  /**
+   * TL-134: registra no pai a guarda de edição suja. O pai chama a guarda
+   * antes de trocar de segmento/novo; a guarda abre o diálogo quando há
+   * edição não salva, ou libera direto (`proceed`) quando está limpo.
+   */
+  onGuardChange?: (guard: (proceed: () => void) => void) => void;
 }
 
 export function TalkXSegmentBuilder({
-  initial, isNew, saving, existingNames = [], onSave, onCancel,
+  initial, isNew, saving, existingNames = [], onSave, onCancel, sideList, sideListButton, onGuardChange,
 }: TalkXSegmentBuilderProps) {
   const [state, dispatch] = React.useReducer(segmentBuilderReducer, initial, createBuilderState);
   const { name, description, rules } = state;
@@ -50,6 +59,16 @@ export function TalkXSegmentBuilder({
   const [draggingField, setDraggingField] = React.useState<string | null>(null);
   const [showErrors, setShowErrors] = React.useState(false);
   const [confirmExit, setConfirmExit] = React.useState(false);
+  // TL-134: ação pendente (troca de segmento/novo) aguardando o diálogo de saída.
+  const [pendingProceed, setPendingProceed] = React.useState<(() => void) | null>(null);
+  /**
+   * TL-134 (X099): a lista lateral troca de segmento SEM remontar (o pai não
+   * passa `key`). Quando o `initial` muda, o rascunho é reposto pela ação
+   * `reset`: baseline nova e histórico zerado, como um carregamento limpo.
+   */
+  React.useEffect(() => {
+    dispatch({ type: 'reset', content: initial });
+  }, [initial]);
 
   const errors = React.useMemo(
     () => validateSegment({ name, description, rules, existingNames }),
@@ -95,16 +114,35 @@ export function TalkXSegmentBuilder({
     if (errors.rules) { toast.error(errors.rules); return; }
     onSave(builderContent(state));
   };
-  const requestExit = () => { if (dirty) setConfirmExit(true); else onCancel(); };
+  // TL-134: guarda chamada pelo pai antes de trocar de segmento/novo. Com edição
+  // suja, guarda a ação pendente e abre o diálogo; limpo, libera direto.
+  const requestProceed = (proceed: () => void) => {
+    if (dirty) {
+      setPendingProceed(() => proceed);
+      setConfirmExit(true);
+    } else {
+      proceed();
+    }
+  };
+  const requestExit = () => requestProceed(onCancel);
+  // Registra a guarda a cada render para o pai sempre chamar o `dirty` atual
+  // (só atribui um ref no pai: não dispara nova renderização).
+  React.useEffect(() => {
+    onGuardChange?.(requestProceed);
+  });
 
   const iconButton = 'h-8 w-8 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center text-foreground-secondary enabled:hover:bg-muted/50 disabled:opacity-40 disabled:cursor-not-allowed shrink-0';
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-[220px_minmax(0,1fr)_280px] gap-4 min-w-0">
+    <div className="grid grid-cols-1 xl:grid-cols-[280px_minmax(0,1fr)_280px] gap-4 min-w-0">
+      {/* TL-134 — coluna 1: "Meus segmentos". Abaixo de xl vira a gaveta
+          aberta pelo botão "Meus segmentos" do cabeçalho do construtor. */}
+      {sideList && <div className="hidden xl:block min-w-0">{sideList}</div>}
       <div className="min-w-0 space-y-4">
         {/* Header */}
         <div className="rounded-2xl bg-card border border-border/70 p-4 flex items-center gap-3">
           <button type="button" onClick={requestExit} aria-label="Voltar" className="h-9 w-9 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50 shrink-0"><ArrowLeft className="w-4 h-4" /></button>
+          {sideListButton}
           <IconTile icon={Bookmark} color="violet" size={48} />
           <div className="min-w-0 flex-1">
             <Input value={name} onChange={(e) => dispatch({ type: 'name', value: e.target.value })} placeholder="Nome do segmento…" aria-invalid={showErrors && !!errors.name} className="text-lg font-bold border-0 bg-transparent p-0 h-auto focus-visible:ring-0 text-foreground placeholder:text-muted-foreground/50" />
@@ -214,10 +252,9 @@ export function TalkXSegmentBuilder({
           </div>
         </section>
 
-      </div>
-
-      {/* Col 3: Catálogo de filtros — primeira coluna no xl: */}
-      <aside className="hidden xl:block order-first rounded-2xl bg-card border border-border/70 p-3.5 space-y-3 max-h-[600px] overflow-y-auto">
+        {/* Catálogo de filtros — abaixo dos grupos, como no mock. A coluna 1 do
+            construtor passou a ser a lista "Meus segmentos" (TL-134). */}
+        <aside className="hidden xl:block rounded-2xl bg-card border border-border/70 p-3.5 space-y-3 max-h-[600px] overflow-y-auto">
         <p className="text-[13px] font-bold text-foreground">Filtros</p>
         <p className="text-2xs text-foreground-secondary leading-snug">Clique para adicionar ao grupo ativo</p>
         {(['basico', 'comportamento', 'comercial', 'lgpd'] as const).map((cat) => (
@@ -243,6 +280,7 @@ export function TalkXSegmentBuilder({
           </div>
         ))}
       </aside>
+      </div>
 
       {/* Resumo do segmento */}
       <div className="space-y-4 min-w-0">
@@ -267,7 +305,7 @@ export function TalkXSegmentBuilder({
         </RailCard>
       </div>
 
-      <AlertDialog open={confirmExit} onOpenChange={(v) => { if (!v) setConfirmExit(false); }}>
+      <AlertDialog open={confirmExit} onOpenChange={(v) => { if (!v) { setConfirmExit(false); setPendingProceed(null); } }}>
         <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-lg">Alterações não salvas</AlertDialogTitle>
@@ -276,9 +314,9 @@ export function TalkXSegmentBuilder({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-2">
-            <AlertDialogCancel className="h-9 text-[13px]">Continuar editando</AlertDialogCancel>
-            <GhostButton onClick={() => { setConfirmExit(false); onCancel(); }} className="h-9 text-[13px]">Descartar</GhostButton>
-            <PrimaryButton onClick={() => { setConfirmExit(false); handleSave(); }} className="h-9 text-[13px]">Salvar e sair</PrimaryButton>
+            <AlertDialogCancel onClick={() => setPendingProceed(null)} className="h-9 text-[13px]">Continuar editando</AlertDialogCancel>
+            <GhostButton onClick={() => { const p = pendingProceed; setPendingProceed(null); setConfirmExit(false); if (p) p(); else onCancel(); }} className="h-9 text-[13px]">Descartar</GhostButton>
+            <PrimaryButton onClick={() => { setPendingProceed(null); setConfirmExit(false); handleSave(); }} className="h-9 text-[13px]">Salvar e sair</PrimaryButton>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

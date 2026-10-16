@@ -58,7 +58,13 @@ export type SegmentBuilderAction =
   | { type: 'clear' }
   | { type: 'activateGroup'; id: string | null }
   | { type: 'undo' }
-  | { type: 'redo' };
+  | { type: 'redo' }
+  /**
+   * TL-134 (X099): a lista lateral troca de segmento SEM remontar o construtor
+   * (sem `key` no pai). A troca repõe o rascunho por esta ação, chamada num
+   * `useEffect [initial]` do construtor: baseline nova, histórico zerado.
+   */
+  | { type: 'reset'; content: SegmentBuilderContent };
 
 function newId(): string {
   return crypto.randomUUID();
@@ -248,6 +254,9 @@ export function segmentBuilderReducer(state: SegmentBuilderState, action: Segmen
       if (!next) return state;
       const past = pushPast(state.past, builderContent(state));
       return { ...state, ...next, past, future: state.future.slice(0, -1), lastEditKey: null, lastEditAt: 0 };
+    }
+    case 'reset': {
+      return createBuilderState(action.content);
     }
     default:
       return state;
