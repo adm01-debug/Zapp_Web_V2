@@ -24,6 +24,7 @@ export interface SentimentData {
  * `useSentimentTrend` (achado P1-D). Devolve `null` no vazio e no erro, como
  * antes; quem precisa distinguir os dois usa o hook direto.
  */
+// eslint-disable-next-line react-refresh/only-export-components -- este arquivo já reúne helpers do painel e o hook de série; separar quebraria os consumidores (`SentimentTrendCard`).
 export function useRealSentimentData(days: number): SentimentData[] | null {
   const trend = useSentimentTrend(days);
   if (trend.isLoading || trend.isError) return null;
