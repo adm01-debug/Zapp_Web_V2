@@ -36,7 +36,8 @@ describe('SystemHealthCard (Saúde do Sistema)', () => {
     render(<SystemHealthCard />);
     expect(screen.getByTestId('system-health-score')).toHaveTextContent('100');
     expect(screen.getByText('Excelente')).toBeInTheDocument();
-    expect(screen.getAllByTestId('system-health-signal')).toHaveLength(3);
+    expect(screen.getAllByTestId('system-health-signal')).toHaveLength(4);
+    expect(screen.getByText('Todas as conexões com credencial válida')).toBeInTheDocument();
     expect(screen.getByText('Nenhuma falha em 40 envio(s) nas últimas 24h')).toBeInTheDocument();
   });
 

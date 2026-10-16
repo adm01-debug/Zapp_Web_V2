@@ -13,13 +13,18 @@
 //     10% de falha sobre os envios do agente nas últimas 24h.
 //   • Fila de envio parada — 30 pts: -10 pts por mensagem presa em "sending" há mais de
 //     5 min (3 ou mais presas = 0).
+//
+// Sinal INFORMATIVO (não entra na nota): "Conexões sem credencial" tem escala própria de
+// 100 pts. A sonda de saúde grava health_status "no_credentials" sem tocar no status da
+// conexão (fail-closed), então o sinal de conexões acima a enxerga como conectada — sem
+// esta linha, uma conexão que não autentica passaria despercebida no cartão.
 
 import type { SystemHealthSignals } from '@/hooks/system/useSystemHealthSignals';
 
 export type SystemHealthGrade = 'excelente' | 'bom' | 'atencao' | 'critico';
 export type SystemHealthTone = 'success' | 'info' | 'warning' | 'danger';
 export type SystemHealthItemStatus = 'ok' | 'warn' | 'bad';
-export type SystemHealthItemId = 'connections' | 'failures' | 'stalled';
+export type SystemHealthItemId = 'connections' | 'failures' | 'stalled' | 'credentials';
 
 export interface SystemHealthItem {
   id: SystemHealthItemId;
@@ -47,6 +52,15 @@ export const STALLED_MAX = 30;
 export const FAILURE_ZERO_RATE = 0.1;
 /** Pontos perdidos por mensagem presa em "sending" há mais de 5 min. */
 export const STALLED_STEP = 10;
+/**
+ * Escala do sinal informativo "Conexões sem credencial" (0-100). NÃO entra na nota:
+ * os 100 pontos da nota continuam vindo de connections (40) + failures (30) + stalled (30).
+ */
+export const CREDENTIALS_MAX = 100;
+/** A partir desta fração de conexões sem credencial o sinal informativo marca Falha. */
+export const CREDENTIALS_BAD_RATIO = 0.5;
+/** health_status que a sonda de saúde grava quando a instância não autentica (401/403). */
+const NO_CREDENTIALS_STATUS = 'no_credentials';
 
 const GRADES: Array<{ min: number; grade: SystemHealthGrade; label: string; tone: SystemHealthTone }> = [
   { min: 90, grade: 'excelente', label: 'Excelente', tone: 'success' },
@@ -106,11 +120,34 @@ function stalledSignal(stalledSending: number): SignalScore {
   return { score, status, summary };
 }
 
+/**
+ * Sinal informativo: quantas conexões a sonda viu sem credencial própria. Escala 0-100
+ * própria — NÃO soma na nota (é diagnóstico, não penalidade: a conexão sem credencial já
+ * pesa no sinal de conexões quando está fora do ar).
+ */
+function credentialSignal(connections: SystemHealthSignals['connections']): SignalScore {
+  const total = connections.length;
+  if (total === 0) {
+    // Sem conexão cadastrada não há credencial a julgar: nem afirma falha nem inventa nota.
+    return { score: CREDENTIALS_MAX, status: 'ok', summary: 'Nenhuma conexão para avaliar credencial' };
+  }
+  const missing = connections.filter((conn) => conn.healthStatus === NO_CREDENTIALS_STATUS).length;
+  const score = Math.round(CREDENTIALS_MAX * (1 - missing / total));
+  const status: SystemHealthItemStatus =
+    missing === 0 ? 'ok' : missing / total >= CREDENTIALS_BAD_RATIO ? 'bad' : 'warn';
+  const summary =
+    missing === 0 ? 'Todas as conexões com credencial válida' : `${missing} de ${total} conexão(ões) sem credencial`;
+  return { score, status, summary };
+}
+
 /** Nota 0-100 e o detalhe por sinal — sempre a partir dos sinais reais, nunca de um teto inventado. */
 export function deriveSystemHealth(signals: SystemHealthSignals): SystemHealthResult {
   const connections = connectionSignal(signals.connections);
   const failures = failureSignal(signals.failedRecent, signals.totalRecent);
   const stalled = stalledSignal(signals.stalledSending);
+  const credentials = credentialSignal(signals.connections);
+  // A nota é a soma dos três sinais clássicos: 40 + 30 + 30 = 100. O sinal de credencial é
+  // informativo (escala própria de 100) e NÃO entra aqui — os 100 pontos não saem de 100.
   const score = connections.score + failures.score + stalled.score;
   const grade = GRADES.find((g) => score >= g.min) ?? GRADES[GRADES.length - 1];
 
@@ -123,6 +160,7 @@ export function deriveSystemHealth(signals: SystemHealthSignals): SystemHealthRe
       { id: 'connections', label: 'Conexões WhatsApp', ...connections, max: CONNECTIONS_MAX },
       { id: 'failures', label: 'Mensagens com falha (24h)', ...failures, max: FAILURES_MAX },
       { id: 'stalled', label: 'Fila de envio', ...stalled, max: STALLED_MAX },
+      { id: 'credentials', label: 'Conexões sem credencial', ...credentials, max: CREDENTIALS_MAX },
     ],
   };
 }
