@@ -3,43 +3,28 @@ import { renderHook, waitFor } from '@testing-library/react';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-// Mock the authenticated CRM gateway used by hooks and services.
-const mockRpc = vi.fn();
-const mockFrom = vi.fn();
+// Mock the authenticated CRM gateway used by hooks.
+const mockNarrow = vi.fn();
 
 vi.mock('@/integrations/supabase/externalClient', () => ({ isExternalConfigured: true }));
 vi.mock('@/hooks/system/useCRMIntegrationEnabled', () => ({ useCRMIntegrationEnabled: () => true }));
 
 vi.mock('@/lib/crmIntegration', () => ({
-  callCRMIntegration: async (action: string, payload: Record<string, unknown>) => {
-    if (action === 'rpc') {
-      const result = await (globalThis as unknown as {
-        __extMockRpc: (rpc: unknown, params: unknown) => Promise<{ data: unknown; error?: Error }>;
-      }).__extMockRpc(payload.rpc, payload.params);
-      if (result.error) throw result.error;
-      return { data: result.data, meta: { record_count: 1, duration_ms: 1, severity: 'ok' } };
+  callCRMIntegration: (action: string) => {
+    if (action !== 'companyNames' && action !== 'roleNames') {
+      throw new Error(`Unexpected action: ${action}`);
     }
-    if (action === 'select') {
-      (globalThis as unknown as { __extMockFrom: (table: unknown) => void }).__extMockFrom(payload.table);
-      return {
-        data: payload.table === 'salespeople' ? [
-          { role: 'Closer' }, { role: 'SDR' }, { role: 'Gerente' },
-          { role: '  Hybrid  ' }, { role: '' }, { role: null },
-        ] : [],
-        meta: { record_count: 6, duration_ms: 1, severity: 'ok' },
-      };
-    }
-    throw new Error(`Unexpected action: ${action}`);
+    return (globalThis as unknown as {
+      __extMockNarrow: (action: string) => unknown;
+    }).__extMockNarrow(action);
   },
 }));
 
-// Bridge mock fns to globalThis so the hoisted factory can access them
+// Bridge the mock fn to globalThis so the hoisted factory can access it
 const testGlobals = globalThis as unknown as {
-  __extMockRpc: typeof mockRpc;
-  __extMockFrom: typeof mockFrom;
+  __extMockNarrow: typeof mockNarrow;
 };
-testGlobals.__extMockRpc = mockRpc;
-testGlobals.__extMockFrom = mockFrom;
+testGlobals.__extMockNarrow = mockNarrow;
 
 vi.mock('@/lib/logger', () => ({
   log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
@@ -49,157 +34,112 @@ vi.mock('@/lib/logger', () => ({
 import { useExternalEmpresas } from '@/hooks/crm/useExternalEmpresas';
 import { useExternalCargos } from '@/hooks/crm/useExternalCargos';
 
-function createWrapper() {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+function createWrapper(client?: QueryClient) {
+  const qc = client ?? new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return ({ children }: { children: React.ReactNode }) => (
     <QueryClientProvider client={qc}>{children}</QueryClientProvider>
   );
 }
 
-// ─── useExternalEmpresas (RPC-based) ───────────────────────────────
+// ─── useExternalEmpresas — ação estreita `companyNames` ────────────
 describe('useExternalEmpresas', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Mock search_contacts_advanced RPC returning company_name
-    mockRpc.mockResolvedValue({
-      data: {
-        results: [
-          { company_name: 'Acme Corp' },
-          { company_name: 'TechBR' },
-          { company_name: '  SpaceLabs  ' },
-          { company_name: 'Acme Corp' }, // duplicate
-          { company_name: '' }, // empty
-          { company_name: null }, // null
-        ],
-      },
-      error: null,
+    // A Edge devolve a lista pronta para quem tem `view_contacts`.
+    mockNarrow.mockResolvedValue({
+      data: ['Acme Corp', 'TechBR', 'SpaceLabs'],
+      meta: { record_count: 3, duration_ms: 1, severity: 'ok' },
     });
   });
 
-  it('fetches unique trimmed empresa names via RPC', async () => {
+  it('usa a ação estreita `companyNames` e expõe as sugestões', async () => {
     const { result } = renderHook(() => useExternalEmpresas(), { wrapper: createWrapper() });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    const data = result.current.data!;
-    expect(data).toContain('Acme Corp');
-    expect(data).toContain('TechBR');
-    expect(data).toContain('SpaceLabs');
-    // No duplicates
-    expect(data.filter(e => e === 'Acme Corp')).toHaveLength(1);
-    // No empty strings
-    expect(data.filter(e => e === '')).toHaveLength(0);
+    expect(mockNarrow).toHaveBeenCalledWith('companyNames');
+    expect(result.current.data).toEqual(['Acme Corp', 'TechBR', 'SpaceLabs']);
   });
 
-  it('calls search_contacts_advanced RPC', async () => {
+  it('não cai mais no RPC admin-only nem no select genérico', async () => {
     const { result } = renderHook(() => useExternalEmpresas(), { wrapper: createWrapper() });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(mockRpc).toHaveBeenCalledWith('search_contacts_advanced', expect.objectContaining({
-      p_page: 0,
-      p_page_size: 200,
-    }));
+    // O mock lança para qualquer action que não seja estreita.
+    expect(mockNarrow).toHaveBeenCalledTimes(1);
+    expect(mockNarrow.mock.calls.every(([action]) => action === 'companyNames')).toBe(true);
   });
 
-  it('paginates until fewer results than page size', async () => {
-    // First call returns full page, second returns partial
-    mockRpc
-      .mockResolvedValueOnce({
-        data: {
-          results: Array.from({ length: 200 }, (_, i) => ({ company_name: `Company ${i}` })),
-        },
-        error: null,
-      })
-      .mockResolvedValueOnce({
-        data: {
-          results: [{ company_name: 'Last Company' }],
-        },
-        error: null,
-      });
-
+  it('sem `view_contacts` (403) o erro aparece — não vira lista vazia de sucesso', async () => {
+    mockNarrow.mockRejectedValue(new Error('Forbidden'));
     const { result } = renderHook(() => useExternalEmpresas(), { wrapper: createWrapper() });
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(mockRpc).toHaveBeenCalledTimes(2);
-    expect(result.current.data).toContain('Last Company');
-    expect(result.current.data).toContain('Company 0');
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(result.current.data).toBeUndefined();
   });
 
-  it('handles RPC error gracefully', async () => {
-    mockRpc.mockResolvedValue({ data: null, error: { message: 'RPC failed' } });
+  it('resposta que não é lista vira lista vazia', async () => {
+    mockNarrow.mockResolvedValue({ data: null, meta: { record_count: 0, duration_ms: 1, severity: 'ok' } });
     const { result } = renderHook(() => useExternalEmpresas(), { wrapper: createWrapper() });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toEqual([]);
   });
 
-  it('returns sorted results (pt-BR locale)', async () => {
-    const { result } = renderHook(() => useExternalEmpresas(), { wrapper: createWrapper() });
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    const data = result.current.data!;
-    const sorted = [...data].sort((a, b) => a.localeCompare(b, 'pt-BR'));
-    expect(data).toEqual(sorted);
+  it('cache de 30 min: remontar o hook não refaz a chamada', async () => {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const wrapper = createWrapper(qc);
+    const first = renderHook(() => useExternalEmpresas(), { wrapper });
+    await waitFor(() => expect(first.result.current.isSuccess).toBe(true));
+    first.unmount();
+    const second = renderHook(() => useExternalEmpresas(), { wrapper });
+    await waitFor(() => expect(second.result.current.isSuccess).toBe(true));
+    expect(mockNarrow).toHaveBeenCalledTimes(1);
   });
 });
 
-// ─── useExternalCargos (salespeople.role + RPC) ────────────────────
+// ─── useExternalCargos — ação estreita `roleNames` ─────────────────
 describe('useExternalCargos', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Mock RPC returning cargo field
-    mockRpc.mockResolvedValue({
-      data: {
-        results: [
-          { cargo: 'Diretor' },
-          { cargo: 'Analista' },
-          { cargo: 'Gerente' }, // duplicate with salespeople
-          { cargo: '' },
-        ],
-      },
-      error: null,
+    mockNarrow.mockResolvedValue({
+      data: ['Analista', 'Closer', 'Diretor'],
+      meta: { record_count: 3, duration_ms: 1, severity: 'ok' },
     });
   });
 
-  it('merges salespeople.role + RPC cargos, deduplicates', async () => {
+  it('usa a ação estreita `roleNames` e expõe as sugestões', async () => {
     const { result } = renderHook(() => useExternalCargos(), { wrapper: createWrapper() });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    const data = result.current.data!;
-    // From salespeople
-    expect(data).toContain('Closer');
-    expect(data).toContain('SDR');
-    expect(data).toContain('Hybrid');
-    // From RPC
-    expect(data).toContain('Diretor');
-    expect(data).toContain('Analista');
-    // Deduplicated "Gerente" (both sources)
-    expect(data.filter(c => c === 'Gerente')).toHaveLength(1);
-    // No empty strings
-    expect(data.filter(c => c === '')).toHaveLength(0);
+    expect(mockNarrow).toHaveBeenCalledWith('roleNames');
+    expect(result.current.data).toEqual(['Analista', 'Closer', 'Diretor']);
   });
 
-  it('queries salespeople table directly for roles', async () => {
+  it('não consulta a tabela salespeople nem o RPC admin-only', async () => {
     const { result } = renderHook(() => useExternalCargos(), { wrapper: createWrapper() });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(mockFrom).toHaveBeenCalledWith('salespeople');
+    expect(mockNarrow).toHaveBeenCalledTimes(1);
+    expect(mockNarrow.mock.calls.every(([action]) => action === 'roleNames')).toBe(true);
   });
 
-  it('also calls RPC for additional cargos', async () => {
+  it('sem `view_contacts` (403) o erro aparece — não vira lista vazia de sucesso', async () => {
+    mockNarrow.mockRejectedValue(new Error('Forbidden'));
     const { result } = renderHook(() => useExternalCargos(), { wrapper: createWrapper() });
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(mockRpc).toHaveBeenCalledWith('search_contacts_advanced', expect.objectContaining({
-      p_page: 0,
-    }));
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(result.current.data).toBeUndefined();
   });
 
-  it('returns sorted results (pt-BR locale)', async () => {
+  it('resposta que não é lista vira lista vazia', async () => {
+    mockNarrow.mockResolvedValue({ data: null, meta: { record_count: 0, duration_ms: 1, severity: 'ok' } });
     const { result } = renderHook(() => useExternalCargos(), { wrapper: createWrapper() });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    const data = result.current.data!;
-    const sorted = [...data].sort((a, b) => a.localeCompare(b, 'pt-BR'));
-    expect(data).toEqual(sorted);
+    expect(result.current.data).toEqual([]);
   });
 
-  it('handles salespeople error gracefully, still returns RPC data', async () => {
-    // Override the from mock to simulate error for salespeople
-    // The mock already returns data, so this tests the merge logic
-    const { result } = renderHook(() => useExternalCargos(), { wrapper: createWrapper() });
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data!.length).toBeGreaterThan(0);
+  it('cache de 30 min: remontar o hook não refaz a chamada', async () => {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const wrapper = createWrapper(qc);
+    const first = renderHook(() => useExternalCargos(), { wrapper });
+    await waitFor(() => expect(first.result.current.isSuccess).toBe(true));
+    first.unmount();
+    const second = renderHook(() => useExternalCargos(), { wrapper });
+    await waitFor(() => expect(second.result.current.isSuccess).toBe(true));
+    expect(mockNarrow).toHaveBeenCalledTimes(1);
   });
 });
 

@@ -899,14 +899,14 @@ export async function handleCRMIntegrationRequest(req: Request): Promise<Respons
       }
       if (!await userHasPermission('view_contacts')) return errorResponse('Forbidden', 403, req);
       const companyNames = action === 'companyNames';
-      const result = await withTimeout(externalClient.from(companyNames ? 'companies' : 'contacts')
-        .select(companyNames ? 'nome_fantasia,nome_crm,razao_social' : 'cargo')
-        .order(companyNames ? 'nome_fantasia' : 'cargo', { ascending: true, nullsFirst: false })
+      const result = await withTimeout(externalClient.from(companyNames ? 'companies' : 'salespeople')
+        .select(companyNames ? 'nome_fantasia,nome_crm,razao_social' : 'role')
+        .order(companyNames ? 'nome_fantasia' : 'role', { ascending: true, nullsFirst: false })
         .limit(MAX_NAME_SUGGESTIONS));
       if (result.error) throw new Error(`CRM_NAMES:${result.error.code || 'unknown'}`);
       data = companyNames
         ? distinctCompanyNames(result.data)
-        : distinctNameSuggestions(result.data, (row) => row.cargo);
+        : distinctNameSuggestions(result.data, (row) => row.role);
     } else if (action === 'mutate') {
       const mutationAction = body.mutationAction;
       const validation = validateMutation(body.table, mutationAction, body.data, body.match);
