@@ -85,22 +85,15 @@ export interface LoginAnonClient {
   };
 }
 
-/**
- * Client service_role do login: RPC de política/lockout e, no modo `verify`,
- * `auth.admin.signOut` para encerrar a sessão temporária criada pelo GoTrue.
- * O tipo é estrutural (não acopla a uma versão de `@supabase/supabase-js`), mas
- * exige as duas formas que o handler realmente usa.
- */
-export interface LoginAdminClient extends NetworkPolicyRpcClient {
-  auth: {
-    admin: {
-      signOut: (
-        jwt: string,
-        scope?: "local" | "global" | "others",
-      ) => PromiseLike<{ error: { message?: string } | null }>;
-    };
-  };
-}
+// Leitura do perfil do usuário autenticado (service_role), por `user_id`:
+// igualdade EXATA num índice UNIQUE (`profiles.user_id` é UNIQUE NOT NULL, FK
+// para `auth.users`), nunca por `profiles.email` (nullable, sem UNIQUE
+// garantido). O `admin` fica tipado só como `NetworkPolicyRpcClient` porque
+// expor o builder `from/select/eq` do supabase-js estoura a instanciação de
+// tipos (TS2589); o cast para o builder fica isolado em `profileLookupFrom`.
+export type ProfileLookup = (
+  userId: string,
+) => PromiseLike<{ data: { is_active: boolean | null } | null; error: unknown }>;
 
 export interface AuthLoginDeps {
   admin: LoginAdminClient;
@@ -109,7 +102,9 @@ export interface AuthLoginDeps {
     key: string,
     maxRequests: number,
     windowMs: number,
-  ) => PromiseLike<{ allowed: boolean; unavailable?: boolean }>;
+  ) => PromiseLike<{ allowed: boolean }>;
+  // Injetável para o teste; o default de produção é `profileLookupFrom(admin)`.
+  getProfileActive?: ProfileLookup;
 }
 
 // Limites hardcoded atuais (fallback quando não há regra ativa de rate limit).
@@ -134,6 +129,69 @@ function rpcErrorCode(err: unknown): string | undefined {
     return (err as { code?: unknown }).code as string | undefined;
   }
   return undefined;
+}
+
+/**
+ * Registra a tentativa falha e devolve o MESMO 401 do caminho de senha errada.
+ * Usado pela recusa de credencial E pelo perfil inativo/ausente: os dois ramos
+ * precisam ser indistinguíveis (status, corpo e contadores do lockout), senão a
+ * resposta vira oráculo de enumeração de contas.
+ */
+async function recordFailure(
+  deps: AuthLoginDeps,
+  log: Logger,
+  req: Request,
+  args: { email: string; ip: string; userAgent: string | null; status?: number | undefined },
+): Promise<Response> {
+  const { data: recData, error: recError } = await deps.admin.rpc("record_failed_login", {
+    p_email: args.email,
+    p_ip_address: args.ip === "unknown" ? null : args.ip,
+    p_user_agent: args.userAgent,
+  });
+  if (recError) log.error("record_failed_login failed", { code: rpcErrorCode(recError) });
+  const recRow = (Array.isArray(recData) ? recData[0] : recData) as LockRow | null;
+  const lock = recRow ? lockPayload(recRow) : { isLocked: false, lockedUntil: null, attempts: 1, remainingTime: 0 };
+  log.done(401, { isLocked: lock.isLocked, attempts: lock.attempts, status: args.status });
+  return jsonResponse({ error: "Invalid login credentials", ...lock }, 401, req);
+}
+
+/**
+ * Revoga TODAS as sessões Auth do usuário via a primitiva SQL service_role-only
+ * `revoke_auth_sessions` (a mesma usada pelo trigger de desativação de perfil e
+ * pela Edge `revoke-auth-sessions`). Chamado quando a credencial foi aceita mas
+ * o perfil não pode entrar: a sessão recém-emitida não pode sobreviver.
+ */
+async function revokeUserSessions(deps: AuthLoginDeps, log: Logger, userId: string): Promise<void> {
+  const { error } = await deps.admin.rpc("revoke_auth_sessions", {
+    p_scope: "global",
+    p_actor_user_id: null,
+    p_target_user_id: userId,
+    p_target_session_id: null,
+    p_preserve_session_id: null,
+  });
+  if (error) log.error("revoke_auth_sessions failed", { code: rpcErrorCode(error) });
+}
+
+/**
+ * Default de produção: resolve `profiles.is_active` pelo `user_id` (igualdade
+ * exata). O cast para o builder do supabase-js é local e intencional: expor esse
+ * builder na assinatura de `admin` estoura a instanciação de tipos (TS2589).
+ */
+function profileLookupFrom(admin: NetworkPolicyRpcClient): ProfileLookup {
+  const client = admin as unknown as {
+    from(table: string): {
+      select(columns: string): {
+        eq(column: string, value: string): {
+          maybeSingle(): PromiseLike<{
+            data: { is_active: boolean | null } | null;
+            error: unknown;
+          }>;
+        };
+      };
+    };
+  };
+  return (userId: string) =>
+    client.from("profiles").select("is_active").eq("user_id", userId).maybeSingle();
 }
 
 export async function handleLogin(req: Request, deps: AuthLoginDeps): Promise<Response> {
@@ -269,16 +327,38 @@ export async function handleLogin(req: Request, deps: AuthLoginDeps): Promise<Re
         log.done(503, { status: signInError?.status });
         return errorResponse("Auth service unavailable", 503, req);
       }
-      const { data: recData, error: recError } = await deps.admin.rpc("record_failed_login", {
-        p_email: email,
-        p_ip_address: ip === "unknown" ? null : ip,
-        p_user_agent: userAgent,
-      });
-      if (recError) log.error("record_failed_login failed", { code: rpcErrorCode(recError) });
-      const recRow = (Array.isArray(recData) ? recData[0] : recData) as LockRow | null;
-      const lock = recRow ? lockPayload(recRow) : { isLocked: false, lockedUntil: null, attempts: 1, remainingTime: 0 };
-      log.done(401, { isLocked: lock.isLocked, attempts: lock.attempts, status: signInError?.status });
-      return jsonResponse({ error: "Invalid login credentials", ...lock }, 401, req);
+      return recordFailure(deps, log, req, { email, ip, userAgent, status: signInError?.status });
+    }
+
+    const userId = signIn.user?.id;
+    if (!userId) {
+      // Sessão emitida sem usuário não deveria acontecer; fail-closed como
+      // indisponibilidade (não é recusa de credencial e não dá para revogar).
+      log.warn("auth unavailable", { reason: "session_without_user" });
+      log.done(503, { reason: "session_without_user" });
+      return errorResponse("Auth service unavailable", 503, req);
+    }
+
+    // R2-AUTH-004 (item 6): credencial válida NÃO basta — perfil inativo não
+    // entra. A consulta vem DEPOIS do GoTrue (o bcrypt já rodou), então inativo
+    // e senha errada têm custo de tempo comparável; e o perfil é resolvido por
+    // `profiles.user_id = signIn.user.id` (UNIQUE NOT NULL, o MESMO id de
+    // auth.users) — igualdade exata, nunca `profiles.email` (nullable, sem
+    // UNIQUE garantido) nem ilike (curinga do PostgREST).
+    const getProfile = deps.getProfileActive ?? profileLookupFrom(deps.admin);
+    const profileRes = await getProfile(userId);
+    if (profileRes.error) {
+      log.error("profile lookup failed", { code: rpcErrorCode(profileRes.error) });
+      // Fail-closed: consulta que falhou não pode deixar a sessão recém-emitida viva.
+      await revokeUserSessions(deps, log, userId);
+      return errorResponse("Internal error", 500, req);
+    }
+    // Ausente, inativo (`false`) ou `is_active` nulo: mesma porta de saída da
+    // credencial recusada — revoga a sessão, registra a tentativa e devolve o
+    // MESMO 401/corpo (sem oráculo de enumeração). `!== true` cobre `false` e `null`.
+    if (!profileRes.data || profileRes.data.is_active !== true) {
+      await revokeUserSessions(deps, log, userId);
+      return recordFailure(deps, log, req, { email, ip, userAgent });
     }
 
     const s = signIn.session;

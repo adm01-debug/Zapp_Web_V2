@@ -63,6 +63,16 @@ function withFetch(routes: Route[]) {
         ),
       );
     }
+    // R2-AUTH-004: `requireAuth` lê `profiles.is_active` por `user_id` (igualdade
+    // exata) antes de liberar o handler; o stub responde "ativo" no caminho feliz.
+    if (url.includes("/rest/v1/profiles") && url.includes("select=is_active")) {
+      return Promise.resolve(
+        new Response(JSON.stringify({ is_active: true }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        }),
+      );
+    }
     const route = routes.find((r) => url.includes(r.match));
     if (!route) return Promise.resolve(new Response('nao stubado', { status: 599 }));
     return Promise.resolve(

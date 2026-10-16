@@ -134,6 +134,11 @@ function instalarEspiao(): Espiao {
       return json({ message: "invalid JWT" }, 401);
     }
     if (alvo.pathname === "/rest/v1/ai_providers") return json(PROVEDOR_VISAO);
+    // R2-AUTH-004: `requireAuth` lê `profiles.is_active` por `user_id` (igualdade
+    // exata) antes de liberar o handler; o stub responde "ativo" no caminho feliz.
+    if (url.includes("/rest/v1/profiles") && url.includes("select=is_active")) {
+      return json({ is_active: true });
+    }
     if (alvo.pathname === "/rest/v1/profiles") return json([]);
     if (alvo.pathname === "/rest/v1/ai_usage_logs") {
       return method === "POST" ? json([], 201) : json([]);

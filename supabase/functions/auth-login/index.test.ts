@@ -56,26 +56,38 @@ function get(): Request {
 function fakeAdmin(
   policy: { data: unknown; error: unknown },
   extra: Record<string, { data: unknown; error: unknown }> = {},
-  signOutError: { message?: string } | null = null,
+  profiles: { data: { is_active: boolean | null } | null; error: unknown } = { data: { is_active: true }, error: null },
 ) {
   const calls: Array<{ fn: string; args: Record<string, unknown> }> = [];
-  const signOuts: Array<{ jwt: string; scope?: string }> = [];
+  const fromCalls: Array<{ table: string; columns: string; column: string; value: string }> = [];
   return {
     calls,
-    signOuts,
+    fromCalls,
     rpc(fn: string, args: Record<string, unknown>) {
       calls.push({ fn, args });
       if (fn === "resolve_network_policy") return Promise.resolve(policy);
       if (fn in extra) return Promise.resolve(extra[fn]);
       return Promise.resolve({ data: null, error: { message: `unexpected rpc ${fn}` } });
     },
-    auth: {
-      admin: {
-        signOut(jwt: string, scope?: string) {
-          signOuts.push({ jwt, scope });
-          return Promise.resolve({ error: signOutError });
+    // Seam de leitura do perfil: registra o caminho exato (tabela/coluna/valor)
+    // para provar que o lookup é por `profiles.user_id`, não por e-mail/ilike.
+    from(table: string) {
+      let columns = "";
+      let column = "";
+      let value = "";
+      const filter = {
+        eq(col: string, v: string) {
+          column = col;
+          value = v;
+          return {
+            maybeSingle() {
+              fromCalls.push({ table, columns, column, value });
+              return Promise.resolve(profiles);
+            },
+          };
         },
-      },
+      };
+      return { select: (c: string) => { columns = c; return filter; } };
     },
   };
 }
@@ -695,11 +707,144 @@ Deno.test("login com `mode:'login'` explícito devolve tokens e NÃO revoga sess
   const res = await handleLogin(
     post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "secret", mode: "login" })),
     { admin, anon },
+
+// ── R2-AUTH-004 (item 6): credencial válida com perfil inativo NÃO entra ──────
+// O perfil é resolvido DEPOIS do GoTrue (bcrypt já rodou — sem oráculo de tempo)
+// por `profiles.user_id = signIn.user.id`: igualdade exata no índice UNIQUE, o
+// MESMO id de auth.users. Ausente/inativo/`is_active` nulo revoga a sessão
+// recém-emitida e devolve o MESMO 401/corpo da senha errada (sem oráculo de
+// enumeração). Erro na consulta é fail-closed: revoga e responde 500.
+
+const ALLOWED_POLICY = {
+  data: [{ allowed: true, reason: null, rate_limit_max_requests: 10, rate_limit_window_seconds: 60 }],
+  error: null,
+};
+const INACTIVE_EXTRA = {
+  is_account_locked: { data: [{ is_locked: false, locked_until: null, attempts: 0 }], error: null },
+  record_failed_login: { data: [{ is_locked: false, locked_until: null, attempts: 3 }], error: null },
+  revoke_auth_sessions: { data: null, error: null },
+};
+
+Deno.test("perfil inativo: revoga a sessão, registra tentativa e devolve 401 sem token", async () => {
+  const admin = fakeAdmin(ALLOWED_POLICY, INACTIVE_EXTRA, { data: { is_active: false }, error: null });
+  const anon = fakeAnon();
+  const rl = fakeRateLimit();
+
+  const res = await handleLogin(
+    post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "secret" })),
+    { admin, anon, enforceRateLimit: rl.enforceRateLimit },
+  );
+
+  assertEquals(res.status, 401);
+  const body = await res.json();
+  assertEquals(body.error, "Invalid login credentials");
+  assertEquals(body.access_token, undefined);
+  assertEquals(body.attempts, 3);
+
+  // GoTrue rodou ANTES do lookup; a sessão recém-emitida foi revogada; a
+  // tentativa foi registrada; as tentativas NÃO foram zeradas.
+  assertEquals(anon.calls.length, 1);
+  const revoke = admin.calls.find((c) => c.fn === "revoke_auth_sessions");
+  assertEquals(revoke?.args.p_scope, "global");
+  assertEquals(revoke?.args.p_target_user_id, "u1");
+  assertEquals(admin.calls.some((c) => c.fn === "record_failed_login"), true);
+  assertEquals(admin.calls.some((c) => c.fn === "clear_login_attempts"), false);
+
+  // O lookup foi por `profiles.user_id` = id do usuário autenticado — nunca por e-mail/ilike.
+  assertEquals(admin.fromCalls, [{ table: "profiles", columns: "is_active", column: "user_id", value: "u1" }]);
+});
+
+Deno.test("perfil inativo: corpo e status IDÊNTICOS à senha errada (sem oráculo)", async () => {
+  const inactive = fakeAdmin(ALLOWED_POLICY, INACTIVE_EXTRA, { data: { is_active: false }, error: null });
+  const resInactive = await handleLogin(
+    post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "secret" })),
+    { admin: inactive, anon: fakeAnon(), enforceRateLimit: fakeRateLimit().enforceRateLimit },
+  );
+  const bodyInactive = await resInactive.json();
+
+  const wrongPass = fakeAdmin(ALLOWED_POLICY, INACTIVE_EXTRA);
+  const resWrong = await handleLogin(
+    post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "wrong" })),
+    {
+      admin: wrongPass,
+      anon: fakeAnon({ data: { session: null, user: null }, error: { status: 400 } }),
+      enforceRateLimit: fakeRateLimit().enforceRateLimit,
+    },
+  );
+  const bodyWrong = await resWrong.json();
+
+  assertEquals(resInactive.status, resWrong.status);
+  assertEquals(bodyInactive, bodyWrong);
+});
+
+Deno.test("perfil ausente (sem linha): revoga a sessão e devolve o mesmo 401", async () => {
+  const admin = fakeAdmin(ALLOWED_POLICY, INACTIVE_EXTRA, { data: null, error: null });
+  const anon = fakeAnon();
+
+  const res = await handleLogin(
+    post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "secret" })),
+    { admin, anon, enforceRateLimit: fakeRateLimit().enforceRateLimit },
+  );
+
+  assertEquals(res.status, 401);
+  const body = await res.json();
+  assertEquals(body.error, "Invalid login credentials");
+  assertEquals(body.access_token, undefined);
+  assertEquals(admin.calls.some((c) => c.fn === "revoke_auth_sessions"), true);
+  assertEquals(admin.calls.some((c) => c.fn === "record_failed_login"), true);
+});
+
+Deno.test("is_active nulo conta como inativo (não entra)", async () => {
+  const admin = fakeAdmin(ALLOWED_POLICY, INACTIVE_EXTRA, { data: { is_active: null }, error: null });
+
+  const res = await handleLogin(
+    post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "secret" })),
+    { admin, anon: fakeAnon(), enforceRateLimit: fakeRateLimit().enforceRateLimit },
+  );
+
+  assertEquals(res.status, 401);
+  assertEquals((await res.json()).access_token, undefined);
+  assertEquals(admin.calls.some((c) => c.fn === "revoke_auth_sessions"), true);
+});
+
+Deno.test("erro na consulta do perfil: revoga a sessão e responde 500 (fail-closed)", async () => {
+  const admin = fakeAdmin(ALLOWED_POLICY, INACTIVE_EXTRA, {
+    data: null,
+    error: { code: "57014", message: "canceling statement due to statement timeout" },
+  });
+
+  const res = await handleLogin(
+    post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "secret" })),
+    { admin, anon: fakeAnon(), enforceRateLimit: fakeRateLimit().enforceRateLimit },
+  );
+
+  assertEquals(res.status, 500);
+  assertEquals((await res.json()).error, "Internal server error");
+  // Nem token nem tentativa: consulta que falhou não libera a sessão nem conta lockout.
+  assertEquals(admin.calls.some((c) => c.fn === "revoke_auth_sessions"), true);
+  assertEquals(admin.calls.some((c) => c.fn === "record_failed_login"), false);
+  assertEquals(admin.calls.some((c) => c.fn === "clear_login_attempts"), false);
+});
+
+Deno.test("perfil ativo (is_active true) entra: 200 com sessão e sem revogação", async () => {
+  const admin = fakeAdmin(
+    ALLOWED_POLICY,
+    {
+      is_account_locked: { data: [{ is_locked: false, locked_until: null, attempts: 0 }], error: null },
+      clear_login_attempts: { data: null, error: null },
+    },
+    { data: { is_active: true }, error: null },
+  );
+
+  const res = await handleLogin(
+    post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "secret" })),
+    { admin, anon: fakeAnon(), enforceRateLimit: fakeRateLimit().enforceRateLimit },
   );
 
   assertEquals(res.status, 200);
   const body = await res.json();
   assertEquals(body.access_token, "tok");
-  assertEquals(body.refresh_token, "ref");
-  assertEquals(admin.signOuts.length, 0);
+  assertEquals(admin.calls.some((c) => c.fn === "revoke_auth_sessions"), false);
+  assertEquals(admin.calls.some((c) => c.fn === "clear_login_attempts"), true);
+  assertEquals(admin.fromCalls, [{ table: "profiles", columns: "is_active", column: "user_id", value: "u1" }]);
 });

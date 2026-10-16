@@ -47,6 +47,15 @@ function withFetch(routes: Route[]) {
     } catch {
       corpo = init?.body ?? null;
     }
+    // R2-AUTH-004: `requireAuth` lê `profiles.is_active` por `user_id` (igualdade
+    // exata) antes de liberar o handler; o stub responde "ativo" no caminho feliz.
+    if (url.includes("/rest/v1/profiles") && url.includes("select=is_active")) {
+      chamadas.push({ metodo, url, corpo: null });
+      return Promise.resolve(new Response(JSON.stringify({ is_active: true }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }));
+    }
     if (!route) {
       chamadas.push({ metodo, url: `SEM_STUB ${url}`, corpo });
       return Promise.resolve(new Response("nao stubado", { status: 599 }));

@@ -441,6 +441,37 @@ export type AuthUserResult = {
   error: unknown;
 };
 
+/** Resultado da leitura de `profiles.is_active` (estrutural; testável offline). */
+export type ProfileActiveResult = {
+  data: { is_active: boolean | null } | null;
+  error: unknown;
+};
+
+/** Leitura de `profiles.is_active` pelo `user_id` do usuário autenticado. */
+export type ProfileActiveLookup = (userId: string) => PromiseLike<ProfileActiveResult>;
+
+/**
+ * Default de produção: resolve `profiles.is_active` por `user_id` (igualdade
+ * EXATA em `profiles.user_id`, índice UNIQUE NOT NULL e o MESMO id de
+ * `auth.users`). Nunca por `profiles.email` (nullable, sem UNIQUE garantido) nem
+ * por `ilike` (curinga do PostgREST). O cast para o builder do supabase-js é
+ * local e intencional: expor o builder na assinatura estoura a instanciação de
+ * tipos (TS2589).
+ */
+export function profileActiveFrom(client: RateLimitRpcClient): ProfileActiveLookup {
+  const c = client as unknown as {
+    from(table: string): {
+      select(columns: string): {
+        eq(column: string, value: string): {
+          maybeSingle(): PromiseLike<ProfileActiveResult>;
+        };
+      };
+    };
+  };
+  return (userId: string) =>
+    c.from("profiles").select("is_active").eq("user_id", userId).maybeSingle();
+}
+
 /**
  * Dependências injetáveis de `requireAuth` (para teste offline). Em produção
  * ficam ausentes e `requireAuth` usa o caminho real (esm.sh + env + service_role).
@@ -457,12 +488,9 @@ export interface RequireAuthOptions {
   /** Fallback de rate limit quando a RPC não tem regra p/ o endpoint (máximos atuais). */
   defaultMaxRequests?: number;
   defaultWindowSeconds?: number;
-  /**
-   * Escritor de `rate_limit_logs` para as negações de política de rede (403).
-   * Padrão: `recordRateLimitDenial` (client service_role, best-effort).
-   * Injectable p/ testar a gravação sem tocar rede/env.
-   */
-  rateLimitLogWriter?: RateLimitLogWriter;
+  /** Leitura de `profiles.is_active` do usuário autenticado (R2-AUTH-004).
+   *  Injectable p/ teste; ausente em produção = client service_role real. */
+  getProfileActive?: ProfileActiveLookup;
 }
 
 /**
@@ -539,6 +567,32 @@ export async function requireAuth(
   }
   if (!decision.allowed) {
     return networkPolicyDenialResponse(decision, req);
+  }
+
+  // 3. R2-AUTH-004 (item 6): perfil inativo/ausente NÃO opera. A checagem roda
+  //    DEPOIS da autenticação e da política de rede e ANTES de qualquer efeito
+  //    do handler; consumidores de requireAuth herdam a trava sem edição
+  //    individual. O perfil é resolvido por `profiles.user_id` (UNIQUE NOT NULL,
+  //    o MESMO id de auth.users) — igualdade exata, nunca por e-mail/ilike.
+  let profile: ProfileActiveResult;
+  try {
+    // Criação do client (import dinâmico + env) e execução do lookup sob o mesmo
+    // guarda-chuva: exceção/rejeição aqui vira negação fechada, nunca liberação.
+    const lookup = opts.getProfileActive ??
+      profileActiveFrom(await (opts.policyRpcFactory ?? getServiceClient)());
+    profile = await lookup(userId);
+  } catch {
+    // Fail-closed (indecidível): não dá para provar que o perfil está ativo.
+    return errorResponse("Service unavailable", 503, req);
+  }
+  if (profile.error) {
+    // Fail-closed: consulta que falhou não libera a operação.
+    return errorResponse("Service unavailable", 503, req);
+  }
+  // Ausente, inativo (`false`) ou `is_active` nulo: 403 neutro, o MESMO corpo da
+  // negação da política de rede — não revela existência nem estado do perfil.
+  if (!profile.data || profile.data.is_active !== true) {
+    return errorResponse("Access denied", 403, req);
   }
   return { userId };
 }
