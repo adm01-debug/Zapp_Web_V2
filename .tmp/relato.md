@@ -1,5 +1,9 @@
 Especialista: senior (area-testes-do-produto)
 
+ENTREGA (o que mudou, comando, resultado — sem ressalva): mudou só o relato
+(.tmp/relato.md); código do cartão já absorvido na do dia (9f9a808792 é
+ancestral do HEAD). Comando: `bunx vitest run src/components/inbox/__tests__/ChatPanel.ligar.test.tsx src/components/inbox/contact-details/__tests__/click-to-call-origens.test.ts`. Resultado: `Test Files 2 passed (2)`, `Tests 15 passed (15)`.
+
 Refazer 2 — SÓ O RELATO (nenhum código muda neste cartão: o código 9f9a808792
 já está absorvido na branch do dia; abaixo a prova). Respondo aos 4 pontos na
 mesma ordem da recusa, cada um com comando rodado agora e saída real colada.
