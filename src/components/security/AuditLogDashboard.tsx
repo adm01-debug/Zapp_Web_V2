@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { FileText, Search, Filter, Calendar, User, Globe, AlertTriangle, Shield, Activity } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,22 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
-import { localDayKey } from '@/lib/localDay';
 import { ptBR } from 'date-fns/locale';
-
-interface AuditLog {
-  id: string;
-  action: string;
-  entity_type: string | null;
-  entity_id: string | null;
-  user_id: string | null;
-  details: Record<string, unknown> | null;
-  ip_address: string | null;
-  user_agent: string | null;
-  created_at: string;
-}
+import { useAuditLogDashboard } from '@/hooks/security/useAuditLogDashboard';
 
 // Contrato compartilhado de ações e entidades de papel: todo evento de papel em
 // public.audit_logs começa com `role_` (audit_role_changes grava role_granted /
@@ -68,63 +55,37 @@ const ACTION_ICONS: Record<string, typeof Shield> = {
 };
 
 export function AuditLogDashboard() {
-  const [logs, setLogs] = useState<AuditLog[]>([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [actionFilter, setActionFilter] = useState<string>('all');
   const [entityFilter, setEntityFilter] = useState<string>('all');
-  const [stats, setStats] = useState({ total: 0, today: 0, suspicious: 0, uniqueUsers: 0 });
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
 
-  const fetchLogs = useCallback(async () => {
-    setLoading(true);
-    let query = supabase
-      .from('audit_logs')
-      .select('id, action, entity_type, user_id, details, ip_address, created_at')
-      .order('created_at', { ascending: false })
-      .limit(200);
+  // O vocabulário dos filtros fica na tela; a consulta (contagem de servidor e
+  // lista de 200) fica no hook.
+  const entityTypes = useMemo(
+    () => (entityFilter === 'all' ? null : ENTITY_TYPES_BY_FILTER[entityFilter] ?? [entityFilter]),
+    [entityFilter],
+  );
+  const consulta = useMemo(
+    () => ({
+      actionLike: actionFilter === ROLE_FILTER_VALUE ? ROLE_ACTION_PREFIX + '%' : null,
+      actionEq: actionFilter !== 'all' && actionFilter !== ROLE_FILTER_VALUE ? actionFilter : null,
+      entityTypes,
+    }),
+    [actionFilter, entityTypes],
+  );
 
-    if (actionFilter === ROLE_FILTER_VALUE) {
-      query = query.like('action', ROLE_ACTION_PREFIX + '%');
-    } else if (actionFilter !== 'all') {
-      query = query.eq('action', actionFilter);
-    }
-    if (entityFilter !== 'all') {
-      query = query.in('entity_type', ENTITY_TYPES_BY_FILTER[entityFilter] ?? [entityFilter]);
-    }
+  const { stats, logs, nomesPorUsuario, loading, error, recarregar } = useAuditLogDashboard(consulta);
 
-    const { data, error } = await query;
-    if (!error && data) {
-      setLogs(data as AuditLog[]);
-      
-      const today = localDayKey(new Date());
-      const todayLogs = data.filter(l => localDayKey(l.created_at) === today);
-      const uniqueUsers = new Set(data.map(l => l.user_id).filter(Boolean));
-      const suspicious = data.filter(l => isSensitiveAction(l.action));
-      
-      setStats({
-        total: data.length,
-        today: todayLogs.length,
-        suspicious: suspicious.length,
-        uniqueUsers: uniqueUsers.size,
-      });
-    }
-    setLoading(false);
-  }, [actionFilter, entityFilter]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount/troca-de-filtro padrão, sem estado derivado de props para sincronizar.
-    fetchLogs();
-  }, [fetchLogs]);
-
-  const filteredLogs = logs.filter(log => {
+  const filteredLogs = logs.filter((log) => {
     if (!search) return true;
     const s = search.toLowerCase();
     return (
       log.action.toLowerCase().includes(s) ||
       log.entity_type?.toLowerCase().includes(s) ||
       log.ip_address?.includes(s) ||
-      log.user_id?.includes(s)
+      log.user_id?.includes(s) ||
+      nomesPorUsuario[log.user_id ?? '']?.toLowerCase().includes(s)
     );
   });
 
@@ -147,24 +108,44 @@ export function AuditLogDashboard() {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total de Logs', value: stats.total, icon: FileText, color: 'text-primary' },
-          { label: 'Hoje', value: stats.today, icon: Calendar, color: 'text-success' },
-          { label: 'Ações Sensíveis', value: stats.suspicious, icon: AlertTriangle, color: 'text-destructive' },
-          { label: 'Usuários Únicos', value: stats.uniqueUsers, icon: User, color: 'text-info' },
+          { label: 'Total de Logs', hint: null, value: stats?.total, icon: FileText, color: 'text-primary' },
+          { label: 'Hoje', hint: 'últimas 24 h', value: stats?.ultimas24h, icon: Calendar, color: 'text-success' },
+          { label: 'Ações Sensíveis', hint: 'últimas 24 h', value: stats?.sensiveis24h, icon: AlertTriangle, color: 'text-destructive' },
+          {
+            label: 'Usuários Únicos',
+            hint: stats?.usuariosUnicosIncompleto ? 'últimos 7 d (leitura parcial)' : 'últimos 7 d',
+            value: stats?.usuariosUnicos7d,
+            icon: User,
+            color: 'text-info',
+          },
         ].map((stat) => (
           <Card key={stat.label}>
             <CardContent className="pt-4 pb-4">
               <div className="flex items-center gap-3">
                 <stat.icon className={`w-5 h-5 ${stat.color}`} />
                 <div>
-                  <p className="text-2xl font-bold">{stat.value}</p>
+                  <p className="text-2xl font-bold">{stat.value ?? '—'}</p>
                   <p className="text-xs text-muted-foreground">{stat.label}</p>
+                  {stat.hint && <p className="text-[10px] text-muted-foreground/70">{stat.hint}</p>}
                 </div>
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
+
+      {error && (
+        <div
+          role="alert"
+          className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive"
+        >
+          <AlertTriangle className="w-4 h-4 shrink-0" />
+          <span>Não foi possível carregar a auditoria: {error}</span>
+          <Button size="sm" variant="outline" className="ml-auto" onClick={recarregar}>
+            Tentar de novo
+          </Button>
+        </div>
+      )}
 
       {/* Filters */}
       <Card>
@@ -241,6 +222,7 @@ export function AuditLogDashboard() {
               ) : (
                 filteredLogs.map((log) => {
                   const Icon = getActionIcon(log.action);
+                  const autor = log.user_id ? nomesPorUsuario[log.user_id] ?? log.user_id : null;
                   return (
                     <motion.div
                       key={log.id}
@@ -262,6 +244,15 @@ export function AuditLogDashboard() {
                             )}
                           </div>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                            {autor && (
+                              <>
+                                <span className="flex items-center gap-1">
+                                  <User className="w-3 h-3" />
+                                  {autor}
+                                </span>
+                                <span>•</span>
+                              </>
+                            )}
                             <span>{format(new Date(log.created_at), "dd/MM/yyyy HH:mm:ss", { locale: ptBR })}</span>
                             {log.ip_address && (
                               <>
