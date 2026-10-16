@@ -197,11 +197,24 @@ describe('GlobalSearch — clique no resultado registra o tipo clicado', () => {
     return screen.findByRole('button', { name: /Conversa com Ana Souza/i }, { timeout: 3000 });
   }
 
+  /**
+   * Um tique de macrotarefa. O ouvinte de teclado do `GlobalSearch` é registrado
+   * num efeito passivo, e o `findByRole` resolve assim que o DOM tem o resultado
+   * (efeito passivo ainda pode estar na fila). Sem esta espera o Enter às vezes
+   * chega antes do ouvinte e o handler enxerga `navigationTargets` vazio —
+   * artefato do teste, não do produto: na tela o Enter vem muito depois da
+   * pintura dos resultados.
+   */
+  async function flushEffects() {
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 0)); });
+  }
+
   it('clique por teclado (Enter) registra result_kind do resultado selecionado', async () => {
     const onSelectResult = vi.fn();
     render(<GlobalSearch open onOpenChange={vi.fn()} onSelectResult={onSelectResult} />);
     fireEvent.change(screen.getByPlaceholderText(/Buscar mensagens/i), { target: { value: 'zzzz' } });
     await screen.findByRole('button', { name: /Conversa com Ana Souza/i }, { timeout: 3000 });
+    await flushEffects();
 
     fireEvent.keyDown(document, { key: 'Enter' });
 
