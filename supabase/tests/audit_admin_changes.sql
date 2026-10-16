@@ -19,7 +19,18 @@
 --     dispara (gatilho nao passa por checagem de EXECUTE);
 --   * o cliente (`authenticated`) NAO consegue forjar a trilha: a policy
 --     "Block direct audit log inserts" (WITH CHECK false) barra o INSERT direto,
---     e por isso a escrita so sai pelo caminho SECURITY DEFINER.
+--     e por isso a escrita so sai pelo caminho SECURITY DEFINER;
+--   * MATRIZ DE PAPEIS (sec. M): `anon` e NEGADO nas tabelas administrativas e na
+--     trilha (42501); `authenticated` tem a operacao PASSA e auditada, mas e
+--     NEGADO ao forjar (RLS), ao chamar a funcao do gatilho (sem EXECUTE) e ao
+--     alterar/apagar a trilha ja gravada (RLS: 0 linhas afetadas);
+--   * ATRIBUICAO (sec. AT): a escrita por um agente grava o uid DESSE agente, nao
+--     o do admin que aparece no fixture;
+--   * UMA OPERACAO = EXATAMENTE 1 REGISTRO (sec. U), nas 8 tabelas — e nenhuma
+--     disparo duplicado;
+--   * SEGREDO/DADO PESSOAL (sec. SEC): o VALOR de `global_settings` (token) nunca
+--     entra em `details` — so a CHAVE, que e identificador; telefone e e-mail do
+--     perfil tambem nunca sao gravados.
 --
 -- Como rodar (PostgreSQL 17 descartavel, UM arquivo, UMA transacao com ROLLBACK).
 -- O `\i` do arquivo roda DENTRO do container, entao a copia precisa estar montada
@@ -73,6 +84,7 @@ CREATE TABLE public.profiles (
   access_level text DEFAULT 'active',
   is_active boolean DEFAULT true,
   can_download boolean NOT NULL DEFAULT true,
+  phone text,
   updated_at timestamptz NOT NULL DEFAULT now(),
   created_at timestamptz NOT NULL DEFAULT now()
 );
@@ -163,10 +175,10 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON
   TO authenticated, service_role;
 
 -- Fixtures: o admin (ator), dois alvos de perfil, a config secreta e um IP bloqueado.
-INSERT INTO public.profiles (id, user_id, name, role) VALUES
-  ('a0000000-0000-0000-0000-00000000000a', '11111111-1111-1111-1111-11111111111a', 'ADMIN', 'admin'),
-  ('c0000000-0000-0000-0000-00000000000c', '22222222-2222-2222-2222-22222222222b', 'ALVO 1', 'agent'),
-  ('d0000000-0000-0000-0000-00000000000d', '33333333-3333-3333-3333-33333333333c', 'ALVO 2', 'agent');
+INSERT INTO public.profiles (id, user_id, name, role, email, phone) VALUES
+  ('a0000000-0000-0000-0000-00000000000a', '11111111-1111-1111-1111-11111111111a', 'ADMIN', 'admin', 'admin@exemplo.test', '+5511999990000'),
+  ('c0000000-0000-0000-0000-00000000000c', '22222222-2222-2222-2222-22222222222b', 'ALVO 1', 'agent', 'alvo1@exemplo.test', '+5511999990001'),
+  ('d0000000-0000-0000-0000-00000000000d', '33333333-3333-3333-3333-33333333333c', 'ALVO 2', 'agent', 'alvo2@exemplo.test', '+5511999990002');
 INSERT INTO public.global_settings (key, value, description) VALUES
   ('api_token', 'TOKEN-DE-PRODUCAO-NAO-VAZAR', 'Token da API publica'),
   ('auto_reopen_hours', '2', 'Horas de reabertura');
@@ -239,7 +251,12 @@ SELECT pg_temp.espera('T.4 perfil vigia exatamente 4 colunas',
 -- ============================================================================
 SET LOCAL ROLE authenticated;
 DO $j$ BEGIN PERFORM set_config('request.jwt.claims', json_build_object('sub', '11111111-1111-1111-1111-11111111111a')::text, true); END $j$;
-UPDATE public.profiles SET is_active = false, name = 'nome trocado junto' WHERE id = 'c0000000-0000-0000-0000-00000000000c';
+UPDATE public.profiles
+   SET is_active = false,
+       name = 'nome trocado junto',
+       email = 'alvo1.novo@exemplo.test',
+       phone = '+5511999990001'
+ WHERE id = 'c0000000-0000-0000-0000-00000000000c';
 UPDATE public.profiles SET email = 'x@exemplo.test' WHERE id = 'd0000000-0000-0000-0000-00000000000d';
 UPDATE public.global_settings SET value = 'SEGREDO-NOVO-NAO-PODE-VAZAR' WHERE key = 'api_token';
 INSERT INTO public.agent_visibility_grants (id, agent_id, can_see_agent_id, granted_by)
@@ -265,6 +282,14 @@ SELECT pg_temp.espera('P.6 changed_fields NAO traz coluna de fora do escopo (nam
 SELECT pg_temp.espera('P.7 ator_kind = jwt', (SELECT details ->> 'actor_kind' FROM public.audit_logs WHERE action = 'profiles_update'), 'jwt');
 SELECT pg_temp.espera('P.8 UPDATE so em coluna fora do escopo NAO gera registro',
   (SELECT count(*)::text FROM public.audit_logs WHERE action = 'profiles_update' AND entity_id = 'd0000000-0000-0000-0000-00000000000d'), '0');
+SELECT pg_temp.espera('P.9 o registro NAO carrega o e-mail do alvo',
+  (SELECT (position('alvo1.novo@exemplo.test' in details::text) = 0)::text FROM public.audit_logs WHERE action = 'profiles_update' AND entity_id = 'c0000000-0000-0000-0000-00000000000c'), 'true');
+SELECT pg_temp.espera('P.10 o registro NAO carrega o telefone do alvo',
+  (SELECT (position('+5511999990001' in details::text) = 0)::text FROM public.audit_logs WHERE action = 'profiles_update' AND entity_id = 'c0000000-0000-0000-0000-00000000000c'), 'true');
+SELECT pg_temp.espera('P.11 changed_fields nem cita email/phone (so os 4 campos de acesso)',
+  (SELECT (NOT ((details -> 'changed_fields') ? 'email') AND NOT ((details -> 'changed_fields') ? 'phone')
+           AND (details -> 'changed_fields') = '["is_active"]'::jsonb)::text
+     FROM public.audit_logs WHERE action = 'profiles_update' AND entity_id = 'c0000000-0000-0000-0000-00000000000c'), 'true');
 
 -- ============================================================================
 -- G. GLOBAL_SETTINGS: grava a chave, NUNCA o valor
@@ -332,5 +357,188 @@ RESET ROLE;
 SELECT pg_temp.espera('F.2 nenhuma linha forjada entrou',
   (SELECT count(*)::text FROM public.audit_logs WHERE action = 'forjado'), '0');
 
+-- ============================================================================
+-- AT. ATRIBUICAO: o registro aponta QUEM agiu — o agente, nao o admin
+-- ============================================================================
+SET LOCAL ROLE authenticated;
+DO $j$ BEGIN PERFORM set_config('request.jwt.claims', json_build_object('sub', '33333333-3333-3333-3333-33333333333c')::text, true); END $j$;
+UPDATE public.profiles SET max_chats = 9 WHERE id = 'd0000000-0000-0000-0000-00000000000d';
+RESET ROLE;
+
+SELECT pg_temp.espera('AT.1 o ator e o AGENTE do JWT, nao o admin',
+  (SELECT user_id::text FROM public.audit_logs WHERE action = 'profiles_update' AND entity_id = 'd0000000-0000-0000-0000-00000000000d'), '33333333-3333-3333-3333-33333333333c');
+SELECT pg_temp.espera('AT.2 changed_fields traz so o campo vigiado (max_chats)',
+  (SELECT (details -> 'changed_fields')::text FROM public.audit_logs WHERE action = 'profiles_update' AND entity_id = 'd0000000-0000-0000-0000-00000000000d'), '["max_chats"]');
+SELECT pg_temp.espera('AT.3 ator marcado como jwt',
+  (SELECT details ->> 'actor_kind' FROM public.audit_logs WHERE action = 'profiles_update' AND entity_id = 'd0000000-0000-0000-0000-00000000000d'), 'jwt');
+
+-- ============================================================================
+-- U. UMA OPERACAO POR TABELA = EXATAMENTE 1 REGISTRO (as 8 tabelas)
+-- ============================================================================
+SET LOCAL ROLE authenticated;
+DO $j$ BEGIN PERFORM set_config('request.jwt.claims', json_build_object('sub', '11111111-1111-1111-1111-11111111111a')::text, true); END $j$;
+INSERT INTO public.profiles (id, user_id, name, role) VALUES
+  ('9a000000-0000-0000-0000-000000000001', '9a000000-0000-0000-0000-00000000a001', 'VARREDURA', 'agent');
+UPDATE public.profiles SET access_level = 'limited', can_download = false
+ WHERE id = '9a000000-0000-0000-0000-000000000001';
+INSERT INTO public.agent_visibility_grants (id, agent_id, can_see_agent_id, granted_by)
+  VALUES ('f1000000-0000-0000-0000-000000000001', '9a000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-00000000000d', 'a0000000-0000-0000-0000-00000000000a');
+INSERT INTO public.global_settings (id, key, value)
+  VALUES ('a1000000-0000-0000-0000-000000000001', 'sweep_token', 'TOKEN-DA-VARREDURA-NAO-VAZAR');
+INSERT INTO public.ip_whitelist (id, ip_address)
+  VALUES ('b1000000-0000-0000-0000-000000000001', '198.51.100.44');
+INSERT INTO public.blocked_ips (id, ip_address, reason)
+  VALUES ('c1000000-0000-0000-0000-000000000001', '203.0.113.44', 'varredura');
+INSERT INTO public.blocked_countries (id, country_code, country_name)
+  VALUES ('d1000000-0000-0000-0000-000000000001', 'IR', 'Ira');
+INSERT INTO public.geo_blocking_settings (id, mode)
+  VALUES ('e1000000-0000-0000-0000-000000000001', 'off');
+INSERT INTO public.rate_limit_configs (id, name, endpoint_pattern, max_requests, window_seconds, block_duration_minutes)
+  VALUES ('f2000000-0000-0000-0000-000000000001', 'varredura', '/sweep', 10, 60, 5);
+RESET ROLE;
+
+SELECT pg_temp.espera('U.1 profiles: 1 registro para a operacao',
+  (SELECT count(*)::text FROM public.audit_logs WHERE action = 'profiles_update' AND entity_id = '9a000000-0000-0000-0000-000000000001'), '1');
+SELECT pg_temp.espera('U.2 agent_visibility_grants: 1 registro',
+  (SELECT count(*)::text FROM public.audit_logs WHERE action = 'agent_visibility_grants_insert' AND entity_id = 'f1000000-0000-0000-0000-000000000001'), '1');
+SELECT pg_temp.espera('U.3 global_settings: 1 registro',
+  (SELECT count(*)::text FROM public.audit_logs WHERE action = 'global_settings_insert' AND entity_id = 'a1000000-0000-0000-0000-000000000001'), '1');
+SELECT pg_temp.espera('U.4 ip_whitelist: 1 registro',
+  (SELECT count(*)::text FROM public.audit_logs WHERE action = 'ip_whitelist_insert' AND entity_id = 'b1000000-0000-0000-0000-000000000001'), '1');
+SELECT pg_temp.espera('U.5 blocked_ips: 1 registro',
+  (SELECT count(*)::text FROM public.audit_logs WHERE action = 'blocked_ips_insert' AND entity_id = 'c1000000-0000-0000-0000-000000000001'), '1');
+SELECT pg_temp.espera('U.6 blocked_countries: 1 registro',
+  (SELECT count(*)::text FROM public.audit_logs WHERE action = 'blocked_countries_insert' AND entity_id = 'd1000000-0000-0000-0000-000000000001'), '1');
+SELECT pg_temp.espera('U.7 geo_blocking_settings: 1 registro',
+  (SELECT count(*)::text FROM public.audit_logs WHERE action = 'geo_blocking_settings_insert' AND entity_id = 'e1000000-0000-0000-0000-000000000001'), '1');
+SELECT pg_temp.espera('U.8 rate_limit_configs: 1 registro',
+  (SELECT count(*)::text FROM public.audit_logs WHERE action = 'rate_limit_configs_insert' AND entity_id = 'f2000000-0000-0000-0000-000000000001'), '1');
+SELECT pg_temp.espera('U.9 INSERT de perfil NAO e auditado (o gatilho e so UPDATE)',
+  (SELECT count(*)::text FROM public.audit_logs WHERE action = 'profiles_insert'), '0');
+SELECT pg_temp.espera('U.10 nenhuma operacao gerou disparo duplicado',
+  (SELECT count(*)::text FROM (
+     SELECT action, entity_id FROM public.audit_logs
+      GROUP BY action, entity_id HAVING count(*) > 2) AS d), '0');
+
+-- ============================================================================
+-- SEC. SEGREDO E DADO PESSOAL: o que SAI na trilha e o que NUNCA sai
+-- ============================================================================
+SELECT pg_temp.espera('SEC.1 global_settings grava a CHAVE (identificador)',
+  (SELECT details ->> 'key' FROM public.audit_logs WHERE action = 'global_settings_insert' AND entity_id = 'a1000000-0000-0000-0000-000000000001'), 'sweep_token');
+SELECT pg_temp.espera('SEC.2 o campo `value` nao existe no registro',
+  (SELECT (details ? 'value')::text FROM public.audit_logs WHERE action = 'global_settings_insert' AND entity_id = 'a1000000-0000-0000-0000-000000000001'), 'false');
+SELECT pg_temp.espera('SEC.3 o VALOR secreto nao aparece em nenhum registro',
+  (SELECT (count(*) = 0)::text FROM public.audit_logs
+    WHERE details::text LIKE '%TOKEN-DA-VARREDURA-NAO-VAZAR%'
+       OR details::text LIKE '%TOKEN-DE-PRODUCAO-NAO-VAZAR%'
+       OR details::text LIKE '%SEGREDO-NOVO-NAO-PODE-VAZAR%'
+       OR details::text LIKE '%troca-anon%'), 'true');
+SELECT pg_temp.espera('SEC.4 telefone e e-mail nunca sao gravados',
+  (SELECT (count(*) = 0)::text FROM public.audit_logs
+    WHERE details::text LIKE '%+5511999990001%'
+       OR details::text LIKE '%alvo1.novo@exemplo.test%'
+       OR details::text LIKE '%@exemplo.test%'), 'true');
+SELECT pg_temp.espera('SEC.5 a trilha nao e vazia (prova nao-vacua)',
+  (SELECT (count(*) > 0)::text FROM public.audit_logs), 'true');
+SELECT pg_temp.espera('SEC.6 as 8 tabelas administrativas aparecem na trilha',
+  (SELECT string_agg(DISTINCT entity_type, ',' ORDER BY entity_type) FROM public.audit_logs
+    WHERE entity_type IN ('profiles', 'agent_visibility_grants', 'global_settings', 'ip_whitelist',
+                          'blocked_ips', 'blocked_countries', 'geo_blocking_settings', 'rate_limit_configs')),
+  'agent_visibility_grants,blocked_countries,blocked_ips,geo_blocking_settings,global_settings,ip_whitelist,profiles,rate_limit_configs');
+
+-- ============================================================================
+-- M. MATRIZ DE PAPEIS: o que PASSA e o que e NEGADO
+-- ============================================================================
+-- NEGADO (anon): sem GRANT nas tabelas administrativas a escrita morre na
+-- permissao (42501), antes de qualquer gatilho; a trilha nem e tocada.
+SET LOCAL ROLE anon;
+DO $m1$
+BEGIN
+  BEGIN
+    INSERT INTO public.ip_whitelist (ip_address) VALUES ('203.0.113.77');
+    RAISE EXCEPTION 'FALHOU [M.1]: anon conseguiu inserir em ip_whitelist';
+  EXCEPTION WHEN insufficient_privilege THEN
+    RAISE NOTICE 'PASS [M.1] NEGADO: anon nao insere em ip_whitelist (%)', SQLSTATE;
+  END;
+END $m1$;
+DO $m2$
+BEGIN
+  BEGIN
+    UPDATE public.global_settings SET value = 'troca-anon' WHERE key = 'api_token';
+    RAISE EXCEPTION 'FALHOU [M.2]: anon conseguiu alterar global_settings';
+  EXCEPTION WHEN insufficient_privilege THEN
+    RAISE NOTICE 'PASS [M.2] NEGADO: anon nao altera global_settings (%)', SQLSTATE;
+  END;
+END $m2$;
+DO $m3$
+BEGIN
+  BEGIN
+    DELETE FROM public.audit_logs;
+    RAISE EXCEPTION 'FALHOU [M.3]: anon conseguiu apagar a trilha';
+  EXCEPTION WHEN insufficient_privilege THEN
+    RAISE NOTICE 'PASS [M.3] NEGADO: anon nao toca audit_logs (%)', SQLSTATE;
+  END;
+END $m3$;
+RESET ROLE;
+SELECT pg_temp.espera('M.4 nenhuma escrita do anon virou trilha',
+  (SELECT count(*)::text FROM public.audit_logs WHERE details ->> 'actor_db_role' = 'anon'), '0');
+
+SET LOCAL ROLE authenticated;
+DO $j$ BEGIN PERFORM set_config('request.jwt.claims', json_build_object('sub', '11111111-1111-1111-1111-11111111111a')::text, true); END $j$;
+
+-- NEGADO (authenticated): nao existe caminho para forjar a trilha.
+DO $m5$
+BEGIN
+  BEGIN
+    INSERT INTO public.audit_logs (user_id, action) VALUES ('11111111-1111-1111-1111-11111111111a', 'forjado-2');
+    RAISE EXCEPTION 'FALHOU [M.5]: authenticated inseriu direto em audit_logs';
+  EXCEPTION WHEN insufficient_privilege THEN
+    IF position('row-level security' in SQLERRM) = 0 THEN
+      RAISE EXCEPTION 'FALHOU [M.5]: barrado, mas nao pela RLS (%): %', SQLSTATE, SQLERRM;
+    END IF;
+    RAISE NOTICE 'PASS [M.5] NEGADO (RLS): authenticated nao forja a trilha';
+  END;
+END $m5$;
+
+-- NEGADO (authenticated): a funcao do gatilho nao tem EXECUTE por assinatura.
+DO $m6$
+BEGIN
+  BEGIN
+    PERFORM public.audit_admin_change();
+    RAISE EXCEPTION 'FALHOU [M.6]: authenticated executou audit_admin_change()';
+  EXCEPTION WHEN insufficient_privilege THEN
+    RAISE NOTICE 'PASS [M.6] NEGADO: authenticated nao chama audit_admin_change() (%)', SQLSTATE;
+  END;
+END $m6$;
+
+-- NEGADO (authenticated): a trilha ja gravada nao pode ser adulterada nem apagada.
+-- A contagem de referencia e feita ANTES, FORA do papel sob RLS — senao o proprio
+-- teste ficaria tautologico (`authenticated` nao enxerga `audit_logs`, entao
+-- "0 linhas afetadas" nao provaria nada).
+RESET ROLE;
+CREATE TEMP TABLE m_trilha_antes AS SELECT count(*)::bigint AS n FROM public.audit_logs;
+SELECT pg_temp.espera('M.4b a trilha a proteger nao e vazia (prova nao-vacua)',
+  (SELECT (n > 0)::text FROM m_trilha_antes), 'true');
+
+SET LOCAL ROLE authenticated;
+DO $j$ BEGIN PERFORM set_config('request.jwt.claims', json_build_object('sub', '11111111-1111-1111-1111-11111111111a')::text, true); END $j$;
+DO $m7$
+DECLARE v_afetadas bigint;
+BEGIN
+  UPDATE public.audit_logs SET details = '{"adulterado":true}'::jsonb;
+  GET DIAGNOSTICS v_afetadas = ROW_COUNT;
+  IF v_afetadas <> 0 THEN RAISE EXCEPTION 'FALHOU [M.7]: authenticated alterou % linhas da trilha', v_afetadas; END IF;
+  DELETE FROM public.audit_logs;
+  GET DIAGNOSTICS v_afetadas = ROW_COUNT;
+  IF v_afetadas <> 0 THEN RAISE EXCEPTION 'FALHOU [M.7]: authenticated apagou % linhas da trilha', v_afetadas; END IF;
+  RAISE NOTICE 'PASS [M.7] NEGADO (RLS): authenticated nao altera nem apaga nenhuma linha da trilha';
+END $m7$;
+RESET ROLE;
+
+SELECT pg_temp.espera('M.8 a trilha segue intacta e sem adulteracao',
+  (SELECT (count(*) = (SELECT n FROM m_trilha_antes)
+           AND NOT EXISTS (SELECT 1 FROM public.audit_logs WHERE details ? 'adulterado'))::text
+     FROM public.audit_logs), 'true');
+
 ROLLBACK;
-\echo 'PASS: trilha das acoes administrativas — 8 gatilhos nao-vacuos, profiles restrito aos 4 campos de acesso, global_settings sem valor, ator JWT/sistema, EXECUTE negado e trilha a prova de forja.'
+\echo 'PASS: trilha das acoes administrativas — 8 gatilhos nao-vacuos (1 registro por operacao), profiles restrito aos 4 campos de acesso, global_settings sem valor, ator JWT/sistema, EXECUTE negado, anon negado e trilha a prova de forja/adulteracao.'
