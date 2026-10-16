@@ -143,7 +143,7 @@ describe('VoiceChangerPicker — aviso inline e movimento reduzido', () => {
   // Percorre o caminho real (abre -> grava -> para -> transforma) e devolve o
   // aviso inline já montado, para medir os props do motion.
   async function abrirAvisoInline() {
-    render(<VoiceChangerPicker onSendAudio={vi.fn()} />);
+    render(<VoiceChangerPicker onSendAudioBlob={vi.fn()} />);
     act(() => {
       popoverState.onOpenChange?.(true);
     });

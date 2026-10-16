@@ -178,7 +178,7 @@ describe('VoiceChangerPicker — falhas de transformação e de reprodução', (
 
   // Percorre o caminho real: abre -> grava -> para, parando no estado gravado.
   async function prepararGravacao() {
-    render(<VoiceChangerPicker onSendAudio={vi.fn()} />);
+    render(<VoiceChangerPicker onSendAudioBlob={vi.fn()} />);
     act(() => {
       popoverState.onOpenChange?.(true);
     });
