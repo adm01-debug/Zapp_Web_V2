@@ -8,8 +8,8 @@
 --
 -- N-111. Esta tabela passa a ser a unica lista de campos/operadores permitidos.
 -- Ela substitui a whitelist hardcoded no front
--- (src/hooks/integrations/useTalkXSegments.ts: RULE_FIELDS nas linhas 63-90 e
--- RULE_OPS nas linhas 92-109) e a logica replicada na RPC de audiencia
+-- (src/hooks/integrations/useTalkXSegments.ts: RULE_FIELDS nas linhas 65-107 e
+-- RULE_OPS nas linhas 109-126) e a logica replicada na RPC de audiencia
 -- (supabase/migrations/20261002391230_talkx_audience_rpc.sql: whitelist de
 -- campo nas linhas 139-160, de operador nas 165-173, validacao de tipo do
 -- valor nas 183-200 e montagem do predicado nas 202-260).
@@ -27,7 +27,7 @@
 -- que o texto cru do valor nunca entra no SQL dinamico.
 --
 -- Semantica de data igual a RPC (20261002391230, linhas 248-259) e ao front
--- (useTalkXSegments.ts, ramo de data nas linhas 189-196): inicio do dia de
+-- (useTalkXSegments.ts, ramo de data nas linhas 217-224): inicio do dia de
 -- calendario em America/Sao_Paulo, (dias - 1) atras.
 --
 -- Classe: ADITIVA e idempotente (CREATE TABLE IF NOT EXISTS, INSERT ... ON
