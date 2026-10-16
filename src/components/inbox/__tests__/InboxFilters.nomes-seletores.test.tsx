@@ -28,7 +28,7 @@ vi.mock('@/hooks/business/useQueues', () => ({
 
 describe('InboxFilters — nomes acessíveis nos seletores', () => {
   const baseProps = {
-    filters: { status: [], tags: [], agentId: null, dateRange: { from: null, to: null } },
+    filters: { status: [], agentId: null, dateRange: { from: null, to: null } },
     onFiltersChange: vi.fn(),
     showAll: true,
     onShowAllChange: vi.fn(),
@@ -56,6 +56,16 @@ describe('InboxFilters — nomes acessíveis nos seletores', () => {
     render(<InboxFilters {...baseProps} />);
     abrirPopover();
     expect(screen.getByRole('switch', { name: 'Mostrar todos' })).toBeInTheDocument();
+  });
+
+  it('o painel Filtros não oferece mais recorte por etiqueta', () => {
+    render(<InboxFilters {...baseProps} />);
+    abrirPopover();
+
+    // A função de etiquetas saiu (ordem de 16/10/2026): nenhuma seção e nenhum
+    // controle de etiqueta no painel.
+    expect(screen.queryByText(/Etiqueta/i)).toBeNull();
+    expect(screen.queryByRole('button', { name: /etiqueta|tag/i })).toBeNull();
   });
 
   it('o axe não acusa `button-name` com o painel de filtros aberto', async () => {

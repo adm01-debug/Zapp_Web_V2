@@ -201,7 +201,6 @@ const conversation: Conversation = {
   unreadCount: 0,
   status: 'open',
   priority: 'medium',
-  tags: [],
   createdAt: new Date(),
   updatedAt: new Date(),
 };

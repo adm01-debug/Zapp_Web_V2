@@ -69,6 +69,7 @@ export interface Contact360Contact {
   relationship_stage: string | null;
   relationship_score: number;
   sentiment: string | null;
+  tags: string[];
   behavior: Contact360Behavior | null;
   notes: string | null;
   source: string | null;

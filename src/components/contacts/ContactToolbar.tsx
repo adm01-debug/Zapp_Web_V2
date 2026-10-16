@@ -53,6 +53,7 @@ interface ContactToolbarProps {
   setFilterDateRange: (val: string) => void;
   uniqueCompanies: string[];
   uniqueJobTitles: string[];
+  uniqueTags: string[];
   onApplyPreset: (preset: FilterPreset) => void;
   groupByCompany: boolean;
   setGroupByCompany: (val: boolean) => void;
@@ -79,8 +80,8 @@ export function ContactToolbar({
   searchInput, onSearchChange, sortBy, setSortBy, showLegacy, setShowLegacy,
   showFilters, setShowFilters, activeFiltersCount, clearFilters,
   activeTab, filterCompany, setFilterCompany, filterJobTitle, setFilterJobTitle,
-  filterDateRange, setFilterDateRange,
-  uniqueCompanies, uniqueJobTitles,
+  filterTag, setFilterTag, filterDateRange, setFilterDateRange,
+  uniqueCompanies, uniqueJobTitles, uniqueTags,
   onApplyPreset, groupByCompany, setGroupByCompany,
   selectedIds, onBulkTag, onCompare, onMerge, canMerge,
   viewMode, setViewMode, gridColumns, setGridColumns, totalCount,
@@ -106,6 +107,7 @@ export function ContactToolbar({
             value={searchInput}
             onChange={onSearchChange}
             uniqueCompanies={uniqueCompanies}
+            uniqueTags={uniqueTags}
             totalCount={totalCount}
           />
         )}

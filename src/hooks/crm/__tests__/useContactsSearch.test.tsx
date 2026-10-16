@@ -109,6 +109,7 @@ describe('useContactsSearch — parâmetros enviados ao banco', () => {
         'contact_type_filter',
         'company_filter',
         'job_title_filter',
+        'tag_filter',
         'date_from',
         'sort_field',
         'sort_direction',
@@ -382,13 +383,15 @@ describe('useContactsSearch — filtros, busca e limpeza', () => {
     expect(result.current.page).toBe(0);
 
     act(() => result.current.setFilterJobTitle('Diretor'));
+    act(() => result.current.setFilterTag('vip'));
     await waitFor(() => expect(ultimoArgs(SEARCH).job_title_filter).toBe('Diretor'));
-    expect(result.current.activeFiltersCount).toBe(2);
+    await waitFor(() => expect(ultimoArgs(SEARCH).tag_filter).toBe('vip'));
+    expect(result.current.activeFiltersCount).toBe(3);
 
     act(() => result.current.setFilterDateRange('week'));
-    await waitFor(() => expect(result.current.activeFiltersCount).toBe(3));
+    await waitFor(() => expect(result.current.activeFiltersCount).toBe(4));
     act(() => result.current.setFilterDateRange('all'));
-    expect(result.current.activeFiltersCount).toBe(2);
+    expect(result.current.activeFiltersCount).toBe(3);
   });
 
   it('clearFilters limpa filtros, ordem e página, mas não a busca nem a aba', async () => {
@@ -397,6 +400,7 @@ describe('useContactsSearch — filtros, busca e limpeza', () => {
     await esperaBusca();
 
     act(() => result.current.setFilterCompany('ACME'));
+    act(() => result.current.setFilterTag('vip'));
     act(() => result.current.setSortBy('created_desc'));
     act(() => result.current.setActiveTab('lead'));
     await waitFor(() => expect(ultimoArgs(SEARCH).company_filter).toBe('ACME'));
@@ -488,12 +492,12 @@ describe('useContactsSearch — filtros, busca e limpeza', () => {
 });
 
 describe('useContactsSearch — valores únicos das listas de filtro', () => {
-  it('deduplica empresa e cargo, ignora nulo/vazio', async () => {
+  it('deduplica empresa/cargo/tags, ignora nulo/vazio e tira as tags de WhatsApp', async () => {
     h.results[SEARCH] = {
       data: [
-        contato('c1', { company: 'ACME', job_title: 'Diretor' }),
-        contato('c2', { company: 'ACME', job_title: 'Diretor' }),
-        contato('c3', { company: '', job_title: '' }),
+        contato('c1', { company: 'ACME', job_title: 'Diretor', tags: ['vip', 'wa:123:Suporte'] }),
+        contato('c2', { company: 'ACME', job_title: 'Diretor', tags: ['vip'] }),
+        contato('c3', { company: '', job_title: '', tags: [] }),
       ],
       error: null,
     };
@@ -502,16 +506,18 @@ describe('useContactsSearch — valores únicos das listas de filtro', () => {
 
     expect(result.current.uniqueCompanies).toEqual(['ACME']);
     expect(result.current.uniqueJobTitles).toEqual(['Diretor']);
+    expect(result.current.uniqueTags).toEqual(['vip']);
   });
 
-  it('contato com dado malformado não derruba a lista', async () => {
+  it('contato sem a coluna de tags (dado malformado) não derruba a lista', async () => {
     h.results[SEARCH] = {
-      data: [contato('c1', { company: 'ACME' }), contato('c2')],
+      data: [{ ...contato('c1', { company: 'ACME' }), tags: undefined }, contato('c2', { tags: ['vip'] })],
       error: null,
     };
     const { result } = setup();
     await waitFor(() => expect(result.current.contacts).toHaveLength(2));
 
+    expect(result.current.uniqueTags).toEqual(['vip']);
     expect(result.current.uniqueCompanies).toEqual(['ACME']);
   });
 });
