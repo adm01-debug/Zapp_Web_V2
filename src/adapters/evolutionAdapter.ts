@@ -136,6 +136,9 @@ export function derivedToConversationContact(dc: DerivedContact): ConversationCo
     phone: dc.phone,
     email: null,
     avatar_url: null,
+    // Contato derivado do WhatsApp nunca nasce bloqueado (o bloqueio e estado do cadastro).
+    blocked_at: null,
+    blocked_by: null,
     tags: null,
     company: null,
     // Contato derivado do WhatsApp nao traz endereco: so existe no cadastro manual.
