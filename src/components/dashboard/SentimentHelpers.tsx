@@ -1,14 +1,12 @@
 import { useState, useMemo, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
 import {
   TrendingUp, TrendingDown, Minus, Smile, Meh, Frown, AlertTriangle,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { format, subDays } from 'date-fns';
+import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { classifySentiment } from '@/lib/sentiment-classes';
+import { useSentimentTrend } from '@/hooks/analytics/useSentimentTrend';
 
 export interface SentimentData {
   date: string;
@@ -19,51 +17,30 @@ export interface SentimentData {
   alerts_count: number;
 }
 
+/**
+ * Série diária de sentimento, num formato compatível com os consumidores
+ * antigos (`SentimentTrendCard`). O cálculo real — janela no fuso do app,
+ * leitura paginada sem corte e classificação canônica — mora em
+ * `useSentimentTrend` (achado P1-D). Devolve `null` no vazio e no erro, como
+ * antes; quem precisa distinguir os dois usa o hook direto.
+ */
+// eslint-disable-next-line react-refresh/only-export-components -- este arquivo já reúne helpers do painel e o hook de série; separar quebraria os consumidores (`SentimentTrendCard`).
 export function useRealSentimentData(days: number): SentimentData[] | null {
-  const { data } = useQuery({
-    queryKey: ['sentiment-trend', days],
-    queryFn: async () => {
-      const startDate = subDays(new Date(), days);
-      const { data: analyses, error } = await supabase
-        .from('conversation_analyses')
-        .select('created_at, sentiment, sentiment_score')
-        .gte('created_at', startDate.toISOString())
-        .order('created_at');
-      
-      if (error) throw error;
-      if (!analyses || analyses.length === 0) return null;
-      
-      const dayMap = new Map<string, { positive: number; negative: number; neutral: number; total: number; alerts: number }>();
-      
-      analyses.forEach(a => {
-        const dateKey = format(new Date(a.created_at), 'yyyy-MM-dd');
-        if (!dayMap.has(dateKey)) dayMap.set(dateKey, { positive: 0, negative: 0, neutral: 0, total: 0, alerts: 0 });
-        const entry = dayMap.get(dateKey)!;
-        entry.total++;
-        // Classificação canônica: traduz o legado EN na leitura e soma `critico`
-        // no negativo. Desconhecido/ausente não entra em balde nenhum — antes o
-        // `else` final transformava crítico E desconhecido em 'neutro'
-        // (IA-SENTIMENT-001). O total do dia segue sendo o total REAL de
-        // análises, então a soma dos baldes pode ficar abaixo de 100%.
-        const classe = classifySentiment(a.sentiment);
-        if (classe === 'positivo') entry.positive++;
-        if (classe === 'negativo') { entry.negative++; entry.alerts++; }
-        if (classe === 'neutro') entry.neutral++;
-      });
-      
-      return Array.from(dayMap.entries()).map(([date, counts]) => ({
-        date,
-        positive: Math.round((counts.positive / counts.total) * 100),
-        neutral: Math.round((counts.neutral / counts.total) * 100),
-        negative: Math.round((counts.negative / counts.total) * 100),
-        avg_score: (counts.positive - counts.negative) / counts.total,
-        alerts_count: counts.alerts,
-      }));
-    },
-    staleTime: 5 * 60 * 1000,
-  });
-  
-  return data ?? null;
+  const trend = useSentimentTrend(days);
+  if (trend.isLoading || trend.isError) return null;
+  if (trend.isEmpty) return null;
+  // Só os dias com análise, como o formato antigo deste hook (quem desenha a
+  // tendência dia a dia usa `useSentimentTrend`, que devolve a janela inteira).
+  return trend.series
+    .filter((dia) => dia.total > 0)
+    .map((dia) => ({
+      date: dia.date,
+      positive: dia.positive,
+      neutral: dia.neutral,
+      negative: dia.negative,
+      avg_score: dia.avgScore,
+      alerts_count: dia.alerts_count,
+    }));
 }
 
 export function SentimentIcon({ score }: { score: number }) {
