@@ -45,8 +45,8 @@ const conversation: Conversation = {
   status: 'open',
 } as unknown as Conversation;
 
-function renderTab(overrides: { latestAnalysis?: unknown; actions?: unknown[]; leadScore?: unknown; sentiment?: string | null } = {}) {
-  mockUseLatestAnalysis.mockReturnValue({ data: overrides.latestAnalysis ?? null });
+function renderTab(overrides: { latestAnalysis?: unknown; latestAnalysisError?: boolean; actions?: unknown[]; leadScore?: unknown; sentiment?: string | null } = {}) {
+  mockUseLatestAnalysis.mockReturnValue({ data: overrides.latestAnalysis ?? null, isError: overrides.latestAnalysisError ?? false });
   mockUseNextBestAction.mockReturnValue({ actions: overrides.actions ?? [], loading: false });
   mockUseContactLeadScore.mockReturnValue({ data: overrides.leadScore ?? null });
   mockFrom.mockReturnValue(chain());
@@ -69,6 +69,12 @@ describe('AiTab', () => {
   it('mostra "Sem análise ainda" quando não há análise recente', () => {
     renderTab();
     expect(screen.getByText('Sem análise ainda')).toBeInTheDocument();
+  });
+
+  it('erro ao carregar a análise mostra o aviso, não "sem análise ainda"', () => {
+    renderTab({ latestAnalysis: null, latestAnalysisError: true });
+    expect(screen.getByText('Análise IA indisponível')).toBeInTheDocument();
+    expect(screen.queryByText('Sem análise ainda')).not.toBeInTheDocument();
   });
 
   it('mostra o horário da última análise quando existe', () => {
