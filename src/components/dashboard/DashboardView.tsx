@@ -42,6 +42,8 @@ import { AIToolsCard } from './overview/AIToolsCard';
 import { CsatCard } from './overview/CsatCard';
 import { SentimentTrendCard } from './overview/SentimentTrendCard';
 import { GamificationSection } from './overview/GamificationSection';
+import { WidgetConfigSheet } from './WidgetConfigSheet';
+import { useDashboardWidgets } from '@/hooks/analytics/useDashboardWidgets';
 import { useUserRole } from '@/hooks/system/useUserRole';
 import { SectionErrorBoundary } from '@/components/ui/section-error-boundary';
 
@@ -105,19 +107,11 @@ export function DashboardView() {
   // sino da faixa do topo já precisa de unreadMessages real na Fase 2). KPIs
   // e "Agora" (Fase 5-6) reaproveitam este mesmo `realtime`, nunca uma 2ª sub.
   const realtime = useRealtimeDashboard({ queueId: filters.queueId, agentId: filters.agentId });
-  // E31/E34: período, fila e agente do filtro do topo propagados para a RPC
-  // dashboard_kpi — antes o dropdown era cosmético para este card (achado A9) e
-  // o período era ignorado (E34). `filters.dateRange` é a janela [from, until)
-  // do período escolhido ("hoje" por padrão); a RPC devolve o período anterior
-  // de mesmo tamanho para o delta. Para não-staff, a RPC trava
-  // p_agent = auth.uid() no servidor (E33), independente do que filters.agentId
-  // trouxer.
-  const { data: kpi, isPending } = useDashboardKpi({
-    queueId: filters.queueId,
-    agentId: filters.agentId,
-    from: filters.dateRange.from,
-    until: filters.dateRange.to,
-  });
+  // E31: fila/agente do filtro do topo propagados para a RPC dashboard_kpi —
+  // antes o dropdown era cosmético para este card (achado A9). Para não-staff,
+  // a RPC trava p_agent = auth.uid() no servidor (E33), independente do que
+  // filters.agentId trouxer.
+  const { data: kpi, isPending } = useDashboardKpi({ queueId: filters.queueId, agentId: filters.agentId });
   const { rows: queueHealthRows, busiestQueue } = useQueueHealth(queueBreakdown, queues);
   const { data: recentEvents } = useRecentConversationEvents(4);
   const { agents: leaderboardAgents, timeRange, setTimeRange } = useLeaderboard();
@@ -127,6 +121,10 @@ export function DashboardView() {
   const { data: slaMetrics } = useSLAMetrics('today');
   const slaRateByAgent = new Map((slaMetrics?.byAgent ?? []).map((a) => [a.agentId, a.overallRate]));
   const queryClient = useQueryClient();
+  // Instância ÚNICA da personalização da Visão Geral: o painel "Personalizar"
+  // e a seção de Gamificação leem/escrevem o MESMO estado. Duas instâncias
+  // separadas fariam o toggle do painel não surtir efeito até recarregar.
+  const widgetConfig = useDashboardWidgets();
 
   // Agente só pode navegar para as próprias abas — bloqueia o vazamento por
   // clique nos cards (Ferramentas de IA → Sentimento → Relatórios etc.), já
@@ -177,15 +175,9 @@ export function DashboardView() {
 
       <div className="space-y-2.5">
         <DashboardHeader
-          // L6: os filtros do topo (período, fila, agente) alimentam
-          // useDashboardData/useDashboardKpi e o volume da Visão Geral. Nas
-          // outras abas a barra não mudava nada e só confundia: fica visível
-          // apenas onde vale.
-          filters={
-            tab === OVERVIEW_TAB ? (
-              <DashboardFilters filters={filters} onFiltersChange={setFilters} onRefresh={handleRefresh} isRefreshing={isRefreshing} showTeamFilters={isStaff} />
-            ) : null
-          }
+          filters={(
+            <DashboardFilters filters={filters} onFiltersChange={setFilters} onRefresh={handleRefresh} isRefreshing={isRefreshing} showTeamFilters={isStaff} />
+          )}
         />
 
         <Tabs value={tab} onValueChange={setTab}>
@@ -200,18 +192,38 @@ export function DashboardView() {
               <GreetingBanner personal={!isStaff} />
             </SectionErrorBoundary>
           </div>
-          <DashboardZone id="numeros" title={filters.period === 'today' ? 'Números de hoje' : 'Números do período'}>
+          {/* Personalização da Visão Geral: monta o WidgetConfigSheet (antes
+              existia o componente, mas nada o abria). Fica no topo da aba,
+              disponível para staff e agente — o layout persiste por navegador. */}
+          <div className="flex justify-end" data-testid="dash-personalizar">
+            <SectionErrorBoundary sectionName="Personalizar widgets">
+              <WidgetConfigSheet
+                widgets={widgetConfig.widgets}
+                isEditMode={widgetConfig.isEditMode}
+                setIsEditMode={widgetConfig.setIsEditMode}
+                onToggleVisibility={widgetConfig.toggleWidgetVisibility}
+                onUpdateSize={widgetConfig.updateWidgetSize}
+                onReorder={widgetConfig.reorderWidgets}
+                onReset={widgetConfig.resetToDefaults}
+              />
+            </SectionErrorBoundary>
+          </div>
+          <DashboardZone id="numeros" title="Números de hoje">
           <div data-testid="dash-kpis">
-            {/* E34 (revisado em 13/10/2026): Resolvidas / Tempo de Resposta / SLA
-                agora seguem o período do filtro acima — dashboard_kpi recebe
-                p_from/p_until e devolve o período anterior de mesmo tamanho para o
-                delta (antes v_today/v_yesterday eram fixos no servidor e o período
-                era ignorado em silêncio; a tela avisava isso, aviso removido junto
-                com a correção). O rótulo da zona acompanha: "hoje" só quando o
-                período é hoje. Isso NÃO se estende ao gráfico de volume (só recebe
-                fila/agente, nunca recebeu período) nem ao card "Conversas Abertas"
-                (vem de dashboard_contact_counts, que respeita p_since/p_until). */}
+            {/* E34 (corrigido em auditoria 25/09/2026, achado Agente 3): Resolvidas
+                Hoje / Tempo de Resposta / SLA vêm de dashboard_kpi (v_today/v_yesterday
+                fixos no servidor) — o período do filtro acima não afeta esses cards.
+                Isso NÃO se estende ao gráfico de volume (só recebe fila/agente, nunca
+                recebeu período) nem ao card "Conversas Abertas" (vem de
+                dashboard_contact_counts, que respeita p_since/p_until) — o texto antigo
+                afirmava os dois incorretamente. Antes isso acontecia em silêncio
+                (achado E34); agora avisa, só sobre o que de fato é fixo. */}
             <SectionErrorBoundary sectionName="Indicadores">
+            {filters.period !== 'today' && (
+              <p className="text-2xs text-muted-foreground mb-1.5" data-testid="dash-kpis-period-notice">
+                Resolvidas hoje, tempo de resposta e SLA são sempre do dia atual — o período selecionado no filtro acima não afeta esses indicadores.
+              </p>
+            )}
             <DashboardKpiRow stats={stats} realtime={realtime} kpi={kpi} isStaff={isStaff} myActiveConversations={myActiveConversations} isLoading={isPending} />
             </SectionErrorBoundary>
           </div>
@@ -283,7 +295,7 @@ export function DashboardView() {
           </div>
           <div data-testid="dash-gamification">
             <SectionErrorBoundary sectionName="Gamificação">
-              <GamificationSection stats={stats} isStaff={isStaff} />
+              <GamificationSection stats={stats} isStaff={isStaff} visibleWidgets={widgetConfig.visibleWidgets} />
             </SectionErrorBoundary>
           </div>
           </DashboardZone>

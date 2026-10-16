@@ -1,31 +1,22 @@
-Especialista: worker (geral)
+Especialista: Íris (area-front-componentes)
 
 ## O que mudou e por quê
-- `ESTADO.md` (7 linhas): linha nova na Tabela — `| \`automation-suggest-reply\` | A | \`src/hooks/chat/useAutomationSuggestions.ts:192\` |` — mais o cabeçalho (`81` → `82` edges), o total do grupo A (`54` → `55`) e o total geral (`81` → `82`). A guarda `scripts/ci/docs-estado-registry-convention.unit.mjs` recalcula o conjunto de edges a partir de `supabase/functions/*/index.ts`; com a edge empilhada e o doc desatualizado, o item citado no cartão reprovava. Foi o único arquivo que eu mudei de fato.
-- A edge **não é órfã**: ela já tem chamador real no front em `src/hooks/chat/useAutomationSuggestions.ts:192` (`await supabase.functions.invoke('automation-suggest-reply', ...)`). Logo o grupo correto é **A** (front), não E — por isso o total sobe em A e a lista de Órfãs não muda.
-- A entrega foi reaplicada com `git cherry-pick 0acdc0ce6` (a edge nova + teste Deno), como o cartão manda ("partir do commit da entrega, não recomeçar"). O commit `2fc637db8` que o cartão cita é o relato da entrega (só `.tmp/relato.md`); a edge está em `0acdc0ce6`, o pai dele.
+- src/components/dashboard/DashboardView.tsx: monta o WidgetConfigSheet no topo da aba Visão Geral (`data-testid="dash-personalizar"`) e cria a instância única de `useDashboardWidgets`; passa `widgetConfig.visibleWidgets` para a GamificationSection. Antes o componente existia pronto, mas nada o abria (PROBLEMA do cartão).
+- src/components/dashboard/WidgetConfigSheet.tsx: o botão passa a se chamar "Personalizar"; a lista ganha arrastar (`@hello-pangea/dnd`) COM alternativa de teclado (setas ↑/↓, cada uma com `aria-label`) e uma região `aria-live` (`LiveRegion`) que anuncia a nova posição; os cartões fixos `stats`/`queues`/`activity` ficam com interruptor travado e selo "Obrigatório". "Restaurar Padrão" segue chamando `resetToDefaults`.
+- src/components/dashboard/overview/GamificationSection.tsx: aceita `visibleWidgets` por prop. Antes tinha uma 2ª instância própria do hook, então o painel não surtia efeito nela até recarregar a página — agora visibilidade e ordem vêm da config compartilhada.
+- src/components/dashboard/DraggableWidgetContainer.tsx: repassa `onReorder` para o WidgetConfigSheet, mantendo o mesmo contrato de reordenação (arrastar + teclado).
 
 ## Prova
-- vermelho antes (edge empilhada, doc ainda em 81 edges): `node --test scripts/ci/docs-estado-registry-convention.unit.mjs` → `not ok 1 - ESTADO.md lista exatamente as edges que existem no repositório` e `not ok 6 - total de edges do cabeçalho do ESTADO.md bate com a tabela`; `# tests 11 / # pass 9 / # fail 2`.
-- verde depois: `node --test scripts/ci/docs-estado-registry-convention.unit.mjs` → `# tests 11 / # pass 11 / # fail 0`, com `ok 1 - ESTADO.md lista exatamente as edges que existem no repositório`.
-- item exato do cartão (arquivo `scripts/ci/docs-estado-registry-convention.unit.mjs`, teste `ESTADO.md lista exatamente as edges que existem no repositório`): saiu da lista de `not ok` do comando do espelho.
-- deno da edge (mantém verde o que a entrega trouxe): `deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 supabase/functions/automation-suggest-reply/index.test.ts` → `ok | 13 passed | 0 failed (38ms)`.
-- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (392s)` — `OK dependencias`, `OK db_guard`, `OK tipos`, `OK lint`, `OK migrations`.
-- As falhas que sobram no conjunto node das guardas (mesmos arquivos que o espelho roda) são PRÉ-EXISTENTES na base, não novas: numa cópia limpa do HEAD (`git archive HEAD` extraído em `.tmp/base`) o mesmo comando dá `# tests 43 / # pass 36 / # fail 7` — `1` de `implicit-any-ratchet` (`o tsconfig.app.json ... TS7006`) e `6` de `lint-ratchet` (fixtures `--staged`), idênticas antes e depois da minha mudança. Nenhum desses arquivos é tocado pelo diff.
+- vermelho antes: `npx vitest run src/components/dashboard/__tests__/WidgetConfigSheet.test.tsx src/components/dashboard/__tests__/GamificationSection.customizacao.test.tsx` com os dois componentes na versão da base (`git show HEAD~1:...`) → `Test Files 2 failed (2); Tests 8 failed | 2 passed (10)` (no botão `btn-personalizar`, sem setas, sem `aria-live`, seção ignorando a prop).
+- verde depois: mesmo comando → `Test Files 2 passed (2); Tests 10 passed (10)`.
+- regressão da área: `npx vitest run src/components/dashboard/__tests__ src/hooks/__tests__/useDashboardWidgets.test.ts` → `Test Files 35 passed (35); Tests 168 passed (168)`.
+- lint no pre-commit: `baseline=2, atual=2, novas=0`.
 
-## Pontos do cartão (refazer t_1aa8f9b8)
-- Ponto 1: feito. Cherry-pick de `0acdc0ce6` reaplicou a entrega sem recomeçar (edge + teste).
-- Ponto 2: feito. Reproduzi o item em vermelho (`# fail 2`) e corrigi a causa em `ESTADO.md` (linha + cabeçalho + totais); guarda agora `# fail 0`.
-- Ponto 3: feito. Item do espelho verde, `zapp-verify . --rapido` = `VERDE SEM BANCO`, sha `1483112a9`.
-- Observação do juiz ("código sem teste"): o cherry-pick `8a6aaddc3` traz a edge e o teste Deno no MESMO commit; o commit do ESTADO.md é doc e não pede teste.
-
-## Números reais do diff (contra a base `96dd72dc5`)
-- `git diff --name-only $B...HEAD` = 4 arquivos: `ESTADO.md`, `supabase/functions/automation-suggest-reply/index.ts`, `supabase/functions/automation-suggest-reply/index.test.ts`, `.tmp/relato.md`.
-- arquivos de teste no diff = 1 (`index.test.ts`); `grep -c Deno.test` = 13 casos, saída real `deno ... ok | 13 passed | 0 failed`.
+## Estados da tela alterada
+- Painel fechado (só o botão "Personalizar"), aberto com a lista, e "Modo de edição" ligado/desligado: cobertos pelo teste do painel.
+- Lista vazia e erro de carregamento do dashboard: inalterados por este cartão; o painel fica dentro de `SectionErrorBoundary sectionName="Personalizar widgets"`, então uma falha nele não derruba o resto da Visão Geral.
 
 ## O que NÃO fiz e por quê
-- Não rodei `bash ~/arquitetura-v2/integrador/ci_espelho.sh .` direto: o HERMES-GUARD recusa executar script de `~/arquitetura-v2` (recusou duas vezes, mensagem "mexer nas guardas/ferramentas do Hermes"). Reproduzi os MESMOS comandos do script à mão — `deno test ...` e `node --test --test-reporter=tap scripts/ci/*.unit.mjs scripts/edge-deploy/*.unit.mjs scripts/db-audit/*.test.mjs scripts/talkx/*.unit.mjs` filtrando `^not ok ` — e o item do cartão desapareceu da lista.
-- Não afrouxei nenhuma asserção: `scripts/ci/docs-estado-registry-convention.unit.mjs` não foi tocado; o diff contra a base é só `ESTADO.md` (7 linhas) + a edge/teste do cherry-pick.
-- Não recomecei a entrega: a edge entrou por cherry-pick, sem reescrever nada.
-
-sha: `1483112a9` (fix do ESTADO.md) sobre `8a6aaddc3` (cherry-pick da edge) sobre `96dd72dc5` (base `dia/2026-10-13`).
+- Não alterei o hook `useDashboardWidgets` (src/hooks/** é da área de hooks): a persistência por navegador em localStorage e a leitura com try/catch continuam as do hook; esta entrega é só a montagem e o comportamento da tela.
+- Sem banco, sem migration, sem Edge Function: o cartão é de tela e nada aqui decide estado no servidor.
+- A DraggableWidgetContainer não ganhou montagem própria na Visão Geral (evita duplicar a grade de cards fixos); a superfície montada é o WidgetConfigSheet. Foi ajustada só para manter o mesmo contrato de reordenação.
