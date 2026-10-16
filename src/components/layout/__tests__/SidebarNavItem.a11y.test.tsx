@@ -17,10 +17,6 @@ import { LayoutDashboard } from 'lucide-react';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { SidebarNavItem } from '@/components/layout/SidebarNavItem';
 
-vi.mock('@/hooks/ui/usePrefetchOnHover', () => ({
-  usePrefetchOnHover: () => ({ prefetch: vi.fn() }),
-}));
-
 const item = { id: 'security', icon: LayoutDashboard, label: 'Segurança' };
 
 type Props = ComponentProps<typeof SidebarNavItem>;

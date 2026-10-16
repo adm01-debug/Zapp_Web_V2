@@ -1,8 +1,7 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import { cn } from '@/lib/utils';
 import { Star } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { usePrefetchOnHover } from '@/hooks/ui/usePrefetchOnHover';
 
 export interface NavItemConfig {
   id: string;
@@ -32,7 +31,6 @@ export const SidebarNavItem = React.memo(function SidebarNavItem({ item, current
   const shortcut = item.shortcut;
   const badgeCount = badge ?? item.badge;
   const pill = item.pill;
-  const { prefetch } = usePrefetchOnHover();
 
   // O nome acessivel e do BOTAO (aria-label), entao o selo precisa entrar nele:
   // sem isso o "NOVO" nao chega ao leitor de tela (o texto interno fica mascarado
@@ -43,15 +41,10 @@ export const SidebarNavItem = React.memo(function SidebarNavItem({ item, current
       ? `${item.label} (${pill.toLocaleLowerCase('pt-BR')})`
       : item.label;
 
-  const handleMouseEnter = useCallback(() => {
-    if (!isActive) prefetch(item.id);
-  }, [isActive, item.id, prefetch]);
-
   const button = (
     <button
       data-tour={item.id}
       onClick={() => onViewChange(item.id)}
-      onMouseEnter={handleMouseEnter}
       aria-label={accessibleLabel}
       aria-current={isActive ? 'page' : undefined}
       className={cn(
