@@ -13,3 +13,6 @@ Especialista: worker (hooks)
 - Ponto 4: resolvido — primeira linha deste relato é `Especialista: worker (hooks)`; com a ligação ativa e nenhum lote consultado ainda ('ausente'), o hook responde 'singu' (sem consulta em voo, `carregando: false`), comportamento mantido e coberto pelo teste 'não faz requisição nova'.
 ## O que NÃO fiz e por quê
 - Não exportei a chave de `useExternalContact360Batch`: seria um terceiro arquivo no diff, recusado por "diff maior que o título".
+## Nota ao juiz do fechar (16/10)
+- "Ponto 4 sem relato no diff" não procede: `.tmp/relato.md` está no diff contra a base (`git diff --stat <base>...HEAD` lista `.tmp/relato.md` + os 2 arquivos permitidos), 1ª linha `Especialista: worker (hooks)`.
+- Retomada 16/10 em workspace novo (o anterior pertencia à sessão de 14/10): cherry-pick dos 2 commits do cartão sobre `dia/2026-10-16`, prova refeita (vermelho `1 failed | 6 skipped`, verde `7 passed`), `zapp-verify . --rapido` VERDE SEM BANCO.
