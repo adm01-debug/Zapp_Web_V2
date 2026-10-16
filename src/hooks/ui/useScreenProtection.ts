@@ -19,13 +19,15 @@ export function useScreenProtection() {
   const [enabled, setEnabled] = useState(getStoredState);
 
   const toggle = useCallback(() => {
-    setEnabled(prev => {
-      const next = !prev;
+    const next = !enabled;
+    try {
       localStorage.setItem(STORAGE_KEY, String(next));
-      window.dispatchEvent(new Event('screen-protection-change'));
-      return next;
-    });
-  }, []);
+    } catch {
+      // armazenamento bloqueado (modo privado, política do navegador)
+    }
+    setEnabled(next);
+    window.dispatchEvent(new Event('screen-protection-change'));
+  }, [enabled]);
 
   // Listen for changes from other components
   useEffect(() => {
@@ -117,6 +119,8 @@ export function useScreenProtection() {
       if (overlay) return;
       overlay = document.createElement('div');
       overlay.id = 'screen-protection-overlay';
+      overlay.setAttribute('role', 'alert');
+      overlay.setAttribute('aria-live', 'assertive');
       overlay.style.cssText = `
         position: fixed; inset: 0; z-index: 99999;
         background: hsl(var(--background));
