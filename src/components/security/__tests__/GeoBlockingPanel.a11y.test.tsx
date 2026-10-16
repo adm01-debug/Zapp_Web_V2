@@ -38,6 +38,7 @@ vi.mock('@/hooks/system/useGeoBlocking', async () => {
         setCountryToRemove,
         activeTab,
         setActiveTab,
+        avaliarModo: () => ({ permitido: true, motivo: null, mensagem: null }),
         handleModeChange: vi.fn(),
         handleAddCountry: vi.fn(),
         handleRemoveCountry: vi.fn(),
@@ -45,6 +46,10 @@ vi.mock('@/hooks/system/useGeoBlocking', async () => {
     },
   };
 });
+
+vi.mock('@/hooks/system/useMyNetworkStatus', () => ({
+  useMyNetworkStatus: () => ({ status: { country: 'BR', ipSeen: '203.0.113.7' }, loading: false, erro: null }),
+}));
 
 import { GeoBlockingPanel } from '../GeoBlockingPanel';
 
