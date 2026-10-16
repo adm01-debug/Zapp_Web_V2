@@ -1,3 +1,4 @@
+import { Loader2 } from 'lucide-react';
 import {
   AlertDialog, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -28,16 +29,13 @@ interface ConnectionDisconnectDialogProps {
   onOpenChange: (open: boolean) => void;
   connectionName: string;
   phoneNumber: string;
-  onConfirm: () => void;
-  /** Desconexão em andamento: mostra "Desconectando…" e trava as saídas. */
+  /** Desconectar em voo: mantém o diálogo aberto com o spinner e trava tudo. */
   pending?: boolean;
-  /** Motivo da última tentativa que falhou; o diálogo continua aberto. */
-  errorMessage?: string | null;
+  onConfirm: () => void | Promise<void>;
 }
 
 export function ConnectionDisconnectDialog({
-  open, onOpenChange, connectionName, phoneNumber, onConfirm,
-  pending = false, errorMessage = null,
+  open, onOpenChange, connectionName, phoneNumber, pending = false, onConfirm,
 }: ConnectionDisconnectDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -55,20 +53,16 @@ export function ConnectionDisconnectDialog({
         )}
         <AlertDialogFooter>
           <AlertDialogCancel disabled={pending}>Cancelar</AlertDialogCancel>
-          <Button
-            type="button"
-            onClick={onConfirm}
+          <AlertDialogAction
+            onClick={(e) => { e.preventDefault(); void onConfirm(); }}
             disabled={pending}
-            aria-busy={pending || undefined}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            aria-busy={pending}
+            className="bg-destructive hover:bg-destructive/90"
           >
-            {pending ? (
-              <>
-                <Loader2 className="w-4 h-4 motion-safe:animate-spin" aria-hidden="true" />
-                Desconectando…
-              </>
-            ) : 'Desconectar'}
-          </Button>
+            {pending
+              ? <><Loader2 className="w-4 h-4 mr-2 motion-safe:animate-spin" />Desconectando…</>
+              : 'Desconectar'}
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
