@@ -64,6 +64,13 @@ const IGNORAR = [
 // Fora da conta de consumidores — senão toda tabela teria "consumidor" e o status viraria enfeite.
 export const LIMITE_ESPELHO = 30;
 
+// O arquivo-lista do CI (`.github/workflows/*.yml`) NÃO é espelho do schema: ele nomeia a tabela no
+// passo que a testa e CRESCE a cada cartão do lote. Ao bater LIMITE_ESPELHO ele era promovido a
+// espelho e o consumidor das linhas que o citam virava mentira de um dia para o outro (medido no
+// empilhamento de 14/10: 29 nomes = verde, 30 = vermelho, com o mesmo documento e a mesma tabela).
+// Espelho é quem cita o schema inteiro de propósito (baseline de grants/RLS, varredura de teste).
+const LISTA_DO_CI = /^\.github\/workflows\//u;
+
 // Chaves do catálogo que o documento declara em `## Objetos por tipo`.
 export const CONTAGENS_OBRIGATORIAS = [
   'tables',
@@ -140,7 +147,7 @@ function referencias(corpus) {
       const achados = new Set();
       for (const m of String(conteudo).matchAll(re)) achados.add(m[0]);
       if (!achados.size) continue;
-      if (achados.size >= LIMITE_ESPELHO) {
+      if (achados.size >= LIMITE_ESPELHO && !LISTA_DO_CI.test(arquivo)) {
         espelhos.add(arquivo);
         continue;
       }
@@ -522,6 +529,35 @@ test('arquivo espelho do schema não conta como consumidor de ninguém', () => {
     arquivos: { 'scripts/ci/limpa.sh': `psql -c "delete from t00"`, 'src/a.ts': 'contacts' },
   });
   assert.equal(statusCalculado('t00', quase), 'parcial');
+});
+
+test('arquivo-lista do CI continua consumidor depois de LIMITE_ESPELHO objetos', () => {
+  const tabelas = [
+    'contacts',
+    ...Array.from({ length: LIMITE_ESPELHO }, (_, i) => `t${String(i).padStart(2, '0')}`),
+  ];
+  // O `db-guard.yml` nomeia a tabela no passo que a testa e CRESCE a cada cartão do lote: no
+  // empilhamento de 14/10 ele chegou aos 30 nomes, foi promovido a "espelho do schema" e o
+  // consumidor das linhas que o citavam sumiu do mapa — o mesmo documento passou a ser acusado
+  // de mentir de um dia para o outro. O arquivo-lista do CI não é espelho: ele cita a tabela que
+  // o próprio passo testa.
+  const corpus = corpusFalso({
+    tabelas,
+    arquivos: {
+      '.github/workflows/db-guard.yml': `# prova de contacts e de t00\n${tabelas.join(' ')}\n`,
+      'scripts/db-audit/grants-baseline.json': tabelas.join(' '),
+      'src/a.ts': 'supabase.from("contacts")',
+    },
+  });
+  assert.ok(
+    citantesDe('t00', corpus).includes('.github/workflows/db-guard.yml'),
+    'o arquivo-lista do CI não pode ser promovido a espelho do schema',
+  );
+  assert.equal(statusCalculado('t00', corpus), 'parcial');
+  assert.ok(
+    !citantesDe('t01', corpus).includes('scripts/db-audit/grants-baseline.json'),
+    'espelho de verdade (fora do CI) continua fora da conta de consumidores',
+  );
 });
 
 test('objeto "ativo" que só lista ferramental é acusado', () => {
