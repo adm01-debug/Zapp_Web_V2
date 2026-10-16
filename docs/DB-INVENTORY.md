@@ -1,8 +1,7 @@
 # Inventário de objetos do banco — `public`
 
 **Fonte de verdade:** `supabase/schema-catalog.json` — snapshot versionado de `postgres`.`public`
-(campo `generated_at`: 2026-10-04; identidade do banco: schema=`public` database=`postgres`
-server_major=`17`), regenerado por
+(campo `generated_at`: 2026-10-04), regenerado por
 `scripts/db-audit/catalog.sql` e conferido contra o banco oficial pelo workflow `db-live-guard.yml`
 (ver `scripts/db-audit/README.md`).
 Este documento não substitui o catálogo: ele dá o que o catálogo não tem — **propósito, status de
@@ -41,13 +40,13 @@ confere que todo caminho listado é consumidor de verdade; ela não obriga a lis
 
 | Objeto | Quantidade |
 |---|---|
-| Tabelas (`tables`) | 167 |
+| Tabelas (`tables`) | 166 |
 | Views (`views`) | 12 |
-| Colunas (`columns`) | 1954 |
-| Funções (`functions`) | 252 |
-| Assinaturas de função (`function_signatures`) | 254 |
+| Colunas (`columns`) | 1947 |
+| Funções (`functions`) | 251 |
+| Assinaturas de função (`function_signatures`) | 253 |
 | Funções de gatilho (`trigger_functions`) | 64 |
-| Restrições de verificação (`check_constraints`) | 158 |
+| Restrições de verificação (`check_constraints`) | 157 |
 
 As tabelas estão inventariadas uma a uma na seção seguinte. Views, funções, colunas e restrições
 têm o inventário completo no catálogo (`supabase/schema-catalog.json`) e o manifesto com hash de
@@ -66,7 +65,7 @@ arquivos do repositório, pela regra da seção anterior — cada linha carrega 
 | `agent_stats` | Agregado de gamificação do agente (XP, nível, enviadas, conquistas) | ativo | `src/components/dashboard/AgentPerformancePanel.tsx`, `src/components/gamification/AchievementsSystem.tsx`, `src/components/gamification/__tests__/AchievementsSystem.test.tsx` … |
 | `agent_visibility_grants` | Concessões de visibilidade de um agente sobre outro | ativo | `src/components/admin/VisibilityGrantsManager.tsx`, `scripts/db-audit/crm-sync-outbox-behavior.test.sh`, `scripts/db-audit/dashboard-rls-authorization.test.sh` … |
 | `ai_budget_reservations` | Reserva de tokens/orçamento por execução de função de IA | parcial | `scripts/qa/prova-orcamento-rate-limit.sh` |
-| `ai_conversation_tags` | Tags sugeridas pela IA em conversa/contato, com confiança e origem | ativo | `src/components/settings/AIAutoTagsConfig.tsx`, `src/components/settings/__tests__/AIAutoTagsConfig.recentesErro.test.tsx`, `src/hooks/crm/__tests__/useContactEnrichedData.test.tsx` … |
+| `ai_conversation_tags` | Tags sugeridas pela IA em conversa/contato, com confiança e origem | ativo | `src/components/ai/AutoTicketClassifier.tsx`, `src/components/settings/AIAutoTagsConfig.tsx`, `src/hooks/crm/__tests__/useContactEnrichedData.test.tsx` … |
 | `ai_jobs` | Fila de jobs de IA (payload, idempotência, tentativas e estado) | ativo | `src/lib/aiJobs/status.ts`, `supabase/functions/_shared/__tests__/effect-reconcile.test.ts`, `supabase/functions/_shared/ai-jobs.ts` … |
 | `ai_model_prices` | Preço por fornecedor/modelo e unidade de cobrança de IA | ativo | `supabase/functions/_shared/ai-usage.ts`, `scripts/db-audit/ai-usage-cost-window-open.test.sh`, `tests/contracts/ia055-custo-no-relatorio.test.ts` |
 | `ai_providers` | Fornecedores de IA cadastrados (endpoint, modelo e referência do segredo) | ativo | `src/__tests__/rls-boundary.test.ts`, `src/components/settings/ai-providers/__tests__/remocao-provedor-fallback.test.tsx`, `src/components/settings/ai-providers/useAIProviders.ts` … |
@@ -124,7 +123,7 @@ arquivos do repositório, pela regra da seção anterior — cada linha carrega 
 | `email_labels` | Etiquetas das contas de e-mail conectadas | ativo | `src/hooks/integrations/useGmail.ts`, `supabase/functions/_shared/gmail-helpers.ts`, `e2e/fixtures/email-navy.ts` |
 | `email_messages` | Mensagens de e-mail (remetente, destinatários, corpo e estado) | ativo | `src/components/email/__tests__/EmailVolumeMedicao.test.tsx`, `src/components/gmail/__tests__/EmailThreadView.test.tsx`, `src/hooks/gmail/__tests__/useContactUnreadEmails.test.tsx` … |
 | `email_threads` | Conversas de e-mail, vinculadas ao contato quando identificado | ativo | `src/components/admin/GmailWebhookMonitor.tsx`, `src/components/admin/__tests__/GmailWebhookMonitor.falha-consulta.test.tsx`, `src/components/email/__tests__/EmailVolumeMedicao.test.tsx` … |
-| `entity_versions` | Versionamento genérico de entidades (tipo, id e cópia dos dados) | roadmap | — |
+| `entity_versions` | Versionamento genérico de entidades (tipo, id e cópia dos dados) | ativo | `src/hooks/system/useVersions.ts` |
 | `favorite_contacts` | Contatos favoritados por usuário | ativo | `src/components/inbox/chat/useChatPanelHandlers.ts`, `src/hooks/chat/__tests__/useConversationActions.test.ts`, `src/hooks/chat/useConversationActions.ts` … |
 | `feature_flags` | Chaves de funcionalidade ligadas/desligadas | ativo | `src/hooks/contacts/__tests__/ContactsView.v2Flags.test.tsx`, `src/hooks/contacts/__tests__/useContactsV2Flags.test.tsx`, `src/hooks/contacts/useContactsV2Flags.ts` … |
 | `followup_executions` | Execuções de sequência de follow-up, com passo atual e estado | ativo | `src/components/settings/FollowUpExecutionsHistory.tsx` |
@@ -135,7 +134,7 @@ arquivos do repositório, pela regra da seção anterior — cada linha carrega 
 | `gmail_accounts` | Contas Gmail conectadas (endereço, tokens cifrados e estado de sincronização) | ativo | `supabase/functions/_shared/__tests__/gmail-cursor-cas-db.test.ts`, `supabase/functions/_shared/__tests__/gmail-helpers-account-scope.test.ts`, `supabase/functions/_shared/__tests__/gmail-helpers.test.ts` … |
 | `goals_configurations` | Metas por agente ou fila (diária, semanal e tipo) | ativo | `src/components/dashboard/GoalsConfigDialog.tsx`, `src/components/dashboard/__tests__/GoalsConfigDialog.test.tsx`, `src/hooks/__tests__/useGoalNotifications.goal-types.test.ts` … |
 | `ip_whitelist` | IPs liberados, com descrição e autor | ativo | `src/components/security/IPWhitelistPanel.tsx`, `scripts/db-audit/network-policy-rpc.test.sh` |
-| `knowledge_base_articles` | Artigos da base de conhecimento usada pela IA e pelo chatbot | ativo | `src/components/settings/ChatbotL1Config.tsx`, `src/hooks/integrations/useKnowledgeBase.ts`, `supabase/functions/chatbot-l1/index.ts` … |
+| `knowledge_base_articles` | Artigos da base de conhecimento usada pela IA e pelo chatbot | ativo | `src/components/settings/ChatbotL1Config.tsx`, `src/hooks/integrations/useKnowledgeBase.ts`, `supabase/functions/ai-suggest-reply/index.ts` … |
 | `knowledge_base_files` | Arquivos anexados aos artigos da base de conhecimento | ativo | `src/hooks/integrations/useKnowledgeBase.ts`, `.github/workflows/db-migrate.yml`, `scripts/db-audit/contracts/20260831150000.sql` |
 | `link_preview_cache` | Cache da prévia de links, com validade por hash de URL | ativo | `supabase/functions/fetch-link-preview/index.ts` |
 | `link_preview_cache_metrics` | Métricas de limpeza do cache de prévia (removidos, restantes e tempo) | roadmap | — |
@@ -159,7 +158,7 @@ arquivos do repositório, pela regra da seção anterior — cada linha carrega 
 | `number_reputation` | Reputação do número por conexão (saúde, envios, falhas e reclamações) | ativo | `src/components/connections/NumberReputationMonitor.tsx`, `src/components/connections/__tests__/NumberReputationMonitor.test.tsx` |
 | `passkey_credentials` | Credenciais WebAuthn (passkeys) do usuário | ativo | `src/hooks/auth/useWebAuthn.ts`, `supabase/functions/webauthn/index.ts` |
 | `password_reset_requests` | Pedidos de redefinição de senha (motivo, estado e revisor) | ativo | `src/pages/ForgotPassword.tsx`, `supabase/functions/approve-password-reset/index.ts` |
-| `payment_links` | Links de pagamento (valor, moeda e estado) | parcial | `scripts/db-audit/global-guards-regression.test.mjs` |
+| `payment_links` | Links de pagamento (valor, moeda e estado) | ativo | `src/hooks/payments/usePaymentLinks.ts`, `scripts/db-audit/global-guards-regression.test.mjs` |
 | `performance_snapshots` | Amostras de performance da tela (FCP, TTFB e tempos de carga) | ativo | `src/hooks/analytics/__tests__/usePerformanceSnapshots.limpeza.test.tsx`, `src/hooks/analytics/usePerformanceSnapshots.ts` |
 | `permissions` | Permissões do sistema (nome, categoria e descrição) | ativo | `src/__tests__/security-and-performance.test.ts`, `src/components/CommandPalette.tsx`, `src/components/a11y/__tests__/CustomModalFocus.test.tsx` … |
 | `pinned_conversations` | Conversas fixadas pelo usuário, com posição | ativo | `src/hooks/chat/__tests__/useConversationActions.test.ts`, `src/hooks/chat/useConversationActions.ts`, `src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` … |
@@ -169,7 +168,7 @@ arquivos do repositório, pela regra da seção anterior — cada linha carrega 
 | `query_telemetry` | Telemetria das operações de banco feitas pelo app (operação, tabela e duração) | ativo | `src/pages/AdminTelemetriaPage.tsx`, `src/pages/admin-telemetria/__tests__/AdminTelemetriaPage.leitura-falha.test.tsx`, `supabase/functions/external-db-bridge/index.ts` |
 | `queue_goals` | Metas por fila (espera máxima, média de espera e taxa de atribuição) | ativo | `src/components/queues/__tests__/QueueGoalsDialog.salvarMetas.test.tsx`, `src/components/queues/__tests__/QueuesView.editar.test.tsx`, `src/components/queues/__tests__/QueuesView.test.tsx` … |
 | `queue_members` | Agentes vinculados a cada fila | ativo | `src/components/agents/__tests__/AgentsView.capacidade.test.tsx`, `src/components/queues/__tests__/QueuesView.editar.test.tsx`, `src/components/queues/__tests__/QueuesView.test.tsx` … |
-| `queue_positions` | Posição do contato na fila, com espera estimada | roadmap | — |
+| `queue_positions` | Posição do contato na fila, com espera estimada | ativo | `src/components/inbox/QueuePositionNotifier.tsx` |
 | `queue_skill_requirements` | Habilidade mínima exigida por fila | ativo | `src/components/settings/SkillBasedRoutingSettings.tsx`, `src/components/settings/__tests__/SkillBasedRoutingSettings.test.tsx` |
 | `queues` | Filas de atendimento (cor, tempo máximo de espera e estado) | ativo | `src/components/admin/SupervisorCopilot.tsx`, `src/components/agents/AgentsView.tsx`, `src/components/agents/__tests__/AgentsView.actions.test.tsx` … |
 | `rate_limit_configs` | Configurações de limite de requisições por padrão de endpoint | ativo | `src/components/security/RateLimitConfigPanel.tsx`, `src/components/security/__tests__/RateLimitConfigPanel.test.tsx`, `scripts/db-audit/network-policy-rpc.test.sh` |
@@ -183,7 +182,7 @@ arquivos do repositório, pela regra da seção anterior — cada linha carrega 
 | `scheduled_report_configs` | Configuração de relatórios agendados pela tela (frequência e destinatários) | ativo | `src/components/reports/ScheduledReportConfigs.tsx`, `src/hooks/dashboard/useScheduledReportConfigs.ts`, `scripts/ci/dashboard-readme-drift.unit.mjs` |
 | `scheduled_reports` | Relatórios agendados (tipo, frequência, destinatários e formato) | ativo | `src/hooks/chat/useScheduledReports.ts`, `supabase/functions/send-scheduled-report/index.test.ts`, `supabase/functions/send-scheduled-report/index.ts` |
 | `security_alerts` | Alertas de segurança (tipo, severidade e IP de origem) | ativo | `src/components/security/RateLimitRealtimeAlerts.tsx`, `src/components/security/SecurityOverview.tsx`, `src/hooks/system/useSecurityPushNotifications.ts` … |
-| `sicoob_contact_mapping` | Mapeamento entre contato do Zapp, usuário Sicoob e agente | parcial | `scripts/db-audit/anon-privileges-contact-messages.test.sh` |
+| `sicoob_contact_mapping` | Mapeamento entre contato do Zapp, usuário Sicoob e agente | parcial | `scripts/db-audit/inbox-contact-authorization.test.sh` |
 | `sla_configurations` | Configurações de SLA (tempo de primeira resposta e de resolução) | ativo | `src/hooks/sla/useApplicableSLA.ts`, `src/hooks/sla/useSLAConfigurations.ts`, `scripts/db-audit/sla-first-response-delivery-contract.test.mjs` |
 | `sla_rules` | Regras de SLA por prioridade, fila ou contato | ativo | `src/components/settings/SLARulesManager.tsx`, `src/hooks/sla/__tests__/useApplicableSLA.test.tsx`, `src/hooks/sla/useApplicableSLA.ts` … |
 | `stickers` | Figurinhas do chat, por categoria e autor | ativo | `src/components/inbox/StickerPicker.tsx`, `src/components/inbox/__tests__/StickerPicker.catalogo.test.tsx`, `src/components/inbox/chat/MessageBubble.tsx` … |
@@ -198,7 +197,6 @@ arquivos do repositório, pela regra da seção anterior — cada linha carrega 
 | `talkx_links` | Links com slug usados nas campanhas TalkX | ativo | `src/hooks/integrations/__tests__/useTalkXInsights.defeito-223.test.tsx`, `src/hooks/integrations/__tests__/useTalkXInsights.engajamento.test.tsx`, `src/hooks/integrations/__tests__/useTalkXInsights.test.ts` … |
 | `talkx_optout_keywords` | Palavras de descadastro reconhecidas pelo TalkX | ativo | `supabase/functions/_shared/__tests__/talkx-webhook-optout.test.ts`, `supabase/functions/_shared/__tests__/talkx-webhook-reply.test.ts`, `supabase/functions/_shared/evolution-webhook-messages.ts` … |
 | `talkx_recipients` | Destinatários da campanha TalkX (mensagem personalizada e estado) | ativo | `src/components/talkx/TalkXAnalytics.tsx`, `src/components/talkx/TalkXCampaignRunning.tsx`, `src/components/talkx/TalkXLiveMonitor.tsx` … |
-| `talkx_segment_fields` | Whitelist dos campos de segmento do TalkX (categoria, expressão e operadores) | parcial | `.github/workflows/db-guard.yml`, `scripts/db-audit/talkx-segment-fields.test.sh` |
 | `talkx_segments` | Segmentos de audiência reutilizáveis do TalkX | ativo | `src/components/talkx/__tests__/TalkXSegments.builder.test.tsx`, `src/components/talkx/useCampaignEditor.ts`, `src/hooks/integrations/useTalkXSegments.ts` … |
 | `talkx_settings` | Configurações chave-valor do TalkX | ativo | `src/hooks/integrations/useTalkXSettings.ts`, `supabase/functions/_shared/__tests__/talkx-resume-policy.test.ts`, `supabase/functions/_shared/__tests__/talkx-v20-window-business-hours.test.ts` … |
 | `talkx_template_variants` | Variantes de template do TalkX (rótulo, conteúdo e mídia) | ativo | `src/hooks/integrations/useTalkXTemplates.ts`, `supabase/functions/talkx-send/index.ts`, `supabase/functions/talkx-send/process-recipient.ts` … |
@@ -247,4 +245,4 @@ inventário apura hoje:
   `.github/workflows/`) as cita. `multiplix_audience_members`, `multiplix_audiences` e
   `talkx_campaign_segments` saíram dessa lista: viraram `ativo` (consumidoras de produto).
 
-As contagens de 28/08 (124 tabelas) são históricas; o catálogo de hoje tem 167.
+As contagens de 28/08 (124 tabelas) são históricas; o catálogo de hoje tem 166.
