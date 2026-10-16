@@ -263,7 +263,7 @@ function queryLedger(ledgerRetryDelays) {
     let exitCode;
     try {
       withPsqlEnvironment(url, (env) => {
-        output = execFileSync(PSQL_BIN, ['-X', '-At', url], {
+        output = execFileSync(PSQL_BIN, ['-X', '-At'], {
           input: LEDGER_QUERY,
           env,
           encoding: 'utf8',
@@ -332,10 +332,10 @@ function diffStatements(fileStmts, ledgerStmts, version) {
   const fileNorm = normalizeStatementsForComparison(fileStmts);
   const ledgerNorm = normalizeStatementsForComparison(ledgerStmts);
   if (fileNorm === ledgerNorm) return [];
+  const fileHash = crypto.createHash('sha256').update(fileNorm).digest('hex').slice(0, 16);
+  const ledgerHash = crypto.createHash('sha256').update(ledgerNorm).digest('hex').slice(0, 16);
   return [
-    `divergencia de statements em ${version}:`,
-    `  arquivo: ${fileNorm.slice(0, 120)}`,
-    `  ledger:  ${ledgerNorm.slice(0, 120)}`,
+    `${version}: conteudo SQL divergente (arquivo sha256:${fileHash} ledger sha256:${ledgerHash})`,
   ];
 }
 
