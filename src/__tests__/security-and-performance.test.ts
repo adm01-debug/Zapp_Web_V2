@@ -12,6 +12,11 @@ const mockOrder = vi.fn();
 const mockLimit = vi.fn();
 const mockMaybeSingle = vi.fn();
 
+// O entityId da auditoria vai para `audit_logs.entity_id`, que e uuid: o fixture
+// precisa ser um UUID REAL para atravessar a normalizacao de audit.ts. Um id
+// textual ('user-1') viraria `details.entity_id_text` e omitiria `p_entity_id`.
+const ID_UUID = '7f9c2c1e-3b1a-4d2f-8a55-01c2d3e4f5a6';
+
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     rpc: mockRpc,
@@ -88,14 +93,14 @@ describe('Security - Audit Logging', () => {
     await logAudit({
       action: 'login',
       entityType: 'auth',
-      entityId: 'user-1',
+      entityId: ID_UUID,
       details: { method: 'password' },
     });
 
     expect(mockRpc).toHaveBeenCalledWith('log_audit_event', expect.objectContaining({
       p_action: 'login',
       p_entity_type: 'auth',
-      p_entity_id: 'user-1',
+      p_entity_id: ID_UUID,
     }));
   });
 
