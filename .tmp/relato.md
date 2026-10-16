@@ -1,22 +1,22 @@
-Especialista: senior (area-front-hooks; refazer-sem-diff-alheio)
+Especialista: complexo (area-sql-banco; executor: Claude Code pelo comando fixo do cartao)
+
+N-096 — Talk X banco: progresso da campanha por segmento (X142, parte 1). Conferi o diff do executor linha a linha e rodei eu mesmo todas as provas abaixo.
 
 ## O que mudou e por quê
-- `docs/talkx/ESTADOS.md`: apliquei o conteúdo regenerado pelo cherry-pick do commit recusado `0ff368cbb` sobre a ponta atual de `dia/2026-10-11`.
-- `FEATURE_REGISTRY.md`: sincronizei o cabeçalho de base para `dia/2026-10-11`, mantendo a tabela com as 55 views calculadas a partir do `ViewRouter` atual.
+- supabase/migrations/20261012115900_talkx_campaign_segment_progress.sql (nova): RPC talkx_campaign_segment_progress(p_campaign_id) que devolve por segmento, na ordem de envio (position): total, enviadas (sent+delivered), entregues, falhas, restante (pending+sending), percentual processado, status done/running/pending, mais total_segments e pending_segments em cada linha. SECURITY DEFINER com SET search_path = public, pg_temp; REVOKE de PUBLIC/anon e GRANT a authenticated/service_role; gate admin/supervisor ou service_role (42501 talkx_admin_required), mesmo padrao do helper irmao talkx_engine_cron_runs. Cabecalho no formato do modelo (20261006141643_ai_jobs_efeito_externo_lease.sql): `-- Rollback (SQL executável, na ordem):` + `--   drop function if exists ...;` (funcao nova, nenhum dado alterado, nada a restaurar — correcao pedida pelo juiz em commit novo). Versao de hoje, maior que o maximo local e >= generated_at do catalogo.
+- scripts/db-audit/talkx-segment-progress.test.sh (novo) + passo N-096 em .github/workflows/db-guard.yml (arquivo citado pelo cartao): harness RED→GREEN em Postgres 17 descartavel aplicando as migrations reais (X057 + a nova) com papel real (SET ROLE authenticated/service_role/anon + claims).
 
-## Pontos da recusa
-- Ponto 1: parti do commit da entrega com `git cherry-pick 0ff368cbb`; o commit local final é o `HEAD` deste fechamento (sha informado no handoff do Kanban).
-- Ponto 2: o item recusado do espelho (`node: FEATURE_REGISTRY.md lista exatamente as views do ViewRouter`) ficou verde. Prova específica: `node --test scripts/ci/docs-estado-registry-convention.unit.mjs` retornou `tests 11`, `pass 11`, `fail 0`; a linha `FEATURE_REGISTRY.md lista exatamente as views do ViewRouter` passou. No espelho, rodei `/bin/bash --noprofile --norc /home/joaquim_ataides/arquitetura-v2/integrador/ci_espelho.sh . > .tmp/ci_espelho.out` e a checagem Python retornou `TARGET_PRESENT=False` para o alvo da recusa.
-- Ponto 3: `zapp-verify . --rapido` retornou `OK db_guard`, `OK tipos`, `OK lint`, `OK migrations`, `VERIFY: VERDE SEM BANCO`.
+## Prova (rodei eu mesmo neste workspace)
+- vermelho antes: `bash scripts/db-audit/talkx-segment-progress.test.sh --red` → `[PASS] RED: a funcao nao existe antes da migration` / `[RED] confirmado: talkx_campaign_segment_progress ausente sem a migration`
+- verde depois: `bash scripts/db-audit/talkx-segment-progress.test.sh` → `[PASS] 1. 3 segmentos: done/running/pending na ordem de envio, pending_segments=2 (= 1|10|8|6|1|0|100.0|done|3|2;2|10|3|2|1|6|40.0|running|3|2;3|10|0|0|0|10|0.0|pending|3|2)` + service_role le o mesmo; agente comum barrado (talkx_admin_required); anon sem EXECUTE (permission denied); campanha sem segmentos 0 linhas; PUBLIC sem EXECUTE; search_path fixado; rollback do cabecalho executa e remove a funcao
+- `hermes-db-migrar supabase/migrations/20261012115900_talkx_campaign_segment_progress.sql` → `APLICADA no banco LOCAL 'v2-2610121152200a' (produção não foi tocada)`
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO` (db_guard, tipos, lint, migrations OK; banco_local AVISO por falta de nome de conjunto — a prova de banco e o harness acima + a aplicacao local)
 
-## Arquivos alterados
-```
-FEATURE_REGISTRY.md
-docs/talkx/ESTADOS.md
-```
+## Criterio de pronto
+1. RPC devolve total/enviadas/entregues/falhas/restante/% e done/running/pending para 3 segmentos de fixture — provado no verde acima.
+2. Falha sem a correcao e passa com ela — vermelho→verde acima, mesmo harness.
+3. So arquivos do titulo; diff pequeno; zapp-verify verde.
 
-## Verificações executadas agora
-- `node --test scripts/ci/docs-estado-registry-convention.unit.mjs` → `tests 11`, `pass 11`, `fail 0`.
-- `/bin/bash --noprofile --norc /home/joaquim_ataides/arquitetura-v2/integrador/ci_espelho.sh . > .tmp/ci_espelho.out` + checagem Python do alvo → `TARGET_PRESENT=False`.
-- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (15s)`.
-- Autorrevisão de escopo: `git diff --name-only $(git merge-base HEAD dia/2026-10-11)...HEAD` lista `FEATURE_REGISTRY.md` e `docs/talkx/ESTADOS.md`; `git diff --stat` mostra `2 files changed, 69 insertions(+), 1 deletion(-)`.
+## O que NAO fiz e por que
+- talkx_campaign_resume_precheck e frente de leitura (X058/F11): outros cartoes. Caminhos do mesmo defeito (git grep): nenhum outro consumidor da RPC no front/edge; o monitor segue lendo destinatarios com .limit(2000) em src/hooks/integrations/useTalkXMonitor.ts:46 — fica para a etapa de front, so comento.
+- Nao regenerei schema-catalog.json/types: dependem do banco oficial apos aplicacao pelo lote; nao toquei.
