@@ -433,6 +433,14 @@ jobs:
         env:
           CONVEVENTS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/conversation-events-insert-autor-visivel.test.sh
+      # R2-DB-023 (item 304): garante que o gatilho de recuperacao autenticada
+      # nao volte a escrever a coluna removida reset_token. O harness executa o
+      # SQL real no PostgreSQL 17 descartavel: RED no corpo antigo, GREEN com a
+      # migration deste cartao, rate limit preservado e rollback executavel.
+      - name: Simular recuperacao autenticada sem coluna reset_token (R2-DB-023)
+        env:
+          RESET_GATILHO_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/reset-gatilho-coluna-removida.test.sh
 
       - name: Simular vinculo de time na reacao em mensagem (#1265)
         env:
