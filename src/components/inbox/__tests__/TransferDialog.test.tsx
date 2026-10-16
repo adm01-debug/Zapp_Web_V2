@@ -9,7 +9,7 @@
 import { axe } from 'vitest-axe';
 import { describe, it, expect, vi } from 'vitest';
 import type { ComponentProps } from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const CURRENT_USER_ID = 'me-auth-id';
@@ -116,6 +116,35 @@ describe('TransferDialog — contrato público restrito a agent|queue (#88)', ()
       expect(onTransfer).toHaveBeenCalledWith('agent', 'colega-profile', undefined)
     );
     expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+});
+
+describe('TransferDialog — troca de conversa durante a transferência (L11)', () => {
+  it('continuação de transferência em voo não fecha o diálogo da conversa nova', async () => {
+    let resolveTransfer: () => void = () => {};
+    const onTransfer = vi.fn(
+      () => new Promise<void>((resolve) => { resolveTransfer = resolve; })
+    );
+    const onOpenChangeOld = vi.fn();
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
+    const { unmount } = render(
+      <QueryClientProvider client={queryClient}>
+        <TransferDialog open onOpenChange={onOpenChangeOld} onTransfer={onTransfer} queueId="queue-1" />
+      </QueryClientProvider>
+    );
+
+    fireEvent.click(screen.getByText('Colega Um'));
+    fireEvent.click(screen.getByRole('button', { name: /transferir/i }));
+    await waitFor(() => expect(onTransfer).toHaveBeenCalledTimes(1));
+
+    // O atendente troca de conversa: o ChatPanel é remontado por
+    // key=conversation.id e este diálogo desmonta com a requisição em voo.
+    unmount();
+
+    await act(async () => { resolveTransfer(); });
+
+    expect(onOpenChangeOld).not.toHaveBeenCalled();
   });
 });
 

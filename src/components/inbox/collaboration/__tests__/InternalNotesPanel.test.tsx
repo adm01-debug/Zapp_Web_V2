@@ -60,14 +60,18 @@ vi.mock('@/components/inbox/collaboration/MentionInput', () => ({
 }));
 
 import { InternalNotesPanel } from '../InternalNotesPanel';
+import { contactNotesKey } from '@/hooks/crm/useContactNotes';
+import { conversationTabCountsKey } from '@/hooks/chat/useConversationTabCounts';
 
-function renderPanel() {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
-  return render(
-    <QueryClientProvider client={client}>
-      <InternalNotesPanel contactId="c1" />
-    </QueryClientProvider>,
-  );
+function renderPanel(client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } })) {
+  return {
+    client,
+    ...render(
+      <QueryClientProvider client={client}>
+        <InternalNotesPanel contactId="c1" />
+      </QueryClientProvider>,
+    ),
+  };
 }
 
 beforeEach(() => {
@@ -125,6 +129,23 @@ describe('InternalNotesPanel — leitura', () => {
     expect(await screen.findByText('Notas Internas')).toBeInTheDocument();
     expect(screen.queryByText('Nenhuma nota ainda')).toBeNull();
   });
+
+  it('mostra o erro (não "vazio") e refaz a consulta no "Tentar novamente"', async () => {
+    db.notesError = new Error('sem permissão');
+    renderPanel();
+
+    expect(await screen.findByText('Não foi possível carregar as notas')).toBeInTheDocument();
+    expect(screen.queryByText('Nenhuma nota ainda')).toBeNull();
+
+    db.notesError = null;
+    db.notes = [{
+      id: 'n1', content: 'Nota recuperada', created_at: '2026-01-06T12:00:00',
+      author: { id: 'a1', name: 'Ana Lima', avatar_url: null },
+    }];
+    fireEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }));
+
+    expect(await screen.findByText('Nota recuperada')).toBeInTheDocument();
+  });
 });
 
 describe('InternalNotesPanel — escrita', () => {
@@ -160,5 +181,20 @@ describe('InternalNotesPanel — escrita', () => {
 
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Erro ao adicionar nota'));
     expect(toast.success).not.toHaveBeenCalled();
+  });
+
+  it('ao gravar, invalida as três chaves que leem a mesma nota', async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+    const invalidate = vi.spyOn(client, 'invalidateQueries');
+    renderPanel(client);
+    await screen.findByText('Nenhuma nota ainda');
+
+    fireEvent.change(screen.getByLabelText('nova nota'), { target: { value: 'Ligar amanhã' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar nota' }));
+
+    await waitFor(() => expect(db.insertSpy).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(invalidate).toHaveBeenCalledWith({ queryKey: ['internal-notes', 'c1'] }));
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: contactNotesKey('c1', 'u1') });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: conversationTabCountsKey('c1') });
   });
 });

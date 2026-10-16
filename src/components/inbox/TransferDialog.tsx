@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { motion } from 'framer-motion';
 import {
@@ -52,6 +52,14 @@ export function TransferDialog({ open, onOpenChange, onTransfer, queueId }: Tran
   const [isTransferring, setIsTransferring] = useState(false);
   const { user } = useAuth();
 
+  // Cada tentativa recebe um id; uma troca de conversa remonta o `ChatPanel`
+  // (key=conversation.id) e desmonta este diálogo com a requisição em voo. Sem
+  // invalidar a tentativa no desmonte, a continuação do `onTransfer` chama o
+  // `onOpenChange(false)` da instância antiga — que fecha o diálogo da conversa
+  // nova, já montada.
+  const transferAttemptRef = useRef(0);
+  useEffect(() => () => { transferAttemptRef.current += 1; }, []);
+
   // trg_prevent_contact_assignee_hijack (20260924203300) só permite transferir
   // um contato SEM fila para você mesmo — decisão de produto de 2026-09-24
   // (self-claim only). Sem filtrar aqui, o picker mostrava todo mundo e a
@@ -60,16 +68,18 @@ export function TransferDialog({ open, onOpenChange, onTransfer, queueId }: Tran
 
   const handleTransfer = async () => {
     if (!selectedTarget || isTransferring) return;
+    const attemptId = ++transferAttemptRef.current;
     setIsTransferring(true);
     try {
       await onTransfer(transferType, selectedTarget, message || undefined);
+      if (attemptId !== transferAttemptRef.current) return;
       onOpenChange(false);
       setSelectedTarget('');
       setMessage('');
     } catch {
       // O callback canônico já exibe o erro e o diálogo permanece aberto.
     } finally {
-      setIsTransferring(false);
+      if (attemptId === transferAttemptRef.current) setIsTransferring(false);
     }
   };
 
