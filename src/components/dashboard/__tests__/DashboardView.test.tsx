@@ -161,3 +161,14 @@ describe('DashboardView — KPIs seguem o período escolhido (E34)', () => {
     expect(screen.getByTestId('dash-zone-numeros')).not.toHaveTextContent('Números de hoje');
   });
 });
+
+describe('DashboardView — filtros do topo só na aba em que valem (L6)', () => {
+  it('a barra de filtros aparece na Visão Geral e sai de cena ao trocar de aba', () => {
+    renderWithProviders();
+    expect(screen.getByTestId('stub-filters')).toBeInTheDocument();
+
+    fireEvent.mouseDown(screen.getByRole('tab', { name: 'Metas' }));
+
+    expect(screen.queryByTestId('stub-filters')).not.toBeInTheDocument();
+  });
+});

@@ -161,15 +161,21 @@ export function SatisfactionMetrics() {
                   </div>
                 </>
               ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={timelineData} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
+                <div
+                  className="h-full w-full"
+                  role="img"
+                  aria-label={`Evolução da satisfação: ${timelineData.length} pontos de CSAT e NPS`}
+                >
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={timelineData} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border)/0.4)" vertical={false} />
                     <XAxis dataKey="date" tick={{ fontSize: CHART_TICK_FONT_SIZE_SM, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
                     <YAxis tick={{ fontSize: CHART_TICK_FONT_SIZE_SM, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} domain={[0, 100]} ticks={[0, 25, 50, 75, 100]} />
                     <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: CHART_TOOLTIP_FONT_SIZE }} />
                     <Line type="monotone" dataKey="CSAT" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3, strokeWidth: 0, fill: 'hsl(var(--primary))' }} connectNulls />
-                  </LineChart>
-                </ResponsiveContainer>
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
               )}
             </div>
             <div className="flex items-center justify-center gap-6 mt-8 text-[13px]">
@@ -184,6 +190,11 @@ export function SatisfactionMetrics() {
               {!hasCsat ? (
                 <EmptyBlock icon={Star} title="Sem avaliações no período" sub="As respostas dos clientes aparecerão aqui, distribuídas por nota de 1 a 5." />
               ) : (
+                <div
+                  className="h-full w-full"
+                  role="img"
+                  aria-label={`Distribuição das avaliações por nota: ${distributionData.length} notas de 1 a 5`}
+                >
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={distributionData} margin={{ top: 12, right: 12, left: -12, bottom: 4 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border)/0.4)" vertical={false} />
@@ -193,6 +204,7 @@ export function SatisfactionMetrics() {
                     <Bar dataKey="count" name="Respostas" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
+                </div>
               )}
             </div>
           </DashboardCard>

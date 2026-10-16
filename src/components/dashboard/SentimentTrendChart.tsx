@@ -163,8 +163,13 @@ export function SentimentTrendChart({ onNavigateTab }: { onNavigateTab?: (tab: s
                 <p className="text-xs">Os dados aparecem quando houver análises processadas</p>
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
+              <div
+                className="h-full w-full"
+                role="img"
+                aria-label={`Tendência de sentimento: ${chartData.length} dias, positivo e negativo`}
+              >
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={chartData} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
                   <defs>
                     <linearGradient id="posGrad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="hsl(var(--dash-green))" stopOpacity={0.3} />
@@ -181,8 +186,9 @@ export function SentimentTrendChart({ onNavigateTab }: { onNavigateTab?: (tab: s
                   <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: CHART_TOOLTIP_FONT_SIZE }} />
                   <Area type="monotone" dataKey="Positivo" stroke="hsl(var(--dash-green))" fill="url(#posGrad)" strokeWidth={2} dot={{ r: 3, fill: 'hsl(var(--dash-green))', strokeWidth: 0 }} />
                   <Area type="monotone" dataKey="Negativo" stroke="hsl(var(--dash-red))" fill="url(#negGrad)" strokeWidth={2} dot={{ r: 3, fill: 'hsl(var(--dash-red))', strokeWidth: 0 }} />
-                </AreaChart>
-              </ResponsiveContainer>
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
             )}
           </div>
           {stats && (

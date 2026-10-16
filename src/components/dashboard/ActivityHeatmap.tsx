@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -31,11 +31,13 @@ interface ActivityData {
 interface ActivityHeatmapProps {
   title?: string;
   data?: ActivityData[];
-  metric?: 'messages' | 'conversations' | 'resolutions';
 }
 
 const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 const MONTHS = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+// L8: a prop `metric` era morta (default 'messages' e nenhum consumidor a
+// passa) — a grafia fica fixa em mensagens até um cartão ligá-la de verdade.
+const METRIC_LABEL = 'mensagens';
 
 const getLevelColor = (level: number, isDark: boolean = false) => {
   const colors = isDark
@@ -47,14 +49,14 @@ const getLevelColor = (level: number, isDark: boolean = false) => {
 export const ActivityHeatmap = ({
   title = 'Atividade',
   data: propData,
-  metric = 'messages',
 }: ActivityHeatmapProps) => {
+  const reduceMotion = useReducedMotion();
   const [selectedPeriod, setSelectedPeriod] = useState<'3m' | '6m' | '1y'>('3m');
   const [hoveredDay, setHoveredDay] = useState<ActivityData | null>(null);
 
   // Fetch real activity data from messages table
   const { data: realData } = useQuery({
-    queryKey: ['activity-heatmap', selectedPeriod, metric],
+    queryKey: ['activity-heatmap', selectedPeriod],
     queryFn: async () => {
       const days = selectedPeriod === '3m' ? 90 : selectedPeriod === '6m' ? 180 : 365;
       const startDate = subDays(new Date(), days);
@@ -132,27 +134,23 @@ export const ActivityHeatmap = ({
   const stats = useMemo(() => {
     const total = data.reduce((sum, d) => sum + d.count, 0);
     const activeDays = data.filter(d => d.count > 0).length;
-    const maxCount = Math.max(...data.map(d => d.count));
+    // Math.max(...[]) devolve -Infinity sem dado; guarda para o card vazio.
+    const maxCount = data.length ? Math.max(...data.map(d => d.count)) : 0;
     const avgCount = Math.round(total / activeDays) || 0;
 
-    // Calculate current streak
+    // Calculate current streak — L8: um dia de hoje ainda sem mensagem não
+    // zera o streak (o dia só terminou no fim dele); nesse caso a contagem
+    // começa em ontem em vez de parar no zero de hoje.
+    const lastIndex = data.length - 1;
+    const startIndex = lastIndex >= 0 && data[lastIndex].count === 0 ? lastIndex - 1 : lastIndex;
     let streak = 0;
-    for (let i = data.length - 1; i >= 0; i--) {
+    for (let i = startIndex; i >= 0; i--) {
       if (data[i].count > 0) streak++;
       else break;
     }
 
     return { total, activeDays, maxCount, avgCount, streak };
   }, [data]);
-
-  const getMetricLabel = () => {
-    switch (metric) {
-      case 'messages': return 'mensagens';
-      case 'conversations': return 'conversas';
-      case 'resolutions': return 'resoluções';
-      default: return 'atividades';
-    }
-  };
 
   // Get month labels
   const monthLabels = useMemo(() => {
@@ -255,10 +253,15 @@ export const ActivityHeatmap = ({
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <motion.div
-                              whileHover={{ scale: 1.3 }}
-                              className={`w-3 h-3 rounded-sm cursor-pointer ${getLevelColor(day.level)}`}
+                              whileHover={reduceMotion ? undefined : { scale: 1.3 }}
+                              role="img"
+                              tabIndex={0}
+                              aria-label={`${format(day.date, "d 'de' MMMM 'de' yyyy", { locale: ptBR })}: ${day.count} ${METRIC_LABEL}`}
+                              className={`w-3 h-3 rounded-sm cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 ${getLevelColor(day.level)}`}
                               onMouseEnter={() => setHoveredDay(day)}
                               onMouseLeave={() => setHoveredDay(null)}
+                              onFocus={() => setHoveredDay(day)}
+                              onBlur={() => setHoveredDay(null)}
                             />
                           </TooltipTrigger>
                           <TooltipContent>
@@ -267,7 +270,7 @@ export const ActivityHeatmap = ({
                                 {format(day.date, "d 'de' MMMM, yyyy", { locale: ptBR })}
                               </div>
                               <div className="text-muted-foreground">
-                                {day.count} {getMetricLabel()}
+                                {day.count} {METRIC_LABEL}
                               </div>
                             </div>
                           </TooltipContent>

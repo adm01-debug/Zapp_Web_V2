@@ -23,7 +23,7 @@
  * no multi-metric and no animations. Both serve distinct UI contexts.
  */
 import { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { Calendar, Clock, TrendingUp, Flame, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -115,7 +115,8 @@ export default function ConversationHeatmap({
   onCellClick,
 }: ConversationHeatmapProps) {
   const { data: realData } = useHeatmapData();
-  const data = externalData || realData || [];
+  const data = useMemo(() => externalData || realData || [], [externalData, realData]);
+  const reduceMotion = useReducedMotion();
   const [selectedMetric, setSelectedMetric] = useState(metric);
   const [hoveredCell, setHoveredCell] = useState<{ day: number; hour: number } | null>(null);
 
@@ -226,11 +227,25 @@ export default function ConversationHeatmap({
                       <Tooltip key={hour}>
                         <TooltipTrigger asChild>
                           <motion.div
-                            whileHover={{ scale: 1.2, zIndex: 10 }}
-                            onClick={() => onCellClick?.(dayIndex, hour)}
+                            whileHover={reduceMotion ? undefined : { scale: 1.2, zIndex: 10 }}
+                            role={onCellClick ? 'button' : 'img'}
+                            tabIndex={0}
+                            aria-label={`${DAYS_FULL[dayIndex]}, ${formatHour(hour)}: ${cellData?.value ?? 0} ${config.unit}`}
+                            onClick={onCellClick ? () => onCellClick(dayIndex, hour) : undefined}
+                            onKeyDown={
+                              onCellClick
+                                ? (event) => {
+                                    if (event.key === 'Enter' || event.key === ' ') {
+                                      event.preventDefault();
+                                      onCellClick(dayIndex, hour);
+                                    }
+                                  }
+                                : undefined
+                            }
                             className={cn(
                               "flex-1 aspect-square rounded cursor-pointer transition-all relative",
                               "min-w-[12px] max-w-[24px]",
+                              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
                               isHotspot && "ring-1 ring-warning/50"
                             )}
                             style={{
