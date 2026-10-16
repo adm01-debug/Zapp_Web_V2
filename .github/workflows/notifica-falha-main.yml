@@ -10,9 +10,9 @@ on:
     workflows:
       - CI/CD Pipeline
       - Deploy Edge Functions
-      - DB Migrate
+      - DB Migrate (production)
       - DB Live Guard
-      - Types Sync
+      - types-sync
     branches: [main]
     types: [completed]
 
