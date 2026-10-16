@@ -1,6 +1,13 @@
 import { supabase } from '@/integrations/supabase/client';
 import { crossTabSendDedupe } from '@/lib/crossTabSendDedupe';
-import { drainOfflineQueueOnReconnect, offlineSendQueue, type OfflineQueuedMessage } from '@/lib/offlineQueue';
+import {
+  drainOfflineQueueOnOpen,
+  drainOfflineQueueOnReconnect,
+  offlineSendQueue,
+  type OfflineQueueDrainResult,
+  type OfflineQueueErrorHandler,
+  type OfflineQueuedMessage,
+} from '@/lib/offlineQueue';
 import { sendThrottle } from '@/lib/sendThrottle';
 
 export type OutboundMessageType = 'text' | 'image' | 'audio' | 'video' | 'document' | 'sticker' | 'location';
@@ -349,18 +356,31 @@ async function deliverQueuedOfflineMessage(message: OfflineQueuedMessage): Promi
   clearPendingAction(queuedActionKey(message), message.clientMessageId);
 }
 
+// A mensagem continua na fila e a próxima tentativa a reenvia; o aviso é o que
+// impede a espera virar falha silenciosa. `console.warn` (e não o logger do app)
+// mantém este módulo — caminho quente de todo envio — sem dependência nova de
+// import, e é o MESMO aviso das duas drenagens (abertura e reconexão).
+function avisarFilaOffline(error: unknown, message?: OfflineQueuedMessage): void {
+  console.warn('Fila offline: entrega adiada', {
+    clientMessageId: message?.clientMessageId ?? null,
+    erro: error instanceof Error ? error.message : String(error),
+  });
+}
+
+/**
+ * Drenagem da fila offline na ABERTURA do app (item 025), chamada pelo efeito
+ * de sessão autenticada (`useOfflineSendQueueDrain`). Cobre o cenário que o
+ * evento `online` não alcança: compõe offline, fecha a aba, reabre já com rede.
+ */
+export function drainOfflineSendQueue(): Promise<OfflineQueueDrainResult | null> {
+  return drainOfflineQueueOnOpen(offlineSendQueue, deliverQueuedOfflineMessage, {
+    onError: avisarFilaOffline,
+  });
+}
+
 // Reconciliação ao reconectar (item 025): a fila local drena no evento `online`.
 drainOfflineQueueOnReconnect(offlineSendQueue, deliverQueuedOfflineMessage, {
-  onError: (error, message) => {
-    // A mensagem continua na fila e a próxima reconexão tenta de novo; o aviso é
-    // o que impede a espera virar falha silenciosa. `console.warn` (e não o
-    // logger do app) mantém este módulo — caminho quente de todo envio — sem
-    // dependência nova de import.
-    console.warn('Fila offline: entrega adiada', {
-      clientMessageId: message?.clientMessageId ?? null,
-      erro: error instanceof Error ? error.message : String(error),
-    });
-  },
+  onError: avisarFilaOffline,
 });
 
 async function enqueueOffline(

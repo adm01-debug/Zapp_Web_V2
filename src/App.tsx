@@ -89,10 +89,14 @@ const DeferredHooks = lazy(() =>
   Promise.all([
     import('@/hooks/system/useServiceWorker'),
     import('@/hooks/ui/useScreenProtection'),
-  ]).then(([swMod, spMod]) => ({
+    // Item 025: a fila offline drena também na ABERTURA (sob sessão autenticada),
+    // não só no evento `online` — ver lib/offlineQueue.ts.
+    import('@/hooks/system/useOfflineSendQueueDrain'),
+  ]).then(([swMod, spMod, offlineMod]) => ({
     default: function DeferredHooksRunner() {
       swMod.useServiceWorker();
       spMod.useScreenProtection();
+      offlineMod.useOfflineSendQueueDrain();
       return null;
     },
   }))
