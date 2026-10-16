@@ -10506,6 +10506,10 @@ export type Database = {
         }
         Returns: Json
       }
+      apply_client_wallet: {
+        Args: { p_contact_id: string }
+        Returns: string | null
+      }
       apply_pg_cron_escalonamento: {
         Args: { p_reverter?: boolean }
         Returns: number
