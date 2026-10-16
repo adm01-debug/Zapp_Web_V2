@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { localDayKey } from '@/lib/localDay';
 import { RESULT_LABEL, toResult } from '@/lib/calls/callStatus';
+import { rotulosDoEncerramento } from '@/lib/journey/mappers';
 import { startOfDay, subDays } from 'date-fns';
 
 export type TimelineEventKind =
@@ -55,8 +56,18 @@ export interface RawEventRow {
    * `metadata.note`; mapa aberto porque a coluna é jsonb.
    */
   metadata?: Record<string, unknown> | null;
+  /**
+   * Nomes já resolvidos (agente/fila) para a linha "De → Para". O hook busca os nomes pelos ids
+   * antes de montar a timeline; sem nome (RLS), o id fica no lugar — mesma decisão do mapeador.
+   */
   from_agent_name?: string | null;
   to_agent_name?: string | null;
+  from_queue_name?: string | null;
+  to_queue_name?: string | null;
+  /** Encerramento: motivo, resultado e classificação já em rótulo (`conversation_closures`). */
+  closure_reason?: string | null;
+  closure_outcome?: string | null;
+  closure_classification?: string | null;
 }
 
 export interface RawNoteRow {
@@ -255,6 +266,25 @@ function comentarioDoEvento(
   return { curto, completo };
 }
 
+/**
+ * Linha de apoio do evento de conversa: transferência/atribuição mostram "De → Para" (com fila
+ * quando não há agente); o encerramento mostra o que o atendente registrou no fechamento. Sem
+ * dado nenhum, o subtítulo não é emitido (nada de linha vazia).
+ */
+function subtituloDoEvento(kind: TimelineEventKind, e: RawEventRow): string | undefined {
+  if (kind === 'close') {
+    const partes = [
+      e.closure_reason ? `Motivo: ${e.closure_reason}` : null,
+      e.closure_outcome ? `Resultado: ${e.closure_outcome}` : null,
+      e.closure_classification ? `Classificação: ${e.closure_classification}` : null,
+    ].filter((p): p is string => !!p);
+    return partes.length ? partes.join(' · ') : undefined;
+  }
+  const de = e.from_agent_name ?? e.from_queue_name;
+  const para = e.to_agent_name ?? e.to_queue_name;
+  return de && para ? `De: ${de} · Para: ${para}` : undefined;
+}
+
 /** Une as fontes, agrupa rajadas de mensagens e ordena — função pura, testável sem rede. */
 export function buildTimeline(
   rows: TimelineRawRows,
@@ -294,7 +324,7 @@ export function buildTimeline(
           at: e.created_at,
           kind,
           title: kind === 'transfer' ? 'Transferência' : kind === 'assign' ? 'Atribuição' : kind === 'close' ? 'Conversa encerrada' : 'Conversa reaberta',
-          subtitle: e.from_agent_name && e.to_agent_name ? `De: ${e.from_agent_name} · Para: ${e.to_agent_name}` : undefined,
+          subtitle: subtituloDoEvento(kind, e),
           note: nota?.curto,
           noteFull: nota?.completo,
         };
@@ -378,7 +408,7 @@ export function useConversationHistoryTimeline(
         .limit(fetchLimit);
       const eventsQuery = supabase
         .from('conversation_events')
-        .select('id, event_type, created_at, metadata')
+        .select('id, event_type, created_at, metadata, from_agent_id, to_agent_id, from_queue_id, to_queue_id, closure_id')
         .eq('contact_id', cid)
         .order('created_at', { ascending: false })
         .limit(fetchLimit);
@@ -408,6 +438,60 @@ export function useConversationHistoryTimeline(
         : { data: [] as RawActivityRow[], error: null };
       if (activitiesRes.error) throw activitiesRes.error;
 
+      // O evento bruto só traz ids: sem resolver os nomes, "De → Para" nunca aparecia e o
+      // encerramento ficava sem motivo/resultado. Consultamos só o que os eventos apontam —
+      // contato sem transferência/encerramento não paga consulta nova.
+      const eventos = eventsRes.data ?? [];
+      const idsDe = (valores: Array<string | null>) => Array.from(new Set(valores.filter((v): v is string => !!v)));
+
+      const agenteIds = idsDe(eventos.flatMap((e) => [e.from_agent_id, e.to_agent_id]));
+      const filaIds = idsDe(eventos.flatMap((e) => [e.from_queue_id, e.to_queue_id]));
+      const encerramentoIds = idsDe(eventos.map((e) => e.closure_id));
+
+      const [agentesRes, filasRes, encerramentosRes] = await Promise.all([
+        agenteIds.length
+          ? supabase.from('profiles').select('id, name').in('id', agenteIds)
+          : { data: [] as Array<{ id: string; name: string | null }>, error: null },
+        filaIds.length
+          ? supabase.from('queues').select('id, name').in('id', filaIds)
+          : { data: [] as Array<{ id: string; name: string | null }>, error: null },
+        encerramentoIds.length
+          ? supabase.from('conversation_closures').select('id, close_reason, outcome, classification').in('id', encerramentoIds)
+          : { data: [] as Array<{ id: string; close_reason: string | null; outcome: string | null; classification: string | null }>, error: null },
+      ]);
+      if (agentesRes.error) throw agentesRes.error;
+      if (filasRes.error) throw filasRes.error;
+      if (encerramentosRes.error) throw encerramentosRes.error;
+
+      const nomeDeAgente = new Map<string, string | null>((agentesRes.data ?? []).map((p) => [p.id, p.name]));
+      const nomeDeFila = new Map<string, string | null>((filasRes.data ?? []).map((q) => [q.id, q.name]));
+      const encerramentos = encerramentosRes.data ?? [];
+      const porId = new Map<string, { id: string; close_reason: string | null; outcome: string | null; classification: string | null }>();
+      for (const c of encerramentos) porId.set(c.id, c);
+
+      const eventosEnriquecidos: RawEventRow[] = eventos.map((e) => {
+        const encerramento = e.closure_id ? porId.get(e.closure_id) : undefined;
+        const rotulos = rotulosDoEncerramento(
+          encerramento
+            ? { closeReason: encerramento.close_reason, outcome: encerramento.outcome, classification: encerramento.classification }
+            : null,
+        );
+        return {
+          id: e.id,
+          event_type: e.event_type,
+          created_at: e.created_at,
+          metadata: e.metadata as Record<string, unknown> | null,
+          // Sem nome (RLS negou), o id fica no lugar — mesma decisão do mapeador da jornada.
+          from_agent_name: e.from_agent_id ? nomeDeAgente.get(e.from_agent_id) ?? e.from_agent_id : null,
+          to_agent_name: e.to_agent_id ? nomeDeAgente.get(e.to_agent_id) ?? e.to_agent_id : null,
+          from_queue_name: e.from_queue_id ? nomeDeFila.get(e.from_queue_id) ?? e.from_queue_id : null,
+          to_queue_name: e.to_queue_id ? nomeDeFila.get(e.to_queue_id) ?? e.to_queue_id : null,
+          closure_reason: rotulos.motivo,
+          closure_outcome: rotulos.resultado,
+          closure_classification: rotulos.classificacao,
+        };
+      });
+
       // Truncamento real: alguma fonte devolveu mais linhas do que a tela mostra (pedimos limit+1).
       // Sem isto, hasMore sairia só do comprimento da amostra e o "Carregar mais" pararia na janela.
       const truncou =
@@ -422,7 +506,7 @@ export function useConversationHistoryTimeline(
       const timeline = buildTimeline(
         {
           messages: (messagesRes.data ?? []) as RawMessageRow[],
-          events: (eventsRes.data ?? []) as RawEventRow[],
+          events: eventosEnriquecidos,
           notes: (notesRes.data ?? []) as RawNoteRow[],
           tasks: (tasksRes.data ?? []) as RawTaskRow[],
           deals: (dealsRes.data ?? []) as RawDealRow[],

@@ -48,6 +48,17 @@ export interface JourneyMapperOptions {
   names?: JourneyNames;
   /** Relógio de referência (tarefa atrasada). Padrão: agora. */
   now?: Date;
+  /**
+   * Encerramentos (`conversation_closures`) que os eventos de fechamento apontam em `closure_id`.
+   * Sem a linha, o motivo cai no `names` (comportamento antigo); com ela, motivo, resultado e
+   * classificação vêm do formulário de encerramento.
+   */
+  closures?: readonly JourneyClosureRow[] | null;
+  /**
+   * Observações do encerramento (`conversation_closures.notes`) no detalhe. Desligado por padrão:
+   * texto livre escrito pelo atendente só vai para quem já enxerga o contato.
+   */
+  includeClosureNotes?: boolean;
 }
 
 /**
@@ -72,6 +83,26 @@ export interface JourneySources {
  * mapeador com o `RawTask` puro (sem prioridade, o detalhe simplesmente não é emitido).
  */
 export type JourneyTaskRow = RawTask & { priority?: string | null };
+
+/**
+ * Linha de `conversation_closures` (o que o atendente preencheu ao encerrar), em camelCase como
+ * o resto das linhas cruas. `notes` é o texto livre de observação — quem chama decide se ele
+ * entra no detalhe (`includeClosureNotes`).
+ */
+export interface JourneyClosureRow {
+  id: string;
+  closeReason: string | null;
+  outcome: string | null;
+  classification: string | null;
+  notes?: string | null;
+}
+
+/** Rótulos de tela de um encerramento; campo ausente/desconhecido sai como veio. */
+export interface ClosureLabels {
+  motivo: string | null;
+  resultado: string | null;
+  classificacao: string | null;
+}
 
 // ---------------------------------------------------------------- constantes
 
@@ -122,6 +153,39 @@ const ACTIVITY_TYPE_LABEL: Record<string, string> = {
   whatsapp: 'Mensagem',
 };
 
+/**
+ * Vocabulário do encerramento — ESPELHA o `CloseConversationDialog` (os mesmos valores e rótulos
+ * que o atendente escolhe ao fechar). Mantido aqui para que a jornada mostre o rótulo do formulário
+ * em vez do código cru; se o diálogo mudar, este mapa precisa acompanhar.
+ */
+const CLOSE_REASON_LABEL: Record<string, string> = {
+  resolved: 'Resolvido',
+  no_response: 'Sem resposta do cliente',
+  transferred: 'Transferido para outro canal',
+  spam: 'Spam / Irrelevante',
+  duplicate: 'Duplicado',
+  self_resolved: 'Cliente resolveu sozinho',
+  other: 'Outro',
+};
+
+const CLOSE_OUTCOME_LABEL: Record<string, string> = {
+  sale: 'Venda realizada',
+  lead_qualified: 'Lead qualificado',
+  support_resolved: 'Suporte resolvido',
+  follow_up: 'Requer follow-up',
+  lost: 'Oportunidade perdida',
+  no_outcome: 'Sem resultado específico',
+};
+
+const CLOSE_CLASSIFICATION_LABEL: Record<string, string> = {
+  sales: 'Comercial',
+  support: 'Suporte',
+  billing: 'Financeiro',
+  complaint: 'Reclamação',
+  information: 'Informação',
+  feedback: 'Feedback',
+};
+
 const TRANSFER_EVENT_TYPES = new Set(['transfer', 'queue_transfer']);
 const REASSIGN_EVENT_TYPES = new Set(['overload_reassign', 'absence_reassign']);
 const ASSIGN_EVENT_TYPES = new Set(['assign']);
@@ -142,6 +206,26 @@ function texto(valor: string | null | undefined): string | null {
 /** Número finito; qualquer outra coisa → `null`. */
 function numero(valor: number | null | undefined): number | null {
   return typeof valor === 'number' && Number.isFinite(valor) ? valor : null;
+}
+
+/** Valor cru → rótulo do vocabulário; vazio → `null`; valor desconhecido → ele mesmo (nunca inventa). */
+function rotular(mapa: Record<string, string>, valor: string | null | undefined): string | null {
+  const t = texto(valor);
+  return t ? mapa[t] ?? t : null;
+}
+
+/**
+ * Rótulos do encerramento (motivo, resultado, classificação) a partir da linha de
+ * `conversation_closures`. Sem a linha, os três vêm `null` e o chamador decide o que mostrar.
+ */
+export function rotulosDoEncerramento(
+  encerramento: Pick<JourneyClosureRow, 'closeReason' | 'outcome' | 'classification'> | null | undefined,
+): ClosureLabels {
+  return {
+    motivo: rotular(CLOSE_REASON_LABEL, encerramento?.closeReason),
+    resultado: rotular(CLOSE_OUTCOME_LABEL, encerramento?.outcome),
+    classificacao: rotular(CLOSE_CLASSIFICATION_LABEL, encerramento?.classification),
+  };
 }
 
 /** Instante em ms; data ausente/inválida → `null`. */
@@ -742,10 +826,12 @@ export function mapTasks(
 
 /**
  * Eventos da conversa (`conversation_events`) — S035–S039: transferência (agente ou fila),
- * reatribuição automática, atribuição/desatribuição, encerramento (com o `closure_id` no motivo)
- * e reabertura. "De → Para" e as filas entram nos detalhes; sem nome no mapa, o id fica no lugar
- * (decisão do plano). `performed_by` nulo (automação/robô/IA) → autor Sistema. Tipo de evento
- * desconhecido é descartado (não vira texto técnico na tela).
+ * reatribuição automática, atribuição/desatribuição, encerramento e reabertura. O encerramento lê
+ * o formulário em `conversation_closures` (pelo `closure_id`): motivo, resultado e classificação
+ * entram em rótulo; sem a linha, o motivo continua caindo no `names` (comportamento antigo).
+ * "De → Para" e as filas entram nos detalhes; sem nome no mapa, o id fica no lugar (decisão do
+ * plano). `performed_by` nulo (automação/robô/IA) → autor Sistema. Tipo de evento desconhecido é
+ * descartado (não vira texto técnico na tela).
  */
 export function mapConversationEvents(
   events: readonly RawEvent[] | null | undefined,
@@ -754,6 +840,12 @@ export function mapConversationEvents(
   const names = options.names;
   const nextId = criadorDeId();
   const mapeados: JourneyEvent[] = [];
+
+  const encerramentos = new Map<string, JourneyClosureRow>();
+  for (const encerramento of options.closures ?? []) {
+    const chave = texto(encerramento?.id);
+    if (chave && encerramento) encerramentos.set(chave, encerramento);
+  }
 
   for (const evento of events ?? []) {
     if (!evento) continue;
@@ -810,13 +902,21 @@ export function mapConversationEvents(
     }
 
     if (CLOSE_EVENT_TYPES.has(tipo)) {
+      const closureId = texto(evento.closureId);
+      const encerramento = closureId ? encerramentos.get(closureId) ?? null : null;
+      const rotulos = rotulosDoEncerramento(encerramento);
       mapeados.push({
         id,
         at,
         category: KIND_TO_CATEGORY.case_closed,
         kind: 'case_closed',
         title: 'Conversa encerrada',
-        details: detalhes([detalhe('Motivo', referencia(names, evento.closureId))]),
+        details: detalhes([
+          detalhe('Motivo', rotulos.motivo ?? referencia(names, evento.closureId)),
+          detalhe('Resultado', rotulos.resultado),
+          detalhe('Classificação', rotulos.classificacao),
+          options.includeClosureNotes && encerramento ? detalhe('Observações', encerramento.notes) : null,
+        ]),
         actor,
         target: { type: 'detail', id },
         badge: { label: 'Encerrada', tone: 'muted' },
