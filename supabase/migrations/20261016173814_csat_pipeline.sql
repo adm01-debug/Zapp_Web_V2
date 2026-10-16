@@ -1,11 +1,13 @@
 -- csat_pipeline — ciclo da pesquisa de satisfação: convite agendado, envio e
 -- captura da nota (cartão t_69726cda).
--- Rollback: desfaz colunas, os 3 índices, constraints, policy, RPCs e o job pg_cron criados aqui.
--- Rollback (SQL executável, na ordem — espelha o corpo: cron, 2 RPCs, policy, 3 constraints, 3 índices, 5 colunas, 2 NOT NULL):
+-- Rollback: desfaz colunas, os 3 índices, constraints, as 2 policies, RPCs e o job pg_cron criados aqui.
+-- Rollback (SQL executável, na ordem — espelha o corpo: cron, 2 RPCs, 2 policies, 3 constraints, 3 índices, 5 colunas, 2 NOT NULL):
 --   do $$ begin if exists (select 1 from pg_extension where extname = 'pg_cron') then perform cron.unschedule(jobid) from cron.job where jobname = 'csat-reply-capture-tick'; end if; end $$;
 --   drop function if exists public.fn_capture_csat_replies(integer);
 --   drop function if exists public.claim_due_csat_surveys(integer);
 --   drop policy if exists "Service role manages CSAT surveys" on public.csat_surveys;
+--   drop policy if exists "Users can insert CSAT surveys" on public.csat_surveys;
+--   create policy "Users can insert CSAT surveys" on public.csat_surveys for insert to authenticated with check (agent_id is null or agent_id in (select id from public.profiles where user_id = auth.uid()) or public.is_admin_or_supervisor(auth.uid()));
 --   alter table public.csat_surveys drop constraint if exists csat_surveys_responded_consistency;
 --   alter table public.csat_surveys drop constraint if exists csat_surveys_rating_range;
 --   alter table public.csat_surveys drop constraint if exists csat_surveys_status_check;
@@ -38,6 +40,14 @@
 --     parcial em conversation_id).
 --   * V2 não tem tabela de conversas (a conversa é o contato): conversation_id fica sem FK,
 --     só como identificador da conversa de origem informado pelo sistema.
+--   * A janela de 72 h da captura conta de send_at (horário agendado do disparo).
+--     send_at é o envio efetivo por construção: o claim despacha tudo que está
+--     devido e o cron roda a cada 2 min, então o atraso normal é de ~2 min e a
+--     resposta anterior a send_at nunca casa (provado no T3). Exceção conhecida:
+--     após indisponibilidade, o lote atrasa e uma resposta entre send_at e o
+--     disparo tardio pode casar — aceito porque a captura é idempotente por
+--     convite (um convite ganha uma nota; a 2ª rodada captura 0) e um convite
+--     nunca é reenviado. (recusa rodada 1, ponto 4)
 -- ADITIVO: nenhuma coluna, policy, grant ou dado existente é removido. RLS já está ligada
 -- em csat_surveys; a leitura por agente/admin (policies atuais) fica como está.
 
@@ -113,6 +123,25 @@ drop policy if exists "Service role manages CSAT surveys" on public.csat_surveys
 create policy "Service role manages CSAT surveys" on public.csat_surveys
   for all to service_role using (true) with check (true);
 
+-- Convite agendado só pelo sistema: authenticated grava só o formato legado
+-- (resposta já dada: status 'responded' + nota + carimbo). Sem isso um agente
+-- plantava 'scheduled' com message_text livre e o claim despachava o texto
+-- ao cliente. O sistema grava via service_role (bypass + policy acima).
+-- (recusa rodada 1, ponto 1)
+drop policy if exists "Users can insert CSAT surveys" on public.csat_surveys;
+create policy "Users can insert CSAT surveys" on public.csat_surveys
+  for insert to authenticated
+  with check (
+    status = 'responded'
+    and rating is not null
+    and responded_at is not null
+    and (
+      agent_id is null
+      or agent_id in (select id from public.profiles where user_id = auth.uid())
+      or public.is_admin_or_supervisor(auth.uid())
+    )
+  );
+
 -- ── 5. RPC do envio: claim atômico dos convites devidos ──────────────────────
 create or replace function public.claim_due_csat_surveys(p_limit integer default 50)
 returns table (
@@ -149,11 +178,15 @@ begin
           and coalesce(c.consent_status, 'unknown') <> 'revoked'
      );
 
-  -- 2) claim: marca 'sent' e devolve o lote. for update skip locked evita dois
-  --    workers pegarem a mesma linha; o cooldown conta convites dos últimos 30 dias.
+  -- 2) claim: marca 'sent' e devolve o lote. Um convite por contato por chamada
+  --    (candidatos: distinct on, o mais antigo devido; o outro 'scheduled' do mesmo
+  --    contato fica para a próxima — recusa rodada 1, ponto 2). for update skip
+  --    locked evita dois workers pegarem a mesma linha; a rechecagem de
+  --    status='scheduled' no update fecha a corrida entre a escolha e a trava.
+  --    O cooldown conta convites dos últimos 30 dias.
   return query
-  with devidos as (
-    select s.id, s.contact_id, s.agent_id, c.phone, s.message_text, s.send_at, s.conversation_id
+  with candidatos as (
+    select distinct on (s.contact_id) s.id as id
       from public.csat_surveys s
       join public.contacts c on c.id = s.contact_id
      where s.status = 'scheduled'
@@ -168,14 +201,22 @@ begin
             and anterior.status in ('sent', 'responded')
             and anterior.created_at > now() - interval '30 days'
        )
+     order by s.contact_id, s.send_at, s.created_at
+     limit v_limit
+  ),
+  devidos as (
+    select s.id, s.contact_id, s.agent_id, c.phone, s.message_text, s.send_at, s.conversation_id
+      from public.csat_surveys s
+      join public.contacts c on c.id = s.contact_id
+     where s.id in (select candidatos.id from candidatos)
      order by s.send_at, s.created_at
      for update of s skip locked
-     limit v_limit
   )
   update public.csat_surveys s
      set status = 'sent'
     from devidos d
    where s.id = d.id
+     and s.status = 'scheduled'
   returning s.id, d.contact_id, d.agent_id, d.phone, d.message_text, d.send_at, d.conversation_id;
 end;
 $$;

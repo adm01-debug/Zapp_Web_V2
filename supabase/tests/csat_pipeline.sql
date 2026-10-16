@@ -211,7 +211,24 @@ BEGIN
     RAISE EXCEPTION 'T2 FALHOU: 2ª rodada devolveu % (esperado 0)', v_lote;
   END IF;
 
-  RAISE NOTICE 'T2 OK: claim saiu só para os devidos (2), inelegíveis viraram failed, cooldown/futuro agendados, 2ª rodada 0';
+  -- dois devidos do MESMO contato: sai só um por chamada (o mais antigo)
+  INSERT INTO public.csat_surveys (id, contact_id, agent_id, rating, status, send_at, conversation_id, message_text, created_at) VALUES
+   ('d0000000-0000-0000-0000-000000000012', 'c0000000-0000-0000-0000-000000000006', NULL, NULL, 'scheduled',
+    now() - interval '2 hours', 'e0000000-0000-0000-0000-000000000012', 'convite duplo A', now() - interval '2 hours'),
+   ('d0000000-0000-0000-0000-000000000013', 'c0000000-0000-0000-0000-000000000006', NULL, NULL, 'scheduled',
+    now() - interval '1 hour', 'e0000000-0000-0000-0000-000000000013', 'convite duplo B', now() - interval '1 hour');
+  SET LOCAL ROLE service_role;
+  SELECT count(*) INTO v_lote FROM public.claim_due_csat_surveys(10);
+  RESET ROLE;
+  IF v_lote <> 1 THEN
+    RAISE EXCEPTION 'T2 FALHOU: par do mesmo contato devolveu % (esperado 1)', v_lote;
+  END IF;
+  SELECT status INTO v_st FROM public.csat_surveys WHERE id = 'd0000000-0000-0000-0000-000000000012';
+  IF v_st <> 'sent' THEN RAISE EXCEPTION 'T2 FALHOU: convite mais antigo do par ficou em % (esperado sent)', v_st; END IF;
+  SELECT status INTO v_st FROM public.csat_surveys WHERE id = 'd0000000-0000-0000-0000-000000000013';
+  IF v_st <> 'scheduled' THEN RAISE EXCEPTION 'T2 FALHOU: 2º convite do par saiu como % (esperado scheduled)', v_st; END IF;
+
+  RAISE NOTICE 'T2 OK: claim saiu só para os devidos (2), inelegíveis viraram failed, cooldown/futuro agendados, 2ª rodada 0, par do mesmo contato sai 1';
 END $$;
 
 -- ==================== T3: captura da resposta "1..5" ====================
@@ -230,6 +247,8 @@ INSERT INTO public.messages (id, contact_id, sender, content, message_type, crea
   ('f0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000005', 'contact', '2',  'text', now() - interval '6 minutes'),
   -- convite vencido d...0008: resposta 73 h depois do convite (fora da janela de 72 h)
   ('f0000000-0000-0000-0000-000000000008', 'c0000000-0000-0000-0000-000000000008', 'contact', '4',  'text', now() - interval '30 seconds'),
+  -- resposta ANTES do send_at do convite (74 h atrás, send há 73 h): nunca casa
+  ('f0000000-0000-0000-0000-000000000009', 'c0000000-0000-0000-0000-000000000008', 'contact', '4',  'text', now() - interval '74 hours'),
   -- contato sem convite aberto
   ('f0000000-0000-0000-0000-000000000007', 'c0000000-0000-0000-0000-000000000007', 'contact', '3',  'text', now() - interval '4 minutes');
 
@@ -379,6 +398,29 @@ BEGIN
   RAISE NOTICE 'T4 OK: anon/authenticated negados nas duas RPCs, search_path fixo, leitura por agente/admin preservada';
 END $$;
 
+-- ============ T4c: INSERT de authenticated só no formato legado ============
+-- Convite agendado (scheduled + message_text) só o sistema grava; authenticated
+-- grava só resposta já dada (responded + nota + carimbo). Prova com papel real.
+DO $$
+BEGIN
+  PERFORM set_config('request.jwt.claims', json_build_object('sub', 'a1000000-0000-0000-0000-000000000001')::text, true);
+  SET LOCAL ROLE authenticated;
+  BEGIN
+    INSERT INTO public.csat_surveys (contact_id, agent_id, rating, status, send_at, message_text)
+    VALUES ('c0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001',
+            NULL, 'scheduled', now(), 'texto plantado pelo agente');
+    RAISE EXCEPTION 'T4c FALHOU: scheduled com message_text passou como authenticated';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+  -- formato legado continua passando
+  INSERT INTO public.csat_surveys (id, contact_id, agent_id, rating, status, responded_at, send_at)
+  VALUES ('d0000000-0000-0000-0000-0000000000c1', 'c0000000-0000-0000-0000-000000000001',
+          'a0000000-0000-0000-0000-000000000001', 5, 'responded', now(), now());
+  RESET ROLE;
+  DELETE FROM public.csat_surveys WHERE id = 'd0000000-0000-0000-0000-0000000000c1';
+  RAISE NOTICE 'T4c OK: authenticated não planta scheduled+texto, legado passa';
+END $$;
+
 -- ============ T4b: entrada inválida recusada (limit <= 0) ============
 DO $$
 DECLARE
@@ -446,11 +488,13 @@ DELETE FROM public.csat_surveys;
 
 SAVEPOINT rb;
 
--- linhas do bloco '-- Rollback (SQL executável, na ordem)' da migration 20261015210626
+-- linhas do bloco '-- Rollback (SQL executável, na ordem)' da migration 20261016173814
 DO $rb$ BEGIN IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_cron') THEN PERFORM cron.unschedule(jobid) FROM cron.job WHERE jobname = 'csat-reply-capture-tick'; END IF; END $rb$;
 DROP FUNCTION IF EXISTS public.fn_capture_csat_replies(integer);
 DROP FUNCTION IF EXISTS public.claim_due_csat_surveys(integer);
 DROP POLICY IF EXISTS "Service role manages CSAT surveys" ON public.csat_surveys;
+DROP POLICY IF EXISTS "Users can insert CSAT surveys" ON public.csat_surveys;
+CREATE POLICY "Users can insert CSAT surveys" ON public.csat_surveys FOR INSERT TO authenticated WITH CHECK (agent_id IS NULL OR agent_id IN (SELECT id FROM public.profiles WHERE user_id = auth.uid()) OR public.is_admin_or_supervisor(auth.uid()));
 ALTER TABLE public.csat_surveys DROP CONSTRAINT IF EXISTS csat_surveys_responded_consistency;
 ALTER TABLE public.csat_surveys DROP CONSTRAINT IF EXISTS csat_surveys_rating_range;
 ALTER TABLE public.csat_surveys DROP CONSTRAINT IF EXISTS csat_surveys_status_check;
@@ -468,6 +512,7 @@ ALTER TABLE public.csat_surveys ALTER COLUMN agent_id SET NOT NULL;
 DO $$
 DECLARE
   v_n integer;
+  v_wc text;
 BEGIN
   SELECT count(*) INTO v_n
     FROM information_schema.columns
@@ -492,6 +537,13 @@ BEGIN
                                   'idx_csat_surveys_contact_invites')) THEN
     RAISE EXCEPTION 'T6 FALHOU: rollback deixou índice do ciclo';
   END IF;
+  -- o rollback restaura o INSERT legado (sem a trava de responded)
+  SELECT with_check INTO v_wc FROM pg_policies
+   WHERE schemaname = 'public' AND tablename = 'csat_surveys'
+     AND policyname = 'Users can insert CSAT surveys';
+  IF v_wc IS NULL OR position('responded' IN v_wc) > 0 THEN
+    RAISE EXCEPTION 'T6 FALHOU: rollback não restaurou o INSERT legado';
+  END IF;
 END $$;
 
 ROLLBACK TO SAVEPOINT rb;
@@ -503,7 +555,7 @@ BEGIN
      OR to_regprocedure('public.fn_capture_csat_replies(integer)') IS NULL THEN
     RAISE EXCEPTION 'T6 FALHOU: as RPCs não voltaram ao desfazer o savepoint';
   END IF;
-  RAISE NOTICE 'T6 OK: o rollback da migration executa e desfaz colunas/RPCs/policy';
+  RAISE NOTICE 'T6 OK: o rollback da migration executa e desfaz colunas/RPCs/policies/índices, restaurando o INSERT legado';
 END $$;
 
 DO $$ BEGIN
