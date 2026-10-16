@@ -212,8 +212,8 @@ describe('Team Chat — persistência e invalidação das mutations', () => {
     vi.clearAllMocks();
   });
 
-  it('useSendTeamMessage persiste conteúdo e mídia e toca o updated_at da conversa', async () => {
-    const { wrapper } = clienteDeTeste();
+  it('useSendTeamMessage persiste conteúdo e mídia e deixa o updated_at com o trigger', async () => {
+    const { invalidar, wrapper } = clienteDeTeste();
     const { result } = renderHook(() => useSendTeamMessage(), { wrapper });
 
     await act(async () => {
@@ -240,9 +240,15 @@ describe('Team Chat — persistência e invalidação das mutations', () => {
       media_bucket: 'team-chat-files',
       media_path: 'conv-a/contrato.pdf',
     });
-    expect(f.updates).toHaveLength(1);
-    expect(f.updates[0].table).toBe('team_conversations');
-    expect(typeof f.updates[0].payload.updated_at).toBe('string');
+    expect(f.updates).toHaveLength(0);
+    // O `updated_at` da conversa é movido pelo trigger
+    // `after_team_message_insert_bump_conversation` no INSERT (migration
+    // 20260927270001, SECURITY DEFINER): o envio não escreve nessa coluna
+    // (o `update` anterior era redundante e, para quem não criou a conversa,
+    // um no-op silencioso filtrado pelo RLS). O inbox se move pela
+    // invalidação abaixo, que recarrega a linha já atualizada pelo trigger.
+    expect(invalidar).toHaveBeenCalledWith({ queryKey: ['team-messages', 'conv-a'] });
+    expect(invalidar).toHaveBeenCalledWith({ queryKey: ['team-conversations'] });
   });
 
   it('useSendTeamMessage invalida a lista de mensagens da conversa e a de conversas', async () => {
