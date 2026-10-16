@@ -72,4 +72,11 @@ describe('derivedToConversationContact', () => {
 
     expect(conversation.contact.lead_origin).toBe('whatsapp');
   });
+
+  it('nasce sem selo VIP (is_vip do ContactRow, default da coluna)', () => {
+    const [conversation] = buildExternalConversations([externalMessage]);
+
+    // Contato derivado do WhatsApp nao esta no cadastro: nunca recebeu o selo VIP.
+    expect(conversation.contact.is_vip).toBe(false);
+  });
 });
