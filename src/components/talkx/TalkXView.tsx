@@ -76,6 +76,18 @@ function tabForRoute(parsed: ParsedTalkXRoute): TalkXTab {
   return parsed.tab;
 }
 
+// X052/TL-109 — o item aberto da URL também escolhe a aba quando o endereço não
+// traz aba explícita: `?segment=` abre Segmentos, `?template=` abre Templates.
+// `tab=` presente (goTab) é a escolha explícita e vence o item aberto — sem isso,
+// `template=new` na URL reintroduziria Templates depois de trocar de aba.
+// O `campaign` não entra aqui: ele é do roteamento de tela (parseTalkXScreenRoute).
+function tabForRoute(parsed: ParsedTalkXRoute): TalkXTab {
+  if (new URLSearchParams(window.location.search).has('tab')) return parsed.tab;
+  if (parsed.segment) return 'segments';
+  if (parsed.template) return 'templates';
+  return parsed.tab;
+}
+
 export default function TalkXView() {
   const { campaigns, isLoading, isError, error: campaignsError, isLive, startCampaign, pauseCampaign, cancelCampaign, deleteCampaign, duplicateCampaign: duplicateCampaignMutation, refetchCampaigns } = useTalkX();
   const { data: teamProfiles = [] } = useTeamProfiles();

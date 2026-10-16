@@ -564,3 +564,115 @@ describe('TalkXView item aberto na URL (TL-109 / X052)', () => {
     pushState.mockRestore();
   });
 });
+
+describe('TalkXView item aberto na URL (TL-109 / X052)', () => {
+  const run = {
+    id: 'cmp_run', name: 'Disparando', status: 'sending',
+    sent_count: 3, failed_count: 0, delivered_count: 3, total_recipients: 5,
+  };
+  const sched = {
+    id: 'cmp_sched', name: 'Agendada', status: 'scheduled',
+    sent_count: 0, failed_count: 0, delivered_count: 0, total_recipients: 5,
+  };
+
+  beforeEach(() => {
+    f.campaigns = [draft, run, sched];
+    f.isLoading = false;
+  });
+
+  afterEach(() => vi.clearAllMocks());
+
+  it('render de ?segment= termina com a URL sem segment (normaliza pela tela, via replace)', async () => {
+    window.history.replaceState(null, '', '/?view=talkx&segment=');
+    const pushState = vi.spyOn(window.history, 'pushState');
+    const replaceState = vi.spyOn(window.history, 'replaceState');
+
+    render(<TalkXView />);
+
+    expect(await screen.findByRole('button', { name: 'Abrir novo wizard' })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(new URLSearchParams(window.location.search).has('segment')).toBe(false);
+    });
+    // Carga inicial: corrigir o endereco tem de usar replace — nunca empurrar entrada nova.
+    expect(replaceState).toHaveBeenCalled();
+    expect(pushState).not.toHaveBeenCalled();
+    pushState.mockRestore();
+    replaceState.mockRestore();
+  });
+
+  it('campanha duplicada no endereço não é escolhida por acaso e sai da URL', async () => {
+    window.history.replaceState(null, '', '/?view=talkx&campaign=cmp_run&campaign=cmp_sched');
+    render(<TalkXView />);
+
+    expect(await screen.findByRole('button', { name: 'Abrir novo wizard' })).toBeInTheDocument();
+    expect(screen.queryByTestId('running')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('scheduled')).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(new URLSearchParams(window.location.search).has('campaign')).toBe(false);
+    });
+  });
+
+  it('render de ?template= termina com a URL sem template', async () => {
+    window.history.replaceState(null, '', '/?view=talkx&template=');
+    render(<TalkXView />);
+
+    expect(await screen.findByRole('button', { name: 'Abrir novo wizard' })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(new URLSearchParams(window.location.search).has('template')).toBe(false);
+    });
+  });
+
+  it('?segment= válido abre a aba Segmentos e o endereço é preservado', async () => {
+    window.history.replaceState(null, '', '/?view=talkx&segment=seg_1');
+    render(<TalkXView />);
+
+    expect(await screen.findByTestId('segments')).toBeInTheDocument();
+    expect(new URLSearchParams(window.location.search).get('segment')).toBe('seg_1');
+  });
+
+  it('URL de wizard com campaign não abre a tela da campanha por cima do editor', async () => {
+    window.history.replaceState(null, '', '/?view=talkx&campaign=cmp_run&wizard=draft_1&step=2');
+    render(<TalkXView />);
+
+    const wizard = await screen.findByTestId('wizard');
+    expect(wizard).toHaveAttribute('data-campaign-id', 'draft_1');
+    expect(screen.queryByTestId('running')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('monitor')).not.toBeInTheDocument();
+  });
+
+  it('voltar do navegador fecha o item aberto quando campaign sai da URL', async () => {
+    window.history.replaceState(null, '', '/?view=talkx');
+    render(<TalkXView />);
+    expect(await screen.findByRole('button', { name: 'Abrir novo wizard' })).toBeInTheDocument();
+
+    await act(async () => {
+      window.history.pushState(null, '', '/?view=talkx&campaign=cmp_run');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+    expect(await screen.findByTestId('running')).toBeInTheDocument();
+
+    await act(async () => {
+      window.history.back();
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('running')).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Abrir novo wizard' })).toBeInTheDocument();
+    });
+    expect(new URLSearchParams(window.location.search).has('campaign')).toBe(false);
+  });
+
+  it('deep link não cria entrada nova no histórico (carga inicial usa replace)', async () => {
+    window.history.replaceState(null, '', '/?view=talkx');
+    const antes = window.history.length;
+    window.history.replaceState(null, '', '/?view=talkx&campaign=cmp_sched');
+    const pushState = vi.spyOn(window.history, 'pushState');
+
+    render(<TalkXView />);
+
+    expect(await screen.findByTestId('scheduled')).toBeInTheDocument();
+    await waitFor(() => expect(pushState).not.toHaveBeenCalled());
+    expect(window.history.length).toBe(antes);
+    pushState.mockRestore();
+  });
+});
