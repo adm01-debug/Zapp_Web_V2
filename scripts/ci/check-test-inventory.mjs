@@ -178,7 +178,11 @@ const ALLOWLIST = new Set([
   // em db-guard.yml a promover pelo dono do workflow.
   'scripts/db-audit/contacts-stats-series-rpc.test.sh',]);,
   'scripts/db-audit/contacts-stats-series-rpc.test.sh',
-]);
+  // #122 (R3-DELTA-003, cartão t_c7543cc1): prova em Postgres 17 descartável (docker) que o cursor
+  // composto (created_at, id) não perde a cauda empatada, que p_after sem p_after_id erra, o ACL sob
+  // roles reais, a idempotência e o Rollback. O passo no db-guard.yml é uma linha
+  // (`bash scripts/db-audit/talkx-campaign-logs-cursor.test.sh`) — promover pelo dono do workflow.
+  'scripts/db-audit/talkx-campaign-logs-cursor.test.sh',]);
 // Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em
 // workflow nenhum. Todas rodam offline (`node --test <arquivo>`); a promoção é uma linha em
 // ci.yml/db-guard.yml — do dono do workflow (agente não edita workflow). R2-INF-013: as quatro
