@@ -22,8 +22,8 @@ function pr(number, extra = {}) {
 
 test('os checks obrigatórios saem do baseline do settings-guard (fonte única)', () => {
   const lista = checksObrigatorios();
-  assert.equal(lista.length, 7);
-  assert.ok(lista.includes('Contrato DB offline'));
+  assert.equal(lista.length, 6);
+  assert.ok(lista.includes('🧩 Node CI Scripts'));
 });
 
 test('estado do check: ausente e em andamento são pendentes; cancelado não conta como falha', () => {
