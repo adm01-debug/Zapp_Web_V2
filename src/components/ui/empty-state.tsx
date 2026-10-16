@@ -7,13 +7,16 @@ import { illustrations } from './empty-state-illustrations';
 interface EmptyStateProps {
   icon: LucideIcon;
   title: string;
-  description: string;
+  /** Texto de apoio; opcional — o título já basta em blocos compactos */
+  description?: string;
   actionLabel?: string;
   onAction?: () => void;
   secondaryActionLabel?: string;
   onSecondaryAction?: () => void;
   illustration?: keyof typeof illustrations;
   size?: 'sm' | 'md' | 'lg';
+  /** Linha de apoio exibida abaixo das ações (ex.: "Como funciona") */
+  helpText?: string;
   className?: string;
 }
 
@@ -54,6 +57,7 @@ export function EmptyState({
   onSecondaryAction,
   illustration,
   size = 'md',
+  helpText,
   className,
 }: EmptyStateProps) {
   const sizes = sizeClasses[size];
@@ -70,6 +74,8 @@ export function EmptyState({
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ delay: 0.1, duration: 0.5 }}
+          aria-hidden="true"
+          data-testid="empty-state-illustration"
           className={cn('relative mb-6', sizes.illustration)}
         >
           {illustrations[illustration]}
@@ -84,6 +90,8 @@ export function EmptyState({
         animate={{ scale: 1 }}
         transition={{ duration: 0.3, delay: 0.3, type: 'spring', stiffness: 200 }}
         className={cn('flex items-center justify-center rounded-2xl mb-4', sizes.iconContainer)}
+        aria-hidden="true"
+        data-testid="empty-state-icon"
         style={{ background: 'var(--gradient-primary)' }}
       >
         <Icon className={cn('text-primary-foreground', sizes.icon)} />
@@ -98,14 +106,16 @@ export function EmptyState({
         {title}
       </motion.h3>
 
-      <motion.p
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.5 }}
-        className={cn('text-muted-foreground max-w-md mb-6', sizes.description)}
-      >
-        {description}
-      </motion.p>
+      {description && (
+        <motion.p
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.5 }}
+          className={cn('text-muted-foreground max-w-md mb-6', sizes.description)}
+        >
+          {description}
+        </motion.p>
+      )}
 
       {(actionLabel || secondaryActionLabel) && (
         <motion.div
@@ -137,6 +147,10 @@ export function EmptyState({
             </Button>
           )}
         </motion.div>
+      )}
+
+      {helpText && (
+        <p className="text-xs text-muted-foreground mt-6 max-w-md">{helpText}</p>
       )}
     </motion.div>
   );

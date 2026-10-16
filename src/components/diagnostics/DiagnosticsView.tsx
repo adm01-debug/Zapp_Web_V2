@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { GenericEmptyState } from '@/components/ui/GenericEmptyState';
+import { EmptyState } from '@/components/ui/empty-state';
 import { ConnectionHealthPanel } from '@/components/diagnostics/ConnectionHealthPanel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -165,7 +165,7 @@ export function DiagnosticsView() {
             {connections.length === 0 ? (
               <Card className="border-dashed">
                 <CardContent className="py-0">
-                  <GenericEmptyState icon={WifiOff} title="Nenhuma conexão encontrada" description="Configure uma conexão WhatsApp para começar." className="py-8" />
+                  <EmptyState icon={WifiOff} title="Nenhuma conexão encontrada" description="Configure uma conexão WhatsApp para começar." className="py-8" />
                 </CardContent>
               </Card>
             ) : connections.map((conn, i) => (

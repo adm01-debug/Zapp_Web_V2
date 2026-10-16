@@ -4,6 +4,7 @@ import { Check, Plus, Trash2, Globe, Loader2, Search, ShieldCheck } from 'lucide
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -188,10 +189,7 @@ export function IPWhitelistPanel() {
               </Button>
             </div>
           ) : filteredIPs.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Globe className="w-12 h-12 mx-auto mb-2 opacity-20" />
-              <p>Nenhum IP na whitelist</p>
-            </div>
+            <EmptyState icon={Globe} title="Nenhum IP na whitelist" size="sm" />
           ) : (
             <div className="space-y-2">
               <AnimatePresence mode="popLayout">

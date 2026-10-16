@@ -5,6 +5,7 @@ import {
   GripVertical, X, Check, List, Layers, ChevronDown,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -163,10 +164,7 @@ export function InteractiveMessageBuilder({ open, onOpenChange, onSend }: Intera
               </AnimatePresence>
 
               {buttons.length === 0 && (
-                <div className="text-center py-6 text-muted-foreground">
-                  <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">Adicione botões clicando acima</p>
-                </div>
+                <EmptyState icon={MessageSquare} title="Adicione botões clicando acima" size="sm" />
               )}
             </TabsContent>
 

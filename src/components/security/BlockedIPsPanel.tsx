@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Ban, Plus, Trash2, Clock, Globe, Loader2, Search, Shield } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -62,7 +63,7 @@ export function BlockedIPsPanel() {
               <p>Não foi possível carregar os IPs bloqueados.</p>
               <Button variant="outline" size="sm" className="mt-2 h-8" onClick={() => void fetchBlockedIPs()}>Tentar de novo</Button>
             </div>
-          : filteredIPs.length === 0 ? <div className="text-center py-8 text-muted-foreground"><Shield className="w-12 h-12 mx-auto mb-2 opacity-20" /><p>Nenhum IP bloqueado</p></div>
+          : filteredIPs.length === 0 ? <EmptyState icon={Shield} title="Nenhum IP bloqueado" size="sm" />
           : (
             <div className="space-y-2">
               <AnimatePresence mode="popLayout">

@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { log } from '@/lib/logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -107,7 +108,7 @@ export function TemplatesWithVariables({ templates, onUseTemplate, contactData }
               ))}
             </AnimatePresence>
             {filteredTemplates.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground"><FileText className="w-10 h-10 mx-auto mb-2 opacity-50" /><p>Nenhum template encontrado</p></div>
+              <EmptyState icon={FileText} title="Nenhum template encontrado" size="sm" />
             )}
           </div>
         </ScrollArea>

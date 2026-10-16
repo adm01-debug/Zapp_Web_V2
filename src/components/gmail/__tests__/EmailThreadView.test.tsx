@@ -48,8 +48,8 @@ vi.mock('@/components/ui/tooltip', () => ({
   TooltipContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
-vi.mock('@/components/ui/GenericEmptyState', () => ({
-  GenericEmptyState: ({ title, description, actionLabel, onAction }: {
+vi.mock('@/components/ui/empty-state', () => ({
+  EmptyState: ({ title, description, actionLabel, onAction }: {
     title: ReactNode; description?: ReactNode; actionLabel?: string; onAction?: () => void;
   }) => (
     <div data-testid="empty-state">

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -78,11 +79,12 @@ export function InternalNotesPanel({ contactId }: { contactId: string }) {
               <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
             </div>
           ) : notes?.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">Nenhuma nota ainda</p>
-              <p className="text-xs">Use @ para mencionar colegas</p>
-            </div>
+            <EmptyState
+              icon={MessageSquare}
+              title="Nenhuma nota ainda"
+              helpText="Use @ para mencionar colegas"
+              size="sm"
+            />
           ) : (
             <div className="space-y-3 pr-2">
               <AnimatePresence>

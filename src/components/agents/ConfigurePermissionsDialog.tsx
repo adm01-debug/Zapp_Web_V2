@@ -8,6 +8,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { EmptyState } from '@/components/ui/empty-state';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Shield, Users, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -114,10 +115,7 @@ export function ConfigurePermissionsDialog({ open, onOpenChange }: ConfigurePerm
               })}
 
               {profiles.length === 0 && (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>Nenhum membro encontrado</p>
-                </div>
+                <EmptyState icon={Users} title="Nenhum membro encontrado" size="sm" />
               )}
             </div>
 

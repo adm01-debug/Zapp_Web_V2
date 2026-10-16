@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { GenericEmptyState } from '@/components/ui/GenericEmptyState';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Mail, Search, RefreshCw, Pencil, Inbox, Loader2, Clock, AlertTriangle } from 'lucide-react';
 import { useGmail, type EmailThread } from '@/hooks/integrations/useGmail';
 import { EMAIL_THREAD_DEFAULT_FILTERS } from '@/lib/emailThreadQuery';
@@ -100,7 +100,7 @@ export default function GmailInboxView() {
     }
     if (accountsError) {
       return (
-        <GenericEmptyState
+        <EmptyState
           icon={AlertTriangle}
           title="Não foi possível verificar suas contas Gmail"
           description="A consulta de contas falhou. Isso não quer dizer que a conta foi desconectada — tente carregar de novo."
@@ -155,7 +155,7 @@ export default function GmailInboxView() {
           <ScrollArea className="flex-1 min-h-0">
             {threadsLoading ? <div className="flex items-center justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
             : threadsFailedWithoutData ? (
-              <GenericEmptyState
+              <EmptyState
                 icon={AlertTriangle}
                 title="Não foi possível carregar os emails"
                 description="A consulta falhou. Isso não significa que a caixa esteja vazia — tente carregar de novo."
@@ -164,10 +164,13 @@ export default function GmailInboxView() {
                 className="py-16"
               />
             ) : filteredThreads.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-                <Inbox className="w-12 h-12 mb-3 opacity-20" /><p className="text-sm">{searchQuery ? 'Nenhum email encontrado' : 'Nenhum email nesta pasta'}</p>
-                {!searchQuery && <Button variant="link" size="sm" className="mt-2" onClick={() => syncInbox.mutate({})}>Sincronizar emails</Button>}
-              </div>
+              <EmptyState
+                icon={Inbox}
+                title={searchQuery ? 'Nenhum email encontrado' : 'Nenhum email nesta pasta'}
+                size="sm"
+                secondaryActionLabel={!searchQuery ? 'Sincronizar emails' : undefined}
+                onSecondaryAction={!searchQuery ? () => { syncInbox.mutate({}); } : undefined}
+              />
             ) : <div>{filteredThreads.map((thread) => <ThreadListItem key={thread.id} thread={thread} isSelected={false} onClick={() => setSelectedThread(thread)} />)}</div>}
           </ScrollArea>
         </div>

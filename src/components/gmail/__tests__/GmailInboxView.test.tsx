@@ -348,4 +348,28 @@ describe('GmailInboxView', () => {
     // o valor visível segue exibido dentro do controle
     expect(trigger?.textContent?.trim().length).toBeGreaterThan(0);
   });
+
+  it('pasta vazia sem busca: estado canônico com "Nenhum email nesta pasta" e saída Sincronizar', () => {
+    config.threads = [];
+    render(<GmailInboxView />);
+    // Escopado ao bloco do título: o manuscrito antigo era <p> sem testid;
+    // o canônico traz o container do ícone (com o svg dentro) no mesmo bloco.
+    const titulo = screen.getByText('Nenhum email nesta pasta');
+    const bloco = titulo.closest('div.flex.flex-col.items-center');
+    expect(bloco?.querySelector('[data-testid="empty-state-icon"] > svg, [data-testid="empty-state-icon"] svg')).not.toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Sincronizar emails' }));
+    expect(syncInboxMutate).toHaveBeenCalledWith({});
+  });
+
+  it('busca sem resultado: "Nenhum email encontrado" e sem botão Sincronizar', async () => {
+    config.threads = [makeThread({ subject: 'Proposta de parceria' })];
+    render(<GmailInboxView />);
+    fireEvent.change(screen.getByPlaceholderText('Buscar emails...'), { target: { value: 'zzz-sem-match' } });
+    await waitFor(() => {
+      expect(screen.getByText('Nenhum email encontrado')).toBeInTheDocument();
+    });
+    const bloco = screen.getByText('Nenhum email encontrado').closest('div.flex.flex-col.items-center');
+    expect(bloco?.querySelector('[data-testid="empty-state-icon"] svg')).not.toBeNull();
+    expect(screen.queryByRole('button', { name: 'Sincronizar emails' })).not.toBeInTheDocument();
+  });
 });
