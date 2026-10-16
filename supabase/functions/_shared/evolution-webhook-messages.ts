@@ -14,6 +14,7 @@ import {
 import { persistMediaToStorage, persistMediaViaApi, persistBase64Media, parseMessageContent } from "./evolution-media.ts";
 import { downloadMediaWithEgressPolicy, SMALL_MEDIA_DOWNLOAD_MAX_BYTES } from "./media-egress.ts";
 import type { EvolutionDbClient, EvolutionRow } from "./evolution-types.ts";
+import { capabilityFlagKeyForFunction } from "./ai-feature-flags.ts";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // X030 — opt-out por palavra configurável + autoresposta pelo token da instância
@@ -548,6 +549,353 @@ export async function sendAwayMessageIfNeeded(
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Chatbot IA (L1) — disparo da resposta automática a partir da mensagem recebida
+//
+// O webhook é o ÚNICO chamador da edge `chatbot-l1`: depois de gravar a fala do
+// cliente ele a aciona ASSINADA (HMAC-SHA256 do corpo cru em
+// `x-webhook-signature`, mesmo contrato do `validateHmacRequest`) e a resposta do
+// bot sai pelo MESMO pipeline oficial da mensagem de ausência:
+//   INSERT em `messages` (client_message_id + status 'sending')
+//   → `claim_outbound_message` (service_role) → provedor → `complete_outbound_message`.
+//
+// DESLIGADO POR PADRÃO, com DOIS portões independentes:
+//   1. só conexão com fluxo `ai_l1` ATIVO responde (PK-06/PK-07);
+//   2. a flag de capacidade `ai.capability.chatbot_l1` precisa existir com
+//      `enabled = true`. Ausência da linha = DESLIGADO — ao contrário do padrão
+//      do gate IA-009 (`readCapabilityFlag`), cuja ausência vale LIGADA: aqui a
+//      resposta automática é nova e nada responde até o dono ligar de propósito.
+//      Leitura que falha (erro do PostgREST/exceção) também FECHA.
+//
+// IDEMPOTÊNCIA por mensagem: o `client_message_id` é DETERMINÍSTICO por
+// (contato, conexão, mensagem recebida). Antes de gastar IA o helper confere se
+// já existe resposta com esse id — reentrega não consome provedor — e, mesmo na
+// corrida, o UNIQUE `ux_messages_contact_client_message_id` é quem deduplica o
+// enfileiramento; a consulta prévia nunca é a única garantia.
+//
+// SEM LAÇO: a resposta sai pelo provedor (pipeline de saída) e o gatilho só roda
+// para mensagem RECEBIDA de TEXTO (`!key.fromMe` + `messageType === 'text'`) já
+// persistida; a própria resposta do bot nunca reentra no webhook. Conversa com
+// atendente atribuído e mensagem de opt-out não disparam.
+//
+// FALHA NÃO DERRUBA O WEBHOOK: qualquer erro aqui é registrado e o processamento
+// da mensagem recebida segue (mesmo contrato da ausência).
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** `delivery_claimed_by` — identifica o produtor no claim oficial da resposta do bot. */
+export const CHATBOT_L1_WORKER = "edge:evolution-webhook:chatbot-l1";
+
+/** Rota interna da edge de chatbot L1, montada da URL do projeto. */
+export function chatbotL1Endpoint(supabaseUrl: string): string {
+  return `${supabaseUrl.replace(/\/+$/, "")}/functions/v1/chatbot-l1`;
+}
+
+/**
+ * `client_message_id` determinístico (UUID) da resposta do bot para UMA mensagem
+ * recebida. Mesmo esquema do `awayClientMessageId` (FNV-1a de 32 bits em 4
+ * pistas → 128 bits): dois isolates produzem o MESMO id para a mesma mensagem, e
+ * quem deduplica o enfileiramento é o UNIQUE do banco. A semente usa o id da
+ * LINHA da mensagem recebida (sempre presente), não o `external_id` do provedor.
+ */
+export function chatbotReplyClientMessageId(
+  contactId: string,
+  connectionId: string,
+  inboundMessageId: string,
+): string {
+  const semente = `${contactId}|chatbot-l1|${connectionId}|${inboundMessageId}`;
+  const hex: string[] = [];
+  for (let pista = 0; pista < 4; pista++) {
+    let h = (0x811c9dc5 ^ Math.imul(pista + 1, 0x9e3779b1)) >>> 0;
+    for (let i = 0; i < semente.length; i++) {
+      h ^= semente.charCodeAt(i) + pista;
+      h = Math.imul(h, 0x01000193) >>> 0;
+    }
+    hex.push(h.toString(16).padStart(8, "0"));
+  }
+  const raw = hex.join("");
+  // UUID de 128 bits com as marcas de versão/variante (id não-secreto).
+  return `${raw.slice(0, 8)}-${raw.slice(8, 12)}-4${raw.slice(13, 16)}-a${raw.slice(17, 20)}-${raw.slice(20, 32)}`;
+}
+
+/** Assinatura HMAC-SHA256 (header `x-webhook-signature`) do corpo cru. */
+async function assinarCorpoDoWebhook(corpo: string, segredo: string): Promise<string> {
+  const chave = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(segredo),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const assinatura = await crypto.subtle.sign("HMAC", chave, new TextEncoder().encode(corpo));
+  const hex = Array.from(new Uint8Array(assinatura)).map((b) => b.toString(16).padStart(2, "0")).join("");
+  return `sha256=${hex}`;
+}
+
+/**
+ * Flag de capacidade do chatbot, com FALHA FECHADA e AUSÊNCIA = DESLIGADO.
+ * Difere de `readCapabilityFlag` (IA-009, cuja ausência vale ligada) de propósito:
+ * nada responde até existir a linha `enabled = true`. Erro de leitura fecha.
+ */
+export async function readChatbotL1Flag(supabase: EvolutionDbClient): Promise<boolean> {
+  try {
+    const { data, error } = await supabase
+      .from("feature_flags")
+      .select("enabled")
+      .eq("key", capabilityFlagKeyForFunction("chatbot-l1"))
+      .maybeSingle();
+    if (error) {
+      console.warn("[CHATBOT-L1] leitura da flag falhou — tratado como DESLIGADO:", error.message);
+      return false;
+    }
+    return data?.enabled === true;
+  } catch (err) {
+    console.warn(
+      "[CHATBOT-L1] flag indisponivel — tratado como DESLIGADO:",
+      err instanceof Error ? err.message : String(err),
+    );
+    return false;
+  }
+}
+
+/** Terminal sem reenvio para a linha claimada da resposta do bot. */
+async function failBotClaim(supabase: EvolutionDbClient, messageId: string, claimToken: string): Promise<void> {
+  const { error } = await supabase.rpc("fail_outbound_message", {
+    p_message_id: messageId,
+    p_claim_token: claimToken,
+    p_retryable: false,
+  });
+  if (error) console.error("[CHATBOT-L1] fail_outbound_message:", error.code, error.message);
+}
+
+/** Efeito incerto (5xx/tempo/id ausente): reconciliação SOMENTE-LEITURA, sem reenvio. */
+async function enqueueBotReconcile(
+  supabase: EvolutionDbClient,
+  messageId: string,
+  externalId: string | null,
+): Promise<void> {
+  try {
+    await enqueueEffectReconcile({
+      supabase,
+      effect: EFFECT_MESSAGE_SEND,
+      sourceTable: "messages",
+      sourceId: messageId,
+      externalId,
+    });
+  } catch (err) {
+    console.error("[CHATBOT-L1] reconcile enqueue failed:", err instanceof Error ? err.message : String(err));
+  }
+}
+
+/**
+ * Enfileira a resposta do bot e a entrega pelo provedor — espelho do envio da
+ * mensagem de ausência (mesmo contrato oficial, mesmo token de instância). NUNCA
+ * lança: a resposta automática não pode derrubar o webhook.
+ */
+async function enviarRespostaDoBot(
+  supabase: EvolutionDbClient,
+  params: { contactId: string; connectionId: string; clientMessageId: string; texto: string },
+): Promise<void> {
+  try {
+    // 1) Dono da conexão = agente responsável (o pipeline exige perfil ativo).
+    const { data: conexao, error: conexaoErr } = await supabase.from("whatsapp_connections")
+      .select("created_by").eq("id", params.connectionId).maybeSingle();
+    if (conexaoErr) { console.warn("[CHATBOT-L1] connection owner read failed:", conexaoErr.message); return; }
+    const ownerId = typeof conexao?.created_by === "string" ? conexao.created_by : null;
+    if (!ownerId) { console.warn("[CHATBOT-L1] conexao sem dono — resposta nao enviada"); return; }
+    const { data: dono, error: donoErr } = await supabase.from("profiles")
+      .select("id").eq("id", ownerId).eq("is_active", true).maybeSingle();
+    if (donoErr) { console.warn("[CHATBOT-L1] owner profile read failed:", donoErr.message); return; }
+    if (typeof dono?.id !== "string") {
+      console.warn("[CHATBOT-L1] dono sem perfil ativo — resposta nao enviada");
+      return;
+    }
+
+    // 2) Enfileira no contrato oficial. O UNIQUE deduplica (sem consulta prévia).
+    const { data: enfileirada, error: enqueueErr } = await supabase.from("messages").insert({
+      contact_id: params.contactId,
+      whatsapp_connection_id: params.connectionId,
+      agent_id: ownerId,
+      sender: "agent",
+      content: params.texto,
+      message_type: "text",
+      is_read: true,
+      status: "sending",
+      status_updated_at: new Date().toISOString(),
+      client_message_id: params.clientMessageId,
+    }).select("id").maybeSingle();
+    if (enqueueErr) {
+      if (enqueueErr.code === "23505") return; // já enfileirada (corrida idempotente)
+      console.warn("[CHATBOT-L1] enqueue failed:", enqueueErr.code, enqueueErr.message);
+      return;
+    }
+    const messageId = typeof enfileirada?.id === "string" ? enfileirada.id : null;
+    if (!messageId) { console.warn("[CHATBOT-L1] enqueue returned no id"); return; }
+
+    // 3) Claim oficial: o webhook roda com a service key (auth.role() = service_role).
+    const { data: claimedRows, error: claimErr } = await supabase.rpc("claim_outbound_message", {
+      p_message_id: messageId,
+      p_agent_id: ownerId,
+      p_worker: CHATBOT_L1_WORKER,
+      p_lease_seconds: 90,
+    });
+    const claim = (Array.isArray(claimedRows) ? claimedRows[0] : claimedRows) as EvolutionRow | null;
+    const claimToken = typeof claim?.claim_token === "string" ? claim.claim_token : null;
+    const instancia = typeof claim?.whatsapp_instance_name === "string" ? claim.whatsapp_instance_name : null;
+    const telefone = typeof claim?.contact_phone === "string" ? claim.contact_phone : null;
+    const texto = typeof claim?.content === "string" ? claim.content : null;
+    if (claimErr || !claimToken || !instancia || !telefone || !texto) {
+      console.warn("[CHATBOT-L1] claim failed:", claimErr?.message ?? "sem linha claimável");
+      return;
+    }
+
+    // 4) Provedor — mesmo sender e mesmo token da edge `message-delivery`.
+    const evolutionUrl = Deno.env.get("EVOLUTION_API_URL")?.replace(/\/+$/, "");
+    const evolutionKey = Deno.env.get("EVOLUTION_API_KEY") ?? "";
+    if (!evolutionUrl || !evolutionKey) {
+      console.error("[CHATBOT-L1] EVOLUTION_API_URL/KEY ausentes — resposta nao enviada");
+      await failBotClaim(supabase, messageId, claimToken);
+      return;
+    }
+
+    let providerPostAttempted = false;
+    let externalId: string | null = null;
+    try {
+      const instanceToken = await resolveInstanceToken(supabase, instancia);
+      providerPostAttempted = true;
+      const resp = await evoFetch(evolutionUrl, evolutionKey, `/message/sendText/${instancia}`, {
+        number: telefone,
+        text: texto,
+      }, undefined, undefined, undefined, instanceToken ?? undefined);
+      const raw = await resp.text();
+      let providerData: unknown = null;
+      try { providerData = raw ? JSON.parse(raw) : null; } catch { /* corpo do provedor inválido */ }
+
+      if (!resp.ok) {
+        await failBotClaim(supabase, messageId, claimToken);
+        if (resp.status >= 500) await enqueueBotReconcile(supabase, messageId, null);
+        console.warn("[CHATBOT-L1] provedor recusou a resposta:", resp.status, messageId);
+        return;
+      }
+      externalId = extractMessageId(providerData) ?? null;
+      if (!externalId || externalId.length > 512) {
+        await failBotClaim(supabase, messageId, claimToken);
+        await enqueueBotReconcile(supabase, messageId, null);
+        console.warn("[CHATBOT-L1] provedor aceitou sem id — efeito incerto:", messageId);
+        return;
+      }
+      const { data: concluida, error: completeErr } = await supabase.rpc("complete_outbound_message", {
+        p_message_id: messageId,
+        p_claim_token: claimToken,
+        p_external_id: externalId,
+        p_delivery_status: "sent",
+      });
+      const linha = (Array.isArray(concluida) ? concluida[0] : concluida) as EvolutionRow | null;
+      if (completeErr || typeof linha?.id !== "string") {
+        await failBotClaim(supabase, messageId, claimToken);
+        await enqueueBotReconcile(supabase, messageId, externalId);
+        console.warn("[CHATBOT-L1] recibo nao persistido:", completeErr?.code ?? "sem retorno");
+        return;
+      }
+      console.log("[CHATBOT-L1] resposta enviada:", messageId, params.contactId);
+    } catch (err) {
+      await failBotClaim(supabase, messageId, claimToken);
+      if (providerPostAttempted) await enqueueBotReconcile(supabase, messageId, externalId);
+      console.warn("[CHATBOT-L1] envio da resposta falhou:", err instanceof Error ? err.message : String(err));
+    }
+  } catch (err) {
+    // O envio do bot NUNCA pode derrubar o processamento da mensagem recebida.
+    console.error("[CHATBOT-L1] erro inesperado no envio:", err instanceof Error ? err.message : String(err));
+  }
+}
+
+/**
+ * Portão da resposta automática. Decide se a mensagem recebida aciona a edge
+ * `chatbot-l1` e, quando aciona, entrega a resposta pelo pipeline oficial.
+ * NUNCA lança — falha aqui é registrada e o webhook segue.
+ */
+export async function triggerChatbotL1IfNeeded(
+  supabase: EvolutionDbClient,
+  params: {
+    connectionId: string;
+    contactId: string;
+    inboundMessageId: string;
+    content: string;
+    assignedTo: string | null;
+  },
+  supabaseUrl: string,
+): Promise<void> {
+  try {
+    // Conversa com atendente atribuído: o bot não responde.
+    if (params.assignedTo) return;
+    const textoRecebido = params.content.trim();
+    if (textoRecebido.length === 0) return;
+
+    const segredo = Deno.env.get("CHATBOT_L1_WEBHOOK_SECRET");
+    if (!segredo) {
+      console.warn("[CHATBOT-L1] CHATBOT_L1_WEBHOOK_SECRET ausente — gatilho nao disparado");
+      return;
+    }
+
+    // Portão 2: flag de capacidade. Ausência/erro = desligado.
+    if (!await readChatbotL1Flag(supabase)) return;
+
+    // Portão 1: a conexão precisa de um fluxo `ai_l1` ATIVO.
+    const { data: fluxo, error: fluxoErr } = await supabase.from("chatbot_flows")
+      .select("id").eq("whatsapp_connection_id", params.connectionId)
+      .eq("is_active", true).eq("trigger_type", "ai_l1").limit(1).maybeSingle();
+    if (fluxoErr) { console.warn("[CHATBOT-L1] leitura do fluxo falhou (fail-closed):", fluxoErr.message); return; }
+    if (!fluxo) return; // conexão sem fluxo ai_l1 ativo
+
+    // Idempotência: reentrega da mesma mensagem não gasta IA nem reenvia.
+    const clientMessageId = chatbotReplyClientMessageId(
+      params.contactId,
+      params.connectionId,
+      params.inboundMessageId,
+    );
+    const { data: anteriores, error: priorErr } = await supabase.from("messages")
+      .select("id").eq("contact_id", params.contactId)
+      .eq("client_message_id", clientMessageId).limit(1);
+    if (priorErr) {
+      console.warn("[CHATBOT-L1] leitura de idempotencia falhou (fail-closed):", priorErr.message);
+      return;
+    }
+    if (Array.isArray(anteriores) && anteriores.length > 0) return; // já respondida
+
+    // Chamada ASSINADA à edge (HMAC do corpo cru).
+    const corpo = JSON.stringify({
+      contactId: params.contactId,
+      message: textoRecebido,
+      connectionId: params.connectionId,
+    });
+    const resp = await fetch(chatbotL1Endpoint(supabaseUrl), {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-webhook-signature": await assinarCorpoDoWebhook(corpo, segredo),
+      },
+      body: corpo,
+    });
+    if (!resp.ok) {
+      await resp.text().catch(() => "");
+      console.warn("[CHATBOT-L1] edge recusou o gatilho:", resp.status);
+      return;
+    }
+    const payload = await resp.json().catch(() => null) as { handled?: unknown; response?: unknown } | null;
+    const resposta = typeof payload?.response === "string" ? payload.response.trim() : "";
+    // Transferência para humano / nada a responder: o atendente assume.
+    if (payload?.handled !== true || resposta.length === 0) return;
+
+    await enviarRespostaDoBot(supabase, {
+      contactId: params.contactId,
+      connectionId: params.connectionId,
+      clientMessageId,
+      texto: resposta,
+    });
+  } catch (err) {
+    console.error("[CHATBOT-L1] erro inesperado no gatilho:", err instanceof Error ? err.message : String(err));
+  }
+}
+
 // deno-lint-ignore no-explicit-any
 export async function handleOutgoingWhatsAppMessage(
   supabase: EvolutionDbClient, instance: string, data: Record<string, unknown>,
@@ -886,6 +1234,21 @@ export async function handleIncomingMessage(
         tx.assigned_to ?? null,
         Date.now(),
       );
+    }
+
+    // Chatbot IA (L1): resposta automática da conexão que tem fluxo `ai_l1`
+    // ativo e a flag `ai.capability.chatbot_l1` ligada. Só mensagem de TEXTO com
+    // conteúdo (o contrato da edge exige `message` não-vazio) e fora do opt-out
+    // (o contato acabou de pedir para sair). NUNCA lança: falha aqui não pode
+    // derrubar o processamento da mensagem recebida.
+    if (!optOutKeyword && messageType === 'text' && typeof content === 'string' && content.trim()) {
+      await triggerChatbotL1IfNeeded(supabase, {
+        connectionId: connection.id,
+        contactId: tx.contact_id,
+        inboundMessageId: tx.message_id,
+        content,
+        assignedTo: tx.assigned_to ?? null,
+      }, supabaseUrl);
     }
   }
 }
