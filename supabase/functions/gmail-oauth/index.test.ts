@@ -519,6 +519,13 @@ Deno.test("exchange-code SEM tópico: não registra watch nem quebra (watch_expi
   assertEquals(admin.upsertCalls[0].watch_expiration, null);
 });
 
+Deno.test("exchange-code com tópico vazio (env ausente): não registra watch", async () => {
+  const { admin, calls } = await exchangeCodeWithWatch({ topicName: "" });
+  assertEquals(calls.watch, []);
+  assertEquals(admin.updateCalls.some((u) => "watch_expiration" in u), false);
+  assertEquals(admin.upsertCalls[0].watch_expiration, null);
+});
+
 Deno.test("watch FALHANDO: conexão conclui com success:true e sem expiration", async () => {
   const { admin, calls, res } = await exchangeCodeWithWatch({
     topicName: TOPIC,
