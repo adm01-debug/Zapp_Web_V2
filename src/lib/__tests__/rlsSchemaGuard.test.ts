@@ -39,6 +39,33 @@ const ESTADO = resolveEffectivePolicies();
 const ESPELHO_PROIBIDO =
   /\b(?:function\s+|\b(?:const|let|var)\s+)(?:can|is|may)[A-Z]\w*\s*(?:=\s*\(|\()/;
 
+/**
+ * Varredura PROPRIA de `supabase/migrations/*.sql`: tabelas do retrato com operacao de
+ * POLICY em arquivo POSTERIOR ao retrato do manifest. E a causa fisica de cada pulo do
+ * filtro de transito — a regex aqui e local e exige `public.` (diferente da do helper)
+ * justamente para nao ser a mesma coisa conferindo a si mesma.
+ */
+function tabelasComPolicyPosteriorNoArquivo(tabelas: Set<string>): string[] {
+  const dir = join(process.cwd(), 'supabase', 'migrations');
+  const limite = snapshotDoManifest().replace(/\D/g, '').slice(0, 14);
+  const operacao = /\bPOLICY\b[\s\S]{0,140}?\bON\s+public\s*\.\s*"?([A-Za-z_]\w*)/gi;
+  const achadas = new Set<string>();
+  for (const nome of readdirSync(dir)
+    .filter((arquivo) => arquivo.endsWith('.sql'))
+    .sort()) {
+    const versao = nome.slice(0, 14);
+    if (!/^\d{14}$/.test(versao) || versao <= limite) continue;
+    const sql = readFileSync(join(dir, nome), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/--[^\n]*/g, '');
+    for (const op of sql.matchAll(operacao)) {
+      const tabela = op[1].toLowerCase();
+      if (tabelas.has(tabela)) achadas.add(`public.${tabela}`);
+    }
+  }
+  return [...achadas].sort();
+}
+
 describe('Guarda: testes de RLS leem o schema real, nao um espelho', () => {
   const rlsTests = readdirSync(TESTS_DIR).filter(
     (nome) => /^rls.*\.test\.ts$/.test(nome) && nome !== 'rlsSchemaGuard.test.ts',
@@ -132,8 +159,21 @@ describe('Guarda: o resolvedor reflete o schema real (nao e um espelho)', () => 
       }
     }
     expect(divergencias).toEqual([]);
-    // O filtro nao pode esvaziar o guarda: sem paridade comparada, nao ha prova.
-    expect(comparadas / tabelas.size).toBeGreaterThan(0.9);
+    // O filtro nao pode esvaziar o guarda — mas a regua nao pode ser o tamanho da PILHA.
+    // `comparadas / tabelas.size > 0.9` media quantos cartoes EMPILHADOS mexem em policy
+    // depois do retrato: com 16 das 159 tabelas do retrato nesse estado (medido na pilha de
+    // 13/10 em `.v2-fila`) a razao cai para 143/159 = 0,899 e o ultimo cartao empilhado vira
+    // culpado unico (t_bc20f2e1, posicao 126) sem ter afrouxado nada. O que o guarda precisa
+    // provar e que cada tabela pulada tem causa fisica: arquivo POSTERIOR ao retrato com
+    // `POLICY ... ON public.<tabela>`, reconferida por varredura propria (acima), sem reusar
+    // o helper do filtro.
+    const puladas = [...tabelas]
+      .filter((tabela) => emTransito.has(`public.${tabela}`))
+      .map((tabela) => `public.${tabela}`)
+      .sort();
+    const justificadas = tabelasComPolicyPosteriorNoArquivo(tabelas);
+    expect(puladas).toEqual(justificadas);
+    expect(comparadas).toBeGreaterThanOrEqual(tabelas.size - justificadas.length);
   });
 });
 
