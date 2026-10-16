@@ -1,66 +1,43 @@
-Especialista: worker (sql) (area-sql-banco)
+Especialista: senior (area-sql-banco)
 
-## O que mudou e por quê
-- supabase/migrations/20261011180337_sla_alert_events_and_preferences.sql (novo): cria o
-  histórico de alertas de SLA e as preferências de alerta do cartão.
-  - public.sla_alert_events: id, contact_id (FK contacts ON DELETE CASCADE), alert_type
-    CHECK ('first_response','resolution'), severity CHECK ('warning','breached'),
-    created_at, resolved_at, resolved_by (FK profiles), queue_id (FK queues). Índice único
-    PARCIAL (contact_id, alert_type, severity) WHERE resolved_at IS NULL — é ele que garante
-    o "não duplica alerta ativo". Índice em contact_id para o cascade. CHECK
-    sla_alert_events_resolved_consistente (resolved_by só existe junto de resolved_at).
-    RLS ligada; REVOKE ALL de PUBLIC/anon; só GRANT SELECT para authenticated. INSERT/UPDATE
-    não têm grant nem policy: o único caminho de escrita são as funções abaixo (SECURITY
-    DEFINER, dono da tabela). SELECT usa a mesma regra de visibilidade de contato
-    (public.is_contact_visible_to_user), que já inclui admin/supervisor (staff).
-  - public.record_sla_alert(p_contact_id, p_alert_type, p_severity) → uuid, SECURITY DEFINER,
-    SET search_path = pg_catalog, public. Idempotente: ON CONFLICT na índice parcial
-    (DO NOTHING) e devolve o id do alerta ativo já existente. Exige sessão (auth.uid());
-    permite service_role (cron). Valida tipo/severidade; só grava se o chamador vê o contato
-    ou é staff. queue_id vem do contato.
-  - public.resolve_sla_alert(p_event_id) → uuid, SECURITY DEFINER, search_path fixo. Só staff
-    (is_admin_or_supervisor). Grava resolved_at = now() e resolved_by = profile do usuário —
-    a auditoria é essa (dado de sistema, sem PII). Segunda chamada no mesmo alerta levanta
-    P0002 ("alerta_inexistente_ou_ja_resolvido"); não é meia-atualização.
-  - public.sla_alert_preferences: user_id PK (FK auth.users ON DELETE CASCADE), enabled,
-    alert_first_response, alert_resolution, severity_warning, severity_breached, updated_at.
-    RLS ligada; policies select/insert/update só na própria linha (user_id = auth.uid());
-    DELETE não é permitido. Gatilho BEFORE UPDATE reusa public.update_updated_at_column().
-- supabase/tests/sla_alert_events_and_preferences.sql (novo): suíte de contrato. Superfície
-  mínima (roles, auth schema, tabelas ambiente) e em seguida \i das migrations REAIS em ordem
-  (20251215025014 base, 20260329175853 enum, 20260909200000 helpers de visibilidade, a
-  migration nova). Executa como authenticated/anon/service_role de verdade (SET LOCAL ROLE +
-  request.jwt.claims) e termina em ROLLBACK. RED: -v sem_guarda=1 desliga RLS e as policies do
-  contrato — prova que o teste é sensível.
-- src/integrations/supabase/types.ts: adiciona as duas tabelas e as duas funções na posição
-  alfabética do gerador, no formato dele (Row/Insert/Update/Relationships). Relationships
-  usa os nomes reais das constraints conferidos no banco local
-  (sla_alert_events_contact_id_fkey / _queue_id_fkey / _resolved_by_fkey; FK para auth.users
-  fica fora, como em agent_presence). typecheck limpo.
+## Pontos da recusa
 
-## Prova
-- vermelho antes (RLS/policies desligadas): `docker exec -i zapp-sla-r psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres -v repo=/repo -v mig_dir=/repo/supabase/migrations -v sem_guarda=1 -f /repo/supabase/tests/sla_alert_events_and_preferences.sql`
-  → `ERROR: SLA FALHOU [A3 agente B (atribuido a C1 + membro de Q2) ve 3 alertas]: esperado 3, obtido 4` (EXIT_RED=3)
-- verde depois (container novo, postgres:17-alpine, repo montado read-only em /repo):
-  `docker exec -i zapp-sla-g psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres -v repo=/repo -v mig_dir=/repo/supabase/migrations -f /repo/supabase/tests/sla_alert_events_and_preferences.sql`
-  → bloco A/B/C/D: 40 NOTICE `PASS [...]`, e `=== SLA ALERT: TODAS AS ASSERTIONS PASSARAM ===` (exit 0).
-  Cobre: anon sem GRANT (42501) nos dois lados; admin/supervisor veem tudo; agente vê só
-  alertas de contatos que enxerga (atribuído + membro de fila); agente de fora vê 0;
-  authenticated sem INSERT/UPDATE/DELETE na tabela (42501 — só via função); record idempotente
-  (mesma linha na repetição, combinação nova cria 1); resolve só staff (agente 42501, anon
-  42501), grava resolved_at/resolved_by, repetição P0002; preferências só na própria linha
-  (INSERT de outro e UPDATE de outro barrados, updated_at tocado pelo gatilho, DELETE sem grant).
-- migration aplicada no banco LOCAL da tarefa: `hermes-db-migrar supabase/migrations/20261011180337_sla_alert_events_and_preferences.sql` → `APLICADA no banco LOCAL`.
-- `node scripts/db-audit/supabase-usage-guard.mjs && node scripts/db-audit/check-migration-drift.mjs` → `OK: nenhuma violacao nova` / `arquivos validos em supabase/migrations: 819`.
-- `npx tsc -b --force` → TSC_EXIT=0.
+Ponto 1: a função aceitava qualquer `p_scope` curto e gravava esse texto arbitrário em `details`/`dedupe_key`.
+- O que mudei: `supabase/migrations/20261011142742_inbox_scope_permissions.sql` agora normaliza o escopo e só aceita `mine`, `department` ou `all`; qualquer valor nulo, vazio, fora da lista ou longo vira `unknown`. O comentário da função também documenta essa lista fechada.
+- Teste que prova: `supabase/tests/inbox_scope_permissions.sql` ampliou o T7 para chamar a função real com `NULL`, vazio, `todos`, `foo`, texto curto fora da lista e texto longo, e verifica que fica só uma linha `unknown` sem gravar escopo arbitrário.
+- Vermelho antes: `zapp-db-local psql . v2-2610111530259e -v ON_ERROR_STOP=1 < supabase/tests/inbox_scope_permissions.sql` -> `ERROR:  T7 FALHOU: escopo arbitrario foi gravado (esperava so all, department e unknown; achei 6 linhas)`.
+- Verde depois: `zapp-db-local psql . v2-2610111530259e -v ON_ERROR_STOP=1 < supabase/tests/inbox_scope_permissions.sql` -> `NOTICE:  inbox_scope_permissions: suite OK (T1 catalogo, T2 papeis, T3 ACL, T4 gravacao, T5 dedupe, T6 escopo, T7 invalido, T8 anon, T9 sem identidade, T10 escrita direta, T12 seed idempotente, T13 dedupe por hora, T11 rollback)`.
 
-## O que NÃO fiz e por quê
-- O aviso "código alterado sem teste" aponta src/integrations/supabase/types.ts como código: é
-  arquivo GERADO que acompanha a migration, e o teste novo do MESMO commit é
-  supabase/tests/sla_alert_events_and_preferences.sql (prova vermelho→verde acima). O detector
-  não reconhece suite .sql de banco — é alarme falso, não falta de teste.
-- Não toquei script de CI/workflow nem ALLOWLIST: o teste é .sql em supabase/tests/ (fora do
-  check-test-inventory, que continua vermelho só pelos 2 órfãos pré-existentes
-  department-invite e team-chat-media — não são meus).
-- Não escrevi em produção nem em ledger remoto (modo V2 local; DESTINO_URL ausente).
-- Correção = migration nova (nada existente foi editado); rollback executável no topo.
+## O que mantive do trabalho anterior
+
+- Mantive a migration aditiva que cria as permissões `inbox.view_department` e `inbox.view_all`, atribui a `admin` e `supervisor`, cria a função `public.log_unauthorized_inbox_scope(text)` com `SECURITY DEFINER`, revoga `PUBLIC`/`anon`/`service_role` e libera só `authenticated`.
+- Mantive `src/integrations/supabase/types.ts` com a assinatura da RPC nova.
+- Mantive e ampliei o teste SQL real em vez de mockar texto da migration; ele executa função, ACL, RLS de escrita direta, idempotência, dedupe por usuário+escopo+hora e o rollback do cabeçalho.
+
+## Rollback
+
+O `-- Rollback:` da migration continua executável e o T11 do teste executa as três linhas do cabeçalho: `drop function`, delete de `role_permissions` e delete de `permissions`. O teste confirma que a função some e que as permissões semeadas são removidas, tudo dentro de transação com `ROLLBACK` final.
+
+## Arquivos alterados
+
+`git diff --name-only dia/2026-10-11...HEAD`:
+
+.tmp/relato.md
+src/integrations/supabase/types.ts
+supabase/migrations/20261011142742_inbox_scope_permissions.sql
+supabase/tests/inbox_scope_permissions.sql
+
+## Verificações executadas
+
+- `hermes-db-migrar supabase/migrations/20261011142742_inbox_scope_permissions.sql` -> aplicou no banco LOCAL da tarefa antes da correção (`BEGIN`, `INSERT`, `CREATE FUNCTION`, `REVOKE`, `GRANT`, `COMMENT`, `COMMIT`).
+- `zapp-db-local psql . v2-2610111530259e -v ON_ERROR_STOP=1 < supabase/tests/inbox_scope_permissions.sql` -> vermelho antes da correção com `T7 FALHOU: escopo arbitrario foi gravado ... achei 6 linhas`.
+- `zapp-db-local psql . v2-2610111530259e -v ON_ERROR_STOP=1 < supabase/migrations/20261011142742_inbox_scope_permissions.sql` -> reaplicou a SQL final localmente (`CREATE FUNCTION`, `REVOKE`, `GRANT`, `COMMENT`).
+- `zapp-db-local psql . v2-2610111530259e -v ON_ERROR_STOP=1 < supabase/tests/inbox_scope_permissions.sql` -> verde depois, com `suite OK` incluindo T7 e T11 rollback.
+- `git log --oneline dia/2026-10-11..HEAD` -> há um único commit com o título `fix(banco): valida escopo da auditoria da inbox`.
+- `git diff --stat dia/2026-10-11...HEAD` -> `.tmp/relato.md`, `src/integrations/supabase/types.ts`, `supabase/migrations/20261011142742_inbox_scope_permissions.sql` e `supabase/tests/inbox_scope_permissions.sql`.
+- `git diff dia/2026-10-11...HEAD | wc -c` -> resultado medido abaixo do limite de 90 mil caracteres.
+
+## O que NÃO fiz
+
+- Não mexi em workflow, manifesto, CI, tela, hook ou dados fora das tabelas de catálogo de permissões previstas pelo cartão.
+- Não acessei banco remoto nem produção; todas as execuções foram no banco local da tarefa.
