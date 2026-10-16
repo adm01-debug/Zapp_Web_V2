@@ -57,7 +57,8 @@ const edgesReais = fs.readdirSync(dirFuncoes, { withFileTypes: true })
   .filter((n) => fs.existsSync(path.join(dirFuncoes, n, 'index.ts')))
   .sort();
 
-const invoca = (n) => new RegExp(`invoke\\(\\s*['"\`]${n}['"\`]`);
+const invoca = (n) => new RegExp(`invoke(Edge)?\\(\\s*['"\`]${n}['"\`]`);
+ // Camada padrão PE-43 (`invokeEdge` de `src/lib/supabaseHelpers`) também é chamador de front (grupo A).
 const rota = (n) => new RegExp(`/functions/v1/${n}(?![\\w-])`);
 const CRON = /cron\.schedule|net\.http_post|pg_cron|supabase_functions\.http_request|http_request_queue/i;
 

@@ -23,7 +23,7 @@ Ou seja: mudou o código, o teste vermelho obriga a atualizar este arquivo.
 
 | Grupo | Significado |
 |---|---|
-| A | front (`invoke`/rota em `src/`) |
+| A | front (`invoke`/`invokeEdge`/rota em `src/`) |
 | B | outra edge (`supabase/functions/`) |
 | C | agendador `pg_cron`/`pg_net` (migration) |
 | D | entrada externa (declarada em `supabase/config.toml`) |
@@ -69,8 +69,13 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `classify-emoji` | A | `src/hooks/integrations/useCustomEmojis.ts:134` |
 | `classify-sticker` | A | `src/hooks/sticker-picker/useStickerPicker.ts:148` · `src/components/inbox/chat/MessageBubble.tsx:325` · `supabase/functions/_shared/evolution-webhook-messages.ts:960` |
 | `cleanup-rate-limit-logs` | E | — sem chamador no repositório — |
+<<<<<<< ours
 | `connection-health-check` | A | `src/hooks/system/useDiagnosticsData.ts:244` · `src/components/monitoring/hooks/useMonitoringActions.ts:17` · `src/components/diagnostics/ConnectionHealthPanel.tsx:78` · `src/components/connections/ConnectionsView.tsx:100` · `supabase/migrations/20260924100800_schedule_connection_health_check_cron.sql:16` · `supabase/migrations/20260930250000_reschedule_cron_secrets_l5.sql:56` · `supabase/migrations/20260930390000_endurece_l5_contrato_e_jobs.sql:87` · `supabase/migrations/20260930430000_cron_sem_dml_direto_v2.sql:116` · `supabase/config.toml:23` |
 | `create-user` | E | — sem chamador no repositório — |
+=======
+| `connection-health-check` | A | `src/hooks/system/useDiagnosticsData.ts:241` · `src/components/monitoring/hooks/useMonitoringActions.ts:17` · `src/components/diagnostics/ConnectionHealthPanel.tsx:78` · `supabase/migrations/20260924100800_schedule_connection_health_check_cron.sql:16` · `supabase/migrations/20260930250000_reschedule_cron_secrets_l5.sql:56` · `supabase/migrations/20260930390000_endurece_l5_contrato_e_jobs.sql:87` · `supabase/migrations/20260930430000_cron_sem_dml_direto_v2.sql:116` · `supabase/config.toml:23` |
+| `create-user` | A | `src/components/admin/useAdminData.ts:334` · `src/components/admin/useAdminData.ts:341` |
+>>>>>>> theirs
 | `crm-integration` | A | `src/lib/crmIntegration.ts:20` · `supabase/config.toml:55` |
 | `csp-report` | D | `supabase/config.toml:58` |
 | `detect-new-device` | A | `src/lib/avisoDispositivo.ts:130` |
