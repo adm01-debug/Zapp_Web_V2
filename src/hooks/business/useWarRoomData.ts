@@ -75,14 +75,6 @@ interface WarRoomAgentBase extends Omit<WarRoomAgent, 'status'> {
 }
 
 /**
- * Teto de linhas por leitura do War Room. Os RPCs agregam no banco (uma linha por
- * agente/fila), então estourar este teto significa payload fora do desenho da central —
- * e somar parcial em silêncio voltaria ao defeito original (subtotal lido como total).
- * Por isso o excesso vira ERRO (a tela mostra falha), nunca `slice` silencioso.
- */
-export const WARROOM_MAX_ROWS = 500;
-
-/**
  * War Room.
  *
  * R2-MOD-030: cadastro habilitado (`profiles.is_active`) **não** é presença; contato atribuído
@@ -110,12 +102,6 @@ export function useWarRoomData({ refetchInterval = 30000 }: WarRoomDataOptions =
       if (activeProfiles.error) throw activeProfiles.error;
 
       const rows = (today.data ?? []) as unknown as WarRoomAgentRpcRow[];
-      if (rows.length > WARROOM_MAX_ROWS) {
-        throw new Error(
-          `warroom_agent_today devolveu ${rows.length} linhas (teto ${WARROOM_MAX_ROWS}): ` +
-          'total parcial não pode virar total da central.',
-        );
-      }
       const userIdByProfile = new Map(
         (activeProfiles.data ?? []).map(p => [p.id, p.user_id ?? null] as const),
       );
@@ -159,12 +145,6 @@ export function useWarRoomData({ refetchInterval = 30000 }: WarRoomDataOptions =
       if (error) throw error;
 
       const rows = (data ?? []) as unknown as WarRoomQueueRpcRow[];
-      if (rows.length > WARROOM_MAX_ROWS) {
-        throw new Error(
-          `warroom_queue_stats devolveu ${rows.length} linhas (teto ${WARROOM_MAX_ROWS}): ` +
-          'total parcial não pode virar total da central.',
-        );
-      }
       return rows.map((q): WarRoomQueue => ({
         id: q.id,
         name: q.name,
