@@ -285,7 +285,15 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
   );
 
   useEffect(() => {
-    const h = (e: KeyboardEvent) => { if ((e.ctrlKey || e.metaKey) && e.key === 'f') { e.preventDefault(); handleSetActiveTool('chatSearch'); } };
+    const h = (e: KeyboardEvent) => {
+      // `toLowerCase()`: o mesmo atalho vale com Caps Lock (e.key devolveria 'F').
+      if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'f') return;
+      // Overlay aberto (diálogo/menu Radix) é dono do teclado: a busca do chat não
+      // pode abrir por baixo dele (mesmo guarda de `useKeyboardNavigation`).
+      if (document.querySelector('[role="dialog"][data-state="open"], [role="alertdialog"][data-state="open"], [role="menu"][data-state="open"]')) return;
+      e.preventDefault();
+      handleSetActiveTool('chatSearch');
+    };
     window.addEventListener('keydown', h);
     return () => window.removeEventListener('keydown', h);
   }, [handleSetActiveTool]);

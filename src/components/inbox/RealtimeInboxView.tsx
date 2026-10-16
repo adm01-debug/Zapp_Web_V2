@@ -90,6 +90,25 @@ function focarQuickAdd(tentativas = 20): void {
   if (tentativas > 0) window.requestAnimationFrame(() => focarQuickAdd(tentativas - 1));
 }
 
+/**
+ * Diálogo ou menu flutuante aberto (padrão Radix usado no projeto).
+ * Enquanto houver overlay, quem é dono do teclado é o overlay — os atalhos do
+ * lote não podem agir por baixo dele (mesma checagem de `useKeyboardNavigation`).
+ */
+function overlayAberto(): boolean {
+  return !!document.querySelector(
+    '[role="dialog"][data-state="open"], [role="alertdialog"][data-state="open"], [role="menu"][data-state="open"]',
+  );
+}
+
+/** Campo de edição de texto: o navegador é dono das teclas (Ctrl+A, Delete, r…). */
+function focoEmCampoDeTexto(): boolean {
+  const active = document.activeElement as HTMLElement | null;
+  if (!active) return false;
+  return active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable ||
+    active.getAttribute('contenteditable') === 'true';
+}
+
 export function RealtimeInboxView() {
   const isMobile = useIsMobile();
   const inbox = useRealtimeInbox();
@@ -187,13 +206,20 @@ export function RealtimeInboxView() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      const active = document.activeElement;
-      const isInput = active?.tagName === 'INPUT' || active?.tagName === 'TEXTAREA' || active?.getAttribute('contenteditable') === 'true';
-      if (isInput) return;
-      if ((e.ctrlKey || e.metaKey) && e.key === 'a') { e.preventDefault(); bulkActions.selectAll(); }
+      // Overlay aberto (diálogo/menu Radix): o teclado é dele.
+      if (overlayAberto()) return;
+      // Campo de texto: o navegador é dono (Ctrl+A seleciona o texto, Delete apaga…).
+      if (focoEmCampoDeTexto()) return;
+      const key = e.key.toLowerCase();
+      // Ctrl+A só seleciona o lote DENTRO do modo de seleção (iniciado pela lista);
+      // fora dele, Ctrl+A continua sendo a seleção de texto do navegador.
+      if ((e.ctrlKey || e.metaKey) && key === 'a') {
+        if (!bulkActions.selectionMode) return;
+        e.preventDefault(); bulkActions.selectAll(); return;
+      }
       if ((e.key === 'Delete' || e.key === 'Backspace') && bulkActions.selectionMode && bulkActions.selectedIds.size > 0) { e.preventDefault(); bulkActions.bulkArchive(); }
       if (e.key === 'Escape' && bulkActions.selectionMode) { e.preventDefault(); bulkActions.clearSelection(); }
-      if (e.key === 'r' && bulkActions.selectionMode && bulkActions.selectedIds.size > 0 && !e.ctrlKey && !e.metaKey) { e.preventDefault(); bulkActions.bulkMarkAsRead(); }
+      if (key === 'r' && bulkActions.selectionMode && bulkActions.selectedIds.size > 0 && !e.ctrlKey && !e.metaKey) { e.preventDefault(); bulkActions.bulkMarkAsRead(); }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
