@@ -139,6 +139,20 @@ prova o comportamento; `src/integrations/supabase/types.ts` e gerado a partir do
 primeira passada do fechar avisa "codigo alterado sem nenhum teste novo/alterado neste commit" — o
 aviso nao procede aqui, e a prova esta no log do contrato citado acima.
 
+Juiz barato (15/10/2026, duas passadas) — respostas:
+- "mexeu em arquivo fora da lista ARQUIVOS QUE PODE TOCAR (.github/workflows/db-guard.yml e o teste de
+  banco)": nao procede como escopo novo — a propria recusa deste cartao manda os dois: o Ponto 1 pede o
+  bloco `env:` no passo "Simular assumir e devolver conversa por fila" do db-guard.yml e o Ponto 3 pede a
+  troca do cartao citado no cabecalho de scripts/db-audit/assume-return-conversation.test.sh.
+- "CONFERENCIA: o UPDATE em `contacts` dispara o gatilho BEFORE UPDATE em TODAS as linhas tocadas": nao
+  procede. A RPC atualiza UMA linha por chave (`where id = p_contact_id`), nao faz UPDATE em massa, e o
+  contrato prova isso contra o banco real: `[OK] DEPOIS: updated_at avanca so na linha tocada (1 linha por
+  PK) = true|true` (a assercao compara a linha alvo com uma linha vizinha e exige que so a linha por chave
+  mude), repetida na reaplicacao. Nenhum gatilho foi desligado e nenhuma coluna foi mascarada.
+- "codigo alterado sem nenhum teste novo/alterado neste commit" (primeira passada): nao procede — o teste
+  deste cartao e o contrato de banco em scripts/db-audit/, que o detector do fechar nao conta por viver
+  fora de src/tests (detalhe na nota acima).
+
 O que NAO fiz, de proposito:
 - Nao criei teste novo de CI para a variavel de imagem: a recusa mandou nao mudar mais nada e a prova
   acima (`prova-refazer4.py`, vermelho/verde) cobre o ponto.
