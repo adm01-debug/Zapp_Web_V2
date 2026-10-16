@@ -42,24 +42,75 @@ export function useSipConnection(onIncomingInvitation?: (invitation: Invitation)
   const onIncomingInvitationRef = useRef(onIncomingInvitation);
   useEffect(() => { onIncomingInvitationRef.current = onIncomingInvitation; }, [onIncomingInvitation]);
 
-  // T16: depois do unmount ninguem mais conecta. Sem isto o retry agendado
-  // criava um UserAgent orfao — registrando a linha de um painel que nao existe
-  // mais, e o servidor so aceita um ramal por vez.
-  const unmountedRef = useRef(false);
-  useEffect(() => () => {
-    unmountedRef.current = true;
-    if (attemptRef.current) attemptRef.current.cancelled = true;
+  const clearReconnectTimer = useCallback(() => {
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
     }
   }, []);
 
-  const clearReconnectTimer = useCallback(() => {
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current);
-      reconnectTimeoutRef.current = null;
+  // T21: retira a sessão das refs de forma SÍNCRONA e devolve quem saiu. É o que
+  // torna o encerramento idempotente e evita que um `connect()` concorrente
+  // perca o UA dele (comparação por identidade). Aba SEGUIDORA nunca registrou
+  // (portão T20 no topo do `connect`), então as refs dela estão nulas e nada da
+  // linha de outra aba é derrubado.
+  const detachSession = useCallback(() => {
+    const registerer = registererRef.current;
+    const ua = uaRef.current;
+    if (registererRef.current === registerer) registererRef.current = null;
+    if (uaRef.current === ua) uaRef.current = null;
+    return { registerer, ua };
+  }, []);
+
+  // T21: invalida a tentativa em voo, limpa o retry agendado e desanexa a
+  // sessão publicada — a base comum do `disconnect`, do unmount e do `pagehide`.
+  const stopAttemptsAndTimers = useCallback(() => {
+    clearReconnectTimer();
+    if (attemptRef.current) {
+      attemptRef.current.cancelled = true;
+      attemptRef.current = null;
     }
+    return detachSession();
+  }, [clearReconnectTimer, detachSession]);
+
+  // T21: encerramento de melhor esforço, SEM `await` bloqueante — usado no
+  // unmount e no `pagehide`/fechamento da aba, onde o navegador não espera
+  // promessas. Solta o REGISTER e para o UserAgent em segundo plano; rodar de
+  // novo é inofensivo (as refs já estão nulas). Só mexe no UA/Registerer que
+  // ESTA aba criou, por isso não derruba a linha de outra aba.
+  const teardownAndForget = useCallback(() => {
+    const { registerer, ua } = stopAttemptsAndTimers();
+    if (registerer) {
+      registerer.unregister().catch((err: unknown) => log.error('SIP unregister error:', err));
+    }
+    if (ua) {
+      ua.transport.onDisconnect = () => {};
+      ua.stop().catch((err: unknown) => log.error('SIP UserAgent stop error:', err));
+    }
+  }, [stopAttemptsAndTimers]);
+
+  // Publicado num ref para o cleanup de unmount e o `pagehide` usarem a versão
+  // viva sem dependerem da identidade do callback (efeitos com deps `[]`).
+  const teardownRef = useRef<() => void>(() => {});
+  useEffect(() => { teardownRef.current = teardownAndForget; }, [teardownAndForget]);
+
+  // T16: depois do unmount ninguem mais conecta. Sem isto o retry agendado
+  // criava um UserAgent orfao — registrando a linha de um painel que nao existe
+  // mais, e o servidor so aceita um ramal por vez.
+  // T21: o unmount também solta o ramal (unregister + stop), para nao deixar a
+  // linha presa no servidor e o proximo login tomar 403 "linha em uso".
+  const unmountedRef = useRef(false);
+  useEffect(() => () => {
+    unmountedRef.current = true;
+    teardownRef.current();
+  }, []);
+
+  // T21: ao fechar ou sair da aba (`pagehide`) o navegador descarta a página sem
+  // rodar o cleanup do React: sem este listener o ramal continuava registrado.
+  useEffect(() => {
+    const onPageHide = () => { teardownRef.current(); };
+    window.addEventListener('pagehide', onPageHide);
+    return () => window.removeEventListener('pagehide', onPageHide);
   }, []);
 
   const connect = useCallback(async (config: SipConfig) => {
@@ -133,10 +184,18 @@ export function useSipConnection(onIncomingInvitation?: (invitation: Invitation)
           reconnectTimeoutRef.current = setTimeout(() => {
             reconnectTimeoutRef.current = null;
             if (unmountedRef.current) return;
-            // O UA anterior morreu junto com o transporte: limpar os refs e o
-            // que permite o retry passar pela guarda de `connect`.
-            uaRef.current = null;
-            registererRef.current = null;
+            // T21: o UA que morreu junto com o transporte nunca era parado — ele
+            // seguia registrando a linha no servidor e o REGISTER do retry tomava
+            // 403. Liberar os refs é o que deixa o retry passar pela guarda de
+            // `connect`; parar o UA antigo em segundo plano libera a linha.
+            const dead = stopAttemptsAndTimers();
+            if (dead.registerer) {
+              dead.registerer.unregister().catch((err: unknown) => log.error('SIP unregister error (retry):', err));
+            }
+            if (dead.ua) {
+              dead.ua.transport.onDisconnect = () => {};
+              dead.ua.stop().catch((err: unknown) => log.error('SIP UserAgent stop error (retry):', err));
+            }
             // eslint-disable-next-line react-hooks/immutability -- retry recursivo: só executa depois que connect() já terminou de ser atribuído.
             connect(config);
           }, delay);
@@ -209,7 +268,7 @@ export function useSipConnection(onIncomingInvitation?: (invitation: Invitation)
     } finally {
       if (attemptRef.current === attempt) attemptRef.current = null;
     }
-  }, [clearReconnectTimer]);
+  }, [clearReconnectTimer, stopAttemptsAndTimers]);
 
   const disconnect = useCallback(async () => {
     // R2-CALL-004: a sessão encerrada sai das refs AQUI — inclusive quando o
@@ -217,15 +276,10 @@ export function useSipConnection(onIncomingInvitation?: (invitation: Invitation)
     // Sem isso `uaRef`/`registererRef` ficavam apontando para um UserAgent
     // parado, e o próximo `connect` morria na guarda `if (uaRef.current) return`:
     // a sequência desconectar -> reconectar terminava sem nova conexão.
+    // T21: `stopAttemptsAndTimers` desanexa as refs de forma síncrona (mesma base
+    // do unmount/pagehide), então só a sessão desta aba é encerrada.
     reconnectAttemptsRef.current = MAX_RECONNECT_ATTEMPTS;
-    clearReconnectTimer();
-    // Invalida a tentativa em voo e já libera a guarda para um connect() novo.
-    if (attemptRef.current) {
-      attemptRef.current.cancelled = true;
-      attemptRef.current = null;
-    }
-    const registerer = registererRef.current;
-    const ua = uaRef.current;
+    const { registerer, ua } = stopAttemptsAndTimers();
     try {
       if (registerer) {
         try {
@@ -243,14 +297,10 @@ export function useSipConnection(onIncomingInvitation?: (invitation: Invitation)
         }
       }
     } finally {
-      // Só o que ainda é a sessão encerrada sai (um connect que tenha corrido
-      // durante o teardown não perde o UA dele).
-      if (uaRef.current === ua) uaRef.current = null;
-      if (registererRef.current === registerer) registererRef.current = null;
       setSipStatus('idle');
       reconnectAttemptsRef.current = 0;
     }
-  }, [clearReconnectTimer]);
+  }, [stopAttemptsAndTimers]);
 
   // T20: `setSipReason` sai daqui para o consumidor (useSipClient) marcar o
   // motivo que a ELEIÇÃO provoca (virou seguidora) — o hook não decide papel,
