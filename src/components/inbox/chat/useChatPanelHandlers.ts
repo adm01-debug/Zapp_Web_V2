@@ -526,13 +526,17 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
       case 'star': (isFavorite(contactId) ? unfavoriteContact : favoriteContact)(contactId); break;
       case 'archive': {
         void (async () => {
-          // ADR-005: arquivar conversa é o estado de FSM em `conversation_status` — o MESMO que
-          // o arquivamento em massa usa. `assigned_to = null` devolvia à fila e não arquivava,
-          // então o aviso "Conversa Arquivada" era falso.
-          const { error } = await supabase
-            .from('contacts')
-            .update({ conversation_status: 'archived', updated_at: new Date().toISOString() })
-            .eq('id', contactId);
+          // ADR-005: arquivar conversa é o estado de FSM em `conversation_status` — o MESMO
+          // caminho do arquivamento individual e do em massa, que passam SEMPRE pela RPC
+          // set_conversation_status (SECURITY DEFINER: valida papel/transição e registra o
+          // evento). `assigned_to = null` devolvia à fila e não arquivava, então o aviso
+          // "Conversa Arquivada" era falso; escrita direta em `contacts` era a terceira
+          // implementação paralela da transição.
+          const { error } = await supabase.rpc('set_conversation_status', {
+            p_contact_id: contactId,
+            p_next: 'archived',
+            p_reason: 'arquivada_no_chat',
+          });
           if (error) {
             log.error('Failed to archive contact:', error);
             toast({ title: 'Erro ao arquivar', description: 'Não foi possível arquivar a conversa.', variant: 'destructive' });

@@ -11,7 +11,10 @@
  *     o HEAD só olhava `error` e anunciava êxito.
  *  4. CÓPIA: `writeText` rejeitado (permissão/contexto) mas o HEAD dizia "Copiado!".
  *  5. Comandos de barra sem argumento (`/snooze`, `/priority`) terminavam em silêncio.
- *  6. `/archive` gravava `assigned_to = null` (devolvia à fila) e dizia "Conversa Arquivada".
+ *  6. `/archive` gravava `assigned_to = null` (devolvia à fila) e dizia "Conversa Arquivada";
+ *     depois passou a escrever `conversation_status = 'archived'` direto em `contacts`, uma
+ *     terceira implementação paralela da transição. Agora transiciona pela RPC
+ *     `set_conversation_status` (ADR-005), como o arquivamento individual e o em massa.
  */
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -22,6 +25,9 @@ const db = vi.hoisted(() => ({
   snoozeConversation: vi.fn(),
   favoriteContact: vi.fn(),
   unfavoriteContact: vi.fn(),
+  // ADR-005: /archive transiciona pela RPC set_conversation_status, como o arquivamento
+  // individual e o em massa — não há mais escrita direta em `contacts` nesse caminho.
+  rpc: vi.fn(async () => ({ error: null as unknown })),
   updates: [] as {
     table: string;
     payload: Record<string, unknown>;
@@ -33,14 +39,14 @@ const db = vi.hoisted(() => ({
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
+    rpc: db.rpc,
     from: (table: string) => ({
       update: (payload: Record<string, unknown>) => ({
         eq: (column: string, value: unknown) => {
           db.updates.push({ table, payload, filter: { column, value } });
           const result = table === 'contacts' ? db.contactsResult : db.messagesResult;
           return {
-            // `.select('id')` devolve as linhas afetadas; o objeto também é "awaitável"
-            // porque o ramo /archive aguarda o retorno de `.eq(...)` direto.
+            // `.select('id')` devolve as linhas afetadas; o objeto também é "awaitável".
             select: () => Promise.resolve(result),
             then: (res: (v: unknown) => unknown) => Promise.resolve(result).then(res),
           };
@@ -284,7 +290,7 @@ describe('comandos de barra — nunca terminam em silêncio', () => {
     expect(informativos[0].variant).toBeUndefined();
   });
 
-  it('/archive grava o estado de FSM (conversation_status), não assigned_to', async () => {
+  it('/archive arquiva pela RPC set_conversation_status (archived), sem escrita direta em contacts', async () => {
     const utils = montar();
 
     await act(async () => {
@@ -292,9 +298,26 @@ describe('comandos de barra — nunca terminam em silêncio', () => {
       await Promise.resolve();
     });
 
-    const archive = db.updates.find((u) => u.table === 'contacts');
-    expect(archive?.payload).toMatchObject({ conversation_status: 'archived' });
-    expect(archive?.payload.assigned_to).toBeUndefined();
+    expect(db.rpc).toHaveBeenCalledWith('set_conversation_status', {
+      p_contact_id: 'contact-1',
+      p_next: 'archived',
+      p_reason: 'arquivada_no_chat',
+    });
+    // A transição passa por um único caminho (ADR-005): nada de UPDATE paralelo em contacts.
+    expect(db.updates.filter((u) => u.table === 'contacts')).toHaveLength(0);
     expect(toasts().some((t) => (t.title ?? '').includes('Arquivada'))).toBe(true);
+  });
+
+  it('/archive em erro na RPC avisa e NÃO anuncia "Conversa Arquivada"', async () => {
+    db.rpc.mockResolvedValueOnce({ error: { message: 'sem permissao' } });
+    const utils = montar();
+
+    await act(async () => {
+      utils.result.current.handleSlashCommand({ id: 'archive', label: 'Arquivar', description: '' } as never);
+      await Promise.resolve();
+    });
+
+    expect(toasts().some((t) => (t.title ?? '').includes('Arquivada'))).toBe(false);
+    expect(toastsDestrutivos().length).toBeGreaterThan(0);
   });
 });
