@@ -22,6 +22,7 @@ import { useWhisperMessagesMutation, type MotivoRecusaSussurro } from '@/hooks/c
 import { useMyWorkItems, tomorrowAtNine } from '@/hooks/tasks/useMyWorkItems';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { CHAR_LIMIT } from './useChatInputLogic';
+import { sendQueue } from '@/hooks/chat/sendQueue';
 
 /** Tipos de mensagem do chat com representação textual direta no transporte. */
 const TEXTUAL_FORWARD_TYPES: ReadonlySet<Message['type']> = new Set(['text', 'interactive']);
@@ -334,11 +335,21 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
     const originalText = corpoDoEnvio;
     const messageContent = payloadDoEnvio;
     const wasReply = replyToMessageRef.current;
-    setIsSending(true); setInputValue(''); setReplyToMessage(null); handleTypingStop();
+    setInputValue(''); setReplyToMessage(null); handleTypingStop();
     if (wasReply) log.debug('Sending reply to:', wasReply.id);
 
+    // PK-21: fila SERIAL por conversa. O compositor NÃO espera o despacho no Edge
+    // (nem os refetches que vinham depois): a mensagem entra na fila da conversa e
+    // o editor já aceita a próxima digitação. A ordem é preservada — a segunda
+    // mensagem só sai depois que a primeira terminou — e uma falha de enqueue
+    // devolve o rascunho em vez de perdê-lo.
     try {
-      await onSendMessage(messageContent, wasReply?.id ?? null);
+      // `enqueue` pode rejeitar de forma SÍNCRONA (o transporte aceita `void`): a
+      // chamada vive DENTRO do try para que o rascunho volte em vez de se perder.
+      await sendQueue.enqueue(conversationId, () =>
+        onSendMessage(messageContent, wasReply?.id ?? null)
+      );
+      // A animação/som de "enviado" é do ACEITE do transporte, nunca da digitação.
       undoToast({
         message: 'Mensagem enviada', icon: '📨', delay: 3000,
         onUndo: () => {
@@ -349,10 +360,14 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
       });
     } catch (err) {
       log.error('Failed to send message:', err);
-      setInputValue(originalText);
+      // O rascunho volta ao editor SEM perder nada: sem texto novo, volta o que
+      // falhou; com texto novo digitado durante o voo, o que falhou volta ACIMA do
+      // texto novo — nada some e o toast "Tente novamente" tem o que reenviar.
+      setInputValue((atual) => (atual === '' ? originalText : `${originalText}\n${atual}`));
+      if (wasReply) setReplyToMessage((atual) => atual ?? wasReply);
       toast({ title: 'Erro ao enviar', description: 'Tente novamente.', variant: 'destructive' });
-    } finally { setIsSending(false); }
-  }, [contactPhone, instanceName, editMessageApi, applySignature, onSendMessage, handleTypingStop, editingMessageRef, inputValueRef, isSendingRef, replyToMessageRef, isWhisperRef, enviarSussurroDoCompositor, recusarAcimaDoLimite]);
+    }
+  }, [conversationId, contactPhone, instanceName, editMessageApi, applySignature, onSendMessage, handleTypingStop, editingMessageRef, inputValueRef, isSendingRef, replyToMessageRef, isWhisperRef, enviarSussurroDoCompositor, recusarAcimaDoLimite]);
 
   const handleReplyToMessage = useCallback((message: Message) => { setReplyToMessage(message); inputRef.current?.focus(); }, []);
   // R2-INB-014: `writeText` pode rejeitar (permissão negada / contexto inseguro). Sem

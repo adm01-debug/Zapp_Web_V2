@@ -24,12 +24,6 @@
 import { describe, it } from 'vitest';
 
 describe('paridade-06 · envio (provas pendentes)', () => {
-  it.todo(
-    'PK-21: Enter repetido enfileira em série por contato, preserva a ordem e libera o compositor logo após o enqueue local',
-  );
-  it.todo('PK-21: falha de enqueue preserva o rascunho e não toca a animação/som de enviado');
-  it.todo('PK-21: o caminho de envio não refaz o fetch da lista de conversas');
-
   it.todo('PK-22: contato existente com conexão A e outra B conectada sai por A');
   it.todo('PK-22: conexão do contato desconectada → aviso, sem troca silenciosa de número');
   it.todo('PK-22: contato novo usa a conexão escolhida e o diálogo mostra de qual número sai');

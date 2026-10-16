@@ -249,6 +249,13 @@ export function useRealtimeInbox() {
   const handleSendMessage = useCallback(async (content: string, replyToId?: string | null) => {
     if (!selectedContactId) return;
     const currentId = selectedContactId;
+    // PK-21: o caminho de envio NÃO refaz o fetch da lista de conversas nem o da
+    // conversa aberta. Os dois já são atualizados pelo Realtime — o INSERT da
+    // mensagem enfileirada é tratado por `useRealtimeMessages` (lista) e por
+    // `useMessages` (conversa aberta) na inscrição `global-messages-realtime` —, e
+    // o par de refetches dentro do envio era o que segurava o compositor depois do
+    // despacho, obrigando o agente a esperar uma ida ao servidor que o Realtime já
+    // cobria.
     try {
       await sendMessage(currentId, content, 'text', undefined, undefined, replyToId);
     } catch (err) {
@@ -257,15 +264,7 @@ export function useRealtimeInbox() {
       // chegar até ele para que não limpe o editor nem anuncie sucesso falso.
       throw err;
     }
-
-    try {
-      await refreshActiveConversation();
-    } catch (err) {
-      // O transporte já confirmou o envio. Falha de refresh não deve sugerir
-      // ao agente que reenvie a mesma mensagem e gere duplicidade.
-      log.warn('Message sent, but conversation refresh failed:', err);
-    }
-  }, [selectedContactId, sendMessage, refreshActiveConversation]);
+  }, [selectedContactId, sendMessage]);
 
    // R2-INB-022 (mantido) + R2-INB-058: o elo de baixo da cadeia do áudio precisa SINALIZAR a
    // falha ao chamador. `handleSendAudio` REJEITA quando não há contato selecionado e quando
