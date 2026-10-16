@@ -306,12 +306,14 @@ describe('TalkXWizardReview — linhas com dado real (X134)', () => {
     expect(screen.getByText('Gerar mais vendas e conversões · Turma de outubro')).toBeInTheDocument();
   });
 
-  it('Segmentos selecionados mostra os nomes e "N segmentos | X contatos"', async () => {
+  it('Segmentos selecionados mostra os nomes, a união e a contagem por segmento', async () => {
     render(
       <TalkXWizardReview
         ed={reviewEd({
           audienceSource: 'segment',
-          selectedSegment: { id: 'seg_1', name: 'VIP', estimated_count: 1250 },
+          selectedSegments: [{ id: 'seg_1', name: 'VIP', estimated_count: 1250 }],
+          segmentEstimates: { seg_1: 1250 },
+          audienceTotal: 1200,
           eligibleCount: 1200,
         })}
         campaign={draft as never}
@@ -321,7 +323,8 @@ describe('TalkXWizardReview — linhas com dado real (X134)', () => {
 
     expect(screen.getByText('Segmentos selecionados')).toBeInTheDocument();
     expect(screen.getByText('VIP')).toBeInTheDocument();
-    expect(screen.getByText('1 segmento | 1.200 contatos')).toBeInTheDocument();
+    expect(screen.getByText(/1\.200 contatos na união/)).toBeInTheDocument();
+    expect(screen.getByText(/VIP \(1\.250\)/)).toBeInTheDocument();
   });
 
   it('Agendamento mostra o dia relativo e quanto falta ("Hoje, 16:12 · Em 5 minutos")', async () => {
