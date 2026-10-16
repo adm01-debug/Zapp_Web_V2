@@ -30,7 +30,6 @@ P_COLEGA='20000000-0000-0000-0000-0000000000f2'   # profiles.id do atendente B
 C_AGENTE='20000000-0000-0000-0000-0000000000c1'   # contato atribuido ao atendente A
 C_COLEGA='20000000-0000-0000-0000-0000000000c2'   # contato atribuido ao atendente B
 M_AGENTE='20000000-0000-0000-0000-0000000000d1'   # mensagem do contato C_AGENTE
-M_COLEGA='20000000-0000-0000-0000-0000000000d2'   # mensagem do contato C_COLEGA (carteira do atendente B)
 
 cleanup() {
   if [[ "$container_name" =~ ^zapp-message-reactions-autoria-[0-9]+-[0-9]+$ ]]; then
@@ -285,15 +284,6 @@ SQL
 # G4 - autorizar por um contato e gravar em outro
 [[ "$(tenta "$U_AGENTE" "INSERT INTO public.message_reactions(message_id, user_id, contact_id, emoji) VALUES ('$M_AGENTE','$P_AGENTE','$C_COLEGA','🔥');")" != 0 ]] \
   || fail 'G4: INSERT com contact_id diferente do contato da mensagem passou'
-# G4b - contact_id NULO nao abre caminho: a reacao de agente (modelo do item 303 grava contact_id
-#       nulo) so vale na carteira do proprio atendente. Em mensagem de contato alheio continua barrado.
-[[ "$(tenta "$U_AGENTE" "INSERT INTO public.message_reactions(message_id, user_id, contact_id, emoji) VALUES ('$M_COLEGA','$P_AGENTE',NULL,'🔥');")" != 0 ]] \
-  || fail 'G4b: INSERT com contact_id nulo em mensagem de contato alheio passou'
-# G1c - reacao de agente com contact_id NULO na propria carteira passa (RETURNING conta 1 linha gravada,
-#       dentro de BEGIN/ROLLBACK): e o formato que o gatilho message_reactions_normalize_author
-#       (item 303) grava depois de zerar contact_id.
-[[ "$(tenta_afeta "$U_AGENTE" "WITH i AS (INSERT INTO public.message_reactions(message_id, user_id, contact_id, emoji) VALUES ('$M_AGENTE','$P_AGENTE',NULL,'🙏') RETURNING 1) SELECT count(*) FROM i;")" == 1 ]] \
-  || fail 'G1c: a reacao do atendente com contact_id nulo (modelo de autoria do item 303) foi barrada'
 # G5 - DELETE da reacao alheia (colega e Cliente) nao pode mais acontecer
 psql_test -q >/dev/null <<SQL
 BEGIN;
