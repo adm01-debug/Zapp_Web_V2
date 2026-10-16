@@ -1874,39 +1874,6 @@ export type Database = {
           },
         ]
       }
-      connection_alert_preferences: {
-        Row: {
-          alert_on_degraded: boolean
-          alert_on_disconnected: boolean
-          created_at: string
-          email_enabled: boolean
-          id: string
-          push_enabled: boolean
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          alert_on_degraded?: boolean
-          alert_on_disconnected?: boolean
-          created_at?: string
-          email_enabled?: boolean
-          id?: string
-          push_enabled?: boolean
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          alert_on_degraded?: boolean
-          alert_on_disconnected?: boolean
-          created_at?: string
-          email_enabled?: boolean
-          id?: string
-          push_enabled?: boolean
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       connection_health_logs: {
         Row: {
           checked_at: string
@@ -2003,42 +1970,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      contact_block_audit: {
-        Row: {
-          blocked_at_from: string | null
-          blocked_at_to: string | null
-          contact_id: string
-          id: string
-          operation: string
-          performed_at: string
-          performed_by: string | null
-          performed_by_db_role: string
-          performed_by_profile: string | null
-        }
-        Insert: {
-          blocked_at_from?: string | null
-          blocked_at_to?: string | null
-          contact_id: string
-          id?: string
-          operation: string
-          performed_at?: string
-          performed_by?: string | null
-          performed_by_db_role?: string
-          performed_by_profile?: string | null
-        }
-        Update: {
-          blocked_at_from?: string | null
-          blocked_at_to?: string | null
-          contact_id?: string
-          id?: string
-          operation?: string
-          performed_at?: string
-          performed_by?: string | null
-          performed_by_db_role?: string
-          performed_by_profile?: string | null
-        }
-        Relationships: []
       }
       contact_deletion_audit: {
         Row: {
@@ -2246,8 +2177,6 @@ export type Database = {
           assigned_to: string | null
           avatar_fetch_attempted_at: string | null
           avatar_url: string | null
-          blocked_at: string | null
-          blocked_by: string | null
           channel_connection_id: string | null
           channel_type: string | null
           city: string | null
@@ -2291,8 +2220,6 @@ export type Database = {
           assigned_to?: string | null
           avatar_fetch_attempted_at?: string | null
           avatar_url?: string | null
-          blocked_at?: string | null
-          blocked_by?: string | null
           channel_connection_id?: string | null
           channel_type?: string | null
           city?: string | null
@@ -2336,8 +2263,6 @@ export type Database = {
           assigned_to?: string | null
           avatar_fetch_attempted_at?: string | null
           avatar_url?: string | null
-          blocked_at?: string | null
-          blocked_by?: string | null
           channel_connection_id?: string | null
           channel_type?: string | null
           city?: string | null
@@ -3264,46 +3189,31 @@ export type Database = {
       }
       csat_surveys: {
         Row: {
-          agent_id: string | null
+          agent_id: string
           contact_id: string
-          conversation_id: string | null
           conversation_resolved_at: string | null
           created_at: string
           feedback: string | null
           id: string
-          message_text: string | null
-          rating: number | null
-          responded_at: string | null
-          send_at: string
-          status: string
+          rating: number
         }
         Insert: {
-          agent_id?: string | null
+          agent_id: string
           contact_id: string
-          conversation_id?: string | null
           conversation_resolved_at?: string | null
           created_at?: string
           feedback?: string | null
           id?: string
-          message_text?: string | null
-          rating?: number | null
-          responded_at?: string | null
-          send_at?: string
-          status?: string
+          rating: number
         }
         Update: {
-          agent_id?: string | null
+          agent_id?: string
           contact_id?: string
-          conversation_id?: string | null
           conversation_resolved_at?: string | null
           created_at?: string
           feedback?: string | null
           id?: string
-          message_text?: string | null
-          rating?: number | null
-          responded_at?: string | null
-          send_at?: string
-          status?: string
+          rating?: number
         }
         Relationships: [
           {
@@ -4691,7 +4601,6 @@ export type Database = {
           transcription_status: string | null
           updated_at: string
           whatsapp_connection_id: string | null
-          whatsapp_group_id: string | null
         }
         Insert: {
           agent_id?: string | null
@@ -4731,7 +4640,6 @@ export type Database = {
           transcription_status?: string | null
           updated_at?: string
           whatsapp_connection_id?: string | null
-          whatsapp_group_id?: string | null
         }
         Update: {
           agent_id?: string | null
@@ -4771,7 +4679,6 @@ export type Database = {
           transcription_status?: string | null
           updated_at?: string
           whatsapp_connection_id?: string | null
-          whatsapp_group_id?: string | null
         }
         Relationships: [
           {
@@ -4849,13 +4756,6 @@ export type Database = {
             columns: ["whatsapp_connection_id"]
             isOneToOne: false
             referencedRelation: "whatsapp_connections_safe"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "messages_whatsapp_group_id_fkey"
-            columns: ["whatsapp_group_id"]
-            isOneToOne: false
-            referencedRelation: "whatsapp_groups"
             referencedColumns: ["id"]
           },
         ]
@@ -6237,59 +6137,6 @@ export type Database = {
             columns: ["department_id"]
             isOneToOne: false
             referencedRelation: "departments"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      qr_attempts: {
-        Row: {
-          connection_id: string
-          created_at: string
-          error_message: string | null
-          id: string
-          status: string
-        }
-        Insert: {
-          connection_id: string
-          created_at?: string
-          error_message?: string | null
-          id?: string
-          status: string
-        }
-        Update: {
-          connection_id?: string
-          created_at?: string
-          error_message?: string | null
-          id?: string
-          status?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "qr_attempts_connection_id_fkey"
-            columns: ["connection_id"]
-            isOneToOne: false
-            referencedRelation: "whatsapp_connections"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "qr_attempts_connection_id_fkey"
-            columns: ["connection_id"]
-            isOneToOne: false
-            referencedRelation: "whatsapp_connections_agent"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "qr_attempts_connection_id_fkey"
-            columns: ["connection_id"]
-            isOneToOne: false
-            referencedRelation: "whatsapp_connections_public"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "qr_attempts_connection_id_fkey"
-            columns: ["connection_id"]
-            isOneToOne: false
-            referencedRelation: "whatsapp_connections_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -9306,7 +9153,6 @@ export type Database = {
           mention_sound_type: string | null
           message_sound_type: string | null
           new_message_sound_enabled: boolean | null
-          onboarding_completed: boolean
           quiet_hours_enabled: boolean | null
           quiet_hours_end: string | null
           quiet_hours_start: string | null
@@ -9347,7 +9193,6 @@ export type Database = {
           mention_sound_type?: string | null
           message_sound_type?: string | null
           new_message_sound_enabled?: boolean | null
-          onboarding_completed?: boolean
           quiet_hours_enabled?: boolean | null
           quiet_hours_end?: string | null
           quiet_hours_start?: string | null
@@ -9388,7 +9233,6 @@ export type Database = {
           mention_sound_type?: string | null
           message_sound_type?: string | null
           new_message_sound_enabled?: boolean | null
-          onboarding_completed?: boolean
           quiet_hours_enabled?: boolean | null
           quiet_hours_end?: string | null
           quiet_hours_start?: string | null
@@ -9979,7 +9823,6 @@ export type Database = {
       }
       whisper_messages: {
         Row: {
-          audio_path: string | null
           contact_id: string
           content: string
           created_at: string | null
@@ -9989,7 +9832,6 @@ export type Database = {
           target_agent_id: string
         }
         Insert: {
-          audio_path?: string | null
           contact_id: string
           content: string
           created_at?: string | null
@@ -9999,7 +9841,6 @@ export type Database = {
           target_agent_id: string
         }
         Update: {
-          audio_path?: string | null
           contact_id?: string
           content?: string
           created_at?: string | null
@@ -10548,15 +10389,6 @@ export type Database = {
           out_user_id: string
         }[]
       }
-      agent_workload: {
-        Args: never
-        Returns: {
-          last_send_at: string
-          open_chats: number
-          profile_id: string
-          waiting_chats: number
-        }[]
-      }
       ai_budget_reconcile: { Args: never; Returns: number }
       ai_budget_release: {
         Args: { p_id: string; p_reason: string }
@@ -10609,10 +10441,7 @@ export type Database = {
         }
         Returns: Json
       }
-      apply_client_wallet: {
-        Args: { p_contact_id: string }
-        Returns: string | null
-      }
+      app_bootstrap: { Args: never; Returns: Json }
       apply_pg_cron_escalonamento: {
         Args: { p_reverter?: boolean }
         Returns: number
@@ -10962,7 +10791,6 @@ export type Database = {
           transcription_status: string | null
           updated_at: string
           whatsapp_connection_id: string | null
-          whatsapp_group_id: string | null
         }
         SetofOptions: {
           from: "*"
@@ -11061,27 +10889,9 @@ export type Database = {
       decrypt_gmail_token: { Args: { p_encrypted: string }; Returns: string }
       delete_contact: { Args: { p_id: string }; Returns: string }
       delete_contacts: { Args: { p_ids: string[] }; Returns: number }
-      delete_department: {
-        Args: {
-          p_department_id: string
-          p_move_to?: string
-        }
-        Returns: Json
-      }
       delete_talkx_campaign: {
         Args: { p_campaign_id: string }
         Returns: string
-      }
-      departments_overview: {
-        Args: never
-        Returns: {
-          conversation_count: number
-          department_id: string
-          is_active: boolean
-          member_count: number
-          name: string
-          queue_count: number
-        }[]
       }
       duplicate_talkx_campaign: {
         Args: { p_campaign_id: string }
@@ -11173,64 +10983,6 @@ export type Database = {
         }
         Returns: string
       }
-      enqueue_group_outbound_message: {
-        Args: {
-          p_caption?: string
-          p_client_message_id: string
-          p_content: string
-          p_group_id: string
-          p_media_url?: string
-          p_message_type?: string
-          p_reply_to_id?: string
-          p_whatsapp_connection_id?: string
-        }
-        Returns: {
-          agent_id: string | null
-          audio_meme_id: string | null
-          caption: string | null
-          channel_connection_id: string | null
-          channel_type: string | null
-          client_message_id: string | null
-          contact_id: string | null
-          content: string
-          created_at: string
-          delivery_attempt_count: number
-          delivery_claim_expires_at: string | null
-          delivery_claim_token: string | null
-          delivery_claimed_at: string | null
-          delivery_claimed_by: string | null
-          delivery_last_claim_token: string | null
-          external_id: string | null
-          id: string
-          is_deleted: boolean | null
-          is_edited: boolean
-          is_read: boolean | null
-          link_preview: Json | null
-          media_filename: string | null
-          media_meta: Json | null
-          media_mimetype: string | null
-          media_size: number | null
-          media_type: string | null
-          media_url: string | null
-          message_type: string
-          ptt: boolean | null
-          reply_to_id: string | null
-          sender: string
-          status: string | null
-          status_updated_at: string | null
-          transcription: string | null
-          transcription_status: string | null
-          updated_at: string
-          whatsapp_connection_id: string | null
-          whatsapp_group_id: string | null
-        }
-        SetofOptions: {
-          from: "*"
-          to: "messages"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
       enqueue_outbound_message: {
         Args: {
           p_caption?: string
@@ -11280,7 +11032,6 @@ export type Database = {
           transcription_status: string | null
           updated_at: string
           whatsapp_connection_id: string | null
-          whatsapp_group_id: string | null
         }
         SetofOptions: {
           from: "*"
@@ -11337,7 +11088,6 @@ export type Database = {
           transcription_status: string | null
           updated_at: string
           whatsapp_connection_id: string | null
-          whatsapp_group_id: string | null
         }
         SetofOptions: {
           from: "*"
@@ -11395,7 +11145,6 @@ export type Database = {
           transcription_status: string | null
           updated_at: string
           whatsapp_connection_id: string | null
-          whatsapp_group_id: string | null
         }
         SetofOptions: {
           from: "*"
@@ -11592,14 +11341,6 @@ export type Database = {
           last_message_type: string
         }[]
       }
-      get_team_birthdays: {
-        Args: never
-        Returns: {
-          birthday_day: number
-          birthday_month: number
-          id: string
-        }[]
-      }
       get_team_inbox: {
         Args: never
         Returns: {
@@ -11702,15 +11443,6 @@ export type Database = {
         Args: { p_profile_id: string }
         Returns: Json
       }
-      inbox_wait_summary: {
-        Args: { p_queue_id?: string }
-        Returns: {
-          avg_open_seconds: number
-          max_wait_seconds: number
-          queue_id: string
-          waiting_count: number
-        }[]
-      }
       ingest_inbound_message: {
         Args: {
           p_connection_id: string
@@ -11730,17 +11462,6 @@ export type Database = {
           contact_name: string
           message_id: string
           outcome: string
-        }[]
-      }
-      instance_auth_event_series: {
-        Args: { p_window?: string }
-        Returns: {
-          auth_failures: number
-          bucket: string
-          disconnected: number
-          errors: number
-          instance: string
-          total: number
         }[]
       }
       is_account_locked: {
@@ -11937,7 +11658,6 @@ export type Database = {
       notify_due_reminders: { Args: never; Returns: number }
       notify_due_tasks: { Args: never; Returns: number }
       notify_searchbox_budget: { Args: never; Returns: number }
-      ops_metrics: { Args: { p_window_hours?: number }; Returns: Json }
       pause_dispatches_for_connection: {
         Args: { p_connection_id: string; p_reason: string }
         Returns: number
@@ -11994,7 +11714,6 @@ export type Database = {
         }[]
       }
       phone_variants: { Args: { p_phone: string }; Returns: string[] }
-      purge_qr_attempts: { Args: never; Returns: number }
       purge_talkx_expired_data: { Args: { p_limit?: number }; Returns: Json }
       reap_ai_jobs: { Args: never; Returns: number }
       reassign_absent_agents: {
@@ -12350,10 +12069,6 @@ export type Database = {
         Args: { p_call_id: string; p_notes: string }
         Returns: undefined
       }
-      set_contact_blocked: {
-        Args: { p_blocked: boolean; p_contact_id: string }
-        Returns: string
-      }
       set_conversation_status: {
         Args: { p_contact_id: string; p_next: string; p_reason?: string }
         Returns: undefined
@@ -12437,18 +12152,6 @@ export type Database = {
           waiting_since: string
         }[]
       }
-      talk_me_list_pending_messages: {
-        Args: { p_contact_id: string; p_limit?: number }
-        Returns: {
-          caption: string
-          content: string
-          created_at: string
-          media_url: string
-          message_id: string
-          message_type: string
-          sender: string
-        }[]
-      }
       talk_me_list_queues: {
         Args: never
         Returns: {
@@ -12511,7 +12214,7 @@ export type Database = {
           legacy_or_deleted: boolean
         }[]
       }
-      talkx_benchmarks: { Args: { p_days?: number; p_limit?: number }; Returns: Json }
+      talkx_benchmarks: { Args: never; Returns: Json }
       talkx_campaign_logs: {
         Args: { p_after?: string; p_campaign_id: string; p_limit?: number }
         Returns: {
@@ -12772,14 +12475,6 @@ export type Database = {
       user_has_permission: {
         Args: { _permission_name: string; _user_id: string }
         Returns: boolean
-      }
-      warroom_agent_today: {
-        Args: { p_date?: string }
-        Returns: Json
-      }
-      warroom_queue_stats: {
-        Args: never
-        Returns: Json
       }
     }
     Enums: {
