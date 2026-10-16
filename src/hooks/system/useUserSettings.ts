@@ -3,9 +3,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { toast } from '@/hooks/ui/use-toast';
 import { log } from '@/lib/logger';
+import { LOCAL_VOICE_ID } from '@/hooks/communication/useTextToSpeech';
 
-// Default ElevenLabs voice: Custom system voice
-const DEFAULT_TTS_VOICE_ID = 'TY3h8ANhQUsJaa0Bga5F';
+// HZ3-004-A — o padrão do app é a voz LOCAL do navegador (nada sai do sistema);
+// a voz premium da ElevenLabs só entra quando o agente a escolhe no seletor.
+const DEFAULT_TTS_VOICE_ID = LOCAL_VOICE_ID;
 const DEFAULT_TTS_SPEED = 1.0;
 
 // Uma leitura que falha não pode virar uma pilha de avisos idênticos: o hook é
