@@ -104,10 +104,14 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
   // empurrou o fim para longe — o usuario que estava no fim apareceria como
   // "lendo o historico" e a lista deixaria de acompanhar a conversa.
   const isNearBottomRef = useRef(true);
+  const virtualizerRef = useRef<{ cancelScroll: () => void } | null>(null);
   const handleScroll = useCallback(() => {
     const el = scrollContainerRef.current;
     if (!el) return;
     isNearBottomRef.current = isNearBottom(el);
+    // Interrompe uma rolagem programada antes que novas medições movam
+    // novamente a lista enquanto o agente está lendo o histórico.
+    if (!isNearBottomRef.current) virtualizerRef.current?.cancelScroll();
   }, []);
 
   const handleMessageDeleted = useCallback(async (messageId: string) => {
@@ -134,6 +138,7 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
     overscan: 10,
     getItemKey,
   });
+  virtualizerRef.current = virtualizer;
 
   // --- Historico anterior (R2-INB-004) --------------------------------------
   // O fetch vive no hook; aqui so cuidamos do que e responsabilidade da
