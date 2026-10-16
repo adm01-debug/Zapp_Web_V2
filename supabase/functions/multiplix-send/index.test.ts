@@ -1023,6 +1023,30 @@ Deno.test("F17: sem cota diária sobrando o disparo é pausado com motivo 'daily
   assert(providerPosts === 0, `nenhum POST ao provedor era esperado, houve ${providerPosts}`);
 });
 
+Deno.test("MX01: UUID valido e preservado em p_correlation_id na materializacao da fila legada", async () => {
+  const phones = ["5511900009005"];
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "scheduled", scheduledAt: "2026-01-01T00:00:00Z" }),
+    recipients: phones.map((p) => recipientRow(1, p)),
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderFetch();
+  try {
+    await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    const calls = rpcs(ctx, "multiplix_materialize_legacy_queue");
+    assert(calls.length > 0, "a RPC multiplix_materialize_legacy_queue deve ter sido chamada");
+    const pCorrelationId = calls[0].args.p_correlation_id as string | null;
+    assert(pCorrelationId !== null, "p_correlation_id nao deve ser null para UUID valido");
+    assert(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(pCorrelationId),
+      `p_correlation_id deve ser UUID 8-4-4-4-12, veio: ${pCorrelationId}`,
+    );
+  } finally {
+    provider.restore();
+  }
+});
+
 Deno.test("F17: com cota sobrando o disparo segue (não pausa por cota)", async () => {
   const phone = "5511966665555";
   const opts: MockOpts = {
