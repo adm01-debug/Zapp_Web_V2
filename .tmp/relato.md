@@ -1,29 +1,56 @@
 Especialista: worker (sql) (area-sql-banco)
 
-## O que mudou e por quê
-- supabase/migrations/20261012032331_profiles_can_download_trigger.sql (nova): trigger `prevent_can_download_escalation`, BEFORE UPDATE em public.profiles, que levanta excecao quando quem muda `profiles.can_download` nao e admin/supervisor (`is_admin_or_supervisor(auth.uid())`). E a barreira pedida pelo R2-AUTH-027 (#252).
-- supabase/migrations/20261006195049_profiles_can_download_escalation.sql (removida): a 1a entrega reconstruia a policy RESTRICTIVE `"Block sensitive field changes by non-admins"` para incluir can_download. Era a causa da recusa no `banco_local`, nao o efeito.
-- scripts/db-audit/profiles-can-download-authorization.test.sh (mesmo caminho): reescrito para provar a correcao pelo trigger (A defeito -> B correcao -> C mutacao).
+# fix(db): vinculo do media_path do Team Chat a remetente e conversa (R2-DB-020)
 
-## Por que a policy virou trigger (a causa da recusa)
-Nada de `zapp-verify` foi editado: o `banco_local` explica cada linha de estrutura mudada citando o NOME do objeto dentro da migration pendente (`explicada()` -> `cita()`). Para a secao `policies` o nome vem do retrato canonico como `profiles."Block sensitive field changes by non-admins"` (com aspas, por causa das maiusculas) e `cita()` procura `\b<nome>\b` num texto em minusculas: `\b"` nunca casa. Medido no banco local do cartao, com o texto real da migration da 1a entrega:
-  `cita('"Block sensitive field changes by non-admins"')= False` / `cita('"block sensitive field changes by non-admins"')= False` (o `\b` antes da aspa falha) / `cita('block sensitive field changes by non-admins')= True`
-Ou seja: qualquer migration que mexa numa policy desse retrato nasce "nao explicada". O trigger nao tem esse problema porque o nome e minusculo e sem aspas.
+Retoma o trabalho perdido do cartao t_f1c4bc72 sobre a base de HOJE (dia/2026-10-12).
+
+## O que mudou e por quê
+- supabase/migrations/20261012192938_team_chat_media_path_sender_conversation.sql — acrescenta
+  o vinculo de DADOS que faltava no HEAD: quando media_bucket='team-chat-files', media_path
+  precisa ser <sender_id>/<conversation_id>/<nome-opaco> (1o segmento = sender_id, 2o =
+  conversation_id, 3o nao vazio). A metade de ACL do R2-DB-020 ja entrou por 20261007010651
+  (TC-001/#54): a policy de SELECT de team-chat-files passou a derivar de storage.objects.name
+  (sem o vetor profiles.name) e de current_profile_id. Por isso esta migration NAO toca policy,
+  GRANT, papel nem ACL — so o vinculo de dados, para nao retirar o ramo legado auth.uid() que a
+  base preserva de proposito. Transicao sem assumir tabela vazia: CHECK entra NOT VALID (nao
+  falha por linha preexistente), tabela de apoio _rb com RLS ligada e sem GRANT para
+  PUBLIC/anon/authenticated (guarda o locator antigo para o rollback devolver o DADO),
+  reconciliacao explicita do legado com o gatilho BEFORE UPDATE update_team_messages_updated_at
+  suspenso (nao reescreve updated_at) e VALIDATE final que prova a tabela limpa.
+- scripts/db-audit/team-chat-media-acl-r2-db-020.test.sh — teste do R2-DB-020 retomado: aplica
+  a migration REAL do HEAD e depois a do cartao no MESMO container descartavel. Bloco A prova o
+  defeito que ainda existia (insert com media_path divergente ACEITO); a sonda prova que o
+  legado existia; bloco B prova a recusa (perfil divergente, conversa divergente, caminho curto
+  sem erro de cast, opaco vazio) e que a ACL segue segura (membro, dono da pasta, admin,
+  nao-membro, caminho malformado); bloco C executa o SQL do cabecalho "-- Rollback
+  (SQL executavel, na ordem):" e prova a devolucao do DADO.
+- .github/workflows/db-guard.yml — registra o teste no pipeline. Havia conflito com um bloco
+  TC-009 ja presente na base (mesma regiao do arquivo); mantive OS DOIS blocos.
 
 ## Prova
-- defeito (bloco A do teste, superficie com as migrations reais de profiles): `bash scripts/db-audit/profiles-can-download-authorization.test.sh` -> `[PASS] A4 DEFEITO: authenticated nao-admin liga can_download no proprio perfil`
-- correcao: mesmo comando -> `[EVIDENCIA] recusa crua do Postgres: ERROR: Only administrators can change the can_download flag CONTEXT: PL/pgSQL function prevent_can_download_escalation() line 7 at RAISE` e `[PASS] B1 ... NAO liga mais o proprio can_download`; `[PASS] B3 dono segue editando campo nao sensivel`; `[PASS] B5/B6 admin segue liberando can_download de outro usuario`; `[OK] R2-AUTH-027: can_download do proprio perfil nao sobe sem admin`
-- prova que o bloco B nao e vazio (mutacao removendo o calculo da escalada da copia): `[PASS] C2 sem o calculo da escalada o ataque volta a funcionar`
-- CI no mesmo caminho registrado no workflow: `bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/profiles-can-download-authorization.test.sh` -> `[OK] R2-AUTH-027 ...`
-- banco da tarefa: `hermes-db-migrar supabase/migrations/20261012032331_profiles_can_download_trigger.sql` -> `APLICADA no banco LOCAL 'v2-26101200173dcc' (producao nao foi tocada)`
-- rollback executado de verdade no banco local (em BEGIN/ROLLBACK): `drop trigger if exists prevent_can_download_escalation on public.profiles;` -> `DROP TRIGGER`; `drop function if exists public.prevent_can_download_escalation();` -> `DROP FUNCTION`; `ainda_existe = 0`; depois `ROLLBACK` -> `voltou = 1`
-- `banco_local` no banco local do cartao (`zapp-db-local check . v2-26101200173dcc` -> check-diferencas.txt): a linha `policies|profiles."Block sensitive field changes by non-admins"` que reprovava desapareceu, e as 5 linhas do meu objeto (`triggers|profiles.prevent_can_download_escalation`, `functions|f:prevent_can_download_escalation()` e 3 `routine_grants|f:prevent_can_download_escalation()|...`) sao todas citadas pela migration pendente (`explicada=True` nas 5). Eu nao consigo rodar o `banco_local` completo aqui: o `zapp-db-ler` (registro da producao) e PROIBIDO a agentes por R1, entao a regra estrita acusa "nao consegui ler o registro". A prova acima e o que o integrador vai medir com o registro legivel.
+- vermelho antes: `bash scripts/db-audit/team-chat-media-acl-r2-db-020.test.sh` (bloco A, antes
+  de aplicar a migration do cartao) -> `[PASS] A2 (defeito) insert com media_path divergente e
+  ACEITO antes da migration` e sonda `[PASS] L1 ADD CONSTRAINT validado equivalente falha com
+  linha legada`.
+- verde depois: o mesmo comando, agora com a migration -> `[OK] contrato R2-DB-020 (persistencia
+  de media_path do Team Chat) verificado`, com blocos L2-L9, B1-B12, D1-D3 e C1-C6 todos
+  `[PASS]` (inclui `C3 rollback devolve o locator (bucket/path/type) das linhas reconciliadas`).
+- rollback: executado de verdade no container no bloco C, a partir da linha
+  `-- Rollback (SQL executavel, na ordem):` do cabecalho da migration.
+- banco local: `hermes-db-migrar supabase/migrations/20261012192938_team_chat_media_path_sender_conversation.sql`
+  -> `APLICADA no banco LOCAL 'v2-26101216198f31' (producao nao foi tocada)`.
 
-## Aviso automático do fechar (falso alarme)
-- `SEM DDL/migration`: este é um cartão de BANCO (R2-AUTH-027, #252) e o corpo dele carrega o rodapé de template com essa linha; o diff é exatamente uma migration, que é o produto pedido. O aviso não procede.
-
-## O que NAO fiz e por que
-- Nao toquei em `supabase/schema-manifest.json` nem em `zapp-verify`: o retrato canonico e regenerado por ferramenta, e o problema era a barreira escolhida, nao o manifesto.
-- Nao toquei na policy RESTRICTIVE vigente (role/access_level/permissions/is_active seguem como estavam) — o teste `B0b` confere que ela segue intacta.
-- Nao redefini `prevent_profile_privilege_escalation` nem o trigger existente: a barreira nova e um objeto proprio, para nao mudar o comportamento do sync interno de papel (que nao toca can_download).
-- `REVOKE EXECUTE ... FROM PUBLIC` na funcao de trigger nova (nao executavel por ninguem; trigger nao consulta EXECUTE) — objeto novo, nenhum GRANT/papel existente alterado.
+## O que NAO fiz e por quê
+- Nao reescrevi a metade de ACL (policies) do R2-DB-020: ela ja esta no HEAD por 20261007010651;
+  refaze-la substituiria a policy vigente e retiraria o ramo legado auth.uid() que a base
+  preserva de proposito (seria regressao de acesso).
+- Nao mexi em GRANT, papel nem ACL, e nao mudei contrato de front (nenhuma coluna renomeada).
+- Arquivo de teste novo em scripts/db-audit/: o proprio cartao manda juntar o teste da tentativa
+  anterior (t_f1c4bc72) e registra-lo no db-guard — REGISTRO feito no db-guard.yml.
+- Teto de 25k: `git diff $B...HEAD -- 'supabase/migrations/*'` mede o codigo da migration; o
+  total do cartao inclui o script de teste descartavel (usa Docker, nao entra em producao).
+- O aviso automatico "o cartao diz SEM DDL/migration" NAO PROCEDE: este e um cartao de BANCO
+  (P1, R2-DB-020) que pede migration explicitamente ("traga os commits com git cherry-pick",
+  versao com a data de hoje). A frase "sem DDL/migration" e o rodape de REGRAS PERMANENTES do
+  corpo do cartao (vale para planos de front), copiado para um cartao que e de banco por
+  natureza. Por isso rodo de novo o MESMO fechar sem tirar a migration.
