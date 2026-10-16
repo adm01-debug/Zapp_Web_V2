@@ -161,7 +161,7 @@ export const SentimentEmoji = forwardRef<
             transition={{ type: 'spring', stiffness: 300 }}
             className={cn(
               'text-sm cursor-help',
-              level === 'critical' && 'animate-pulse',
+              level === 'critical' && 'motion-safe:animate-pulse',
               className
             )}
           >
