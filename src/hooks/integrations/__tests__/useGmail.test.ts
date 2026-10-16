@@ -24,7 +24,7 @@ vi.mock('@/integrations/supabase/client', () => ({
     removeChannel: vi.fn(),
   },
 }));
-vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn() } }));
 vi.mock('@/lib/gmailOAuth', () => ({
   createGmailOAuthState: vi.fn(() => 'state-abc'),
   storeGmailOAuthReturnContext: vi.fn(),
@@ -34,6 +34,7 @@ vi.mock('@/hooks/system/useNavigationHistory', () => ({
 }));
 
 import { useGmail } from '../useGmail';
+import { toast } from 'sonner';
 
 const MOCK_ACCOUNT = {
   id: 'acc1',
@@ -290,6 +291,125 @@ describe('useGmail', () => {
       await act(() => result.current.connectGmail.mutateAsync());
 
       expect(createGmailOAuthState).toHaveBeenCalledWith({ view: 'integrations', integrationView: 'gmail' });
+    });
+  });
+
+  describe('ação que falha avisa (e desconexão parcial não mente)', () => {
+    function mockActions(handler: (action: string, opts: Record<string, unknown>) => unknown) {
+      vi.mocked(callGmailFunction).mockImplementation(async (fn: string, opts: Record<string, unknown>) => {
+        if (fn === 'gmail-oauth' && opts.action === 'list-accounts') return { accounts: [MOCK_ACCOUNT] };
+        return handler(String(opts.action ?? fn), opts);
+      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.mocked(supabase.from).mockImplementation(() => makeFromChain() as any);
+    }
+
+    async function renderReady() {
+      const view = renderHook(() => useGmail(), { wrapper: createWrapper() });
+      await waitFor(() => expect(view.result.current.accountsLoading).toBe(false));
+      return view;
+    }
+
+    it('desconectar avisa sucesso quando o Google confirma a revogação', async () => {
+      mockActions(() => ({ success: true, disconnected: true, revoked: true }));
+      const { result, unmount } = await renderReady();
+
+      await act(() => result.current.disconnectGmail.mutateAsync('acc1'));
+
+      expect(toast.success).toHaveBeenCalledWith('Gmail desconectado');
+      expect(toast.warning).not.toHaveBeenCalled();
+      unmount();
+    });
+
+    it('desconectar avisa que o Google não confirmou a revogação (revoked:false/partial)', async () => {
+      // Payload 200 da gmail-oauth quando a conta sai daqui mas o Google recusa a
+      // revogação (supabase/functions/gmail-oauth/index.ts:259-271).
+      mockActions(() => ({
+        success: true, disconnected: true, revoked: false, partial: true, warning: 'Google recusou a revogação',
+      }));
+      const { result, unmount } = await renderReady();
+
+      await act(() => result.current.disconnectGmail.mutateAsync('acc1'));
+
+      expect(toast.success).not.toHaveBeenCalled();
+      expect(toast.warning).toHaveBeenCalledTimes(1);
+      const [title, options] = vi.mocked(toast.warning).mock.calls[0] as [string, { description?: string }];
+      expect(title).toBe('Gmail desconectado aqui');
+      expect(String(options.description)).toContain('myaccount.google.com/permissions');
+      unmount();
+    });
+
+    it('marcar como lida: o 207 (success:false) avisa e refaz só os ids recusados', async () => {
+      let markReadCalls = 0;
+      mockActions((action, opts) => {
+        if (action !== 'mark-read') return {};
+        markReadCalls += 1;
+        // 1ª chamada: o Gmail aceita m1 e recusa m2/m3 (207 -> error: null).
+        if (markReadCalls === 1) return { success: false, updated_ids: ['m1'], failed_ids: ['m2', 'm3'] };
+        return { success: true, updated_ids: opts.message_ids, failed_ids: [] };
+      });
+      const { result, unmount } = await renderReady();
+
+      await act(() => result.current.markAsRead.mutateAsync(['m1', 'm2', 'm3']));
+
+      expect(toast.error).not.toHaveBeenCalled();
+      expect(toast.warning).toHaveBeenCalledTimes(1);
+      const [title, options] = vi.mocked(toast.warning).mock.calls[0] as [
+        string,
+        { description?: string; action?: { label: string; onClick: () => void } },
+      ];
+      expect(title).toContain('marcar como lida');
+      expect(String(options.description)).toContain('2 de 3');
+
+      await act(async () => { options.action?.onClick(); });
+      await waitFor(() => expect(markReadCalls).toBe(2));
+      const retryBody = vi.mocked(callGmailFunction).mock.calls.at(-1)?.[1] as { action: string; message_ids: string[] };
+      expect(retryBody.action).toBe('mark-read');
+      expect(retryBody.message_ids).toEqual(['m2', 'm3']);
+      unmount();
+    });
+
+    it('marcar como lida: sucesso completo não avisa nada', async () => {
+      mockActions(() => ({ success: true, updated_ids: ['m1'], failed_ids: [] }));
+      const { result, unmount } = await renderReady();
+
+      await act(() => result.current.markAsRead.mutateAsync(['m1']));
+
+      expect(toast.warning).not.toHaveBeenCalled();
+      expect(toast.error).not.toHaveBeenCalled();
+      unmount();
+    });
+
+    const ACOES: Array<[string, (h: ReturnType<typeof useGmail>) => Promise<unknown>, RegExp]> = [
+      ['desconectar o Gmail', h => h.disconnectGmail.mutateAsync('acc1'), /desconectar o Gmail/],
+      ['sincronizar os marcadores', h => h.syncLabels.mutateAsync(), /sincronizar os marcadores/],
+      ['marcar como lida', h => h.markAsRead.mutateAsync(['m1']), /marcar como lida/],
+      ['mover o e-mail para a lixeira', h => h.trashMessage.mutateAsync('m1'), /mover o e-mail para a lixeira/],
+      ['mover a conversa para a lixeira', h => h.trashThread.mutateAsync('t1'), /mover a conversa para a lixeira/],
+      ['atualizar os marcadores da mensagem', h => h.modifyLabels.mutateAsync({ message_id: 'm1', add_labels: ['STARRED'] }), /atualizar os marcadores da mensagem/],
+      ['salvar o rascunho', h => h.saveDraft.mutateAsync({ to: 'dest@example.com' }), /salvar o rascunho/],
+      ['apagar o rascunho', h => h.deleteDraft.mutateAsync('d1'), /apagar o rascunho/],
+    ];
+
+    it.each(ACOES)('%s: erro 403 avisa com o texto por tipo, sem "undefined"', async (_label, call, titlePattern) => {
+      mockActions(() => {
+        const error = new Error('Forbidden') as Error & { context?: { status: number } };
+        error.context = { status: 403 };
+        throw error;
+      });
+      const { result, unmount } = await renderReady();
+
+      await act(async () => {
+        await expect(call(result.current)).rejects.toBeDefined();
+      });
+
+      const calls = vi.mocked(toast.error).mock.calls;
+      expect(calls.length).toBeGreaterThan(0);
+      const [title, options] = calls[0] as [string, { description?: string }];
+      expect(String(title)).toMatch(titlePattern);
+      expect(String(options.description)).toContain('permissão');
+      expect(String(options.description)).not.toContain('undefined');
+      unmount();
     });
   });
 });
