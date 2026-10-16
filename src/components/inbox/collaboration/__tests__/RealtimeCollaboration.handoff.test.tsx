@@ -12,9 +12,10 @@
  * (`{ noteSaved: false }`), nunca "sucesso".
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { HandoffResult } from '../HandoffDialog';
+import { conversationTabCountsKey } from '@/hooks/chat/useConversationTabCounts';
 import { RealtimeCollaboration } from '../../RealtimeCollaboration';
 
 const mocks = vi.hoisted(() => ({
@@ -45,9 +46,11 @@ vi.mock('../InternalNotesPanel', () => ({ InternalNotesPanel: () => null }));
 
 type OnHandoff = (agentId: string, comment: string) => Promise<HandoffResult>;
 let capturedOnHandoff: OnHandoff | null = null;
+let capturedQueueId: string | null | undefined;
 vi.mock('../HandoffDialog', () => ({
-  HandoffDialog: (props: { onHandoff: OnHandoff }) => {
+  HandoffDialog: (props: { onHandoff: OnHandoff; queueId?: string | null }) => {
     capturedOnHandoff = props.onHandoff;
+    capturedQueueId = props.queueId;
     return null;
   },
 }));
@@ -67,10 +70,20 @@ function renderComponent(contactId = CONTACT_ID) {
   );
 }
 
-/** Cada tabela com a cadeia que o componente usa. */
+/** Cadeia de `contacts` usada pela leitura da fila do contato (filtro do diálogo). */
+const CONTACTS_TABLE = () => ({
+  select: () => ({
+    eq: () => ({
+      maybeSingle: () => Promise.resolve({ data: { queue_id: 'queue-1' }, error: null }),
+    }),
+  }),
+});
+
+/** Cada tabela com a cadeia que o componente usa (a de `contacts` é padrão). */
 function mockTables(tables: Record<string, () => unknown>) {
+  const all: Record<string, () => unknown> = { contacts: CONTACTS_TABLE, ...tables };
   mocks.from.mockImplementation((table: string) => {
-    const handler = tables[table];
+    const handler = all[table];
     if (!handler) throw new Error(`tabela inesperada no teste: ${table}`);
     return handler();
   });
@@ -79,9 +92,11 @@ function mockTables(tables: Record<string, () => unknown>) {
 beforeEach(() => {
   vi.clearAllMocks();
   capturedOnHandoff = null;
+  capturedQueueId = undefined;
   mocks.rpcCalls.length = 0;
   mocks.getUser.mockResolvedValue({ data: { user: { id: AUTH_USER_ID } } });
   mocks.from.mockImplementation((table: string) => {
+    if (table === 'contacts') return CONTACTS_TABLE();
     throw new Error(`tabela inesperada no teste: ${table}`);
   });
 });
@@ -131,7 +146,10 @@ describe('RealtimeCollaboration — handleHandoff pelo painel do contato', () =>
         },
       },
     ]);
-    expect(mocks.from).not.toHaveBeenCalled();
+    // Sem comentário, nenhuma tabela de nota é tocada — o único `from` é a
+    // leitura da fila do contato que alimenta o filtro do diálogo.
+    expect(mocks.from.mock.calls.map((c) => c[0])).toEqual(['contacts']);
+    await waitFor(() => expect(capturedQueueId).toBe('queue-1'));
   });
 
   it('sucesso com nota salva: grava "Transferido: …" e invalida o painel de notas', async () => {
@@ -155,6 +173,10 @@ describe('RealtimeCollaboration — handleHandoff pelo painel do contato', () =>
     expect(noteInserts).toEqual([
       { contact_id: CONTACT_ID, author_id: 'me-profile', content: 'Transferido: cliente vip' },
     ]);
+    // A transferência mexeu em assigned_to/fila: contadores das abas e as duas
+    // famílias de notas precisam ser relidos.
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: conversationTabCountsKey(CONTACT_ID) });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['contact-notes'] });
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['internal-notes', CONTACT_ID] });
     expect(mocks.warn).not.toHaveBeenCalled();
   });
@@ -172,7 +194,12 @@ describe('RealtimeCollaboration — handleHandoff pelo painel do contato', () =>
     });
 
     await expect(capturedOnHandoff!('agent-1', 'cliente vip')).resolves.toEqual({ noteSaved: false });
-    expect(invalidateSpy).not.toHaveBeenCalled();
+    // A transferência FOI gravada (só a nota falhou): as caches derivadas do
+    // contato são invalidadas mesmo assim — antes só o caminho de nota salva
+    // invalidava, deixando os contadores das abas velhos.
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: conversationTabCountsKey(CONTACT_ID) });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['contact-notes'] });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['internal-notes', CONTACT_ID] });
     expect(mocks.warn).toHaveBeenCalledTimes(1);
   });
 

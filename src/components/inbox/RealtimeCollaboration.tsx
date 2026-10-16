@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { log } from '@/lib/logger';
+import { conversationTabCountsKey } from '@/hooks/chat/useConversationTabCounts';
 import { ViewersIndicator } from './collaboration/ViewersIndicator';
 import { InternalNotesPanel } from './collaboration/InternalNotesPanel';
 import { HandoffDialog, type HandoffResult } from './collaboration/HandoffDialog';
@@ -20,6 +21,24 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 export function RealtimeCollaboration({ contactId, className }: RealtimeCollaborationProps) {
   const [handoffOpen, setHandoffOpen] = useState(false);
   const queryClient = useQueryClient();
+
+  // `contacts.queue_id` decide o filtro da lista de destinos no diálogo: sem
+  // fila, o guard só permite atribuir para o próprio usuário (mesma regra do
+  // TransferDialog). Em erro/falha fica `undefined` → tratado como sem fila,
+  // o lado conservador (nunca oferece um destino que o trigger vai recusar).
+  const { data: contactQueueId } = useQuery({
+    queryKey: ['contact-queue-id', contactId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('contacts')
+        .select('queue_id')
+        .eq('id', contactId)
+        .maybeSingle();
+      if (error) throw error;
+      return ((data as { queue_id?: string | null } | null)?.queue_id ?? null) as string | null;
+    },
+    enabled: UUID_RE.test(contactId),
+  });
 
   // Antes deste fix o update em `contacts` era escrito sem ler `error` nem as
   // linhas afetadas e o insert da nota também não era conferido: com a policy
@@ -49,6 +68,15 @@ export function RealtimeCollaboration({ contactId, className }: RealtimeCollabor
       throw new Error('Nenhuma transferência foi gravada.');
     }
 
+    // A atribuição/fila do contato mudou: os contadores das abas e as DUAS
+    // famílias de notas (painel de notas internas e a lista do contato, que a
+    // nota de handoff alimenta) ficam velhos independentemente de a nota ter
+    // sido salva. `contact-notes` é invalidado pela família porque a chave
+    // inclui o id do usuário (ver `contactNotesKey`).
+    void queryClient.invalidateQueries({ queryKey: conversationTabCountsKey(contactId) });
+    void queryClient.invalidateQueries({ queryKey: ['contact-notes'] });
+    void queryClient.invalidateQueries({ queryKey: ['internal-notes', contactId] });
+
     let noteSaved = true;
     if (trimmedComment) {
       const { data: profile, error: profileError } = await supabase
@@ -74,8 +102,6 @@ export function RealtimeCollaboration({ contactId, className }: RealtimeCollabor
         // Sem conteúdo da nota no log (dado de cliente/conversa).
         log.warn('[RealtimeCollaboration] Nota de handoff não pôde ser salva.');
         noteSaved = false;
-      } else {
-        void queryClient.invalidateQueries({ queryKey: ['internal-notes', contactId] });
       }
     }
 
@@ -91,7 +117,7 @@ export function RealtimeCollaboration({ contactId, className }: RealtimeCollabor
         </Button>
       </div>
       <InternalNotesPanel contactId={contactId} />
-      <HandoffDialog open={handoffOpen} onOpenChange={setHandoffOpen} contactId={contactId} onHandoff={handleHandoff} />
+      <HandoffDialog open={handoffOpen} onOpenChange={setHandoffOpen} contactId={contactId} queueId={contactQueueId} onHandoff={handleHandoff} />
     </div>
   );
 }
