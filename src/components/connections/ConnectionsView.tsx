@@ -12,7 +12,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription,
 } from '@/components/ui/dialog';
 import {
-  Smartphone, Plus, QrCode, Loader2, CheckCircle2, XCircle, AlertCircle, RefreshCw,
+  Smartphone, Plus, QrCode, Loader2, CheckCircle2, XCircle, AlertCircle, AlertTriangle, RefreshCw,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,7 +22,9 @@ import { ConnectionQueuesDialog } from './ConnectionQueuesDialog';
 import { InstanceSettingsDialog } from './InstanceSettingsDialog';
 import { NumberReputationMonitor } from './NumberReputationMonitor';
 import { ConnectionCard } from './ConnectionCard';
-import { useConnectionsManager } from '@/hooks/inbox/useConnectionsManager';
+import { ConnectionDeleteDialog } from './ConnectionDeleteDialog';
+import { useConnectionsManager, type WhatsAppConnection } from '@/hooks/inbox/useConnectionsManager';
+import { useUserRole } from '@/hooks/system/useUserRole';
 
 /** E42 — texto único da trava de nova conexão (cabeçalho e estado vazio). */
 const MULTI_CONNECTION_LOCKED_MESSAGE = 'Múltiplas conexões ainda não estão habilitadas neste sistema';
@@ -36,6 +38,17 @@ export function ConnectionsView() {
     handleAddConnection, handleShowQrCode, handleRefreshQrCode,
     handleCopyId, handleDisconnect, handleSetDefault, handleDelete, closeQrDialog,
   } = useConnectionsManager();
+
+  // PM-37 (parte de tela do PM-36): a comparação entre as instâncias do
+  // provedor e as linhas de `whatsapp_connections` é uma ação de controle da
+  // Edge Function `evolution-api` (`reconcile-instances`), restrita a
+  // admin/supervisor — a tela só oferece o que a edge autoriza.
+  const { isAdmin, isSupervisor } = useUserRole();
+  const canManageInstances = isAdmin || isSupervisor;
+  const [orphans, setOrphans] = useState<{ soNoProvedor: string[]; soNoBanco: string[] } | null>(null);
+  const [checkingOrphans, setCheckingOrphans] = useState(false);
+  const [orphanError, setOrphanError] = useState<string | null>(null);
+  const [orphanToRemove, setOrphanToRemove] = useState<WhatsAppConnection | null>(null);
 
   // Trava a criação de conexão nova até o token por instância (Vault) estar
   // implementado — hoje ela nasceria sem credencial própria e usando o token
@@ -103,6 +116,40 @@ export function ConnectionsView() {
     } catch (e: unknown) {
       toast({ title: 'Erro no health check', description: e instanceof Error ? e.message : 'Erro desconhecido', variant: 'destructive' });
     } finally { setCheckingHealth(null); }
+  };
+
+  // PM-36/PM-37: quem existe no provedor e não existe aqui (ou o contrário).
+  // A edge é só leitura — ela não cria, não importa e não apaga nada. O Zapp
+  // NÃO importa instâncias: "só no provedor" é informativo.
+  const handleCheckOrphans = async () => {
+    setCheckingOrphans(true);
+    setOrphanError(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('evolution-api', {
+        body: { action: 'reconcile-instances' },
+      });
+      if (error) throw error;
+      // A edge responde 200 também nas falhas lógicas: o erro vem no corpo.
+      if (data?.error) throw new Error(data.message ?? 'Não foi possível comparar as instâncias.');
+      setOrphans({
+        soNoProvedor: data?.so_no_provedor ?? [],
+        soNoBanco: data?.so_no_banco ?? [],
+      });
+    } catch (e: unknown) {
+      setOrphans(null);
+      setOrphanError(e instanceof Error ? e.message : 'Não foi possível comparar as instâncias.');
+    } finally { setCheckingOrphans(false); }
+  };
+
+  // A remoção reaproveita o `handleDelete` do gerenciador (mesmo caminho do
+  // menu "Excluir" do cartão), depois da confirmação em duas etapas do
+  // ConnectionDeleteDialog — nenhum clique único apaga nada.
+  const handleRemoveOrphanRow = async () => {
+    const connection = orphanToRemove;
+    setOrphanToRemove(null);
+    if (!connection) return;
+    await handleDelete(connection);
+    await handleCheckOrphans();
   };
 
   return (
@@ -198,6 +245,84 @@ export function ConnectionsView() {
         ))}
       </div>
 
+      {/* PM-36/PM-37 — instâncias sem correspondência (só para quem a edge
+          autoriza: admin/supervisor). A lista é informativa e a única ação
+          destrutiva é remover a LINHA local órfã, com confirmação. */}
+      {canManageInstances && (
+        <Card className="border border-secondary/20 bg-card">
+          <CardContent className="p-4 space-y-3">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-medium flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-amber-500" aria-hidden="true" />
+                  Instâncias sem correspondência
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Compara as instâncias do provedor com as linhas de conexão daqui. O Zapp não
+                  importa instâncias — nada é criado nem alterado; só a linha local órfã pode ser removida.
+                </p>
+              </div>
+              <Button variant="outline" size="sm" onClick={handleCheckOrphans} disabled={checkingOrphans}>
+                {checkingOrphans ? <Loader2 className="w-4 h-4 mr-2 motion-safe:animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+                Verificar agora
+              </Button>
+            </div>
+
+            {orphanError && <p role="alert" className="text-sm text-destructive">{orphanError}</p>}
+
+            {orphans && (
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-lg border border-secondary/20 p-3">
+                  <p className="text-sm font-medium">Só no provedor ({orphans.soNoProvedor.length})</p>
+                  <p className="text-xs text-muted-foreground">
+                    Existem no provedor e não têm linha aqui. O Zapp não importa instâncias.
+                  </p>
+                  {orphans.soNoProvedor.length === 0 ? (
+                    <p className="text-xs text-muted-foreground mt-2">Nenhuma.</p>
+                  ) : (
+                    <ul className="mt-2 space-y-1">
+                      {orphans.soNoProvedor.map((nome) => (
+                        <li key={nome} className="text-sm font-mono break-all">{nome}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <div className="rounded-lg border border-secondary/20 p-3">
+                  <p className="text-sm font-medium">Só no banco ({orphans.soNoBanco.length})</p>
+                  <p className="text-xs text-muted-foreground">
+                    Linhas reservadas que não têm instância no provedor. A remoção pede confirmação
+                    e segue o mesmo caminho da exclusão de conexão.
+                  </p>
+                  {orphans.soNoBanco.length === 0 ? (
+                    <p className="text-xs text-muted-foreground mt-2">Nenhuma.</p>
+                  ) : (
+                    <ul className="mt-2 space-y-2">
+                      {orphans.soNoBanco.map((nome) => {
+                        const connection = connections.find((c) => c.instance_id === nome);
+                        return (
+                          <li key={nome} className="flex flex-wrap items-center justify-between gap-2">
+                            <span className="text-sm font-mono break-all">{nome}</span>
+                            {connection ? (
+                              <Button variant="outline" size="sm" onClick={() => setOrphanToRemove(connection)}>
+                                Remover linha órfã
+                              </Button>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">
+                                sem conexão carregada nesta tela
+                              </span>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Connections List */}
       {loading ? (
         <div className="flex items-center justify-center py-8 text-muted-foreground"><Loader2 className="w-6 h-6 animate-spin mr-2" />Carregando conexões...</div>
@@ -236,6 +361,14 @@ export function ConnectionsView() {
       <BusinessHoursDialog open={businessHoursDialog.open} onOpenChange={(open) => setBusinessHoursDialog(prev => ({ ...prev, open }))} connectionId={businessHoursDialog.connectionId} connectionName={businessHoursDialog.connectionName} />
       <ConnectionQueuesDialog open={queuesDialog.open} onOpenChange={(open) => setQueuesDialog(prev => ({ ...prev, open }))} connectionId={queuesDialog.connectionId} connectionName={queuesDialog.connectionName} />
       <InstanceSettingsDialog open={settingsDialog.open} onOpenChange={(open) => setSettingsDialog(prev => ({ ...prev, open }))} instanceName={settingsDialog.instanceName} connectionName={settingsDialog.connectionName} />
+      {orphanToRemove && (
+        <ConnectionDeleteDialog
+          open
+          onOpenChange={(open) => { if (!open) setOrphanToRemove(null); }}
+          connectionName={orphanToRemove.name}
+          onConfirm={() => { void handleRemoveOrphanRow(); }}
+        />
+      )}
       <NumberReputationMonitor />
     </div>
   );

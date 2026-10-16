@@ -40,6 +40,20 @@ const INITIAL_QR_STATE: QrCodeDialogState = {
   status: 'loading',
 };
 
+// PM-37: a edge `evolution-api` responde HTTP 200 com
+// `{ error: true, status: 404, message: 'Instância não encontrada…' }` quando
+// a instância não existe na Evolution GO, e o `callApi` relança isso como um
+// Error com `apiStatus: 404`. Só esse caso significa "já não existe no
+// provedor" (exclusão idempotente). Todo o resto — 500, timeout, falha de
+// rede — continua bloqueando o delete local (TRA-005).
+function isInstanceNotFoundError(e: unknown): boolean {
+  if (!e || typeof e !== 'object') return false;
+  const status = (e as { apiStatus?: unknown }).apiStatus;
+  if (status === 404 || status === '404') return true;
+  const message = e instanceof Error ? e.message : String(e);
+  return /não encontrad|not.?found|\b404\b/i.test(message);
+}
+
 export function useConnectionsManager() {
   const [connections, setConnections] = useState<WhatsAppConnection[]>([]);
   const [loading, setLoading] = useState(true);
@@ -322,12 +336,21 @@ export function useConnectionsManager() {
   // a GO (o edge só apaga a linha em whatsapp_connections quando a GO
   // confirma), depois o vínculo local. Se o vínculo sobrar, o estado é
   // "exclusão pendente" — nunca sucesso mudo.
+  //
+  // Exceção (PM-37, linha órfã "só no banco"): a exclusão é idempotente — se
+  // o provedor responde "instância inexistente" (404 da GO/edge), não há nada
+  // remoto a preservar e o fluxo SEGUE para o delete local. Qualquer outro
+  // erro da GO continua interrompendo tudo, como acima.
   const handleDelete = async (connection: WhatsAppConnection) => {
     try {
       if (connection.instance_id) {
         // Sem `.catch(() => {})`: a rejeição da GO sobe e interrompe o fluxo,
         // para não remover o vínculo local com a instância remota ainda viva.
-        await deleteInstance(connection.instance_id);
+        try {
+          await deleteInstance(connection.instance_id);
+        } catch (e: unknown) {
+          if (!isInstanceNotFoundError(e)) throw e;
+        }
       }
 
       // Idempotente: cobre linha órfã (sem instance_id) e o caso de o edge não

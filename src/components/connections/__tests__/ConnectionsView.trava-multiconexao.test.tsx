@@ -38,6 +38,12 @@ vi.mock('@/integrations/supabase/client', () => ({
   },
 }));
 
+// PM-37: ConnectionsView passou a ler o papel (bloco de instâncias órfãs só
+// para admin/supervisor); o hook exige AuthProvider, que este teste não monta.
+vi.mock('@/hooks/system/useUserRole', () => ({
+  useUserRole: () => ({ isAdmin: true, isSupervisor: true, roles: ['admin'], loading: false }),
+}));
+
 vi.mock('@/hooks/inbox/useConnectionsManager', () => ({
   useConnectionsManager: () => ({
     connections: h.connections,
