@@ -21,12 +21,14 @@
 --     "Block direct audit log inserts" (WITH CHECK false) barra o INSERT direto,
 --     e por isso a escrita so sai pelo caminho SECURITY DEFINER.
 --
--- Como rodar (PostgreSQL 17 descartavel, UM arquivo, UMA transacao com ROLLBACK):
---   docker run --rm -d --name pg-audit-admin -e POSTGRES_PASSWORD=t postgres:17-alpine
+-- Como rodar (PostgreSQL 17 descartavel, UM arquivo, UMA transacao com ROLLBACK).
+-- O `\i` do arquivo roda DENTRO do container, entao a copia precisa estar montada
+-- (com caminho de host o psql do container nao acha o arquivo):
+--   docker run -d --name pg-audit-admin -e POSTGRES_PASSWORD=t \
+--     -v "$PWD":/repo postgres:17-alpine
 --   docker exec -i pg-audit-admin psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres \
---     -v mig_dir="$PWD/supabase/migrations" \
+--     -v mig_dir=/repo/supabase/migrations \
 --     -f - < supabase/tests/audit_admin_changes.sql
---   (sem `-v mig_dir`, assume `supabase/migrations`)
 --
 -- VERMELHO (o teste falha quando a correcao nao esta la): acrescente `-v sem_guarda=1`.
 --   Com sem_guarda os 8 gatilhos sao derrubados DENTRO da transacao — nada persiste
