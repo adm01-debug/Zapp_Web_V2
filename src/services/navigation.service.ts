@@ -2,8 +2,8 @@ import type { AppRole } from './role.service';
 import type { LucideIcon } from 'lucide-react';
 import { 
   MessageSquare, MessagesSquare, Mail, User, BarChart3, Kanban, Sparkles, Settings,
-  Building2, Wallet, Package, LayoutDashboard, CalendarClock, UsersRound,
-  Bot, RefreshCw, Workflow, Brain, TrendingDown, Tags, Megaphone, FileText,
+  Building2, Wallet, Package, CreditCard, LayoutDashboard, CalendarClock, UsersRound,
+  Bot, RefreshCw, Workflow, Brain, TrendingDown, Tags, FileText,
   FileBarChart, AlertTriangle, HeartPulse, Gauge, Target, Trophy,
   Link2, Plug, Inbox, PhoneCall, Activity, Calendar,
   Phone, Shield, ShieldCheck, UserCog, Palette, BookOpen, Lock,
@@ -90,7 +90,6 @@ export class NavigationService {
           { id: 'knowledge', icon: Brain, label: 'Base de Conhecimento', roles: STAFF_ROLES },
           { id: 'churn', icon: TrendingDown, label: 'Previsão Churn', roles: STAFF_ROLES },
           { id: 'ticket-classifier', icon: Tags, label: 'Classificador IA', roles: STAFF_ROLES },
-          { id: 'campaigns', icon: Megaphone, label: 'Campanhas Clássicas', roles: STAFF_ROLES },
           { id: 'wa-templates', icon: FileText, label: 'Templates WA', roles: STAFF_ROLES },
         ],
       },

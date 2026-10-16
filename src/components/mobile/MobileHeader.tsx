@@ -25,7 +25,6 @@ const viewLabels: Record<string, string> = {
   groups: 'Grupos',
   queues: 'Filas',
   connections: 'Conexões',
-  campaigns: 'Campanhas',
   chatbot: 'Chatbot',
   tasks: 'Tarefas',
   wallet: 'Carteira',
