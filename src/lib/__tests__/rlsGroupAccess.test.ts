@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest';
 import {
   cobreComando,
   comandoProtegido,
-  normSql,
   paridadeDeNomes,
   policiesOn,
   predicadoEfetivo,
@@ -37,6 +36,13 @@ function checaManifest(policies: EffectivePolicy[], tabela: string): void {
 
 const ADMIN_OU_SUPERVISOR = /is_admin_or_supervisor\(\s*auth\.uid\(\)\s*\)/;
 
+/**
+ * Gates de papel da casa: membro com qualquer papel em `user_roles`
+ * (`user_has_any_app_role()`, o gate das tabelas de configuracao) ou
+ * admin/supervisor. Qualquer outro predicado — `true` inclusive — reprova.
+ */
+const GATE_DE_PAPEL = /user_has_any_app_role\(\s*\)|is_admin_or_supervisor\(\s*auth\.uid\(\)\s*\)/;
+
 /** Comandos de escrita — `FOR ALL` e avaliado contra cada um deles. */
 const ESCRITA: ComandoRls[] = ['INSERT', 'UPDATE', 'DELETE'];
 
@@ -52,12 +58,19 @@ describe('RLS real: whatsapp_groups (schema resolvido das migrations)', () => {
     checaManifest(policies, 'whatsapp_groups');
   });
 
-  it('SELECT e aberto a todo usuario autenticado', () => {
-    const select = policies.filter((p) => p.command === 'SELECT');
+  it('SELECT exige papel em user_roles — conta sem papel nao le', () => {
+    // `policies.filter(cobreComando)` (e nao `command === 'SELECT'`) para
+    // pegar tambem um FOR ALL que conceda SELECT pelo USING.
+    const select = policies.filter((p) => cobreComando(p, 'SELECT'));
     expect(select.length).toBeGreaterThan(0);
     for (const p of select) {
       expect(p.roles).toContain('authenticated');
-      expect(normSql(p.using)).toBe('true');
+      // Contrato vigente: a migration 20261012151545 substituiu o USING(true)
+      // das politicas de SELECT TO authenticated pelo gate de papel — conta
+      // autenticada SEM linha em public.user_roles nao le mais.
+      const predicado = predicadoEfetivo(p, 'SELECT');
+      expect(predicado, `${p.name} abriu SELECT para todos`).not.toBe('true');
+      expect(predicado, p.name).toMatch(GATE_DE_PAPEL);
     }
   });
 
