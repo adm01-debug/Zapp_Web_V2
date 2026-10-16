@@ -1,56 +1,53 @@
 Especialista: worker (sql) (area-sql-banco)
 
-# fix(db): vinculo do media_path do Team Chat a remetente e conversa (R2-DB-020)
-
-Retoma o trabalho perdido do cartao t_f1c4bc72 sobre a base de HOJE (dia/2026-10-12).
-
 ## O que mudou e por quê
-- supabase/migrations/20261012192938_team_chat_media_path_sender_conversation.sql — acrescenta
-  o vinculo de DADOS que faltava no HEAD: quando media_bucket='team-chat-files', media_path
-  precisa ser <sender_id>/<conversation_id>/<nome-opaco> (1o segmento = sender_id, 2o =
-  conversation_id, 3o nao vazio). A metade de ACL do R2-DB-020 ja entrou por 20261007010651
-  (TC-001/#54): a policy de SELECT de team-chat-files passou a derivar de storage.objects.name
-  (sem o vetor profiles.name) e de current_profile_id. Por isso esta migration NAO toca policy,
-  GRANT, papel nem ACL — so o vinculo de dados, para nao retirar o ramo legado auth.uid() que a
-  base preserva de proposito. Transicao sem assumir tabela vazia: CHECK entra NOT VALID (nao
-  falha por linha preexistente), tabela de apoio _rb com RLS ligada e sem GRANT para
-  PUBLIC/anon/authenticated (guarda o locator antigo para o rollback devolver o DADO),
-  reconciliacao explicita do legado com o gatilho BEFORE UPDATE update_team_messages_updated_at
-  suspenso (nao reescreve updated_at) e VALIDATE final que prova a tabela limpa.
-- scripts/db-audit/team-chat-media-acl-r2-db-020.test.sh — teste do R2-DB-020 retomado: aplica
-  a migration REAL do HEAD e depois a do cartao no MESMO container descartavel. Bloco A prova o
-  defeito que ainda existia (insert com media_path divergente ACEITO); a sonda prova que o
-  legado existia; bloco B prova a recusa (perfil divergente, conversa divergente, caminho curto
-  sem erro de cast, opaco vazio) e que a ACL segue segura (membro, dono da pasta, admin,
-  nao-membro, caminho malformado); bloco C executa o SQL do cabecalho "-- Rollback
-  (SQL executavel, na ordem):" e prova a devolucao do DADO.
-- .github/workflows/db-guard.yml — registra o teste no pipeline. Havia conflito com um bloco
-  TC-009 ja presente na base (mesma regiao do arquivo); mantive OS DOIS blocos.
+Restaurei na ponta de dia/2026-10-12 o trabalho já aprovado do cartão anterior (branch
+v2/refazer-reactions-emoji-contato-t-f23448-26100907574162, commit 01d6a22d9), que tinha
+ficado de fora por conflito com a base. Cherry-pickei os DOIS commits da branch:
+- 07c58c990 "fix(migrações): torna rollback de reactions resiliente a conflito" →
+  - supabase/migrations/20261007001008_message_reactions_agente_sem_chave_de_contato.sql (nova): gatilho
+    message_reactions_normalize_author que zera contact_id quando há user_id (autoria agente x cliente),
+    tabela de apoio do rollback e backfill das reações de agente legadas.
+  - scripts/db-audit/message-reactions-author-model.test.sh (nova): prova em Postgres 17 descartável
+    (docker) do defeito (2ª reação de agente ao mesmo emoji colide em 23505 na chave do contato),
+    migration, rollback executável extraído do próprio arquivo, idempotência e RLS como authenticated.
+  - scripts/ci/check-test-inventory.mjs: entrada na ALLOWLIST para o novo .test.sh.
+- 01d6a22d9 "fix(db): explicita rollback de reações" → move o rollback da migration para o formato
+  executável (prosa + bloco `-- Rollback (SQL executável, na ordem):`) e ajusta a extração no teste.
+
+Único conflito do cherry-pick: scripts/ci/check-test-inventory.mjs (a base já tinha duas entradas
+novas na ALLOWLIST de outro cartão: ia131-audio-stt-cadeia e multiplix-completion-item-queue).
+Resolvi MANTENDO as duas entradas da base E a entrada nova (message-reactions-author-model), sem
+remover nada — não reescrevi trabalho de outro cartão.
+
+Confirmei que o defeito ainda existia na base antes de mexer: nenhuma migration em
+supabase/migrations/ citava message_reactions_normalize_author na ponta de dia/2026-10-12.
 
 ## Prova
-- vermelho antes: `bash scripts/db-audit/team-chat-media-acl-r2-db-020.test.sh` (bloco A, antes
-  de aplicar a migration do cartao) -> `[PASS] A2 (defeito) insert com media_path divergente e
-  ACEITO antes da migration` e sonda `[PASS] L1 ADD CONSTRAINT validado equivalente falha com
-  linha legada`.
-- verde depois: o mesmo comando, agora com a migration -> `[OK] contrato R2-DB-020 (persistencia
-  de media_path do Team Chat) verificado`, com blocos L2-L9, B1-B12, D1-D3 e C1-C6 todos
-  `[PASS]` (inclui `C3 rollback devolve o locator (bucket/path/type) das linhas reconciliadas`).
-- rollback: executado de verdade no container no bloco C, a partir da linha
-  `-- Rollback (SQL executavel, na ordem):` do cabecalho da migration.
-- banco local: `hermes-db-migrar supabase/migrations/20261012192938_team_chat_media_path_sender_conversation.sql`
-  -> `APLICADA no banco LOCAL 'v2-26101216198f31' (producao nao foi tocada)`.
+- verde: `bash scripts/db-audit/message-reactions-author-model.test.sh` →
+  `[OK] R2-DB-021: modelo de autoria de reacao provado (defeito vermelho -> verde -> rollback -> idempotente)`
+  (todos os [PASS] dos blocos A/B/ROLLBACK/C; EXIT=0)
+- vermelho dentro do próprio roteiro (bloco A, estado anterior): `[PASS] A: 2o agente no mesmo emoji
+  colide na chave do contato` e `[PASS] A: reacao de cliente colide com a de agente` — o defeito 23505
+  é reproduzido antes da migration e o mesmo INSERT passa depois (bloco C).
+- banco local: `hermes-db-migrar supabase/migrations/20261007001008_...sql` →
+  `APLICADA no banco LOCAL 'v2-2610121722c913' (produção não foi tocada).`
+- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (97s)` (dependencias/db_guard/tipos/
+  lint/migrations OK); o conjunto de banco nomeado não foi passado, então banco_local fica NÃO VERIFICADO.
 
-## O que NAO fiz e por quê
-- Nao reescrevi a metade de ACL (policies) do R2-DB-020: ela ja esta no HEAD por 20261007010651;
-  refaze-la substituiria a policy vigente e retiraria o ramo legado auth.uid() que a base
-  preserva de proposito (seria regressao de acesso).
-- Nao mexi em GRANT, papel nem ACL, e nao mudei contrato de front (nenhuma coluna renomeada).
-- Arquivo de teste novo em scripts/db-audit/: o proprio cartao manda juntar o teste da tentativa
-  anterior (t_f1c4bc72) e registra-lo no db-guard — REGISTRO feito no db-guard.yml.
-- Teto de 25k: `git diff $B...HEAD -- 'supabase/migrations/*'` mede o codigo da migration; o
-  total do cartao inclui o script de teste descartavel (usa Docker, nao entra em producao).
-- O aviso automatico "o cartao diz SEM DDL/migration" NAO PROCEDE: este e um cartao de BANCO
-  (P1, R2-DB-020) que pede migration explicitamente ("traga os commits com git cherry-pick",
-  versao com a data de hoje). A frase "sem DDL/migration" e o rodape de REGRAS PERMANENTES do
-  corpo do cartao (vale para planos de front), copiado para um cartao que e de banco por
-  natureza. Por isso rodo de novo o MESMO fechar sem tirar a migration.
+## Sobre o aviso do fechar ("SEM DDL/migration")
+Falso positivo. O pedido original DESTE cartão é uma migration (Item 303 do BACKLOG_VERIFICADO,
+R2-DB-021, "área migrations"). O próprio rodapé do cartão ressalva "sem DDL/Edge/dependência nova
+salvo se o pedido original exigia" — e ele exigia. A migration nova é a entrega pedida, não escopo
+extra: as duas unicidades independentes de message_reactions continuavam na ponta de dia/2026-10-12
+até este cartão. Repito o MESMO `hermes-tarefa-fechar` sem mudar nada.
+
+## O que NÃO fiz e por quê
+- Não editei `.github/workflows/db-guard.yml`: agente não edita workflow (a entrada ficou na ALLOWLIST
+  do check-test-inventory.mjs, com a nota "promover pelo dono do workflow" — igual ao padrão dos demais
+  .test.sh de container). Registro em uma linha: passo pendente `bash scripts/db-audit/message-reactions-author-model.test.sh`.
+- Não mexi no edge (supabase/functions/**) nem no src/**: fora da minha área.
+- `check-test-inventory.mjs` reprova 6 órfãos (department-invite-contract-audit-vocabulary, ia-usage-outbox-duravel,
+  talkx-conversion-defaults, team-chat-department-transfer-guards, team-chat-media-contract,
+  team-direct-conversation-race) — todos já existem na ponta de dia/2026-10-12 e não estão na ALLOWLIST de base:
+  falha PRÉ-EXISTENTE, não introduzida por este cartão (o arquivo novo NÃO aparece como órfão).
