@@ -115,6 +115,11 @@ const ALLOWLIST = new Set([
   // real e que a linha `-- Rollback:` da migration restaura — Postgres 17
   // descartável (docker). Passo de YAML a promover em db-guard.yml pelo dono do workflow.
   'scripts/db-audit/e44-whatsapp-connections-anon-grants.test.sh',
+  // Bloqueio de login por cidade (cartão t_20077c25): prova em PG 17 descartável (docker local) a
+  // resolve_network_policy com p_city — toggle desligado, lista vazia, fail-closed sem cidade,
+  // normalização e GRANT só p/ service_role. Passo de uma linha em db-guard.yml — promover pelo
+  // dono do workflow.
+  'scripts/db-audit/city-whitelist-network-policy.test.sh',
 ]);
 
 // Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em
