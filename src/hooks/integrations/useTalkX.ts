@@ -291,7 +291,7 @@ export function useTalkX() {
       creationKey: string | null;
       payload: CampaignPayload;
     }) => {
-      const rpc = supabase.rpc as unknown as PendingDatabaseRpc;
+      const rpc = supabase.rpc.bind(supabase) as unknown as PendingDatabaseRpc;
       const { data, error } = await rpc('save_talkx_campaign_draft', {
         p_campaign_id: campaignId,
         p_expected_revision: expectedRevision,
@@ -316,7 +316,7 @@ export function useTalkX() {
       expectedRevision: number | null;
       limits: Record<string, unknown>;
     }) => {
-      const rpc = supabase.rpc as unknown as PendingDatabaseRpc;
+      const rpc = supabase.rpc.bind(supabase) as unknown as PendingDatabaseRpc;
       const { data, error } = await rpc('update_talkx_campaign_limits', {
         p_campaign_id: id,
         p_expected_revision: expectedRevision,
@@ -334,7 +334,7 @@ export function useTalkX() {
     mutationFn: async (id: string) => {
       // X026: a exclusão passa pela RPC (draft ou scheduled, sem envio). O delete
       // direto no PostgREST só alcançava rascunho e não deixava rastro/autorização.
-      const rpc = supabase.rpc as unknown as PendingDatabaseRpc;
+      const rpc = supabase.rpc.bind(supabase) as unknown as PendingDatabaseRpc;
       const { error } = await rpc('delete_talkx_campaign', { p_campaign_id: id });
       if (error) throw new Error(error.message);
     },
@@ -352,7 +352,7 @@ export function useTalkX() {
    */
   const duplicateCampaign = useMutation({
     mutationFn: async (id: string) => {
-      const rpc = supabase.rpc as unknown as PendingDatabaseRpc;
+      const rpc = supabase.rpc.bind(supabase) as unknown as PendingDatabaseRpc;
       const { data, error } = await rpc('duplicate_talkx_campaign', { p_campaign_id: id });
       if (error) throw new Error(error.message);
       const row = Array.isArray(data) ? data[0] : data;
@@ -377,7 +377,7 @@ export function useTalkX() {
       // Compatibilidade do hook antigo: destinatários agora só podem ser
       // gravados pelo snapshot transacional. Insert direto violaria o trigger
       // de integridade e permitiria contador/audiência divergentes.
-      const rpc = supabase.rpc as unknown as PendingDatabaseRpc;
+      const rpc = supabase.rpc.bind(supabase) as unknown as PendingDatabaseRpc;
       const { error } = await rpc('replace_talkx_draft_recipients', {
         p_campaign_id: campaignId,
         p_contact_ids: contactIds,
@@ -403,7 +403,7 @@ export function useTalkX() {
       campaignId: string;
       contactIds: string[];
     }) => {
-      const rpc = supabase.rpc as unknown as PendingDatabaseRpc;
+      const rpc = supabase.rpc.bind(supabase) as unknown as PendingDatabaseRpc;
       const { data, error } = await rpc('replace_talkx_draft_recipients', {
         p_campaign_id: campaignId,
         p_contact_ids: contactIds,
@@ -432,7 +432,7 @@ export function useTalkX() {
       campaignId: string;
       expectedRevision: number;
     }) => {
-      const rpc = supabase.rpc as unknown as PendingDatabaseRpc;
+      const rpc = supabase.rpc.bind(supabase) as unknown as PendingDatabaseRpc;
       const { data, error } = await rpc('snapshot_talkx_campaign_audience', {
         p_campaign_id: campaignId,
         p_expected_revision: expectedRevision,

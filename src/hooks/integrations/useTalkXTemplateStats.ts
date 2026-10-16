@@ -99,7 +99,7 @@ export function useTalkXTemplateLibraryStats(dias: number = 30, top: number = 3)
   const query = useQuery({
     queryKey: ['talkx-template-library-stats', dias, top],
     queryFn: async () => {
-      const rpc = supabase.rpc as unknown as PendingDatabaseRpc;
+      const rpc = supabase.rpc.bind(supabase) as unknown as PendingDatabaseRpc;
       const { data, error } = await rpc('talkx_template_library_stats', { p_days: dias, p_top: top });
       if (error) throw error;
       return (data ?? null) as TalkXTemplateLibraryStats | null;
@@ -125,7 +125,7 @@ export function useTalkXTemplateStats(templateId: string | null | undefined, dia
     enabled: !!templateId,
     queryFn: async () => {
       const { p_from, p_to } = templateStatsRange(dias);
-      const rpc = supabase.rpc as unknown as PendingDatabaseRpc;
+      const rpc = supabase.rpc.bind(supabase) as unknown as PendingDatabaseRpc;
       const { data, error } = await rpc('talkx_template_stats', {
         p_template_id: templateId as string,
         p_from,

@@ -200,7 +200,7 @@ export function useAIUsageDashboard() {
     queryFn: async () => {
       // O tipo gerado ainda nao conhece esta RPC (types.ts e regenerado do banco,
       // que esta indisponivel); o cast some quando a regeneracao rodar.
-      const { data, error } = await (supabase.rpc as unknown as (
+      const { data, error } = await (supabase.rpc.bind(supabase) as unknown as (
         fn: string,
         args: Record<string, unknown>,
       ) => Promise<{ data: unknown; error: unknown }>)('ai_usage_summary', {
@@ -223,7 +223,7 @@ export function useAIUsageDashboard() {
   const { data: custos, refetch: refetchCustos } = useQuery({
     queryKey: ['ai-usage-cost', timeFilter],
     queryFn: async () => {
-      const { data, error } = await (supabase.rpc as unknown as (
+      const { data, error } = await (supabase.rpc.bind(supabase) as unknown as (
         fn: string,
         args: Record<string, unknown>,
       ) => Promise<{ data: unknown; error: unknown }>)('ai_usage_cost_summary', {

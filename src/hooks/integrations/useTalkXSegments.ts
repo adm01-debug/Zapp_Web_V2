@@ -286,7 +286,7 @@ const AUDIENCE_RPC_PAGE_LIMIT = 1000;
  * PostgREST filtrando só `phone not null`, o que superestimava o público.
  */
 export async function countAudience(rules: SegmentRules | null | undefined, segmentIds?: string[]): Promise<number> {
-  const rpc = supabase.rpc as unknown as TalkXAudienceRpc;
+  const rpc = supabase.rpc.bind(supabase) as unknown as TalkXAudienceRpc;
   const { data, error } = await rpc('talkx_resolve_audience', {
     p_rules: audienceRulesPayload(rules),
     p_segment_ids: segmentIds ?? null,
@@ -307,7 +307,7 @@ export interface AudienceContact { id: string; name: string; nickname: string | 
  * mascarado pelo servidor e a paginação percorre até `limit` (ou o fim da lista).
  */
 export async function resolveAudience(rules: SegmentRules | null | undefined, limit = 5000, segmentIds?: string[]): Promise<AudienceContact[]> {
-  const rpc = supabase.rpc as unknown as TalkXAudienceRpc;
+  const rpc = supabase.rpc.bind(supabase) as unknown as TalkXAudienceRpc;
   const target = Math.max(0, Math.floor(limit));
   const rows: AudienceContact[] = [];
   let after: string | null = null;
@@ -408,7 +408,7 @@ export function useSegmentLibraryStats() {
   return useQuery({
     queryKey: LIBRARY_STATS_QUERY_KEY,
     queryFn: async () => {
-      const rpc = supabase.rpc as unknown as TalkXLibraryStatsRpc;
+      const rpc = supabase.rpc.bind(supabase) as unknown as TalkXLibraryStatsRpc;
       const { data, error } = await rpc('talkx_segment_library_stats', { p_timezone: SEGMENT_TIMEZONE });
       if (error) throw new Error(error.message);
       return data as TalkXSegmentLibraryStats;
@@ -493,7 +493,7 @@ export async function applySegmentBulkAction(input: {
   // Falha fechada ANTES de chamar o servidor: entrada inválida não aplica nada.
   if (input.action === 'tag' && !tag) throw new Error('Informe a tag para aplicar em massa.');
 
-  const rpc = supabase.rpc as unknown as TalkXBulkRpc;
+  const rpc = supabase.rpc.bind(supabase) as unknown as TalkXBulkRpc;
   const results: TalkXSegmentBulkResult[] = [];
 
   for (let start = 0; start < ids.length; start += BULK_ACTION_MAX_IDS) {
