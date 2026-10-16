@@ -54,6 +54,7 @@ const scrollToOriginal = protoHtml.scrollTo;
 protoHtml.scrollTo = function (this: HTMLElement, opcoes?: ScrollToOptions | number) {
   scrollToSpy(opcoes);
   this.scrollTop = typeof opcoes === 'number' ? opcoes : opcoes?.top ?? 0;
+  this.dispatchEvent(new Event('scroll'));
 };
 
 afterAll(() => {
@@ -220,20 +221,20 @@ function useMessagesState(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function buildUi() {
+function renderPopup() {
+  // QueryClient fixo: reutilizar a mesma instância garante que o contexto do
+  // QueryClientProvider nao muda entre rerenders — evita que o React desmonte e
+  // remonte o ChatMessagesArea (e redefina isNearBottomRef para true).
+  // Um novo elemento JSX a cada rerender forca o React a re-renderizar os filhos
+  // (relendo os mocks), sem mudar o valor do contexto.
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return (
+  const makeUi = () => (
     <QueryClientProvider client={queryClient}>
       <ChatPopup />
     </QueryClientProvider>
   );
-}
-
-function renderPopup() {
-  // Elemento novo a cada render: o React balança (bail out) com props idênticas
-  // por referência e o popup nao veria o novo estado da fachada.
-  const { rerender } = render(buildUi());
-  return { rerender: () => rerender(buildUi()) };
+  const { rerender } = render(makeUi());
+  return { rerender: () => rerender(makeUi()) };
 }
 
 function superficie() {
