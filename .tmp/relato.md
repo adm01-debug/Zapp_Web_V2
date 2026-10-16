@@ -1,22 +1,23 @@
-Especialista: Íris (area-front-componentes)
+Especialista: Hugo (area-front-hooks)
+
+Concluído: sim. Os três pontos do cartão estão no diff e a verificação passou verde.
 
 ## O que mudou e por quê
-- src/components/dashboard/DashboardView.tsx: monta o WidgetConfigSheet no topo da aba Visão Geral (`data-testid="dash-personalizar"`) e cria a instância única de `useDashboardWidgets`; passa `widgetConfig.visibleWidgets` para a GamificationSection. Antes o componente existia pronto, mas nada o abria (PROBLEMA do cartão).
-- src/components/dashboard/WidgetConfigSheet.tsx: o botão passa a se chamar "Personalizar"; a lista ganha arrastar (`@hello-pangea/dnd`) COM alternativa de teclado (setas ↑/↓, cada uma com `aria-label`) e uma região `aria-live` (`LiveRegion`) que anuncia a nova posição; os cartões fixos `stats`/`queues`/`activity` ficam com interruptor travado e selo "Obrigatório". "Restaurar Padrão" segue chamando `resetToDefaults`.
-- src/components/dashboard/overview/GamificationSection.tsx: aceita `visibleWidgets` por prop. Antes tinha uma 2ª instância própria do hook, então o painel não surtia efeito nela até recarregar a página — agora visibilidade e ordem vêm da config compartilhada.
-- src/components/dashboard/DraggableWidgetContainer.tsx: repassa `onReorder` para o WidgetConfigSheet, mantendo o mesmo contrato de reordenação (arrastar + teclado).
+- src/hooks/system/useUserSettings.ts: `theme` e `language` deixaram de ser campos inertes do estado. Ao trocar na aba Aparência, `updateSettings` chama na hora o dono de cada um (`useTheme().setTheme` para o tema, `changeAppLanguage` — o mesmo caminho do `useLanguage().changeLanguage` — para o idioma), então a interface muda imediatamente e o cache do boot (`localStorage['theme']`/`['language']`) já sai com o código normalizado.
+- src/hooks/system/useUserSettings.ts: hidratação no login — o que veio do banco (`user_settings.theme|language`) passa a valer neste dispositivo (`aplicarPreferencias`). Antes, salvar 'Escuro' em um computador não mudava nada no outro.
+- src/hooks/system/useUserSettings.ts: `browser_notifications_enabled` saiu do upsert global. A coluna é posse do hook canônico `useNotificationSettings`, que grava no clique do interruptor; o upsert lia a cópia do mount e DESFAZIA a escolha do usuário ao clicar em "Salvar Alterações".
+- src/hooks/system/useUserSettings.ts: guarda de corrida — `escolhaLocalRef` + flag `ativo`. Resposta atrasada do banco não sobrescreve o tema/idioma que o usuário acabou de escolher (nem no estado, nem nos donos), e resposta que chega depois do unmount não mexe mais em nada.
+- src/i18n/index.ts: `normalizeLanguage` (`pt-BR`→`pt`, `en-US`→`en`) e `changeAppLanguage`; o boot (`lng:`) e o `useLanguage().changeLanguage` usam o mesmo caminho. Antes, o `pt-BR` que a aba Aparência grava no banco não existe em `resources` e o i18n caía no fallback — a interface ficava sempre em português.
+- src/hooks/__tests__/useUserSettings.tema-idioma.test.tsx (novo): 6 testes com o hook real.
+- src/hooks/__tests__/useUserSettings.test.tsx: 3 asserções do payload mudaram para o contrato novo. Todas ficaram MAIS ESTRITAS (antes exigiam `browser_notifications_enabled` no payload; agora exigem que a coluna NÃO esteja lá) — nada foi afrouxado.
 
 ## Prova
-- vermelho antes: `npx vitest run src/components/dashboard/__tests__/WidgetConfigSheet.test.tsx src/components/dashboard/__tests__/GamificationSection.customizacao.test.tsx` com os dois componentes na versão da base (`git show HEAD~1:...`) → `Test Files 2 failed (2); Tests 8 failed | 2 passed (10)` (no botão `btn-personalizar`, sem setas, sem `aria-live`, seção ignorando a prop).
-- verde depois: mesmo comando → `Test Files 2 passed (2); Tests 10 passed (10)`.
-- regressão da área: `npx vitest run src/components/dashboard/__tests__ src/hooks/__tests__/useDashboardWidgets.test.ts` → `Test Files 35 passed (35); Tests 168 passed (168)`.
-- lint no pre-commit: `baseline=2, atual=2, novas=0`.
-
-## Estados da tela alterada
-- Painel fechado (só o botão "Personalizar"), aberto com a lista, e "Modo de edição" ligado/desligado: cobertos pelo teste do painel.
-- Lista vazia e erro de carregamento do dashboard: inalterados por este cartão; o painel fica dentro de `SectionErrorBoundary sectionName="Personalizar widgets"`, então uma falha nele não derruba o resto da Visão Geral.
+- vermelho antes: `npx vitest run src/hooks/__tests__/useUserSettings.tema-idioma.test.tsx` com os fontes de `dia/2026-10-13` → `Tests 5 failed | 1 passed (6)` (ex.: `expected { user_id: 'u1', …(6) } to not have property "browser_notifications_enabled"`; `expected 'dark' to be 'light'` na corrida).
+- verde depois: `npx vitest run src/hooks/__tests__/useUserSettings.test.tsx src/hooks/__tests__/useUserSettings.tema-idioma.test.tsx` → `Test Files 2 passed (2); Tests 16 passed (16)`.
+- regressão da área de Configurações: `npx vitest run src/components/settings/__tests__ …` → `Test Files 28 passed (28); Tests 437 passed (437)`.
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO` com `OK tipos`, `OK lint`, `OK db_guard` e `OK migrations`. O cartão não pede DDL nenhum (tema e idioma já existem em `user_settings`; a coluna de notificações é escrita pelo hook canônico), então o banco local não faz parte da prova deste diff.
 
 ## O que NÃO fiz e por quê
-- Não alterei o hook `useDashboardWidgets` (src/hooks/** é da área de hooks): a persistência por navegador em localStorage e a leitura com try/catch continuam as do hook; esta entrega é só a montagem e o comportamento da tela.
-- Sem banco, sem migration, sem Edge Function: o cartão é de tela e nada aqui decide estado no servidor.
-- A DraggableWidgetContainer não ganhou montagem própria na Visão Geral (evita duplicar a grade de cards fixos); a superfície montada é o WidgetConfigSheet. Foi ajustada só para manter o mesmo contrato de reordenação.
+- Não toquei em src/components/settings/SettingsView.tsx nem em AppearanceSettings.tsx (arquivos de tela, área da Íris): o botão "Salvar Alterações" continua existindo e agora grava só campos que são posse deste hook (`theme`, `language`, `compact_mode`, `tts_*`), então o rótulo segue verdadeiro. Os `<Select>` já chamam `updateSettings`; a ligação aconteceu por dentro do hook, sem mudar o contrato da tela.
+- Não mexi em useTheme.ts: o `setTheme` existente já grava `localStorage['theme']` e a classe no `<html>`; a hidratação passou a usá-lo.
+- Nenhum DDL: o cartão cita "SQL" mas a coluna `user_settings.theme|language` já é usada por este hook.
