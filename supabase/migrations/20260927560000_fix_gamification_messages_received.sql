@@ -5,6 +5,7 @@
 CREATE OR REPLACE FUNCTION public.handle_message_gamification()
  RETURNS trigger
  LANGUAGE plpgsql
+ SECURITY DEFINER
  SET search_path TO ''
 AS $function$
 DECLARE
