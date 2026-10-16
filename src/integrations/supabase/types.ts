@@ -12903,7 +12903,6 @@ export type Database = {
           p_avatar_url?: string
           p_birthday?: string
           p_display_name?: string
-          p_email?: string
           p_phone?: string
           p_signature?: string
         }
