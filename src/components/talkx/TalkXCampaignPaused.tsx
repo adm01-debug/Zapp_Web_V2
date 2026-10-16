@@ -3,14 +3,89 @@
 // Antes desta tela, uma campanha `paused` abria `TalkXCampaignRunning` sob o
 // título "Campanha em Andamento": não havia nome da campanha, data da pausa,
 // banner de pausa nem confirmação para retomar/encerrar.
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, Pause, Play, RefreshCw, Square } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTalkX, type TalkXCampaign } from '@/hooks/integrations/useTalkX';
+import { fromTable, supabase } from '@/lib/supabaseHelpers';
 import {
   AlertCard, IconTile, TalkXConfirmDialog, TalkXEmptyState, TalkXQueryBoundary, TalkXSkeletonRows,
   fmtDateTime,
 } from './talkxShared';
+import { TalkXSentSummaryChart } from './tracking/TalkXSentSummaryChart';
+import { TalkXKeyMetricsCard } from './tracking/TalkXKeyMetricsCard';
+import {
+  SUMMARY_WINDOWS, type TalkXSentSummaryPoint, type TalkXSummaryWindow,
+} from './tracking/talkxSentSummary';
+import type { TalkXKeyMetricsBenchmarks, TalkXKeyMetricsData } from './tracking/talkxKeyMetrics';
+
+const HOUR_MS = 3_600_000;
+
+/** Base mínima da CAP-083: sem 5 campanhas concluídas não há "vs. média" para comparar. */
+const BENCHMARK_MIN_CAMPAIGNS = 5;
+
+/** Linha de `talkx_recipients` que o resumo consome. */
+interface SummaryRecipientRow {
+  sent_at: string;
+  delivered_at: string | null;
+  replied_at: string | null;
+}
+
+/** KPIs de `talkx_campaign_report(p_campaign)` (20260930670000). */
+interface TalkXReportKpis {
+  sent_count?: number | null;
+  delivered_count?: number | null;
+  failed_count?: number | null;
+  outcome_unknown_count?: number | null;
+  avg_reply_secs?: number | null;
+}
+
+/** Médias históricas de `talkx_benchmarks()` (CAP-083). */
+interface TalkXBenchmarksPayload {
+  global?: {
+    campaign_count?: number | null;
+    avg_delivery_rate_pct?: number | null;
+    avg_reply_rate_pct?: number | null;
+  } | null;
+}
+
+/**
+ * Série de hora em hora do "Resumo de Enviados" a partir das linhas REAIS da campanha.
+ *
+ * Não existe RPC de série por janela que traga as três linhas: o `talkx_campaign_report`
+ * devolve `hourly_series` só com `sent`/`delivered` e sem recorte de janela. O Monitor já
+ * monta a série dele no navegador a partir de até 2000 linhas ordenadas por `sent_at`
+ * (F11:34) — esta tela faz o mesmo e filtra a janela na consulta.
+ * Balde sem envio entra com zero para a linha do tempo não pular hora.
+ */
+function hourlySummaryPoints(
+  rows: SummaryRecipientRow[],
+  { minutes, now }: { minutes: number; now: number },
+): TalkXSentSummaryPoint[] {
+  // Nada no recorte (campanha sem envio, ou nenhum envio na janela): série vazia, para
+  // o card dizer "nenhum envio" em vez de desenhar uma reta de zeros.
+  if (rows.length === 0) return [];
+
+  const inicio = Math.floor((now - minutes * 60_000) / HOUR_MS) * HOUR_MS;
+  const baldes = new Map<number, { sent: number; delivered: number; replied: number }>();
+  for (let t = inicio; t <= now; t += HOUR_MS) baldes.set(t, { sent: 0, delivered: 0, replied: 0 });
+
+  for (const row of rows) {
+    const sentMs = new Date(row.sent_at).getTime();
+    if (Number.isNaN(sentMs)) continue;
+    const balde = baldes.get(Math.floor(sentMs / HOUR_MS) * HOUR_MS);
+    if (!balde) continue;
+    // `sent` conta o que saiu (tem `sent_at`), inclusive o que já foi entregue ou respondido.
+    balde.sent += 1;
+    if (row.delivered_at) balde.delivered += 1;
+    if (row.replied_at) balde.replied += 1;
+  }
+
+  return [...baldes.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([t, v]) => ({ bucket: new Date(t).toISOString(), ...v }));
+}
 
 interface Props {
   campaignId: string;
@@ -26,6 +101,97 @@ export function TalkXCampaignPaused({ campaignId, onBack, onStatusChange }: Prop
   } = useTalkX();
   // Deriva sempre da consulta: a linha do banco é a única fonte do status.
   const campaign = campaigns.find((c) => c.id === campaignId) ?? null;
+
+  const [summaryWindow, setSummaryWindow] = useState<TalkXSummaryWindow>('24h');
+  const windowMinutes = SUMMARY_WINDOWS.find((w) => w.id === summaryWindow)?.minutes ?? 1440;
+
+  // Série do "Resumo de Enviados": a janela faz parte da chave, então trocar o
+  // select pede o painel de novo (6/12/24 h) em vez de recortar o que já veio.
+  const summaryQuery = useQuery({
+    queryKey: ['talkx-paused-summary', campaignId, summaryWindow],
+    enabled: !!campaign,
+    queryFn: async () => {
+      const now = Date.now();
+      const { data, error } = await fromTable('talkx_recipients')
+        .select('sent_at, delivered_at, replied_at')
+        .eq('campaign_id', campaignId)
+        .not('sent_at', 'is', null)
+        .gte('sent_at', new Date(now - windowMinutes * 60_000).toISOString())
+        .order('sent_at', { ascending: false })
+        .limit(2000);
+      if (error) throw error;
+      return { now, rows: (data ?? []) as SummaryRecipientRow[] };
+    },
+  });
+
+  const summaryPoints = useMemo(
+    () => (summaryQuery.data
+      ? hourlySummaryPoints(summaryQuery.data.rows, { minutes: windowMinutes, now: summaryQuery.data.now })
+      : []),
+    [summaryQuery.data, windowMinutes],
+  );
+
+  // KPIs da campanha: o `talkx_campaign_report` traz o tempo médio de resposta, que
+  // a linha da campanha não guarda.
+  const kpisQuery = useQuery({
+    queryKey: ['talkx-paused-kpis', campaignId],
+    enabled: !!campaign,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('talkx_campaign_report', { p_campaign: campaignId });
+      if (error) throw error;
+      return ((data ?? null) as { kpis?: TalkXReportKpis } | null)?.kpis ?? null;
+    },
+  });
+
+  // Médias históricas (CAP-083): sem base mínima o card mostra o valor e não compara.
+  const benchmarksQuery = useQuery({
+    queryKey: ['talkx-benchmarks'],
+    enabled: !!campaign,
+    staleTime: 5 * 60_000,
+    queryFn: async (): Promise<TalkXKeyMetricsBenchmarks> => {
+      const { data, error } = await supabase.rpc('talkx_benchmarks');
+      if (error) throw error;
+      const global = ((data ?? null) as TalkXBenchmarksPayload | null)?.global ?? null;
+      return {
+        hasBaseline: (global?.campaign_count ?? 0) >= BENCHMARK_MIN_CAMPAIGNS,
+        avgDeliveryRatePct: global?.avg_delivery_rate_pct ?? null,
+        avgReplyRatePct: global?.avg_reply_rate_pct ?? null,
+      };
+    },
+  });
+
+  // "Quem pausou": `paused_by` não está no tipo do hook, e o nome sai do perfil (FK).
+  const actorQuery = useQuery({
+    queryKey: ['talkx-paused-ator', campaignId],
+    enabled: !!campaign,
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const { data, error } = await fromTable('talkx_campaigns')
+        .select('paused_by, ator:profiles!talkx_campaigns_paused_by_fkey(name)')
+        .eq('id', campaignId)
+        .maybeSingle();
+      if (error) throw error;
+      const nome = ((data ?? null) as { ator?: { name?: string | null } | null } | null)?.ator?.name;
+      return nome?.trim() || null;
+    },
+  });
+
+  const metrics = useMemo<TalkXKeyMetricsData>(() => {
+    const kpis = kpisQuery.data;
+    const sent = kpis?.sent_count ?? 0;
+    const failed = kpis?.failed_count ?? 0;
+    const unknown = kpis?.outcome_unknown_count ?? 0;
+    return {
+      sent,
+      delivered: kpis?.delivered_count ?? 0,
+      // `replied_count` não está nos KPIs do RPC: vem da linha da campanha, que é
+      // a mesma origem dos demais contadores.
+      replied: campaign?.replied_count ?? 0,
+      failed,
+      processed: sent + failed + unknown,
+      avgReplySeconds: kpis?.avg_reply_secs ?? null,
+    };
+  }, [kpisQuery.data, campaign]);
 
   // A pausa pode acabar sem passar por esta tela (retomada pelo Monitor, pelo
   // agendador dentro da janela de envio, ou encerrada em outra aba). Quem
@@ -129,9 +295,41 @@ export function TalkXCampaignPaused({ campaignId, onBack, onStatusChange }: Prop
               sendo entregues.
             </p>
             <p className="mt-1 text-2xs">
-              {campaign.paused_at ? `Pausada em ${fmtDateTime(campaign.paused_at)}` : 'Pausada sem data registrada'}
+              {campaign.paused_at
+                ? `Pausada em ${fmtDateTime(campaign.paused_at)}${actorQuery.data ? ` por ${actorQuery.data}` : ''}`
+                : 'Pausada sem data registrada'}
             </p>
           </AlertCard>
+
+          {/* Painel da campanha: resumo de enviados + principais métricas */}
+          <TalkXQueryBoundary
+            query={{
+              isLoading: summaryQuery.isLoading || kpisQuery.isLoading || benchmarksQuery.isLoading,
+              isFetching: summaryQuery.isFetching || kpisQuery.isFetching || benchmarksQuery.isFetching,
+              isError: summaryQuery.isError || kpisQuery.isError || benchmarksQuery.isError,
+              error: summaryQuery.error ?? kpisQuery.error ?? benchmarksQuery.error,
+            }}
+            entity="painel da campanha"
+            onRetry={() => {
+              void summaryQuery.refetch();
+              void kpisQuery.refetch();
+              void benchmarksQuery.refetch();
+            }}
+            skeleton={<TalkXSkeletonRows rows={6} variant="cards" />}
+            isEmpty={false}
+            empty={null}
+          >
+            <div className="space-y-4">
+              <TalkXSentSummaryChart
+                points={summaryPoints}
+                pausedAt={campaign.paused_at}
+                windowId={summaryWindow}
+                onWindowChange={setSummaryWindow}
+                loading={summaryQuery.isFetching}
+              />
+              <TalkXKeyMetricsCard metrics={metrics} benchmarks={benchmarksQuery.data ?? null} />
+            </div>
+          </TalkXQueryBoundary>
 
           {/* Ações */}
           <div className="rounded-2xl bg-card border border-border/70 p-4">

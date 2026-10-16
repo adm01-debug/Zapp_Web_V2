@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act, within } from '@testing-library/react';
 import React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 /**
  * Tela 13 — "Campanha Pausada" (X156 · F11 Acompanhar campanha).
@@ -59,6 +60,17 @@ vi.mock('sonner', () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), warning: vi.fn() },
 }));
 
+// A tela passou a ter consulta própria (painel da campanha) e "quem pausou": aqui
+// nada de rede — o painel devolve vazio e o ator, nenhum nome.
+vi.mock('@/lib/supabaseHelpers', () => {
+  const vazio = { data: [], error: null };
+  const cadeia: Record<string, unknown> = {};
+  for (const metodo of ['select', 'eq', 'not', 'gte', 'order', 'limit']) cadeia[metodo] = () => cadeia;
+  cadeia.maybeSingle = () => Promise.resolve({ data: null, error: null });
+  cadeia.then = (ok: (v: unknown) => unknown) => Promise.resolve(vazio).then(ok);
+  return { fromTable: () => cadeia, supabase: { rpc: async () => ({ data: null, error: null }) } };
+});
+
 import { toast } from 'sonner';
 import { TalkXCampaignPaused } from '../TalkXCampaignPaused';
 
@@ -103,11 +115,13 @@ function setQueryState(over: Partial<QueryState>) {
 
 function view() {
   return (
-    <TalkXCampaignPaused
-      campaignId="camp-pausada-1"
-      onBack={h.onBack}
-      onStatusChange={h.onStatusChange}
-    />
+    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+      <TalkXCampaignPaused
+        campaignId="camp-pausada-1"
+        onBack={h.onBack}
+        onStatusChange={h.onStatusChange}
+      />
+    </QueryClientProvider>
   );
 }
 
