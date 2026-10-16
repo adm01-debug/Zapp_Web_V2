@@ -5,13 +5,20 @@
  * avisava nada. Agora o banner aparece quando há falha do agente, entra deslizando (mola curta) e
  * tem "Enviar de novo" (spinner -> check) e "Dispensar" (também por Esc, com "Desfazer").
  *
- * Autoria e idade (PK-23, paridade com o varredor do PD-78): o banner só age no que o atendente
- * pode agir. `messages.agent_id` aponta para `profiles.id` (ver RLS de insert em messages), então:
- *  - atendente comum: só as falhas DELE entram (contador e reenvio) — texto antigo de outro
- *    atendente nunca é reenviado por aqui;
- *  - admin/supervisor: vê as de todos, mas reenviar a de outro exige confirmação explícita;
- *  - perfil ainda não carregado (`profiles.id` desconhecido): nada é escondido — a falha aparece
- *    e o reenvio pede confirmação, porque a autoria não pode ser atribuída ainda.
+ * Autoria e idade (PK-23, paridade com o varredor do PD-78): o banner mostra TODAS as
+ * falhas do agente — a de colega NÃO some para atendente comum: ela aparece identificada
+ * pelo autor e com o reenvio BLOQUEADO (só o próprio autor ou um gestor reenvia). Cadeia de
+ * autoria, provada no DDL aplicado (ver teste `SendErrorBanner.autor-idade.test.tsx`):
+ *  - `messages.agent_id → profiles.id` (`supabase/migrations/20251215163158…sql`, tabela
+ *    `public.messages`: `agent_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL`);
+ *  - `profiles.id` é uuid próprio (`supabase/migrations/20251215024517…sql`: `id UUID …
+ *    PRIMARY KEY`); quem aponta para `auth.users(id)` é `profiles.user_id` — ou seja,
+ *    `agent_id` NUNCA é `auth.uid()`, e a comparação correta é contra `profile.id`.
+ *  - `agent_id` é anulável; sem autoria registrada a falha é tratada como do próprio usuário.
+ * Regras de reenvio: próprio autor reenvia direto (acima de 1 h pede confirmação);
+ * gestor reenviando a de outro pede confirmação explícita; perfil ainda não carregado
+ * (`profiles.id` desconhecido) mostra tudo e pede confirmação, porque a autoria não pode
+ * ser atribuída ainda.
  * Idade: a partir de 1 h o reenvio pede confirmação (pode não fazer sentido agora) e acima de 24 h
  * a falha é rotulada "Falha antiga" — nunca sai reenvio automático.
  *
@@ -74,6 +81,11 @@ function podeReenviarComoTexto(mensagem: Message | null | undefined): boolean {
 
 const porHorario = (a: Message, b: Message) => (a.created_at ?? '').localeCompare(b.created_at ?? '');
 
+/** Identifica o autor na interface: prefixo do `agent_id` (uuid de `profiles.id`). */
+function autorCurto(mensagem: Message): string {
+  return mensagem.agent_id != null ? String(mensagem.agent_id).slice(0, 8) : '';
+}
+
 /** Criada há quantos ms (0 quando não há data utilizável). */
 function idadeMs(mensagem: Message, agora: number): number {
   const referencia = mensagem.created_at ?? mensagem.timestamp?.toISOString();
@@ -128,7 +140,7 @@ function usePerfilAtual(): { profile: Profile | null } {
 export function SendErrorBanner({ messages, onSendMessage, className }: SendErrorBannerProps) {
   const reduzido = useReducedMotion();
   const { profile } = usePerfilAtual();
-  /** `messages.agent_id` referencia `profiles.id` (RLS de insert em messages). */
+  /** P2: `messages.agent_id` referencia `profiles.id` (uuid próprio — NÃO `auth.uid()`). */
   const meuPerfilId = profile?.id ?? null;
   const gestor = profile?.role === 'admin' || profile?.role === 'supervisor';
   /** Sem perfil carregado a autoria não é atribuível: mostra com confirmação em vez de esconder. */
@@ -144,16 +156,16 @@ export function SendErrorBanner({ messages, onSendMessage, className }: SendErro
     [meuPerfilId],
   );
 
-  // Atendente comum não vê (nem conta) falha de colega: só entra o que ele pode agir.
-  const visiveis = useMemo(
-    () => falhas.filter((m) => gestor || autoriaIndefinida || !deOutroAtendente(m)),
-    [falhas, gestor, autoriaIndefinida, deOutroAtendente],
-  );
+  // P1 (recusa rodada 1): a falha de colega NÃO some para atendente comum — ela aparece
+  // identificada pelo autor (seletor/nota) e com o reenvio bloqueado. Esconder seria ocultar
+  // dado de outro atendente sem papel de gestor para isso.
+  const visiveis = useMemo(() => falhas, [falhas]);
 
   const assinatura = visiveis.map((m) => m.id).join('|');
   const [dispensada, setDispensada] = useState<string | null>(null);
   const [escolhidaId, setEscolhidaId] = useState<string | null>(null);
-  const [confirmando, setConfirmando] = useState(false);
+  /** Id da falha com confirmação de reenvio ABERTA (null = nenhuma). */
+  const [confirmandoId, setConfirmandoId] = useState<string | null>(null);
   const [reenvio, setReenvio] = useState<EstadoReenvio>('parado');
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const montado = useRef(true);
@@ -163,11 +175,18 @@ export function SendErrorBanner({ messages, onSendMessage, className }: SendErro
   const agora = agoraMs();
   // Sem escolha explícita vale a falha mais recente; a escolha vence enquanto ela existir.
   const selecionada = visiveis.find((m) => m.id === escolhidaId) ?? visiveis[visiveis.length - 1] ?? null;
+  const selecionadaId = selecionada?.id ?? null;
+  // P4 (recusa rodada 1): a confirmação pertence à falha exibida — ela só vale quando o id
+  // confirmado ainda é o selecionado. Trocar a falha (seletor ou lista) invalida sozinho a
+  // confirmação aberta, sem efeito colateral: o "Confirmar reenvio" nunca vale para outra mensagem.
+  const confirmando = confirmandoId !== null && confirmandoId === selecionadaId;
   const idadeSelecionada = selecionada ? idadeMs(selecionada, agora) : 0;
   const selecionadaAntiga = idadeSelecionada > LIMITE_FALHA_ANTIGA_MS;
   const selecionadaDeOutro = selecionada ? deOutroAtendente(selecionada) : false;
   const exigeConfirmacao = selecionadaAntiga || selecionadaDeOutro || idadeSelecionada > LIMITE_CONFIRMACAO_MS;
-  const podeReenviar = podeReenviarComoTexto(selecionada);
+  /** Atendente comum não reenvia falha de colega: aparece identificada, com reenvio bloqueado. */
+  const reenvioBloqueado = selecionadaDeOutro && !gestor && !autoriaIndefinida;
+  const podeReenviar = podeReenviarComoTexto(selecionada) && !reenvioBloqueado;
   const visivel = visiveis.length > 0 && dispensada !== assinatura;
 
   const dispensar = useCallback(() => setDispensada(assinatura), [assinatura]);
@@ -212,7 +231,7 @@ export function SendErrorBanner({ messages, onSendMessage, className }: SendErro
   const reenviar = async (mensagem: Message) => {
     if (reenvio !== 'parado' || ocupado.current) return;
     ocupado.current = true;
-    setConfirmando(false);
+    setConfirmandoId(null);
     setReenvio('enviando');
     try {
       await onSendMessage(mensagem.content);
@@ -231,7 +250,7 @@ export function SendErrorBanner({ messages, onSendMessage, className }: SendErro
   const pedirReenvio = () => {
     if (!selecionada || !podeReenviar || reenvio !== 'parado') return;
     if (exigeConfirmacao) {
-      setConfirmando(true);
+      setConfirmandoId(selecionada.id);
       return;
     }
     void reenviar(selecionada);
@@ -239,7 +258,7 @@ export function SendErrorBanner({ messages, onSendMessage, className }: SendErro
 
   const escolher = (id: string) => {
     setEscolhidaId(id);
-    setConfirmando(false);
+    setConfirmandoId(null);
   };
 
   // Esc escopado: só dispensa com o foco dentro do banner.
@@ -286,7 +305,7 @@ export function SendErrorBanner({ messages, onSendMessage, className }: SendErro
             <option key={m.id} value={m.id}>
               {horaCurta(m)} — {resumoDaFalha(m)}
               {antiga ? ' · falha antiga' : ''}
-              {deOutro ? ' · outro atendente' : ''}
+              {deOutro ? ` · outro atendente (${autorCurto(m)})` : ''}
             </option>
           );
         })}
@@ -315,10 +334,16 @@ export function SendErrorBanner({ messages, onSendMessage, className }: SendErro
       <Button type="button" variant="outline" size="default" onClick={() => void reenviar(selecionada)}>
         Confirmar reenvio
       </Button>
-      <Button type="button" variant="ghost" size="default" onClick={() => setConfirmando(false)}>
+      <Button type="button" variant="ghost" size="default" onClick={() => setConfirmandoId(null)}>
         Cancelar
       </Button>
     </div>
+  );
+
+  const notaBloqueio = reenvioBloqueado && selecionada && (
+    <span className="text-2xs text-muted-foreground">
+      Falha de outro atendente ({autorCurto(selecionada)}) — só ele ou um gestor pode reenviar.
+    </span>
   );
 
   const acao = podeReenviar ? (
@@ -348,6 +373,7 @@ export function SendErrorBanner({ messages, onSendMessage, className }: SendErro
       {seletor}
       {etiquetaAntiga}
       {acao}
+      {notaBloqueio}
       {confirmacao}
       <Button
         type="button"
