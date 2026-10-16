@@ -3,7 +3,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const { rpc, invoke } = vi.hoisted(() => ({ rpc: vi.fn(), invoke: vi.fn() }));
 
 vi.mock('@/integrations/supabase/client', () => ({
-  supabase: { rpc, functions: { invoke } },
+  supabase: {
+    rpc,
+    functions: { invoke },
+    auth: { onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } })) },
+  },
 }));
 
 import { sendOutboundMessage, sendRichOutboundMessage } from '../outbound-message.service';
@@ -11,10 +15,18 @@ import { crossTabSendDedupe } from '@/lib/crossTabSendDedupe';
 import { offlineSendQueue } from '@/lib/offlineQueue';
 import { sendThrottle } from '@/lib/sendThrottle';
 
+/** Sessão persistida pelo supabase-js: é o que `readAuthenticatedUserId` lê. */
+function autenticarComo(userId: string): void {
+  localStorage.setItem('sb-teste-auth-token', JSON.stringify({ access_token: 'token-de-teste', user: { id: userId } }));
+}
+
 describe('sendOutboundMessage', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     vi.clearAllMocks();
+    localStorage.clear();
+    // Enviar mensagem exige atendente logado: os casos da fila offline rodam como o usuário A.
+    autenticarComo('atendente-a');
     vi.stubGlobal('crypto', { randomUUID: () => '0c5d8df5-430d-4f46-8c0a-764be035116a' });
     // `sendThrottle` é um singleton do módulo: as reservas de um caso ficariam de
     // pé para o próximo e a drenagem do caso da fila offline sairia só depois do
@@ -167,6 +179,35 @@ describe('sendOutboundMessage', () => {
     expect(invoke).toHaveBeenCalledWith('message-delivery', {
       body: { messageId: 'e23ca9d2-99a8-45d2-a3fe-df344fb9b2cc' },
     });
+  });
+
+  it('a fila é do usuário: trocar de atendente na mesma máquina não envia o texto alheio (fila offline)', async () => {
+    await offlineSendQueue.clear();
+    autenticarComo('atendente-a');
+    Object.defineProperty(navigator, 'onLine', { configurable: true, value: false });
+    try {
+      await sendOutboundMessage({ contactId: 'contato-fila', content: 'texto do A', clientMessageId: 'fila-do-a' });
+    } finally {
+      delete (navigator as unknown as Record<string, unknown>).onLine;
+    }
+    // O dono vai gravado no item.
+    expect((await offlineSendQueue.list()).map((item) => item.userId)).toEqual(['atendente-a']);
+
+    // B entra na mesma máquina e a rede volta: a fila do A não é dele.
+    autenticarComo('atendente-b');
+    rpc.mockResolvedValue({ data: { id: 'srv-fila', status: 'sending', external_id: null }, error: null });
+    window.dispatchEvent(new Event('online'));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(rpc).not.toHaveBeenCalled();
+    expect((await offlineSendQueue.list()).map((item) => item.clientMessageId)).toEqual(['fila-do-a']);
+
+    // O A volta e a fila dele drena com a chave original.
+    autenticarComo('atendente-a');
+    window.dispatchEvent(new Event('online'));
+    await vi.waitFor(() => expect(rpc).toHaveBeenCalledWith('enqueue_outbound_message', expect.objectContaining({
+      p_client_message_id: 'fila-do-a',
+      p_content: 'texto do A',
+    })));
   });
 
   it('aba que perde a disputa de dedupe não dispara enqueue nem despacho (SL-070/026)', async () => {

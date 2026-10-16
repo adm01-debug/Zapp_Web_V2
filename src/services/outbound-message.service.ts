@@ -1,6 +1,11 @@
 import { supabase } from '@/integrations/supabase/client';
 import { crossTabSendDedupe } from '@/lib/crossTabSendDedupe';
-import { drainOfflineQueueOnReconnect, offlineSendQueue, type OfflineQueuedMessage } from '@/lib/offlineQueue';
+import {
+  drainOfflineQueueOnReconnect,
+  offlineSendQueue,
+  readAuthenticatedUserId,
+  type OfflineQueuedMessage,
+} from '@/lib/offlineQueue';
 import { sendThrottle } from '@/lib/sendThrottle';
 
 export type OutboundMessageType = 'text' | 'image' | 'audio' | 'video' | 'document' | 'sticker' | 'location';
@@ -189,26 +194,49 @@ async function deliverQueuedOfflineMessage(message: OfflineQueuedMessage): Promi
   clearPendingAction(queuedActionKey(message), message.clientMessageId);
 }
 
-// Reconciliação ao reconectar (item 025): a fila local drena no evento `online`.
+// Reconciliação ao reconectar (item 025): a fila local drena no evento `online`,
+// só os itens do usuário logado no momento do evento.
+function avisarFilaOffline(error: unknown, message?: OfflineQueuedMessage): void {
+  // A mensagem continua na fila e a próxima reconexão tenta de novo; o aviso é
+  // o que impede a espera virar falha silenciosa. `console.warn` (e não o
+  // logger do app) mantém este módulo — caminho quente de todo envio — sem
+  // dependência nova de import. Sem telefone, token ou texto de mensagem.
+  console.warn('Fila offline: entrega adiada', {
+    clientMessageId: message?.clientMessageId ?? null,
+    erro: error instanceof Error ? error.message : String(error),
+  });
+}
+
+/** Drena a fila do usuário logado agora, se houver: boot, login e volta da rede. */
+function drenarFilaDoUsuarioAtual(): void {
+  if (semRede()) return;
+  const userId = readAuthenticatedUserId();
+  // Sem usuário não há fila para drenar — o que está no disco pode ser de outro
+  // atendente. Trocar de usuário nunca envia o texto alheio.
+  if (!userId) return;
+  void offlineSendQueue.drain(deliverQueuedOfflineMessage, { userId, onError: avisarFilaOffline });
+}
+
 drainOfflineQueueOnReconnect(offlineSendQueue, deliverQueuedOfflineMessage, {
-  onError: (error, message) => {
-    // A mensagem continua na fila e a próxima reconexão tenta de novo; o aviso é
-    // o que impede a espera virar falha silenciosa. `console.warn` (e não o
-    // logger do app) mantém este módulo — caminho quente de todo envio — sem
-    // dependência nova de import.
-    console.warn('Fila offline: entrega adiada', {
-      clientMessageId: message?.clientMessageId ?? null,
-      erro: error instanceof Error ? error.message : String(error),
-    });
-  },
+  onError: avisarFilaOffline,
+  resolveUserId: readAuthenticatedUserId,
+});
+
+// O evento `online` não cobre um reload que já começa conectado nem a fila que
+// esperou o usuário voltar a entrar: drena no boot e a cada novo login.
+drenarFilaDoUsuarioAtual();
+supabase.auth.onAuthStateChange((event) => {
+  if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') drenarFilaDoUsuarioAtual();
 });
 
 async function enqueueOffline(
   input: SendOutboundMessageInput,
   clientMessageId: string,
+  userId: string | null,
 ): Promise<OutboundMessageDeliveryResult> {
   const queued = await offlineSendQueue.enqueue({
     clientMessageId,
+    userId,
     contactId: input.contactId,
     content: input.content,
     messageType: input.messageType ?? 'text',
@@ -237,12 +265,13 @@ export async function sendOutboundMessage(
 ): Promise<OutboundMessageDeliveryResult> {
   const { id: clientMessageId, key } = resolveClientMessageId(input);
 
+  // A fila é do usuário: o dono vai gravado no item para a drenagem só entregar
+  // o que é dele (trocar de atendente na mesma máquina não vaza texto alheio).
+  // E a fila guarda o PRÓPRIO id no item, então a chave da ação morre aqui:
+  // deixá-la viva reaproveitava o id num texto igual mandado depois e a Edge o
+  // descartava como idempotente sem nenhum WhatsApp sair.
   if (semRede()) {
-    // A fila offline guarda o PRÓPRIO id no item enfileirado, então a chave da
-    // ação não precisa sobreviver a este envio. Deixá-la viva era o defeito: o
-    // mesmo texto mandado depois, já online, reaproveitava o id e a Edge o
-    // descartava como idempotente sem nenhum WhatsApp sair.
-    const result = await enqueueOffline(input, clientMessageId);
+    const result = await enqueueOffline(input, clientMessageId, readAuthenticatedUserId());
     clearPendingAction(key, clientMessageId);
     return result;
   }

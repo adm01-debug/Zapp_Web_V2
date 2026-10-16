@@ -18,9 +18,21 @@ export const OFFLINE_QUEUE_DATABASE = 'zapp-offline-outbox';
 export const OFFLINE_QUEUE_DATABASE_VERSION = 1;
 export const OFFLINE_QUEUE_STORE = 'outbound_messages';
 
+/** Tentativas antes de um item ruim virar `failed` e deixar de travar a fila. */
+export const OFFLINE_QUEUE_MAX_ATTEMPTS = 5;
+
+/** `failed` = tentativas esgotadas: o item fica na fila marcado, os seguintes seguem. */
+export type OfflineQueuedMessageStatus = 'pending' | 'failed';
+
 export interface OfflineQueuedMessage {
   /** Chave primária e chave de idempotência do envio (item 024). */
   clientMessageId: string;
+  /**
+   * Dono do item: a fila é do usuário. Só o usuário logado drena o que é dele
+   * e o logout limpa o que ficou — sem isso o texto parado no disco drenaria
+   * como o próximo atendente que logasse na mesma máquina.
+   */
+  userId: string | null;
   contactId: string;
   content: string;
   messageType: string;
@@ -30,11 +42,12 @@ export interface OfflineQueuedMessage {
   whatsappConnectionId: string | null;
   /** Ordem de drenagem. Sempre único e crescente (a fila respeita a ordem de composição). */
   enqueuedAt: number;
-  /** Tentativas de drenagem já feitas — observabilidade, não decide nada. */
+  /** Tentativas de drenagem já feitas — decide quando o item vira `failed`. */
   attempts: number;
+  status: OfflineQueuedMessageStatus;
 }
 
-export type OfflineQueueInput = Omit<OfflineQueuedMessage, 'enqueuedAt' | 'attempts'>;
+export type OfflineQueueInput = Omit<OfflineQueuedMessage, 'enqueuedAt' | 'attempts' | 'status'>;
 
 export interface OfflineQueueDriver {
   readAll(): Promise<OfflineQueuedMessage[]>;
@@ -53,6 +66,12 @@ export interface OfflineQueueDrainResult {
 export interface OfflineQueueDrainOptions {
   /** Chamado quando a drenagem falha (sem mensagem quando a leitura da fila falha). */
   onError?: OfflineQueueErrorHandler;
+  /**
+   * Só drena itens deste usuário. `undefined` = sem escopo (uso interno/teste);
+   * o app sempre passa o id do usuário logado — é o que impede entregar o que
+   * é de outro atendente.
+   */
+  userId?: string | null;
 }
 
 /** Handler de erro da fila: recebe a mensagem quando a falha foi da entrega dela. */
@@ -72,6 +91,32 @@ export interface OfflineQueue {
 export interface OfflineQueueOptions {
   driver?: OfflineQueueDriver;
   now?: () => number;
+  /** Limite de tentativas por item antes de marcá-lo `failed` (default 5). */
+  maxAttempts?: number;
+}
+
+/**
+ * Id do usuário autenticado da sessão persistida pelo `supabase-js`
+ * (`sb-<ref>-auth-token`, o mesmo padrão de `mediaVolumeStore`). Tolerante:
+ * storage bloqueado, JSON estranho ou sessão sem `user.id` → `null`.
+ */
+export function readAuthenticatedUserId(): string | null {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return null;
+    const storage = window.localStorage;
+    for (let index = 0; index < storage.length; index += 1) {
+      const key = storage.key(index);
+      if (!key || !key.startsWith('sb-') || !key.endsWith('-auth-token')) continue;
+      const raw = storage.getItem(key);
+      if (!raw) continue;
+      const parsed = JSON.parse(raw) as { access_token?: unknown; user?: { id?: unknown } } | null;
+      const userId = parsed?.user?.id;
+      if (typeof parsed?.access_token === 'string' && typeof userId === 'string' && userId) return userId;
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 /** Driver de memória: fallback de ambiente sem IndexedDB e base dos testes de regra. */
@@ -181,6 +226,7 @@ export function resolveOfflineQueueDriver(): OfflineQueueDriver {
 export function createOfflineQueue(options: OfflineQueueOptions = {}): OfflineQueue {
   const driver = options.driver ?? resolveOfflineQueueDriver();
   const now = options.now ?? (() => Date.now());
+  const maxAttempts = options.maxAttempts ?? OFFLINE_QUEUE_MAX_ATTEMPTS;
   const listeners = new Set<() => void>();
   let snapshot = 0;
   let draining: Promise<OfflineQueueDrainResult> | null = null;
@@ -208,23 +254,45 @@ export function createOfflineQueue(options: OfflineQueueOptions = {}): OfflineQu
     // Uma drenagem por vez: dois gatilhos de `online` próximos não podem entregar
     // a mesma mensagem duas vezes.
     if (draining) return draining;
+    // A fila é do usuário: só entra na drenagem o que pertence ao usuário logado.
+    const inScope = (message: OfflineQueuedMessage): boolean =>
+      drainOptions.userId === undefined || message.userId === drainOptions.userId;
+    const markFailed = async (message: OfflineQueuedMessage): Promise<void> => {
+      try {
+        await driver.put({ ...message, status: 'failed' });
+      } catch (error) {
+        drainOptions.onError?.(error, message);
+      }
+    };
     const run = (async (): Promise<OfflineQueueDrainResult> => {
       let sent = 0;
       let pending: OfflineQueuedMessage[];
       try {
-        pending = await list();
+        pending = (await list()).filter(inScope);
       } catch (error) {
         drainOptions.onError?.(error);
         return { sent: 0, remaining: snapshot };
       }
       commitSnapshot(pending.length);
       for (const message of pending) {
+        // Item ruim já esgotado: fica na fila marcado e a drenagem SEGUE para o
+        // próximo — senão um envio inválido travaria a fila inteira para sempre.
+        if (message.status === 'failed' || message.attempts >= maxAttempts) {
+          if (message.status !== 'failed') await markFailed(message);
+          continue;
+        }
+        const tentativa: OfflineQueuedMessage = { ...message, attempts: message.attempts + 1 };
         try {
-          await driver.put({ ...message, attempts: message.attempts + 1 });
+          await driver.put(tentativa);
           await deliver(message);
         } catch (error) {
-          // Para na primeira falha: a ordem de composição vale mais que a vazão.
           drainOptions.onError?.(error, message);
+          // Esgotou as tentativas: marca `failed` e segue; ainda tem tentativa:
+          // para na primeira falha (a ordem de composição vale mais que a vazão).
+          if (tentativa.attempts >= maxAttempts) {
+            await markFailed(tentativa);
+            continue;
+          }
           break;
         }
         // A entrega já aconteceu: conta como enviada mesmo se a baixa local falhar.
@@ -243,7 +311,7 @@ export function createOfflineQueue(options: OfflineQueueOptions = {}): OfflineQu
       }
       let remaining = snapshot;
       try {
-        remaining = (await driver.readAll()).length;
+        remaining = (await driver.readAll()).filter(inScope).length;
       } catch (error) {
         drainOptions.onError?.(error);
       }
@@ -267,6 +335,8 @@ export function createOfflineQueue(options: OfflineQueueOptions = {}): OfflineQu
         // Já enfileirada (retry da mesma ação): mantém o lugar e as tentativas.
         enqueuedAt: anterior ? anterior.enqueuedAt : Math.max(now(), maiorHorario + 1),
         attempts: anterior ? anterior.attempts : 0,
+        // Reenfileirar a mesma ação é gesto deliberado do usuário: volta a `pending`.
+        status: 'pending',
       };
       await driver.put(message);
       commitSnapshot(anterior ? all.length : all.length + 1);
@@ -304,12 +374,21 @@ export type OnlineScope = Pick<Window, 'addEventListener' | 'removeEventListener
 export function drainOfflineQueueOnReconnect(
   queue: OfflineQueue,
   deliver: (message: OfflineQueuedMessage) => Promise<void>,
-  options: { scope?: OnlineScope | null; onError?: OfflineQueueErrorHandler } = {},
+  options: {
+    scope?: OnlineScope | null;
+    onError?: OfflineQueueErrorHandler;
+    /** Resolve, no momento do evento, o usuário dono da drenagem. */
+    resolveUserId?: () => string | null;
+  } = {},
 ): () => void {
   const scope = options.scope !== undefined ? options.scope : typeof window === 'undefined' ? null : window;
   if (!scope) return () => {};
   const handleOnline = () => {
-    void queue.drain(deliver, { onError: options.onError });
+    // O usuário pode ter mudado desde a instalação: resolve na hora, e sem
+    // usuário logado não há o que drenar (a fila é de alguém).
+    const userId = options.resolveUserId ? options.resolveUserId() : undefined;
+    if (options.resolveUserId && !userId) return;
+    void queue.drain(deliver, { onError: options.onError, userId });
   };
   scope.addEventListener('online', handleOnline);
   return () => scope.removeEventListener('online', handleOnline);

@@ -11,9 +11,10 @@ import {
   type OfflineQueueInput,
 } from '../offlineQueue';
 
-function mensagem(indice: number): OfflineQueueInput {
+function mensagem(indice: number, userId = 'usuario-1'): OfflineQueueInput {
   return {
     clientMessageId: `id-${indice}`,
+    userId,
     contactId: 'contato-1',
     content: `mensagem ${indice}`,
     messageType: 'text',
@@ -227,5 +228,81 @@ describe('drainOfflineQueueOnReconnect', () => {
 
     expect(await queue.drain(async () => {}, { onError })).toEqual({ sent: 0, remaining: 0 });
     expect(onError).toHaveBeenCalledOnce();
+  });
+});
+
+describe('escopo de usuário da fila (fila é do usuário logado)', () => {
+  it('drena só as mensagens do usuário logado — a do outro atendente fica guardada', async () => {
+    const queue = createOfflineQueue({ driver: createMemoryOfflineQueueDriver() });
+    await queue.enqueue(mensagem(1, 'atendente-a'));
+    await queue.enqueue(mensagem(2, 'atendente-b'));
+
+    const entregues: string[] = [];
+    const resultado = await queue.drain(async (item) => {
+      entregues.push(item.content);
+    }, { userId: 'atendente-a' });
+
+    expect(entregues).toEqual(['mensagem 1']);
+    // `remaining` conta só o que sobrou para o usuário drenado; a mensagem do B
+    // do outro atendente continua guardada (provado pelo `list` abaixo).
+    expect(resultado).toEqual({ sent: 1, remaining: 0 });
+    expect((await queue.list()).map((item) => item.userId)).toEqual(['atendente-b']);
+  });
+
+  it('sem usuário logado a mensagem do outro atendente não sai', async () => {
+    const queue = createOfflineQueue({ driver: createMemoryOfflineQueueDriver() });
+    await queue.enqueue(mensagem(1, 'atendente-a'));
+
+    const entregues: string[] = [];
+    const resultado = await queue.drain(async (item) => {
+      entregues.push(item.content);
+    }, { userId: null });
+
+    expect(entregues).toEqual([]);
+    expect(resultado).toEqual({ sent: 0, remaining: 0 });
+    expect(await queue.list()).toHaveLength(1);
+  });
+});
+
+describe('um item ruim não trava os seguintes', () => {
+  it('esgotadas as tentativas o item vira `failed` e a drenagem segue para o próximo', async () => {
+    const queue = createOfflineQueue({ driver: createMemoryOfflineQueueDriver(), maxAttempts: 1 });
+    await queue.enqueue(mensagem(1));
+    await queue.enqueue(mensagem(2));
+    await queue.enqueue(mensagem(3));
+
+    const entregues: string[] = [];
+    const onError = vi.fn();
+    const resultado = await queue.drain(async (item) => {
+      if (item.clientMessageId === 'id-2') throw new Error('payload inválido');
+      entregues.push(item.content);
+    }, { onError });
+
+    expect(entregues).toEqual(['mensagem 1', 'mensagem 3']);
+    expect(onError).toHaveBeenCalledOnce();
+    expect(resultado.sent).toBe(2);
+    // O item ruim fica marcado, visível, sem travar a fila.
+    expect((await queue.list()).map((item) => [item.clientMessageId, item.status])).toEqual([['id-2', 'failed']]);
+  });
+
+  it('enquanto ainda há tentativa a drenagem para na falha e só segue quando esgota', async () => {
+    const queue = createOfflineQueue({ driver: createMemoryOfflineQueueDriver(), maxAttempts: 2 });
+    await queue.enqueue(mensagem(1));
+    await queue.enqueue(mensagem(2));
+    await queue.enqueue(mensagem(3));
+
+    const entregues: string[] = [];
+    const entregar = async (item: { clientMessageId: string; content: string }) => {
+      if (item.clientMessageId === 'id-2') throw new Error('rede caiu');
+      entregues.push(item.content);
+    };
+
+    const primeira = await queue.drain(entregar);
+    expect(primeira).toEqual({ sent: 1, remaining: 2 });
+    expect(entregues).toEqual(['mensagem 1']);
+
+    const segunda = await queue.drain(entregar);
+    expect(segunda).toEqual({ sent: 1, remaining: 1 });
+    expect(entregues).toEqual(['mensagem 1', 'mensagem 3']);
   });
 });
