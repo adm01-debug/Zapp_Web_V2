@@ -114,7 +114,7 @@ jobs:
     # de cena (Deployment do GitHub substitui a tag; ver comentario "E60" abaixo).
     # deployments:write cobre o registro do Deployment; actions:read cobre o
     # passo de serializacao do escopo `all`.
-    permissions:
+    permissions:  # zizmor: ignore[excessive-permissions]
       contents: read
       # Leitura dos runs deste workflow para o passo de serializacao do escopo `all`.
       actions: read

@@ -161,8 +161,8 @@ jobs:
           # W26: lote-pendente.mjs e a fonte unica da regra "apply pendente" (sobre W21/W22).
           # No evento push (lote acabou de entrar na main), apply-pendente e esperado:
           # o apply acontece no mesmo dia pelo fluxo de lote. Tratar como neutral (exit 0)
-          # para nao abrir issue espuria. No schedule/dispatch: manter estrito (exit 2).
-          # O shell padrao e `-euo pipefail` (W44): sem o `set +e`, o exit 2 do pipeline
+          # para nao abrir issue espuria. No schedule/dispatch: manter estrito (exit 3).
+          # O shell padrao e `-euo pipefail` (W44): sem o `set +e`, o exit 3 do pipeline
           # aborta o passo antes de `rc` ser lido e a regra acima nunca executa.
           set +e
           node scripts/db-audit/lote-pendente.mjs 2>&1 | tee /tmp/step-migrations.log

@@ -83,6 +83,7 @@ function pinnedEvidence({
     reason,
     related_migration,
     justification: JUSTIFICATION,
+    'sql-sha256': statementsHash(statements),
     ...overrides,
   };
 }
@@ -1037,7 +1038,7 @@ test('queryLedger desiste apos esgotar tentativas de falha transitoria', () => {
     psqlFailMessage: 'timeout expired',
     retryDelaysMs: '10,10',
   });
-  assert.equal(result.status, 2);
+  assert.equal(result.status, 1);
   assert.match(result.stderr, /AVISO: falha transitoria de conexao.*tentativa 1\/3/);
   assert.match(result.stderr, /AVISO: falha transitoria de conexao.*tentativa 2\/3/);
   assert.match(result.stderr, /FALHA: falha ao consultar schema_migrations via psql: timeout expired/);
@@ -1049,7 +1050,7 @@ test('queryLedger nao tenta novamente para erro nao-transitorio', () => {
     psqlFailMessage: 'ERROR:  syntax error at or near "SELEC"',
     retryDelaysMs: '10,10',
   });
-  assert.equal(result.status, 2);
+  assert.equal(result.status, 1);
   assert.doesNotMatch(result.stderr, /AVISO: falha transitoria/);
   assert.match(result.stderr, /FALHA: falha ao consultar schema_migrations via psql: ERROR:  syntax error/);
 });
@@ -1063,7 +1064,7 @@ test('LEDGER_RETRY_DELAYS_MS vazio desliga o retry do ledger', () => {
     psqlFailMessage: 'connection to server ... port 5432 failed: timeout expired',
     retryDelaysMs: '',
   });
-  assert.equal(result.status, 2);
+  assert.equal(result.status, 1);
   assert.doesNotMatch(result.stderr, /AVISO: falha transitoria/);
   assert.match(result.stderr, /FALHA: falha ao consultar schema_migrations via psql: connection to server/);
 });
@@ -1109,4 +1110,37 @@ test('W21: drift real prevalece sobre apply pendente quando os dois ocorrem (exi
 test('W21: --classificar sem pendencia nem drift sai com 0', () => {
   const result = runGuard({ args: ['--classificar'] });
   assert.equal(result.status, 0, result.stderr);
+});
+
+// P1: verificacao offline de file_sha256 para pinned-replay e name-and-file-pinned
+
+test('P1: pinned-replay com file_sha256 errado falha no modo offline', () => {
+  const result = runGuard({
+    destino: false,
+    evidence: [pinnedEvidence({ overrides: { file_sha256: '0'.repeat(64) } })],
+  });
+  assert.equal(result.status, 1, result.stderr);
+  assert.match(result.stderr, /file_sha256 divergente do manifesto/);
+});
+
+test('P1: name-and-file-pinned com file_sha256 errado falha no modo offline', () => {
+  const result = runGuard({
+    destino: false,
+    files: { [FILE]: SQL },
+    evidence: [nameOnlyEvidence(SQL, { file_sha256: '0'.repeat(64) })],
+  });
+  assert.equal(result.status, 1, result.stderr);
+  assert.match(result.stderr, /file_sha256 divergente do manifesto/);
+});
+
+// P2: ledger statement que comeca com comentario mas contem SQL executavel deve ser detectado
+
+test('P2: name-and-file-pinned rejeita ledger com SQL executavel precedido de comentario', () => {
+  const stmtWithComment = `-- resumo\n${SQL.trim()}`;
+  const result = runGuard({
+    ledger: [ledgerRecord({ statements: [stmtWithComment] })],
+    evidence: [nameOnlyEvidence()],
+  });
+  assert.equal(result.status, 1, result.stderr);
+  assert.match(result.stderr, /exige ledger sem SQL\/hash historico/);
 });
