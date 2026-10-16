@@ -373,6 +373,11 @@ jobs:
           ENQUEUE_SCOPE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/enqueue-connection-scope.test.sh
 
+      - name: Simular troca atomica da conexao WhatsApp padrao (#174)
+        env:
+          WHATSAPP_DEFAULT_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/whatsapp-default-connection-atomicity.test.sh
+
       # R2-DB-009 (cartao t_94758927): no marco de mensagens (10/50/100/500/1000) o trigger de
       # gamificacao chamava grant_agent_achievement com tipo reservado e o RAISE derrubava o
       # enqueue inteiro (mensagem nao gravada, agent_stats revertido) para todo agente comum.
