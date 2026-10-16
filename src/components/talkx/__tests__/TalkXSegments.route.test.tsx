@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -10,7 +10,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 // entra (motor de regras real, via importOriginal); só a lista/CRUD e o toast
 // viram spies.
 
-const f = vi.hoisted(() => ({ create: vi.fn(), update: vi.fn() }));
+const f = vi.hoisted(() => ({ create: vi.fn(), update: vi.fn(), refetch: vi.fn(), refreshEstimates: vi.fn() }));
 const state = vi.hoisted(() => ({ segments: [] as unknown[] }));
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() } }));
@@ -51,11 +51,11 @@ vi.mock('@/hooks/integrations/useTalkXSegments', async (importOriginal) => {
       isLoading: false,
       isError: false,
       error: null,
-      refetch: vi.fn(),
+      refetch: f.refetch,
       createSegment: { mutateAsync: f.create },
       updateSegment: { mutateAsync: f.update },
       deleteSegment: { mutate: vi.fn() },
-      refreshEstimates: { mutate: vi.fn() },
+      refreshEstimates: { mutate: f.refreshEstimates },
     }),
   };
 });
@@ -95,6 +95,8 @@ describe('TalkXSegments · construtor pela URL (X111)', () => {
     state.segments = [segmento];
     f.create.mockReset();
     f.update.mockReset();
+    f.refetch.mockReset();
+    f.refreshEstimates.mockReset();
     vi.mocked(toast.error).mockClear();
   });
 
@@ -195,5 +197,41 @@ describe('TalkXSegments · construtor pela URL (X111)', () => {
     expect(screen.getByRole('button', { name: 'Novo segmento' })).toBeInTheDocument();
     expect(screen.queryByPlaceholderText('Nome do segmento…')).toBeNull();
     await waitFor(() => expect(params().has('segment')).toBe(false));
+  });
+
+  it('construtor traz o cabeçalho próprio da tela 03: título, subtítulo e o ↻ que refaz lista e estimativa', async () => {
+    window.history.replaceState(null, '', '/?view=talkx&tab=segments&segment=seg-1&mode=edit');
+    renderView();
+
+    await screen.findByPlaceholderText('Nome do segmento…');
+    expect(screen.getByRole('heading', { level: 1, name: 'Segmentos' })).toBeInTheDocument();
+    expect(screen.getByText('Crie, gerencie e utilize segmentos inteligentes para suas campanhas no Talk X.')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Atualizar' }));
+    expect(f.refetch).toHaveBeenCalledTimes(1);
+    expect(f.refreshEstimates).toHaveBeenCalledWith([segmento]);
+  });
+
+  it('as abas superiores trazem as cinco abas do mock, com Segmentos ativa e as demais ainda sem conteúdo', async () => {
+    window.history.replaceState(null, '', '/?view=talkx&tab=segments&mode=new');
+    renderView();
+
+    await screen.findByPlaceholderText('Nome do segmento…');
+    const abas = screen.getByRole('navigation', { name: 'Abas superiores de segmentos' });
+    for (const rotulo of ['Segmentos', 'Regras Avançadas', 'Audiências', 'Modelos', 'Insights com IA']) {
+      expect(within(abas).getByRole('button', { name: rotulo })).toBeInTheDocument();
+    }
+    expect(within(abas).getByRole('button', { name: 'Segmentos' })).toHaveAttribute('aria-current', 'page');
+    expect(within(abas).getByRole('button', { name: 'Regras Avançadas' })).toBeDisabled();
+    expect(within(abas).getByRole('button', { name: 'Insights com IA' })).toBeDisabled();
+  });
+
+  it('a biblioteca (tela 02) não mostra o cabeçalho nem as abas da tela 03', async () => {
+    window.history.replaceState(null, '', '/?view=talkx&tab=segments');
+    renderView();
+
+    await screen.findByRole('button', { name: 'Novo segmento' });
+    expect(screen.queryByRole('heading', { level: 1, name: 'Segmentos' })).toBeNull();
+    expect(screen.queryByRole('navigation', { name: 'Abas superiores de segmentos' })).toBeNull();
   });
 });
