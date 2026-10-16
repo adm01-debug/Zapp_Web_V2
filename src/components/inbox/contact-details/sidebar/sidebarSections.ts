@@ -1,7 +1,7 @@
 /**
  * Config das seções do sidebar "Detalhes do Contato" (plano
  * PLANO_SIDEBAR_CONTATO_3_SECOES_100_ETAPAS_2026-10-02.md, etapa 44; a seção
- * `memoria` entrou depois, somente leitura).
+ * `memoria` entrou depois, com edição manual).
  *
  * O estado do accordion migra da chave antiga `contact-details-accordion-state`
  * (seções antigas: info, tags, timeline...) para a chave nova

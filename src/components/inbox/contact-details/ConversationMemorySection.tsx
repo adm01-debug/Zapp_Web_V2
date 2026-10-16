@@ -25,7 +25,6 @@ import { SidebarEmpty } from './sidebar/SidebarEmpty';
 import { hasMemoryContent, useConversationMemory } from '@/hooks/crm/useConversationMemory';
 import type { ConversationMemoryData } from '@/hooks/crm/useConversationMemory';
 import {
-  EMPTY_MEMORY_DRAFT,
   MEMORY_FIELD_MAX,
   useSaveConversationMemory,
 } from '@/hooks/crm/useSaveConversationMemory';
@@ -168,20 +167,22 @@ function MemoryField({ id, label, hint, value, rows, onChange }: MemoryFieldProp
 
 export function ConversationMemorySection({ contactId, index = 3 }: ConversationMemorySectionProps) {
   const { memory, status, loading, reload } = useConversationMemory(contactId);
-  const { save, saving, error: saveError } = useSaveConversationMemory(contactId);
+  const { save, saving, error: saveError, clearError } = useSaveConversationMemory(contactId);
 
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<MemoryFormDraft>(EMPTY_FORM_DRAFT);
 
   const startEditing = useCallback(() => {
+    clearError();
     setDraft(draftFromMemory(memory));
     setEditing(true);
-  }, [memory]);
+  }, [memory, clearError]);
 
   const cancelEditing = useCallback(() => {
+    clearError();
     setDraft(EMPTY_FORM_DRAFT);
     setEditing(false);
-  }, []);
+  }, [clearError]);
 
   const handleSave = useCallback(async () => {
     // Envio já em curso (o botão desabilita, mas um segundo submit pode

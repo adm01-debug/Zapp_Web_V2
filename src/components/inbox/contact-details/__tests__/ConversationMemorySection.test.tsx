@@ -77,7 +77,7 @@ async function abrirEdicao() {
   await waitFor(() => expect(screen.getByTestId('memoria-formulario')).toBeInTheDocument());
 }
 
-describe('ConversationMemorySection — memória da conversa (somente leitura)', () => {
+describe('ConversationMemorySection — memória da conversa (leitura)', () => {
   beforeEach(() => {
     h.state.row = rowCompleta;
     h.state.error = null;
@@ -246,6 +246,22 @@ describe('ConversationMemorySection — editar e salvar à mão', () => {
     expect(alerta).toHaveTextContent('Não foi possível salvar a memória da conversa. Tente de novo.');
     expect(screen.getByTestId('memoria-formulario')).toBeInTheDocument();
     expect(screen.getByLabelText('Resumo comercial')).toHaveValue('Resumo que não salvou.');
+  });
+
+  it('erro de gravação some ao descartar e não reaparece ao reeditar', async () => {
+    h.state.saveError = { message: 'new row violates row-level security policy' };
+    await abrirEdicao();
+
+    fireEvent.click(screen.getByTestId('memoria-salvar'));
+    await waitFor(() => expect(screen.getByTestId('memoria-erro-salvar')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByTestId('memoria-descartar'));
+    await waitFor(() => expect(screen.queryByTestId('memoria-formulario')).not.toBeInTheDocument());
+    expect(screen.queryByTestId('memoria-erro-salvar')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('memoria-editar'));
+    await waitFor(() => expect(screen.getByTestId('memoria-formulario')).toBeInTheDocument());
+    expect(screen.queryByTestId('memoria-erro-salvar')).not.toBeInTheDocument();
   });
 
   it('enquanto grava o botão vira "Salvando..." e fica bloqueado (não grava duas vezes)', async () => {

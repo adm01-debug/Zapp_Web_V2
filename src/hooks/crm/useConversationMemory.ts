@@ -1,9 +1,11 @@
 /**
- * useConversationMemory — memória viva da conversa (somente leitura).
+ * useConversationMemory — memória viva da conversa (leitura; a escrita manual
+ * está em useSaveConversationMemory).
  *
  * Lê `conversation_memory` do contato. É a MESMA fonte e a MESMA cadeia de
  * consulta que `useNextBestAction` já usa (select → eq → maybeSingle); sem
- * Realtime (o painel relê ao montar) e sem escrita — a tela é só de leitura.
+ * Realtime (o painel relê ao montar). A releitura após salvar é manual, via
+ * reload().
  *
  * `status` distingue "não há memória" (empty) de "não foi possível ler"
  * (error): sem essa distinção, uma falha de RLS/rede apareceria para o
