@@ -25,6 +25,11 @@ Ou seja, a entrega entrou na ponta do dia entre 11/10 e hoje; a retomada por mer
   - o teste `exigirCabecalho` monta a TELA real e confere `h1` + trilha `Gestão > folha` (Contatos, CRM 360°, Agendamentos);
   - o teste dos cards admin monta a tela real sob Router e confere a rota trocada sem reload (`window.location.pathname` segue `/`).
 
+## Critério de pronto, item por item
+1. As 8 telas no PageHeader: **6 de 8** — Contatos, CRM 360°, Carteira, Filas, Agendamentos e Grupos usam o PageHeader com a trilha `Gestão > folha` (arquivo:linha acima, provado pelo teste `exigirCabecalho`). As outras 2 (Admin e Security) mantêm `h1` próprio — `AdminView.tsx:168` e `SecurityView.tsx:46` — porque `AdminView.tsx` NÃO está em ARQUIVOS QUE PODE TOCAR e, de `SecurityView.tsx`, o cartão autoriza só os 2 pontos de navegação. **FALTA:** migrar os cabeçalhos de Admin/Security para o PageHeader (precisa de cartão com esses arquivos liberados).
+2. Os 2 cards do SecurityView navegam sem reload completo: cumprido (prova acima).
+3. zapp-verify . --rapido: roda no fechar.
+
 ## O que NÃO fiz e por quê
 - Nenhum commit de código: o cartão manda fechar sem commit quando o defeito já está corrigido. O único commit desta entrega é `docs` e contém apenas este `.tmp/relato.md` (o `hermes-tarefa-fechar` recusa sem commit novo: `ERRO: nenhum commit novo em relação a dia/2026-10-16`).
 - `src/components/admin/AdminView.tsx` não está na lista ARQUIVOS QUE PODE TOCAR do cartão e não foi tocado; o `h1` próprio dele (`:168`) e o da Central de Segurança (`SecurityView.tsx:46`) permanecem — o cartão pede de SecurityView apenas os 2 pontos de navegação, que estão feitos.
