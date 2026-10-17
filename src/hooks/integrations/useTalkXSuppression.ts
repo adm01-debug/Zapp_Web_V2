@@ -265,7 +265,9 @@ export function useTalkXSuppressionStats(days = 30) {
   return useQuery({
     queryKey: ['talkx-suppression-stats', days],
     queryFn: async () => {
-      const rpc = supabase.rpc as unknown as TalkXSuppressionStatsRpc;
+      // `rpc` no cliente real é método de protótipo e usa `this.rest`; chamado a
+      // partir desta const, precisa seguir vinculado ao cliente.
+      const rpc = supabase.rpc.bind(supabase) as unknown as TalkXSuppressionStatsRpc;
       const { data, error } = await rpc('talkx_suppression_stats', { p_days: days });
       if (error) throw new Error(error.message);
       return (data ?? null) as TalkXSuppressionStats | null;
