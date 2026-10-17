@@ -104,7 +104,31 @@ sed -n '/^CREATE OR REPLACE FUNCTION public.talkx_engine_window_open/,/^\$functi
 [[ "$(psql_q "SELECT count(*) FROM pg_proc WHERE proname='talkx_engine_window_open'")" == "1" ]] \
   || fail 'funcao de janela real nao foi extraida da migration'
 
-psql_test >/dev/null < "$migration"
+# Empilhamento — o defeito deste cartao. Na pilha do integrador a versao de N-096
+# (20261012115900_talkx_campaign_segment_progress.sql) entra ANTES desta migration e as duas
+# definem a MESMA RPC. Antes da correcao o CREATE OR REPLACE daqui abortava com
+# "cannot change return type of existing function" (psql:<stdin>:157) e derrubava o conjunto.
+stacked_migration="$repo_root/supabase/migrations/20261012115900_talkx_campaign_segment_progress.sql"
+def_antes=''
+if [[ -f "$stacked_migration" ]]; then
+  psql_test >/dev/null < "$stacked_migration" \
+    || fail 'a versao de N-096 (20261012115900) nao aplicou antes da nossa'
+  [[ "$(psql_q "SELECT (to_regprocedure('public.talkx_campaign_segment_progress(uuid)') IS NOT NULL)::text")" == "true" ]] \
+    || fail 'a versao de N-096 nao criou talkx_campaign_segment_progress'
+  def_antes="$(psql_q "SELECT pg_get_functiondef('public.talkx_campaign_segment_progress(uuid)'::regprocedure)")"
+  pass 'empilhamento: a versao de N-096 (20261012115900) entrou na pilha antes da nossa'
+else
+  printf '[SKIP] empilhamento com 20261012115900: esta copia nao traz essa versao\n'
+fi
+
+psql_test >/dev/null < "$migration" \
+  || fail "a migration deste cartao nao empilhou sobre esta copia: $migration"
+if [[ -n "$def_antes" ]]; then
+  def_depois="$(psql_q "SELECT pg_get_functiondef('public.talkx_campaign_segment_progress(uuid)'::regprocedure)")"
+  [[ "$def_antes" == "$def_depois" ]] \
+    || fail 'a nossa migration NAO pode mudar a definicao vigente da RPC de progresso (N-096)'
+  pass 'empilhamento: a RPC de progresso (N-096) fica IDENTICA depois da nossa migration'
+fi
 
 psql_test >/dev/null <<'SQL'
 INSERT INTO public.user_roles VALUES
@@ -223,24 +247,36 @@ SELECT 'e0000000-0000-4000-8000-000000000007', gen_random_uuid(), v.seg::uuid, v
   ) AS v(seg, st);
 SQL
 
+# Contrato de leitura do front X149 (src/components/talkx/tracking/talkxSegmentProgress.ts):
+# LINHAS com segment_id, position, total, sent, delivered, failed, remaining, percent, status,
+# total_segments, pending_segments. E o contrato que ja existe (N-096, 20261012115900); a versao
+# anterior desta migration devolvia jsonb e era isso que derrubava o empilhamento.
+sig="$(psql_q "SELECT pg_get_function_result('public.talkx_campaign_segment_progress(uuid)'::regprocedure)")"
+[[ "$sig" == 'TABLE(segment_id uuid, "position" smallint, total bigint, sent bigint, delivered bigint, failed bigint, remaining bigint, percent numeric, status text, total_segments bigint, pending_segments bigint)' ]] \
+  || fail "contrato deveria ser TABLE(...) como o front X149 le; veio: $sig"
+pass 'contrato alinhado: TABLE(segment_id, position, total, sent, delivered, failed, remaining, percent, status, total_segments, pending_segments)'
+
+cols='position, total, sent, delivered, failed, remaining, percent, status, total_segments, pending_segments'
+admin_sql="BEGIN; SET LOCAL ROLE authenticated; SELECT set_config('request.jwt.claim.sub','$admin',true);"
+svc_sql="BEGIN; SET LOCAL ROLE service_role; SELECT set_config('request.jwt.claim.role','service_role',true);"
 progress() {
-  psql_q "BEGIN; SET LOCAL ROLE authenticated; SELECT set_config('request.jwt.claim.sub','$1',true); SELECT public.talkx_campaign_segment_progress('e0000000-0000-4000-8000-000000000007'); COMMIT;" \
-    | grep -E '^\{' | head -1
+  psql_q "$admin_sql SELECT string_agg(concat_ws('|', $cols), ';' ORDER BY position) FROM public.talkx_campaign_segment_progress('e0000000-0000-4000-8000-000000000007'); COMMIT;" \
+    | grep -E '^[0-9]' | head -1
 }
-out="$(progress "$admin")"
-[[ "$(jq_get "$out" "j->>'total_segments'")" == "3" ]] || fail "total_segments esperado 3: $out"
-[[ "$(jq_get "$out" "j->>'pending_segments'")" == "1" ]] || fail "pending_segments esperado 1: $out"
-[[ "$(jq_get "$out" "(j->'segments'->0)->>'name'")" == "Segmento B" ]] || fail "ordem deve seguir position: $out"
-[[ "$(jq_get "$out" "(j->'segments'->0)->>'status'")" == "done" ]] || fail "B deveria estar done: $out"
-[[ "$(jq_get "$out" "(j->'segments'->0)->>'percent'")" == "100" ]] || fail "B deveria ter 100%: $out"
-seg_a="$(jq_get "$out" "j->'segments'->1")"
-[[ "$(jq_get "$out" "(j->'segments'->1)->>'status'")" == "running" ]] || fail "A deveria estar running: $out"
-for pair in total:4 sent:2 delivered:1 failed:1 remaining:1 percent:75; do
-  [[ "$(jq_get "$out" "(j->'segments'->1)->>'${pair%%:*}'")" == "${pair##*:}" ]] \
-    || fail "A: ${pair%%:*} esperado ${pair##*:}: $seg_a"
-done
-[[ "$(jq_get "$out" "(j->'segments'->2)->>'status'")" == "pending" ]] || fail "C deveria estar pending: $out"
-pass 'progresso por segmento: ordem, contagens e status'
+# B (position 1) = sent+delivered -> done 100.0 | A (position 2) = 4 destinatarios com 1 pendente
+# -> running 75.0 | C (position 3) so pendente -> pending 0.0 | pending_segments = A + C = 2.
+esperado='1|2|2|1|0|0|100.0|done|3|2;2|4|2|1|1|1|75.0|running|3|2;3|1|0|0|0|1|0.0|pending|3|2'
+out="$(progress)"
+[[ "$out" == "$esperado" ]] || fail "progresso por segmento: esperado '$esperado', veio '$out'"
+pass 'progresso por segmento: ordem por position, contagens, percentual e status'
+
+out_svc="$(psql_q "$svc_sql SELECT string_agg(concat_ws('|', $cols), ';' ORDER BY position) FROM public.talkx_campaign_segment_progress('e0000000-0000-4000-8000-000000000007'); COMMIT;" | grep -E '^[0-9]' | head -1)"
+[[ "$out_svc" == "$esperado" ]] || fail "service_role deveria ler o mesmo: '$out_svc'"
+pass 'progresso por segmento: service_role le o mesmo'
+
+sem_seg="$(psql_q "$admin_sql SELECT count(*) FROM public.talkx_campaign_segment_progress('e0000000-0000-4000-8000-0000000000ff'); COMMIT;" | grep -E '^[0-9]+$' | tail -1)"
+[[ "$sem_seg" == "0" ]] || fail "campanha sem segmentos deveria devolver 0 linhas: '$sem_seg'"
+pass 'progresso por segmento: campanha sem segmentos devolve 0 linhas'
 
 set +e
 err="$(psql_test -c "BEGIN; SET LOCAL ROLE authenticated; SELECT set_config('request.jwt.claim.sub','$agent',true); SELECT public.talkx_campaign_segment_progress('e0000000-0000-4000-8000-000000000007'); COMMIT;" 2>&1)"
@@ -251,5 +287,38 @@ err="$(psql_test -c "BEGIN; SET LOCAL ROLE anon; SELECT public.talkx_campaign_se
 set -e
 [[ "$err" == *"permission denied"* ]] || fail "progresso: anon deveria ser negado: $err"
 pass 'progresso: ACL de agente e anon'
+
+# ── Rollback do cabecalho: tem de rodar e devolver o estado anterior ─────────
+# O bloco '-- Rollback (SQL executável, na ordem):' e lido como um todo (padrao dos testes
+# irmaos: talkx-retry-resolve, conversation-closures-reopen-same-day) e executado inteiro: o
+# CREATE OR REPLACE da RPC de progresso ocupa varias linhas '--   '.
+rb_sql="$(awk '/^-- Rollback \(SQL/{f=1; next} f && /^--   /{sub(/^--   /, ""); print; next} f{exit}' "$migration")"
+[[ -n "$rb_sql" ]] || fail 'bloco de Rollback do cabecalho nao encontrado'
+rb_n="$(printf '%s\n' "$rb_sql" | wc -l)"
+printf '%s\n' "$rb_sql" | psql_test >/dev/null || fail 'o bloco de Rollback do cabecalho nao rodou'
+pass "rollback do cabecalho executou (${rb_n} linhas de SQL)"
+
+[[ "$(psql_q "SELECT (to_regprocedure('public.talkx_campaign_resume_precheck(uuid)') IS NOT NULL)::text")" == "false" ]] \
+  || fail 'rollback: talkx_campaign_resume_precheck deveria sumir (funcao nova)'
+pass 'rollback: talkx_campaign_resume_precheck some (funcao nova)'
+
+def_volta="$(psql_q "SELECT COALESCE(pg_get_functiondef('public.talkx_campaign_segment_progress(uuid)'::regprocedure), '')")"
+[[ -n "$def_volta" ]] \
+  || fail 'rollback: a RPC de progresso nao pode ficar ausente (o front X149 le ela)'
+[[ "$(psql_q "SELECT pg_get_function_result('public.talkx_campaign_segment_progress(uuid)'::regprocedure)")" == "$sig" ]] \
+  || fail 'rollback: o contrato da RPC de progresso nao voltou'
+[[ "$(psql_q "SELECT has_function_privilege('anon','public.talkx_campaign_segment_progress(uuid)','EXECUTE')::text")" == "false" ]] \
+  || fail 'rollback: anon deveria seguir sem EXECUTE na RPC de progresso'
+[[ "$(psql_q "SELECT has_function_privilege('authenticated','public.talkx_campaign_segment_progress(uuid)','EXECUTE')::text")" == "true" ]] \
+  || fail 'rollback: authenticated deveria seguir com EXECUTE na RPC de progresso'
+if [[ -n "$def_antes" ]]; then
+  [[ "$def_antes" == "$def_volta" ]] \
+    || fail 'rollback: a definicao da RPC de progresso nao voltou igual ao estado anterior'
+  pass 'rollback: RPC de progresso volta IDENTICA (definicao, contrato e ACL) — pilha'
+fi
+pass 'rollback: estado anterior da RPC de progresso restaurado'
+
+psql_test >/dev/null < "$migration" || fail 'reaplicar a migration depois do rollback falhou'
+pass 'rollback: migration reaplicada depois do rollback (idempotencia)'
 
 printf 'talkx-resume-precheck: OK\n'
