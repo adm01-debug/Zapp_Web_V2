@@ -60,10 +60,10 @@ export function useDashboardStats(filters: DashboardFilters) {
     queryKey: ['dashboard-contact-counts', filters],
     queryFn: async () => {
       const { data, error } = await supabase.rpc('dashboard_contact_counts', {
-        p_since: filters.dateRange?.from ? filters.dateRange.from.toISOString() : null,
-        p_until: filters.dateRange?.to ? filters.dateRange.to.toISOString() : null,
-        p_queue: filters.queueId || null,
-        p_agent: filters.agentId || null,
+        p_since: filters.dateRange?.from ? filters.dateRange.from.toISOString() : undefined,
+        p_until: filters.dateRange?.to ? filters.dateRange.to.toISOString() : undefined,
+        p_queue: filters.queueId || undefined,
+        p_agent: filters.agentId || undefined,
       });
       if (error) throw error;
       return data as unknown as DashboardContactCounts;
