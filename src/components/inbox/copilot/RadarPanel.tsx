@@ -97,8 +97,7 @@ export function RadarPanel({
     if (suggestionsLoading && !prevLoadingRef.current) {
       setTimedOut(false);
       timeoutRef.current = setTimeout(() => setTimedOut(true), THINKING_TIMEOUT_MS);
-    }
-    if (!suggestionsLoading) {
+    } else if (!suggestionsLoading && prevLoadingRef.current) {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       setTimedOut(false);
     }
@@ -167,7 +166,7 @@ export function RadarPanel({
         role="complementary"
         aria-label="RADAR Copiloto — recolhido"
       >
-        <Radar className={cn('h-4 w-4 text-primary', suggestionsLoading && 'animate-pulse')} />
+        <Radar className={cn('h-4 w-4 text-primary', suggestionsLoading && 'motion-safe:animate-pulse')} />
         <span className="text-[11px] font-semibold text-primary">RADAR</span>
         {suggestions.length > 0 && (
           <span className="rounded-full bg-primary px-1.5 text-[9px] font-bold text-primary-foreground">{suggestions.length}</span>
@@ -197,7 +196,7 @@ export function RadarPanel({
       >
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-1.5">
-            <Radar className={cn('h-4 w-4 text-primary', suggestionsLoading && 'animate-pulse')} />
+            <Radar className={cn('h-4 w-4 text-primary', suggestionsLoading && 'motion-safe:animate-pulse')} />
             <span className="text-[12px] font-bold text-primary">RADAR</span>
           </div>
           <button type="button" onClick={onToggleCollapsed} aria-label="Fechar RADAR" className="text-muted-foreground hover:text-foreground">
@@ -249,12 +248,12 @@ export function RadarPanel({
         className="flex items-center gap-1.5 rounded-t-xl border-b border-border/60 px-3 py-2 cursor-grab active:cursor-grabbing"
         onMouseDown={onMouseDown}
       >
-        <Radar className={cn('h-4 w-4 text-primary shrink-0', suggestionsLoading && !timedOut && 'animate-pulse')} />
+        <Radar className={cn('h-4 w-4 text-primary shrink-0', suggestionsLoading && !timedOut && 'motion-safe:animate-pulse')} />
         <span className="text-[11px] font-bold text-primary flex-1">RADAR</span>
 
         {/* CV-054 — indicator */}
         {suggestionsLoading && !timedOut && (
-          <span className="flex h-1.5 w-1.5 rounded-full bg-primary animate-ping mr-1" aria-hidden="true" />
+          <span className="flex h-1.5 w-1.5 rounded-full bg-primary motion-safe:animate-ping mr-1" aria-hidden="true" />
         )}
 
         {/* Mode selector (CV-052) */}
@@ -279,7 +278,7 @@ export function RadarPanel({
         {/* DND toggle (CV-058) */}
         <button
           type="button"
-          onClick={(e) => { e.stopPropagation(); isDnd ? onClearDnd() : onEnableDnd(conversationId); }}
+          onClick={(e) => { e.stopPropagation(); if (isDnd) { onClearDnd(); } else { onEnableDnd(conversationId); } }}
           className="text-muted-foreground hover:text-foreground transition-colors"
           title={isDnd ? 'Retomar RADAR' : 'Silenciar RADAR (não perturbe)'}
           aria-label={isDnd ? 'Retomar RADAR' : 'Silenciar RADAR'}
@@ -296,7 +295,7 @@ export function RadarPanel({
             className="text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40"
             aria-label="Atualizar RADAR"
           >
-            <RefreshCw className={cn('h-3.5 w-3.5', suggestionsLoading && 'animate-spin')} />
+            <RefreshCw className={cn('h-3.5 w-3.5', suggestionsLoading && 'motion-safe:animate-spin')} />
           </button>
         )}
 

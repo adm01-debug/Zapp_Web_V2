@@ -130,7 +130,7 @@ interface SuggestionsCardProps {
 export function SuggestionsCard({ suggestions, loading, collapsed, onToggle, onUse }: SuggestionsCardProps) {
   const best = suggestions[0];
   const badge = loading ? (
-    <span className="ml-auto mr-1 flex h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+    <span className="ml-auto mr-1 flex h-1.5 w-1.5 rounded-full bg-primary motion-safe:animate-pulse" />
   ) : suggestions.length > 0 ? (
     <span className="ml-auto mr-1 text-[10px] text-primary font-semibold">{suggestions.length}</span>
   ) : null;

@@ -97,8 +97,8 @@ describe('RadarPanel CV-053 cartões recolhíveis', () => {
 describe('RadarPanel CV-054 indicador de pensamento', () => {
   it('exibe ping de carregamento quando suggestionsLoading=true', () => {
     render(<RadarPanel {...baseProps} suggestionsLoading={true} />);
-    // O botão de RADAR tem animate-pulse
-    const radar = document.querySelector('.animate-ping');
+    // O indicador usa o pulso respeitando preferência de movimento (motion-safe)
+    const radar = document.querySelector('[class*="animate-ping"]');
     expect(radar).toBeTruthy();
   });
 
