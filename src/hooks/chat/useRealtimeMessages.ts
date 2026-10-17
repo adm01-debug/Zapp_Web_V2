@@ -15,6 +15,11 @@ import { useMessageUpdateBatcher } from '../realtime/useMessageUpdateBatcher';
 
 const log = getLogger('RealtimeMessages');
 
+// Tetô da revalidação incremental (mesmo valor do default do serviço). A
+// consulta é ASCENDENTE e não pagina: atingir o teto significa que pode existir
+// mensagem nova fora do lote — ver fetchIncrementalConversations.
+const INCREMENTAL_FETCH_LIMIT = 200;
+
 export interface NewMessageNotification {
   id: string;
   contactId: string;
@@ -253,11 +258,18 @@ export function useRealtimeMessages() {
     }
     const contact = contacts[0];
     if (!mountedRef.current || !contact) return;
+    // Só entra quem tem CONVERSA de verdade (resumo do banco com última
+    // mensagem). Um UPDATE de contato sem histórico — editado na tela Contatos
+    // ou fora da janela da carga inicial — não é uma conversa da inbox: antes
+    // ele entrava como conversa VAZIA (sem preview, 0 não lidas), poluindo a
+    // lista. Sem resumo, o UPDATE é ignorado.
+    const summary = summaries.get(contact.id) ?? null;
+    if (!summary?.lastMessage) return;
     if (conversationsRef.current.some((c) => c.contact.id === contact.id)) return;
     liveRevisionRef.current += 1;
     commitConversations((prev) => {
       if (prev.some((c) => c.contact.id === contact.id)) return prev;
-      return [buildConversation(contact, [], summaries.get(contact.id) ?? null), ...prev];
+      return [buildConversation(contact, [], summary), ...prev];
     });
   }, [buscarComRetry, commitConversations]);
 
@@ -429,8 +441,16 @@ export function useRealtimeMessages() {
     if (!since) return fetchConversations();
     setRefreshing(true);
     try {
-      const novas = await RealtimeService.fetchMessagesSince(since, 200);
-      if (!mountedRef.current || novas.length === 0) return;
+      const novas = await RealtimeService.fetchMessagesSince(since, INCREMENTAL_FETCH_LIMIT);
+      if (!mountedRef.current) return;
+      // Teto atingido: a consulta não pagina, então pode haver mensagem nova
+      // fora do lote. Mesclar só as 200 mais antigas deixaria a lista errada em
+      // silêncio — cai na recarga total (silenciosa: a lista já está na tela).
+      if (novas.length >= INCREMENTAL_FETCH_LIMIT) {
+        await fetchConversations();
+        return;
+      }
+      if (novas.length === 0) return;
       const porContato = new Map<string, RealtimeMessage[]>();
       for (const m of novas) {
         if (!m.contact_id) continue;
