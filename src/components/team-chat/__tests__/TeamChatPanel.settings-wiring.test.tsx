@@ -73,9 +73,19 @@ vi.mock('@/hooks/storage/useResolvedStorageUrl', () => ({
 vi.mock('@/hooks/communication/useMediaElementVolume', () => ({
   useMediaElementVolume: () => ({}),
 }));
-vi.mock('@/integrations/supabase/client', () => ({
-  supabase: { from: vi.fn(), storage: { from: vi.fn() } },
-}));
+vi.mock('@/integrations/supabase/client', () => {
+  // Canais privados de digitação/presença (PD-69): stub sem rede — o teste é de busca (SL-082).
+  const channel = () => {
+    const ch: Record<string, unknown> = {};
+    ch.on = () => ch;
+    ch.subscribe = () => ch;
+    ch.track = () => Promise.resolve();
+    ch.send = () => Promise.resolve();
+    ch.presenceState = () => ({});
+    return ch;
+  };
+  return { supabase: { from: vi.fn(), storage: { from: vi.fn() }, channel, removeChannel: vi.fn() } };
+});
 
 const conversation = { id: 'conv-a', type: 'group', name: 'Time Comercial', created_by: 'user-1' } as TeamConversation;
 
