@@ -94,7 +94,7 @@ export function authMock() {
 
 export function loggerMock() {
   const logger = () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() });
-  return { getLogger: logger, log: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() } };
+  return { getLogger: logger, createLogger: logger, generateCorrelationId: () => 'test-correlation-id', log: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() } };
 }
 
 export function toastMock() {
