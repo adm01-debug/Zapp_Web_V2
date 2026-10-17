@@ -309,7 +309,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
       });
     })();
     return () => { cancelado = true; };
-  }, [searchTerm, conversation.id]);
+  }, [searchTerm, conversation.id, searchRetryCount]);
 
   const searchActive = searchTerm.length > 0;
   // `isSearching` separa "buscando" de "nada encontrado" na tela: mostrar
@@ -549,5 +549,12 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     deleteConvMutation,
     tts,
     reactions,
+    isSearchingMessages: isSearching,
+    searchBelowMinChars: debouncedSearchQuery.length > 0 && debouncedSearchQuery.length < MIN_SEARCH_CHARS,
+    retrySearch,
+    searchIsCapped: (serverSearch?.results?.length ?? 0) >= 100,
+    messagesError: isError,
+    refetchMessages: refetch,
+    olderError,
   };
 }

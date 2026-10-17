@@ -12,15 +12,6 @@
       "contextHash": "0386188cd94121c367c98f3d7ddd1ef5d77d9ee0c3da321d3371fcf2241132f5"
     },
     {
-      "file": "src/components/gamification/TrainingMiniGames.tsx",
-      "line": 61,
-      "column": 93,
-      "severity": "error",
-      "code": "TS2304",
-      "message": "Cannot find name 'creditoDaPartida'.",
-      "contextHash": "50e823df3fc3ab011c56300b5461c1e44357b7cf159195875c01ea6881784ae7"
-    },
-    {
       "file": "src/components/inbox/__tests__/InboxEmptyChat.cta.test.tsx",
       "line": 52,
       "column": 28,
@@ -174,24 +165,6 @@
       "contextHash": "b267f4622d840372cc578fc17235da22c1bc35694178824a94d951adc04d63cf"
     },
     {
-      "file": "src/components/inbox/ChatPanel.tsx",
-      "line": 375,
-      "column": 42,
-      "severity": "error",
-      "code": "TS2345",
-      "message": "Argument of type '\"transfer_conversation\"' is not assignable to parameter of type '\"is_admin\" | \"accept_department_invite\" | \"add_agent_xp\" | \"add_wa_tag_if_not_exists\" | \"admin_set_role\" | \"admin_unlock_login\" | \"ai_budget_reconcile\" | \"ai_budget_release\" | ... 270 more ... | \"user_has_permission\"'.",
-      "contextHash": "2c630c3ca0ab322e35151ce87f0c283e922156127af81c354093a1601c38ed3c"
-    },
-    {
-      "file": "src/components/inbox/contact-details/ConversationMemorySection.tsx",
-      "line": 98,
-      "column": 7,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type '\"memoria\"' is not assignable to type '\"professional\" | \"personal\" | \"singu\" | \"intelligence\" | \"delivery\"'.",
-      "contextHash": "efb3acb2294788823eff6c6413566bf9efc1b9887c144dee784cda8776eb754b"
-    },
-    {
       "file": "src/components/inbox/ConversationListSidebar.tsx",
       "line": 596,
       "column": 15,
@@ -210,15 +183,6 @@
       "contextHash": "c9733e67d293609c93ec50bbdc551ee606b2e6d5a6f1232052815839f8459e5b"
     },
     {
-      "file": "src/components/inbox/RealtimeCollaboration.tsx",
-      "line": 60,
-      "column": 72,
-      "severity": "error",
-      "code": "TS2345",
-      "message": "Argument of type '\"transfer_conversation\"' is not assignable to parameter of type '\"is_admin\" | \"accept_department_invite\" | \"add_agent_xp\" | \"add_wa_tag_if_not_exists\" | \"admin_set_role\" | \"admin_unlock_login\" | \"ai_budget_reconcile\" | \"ai_budget_release\" | ... 270 more ... | \"user_has_permission\"'.",
-      "contextHash": "2f36ba21e5d43d7cbb505b5d38ad72c3d76ae5ade5b57e50c8757dfbcf053b4e"
-    },
-    {
       "file": "src/components/inbox/RealtimeInboxView.tsx",
       "line": 477,
       "column": 15,
@@ -228,22 +192,22 @@
       "contextHash": "e97bc4c0bd584ef8d77a3df32104562158bf0b231cb8c6f48886337ee8b0a0dd"
     },
     {
-      "file": "src/components/queues/QueueAlertsDisplay.tsx",
-      "line": 94,
-      "column": 19,
+      "file": "src/components/settings/AppearanceSettings.tsx",
+      "line": 69,
+      "column": 22,
       "severity": "error",
-      "code": "TS17001",
-      "message": "JSX elements cannot have multiple attributes with the same name.",
-      "contextHash": "4762c1f2e2f9fb477c0028f556938d9b7e4570dd08a793535da445f670b725fb"
+      "code": "TS18048",
+      "message": "'onSave' is possibly 'undefined'.",
+      "contextHash": "87e3c34ab0169895b43bdff4bbaf99ccf0ac8964f8d0a72a5c8272f3e4450190"
     },
     {
-      "file": "src/components/settings/SettingsView.tsx",
-      "line": 232,
-      "column": 12,
+      "file": "src/components/settings/AppearanceSettings.tsx",
+      "line": 69,
+      "column": 22,
       "severity": "error",
-      "code": "TS2739",
-      "message": "Type '{ settings: UserSettings; updateSettings: (updates: Partial<UserSettings>) => void; onResetOnboarding: () => void; }' is missing the following properties from type 'AppearanceSettingsProps': isSaving, onSave",
-      "contextHash": "d7f993d72b0fa443c6a8571870f8314edb93bd2604af40bf487fdf278d20bbc5"
+      "code": "TS2722",
+      "message": "Cannot invoke an object which is possibly 'undefined'.",
+      "contextHash": "87e3c34ab0169895b43bdff4bbaf99ccf0ac8964f8d0a72a5c8272f3e4450190"
     },
     {
       "file": "src/components/talkx/__tests__/TalkXTemplateEditor.states.test.tsx",
@@ -262,15 +226,6 @@
       "code": "TS2322",
       "message": "Type '{ key: string; templates: TalkXTemplate[]; isLoading: boolean; isError: boolean; error: Error | null; onRetry: () => void; editing: TalkXTemplate | null; initialTtab: TalkXTemplateTab; onActiveTemplateChange: (templateId: string) => void; onClose: () => void; onOpenMonitor: ((campaignId: string) => void) | undefined...' is not assignable to type 'IntrinsicAttributes & Props'. Property 'isError' does not exist on type 'IntrinsicAttributes & Props'.",
       "contextHash": "39cb0ff61a853c7b9aa1ca27eeb585334cce557ab98bdfb1370cf84320b0f7bc"
-    },
-    {
-      "file": "src/components/talkx/TalkXView.tsx",
-      "line": 96,
-      "column": 56,
-      "severity": "error",
-      "code": "TS2345",
-      "message": "Argument of type '() => \"wizard\" | TalkXScreen | \"tabs\"' is not assignable to parameter of type 'TalkXTopView | (() => TalkXTopView)'. Type '() => \"wizard\" | TalkXScreen | \"tabs\"' is not assignable to type '() => TalkXTopView'. Type '\"wizard\" | TalkXScreen | \"tabs\"' is not assignable to type 'TalkXTopView'. Type '\"paused\"' is not assignable to type 'TalkXTopView'.",
-      "contextHash": "8ebdf40d503173f2b07ff7fe8c208c71ba4cee44c607c3757583553dbbadd996"
     },
     {
       "file": "src/components/team-chat/__tests__/useTeamChatPanel.search-antigas.test.tsx",
@@ -372,42 +327,6 @@
       "contextHash": "e0631632ef6ce84ede7b6c0f35db1e9909be3fdfd1e00fc72d457062dd0e6c12"
     },
     {
-      "file": "src/hooks/analytics/__tests__/useGoalsDashboard.test.tsx",
-      "line": 324,
-      "column": 18,
-      "severity": "error",
-      "code": "TS2339",
-      "message": "Property 'hasData' does not exist on type 'Goal'.",
-      "contextHash": "aa44c08718eb5757d006e503bd10e4f8d1adf230ecfe4d248f187271f42dba04"
-    },
-    {
-      "file": "src/hooks/analytics/__tests__/useGoalsDashboard.test.tsx",
-      "line": 331,
-      "column": 18,
-      "severity": "error",
-      "code": "TS2339",
-      "message": "Property 'hasData' does not exist on type 'Goal'.",
-      "contextHash": "b0d433d9aa827ff0e7af57d451eb4cf885b0bb7f62be440176a5510413ed02ae"
-    },
-    {
-      "file": "src/hooks/analytics/__tests__/useGoalsDashboard.test.tsx",
-      "line": 475,
-      "column": 64,
-      "severity": "error",
-      "code": "TS2339",
-      "message": "Property 'hasData' does not exist on type 'Goal'.",
-      "contextHash": "1e18824f3de458ea221fdc36e0dffdb8ab81cacf985940022bc58a86b20eb8d6"
-    },
-    {
-      "file": "src/hooks/business/__tests__/useWarRoomData.test.tsx",
-      "line": 72,
-      "column": 45,
-      "severity": "error",
-      "code": "TS2305",
-      "message": "Module '\"../useWarRoomData\"' has no exported member 'WARROOM_MAX_ROWS'.",
-      "contextHash": "571260a5986d89f8c07a17bac8253aa64afbd718c80af924c77a14e1d5324da9"
-    },
-    {
       "file": "src/hooks/business/useCSAT.ts",
       "line": 106,
       "column": 9,
@@ -418,7 +337,7 @@
     },
     {
       "file": "src/hooks/business/useWarRoomData.ts",
-      "line": 98,
+      "line": 100,
       "column": 22,
       "severity": "error",
       "code": "TS2345",
@@ -427,7 +346,7 @@
     },
     {
       "file": "src/hooks/business/useWarRoomData.ts",
-      "line": 144,
+      "line": 146,
       "column": 50,
       "severity": "error",
       "code": "TS2345",
