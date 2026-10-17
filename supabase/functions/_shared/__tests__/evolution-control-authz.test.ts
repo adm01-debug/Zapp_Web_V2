@@ -6,6 +6,7 @@ import {
   CONTROL_ACTIONS,
   SEND_ACTIONS,
   READ_ACTIONS,
+  maskSecretFields,
 } from "../evolution-control-authz.ts";
 
 // R2-API-001 (P1): a matriz de autorização das ações de controle Evolution.
@@ -63,11 +64,66 @@ Deno.test("classifyEvolutionAction - leituras seguem liberadas a autenticados", 
   for (const action of [
     "status", "get-settings", "get-webhook", "find-chats", "list-instances",
     "fetch-profile", "instance-info", "list-groups", "invite-info",
-    "check-numbers", "get-catalog", "find-templates", "typebot-sessions",
+    "check-numbers", "get-catalog", "find-templates",
   ]) {
     assertEquals(classifyEvolutionAction(action), "read", `${action} deve ser read`);
     assert(READ_ACTIONS.has(action), `${action} deve estar em READ_ACTIONS`);
   }
+});
+
+// PL-01 (P1): as leituras de INTEGRAÇÃO do provedor devolviam a resposta CRUA
+// (openAiApiKey/apiKey/token/password/secret em claro). RED: qualquer usuário
+// autenticado lia a credencial da integração. GREEN: as 15 saíram do handler e
+// dos conjuntos — fora deles caem em 'control' (deny by default).
+Deno.test("PL-01 - leituras de integração removidas caem em control (deny by default)", () => {
+  const removidas = [
+    "get-chatwoot", "get-typebot", "typebot-sessions", "get-openai", "get-dify",
+    "get-flowise", "get-evolution-bot", "get-rabbitmq", "get-sqs", "get-proxy",
+    "get-evoai", "get-n8n", "get-kafka", "get-nats", "get-pusher",
+  ];
+  // PL-01: as 15 leituras de integração não voltam a NENHUM conjunto — fora
+  // deles caem em `control` (deny by default). É o reforço do piso de sanidade
+  // logo acima, que só existe para pegar truncamento do fonte.
+  for (const action of removidas) {
+    for (const set of [CONTROL_ACTIONS, SEND_ACTIONS, READ_ACTIONS]) {
+      assert(!set.has(action), `${action} não pode estar em nenhum conjunto (PL-01)`);
+    }
+    assertEquals(classifyEvolutionAction(action), "control", `${action} deve cair em control`);
+  }
+});
+
+// Forma do retorno de `maskSecretFields` usada nas asserções abaixo (evita `any`:
+// o lint ratchet recusa ocorrência nova de @typescript-eslint/no-explicit-any).
+type Mascarado = {
+  enabled: boolean;
+  apiKey: string;
+  openAiApiKey: string;
+  aninhado: { token: string; password: string; keep: string };
+  lista: Array<{ secret?: string; name?: string }>;
+  authorization: string;
+};
+
+Deno.test("PL-01 - maskSecretFields troca o valor de campo de credencial por '***'", () => {
+  const mascarado = maskSecretFields({
+    enabled: true,
+    apiKey: "chave-secreta",
+    openAiApiKey: "sk-secreto",
+    aninhado: { token: "tok-123", password: "pwd", keep: "ok" },
+    lista: [{ secret: "s1" }, { name: "visível" }],
+    authorization: "Bearer x",
+  }) as Mascarado;
+  assertEquals(mascarado.apiKey, "***");
+  assertEquals(mascarado.openAiApiKey, "***");
+  assertEquals(mascarado.aninhado.token, "***");
+  assertEquals(mascarado.aninhado.password, "***");
+  assertEquals(mascarado.aninhado.keep, "ok");
+  assertEquals(mascarado.lista[0].secret, "***");
+  assertEquals(mascarado.lista[1].name, "visível");
+  assertEquals(mascarado.authorization, "***", "header authorization não pode sair em claro");
+  assertEquals(mascarado.enabled, true, "campo não-secreto sobrevive");
+  // Primitivos e arrays de primitivos passam intactos.
+  assertEquals(maskSecretFields("texto"), "texto");
+  assertEquals(maskSecretFields([1, 2]), [1, 2]);
 });
 
 Deno.test("decideControlAuthz - admin/supervisor conserva a operação", () => {
@@ -101,7 +157,9 @@ Deno.test("matriz é exaustiva: toda ação do handler está em exatamente um co
   const handlerActions = new Set(
     [...handlerSource.matchAll(/action === '([^']+)'/g)].map((m) => m[1]),
   );
-  assert(handlerActions.size > 100, `sanidade: handler deve ter >100 ações (achou ${handlerActions.size})`);
+  // PL-01 removeu 15 leituras de integração do handler (eram 113); o piso
+  // desceu junto (>100 → >90). Hoje o handler tem ~98 ações.
+  assert(handlerActions.size > 90, `sanidade: handler deve ter >90 ações (achou ${handlerActions.size})`);
 
   const sets = { CONTROL_ACTIONS, SEND_ACTIONS, READ_ACTIONS };
   for (const [name, set] of Object.entries(sets)) {
