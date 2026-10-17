@@ -6,7 +6,7 @@ const [migration, sender, editor, delivery, scheduled, windowShared, scheduler, 
   readFile(new URL('../../supabase/migrations/20260911200000_persist_talkx_schedule_timezone.sql', import.meta.url), 'utf8'),
   readFile(new URL('../../supabase/functions/talkx-send/index.ts', import.meta.url), 'utf8'),
   readFile(new URL('../../src/components/talkx/useCampaignEditor.ts', import.meta.url), 'utf8'),
-  readFile(new URL('../../src/components/talkx/TalkXWizardDelivery.tsx', import.meta.url), 'utf8'),
+  readFile(new URL('../../supabase/functions/talkx-send/../../../src/components/talkx/TalkXWizardDelivery.tsx', import.meta.url), 'utf8'),
   readFile(new URL('../../src/components/talkx/TalkXCampaignScheduled.tsx', import.meta.url), 'utf8'),
   readFile(new URL('../../supabase/functions/_shared/talkx-window.ts', import.meta.url), 'utf8'),
   readFile(new URL('../../supabase/functions/talkx-scheduler/index.ts', import.meta.url), 'utf8'),
@@ -33,7 +33,8 @@ test('Talk X evaluates the delivery window in the campaign timezone and fails cl
   // deliveryWindowStatus foi extraida para _shared/talkx-window.ts (auditoria
   // 2026-09-16) para que talkx-scheduler reuse a MESMA logica em vez de
   // reimplementar; talkx-send agora importa em vez de definir localmente.
-  assert.match(sender, /import \{ DEFAULT_SCHEDULE_TIMEZONE, deliveryWindowStatus, parseBusinessHours \} from "\.\.\/_shared\/talkx-window\.ts"/);
+  // [^}]* permite imports adicionais (ex: parseDndHours, type DndSetting) no mesmo statement.
+  assert.match(sender, /import \{ DEFAULT_SCHEDULE_TIMEZONE, deliveryWindowStatus, parseBusinessHours[^}]*\} from "\.\.\/\_shared\/talkx-window\.ts"/);
   assert.match(windowShared, /function deliveryWindowStatus/);
   assert.match(windowShared, /invalid_schedule_timezone/);
   assert.doesNotMatch(sender, /nowBR|hmBR|horário de Brasília/);
@@ -73,7 +74,7 @@ test('Talk X scheduler resume reuses deliveryWindowStatus (fails closed, respect
   // existir. O que ela protege é o mesmo: a janela não pode ser reimplementada
   // em elo nenhum (a política decide por deliveryWindowStatus, não por conta
   // própria, e nenhum dos dois elos calcula hora local à mão).
-  assert.match(scheduler, /import \{ AUTO_RESUME_REASONS, connectionStatusResolver, selectResumableCampaigns \} from "\.\.\/_shared\/talkx-resume-policy\.ts"/);
+  assert.match(scheduler, /import \{ AUTO_RESUME_REASONS, connectionStatusResolver, selectResumableCampaigns \} from "\.\.\/\_shared\/talkx-resume-policy\.ts"/);
   assert.match(scheduler, /schedule_timezone, send_window_start/);
   assert.match(scheduler, /selectResumableCampaigns\(/);
   // V03.2: a fiação do status da conexão NÃO pode voltar a morar inline no
@@ -85,7 +86,7 @@ test('Talk X scheduler resume reuses deliveryWindowStatus (fails closed, respect
   assert.doesNotMatch(scheduler, /connectionStatusById\.get\(/);
   assert.match(resumePolicy, /export function connectionStatusResolver\(/);
   assert.match(resumePolicy, /if \(typeof connectionId !== "string"\) return null;/);
-  assert.match(resumePolicy, /import \{ deliveryWindowStatus, type ScheduleGuardCampaign \} from "\.\/talkx-window\.ts"/);
+  assert.match(resumePolicy, /import \{ deliveryWindowStatus, type ScheduleGuardCampaign \} from "\.\.\/talkx-window\.ts"/);
   assert.match(resumePolicy, /deliveryWindowStatus\(campaign, now\)\.allowed/);
   assert.doesNotMatch(resumePolicy, /nowBR|hmBR|isWithinSendWindow|Intl\.DateTimeFormat/);
 });
