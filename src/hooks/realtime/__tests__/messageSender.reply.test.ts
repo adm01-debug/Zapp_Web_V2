@@ -55,3 +55,22 @@ describe('messageSender — resposta preserva o id citado até o RPC (R2-INB-001
     expect(args.p_reply_to_id).toBeUndefined();
   });
 });
+
+describe('messageSender — clientMessageId chega ao enqueue (B08)', () => {
+  it('repasse o clientMessageId da acao como p_client_message_id', async () => {
+    await sendMessageToContact('c2', 'nota de voz', 'audio', undefined, undefined, null, 'cli-fixo-1');
+
+    expect(rpcMock).toHaveBeenCalledWith(
+      'enqueue_outbound_message',
+      expect.objectContaining({ p_client_message_id: 'cli-fixo-1' }),
+    );
+  });
+
+  it('sem clientMessageId, o servico gera o id (texto segue idempotente)', async () => {
+    await sendMessageToContact('c3', 'texto novo');
+
+    const args = rpcMock.mock.calls[0][1] as Record<string, unknown>;
+    expect(typeof args.p_client_message_id).toBe('string');
+    expect(args.p_client_message_id).not.toBe('');
+  });
+});
