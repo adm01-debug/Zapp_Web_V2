@@ -12,6 +12,7 @@ import {
   resolveEffectivePolicies,
   resolvePolicyState,
   snapshotDoManifest,
+  tabelasComPolicyCriadaNaoSincronizada,
   tabelasComPolicyPosterior,
   type ComandoRls,
 } from './helpers/rlsSchema';
@@ -109,6 +110,12 @@ describe('Guarda: o resolvedor reflete o schema real (nao e um espelho)', () => 
     // `docs/MIGRATIONS.md` proibe commitá-lo junto da migration (sem essa
     // tolerancia, um cartao de RLS legitimo travaria em vermelho ate o bot).
     const emTransito = tabelasComPolicyPosterior(snapshotDoManifest());
+    // Trânsito por timestamp retroativo (t_5f3ab2b7): migration com versão
+    // anterior ao snapshot, ainda não sincronizada pelo `types-sync`, cria
+    // policy que o manifest não registra — o critério de timestamp acima não
+    // alcança essa tabela. Só entra aqui a adição explicada por CREATE POLICY
+    // real; para essas tabelas vale a paridade leniente (nada do banco some).
+    const criadasNaoSincronizadas = tabelasComPolicyCriadaNaoSincronizada(ESTADO);
     const divergencias: string[] = [];
     const tabelas = new Set<string>();
     for (const chave of Object.keys(
@@ -125,6 +132,17 @@ describe('Guarda: o resolvedor reflete o schema real (nao e um espelho)', () => 
         .map((p) => p.name)
         .sort();
       const manifest = manifestPolicyNames(tabela);
+      if (criadasNaoSincronizadas.has(`public.${tabela}`)) {
+        // Paridade leniente do trânsito retroativo: a adição já está explicada
+        // por CREATE POLICY real, então o que se prova aqui é que nenhuma
+        // policy do banco real sumiu no estado resolvido.
+        for (const nome of manifest) {
+          if (!resolvidas.includes(nome)) {
+            divergencias.push(`${tabela}: policy do banco real ausente: ${nome}`);
+          }
+        }
+        continue;
+      }
       if (JSON.stringify(resolvidas) !== JSON.stringify(manifest)) {
         divergencias.push(
           `${tabela}: migrations=${JSON.stringify(resolvidas)} manifest=${JSON.stringify(manifest)}`,

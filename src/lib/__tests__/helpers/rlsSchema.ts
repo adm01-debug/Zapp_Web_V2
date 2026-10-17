@@ -220,6 +220,69 @@ export function tabelasComPolicyPosterior(snapshotIso: string = snapshotDoManife
   return tocadas;
 }
 
+/**
+ * Tabelas com policy CRIADA por migration real mas ainda ausente do manifest.
+ *
+ * Cobre o furo do critério de timestamp (`tabelasComPolicyPosterior`): uma
+ * migration com timestamp RETROATIVO (anterior ao snapshot do manifest) ainda
+ * não sincronizada pelo `types-sync` cria policies que o manifest não
+ * registra, mas a tabela não entra no conjunto "em trânsito" porque a versão
+ * do arquivo é menor ou igual à do snapshot. Caso real (t_5f3ab2b7): a
+ * migration `20261006221242_recuperacao_anonima_pedido_reset.sql` cria
+ * "Anon can file a password reset request" com timestamp anterior ao snapshot
+ * `2026-10-09T16:18:59Z` do manifest.
+ *
+ * Retorna a tabela SOMENTE quando TODA policy resolvida ausente do manifest
+ * está explicada por um `CREATE POLICY` real nas migrations (qualquer
+ * timestamp). Policy fantasma do resolvedor — sem CREATE correspondente —
+ * não entra aqui, e remoção de policy do banco real também não (o chamador
+ * continua exigindo `manifest ⊆ resolvido` para essas tabelas).
+ */
+export function tabelasComPolicyCriadaNaoSincronizada(state: PolicyState): Set<string> {
+  const dir = join(process.cwd(), 'supabase', 'migrations');
+  const criadas = new Map<string, Set<string>>();
+  const criaPolicy = /CREATE\s+POLICY\s+(?:"([^"]+)"|(\w+))\s+ON\s+((?:\w+\s*\.\s*)?\w+)/gi;
+  for (const nome of readdirSync(dir)
+    .filter((arquivo) => arquivo.endsWith('.sql'))
+    .sort()) {
+    const sql = semComentarios(readFileSync(join(dir, nome), 'utf8'));
+    for (const ocorrencia of sql.matchAll(criaPolicy)) {
+      const tabela = nomeTabela(ocorrencia[3]);
+      const policy = ocorrencia[1] ?? ocorrencia[2]!;
+      let nomes = criadas.get(tabela);
+      if (!nomes) {
+        nomes = new Set();
+        criadas.set(tabela, nomes);
+      }
+      nomes.add(policy);
+    }
+  }
+  const manifest = JSON.parse(
+    readFileSync(join(process.cwd(), 'supabase', 'schema-manifest.json'), 'utf8'),
+  ) as { policies: Record<string, string> };
+  const registradas = new Map<string, Set<string>>();
+  for (const chave of Object.keys(manifest.policies)) {
+    const tabela = `public.${chave.split('.')[0].toLowerCase()}`;
+    const policy = chave.slice(chave.indexOf('.') + 1).replace(/^"|"$/g, '');
+    let nomes = registradas.get(tabela);
+    if (!nomes) {
+      nomes = new Set();
+      registradas.set(tabela, nomes);
+    }
+    nomes.add(policy);
+  }
+  const fora = new Set<string>();
+  for (const [tabela, lista] of state) {
+    const resolvidos = new Set(lista.map((p) => p.name));
+    const noManifest = registradas.get(tabela) ?? new Set<string>();
+    const extras = [...resolvidos].filter((nome) => !noManifest.has(nome));
+    if (extras.length === 0) continue;
+    const criadasNaTabela = criadas.get(tabela) ?? new Set<string>();
+    if (extras.every((nome) => criadasNaTabela.has(nome))) fora.add(tabela);
+  }
+  return fora;
+}
+
 /** Nomes de policy que o manifest do banco real registra para a tabela (ordem alfabética). */
 export function manifestPolicyNames(tabela: string): string[] {
   const manifest = JSON.parse(
