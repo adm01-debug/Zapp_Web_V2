@@ -1,0 +1,3 @@
+arquivo,import,alvo,motivo
+src/hooks/chat/useTeamChatDraft.ts,@/lib/teamChatDraftSession,src/lib/teamChatDraftSession.ts,nao existe na dia-base
+src/hooks/integrations/useMultiplixDispatches.ts,@/lib/invokeEdge,src/lib/invokeEdge.ts,nao existe na dia-base

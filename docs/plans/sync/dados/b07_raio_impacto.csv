@@ -1,0 +1,33 @@
+alvo,importadores,testes,quem
+src/components/calls/IncomingCallAlert.tsx,2,2,src/components/calls/__tests__/IncomingCallAlert.provider.test.tsx | src/components/inbox/__tests__/MediaVolume.test.tsx
+src/components/calls/RecordingPlayer.tsx,1,1,tests/contracts/media-volume-surfaces.contract.test.ts
+src/components/catalog/useSendProduct.ts,2,1,src/hooks/__tests__/useSentimentAlerts.test.ts | src/lib/calls/WhatsAppCallAdapter.ts
+src/components/inbox/AudioMessagePlayer.tsx,1,1,tests/contracts/contraste-balao-midia.contract.test.ts
+src/components/inbox/MediaPreview.tsx,1,1,tests/contracts/media-volume-surfaces.contract.test.ts
+src/components/inbox/VideoFullscreen.tsx,1,1,tests/contracts/media-volume-surfaces.contract.test.ts
+src/components/inbox/media-gallery/MediaPreviewDialog.tsx,1,1,tests/contracts/media-volume-surfaces.contract.test.ts
+src/components/team-chat/teamChatParts.tsx,1,1,tests/contracts/media-volume-surfaces.contract.test.ts
+src/components/transcriptions/TranscriptionContactGroup.tsx,1,1,tests/contracts/media-volume-surfaces.contract.test.ts
+src/hooks/auth/useAuth.tsx,1,1,src/pages/__tests__/Auth.sem-cadastro.test.tsx
+src/hooks/chat/useTeamChatNotifications.ts,2,2,tests/contracts/alert-sound-persistence.contract.test.ts | tests/contracts/media-volume-surfaces.contract.test.ts
+src/hooks/communication/useAudioMemes.ts,1,1,tests/contracts/media-volume-surfaces.contract.test.ts
+src/hooks/communication/useTranscriptionNotifications.ts,1,1,tests/contracts/notification-sound-persistence.contract.test.ts
+src/hooks/crm/useAgents.ts,2,0,src/hooks/agents/useAgentPendingCounts.ts | src/hooks/agents/useAgentRecentSends.ts
+src/hooks/evolution/useEvolutionMessaging.ts,1,1,src/hooks/evolution/__tests__/useEvolutionMessaging.test.ts
+src/hooks/inbox/useInboxFilters.ts,1,0,src/hooks/agents/useAgentPendingCounts.ts
+src/hooks/inbox/useRealtimeInbox.ts,2,1,src/components/inbox/__tests__/RealtimeInboxView.pagination.test.tsx | src/lib/calls/WhatsAppCallAdapter.ts
+src/hooks/inbox/useSentimentAlerts.ts,1,1,tests/contracts/notification-sound-persistence.contract.test.ts
+src/hooks/integrations/useCatalogSendHistory.ts,1,0,src/components/catalog/catalogExport.ts
+src/hooks/integrations/useMultiplixDispatches.ts,1,1,tests/contracts/multiplix-dispatch-write-path.contract.test.ts
+src/hooks/realtime/useRealtimeNotifications.ts,1,1,tests/contracts/notification-sound-persistence.contract.test.ts
+src/hooks/system/useNavigationHistory.ts,2,2,src/hooks/__tests__/useGlobalKeyboardShortcuts.dashboard.test.tsx | src/pages/__tests__/Index.keyboard-dashboard-view.test.tsx
+src/hooks/system/useNotificationSettings.ts,1,1,tests/contracts/notification-sound-persistence.contract.test.ts
+src/hooks/ui/use-toast.ts,1,1,src/hooks/ui/__tests__/use-toast.test.tsx
+src/integrations/supabase/client.ts,2,1,src/lib/__tests__/sec-fe-01-supabase-url-import-meta.test.ts | src/test/setup.ts
+src/lib/calls/phone.ts,3,1,src/components/catalog/ExternalProductManagement.tsx | src/components/contacts/ContactDetailPanel.tsx | src/components/contacts/__tests__/CT51_52_sendProduct.test.tsx
+src/lib/localDay.ts,7,4,src/components/inbox/__tests__/localDay.localInstantFromDayAndTime.test.ts | src/hooks/analytics/__tests__/useAIStats.test.tsx | src/hooks/tasks/workItemFormat.ts | src/lib/__tests__/periodEquivalence.test.ts | src/lib/journey/__tests__/periodRange.test.ts | src/lib/journey/periodRange.ts | src/lib/journey/stats.ts
+src/lib/mediaVolumeElement.ts,2,2,src/components/inbox/__tests__/MediaVolume.test.tsx | src/components/inbox/__tests__/VideoIosFallback.test.tsx
+src/lib/mediaVolumeStore.ts,2,1,src/components/inbox/__tests__/MediaVolume.test.tsx | src/lib/calls/tabLeaderStore.ts
+src/types/chat.ts,2,1,src/components/inbox/chat/MessageBubbleUnsupported.tsx | src/components/inbox/chat/__tests__/MessageBubbleUnsupported.test.tsx
+src/utils/audioToMp3.ts,1,1,src/utils/__tests__/audioToMp3.loadLamejs.test.ts
+src/utils/notificationSounds.ts,1,1,src/components/inbox/__tests__/MediaVolume.test.tsx
