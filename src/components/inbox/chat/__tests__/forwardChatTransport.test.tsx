@@ -34,8 +34,8 @@ vi.mock('@/services/outbound-message.service', () => ({
 }));
 
 // Só o transporte de mídia é substituído: o resto (createForwardRunState etc.) fica real.
-vi.mock('@/hooks/chat/useForwardMedia', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/hooks/chat/useForwardMedia')>();
+vi.mock('@/hooks/chat/forwardMedia', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/hooks/chat/forwardMedia')>();
   return { ...actual, forwardMediaMessages: mocks.forwardMediaMessages };
 });
 
@@ -61,7 +61,7 @@ vi.mock('@/lib/logger', () => ({
 
 import { useChatPanelHandlers } from '@/components/inbox/chat/useChatPanelHandlers';
 import { useForwardMessage, type ForwardCallback } from '@/hooks/chat/useForwardMessage';
-import type { ForwardResult } from '@/hooks/chat/useForwardMedia';
+import type { ForwardResult } from '@/hooks/chat/forwardMedia';
 import type { Message } from '@/types/chat';
 
 function chatMessage(overrides: Partial<Message> = {}): Message {

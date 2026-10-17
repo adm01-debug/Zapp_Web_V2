@@ -7,7 +7,7 @@ import {
   fetchCatalogContactResults,
   logCatalogSendEvent,
   type CatalogSendEventInput,
-} from '../useCatalogContactSearch';
+} from '../catalogContactSearch';
 
 // CT-78 — o cliente Supabase é a ÚNICA dependência externa de
 // `logCatalogSendEvent`; é ele que muda (não a função sob teste). `insert` é um

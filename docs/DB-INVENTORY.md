@@ -112,7 +112,7 @@ arquivos do repositório, pela regra da seção anterior — cada linha carrega 
 | `crm_contact_links` | Vínculo entre o contato do Zapp e contato/empresa do CRM externo | ativo | `src/components/inbox/__tests__/GlobalSearch.r2-inb-020.test.tsx`, `src/components/inbox/contact-details/sidebar/ContactSidebarSections.tsx`, `src/components/inbox/useGlobalSearchData.ts` … |
 | `crm_sync_outbox` | Fila de saída da sincronização com o CRM (payload e idempotência) | ativo | `supabase/functions/crm-integration/index.ts`, `.github/workflows/db-migrate.yml`, `scripts/db-audit/contracts/20260908180000.sql` … |
 | `csat_auto_config` | Disparo automático de CSAT (tempo de espera e modelo de mensagem) | ativo | `src/components/settings/CSATAutoConfig.tsx`, `src/components/settings/__tests__/CSATAutoConfig.test.tsx` |
-| `csat_surveys` | Respostas de pesquisa CSAT (nota, comentário e agente avaliado) | ativo | `src/hooks/business/useCSAT.ts`, `src/hooks/integrations/useCatalogContactSearch.ts`, `src/services/contact.service.ts` |
+| `csat_surveys` | Respostas de pesquisa CSAT (nota, comentário e agente avaliado) | ativo | `src/hooks/business/useCSAT.ts`, `src/hooks/integrations/catalogContactSearch.ts`, `src/services/contact.service.ts` |
 | `custom_emojis` | Emojis personalizados disponíveis no chat | ativo | `src/components/settings/MediaLibraryAdmin.tsx`, `src/components/settings/__tests__/MediaLibraryAdmin.test.tsx`, `src/components/settings/media-library/useMediaLibrary.ts` … |
 | `deal_activities` | Atividades registradas em uma negociação do CRM | ativo | `src/hooks/chat/useConversationHistoryTimeline.ts`, `src/hooks/crm/useContactCrm360.ts` |
 | `department_audit_logs` | Auditoria de alterações em departamento do chat interno | ativo | `src/hooks/team-chat/useDepartmentManagement.ts`, `scripts/db-audit/team-chat-department-whatsapp-safe-config.test.sh`, `scripts/db-tests/04-schema-contracts.sql` … |
@@ -223,7 +223,7 @@ arquivos do repositório, pela regra da seção anterior — cada linha carrega 
 | `whatsapp_connection_queues` | Vínculo entre conexão de WhatsApp e fila de atendimento | ativo | `src/hooks/__tests__/useConnectionQueues.test.tsx`, `src/hooks/inbox/useConnectionQueues.ts`, `scripts/db-audit/enqueue-connection-scope.test.sh` … |
 | `whatsapp_connections` | Conexões de WhatsApp (instância, telefone, estado e QR) | ativo | `src/__tests__/rls-boundary.test.ts`, `src/components/alerts/EvolutionDisconnectBanner.tsx`, `src/components/connections/NumberReputationMonitor.tsx` … |
 | `whatsapp_flows` | Fluxos do WhatsApp (JSON de telas e publicação) | ativo | `src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx` |
-| `whatsapp_groups` | Grupos de WhatsApp conhecidos, com participantes | ativo | `src/hooks/chat/useForwardMedia.ts`, `src/hooks/chat/useForwardMessage.ts`, `src/hooks/chat/useGroupsManager.ts` … |
+| `whatsapp_groups` | Grupos de WhatsApp conhecidos, com participantes | ativo | `src/hooks/chat/forwardMedia.ts`, `src/hooks/chat/useForwardMessage.ts`, `src/hooks/chat/useGroupsManager.ts` … |
 | `whatsapp_templates` | Modelos de mensagem do WhatsApp (categoria, idioma e conteúdo) | ativo | `src/hooks/integrations/useWhatsAppTemplates.ts` |
 | `whisper_messages` | Mensagens sussurradas entre agentes dentro de uma conversa | ativo | `src/components/inbox/WhisperMode.tsx` |
 

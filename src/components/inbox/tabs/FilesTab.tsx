@@ -20,7 +20,7 @@ import {
   forwardMediaMessages,
   type ForwardMediaItem,
   type ForwardRunState,
-} from '@/hooks/chat/useForwardMedia';
+} from '@/hooks/chat/forwardMedia';
 import type { ForwardCallback } from '@/hooks/chat/useForwardMessage';
 import { forwardLimitError } from '@/lib/forward-limits';
 import { FilesToolbar, type SenderFilterOption } from './FilesToolbar';

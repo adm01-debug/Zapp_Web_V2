@@ -35,7 +35,7 @@ vi.mock('@/hooks/integrations/useCatalogSendReadiness', () => ({
 }));
 
 const mockFetchContacts = vi.hoisted(() => vi.fn());
-vi.mock('@/hooks/integrations/useCatalogContactSearch', () => ({
+vi.mock('@/hooks/integrations/catalogContactSearch', () => ({
   fetchCatalogContactResults: (...args: unknown[]) => mockFetchContacts(...args),
   logCatalogSendEvent: vi.fn().mockResolvedValue(undefined),
   // CT-43 — useSendProduct importa esta constante do módulo real; ela precisa

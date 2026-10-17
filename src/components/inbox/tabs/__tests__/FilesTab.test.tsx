@@ -15,7 +15,7 @@ const mockUseAuth = vi.fn();
 /** R07/S52: captura o payload REAL que chega ao transporte do encaminhamento. */
 const encaminhar = vi.hoisted(() => ({ forwardMediaMessages: vi.fn() }));
 
-vi.mock('@/hooks/chat/useForwardMedia', () => ({
+vi.mock('@/hooks/chat/forwardMedia', () => ({
   createForwardRunState: () => ({
     completedKeys: new Set<string>(),
     copiedPaths: new Map<string, string>(),

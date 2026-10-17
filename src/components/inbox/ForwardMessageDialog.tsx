@@ -16,7 +16,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Message } from '@/types/chat';
 import { useForwardMessage, type ForwardCallback } from '@/hooks/chat/useForwardMessage';
-import type { ForwardMediaItem } from '@/hooks/chat/useForwardMedia';
+import type { ForwardMediaItem } from '@/hooks/chat/forwardMedia';
 import { forwardConfirmMessage, forwardLimitError, needsForwardConfirmation } from '@/lib/forward-limits';
 
 export interface ForwardMessageDialogProps {

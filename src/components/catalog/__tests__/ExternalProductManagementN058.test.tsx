@@ -60,7 +60,7 @@ vi.mock('@/hooks/integrations/useCatalogSendHistory', () => ({
 }));
 
 const mockFetchContactPreset = vi.fn();
-vi.mock('@/hooks/integrations/useCatalogContactPreset', () => ({
+vi.mock('@/hooks/integrations/catalogContactPreset', () => ({
   fetchCatalogContactPreset: (...args: unknown[]) => mockFetchContactPreset(...args),
 }));
 

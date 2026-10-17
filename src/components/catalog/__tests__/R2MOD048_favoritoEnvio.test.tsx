@@ -35,7 +35,7 @@ vi.mock('@/hooks/integrations/useCatalogSendReadiness', () => ({
   useCatalogSendReadiness: (...args: unknown[]) => mockReadiness(...args),
 }));
 
-vi.mock('@/hooks/integrations/useCatalogContactSearch', () => ({
+vi.mock('@/hooks/integrations/catalogContactSearch', () => ({
   fetchCatalogContactResults: vi.fn().mockResolvedValue([]),
   logCatalogSendEvent: vi.fn().mockResolvedValue(undefined),
   CONTACT_SEARCH_MIN_CHARS: 2,

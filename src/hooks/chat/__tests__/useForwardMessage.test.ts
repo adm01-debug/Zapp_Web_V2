@@ -55,7 +55,7 @@ import type {
   ForwardResult,
   ForwardPairOutcome,
   ForwardNonForwardable,
-} from '@/hooks/chat/useForwardMedia';
+} from '@/hooks/chat/forwardMedia';
 
 interface ContactFixture {
   id: string;

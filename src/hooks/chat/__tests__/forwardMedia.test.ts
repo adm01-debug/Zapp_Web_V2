@@ -5,7 +5,7 @@ import {
   forwardMediaMessages,
   type ForwardMediaItem,
   type ForwardTarget,
-} from '../useForwardMedia';
+} from '../forwardMedia';
 
 const mocks = vi.hoisted(() => ({
   storageFrom: vi.fn(),

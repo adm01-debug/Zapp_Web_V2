@@ -45,7 +45,7 @@ const MAX_FILES = 10;
 
 /**
  * Reconciliacao da fila por `(contact_id, client_message_id)` — mesmo contrato de
- * `useForwardMedia`: `true` = existe linha apontando para o objeto; `false` = provado
+ * `forwardMedia`: `true` = existe linha apontando para o objeto; `false` = provado
  * ausente (objeto orfao); `null` = estado indeterminado (a consulta falhou). Somente
  * `false` autoriza remover o objeto do Storage (R2-INB-006).
  */

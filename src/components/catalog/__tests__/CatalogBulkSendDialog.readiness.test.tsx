@@ -34,8 +34,8 @@ vi.mock('@/services/outbound-message.service', () => ({
 }));
 
 const mockLogCatalogSendEvent = vi.hoisted(() => vi.fn());
-vi.mock('@/hooks/integrations/useCatalogContactSearch', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/hooks/integrations/useCatalogContactSearch')>();
+vi.mock('@/hooks/integrations/catalogContactSearch', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/hooks/integrations/catalogContactSearch')>();
   return { ...actual, logCatalogSendEvent: (...args: unknown[]) => mockLogCatalogSendEvent(...args) };
 });
 
