@@ -1,4 +1,4 @@
-# ADR-009 — Testes de teclado com `@testing-library/user-event`
+# ADR-011 — Testes de teclado com `@testing-library/user-event`
 
 - **Status:** Accepted
 - **Data:** 2026-10-14

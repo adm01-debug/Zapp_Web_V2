@@ -1,4 +1,4 @@
-// PADRÃO DE TESTE DE TECLADO — ADR-009 (docs/adr/ADR-009-testes-de-teclado-user-event.md)
+// PADRÃO DE TESTE DE TECLADO — ADR-011 (docs/adr/ADR-011-testes-de-teclado-user-event.md)
 //
 // Teclado que o jsdom NÃO simula (Tab movendo o foco, Enter/Space clicando o
 // elemento focado, setas num roving tabindex) se escreve com
@@ -27,7 +27,7 @@ function renderLista(onSelect = vi.fn()) {
   return { onSelect, options: screen.getAllByRole('option') };
 }
 
-describe('AccessibleList — teclado com user-event (padrão ADR-009)', () => {
+describe('AccessibleList — teclado com user-event (padrão ADR-011)', () => {
   it('Tab entra na lista e as setas movem o foco entre os itens', async () => {
     const user = userEvent.setup();
     const { options } = renderLista();
