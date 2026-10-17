@@ -41,6 +41,10 @@ export async function sendMessageToContact(
       mediaUrl: mediaUrl ?? null,
       clientMessageId: clientMessageId ?? undefined,
       replyToId: replyToId ?? null,
+      // Id de entrega vindo de quem conhece a AÇÃO (ex.: o áudio gravado reusa o
+      // mesmo id na retentativa). Sem ele, o serviço gera um novo — correto para
+      // texto, mas duplicaria a nota de voz quando a retentativa troca o arquivo.
+      clientMessageId: clientMessageId ?? undefined,
     });
     return {
       id: result.id,
