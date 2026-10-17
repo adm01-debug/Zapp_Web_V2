@@ -440,7 +440,7 @@ export default function MultiplixView() {
         subtitle="Envio em massa para fornecedores, transportadoras e clientes"
       />
 
-      {(dispatches.data?.length ?? 0) > 0 && (
+      {(dispatches.data?.rows?.length ?? 0) > 0 && (
         <div className="rounded-2xl border border-border bg-card p-4">
           <p className="text-sm font-semibold text-foreground mb-3 flex items-center gap-1.5"><ListChecks className="w-4 h-4" />Disparos recentes</p>
           {/* Lista TODOS os disparos que a edge devolveu (ate o limite do fetch),
@@ -448,7 +448,7 @@ export default function MultiplixView() {
               vinha do servidor e nao tinha nenhum caminho de clique para o
               monitor. */}
           <div className="divide-y divide-border/40 max-h-[22.5rem] overflow-auto">
-            {dispatches.data!.map((d) => (
+            {((dispatches.data?.rows) ?? []).map((d) => (
               <button
                 key={d.id}
                 type="button"

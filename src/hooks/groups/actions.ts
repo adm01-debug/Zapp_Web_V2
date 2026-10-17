@@ -175,9 +175,17 @@ export function useGroupActions({ connections, groups, selectedGroups, setGroups
     // fechar a aba, trocar de rota ou perder a rede matava os grupos restantes sem
     // registro e sem retomada. Agora a aba só enfileira — o que já entrou na fila
     // não depende dela.
+    // A RPC `enqueue_group_outbound_message` é do backend (outro lote): os tipos
+    // gerados da dia ainda não a conhecem (nem os da origin). O cast local vale
+    // até a regeneração dos tipos; o formato da resposta ({ id } | null) é o que
+    // o spec actions.test.ts cobre.
+    type EnqueueGroupOutbound = (
+      fn: 'enqueue_group_outbound_message',
+      args: { p_group_id: string; p_client_message_id: string; p_content: string; p_whatsapp_connection_id?: string },
+    ) => Promise<{ data: { id: string } | null; error: unknown }>;
     const results = await Promise.all(groupsToSend.map(async (group): Promise<GroupBroadcastResult> => {
       try {
-        const { data, error } = await supabase.rpc('enqueue_group_outbound_message', {
+        const { data, error } = await (supabase.rpc as unknown as EnqueueGroupOutbound)('enqueue_group_outbound_message', {
           p_group_id: group.id,
           p_client_message_id: resolveBroadcastClientMessageId(group.id, texto),
           p_content: texto,
