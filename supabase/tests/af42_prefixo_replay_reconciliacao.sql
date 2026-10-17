@@ -13,8 +13,10 @@
 --     "column media_path of relation ... does not exist" — CREATE TABLE IF NOT EXISTS sobre tabela
 --     que ja existe e no-op e nao acrescenta coluna. A correcao escolhida e ADD COLUMN.
 --
--- Os objetos aqui sao SO DESTE TESTE (prefixo af42_teste_) e sao removidos no fim: o teste nao cria,
--- nao altera e nao depende de nenhum objeto real do schema (roda em qualquer banco da copia).
+-- T1..T4 usam objetos SO DESTE TESTE (prefixo af42_teste_), removidos no fim: nao cria nem altera
+-- objeto real. T5/T6 apenas LEEM os dois objetos reais da correcao (se existirem nesta pilha) para
+-- prender o invariante que a migration estabelece — e falham numa pilha que traga a 20261011000003
+-- ou a 20261009172324 se o prefixo nao tiver rodado.
 -- Roda no banco LOCAL, em cima das migrations reais:
 --   zapp-db-local psql <copia> <nome> < supabase/tests/af42_prefixo_replay_reconciliacao.sql
 
@@ -101,10 +103,39 @@ BEGIN
   EXECUTE 'INSERT INTO public.af42_teste_rb (message_id, media_bucket, media_path) VALUES (gen_random_uuid(), ''b'', ''p'')';
   RAISE NOTICE 'af42 T4 ok: ADD COLUMN destrava o INSERT (colunas=%)', v_colunas;
 
+  -- T5 — invariante que o prefixo estabelece no NOME canonico: se a funcao existe nesta pilha, ela
+  -- NAO pode estar com o retorno TABLE (era o que travava a 20261011003008). Sem o prefixo, uma
+  -- pilha que traga a 20261011000003 teria TABLE aqui e este teste falha.
+  IF to_regprocedure('public.talkx_campaign_window_open(uuid, timestamptz)') IS NOT NULL THEN
+    SELECT pg_get_function_result(to_regprocedure('public.talkx_campaign_window_open(uuid, timestamptz)'))
+      INTO v_retorno;
+    IF v_retorno <> 'boolean' THEN
+      RAISE EXCEPTION 'af42 T5 FALHOU: talkx_campaign_window_open existe com retorno % (o prefixo nao reconciliou)', v_retorno;
+    END IF;
+    RAISE NOTICE 'af42 T5 ok: talkx_campaign_window_open existe no nome canonico com retorno boolean';
+  ELSE
+    RAISE NOTICE 'af42 T5 ok: talkx_campaign_window_open ausente nesta pilha (nada a reconciliar aqui)';
+  END IF;
+
+  -- T6 — invariante do CASO 2: se a tabela existe, ela tem de ter as colunas que a
+  -- 20261012192938 usa no INSERT. Sem o prefixo, uma pilha que traga a 20261009172324 teria 3 colunas.
+  IF to_regclass('public.team_chat_media_acl_r2_db_020_rb') IS NOT NULL THEN
+    SELECT string_agg(attname, ',' ORDER BY attnum)
+      INTO v_colunas
+      FROM pg_attribute
+      WHERE attrelid = to_regclass('public.team_chat_media_acl_r2_db_020_rb') AND attnum > 0 AND NOT attisdropped;
+    IF v_colunas NOT LIKE '%media_path%' OR v_colunas NOT LIKE '%media_type%' THEN
+      RAISE EXCEPTION 'af42 T6 FALHOU: team_chat_media_acl_r2_db_020_rb existe sem media_path/media_type (colunas=%)', v_colunas;
+    END IF;
+    RAISE NOTICE 'af42 T6 ok: team_chat_media_acl_r2_db_020_rb com media_path/media_type (colunas=%)', v_colunas;
+  ELSE
+    RAISE NOTICE 'af42 T6 ok: team_chat_media_acl_r2_db_020_rb ausente nesta pilha (a 20261012192938 a criaria com as 4 colunas)';
+  END IF;
+
   -- Limpeza: nada deste teste fica no schema (a base e descartavel, mas nao deixa lixo).
   EXECUTE 'DROP TABLE public.af42_teste_rb';
   EXECUTE 'DROP FUNCTION public.af42_teste_retorno(uuid)';
   EXECUTE 'DROP FUNCTION public.af42_teste_retorno_legado(uuid)';
 
-  RAISE NOTICE 'af42_prefixo_replay_reconciliacao: 4/4 ok';
+  RAISE NOTICE 'af42_prefixo_replay_reconciliacao: 6/6 ok (T1..T4 mecanica, T5/T6 invariante da correcao)';
 END $$;
