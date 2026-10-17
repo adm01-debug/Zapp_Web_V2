@@ -96,8 +96,7 @@ export function useDashboardKpi(filters: DashboardKpiFilters = {}) {
     queryKey: ['dashboard-kpi', fromIso, untilIso, queueId, agentId],
     queryFn: async () => {
       const { data, error } = await supabase.rpc('dashboard_kpi', {
-        p_from: fromIso,
-        p_until: untilIso,
+        p_since: fromIso,
         p_queue: queueId,
         p_agent: agentId,
       });
