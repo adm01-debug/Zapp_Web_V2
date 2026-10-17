@@ -122,6 +122,7 @@ before(() => {
   assert.equal(info.status, 0, 'daemon docker inacessivel: a prova em Postgres descartavel nao pode rodar');
   const run = docker([
     'run', '--rm', '-d', '--name', CONTAINER,
+    '--shm-size', '256m',
     '-e', 'POSTGRES_PASSWORD=test_only', IMAGE,
   ]);
   assert.equal(run.status, 0, `docker run falhou: ${run.stderr}`);
