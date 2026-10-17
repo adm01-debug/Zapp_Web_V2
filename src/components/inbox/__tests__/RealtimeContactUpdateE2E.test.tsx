@@ -273,10 +273,54 @@ describe('Integração ponta-a-ponta: useRealtimeMessages + VirtualizedRealtimeL
     expect(rowAfter).toBe(rowBefore);
   });
 
-  it('UPDATE de contato fora da lista INSERE a conversa na árvore completa (entrada ao vivo)', async () => {
+  it('UPDATE de contato fora da lista COM resumo do banco INSERE a conversa na árvore completa (entrada ao vivo)', async () => {
     // Ordem da recusa do revisor (ponto 1): UPDATE de contato ainda fora da
     // lista busca contato+resumo e insere a conversa ao vivo, em vez do
     // `return prev` que este teste consagrava antes ("ignora UPDATE...").
+    // Ponto 4 do cartão seguinte: a entrada só vale com conversa REAL — aqui o
+    // agregado do banco traz a última mensagem.
+    seededContacts = [makeContact({ id: 'contact-1', name: 'Maria Souza' })];
+    contactsById['contact-fantasma'] = makeContact({ id: 'contact-fantasma', name: 'Fantasma Novo' });
+    mockRpc.mockImplementation((_fn: string, args: { p_contact_ids: string[] }) =>
+      Promise.resolve({
+        data: args.p_contact_ids.includes('contact-fantasma')
+          ? [
+              {
+                contact_id: 'contact-fantasma',
+                last_message_id: 'msg-fantasma-1',
+                last_message_created_at: '2026-04-02T19:10:00Z',
+                last_message_content: 'Ola, preciso de ajuda',
+                last_message_sender: 'contact',
+                last_message_type: 'text',
+                unread_count: 2,
+              },
+            ]
+          : [],
+        error: null,
+      })
+    );
+
+    render(<InboxHarness />);
+    expect(await screen.findByText('Maria')).toBeInTheDocument();
+    expect(screen.getAllByTestId('conversation-item')).toHaveLength(1);
+
+    act(() => {
+      emitRealtimeEvent('contacts', {
+        eventType: 'UPDATE',
+        new: makeContact({ id: 'contact-fantasma', name: 'Fantasma Novo' }),
+        old: makeContact({ id: 'contact-fantasma' }),
+      });
+    });
+
+    // A conversa entra na lista sozinha, com o preview real vindo do banco.
+    expect(await screen.findByText('Fantasma')).toBeInTheDocument();
+    expect(await screen.findByText('Ola, preciso de ajuda')).toBeInTheDocument();
+    expect(screen.getAllByTestId('conversation-item')).toHaveLength(2);
+  });
+
+  it('UPDATE de contato fora da lista SEM resumo NÃO insere conversa vazia (ponto 4)', async () => {
+    // Contato editado na tela Contatos (ou ativo fora da janela da carga
+    // inicial) não tem conversa: entrar como linha vazia sujava a lista.
     seededContacts = [makeContact({ id: 'contact-1', name: 'Maria Souza' })];
     contactsById['contact-fantasma'] = makeContact({ id: 'contact-fantasma', name: 'Fantasma Novo' });
     mockRpc.mockResolvedValue({ data: [], error: null });
@@ -293,8 +337,17 @@ describe('Integração ponta-a-ponta: useRealtimeMessages + VirtualizedRealtimeL
       });
     });
 
-    // A conversa entra na lista sozinha, sem refetch e sem remontar a árvore.
-    expect(await screen.findByText('Fantasma')).toBeInTheDocument();
-    expect(screen.getAllByTestId('conversation-item')).toHaveLength(2);
+    // Espera o hydrate (contato + resumo) terminar antes de exigir a ausência.
+    await waitFor(() =>
+      expect(mockRpc).toHaveBeenCalledWith('get_inbox_contact_summaries', {
+        p_contact_ids: ['contact-fantasma'],
+      })
+    );
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    });
+
+    expect(screen.queryByText('Fantasma')).not.toBeInTheDocument();
+    expect(screen.getAllByTestId('conversation-item')).toHaveLength(1);
   });
 });
