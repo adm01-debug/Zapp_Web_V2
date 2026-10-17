@@ -82,6 +82,50 @@ export function buildSessionInsert(args: {
   };
 }
 
+export interface DeviceAlertEmailArgs {
+  deviceName: string;
+  browser: string;
+  os: string;
+  clientIp: string;
+  whenLabel: string;
+}
+
+/** Monta o e-mail de alerta de novo dispositivo. Os campos vindos do corpo do
+ * chamador (device_name, browser, os, ip) são escapados antes de entrar no HTML:
+ * sem isso, um chamador injeta marcação no e-mail que o dono recebe. */
+export function buildDeviceAlertEmail(args: DeviceAlertEmailArgs): string {
+  const safeDeviceName = escapeHtml(args.deviceName);
+  const safeBrowser = escapeHtml(args.browser);
+  const safeOs = escapeHtml(args.os);
+  const safeClientIp = escapeHtml(args.clientIp);
+  return `
+            <!DOCTYPE html>
+            <html>
+            <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+            <body style="font-family: ${EMAIL_FONT_STACK}; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px 10px 0 0;">
+                <h1 style="color: white; margin: 0; font-size: 24px;">🔐 Alerta de Segurança</h1>
+              </div>
+              <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #e9ecef; border-top: none;">
+                <p style="font-size: 16px;">Detectamos um <strong>novo login</strong> na sua conta a partir de um dispositivo desconhecido.</p>
+                <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #667eea; margin: 20px 0;">
+                  <h3 style="margin-top: 0; color: #667eea;">Detalhes do Dispositivo:</h3>
+                  <table style="width: 100%; font-size: 14px;">
+                    <tr><td style="padding: 8px 0; color: #666;"><strong>Dispositivo:</strong></td><td>${safeDeviceName}</td></tr>
+                    <tr><td style="padding: 8px 0; color: #666;"><strong>Navegador:</strong></td><td>${safeBrowser}</td></tr>
+                    <tr><td style="padding: 8px 0; color: #666;"><strong>Sistema:</strong></td><td>${safeOs}</td></tr>
+                    <tr><td style="padding: 8px 0; color: #666;"><strong>IP:</strong></td><td>${safeClientIp}</td></tr>
+                    <tr><td style="padding: 8px 0; color: #666;"><strong>Data/Hora:</strong></td><td>${escapeHtml(args.whenLabel)}</td></tr>
+                  </table>
+                </div>
+                <div style="background: #fff3cd; padding: 15px; border-radius: 8px;">
+                  <p style="margin: 0; font-size: 14px; color: #856404;"><strong>⚠️ Não reconhece este acesso?</strong><br>Altere sua senha e habilite a autenticação em duas etapas (2FA).</p>
+                </div>
+              </div>
+            </body>
+            </html>`;
+}
+
 export async function handleDetectNewDevice(req: Request): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
@@ -191,32 +235,13 @@ export async function handleDetectNewDevice(req: Request): Promise<Response> {
       const userEmail = user.email;
       if (isNewDevice && userEmail && RESEND_API_KEY && emailAllowed) {
         try {
-          const emailHtml = `
-            <!DOCTYPE html>
-            <html>
-            <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-            <body style="font-family: ${EMAIL_FONT_STACK}; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-              <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px 10px 0 0;">
-                <h1 style="color: white; margin: 0; font-size: 24px;">🔐 Alerta de Segurança</h1>
-              </div>
-              <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #e9ecef; border-top: none;">
-                <p style="font-size: 16px;">Detectamos um <strong>novo login</strong> na sua conta a partir de um dispositivo desconhecido.</p>
-                <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #667eea; margin: 20px 0;">
-                  <h3 style="margin-top: 0; color: #667eea;">Detalhes do Dispositivo:</h3>
-                  <table style="width: 100%; font-size: 14px;">
-                    <tr><td style="padding: 8px 0; color: #666;"><strong>Dispositivo:</strong></td><td>${escapeHtml(device_name)}</td></tr>
-                    <tr><td style="padding: 8px 0; color: #666;"><strong>Navegador:</strong></td><td>${escapeHtml(browser)}</td></tr>
-                    <tr><td style="padding: 8px 0; color: #666;"><strong>Sistema:</strong></td><td>${escapeHtml(os)}</td></tr>
-                    <tr><td style="padding: 8px 0; color: #666;"><strong>IP:</strong></td><td>${escapeHtml(clientIp)}</td></tr>
-                    <tr><td style="padding: 8px 0; color: #666;"><strong>Data/Hora:</strong></td><td>${new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}</td></tr>
-                  </table>
-                </div>
-                <div style="background: #fff3cd; padding: 15px; border-radius: 8px;">
-                  <p style="margin: 0; font-size: 14px; color: #856404;"><strong>⚠️ Não reconhece este acesso?</strong><br>Altere sua senha e habilite a autenticação em duas etapas (2FA).</p>
-                </div>
-              </div>
-            </body>
-            </html>`;
+          const emailHtml = buildDeviceAlertEmail({
+            deviceName: device_name,
+            browser,
+            os,
+            clientIp,
+            whenLabel: new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }),
+          });
 
           const resendResp = await fetch("https://api.resend.com/emails", {
             method: "POST",

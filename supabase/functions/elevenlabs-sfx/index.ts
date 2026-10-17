@@ -38,7 +38,17 @@ export async function handleElevenLabsSfx(req: Request): Promise<Response> {
     const isMusic = mode === "music";
     const spec = buildElevenLabsRequest({ prompt, duration, mode });
 
-    log.info(`Generating ${isMusic ? "music" : "sfx"}: "${prompt}" (${duration || (isMusic ? 15 : 5)}s)`);
+    // LGPD (doc 07, mesmo achado do log de voz corrigido no `voice-agent`): o
+    // log registra só METADADOS do pedido — tamanho do prompt e um identificador
+    // curto da requisição —, NUNCA o texto digitado pelo usuário. O prompt pode
+    // conter dado pessoal e os logs de Edge ficam retidos fora do nosso controle
+    // de purga. O `Logger` já carimba o `rid` próprio na linha.
+    log.info("Generating audio", {
+      mode: isMusic ? "music" : "sfx",
+      prompt_length: prompt.length,
+      request_id: crypto.randomUUID().slice(0, 8),
+      seconds: duration || (isMusic ? 15 : 5),
+    });
 
     const iniciadoEm = Date.now();
     const response = await fetch(spec.url, {
