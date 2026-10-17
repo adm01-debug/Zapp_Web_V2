@@ -1,0 +1,158 @@
+# Decisão F04 — Integrar dia 2026-10-17 na main: merge OU rebase
+
+Data: 2026-10-17. Cartão: F04 (árvore de integração — merge simulado).
+Método: simulação 100% somente-leitura (`git merge-tree`, sem commit, sem branch,
+sem push, sem migration). Nenhum comando escreveu na `dia` nem na `main`.
+
+- Base da simulação: `dia/2026-10-17` = `d723a90107`, `origin/main` = `a9b4d6c6fb`
+- Merge-base: `7a15852791`
+- Comando: `git merge-tree --write-tree --merge-base=7a15852791 d723a90107 a9b4d6c6fb`
+
+## 1. Tamanho real da divergência: 578 conflitos
+
+| Tipo | Qtd | O que significa |
+|---|---|---|
+| `content` (conteúdo) | 285 | mesmo arquivo alterado dos dois lados |
+| `add/add` | 283 | mesmo caminho criado dos dois lados, com conteúdo diferente |
+| `modify/delete` | 10 | um lado apagou, o outro alterou |
+| **Total** | **578** | |
+
+Conflitos por área (arquivo conta 1x; `modify/delete` incluído):
+
+| Área | Total | content | add/add | modify/delete |
+|---|---|---|---|---|
+| src/components | 314 | 149 | 157 | 8 |
+| src/hooks | 113 | 64 | 47 | 2 |
+| supabase/functions | 73 | 38 | 35 | 0 |
+| src/outros | 14 | 13 | 1 | 0 |
+| scripts | 13 | 6 | 7 | 0 |
+| src/lib | 11 | 1 | 10 | 0 |
+| docs | 9 | 3 | 6 | 0 |
+| raiz/outros | 7 | 1 | 6 | 0 |
+| src/pages | 7 | 2 | 5 | 0 |
+| .github | 6 | 5 | 1 | 0 |
+| e2e | 5 | 1 | 4 | 0 |
+| supabase/outros | 4 | 2 | 2 | 0 |
+| supabase/migrations | 2 | 0 | 2 | 0 |
+
+Hotspots (módulos com mais conflito — editaram dos dois lados ao mesmo tempo):
+`src/components/inbox` (81), `src/components/talkx` (57), `src/components/settings` (16),
+`src/hooks/integrations` (14), `src/hooks/chat` (13), `src/components/security` (13),
+`supabase/functions/_shared` (12), `src/components/connections` (12).
+
+Os 10 `modify/delete` (todos exigem decisão manual, não há `-X` que resolva):
+
+Apagado na ORIGIN, alterado na dia (7 — a dia ainda usa; manter = decisão da dia):
+`campaigns/CampaignABTesting.tsx`, `campaigns/CampaignCreateDialog.tsx`,
+`campaigns/CampaignsView.tsx`, `settings/AIAutoTagsConfig.tsx`,
+`components/ui/pagination.tsx`, `components/ui/sidebar/sidebar-primitives.tsx`,
+`hooks/inbox/useInboxFilterTags.ts`.
+
+Apagado na DIA, alterado na origin (3 — a origin ainda usa; checar se a remoção da dia foi intencional):
+`payments/PaymentLinksView.tsx`, `talkx/TalkXHelp.tsx`, `hooks/payments/usePaymentLinks.ts`.
+
+Leitura: quase metade dos conflitos (283) é `add/add` — os dois lados criaram os
+mesmos caminhos independentemente. Esse é o custo dominante: não é "escolher um lado",
+é comparar dois arquivos parecidos e fundir à mão. Os outros 285 (`content`) concentram-se
+em inbox + talkx, os dois módulos mais ativos dos dois lados.
+
+## 2. Protótipo da árvore (experimento declarado, sem branch)
+
+Como a guarda do workspace bloqueia criar branch, o protótipo foi materializado como
+árvore git direta (mesmo conteúdo que um merge produziria, sem commit):
+
+- `git merge-tree --write-tree --merge-base=... -X ours dia origin` → árvore `d93bc10e`
+  (variante OURS: nos 578 conflitos vence a dia; equivale a "trazer a origin para dentro
+  da dia preservando a release"). Difere da dia em 1526 arquivos (mudanças limpas da origin).
+- `git merge-tree --write-tree --merge-base=... -X theirs dia origin` → árvore `bac60997`
+  (variante THEIRS: nos 578 conflitos vence a origin; controle do experimento).
+  Difere da origin em só 57 arquivos (mudanças limpas da dia).
+
+Typecheck (`tsc -b --force`, mesmos `node_modules`) nos 4 estados:
+
+| Estado | Erros TS | Leitura |
+|---|---|---|
+| dia (base, premise do cartão) | 0 | confirmado: verde |
+| origin/main (ponta) | 98 | confirmado; maioria em testes/hooks por tipos defasados |
+| Protótipo OURS (dia vence) | 23 em 7 arquivos | TODOS de sintaxe (TS1005/TS1109/TS1128/TS17002): auto-merge limpo que gerou JSX/parênteses desbalanceados |
+| Protótipo THEIRS (origin vence) | 1 | idem, em `MultiplixView.tsx` (TS1005) |
+
+Dois achados que mudam o plano:
+
+1. **A dia cura a origin.** A variante THEIRS (conteúdo da origin nos 578 conflitos)
+   tem 1 erro contra 98 da origin pura. A cura vem de 57 arquivos alterados só na dia,
+   encabeçados por `src/integrations/supabase/types.ts` (tipos gerados do banco):
+   a origin quebrou porque seus tipos gerados estão defasados (RPCs como
+   `admin_list_cron_jobs`, colunas como `sender_participant_jid`), e a dia já carrega
+   os tipos atualizados. Arquivos idênticos byte-a-byte (`useTeamReadState.ts`,
+   `useDashboardStats.ts`) quebram na origin e passam na THEIRS — a diferença está
+   só nas dependências vindas da dia.
+2. **Auto-merge limpo também quebra.** `MultiplixView.tsx` está limpo nos dois lados
+   e o merge automático produziu arquivo sintaticamente inválido (bloco da dia com
+   `hasSearched`/`selectableRows` enxertado na versão da origin: +108 linhas, TS1005).
+   Os 23 erros da OURS são todos dessa natureza, em 7 arquivos:
+   `ContactActivityTimeline.tsx` (5), `TasksBoardMode.tsx` (4), `useTeamMessages.ts` (4),
+   `AppProviders.tsx` (3), `useRealtimeInbox.ts` (3), `ContactsView.tsx` (3),
+   `hooks/groups/actions.ts` (1). Typecheck verde NÃO basta para validar o merge;
+   a suite precisa rodar.
+
+Suite unitária (`npx vitest run`, 1504 arquivos):
+
+| Estado | Suite (`npx vitest run`, 1504 arquivos na base) | Exit |
+|---|---|---|
+| dia (base) | 1499 passed, 5 skipped (1504 arquivos); 13235 passed, 24 expected-fail, 48 todo (13307 testes) | 0 — verde, premise confirmada (551 s) |
+| Protótipo OURS | 1271 passed, **545 failed**, 5 skipped (1821 arquivos — a origin adicionou ~317 arquivos de teste); **1552 failed** / 12359 passed / 23 expected-fail / 4 skipped / 45 todo (13983 testes) | 1 — vermelho esperado (777 s) |
+
+Causas dominantes das 1552 falhas (lidas no log, não adivinhadas): 299×
+`X is not defined` (`SearchCheck` 41×, `isSubscribed` 23×, `formatDocumentTitle` 18×…)
+e 80× `X is not a function` (cadeias de mock do supabase, `buildSentSummaryPoints`,
+`AuthService.verifyPassword`…) — ou seja, testes de um lado chamando APIs com o
+formato do outro lado. Concentração: `talkx` (315 arquivos falhando) e `inbox` (309),
+os mesmos hotspots do merge. Só 47 falhas são de sintaxe/parse (os 7 arquivos da
+seção do typecheck). A lista de identificadores acima É o checklist de reconciliação
+módulo a módulo para o merge real.
+
+(Suite da variante THEIRS não rodada: é o controle do experimento, não a direção
+proposta; typecheck dela está acima. Orçamento de 60 min do cartão.)
+
+## 3. Decisão: MERGE (não rebase)
+
+**Fazer merge da origin para dentro da dia (ou da dia na main), com resolução manual.
+Não fazer rebase.**
+
+Porquê, em 3 motivos medidos:
+
+1. Rebase repetiria a resolução 578 conflitos commit a commit (a dia tem dezenas de
+   commits desde o merge-base); merge resolve 1 vez. Com 283 `add/add` exigindo fusão
+   manual arquivo a arquivo, rebase multiplica o trabalho pelo nº de commits.
+2. A dia é branch compartilhada da release (`dia/2026-10-17`): reescrever o histórico
+   dela invalida todos os workspaces e evidências já apontados para seus SHAs.
+3. O experimento mostra que a direção "dia vence nos conflitos" produz árvore quase
+   verde (23 erros de sintaxe localizados em 7 arquivos, todos reparáveis
+   mecanicamente a partir do diff), enquanto a origin sozinha está em 98 erros —
+   ou seja, o conteúdo da dia é o que estabiliza, e merge o preserva.
+
+## 4. Plano do merge real (para o cartão que for executá-lo)
+
+1. `git merge origin/main` na dia (ou vice-versa, conforme convenção do integrador);
+   NADA de `-X ours/theirs` de verdade — os `-X` aqui foram só experimento.
+2. Resolver nesta ordem (cura primeiro o que destrava o resto):
+   a. `src/integrations/supabase/types.ts` + arquivos de tipos/lib da dia (cura ~97 erros herdados da origin);
+   b. os 10 `modify/delete` (lista na seção 1 — decisão produto: manter os 7 da dia? checar os 3 da origin);
+   c. os 7 arquivos com erro de sintaxe da OURS (reparo mecânico guiado pelo diff);
+   d. os 283 `add/add`, módulo a módulo, começando por inbox e talkx (custo dominante);
+   e. os 285 `content` restantes.
+3. Portão de saída do merge: `tsc -b --force` = 0 erros E `vitest run` verde
+   (patamar da dia: 1499 arquivos / 13307 testes), mais os guardas (`db:guard`,
+   `zapp-verify --rapido`). Enquanto houver 1 vermelho, o merge não está pronto —
+   o protótipo provou que "merge limpo" (sem marcadores) ainda pode estar quebrado.
+4. Proibido no cartão executor: push, merge na `dia`/`main` fora da janela do
+   integrador, deletar branch, aplicar migration, tocar produção.
+
+## 5. Limites desta medição
+
+- O protótipo usou resolução 100% automática por lado; o merge real exigirá as fusões
+  manuais acima — os números de erros do protótipo são piso, não teto.
+- Suite rodada só na base e na variante OURS (direção proposta).
+- Evidências brutas (logs de merge-tree, typechecks e suites) ficaram no `.tmp/` do
+  workspace deste cartão e não fazem parte da entrega.
