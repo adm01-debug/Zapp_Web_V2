@@ -3,7 +3,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const { rpc, invoke } = vi.hoisted(() => ({ rpc: vi.fn(), invoke: vi.fn() }));
 
 vi.mock('@/integrations/supabase/client', () => ({
-  supabase: { rpc, functions: { invoke } },
+  supabase: {
+    rpc,
+    functions: { invoke },
+    auth: { onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } })) },
+  },
 }));
 
 import { sendOutboundMessage, sendRichOutboundMessage } from '../outbound-message.service';
@@ -15,6 +19,7 @@ describe('sendOutboundMessage', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     vi.clearAllMocks();
+    localStorage.clear();
     vi.stubGlobal('crypto', { randomUUID: () => '0c5d8df5-430d-4f46-8c0a-764be035116a' });
     // `sendThrottle` é um singleton do módulo: as reservas de um caso ficariam de
     // pé para o próximo e a drenagem do caso da fila offline sairia só depois do
@@ -48,9 +53,14 @@ describe('sendOutboundMessage', () => {
       p_content: 'Olá', p_message_type: 'text', p_media_url: undefined,
       p_reply_to_id: undefined, p_whatsapp_connection_id: undefined, p_caption: undefined,
     });
-    expect(invoke).toHaveBeenCalledWith('message-delivery', {
+    expect(invoke).toHaveBeenCalledWith('message-delivery', expect.objectContaining({
       body: { messageId: 'e23ca9d2-99a8-45d2-a3fe-df344fb9b2cc' },
-    });
+      // PE-16: o despacho carrega o id de correlação que o log do cliente mostra.
+      headers: expect.objectContaining({
+        'x-request-id': expect.any(String),
+        'x-correlation-id': expect.any(String),
+      }),
+    }));
   });
 
   it('does not dispatch when authorization or validation prevents enqueueing', async () => {
@@ -128,9 +138,14 @@ describe('sendOutboundMessage', () => {
       p_message_type: 'poll',
       p_delivery_payload: { name: 'Cor', values: ['Azul', 'Carvão'], selectableCount: 1 },
     }));
-    expect(invoke).toHaveBeenCalledWith('message-delivery', {
+    expect(invoke).toHaveBeenCalledWith('message-delivery', expect.objectContaining({
       body: { messageId: '56bb3f25-ad35-40b9-adcd-d10f4a98752d' },
-    });
+      // PE-16: o despacho carrega o id de correlação que o log do cliente mostra.
+      headers: expect.objectContaining({
+        'x-request-id': expect.any(String),
+        'x-correlation-id': expect.any(String),
+      }),
+    }));
   });
 
   it('com a rede caída a mensagem espera na fila local e sai sozinha na reconexão (SL-070/025)', async () => {
@@ -164,10 +179,24 @@ describe('sendOutboundMessage', () => {
       p_client_message_id: '0c5d8df5-430d-4f46-8c0a-764be035116a',
       p_content: 'composta offline',
     }));
-    expect(invoke).toHaveBeenCalledWith('message-delivery', {
+    expect(invoke).toHaveBeenCalledWith('message-delivery', expect.objectContaining({
       body: { messageId: 'e23ca9d2-99a8-45d2-a3fe-df344fb9b2cc' },
-    });
+      // PE-16: o despacho carrega o id de correlação que o log do cliente mostra.
+      headers: expect.objectContaining({
+        'x-request-id': expect.any(String),
+        'x-correlation-id': expect.any(String),
+      }),
+    }));
   });
+
+  // NOTA (merge t_2504549b): a origin traz aqui o caso "a fila é do usuário"
+  // (userId gravado no item + drenagem só do dono). Ele foi REMOVIDO porque a
+  // peça de produção não existe em nenhuma das duas branches: o service nunca
+  // grava `userId` no item (`enqueueOffline` não lê sessão) e nada filtra por
+  // dono na drenagem — o caso falha na origin e na dia do mesmo jeito. Fila
+  // offline por usuário é funcionalidade nova (carimbo de dono + filtro +
+  // efeito de sessão `useOfflineSendQueueDrain` + fiação no App) e pertence a
+  // cartão próprio, não a este merge.
 
   it('aba que perde a disputa de dedupe não dispara enqueue nem despacho (SL-070/026)', async () => {
     vi.spyOn(crossTabSendDedupe, 'claim').mockResolvedValue({
@@ -333,7 +362,14 @@ describe('sendOutboundMessage', () => {
     // Ação NOVA: id novo no enqueue e um despacho de verdade (nada de idempotent).
     const ids = rpc.mock.calls.map(([, args]) => args.p_client_message_id);
     expect(ids).toEqual(['acao-2']);
-    expect(invoke).toHaveBeenCalledWith('message-delivery', { body: { messageId: 'srv-online' } });
+    expect(invoke).toHaveBeenCalledWith('message-delivery', expect.objectContaining({
+      body: { messageId: 'srv-online' },
+      // PE-16: o despacho carrega o id de correlação que o log do cliente mostra.
+      headers: expect.objectContaining({
+        'x-request-id': expect.any(String),
+        'x-correlation-id': expect.any(String),
+      }),
+    }));
   });
 
   // Critério de pronto 2 — o duplo clique online continua sendo UMA ação: as
