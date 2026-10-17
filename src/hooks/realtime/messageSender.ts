@@ -24,7 +24,8 @@ export async function sendMessageToContact(
   messageType = 'text',
   mediaUrl?: string,
   mediaPayload?: string,
-  replyToId?: string | null
+  replyToId?: string | null,
+  clientMessageId?: string
 ): Promise<SendMessageResult> {
   if (!OUTBOUND_MESSAGE_TYPES.has(messageType as OutboundMessageType)) {
     throw new Error(`Tipo de mensagem não suportado pelo envio seguro: ${messageType}`);
@@ -38,6 +39,7 @@ export async function sendMessageToContact(
       content,
       messageType: messageType as OutboundMessageType,
       mediaUrl: mediaUrl ?? null,
+      clientMessageId: clientMessageId ?? undefined,
       replyToId: replyToId ?? null,
     });
     return {

@@ -165,8 +165,7 @@ describe('mapeamento ação -> payload da edge function', () => {
       'sendListMessage', 'sendButtonsMessage', 'sendStatusMessage', 'sendTemplateMessage',
       'sendPtvMessage', 'sendChatPresence', 'markMessageAsRead', 'markMessageAsUnread',
       'archiveChat', 'deleteMessage', 'updateMessage', 'deleteMessageForEveryone', 'editMessage',
-      'pinChat', 'unpinChat', 'starMessage', 'clearChat', 'setDisappearingMessages',
-      'fetchContactProfile', 'muteChat',
+      'fetchContactProfile',
       // useEvolutionGroups
       'createGroup', 'listGroups', 'getGroupInfo', 'getGroupParticipants', 'updateGroupName',
       'updateGroupDescription', 'updateGroupParticipants', 'updateGroupSetting',

@@ -210,7 +210,7 @@ vi.mock('@/hooks/integrations/useMultiplixAudience', () => ({
 }));
 
 vi.mock('@/hooks/integrations/useMultiplixDispatches', () => ({
-  useMultiplixDispatchesList: () => ({ data: h.dispatches, refetch: vi.fn() }),
+  useMultiplixDispatchesList: () => ({ data: { rows: h.dispatches, total: h.dispatches.length }, refetch: vi.fn() }),
   useCreateMultiplixDispatch: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useMultiplixDispatch: () => ({
     data: {

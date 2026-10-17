@@ -138,7 +138,7 @@ describe('useRealtimeInbox.handleSendAudio — falha sinalizada ao chamador (#35
     await expect(sendAudio()).resolves.toBe(true);
 
     expect(uploadAudioMock).toHaveBeenCalledWith('c1', blob);
-    expect(sendMessageMock).toHaveBeenCalledWith('c1', '[Áudio]', 'audio', 'audio/arquivo.webm');
+    expect(sendMessageMock).toHaveBeenCalledWith('c1', '[Áudio]', 'audio', 'audio/arquivo.webm', undefined, null, expect.any(String));
   });
 
   it('não anuncia sucesso falso: falha do envio rejeita mesmo se o refresh cair', async () => {

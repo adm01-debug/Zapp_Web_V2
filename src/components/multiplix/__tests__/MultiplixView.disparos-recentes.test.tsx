@@ -31,7 +31,7 @@ const { dispatches } = vi.hoisted(() => ({
 }));
 
 vi.mock('@/hooks/integrations/useMultiplixDispatches', () => ({
-  useMultiplixDispatchesList: () => ({ data: dispatches, refetch: vi.fn() }),
+  useMultiplixDispatchesList: () => ({ data: { rows: dispatches, total: dispatches.length }, refetch: vi.fn() }),
   useCreateMultiplixDispatch: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 

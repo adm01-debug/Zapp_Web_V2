@@ -246,8 +246,8 @@ export function useRealtimeMessages() {
     return () => window.removeEventListener('zapp:contact-status-changed', handler);
   }, [commitConversations]);
 
-  const sendMessage = async (contactId: string, content: string, messageType: string = 'text', mediaUrl?: string, mediaPayload?: string, replyToId?: string | null) => {
-    return sendMessageToContact(contactId, content, messageType, mediaUrl, mediaPayload, replyToId);
+  const sendMessage = async (contactId: string, content: string, messageType: string = 'text', mediaUrl?: string, mediaPayload?: string, replyToId?: string | null, clientMessageId?: string) => {
+    return sendMessageToContact(contactId, content, messageType, mediaUrl, mediaPayload, replyToId, clientMessageId);
   };
 
   const markAsRead = async (contactId: string) => {
