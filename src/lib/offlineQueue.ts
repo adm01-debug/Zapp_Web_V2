@@ -32,6 +32,13 @@ export interface OfflineQueuedMessage {
   enqueuedAt: number;
   /** Tentativas de drenagem já feitas — observabilidade, não decide nada. */
   attempts: number;
+  /**
+   * Dono do item (id do usuário autenticado). Opcional: itens gravados antes
+   * da fila por usuário não têm dono e drenam para qualquer sessão.
+   * (merge t_2504549b — contrato da origin; o carimbo na escrita e o filtro
+   * por dono pertencem ao cartão da fila por usuário, não a este merge.)
+   */
+  userId?: string;
 }
 
 export type OfflineQueueInput = Omit<OfflineQueuedMessage, 'enqueuedAt' | 'attempts'>;
@@ -313,4 +320,23 @@ export function drainOfflineQueueOnReconnect(
   };
   scope.addEventListener('online', handleOnline);
   return () => scope.removeEventListener('online', handleOnline);
+}
+
+/**
+ * Drenagem na ABERTURA do app (merge t_2504549b — contrato da origin,
+ * adaptado): o evento `online` sozinho não cobre o usuário que compôs
+ * offline, FECHOU a aba e reabriu já com rede — nenhum `online` dispara e a
+ * mensagem ficaria parada no IndexedDB. O dono do ciclo de vida (efeito de
+ * sessão autenticada, cartão próprio) chama esta função no boot e no login.
+ *
+ * Adaptação declarada: a origin drena sob `crossTabDrainLock` (história
+ * PK-28, fora deste merge). Aqui a exclusão é a da fila (`drain` com voo
+ * único por aba); a trava entre abas chega com o cartão PK-28.
+ */
+export function drainOfflineQueueOnOpen(
+  queue: OfflineQueue,
+  deliver: (message: OfflineQueuedMessage) => Promise<void>,
+  options: { onError?: OfflineQueueErrorHandler } = {},
+): Promise<OfflineQueueDrainResult> {
+  return queue.drain(deliver, { onError: options.onError });
 }
