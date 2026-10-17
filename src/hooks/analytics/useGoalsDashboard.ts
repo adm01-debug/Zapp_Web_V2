@@ -15,6 +15,7 @@ export interface Goal {
   icon: React.ElementType;
   color: string;
   priority: 'high' | 'medium' | 'low';
+  hasData?: boolean;
 }
 
 export const PERIOD_OPTIONS = [

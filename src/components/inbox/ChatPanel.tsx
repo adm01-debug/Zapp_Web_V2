@@ -372,7 +372,7 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
   // transação): se a RPC falha, NADA persiste — o callback rejeita, o diálogo
   // exibe erro e permanece aberto. Não há estado otimista nem escrita solta.
   const handleTransfer = async (type: TransferTargetType, targetId: string, message?: string) => {
-    const { error } = await supabase.rpc('transfer_conversation', {
+    const { error } = await (supabase as any).rpc('transfer_conversation', { // eslint-disable-line @typescript-eslint/no-explicit-any -- RPC não está nos types.ts gerados
       p_contact_id: conversation.contact.id,
       p_to_agent_id: type === 'agent' ? targetId : null,
       p_to_queue_id: type === 'queue' ? targetId : null,

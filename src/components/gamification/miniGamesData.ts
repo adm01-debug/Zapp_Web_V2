@@ -8,6 +8,7 @@ export interface Game {
   description: string;
   icon: typeof Gamepad2;
   difficulty: 'easy' | 'medium' | 'hard';
+  xpReward?: number;
 }
 
 // Os mini-games NÃO creditam XP: o cliente não pode creditar XP (PB-18/D4) e

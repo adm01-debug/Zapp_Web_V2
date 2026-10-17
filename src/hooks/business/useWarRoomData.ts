@@ -3,6 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { useAgentPresenceMap } from '@/hooks/crm/useAgentPresence';
 
+export const WARROOM_MAX_ROWS = 200;
+
 export interface WarRoomAgent {
   id: string;
   name: string;

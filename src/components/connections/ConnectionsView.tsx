@@ -217,7 +217,7 @@ export function ConnectionsView() {
             <StaggeredItem key={connection.id}>
               <ConnectionCard
                 connection={connection} syncingHistory={syncingHistory}
-                onShowQrCode={handleShowQrCode} onCopyId={handleCopyId} onDisconnect={handleDisconnect}
+                onShowQrCode={handleShowQrCode} onCopyId={handleCopyId} onDisconnect={(c) => { void handleDisconnect(c); }}
                 onSetDefault={handleSetDefault} onDelete={handleDelete}
                 onBusinessHours={(id, name) => setBusinessHoursDialog({ open: true, connectionId: id, connectionName: name })}
                 onQueues={(id, name) => setQueuesDialog({ open: true, connectionId: id, connectionName: name })}

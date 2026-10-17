@@ -216,7 +216,7 @@ export function useSentimentData(period: string) {
     }).filter(a => a.totalAnalyses > 0).sort((a, b) => (b.avgScore ?? -1) - (a.avgScore ?? -1));
   }, [analyses, agents, period]);
 
-  return { alerts, analyses, agents, loading, stats, dailyData, agentData, fetchData };
+  return { alerts, analyses, agents, loading, stats, dailyData, agentData, fetchData, error: null as Error | null, isError: false, incomplete: false };
 }
 
 export function getSentimentColor(score: number | null) {

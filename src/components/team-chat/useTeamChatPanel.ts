@@ -82,7 +82,8 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   const isNearBottomRef = useRef(true);
   const savedScrollFromBottomRef = useRef<number | null>(null);
 
-  const { messages: newestMessages, isLoading } = useTeamMessages(conversation.id);
+  const { messages: newestMessages, isLoading, isError, refetch } = useTeamMessages(conversation.id);
+  const [olderError, setOlderError] = useState(false);
   const sendMutation = useSendTeamMessage();
   const deleteMutation = useDeleteTeamMessage();
   const editMutation = useEditTeamMessage();
@@ -212,6 +213,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
         .limit(60);
       if (error) throw error;
       const older = ((data || []) as TeamMessage[]).reverse();
+      setOlderError(false);
       if (older.length === 0) {
         setHasOlderMessages(false);
       } else {
@@ -223,12 +225,16 @@ export function useTeamChatPanel(conversation: TeamConversation) {
       }
     } catch (err) {
       log.error('Erro ao carregar mensagens anteriores', err);
+      setOlderError(true);
     } finally {
       setIsFetchingOlder(false);
     }
   }, [isFetchingOlder, hasOlderMessages, oldestCursor, conversation.id]);
 
   const debouncedSearchQuery = useDebounce(searchQuery, 400);
+  const MIN_SEARCH_CHARS = 2;
+  const [searchRetryCount, setSearchRetryCount] = useState(0);
+  const retrySearch = useCallback(() => { setSearchRetryCount(n => n + 1); }, []);
 
   // SL-082 (F69) — a busca filtrava SÓ o que já estava carregado (as mensagens
   // mais novas + as páginas abertas): um termo que existia numa mensagem antiga
@@ -251,7 +257,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   const [serverSearchError, setServerSearchError] = useState<{ conversationId: string; term: string; message: string } | null>(null);
 
   useEffect(() => {
-    if (!searchTerm) return;
+    if (!searchTerm || searchTerm.length < MIN_SEARCH_CHARS) return;
     // A conversa da requisição é lida aqui, ao disparar: é ela, junto com o termo,
     // que diz se a resposta ainda interessa ao que está na tela.
     const conversationId = conversation.id;

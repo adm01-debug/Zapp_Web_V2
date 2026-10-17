@@ -18,8 +18,8 @@ interface AppearanceSettingsProps {
   updateSettings: (updates: Partial<AppearanceSettingsProps['settings']>) => void;
   onResetOnboarding: () => void;
   /** `isSaving`/`onSave` vêm do hook canônico (`useUserSettings`) na SettingsView: um só dono da escrita. */
-  isSaving: boolean;
-  onSave: () => Promise<boolean> | void;
+  isSaving?: boolean;
+  onSave?: () => Promise<boolean> | void;
 }
 
 /** Valores que o dono da preferência (`useTheme`) entende; qualquer outro cai em 'system'. */

@@ -42,7 +42,8 @@ export function useTarefasAgendadas() {
   const { data, error, isLoading, refetch } = useQuery({
     queryKey: CHAVE_TAREFAS_AGENDADAS,
     queryFn: async (): Promise<TarefaAgendada[]> => {
-      const { data: linhas, error: erroConsulta } = await supabase.rpc('admin_list_cron_jobs');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: linhas, error: erroConsulta } = await (supabase as any).rpc('admin_list_cron_jobs');
       // O erro cru (com nome de função/policy) NUNCA é exibido: ele sobe e é
       // traduzido por `mensagemDeErro` antes de chegar à tela.
       if (erroConsulta) throw erroConsulta;
@@ -69,7 +70,8 @@ export function useTarefasAgendadas() {
       emAndamento.current = true;
       setAlterando(jobname);
 
-      const { error: erroAlteracao } = await supabase.rpc('admin_toggle_cron_job', {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error: erroAlteracao } = await (supabase as any).rpc('admin_toggle_cron_job', {
         p_jobname: jobname,
         p_ativo: ativo,
       });

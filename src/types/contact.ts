@@ -12,6 +12,9 @@ export type ContactRow = Database['public']['Tables']['contacts']['Row'] & {
   blocked_by?: string | null;
   /** Marcador VIP do contato (default false no banco). */
   is_vip?: boolean;
+  presence_status?: string | null;
+  presence_updated_at?: string | null;
+  last_seen_at?: string | null;
 };
 export type ContactInsert = Database['public']['Tables']['contacts']['Insert'];
 export type ContactUpdate = Database['public']['Tables']['contacts']['Update'];

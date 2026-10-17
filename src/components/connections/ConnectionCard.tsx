@@ -218,7 +218,7 @@ export function ConnectionCard({
 
       <ConnectionDisconnectDialog
         open={confirmDisconnect}
-        onOpenChange={handleDisconnectDialogOpenChange}
+        onOpenChange={setConfirmDisconnect}
         connectionName={connection.name}
         phoneNumber={connection.phone_number}
         pending={disconnecting}
