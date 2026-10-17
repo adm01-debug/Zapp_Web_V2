@@ -257,15 +257,48 @@ export async function syncMessageIds(supabase: SupabaseClient, accountId: string
 
 const GMAIL_MESSAGES_MAX_PAGES = 100;
 
-export async function syncMessages(supabase: SupabaseClient, accountId: string, accessToken: string, log: Logger, query = "", maxResults = 50) {
+// Escopo do full sync: caixa de entrada + enviados dos últimos 12 meses. Spam,
+// Lixeira e Rascunhos ficam FORA da varredura de conteúdo — deles só a contagem
+// do marcador (ver `syncLabels`), nunca o corpo da mensagem.
+export const GMAIL_FULL_SYNC_BASE_QUERY = "in:inbox OR in:sent";
+export const GMAIL_FULL_SYNC_WINDOW_SECONDS = 365 * 24 * 60 * 60;
+// Teto de páginas POR INVOCAÇÃO do full sync manual (`gmail-sync` →
+// `sync-inbox`): uma execução de Edge não varre a caixa inteira dentro do tempo
+// de parede. O que sobrar continua na invocação seguinte, pelo `nextPageToken`
+// devolvido ao chamador. Quem não passa `maxPages` mantém o teto absoluto.
+export const GMAIL_FULL_SYNC_MAX_PAGES_PER_RUN = 10;
+
+export function gmailFullSyncQuery(now: Date = new Date()): string {
+  const corte = Math.floor(now.getTime() / 1000) - GMAIL_FULL_SYNC_WINDOW_SECONDS;
+  return `${GMAIL_FULL_SYNC_BASE_QUERY} after:${corte}`;
+}
+
+export interface GmailSyncPagingOptions {
+  /** Página em que a varredura começa (retomada da invocação anterior). */
+  startPageToken?: string;
+  /** Teto de páginas nesta invocação. Sem ele, vale o teto absoluto. */
+  maxPages?: number;
+}
+
+export async function syncMessages(
+  supabase: SupabaseClient,
+  accountId: string,
+  accessToken: string,
+  log: Logger,
+  query = "",
+  maxResults = 50,
+  paging: GmailSyncPagingOptions = {},
+) {
   const totals = {
     synced: 0, failed: 0,
     failures: [] as Array<{ id: string; error: string }>,
     messages: [] as Array<{ id: string; threadId: string; subject: string }>,
   };
+  const pageBudget = paging.maxPages ?? GMAIL_MESSAGES_MAX_PAGES;
   const seenPageTokens = new Set<string>();
-  let pageToken: string | undefined;
+  let pageToken: string | undefined = paging.startPageToken;
   let pages = 0;
+  let hasMore = false;
   do {
     const params = new URLSearchParams({ maxResults: String(maxResults) });
     if (query) params.set("q", query);
@@ -283,8 +316,11 @@ export async function syncMessages(supabase: SupabaseClient, accountId: string, 
     }
     pageToken = listData.nextPageToken;
     if (pageToken && pages >= GMAIL_MESSAGES_MAX_PAGES) throw new Error("Gmail messages sync exceeded the safe pagination limit");
+    // Orçamento da invocação esgotado: para com o cursor em mãos (o chamador
+    // retoma pelo `next_page_token`), em vez de varrer a caixa até o teto.
+    if (pageToken && pages >= pageBudget) { hasMore = true; break; }
   } while (pageToken);
-  return { ...totals, pages };
+  return { ...totals, pages, has_more: hasMore, next_page_token: hasMore ? pageToken ?? null : null };
 }
 
 export type GmailHistoryResetOutcome = "reset" | "conflict";
@@ -302,8 +338,19 @@ export async function resetGmailHistoryCursor(supabase: SupabaseClient, accountI
   return data && data.length > 0 ? "reset" : "conflict";
 }
 
-export async function runGmailFullSync(supabase: SupabaseClient, accountId: string, accessToken: string, log: Logger, query = "in:inbox", maxResults = 50) {
-  const result = await syncMessages(supabase, accountId, accessToken, log, query, maxResults);
+export async function runGmailFullSync(
+  supabase: SupabaseClient,
+  accountId: string,
+  accessToken: string,
+  log: Logger,
+  query = gmailFullSyncQuery(),
+  maxResults = 50,
+  paging: GmailSyncPagingOptions = {},
+) {
+  const result = await syncMessages(supabase, accountId, accessToken, log, query, maxResults, {
+    startPageToken: paging.startPageToken,
+    maxPages: paging.maxPages,
+  });
   if (result.failed > 0) {
     const { error: statusError } = await supabase.from("gmail_accounts").update({
       sync_status: "error", last_sync_at: new Date().toISOString(),
@@ -312,6 +359,10 @@ export async function runGmailFullSync(supabase: SupabaseClient, accountId: stri
     if (statusError) throw new Error("Failed to record Gmail sync error state");
     return result;
   }
+  // Orçamento de páginas esgotado: a varredura continua na invocação seguinte
+  // (o chamador devolve `next_page_token` em `page_token`). A conta NÃO é
+  // marcada como sincronizada — `history_id` só depois de todas as páginas.
+  if (result.has_more) return result;
   const profile = await gmailFetch<{ historyId?: string }>(accessToken, "/profile");
   if (!profile.historyId) throw new Error("Gmail profile response missing historyId");
   const { error } = await supabase.from("gmail_accounts").update({

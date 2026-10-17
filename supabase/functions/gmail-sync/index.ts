@@ -3,9 +3,25 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { z } from "https://esm.sh/zod@3.23.8";
 import { handleCors, errorResponse, jsonResponse, Logger, requireEnv } from "../_shared/validation.ts";
-import { ensureValidToken, gmailFetch, reconcileEmailThreads, runGmailFullSync, syncLabels, syncMessageIds } from "../_shared/gmail-helpers.ts";
+import { ensureValidToken, gmailFetch, gmailFullSyncQuery, GMAIL_FULL_SYNC_MAX_PAGES_PER_RUN, reconcileEmailThreads, runGmailFullSync, syncLabels, syncMessageIds } from "../_shared/gmail-helpers.ts";
 
 const GMAIL_RESOURCE_ID_RE = /^[0-9A-Za-z_-]{1,200}$/;
+// O `pageToken` do Gmail é opaco: só garantimos tamanho e um alfabeto seguro
+// antes de devolvê-lo à API (nada de espaço, quebra de linha ou controle).
+const GMAIL_PAGE_TOKEN_RE = /^[0-9A-Za-z_.=+/-]{1,512}$/;
+// Rótulos cujo CONTEÚDO não entra no Zapp: de Spam, Lixeira e Rascunhos só a
+// contagem do marcador (`syncLabels`). Consulta que peça essas pastas é
+// recusada antes de qualquer chamada ao Gmail.
+const GMAIL_QUERY_TERMOS_FORA_DE_ESCOPO = [
+  "in:spam", "in:trash", "in:draft", "in:drafts", "is:draft", "in:anywhere",
+  "label:spam", "label:trash",
+];
+
+export function gmailQueryTermosForaDeEscopo(query: string): string[] {
+  const normalizada = query.toLowerCase();
+  return GMAIL_QUERY_TERMOS_FORA_DE_ESCOPO.filter(termo => new RegExp(`\\b${termo}\\b`).test(normalizada));
+}
+
 // Cor de marcador do Gmail: o schema só garante o formato hex; a paleta exata é
 // validada pela própria API do Gmail (erro explícito devolvido ao chamador).
 const GMAIL_LABEL_HEX_RE = /^#[0-9a-fA-F]{6}$/;
@@ -24,6 +40,8 @@ export const GmailSyncActionSchema = z.object({
   account_id: z.string().uuid("account_id must be a valid UUID"),
   query: z.string().max(500).optional(),
   maxResults: z.number().int().min(1).max(200).optional(),
+  // Retomada da invocação anterior do full sync (`next_page_token` da resposta).
+  page_token: z.string().regex(GMAIL_PAGE_TOKEN_RE, "page_token inválido").optional(),
   thread_id: z.string().max(200).regex(GMAIL_RESOURCE_ID_RE).optional(),
   topic_name: z.string().max(500).optional(),
   // Gerenciamento de marcadores do Gmail (create/update/delete-label).
@@ -33,6 +51,18 @@ export const GmailSyncActionSchema = z.object({
   label_list_visibility: z.enum(['labelShow', 'labelShowIfUnread', 'labelHide']).optional(),
   message_list_visibility: z.enum(['show', 'hide']).optional(),
 }).superRefine((value, ctx) => {
+  // LGPD: conteúdo de Spam, Lixeira e Rascunhos não entra no Zapp. Consulta que
+  // peça essas pastas é recusada aqui, antes de qualquer chamada ao Gmail.
+  if (value.action === 'sync-inbox' && value.query !== undefined) {
+    const foraDeEscopo = gmailQueryTermosForaDeEscopo(value.query);
+    if (foraDeEscopo.length > 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['query'],
+        message: `query fora do escopo (Spam, Lixeira e Rascunhos só têm a contagem do marcador): ${foraDeEscopo.join(', ')}`,
+      });
+    }
+  }
   if (value.action === 'create-label') {
     if (!value.name || value.name.trim().length === 0) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['name'], message: 'name é obrigatório para criar um marcador' });
@@ -314,13 +344,23 @@ export async function handleGmailSync(req: Request): Promise<Response> {
       case "sync-inbox": {
         await supabase.from("gmail_accounts").update({ sync_status: "syncing" }).eq("id", account.id);
         try {
-          const result = await runGmailFullSync(supabase, account.id, accessToken, log, body.query || "in:inbox", body.maxResults || 50);
+          // Escopo ampliado: caixa de entrada + enviados dos últimos 12 meses.
+          // Sem `query` do chamador, o padrão é essa consulta — Spam, Lixeira e
+          // Rascunhos nunca entram (o schema recusa quem pedir).
+          const query = body.query?.trim() ? body.query.trim() : gmailFullSyncQuery();
+          const result = await runGmailFullSync(
+            supabase, account.id, accessToken, log, query, body.maxResults || 50,
+            { startPageToken: body.page_token, maxPages: GMAIL_FULL_SYNC_MAX_PAGES_PER_RUN },
+          );
+          const payload = {
+            ...result, query, has_more: result.has_more, next_page_token: result.next_page_token,
+          };
           if (result.failed > 0) {
-            log.done(207, { synced: result.synced, failed: result.failed });
-            return jsonResponse({ success: false, ...result }, 207, req);
+            log.done(207, { synced: result.synced, failed: result.failed, hasMore: result.has_more });
+            return jsonResponse({ success: false, ...payload }, 207, req);
           }
-          log.done(200, { synced: result.synced });
-          return jsonResponse({ success: true, ...result }, 200, req);
+          log.done(200, { synced: result.synced, hasMore: result.has_more });
+          return jsonResponse({ success: true, ...payload }, 200, req);
         } catch (err: unknown) {
           await supabase.from("gmail_accounts").update({
             sync_status: "error", last_error: err instanceof Error ? err.message : String(err),

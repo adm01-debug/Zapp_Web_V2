@@ -1,5 +1,5 @@
 import { assertEquals, assertRejects } from "https://deno.land/std@0.224.0/testing/asserts.ts";
-import { decodeBase64Url, extractAttachments, extractBody, parseGmailAddressList, runGmailFullSync, syncMessages, type GmailMessage } from "../gmail-helpers.ts";
+import { decodeBase64Url, extractAttachments, extractBody, gmailFullSyncQuery, GMAIL_FULL_SYNC_MAX_PAGES_PER_RUN, GMAIL_FULL_SYNC_WINDOW_SECONDS, parseGmailAddressList, runGmailFullSync, syncMessages, type GmailMessage } from "../gmail-helpers.ts";
 import { Logger } from "../validation.ts";
 
 function base64Url(value: string): string {
@@ -257,4 +257,63 @@ Deno.test('extractBody e extractAttachments percorrem MIME aninhado', () => {
   };
   assertEquals(extractBody(payload), { text: 'texto', html: '<b>texto</b>' });
   assertEquals(extractAttachments(payload), [{ filename: 'arquivo.pdf', mimeType: 'application/pdf', attachmentId: 'att-1', size: 123 }]);
+});
+
+Deno.test('gmailFullSyncQuery cobre entrada e enviados dos ultimos 12 meses, sem Spam/Lixeira/Rascunhos', () => {
+  const agora = new Date('2026-10-17T00:00:00Z');
+  assertEquals(gmailFullSyncQuery(agora), 'in:inbox OR in:sent after:1760659200');
+  // 12 meses = 365 dias, em segundos.
+  assertEquals(GMAIL_FULL_SYNC_WINDOW_SECONDS, 31536000);
+  assertEquals(Math.floor(agora.getTime() / 1000) - GMAIL_FULL_SYNC_WINDOW_SECONDS, 1760659200);
+  const query = gmailFullSyncQuery(agora);
+  assertEquals(/in:spam|in:trash|in:draft|in:anywhere/.test(query), false);
+});
+
+Deno.test('runGmailFullSync para no orcamento de paginas e devolve o cursor sem gravar history_id', async () => {
+  const { urls, restore } = comFetchFake((url) => {
+    if (url.includes('/messages?')) {
+      const pagina = Number(new URL(url).searchParams.get('pageToken') ?? '0');
+      return { body: { messages: [{ id: `p${pagina}` }], nextPageToken: String(pagina + 1) } };
+    }
+    return { body: mensagemFake(url.split('/messages/')[1].split('?')[0]) };
+  });
+  const chamadas: Chamada[] = [];
+  const eventos: string[] = [];
+  try {
+    const r = await runGmailFullSync(
+      supabaseArg(chamadas, eventos), 'conta-a', 'token', new Logger('test'), undefined, 50,
+      { maxPages: 3 },
+    );
+    const listagens = urls.filter(u => u.includes('/messages?'));
+    // O teto por invocação é o do chamador (o handler `gmail-sync` passa
+    // GMAIL_FULL_SYNC_MAX_PAGES_PER_RUN = 10, bem abaixo do teto absoluto de 100).
+    assertEquals(GMAIL_FULL_SYNC_MAX_PAGES_PER_RUN, 10);
+    assertEquals(listagens.length, 3);
+    assertEquals(r.pages, 3);
+    assertEquals(r.has_more, true);
+    assertEquals(r.next_page_token, '3');
+    assertEquals(listagens[0].includes('pageToken='), false);
+    // Sem `history_id` e sem "synced": o cursor so avanca quando a varredura termina.
+    assertEquals(updatesDaConta(chamadas).length, 0);
+    assertEquals(eventos.includes('fetch:profile'), false);
+  } finally { restore(); }
+});
+
+Deno.test('syncMessages retoma da pagina do startPageToken e fecha sem sobra', async () => {
+  const { urls, restore } = comFetchFake((url) =>
+    url.includes('/messages?') ? { body: { messages: [] } } : { body: mensagemFake('m1') }
+  );
+  const chamadas: Chamada[] = [];
+  try {
+    const r = await syncMessages(
+      supabaseArg(chamadas), 'conta-a', 'token', new Logger('test'), 'in:inbox OR in:sent', 50,
+      { startPageToken: 'tok-retomada' },
+    );
+    const listagens = urls.filter(u => u.includes('/messages?'));
+    assertEquals(listagens.length, 1);
+    assertEquals(listagens[0].includes('pageToken=tok-retomada'), true);
+    assertEquals(r.pages, 1);
+    assertEquals(r.has_more, false);
+    assertEquals(r.next_page_token, null);
+  } finally { restore(); }
 });
