@@ -162,7 +162,7 @@ jobs:
             validarDestino,
             validarSupabaseCa,
           } from './scripts/db-audit/database-identity.mjs';
-          import { appendFileSync } from 'node:fs';
+          import { writeFileSync } from 'node:fs';
           const identidade = carregarIdentidadeEsperada('scripts/db-audit/database-identity.json');
           const erros = validarDestino(process.env.DESTINO_URL, identidade);
           erros.push(...validarSupabaseCa());
@@ -172,14 +172,15 @@ jobs:
           if (erros.length) process.exit(1);
           const destinoSeguro = tls.connectionString;
           console.log(`::add-mask::${destinoSeguro}`);
-          appendFileSync(process.env.GITHUB_ENV, `DESTINO_URL=${destinoSeguro}\n`);
-          appendFileSync(process.env.GITHUB_ENV, 'PGSSLMODE=verify-full\n');
+          // GA21: escreve em arquivo temporario (mode 600) em vez do GITHUB_ENV
+          // para evitar que DESTINO_URL vaze para o passo de instalacao de deps e actions de terceiros.
+          writeFileSync('/tmp/.destino_url_hardened', destinoSeguro, { mode: 0o600 });
           console.log('OK: endpoint do banco oficial comprovado por fingerprint; TLS verify-full e CA Supabase pinada.');
           NODE
 
-      # DESTINO_URL (ja endurecido com TLS) e PGSSLMODE vem do GITHUB_ENV
-      # gravado pelo passo anterior — sem env: proprio aqui, que sobrescreveria
-      # com o secret cru sem TLS.
+      # GA21: DESTINO_URL (endurecido com TLS) lido de /tmp/.destino_url_hardened
+      # nos passos que precisam dele — nunca exportado via GITHUB_ENV para evitar
+      # exposicao a bun install, actions/cache e actions de terceiros.
       # gen-types.sh puxa ghcr.io/supabase/postgres-meta (GitHub Container
       # Registry, nao Docker Hub). GITHUB_TOKEN le pacotes publicos sem secret extra.
       - name: ghcr.io login (previne rate-limit no gen-types)
@@ -208,6 +209,9 @@ jobs:
 
       - name: Gerar candidatos em diretorio temporario
         run: |
+          # GA21: DESTINO_URL lido do arquivo temporario (nunca do GITHUB_ENV).
+          export DESTINO_URL=$(cat /tmp/.destino_url_hardened)
+          export PGSSLMODE=verify-full
           umask 077
           bash scripts/db-audit/gen-types.sh /tmp/types.new.ts
 
@@ -255,8 +259,8 @@ jobs:
 
       # Contrato dos checkers: 0=igual, 1=drift valido, 2=erro/identidade.
       # Apenas exit 1 pode virar proposta de atualizacao.
-      # DESTINO_URL (endurecido) vem do GITHUB_ENV do 1o passo — sem env:
-      # proprio aqui pela mesma razao do passo "Gerar candidatos" acima.
+      # GA21: DESTINO_URL nao e exportado via GITHUB_ENV — os passos que precisam
+      # dele leem /tmp/.destino_url_hardened diretamente no run block.
       - name: Classificar drift com identidade comprovada
         id: diff
         run: |
@@ -385,10 +389,10 @@ jobs:
         # exit 2 = so apply-pendente.
         id: gate1b
         if: steps.diff.outputs.schema_changed == 'true' && steps.gate1.outputs.passed == 'false'
-        env:
-          DESTINO_URL: ${{ env.DESTINO_URL }}
-          PGSSLMODE: ${{ env.PGSSLMODE }}
         run: |
+          # GA21: DESTINO_URL lido do arquivo temporario (nunca do GITHUB_ENV).
+          export DESTINO_URL=$(cat /tmp/.destino_url_hardened)
+          export PGSSLMODE=verify-full
           set +e
           node scripts/db-audit/lote-pendente.mjs > /tmp/drift.log 2>&1
           drift_exit=$?
@@ -433,7 +437,11 @@ jobs:
           # F-01 (auditoria 2026-09-27): mesmo pipefail dos Gates 1 e 2 — sem ele o
           # tee sempre saia 0 e o gate passava mesmo com o script bloqueando.
           set -o pipefail
-          if node scripts/db-audit/check-remocoes-destrutivas.mjs supabase/schema-catalog.json /tmp/catalog.new.json 2>&1 | tee /tmp/gate3.log; then
+          # GA20: "Aplicar candidatos" ja sobrescreveu supabase/schema-catalog.json
+          # antes deste passo. Recuperar o catalogo original do HEAD do git para
+          # comparar velho x novo corretamente (sem isso o gate compara new x new).
+          git show HEAD:supabase/schema-catalog.json > /tmp/catalog.old.json
+          if node scripts/db-audit/check-remocoes-destrutivas.mjs /tmp/catalog.old.json /tmp/catalog.new.json 2>&1 | tee /tmp/gate3.log; then
             echo "passed=true" >> "$GITHUB_OUTPUT"
           else
             echo "passed=false" >> "$GITHUB_OUTPUT"
