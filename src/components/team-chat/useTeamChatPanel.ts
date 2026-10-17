@@ -266,7 +266,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
       const { data, error } = await supabase.rpc('search_team_messages', {
         p_conversation_id: conversationId,
         p_query: searchTerm,
-        p_limit: 50,
+        p_limit: 100,
       });
       if (cancelado) return;
       if (error) {
@@ -329,6 +329,8 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     ? serverSearchError.message
     : null;
   const isSearching = searchActive && !searchError && !serverSearchMatches;
+  const searchBelowMinChars = searchTerm.length > 0 && searchTerm.length < MIN_SEARCH_CHARS;
+  const searchIsCapped = !!(serverSearchMatches && serverSearch && serverSearch.results.length >= 100);
 
   const filteredMessages = useMemo(() => {
     if (!searchActive) return messages;
