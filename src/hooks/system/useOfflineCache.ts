@@ -59,7 +59,13 @@ function writeCache(data: ConversationWithMessages[]) {
 }
 
 export function useOfflineCache(conversations: ConversationWithMessages[], loading: boolean) {
-  const [cachedData, setCachedData] = useState<ConversationWithMessages[] | null>(null);
+  const [cachedData, setCachedData] = useState<ConversationWithMessages[] | null>(() => {
+    const cached = readCache();
+    if (cached) {
+      getLogger('OfflineCache').info(`Loaded ${cached.length} conversations from offline cache`);
+    }
+    return cached;
+  });
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const lastWriteRef = useRef(0);
 
@@ -73,15 +79,6 @@ export function useOfflineCache(conversations: ConversationWithMessages[], loadi
       window.removeEventListener('online', goOnline);
       window.removeEventListener('offline', goOffline);
     };
-  }, []);
-
-  // Load cache on mount
-  useEffect(() => {
-    const cached = readCache();
-    if (cached) {
-      setCachedData(cached);
-      getLogger('OfflineCache').info(`Loaded ${cached.length} conversations from offline cache`);
-    }
   }, []);
 
   // Write cache when conversations update (throttled)
