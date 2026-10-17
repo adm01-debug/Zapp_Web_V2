@@ -46,6 +46,9 @@ vi.mock('@/lib/logger', () => ({
   // (src/components/catalog/useSendProduct), cujo grafo importa o logger
   // nomeado — o mock precisa do export real.
   getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
+  // O envio da conversa passa por invokeEdge, que cria o logger no topo.
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
+  generateCorrelationId: () => 'test-correlation-id',
 }));
 
 import { useSentimentAlerts } from '@/hooks/inbox/useSentimentAlerts';

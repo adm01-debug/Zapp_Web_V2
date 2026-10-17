@@ -60,6 +60,9 @@ vi.mock('@/hooks/auth/useAuth', () => ({
 vi.mock('@/lib/logger', () => ({
   log: { error: vi.fn(), debug: vi.fn(), info: vi.fn() },
   getLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),
+  // Cadeia real de envio: `createLogger` é chamado no topo de invokeEdge.
+  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),
+  generateCorrelationId: () => 'test-correlation-id',
 }));
 
 import { useNotifications } from '@/hooks/system/useNotifications';

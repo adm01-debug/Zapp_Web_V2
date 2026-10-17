@@ -33,6 +33,10 @@ vi.mock('@/lib/logger', () => ({
   // O toast do `reminder_due` arrasta a cadeia de tarefas (useSendProduct →
   // useCatalogContactSearch), que cria o logger por `getLogger`.
   getLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),
+  // O caminho de envio importa `createLogger` no topo do módulo
+  // (src/lib/invokeEdge.ts) — o mock precisa dos dois exports nomeados.
+  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),
+  generateCorrelationId: () => 'test-correlation-id',
 }));
 
 import { useNotifications } from '@/hooks/system/useNotifications';

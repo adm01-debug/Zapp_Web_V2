@@ -36,6 +36,10 @@ vi.mock('@/utils/notificationSounds', () => ({
 
 vi.mock('@/lib/logger', () => ({
   getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
+  // A cadeia importada pelo hook usa `createLogger` no topo do módulo
+  // (src/lib/invokeEdge.ts) e `generateCorrelationId` no envio.
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
+  generateCorrelationId: () => 'test-correlation-id',
 }));
 
 const { useRealtimeSentimentAlerts } = await import('@/hooks/inbox/useRealtimeSentimentAlerts');
