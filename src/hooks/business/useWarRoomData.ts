@@ -11,9 +11,11 @@ export interface WarRoomAgent {
   status: 'online' | 'busy' | 'away' | 'offline';
   activeChats: number;
   maxChats: number;
-  avgResponseTime: number;
+  /** `null` = não houve 1ª resposta medida hoje (não é "0s medido"). */
+  avgResponseTime: number | null;
   resolvedToday: number;
-  satisfaction: number;
+  /** `null` = nenhuma avaliação no dia (não é "0 de satisfação"). */
+  satisfaction: number | null;
 }
 
 export interface WarRoomQueue {
@@ -193,6 +195,7 @@ export interface WarRoomMetrics {
   /** `null` quando nenhuma fila tem risco calculado. */
   totalWarnings: number | null;
   onlineAgents: number;
+  /** Média só sobre agentes com amostra; `0` quando nenhum agente tem avaliação no dia. */
   avgSatisfaction: number;
   totalResolved: number;
 }
@@ -206,7 +209,12 @@ export function useWarRoomMetrics(agents: WarRoomAgent[], queues: WarRoomQueue[]
       ? filasComRisco.reduce((acc, q) => acc + (q.slaWarnings ?? 0), 0)
       : null;
     const onlineAgents = agents.filter(a => a.status === 'online' || a.status === 'busy').length;
-    const avgSatisfaction = agents.length > 0 ? agents.reduce((acc, a) => acc + a.satisfaction, 0) / agents.length : 0;
+    // Média só sobre quem tem amostra: agente sem avaliação não puxa a média para baixo como zero.
+    // Se ninguém tem amostra, fica 0 (a tela mostra '—' por `agents[].satisfaction === null`, no card da tela).
+    const avaliados = agents.filter((a): a is WarRoomAgent & { satisfaction: number } => a.satisfaction !== null);
+    const avgSatisfaction = avaliados.length > 0
+      ? avaliados.reduce((acc, a) => acc + a.satisfaction, 0) / avaliados.length
+      : 0;
     const totalResolved = agents.reduce((acc, a) => acc + a.resolvedToday, 0);
     return { totalWaiting, totalBreaches, totalWarnings, onlineAgents, avgSatisfaction, totalResolved };
   }, [agents, queues]);

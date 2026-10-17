@@ -20,6 +20,8 @@ import { describe, expect, it } from 'vitest';
 const raiz = process.cwd();
 const RESIDUO = 'src/hooks/inbox/useBulkActions.ts';
 const REFERENCIA = 'useBulkActions';
+// Substituto legítimo — pode mencionar o nome antigo em comentários
+const SUBSTITUTO = 'useInboxBulkActions.ts';
 const ESTE_TESTE = 'useBulkActions.removido.test.ts';
 
 function arquivosFonte(diretorio: string, achados: string[] = []): string[] {
@@ -42,6 +44,7 @@ describe('resíduo do hook useBulkActions (exclusão por tabela arbitrária)', (
   it('nenhum módulo de src aponta para o hook removido', () => {
     const referencias = arquivosFonte(join(raiz, 'src'))
       .filter((arquivo) => !arquivo.endsWith(ESTE_TESTE))
+      .filter((arquivo) => !arquivo.endsWith(SUBSTITUTO))
       .filter((arquivo) => readFileSync(arquivo, 'utf8').includes(REFERENCIA))
       .map((arquivo) => relative(raiz, arquivo));
 

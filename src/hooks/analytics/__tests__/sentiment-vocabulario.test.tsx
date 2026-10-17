@@ -26,7 +26,7 @@ vi.mock('@/integrations/supabase/client', () => {
   // ao ser aguardado (`then`), resolve pelo próximo resultado da fila.
   const construtor = (resolver: () => unknown) => {
     const b: Record<string, unknown> = {};
-    for (const metodo of ['select', 'gte', 'lt', 'lte', 'not', 'eq', 'order', 'limit']) {
+    for (const metodo of ['select', 'gte', 'lt', 'lte', 'not', 'eq', 'order', 'limit', 'range']) {
       b[metodo] = () => b;
     }
     b.then = (res: (v: unknown) => unknown, rej?: (e: unknown) => unknown) =>
