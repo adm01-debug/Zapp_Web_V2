@@ -129,25 +129,27 @@ function makeMessage(overrides: Record<string, unknown> = {}) {
 }
 
 function makeContactsQuery() {
-  return {
-    select: vi.fn(() => ({
-      order: vi.fn(() => ({
-        limit: vi.fn().mockResolvedValue({ data: seededContacts, error: null }),
-      })),
-      in: vi.fn((_: string, ids: string[]) => {
-        return Promise.resolve({
-          data: ids.map((id) => contactsById[id]).filter(Boolean),
-          error: null,
-        });
+  // A Inbox filtra `.is('deleted_at', null)` nas duas leituras de contatos —
+  // o fake encadeia `.is()` como o PostgREST (mesmo dado; filtro é do banco).
+  const chain: Record<string, unknown> = {
+    is: vi.fn(() => chain),
+    order: vi.fn(() => ({
+      limit: vi.fn().mockResolvedValue({ data: seededContacts, error: null }),
+    })),
+    in: vi.fn((_: string, ids: string[]) => {
+      return Promise.resolve({
+        data: ids.map((id) => contactsById[id]).filter(Boolean),
+        error: null,
+      });
+    }),
+    eq: vi.fn((_: string, value: string) => ({
+      maybeSingle: vi.fn().mockResolvedValue({
+        data: contactsById[value] ?? null,
+        error: null,
       }),
-      eq: vi.fn((_: string, value: string) => ({
-        maybeSingle: vi.fn().mockResolvedValue({
-          data: contactsById[value] ?? null,
-          error: null,
-        }),
-      })),
     })),
   };
+  return { select: vi.fn(() => chain) };
 }
 
 function makeMessagesQuery() {
@@ -233,7 +235,8 @@ describe('useRealtimeMessages', () => {
     // Override contacts query to add proper .in() support at top level
     mockFrom.mockImplementation((table: string) => {
       if (table === 'contacts') {
-        const selectFn = vi.fn(() => ({
+        const chain: Record<string, unknown> = {
+          is: vi.fn(() => chain),
           order: vi.fn(() => ({
             limit: vi.fn().mockResolvedValue({ data: seededContacts, error: null }),
           })),
@@ -244,7 +247,8 @@ describe('useRealtimeMessages', () => {
               error: null,
             }),
           })),
-        }));
+        };
+        const selectFn = vi.fn(() => chain);
         return { select: selectFn };
       }
       if (table === 'messages') return makeMessagesQuery();
@@ -326,16 +330,16 @@ describe('useRealtimeMessages', () => {
     const pending = new Promise<void>((resolve) => { resolvePending = resolve; });
     mockFrom.mockImplementation((table: string) => {
       if (table === 'contacts') {
-        return {
-          select: vi.fn(() => ({
-            order: vi.fn(() => ({
-              // Snapshot deliberadamente lento e desatualizado (nickname antigo).
-              limit: vi.fn(() => pending.then(() => ({ data: seededContacts, error: null }))),
-            })),
-            in: vi.fn(() => Promise.resolve({ data: [], error: null })),
-            eq: vi.fn(() => ({ maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }) })),
+        const chain: Record<string, unknown> = {
+          is: vi.fn(() => chain),
+          order: vi.fn(() => ({
+            // Snapshot deliberadamente lento e desatualizado (nickname antigo).
+            limit: vi.fn(() => pending.then(() => ({ data: seededContacts, error: null }))),
           })),
+          in: vi.fn(() => Promise.resolve({ data: [], error: null })),
+          eq: vi.fn(() => ({ maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }) })),
         };
+        return { select: vi.fn(() => chain) };
       }
       if (table === 'messages') return makeMessagesQuery();
       return {

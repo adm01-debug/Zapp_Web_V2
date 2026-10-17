@@ -50,6 +50,7 @@ export class RealtimeService {
       const { data, error } = await supabase
         .from('contacts')
         .select('*, conversation_sla(first_response_at, first_message_at, first_response_breached)')
+        .is('deleted_at', null)
         .in('id', idsChunk);
         
       if (error) {
@@ -131,6 +132,7 @@ export class RealtimeService {
     const { data: seededContacts, error: contactsError } = await supabase
       .from('contacts')
       .select('*, conversation_sla(first_response_at, first_message_at, first_response_breached)')
+      .is('deleted_at', null)
       .order('updated_at', { ascending: false })
       .limit(SEEDED_CONTACT_LIMIT);
       

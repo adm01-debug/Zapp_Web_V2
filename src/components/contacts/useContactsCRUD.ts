@@ -90,6 +90,32 @@ type ContactEditSource = Omit<Contact, 'latitude' | 'longitude'> & {
   longitude?: number | string | null;
 };
 
+const PHONE_DUPLICADO = 'Já existe outro contato com este número de telefone.';
+const PHONE_DUPLICADO_EXCLUIDO =
+  'Já existe um contato excluído com este número de telefone. Restaure-o e tente de novo.';
+
+/**
+ * Telefone duplicado diz a verdade: o 23505 do UPDATE usa a constraint viva
+ * `contacts_phone_key`. Quando o número pertence a um contato EXCLUÍDO, a
+ * mensagem orienta restaurar. A consulta é informativa e passa pela policy de
+ * SELECT (só admin/supervisor enxerga o excluído); erro ou zero linha cai na
+ * mensagem padrão.
+ */
+async function duplicatePhoneError(phone: string): Promise<Error> {
+  try {
+    const { data, error } = await supabase
+      .from('contacts')
+      .select('id')
+      .eq('phone', phone.replace(/\D/g, ''))
+      .not('deleted_at', 'is', null)
+      .limit(1);
+    if (!error && data && data.length > 0) return new Error(PHONE_DUPLICADO_EXCLUIDO);
+  } catch {
+    // consulta indisponível: a mensagem padrão abaixo continua correta
+  }
+  return new Error(PHONE_DUPLICADO);
+}
+
 export function useContactsCRUD() {
   const { profile } = useAuth();
   const feedback = useActionFeedback();
@@ -214,8 +240,8 @@ export function useContactsCRUD() {
           .eq('id', contact.id)
           .select('id');
         if (error) {
-          if (error.code === '23505' && error.message?.includes('contacts_phone_unique')) {
-            throw new Error('Já existe outro contato com este número de telefone.');
+          if (error.code === '23505' && error.message?.includes('contacts_phone_key')) {
+            throw await duplicatePhoneError(contact.phone);
           }
           throw error;
         }

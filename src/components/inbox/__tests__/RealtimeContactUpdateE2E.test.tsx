@@ -160,19 +160,21 @@ function makeContact(overrides: MockContact = {}) {
 }
 
 function makeContactsQuery() {
-  return {
-    select: vi.fn(() => ({
-      order: vi.fn(() => ({
-        limit: vi.fn().mockResolvedValue({ data: seededContacts, error: null }),
-      })),
-      in: vi.fn((_: string, ids: string[]) =>
-        Promise.resolve({ data: ids.map((id) => contactsById[id]).filter(Boolean), error: null })
-      ),
-      eq: vi.fn((_: string, value: string) => ({
-        maybeSingle: vi.fn().mockResolvedValue({ data: contactsById[value] ?? null, error: null }),
-      })),
+  // A Inbox filtra `.is('deleted_at', null)` nas duas leituras de contatos —
+  // o fake encadeia `.is()` como o PostgREST (mesmo dado; filtro é do banco).
+  const chain: Record<string, unknown> = {
+    is: vi.fn(() => chain),
+    order: vi.fn(() => ({
+      limit: vi.fn().mockResolvedValue({ data: seededContacts, error: null }),
+    })),
+    in: vi.fn((_: string, ids: string[]) =>
+      Promise.resolve({ data: ids.map((id) => contactsById[id]).filter(Boolean), error: null })
+    ),
+    eq: vi.fn((_: string, value: string) => ({
+      maybeSingle: vi.fn().mockResolvedValue({ data: contactsById[value] ?? null, error: null }),
     })),
   };
+  return { select: vi.fn(() => chain) };
 }
 
 interface MockMessagesChain {
