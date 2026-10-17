@@ -191,10 +191,18 @@ export async function handleContactsUpsert(supabase: EvolutionDbClient, instance
   }
 }
 
+// Presenca ("digitando" e online/offline) do CONTATO — PD-68.
+//
+// Seguranca: este handler so e alcancado pelo caminho ja validado do
+// evolution-webhook (gate R2-API-021 — assinatura HMAC/EVOLUTION_WEBHOOK_SECRET
+// ou instanceToken por instancia — roda ANTES de qualquer handler; ver
+// evolution-webhook/index.ts). Aqui dentro o guard residual e fail-closed: sem
+// instancia registrada (getConnectionByInstance) ou sem contato correspondente,
+// NADA e publicado.
 // deno-lint-ignore no-explicit-any
 export async function handlePresenceUpdate(supabase: EvolutionDbClient, instance: string, data: unknown) {
   const presenceData = isRecord(data) ? data : {};
-  const jid = (presenceData.id as string) || (presenceData.remoteJid as string);
+  const jid = ((presenceData.id as string) || (presenceData.remoteJid as string) || '').trim();
   if (!jid) return;
 
   // `status@broadcast` é o recado/status do WhatsApp, não a presença de um chat:
@@ -208,6 +216,9 @@ export async function handlePresenceUpdate(supabase: EvolutionDbClient, instance
   // do evento é o chat (o próprio grupo). No 1:1 os dois coincidem.
   let isComposing = false;
   let typingParticipant: string | null = null;
+  // Presença REAL (online/offline) do contato — só existe no 1:1.
+  let online = false;
+  let offline = false;
   if (presences) {
     const entradas = Object.entries(presences);
     if (isGroup) {
@@ -221,15 +232,28 @@ export async function handlePresenceUpdate(supabase: EvolutionDbClient, instance
       isComposing = !!autor &&
         (autor[1]?.lastKnownPresence === "composing" || autor[1]?.status === "composing");
     } else {
-      isComposing = entradas.some(
-        ([, p]) => p?.lastKnownPresence === "composing" || p?.status === "composing",
-      );
+      // O GO entrega os dois envelopes neste ramo: ChatPresence
+      // {presences:{jid:{lastKnownPresence}}} (composing/paused) e Presence {status}
+      // (online/offline, às vezes available/unavailable). Colhemos TODOS os estados
+      // e derivamos digitando e presença real.
+      const estados: string[] = [];
+      for (const [, p] of entradas) {
+        const valor = p?.lastKnownPresence ?? p?.status;
+        if (typeof valor === 'string') estados.push(valor.toLowerCase());
+      }
+      isComposing = estados.includes('composing');
+      online = estados.some((e) => e === 'online' || e === 'available');
+      offline = estados.some((e) => e === 'offline' || e === 'unavailable');
     }
   } else {
     const directStatus = presenceData.status as string || presenceData.lastKnownPresence as string;
     isComposing = directStatus === "composing";
     if (isGroup) {
       typingParticipant = (presenceData.participant as string) || (presenceData.participantJid as string) || null;
+    } else if (typeof directStatus === 'string') {
+      const estado = directStatus.toLowerCase();
+      online = estado === 'online' || estado === 'available';
+      offline = estado === 'offline' || estado === 'unavailable';
     }
   }
 
@@ -262,6 +286,29 @@ export async function handlePresenceUpdate(supabase: EvolutionDbClient, instance
     : { isTyping: isComposing, contactId: contact.id, timestamp: new Date().toISOString() };
   await channel.send({ type: 'broadcast', event: 'contact_typing', payload });
   supabase.removeChannel(channel);
+
+  // Presenca ONLINE/OFFLINE real do contato (so no 1:1 - grupo nao tem presenca
+  // propria): grava estado e horarios. Falha na gravacao nao desfaz o indicador
+  // que ja foi publicado.
+  if (!isGroup && (online || offline)) {
+    const agora = new Date().toISOString();
+    const updateData: Record<string, unknown> = {
+      presence_status: online ? 'online' : 'offline',
+      presence_updated_at: agora,
+    };
+    if (offline) {
+      // "Visto por ultimo" so avanca na TRANSICAO online -> offline: contato que o
+      // WhatsApp ja mandava como offline nao reescreve (nem inventa) esse horario.
+      const { data: atual } = await supabase
+        .from('contacts')
+        .select('presence_status')
+        .eq('id', contact.id)
+        .maybeSingle();
+      if (atual?.presence_status === 'online') updateData.last_seen_at = agora;
+    }
+    const { error: presenceErr } = await supabase.from('contacts').update(updateData).eq('id', contact.id);
+    if (presenceErr) console.warn('[PRESENCE] falha ao gravar presenca do contato:', presenceErr.message);
+  }
 }
 
 // deno-lint-ignore no-explicit-any

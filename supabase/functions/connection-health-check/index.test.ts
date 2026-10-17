@@ -1,4 +1,4 @@
-import { handleConnectionHealthCheck } from './index.ts';
+import { handleConnectionHealthCheck, evaluateOpenConnectionHealth, parseOwnerJid, parseSilenceMinutes, inboxSilenceDedupeKey } from './index.ts';
 
 // ---------------------------------------------------------------------------
 // SL-053 / F3 E23-E29 do plano multi-conexão (E24/E25/E26/E28).
@@ -54,11 +54,27 @@ interface Fake {
   statusById: Record<string, string | null>;
   /** token por instância como o Vault devolveria (get_instance_token) */
   tokens: Record<string, string | null>;
+  /** corpos POST capturados (Resend) */
+  bodies: Array<unknown>;
+  /** última mensagem recebida por conexão (camada 3 / caixa muda) */
+  lastInbound: Array<{ created_at: string }>;
+  /** admins para o e-mail de queda (opt-in desliga quando vazio) */
+  adminProfiles: Array<Record<string, unknown>>;
+  /** pushes gravados em notifications */
+  pushNotifications: Array<unknown>;
+  /** deletes no warroom (testemunha do auto-resolve) */
+  alertDeletes: Array<unknown>;
+  /** dentro do horário comercial? (RPC is_within_business_hours) */
+  withinHours: boolean;
   /** get_instance_token falha (leitura do Vault indisponível) */
   tokenRpcError: boolean;
   alerts: Array<Record<string, unknown>>;
   healthLogs: Array<Record<string, unknown>>;
+  /** linhas que o handler grava em `audit_logs` (trilha de transição de status) */
+  auditLogs: Array<Record<string, unknown>>;
   connUpdates: Array<Record<string, unknown>>;
+  /** tabelas alvo de CADA insert (testemunha do espelho: push vai a `notifications`) */
+  insertTables: string[];
   calls: Array<{ path: string; apikey: string | null }>;
   rpcCalls: string[];
   fetchImpl: (call: { path: string; apikey: string | null }) => Response | Promise<Response>;
@@ -70,9 +86,17 @@ function baseFake(): Fake {
     statusById: {},
     tokens: {},
     tokenRpcError: false,
+    bodies: [],
+    lastInbound: [],
+    adminProfiles: [],
+    pushNotifications: [],
+    alertDeletes: [],
+    withinHours: false,
     alerts: [],
     healthLogs: [],
+    auditLogs: [],
     connUpdates: [],
+    insertTables: [],
     calls: [],
     rpcCalls: [],
     fetchImpl: () => jsonResponse({ instance: { state: 'open' } }),
@@ -112,11 +136,35 @@ function result(
     return { data: null, error: null };
   }
   if (table === 'connection_health_logs' && op === 'insert' && pending) {
+    fake.insertTables.push(table);
     fake.healthLogs.push(pending);
     return { data: null, error: null };
   }
+  if (table === 'audit_logs' && op === 'insert' && pending) {
+    fake.auditLogs.push(pending);
+    return { data: null, error: null };
+  }
   if (table === 'warroom_alerts' && op === 'insert' && pending) {
+    fake.insertTables.push(table);
     fake.alerts.push(pending);
+    return { data: null, error: null };
+  }
+  if (table === 'warroom_alerts' && op === 'delete') {
+    fake.alertDeletes.push(filters);
+    return { data: null, error: null };
+  }
+  if (table === 'messages' && op === 'select') {
+    return { data: fake.lastInbound[0] ?? null, error: null };
+  }
+  if (table === 'profiles' && op === 'select') {
+    return { data: fake.adminProfiles, error: null };
+  }
+  if (table === 'notifications' && op === 'insert' && pending) {
+    fake.insertTables.push(table);
+    fake.pushNotifications.push(pending);
+    return { data: null, error: null };
+  }
+  if (table === 'global_settings' && op === 'select') {
     return { data: null, error: null };
   }
   if (op === 'select' && table === 'whatsapp_connections') {
@@ -199,6 +247,10 @@ function makeDeps(fake: Fake): any {
           const instance = params?.p_instance_id as string;
           return Promise.resolve({ data: fake.tokens[instance] ?? null, error: null });
         }
+        // PE-87: dentro/fora do horário comercial (contracheque da "caixa muda").
+        if (name === 'is_within_business_hours') {
+          return Promise.resolve({ data: fake.withinHours, error: null });
+        }
         return Promise.resolve({ data: null, error: null });
       },
       auth: {
@@ -223,6 +275,7 @@ async function run(fake: Fake, req?: Request, deps?: unknown): Promise<Response>
     const path = new URL(String(input)).pathname;
     const apikey = ((init?.headers ?? {}) as Record<string, string>).apikey ?? null;
     fake.calls.push({ path, apikey });
+    fake.bodies.push((init as { body?: unknown } | undefined)?.body ?? null);
     return Promise.resolve(fake.fetchImpl({ path, apikey }));
   }) as typeof fetch;
   try {
@@ -248,19 +301,42 @@ Deno.test('E24: cada conexão consulta o provedor com o token DELA, nunca com a 
   assert(res.status === 200, `esperado 200, recebido ${res.status}`);
 
   // No flavor GO a instância é escolhida pela CREDENCIAL, então duas conexões =
-  // duas chamadas, cada uma com o token da sua instância.
+  // duas consultas de estado, cada uma com o token da sua instância. (A camada
+  // de identidade/owner faz chamadas extras à parte — não entram aqui.)
+  const stateCalls = fake.calls.filter((c) => c.path.includes('/instance/status'));
   assert(
-    fake.calls.length === 2,
-    `esperado uma consulta por conexão (2), recebido ${fake.calls.length}: ${JSON.stringify(fake.calls)}`,
+    stateCalls.length === 2,
+    `esperado uma consulta de estado por conexão (2), recebido ${stateCalls.length}: ${JSON.stringify(fake.calls)}`,
   );
-  const apikeys = fake.calls.map((c) => c.apikey).sort();
+  const apikeys = stateCalls.map((c) => c.apikey).sort();
   assert(
     JSON.stringify(apikeys) === JSON.stringify(['tok-da-inst-b', 'tok-da-padrao']),
     `cada chamada tem de levar o token da própria instância, recebido ${JSON.stringify(apikeys)}`,
   );
+  // A regra "nunca a chave global" vale para a ROTA DE ESTADO (por instância,
+  // auth "instance" no evolution-go-routes). A camada de identidade usa a rota
+  // ADMIN de listagem (/instance/fetchInstances → /instance/all, auth "admin"):
+  // ela leva a chave do servidor e não personifica outra instância — por isso
+  // fica fora desta asserção (filtrar só stateCalls, não todas as chamadas).
+  // Mas a listagem também é presa: existe (uma por conexão aberta) e leva a
+  // chave do servidor, nunca token de instância.
+  const ownerCalls = fake.calls.filter((c) => c.path.includes('/instance/all'));
   assert(
-    !fake.calls.some((c) => c.apikey === 'test-evolution-key' || c.apikey === 'tok-legado-da-padrao'),
-    `a credencial global/legada não pode ser usada numa rota de instância: ${JSON.stringify(fake.calls)}`,
+    ownerCalls.length === 2,
+    `camada de identidade tem de consultar o dono de cada conexão aberta (2), recebido ${ownerCalls.length}`,
+  );
+  assert(
+    ownerCalls.every((c) => c.apikey === 'test-evolution-key'),
+    `a rota ADMIN de listagem usa a chave do servidor, nunca token de instância: ${JSON.stringify(ownerCalls)}`,
+  );
+  // E o token legado não aparece em chamada nenhuma (nem estado, nem listagem).
+  assert(
+    !fake.calls.some((c) => c.apikey === 'tok-legado-da-padrao'),
+    `token legado não pode vazar em nenhuma rota: ${JSON.stringify(fake.calls)}`,
+  );
+  assert(
+    !stateCalls.some((c) => c.apikey === 'test-evolution-key' || c.apikey === 'tok-legado-da-padrao'),
+    `a rota de estado (por instância) não pode usar a credencial global/legada: ${JSON.stringify(stateCalls)}`,
   );
 
   // E24: as duas instâncias têm estado independente — a segunda não é 'error'.
@@ -534,18 +610,71 @@ Deno.test('N-162: service key interna continua passando sem exigir papel', async
   assert(res.status === 200, `service key deve passar, veio ${res.status}`);
 });
 
-// ---------------------------------------------------------------------------
-// SL-053 (retomada): alvo único e concorrência limitada na varredura.
-//
-// DEFEITO fechado: a sonda SEMPRE varria todas as conexões (uma de cada vez).
-// Não havia como o "Verificar agora" de uma instância pedir só a dela, e um
-// lote grande prendia a Edge. Agora:
-//   - `{ instanceName }` verifica SÓ aquela conexão (e instância de formato
-//     inválido é recusada ANTES de virar segmento de PATH/parâmetro de RPC);
-//   - instância bem-formada mas desconhecida responde 404 NEUTRO (sem nomear);
-//   - sem alvo, a varredura roda com no máximo 3 conexões em voo.
-// ---------------------------------------------------------------------------
+// ──────────────────────── CA2: trilha de auditoria ─────────────────────────
 
+Deno.test('CA2: queda detectada pelo monitor grava a transição em audit_logs, no formato que o diálogo lê', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'inst-a', phone_number: '+5511999999999' }];
+  fake.statusById = { c1: 'connected' };
+  fake.tokens = { 'inst-a': 'tok-da-inst-a' };
+  // Provedor responde 'close' → o monitor transiciona a linha para 'disconnected'.
+  fake.fetchImpl = () => jsonResponse({ instance: { state: 'close' } });
+
+  // Duas checagens iguais da MESMA queda: o CAS só deixa transicionar uma vez.
+  await run(fake);
+  await run(fake);
+
+  assert(fake.auditLogs.length === 1, `esperado 1 evento de trilha para uma única transição, veio ${fake.auditLogs.length}`);
+  const ev = fake.auditLogs[0];
+  assert(ev.action === 'connection_disconnected', `ação inesperada: ${String(ev.action)}`);
+  assert(ev.entity_type === 'connection', `entity_type inesperado: ${String(ev.entity_type)}`);
+  assert(ev.entity_id === 'c1', `entity_id deve ser o uuid da linha: ${String(ev.entity_id)}`);
+  assert(ev.user_id === null, 'transição automática não tem autor — user_id nulo (a tela mostra "Sistema")');
+  const details = ev.details as Record<string, unknown>;
+  // O diálogo de auditoria filtra por details.instance_id: sem ele a linha não aparece.
+  assert(details.instance_id === 'inst-a', `details.instance_id deve ser o da conexão: ${String(details.instance_id)}`);
+  assert(details.previous_status === 'connected', `previous_status inesperado: ${String(details.previous_status)}`);
+  assert(details.status === 'disconnected', `status inesperado: ${String(details.status)}`);
+  assert(details.source === 'health-check', `origem inesperada: ${String(details.source)}`);
+  // Sem telefone, token nem payload bruto do provedor.
+  const serializado = JSON.stringify(ev);
+  assert(!serializado.includes('+5511999999999'), 'a trilha NÃO pode conter o telefone');
+  assert(!serializado.includes('tok-da-inst-a'), 'a trilha NÃO pode conter o token');
+  assert(!serializado.includes('"close"'), 'a trilha NÃO pode conter payload bruto do provedor');
+});
+
+Deno.test('CA2: reconexão detectada pelo monitor grava connection_connected', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c9', instance_id: 'inst-b', phone_number: null }];
+  fake.statusById = { c9: 'disconnected' };
+  fake.tokens = { 'inst-b': 'tok-da-inst-b' };
+  fake.fetchImpl = () => jsonResponse({ instance: { state: 'open' } });
+
+  await run(fake);
+
+  assert(fake.auditLogs.length === 1, `esperado 1 evento de trilha, veio ${fake.auditLogs.length}`);
+  const ev = fake.auditLogs[0];
+  assert(ev.action === 'connection_connected', `ação inesperada: ${String(ev.action)}`);
+  const details = ev.details as Record<string, unknown>;
+  assert(details.instance_id === 'inst-b', `details.instance_id inesperado: ${String(details.instance_id)}`);
+  assert(details.previous_status === 'disconnected', `previous_status inesperado: ${String(details.previous_status)}`);
+  assert(details.status === 'connected', `status inesperado: ${String(details.status)}`);
+  assert(details.source === 'health-check', `origem inesperada: ${String(details.source)}`);
+});
+
+Deno.test('CA2: checagem SEM transição não grava linha de trilha', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null }];
+  // Já está 'connected' e o provedor confirma 'open': nada muda na linha.
+  fake.statusById = { c1: 'connected' };
+  fake.tokens = { padrao: 'tok-da-padrao' };
+  fake.fetchImpl = () => jsonResponse({ instance: { state: 'open' } });
+
+  const res = await run(fake);
+
+  assert(res.status === 200, `esperado 200, veio ${res.status}`);
+  assert(fake.auditLogs.length === 0, `sem mudança de status não pode haver trilha, veio ${fake.auditLogs.length}`);
+});
 /** Requisição de cron com corpo JSON (o `run` aceita o Request pronto). */
 function makeCronRequestWithBody(body: unknown): Request {
   return new Request('https://edge.test/connection-health-check', {
@@ -571,10 +700,21 @@ Deno.test('alvo único: verifica SÓ a instância pedida, não varre as demais',
 
   // Uma única consulta, e ela é da instância pedida (no flavor GO a instância é
   // identificada pela CREDENCIAL, então o alvo aparece no apikey).
-  assert(fake.calls.length === 1, `esperado 1 consulta (só o alvo), recebido ${fake.calls.length}`);
+  const stateCalls = fake.calls.filter((c) => c.path.includes('/instance/status'));
   assert(
-    fake.calls[0].apikey === 'tok-b',
+    stateCalls.length === 1,
+    `esperado 1 consulta de estado (só o alvo), recebido ${stateCalls.length}: ${JSON.stringify(fake.calls)}`,
+  );
+  assert(
+    stateCalls.every((c) => c.apikey === 'tok-b'),
     `a consulta tem de ser da instância pedida (token do alvo): ${JSON.stringify(fake.calls)}`,
+  );
+  // Fora da sonda, só a rota ADMIN de identidade pode aparecer: nada de tocar
+  // outra instância nem outra rota qualquer.
+  const extras = fake.calls.filter((c) => !c.path.includes('/instance/status'));
+  assert(
+    extras.every((c) => c.path.includes('/instance/all')),
+    `fora da sonda, só a listagem ADMIN de identidade pode ser chamada: ${JSON.stringify(extras)}`,
   );
   // Só a instância pedida foi logada/atualizada; as outras não foram tocadas.
   const logadas = fake.healthLogs.map((l) => l.instance_id);
@@ -644,7 +784,20 @@ Deno.test('sem alvo: varredura com concorrência LIMITADA (no máximo 3 em voo)'
   const res = await run(fake, makeRequest(), makeDeps(fake));
   assert(res.status === 200, `esperado 200, recebido ${res.status}`);
 
-  assert(fake.calls.length === 7, `todas as 7 instâncias têm de ser consultadas: ${fake.calls.length}`);
+  const stateCalls = fake.calls.filter((c) => c.path.includes('/instance/status'));
+  assert(
+    stateCalls.length === 7,
+    `todas as 7 instâncias têm de ser consultadas: ${stateCalls.length}`,
+  );
+  assert(
+    stateCalls.every((c) => typeof c.apikey === 'string' && c.apikey.startsWith('tok-')),
+    `cada consulta leva o token da própria instância: ${JSON.stringify(stateCalls)}`,
+  );
+  const extras = fake.calls.filter((c) => !c.path.includes('/instance/status'));
+  assert(
+    extras.every((c) => c.path.includes('/instance/all')),
+    `fora da sonda, só a listagem ADMIN de identidade pode ser chamada: ${JSON.stringify(extras)}`,
+  );
   assert(pico === 3, `pico de concorrência deve ser exatamente 3, foi ${pico}`);
   assert(emVoo === 0, `nenhuma consulta pode ficar pendente: ${emVoo}`);
 
