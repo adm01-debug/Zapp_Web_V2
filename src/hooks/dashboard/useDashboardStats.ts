@@ -59,10 +59,7 @@ export function useDashboardStats(filters: DashboardFilters) {
   const contactCountsQuery = useQuery({
     queryKey: ['dashboard-contact-counts', filters],
     queryFn: async () => {
-      // cast temporário: types.ts gerado ainda não tem dashboard_contact_counts
-      // (RPC nova, E24/E25) — sync automático traz o tipo real em breve (mesmo
-      // padrão do dashboard_kpi, E23).
-      const { data, error } = await (supabase as any).rpc('dashboard_contact_counts', { // eslint-disable-line @typescript-eslint/no-explicit-any -- cast temporário até sync de types
+      const { data, error } = await supabase.rpc('dashboard_contact_counts', {
         p_since: filters.dateRange?.from ? filters.dateRange.from.toISOString() : null,
         p_until: filters.dateRange?.to ? filters.dateRange.to.toISOString() : null,
         p_queue: filters.queueId || null,
