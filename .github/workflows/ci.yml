@@ -52,7 +52,7 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.bun/install/cache
-          key: bun-${{ hashFiles('bun.lock') }}-${{ runner.os }}
+          key: bun-${{ hashFiles('bun.lock') }}
           restore-keys: bun-
 
       - name: 📚 Install dependencies
@@ -62,6 +62,9 @@ jobs:
       # "tsc -b --force" e falha so se surgir erro de tipo novo.
       - name: 🔎 Run TypeScript debt ratchet
         run: node scripts/ci/typecheck-ratchet.mjs
+
+      - name: 🛡️ Integridade do CLAUDE.md (GA02)
+        run: node scripts/ci/check-claude-md-integrity.mjs
 
   unit-tests:
     name: 🧪 Unit Tests (${{ matrix.shard }}/3)
@@ -86,7 +89,7 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.bun/install/cache
-          key: bun-${{ hashFiles('bun.lock') }}-${{ runner.os }}
+          key: bun-${{ hashFiles('bun.lock') }}
           restore-keys: bun-
 
       - name: 📚 Install dependencies
@@ -121,7 +124,7 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.bun/install/cache
-          key: bun-${{ hashFiles('bun.lock') }}-${{ runner.os }}
+          key: bun-${{ hashFiles('bun.lock') }}
           restore-keys: bun-
 
       - name: 📚 Install dependencies
@@ -152,7 +155,7 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.bun/install/cache
-          key: bun-${{ hashFiles('bun.lock') }}-${{ runner.os }}
+          key: bun-${{ hashFiles('bun.lock') }}
           restore-keys: bun-
 
       - name: 📚 Install dependencies

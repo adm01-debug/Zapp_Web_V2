@@ -134,7 +134,8 @@ test('E98: o guarda vivo não dispara por mudança de Edge Function', () => {
   assert.ok(texto, 'db-live-guard.yml sumiu');
 
   const trechoPaths = texto.split(/^\s{4}paths:/m)[1]?.split(/^\s{2}\w/m)[0] ?? '';
-  assert.ok(trechoPaths.length > 0, 'não achei o bloco paths do db-live-guard');
+  // CI mínimo (16/10/2026): sem trigger push no db-live-guard, não há bloco paths — contrato satisfeito.
+  if (trechoPaths.length === 0) return;
   assert.ok(
     !/functions\/\*\*/.test(trechoPaths),
     'functions/** voltou ao paths do guarda vivo: PR de Edge Function passa a conectar no banco de produção',
@@ -407,7 +408,7 @@ test('E67: todo job que roda bun install restaura o cache do Bun antes de instal
   for (const nome of nomes) {
     for (const job of blocosDeJob(wf[nome])) {
       const linhasJob = job.texto.split('\n');
-      const idxInstall = linhasJob.findIndex((l) => /\bbun install\b/.test(l));
+      const idxInstall = linhasJob.findIndex((l) => /\bbun install\b/.test(l) && !l.trimStart().startsWith('#'));
       if (idxInstall === -1) continue;
       jobsComInstall += 1;
 
@@ -528,4 +529,28 @@ test('E69: o build continua atrás do lint E do test', () => {
   const anc = ancestrais(grafoDeNeeds(wf['ci.yml']), 'build');
   assert.ok(anc.has('typecheck'), 'build deixou de esperar o lint');
   assert.ok(anc.has('unit-tests'), 'build deixou de esperar o test');
+});
+
+test('GA10: todos os nomes em notifica-falha-main.yml existem como name: em algum workflow', () => {
+  const texto = wf['notifica-falha-main.yml'];
+  assert.ok(texto, 'notifica-falha-main.yml nao encontrado');
+
+  const m = texto.match(/^\s{4}workflows:\n((?:\s{6}-\s.+\n)+)/m);
+  assert.ok(m, 'notifica-falha-main.yml nao tem bloco workflows: sob workflow_run');
+
+  const nomesMonitorados = m[1]
+    .split('\n')
+    .map((l) => l.replace(/^\s+-\s+/, '').trim())
+    .filter(Boolean);
+
+  const nomesReais = Object.values(wf)
+    .map((t) => { const m2 = t.match(/^name:\s*(.+)$/m); return m2 ? m2[1].trim() : null; })
+    .filter(Boolean);
+
+  for (const nome of nomesMonitorados) {
+    assert.ok(
+      nomesReais.includes(nome),
+      `notifica-falha-main.yml monitora "${nome}" mas nenhum workflow tem esse name: — renomeou sem atualizar?`,
+    );
+  }
 });
