@@ -18,10 +18,18 @@
 -- paginacao (timestamp + id); p_after_id NULL mantem o comportamento antigo
 -- (so timestamp). p_account NULL devolve zero linhas (falha fechada, sem erro).
 --
--- Desempenho: a funcao e LANGUAGE sql (inlinavel) com CTEs MATERIALIZED que
--- pre-filtram corpo e anexo com gmail_account_id = p_account AND ... ILIKE, para o
--- planejador usar os GIN de trigrama no plano REAL da chamada (sem truque de
--- enable_seqscan). Em plpgsql a funcao seria caixa-preta ("Function Scan"). Sem clausula SET de proposito: o SET impede o inline e esconderia o plano; a seguranca vem da qualificacao total (todo objeto com public. e so builtins do pg_catalog, imunes a search_path), provada no teste B.1c com schema hostil.
+-- Desempenho MEDIDO (Postgres 17.11; semeadura com 5.003 mensagens e 5.002 anexos na
+-- conta): `SET search_path = ''` impede o inline de proposito, entao a chamada e sempre um
+-- "Function Scan". O SQL interno, porem, NAO usa os GIN de trigrama quando quem chama e
+-- `authenticated`: a RLS de email_messages entra como SubPlan por linha e o planejador
+-- prefere o acesso por conta (Bitmap Index Scan em
+-- email_messages_gmail_account_id_gmail_message_id_key) com o ILIKE aplicado como filtro
+-- sobre TODAS as mensagens da conta (5.002 descartadas no exemplo) - 73 ms e 71.120
+-- buffers no SQL interno, 82-114 ms pela RPC (3 execucoes). Como `service_role` (sem RLS)
+-- o mesmo SQL usa os dois GIN: 0,9 ms e 91 buffers (RPC inteira: 9,9 ms / 1.478 buffers).
+-- O indice existe e vale para quem nao passa pela RLS; o caminho `authenticated` paga a
+-- varredura da conta. O COMMENT da funcao repete estes numeros e os testes B.25/B.26
+-- travam o comportamento medido.
 --
 -- O termo e aparado, limitado a 120 caracteres e casado como literal com
 -- ESCAPE '!': a exclamacao dobra primeiro e % e _ sao escapados com ela, entao
@@ -41,10 +49,6 @@ CREATE INDEX IF NOT EXISTS email_messages_body_text_trgm_idx
 CREATE INDEX IF NOT EXISTS email_attachments_filename_trgm_idx
   ON public.email_attachments USING gin (filename extensions.gin_trgm_ops);
 
--- Remove a sobrecarga de 4 args da rodada 1 (se existir): o cursor passa a ser
--- composto (p_after + p_after_id) e so a assinatura de 5 args permanece.
-DROP FUNCTION IF EXISTS public.search_email_threads(uuid, text, integer, timestamptz);
-
 CREATE OR REPLACE FUNCTION public.search_email_threads(
   p_account uuid,
   p_q text,
@@ -61,6 +65,7 @@ RETURNS TABLE (
 LANGUAGE sql
 STABLE
 SECURITY INVOKER
+SET search_path = ''
 AS $function$
   -- p_account NULL devolve zero linhas (a comparacao com NULL nunca casa);
   -- termo vazio tambem (guardas btrim(coalesce(p_q, '')) <> '').
@@ -150,7 +155,7 @@ AS $function$
 $function$;
 
 COMMENT ON FUNCTION public.search_email_threads(uuid, text, integer, timestamptz, uuid) IS
-  'Busca de e-mail (PE-09) em LANGUAGE sql para o planejador inlinar: procura o termo em email_threads (assunto/remetente/snippet), no corpo de email_messages.body_text e no nome de email_attachments.filename, via CTEs MATERIALIZED pre-filtradas por conta (GIN de trigrama). SECURITY INVOKER: respeita a RLS de e-mail (limita ao que o usuario ve). Termo vazio e p_account NULL devolvem zero linhas. Termo casa como literal (ESCAPE "!"). Devolve (thread_id, match_field, match_snippet, last_message_at); cursor composto (p_after, p_after_id) para paginacao sem pular empates de last_message_at.';
+  'Busca de e-mail (PE-09): procura o termo em email_threads (assunto/remetente/snippet), no corpo de email_messages.body_text e no nome de email_attachments.filename, e diz onde casou (match_field) com um trecho (match_snippet). SECURITY INVOKER (respeita a RLS de e-mail) e SET search_path = '''' (o corpo so usa public. e builtins do pg_catalog) - a clausula SET impede o inline de proposito. Desempenho MEDIDO (Postgres 17.11; conta com 5.003 mensagens/5.002 anexos): como service_role os GIN de trigrama entram (0,9 ms, 91 buffers); como authenticated a RLS bloqueia o GIN e o acesso e por gmail_account_id com o ILIKE filtrado sobre todas as mensagens da conta (73 ms, 71.120 buffers no SQL interno; 82-114 ms chamando a RPC). Termo vazio e p_account NULL devolvem zero linhas. Termo casa como literal (ESCAPE "!"). Devolve (thread_id, match_field, match_snippet, last_message_at); cursor composto (p_after, p_after_id) para paginacao sem pular empates de last_message_at.';
 
 -- ACL minima: ninguem alem dos dois papes de borda executa. O REVOKE vem ANTES dos
 -- GRANTs e limpa PUBLIC e anon (o padrao do Postgres daria EXECUTE a PUBLIC, e o

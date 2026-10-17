@@ -11,10 +11,20 @@
 #   BLOCO B — migration real aplicada (psql -f): acha corpo e anexo, diz onde casou, respeita
 #             a RLS (nao vaza para outro dono nem para quem nao tem conta), nao devolve a
 #             caixa inteira em termo vazio/curinga, pagina por cursor composto
-#             (p_after, p_after_id) com empate coberto, e o plano REAL da RPC usa os
-#             indices de trigrama (sem enable_seqscan=off).
+#             (p_after, p_after_id) com empate coberto, e o plano INTERNO MEDIDO por papel (B.25/B.26):
+#             como authenticated o SQL interno NAO usa os GIN de trigrama (acesso por
+#             gmail_account_id + filtro ILIKE sobre toda a conta); como service_role usa os
+#             dois.
 #   BLOCO C — a linha "-- Rollback:" do proprio arquivo roda e remove a funcao e os indices.
 
+# ---
+# Onde este teste mora (e por que): scripts/db-audit/ e a convencao das suites docker de
+# banco deste repo - o roteiro precisa de um Postgres descartavel com os papeis REAIS
+# (anon/authenticated/service_role) e ha 208 *.test.sh irmaos na pasta, orquestrados pelo
+# workflow db-guard.yml via scripts/db-audit/retry-disposable-postgres-test.sh. As suites de
+# supabase/tests/*.sql rodam como service_role (BYPASSRLS, cf. .github/workflows/db-guard.yml)
+# e nao conseguem provar RLS/ACL - que e o centro das provas B.2/B.12/B.24 daqui.
+#
 set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -243,8 +253,8 @@ INSERT INTO public.email_threads (id, gmail_account_id, gmail_thread_id, subject
   ('b6000000-0000-0000-0000-000000000006','a1000000-0000-0000-0000-000000000001','t6','Empate beta','Snippet padrao','2026-10-09 10:00:00+00','Rui','rui@exemplo.test');
 
 -- Volume neutro (sem os termos cliente/orcamento/empate/nota): 40 threads x 125
--- mensagens = 5000 corpos + 5000 anexos. Existe para o plano REAL da RPC (como
--- service_role) escolher o GIN por conta propria, sem enable_seqscan=off.
+-- mensagens = 5000 corpos + 5000 anexos. Existe para o plano do SQL INTERNO ter
+-- volume e o planejador escolher sozinho, sem enable_seqscan=off (B.25/B.26).
 INSERT INTO public.email_threads (id, gmail_account_id, gmail_thread_id, subject, snippet, last_message_at, last_from_name, last_from_address)
 SELECT gen_random_uuid(), 'a1000000-0000-0000-0000-000000000001', 'bulk-' || g, 'Boletim ' || g,
   'Snippet neutro', '2026-09-01 10:00:00+00'::timestamptz + (g || ' minutes')::interval,
@@ -300,16 +310,20 @@ expect_value 'B.3 authenticated pode executar' 't' \
   "SELECT has_function_privilege('authenticated','public.search_email_threads(uuid,text,integer,timestamptz,uuid)','EXECUTE');"
 expect_value 'B.4 os dois indices de trigrama existem' '2' \
   "SELECT count(*) FROM pg_indexes WHERE schemaname='public' AND indexname IN ('email_messages_body_text_trgm_idx','email_attachments_filename_trgm_idx');"
-expect_value 'B.4b existe UMA unica sobrecarga da RPC (a de 4 args foi removida)' '1' \
+expect_value 'B.4b a RPC tem UMA unica sobrecarga (nesta base ela nasce so na assinatura de 5 args)' '1' \
   "SELECT count(*) FROM pg_proc WHERE proname='search_email_threads';"
 
-# --- imunidade a search_path: sem clausula SET (ela impediria o inline e esconderia o
-# plano), a seguranca vem da qualificacao total. Com search_path sem public., a RPC
-# tem de devolver o mesmo resultado; se algo estivesse sem public., daria erro aqui.
+# --- imunidade a search_path: a funcao carrega `SET search_path = ''` (provado em B.1d)
+# e o corpo so usa `public.` e builtins do pg_catalog. Com a sessao apontada para um
+# schema hostil (sem public.), a RPC tem de devolver o mesmo resultado; se algo
+# estivesse sem `public.`, daria erro aqui. O SET tambem impede o inline - por isso o
+# plano INTERNO e lido com PREPARE em B.25/B.26, e nao com EXPLAIN da chamada.
 HOSTIL="$(docker exec "$container_name" psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c \
   "SET ROLE authenticated; SELECT set_config('request.jwt.claims', '$U1', false); SET search_path = atacante, pg_temp; SELECT count(*) FROM public.search_email_threads('$A1','orcamento',20,NULL,NULL);" | tail -n1)"
 [[ "$HOSTIL" == "1" ]] || { printf '%s\n' "$HOSTIL" >&2; fail 'B.1c search_path hostil mudou o resultado'; }
 pass 'B.1c search_path hostil (sem public.) nao muda nada: tudo qualificado'
+expect_value 'B.1d a funcao fixa search_path (SET gravado na proconfig)' '1' \
+  "SELECT count(*) FROM pg_proc WHERE proname='search_email_threads' AND proconfig::text LIKE '%search_path=%';"
 
 # --- corpo ---
 expect_value_role 'B.5 dono acha palavra do CORPO na propria conta' '1' 'authenticated' "$U1" \
@@ -387,18 +401,50 @@ expect_error_role 'B.24 anon nao executa a RPC (permission denied)' \
   'permission denied' 'anon' "$ANON" \
   "SELECT count(*) FROM public.search_email_threads('$A1','orcamento',20,NULL::timestamptz,NULL);"
 
-# --- plano REAL da RPC (inlined; sem enable_seqscan=off) ---
-# Como authenticated, o custo por linha da SubPlan da RLS domina a escolha de caminho
-# (artefato do custeio: com RLS o planejador prefere btree/seqscan em qualquer seed
-# testado, ate 200k linhas) e esconde o acesso por padrao. Como service_role, chamador
-# REAL da RPC no servidor (cf. B.23, BYPASSRLS), o plano mostra o acesso puro ao padrao
-# ILIKE. O enforcement da RLS esta provado em B.5-B.22b e B.24 como authenticated/anon.
-PLANO="$(as_role 'service_role' "$SVC" "EXPLAIN SELECT thread_id FROM public.search_email_threads('$A1','cliente',20,NULL,NULL);")"
-[[ "$PLANO" == *"email_messages_body_text_trgm_idx"* ]] || { printf '%s\n' "$PLANO" >&2; fail 'B.25 o plano REAL da RPC nao usa o indice de trigrama do corpo'; }
-pass 'B.25 o plano REAL da RPC usa email_messages_body_text_trgm_idx (sem enable_seqscan=off)'
-[[ "$PLANO" == *"email_attachments_filename_trgm_idx"* ]] || { printf '%s\n' "$PLANO" >&2; fail 'B.26 o plano REAL da RPC nao usa o indice de trigrama do anexo'; }
-pass 'B.26 o plano REAL da RPC usa email_attachments_filename_trgm_idx (sem enable_seqscan=off)'
+# --- plano do SQL INTERNO por papel (ponto 1/2 da recusa) ---
+# `SET search_path = ''` impede o inline, entao EXPLAIN da chamada mostra so "Function Scan"
+# e nao abre o acesso. Para ver o caminho real, o corpo da funcao e extraido da migration e
+# rodado com PREPARE/EXPLAIN EXECUTE em cada papel - mesmo SQL, muda so o papel.
+#
+# MEDIDO (postgres:17-alpine, 5.003 mensagens e 5.002 anexos na conta A1, termo 'cliente'):
+#   authenticated -> acesso por email_messages_gmail_account_id_gmail_message_id_key com
+#                    "Rows Removed by Filter" cobrindo as 5.002 mensagens da conta (o ILIKE
+#                    nao virou condicao de indice), Seq Scan em email_attachments; 73 ms e
+#                    71.120 buffers; os dois GIN ficam de fora.
+#   service_role  -> email_messages_body_text_trgm_idx e email_attachments_filename_trgm_idx;
+#                    0,9 ms e 91 buffers.
+# O indice nao esta quebrado: quem bloqueia o GIN no caminho que a caixa usa e a RLS
+# (ILIKE nao e leakproof), como dizem o COMMENT da migration e o cabecalho dela.
+awk '$0 == "AS $function$" {dentro=1; next} $0 == "$function$;" {dentro=0} dentro' "$migration" > "$tmp_dir/inner.sql"
+[[ -s "$tmp_dir/inner.sql" ]] || fail 'B.25 nao consegui extrair o corpo da funcao'
+sed -i -e 's/\bp_after_id\b/\$5/g' -e 's/\bp_account\b/\$1/g' -e 's/\bp_limit\b/\$3/g' \
+       -e 's/\bp_after\b/\$4/g' -e 's/\bp_q\b/\$2/g' "$tmp_dir/inner.sql"
+grep -q '\$5' "$tmp_dir/inner.sql" || fail 'B.25 a extracao do corpo perdeu os parametros nomeados'
+{
+  printf 'PREPARE inner_prova(uuid, text, integer, timestamptz, uuid) AS\n'
+  cat "$tmp_dir/inner.sql"
+  printf ';\nEXPLAIN (ANALYZE, BUFFERS) EXECUTE inner_prova(%s, %s, 20, NULL, NULL);\n' "'$A1'" "'cliente'"
+} > "$tmp_dir/inner_plano.sql"
 
+as_role_file() {  # papel + jwt + arquivo .sql (o PREPARE e planejado/executado como o papel)
+  local role="$1" jwt="$2" arq="$3"
+  docker exec -i "$container_name" psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres \
+    -c "SET ROLE $role; SELECT set_config('request.jwt.claims', '$jwt', false);" -f - < "$arq"
+}
+
+PLANO_AUTH="$(as_role_file 'authenticated' "$U1" "$tmp_dir/inner_plano.sql" 2>&1)"
+[[ "$PLANO_AUTH" == *"email_messages_gmail_account_id_gmail_message_id_key"* ]] \
+  || { printf '%s\n' "$PLANO_AUTH" >&2; fail 'B.25 como authenticated o SQL interno nao acessou por gmail_account_id'; }
+pass 'B.25 como authenticated o SQL interno acessa por gmail_account_id e NAO pelos GIN de trigrama'
+[[ "$PLANO_AUTH" != *"email_messages_body_text_trgm_idx"* && "$PLANO_AUTH" != *"email_attachments_filename_trgm_idx"* ]] \
+  || { printf '%s\n' "$PLANO_AUTH" >&2; fail 'B.25 o caminho authenticated passou a usar trigrama: corrija o COMMENT da migration'; }
+
+PLANO_SVC="$(as_role_file 'service_role' "$SVC" "$tmp_dir/inner_plano.sql" 2>&1)"
+[[ "$PLANO_SVC" == *"email_messages_body_text_trgm_idx"* ]] \
+  || { printf '%s\n' "$PLANO_SVC" >&2; fail 'B.26 o MESMO SQL como service_role nao usa o indice de trigrama do corpo'; }
+[[ "$PLANO_SVC" == *"email_attachments_filename_trgm_idx"* ]] \
+  || { printf '%s\n' "$PLANO_SVC" >&2; fail 'B.26 o MESMO SQL como service_role nao usa o indice de trigrama do anexo'; }
+pass 'B.26 controle: o MESMO SQL como service_role usa os dois GIN (o que bloqueia e a RLS)'
 printf '\n============ BLOCO C — rollback do proprio arquivo ============\n'
 sed -n '1,12p' "$migration" | sed -n 's/^--   //p' > "$tmp_dir/rollback.sql"
 [[ -s "$tmp_dir/rollback.sql" ]] || fail 'a migration nao tem as linhas de rollback executavel'
