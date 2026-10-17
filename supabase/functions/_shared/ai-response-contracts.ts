@@ -12,8 +12,8 @@
  *      default. Quem consome decide o que fazer com a ausência.
  *   2. Valor com TIPO ou FAIXA errada é REJEITADO, não corrigido/coagido.
  *      `'80'` não vira 80; `'purple'` não vira `'neutro'`.
- *   3. `buildAiEnvelope` só escreve as chaves que receberam valor — nada de
- *      `context: undefined` poluindo o objeto serializado.
+ *   3. `buildAiEnvelope` só escreve as chaves que receberam valor — aquilo
+ *      que não é `undefined` no objeto serializado.
  *
  * Uso:
  *   const parsed = parseModelOutput(ConversationAnalysisOutput, rawJson);
@@ -153,7 +153,7 @@ export const AutoTagOutput = z.object({
  * Saída esperada de `chatbot-l1`.
  *
  * `confidence` é NÚMERO de verdade: `'0.9'` (string) ou `95` (percentual) são
- * REJEITADOS em vez de coagidos — o código antigo comparava
+ * REJEITADOS em vez de coagidos — i código antigo comparava
  * `result.confidence < 0.6` sobre o que viesse, e uma string passava batido.
  * Ausente continua ausente (não vira 0).
  *
@@ -179,6 +179,69 @@ export type SuggestedRepliesOutput = z.infer<typeof SuggestedRepliesOutput>;
 export type AutoTagOutput = z.infer<typeof AutoTagOutput>;
 export type ChatbotL1Output = z.infer<typeof ChatbotL1Output>;
 export type AgentPerformance = z.infer<typeof AgentPerformanceSchema>;
+
+// ─── Capacidade: copilot-live (CV-023) ───────────────────────
+/**
+ * Estado B·R·I·N·D·E parcial do vendedor.
+ * Cada campo é opcional (não extraído = ausente, nunca null por default).
+ */
+export const BrindeStateSchema = z.object({
+  B: z.string().nullable().optional(), // Budget/Orçamento
+  R: z.string().nullable().optional(), // Responsável pelo OK
+  I: z.string().nullable().optional(), // Intenção de compra
+  N: z.string().nullable().optional(), // Número/quantidade
+  D: z.string().nullable().optional(), // Data de necessidade
+  E: z.string().nullable().optional(), // Entrega/local
+});
+
+/** Momento-chave detectado pelo copilot. */
+export const KEY_MOMENT_TYPES = [
+  "price_request",
+  "objection",
+  "buy_signal",
+  "competitor_mention",
+  "unanswered_question",
+  "sentiment_shift",
+  "deadline_request",
+  "logo_sent",
+] as const;
+type KeyMomentTuple = typeof KEY_MOMENT_TYPES;
+const keyMomentSchema = z.enum(KEY_MOMENT_TYPES as unknown as [string, ...string[]]);
+
+/** Risco identificado na conversa. */
+export const RISK_TYPES = ["price_gap", "competitor", "urgency", "authority", "no_decision"] as const;
+const riskSchema = z.enum(RISK_TYPES as unknown as [string, ...string[]]);
+
+/**
+ * Saída do modelo para um tick do copilot-live.
+ * Campos ausentes = não detectados/alterados neste tick.
+ * Regra do contrato: valor fora de tipo/faixa é REJEITADO, nunca coagido.
+ */
+export const CopilotLiveOutputSchema = z.object({
+  /** Etapa da metodologia BRINDE em que a conversa está. */
+  stage: z.enum(["E1", "E2", "E3", "E4", "E5", "E6"]).optional(),
+  /** Delta do estado B·R·I·N·D·E — só campos que mudaram neste tick. */
+  brinde_delta: BrindeStateSchema.optional(),
+  /** Temperatura de compra 0–10 (0 = frio, 10 = pronto para fechar). */
+  temperature: z.number().int().min(0).max(10).optional(),
+  /** Intenção principal detectada neste tick. */
+  intent: z.enum([
+    "browsing", "comparing", "negotiating", "deciding", "closing", "post_sale",
+  ]).optional(),
+  /** Sentimento do contato neste tick. */
+  sentiment: z.enum(asEnumValues(SENTIMENT_VALUES)).optional(),
+  /** Momentos-chave detectados neste tick (pode ser vazio). */
+  key_moments: z.array(keyMomentSchema).optional(),
+  /** Riscos de perda detectados. */
+  risks: z.array(riskSchema).optional(),
+  /** Sugestão de próximo passo para o vendedor (≤ 120 chars). */
+  next_action: z.string().max(120).optional(),
+  /** Confiança do modelo nesta análise (0–1). */
+  confidence: z.number().min(0).max(1).optional(),
+});
+
+export type CopilotLiveOutput = z.infer<typeof CopilotLiveOutputSchema>;
+export type BrindeState = z.infer<typeof BrindeStateSchema>;
 
 // ─── Parser com erros achatados ──────────────────────────────
 /** Erro de contrato com o caminho achatado (ex.: `keyPoints.5`). */
