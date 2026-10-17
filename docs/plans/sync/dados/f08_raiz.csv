@@ -1,0 +1,7 @@
+arquivo,classe,blob_HEAD,blob_origin,linhas_HEAD,linhas_origin,diferenca_linhas,decisao
+bun.lock,diferente,ab9cffbd4d18,2e948f704927,1653,1653,"1 file changed, 144 insertions(+), 144 deletions(-)",
+.env.production,diferente,084e56fd638c,c5ffb45ccf19,25,25,"1 file changed, 1 insertion(+), 1 deletion(-)",
+.gitignore,diferente,87fefc61b070,b259e5b35292,129,130,"1 file changed, 1 insertion(+)",
+FEATURE_REGISTRY.md,diferente,43868a0cbb33,d43443329444,87,86,"1 file changed, 3 insertions(+), 4 deletions(-)",
+ESTADO.md,diferente,b63af75bac70,4cac3020c7a2,158,163,"1 file changed, 10 insertions(+), 5 deletions(-)",
+CONTRIBUTING.md,diferente,3de2b7d92fae,e3aa0cc9998a,178,112,"1 file changed, 68 insertions(+), 134 deletions(-)",

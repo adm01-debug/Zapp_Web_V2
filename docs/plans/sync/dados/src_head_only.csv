@@ -1,0 +1,34 @@
+caminho,blob_HEAD,ultima_alteracao_HEAD,removido_na_origin_por,importadores_origin,exemplo_importador,veredito
+src/components/campaigns/CampaignABTesting.tsx,d118e76fa8ec,2026-10-11 16:18,025d0258dc,0,,obsoleto
+src/components/campaigns/CampaignCreateDialog.tsx,4edc72a30ea1,2026-10-08 01:48,025d0258dc,0,,obsoleto
+src/components/campaigns/CampaignsView.tsx,d426e496dc26,2026-10-11 16:18,025d0258dc,0,,obsoleto
+src/components/campaigns/__tests__/CampaignABTesting.a11y.test.tsx,abd17fbe86e7,2026-10-11 16:18,,0,,obsoleto_teste_de_codigo_removido
+src/components/campaigns/__tests__/CampaignCreateDialog.r2-mod-005.test.tsx,5b2d32893e2e,2026-10-08 01:48,025d0258dc,0,,obsoleto_teste_de_codigo_removido
+src/components/campaigns/__tests__/CampaignsView.a11y-progress.test.tsx,8d4fe000f8fb,2026-10-11 16:18,,0,,obsoleto_teste_de_codigo_removido
+src/components/campaigns/__tests__/CampaignsView.audiencia.r2-mod-005.test.tsx,57edccac5d84,2026-10-08 01:48,025d0258dc,0,,obsoleto_teste_de_codigo_removido
+src/components/campaigns/__tests__/CampaignsView.retomada.test.tsx,1114092286fe,2026-10-07 20:50,025d0258dc,0,,obsoleto_teste_de_codigo_removido
+src/components/campaigns/__tests__/CampaignsView.test.tsx,fa69cd179c93,,025d0258dc,0,,obsoleto_teste_de_codigo_removido
+src/components/inbox/QueuePositionNotifier.tsx,6423388b66b8,,025d0258dc,0,,obsoleto
+src/components/inbox/SwipeableListItem.tsx,2847424b36a0,,025d0258dc,0,,obsoleto
+src/components/inbox/__tests__/swipeActions.test.ts,500bf95ab37d,2026-10-14 11:59,,0,git grep -F swipeActions origin/main -- src = 0 arquivos (assunto removido na origin),obsoleto
+src/components/inbox/swipeActions.ts,872a37086e89,,025d0258dc,0,,obsoleto
+src/components/security/__tests__/AuditLogDashboard.hoje-local.test.tsx,2c8e97fd1db6,,025d0258dc,1,src/components/security/SecurityView.tsx,obsoleto_teste_de_codigo_removido
+src/components/settings/AIAutoTagsConfig.tsx,d42227b94948,2026-10-09 12:24,025d0258dc,0,,obsoleto
+src/components/settings/__tests__/AIAutoTagsConfig.recentesErro.test.tsx,b712e7b66370,2026-10-09 12:24,025d0258dc,0,,obsoleto_teste_de_codigo_removido
+src/components/ui/hover-card.tsx,95643d9c7099,,025d0258dc,0,,obsoleto
+src/components/ui/menubar.tsx,15687e4c9263,,025d0258dc,0,,obsoleto
+src/components/ui/pagination.tsx,144475fe9757,2026-10-14 13:30,025d0258dc,0,,obsoleto
+src/components/ui/resizable.tsx,4a1bd8c87ed7,,025d0258dc,0,,obsoleto
+src/components/ui/sidebar.tsx,64d9cb579eee,,025d0258dc,0,,obsoleto
+src/components/ui/sidebar/index.ts,5304a4a50f87,,025d0258dc,0,,obsoleto
+src/components/ui/sidebar/sidebar-context.tsx,3df29ab88b11,,025d0258dc,0,,obsoleto
+src/components/ui/sidebar/sidebar-menu.tsx,e3b718e35d56,,025d0258dc,0,,obsoleto
+src/components/ui/sidebar/sidebar-primitives.tsx,062a83866930,2026-10-14 13:30,025d0258dc,0,,obsoleto
+src/hooks/__tests__/useCampaigns.test.tsx,381bc38dc173,,025d0258dc,0,,obsoleto_teste_de_codigo_removido
+src/hooks/__tests__/useMessageStatus.test.tsx,5b084bddba95,,025d0258dc,0,,obsoleto_teste_de_codigo_removido
+src/hooks/__tests__/useVersions.test.tsx,4b450ac0abf6,,025d0258dc,0,,obsoleto_teste_de_codigo_removido
+src/hooks/communication/useCampaigns.ts,73aadfdf5fc5,,025d0258dc,0,,obsoleto
+src/hooks/inbox/__tests__/useInboxFilterTags.camada-servico.test.tsx,9c2e6eefb182,2026-10-09 12:24,025d0258dc,0,,obsoleto_teste_de_codigo_removido
+src/hooks/inbox/__tests__/useInboxFilterTags.paginacao.test.tsx,7269e0b5f82a,2026-10-06 00:17,025d0258dc,0,,obsoleto_teste_de_codigo_removido
+src/hooks/inbox/useInboxFilterTags.ts,8b81bd825e55,2026-10-09 12:24,025d0258dc,0,,obsoleto
+src/hooks/system/useVersions.ts,32b93143b28e,,025d0258dc,0,,obsoleto

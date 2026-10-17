@@ -1,0 +1,87 @@
+pr,subarea,tipo,arquivos,linhas_estimadas,origem_provavel,regra
+PR01,components,origin_only,9,1477,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR02,components,origin_only,10,1395,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR03,components,origin_only,13,1423,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR04,components,origin_only,11,1298,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR05,components,origin_only,12,1421,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR06,components,origin_only,10,1396,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR07,components,origin_only,12,1473,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR08,components,origin_only,13,1447,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR09,components,origin_only,11,1444,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR10,components,origin_only,10,1355,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR11,components,origin_only,3,685,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR12,components,origin_only,1,845,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR13,components,origin_only,5,1489,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR14,components,origin_only,11,1377,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR15,components,origin_only,13,1332,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR16,components,origin_only,13,1404,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR17,components,origin_only,12,1388,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR18,components,origin_only,10,1437,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR19,components,origin_only,9,1199,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR20,components,origin_only,6,1428,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR21,components,origin_only,9,1414,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR22,components,origin_only,10,1338,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR23,components,origin_only,7,1303,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR24,components,origin_only,9,1417,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR25,components,origin_only,11,1417,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR26,components,origin_only,6,890,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR27,components,blob_diferente,26,1486,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)","99aa354f5e Lote 06–07/10: correções da fábrica local (#1900); b44540e359 Lote 04–05/10: 45 correções da fábrica local (2 P0, seguranç"
+PR28,components,blob_diferente,30,1410,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)","15494eecc5 Lote 07–08/10: 99 correções da fábrica (14 migrations, 14 Ed; 99aa354f5e Lote 06–07/10: correções da fábrica local (#1900)"
+PR29,components,blob_diferente,30,1301,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",99aa354f5e Lote 06–07/10: correções da fábrica local (#1900); ecfdb26ffd feat: lote 2026-10-09 (correções e melhorias da fábrica) (#1
+PR30,components,blob_diferente,30,1023,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",5f8a69571f Lote 07/10 (tarde): 49 correções e melhorias da fábrica (#19; 99aa354f5e Lote 06–07/10: correções da fábrica local (#1900)
+PR31,components,blob_diferente,19,1490,5f8a69571f Lote 07/10 (tarde): 49 correções e melhorias da fábrica (#19,99aa354f5e Lote 06–07/10: correções da fábrica local (#1900)
+PR32,components,blob_diferente,30,1136,origin/main,
+PR33,components,blob_diferente,24,1373,"01b753e7dd feat: lote 2026-10-08 tarde (157 arquivos, 1 migration, 5 Ed","025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila); 99aa354f5e Lote 06–07/10: correções da fábrica local (#1900)"
+PR34,components,blob_diferente,30,1068,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",99aa354f5e Lote 06–07/10: correções da fábrica local (#1900); a8c38faad4 Lote 05–06/10: correções da fábrica local (#1897)
+PR35,components,blob_diferente,30,1048,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",5f8a69571f Lote 07/10 (tarde): 49 correções e melhorias da fábrica (#19; 99aa354f5e Lote 06–07/10: correções da fábrica local (#1900)
+PR36,components,blob_diferente,30,1150,"01b753e7dd feat: lote 2026-10-08 tarde (157 arquivos, 1 migration, 5 Ed","025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)"
+PR37,components,blob_diferente,30,998,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)","15494eecc5 Lote 07–08/10: 99 correções da fábrica (14 migrations, 14 Ed; 5f8a69571f Lote 07/10 (tarde): 49 correções e melhorias da fábrica (#19"
+PR38,components,blob_diferente,30,1001,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)","15494eecc5 Lote 07–08/10: 99 correções da fábrica (14 migrations, 14 Ed; 5f8a69571f Lote 07/10 (tarde): 49 correções e melhorias da fábrica (#19"
+PR39,components,blob_diferente,30,1233,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",99aa354f5e Lote 06–07/10: correções da fábrica local (#1900); ecfdb26ffd feat: lote 2026-10-09 (correções e melhorias da fábrica) (#1
+PR40,components,blob_diferente,30,719,"01b753e7dd feat: lote 2026-10-08 tarde (157 arquivos, 1 migration, 5 Ed","025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila); 15494eecc5 Lote 07–08/10: 99 correções da fábrica (14 migrations, 14 Ed"
+PR41,components,blob_diferente,30,856,"01b753e7dd feat: lote 2026-10-08 tarde (157 arquivos, 1 migration, 5 Ed","025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila); ecfdb26ffd feat: lote 2026-10-09 (correções e melhorias da fábrica) (#1"
+PR42,components,blob_diferente,30,1179,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)","15494eecc5 Lote 07–08/10: 99 correções da fábrica (14 migrations, 14 Ed; 5f8a69571f Lote 07/10 (tarde): 49 correções e melhorias da fábrica (#19"
+PR43,components,blob_diferente,18,504,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",99aa354f5e Lote 06–07/10: correções da fábrica local (#1900)
+PR44,hooks,origin_only,10,1383,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR45,hooks,origin_only,8,1464,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR46,hooks,origin_only,11,1469,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR47,hooks,origin_only,9,1409,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR48,hooks,origin_only,10,1428,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR49,hooks,origin_only,8,1418,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",ecfdb26ffd feat: lote 2026-10-09 (correções e melhorias da fábrica) (#1
+PR50,hooks,origin_only,7,1383,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR51,hooks,origin_only,10,1455,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR52,hooks,origin_only,9,1363,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR53,hooks,origin_only,10,1402,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",312bd59920 revert: desfaz o lote #1976 (main não compilava) (#1982); ecfdb26ffd feat: lote 2026-10-09 (correções e melhorias da fábrica) (#1
+PR54,hooks,origin_only,13,1422,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR55,hooks,origin_only,14,1455,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR56,hooks,origin_only,12,1149,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR57,hooks,blob_diferente,30,1442,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)","15494eecc5 Lote 07–08/10: 99 correções da fábrica (14 migrations, 14 Ed; 99aa354f5e Lote 06–07/10: correções da fábrica local (#1900)"
+PR58,hooks,blob_diferente,21,1316,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)","99aa354f5e Lote 06–07/10: correções da fábrica local (#1900); b44540e359 Lote 04–05/10: 45 correções da fábrica local (2 P0, seguranç"
+PR59,hooks,blob_diferente,28,1356,"01b753e7dd feat: lote 2026-10-08 tarde (157 arquivos, 1 migration, 5 Ed","025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila); 15494eecc5 Lote 07–08/10: 99 correções da fábrica (14 migrations, 14 Ed"
+PR60,hooks,blob_diferente,25,1300,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",ecfdb26ffd feat: lote 2026-10-09 (correções e melhorias da fábrica) (#1
+PR61,hooks,blob_diferente,20,1430,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)","15494eecc5 Lote 07–08/10: 99 correções da fábrica (14 migrations, 14 Ed; ecfdb26ffd feat: lote 2026-10-09 (correções e melhorias da fábrica) (#1"
+PR62,hooks,blob_diferente,22,1436,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",ecfdb26ffd feat: lote 2026-10-09 (correções e melhorias da fábrica) (#1
+PR63,hooks,blob_diferente,8,1426,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",ecfdb26ffd feat: lote 2026-10-09 (correções e melhorias da fábrica) (#1
+PR64,hooks,blob_diferente,26,1491,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",99aa354f5e Lote 06–07/10: correções da fábrica local (#1900)
+PR65,hooks,blob_diferente,10,461,origin/main,
+PR66,lib,origin_only,17,1358,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR67,lib,origin_only,13,1170,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR68,lib,blob_diferente,20,1046,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)","15494eecc5 Lote 07–08/10: 99 correções da fábrica (14 migrations, 14 Ed"
+PR69,pages,origin_only,8,1067,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR70,pages,blob_diferente,12,583,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",99aa354f5e Lote 06–07/10: correções da fábrica local (#1900); ecfdb26ffd feat: lote 2026-10-09 (correções e melhorias da fábrica) (#1
+PR71,services,origin_only,3,211,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR72,services,blob_diferente,12,720,origin/main,
+PR73,features,blob_diferente,5,322,origin/main,
+PR74,adapters,blob_diferente,3,24,origin/main,
+PR75,utils,blob_diferente,3,221,origin/main,
+PR76,types,blob_diferente,2,19,FORA DO ESCOPO DESTA TRILHA: types.ts e da F12 (cartao proibe aqui),
+PR77,segments,origin_only,2,391,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR78,providers,origin_only,2,137,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR79,providers,blob_diferente,1,11,origin/main,
+PR80,__tests__,origin_only,3,555,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR81,__tests__,blob_diferente,2,40,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR82,test,origin_only,1,292,"025d0258dc lote 880 cartões + fixes F1-F6 (completo, compila)",
+PR83,styles,blob_diferente,1,67,origin/main,
+PR84,integrations,blob_diferente,1,418,origin/main,
+PR85,i18n,blob_diferente,1,31,origin/main,
+PR86,App.tsx,blob_diferente,1,33,origin/main,
