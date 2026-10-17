@@ -74,23 +74,73 @@ const RETRYABLE_STATUSES = new Set([408, 429, 500, 502, 503, 504]);
 
 const CB_FAILURE_THRESHOLD = 5;
 const CB_OPEN_DURATION_MS = 60_000;
-// E22 (plano multi-conexão): breaker por instância — 5 falhas na instância A
-// não podem abrir o breaker para a instância B. Rotas admin (sem instância no
-// path) usam a chave '__admin'.
-const cbState = new Map<string, { failures: number; openUntil: number }>();
-function cbRecord(key: string, success: boolean): void {
+
+export interface BreakerState { failures: number; openUntil: number }
+
+// E22 (plano multi-conexão): breaker por instância — 5 falhas na instância A não
+// podem abrir o breaker para a instância B. Rotas admin (sem instância no path)
+// usam a chave '__admin'.
+//
+// E22/OB1: o estado NÃO pode viver na memória do isolate. A Edge Function sobe e
+// desce e roda em várias instâncias ao mesmo tempo: "5 falhas em 60 s" quase
+// nunca acumulava, e a instância que abria o circuito podia não ser a que
+// recebia a chamada seguinte. O estado passa a viver no banco (tabela
+// evolution_breaker_state + RPCs, migration 20261014120001_evolution_breaker_state):
+// o chamador injeta um BreakerStore e a memória do isolate fica só como fallback
+// quando o banco não responde — proteção degradada, nunca ausente.
+export interface BreakerStore {
+  /** Estado do circuito para a chave; null quando a chave nunca falhou. */
+  read(key: string): Promise<BreakerState | null>;
+  /** Registra o resultado da chamada e devolve o estado após o registro. */
+  record(key: string, success: boolean, threshold: number, openMs: number): Promise<BreakerState>;
+}
+
+// Fallback local (por isolate): usado quando o chamador não injeta um BreakerStore
+// e quando o banco não responde. Antes era o único caminho.
+const cbState = new Map<string, BreakerState>();
+function cbRecordMemory(key: string, success: boolean): BreakerState {
   const state = cbState.get(key) ?? { failures: 0, openUntil: 0 };
-  if (success) { state.failures = 0; cbState.set(key, state); return; }
+  if (success) { state.failures = 0; state.openUntil = 0; cbState.set(key, state); return { ...state }; }
   state.failures++;
   if (state.failures >= CB_FAILURE_THRESHOLD) state.openUntil = Date.now() + CB_OPEN_DURATION_MS;
   cbState.set(key, state);
+  return { ...state };
 }
-function cbIsOpen(key: string): boolean {
+function cbReadMemory(key: string): BreakerState {
   const state = cbState.get(key);
-  if (!state) return false;
-  if (Date.now() < state.openUntil) return true;
+  if (!state) return { failures: 0, openUntil: 0 };
+  if (Date.now() < state.openUntil) return { ...state };
+  // cooldown vencido: rearma (half-open) — uma única falha nova não reabre de imediato
   if (state.openUntil > 0) { state.openUntil = 0; state.failures = 0; }
-  return false;
+  return { ...state };
+}
+async function cbRead(key: string, store?: BreakerStore): Promise<BreakerState> {
+  if (!store) return cbReadMemory(key);
+  try {
+    return (await store.read(key)) ?? { failures: 0, openUntil: 0 };
+  } catch (err) {
+    console.warn(`[Evolution CB] leitura do disjuntor no banco falhou (${err instanceof Error ? err.message : String(err)}); usando a memória do isolate`);
+    return cbReadMemory(key);
+  }
+}
+async function cbRegistrar(key: string, success: boolean, before: BreakerState, store?: BreakerStore): Promise<void> {
+  let after: BreakerState;
+  if (!store) {
+    after = cbRecordMemory(key, success);
+  } else {
+    try {
+      after = await store.record(key, success, CB_FAILURE_THRESHOLD, CB_OPEN_DURATION_MS);
+    } catch (err) {
+      console.warn(`[Evolution CB] registro do disjuntor no banco falhou (${err instanceof Error ? err.message : String(err)}); usando a memória do isolate`);
+      after = cbRecordMemory(key, success);
+    }
+  }
+  // Complemento do OB1: abertura e fechamento ficam registrados no log.
+  if (after.openUntil > Date.now()) {
+    console.warn(`[Evolution CB] disjuntor ABERTO para ${key} (${after.failures} falhas consecutivas) até ${new Date(after.openUntil).toISOString()}`);
+  } else if (success && before.failures > 0) {
+    console.warn(`[Evolution CB] disjuntor FECHADO para ${key} após sucesso (zerou ${before.failures} falhas)`);
+  }
 }
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -112,10 +162,15 @@ export async function proxyToEvolution(
   // padrão — a GO seleciona a instância pela credencial, então a da padrão não
   // pode autenticar rota de outra conexão.
   instanceToken?: string,
+  // E22/OB1: estado do disjuntor fora da memória do isolate. O chamador
+  // (evolution-api/index.ts) passa o store que fala com o banco; sem ele o
+  // proxy cai na memória do isolate (fallback).
+  breakerStore?: BreakerStore,
 ): Promise<Response> {
   const breakerKey = cbKey || instanceInPath || '__admin';
-  if (cbIsOpen(breakerKey)) {
-    console.warn('[Evolution CB] circuit breaker aberto — rejeitando requisição');
+  const cbBefore = await cbRead(breakerKey, breakerStore);
+  if (cbBefore.openUntil > Date.now()) {
+    console.warn(`[Evolution CB] circuit breaker aberto para ${breakerKey} — rejeitando requisição`);
     return new Response(JSON.stringify({ error: true, status: 503, message: 'Evolution API temporariamente indisponível (circuit breaker aberto). Tente novamente em instantes.' }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
@@ -239,13 +294,13 @@ export async function proxyToEvolution(
         // estava invertido — 404 abria o breaker e 500 zerava o contador.
         // 408 e a excecao: e timeout reportado pelo servidor, ja listado em
         // RETRYABLE_STATUSES, entao continua contando como falha.
-        cbRecord(breakerKey, response.status < 500 && response.status !== 408);
+        await cbRegistrar(breakerKey, response.status < 500 && response.status !== 408, cbBefore, breakerStore);
         return new Response(JSON.stringify({ error: true, status: response.status, message: friendlyMessage }), {
           status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
 
-      cbRecord(breakerKey, true);
+      await cbRegistrar(breakerKey, true, cbBefore, breakerStore);
       return new Response(JSON.stringify(normalizeGoResponse(goPath, data)), {
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -258,7 +313,7 @@ export async function proxyToEvolution(
     }
   }
 
-  cbRecord(breakerKey, false);
+  await cbRegistrar(breakerKey, false, cbBefore, breakerStore);
   return new Response(JSON.stringify({
     error: true, status: 504,
     message: `Falha ao conectar com a API Evolution: ${lastError?.message || 'Erro desconhecido'}`,

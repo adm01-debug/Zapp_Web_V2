@@ -12,24 +12,30 @@ const proxySrc = readFileSync(join(root, "supabase/functions/_shared/evolution-a
 const apiSrc = readFileSync(join(root, "supabase/functions/evolution-api/index.ts"), "utf8");
 
 test("circuit breaker: 4xx nao conta como falha e 5xx nao zera o contador", () => {
-  // cbRecord(key, success): inverter esse argumento fazia 5 respostas 404 abrirem o
-  // breaker por 60s (derrubando ate o envio de mensagem), enquanto um 500 real
-  // zerava o contador e o breaker nunca abria quando deveria.
+  // cbRegistrar(key, success, ...): inverter esse argumento fazia 5 respostas 404
+  // abrirem o breaker por 60s (derrubando ate o envio de mensagem), enquanto um
+  // 500 real zerava o contador e o breaker nunca abria quando deveria.
+  // Desde o breaker por instancia no banco (migration 20261014120001, E22): o
+  // registro passa pelo BreakerStore injetado com fallback para a memoria do
+  // isolate (cbRecordMemory) — a regra 4xx-sucesso/5xx-falha vale nos dois.
   assert.equal(
-    proxySrc.includes("cbRecord(breakerKey, response.status >= 500)"), false,
-    "cbRecord(breakerKey, status >= 500) esta invertido: passa sucesso=true em erro 5xx",
+    proxySrc.includes("cbRegistrar(breakerKey, response.status >= 500)"), false,
+    "cbRegistrar(breakerKey, status >= 500) esta invertido: passa sucesso=true em erro 5xx",
   );
   assert.equal(
-    proxySrc.includes("cbRecord(breakerKey, response.status < 500"), true,
+    proxySrc.includes("cbRegistrar(breakerKey, response.status < 500"), true,
     "o ramo de !response.ok precisa registrar 4xx como sucesso do breaker",
   );
   // 408 e timeout reportado pelo servidor: esta em RETRYABLE_STATUSES e tem que
   // continuar abrindo o breaker, senao a Evolution pode pendurar sem protecao.
-  assert.match(proxySrc, /cbRecord\(breakerKey, response\.status < 500 && response\.status !== 408\)/);
+  assert.match(proxySrc, /cbRegistrar\(breakerKey, response\.status < 500 && response\.status !== 408[,)]/);
   assert.match(proxySrc, /RETRYABLE_STATUSES = new Set\(\[408,/);
   // A assinatura que da sentido ao teste acima (E22: chave do breaker por instancia).
-  assert.match(proxySrc, /function cbRecord\(key: string, success: boolean\): void/);
-  assert.match(proxySrc, /if \(success\) \{ state\.failures = 0; cbState\.set\(key, state\); return; \}/);
+  assert.match(proxySrc, /async function cbRegistrar\(key: string, success: boolean, before: BreakerState, store\?: BreakerStore\): Promise<void>/);
+  // O caminho persistente delega o sucesso sem inversao; o fallback de memoria
+  // zera o contador no sucesso, como antes.
+  assert.match(proxySrc, /store\.record\(key, success, CB_FAILURE_THRESHOLD, CB_OPEN_DURATION_MS\)/);
+  assert.match(proxySrc, /if \(success\) \{ state\.failures = 0; state\.openUntil = 0; cbState\.set\(key, state\); return/);
 });
 
 test("action status nao apaga o qr_code de um pareamento em curso", () => {
