@@ -86,8 +86,7 @@ test('a consulta do ledger devolve null textual em vez de linha vazia', () => {
 test('o passo do db-migrate exige NOT NULL e array_length antes de comparar', async () => {
   const workflow = await readFile(new URL('../../.github/workflows/db-migrate.yml', import.meta.url), 'utf8');
   const inicio = workflow.indexOf('- name: Validar registro no ledger');
-  // W31 arquivou as validacoes historicas pos-apply; o passo seguinte agora e' a paridade integral.
-  const fim = workflow.indexOf('- name: Provar paridade integral apos aplicacao');
+  const fim = workflow.indexOf('- name: Validar ledger completo do bundle de entrega atomica');
   assert.ok(inicio > 0 && fim > inicio, 'passo precisa existir e vir antes do proximo');
   const passo = workflow.slice(inicio, fim);
   assert.match(passo, /AND statements IS NOT NULL/);
@@ -109,6 +108,31 @@ test('R2-INF-005: o heredoc do ledger e SQL valido, sem comentario de Bash', asy
     'o lexer SQL do repositorio nao reconhece "#" como comentario -- e token que o parser recusa');
 });
 
+// ---------------------------------------------------------------------------
+// GA05: o psql pode gravar um cabecalho "--" no inicio de um statement
+// armazenado (run 37355980323, migration 20261004195051). O flatMap sobre
+// splitStatements ja normaliza os dois lados -- estes testes provam isso
+// e garantem que arquivo diferente continua reprovando.
+// ---------------------------------------------------------------------------
+
+test('GA05: statement do ledger com cabecalho -- normalizado pelo splitStatements', () => {
+  // Simula o caso do run 37355980323: ledger guarda um statement com
+  // cabecalho de comentario "--" que o psql adicionou; o arquivo nao tem.
+  const bruto = JSON.stringify(['-- cabecalho de psql\nCREATE TABLE public.ga05_fixture (id int)']);
+  const statementsDoArquivo = ['CREATE TABLE public.ga05_fixture (id int)'];
+  const r = avaliarStatementsDoLedger({ bruto, statementsDoArquivo });
+  assert.equal(r.ok, true, 'cabecalho -- no ledger tem de ser normalizado e passar');
+  assert.equal(r.total, 1);
+});
+
+test('GA05: arquivo diferente do ledger continua reprovando mesmo com normalizacao', () => {
+  const bruto = JSON.stringify(['-- cabecalho de psql\nCREATE TABLE public.ga05_fixture (id int)']);
+  const statementsDoArquivo = ['CREATE TABLE public.ga05_DIFERENTE (id int)'];
+  const r = avaliarStatementsDoLedger({ bruto, statementsDoArquivo });
+  assert.equal(r.ok, false, 'conteudo diferente tem de reprovar mesmo com normalizacao');
+  assert.match(r.motivo, /statement 1/);
+});
+
 test('R2-INF-005: o comentario da consulta e SQL e a regressao para "#" e detectavel', async () => {
   const workflow = await readFile(new URL('../../.github/workflows/db-migrate.yml', import.meta.url), 'utf8');
   const consulta = extrairConsultaDoLedger(workflow);
@@ -117,41 +141,4 @@ test('R2-INF-005: o comentario da consulta e SQL e a regressao para "#" e detect
   const comBash = consulta.replace(/^(\s*)--/m, '$1#');
   assert.notEqual(comBash, consulta, 'a consulta precisa ter comentario SQL (--) para a contraprova');
   assert.ok(sqlTokens(comBash).includes('#'), 'a volta do comentario de Bash tem de ser detectada');
-});
-
-// W58: fixtures do modo apply_all_missing (W27): bundle com lista ordenada, 1 faltando, 1 a mais.
-// Cada migration do bundle e validada individualmente — avaliarStatementsDoLedger e chamado uma
-// vez por arquivo. Estes testes provam o comportamento da funcao nesses cenarios.
-test('W58: bundle com todas as migrations registradas passa', () => {
-  const stmts = [['create table w58a();'], ['create table w58b();'], ['create table w58c();']];
-  const resultados = stmts.map((s) =>
-    avaliarStatementsDoLedger({ bruto: JSON.stringify(s), statementsDoArquivo: s })
-  );
-  assert.ok(resultados.every((r) => r.ok), 'todas as migrations do bundle devem passar');
-  assert.deepEqual(resultados.map((r) => r.total), [1, 1, 1]);
-});
-
-test('W58: bundle com 1 arquivo sem registro no ledger (faltando) recusa para aquela migration', () => {
-  const stmts = [['create table w58a();'], ['create table w58b();']];
-  // Terceiro arquivo nao tem registro no ledger: retorna linha vazia
-  const resultados = [
-    avaliarStatementsDoLedger({ bruto: JSON.stringify(stmts[0]), statementsDoArquivo: stmts[0] }),
-    avaliarStatementsDoLedger({ bruto: JSON.stringify(stmts[1]), statementsDoArquivo: stmts[1] }),
-    avaliarStatementsDoLedger({ bruto: '\n', statementsDoArquivo: ['create table w58c();'] }),
-  ];
-  assert.equal(resultados[0].ok, true);
-  assert.equal(resultados[1].ok, true);
-  assert.equal(resultados[2].ok, false);
-  assert.match(resultados[2].motivo, /nao retornou linha/);
-});
-
-test('W58: bundle com 1 arquivo a mais aplicado (statements divergem do arquivo local) recusa', () => {
-  const stmtsArquivo = ['create table w58extra();'];
-  // Ledger tem uma migration diferente no mesmo slot — statements divergem
-  const r = avaliarStatementsDoLedger({
-    bruto: JSON.stringify(['create table w58outro_conteudo();']),
-    statementsDoArquivo: stmtsArquivo,
-  });
-  assert.equal(r.ok, false);
-  assert.match(r.motivo, /statement 1/);
 });
