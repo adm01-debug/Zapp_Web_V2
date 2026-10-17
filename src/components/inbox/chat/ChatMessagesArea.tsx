@@ -101,7 +101,8 @@ function isNearBottom(el: HTMLElement): boolean {
   return el.scrollHeight - el.scrollTop - el.clientHeight <= BOTTOM_FOLLOW_THRESHOLD_PX;
 }
 
-export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessagesAreaProps>(({ 
+export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessagesAreaProps>((
+{
   messages, isContactTyping, isColleagueTyping = false, typingUserName, ttsLoading, ttsPlaying, ttsMessageId,
   instanceName, conversationId, contactJid, contactAvatar, onSpeak, onStop, onReply, onForward, onCopy,
   onScrollToMessage, onInteractiveButtonClick, onInteractiveListItemClick, onEditStart, highlightedMessageIds, activeHighlightId, searchQuery,
@@ -120,12 +121,19 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
   // "lendo o historico" e a lista deixaria de acompanhar a conversa.
   const isNearBottomRef = useRef(true);
   const virtualizerRef = useRef<{ cancelScroll: () => void } | null>(null);
+  // P2 fix: evita que cancelScroll interrompa o proprio scroll programatico
+  // (scrollToMessage). Sem esta guarda, o evento de scroll disparado pelo
+  // scrollToIndex chegava ao handleScroll com nearBottom=false e cancelava
+  // o proprio movimento antes de terminar.
+  const isProgrammaticScrollRef = useRef(false);
   const handleScroll = useCallback(() => {
     const el = scrollContainerRef.current;
     if (!el) return;
     const nearBottom = isNearBottom(el);
     isNearBottomRef.current = nearBottom;
-    if (!nearBottom) virtualizerRef.current?.cancelScroll();
+    const wasProgrammatic = isProgrammaticScrollRef.current;
+    isProgrammaticScrollRef.current = false;
+    if (!nearBottom && !wasProgrammatic) virtualizerRef.current?.cancelScroll();
   }, []);
 
   const handleMessageDeleted = useCallback(async (messageId: string) => {
@@ -309,6 +317,7 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
     scrollToMessage: (messageId: string) => {
       const index = messages.findIndex(m => m.id === messageId);
       if (index !== -1) {
+        isProgrammaticScrollRef.current = true;
         virtualizer.scrollToIndex(index, { align: 'center' });
       }
     },

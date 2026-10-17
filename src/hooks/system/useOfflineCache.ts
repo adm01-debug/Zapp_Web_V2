@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
 import { getLogger } from '@/lib/logger';
 
-const log = getLogger('OfflineCache');
 const CACHE_KEY = 'offline_conversations';
 const CACHE_TTL = 1000 * 60 * 30; // 30 min
 
@@ -49,7 +48,7 @@ function writeCache(data: ConversationWithMessages[]) {
         e.name === 'QuotaExceededError' || e.code === 22
       );
       if (!isQuota) {
-        log.warn('Failed to write offline cache', e);
+        getLogger('OfflineCache').warn('Failed to write offline cache', e);
         return;
       }
       // Free space and try a smaller tier
@@ -81,7 +80,7 @@ export function useOfflineCache(conversations: ConversationWithMessages[], loadi
     const cached = readCache();
     if (cached) {
       setCachedData(cached);
-      log.info(`Loaded ${cached.length} conversations from offline cache`);
+      getLogger('OfflineCache').info(`Loaded ${cached.length} conversations from offline cache`);
     }
   }, []);
 
