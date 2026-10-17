@@ -36,7 +36,10 @@ import { requireAiIdentityOrService } from "../ai-auth.ts";
 
 const REQ = new Request("https://exemplo.test/functions/v1/ai-suggest-reply", { method: "POST" });
 
-/** Só o que o desenho IA-009 declara: 10 capacidades, nenhuma a mais. */
+/**
+ * Só o que o desenho IA-009 declara (10 capacidades) + `copilot_live`
+ * (CV-010, Copiloto de Vendas): 11 capacidades, nenhuma a mais.
+ */
 const CAPACIDADES_DO_DESENHO: AiCapability[] = [
   "suggest_reply",
   "enhance_message",
@@ -48,6 +51,7 @@ const CAPACIDADES_DO_DESENHO: AiCapability[] = [
   "transcribe_audio",
   "voice",
   "chatbot_l1",
+  "copilot_live",
 ];
 
 // ---------------------------------------------------------------------------
@@ -86,6 +90,34 @@ Deno.test("chave herdada do protótipo não vira capacidade (Object.prototype n�
   assertEquals(capabilityFlagKeyForFunction("toString"), null);
   assertEquals(capabilityFlagKeyForFunction("constructor"), null);
   assertEquals(capabilityFlagKeyForFunction("hasOwnProperty"), null);
+});
+
+// ---------------------------------------------------------------------------
+// (a.1) CV-010 — a 11ª capacidade: `copilot_live` (Copiloto de Vendas ao Vivo)
+// ---------------------------------------------------------------------------
+
+Deno.test("CV-010: copilot-live está no mapa de capacidades como copilot_live", () => {
+  assertEquals(AI_CAPABILITY_BY_FUNCTION["copilot-live"], "copilot_live");
+});
+
+Deno.test("CV-010: capabilityFlagKeyForFunction('copilot-live') devolve a chave da capacidade", () => {
+  assertEquals(capabilityFlagKeyForFunction("copilot-live"), "ai.capability.copilot_live");
+});
+
+Deno.test("CV-010: aiCapabilityFlagKey('copilot_live') usa o prefixo único ai.capability.", () => {
+  assertEquals(aiCapabilityFlagKey("copilot_live"), "ai.capability.copilot_live");
+});
+
+Deno.test("CV-010: copilot-live desligado (false) bloqueia a família com 503", async () => {
+  const res = await enforceAiCapability({
+    functionName: "copilot-live",
+    req: REQ,
+    readFlag: () => Promise.resolve(false),
+  });
+  assert(res instanceof Response, "capacidade copilot_live desligada tem de bloquear");
+  assertEquals(res!.status, 503);
+  const corpo = await res!.json() as { code: string };
+  assertEquals(corpo.code, "AI_CAPABILITY_DISABLED");
 });
 
 // ---------------------------------------------------------------------------
