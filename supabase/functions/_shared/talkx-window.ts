@@ -326,7 +326,7 @@ export function deliveryWindowStatus(
     // N-118: janela presente mas fora do contrato fecha (não passa aberta).
     const start = minutesOfTime(campaign.send_window_start);
     const end = minutesOfTime(campaign.send_window_end);
-    if (start === null || end === null || currentMinutes < start || currentMinutes >= end) {
+    if (!Number.isInteger(start) || !Number.isInteger(end) || currentMinutes < start || currentMinutes >= end) {
       return { allowed: false, reason: "outside_send_window", next_window: campaign.send_window_start };
     }
   }
