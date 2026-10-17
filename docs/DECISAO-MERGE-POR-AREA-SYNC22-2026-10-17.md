@@ -74,10 +74,10 @@ do checklist OURS do doc-irmão.
 
 ## 3. Matriz executável dos 578 + 1 auto-limpo perigoso
 
-- `.tmp/sync20-22/matriz-578.csv` (579 linhas de dados: 578 conflitos +
+- `docs/plans/sync/dados/matriz-578.csv` (579 linhas de dados: 578 conflitos +
   1 `.env.production`; colunas `area,tipo,path`; tipo ∈ `content`,
   `add/add`, `modify/delete|...`, `auto-limpo_EXIGE-decisao-manual`).
-- `.tmp/sync20-22/lotes.json` (19 lotes ≤40 arquivos, ver §5).
+- `docs/plans/sync/dados/lotes.json` (19 lotes ≤40 arquivos, ver §5).
 - `.tmp/sync20-22/merge-plain.raw.txt` (evidência bruta do merge-tree).
 
 Por área (arquivo conta 1x): src/components 314 (149 content, 157 add/add, 8 m/d),
@@ -131,7 +131,7 @@ A resolução é por área, com lado-default para destravar hunk ambíguo:
 | `docs`, `ESTADO.md`, `FEATURE_REGISTRY.md`, `.tmp/*` | **mecânico** (lote M0): docs = concatena/append; `.tmp/*` = fica o da dia (evidência local, não produto) | sem runtime |
 | 10 `modify/delete` | **manual de produto** (lista no §3) | sem default automático |
 
-## 5. Lotes de execução (máx 40 arquivos; detalhe em `.tmp/sync20-22/lotes.json`)
+## 5. Lotes de execução (máx 40 arquivos; detalhe em `docs/plans/sync/dados/lotes.json`)
 
 | Lote | Conteúdo | N |
 |---|---|---|
