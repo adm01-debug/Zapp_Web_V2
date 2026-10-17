@@ -81,34 +81,43 @@ export function useBusinessHours(connectionId: string) {
     enabled: !!connectionId,
   });
 
-  // Save mutation
+  /**
+   * Salvar horário é UMA chamada atômica: a RPC `save_business_hours` valida a
+   * semana inteira antes de escrever (uma função = uma transação). O laço de
+   * upsert dia a dia saiu — uma falha no 5º dia deixava 4 gravados e 3 não.
+   *
+   * A RPC NÃO toca `away_messages`. A mensagem de ausência só é gravada quando
+   * a tela que a edita passa `away` explicitamente (ação separada do horário);
+   * a tela de horário não cria mais a mensagem de ausência sozinha.
+   */
   const saveMutation = useMutation({
-    mutationFn: async ({ hours, away }: { hours: BusinessHour[]; away: AwayMessage }) => {
-      // Upsert business hours
-      for (const hour of hours) {
-        const { error } = await supabase
-          .from('business_hours')
-          .upsert({
-            whatsapp_connection_id: connectionId,
+    mutationFn: async ({ hours, away }: { hours: BusinessHour[]; away?: AwayMessage }) => {
+      if (hours.length > 0) {
+        const { error } = await supabase.rpc('save_business_hours', {
+          p_connection_id: connectionId,
+          p_days: hours.map((hour) => ({
             day_of_week: hour.day_of_week,
             is_open: hour.is_open,
             open_time: hour.open_time,
             close_time: hour.close_time,
-          }, { onConflict: 'whatsapp_connection_id,day_of_week' });
+          })),
+        });
 
         if (error) throw error;
       }
 
-      // Upsert away message
-      const { error: awayError } = await supabase
-        .from('away_messages')
-        .upsert({
-          whatsapp_connection_id: connectionId,
-          content: away.content,
-          is_enabled: away.is_enabled,
-        }, { onConflict: 'whatsapp_connection_id' });
+      // Ação separada: só quem edita a mensagem de ausência manda `away`.
+      if (away) {
+        const { error: awayError } = await supabase
+          .from('away_messages')
+          .upsert({
+            whatsapp_connection_id: connectionId,
+            content: away.content,
+            is_enabled: away.is_enabled,
+          }, { onConflict: 'whatsapp_connection_id' });
 
-      if (awayError) throw awayError;
+        if (awayError) throw awayError;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['business-hours', connectionId] });
@@ -128,7 +137,7 @@ export function useBusinessHours(connectionId: string) {
     },
   });
 
-  const saveSettings = useCallback((hours: BusinessHour[], away: AwayMessage) => {
+  const saveSettings = useCallback((hours: BusinessHour[], away?: AwayMessage) => {
     return saveMutation.mutateAsync({ hours, away });
   }, [saveMutation]);
 

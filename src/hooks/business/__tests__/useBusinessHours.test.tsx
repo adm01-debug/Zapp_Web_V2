@@ -3,9 +3,9 @@
  *
  * O sujeito é o hook REAL; a dublagem é só a fronteira de rede (`supabase`),
  * que grava operação/payload/filtros e responde o que o teste manda. Prova o
- * que o hook pede ao banco (ordem dos dias, chave de conflito do upsert), o
- * padrão honesto quando não há linha (domingo fechado), a invalidação do cache
- * e o que ele faz quando a gravação é recusada.
+ * que o hook pede ao banco (UMA chamada atômica da RPC `save_business_hours`,
+ * sem upsert dia a dia), o padrão honesto quando não há linha (domingo fechado),
+ * a invalidação do cache e o que ele faz quando a gravação é recusada.
  *
  * Cartão: falta teste do hook de horário na V2.
  */
@@ -22,10 +22,12 @@ const h = vi.hoisted(() => ({
     options?: unknown;
     filters: unknown[][];
   }>,
+  rpcs: [] as Array<{ fn: string; args: unknown }>,
   hours: [] as unknown[],
   away: null as unknown,
   selectError: null as { message: string } | null,
   upsertError: null as { message: string } | null,
+  rpcError: null as { message: string } | null,
   upsertGate: null as null | { promise: Promise<void>; release: () => void },
   toast: vi.fn(),
   logError: vi.fn(),
@@ -36,6 +38,10 @@ vi.mock('@/lib/logger', () => ({ log: { error: h.logError } }));
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
+    rpc: (fn: string, args: unknown) => {
+      h.rpcs.push({ fn, args });
+      return Promise.resolve({ data: null, error: h.rpcError });
+    },
     from: (table: string) => {
       const entry = {
         table,
@@ -106,10 +112,12 @@ const DIAS = [
 beforeEach(() => {
   vi.clearAllMocks();
   h.ops = [];
+  h.rpcs = [];
   h.hours = [];
   h.away = null;
   h.selectError = null;
   h.upsertError = null;
+  h.rpcError = null;
   h.upsertGate = null;
 });
 
@@ -154,8 +162,60 @@ describe('useBusinessHours — leitura', () => {
 });
 
 describe('useBusinessHours — gravação', () => {
-  it('grava os 7 dias e a mensagem de ausência com a chave de conflito certa', async () => {
+  // ---------------------------------------------------------------------------
+  // Salvar horário é UMA chamada atômica da RPC `save_business_hours`. O laço de
+  // upsert dia a dia saiu: uma falha no 5º dia deixava 4 gravados e 3 não.
+  // ---------------------------------------------------------------------------
+  it('salva a semana em UMA chamada da RPC save_business_hours (sem upsert dia a dia)', async () => {
     const { result, invalidate } = setup();
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    const horas: BusinessHour[] = DIAS.map((d) => ({ ...d, whatsapp_connection_id: 'conn-1' }));
+
+    await act(async () => {
+      await result.current.saveSettings(horas);
+    });
+
+    expect(h.rpcs).toHaveLength(1);
+    expect(h.rpcs[0].fn).toBe('save_business_hours');
+    expect(h.rpcs[0].args).toEqual({
+      p_connection_id: 'conn-1',
+      p_days: DIAS.map((d) => ({
+        day_of_week: d.day_of_week,
+        is_open: d.is_open,
+        open_time: d.open_time,
+        close_time: d.close_time,
+      })),
+    });
+    // Nada de upsert dia a dia em `business_hours`: o horário foi pela RPC.
+    const dias = h.ops.filter((o) => o.op === 'upsert' && o.table === 'business_hours');
+    expect(dias).toHaveLength(0);
+
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['business-hours', 'conn-1'] });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['away-message', 'conn-1'] });
+    expect(h.toast).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Configurações salvas' }),
+    );
+  });
+
+  it('sem `away`, não cria away_messages (a tela de horário não cria a ausência sozinha)', async () => {
+    const { result } = setup();
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    const horas: BusinessHour[] = DIAS.map((d) => ({ ...d, whatsapp_connection_id: 'conn-1' }));
+
+    await act(async () => {
+      await result.current.saveSettings(horas);
+    });
+
+    // O horário foi pela RPC; `away_messages` só aparece na LEITURA do hook.
+    expect(h.rpcs).toHaveLength(1);
+    const escritasAusencia = h.ops.filter((o) => o.op === 'upsert' && o.table === 'away_messages');
+    expect(escritasAusencia).toHaveLength(0);
+  });
+
+  it('com `away` explícito, grava a mensagem de ausência em ação separada', async () => {
+    const { result } = setup();
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     const horas: BusinessHour[] = DIAS.map((d) => ({ ...d, whatsapp_connection_id: 'conn-1' }));
@@ -165,43 +225,36 @@ describe('useBusinessHours — gravação', () => {
       await result.current.saveSettings(horas, away);
     });
 
-    const upserts = h.ops.filter((o) => o.op === 'upsert');
-    expect(upserts).toHaveLength(8); // 7 dias + 1 ausência
-    const dias = upserts.filter((o) => o.table === 'business_hours');
-    expect(dias).toHaveLength(7);
-    for (const dia of dias) {
-      expect(dia.options).toEqual({ onConflict: 'whatsapp_connection_id,day_of_week' });
-      expect(dia.payload).toMatchObject({ whatsapp_connection_id: 'conn-1' });
-    }
-    const mensagem = upserts.find((o) => o.table === 'away_messages')!;
+    // O horário continua indo pela RPC (1 chamada); a ausência é a única escrita avulsa.
+    expect(h.rpcs).toHaveLength(1);
+    expect(h.rpcs[0].fn).toBe('save_business_hours');
+    const dias = h.ops.filter((o) => o.op === 'upsert' && o.table === 'business_hours');
+    expect(dias).toHaveLength(0);
+    const mensagem = h.ops.find((o) => o.op === 'upsert' && o.table === 'away_messages')!;
     expect(mensagem.payload).toEqual({
       whatsapp_connection_id: 'conn-1',
       content: 'Voltamos já',
       is_enabled: false,
     });
     expect(mensagem.options).toEqual({ onConflict: 'whatsapp_connection_id' });
-
-    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['business-hours', 'conn-1'] });
-    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['away-message', 'conn-1'] });
-    expect(h.toast).toHaveBeenCalledWith(
-      expect.objectContaining({ title: 'Configurações salvas' }),
-    );
   });
 
-  it('recusa da gravação avisa o usuário e propaga o erro', async () => {
-    h.upsertError = { message: 'permission denied' };
+  it('falha da RPC não grava metade da semana (rejeita e não escreve nada)', async () => {
+    h.rpcError = { message: 'intervalo_invalido' };
     const { result } = setup();
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     const horas: BusinessHour[] = DIAS.map((d) => ({ ...d, whatsapp_connection_id: 'conn-1' }));
-    const away: AwayMessage = { whatsapp_connection_id: 'conn-1', content: 'x', is_enabled: true };
 
     await act(async () => {
-      await expect(result.current.saveSettings(horas, away)).rejects.toMatchObject({
-        message: 'permission denied',
+      await expect(result.current.saveSettings(horas)).rejects.toMatchObject({
+        message: 'intervalo_invalido',
       });
     });
 
+    expect(h.rpcs).toHaveLength(1);
+    const upserts = h.ops.filter((o) => o.op === 'upsert');
+    expect(upserts).toHaveLength(0);
     expect(h.toast).toHaveBeenCalledWith(
       expect.objectContaining({ title: 'Erro ao salvar', variant: 'destructive' }),
     );

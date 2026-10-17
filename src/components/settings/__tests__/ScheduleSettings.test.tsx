@@ -23,8 +23,9 @@ const h = vi.hoisted(() => ({
   fromCalls: [] as string[],
   eqFilters: [] as Array<{ table: string; column: string; value: unknown }>,
   upserts: [] as Array<{ table: string; payload: Record<string, unknown>; options?: Record<string, unknown> }>,
+  rpcCalls: [] as Array<{ name: string; args: Record<string, unknown> }>,
   toasts: [] as Array<Record<string, unknown>>,
-  failBusinessHoursUpsert: false,
+  failRpc: false,
 }));
 
 vi.mock('@/components/ui/select', () => ({
@@ -122,9 +123,6 @@ vi.mock('@/integrations/supabase/client', () => {
       maybeSingle: () => Promise.resolve({ data: null, error: null }),
       upsert: (payload: Record<string, unknown>, options?: Record<string, unknown>) => {
         h.upserts.push({ table, payload, options });
-        if (table === 'business_hours' && h.failBusinessHoursUpsert) {
-          return Promise.resolve({ error: { message: 'falha simulada' } });
-        }
         return Promise.resolve({ error: null });
       },
       update: (payload: Record<string, unknown>) => {
@@ -135,7 +133,18 @@ vi.mock('@/integrations/supabase/client', () => {
     return builder;
   };
 
-  return { supabase: { from, channel: () => realtimeChannel, removeChannel: () => Promise.resolve('ok') } };
+  // Salvar horário passou a ser UMA chamada atômica da RPC `save_business_hours`.
+  const rpc = (name: string, args: Record<string, unknown>) => {
+    h.rpcCalls.push({ name, args });
+    if (h.failRpc) {
+      return Promise.resolve({ data: null, error: { message: 'intervalo_invalido', code: '22023' } });
+    }
+    return Promise.resolve({ data: null, error: null });
+  };
+
+  return {
+    supabase: { from, rpc, channel: () => realtimeChannel, removeChannel: () => Promise.resolve('ok') },
+  };
 });
 
 import { ScheduleSettings } from '../ScheduleSettings';
@@ -160,18 +169,20 @@ function comboComOpcao(texto: string): HTMLSelectElement {
 
 const valorDoCampo = (nome: string) => (screen.getByLabelText(nome) as HTMLInputElement).value;
 
-const upsertsBusinessHours = () => h.upserts.filter(u => u.table === 'business_hours');
+/** Dias enviados na RPC de horário (a única chamada esperada da tela). */
+const diasDaRpc = () => (h.rpcCalls[0]?.args.p_days ?? []) as Array<Record<string, unknown>>;
 
 describe('ScheduleSettings — horário por conexão em business_hours (item 273-A)', () => {
   beforeEach(() => {
     h.fromCalls.length = 0;
     h.eqFilters.length = 0;
     h.upserts.length = 0;
+    h.rpcCalls.length = 0;
     h.toasts.length = 0;
-    h.failBusinessHoursUpsert = false;
+    h.failRpc = false;
   });
 
-  it('abre o dia, muda o horário e grava a semana em business_hours da conexão padrão', async () => {
+  it('abre o dia, muda o horário e grava a semana em UMA chamada de save_business_hours', async () => {
     renderSchedule();
 
     // Padrão = conexão `is_default` (wc2), não a primeira da lista.
@@ -188,29 +199,32 @@ describe('ScheduleSettings — horário por conexão em business_hours (item 273
 
     fireEvent.click(screen.getByRole('button', { name: /Salvar Horários/i }));
 
-    await waitFor(() => expect(upsertsBusinessHours().length).toBeGreaterThan(0));
+    await waitFor(() => expect(h.rpcCalls.length).toBeGreaterThan(0));
 
-    const sabado = upsertsBusinessHours().find(u => u.payload.day_of_week === 6);
-    expect(sabado).toBeTruthy();
-    expect(sabado!.payload).toEqual({
-      whatsapp_connection_id: 'wc2',
+    // ATÔMICO: uma única chamada (não um upsert por dia, que deixava estado misto).
+    expect(h.rpcCalls).toHaveLength(1);
+    expect(h.rpcCalls[0].name).toBe('save_business_hours');
+    expect(h.rpcCalls[0].args.p_connection_id).toBe('wc2');
+
+    const sabado = diasDaRpc().find(d => d.day_of_week === 6);
+    expect(sabado).toEqual({
       day_of_week: 6,
       is_open: true,
       open_time: '10:30',
       close_time: '15:00',
     });
-    expect(sabado!.options).toEqual({ onConflict: 'whatsapp_connection_id,day_of_week' });
 
-    // Nenhum valor fora do contrato chega ao upsert: semana 0-6, um por dia,
-    // is_open booleano e horários HH:MM.
-    expect(upsertsBusinessHours().map(u => u.payload.day_of_week)).toEqual([0, 1, 2, 3, 4, 5, 6]);
-    for (const gravação of upsertsBusinessHours()) {
-      expect(gravação.payload.whatsapp_connection_id).toBe('wc2');
-      expect(typeof gravação.payload.is_open).toBe('boolean');
-      expect(gravação.payload.open_time).toMatch(/^([01]\d|2[0-3]):[0-5]\d$/);
-      expect(gravação.payload.close_time).toMatch(/^([01]\d|2[0-3]):[0-5]\d$/);
-      expect(gravação.options).toEqual({ onConflict: 'whatsapp_connection_id,day_of_week' });
+    // Semana 0-6 completa, um dia por vez, sem repetido, is_open booleano e
+    // horários HH:MM (o contrato que a RPC valida no banco).
+    expect(diasDaRpc().map(d => d.day_of_week)).toEqual([0, 1, 2, 3, 4, 5, 6]);
+    for (const dia of diasDaRpc()) {
+      expect(typeof dia.is_open).toBe('boolean');
+      expect(dia.open_time).toMatch(/^([01]\d|2[0-3]):[0-5]\d$/);
+      expect(dia.close_time).toMatch(/^([01]\d|2[0-3]):[0-5]\d$/);
     }
+
+    // O horário não vai mais por upsert, e esta aba NÃO cria `away_messages`.
+    expect(h.upserts).toHaveLength(0);
   });
 
   it('não grava nada em user_settings (a aba deixou de ser preferência pessoal)', async () => {
@@ -221,13 +235,13 @@ describe('ScheduleSettings — horário por conexão em business_hours (item 273
     fireEvent.click(screen.getByRole('switch', { name: 'Segunda-feira aberto' }));
     fireEvent.click(screen.getByRole('button', { name: /Salvar Horários/i }));
 
-    await waitFor(() => expect(upsertsBusinessHours().length).toBeGreaterThan(0));
+    await waitFor(() => expect(h.rpcCalls.length).toBeGreaterThan(0));
 
     expect(h.fromCalls).not.toContain('user_settings');
     expect([...new Set(h.upserts.map(u => u.table))]).not.toContain('user_settings');
     // O dia fechado também vai para o banco como fechado (contrato por dia).
-    const segunda = upsertsBusinessHours().find(u => u.payload.day_of_week === 1);
-    expect(segunda!.payload.is_open).toBe(false);
+    const segunda = diasDaRpc().find(d => d.day_of_week === 1);
+    expect(segunda!.is_open).toBe(false);
   });
 
   it('trocar o seletor recarrega o horário da outra conexão', async () => {
@@ -255,8 +269,8 @@ describe('ScheduleSettings — horário por conexão em business_hours (item 273
     expect(screen.getByText(/is_within_business_hours/)).toBeInTheDocument();
   });
 
-  it('falha do upsert aparece na tela e não é confirmada como salva', async () => {
-    h.failBusinessHoursUpsert = true;
+  it('falha da RPC aparece na tela, não grava metade e não é confirmada como salva', async () => {
+    h.failRpc = true;
     renderSchedule();
     await waitFor(() => comboComOpcao('Vendas'));
     await waitFor(() => expect(valorDoCampo('Segunda-feira abertura')).toBe('09:00'));
@@ -266,6 +280,9 @@ describe('ScheduleSettings — horário por conexão em business_hours (item 273
 
     await waitFor(() => expect(h.toasts.some(t => t.variant === 'destructive')).toBe(true));
     expect(h.toasts.some(t => t.title === 'Configurações salvas')).toBe(false);
+    // ATÔMICO: nenhuma escrita parcial (nem dia a dia, nem `away_messages`).
+    expect(h.rpcCalls).toHaveLength(1);
+    expect(h.upserts).toHaveLength(0);
     // A falha mantém o rascunho: o que o usuário digitou continua na tela.
     expect(valorDoCampo('Segunda-feira abertura')).toBe('11:00');
   });
@@ -279,14 +296,15 @@ describe('ScheduleSettings — horário por conexão em business_hours (item 273
     fireEvent.change(screen.getByLabelText('Segunda-feira abertura'), { target: { value: '' } });
     fireEvent.click(screen.getByRole('button', { name: /Salvar Horários/i }));
 
-    // O salvar terminou: sem a validação o upsert inválido JÁ saiu; com ela o
-    // erro já está na tela. Só depois disso as duas provas são comparáveis.
+    // O salvar terminou: sem a validação a RPC inválida JÁ saiu; com ela o erro
+    // já está na tela. Só depois disso as duas provas são comparáveis.
     await waitFor(() =>
-      expect(upsertsBusinessHours().length > 0 || screen.queryByRole('alert') !== null).toBe(true)
+      expect(h.rpcCalls.length > 0 || screen.queryByRole('alert') !== null).toBe(true)
     );
 
-    // NENHUM valor fora do contrato chega ao upsert de business_hours...
-    expect(upsertsBusinessHours()).toHaveLength(0);
+    // NENHUM valor fora do contrato chega à RPC de horário...
+    expect(h.rpcCalls).toHaveLength(0);
+    expect(h.upserts).toHaveLength(0);
 
     // ...e o erro aparece na tela, apontando o dia aberto com horário em falta.
     const erro = screen.getByRole('alert');
