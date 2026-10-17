@@ -1,0 +1,18 @@
+--- a/src/components/team-chat/__tests__/team-chat-comprehensive.test.ts
++++ b/src/components/team-chat/__tests__/team-chat-comprehensive.test.ts
+@@ assunto: envio nao escreve updated_at redundante (alinha com d715ed464)
+-  it('useSendTeamMessage persiste conteúdo e mídia e toca o updated_at da conversa', async () => {
++  it('useSendTeamMessage persiste conteúdo e mídia e NÃO escreve o updated_at da conversa', async () => {
+@@ mesmo teste, bloco final de updates
+-    expect(f.updates).toHaveLength(1);
+-    expect(f.updates[0].table).toBe('team_conversations');
+-    expect(typeof f.updates[0].payload.updated_at).toBe('string');
++    // O `updated_at` de `team_conversations` é mantido pelo trigger
++    // `after_team_message_insert_bump_conversation` (migration
++    // 20260927270001_team_chat_e10_bump_conversation_updated_at_trigger.sql)
++    // no INSERT de `team_messages`: o envio não escreve nessa coluna (a escrita
++    // anterior era redundante e um no-op silencioso para quem não criou a
++    // conversa). Comprimento zero aqui é asserção ESTRITA, não afrouxamento:
++    // qualquer `update` no caminho do envio volta a deixar este teste VERMELHO.
++    expect(f.updates).toHaveLength(0);
+   });

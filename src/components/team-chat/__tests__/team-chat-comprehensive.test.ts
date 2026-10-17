@@ -212,7 +212,7 @@ describe('Team Chat — persistência e invalidação das mutations', () => {
     vi.clearAllMocks();
   });
 
-  it('useSendTeamMessage persiste conteúdo e mídia e toca o updated_at da conversa', async () => {
+  it('useSendTeamMessage persiste conteúdo e mídia e NÃO escreve o updated_at da conversa', async () => {
     const { wrapper } = clienteDeTeste();
     const { result } = renderHook(() => useSendTeamMessage(), { wrapper });
 
@@ -240,9 +240,14 @@ describe('Team Chat — persistência e invalidação das mutations', () => {
       media_bucket: 'team-chat-files',
       media_path: 'conv-a/contrato.pdf',
     });
-    expect(f.updates).toHaveLength(1);
-    expect(f.updates[0].table).toBe('team_conversations');
-    expect(typeof f.updates[0].payload.updated_at).toBe('string');
+    // O `updated_at` de `team_conversations` é mantido pelo trigger
+    // `after_team_message_insert_bump_conversation` (migration
+    // 20260927270001_team_chat_e10_bump_conversation_updated_at_trigger.sql)
+    // no INSERT de `team_messages`: o envio não escreve nessa coluna (a escrita
+    // anterior era redundante e um no-op silencioso para quem não criou a
+    // conversa). Comprimento zero aqui é asserção ESTRITA, não afrouxamento:
+    // qualquer `update` no caminho do envio volta a deixar este teste VERMELHO.
+    expect(f.updates).toHaveLength(0);
   });
 
   it('useSendTeamMessage invalida a lista de mensagens da conversa e a de conversas', async () => {
