@@ -849,6 +849,71 @@ describe('mapConversationEvents', () => {
     expect(reaberta.badge).toEqual({ label: 'Reaberta', tone: 'success' });
   });
 
+  it('encerramento lê motivo, resultado e classificação de `conversation_closures`', () => {
+    const [encerrada] = mapConversationEvents(
+      [eventoConversa({ id: 'e1', createdAt: T0, eventType: 'close', closureId: 'cl1', performedBy: 'u1' })],
+      {
+        names: NAMES,
+        closures: [
+          { id: 'cl1', closeReason: 'resolved', outcome: 'lead_qualified', classification: 'sales', notes: 'pediu a proposta por e-mail' },
+        ],
+      },
+    );
+
+    expect(encerrada.kind).toBe('case_closed');
+    expect(detalheDe(encerrada, 'Motivo')).toBe('Resolvido');
+    expect(detalheDe(encerrada, 'Resultado')).toBe('Lead qualificado');
+    expect(detalheDe(encerrada, 'Classificação')).toBe('Comercial');
+    // Observação é texto livre do atendente: só entra quando quem chama declara que já vê o contato.
+    expect(detalheDe(encerrada, 'Observações')).toBeUndefined();
+    conferirContrato(encerrada);
+  });
+
+  it('encerramento expõe a observação só com `includeClosureNotes` e omite campo vazio', () => {
+    const linha = {
+      id: 'cl1',
+      closeReason: 'other',
+      outcome: null,
+      classification: null,
+      notes: 'cliente pediu retorno na segunda',
+    };
+
+    const [sem] = mapConversationEvents(
+      [eventoConversa({ id: 'e1', createdAt: T0, eventType: 'close', closureId: 'cl1' })],
+      { closures: [linha] },
+    );
+    expect(detalheDe(sem, 'Observações')).toBeUndefined();
+
+    const [com] = mapConversationEvents(
+      [eventoConversa({ id: 'e2', createdAt: T0, eventType: 'close', closureId: 'cl1' })],
+      { closures: [linha], includeClosureNotes: true },
+    );
+    expect(detalheDe(com, 'Motivo')).toBe('Outro');
+    expect(detalheDe(com, 'Observações')).toBe('cliente pediu retorno na segunda');
+    // Resultado/classificação vazios não viram linha em branco.
+    expect(detalheDe(com, 'Resultado')).toBeUndefined();
+    expect(detalheDe(com, 'Classificação')).toBeUndefined();
+  });
+
+  it('valor fora do vocabulário do encerramento sai como veio (não inventa rótulo)', () => {
+    const [encerrada] = mapConversationEvents(
+      [eventoConversa({ id: 'e1', createdAt: T0, eventType: 'close', closureId: 'cl9' })],
+      { closures: [{ id: 'cl9', closeReason: 'motivo_novo_do_produto', outcome: null, classification: null }] },
+    );
+
+    expect(detalheDe(encerrada, 'Motivo')).toBe('motivo_novo_do_produto');
+  });
+
+  it('encerramento aponta para um `closure_id` que não veio na consulta: cai no `names`', () => {
+    const [encerrada] = mapConversationEvents(
+      [eventoConversa({ id: 'e1', createdAt: T0, eventType: 'close', closureId: 'cl1' })],
+      { names: NAMES, closures: [{ id: 'outro', closeReason: 'spam', outcome: 'no_outcome', classification: null }] },
+    );
+
+    expect(detalheDe(encerrada, 'Motivo')).toBe('Resolvido');
+    expect(detalheDe(encerrada, 'Resultado')).toBeUndefined();
+  });
+
   it('evento sem `performed_by` (automação/robô/IA) é do Sistema', () => {
     const [evento] = mapConversationEvents([eventoConversa({ id: 'e1', createdAt: T0, eventType: 'close' })]);
     expect(evento.actor).toEqual({ kind: 'system', id: null, name: 'Sistema', avatarUrl: null });

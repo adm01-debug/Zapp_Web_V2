@@ -6,8 +6,10 @@ import { useMessages } from '@/hooks/chat/useMessages';
 import type { Database } from '@/integrations/supabase/types';
 import { Conversation, Message } from '@/types/chat';
 import { log } from '@/lib/logger';
+import { createStorageObjectId } from '@/lib/storage_object_upload';
 import { normalizeOperationalPriority } from '@/lib/ai-vocabulary';
 import { toast } from '@/hooks/ui/use-toast';
+import { formatDocumentTitle } from '@/lib/productName';
 
 type ContactRow = Database['public']['Tables']['contacts']['Row'];
 import { Skeleton } from '@/components/ui/skeleton';
@@ -115,7 +117,9 @@ export default function ChatPopup() {
         .single();
       if (data) {
         setContact(data);
-        document.title = `Chat — ${data.name}`;
+        // Mesmo nome de produto do resto da aplicação (não repita o literal):
+        // antes a janela destoava do `index.html`, que já dizia "ZAPP WEB".
+        document.title = formatDocumentTitle(`Chat — ${data.name}`);
       }
       setLoading(false);
     })();
@@ -171,7 +175,7 @@ export default function ChatPopup() {
     async (blob: Blob): Promise<boolean> => {
       if (!contactId) return false;
       try {
-        const fileName = `${contactId}/audio_${Date.now()}.webm`;
+        const fileName = `${contactId}/audio_${createStorageObjectId()}.webm`;
         const { error: uploadError } = await supabase.storage
           .from('whatsapp-media')
           .upload(fileName, blob, { contentType: blob.type || 'audio/webm' });

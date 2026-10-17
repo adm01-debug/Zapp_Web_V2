@@ -7,10 +7,14 @@ export interface ServerLoginLock {
   remainingTime: number;
 }
 
+export type ServerLoginMode = 'login' | 'verify';
+
 export type ServerLoginResult =
   | { ok: true; accessToken: string; refreshToken: string }
+  | { ok: true; mode: 'verify' }
   | { ok: false; unavailable: false; error: string; lock: ServerLoginLock }
   | { ok: false; unavailable: false; networkBlocked: true; retryable: boolean; error: string; lock: ServerLoginLock }
+  | { ok: false; unavailable: false; rateLimited: true; retryAfterSeconds: number | null; error: string; lock: ServerLoginLock }
   | { ok: false; unavailable: true; error: string };
 
 /**
@@ -26,6 +30,55 @@ export const NETWORK_POLICY_DENIED_BODY = 'Access denied';
 export const NETWORK_POLICY_UNAVAILABLE_BODY = 'Service unavailable';
 
 const NO_LOCK: ServerLoginLock = { isLocked: false, lockedUntil: null, attempts: 1, remainingTime: 0 };
+
+/**
+ * Estado de lock que acompanha o 429. Todo ramo `unavailable: false` traz `lock`
+ * (o chamador le sempre), mas aqui NAO houve senha conferida: `attempts: 0`
+ * mantem a tela de login sem o banner "N tentativas restantes antes do bloqueio"
+ * (pages/Auth.tsx), que so vale quando a edge contou uma senha errada de fato.
+ */
+const NO_LOCK_RATE_LIMITED: ServerLoginLock = { isLocked: false, lockedUntil: null, attempts: 0, remainingTime: 0 };
+
+/**
+ * Mensagem propria de "muitas tentativas" (429 da edge `auth-login`, por IP ou
+ * por e-mail). E a MESMA exista ou nao a conta e seja qual for o limite
+ * estourado: nada aqui revela e-mail cadastrado, IP ou regra.
+ */
+export const RATE_LIMITED_MESSAGE = 'Muitas tentativas de login. Aguarde alguns minutos.';
+
+/**
+ * Mensagem de "muitas tentativas" com a espera pedida pela resposta, quando ela
+ * e conhecida. Sem espera fica a mensagem generica acima — hoje e o caso: a edge
+ * responde 429 sem `Retry-After` (errorResponse de _shared/validation.ts) e o
+ * CORS nem expoe o header, entao o valor so aparece quando a Edge passar a envia-lo.
+ */
+export function rateLimitedMessage(retryAfterSeconds: number | null): string {
+  if (retryAfterSeconds === null || retryAfterSeconds <= 0) return RATE_LIMITED_MESSAGE;
+  if (retryAfterSeconds < 60) {
+    return `Muitas tentativas de login. Tente novamente em ${Math.ceil(retryAfterSeconds)}s.`;
+  }
+  return `Muitas tentativas de login. Tente novamente em ${Math.ceil(retryAfterSeconds / 60)} min.`;
+}
+
+/**
+ * Le a espera que a resposta 429 pede: `Retry-After` em segundos ("45") ou em
+ * data HTTP ("Wed, 21 Oct 2026 07:28:00 GMT"). Devolve os segundos a esperar, ou
+ * null quando o header nao existe / nao da para ler (valor invalido ou data ja
+ * no passado) — quem chama cai na mensagem sem contagem, nunca inventa espera.
+ */
+export function parseRetryAfterSeconds(headers: Headers, now: number = Date.now()): number | null {
+  const raw = headers.get('retry-after');
+  if (!raw) return null;
+  const value = raw.trim();
+  if (/^\d+$/.test(value)) {
+    const seconds = Number(value);
+    return seconds > 0 ? seconds : null;
+  }
+  const at = Date.parse(value);
+  if (Number.isNaN(at)) return null;
+  const seconds = Math.ceil((at - now) / 1000);
+  return seconds > 0 ? seconds : null;
+}
 
 /**
  * Regiao da invocacao da edge `auth-login` (T06).
@@ -77,8 +130,17 @@ function parseLock(body: Record<string, unknown>): ServerLoginLock {
  * corpo invalido) vira `unavailable`.
  * O chamador deve falhar fechado e nunca recorrer ao GoTrue diretamente, para que
  * o lockout continue sendo aplicado pela Edge.
+ *
+ * `mode: 'verify'` (R2-AUTH-023) confere a senha SEM emitir sessao: a edge valida
+ * as credenciais e revoga a sessao temporaria antes de responder `{ok:true}`. E o
+ * caminho da reautenticacao — `setSession` com um token novo rebaixava a sessao
+ * do usuario de AAL2 para AAL1 a cada acao sensivel.
  */
-export async function serverLogin(email: string, password: string): Promise<ServerLoginResult> {
+export async function serverLogin(
+  email: string,
+  password: string,
+  mode: ServerLoginMode = 'login',
+): Promise<ServerLoginResult> {
   let response: Response;
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), AUTH_LOGIN_TIMEOUT_MS);
@@ -92,7 +154,12 @@ export async function serverLogin(email: string, password: string): Promise<Serv
         apikey: SUPABASE_ANON_KEY,
         Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
       },
-      body: JSON.stringify({ email, password, userAgent: navigator.userAgent }),
+      body: JSON.stringify({
+        email,
+        password,
+        userAgent: navigator.userAgent,
+        ...(mode === 'verify' ? { mode } : {}),
+      }),
       signal: controller.signal,
 
     });
@@ -117,6 +184,12 @@ export async function serverLogin(email: string, password: string): Promise<Serv
   }
 
   if (response.ok) {
+    if (mode === 'verify') {
+      // A edge em modo verify NAO emite sessao: o 200 e exatamente `{ok:true}`.
+      // Corpo diferente disso e falha fechada (nao ha o que confirmar).
+      if (body?.ok === true) return { ok: true, mode: 'verify' };
+      return { ok: false, unavailable: true, error: 'auth-login: verify sem confirmacao' };
+    }
     if (body && typeof body.access_token === 'string' && typeof body.refresh_token === 'string') {
       return { ok: true, accessToken: body.access_token, refreshToken: body.refresh_token };
     }
@@ -160,6 +233,22 @@ export async function serverLogin(email: string, password: string): Promise<Serv
       retryable: true,
       error: NETWORK_POLICY_UNAVAILABLE_BODY,
       lock: NO_LOCK,
+    };
+  }
+
+  // Muitas tentativas de login (por IP ou por e-mail): a edge responde 429 antes
+  // de conferir a senha. NAO e lockout de conta (sem tentativa contabilizada) e NAO
+  // e indisponibilidade — a mensagem propria evita "Login temporariamente indisponivel".
+  // O `Retry-After` e lido quando disponivel; sem ele a mensagem e generica.
+  if (response.status === 429) {
+    const retryAfterSeconds = parseRetryAfterSeconds(response.headers);
+    return {
+      ok: false,
+      unavailable: false,
+      rateLimited: true,
+      retryAfterSeconds,
+      error: rateLimitedMessage(retryAfterSeconds),
+      lock: NO_LOCK_RATE_LIMITED,
     };
   }
 

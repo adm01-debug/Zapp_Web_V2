@@ -1,3 +1,4 @@
+import { MotionConfig } from "framer-motion";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { AuthProvider } from "@/hooks/auth/useAuth";
@@ -121,6 +122,15 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
 
   return (
     <ErrorBoundary resetKey={errorKey} onError={handleError} onReset={handleReset}>
+      {/*
+        A11Y: configura o framer-motion do app inteiro de uma vez so. Com
+        `reducedMotion="user"`, quem pede `prefers-reduced-motion: reduce` no
+        sistema deixa de receber animacao de transform/layout em TODOS os
+        consumidores de `motion.*` (antes cada tela ligava seu proprio
+        MotionConfig ou nenhum). O caso de `pathLength` das ilustracoes, que o
+        reducedMotion nao cobre, tem portao proprio em empty-state-illustration-art.
+      */}
+      <MotionConfig reducedMotion="user">
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <HighContrastProvider>
@@ -138,6 +148,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
           </HighContrastProvider>
         </AuthProvider>
       </QueryClientProvider>
+      </MotionConfig>
     </ErrorBoundary>
   );
 }
