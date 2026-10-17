@@ -4,10 +4,31 @@ import { Suspense, type ComponentType } from 'react';
 import { lazyWithRetry } from '@/lib/lazyWithRetry';
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 
-vi.mock('@/lib/logger', () => ({
-  getLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),
-  log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
-}));
+vi.mock('@/lib/logger', () => {
+  const makeLogger = () => ({
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    withCorrelation: vi.fn(() => ({
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    })),
+  });
+  const logger = makeLogger();
+  return {
+    createLogger: vi.fn(() => makeLogger()),
+    getLogger: vi.fn(() => makeLogger()),
+    logger,
+    log: logger,
+    generateCorrelationId: vi.fn((prefix = 'req') => `${prefix}_mock_0`),
+    getSessionId: vi.fn(() => 'mock-session-id'),
+    logPerformance: vi.fn((_label, fn) => fn()),
+    logAsyncPerformance: vi.fn(async (_label, fn) => fn()),
+  };
+});
 vi.mock('@/lib/errorReporter', () => ({ reportClientError: vi.fn() }));
 
 const reload = vi.fn();

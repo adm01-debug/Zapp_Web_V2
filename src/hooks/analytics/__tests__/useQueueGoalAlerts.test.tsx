@@ -102,10 +102,31 @@ vi.mock('@/utils/notificationSounds', () => ({
   showBrowserNotification: (...args: unknown[]) => h.state.browserNotification(...args),
 }));
 
-vi.mock('@/lib/logger', () => ({
-  log: { error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() },
-  getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
-}));
+vi.mock('@/lib/logger', () => {
+  const makeLogger = () => ({
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    withCorrelation: vi.fn(() => ({
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    })),
+  });
+  const logger = makeLogger();
+  return {
+    createLogger: vi.fn(() => makeLogger()),
+    getLogger: vi.fn(() => makeLogger()),
+    logger,
+    log: logger,
+    generateCorrelationId: vi.fn((prefix = 'req') => `${prefix}_mock_0`),
+    getSessionId: vi.fn(() => 'mock-session-id'),
+    logPerformance: vi.fn((_label, fn) => fn()),
+    logAsyncPerformance: vi.fn(async (_label, fn) => fn()),
+  };
+});
 
 import { useQueueGoalAlerts, QUEUE_GOAL_ALERTS_INTERVAL_MS, QUEUE_GOAL_ALERTS_STORAGE_KEY } from '@/hooks/analytics/useQueueGoalAlerts';
 

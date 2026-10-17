@@ -89,9 +89,31 @@ vi.mock('@/hooks/system/useNotificationSettings', () => ({
   }),
 }));
 
-vi.mock('@/lib/logger', () => ({
-  getLogger: () => ({ error: vi.fn(), warn: vi.fn(), debug: vi.fn(), info: vi.fn() }),
-}));
+vi.mock('@/lib/logger', () => {
+  const makeLogger = () => ({
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    withCorrelation: vi.fn(() => ({
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    })),
+  });
+  const logger = makeLogger();
+  return {
+    createLogger: vi.fn(() => makeLogger()),
+    getLogger: vi.fn(() => makeLogger()),
+    logger,
+    log: logger,
+    generateCorrelationId: vi.fn((prefix = 'req') => `${prefix}_mock_0`),
+    getSessionId: vi.fn(() => 'mock-session-id'),
+    logPerformance: vi.fn((_label, fn) => fn()),
+    logAsyncPerformance: vi.fn(async (_label, fn) => fn()),
+  };
+});
 
 // R2-CALL-007: o canal WhatsApp não fala com o banco pelo alerta — quem grava é
 // o adapter, pelas portas dubladas abaixo. O resto do módulo de persistência

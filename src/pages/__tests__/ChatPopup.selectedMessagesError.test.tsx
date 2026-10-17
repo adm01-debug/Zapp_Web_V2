@@ -62,10 +62,31 @@ vi.mock('@/integrations/supabase/client', () => ({
 }));
 vi.mock('@/hooks/realtime/messageSender', () => ({ sendMessageToContact: vi.fn() }));
 vi.mock('@/hooks/ui/use-toast', () => ({ toast: vi.fn() }));
-vi.mock('@/lib/logger', () => ({
-  log: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
-  getLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
-}));
+vi.mock('@/lib/logger', () => {
+  const makeLogger = () => ({
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    withCorrelation: vi.fn(() => ({
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    })),
+  });
+  const logger = makeLogger();
+  return {
+    createLogger: vi.fn(() => makeLogger()),
+    getLogger: vi.fn(() => makeLogger()),
+    logger,
+    log: logger,
+    generateCorrelationId: vi.fn((prefix = 'req') => `${prefix}_mock_0`),
+    getSessionId: vi.fn(() => 'mock-session-id'),
+    logPerformance: vi.fn((_label, fn) => fn()),
+    logAsyncPerformance: vi.fn(async (_label, fn) => fn()),
+  };
+});
 // O alvo do cartão é o ramo escolhido pelo popup ANTES de montar o painel do chat; o
 // ChatPanel (lazy) entra como marcador para observar se ele foi montado ou não.
 vi.mock('@/components/inbox/ChatPanel', () => ({

@@ -76,10 +76,31 @@ vi.mock('../NewConversationModal', () => ({ default: () => null }));
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: { storage: { from: () => ({ upload: vi.fn(), getPublicUrl: () => ({ data: { publicUrl: '' } }), remove: vi.fn() }) }, from: () => ({ update: () => ({ eq: () => ({ error: null }) }) }) },
 }));
-vi.mock('@/lib/logger', () => ({
-  log: { debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
-  getLogger: () => ({ debug: vi.fn(), warn: vi.fn(), error: vi.fn(), info: vi.fn() }),
-}));
+vi.mock('@/lib/logger', () => {
+  const makeLogger = () => ({
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    withCorrelation: vi.fn(() => ({
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    })),
+  });
+  const logger = makeLogger();
+  return {
+    createLogger: vi.fn(() => makeLogger()),
+    getLogger: vi.fn(() => makeLogger()),
+    logger,
+    log: logger,
+    generateCorrelationId: vi.fn((prefix = 'req') => `${prefix}_mock_0`),
+    getSessionId: vi.fn(() => 'mock-session-id'),
+    logPerformance: vi.fn((_label, fn) => fn()),
+    logAsyncPerformance: vi.fn(async (_label, fn) => fn()),
+  };
+});
 vi.mock('@/hooks/chat/useTypingPresence', () => ({
   useTypingPresence: () => ({ isContactTyping: false, typingUsers: [], handleTypingStart: vi.fn(), handleTypingStop: vi.fn() }),
 }));

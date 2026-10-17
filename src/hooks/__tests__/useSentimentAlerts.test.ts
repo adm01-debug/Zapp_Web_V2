@@ -40,13 +40,31 @@ vi.mock('@/utils/notificationSounds', () => ({
   requestNotificationPermission: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('@/lib/logger', () => ({
-  log: { error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() },
-  // useSentimentAlerts abre a conversa via `openContactChat`
-  // (src/components/catalog/useSendProduct), cujo grafo importa o logger
-  // nomeado — o mock precisa do export real.
-  getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
-}));
+vi.mock('@/lib/logger', () => {
+  const makeLogger = () => ({
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    withCorrelation: vi.fn(() => ({
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    })),
+  });
+  const logger = makeLogger();
+  return {
+    createLogger: vi.fn(() => makeLogger()),
+    getLogger: vi.fn(() => makeLogger()),
+    logger,
+    log: logger,
+    generateCorrelationId: vi.fn((prefix = 'req') => `${prefix}_mock_0`),
+    getSessionId: vi.fn(() => 'mock-session-id'),
+    logPerformance: vi.fn((_label, fn) => fn()),
+    logAsyncPerformance: vi.fn(async (_label, fn) => fn()),
+  };
+});
 
 import { useSentimentAlerts } from '@/hooks/inbox/useSentimentAlerts';
 import { claimNotificationEvent } from '@/lib/notificationDedupe';

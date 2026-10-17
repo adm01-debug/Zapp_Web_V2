@@ -28,12 +28,31 @@ vi.mock('@/hooks/auth/useAuth', () => ({
   AuthProvider: ({ children }: { children?: import("react").ReactNode }) => children,
 }));
 
-vi.mock('@/lib/logger', () => ({
-  log: { error: vi.fn(), debug: vi.fn(), info: vi.fn() },
-  // O toast do `reminder_due` arrasta a cadeia de tarefas (useSendProduct →
-  // useCatalogContactSearch), que cria o logger por `getLogger`.
-  getLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),
-}));
+vi.mock('@/lib/logger', () => {
+  const makeLogger = () => ({
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    withCorrelation: vi.fn(() => ({
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    })),
+  });
+  const logger = makeLogger();
+  return {
+    createLogger: vi.fn(() => makeLogger()),
+    getLogger: vi.fn(() => makeLogger()),
+    logger,
+    log: logger,
+    generateCorrelationId: vi.fn((prefix = 'req') => `${prefix}_mock_0`),
+    getSessionId: vi.fn(() => 'mock-session-id'),
+    logPerformance: vi.fn((_label, fn) => fn()),
+    logAsyncPerformance: vi.fn(async (_label, fn) => fn()),
+  };
+});
 
 import { useNotifications } from '@/hooks/system/useNotifications';
 
