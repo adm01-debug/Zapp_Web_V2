@@ -18,7 +18,11 @@
 //   * erro da RPC responde 500 genérico, sem detalhe interno;
 //   * indisponibilidade do GoTrue responde 503 sem registrar tentativa;
 //   * o caminho permitido autentica e devolve a sessão;
-//   * o limite configurável de `auth-login` prevalece sobre os hardcoded.
+//   * o limite configurável de `auth-login` prevalece sobre os hardcoded;
+//   * a negação NÃO chama signInWithPassword nem record_failed_login;
+//   * se o contador PERSISTENTE do limite por e-mail estiver indisponível, o
+//     login falha FECHADO (503) sem autenticar — a guarda por conta não pode
+//     cair para o contador em memória, que zera a cada isolate.
 //
 // Run with:
 //   deno test --config scripts/ci/deno.json supabase/functions/auth-login/index.test.ts
@@ -49,15 +53,65 @@ function get(): Request {
 }
 
 /** Fake do client service_role: registra cada RPC e devolve o resultado scriptado. */
-function fakeAdmin(policy: { data: unknown; error: unknown }, extra: Record<string, { data: unknown; error: unknown }> = {}) {
+function fakeAdmin(
+  policy: { data: unknown; error: unknown },
+  extra: Record<string, { data: unknown; error: unknown }> = {},
+  profiles: { data: { is_active: boolean | null } | null; error: unknown } = { data: { is_active: true }, error: null },
+  signOutError: { message?: string } | null = null,
+) {
   const calls: Array<{ fn: string; args: Record<string, unknown> }> = [];
+  const fromCalls: Array<{ table: string; columns: string; column: string; value: string }> = [];
+  // Revogação de sessão (modo `verify`): registra o par (jwt, escopo).
+  const signOuts: Array<{ jwt: string; scope: string }> = [];
   return {
     calls,
+    fromCalls,
+    signOuts,
+    auth: {
+      admin: {
+        signOut(jwt: string, scope: "global" | "local" | "others" = "local") {
+          signOuts.push({ jwt, scope });
+          return Promise.resolve({ error: signOutError });
+        },
+      },
+    },
     rpc(fn: string, args: Record<string, unknown>) {
       calls.push({ fn, args });
       if (fn === "resolve_network_policy") return Promise.resolve(policy);
       if (fn in extra) return Promise.resolve(extra[fn]);
       return Promise.resolve({ data: null, error: { message: `unexpected rpc ${fn}` } });
+    },
+    // Seam de leitura do perfil: registra o caminho exato (tabela/coluna/valor)
+    // para provar que o lookup é por `profiles.user_id`, não por e-mail/ilike.
+    from(table: string) {
+      let columns = "";
+      let column = "";
+      let value = "";
+      const filter = {
+        eq(col: string, v: string) {
+          column = col;
+          value = v;
+          return {
+            maybeSingle() {
+              fromCalls.push({ table, columns, column, value });
+              return Promise.resolve(profiles);
+            },
+          };
+        },
+      };
+      return { select: (c: string) => { columns = c; return filter; } };
+    },
+  };
+}
+
+/** Fake do contador de rate limit: registra (chave, maximo, janela) e devolve o scriptado. */
+function fakeRateLimit(allowed = true, unavailable = false) {
+  const calls: Array<{ key: string; max: number; windowMs: number }> = [];
+  return {
+    calls,
+    enforceRateLimit(key: string, max: number, windowMs: number) {
+      calls.push({ key, max, windowMs });
+      return Promise.resolve({ allowed, ...(unavailable ? { unavailable: true } : {}) });
     },
   };
 }
@@ -119,14 +173,17 @@ Deno.test("negação por IP (403) responde ANTES de body/credenciais/efeitos", a
   const res = await handleLogin(post({ "x-forwarded-for": IP, "cf-ipcountry": "br" }, "{invalid"), {
     admin,
     anon,
+    enforceRateLimit: fakeRateLimit().enforceRateLimit,
   });
 
   assertEquals(res.status, 403);
   const body = await res.json();
   assertEquals(body.error, "Access denied"); // genérico: não revela IP/país/regra
 
-  // Só a RPC de política foi chamada — nada de gate, consultar usuário ou gravar tentativa.
-  assertEquals(admin.calls.map((c) => c.fn), ["resolve_network_policy"]);
+  // Só as RPCs de política e de registro do bloqueio foram chamadas — nada de
+  // consultar usuário, gravar tentativa de senha ou consumir rate limit.
+  assertEquals(admin.calls.map((c) => c.fn), ["resolve_network_policy", "log_login_block"]);
+
   assertEquals(anon.calls.length, 0);
 });
 
@@ -137,13 +194,16 @@ Deno.test("negação por país (403) não chama autenticação nem grava tentati
   const res = await handleLogin(post({ "x-forwarded-for": IP, "cf-ipcountry": "ru" }, JSON.stringify({ email: "a@b.com", password: "x" })), {
     admin,
     anon,
+    enforceRateLimit: fakeRateLimit().enforceRateLimit,
   });
 
   assertEquals(res.status, 403);
   assertEquals((await res.json()).error, "Access denied");
 
-  // consume_login_gate, record_failed_login e signInWithPassword NUNCA foram chamados.
-  assertEquals(admin.calls.map((c) => c.fn), ["resolve_network_policy"]);
+  // record_failed_login e signInWithPassword NUNCA foram chamados; o bloqueio é
+  // registrado (log_login_block) para o painel de auditoria.
+  assertEquals(admin.calls.map((c) => c.fn), ["resolve_network_policy", "log_login_block"]);
+  assertEquals(admin.calls.some((c) => c.fn === "record_failed_login"), false);
   assertEquals(anon.calls.length, 0);
 });
 
@@ -154,6 +214,7 @@ Deno.test("erro de decisão responde 503 (indecidível, sem vazar regras)", asyn
   const res = await handleLogin(post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "x" })), {
     admin,
     anon,
+    enforceRateLimit: fakeRateLimit().enforceRateLimit,
   });
 
   assertEquals(res.status, 503);
@@ -164,11 +225,36 @@ Deno.test("erro de decisão responde 503 (indecidível, sem vazar regras)", asyn
   assertEquals(anon.calls.length, 0);
 });
 
+Deno.test("bloqueio por país registra log_login_block com IP, país, motivo e user-agent", async () => {
+  const admin = fakeAdmin(POLICY_DENY_COUNTRY, { log_login_block: { data: null, error: null } });
+  const anon = fakeAnon();
+  const rl = fakeRateLimit();
+
+  const res = await handleLogin(
+    post(
+      { "x-forwarded-for": IP, "cf-ipcountry": "ru", "user-agent": "Mozilla/5.0 teste" },
+      JSON.stringify({ email: "a@b.com", password: "x" }),
+    ),
+    { admin, anon, enforceRateLimit: rl.enforceRateLimit },
+  );
+
+  assertEquals(res.status, 403);
+  const call = admin.calls.find((c) => c.fn === "log_login_block");
+  // E-mail é null por design: o bloqueio acontece antes de ler o body.
+  assertEquals(call?.args, {
+    p_email: null,
+    p_ip: IP,
+    p_country_code: "RU",
+    p_reason: "country_blocked",
+    p_user_agent: "Mozilla/5.0 teste",
+  });
+});
+
 Deno.test("método não-POST responde 405 antes da política", async () => {
   const admin = fakeAdmin(POLICY_DENY_IP);
   const anon = fakeAnon();
 
-  const res = await handleLogin(get(), { admin, anon });
+  const res = await handleLogin(get(), { admin, anon, enforceRateLimit: fakeRateLimit().enforceRateLimit });
 
   assertEquals(res.status, 405);
   assertEquals(admin.calls.length, 0);
@@ -184,7 +270,7 @@ Deno.test("caminho permitido autentica e devolve a sessão (200)", async () => {
 
   const res = await handleLogin(
     post({ "x-forwarded-for": IP, "cf-ipcountry": "br" }, JSON.stringify({ email: "a@b.com", password: "secret" })),
-    { admin, anon },
+    { admin, anon, enforceRateLimit: fakeRateLimit().enforceRateLimit },
   );
 
   assertEquals(res.status, 200);
@@ -223,7 +309,7 @@ Deno.test("limite configurável de `auth-login` prevalece sobre os hardcoded", a
 
   await handleLogin(
     post({ "x-forwarded-for": "1.2.3.4, 9.9.9.9" }, JSON.stringify({ email: "a@b.com", password: "secret" })),
-    { admin, anon },
+    { admin, anon, enforceRateLimit: fakeRateLimit().enforceRateLimit },
   );
 
   // O limite por IP usa o valor configurável (25 req / 120s), não o hardcoded 10/60.
@@ -246,7 +332,7 @@ Deno.test("sem regra ativa, o limite por IP cai no hardcoded (10/60s)", async ()
 
   await handleLogin(
     post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "secret" })),
-    { admin, anon },
+    { admin, anon, enforceRateLimit: fakeRateLimit().enforceRateLimit },
   );
 
   const gate = callsTo(admin, "consume_login_gate")[0];
@@ -260,7 +346,7 @@ Deno.test("conta travada responde 423 sem chamar signInWithPassword", async () =
 
   const res = await handleLogin(
     post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "secret" })),
-    { admin, anon },
+    { admin, anon, enforceRateLimit: fakeRateLimit().enforceRateLimit },
   );
 
   assertEquals(res.status, 423);
@@ -281,7 +367,7 @@ Deno.test("rate limit excedido responde 429 sem chamar signInWithPassword", asyn
 
   const res = await handleLogin(
     post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "secret" })),
-    { admin, anon },
+    { admin, anon, enforceRateLimit: fakeRateLimit().enforceRateLimit },
   );
 
   assertEquals(res.status, 429);
@@ -294,7 +380,7 @@ Deno.test("corpo inválido (JSON) consome apenas IP: gate com p_email=null, resp
   const admin = fakeAdmin(POLICY_ALLOW, { consume_login_gate: GATE_OK });
   const anon = fakeAnon();
 
-  const res = await handleLogin(post({ "x-forwarded-for": IP }, "{invalid"), { admin, anon });
+  const res = await handleLogin(post({ "x-forwarded-for": IP }, "{invalid"), { admin, anon, enforceRateLimit: fakeRateLimit().enforceRateLimit });
 
   assertEquals(res.status, 400);
   assertEquals((await res.json()).error, "Invalid JSON");
@@ -312,7 +398,7 @@ Deno.test("e-mail inválido chama o gate com p_email=null e responde 400", async
 
   const res = await handleLogin(
     post({ "x-forwarded-for": IP }, JSON.stringify({ email: "nao-e-email", password: "x" })),
-    { admin, anon },
+    { admin, anon, enforceRateLimit: fakeRateLimit().enforceRateLimit },
   );
 
   assertEquals(res.status, 400);
@@ -327,7 +413,7 @@ Deno.test("senha inválida chama o gate com p_email=null e responde 400", async 
 
   const res = await handleLogin(
     post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com" })),
-    { admin, anon },
+    { admin, anon, enforceRateLimit: fakeRateLimit().enforceRateLimit },
   );
 
   assertEquals(res.status, 400);
@@ -340,7 +426,7 @@ Deno.test("corpo inválido com IP no teto responde 429 (precedência preservada)
   const admin = fakeAdmin(POLICY_ALLOW, { consume_login_gate: GATE_DENIED });
   const anon = fakeAnon();
 
-  const res = await handleLogin(post({ "x-forwarded-for": IP }, "{invalid"), { admin, anon });
+  const res = await handleLogin(post({ "x-forwarded-for": IP }, "{invalid"), { admin, anon, enforceRateLimit: fakeRateLimit().enforceRateLimit });
 
   assertEquals(res.status, 429);
   assertEquals((await res.json()).error, "Rate limit exceeded");
@@ -354,7 +440,7 @@ Deno.test("erro da RPC do gate responde 500 sem detalhe interno", async () => {
 
   const res = await handleLogin(
     post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "secret" })),
-    { admin, anon },
+    { admin, anon, enforceRateLimit: fakeRateLimit().enforceRateLimit },
   );
 
   assertEquals(res.status, 500);
@@ -373,7 +459,7 @@ Deno.test("falha no signIn registra tentativa e devolve 401", async () => {
 
   const res = await handleLogin(
     post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "wrong" })),
-    { admin, anon },
+    { admin, anon, enforceRateLimit: fakeRateLimit().enforceRateLimit },
   );
 
   assertEquals(res.status, 401);
@@ -397,7 +483,7 @@ Deno.test("GoTrue indisponível (503) responde 503 e NÃO registra tentativa", a
 
   const res = await handleLogin(
     post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "secret" })),
-    { admin, anon },
+    { admin, anon, enforceRateLimit: fakeRateLimit().enforceRateLimit },
   );
 
   assertEquals(res.status, 503);
@@ -413,7 +499,7 @@ Deno.test("rate limit do GoTrue (429) responde 503 e NÃO registra tentativa", a
 
   const res = await handleLogin(
     post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "secret" })),
-    { admin, anon },
+    { admin, anon, enforceRateLimit: fakeRateLimit().enforceRateLimit },
   );
 
   assertEquals(res.status, 503);
@@ -431,7 +517,7 @@ Deno.test("AuthRetryableFetchError responde 503 e NÃO registra tentativa", asyn
 
   const res = await handleLogin(
     post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "secret" })),
-    { admin, anon },
+    { admin, anon, enforceRateLimit: fakeRateLimit().enforceRateLimit },
   );
 
   assertEquals(res.status, 503);
@@ -446,7 +532,7 @@ Deno.test("falha de transporte que REJEITA a promise responde 503 e NÃO registr
 
   const res = await handleLogin(
     post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "secret" })),
-    { admin, anon },
+    { admin, anon, enforceRateLimit: fakeRateLimit().enforceRateLimit },
   );
 
   assertEquals(res.status, 503);
@@ -455,17 +541,340 @@ Deno.test("falha de transporte que REJEITA a promise responde 503 e NÃO registr
   assertEquals(admin.calls.some((c) => c.fn === "record_failed_login"), false);
 });
 
+Deno.test("limiter persistente indisponível: login por e-mail falha FECHADO (503) sem autenticar", async () => {
+  const admin = allowedAdmin();
+  const anon = fakeAnon();
+  const keys: string[] = [];
+
+  const res = await handleLogin(
+    post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "secret" })),
+    {
+      admin,
+      anon,
+      enforceRateLimit: (key: string) => {
+        keys.push(key);
+        // Só a chave de E-MAIL usa o limiter persistente (o limite por IP é a
+        // política de rede) — ela sinaliza indisponibilidade.
+        return Promise.resolve(key.includes("email") ? { allowed: true, unavailable: true } : { allowed: true });
+      },
+    },
+  );
+
+  assertEquals(res.status, 503);
+  // errorResponse reescreve 5xx: mensagem genérica de indisponibilidade.
+  assertEquals((await res.json()).error, "Internal server error");
+  // Fail-closed: nenhuma credencial foi conferida — só a política e o gate rodaram.
+  assertEquals(anon.calls.length, 0);
+  assertEquals(admin.calls.map((c) => c.fn), ["resolve_network_policy", "consume_login_gate"]);
+  assertEquals(keys, ["auth-login-email:a@b.com"]);
+});
+
 Deno.test("resposta sem sessão e sem erro responde 503 e NÃO registra tentativa", async () => {
   const admin = allowedAdmin();
   const anon = fakeAnon({ data: { session: null, user: null }, error: null });
 
   const res = await handleLogin(
     post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "secret" })),
-    { admin, anon },
+    { admin, anon, enforceRateLimit: fakeRateLimit().enforceRateLimit },
   );
 
   assertEquals(res.status, 503);
   assertEquals(anon.calls.length, 1);
   assertEquals(callsTo(admin, "consume_login_gate").length, 1);
   assertEquals(admin.calls.some((c) => c.fn === "record_failed_login"), false);
+});
+
+// ── modo `verify` (reautenticação sem trocar a sessão) ────────────────────────
+// `{email,password,mode:'verify'}` valida a senha e devolve `{ok:true}` SEM
+// tokens, revogando a sessão temporária criada pelo GoTrue (escopo `local`).
+// As recusas (rede, rate limit, lockout, senha) são IDÊNTICAS ao login, e o
+// login normal (sem `mode` ou `mode:'login'`) não passa por signOut.
+
+function verifyBody(email = "a@b.com", password = "secret") {
+  return JSON.stringify({ email, password, mode: "verify" });
+}
+
+/** Admin permitido com gate e clear scriptados; `extra`/`signOutError` por teste. */
+function allowedVerifyAdmin(
+  extra: Record<string, { data: unknown; error: unknown }> = {},
+  signOutError: { message?: string } | null = null,
+) {
+  return fakeAdmin(
+    POLICY_ALLOW,
+    {
+      consume_login_gate: GATE_OK,
+      clear_login_attempts: { data: null, error: null },
+      ...extra,
+    },
+    undefined,
+    signOutError,
+  );
+}
+
+Deno.test("verify: senha correta devolve {ok:true} SEM tokens e revoga a sessão temporária", async () => {
+  const admin = allowedVerifyAdmin();
+  const anon = fakeAnon();
+
+  const res = await handleLogin(post({ "x-forwarded-for": IP }, verifyBody()), { admin, anon, enforceRateLimit: fakeRateLimit().enforceRateLimit });
+
+  assertEquals(res.status, 200);
+  const body = (await res.json()) as Record<string, unknown>;
+  // Nenhum token: o corpo é exatamente {ok:true}.
+  assertEquals(body, { ok: true });
+  assertEquals("access_token" in body, false);
+  assertEquals("refresh_token" in body, false);
+
+  // A senha foi conferida pelo GoTrue e a sessão temporária foi revogada
+  // (escopo `local` = só ela, sem derrubar a sessão real do usuário).
+  assertEquals(anon.calls.length, 1);
+  assertEquals(admin.signOuts, [{ jwt: "tok", scope: "local" }]);
+
+  // Ordem igual ao login: política -> gate único -> tentativas zeradas.
+  assertEquals(admin.calls.map((c) => c.fn), [
+    "resolve_network_policy",
+    "consume_login_gate",
+    "clear_login_attempts",
+  ]);
+});
+
+Deno.test("verify: senha errada tem recusa idêntica ao login (401) e não cria sessão", async () => {
+  const admin = allowedVerifyAdmin({
+    record_failed_login: { data: [{ is_locked: false, locked_until: null, attempts: 1 }], error: null },
+  });
+  const anon = fakeAnon({ data: { session: null, user: null }, error: { status: 400 } });
+
+  const res = await handleLogin(post({ "x-forwarded-for": IP }, verifyBody("a@b.com", "wrong")), {
+    admin,
+    anon,
+    enforceRateLimit: fakeRateLimit().enforceRateLimit,
+  });
+
+  assertEquals(res.status, 401);
+  assertEquals((await res.json()).error, "Invalid login credentials");
+  assertEquals(admin.calls.some((c) => c.fn === "record_failed_login"), true);
+  // Sem sessão temporária: nada a revogar.
+  assertEquals(admin.signOuts.length, 0);
+});
+
+Deno.test("verify: conta inativa/recusada pelo GoTrue (4xx) recusa como o login (401)", async () => {
+  const admin = allowedVerifyAdmin({
+    record_failed_login: { data: [{ is_locked: false, locked_until: null, attempts: 1 }], error: null },
+  });
+  // GoTrue recusa usuário inativo/banido com 4xx (não 429): mesma trilha de recusa.
+  const anon = fakeAnon({ data: { session: null, user: null }, error: { status: 403 } });
+
+  const res = await handleLogin(post({ "x-forwarded-for": IP }, verifyBody()), { admin, anon, enforceRateLimit: fakeRateLimit().enforceRateLimit });
+
+  assertEquals(res.status, 401);
+  assertEquals((await res.json()).error, "Invalid login credentials");
+  assertEquals(admin.signOuts.length, 0);
+});
+
+Deno.test("verify: conta bloqueada responde 423 sem tocar no GoTrue nem na sessão", async () => {
+  const admin = fakeAdmin(POLICY_ALLOW, { consume_login_gate: GATE_LOCKED });
+  const anon = fakeAnon();
+
+  const res = await handleLogin(post({ "x-forwarded-for": IP }, verifyBody()), { admin, anon, enforceRateLimit: fakeRateLimit().enforceRateLimit });
+
+  assertEquals(res.status, 423);
+  assertEquals((await res.json()).error, "Account locked");
+  assertEquals(anon.calls.length, 0);
+  assertEquals(admin.signOuts.length, 0);
+});
+
+Deno.test("verify: rede negada responde 403 antes de qualquer efeito", async () => {
+  const admin = fakeAdmin(POLICY_DENY_IP);
+  const anon = fakeAnon();
+
+  const res = await handleLogin(post({ "x-forwarded-for": IP, "cf-ipcountry": "br" }, verifyBody()), {
+    admin,
+    anon,
+    enforceRateLimit: fakeRateLimit().enforceRateLimit,
+  });
+
+  assertEquals(res.status, 403);
+  assertEquals(admin.calls.map((c) => c.fn), ["resolve_network_policy", "log_login_block"]);
+  assertEquals(anon.calls.length, 0);
+  assertEquals(admin.signOuts.length, 0);
+});
+
+Deno.test("verify: falha ao revogar a sessão temporária responde 503 (falha fechada)", async () => {
+  const admin = allowedVerifyAdmin({}, { message: "logout failed" });
+  const anon = fakeAnon();
+
+  const res = await handleLogin(post({ "x-forwarded-for": IP }, verifyBody()), { admin, anon, enforceRateLimit: fakeRateLimit().enforceRateLimit });
+
+  assertEquals(res.status, 503);
+  assertEquals((await res.json()).error, "Internal server error");
+  // A senha não pode voltar como aceita enquanto a sessão temporária não é revogada.
+  assertEquals(admin.signOuts, [{ jwt: "tok", scope: "local" }]);
+});
+
+Deno.test("mode desconhecido responde 400 antes de qualquer efeito", async () => {
+  const admin = fakeAdmin(POLICY_ALLOW);
+  const anon = fakeAnon();
+
+  const res = await handleLogin(
+    post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "secret", mode: "banana" })),
+    { admin, anon, enforceRateLimit: fakeRateLimit().enforceRateLimit },
+  );
+
+  assertEquals(res.status, 400);
+  // A recusa fecha ANTES do gate e do GoTrue: nenhum contador consumido.
+  assertEquals(admin.calls.map((c) => c.fn), ["resolve_network_policy"]);
+  assertEquals(anon.calls.length, 0);
+  assertEquals(admin.signOuts.length, 0);
+});
+
+Deno.test("login com `mode:'login'` explícito devolve tokens e NÃO revoga sessão", async () => {
+  const admin = allowedVerifyAdmin();
+  const anon = fakeAnon();
+
+  const res = await handleLogin(
+    post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "secret", mode: "login" })),
+    { admin, anon, enforceRateLimit: () => Promise.resolve({ allowed: true }) },
+  );
+  assertEquals(res.status, 200);
+  assertEquals(admin.calls.some((c) => c.fn === "revoke_auth_sessions"), false);
+});
+
+// ── R2-AUTH-004 (item 6): credencial válida com perfil inativo NÃO entra ──────
+// O perfil é resolvido DEPOIS do GoTrue (bcrypt já rodou — sem oráculo de tempo)
+// por `profiles.user_id = signIn.user.id`: igualdade exata no índice UNIQUE, o
+// MESMO id de auth.users. Ausente/inativo/`is_active` nulo revoga a sessão
+// recém-emitida e devolve o MESMO 401/corpo da senha errada (sem oráculo de
+// enumeração). Erro na consulta é fail-closed: revoga e responde 500.
+
+const ALLOWED_POLICY = {
+  data: [{ allowed: true, reason: null, rate_limit_max_requests: 10, rate_limit_window_seconds: 60 }],
+  error: null,
+};
+const INACTIVE_EXTRA = {
+  consume_login_gate: GATE_OK,
+  record_failed_login: { data: [{ is_locked: false, locked_until: null, attempts: 3 }], error: null },
+  revoke_auth_sessions: { data: null, error: null },
+};
+
+Deno.test("perfil inativo: revoga a sessão, registra tentativa e devolve 401 sem token", async () => {
+  const admin = fakeAdmin(ALLOWED_POLICY, INACTIVE_EXTRA, { data: { is_active: false }, error: null });
+  const anon = fakeAnon();
+  const rl = fakeRateLimit();
+
+  const res = await handleLogin(
+    post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "secret" })),
+    { admin, anon, enforceRateLimit: rl.enforceRateLimit },
+  );
+
+  assertEquals(res.status, 401);
+  const body = await res.json();
+  assertEquals(body.error, "Invalid login credentials");
+  assertEquals(body.access_token, undefined);
+  assertEquals(body.attempts, 3);
+
+  // GoTrue rodou ANTES do lookup; a sessão recém-emitida foi revogada; a
+  // tentativa foi registrada; as tentativas NÃO foram zeradas.
+  assertEquals(anon.calls.length, 1);
+  const revoke = admin.calls.find((c) => c.fn === "revoke_auth_sessions");
+  assertEquals(revoke?.args.p_scope, "global");
+  assertEquals(revoke?.args.p_target_user_id, "u1");
+  assertEquals(admin.calls.some((c) => c.fn === "record_failed_login"), true);
+  assertEquals(admin.calls.some((c) => c.fn === "clear_login_attempts"), false);
+
+  // O lookup foi por `profiles.user_id` = id do usuário autenticado — nunca por e-mail/ilike.
+  assertEquals(admin.fromCalls, [{ table: "profiles", columns: "is_active", column: "user_id", value: "u1" }]);
+});
+
+Deno.test("perfil inativo: corpo e status IDÊNTICOS à senha errada (sem oráculo)", async () => {
+  const inactive = fakeAdmin(ALLOWED_POLICY, INACTIVE_EXTRA, { data: { is_active: false }, error: null });
+  const resInactive = await handleLogin(
+    post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "secret" })),
+    { admin: inactive, anon: fakeAnon(), enforceRateLimit: fakeRateLimit().enforceRateLimit },
+  );
+  const bodyInactive = await resInactive.json();
+
+  const wrongPass = fakeAdmin(ALLOWED_POLICY, INACTIVE_EXTRA);
+  const resWrong = await handleLogin(
+    post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "wrong" })),
+    {
+      admin: wrongPass,
+      anon: fakeAnon({ data: { session: null, user: null }, error: { status: 400 } }),
+      enforceRateLimit: fakeRateLimit().enforceRateLimit,
+    },
+  );
+  const bodyWrong = await resWrong.json();
+
+  assertEquals(resInactive.status, resWrong.status);
+  assertEquals(bodyInactive, bodyWrong);
+});
+
+Deno.test("perfil ausente (sem linha): revoga a sessão e devolve o mesmo 401", async () => {
+  const admin = fakeAdmin(ALLOWED_POLICY, INACTIVE_EXTRA, { data: null, error: null });
+  const anon = fakeAnon();
+
+  const res = await handleLogin(
+    post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "secret" })),
+    { admin, anon, enforceRateLimit: fakeRateLimit().enforceRateLimit },
+  );
+
+  assertEquals(res.status, 401);
+  const body = await res.json();
+  assertEquals(body.error, "Invalid login credentials");
+  assertEquals(body.access_token, undefined);
+  assertEquals(admin.calls.some((c) => c.fn === "revoke_auth_sessions"), true);
+  assertEquals(admin.calls.some((c) => c.fn === "record_failed_login"), true);
+});
+
+Deno.test("is_active nulo conta como inativo (não entra)", async () => {
+  const admin = fakeAdmin(ALLOWED_POLICY, INACTIVE_EXTRA, { data: { is_active: null }, error: null });
+
+  const res = await handleLogin(
+    post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "secret" })),
+    { admin, anon: fakeAnon(), enforceRateLimit: fakeRateLimit().enforceRateLimit },
+  );
+
+  assertEquals(res.status, 401);
+  assertEquals((await res.json()).access_token, undefined);
+  assertEquals(admin.calls.some((c) => c.fn === "revoke_auth_sessions"), true);
+});
+
+Deno.test("erro na consulta do perfil: revoga a sessão e responde 500 (fail-closed)", async () => {
+  const admin = fakeAdmin(ALLOWED_POLICY, INACTIVE_EXTRA, {
+    data: null,
+    error: { code: "57014", message: "canceling statement due to statement timeout" },
+  });
+
+  const res = await handleLogin(
+    post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "secret" })),
+    { admin, anon: fakeAnon(), enforceRateLimit: fakeRateLimit().enforceRateLimit },
+  );
+
+  assertEquals(res.status, 500);
+  assertEquals((await res.json()).error, "Internal server error");
+  // Nem token nem tentativa: consulta que falhou não libera a sessão nem conta lockout.
+  assertEquals(admin.calls.some((c) => c.fn === "revoke_auth_sessions"), true);
+  assertEquals(admin.calls.some((c) => c.fn === "record_failed_login"), false);
+  assertEquals(admin.calls.some((c) => c.fn === "clear_login_attempts"), false);
+});
+
+Deno.test("perfil ativo (is_active true) entra: 200 com sessão e sem revogação", async () => {
+  const admin = fakeAdmin(
+    ALLOWED_POLICY,
+    {
+      consume_login_gate: GATE_OK,
+      clear_login_attempts: { data: null, error: null },
+    },
+    { data: { is_active: true }, error: null },
+  );
+
+  const res = await handleLogin(
+    post({ "x-forwarded-for": IP }, JSON.stringify({ email: "a@b.com", password: "secret" })),
+    { admin, anon: fakeAnon(), enforceRateLimit: fakeRateLimit().enforceRateLimit },
+  );
+
+  assertEquals(res.status, 200);
+  const body = await res.json();
+  assertEquals(body.access_token, "tok");
+  assertEquals(admin.calls.some((c) => c.fn === "revoke_auth_sessions"), false);
+  assertEquals(admin.calls.some((c) => c.fn === "clear_login_attempts"), true);
+  assertEquals(admin.fromCalls, [{ table: "profiles", columns: "is_active", column: "user_id", value: "u1" }]);
 });

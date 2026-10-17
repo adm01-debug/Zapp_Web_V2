@@ -26,6 +26,11 @@ import {
   scheduleRateLimitDenial,
   type RateLimitLogWriter,
 } from './rate-limit-log.ts';
+import { isAllowedOrigin, FALLBACK_ORIGIN } from './cors-origins.ts';
+
+// Reexport para os consumidores historicos (ex.: approve-password-reset), que
+// importam `isAllowedOrigin` de `validation.ts`.
+export { isAllowedOrigin, FALLBACK_ORIGIN };
 
 // ─── Structured Logger ─────────────────────────────────────────
 
@@ -105,30 +110,6 @@ export class Logger {
   }
 }
 
-// Endereco canonico de producao no CORS (ver docs/runbooks/deploy.md). So ele
-// entra na lista exata: os hosts que ja serviram o app fora do fluxo
-// GitHub -> Vercel entregavam build velho. URLs de deployment/preview deste
-// projeto (zappwebv2-<hash|branch>-juca1.vercel.app) continuam em
-// ORIGIN_PATTERNS; o alias padrao do projeto (zappwebv2-juca1.vercel.app)
-// deixa de ser aceito de proposito, para existir UM endereco canonico.
-const EXACT_ALLOWED_ORIGINS = new Set([
-  'https://zapp-web-v2.vercel.app',
-]);
-
-const ORIGIN_PATTERNS = [
-  /^https:\/\/zappwebv2-[a-z0-9-]+-juca1\.vercel\.app$/,
-  /^http:\/\/localhost(?::\d{1,5})?$/,
-  /^http:\/\/127\.0\.0\.1(?::\d{1,5})?$/,
-];
-
-/** Origens do projeto (canônica + padrões de preview/local). Exportado para que
- * edge functions que precisam montar um `redirectTo` do GoTrue usem a MESMA
- * allow-list do CORS, em vez de repetí-la (open-redirect por origem do chamador). */
-export function isAllowedOrigin(origin: string): boolean {
-  return EXACT_ALLOWED_ORIGINS.has(origin) ||
-    ORIGIN_PATTERNS.some((pattern) => pattern.test(origin));
-}
-
 /** Security headers applied to all responses */
 const SECURITY_HEADERS: Record<string, string> = {
   'X-Content-Type-Options': 'nosniff',
@@ -145,15 +126,15 @@ const SECURITY_HEADERS: Record<string, string> = {
 /** Build CORS + security headers with origin validation */
 export function getCorsHeaders(req?: Request): Record<string, string> {
   const origin = req?.headers.get('origin') || '';
-  const allowedOrigin = isAllowedOrigin(origin) ? origin : 'https://zapp-web-v2.vercel.app';
+  const allowedOrigin = isAllowedOrigin(origin) ? origin : FALLBACK_ORIGIN;
   const requestId = req?.headers.get('x-request-id') || crypto.randomUUID();
   return {
     ...SECURITY_HEADERS,
     'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
     'Access-Control-Allow-Headers':
-      'authorization, x-client-info, apikey, content-type, x-app-name, x-app-version, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version, x-hub-signature-256, x-signature, x-webhook-signature, x-evolution-signature, x-contract-version, x-request-id',
-    'Access-Control-Expose-Headers': 'x-request-id, x-degraded',
+      'authorization, x-client-info, apikey, content-type, x-app-name, x-app-version, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version, x-hub-signature-256, x-signature, x-webhook-signature, x-evolution-signature, x-contract-version, x-request-id, x-correlation-id, traceparent',
+    'Access-Control-Expose-Headers': 'x-request-id, x-correlation-id, x-degraded',
     'Access-Control-Max-Age': '86400',
     Vary: 'Origin',
     'X-Request-ID': requestId,
@@ -384,7 +365,7 @@ export async function enforceRateLimit(
   maxRequests = 30,
   windowMs = 60_000,
   ctx: EnforceRateLimitContext = {},
-): Promise<{ allowed: boolean; remaining: number; persistent: boolean }> {
+): Promise<{ allowed: boolean; remaining: number; persistent: boolean; unavailable?: boolean }> {
   const local = checkRateLimit(key, maxRequests, windowMs);
   if (!local.allowed) {
     recordRateLimitDenialFor(key, maxRequests, ctx);
@@ -399,9 +380,11 @@ export async function enforceRateLimit(
     });
     if (error) throw error;
     const row = (Array.isArray(data) ? data[0] : data) as { allowed?: unknown; remaining?: unknown } | null;
-    if (!row || typeof row.allowed !== "boolean") return { ...local, persistent: false };
-    if (row.allowed === false) {
-      recordRateLimitDenialFor(key, maxRequests, ctx);
+    if (!row || typeof row.allowed !== "boolean") {
+      // A RPC respondeu, mas sem o contrato esperado: o contador persistente não
+      // vale. Marca `unavailable` para quem precisa falhar FECHADO (auth-login),
+      // sem mudar o comportamento de quem aceita o fallback local.
+      return { ...local, persistent: false, unavailable: true };
     }
     return {
       allowed: row.allowed,
@@ -410,7 +393,7 @@ export async function enforceRateLimit(
     };
   } catch (err) {
     console.warn("[rate-limit] limiter persistente indisponivel; usando contador local:", String(err));
-    return { ...local, persistent: false };
+    return { ...local, persistent: false, unavailable: true };
   }
 }
 
@@ -440,6 +423,37 @@ export type AuthUserResult = {
   error: unknown;
 };
 
+/** Resultado da leitura de `profiles.is_active` (estrutural; testável offline). */
+export type ProfileActiveResult = {
+  data: { is_active: boolean | null } | null;
+  error: unknown;
+};
+
+/** Leitura de `profiles.is_active` pelo `user_id` do usuário autenticado. */
+export type ProfileActiveLookup = (userId: string) => PromiseLike<ProfileActiveResult>;
+
+/**
+ * Default de produção: resolve `profiles.is_active` por `user_id` (igualdade
+ * EXATA em `profiles.user_id`, índice UNIQUE NOT NULL e o MESMO id de
+ * `auth.users`). Nunca por `profiles.email` (nullable, sem UNIQUE garantido) nem
+ * por `ilike` (curinga do PostgREST). O cast para o builder do supabase-js é
+ * local e intencional: expor o builder na assinatura estoura a instanciação de
+ * tipos (TS2589).
+ */
+export function profileActiveFrom(client: RateLimitRpcClient): ProfileActiveLookup {
+  const c = client as unknown as {
+    from(table: string): {
+      select(columns: string): {
+        eq(column: string, value: string): {
+          maybeSingle(): PromiseLike<ProfileActiveResult>;
+        };
+      };
+    };
+  };
+  return (userId: string) =>
+    c.from("profiles").select("is_active").eq("user_id", userId).maybeSingle();
+}
+
 /**
  * Dependências injetáveis de `requireAuth` (para teste offline). Em produção
  * ficam ausentes e `requireAuth` usa o caminho real (esm.sh + env + service_role).
@@ -456,6 +470,9 @@ export interface RequireAuthOptions {
   /** Fallback de rate limit quando a RPC não tem regra p/ o endpoint (máximos atuais). */
   defaultMaxRequests?: number;
   defaultWindowSeconds?: number;
+  /** Leitura de `profiles.is_active` do usuário autenticado (R2-AUTH-004).
+   *  Injectable p/ teste; ausente em produção = client service_role real. */
+  getProfileActive?: ProfileActiveLookup;
   /**
    * Escritor de `rate_limit_logs` para as negações de política de rede (403).
    * Padrão: `recordRateLimitDenial` (client service_role, best-effort).
@@ -538,6 +555,32 @@ export async function requireAuth(
   }
   if (!decision.allowed) {
     return networkPolicyDenialResponse(decision, req);
+  }
+
+  // 3. R2-AUTH-004 (item 6): perfil inativo/ausente NÃO opera. A checagem roda
+  //    DEPOIS da autenticação e da política de rede e ANTES de qualquer efeito
+  //    do handler; consumidores de requireAuth herdam a trava sem edição
+  //    individual. O perfil é resolvido por `profiles.user_id` (UNIQUE NOT NULL,
+  //    o MESMO id de auth.users) — igualdade exata, nunca por e-mail/ilike.
+  let profile: ProfileActiveResult;
+  try {
+    // Criação do client (import dinâmico + env) e execução do lookup sob o mesmo
+    // guarda-chuva: exceção/rejeição aqui vira negação fechada, nunca liberação.
+    const lookup = opts.getProfileActive ??
+      profileActiveFrom(await (opts.policyRpcFactory ?? getServiceClient)());
+    profile = await lookup(userId);
+  } catch {
+    // Fail-closed (indecidível): não dá para provar que o perfil está ativo.
+    return errorResponse("Service unavailable", 503, req);
+  }
+  if (profile.error) {
+    // Fail-closed: consulta que falhou não libera a operação.
+    return errorResponse("Service unavailable", 503, req);
+  }
+  // Ausente, inativo (`false`) ou `is_active` nulo: 403 neutro, o MESMO corpo da
+  // negação da política de rede — não revela existência nem estado do perfil.
+  if (!profile.data || profile.data.is_active !== true) {
+    return errorResponse("Access denied", 403, req);
   }
   return { userId };
 }
