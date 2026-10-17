@@ -1,0 +1,5 @@
+importador_origin,dependencia_ausente_no_head
+supabase/functions/_shared/validation.ts,supabase/functions/_shared/cors-origins.ts
+supabase/functions/talkx-link/index.test.ts,supabase/functions/_shared/talkx-tracking-token.ts
+supabase/functions/talkx-link/index.ts,supabase/functions/_shared/talkx-tracking-token.ts
+supabase/functions/talkx-send/index.ts,supabase/functions/_shared/talkx-tracking-token.ts

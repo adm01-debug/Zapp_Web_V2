@@ -1,0 +1,11 @@
+caminho,classe,hash_head,hash_origin
+supabase/functions/_shared/evolution-api-proxy.ts,blob_diferente,ae337e436a,6d1b020517
+supabase/functions/_shared/evolution-control-authz.ts,blob_diferente,91c31a6a70,9ce9d645ea
+supabase/functions/_shared/evolution-types.ts,blob_diferente,abab8e8ac0,c5adf47a74
+supabase/functions/_shared/evolution-webhook-handlers.ts,blob_diferente,e87a52316c,d2041583d8
+supabase/functions/_shared/evolution-webhook-messages.ts,blob_diferente,ff3f9fb274,5f775c66f1
+supabase/functions/_shared/talkx-tracking-token.ts,origin_only,-,d09cddee34
+supabase/functions/_shared/cors-origins.ts,origin_only,-,f281163b45
+supabase/functions/_shared/hmac-validation.ts,igual,df0a7dba80,df0a7dba80
+supabase/functions/_shared/validation.ts,blob_diferente,6a1d3f7e89,b8e38c15d5
+supabase/functions/_shared/cron-secret-auth.ts,blob_diferente,f03ec34cc0,7f1e2ba158
