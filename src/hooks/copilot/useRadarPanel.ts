@@ -72,9 +72,24 @@ export function useRadarPanel(userId: string | undefined, conversationId?: strin
     userId ? loadState(userId) : DEFAULT_STATE,
   );
 
+  // Troca de usuário durante a vida do componente recarrega a preferência dele.
+  // Ajuste durante a renderização (padrão do React para derivar de props) em vez
+  // de efeito, que dispararia renderização em cascata.
+  const [loadedUserId, setLoadedUserId] = useState(userId);
+  if (userId !== loadedUserId) {
+    setLoadedUserId(userId);
+    setState(userId ? loadState(userId) : DEFAULT_STATE);
+  }
+
+  // Relógio do "não perturbe" temporizado: `Date.now()` só é lido fora da
+  // renderização (no intervalo). O estado começa em 0 para o DND recém-ativado
+  // valer de imediato e passa a comparar com o relógio real a cada segundo.
+  const [clock, setClock] = useState(0);
   useEffect(() => {
-    if (userId) setState(loadState(userId));
-  }, [userId]);
+    if (state.dndUntil === null) return;
+    const id = setInterval(() => setClock(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [state.dndUntil]);
 
   const update = useCallback(
     (patch: Partial<RadarPanelState>) => {
@@ -114,7 +129,7 @@ export function useRadarPanel(userId: string | undefined, conversationId?: strin
 
   const isDnd =
     (state.dndConversationId !== null && state.dndConversationId === conversationId) ||
-    (state.dndUntil !== null && Date.now() < state.dndUntil);
+    (state.dndUntil !== null && clock < state.dndUntil);
 
   return {
     mode: state.mode,
