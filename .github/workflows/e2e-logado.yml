@@ -38,8 +38,12 @@ permissions:
 # chegarem enquanto a run atual roda, so o mais recente pendente roda em
 # seguida (os intermediarios sao pulados) -- mesma semantica de "valida so o
 # commit mais novo", sem desperdicar runs quase completas.
+# GA09: grupo fixo (sem ${{ github.ref }}) -- este workflow so dispara em
+# push na main e dispatch sobre main (guardado pelo step linha 91); nunca
+# ha dois refs distintos, entao o sufixo era redundante e deixava runs de
+# dispatch paralelas operarem fora do grupo de serializacao da push.
 concurrency:
-  group: e2e-logado-${{ github.ref }}
+  group: e2e-logado
   cancel-in-progress: false
 
 jobs:
