@@ -65,3 +65,38 @@ test('E62: o contrato da versao 20260830170000 existe e nao esta vazio', () => {
   assert.ok(sql.trim().length > 100, 'contrato tem de ter conteudo real');
   assert.ok(existsSync(new URL('20260830170000.sql', CONTRATOS)));
 });
+
+// ---------------------------------------------------------------------------
+// GA04: console.log no heredoc inline do db-migrate.yml contamina stdout
+// quando o passo e' capturado por automacao (o hash de 64 chars mistura com
+// texto diagnostico e a comparacao quebra). Os 2 pontos diagnosticos do
+// heredoc "Validar runtime proof" tem de ir ao stderr (console.error).
+// ---------------------------------------------------------------------------
+
+test('GA04: db-migrate.yml nao usa console.log para diagnosticos no heredoc inline', () => {
+  const y = ler('.github/workflows/db-migrate.yml');
+  assert.doesNotMatch(y, /console\.log.*Contrato generico/,
+    'aviso do contrato generico tem de ir ao stderr (console.error)');
+  assert.doesNotMatch(y, /console\.log.*descreverConfirmacao/,
+    'descricao da confirmacao tem de ir ao stderr (console.error)');
+  assert.match(y, /console\.error.*Contrato generico/,
+    'o aviso do contrato generico tem de existir no stderr');
+  assert.match(y, /console\.error.*descreverConfirmacao/,
+    'a descricao da confirmacao tem de existir no stderr');
+});
+
+test('GA04: run-runtime-contract.mjs nao tem console.log (stdout e so JSON do proof)', () => {
+  const src = ler('scripts/db-audit/run-runtime-contract.mjs');
+  assert.doesNotMatch(src, /console\.log/,
+    'nenhum console.log no executor: stdout tem de ser exclusivamente o JSON do proof');
+});
+
+test('GA04: confirm-hash.mjs nao tem console.log (heredoc imprime so via stderr/stdout controlado)', () => {
+  // Na linha atual nao existe validate-runtime-proof.mjs standalone (PR #2036,
+  // base antiga): a validacao vive no heredoc inline + confirm-hash.mjs. O
+  // modulo tem de continuar puro (sem console.*), para o heredoc decidir o
+  // destino de cada saida.
+  const src = ler('scripts/db-audit/confirm-hash.mjs');
+  assert.doesNotMatch(src, /console\.log/,
+    'confirm-hash nao pode ter console.log: so funcoes puras de hash');
+});

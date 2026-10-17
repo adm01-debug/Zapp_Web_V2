@@ -19,7 +19,7 @@
  */
 import { spawnSync } from 'node:child_process';
 import { resolve } from 'node:path';
-import { parseMigrationFile } from './register-migration.mjs';
+import { parseMigrationFile, splitStatements } from './register-migration.mjs';
 
 // `array_to_json` preserva a ordem e devolve `null` (texto) quando a coluna e
 // NULL -- e' o que permite distinguir "NULL" de "array vazio".
@@ -46,18 +46,24 @@ export function avaliarStatementsDoLedger({ bruto, statementsDoArquivo }) {
   }
   if (!Array.isArray(doLedger)) return { ok: false, motivo: 'statements do ledger nao e um array' };
   if (doLedger.length === 0) return { ok: false, motivo: 'array_length(statements, 1) = 0' };
-  if (doLedger.length !== statementsDoArquivo.length) {
+  // GA05 (run 37355980323, migration 20261004195051): o psql pode gravar um
+  // cabecalho "--" no inicio de um statement armazenado; o arquivo nao tem.
+  // Normaliza os dois lados pelo splitStatements (que descarta comentarios
+  // "--" fora de strings/dollar-quote) antes de comparar.
+  const normalizadosDoLedger = doLedger.flatMap((s) => splitStatements(String(s)));
+  const normalizadosDoArquivo = statementsDoArquivo.flatMap((s) => splitStatements(String(s)));
+  if (normalizadosDoLedger.length !== normalizadosDoArquivo.length) {
     return {
       ok: false,
-      motivo: `quantidade de statements difere: ledger=${doLedger.length} arquivo=${statementsDoArquivo.length}`,
+      motivo: `quantidade de statements difere: ledger=${normalizadosDoLedger.length} arquivo=${normalizadosDoArquivo.length}`,
     };
   }
-  for (let i = 0; i < doLedger.length; i += 1) {
-    if (doLedger[i] !== statementsDoArquivo[i]) {
+  for (let i = 0; i < normalizadosDoLedger.length; i += 1) {
+    if (normalizadosDoLedger[i] !== normalizadosDoArquivo[i]) {
       return { ok: false, motivo: `o statement ${i + 1} do ledger difere do arquivo` };
     }
   }
-  return { ok: true, total: doLedger.length };
+  return { ok: true, total: normalizadosDoLedger.length };
 }
 
 function main() {

@@ -108,6 +108,31 @@ test('R2-INF-005: o heredoc do ledger e SQL valido, sem comentario de Bash', asy
     'o lexer SQL do repositorio nao reconhece "#" como comentario -- e token que o parser recusa');
 });
 
+// ---------------------------------------------------------------------------
+// GA05: o psql pode gravar um cabecalho "--" no inicio de um statement
+// armazenado (run 37355980323, migration 20261004195051). O flatMap sobre
+// splitStatements normaliza os dois lados -- estes testes provam isso
+// e garantem que arquivo diferente continua reprovando.
+// ---------------------------------------------------------------------------
+
+test('GA05: statement do ledger com cabecalho -- normalizado pelo splitStatements', () => {
+  // Simula o caso do run 37355980323: ledger guarda um statement com
+  // cabecalho de comentario "--" que o psql adicionou; o arquivo nao tem.
+  const bruto = JSON.stringify(['-- cabecalho de psql\nCREATE TABLE public.ga05_fixture (id int)']);
+  const statementsDoArquivo = ['CREATE TABLE public.ga05_fixture (id int)'];
+  const r = avaliarStatementsDoLedger({ bruto, statementsDoArquivo });
+  assert.equal(r.ok, true, 'cabecalho -- no ledger tem de ser normalizado e passar');
+  assert.equal(r.total, 1);
+});
+
+test('GA05: arquivo diferente do ledger continua reprovando mesmo com normalizacao', () => {
+  const bruto = JSON.stringify(['-- cabecalho de psql\nCREATE TABLE public.ga05_fixture (id int)']);
+  const statementsDoArquivo = ['CREATE TABLE public.ga05_DIFERENTE (id int)'];
+  const r = avaliarStatementsDoLedger({ bruto, statementsDoArquivo });
+  assert.equal(r.ok, false, 'conteudo diferente tem de reprovar mesmo com normalizacao');
+  assert.match(r.motivo, /statement 1/);
+});
+
 test('R2-INF-005: o comentario da consulta e SQL e a regressao para "#" e detectavel', async () => {
   const workflow = await readFile(new URL('../../.github/workflows/db-migrate.yml', import.meta.url), 'utf8');
   const consulta = extrairConsultaDoLedger(workflow);

@@ -848,7 +848,7 @@ jobs:
               && Number.isInteger(proof.policy_count) && proof.policy_count >= 0
               && Number.isInteger(proof.ledger_count) && proof.ledger_count > 0
               && /^[a-f0-9]{64}$/.test(proof.structure_sha256 || '');
-            console.log('Contrato generico: estrutura de public em '
+            console.error('Contrato generico: estrutura de public em '
               + String(proof.structure_sha256).slice(0, 12)
               + '; a autorizacao do apply depende da confirmacao do runtime_sha256 do dry-run.');
           }
@@ -878,7 +878,7 @@ jobs:
             arquivoSha256,
             commitSha: process.env.GITHUB_SHA,
           });
-          console.log(modHash.descreverConfirmacao({
+          console.error(modHash.descreverConfirmacao({
             runtimeSha256: proof.runtime_sha256,
             arquivoSha256,
             commitSha: process.env.GITHUB_SHA,
