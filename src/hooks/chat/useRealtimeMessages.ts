@@ -74,6 +74,15 @@ export function useRealtimeMessages() {
     }
     return true;
   }, []);
+  // Devolve ids ao dedupe: usado quando o lote de hidratação NÃO entra na lista
+  // (falha da busca ou contato que não voltou). Sem isso a mensagem ficava
+  // marcada como vista sem estar na lista e `fetchIncrementalConversations` a
+  // pulava para sempre (`if (!markMessageSeen(m.id)) continue`), deixando a
+  // conversa invisível até uma recarga manual.
+  const unmarkMessageSeen = useCallback((ids: Iterable<string>) => {
+    const seen = seenMessageIdsRef.current;
+    for (const id of ids) seen.delete(id);
+  }, []);
   // Hidratação em lote: mensagens de contatos ainda fora da lista acumulam por
   // ~150 ms e saem numa única busca de contatos (em vez de 1 por mensagem).
   const HYDRATION_BATCH_MS = 150;
@@ -130,33 +139,79 @@ export function useRealtimeMessages() {
     if (pendentes.size === 0) return;
     pendingHydrationRef.current = new Map();
     const ids = Array.from(pendentes.keys());
+    // Todos os ids do lote: devolvidos ao dedupe quando o lote NÃO entra, para
+    // a revalidação incremental (ou o realtime) ainda poder recuperá-lo.
+    const idsDoLote = () => {
+      const todos: string[] = [];
+      for (const msgs of pendentes.values()) for (const m of msgs) todos.push(m.id);
+      return todos;
+    };
     let contacts: ConversationContact[];
     try {
       contacts = await buscarComRetry(() => RealtimeService.fetchContactsByIds(ids));
     } catch (err) {
+      // Falhou mesmo após o retry: as mensagens não entraram na lista. Sem
+      // devolvê-las ao dedupe, `fetchIncrementalConversations` as pularia para
+      // sempre (`if (!markMessageSeen(m.id)) continue`).
+      unmarkMessageSeen(idsDoLote());
       log.error('Error hydrating new conversations (lote):', err);
       return;
     }
-    if (!mountedRef.current || contacts.length === 0) return;
-    liveRevisionRef.current += 1;
-    commitConversations((prev) => {
-      let next = prev;
-      let changed = false;
-      for (const contact of contacts) {
-        if (next.some((c) => c.contact.id === contact.id)) continue;
-        const msgs = pendentes.get(contact.id) ?? [];
-        if (msgs.length === 0) continue;
-        next = [buildConversation(contact, msgs), ...next];
-        changed = true;
-      }
-      return changed ? next : prev;
-    });
-    for (const contact of contacts) {
-      for (const m of pendentes.get(contact.id) ?? []) {
-        notifyAboutIncomingMessage(contact, m);
-      }
+    if (!mountedRef.current) return;
+    if (contacts.length === 0) {
+      unmarkMessageSeen(idsDoLote());
+      return;
     }
-  }, [buscarComRetry, commitConversations, notifyAboutIncomingMessage]);
+    const retornados = new Set(contacts.map((contact) => contact.id));
+    // Contato que não voltou nesta busca: o lote dele também não entrou.
+    for (const [contactId, msgs] of pendentes) {
+      if (!retornados.has(contactId)) unmarkMessageSeen(msgs.map((m) => m.id));
+    }
+    liveRevisionRef.current += 1;
+    // Só o que ENTROU na lista é notificado: antes a notificação percorria o
+    // lote inteiro, mesmo quando o `continue` de contato já presente descartava
+    // as mensagens (som/browser tocava por mensagem que não foi para a lista).
+    // A decisão sai do estado ATUAL do ref (fonte síncrona da lista) — o
+    // updater do React pode rodar depois deste ponto, então não dá para ler o
+    // resultado de dentro dele aqui.
+    const atuais = conversationsRef.current;
+    let next = atuais;
+    const inseridas: Array<{ contact: ConversationContact; messages: RealtimeMessage[] }> = [];
+    for (const contact of contacts) {
+      const msgs = pendentes.get(contact.id) ?? [];
+      if (msgs.length === 0) continue;
+      const idx = next.findIndex((c) => c.contact.id === contact.id);
+      if (idx < 0) {
+        next = [buildConversation(contact, msgs), ...next];
+        inseridas.push({ contact, messages: msgs });
+        continue;
+      }
+      // O contato entrou na lista enquanto esta busca estava em voo
+      // (refetch/realtime): mescla as mensagens na conversa existente (dedupe
+      // por id) em vez de descartar o lote — o `continue` antigo perdia a
+      // mensagem e ainda notificava.
+      const conv = next[idx];
+      const idsConv = new Set(conv.messages.map((m) => m.id));
+      const frescas = msgs.filter((m) => !idsConv.has(m.id));
+      if (frescas.length === 0) continue;
+      const todas = [...conv.messages, ...frescas].sort((a, b) => a.created_at.localeCompare(b.created_at));
+      next = [
+        ...next.slice(0, idx),
+        {
+          ...conv,
+          messages: todas,
+          unreadCount: conv.unreadCount + frescas.filter((m) => !m.is_read).length,
+          lastMessage: todas[todas.length - 1] ?? conv.lastMessage,
+        },
+        ...next.slice(idx + 1),
+      ];
+      inseridas.push({ contact, messages: frescas });
+    }
+    if (next !== atuais) commitConversations(next);
+    for (const { contact, messages } of inseridas) {
+      for (const m of messages) notifyAboutIncomingMessage(contact, m);
+    }
+  }, [buscarComRetry, commitConversations, notifyAboutIncomingMessage, unmarkMessageSeen]);
 
   // Enfileira sem marcar (o chamador já marcou): usado pelo handleNewMessage
   // (marca no topo) e pelo flush incremental (marca ao agrupar).
