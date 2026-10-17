@@ -122,23 +122,23 @@ const ALLOWLIST = new Set([
 // ci.yml/db-guard.yml — do dono do workflow (agente não edita workflow). R2-INF-013: as quatro
 // primeiras já existiam quando a auditoria (2026-10-03) apontou o defeito; as três de
 // ui-audit entraram depois (2026-10-05) e ficaram invisíveis pelo mesmo motivo.
+// PR #1975 (resolvido em SYNC20-32, 17/10/2026): o bloco `run:` do ci.yml passou a
+// executar os globs de lib/qa/raiz de scripts; a ALLOWLIST_NODE guarda só o que segue
+// sem runner (catálogo, a suite de banco e as 3 auditorias de UI, vermelhas na linha dia).
 export const ALLOWLIST_NODE = new Set([
   // Valida um plano de catálogo sintético contra o repositório (offline).
   'scripts/catalog/validate-plan.test.mjs',
-  // Prova o resolvedor de executáveis usado por várias guardas (offline).
-  'scripts/lib/seguranca-processo.test.mjs',
-  // Prova os provadores de visão com `fetch` stubbed (offline).
-  'scripts/qa/prova-visao-classificadores.unit.mjs',
-  // Prova o log do validador de banco do team chat com `fetch` stubbed (offline).
-  'scripts/team-chat-db-validate.unit.mjs',
-  // Auditorias de layout/UI lidas do próprio repositório (offline).
-  'scripts/ui-audit/contacts-navy-header.unit.mjs',
-  'scripts/ui-audit/layout-guard.unit.mjs',
-  'scripts/ui-audit/view-container-padding.unit.mjs',
   // R2-INF-010: prova o contrato da resposta do `mcp_exec` no runner da suite de banco
   // (runner de verdade em child process, `fetch` stubbed); offline. A promoção a um bloco
   // `run:` de ci.yml é do dono do workflow.
   'scripts/db-tests/run-all.unit.mjs',
+  // Auditorias de layout/UI lidas do próprio repositório (offline). NÃO promovidas em
+  // SYNC20-32: 3 das suítes estão vermelhas na linha dia (título de Contatos e gutter de
+  // TalkX/Multiplix), então o glob `scripts/ui-audit/*.unit.mjs` fica fora do runner até a
+  // linha dia voltar verde — cartão próprio.
+  'scripts/ui-audit/contacts-navy-header.unit.mjs',
+  'scripts/ui-audit/layout-guard.unit.mjs',
+  'scripts/ui-audit/view-container-padding.unit.mjs',
 ]);
 
 // ── 1. .test.ts: disco vs ci.yml ───────────────────────────────────────────────

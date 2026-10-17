@@ -48,7 +48,7 @@ Há **cinco camadas**. Cada uma tem seu runner, seu diretório e seu motivo de e
 * Runner: **`node:test`** (nativo), sem framework. Predomina `*.unit.mjs`, mas a CI
   também roda contratos `.test.mjs` de `scripts/db-audit/`.
 * Comando (CI, passo "Test CI and Edge deployment guards"):
-  `node --test scripts/ci/*.unit.mjs scripts/edge-deploy/*.unit.mjs scripts/db-audit/crm-sync-outbox-contract.test.mjs scripts/db-audit/types-sync-psql-buffer.test.mjs scripts/talkx/*.unit.mjs`.
+  `node --test scripts/ci/*.unit.mjs scripts/edge-deploy/*.unit.mjs scripts/db-audit/crm-sync-outbox-contract.test.mjs scripts/db-audit/types-sync-psql-buffer.test.mjs scripts/talkx/*.unit.mjs scripts/lib/*.test.mjs scripts/qa/*.unit.mjs scripts/*.unit.mjs`.
 * Guarda de documentação entra aqui: quando um doc afirma algo do código, o teste lê os
   dois lados e falha se divergirem (ex.: `scripts/ci/dashboard-readme-drift.unit.mjs`).
 * Rodar um só: `node --test scripts/ci/<arquivo>.unit.mjs`.
@@ -78,8 +78,10 @@ Há **cinco camadas**. Cada uma tem seu runner, seu diretório e seu motivo de e
 
 * Nome do arquivo diz o que ele é: `.test.ts`/`.spec.ts` = suíte de código;
   `.unit.mjs` = guarda executável de CI. Em scripts, o passo da CI varre
-  `scripts/ci/*.unit.mjs`, `scripts/edge-deploy/*.unit.mjs`, `scripts/talkx/*.unit.mjs`
+  `scripts/ci/*.unit.mjs`, `scripts/edge-deploy/*.unit.mjs`, `scripts/talkx/*.unit.mjs`,
+  `scripts/lib/*.test.mjs`, `scripts/qa/*.unit.mjs`, `scripts/*.unit.mjs`
   e os dois contratos `.test.mjs` de `scripts/db-audit/`.
+  (`scripts/ui-audit/*.unit.mjs` ainda não roda na CI — 3 suítes vermelhas na linha dia.)
 * Teste que prova correção de defeito nasce **vermelho** e fica verde com a correção; teste
   que não falha sem a correção não prova nada.
 * Nada de produção: nenhuma camada acima aponta para banco, edge ou segredo de produção.

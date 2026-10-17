@@ -96,11 +96,17 @@ jobs:
           deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1
           $(git ls-files 'supabase/functions/**/*.test.ts')
 
+      # PR #1975 (reativar suites no runner): os globs abaixo cobrem suites que
+      # viviam só na ALLOWLIST_NODE do check-test-inventory (lib, qa, raiz de
+      # scripts). Resolucao SYNC20-32: a linha dia ja cobria talkx e edge-deploy;
+      # `scripts/ui-audit/*.unit.mjs` NAO entra (3 vermelhos reais na dia) e as
+      # 3 entradas correspondentes seguem na ALLOWLIST_NODE.
       - name: 🧪 Test CI and Edge deployment guards
         run: >-
           node --test scripts/ci/*.unit.mjs scripts/edge-deploy/*.unit.mjs
           scripts/db-audit/crm-sync-outbox-contract.test.mjs
           scripts/db-audit/types-sync-psql-buffer.test.mjs scripts/talkx/*.unit.mjs
+          scripts/lib/*.test.mjs scripts/qa/*.unit.mjs scripts/*.unit.mjs
 
       - name: 🐹 Setup Go for egress-proxy contracts
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
