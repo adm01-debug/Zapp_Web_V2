@@ -1,0 +1,5 @@
+versao,arquivo,area,classificacao,objetos,idempotente,rollback_tipo,replay_resultado,provas_lote1
+20261010180000,20261010180000_conversation_tasks_owner_status_completed_idx.sql,mensagens/inbox,ADITIVA,indice:conversation_tasks,sim,linha-sql,ok,indice presente=1 -> rollback=0 -> reaplicado=1
+20261010180001,20261010180001_conversation_tasks_owner_status_position_idx.sql,mensagens/inbox,ADITIVA,indice:conversation_tasks,sim,linha-sql,ok,indice presente=1 -> rollback=0 -> reaplicado=1
+20261011003025,20261011003025_fecha_get_profile_role_for_check.sql,perfis/diretorio,CORRETIVA,fn:get_profile_role_for_check,sim,bloco-executavel,ok,corpo com auth.uid()=1 -> rollback=0 -> reaplicado=1
+20261011140613,20261011140613_messages_group_sender.sql,mensagens/inbox,ADITIVA,tabela:messages,sim,bloco-executavel,ok,2 colunas presentes -> rollback=0 -> reaplicadas=2
