@@ -73,13 +73,16 @@ export function useTeamReadState(
 
       const respostas = await Promise.all(
         lotes.map(async lote => {
-          const { data, error } = await supabase
+          // `team_message_read_state` é view criada pelas migrations do copiloto e
+          // ainda não consta em types.ts — cast explícito até o types-sync incluí-la.
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const { data, error } = await (supabase as any)
             .from('team_message_read_state')
             .select('message_id, conversation_id, member_count, read_count, all_read')
             .eq('conversation_id', conversationId)
             .in('message_id', lote);
           if (error) throw error;
-          return data ?? [];
+          return (data ?? []) as TeamMessageReadState[];
         }),
       );
 
