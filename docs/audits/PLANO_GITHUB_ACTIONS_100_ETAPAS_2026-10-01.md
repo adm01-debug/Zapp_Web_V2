@@ -105,7 +105,7 @@ vigente de `required_status_checks` é **`strict=true`** (E15(b), 02/10); a inst
 | **E55** `timeout-minutes` da atestação | `[x]` **CONCLUÍDA** | PR #1757 — `.github/workflows/deploy-functions.yml` - `scripts/edge-deploy/stable-inventory.unit.mjs` | A prova é o teste do `lastReason`; **não** houve nova execução remota nesta reconciliação. |
 | **E56** regressão do log ANSI (`collect-remote.mjs`) | `[x]` **CONCLUÍDA** | PR #1754 — `scripts/edge-deploy/stable-inventory.unit.mjs` | Usa o log real do run 36852598923 já coletado; nenhum run novo foi disparado. |
 | **E62** destino do `db-migrate.yml` | `[~]` **PARCIAL** | PR #1778 extraiu 12 contratos para `scripts/db-audit/run-runtime-contract.mjs`; hoje `.github/workflows/db-migrate.yml` tem **1479 linhas** | A meta literal de ~150 linhas **não** se atinge e não pode justificar remover as validações pós-apply: as guardas de DB ficam. O alvo é organizar o contrato, não encolher por estética. |
-| **E76** `bunx playwright` sem pin de versão | `[~]` **AGUARDA RUNTIME** | `bun.lock` resolve `playwright@1.63.0`, `playwright-core@1.63.0` e `@playwright/test@1.63.0`; os **três** workflows pinam a mesma versão (`ci.yml:367`, `e2e-logado.yml:77`, `e2e-talkx.yml:74`) | **Não há mismatch** entre lock e workflows: a paridade 1.63.0 é real. Não registrar falso achado de versão. Remover o pin literal é opção da E75. |
+| **E76** `bunx playwright` sem pin de versão | `[~]` **AGUARDA RUNTIME** | `bun.lock` resolve `playwright@1.64.1`, `playwright-core@1.64.1` e `@playwright/test@1.64.1`; os **três** workflows pinam a mesma versão (`ci.yml` comentário no job e2e, `e2e-logado.yml:127`, `e2e-talkx.yml:91`) | **Não há mismatch** entre lock e workflows: a paridade 1.64.1 é real. Não registrar falso achado de versão. Remover o pin literal é opção da E75. |
 | **E93** settings de merge do repo | `[x]` **CONCLUÍDA** | `scripts/ci/github-settings-baseline.json` (`allow_merge_commit=false`, `allow_rebase_merge=false`, squash `PR_BODY`/`PR_TITLE`) | Medição por API do GitHub; o checkbox original vazio é que estava desatualizado. |
 | **E95** tabela canônica no `CLAUDE.md` | `[x]` **CONCLUÍDA** | Seção "Perímetro do GitHub — estado canônico" no `CLAUDE.md` + `docs/audits/e95-perimetro-github-2026-10-03.md` | Os campos de branch protection exigem `administration: read`: o guard recebe **403** e marca "NÃO VERIFICÁVEL". 403 é limite de evidência, **não** confirmação de configuração errada. |
 | **E96** `docs/ci/README.md` gerado | `[x]` **CONCLUÍDA** | PR #1859 — `docs/ci/README.md` + `scripts/ci/render-workflow-docs.mjs`; README declara **16 workflows** e `--check` é verde | O `--check` prova que o doc acompanha os YAML; ele não prova runtime nenhum. |
@@ -784,7 +784,7 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
   `supabase-cli`, `playwright`, `postgres-image`) lido pelos workflows via um passo `Carregar toolchain` que escreve
   `GITHUB_ENV`; `check-workflow-pins.mjs` falha se um YAML literalizar uma versão. Verificação: grep de `1.4.0` nos
   YAML → 0.
-- [~] **E76** · B · G-20 · `e2e-talkx-pr.yml:59` `bunx playwright@1.63.0` → `bunx playwright` (versão do lockfile), e
+- [~] **E76** · B · G-20 · `e2e-talkx-pr.yml:59` `bunx playwright@1.64.1` → `bunx playwright` (versão do lockfile), e
   subir `@playwright/test` para a versão que os browsers instalados esperam, num PR só. Verificação: 3 engines verdes
   nos 3 workflows com a mesma versão.
 - [ ] **E77** · C · G-20 · Dependabot: adicionar `package-ecosystem: docker` (não existe Dockerfile → usar

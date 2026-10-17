@@ -20,6 +20,12 @@ on:
   schedule:
     - cron: '13 6 * * 1'
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/**'
+      - 'scripts/db-audit/**'
+      - '.github/workflows/db-live-guard.yml'
 
 defaults:
   run:

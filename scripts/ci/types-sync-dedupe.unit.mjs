@@ -62,7 +62,7 @@ const CAUSA_NO_CODIGO = /<!-- causa:/.test(codigo);
 
 /** Sobe o passo real contra `github`/`context`/`core` falsos e devolve as chamadas. */
 async function executar({ gates = {}, abertas = [], comentarios = [] }) {
-  const chamadas = { criadas: [], comentadas: [], labels: [], infos: [] };
+  const chamadas = { criadas: [], comentadas: [], labels: [], infos: [], updates: [] };
   assert.ok(TITULO, 'nao consegui ler o titulo da issue do bloco real do passo');
 
   const paginar = ({ per_page = 30, page = 1 } = {}) => {
@@ -86,6 +86,7 @@ async function executar({ gates = {}, abertas = [], comentarios = [] }) {
         createComment: async (p) => { chamadas.comentadas.push(p); return { data: {} }; },
         create: async (p) => { chamadas.criadas.push(p); return { data: {} }; },
         createLabel: async (p) => { chamadas.labels.push(p); return { data: {} }; },
+        update: async (p) => { chamadas.updates.push(p); return { data: {} }; },
       },
     },
   };

@@ -356,7 +356,7 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.bun/install/cache
-          key: bun-${{ hashFiles('bun.lock') }}-${{ runner.os }}
+          key: bun-${{ hashFiles('bun.lock') }}
           restore-keys: bun-
 
       - name: Instalar dependencias
@@ -522,7 +522,26 @@ jobs:
               const ultimaPaginaMatch = (primeira.headers?.link || '')
                 .match(/[?&]page=(\d+)[^>]*>;\s*rel="last"/);
               const ultimaPagina = ultimaPaginaMatch ? Number(ultimaPaginaMatch[1]) : 1;
+              // E20: dedupe ANTES da rotacao — se a causa nao mudou e tem < 6h,
+              // suprimir sem criar comentario, independente do numero de paginas.
+              // (Bug original: rotacao disparava primeiro quando ultimaPagina > 20,
+              // criando comentario mesmo quando deveria ser suprimido pelo dedupe.)
+              const { data: comentarios } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                per_page: 1,
+                page: ultimaPagina
+              });
+              const ultimo = comentarios[0];
+              const causaAnterior = ultimo?.body?.match(/<!-- causa:([a-z-]+) -->/)?.[1] ?? null;
+              const idadeUltimoMs = ultimo ? Date.now() - new Date(ultimo.created_at).getTime() : Infinity;
+              if (causaAnterior === causa && idadeUltimoMs < 6 * 60 * 60 * 1000) {
+                core.info(`Dedupe: mesma causa (${causa}) ha menos de 6h; comentario suprimido.`);
+                return;
+              }
               // W91/E51: rotacionar issue apos 20 comentarios para manter legibilidade.
+              // So chega aqui se o dedupe nao suprimiu (causa nova ou >6h).
               if (ultimaPagina > 20) {
                 await github.rest.issues.createComment({
                   owner: context.repo.owner, repo: context.repo.repo,
@@ -540,20 +559,6 @@ jobs:
                   body: `Continuação de #${existing.number} (fechada por atingir ${ultimaPagina} comentários — E51/W91).\n\n---\n\n${body}`,
                   labels: ['types-sync'],
                 });
-                return;
-              }
-              const { data: comentarios } = await github.rest.issues.listComments({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: existing.number,
-                per_page: 1,
-                page: ultimaPagina
-              });
-              const ultimo = comentarios[0];
-              const causaAnterior = ultimo?.body?.match(/<!-- causa:([a-z-]+) -->/)?.[1] ?? null;
-              const idadeUltimoMs = ultimo ? Date.now() - new Date(ultimo.created_at).getTime() : Infinity;
-              if (causaAnterior === causa && idadeUltimoMs < 6 * 60 * 60 * 1000) {
-                core.info(`Dedupe: mesma causa (${causa}) ha menos de 6h; comentario suprimido.`);
                 return;
               }
               await github.rest.issues.createComment({

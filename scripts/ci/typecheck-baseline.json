@@ -1,5 +1,1 @@
-{
-  "schemaVersion": 2,
-  "command": "tsc -b --force",
-  "issues": []
-}
+{"schemaVersion": 2, "command": "tsc -b --force", "issues": []}
