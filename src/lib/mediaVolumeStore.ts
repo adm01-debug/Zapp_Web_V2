@@ -133,7 +133,9 @@ function readPersistedMuted(raw: string | null): boolean {
 }
 
 function isSupabaseSessionKey(key: string | null): boolean {
-  return Boolean(key && key.startsWith(SUPABASE_SESSION_KEY_PREFIX) && key.endsWith(SUPABASE_SESSION_KEY_SUFFIX));
+  return Boolean(
+    key && key.startsWith(SUPABASE_SESSION_KEY_PREFIX) && key.endsWith(SUPABASE_SESSION_KEY_SUFFIX)
+  );
 }
 
 /**
@@ -153,7 +155,8 @@ function readAuthenticatedUserId(): string | null {
       if (!raw) continue;
       const parsed = JSON.parse(raw) as { access_token?: unknown; user?: { id?: unknown } } | null;
       const userId = parsed?.user?.id;
-      if (typeof parsed?.access_token === 'string' && typeof userId === 'string' && userId) return userId;
+      if (typeof parsed?.access_token === 'string' && typeof userId === 'string' && userId)
+        return userId;
     }
     return null;
   } catch {
@@ -183,8 +186,10 @@ function migrateLegacyKeys(userId: string | null): void {
   const keys = mediaVolumeStorageKeys(userId);
   const legacyVolume = readStorage(MEDIA_VOLUME_STORAGE_KEYS.volume);
   const legacyMuted = readStorage(MEDIA_VOLUME_STORAGE_KEYS.muted);
-  if (legacyVolume !== null && readStorage(keys.volume) === null) writeStorage(keys.volume, legacyVolume);
-  if (legacyMuted !== null && readStorage(keys.muted) === null) writeStorage(keys.muted, legacyMuted);
+  if (legacyVolume !== null && readStorage(keys.volume) === null)
+    writeStorage(keys.volume, legacyVolume);
+  if (legacyMuted !== null && readStorage(keys.muted) === null)
+    writeStorage(keys.muted, legacyMuted);
   writeStorage(MEDIA_VOLUME_LEGACY_MIGRATION_KEY, '1');
 }
 
@@ -245,7 +250,11 @@ function applyExternalState(payload: unknown): void {
   if (!payload || typeof payload !== 'object') return;
   // A identidade pode ter mudado desde o último evento (login/logout em outra aba).
   syncIdentity(false);
-  const { userId, volume, muted } = payload as { userId?: unknown; volume?: unknown; muted?: unknown };
+  const { userId, volume, muted } = payload as {
+    userId?: unknown;
+    volume?: unknown;
+    muted?: unknown;
+  };
   // Outra conta no mesmo navegador não manda no meu volume (é o B7 de novo, agora entre abas).
   if (userId !== currentUserId) return;
   const patch: Partial<MediaVolumeState> = {};

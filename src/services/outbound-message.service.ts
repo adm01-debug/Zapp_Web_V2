@@ -11,7 +11,8 @@ import {
 } from '@/lib/offlineQueue';
 import { sendThrottle } from '@/lib/sendThrottle';
 
-export type OutboundMessageType = 'text' | 'image' | 'audio' | 'video' | 'document' | 'sticker' | 'location';
+export type OutboundMessageType =
+  'text' | 'image' | 'audio' | 'video' | 'document' | 'sticker' | 'location';
 
 export interface SendOutboundMessageInput {
   contactId: string;
@@ -60,7 +61,10 @@ interface QueuedMessage {
 }
 
 interface AtomicQueueRpc {
-  rpc: (name: string, args: Record<string, unknown>) => Promise<{
+  rpc: (
+    name: string,
+    args: Record<string, unknown>
+  ) => Promise<{
     data: QueuedMessage | null;
     error: Error | null;
   }>;
@@ -93,7 +97,9 @@ const pendingActionIds = new Map<string, PendingAction>();
 
 function createClientMessageId(): string {
   if (typeof crypto?.randomUUID !== 'function') {
-    throw new Error('Seu navegador não suporta identificadores de entrega seguros. Atualize-o e tente novamente.');
+    throw new Error(
+      'Seu navegador não suporta identificadores de entrega seguros. Atualize-o e tente novamente.'
+    );
   }
   return crypto.randomUUID();
 }
@@ -105,7 +111,7 @@ function actionKey(input: SendOutboundMessageInput | RichOutboundMessageInput): 
     input.contactId,
     input.messageType ?? 'text',
     rich ? input.displayContent : input.content,
-    rich ? input.deliveryPayload : input.mediaUrl ?? null,
+    rich ? input.deliveryPayload : (input.mediaUrl ?? null),
     input.replyToId ?? null,
     input.whatsappConnectionId ?? null,
   ]);
@@ -197,7 +203,7 @@ async function enqueueOrResendAfterDefinitiveFailure(
   enqueue: (clientMessageId: string) => Promise<EnqueueResult>,
   clientMessageId: string,
   key: string | null,
-  offline: boolean,
+  offline: boolean
 ): Promise<ResultadoEnqueue> {
   // Adotante espaçado pelo throttle: o dono já concluiu e aposentou este id
   // antes do nosso enqueue — nem enqueue fazemos, adotamos a entrega.
@@ -229,7 +235,11 @@ async function enqueueOrResendAfterDefinitiveFailure(
 }
 
 /** Conclui o voo do reenvio para os adotantes e o tira do mapa. */
-function concluirVooReenvio(key: string | null, voo: VooReenvio, entrega: OutboundMessageDeliveryResult): void {
+function concluirVooReenvio(
+  key: string | null,
+  voo: VooReenvio,
+  entrega: OutboundMessageDeliveryResult
+): void {
   try {
     voo.concluir(entrega);
   } finally {
@@ -285,26 +295,27 @@ async function enqueueAndDispatch(
   input: SendOutboundMessageInput,
   clientMessageId: string,
   key: string | null,
-  offline = false,
+  offline = false
 ): Promise<OutboundMessageDeliveryResult> {
   // Generated database types intentionally stay bound to the canonical
   // database until the controlled migration is applied. This narrow transport
   // shape is removed by the post-deploy type-sync workflow.
   const rpcClient = supabase as unknown as AtomicQueueRpc;
   const resultado = await enqueueOrResendAfterDefinitiveFailure(
-    (id) => rpcClient.rpc('enqueue_outbound_message', {
-      p_contact_id: input.contactId,
-      p_client_message_id: id,
-      p_content: input.content,
-      p_message_type: input.messageType ?? 'text',
-      p_media_url: input.mediaUrl ?? undefined,
-      p_reply_to_id: input.replyToId ?? undefined,
-      p_whatsapp_connection_id: input.whatsappConnectionId ?? undefined,
-      p_caption: input.caption ?? undefined,
-    }),
+    (id) =>
+      rpcClient.rpc('enqueue_outbound_message', {
+        p_contact_id: input.contactId,
+        p_client_message_id: id,
+        p_content: input.content,
+        p_message_type: input.messageType ?? 'text',
+        p_media_url: input.mediaUrl ?? undefined,
+        p_reply_to_id: input.replyToId ?? undefined,
+        p_whatsapp_connection_id: input.whatsappConnectionId ?? undefined,
+        p_caption: input.caption ?? undefined,
+      }),
     clientMessageId,
     key,
-    offline,
+    offline
   );
   // Adotante do duplo clique concorrente: o dono despacha, aqui só se aguarda
   // o mesmo voo — um dispatch só para a ação.
@@ -317,7 +328,11 @@ async function enqueueAndDispatch(
     throw erro;
   }
   try {
-    const entrega = await dispatchQueuedMessage(queuedId, queued.data?.status ?? null, queued.data?.external_id ?? null);
+    const entrega = await dispatchQueuedMessage(
+      queuedId,
+      queued.data?.status ?? null,
+      queued.data?.external_id ?? null
+    );
     // Limpa com o id efetivamente usado (novo após falha definitiva): a guarda
     // impede uma chamada antiga de apagar a chave de uma ação mais nova.
     clearPendingAction(key, usedId);
@@ -349,7 +364,7 @@ async function deliverQueuedOfflineMessage(message: OfflineQueuedMessage): Promi
     },
     message.clientMessageId,
     null,
-    true,
+    true
   );
   // Entrega concluída: a chave da ação morre junto. Sem isso, o mesmo texto
   // enviado depois pela aba reaproveitaria o id já entregue e a Edge o
@@ -386,7 +401,7 @@ drainOfflineQueueOnReconnect(offlineSendQueue, deliverQueuedOfflineMessage, {
 
 async function enqueueOffline(
   input: SendOutboundMessageInput,
-  clientMessageId: string,
+  clientMessageId: string
 ): Promise<OutboundMessageDeliveryResult> {
   const queued = await offlineSendQueue.enqueue({
     clientMessageId,
@@ -414,7 +429,7 @@ async function enqueueOffline(
  * e com a rede caída a mensagem espera na fila local em vez de se perder (025).
  */
 export async function sendOutboundMessage(
-  input: SendOutboundMessageInput,
+  input: SendOutboundMessageInput
 ): Promise<OutboundMessageDeliveryResult> {
   const { id: clientMessageId, key } = resolveClientMessageId(input);
 
@@ -451,7 +466,7 @@ export async function sendOutboundMessage(
 async function dispatchQueuedMessage(
   messageId: string,
   queuedStatus: string | null,
-  queuedExternalId: string | null,
+  queuedExternalId: string | null
 ): Promise<OutboundMessageDeliveryResult> {
   const { data: deliveryData, error: deliveryError } = await invokeEdge('message-delivery', {
     body: { messageId },
@@ -476,23 +491,24 @@ async function dispatchQueuedMessage(
 
 /** Queue an outbound poll, contact card or interactive message (buttons/list) with an immutable transport payload. */
 export async function sendRichOutboundMessage(
-  input: RichOutboundMessageInput,
+  input: RichOutboundMessageInput
 ): Promise<OutboundMessageDeliveryResult> {
   const { id: clientMessageId, key } = resolveClientMessageId(input);
   const rpcClient = supabase as unknown as AtomicQueueRpc;
   const resultado = await enqueueOrResendAfterDefinitiveFailure(
-    (id) => rpcClient.rpc('enqueue_rich_outbound_message', {
-      p_contact_id: input.contactId,
-      p_client_message_id: id,
-      p_display_content: input.displayContent,
-      p_message_type: input.messageType,
-      p_delivery_payload: input.deliveryPayload,
-      p_reply_to_id: input.replyToId ?? undefined,
-      p_whatsapp_connection_id: input.whatsappConnectionId ?? undefined,
-    }),
+    (id) =>
+      rpcClient.rpc('enqueue_rich_outbound_message', {
+        p_contact_id: input.contactId,
+        p_client_message_id: id,
+        p_display_content: input.displayContent,
+        p_message_type: input.messageType,
+        p_delivery_payload: input.deliveryPayload,
+        p_reply_to_id: input.replyToId ?? undefined,
+        p_whatsapp_connection_id: input.whatsappConnectionId ?? undefined,
+      }),
     clientMessageId,
     key,
-    false,
+    false
   );
   if (resultado.tipo === 'adotado') return resultado.voo;
   const { queued, usedId, voo } = resultado;
@@ -503,7 +519,11 @@ export async function sendRichOutboundMessage(
     throw erro;
   }
   try {
-    const result = await dispatchQueuedMessage(queuedId, queued.data?.status ?? null, queued.data?.external_id ?? null);
+    const result = await dispatchQueuedMessage(
+      queuedId,
+      queued.data?.status ?? null,
+      queued.data?.external_id ?? null
+    );
     clearPendingAction(key, usedId);
     if (voo) {
       aposentarIdDeReenvio(clientMessageId, result);
