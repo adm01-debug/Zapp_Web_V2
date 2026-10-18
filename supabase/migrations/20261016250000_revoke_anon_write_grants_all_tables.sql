@@ -1,0 +1,21 @@
+-- Z054-Z055: REVOKE INSERT, UPDATE, DELETE de anon em todas as tabelas do schema public
+--
+-- Diagnóstico (2026-10-18): 343 grants encontrados — anon tinha INSERT, UPDATE e DELETE
+-- em ~85 tabelas de negócio sensíveis (campaigns, security_alerts, permissions,
+-- mfa_sessions, user_roles, global_settings, etc.).
+--
+-- Contexto de segurança:
+--   • RLS está ATIVO em todas as tabelas (Z038 = 0 tabelas sem RLS).
+--   • Nenhuma policy concede acesso de escrita a anon (Z037 = apenas 1 policy de BLOQUEIO
+--     em webauthn_challenges — "Block anon access to webauthn challenges").
+--   • Os grants eram resultado de um GRANT ... ON ALL TABLES globalmente, padrão Supabase
+--     que delega o controle ao RLS — mas seguindo o princípio de menor privilégio,
+--     grants desnecessários devem ser removidos.
+--
+-- Efeito: nenhuma quebra funcional esperada, pois o RLS já bloqueava o acesso.
+-- Qualquer tabela que futuramente precise de acesso anon receberá GRANT explícito e
+-- acompanhado de policy RLS permissiva documentada.
+--
+-- Rollback: GRANT INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO anon;
+
+REVOKE INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public FROM anon;
