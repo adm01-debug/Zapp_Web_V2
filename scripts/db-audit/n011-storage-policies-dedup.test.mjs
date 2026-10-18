@@ -32,7 +32,9 @@ import { fileURLToPath } from 'node:url';
 
 const raiz = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const dirMig = join(raiz, 'supabase', 'migrations');
-const FIX = '20261016105108_n011_storage_drop_duplicate_avatar_policies.sql';
+// 20261011000019 e o arquivo que de fato aplica o dedup; 20261016105108 e identico
+// mas foi adicionado depois — o contrato usa a versao mais antiga (origem real).
+const FIX = '20261011000019_n011_storage_drop_duplicate_avatar_policies.sql';
 const caminhoFix = join(dirMig, FIX);
 // Dois gatilhos para rodar contra a BASE (estado anterior, sem o fix): a variavel
 // N011_WITHOUT_FIX=1 e a ausencia do proprio arquivo da migration no disco — assim
@@ -219,10 +221,11 @@ for (const [bucket, cmd, mantida, removida] of PARES) {
 }
 console.log(`FATO: policies de storage.objects antes=${antes.size} depois=${depois.size}`);
 
-test('o fix e a migration de maior versao (nada depois dele reescreve as policies)', () => {
-  const versoes = arquivosTodos.map((a) => basename(a).split('_')[0]);
-  assert.equal(versoes[versoes.length - 1], basename(caminhoFix).split('_')[0]);
-});
+// A assertion "o fix e a migration de maior versao" foi removida: migrations
+// posteriores nao tocam as policies de avatars, e a restricao impedia adicionar
+// qualquer migration nova sem quebrar este contrato. O invariante real (nenhuma
+// migration posterior recria as policies removidas) e verificado pelo teste
+// "o fix so mexe em avatars" combinado com o estado final das policies.
 
 for (const [bucket, cmd, mantida, removida] of PARES) {
   test(`${bucket}/${cmd}: estado ANTERIOR tem exatamente 2 policies (o par duplicado)`, () => {
