@@ -185,7 +185,7 @@ function loadEvidence(filePath) {
         ? [
           'file_sha256', 'file_sql_sha256', 'filename', 'justification', 'kind',
           'ledger_name', 'ledger_sql_sha256', 'ledger_statements_sha256',
-          'reason', 'related_migration', 'sql-sha256', 'version',
+          'reason', 'related_migration', 'version',
         ]
         : null;
     if (!expectedKeys) {

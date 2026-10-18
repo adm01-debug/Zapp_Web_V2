@@ -774,6 +774,7 @@
       "filename": "20261016240000_search_events_rls_decision.sql",
       "file_sha256": "65d54fca860da5150347b97c28c27d1865ece494baef8e3be6b48288181cf472",
       "ledger_name": "search_events_rls_decision",
+      "ledger_statements_sha256": "6a02ba1765e2fe299c7d5eec599a1a13443e3b9c5c31ad0884cb0b8182bf811b",
       "kind": "ledger-only/comment-only",
       "justification": "Arquivo contém apenas comentários documentando a decisão arquitetural P2 de não ter SELECT policy em search_events. Nenhuma DDL executável. Registrado no ledger com statements={} para documentação de decisão de arquitetura (P2)."
     }
