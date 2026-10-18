@@ -272,7 +272,7 @@ test('E68: browser do Playwright é cacheado e o download só roda em cache miss
     const chave = /^ {10}key:\s*(.+?)\s*$/m.exec(cache)?.[1] ?? '';
     const conjunto = /(?:^|[^a-z])pw-([cfw]+)-/.exec(chave)?.[1] ?? '';
     const instalados = Object.keys(LETRA)
-      .filter((b) => new RegExp(`install --with-deps[^\\n]*\\b${b}\\b`).test(texto))
+      .filter((b) => new RegExp(`install --with-deps[^\n]*\\b${b}\\b`).test(texto))
       .map((b) => LETRA[b])
       .sort()
       .join('');
