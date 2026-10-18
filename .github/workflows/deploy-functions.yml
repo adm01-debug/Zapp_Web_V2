@@ -445,6 +445,14 @@ jobs:
           EVIDENCIA="$RUNNER_TEMP/edge-deployment-evidence"
           node "$RUNNER_TEMP/edge-tooling/scripts/edge-deploy/deploy-plan.mjs" --manifest supabase/deployment-manifest.json --remoto "$EVIDENCIA/edge-before.json" --escopo "$FN" --saida "$EVIDENCIA/deploy-plan.json"
 
+      - name: Setup Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
+        with:
+          deno-version: '2.9.5'
+
+      - name: Typecheck das edge functions (deno check)
+        run: deno check supabase/functions/**/index.ts
+
       - name: Deploy
         if: inputs.dry_run != true
         env:

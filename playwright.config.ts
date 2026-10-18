@@ -32,6 +32,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   // E81: deslogado nao repete (ver RETRIES_LOGADOS no topo do arquivo).
   retries: 0,
+  // W75: 1 worker no CI (estabilidade), 2 localmente (velocidade).
   // The Email fixture boots a full Vite app and captures visual artifacts. A
   // bounded local pool prevents cold-start starvation that made otherwise
   // independent specs observe the module-loading fallback after five seconds.
