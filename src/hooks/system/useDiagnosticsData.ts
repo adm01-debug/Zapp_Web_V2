@@ -321,14 +321,32 @@ export function useDiagnosticsData() {
     const storageLatency = storageError ? null : Math.round(performance.now() - storageStart);
 
     // Totais ESTIMADOS: não varrem a tabela inteira a cada ciclo de polling.
+    // `messages` continua propagando (lança): coberto por
+    // `useDiagnosticsData.test.ts` ("erro na contagem estimada de messages
+    // também não passa em branco"), que espera o erro subir até
+    // `collectionError`/`errorLogs` do chamador — contrato já existente,
+    // não tocado aqui.
     const { count: messagesCount, error: messagesCountError } = await supabase
       .from('messages')
       .select('id', { count: 'estimated', head: true });
     if (messagesCountError) throw messagesCountError;
-    const { count: connectionsCount, error: connectionsCountError } = await supabase
-      .from('whatsapp_connections')
-      .select('id', { count: 'estimated', head: true });
-    if (connectionsCountError) throw connectionsCountError;
+    // N-216: `whatsapp_connections` ANTES também lançava direto — derrubava a
+    // função inteira (contactsCount/storageError/realtime já coletados com
+    // sucesso eram descartados) e "0 conexões" por falha de leitura ficava
+    // indistinguível de uma base genuinamente vazia. Captura como as sondas
+    // de contacts/storage acima: erro aqui é sinal de banco (`database`),
+    // não derruba o resto.
+    let connectionsCount: number | null = null;
+    let connectionsCountError: ProbeError | null = null;
+    try {
+      const { count, error } = await supabase
+        .from('whatsapp_connections')
+        .select('id', { count: 'estimated', head: true });
+      connectionsCount = count ?? null;
+      connectionsCountError = error ?? null;
+    } catch (err) {
+      connectionsCountError = err as ProbeError;
+    }
 
     const realtime = await probeRealtime();
 
@@ -351,7 +369,10 @@ export function useDiagnosticsData() {
     const lastHealthCheckAt = healthCheckLogs[0]?.checked_at ?? null;
 
     setHealth({
-      database: classifyHealth(dbError, dbLatency, 500, 2000),
+      // Latência fica só da sonda de `contacts` (é a única com medição); erro
+      // na contagem de conexões também é sinal de banco indisponível, não
+      // "0 conexões" saudável.
+      database: classifyHealth(dbError ?? connectionsCountError, dbLatency, 500, 2000),
       storage: classifyHealth(storageError, storageLatency, 1000, 3000),
       realtime: realtime.status,
       edgeFunctions: classifyHeartbeat(heartbeatError, lastHealthCheckAt, Date.now()),
