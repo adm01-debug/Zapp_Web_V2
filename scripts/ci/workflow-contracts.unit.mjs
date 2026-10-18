@@ -640,3 +640,35 @@ test('W71: e2e-logado não roda quando workflow_run falhou', () => {
     'e2e-logado.yml perdeu o guard if: conclusion == success — E2E roda mesmo com CI falho',
   );
 });
+
+test('W72: auth.setup.ts tem teto de 180 s e timeout curto no goto /auth', async () => {
+  // W72 (2026-10-18): o setup de autenticação precisa falhar rápido (<2 min) quando
+  // a credencial está errada ou o app não responde — não travar o job por 15 min.
+  const texto = await readFile(
+    new URL('../../e2e/auth.setup.ts', import.meta.url),
+    'utf8',
+  );
+  assert.ok(
+    /setup\.setTimeout\(180_000\)/.test(texto),
+    'auth.setup.ts perdeu setup.setTimeout(180_000) — job vai travar 15 min com senha errada',
+  );
+  assert.ok(
+    /page\.goto\([^)]*timeout:\s*15_000/.test(texto),
+    'auth.setup.ts perdeu o timeout:15_000 no page.goto("/auth") — não distingue "app fora" de "credencial errada"',
+  );
+});
+
+test('W73: curl do teardown CT-82 em e2e-logado.yml tem --max-time', () => {
+  // W73 (2026-10-18): o teardown de catalog_send_events usa curl para DELETE via
+  // REST. Sem --max-time o runner pode travar ad infinitum se o endpoint não
+  // responder. O W73 original era especificamente sobre este curl; demais workflows
+  // são cobertos separadamente.
+  const texto = wf['e2e-logado.yml'];
+  assert.ok(texto, 'e2e-logado.yml sumiu');
+  // Verifica que o bloco do teardown CT-82 tem --max-time
+  assert.ok(
+    /catalog_send_events[\s\S]{0,300}--max-time/.test(texto) ||
+    /--max-time[\s\S]{0,300}catalog_send_events/.test(texto),
+    'e2e-logado.yml: curl do teardown de catalog_send_events perdeu --max-time — runner pode travar',
+  );
+});
