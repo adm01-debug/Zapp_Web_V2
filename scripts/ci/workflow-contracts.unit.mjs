@@ -300,6 +300,39 @@ test('E68: browser do Playwright é cacheado e o download só roda em cache miss
   assert.deepEqual(problemas, [], `cache dos browsers Playwright:\n${problemas.join('\n')}`);
 });
 
+test('W60: contents:write só onde há git push / tag', () => {
+  // contents:write dá ao GITHUB_TOKEN capacidade de criar branch, tag e commit.
+  // É uma permissão elevada que só faz sentido quando o job de fato escreve no
+  // repositório. Workflows que a declaram sem escrita real entregam capacidade
+  // extra desnecessariamente — blast radius de qualquer comprometimento do job.
+  //
+  // Indicadores de escrita legítima:
+  //   - `git push` / `git tag` num run:
+  //   - `gh api.*update-branch` (atualiza branch de PR via API)
+  //   - `peter-evans/create-pull-request` (cria commit + push internamente)
+  //   - createRef / createTag / update-ref (chamadas à API de refs)
+  const ESCRITA_RUN = /\bgit\s+(?:push|tag)\b|gh\s+api.*update-branch|createRef|createTag|update-ref/;
+  const ESCRITA_USES = /peter-evans\/create-pull-request@/;
+
+  const infratores = [];
+  for (const nome of nomes) {
+    const texto = wf[nome];
+    // Só verifica arquivos que declaram contents: write em nível de job/workflow
+    if (!/^\s+contents:\s+write\s*$/m.test(texto)) continue;
+    // Escrita em run: ou via action de criação de PR
+    const execRun = linhasExecutaveis(texto).some((l) => ESCRITA_RUN.test(l));
+    const execUses = ESCRITA_USES.test(texto);
+    if (!execRun && !execUses) {
+      infratores.push(nome);
+    }
+  }
+  assert.deepEqual(
+    infratores,
+    [],
+    `contents:write sem git push/tag em: ${infratores.join(', ')}`,
+  );
+});
+
 // E86 (auditoria de GitHub Actions, 2026-10-01): "avaliar `supabase start` +
 // seed mínimo em CI para a suíte logada". **Avaliado neste repositório e NÃO
 // adotado** — e a decisão fica travada aqui, não no texto do plano:
