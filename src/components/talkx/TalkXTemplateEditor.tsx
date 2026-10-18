@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useSyncExternalStore } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useSyncExternalStore } from 'react';
 import {
   X, Check, Copy, ChevronLeft, ChevronRight, FileText, BarChart3, Image, Video, Music, Send, CheckCircle, XCircle, History, RotateCcw,
 } from 'lucide-react';
@@ -56,13 +56,19 @@ function usePainelLargo() {
 interface Props {
   templates: TalkXTemplate[];
   isLoading: boolean;
+  isError?: boolean;
+  error?: Error | null;
+  onRetry?: () => void;
   editing: TalkXTemplate | null;
+  /** Aba inicial do editor: 'ab' abre o painel de variações já expandido. */
+  initialTtab?: 'conteudo' | 'ab' | 'historico';
+  onActiveTemplateChange?: (t: TalkXTemplate | null) => void;
   onClose: () => void;
   /** X091 — clique do widget "Em andamento" abre o monitor da campanha. */
   onOpenMonitor?: (campaignId: string) => void;
 }
 
-export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, onOpenMonitor }: Props) {
+export function TalkXTemplateEditor({ templates, isLoading, editing, initialTtab, onClose, onOpenMonitor }: Props) {
   const {
     createTemplate, updateTemplate, duplicateTemplate, testTemplate, fetchVersionHistory, fetchVariants,
     saveVariant, deleteVariant, countVariantRecipients,
@@ -103,7 +109,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
   const [loadingVersions, setLoadingVersions] = useState(false);
   const [showVersions, setShowVersions] = useState(false);
   const [variants, setVariants] = useState<TemplateVariant[]>([]);
-  const [showVariants, setShowVariants] = useState(false);
+  const [showVariants, setShowVariants] = useState(initialTtab === 'ab');
   const [savingVariant, setSavingVariant] = useState(false);
   // R2-MOD-024: respostas atrasadas não podem contaminar o template seguinte.
   // `activeTemplateIdRef` guarda o template REALMENTE ativo agora (independe do
@@ -118,6 +124,12 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
   // passa a ser gaveta, aberta pelo botão do cabeçalho (mesmo corte do CSS).
   const larguraLarga = usePainelLargo();
   const [painelAberto, setPainelAberto] = useState(false);
+
+  // Quando abertura via initialTtab='ab', carrega variantes imediatamente.
+  useEffect(() => {
+    if (initialTtab === 'ab' && activeTemplateId) void loadVariants(activeTemplateId);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Fonte única de troca: invalida callbacks antigos no mesmo tick, antes do render.
   const activateTemplate = (templateId: string) => {
@@ -652,7 +664,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
           {/* E45: Variaveis customizadas */}
           <div>
             <p className="text-xs text-foreground-secondary mb-1.5">Variáveis personalizadas</p>
-            <p className="text-2xs text-muted-foreground mb-2">Defina variáveis próprias para este template. Serão inseridas como <span className="font-mono text-primary-glow">{'{{'}var{'}}'}</span> na mensagem.</p>
+            <p className="text-2xs text-muted-foreground mb-2">Defina variáveis próprias para este template. Serão inseridas como <span className="font-mono text-primary-glow">{'{{'+'var'+'}}'}</span> na mensagem.</p>
             <div className="flex items-center gap-2 flex-wrap mb-2">
               {eCustomVars.map((v) => (
                 <span key={v} className="flex items-center gap-1 h-7 px-2 rounded-lg bg-violeta/10 border border-violeta/20 text-xs font-mono text-[hsl(var(--violeta-text))]">
