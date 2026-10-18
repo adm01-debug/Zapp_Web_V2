@@ -27,7 +27,7 @@ function isOperationAllowed(action: string, table?: string | null, rpc?: string 
   return (ops as ReadonlyArray<string>).includes(action);
 }
 
-// ─── Telemetry helper ─────────────────────────────────────────
+// ─── Telemetry helper ──────────────────────────────────
 interface TelemetryPayload {
   operation: string;
   table_name?: string | null;
@@ -162,6 +162,7 @@ export async function handleExternalDbBridge(
           return errorResponse("Invalid select parameter", 400, req);
         }
         // deno-lint-ignore no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let query: any = supabaseAdmin.from(table).select(selectParam || "*", {
           count: (countMode as "exact" | "planned" | "estimated") || undefined,
         });
@@ -186,35 +187,6 @@ export async function handleExternalDbBridge(
         if (error) throw error;
         result = data;
         recordCount = Array.isArray(data) ? data.length : 1;
-      } else if (action === "insert" && table) {
-        const { data, error } = await supabaseAdmin.from(table).insert(params?.rows || params).select();
-        if (error) throw error;
-        result = data;
-        recordCount = Array.isArray(data) ? data.length : 1;
-      } else if (action === "update" && table) {
-        // deno-lint-ignore no-explicit-any
-        let query: any = supabaseAdmin.from(table).update(params?.values || {});
-        if (params?.match) {
-          for (const [k, v] of Object.entries(params.match)) {
-            query = query.eq(k, v as string);
-          }
-        }
-        const { data, error } = await query.select();
-        if (error) throw error;
-        result = data;
-        recordCount = Array.isArray(data) ? data.length : 0;
-      } else if (action === "delete" && table) {
-        // deno-lint-ignore no-explicit-any
-        let query: any = supabaseAdmin.from(table).delete();
-        if (params?.match) {
-          for (const [k, v] of Object.entries(params.match)) {
-            query = query.eq(k, v as string);
-          }
-        }
-        const { data, error } = await query.select();
-        if (error) throw error;
-        result = data;
-        recordCount = Array.isArray(data) ? data.length : 0;
       } else {
         return errorResponse("Invalid action or missing table/rpc", 400, req);
       }
