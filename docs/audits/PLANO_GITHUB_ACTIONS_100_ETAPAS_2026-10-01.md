@@ -500,15 +500,15 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
 - [x] **E16** · A · G-06 · Se E15=(a): **apagar** `auto-update-pr-branch.yml` (código morto desde sempre) e remover as
   referências no CLAUDE.md. Se E15=(b): ligar `allow_auto_merge` e reativar o gatilho `push`. Verificação: lista de
   workflows coerente com a decisão.
-- [~] **E17** · B · G-02/G-26 · `types-sync.yml`: antes de "Gerar candidatos", se existir PR aberta em
+- [x] **E17** · B · G-02/G-26 · FEITO (18/10/2026): debounce já implementado em `types-sync.yml:60–108` (job `preflight`; skipa se PR de sync com head < 20 min). `types-sync.yml`: antes de "Gerar candidatos", se existir PR aberta em
   `automation/types-sync` cujo head foi gerado há < 20 min, **encerrar o run** (`exit 0` com resumo) em vez de regenerar
   — debounce que impede o force-push a cada push da `main`. Verificação: 3 pushes seguidos na `main` em 10 min → 1 só
   atualização do PR.
-- [~] **E18** · B · G-26 · `types-sync.yml` `paths`: excluir os 4 artefatos que o próprio sync gera
+- [x] **E18** · B · G-26 · FEITO (18/10/2026): todos os 4 artefatos excluídos em `types-sync.yml:paths` (adicionados `!src/integrations/supabase/types.ts`, `!supabase/schema-catalog.json`, `!supabase/schema-manifest.json`). `types-sync.yml` `paths`: excluir os 4 artefatos que o próprio sync gera
   (`src/integrations/supabase/types.ts`, `supabase/schema-catalog.json`, `supabase/schema-manifest.json`,
   `scripts/db-audit/grants-baseline.json`) com `paths-ignore` combinado, para o merge do PR de sync não redisparar o
   sync. Verificação: merge de um PR `[auto]` não cria run de `types-sync`.
-- [ ] **E19** · B · G-17 · Redesenhar o Gate 3: em vez de contar linhas de `types.ts`, comparar **objetos**
+- [x] **E19** · B · G-17 · FEITO (18/10/2026): `scripts/db-audit/check-remocoes-destrutivas.mjs` + `scripts/ci/check-remocoes-destrutivas.unit.mjs` (7/7 testes), integrado em `types-sync.yml:442`. Redesenhar o Gate 3: em vez de contar linhas de `types.ts`, comparar **objetos**
   (tabelas/views/funções/enums removidos) usando `supabase/schema-catalog.json` antigo × novo; bloquear só remoção de
   tabela/view com call-site no `src/` (reaproveitar `supabase-usage-guard.mjs` em modo projeção). Troca de assinatura
   (DROP+CREATE mesmo nome) passa. Verificação: fixture com a `20260930390000` passa; fixture com `DROP TABLE
@@ -520,7 +520,7 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
   'automation/types-sync'` além de `head_sha`. Verificação: unit test com run de outra branch no mesmo SHA → não
   aprovado.
   — FEITO (18/10/2026): `head_branch: 'automation/types-sync'` em types-sync.yml:694; 3 testes E21 em `types-sync-workflow.unit.mjs` passando (incluindo "run de outra branch não aprovado").
-- [~] **E22** · B · G-02 · `types-sync.yml`: usar `peter-evans/create-pull-request` com `branch-suffix: ''` e
+- [x] **E22** · B · G-02 · FEITO (18/10/2026): `labels: types-sync,automerge-ok` em `types-sync.yml:634`; `gh pr merge --auto --squash` em `types-sync.yml:754`. `types-sync.yml`: usar `peter-evans/create-pull-request` com `branch-suffix: ''` e
   `delete-branch: true` (já tem) **mais** `labels: types-sync,automerge-ok`; se E15=(b), habilitar auto-merge no PR via
   `gh pr merge --auto --squash` no passo seguinte. Verificação: PR de sync mergeia sozinho quando verde.
 

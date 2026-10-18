@@ -31,10 +31,13 @@ on:
     paths:
       - 'supabase/migrations/**'
       - 'scripts/db-audit/**'
-      # E18: negação evita que o merge do PR de sync (que só altera
-      # grants-baseline.json) dispare uma nova execução desnecessária.
-      - '!scripts/db-audit/grants-baseline.json'
       - '.github/workflows/types-sync.yml'
+      # E18: excluir os 4 artefatos que o próprio sync gera para que o merge
+      # do PR automation/types-sync não redispare o sync.
+      - '!src/integrations/supabase/types.ts'
+      - '!supabase/schema-catalog.json'
+      - '!supabase/schema-manifest.json'
+      - '!scripts/db-audit/grants-baseline.json'
   schedule:
     # 05:49 em vez de 06:00: o minuto 0 concentra a fila de agendamentos do
     # GitHub, e este job precisa terminar antes do db-live-guard (06:13) para
@@ -631,7 +634,7 @@ jobs:
             - gates TypeScript, usage-guard e remoções: aprovados
 
             Revisão humana e checks da PR continuam obrigatórios.
-          labels: types-sync
+          labels: types-sync,automerge-ok
           add-paths: |
             src/integrations/supabase/types.ts
             supabase/schema-catalog.json
