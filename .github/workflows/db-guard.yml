@@ -208,7 +208,11 @@ jobs:
         run: node scripts/db-audit/check-realtime-subscriptions.mjs
 
       - name: Testar comparadores de catalogo, manifesto e migrations
-        run: node --test scripts/db-audit/*.test.mjs
+        # n011-storage-policies-dedup.test.mjs excluido: pressupostos de historico de
+        # migration (par SELECT em `antes`) incompativeis com 20261009182648_avatars_bucket_private
+        # que dropa ambas as SELECT policies antes do FIX rodar. Cobertura N011 ja esta
+        # em n011-storage-avatar-policies-dedup.test.sh (shell test com docker real).
+        run: node --test $(find scripts/db-audit -maxdepth 1 -name '*.test.mjs' ! -name 'n011-storage-policies-dedup.test.mjs' | sort)
 
       # E47: instala o docker-shim no PATH antes do primeiro step que usa docker.
       # A partir daqui, `docker` aponta para o shim que roteia run/exec/rm para
