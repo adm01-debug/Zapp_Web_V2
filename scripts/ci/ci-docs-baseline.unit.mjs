@@ -437,3 +437,39 @@ test('plano: tabela de abertura (E01/E13/E14/E16) preserva as evidencias medidas
   }
   assert.deepEqual(violacoesTabelaAbertura(plano), []);
 });
+
+// W95: CONTRIBUTING.md deve referenciar o stack e o fluxo atuais
+const CONTRIBUTING = join(RAIZ, 'CONTRIBUTING.md');
+
+test('W95 CONTRIBUTING.md: usa bun (nao npm)', async () => {
+  const texto = await readFile(CONTRIBUTING, 'utf8');
+  assert.ok(!texto.includes('npm install'), 'nao deve conter "npm install"');
+  assert.ok(!texto.includes('npm run'), 'nao deve conter "npm run"');
+  assert.match(texto, /bun install/);
+});
+
+test('W95 CONTRIBUTING.md: nome correto do repositorio', async () => {
+  const texto = await readFile(CONTRIBUTING, 'utf8');
+  assert.ok(!texto.includes('zapp-web.git'), 'nao deve conter o nome antigo do repo');
+  assert.match(texto, /Zapp_Web_V2/);
+});
+
+test('W95 CONTRIBUTING.md: cita branch do lote dia/AAAA-MM-DD', async () => {
+  const texto = await readFile(CONTRIBUTING, 'utf8');
+  assert.match(texto, /dia\/AAAA-MM-DD/);
+});
+
+test('W95 CONTRIBUTING.md: lista os 6 required checks', async () => {
+  const texto = await readFile(CONTRIBUTING, 'utf8');
+  assert.match(texto, /Lint.*TypeCheck|Lint & TypeCheck/);
+  assert.match(texto, /Unit Tests/);
+  assert.match(texto, /Build/);
+  assert.match(texto, /Security Audit/);
+  assert.match(texto, /Contrato DB offline/);
+  assert.match(texto, /E2E Tests/);
+});
+
+test('W95 CONTRIBUTING.md: nao referencia branch develop', async () => {
+  const texto = await readFile(CONTRIBUTING, 'utf8');
+  assert.ok(!texto.includes('`develop`'), 'nao deve referenciar branch develop');
+});
