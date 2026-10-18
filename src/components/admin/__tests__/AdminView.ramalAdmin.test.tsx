@@ -95,7 +95,7 @@ describe('AdminView — ramal do atendente no cadastro (PE-104/105)', () => {
     fireEvent.click(screen.getByRole('button', { name: /Salvar ramal/i }));
 
     await waitFor(() =>
-      expect(handleSaveRamal).toHaveBeenCalledWith('prof-1', '2001', 'segredo-sip'),
+      expect(handleSaveRamal).toHaveBeenCalledWith('prof-1', '2001', 'segredo-sip')
     );
   });
 });
