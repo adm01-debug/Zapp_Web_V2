@@ -694,6 +694,39 @@ test('W72: auth.setup.ts tem teto de 180 s e timeout curto no goto /auth', async
   );
 });
 
+test('GA10: notifica-falha-main — todo nome em workflow_run.workflows existe como name: num workflow', () => {
+  // GA10 (2026-10-18): renomear um workflow sem atualizar notifica-falha-main.yml
+  // faz o alerta deixar de disparar silenciosamente. O contrato prova que cada
+  // entrada de workflows: tem um workflow real com aquele name:.
+  const notifica = wf['notifica-falha-main.yml'];
+  assert.ok(notifica, 'notifica-falha-main.yml sumiu');
+
+  // Extrai a lista de nomes do bloco `workflow_run.workflows:`
+  const blocoWorkflows = notifica.match(/workflow_run:\s*\n\s+workflows:\s*\n((?:\s+-[^\n]+\n?)+)/);
+  assert.ok(blocoWorkflows, 'notifica-falha-main.yml perdeu o bloco workflow_run.workflows:');
+  const nomesMonitorados = [...blocoWorkflows[1].matchAll(/^\s+-\s+(.+)$/gm)].map((m) =>
+    m[1].trim(),
+  );
+  assert.ok(
+    nomesMonitorados.length > 0,
+    'notifica-falha-main.yml não tem nenhum workflow em workflow_run.workflows:',
+  );
+
+  // Todos os name: de todos os workflows carregados
+  const nomesExistentes = new Set(
+    Object.values(wf)
+      .flatMap((txt) => [...txt.matchAll(/^name:\s*(.+)$/gm)])
+      .map((m) => m[1].trim()),
+  );
+
+  const ausentes = nomesMonitorados.filter((n) => !nomesExistentes.has(n));
+  assert.deepEqual(
+    ausentes,
+    [],
+    `GA10: estes nomes em notifica-falha-main.yml não existem como name: em nenhum workflow:\n${ausentes.join('\n')}`,
+  );
+});
+
 test('W73: todo curl em workflow tem --max-time (runner não trava ad infinitum)', () => {
   // W73 (2026-10-18): curl sem --max-time pode prender o runner indefinidamente.
   // Este contrato verifica que cada chamada curl em todos os workflows define
