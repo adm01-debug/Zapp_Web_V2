@@ -100,6 +100,8 @@ describe('useAudioMemes — meme sempre na pasta do usuário (PK-16)', () => {
 
     expect(mocks.upload).not.toHaveBeenCalled();
     expect(result.current.pendingUpload).toBeNull();
-    expect(mocks.toastError).toHaveBeenCalledWith('Sessão expirada: entre novamente para enviar o áudio');
+    expect(mocks.toastError).toHaveBeenCalledWith(
+      'Sessão expirada: entre novamente para enviar o áudio'
+    );
   });
 });
