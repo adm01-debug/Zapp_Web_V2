@@ -194,6 +194,10 @@ function setup(totalThreads = 1738): { records: Records; client: QueryClient } {
   const records: Records = { list: [], count: [], other: [] };
   const threads = Array.from({ length: totalThreads }, (_, index) => makeThread(index + 1));
   vi.mocked(callGmailFunction).mockResolvedValue({ accounts: [MOCK_ACCOUNT] });
+  // PE-09: toda busca também chama a RPC search_email_threads (casa corpo/anexo,
+  // paginada por cursor) ANTES de montar o `.or()` de colunas da própria tabela —
+  // sem este mock a RPC devolve `undefined` e a busca inteira lança.
+  vi.mocked(supabase.rpc).mockResolvedValue({ data: [], error: null } as never);
   vi.mocked(supabase.from).mockImplementation((table: string) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return makeRecordingChain(
