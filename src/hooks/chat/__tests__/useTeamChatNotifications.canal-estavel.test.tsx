@@ -34,7 +34,7 @@ vi.mock('@/integrations/supabase/client', () => {
   consulta.eq = () => consulta;
   consulta.limit = () =>
     Promise.resolve(
-      h.erro ? { data: null, error: { message: h.erro } } : { data: h.membership, error: null },
+      h.erro ? { data: null, error: { message: h.erro } } : { data: h.membership, error: null }
     );
   return {
     supabase: {
@@ -147,7 +147,9 @@ describe('useTeamChatNotifications — canal estável (HZ5-09)', () => {
     client.setQueryData(queryKeys.inbox('eu'), [conversa([{ profile_id: 'eu', is_muted: false }])]);
 
     renderHook(() => useTeamChatNotifications(null), { wrapper: wrapper(client) });
-    await act(async () => { await h.handler!(mensagem()); });
+    await act(async () => {
+      await h.handler!(mensagem());
+    });
 
     expect(h.fromTables).not.toContain('team_conversation_members');
     expect(h.show).toHaveBeenCalledWith(expect.objectContaining({ title: '💬 Teams: Ana' }));
@@ -155,10 +157,14 @@ describe('useTeamChatNotifications — canal estável (HZ5-09)', () => {
 
   it('não notifica nem vai ao banco quando o cache diz que não é membro', async () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    client.setQueryData(queryKeys.inbox('eu'), [conversa([{ profile_id: 'outro', is_muted: false }])]);
+    client.setQueryData(queryKeys.inbox('eu'), [
+      conversa([{ profile_id: 'outro', is_muted: false }]),
+    ]);
 
     renderHook(() => useTeamChatNotifications(null), { wrapper: wrapper(client) });
-    await act(async () => { await h.handler!(mensagem()); });
+    await act(async () => {
+      await h.handler!(mensagem());
+    });
 
     expect(h.fromTables).not.toContain('team_conversation_members');
     expect(h.show).not.toHaveBeenCalled();
@@ -168,7 +174,9 @@ describe('useTeamChatNotifications — canal estável (HZ5-09)', () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
     renderHook(() => useTeamChatNotifications(null), { wrapper: wrapper(client) });
-    await act(async () => { await h.handler!(mensagem()); });
+    await act(async () => {
+      await h.handler!(mensagem());
+    });
 
     expect(h.fromTables).toContain('team_conversation_members');
     expect(h.show).toHaveBeenCalled();
@@ -179,7 +187,9 @@ describe('useTeamChatNotifications — canal estável (HZ5-09)', () => {
     client.setQueryData(queryKeys.inbox('eu'), [conversa([{ profile_id: 'eu', is_muted: true }])]);
 
     renderHook(() => useTeamChatNotifications(null), { wrapper: wrapper(client) });
-    await act(async () => { await h.handler!(mensagem()); });
+    await act(async () => {
+      await h.handler!(mensagem());
+    });
 
     expect(h.show).not.toHaveBeenCalled();
     expect(h.fromTables).not.toContain('team_conversation_members');
@@ -190,13 +200,15 @@ describe('useTeamChatNotifications — canal estável (HZ5-09)', () => {
     h.erro = 'permission denied';
 
     renderHook(() => useTeamChatNotifications(null), { wrapper: wrapper(client) });
-    await act(async () => { await h.handler!(mensagem()); });
+    await act(async () => {
+      await h.handler!(mensagem());
+    });
 
     expect(h.fromTables).toContain('team_conversation_members');
     expect(h.show).not.toHaveBeenCalled();
     expect(h.logWarn).toHaveBeenCalledWith(
       'Falha ao confirmar participação na conversa; sem notificação:',
-      'permission denied',
+      'permission denied'
     );
   });
 });
