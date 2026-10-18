@@ -37,6 +37,8 @@ vi.mock('@/lib/supabaseHelpers', () => ({
 vi.mock('@/hooks/auth/useAuth', () => ({ useAuth: () => ({ user: { id: 'u-1' } }) }));
 vi.mock('@/lib/logger', () => ({
   log: { debug: vi.fn(), error: vi.fn(), info: vi.fn(), warn: vi.fn() },
+  getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
 }));
 
 import { useDeviceDetection } from '@/hooks/ui/useDeviceDetection';

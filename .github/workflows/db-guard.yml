@@ -381,6 +381,10 @@ jobs:
       - name: Simular pedido anônimo de recuperação de senha (item 72)
         env:
           RECUPERACAO_ANONIMA_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          # E47: SKIP_DOCKER_SHIM=1 — o teste cria seu próprio container descartável
+          # via `docker run --rm -d` (linha 86 do script); o docker-shim redirecionaria
+          # esse comando para o container compartilhado, quebrando o isolamento do teste.
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/recuperacao-anonima-pedido-reset.test.sh
 
       # Item 265 (R2-AUTH-041): a consulta de custo do painel de IA recebia fim
@@ -496,6 +500,10 @@ jobs:
       - name: Simular recuperacao autenticada sem coluna reset_token (R2-DB-023)
         env:
           RESET_GATILHO_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          # E47: SKIP_DOCKER_SHIM=1 — o teste cria seu próprio container descartável
+          # via `docker run --rm -d`; o docker-shim redirecionaria para o container
+          # compartilhado, corrompendo o isolamento do BLOCO A / BLOCO B.
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/reset-gatilho-coluna-removida.test.sh
 
       # Despacho de mensagens agendadas (scheduled_messages nunca saia): extrai o corpo

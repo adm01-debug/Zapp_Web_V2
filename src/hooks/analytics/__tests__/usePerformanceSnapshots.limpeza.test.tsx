@@ -19,6 +19,7 @@ vi.mock('@/hooks/auth/useAuth', () => ({
 
 vi.mock('@/lib/logger', () => ({
   getLogger: () => h.log,
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
 }));
 
 vi.mock('sonner', () => ({

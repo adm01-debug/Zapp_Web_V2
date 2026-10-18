@@ -52,6 +52,12 @@ const scrollToSpy = vi.fn();
 beforeAll(() => {
   (window as unknown as { ResizeObserver: typeof ResizeObserverMock }).ResizeObserver = ResizeObserverMock;
   (Element.prototype as unknown as { scrollTo: unknown }).scrollTo = scrollToSpy;
+  // jsdom retorna clientHeight=0; o virtualizer usa clientHeight para calcular
+  // quantos itens renderizar — sem isso, nenhum item fica visível no teste.
+  Object.defineProperty(HTMLElement.prototype, 'clientHeight', {
+    configurable: true,
+    get() { return 600; },
+  });
 });
 
 vi.mock('../MessageBubble', () => ({

@@ -14,6 +14,8 @@ const { queryExternalProxy, logError } = vi.hoisted(() => ({
 vi.mock('@/lib/externalProxy', () => ({ queryExternalProxy }));
 vi.mock('@/lib/logger', () => ({
   log: { error: logError, warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
 }));
 
 import { useQuarantineMedia, type QuarantineRecord } from '../useQuarantineMedia';

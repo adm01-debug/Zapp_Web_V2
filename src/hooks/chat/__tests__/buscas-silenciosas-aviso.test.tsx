@@ -59,6 +59,8 @@ vi.mock('sonner', () => ({
 
 vi.mock('@/lib/logger', () => ({
   log: { debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
+  getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
 }));
 
 vi.mock('@/lib/forward-limits', () => ({

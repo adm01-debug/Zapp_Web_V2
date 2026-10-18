@@ -3,7 +3,11 @@ import type { ReactNode } from 'react';
 import { render, screen } from '@testing-library/react';
 import { ConversationSummary } from '../ConversationSummary';
 
-vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() } }));
+vi.mock('@/lib/logger', () => ({
+  log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
+}));
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { functions: { invoke: vi.fn() } } }));
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 

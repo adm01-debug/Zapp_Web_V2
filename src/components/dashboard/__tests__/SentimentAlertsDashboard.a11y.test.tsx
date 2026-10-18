@@ -33,7 +33,11 @@ vi.mock('@/integrations/supabase/client', () => {
     },
   };
 });
-vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() } }));
+vi.mock('@/lib/logger', () => ({
+  log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
+}));
 
 import { SentimentAlertsDashboard } from '../SentimentAlertsDashboard';
 

@@ -10,7 +10,11 @@ vi.mock('@/integrations/supabase/client', () => ({
   supabase: { functions: { invoke: (...args: unknown[]) => h.invoke(...args) } },
 }));
 vi.mock('@/lib/errorReporter', () => ({ reportClientError: (...args: unknown[]) => h.reportClientError(...args) }));
-vi.mock('@/lib/logger', () => ({ log: { error: (...args: unknown[]) => h.logError(...args) } }));
+vi.mock('@/lib/logger', () => ({
+  log: { error: (...args: unknown[]) => h.logError(...args) },
+  getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
+}));
 
 import {
   getMapboxToken,

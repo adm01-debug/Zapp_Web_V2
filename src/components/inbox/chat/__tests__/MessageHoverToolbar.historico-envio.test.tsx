@@ -48,6 +48,7 @@ vi.mock('sonner', () => ({
 
 vi.mock('@/lib/logger', () => ({
   getLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
 }));
 
 vi.mock('@/components/inbox/TextToSpeechButton', () => ({

@@ -22,6 +22,8 @@ vi.mock('@/integrations/supabase/client', () => ({
 
 vi.mock('@/lib/logger', () => ({
   log: { warn: vi.fn() },
+  getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
 }));
 
 import { AuthService } from '@/services/auth.service';

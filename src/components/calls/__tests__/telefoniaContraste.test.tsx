@@ -55,6 +55,7 @@ vi.mock('@/hooks/system/useNotificationSettings', () => ({
 }));
 vi.mock('@/lib/logger', () => ({
   getLogger: () => ({ error: vi.fn(), warn: vi.fn(), debug: vi.fn(), info: vi.fn() }),
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
 }));
 vi.mock('@/hooks/calls/useTerminoRemoto', () => ({ useTerminoRemoto: vi.fn() }));
 vi.mock('@/lib/calls/persistence', () => ({ upsertMyCall: vi.fn() }));

@@ -12,7 +12,10 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 const logStub = vi.hoisted(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }));
 
-vi.mock('@/lib/logger', () => ({ getLogger: () => logStub, log: logStub, logger: logStub }));
+vi.mock('@/lib/logger', () => ({
+  getLogger: () => logStub, log: logStub, logger: logStub,
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
+}));
 
 import {
   converterFigurinhaParaWebp,

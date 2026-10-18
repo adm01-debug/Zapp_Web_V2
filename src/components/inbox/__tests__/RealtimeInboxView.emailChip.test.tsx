@@ -55,6 +55,7 @@ vi.mock('@/features/talk-me/useTalkMeQueue', () => ({
 vi.mock('@/lib/logger', () => ({
   log: { debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
   getLogger: () => ({ debug: vi.fn(), warn: vi.fn(), error: vi.fn(), info: vi.fn() }),
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
 }));
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: { storage: { from: () => ({ upload: vi.fn(), getPublicUrl: () => ({ data: { publicUrl: '' } }), remove: vi.fn() }) }, from: () => ({ update: () => ({ eq: () => ({ error: null }) }) }) },

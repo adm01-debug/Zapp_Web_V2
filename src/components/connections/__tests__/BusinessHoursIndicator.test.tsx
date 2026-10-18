@@ -20,7 +20,11 @@ const h = vi.hoisted(() => ({
   filters: [] as unknown[][],
 }));
 
-vi.mock('@/lib/logger', () => ({ log: { error: h.logError } }));
+vi.mock('@/lib/logger', () => ({
+  log: { error: h.logError },
+  getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
+}));
 
 vi.mock('framer-motion', () => ({
   motion: {
