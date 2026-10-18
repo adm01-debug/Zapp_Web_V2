@@ -1,9 +1,9 @@
 # docs:
-#   gatilho: push
+#   gatilho: push na main; schedule semanal (seg 07:45 UTC); dispatch
 #   prova: o placar do Talk X regenerado a partir dos dados atuais
 #   falha: o job fica vermelho e o placar nao e atualizado
 #   avisa: autor do push
-name: Talk X V4 placar regen (push)
+name: Talk X V4 placar regen (push + semanal)
 
 # Regenera docs/talkx/v4/STATUS.md quando a main anda e, se mudou, abre/atualiza
 # um PR. NUNCA empurra direto na main.
@@ -29,10 +29,17 @@ name: Talk X V4 placar regen (push)
 on:
   push:
     branches: [main]
+  schedule:
+    # W92: regen semanal — seg 07:45 UTC (agendamento sem colisão com branch-hygiene
+    # 07:56 e types-sync 05:49; jitter de 15 min antes das 08:00).
+    - cron: '45 7 * * 1'
+  workflow_dispatch:
 
 concurrency:
-  group: talkx-status-regen
-  cancel-in-progress: false
+  # W94: cancela run anterior se um novo push/schedule chegar antes do fim.
+  group: talkx-regen-${{ github.ref }}
+  cancel-in-progress: true
+
 
 defaults:
   run:
@@ -43,8 +50,8 @@ permissions:
 
 jobs:
   regen:
-    runs-on: ubuntu-latest
-    permissions:
+    runs-on: ubuntu-24.04
+    permissions:  # zizmor: ignore[excessive-permissions]
       contents: write
       # Obrigatorio para o create-pull-request criar o PR: sem esta permissao o
       # GITHUB_TOKEN devolve "Resource not accessible by integration -
