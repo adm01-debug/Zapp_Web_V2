@@ -90,7 +90,7 @@ function classifyHealth(
   error: ProbeError | null,
   latency: number | null,
   healthyBelowMs: number,
-  degradedBelowMs: number,
+  degradedBelowMs: number
 ): HealthStatus {
   if (error) return isAuthorizationError(error) ? 'unauthorized' : 'down';
   if (latency === null) return 'unknown';
@@ -109,7 +109,7 @@ const HEARTBEAT_DEGRADADO_MS = 60 * 60 * 1000;
 function classifyHeartbeat(
   error: ProbeError | null,
   lastCheckedAt: string | null,
-  agora: number,
+  agora: number
 ): HealthStatus {
   if (error) return isAuthorizationError(error) ? 'unauthorized' : 'down';
   if (!lastCheckedAt) return 'unknown';
@@ -188,7 +188,9 @@ export function useDiagnosticsData() {
   const fetchConnections = async () => {
     const { data, error } = await supabase
       .from('whatsapp_connections')
-      .select('id, instance_id, status, phone_number, created_at, updated_at, health_status, last_health_check, health_response_ms')
+      .select(
+        'id, instance_id, status, phone_number, created_at, updated_at, health_status, last_health_check, health_response_ms'
+      )
       .order('created_at', { ascending: false });
     if (error) throw error;
     setConnections((data ?? []) as ConnectionStatus[]);
@@ -200,12 +202,41 @@ export function useDiagnosticsData() {
     // Contagens da JANELA de 24 h (indexadas) são exatas: alimentam taxas que
     // não podem mentir. O que não pode existir é COUNT exato da tabela inteira.
     const contagens = await Promise.all([
-      supabase.from('messages').select('id', { count: 'exact', head: true }).gte('created_at', since).eq('sender', 'agent'),
-      supabase.from('messages').select('id', { count: 'exact', head: true }).gte('created_at', since).eq('sender', 'agent').eq('status', 'sent'),
-      supabase.from('messages').select('id', { count: 'exact', head: true }).gte('created_at', since).eq('sender', 'agent').eq('status', 'delivered'),
-      supabase.from('messages').select('id', { count: 'exact', head: true }).gte('created_at', since).eq('sender', 'agent').eq('status', 'read'),
-      supabase.from('messages').select('id', { count: 'exact', head: true }).gte('created_at', since).eq('sender', 'agent').eq('status', 'failed'),
-      supabase.from('messages').select('id', { count: 'exact', head: true }).gte('created_at', since).eq('sender', 'agent').eq('status', 'sending'),
+      supabase
+        .from('messages')
+        .select('id', { count: 'exact', head: true })
+        .gte('created_at', since)
+        .eq('sender', 'agent'),
+      supabase
+        .from('messages')
+        .select('id', { count: 'exact', head: true })
+        .gte('created_at', since)
+        .eq('sender', 'agent')
+        .eq('status', 'sent'),
+      supabase
+        .from('messages')
+        .select('id', { count: 'exact', head: true })
+        .gte('created_at', since)
+        .eq('sender', 'agent')
+        .eq('status', 'delivered'),
+      supabase
+        .from('messages')
+        .select('id', { count: 'exact', head: true })
+        .gte('created_at', since)
+        .eq('sender', 'agent')
+        .eq('status', 'read'),
+      supabase
+        .from('messages')
+        .select('id', { count: 'exact', head: true })
+        .gte('created_at', since)
+        .eq('sender', 'agent')
+        .eq('status', 'failed'),
+      supabase
+        .from('messages')
+        .select('id', { count: 'exact', head: true })
+        .gte('created_at', since)
+        .eq('sender', 'agent')
+        .eq('status', 'sending'),
     ]);
 
     // Qualquer leitura recusada (RLS) aborta o agregado: sem zeros silenciosos.
@@ -247,7 +278,12 @@ export function useDiagnosticsData() {
     const pending = pendingCount || 0;
 
     setMessageDiag({
-      total, sent, delivered, read, failed, pending,
+      total,
+      sent,
+      delivered,
+      read,
+      failed,
+      pending,
       deliveryRate: total > 0 ? Math.round(((delivered + read) / total) * 100) : 0,
       failureRate: total > 0 ? Math.round((failed / total) * 100) : 0,
       recentFailures,
@@ -286,10 +322,12 @@ export function useDiagnosticsData() {
 
     // Totais ESTIMADOS: não varrem a tabela inteira a cada ciclo de polling.
     const { count: messagesCount, error: messagesCountError } = await supabase
-      .from('messages').select('id', { count: 'estimated', head: true });
+      .from('messages')
+      .select('id', { count: 'estimated', head: true });
     if (messagesCountError) throw messagesCountError;
     const { count: connectionsCount, error: connectionsCountError } = await supabase
-      .from('whatsapp_connections').select('id', { count: 'estimated', head: true });
+      .from('whatsapp_connections')
+      .select('id', { count: 'estimated', head: true });
     if (connectionsCountError) throw connectionsCountError;
 
     const realtime = await probeRealtime();
@@ -387,7 +425,8 @@ export function useDiagnosticsData() {
         type: 'system',
         severity: 'warning',
         message: `${orphanCount} contato(s) sem conexão WhatsApp`,
-        details: 'Esses contatos não receberão mensagens enviadas pelo sistema. Vincule-os a uma conexão.',
+        details:
+          'Esses contatos não receberão mensagens enviadas pelo sistema. Vincule-os a uma conexão.',
         timestamp: new Date(),
       });
     }
@@ -407,7 +446,8 @@ export function useDiagnosticsData() {
         type: 'message',
         severity: 'warning',
         message: `${stuckCount} mensagem(ns) travada(s) no status "enviando"`,
-        details: 'Mensagens com mais de 5 minutos no status "sending". Pode indicar problemas com a Evolution API.',
+        details:
+          'Mensagens com mais de 5 minutos no status "sending". Pode indicar problemas com a Evolution API.',
         timestamp: new Date(),
       });
     }
@@ -454,15 +494,24 @@ export function useDiagnosticsData() {
 
   // A falha de coleta entra no topo (é a mais nova) e conta como erro crítico.
   const logsVisiveis = coletaFalhou ? [coletaFalhou, ...errorLogs] : errorLogs;
-  const errorCount = logsVisiveis.filter(l => l.severity === 'error' || l.severity === 'critical').length;
-  const warningCount = logsVisiveis.filter(l => l.severity === 'warning').length;
-  const connectedCount = connections.filter(c => c.status === 'connected').length;
+  const errorCount = logsVisiveis.filter(
+    (l) => l.severity === 'error' || l.severity === 'critical'
+  ).length;
+  const warningCount = logsVisiveis.filter((l) => l.severity === 'warning').length;
+  const connectedCount = connections.filter((c) => c.status === 'connected').length;
 
   return {
-    loading, refreshing, lastRefresh,
-    connections, messageDiag, health, errorLogs: logsVisiveis,
+    loading,
+    refreshing,
+    lastRefresh,
+    connections,
+    messageDiag,
+    health,
+    errorLogs: logsVisiveis,
     handleRefresh,
-    errorCount, warningCount, connectedCount,
+    errorCount,
+    warningCount,
+    connectedCount,
     collectionError: coletaFalhou?.details ?? null,
   };
 }
