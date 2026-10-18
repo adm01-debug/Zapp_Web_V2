@@ -603,3 +603,29 @@ test('W99: todo upload-artifact declara retention-days', async () => {
   }
   assert.deepEqual(infratores, [], `upload-artifact sem retention-days:\n${infratores.join('\n')}`);
 });
+
+test('W71: e2e-logado não dispara em push (só via workflow_run do CI/CD Pipeline)', () => {
+  // W71 (2026-10-18): e2e-logado.yml migrou de on.push para on.workflow_run.
+  // Sem este contrato, restaurar o push seria silencioso — o E2E rodaria em
+  // paralelo ao CI principal e cancel-in-progress: true mataria runs em andamento.
+  const texto = wf['e2e-logado.yml'];
+  assert.ok(texto, 'e2e-logado.yml sumiu');
+  assert.ok(
+    !/^\s{2}push:/m.test(texto),
+    'e2e-logado.yml voltou a ter on.push: o E2E roda em push sem esperar o CI principal',
+  );
+  assert.ok(
+    /workflow_run:/.test(texto),
+    'e2e-logado.yml não usa on.workflow_run como gatilho principal',
+  );
+  assert.ok(
+    /workflows:\s*\["CI\/CD Pipeline"\]/.test(texto),
+    'e2e-logado.yml não referencia "CI/CD Pipeline" em on.workflow_run',
+  );
+  const ciNome = (wf['ci.yml'].match(/^name:\s*(.+)/m) ?? [])[1]?.trim() ?? '';
+  assert.equal(
+    ciNome,
+    'CI/CD Pipeline',
+    `ci.yml mudou de nome: e2e-logado.yml espera "CI/CD Pipeline" mas ci.yml se chama "${ciNome}"`,
+  );
+});
