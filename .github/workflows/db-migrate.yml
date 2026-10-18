@@ -70,9 +70,10 @@ env:
 jobs:
   migrate:
     name: Migration oficial com preflight
+    # GA13: gate so' ativo durante o apply; dry-run roda sem "Waiting".
     # Aprovacao humana obrigatoria antes de qualquer DDL tocar producao. Soma-se
     # ao dry-run + confirmacao de hash; nao substitui nenhum dos dois.
-    environment: producao-ddl
+    environment: ${{ inputs.apply && 'producao-ddl' || '' }}
     runs-on: ubuntu-24.04
     # E66 (auditoria de 01/10/2026): 25 min nao cobriam preflight + dry-run +
     # apply + as validacoes de ledger/runtime do file completo.
