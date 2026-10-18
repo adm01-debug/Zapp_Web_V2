@@ -14,7 +14,7 @@ const SCRIPT = join(dirname(fileURLToPath(import.meta.url)), 'github-settings-gu
 const TITULO = '[settings-guard] perimeter regression detected';
 
 const CONTEXTS_OK =
-  "['🔎 TypeCheck','🧪 Unit Tests (1/3)','🧪 Unit Tests (2/3)','🧪 Unit Tests (3/3)','🏗️ Build','🧩 Node CI Scripts']";
+  "['🔎 TypeCheck','🧪 Unit Tests (1/3)','🧪 Unit Tests (2/3)','🧪 Unit Tests (3/3)','🏗️ Build','🔒 Security Audit','Contrato DB offline','🎭 E2E Tests (Playwright)','🧩 Node CI Scripts']";
 const PROT_OK = `send({ required_status_checks: { strict: true, contexts: ${CONTEXTS_OK} }, enforce_admins: { enabled: true }, required_linear_history: { enabled: true }, allow_force_pushes: { enabled: false } })`;
 const PROT_REGRESSAO = `send({ required_status_checks: { strict: false, contexts: ${CONTEXTS_OK} }, enforce_admins: { enabled: true }, required_linear_history: { enabled: true }, allow_force_pushes: { enabled: false } })`;
 const REPO_OK =
@@ -29,7 +29,7 @@ const SEM_ESCOPO = "send({ message: 'Resource not accessible by integration' }, 
  * Stub de `fetch` no mesmo formato do baseline real. `modo` escolhe a resposta:
  *   ok         — tudo conforme o baseline
  *   regressao  — strict=false (a regressão que o guard existe para pegar)
- *   semChecks  — `required_status_checks: null` (os 6 checks obrigatorios apagados;
+ *   semChecks  — `required_status_checks: null` (os 9 checks obrigatorios apagados;
  *                e assim que a API DESLIGA os checks — achado do Codex na PR #1920)
  *   semEscopo  — a branch protection responde 403
  *   tokenReal  — o que o GITHUB_TOKEN devolve HOJE (medido no run 38615982485):

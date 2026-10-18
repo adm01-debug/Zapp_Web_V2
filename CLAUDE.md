@@ -244,7 +244,7 @@ GitHub medida em 03/10/2026 (`docs/audits/e95-perimetro-github-2026-10-03.md`).
 
 | Campo | Estado canônico | Verificado por |
 |---|---|---|
-| Branch protection — required checks | **6**: `🔍 Lint & TypeCheck` · `🧪 Unit Tests` · `🏗️ Build` · `🔒 Security Audit` · `Contrato DB offline` · `🎭 E2E Tests (Playwright)` | `settings-guard` ⚠ |
+| Branch protection — required checks | **9**: `🔎 TypeCheck` · `🧪 Unit Tests (1/3)` · `🧪 Unit Tests (2/3)` · `🧪 Unit Tests (3/3)` · `🏗️ Build` · `🔒 Security Audit` · `Contrato DB offline` · `🎭 E2E Tests (Playwright)` · `🧩 Node CI Scripts` | `settings-guard` ⚠ |
 | Branch protection — `strict` | **`true`** (política vigente desde 01/10; a opção `strict=false` foi **revogada** em 02/10 — E15(b)) | `settings-guard` ⚠ |
 | Branch protection — `enforce_admins` | `true` | `settings-guard` ⚠ |
 | Branch protection — review obrigatório | nenhum (deliberado: vários agentes com auto-merge) | — |
