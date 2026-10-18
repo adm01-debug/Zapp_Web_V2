@@ -128,9 +128,10 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled, onO
   // X094 — o endereço acompanha a troca feita DENTRO do editor (biblioteca lateral)
   // sem mexer no estado do React: remontar o editor aqui perderia a edição em curso
   // (R2-MOD-024 decide que só a biblioteca troca o template ativo).
-  const mirrorEditorTemplate = useCallback((templateId: string) => {
+  const mirrorEditorTemplate = useCallback((t: TalkXTemplate | null) => {
+    if (!t) return;
     const current = parseTalkXTemplateRoute(window.location.search).route;
-    replaceTalkXTemplateRoute({ templateId, ttab: current?.ttab ?? 'conteudo' });
+    replaceTalkXTemplateRoute({ templateId: t.id, ttab: current?.ttab ?? 'conteudo' });
   }, []);
 
   // Fechar o editor (salvar, duplicar ou Voltar) devolve a biblioteca e o endereço.
