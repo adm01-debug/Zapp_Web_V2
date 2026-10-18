@@ -1,6 +1,6 @@
 import { useRef, forwardRef, useImperativeHandle, useCallback, useMemo, memo, useEffect, useLayoutEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useVirtualizer } from '@tanstack/react-virtual';
+import { useVirtualizer, type ReactVirtualizer } from '@tanstack/react-virtual';
 import { ChevronUp, Loader2 } from 'lucide-react';
 import { getLogger } from '@/lib/logger';
 
@@ -119,13 +119,12 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
   // empurrou o fim para longe — o usuario que estava no fim apareceria como
   // "lendo o historico" e a lista deixaria de acompanhar a conversa.
   const isNearBottomRef = useRef(true);
-  const virtualizerRef = useRef<{ cancelScroll: () => void } | null>(null);
+  const virtualizerRef = useRef<ReactVirtualizer<HTMLDivElement, Element> | null>(null);
   const handleScroll = useCallback(() => {
     const el = scrollContainerRef.current;
     if (!el) return;
     const nearBottom = isNearBottom(el);
     isNearBottomRef.current = nearBottom;
-    if (!nearBottom) virtualizerRef.current?.cancelScroll();
   }, []);
 
   const handleMessageDeleted = useCallback(async (messageId: string) => {
