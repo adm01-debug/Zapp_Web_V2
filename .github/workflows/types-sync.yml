@@ -728,3 +728,32 @@ jobs:
             echo "| grants-baseline.json | ${{ steps.diff.outputs.grants_changed || 'n/a' }} |"
             echo "| PR | ${{ steps.pull-request.outputs.pull-request-number || 'n/a' }} |"
           } >> "$GITHUB_STEP_SUMMARY"
+
+      # Z029: quando o workflow falha, exibe o motivo no Job Summary para facilitar
+      # diagnóstico sem precisar abrir os logs de cada step individualmente.
+      - name: Resumo de falha
+        if: failure()
+        run: |
+          {
+            echo ""
+            echo "## ❌ types-sync falhou"
+            echo ""
+            if [ -f /tmp/tsc.log ]; then
+              echo "### Gate 1 — TypeScript"
+              echo '```'
+              head -100 /tmp/tsc.log
+              echo '```'
+            elif [ -f /tmp/guard.log ]; then
+              echo "### Gate 2 — usage-guard"
+              echo '```'
+              head -100 /tmp/guard.log
+              echo '```'
+            elif [ -f /tmp/gate3.log ]; then
+              echo "### Gate 3 — remoções destrutivas"
+              echo '```'
+              head -100 /tmp/gate3.log
+              echo '```'
+            else
+              echo "Verifique os logs do step anterior para detalhes."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
