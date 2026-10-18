@@ -42,7 +42,7 @@ function violacoesContagemClaude(texto, totalYaml) {
     }
   }
   const chato = achata(texto);
-  if (!new RegExp(`\\*\\*${totalYaml}\\*\\* arquivos em \`.github/workflows/\``).test(chato)) {
+  if (!new RegExp(`\\*\\*${totalYaml}\\*\\* arquivos em \`\.github/workflows/\``).test(chato)) {
     out.push(`CLAUDE.md nao declara os ${totalYaml} arquivos de .github/workflows/`);
   }
   if (!texto.includes('docs/ci/README.md')) {
@@ -197,7 +197,7 @@ function evidenciasDaAbertura(tabela) {
 
 function violacoesTabelaAbertura(plano, esperadas = ABERTURA_ESPERADA) {
   const tabela = tabelaDeAbertura(plano);
-  if (tabela === null) return [`plano sem a secao "${SECAO_ABERTURA}"}`];
+  if (tabela === null) return [`plano sem a secao "${SECAO_ABERTURA}"`];
   const out = [];
   for (const [id, linha] of Object.entries(esperadas)) {
     const atual = tabela.find((l) => l.startsWith(`| **${id}**`));
