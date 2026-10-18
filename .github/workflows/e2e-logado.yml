@@ -93,7 +93,7 @@ jobs:
     steps:
       - name: ✋ Somente executa na main
         if: |
-          github.event_name == 'schedule' &&
+          (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') &&
           github.ref != 'refs/heads/main'
         run: |
           echo "::error::Este workflow só pode ser disparado a partir da main (ref: ${{ github.ref }})."
