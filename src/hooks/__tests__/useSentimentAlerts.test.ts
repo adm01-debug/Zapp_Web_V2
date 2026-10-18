@@ -31,7 +31,11 @@ vi.mock('@/hooks/system/useNotificationSettings', () => ({
 }));
 
 vi.mock('sonner', () => ({
-  toast: { error: (...args: unknown[]) => mockToastError(...args), success: vi.fn(), info: vi.fn() },
+  toast: {
+    error: (...args: unknown[]) => mockToastError(...args),
+    success: vi.fn(),
+    info: vi.fn(),
+  },
 }));
 
 vi.mock('@/utils/notificationSounds', () => ({
@@ -151,7 +155,10 @@ describe('useSentimentAlerts', () => {
   });
 
   it('checkAndTriggerAlert returns triggered when alerted', async () => {
-    mockFunctionsInvoke.mockResolvedValue({ data: { alerted: true, consecutiveLow: 3, emailSent: true }, error: null });
+    mockFunctionsInvoke.mockResolvedValue({
+      data: { alerted: true, consecutiveLow: 3, emailSent: true },
+      error: null,
+    });
     const { result } = renderHook(() => useSentimentAlerts());
     const outcome = await result.current.checkAndTriggerAlert({
       contactId: 'c1',
@@ -201,11 +208,17 @@ describe('useSentimentAlerts', () => {
     // O som que sai aqui é o de MENÇÃO (`mention`/`mentionSoundType`). O portão estava em
     // `slaBreachSound`, então desligar o som de SLA emudecia este alerta.
     Object.assign(mockSettings, { soundEnabled: true, mentionSound: true, slaBreachSound: false });
-    mockFunctionsInvoke.mockResolvedValue({ data: { alerted: true, consecutiveLow: 3, emailSent: false }, error: null });
+    mockFunctionsInvoke.mockResolvedValue({
+      data: { alerted: true, consecutiveLow: 3, emailSent: false },
+      error: null,
+    });
     const { result } = renderHook(() => useSentimentAlerts());
 
     await result.current.checkAndTriggerAlert({
-      contactId: 'c1', contactName: 'João', sentimentScore: 10, analysisId: 'a-portao-de-mencao',
+      contactId: 'c1',
+      contactName: 'João',
+      sentimentScore: 10,
+      analysisId: 'a-portao-de-mencao',
     });
 
     expect(mockPlaySound).toHaveBeenCalledTimes(1);
@@ -213,11 +226,17 @@ describe('useSentimentAlerts', () => {
 
   it('cala o alerta quando o usuário desliga o som de menção', async () => {
     Object.assign(mockSettings, { soundEnabled: true, mentionSound: false, slaBreachSound: true });
-    mockFunctionsInvoke.mockResolvedValue({ data: { alerted: true, consecutiveLow: 3, emailSent: false }, error: null });
+    mockFunctionsInvoke.mockResolvedValue({
+      data: { alerted: true, consecutiveLow: 3, emailSent: false },
+      error: null,
+    });
     const { result } = renderHook(() => useSentimentAlerts());
 
     await result.current.checkAndTriggerAlert({
-      contactId: 'c1', contactName: 'João', sentimentScore: 10, analysisId: 'a-mencao-desligada',
+      contactId: 'c1',
+      contactName: 'João',
+      sentimentScore: 10,
+      analysisId: 'a-mencao-desligada',
     });
 
     expect(mockPlaySound).not.toHaveBeenCalled();

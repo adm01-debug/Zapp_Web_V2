@@ -29,7 +29,10 @@ const { supabaseFake } = vi.hoisted(() => ({
     removeChannel: vi.fn(),
     storage: {
       from: vi.fn(() => ({
-        createSignedUrl: vi.fn(async () => ({ data: null, error: new Error('sem assinatura no teste') })),
+        createSignedUrl: vi.fn(async () => ({
+          data: null,
+          error: new Error('sem assinatura no teste'),
+        })),
       })),
     },
     functions: { invoke: vi.fn(async () => ({ data: null, error: null })) },
@@ -55,7 +58,13 @@ vi.mock('framer-motion', () => {
   const semMovimento = (tag: string) =>
     React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
       const { whileHover, whileTap, initial, animate, exit, transition, variants, ...rest } = props;
-      void whileHover; void whileTap; void initial; void animate; void exit; void transition; void variants;
+      void whileHover;
+      void whileTap;
+      void initial;
+      void animate;
+      void exit;
+      void transition;
+      void variants;
       return React.createElement(tag, { ...rest, ref });
     });
   return {
@@ -123,7 +132,11 @@ vi.mock('@/hooks/calls/useCallChannels', () => ({
   useCallChannels: () => ({
     voip: { channel: 'voip', canDial: true, canReceive: true, canRecord: false, canReject: true },
     whatsapp: {
-      channel: 'whatsapp', canDial: false, canReceive: true, canRecord: false, canReject: false,
+      channel: 'whatsapp',
+      canDial: false,
+      canReceive: true,
+      canRecord: false,
+      canReject: false,
       reason: 'whatsapp_no_outbound',
     },
   }),
@@ -186,7 +199,7 @@ interface Montagem {
  */
 function bateriaDoVolume(
   montar: () => Montagem,
-  obterElemento: (montagem: Montagem) => HTMLMediaElement,
+  obterElemento: (montagem: Montagem) => HTMLMediaElement
 ): HTMLMediaElement {
   const montagem = montar();
   const elemento = obterElemento(montagem);
@@ -212,7 +225,10 @@ function bateriaDoVolume(
   // 3) sair do mudo devolve o último volume
   act(() => setMuted(false));
   expect(elemento.muted, 'desmudo').toBe(false);
-  expect(elemento.volume, 'volume restaurado depois do mudo').toBeCloseTo(toGain(AJUSTE_ALTERADO), 5);
+  expect(elemento.volume, 'volume restaurado depois do mudo').toBeCloseTo(
+    toGain(AJUSTE_ALTERADO),
+    5
+  );
 
   // 4) desmontar solta o listener: nem o store nem os eventos do elemento o alcançam
   montagem.unmount();
@@ -315,8 +331,12 @@ function FakeAudioContextDeAlerta(this: unknown): AudioContext {
     createGain: () => ({
       get gain() {
         return {
-          get value() { return ganho.valor; },
-          set value(novo: number) { ganho.valor = novo; },
+          get value() {
+            return ganho.valor;
+          },
+          set value(novo: number) {
+            ganho.valor = novo;
+          },
         };
       },
       connect: vi.fn(),
@@ -367,19 +387,29 @@ describe('S41 — MediaPreviewDialog (janela do arquivo) obedece o volume das m�
    */
   it('o vídeo do visualizador obedece ao volume global (S41)', () => {
     bateriaDoVolume(
-      () => render(
-        <MediaPreviewDialog item={itemDaGaleria('video', 'entrada.mp4')} open onOpenChange={() => {}} />,
-      ),
-      () => midiaDoPlayer(),
+      () =>
+        render(
+          <MediaPreviewDialog
+            item={itemDaGaleria('video', 'entrada.mp4')}
+            open
+            onOpenChange={() => {}}
+          />
+        ),
+      () => midiaDoPlayer()
     );
   });
 
   it('o áudio do visualizador obedece ao volume global (S41)', () => {
     bateriaDoVolume(
-      () => render(
-        <MediaPreviewDialog item={itemDaGaleria('audio', 'recado.mp3')} open onOpenChange={() => {}} />,
-      ),
-      () => midiaDoPlayer(),
+      () =>
+        render(
+          <MediaPreviewDialog
+            item={itemDaGaleria('audio', 'recado.mp3')}
+            open
+            onOpenChange={() => {}}
+          />
+        ),
+      () => midiaDoPlayer()
     );
   });
 });
@@ -389,10 +419,15 @@ describe('S41 — MediaPreviewDialog (janela do arquivo) obedece o volume das m�
 describe('S42 — AudioMessagePlayer (via useAudioPlayer) obedece', () => {
   it('o áudio do balão obedece (volume, mudo, desmudo e desmontar)', () => {
     bateriaDoVolume(
-      () => render(
-        <AudioMessagePlayer audioUrl="https://cdn.test/audio-do-balao.webm" messageId="msg-1" isSent={false} />,
-      ),
-      (montagem) => midiaDoPlayer(montagem.container),
+      () =>
+        render(
+          <AudioMessagePlayer
+            audioUrl="https://cdn.test/audio-do-balao.webm"
+            messageId="msg-1"
+            isSent={false}
+          />
+        ),
+      (montagem) => midiaDoPlayer(montagem.container)
     );
   });
 });
@@ -402,15 +437,18 @@ describe('S42 — AudioMessagePlayer (via useAudioPlayer) obedece', () => {
 describe('S44 — vídeo em tela cheia, preview do balão e gravação da chamada', () => {
   it('o vídeo da tela cheia obedece (volume, mudo, desmudo e desmontar)', () => {
     bateriaDoVolume(
-      () => render(<VideoFullscreen url="https://cdn.test/clipe-em-tela-cheia.mp4" onClose={() => {}} />),
-      () => midiaDoPlayer(),
+      () =>
+        render(
+          <VideoFullscreen url="https://cdn.test/clipe-em-tela-cheia.mp4" onClose={() => {}} />
+        ),
+      () => midiaDoPlayer()
     );
   });
 
   it('a gravação da chamada obedece (volume, mudo, desmudo e desmontar)', () => {
     bateriaDoVolume(
       () => render(<RecordingPlayer callId="chamada-1" recordingStatus="available" />),
-      (montagem) => midiaDoPlayer(montagem.container),
+      (montagem) => midiaDoPlayer(montagem.container)
     );
   });
 
@@ -431,7 +469,10 @@ describe('S44 — vídeo em tela cheia, preview do balão e gravação da chamad
     expect(elemento.muted).toBe(true);
     act(() => setMuted(false));
     expect(elemento.muted, 'o preview segue mudo sem o mudo global').toBe(true);
-    expect(elemento.volume, 'volume restaurado depois do mudo').toBeCloseTo(toGain(AJUSTE_ALTERADO), 5);
+    expect(elemento.volume, 'volume restaurado depois do mudo').toBeCloseTo(
+      toGain(AJUSTE_ALTERADO),
+      5
+    );
 
     montagem.unmount();
     elemento.volume = 0.5;
@@ -448,14 +489,14 @@ describe('chat interno da equipe e transcrições obedecem', () => {
   it('o vídeo do chat interno obedece (volume, mudo, desmudo e desmontar)', () => {
     bateriaDoVolume(
       () => render(<MediaContent msg={mensagemDaEquipe('video', 'video-da-equipe.mp4')} />),
-      (montagem) => midiaDoPlayer(montagem.container),
+      (montagem) => midiaDoPlayer(montagem.container)
     );
   });
 
   it('o áudio do chat interno obedece (volume, mudo, desmudo e desmontar)', () => {
     bateriaDoVolume(
       () => render(<MediaContent msg={mensagemDaEquipe('audio', 'audio-da-equipe.mp3')} />),
-      (montagem) => midiaDoPlayer(montagem.container),
+      (montagem) => midiaDoPlayer(montagem.container)
     );
   });
 
@@ -464,17 +505,22 @@ describe('chat interno da equipe e transcrições obedecem', () => {
       () => {
         const montagem = render(
           <TranscriptionContactGroup
-            contact={{ id: 'contato-1', name: 'Contato de teste', phone: '+55 11 90000-0000', avatar: null }}
+            contact={{
+              id: 'contato-1',
+              name: 'Contato de teste',
+              phone: '+55 11 90000-0000',
+              avatar: null,
+            }}
             transcriptions={[transcricaoComAudio]}
             isExpanded
             onToggle={() => {}}
             index={0}
-          />,
+          />
         );
         fireEvent.click(screen.getByRole('button', { name: /Ouvir/ }));
         return montagem;
       },
-      (montagem) => midiaDoPlayer(montagem.container),
+      (montagem) => midiaDoPlayer(montagem.container)
     );
   });
 });
@@ -486,7 +532,9 @@ describe('S43 — AudioPlayButton (player do cartão da aba Arquivos)', () => {
     capturarAudios();
     bateriaDoVolume(
       () => {
-        const montagem = render(<AudioPlayButton item={itemDaAbaArquivos('audio-do-cartao.mp3')} />);
+        const montagem = render(
+          <AudioPlayButton item={itemDaAbaArquivos('audio-do-cartao.mp3')} />
+        );
         // A06b: o rótulo acessível do play cita o nome do arquivo (aqui, o do cartão).
         fireEvent.click(screen.getByRole('button', { name: 'Tocar áudio audio-do-cartao.mp3' }));
         return montagem;
@@ -495,7 +543,7 @@ describe('S43 — AudioPlayButton (player do cartão da aba Arquivos)', () => {
         const elemento = audiosCriados[0];
         if (!elemento) throw new Error('o player do cartão não criou o elemento de áudio');
         return elemento;
-      },
+      }
     );
   });
 });
@@ -522,8 +570,10 @@ describe('os alertas da chamada não seguem o volume das mídias', () => {
     act(() => setMuted(false));
     act(() => setVolume(15));
 
-    expect(ganhosDoAlerta[0].valor, 'ganho do toque depois de mexer na mídia')
-      .toBeCloseTo(GANHO_ESPERADO_DO_TOQUE, 5);
+    expect(ganhosDoAlerta[0].valor, 'ganho do toque depois de mexer na mídia').toBeCloseTo(
+      GANHO_ESPERADO_DO_TOQUE,
+      5
+    );
     expect(ganhosDoAlerta).toHaveLength(1);
   });
 });

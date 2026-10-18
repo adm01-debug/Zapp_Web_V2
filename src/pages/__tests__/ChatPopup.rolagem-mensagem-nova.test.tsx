@@ -53,7 +53,7 @@ const protoHtml = HTMLElement.prototype as unknown as Record<string, unknown>;
 const scrollToOriginal = protoHtml.scrollTo;
 protoHtml.scrollTo = function (this: HTMLElement, opcoes?: ScrollToOptions | number) {
   scrollToSpy(opcoes);
-  this.scrollTop = typeof opcoes === 'number' ? opcoes : opcoes?.top ?? 0;
+  this.scrollTop = typeof opcoes === 'number' ? opcoes : (opcoes?.top ?? 0);
   this.dispatchEvent(new Event('scroll'));
 };
 
@@ -103,7 +103,11 @@ vi.mock('@/integrations/supabase/client', () => ({
       select: () => ({ eq: () => ({ single: async () => ({ data: CONTACT_ROW, error: null }) }) }),
     }),
     storage: {
-      from: () => ({ upload: vi.fn(), getPublicUrl: () => ({ data: { publicUrl: '' } }), remove: vi.fn() }),
+      from: () => ({
+        upload: vi.fn(),
+        getPublicUrl: () => ({ data: { publicUrl: '' } }),
+        remove: vi.fn(),
+      }),
     },
   },
 }));
@@ -116,8 +120,11 @@ vi.mock('@/lib/logger', () => ({
 // ---- dependencias internas do ChatPanel (precedente: ChatPopup.pagination) ----
 vi.mock('@/components/inbox/useChatMediaSending', () => ({
   useChatMediaSending: () => ({
-    instanceName: '', initResolve: vi.fn(), handleSendSticker: vi.fn(),
-    handleSendCustomEmoji: vi.fn(), handleSendAudioMeme: vi.fn(),
+    instanceName: '',
+    initResolve: vi.fn(),
+    handleSendSticker: vi.fn(),
+    handleSendCustomEmoji: vi.fn(),
+    handleSendAudioMeme: vi.fn(),
   }),
 }));
 vi.mock('@/components/inbox/CRMAutoSync', () => ({ CRMAutoSync: () => null }));
@@ -126,18 +133,35 @@ vi.mock('@/components/inbox/chat/ChatPanelHeader', () => ({ ChatPanelHeader: () 
 vi.mock('@/components/inbox/chat/ChatWatermark', () => ({ ChatWatermark: () => null }));
 vi.mock('@/components/inbox/chat/ChatInputArea', () => ({ ChatInputArea: () => null }));
 vi.mock('@/components/inbox/chat/ChatDragOverlay', () => ({ ChatDragOverlay: () => null }));
-vi.mock('@/components/inbox/chat/ChatQuickRepliesPopover', () => ({ ChatQuickRepliesPopover: () => null }));
+vi.mock('@/components/inbox/chat/ChatQuickRepliesPopover', () => ({
+  ChatQuickRepliesPopover: () => null,
+}));
 vi.mock('@/components/inbox/chat/ChatSearchBar', () => ({ ChatSearchBar: () => null }));
 vi.mock('@/components/inbox/chat/ChatDialogs', () => ({ ChatDialogs: () => null }));
 vi.mock('@/components/inbox/chat/useChatPanelHandlers', () => ({
   useChatPanelHandlers: () => ({
-    inputValue: '', inputRef: { current: null }, isSending: false, isRecordingAudio: false,
-    replyToMessage: null, editingMessage: null, forwardMessage: null,
-    setInputValue: vi.fn(), handleReplyToMessage: vi.fn(), handleForwardMessage: vi.fn(),
-    handleCopyMessage: vi.fn(), handleInteractiveButtonClick: vi.fn(), handleEditStart: vi.fn(),
-    handleInputChange: vi.fn(), handleKeyDown: vi.fn(), handleCancelEdit: vi.fn(),
-    handleSlashCommand: vi.fn(), handleAudioSend: vi.fn(), handleSend: vi.fn(),
-    handleSendInteractiveMessage: vi.fn(), handleForwardToTargets: vi.fn(), handleSendLocation: vi.fn(),
+    inputValue: '',
+    inputRef: { current: null },
+    isSending: false,
+    isRecordingAudio: false,
+    replyToMessage: null,
+    editingMessage: null,
+    forwardMessage: null,
+    setInputValue: vi.fn(),
+    handleReplyToMessage: vi.fn(),
+    handleForwardMessage: vi.fn(),
+    handleCopyMessage: vi.fn(),
+    handleInteractiveButtonClick: vi.fn(),
+    handleEditStart: vi.fn(),
+    handleInputChange: vi.fn(),
+    handleKeyDown: vi.fn(),
+    handleCancelEdit: vi.fn(),
+    handleSlashCommand: vi.fn(),
+    handleAudioSend: vi.fn(),
+    handleSend: vi.fn(),
+    handleSendInteractiveMessage: vi.fn(),
+    handleForwardToTargets: vi.fn(),
+    handleSendLocation: vi.fn(),
   }),
 }));
 vi.mock('@/components/inbox/WhisperMode', () => ({ WhisperMode: () => null }));
@@ -149,15 +173,27 @@ vi.mock('@/hooks/chat/useTypingPresence', () => ({
   useTypingPresence: () => ({
     isContactTyping: mocks.isContactTyping,
     typingUsers: mocks.isContactTyping ? [{ name: 'Maria Silva' }] : [],
-    handleTypingStart: vi.fn(), handleTypingStop: vi.fn(),
+    handleTypingStart: vi.fn(),
+    handleTypingStop: vi.fn(),
   }),
 }));
-vi.mock('@/hooks/integrations/useEvolutionApi', () => ({ useEvolutionApi: () => ({ editMessage: vi.fn() }) }));
-vi.mock('@/hooks/chat/useQuickReplies', () => ({ useQuickReplies: () => ({ quickReplies: [], incrementUseCount: vi.fn() }) }));
+vi.mock('@/hooks/integrations/useEvolutionApi', () => ({
+  useEvolutionApi: () => ({ editMessage: vi.fn() }),
+}));
+vi.mock('@/hooks/chat/useQuickReplies', () => ({
+  useQuickReplies: () => ({ quickReplies: [], incrementUseCount: vi.fn() }),
+}));
 vi.mock('@/hooks/communication/useTextToSpeech', () => ({
   useTextToSpeech: () => ({
-    speak: vi.fn(), stop: vi.fn(), isLoading: false, isPlaying: false,
-    currentMessageId: null, voiceId: '', setVoiceId: vi.fn(), speed: 1, setSpeed: vi.fn(),
+    speak: vi.fn(),
+    stop: vi.fn(),
+    isLoading: false,
+    isPlaying: false,
+    currentMessageId: null,
+    voiceId: '',
+    setVoiceId: vi.fn(),
+    speed: 1,
+    setSpeed: vi.fn(),
   }),
 }));
 vi.mock('@/hooks/system/useUserSettings', () => ({
@@ -165,23 +201,39 @@ vi.mock('@/hooks/system/useUserSettings', () => ({
 }));
 vi.mock('@/hooks/ui/use-toast', () => ({ toast: vi.fn() }));
 vi.mock('@/hooks/chat/useScheduledMessages', () => ({
-  useScheduledMessages: () => ({ messages: [], isLoading: false, scheduleMessage: vi.fn(), cancelMessage: vi.fn(), isScheduling: false }),
+  useScheduledMessages: () => ({
+    messages: [],
+    isLoading: false,
+    scheduleMessage: vi.fn(),
+    cancelMessage: vi.fn(),
+    isScheduling: false,
+  }),
 }));
 vi.mock('@/hooks/chat/useMessageSignature', () => ({
-  useMessageSignature: () => ({ signatureEnabled: false, agentName: '', toggleSignature: vi.fn(), applySignature: vi.fn() }),
+  useMessageSignature: () => ({
+    signatureEnabled: false,
+    agentName: '',
+    toggleSignature: vi.fn(),
+    applySignature: vi.fn(),
+  }),
 }));
-vi.mock('@/hooks/ui/useAmbientColor', () => ({ useAmbientColor: () => ({ className: '', bgTint: undefined }) }));
+vi.mock('@/hooks/ui/useAmbientColor', () => ({
+  useAmbientColor: () => ({ className: '', bgTint: undefined }),
+}));
 vi.mock('@/lib/calls/events', () => ({ dispatchStartCall: vi.fn() }));
 
 // ---- vizinhos da ChatMessagesArea (ela fica REAL) ----
 vi.mock('@/components/inbox/chat/MessageBubble', () => ({
   MessageBubble: ({ message }: { message: { id: string; content: string } }) => (
-    <div data-testid="bubble" data-message-id={message.id}>{message.content}</div>
+    <div data-testid="bubble" data-message-id={message.id}>
+      {message.content}
+    </div>
   ),
 }));
 // Marcador: da para ver na tela que o "digitando..." esta ativo.
 vi.mock('@/components/inbox/TypingIndicator', () => ({
-  TypingIndicator: ({ isVisible }: { isVisible: boolean }) => (isVisible ? <div data-testid="digitando" /> : null),
+  TypingIndicator: ({ isVisible }: { isVisible: boolean }) =>
+    isVisible ? <div data-testid="digitando" /> : null,
 }));
 vi.mock('@/services/realtime.service', () => ({
   RealtimeService: { subscribeToReactions: vi.fn(() => ({})), removeChannel: vi.fn() },
@@ -246,7 +298,7 @@ function superficie() {
 /** Altura da lista virtualizada = quantas linhas a area recebeu do popup. */
 function alturaDaLista(el: HTMLElement): number {
   const lista = Array.from(el.querySelectorAll<HTMLElement>('div')).find((d) =>
-    /^\d+px$/.test(d.style.height),
+    /^\d+px$/.test(d.style.height)
   );
   if (!lista) throw new Error('lista virtualizada nao encontrada dentro do role=log');
   return Number(lista.style.height.replace('px', ''));

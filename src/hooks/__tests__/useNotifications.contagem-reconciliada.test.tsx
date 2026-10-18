@@ -45,7 +45,9 @@ vi.mock('@/integrations/supabase/client', () => ({
     channel: (name: string) => mockChannel(name),
     removeChannel: (ch: unknown) => mockRemoveChannel(ch),
     auth: {
-      onAuthStateChange: vi.fn().mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } }),
+      onAuthStateChange: vi
+        .fn()
+        .mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } }),
       getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
     },
   },

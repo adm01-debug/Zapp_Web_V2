@@ -72,7 +72,9 @@ vi.stubGlobal('AudioContext', FakeAudioContext);
 
 vi.mock('framer-motion', () => ({
   motion: {
-    div: ({ children, ...rest }: { children?: unknown }) => <div {...rest}>{children as never}</div>,
+    div: ({ children, ...rest }: { children?: unknown }) => (
+      <div {...rest}>{children as never}</div>
+    ),
   },
   AnimatePresence: ({ children }: { children?: unknown }) => <>{children as never}</>,
 }));
