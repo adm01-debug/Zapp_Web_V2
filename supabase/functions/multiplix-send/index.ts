@@ -9,6 +9,7 @@
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { enforceRateLimit, getCorsHeaders, handleCors, Logger } from "../_shared/validation.ts";
+import { timingSafeStringEqual } from "../_shared/cron-secret-auth.ts";
 import { evoFetch, extractMessageId } from "../_shared/evolution-send.ts";
 import { DEFAULT_SCHEDULE_TIMEZONE, deliveryWindowStatus } from "../_shared/talkx-window.ts";
 import { resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
@@ -50,15 +51,6 @@ import {
 // importadores deste módulo (index.test.ts importa daqui).
 export { personalize };
 
-function timingSafeStringEqual(a: string, b: string): boolean {
-  const enc = new TextEncoder();
-  const ab = enc.encode(a);
-  const bb = enc.encode(b);
-  if (ab.length !== bb.length) return false;
-  let diff = 0;
-  for (let i = 0; i < ab.length; i++) diff |= ab[i] ^ bb[i];
-  return diff === 0;
-}
 
 /** F56: mapeia o tipo REAL detectado pelo prepareMedia para o kind do adaptador. */
 function kindForMedia(kind: MediaKind): MessageKind {
