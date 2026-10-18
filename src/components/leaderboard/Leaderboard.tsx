@@ -29,7 +29,7 @@ function LeaderboardSkeleton() {
 }
 
 export function Leaderboard() {
-  const { agents, isLoading, isRefreshing, timeRange, setTimeRange, handleRefresh } =
+  const { agents, isLoading, isRefreshing, error, timeRange, setTimeRange, handleRefresh } =
     useLeaderboard();
 
   return (
@@ -76,6 +76,17 @@ export function Leaderboard() {
 
       {isLoading ? (
         <LeaderboardSkeleton />
+      ) : error ? (
+        // "a leitura falhou" != "o ranking esta vazio" -- sem este ramo o
+        // agente via o vazio do produto (mentindo que nao ha ninguem no
+        // ranking) com uma RPC caida, sem nenhuma forma de tentar de novo.
+        <div className="py-8 text-center" role="alert" data-leaderboard-state="error">
+          <Trophy className="mx-auto mb-3 h-12 w-12 text-destructive/50" />
+          <p className="text-muted-foreground">Não foi possível carregar o ranking</p>
+          <Button variant="outline" size="sm" onClick={handleRefresh} className="mt-3">
+            Tentar de novo
+          </Button>
+        </div>
       ) : agents.length > 0 ? (
         <div className="space-y-2">
           {agents.map((agent, index) => (
@@ -83,7 +94,7 @@ export function Leaderboard() {
           ))}
         </div>
       ) : (
-        <div className="py-8 text-center">
+        <div className="py-8 text-center" data-leaderboard-state="empty">
           <Trophy className="mx-auto mb-3 h-12 w-12 text-muted-foreground/50" />
           <p className="text-muted-foreground">Nenhum agente no ranking ainda</p>
           <p className="mt-1 text-xs text-muted-foreground">
