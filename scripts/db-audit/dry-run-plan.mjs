@@ -111,6 +111,42 @@ export function mensagemDoPlano({ migracoes }) {
   return migracoes.map((m) => `  - ${m.version} (${m.arquivo})`).join('\n');
 }
 
+/**
+ * W58/W27: valida o dry-run do modo apply_all_missing.
+ *
+ * Diferente de avaliarPlanoDoDryRun (que verifica um alvo unico ou bundle
+ * pre-autorizado), esta funcao recebe a lista completa de versions esperadas
+ * e verifica que o dry-run anuncia exatamente essas, em ordem estrita.
+ * "Exatamente" = mesmo conjunto e mesma ordem; um a mais ou um a menos recusa.
+ *
+ * @param {{ texto: string, esperados: string[] }} entrada
+ * @returns {{ ok: true, migracoes: object[] } | { ok: false, motivo: string }}
+ */
+export function avaliarPlanoDoDryRunApplyAll({ texto, esperados }) {
+  const { cabecalhoReconhecido, migracoes } = parseDryRunPlan(texto);
+  if (!cabecalhoReconhecido) {
+    return { ok: false, motivo: 'saida do dry-run nao reconhecida (falta o cabecalho "DRY RUN: migrations will *not* be pushed to the database.")' };
+  }
+  if (migracoes.length === 0) {
+    return { ok: false, motivo: 'o dry-run nao anunciou nenhuma migration' };
+  }
+  const versions = migracoes.map((m) => m.version);
+  for (let i = 1; i < versions.length; i += 1) {
+    if (versions[i] <= versions[i - 1]) {
+      return { ok: false, motivo: `bundle fora de ordem estrita: ${versions[i - 1]} antes de ${versions[i]}` };
+    }
+  }
+  const faltando = esperados.filter((v) => !versions.includes(v));
+  const extra = versions.filter((v) => !esperados.includes(v));
+  if (faltando.length > 0 || extra.length > 0) {
+    const partes = [];
+    if (faltando.length > 0) partes.push(`faltando: ${faltando.join(', ')}`);
+    if (extra.length > 0) partes.push(`extra: ${extra.join(', ')}`);
+    return { ok: false, motivo: `o dry-run nao corresponde ao conjunto esperado — ${partes.join('; ')}` };
+  }
+  return { ok: true, migracoes };
+}
+
 // --- CLI (usado pelo passo do workflow) -----------------------------------
 if (process.argv[1]?.endsWith('dry-run-plan.mjs')) {
   const args = process.argv.slice(2);

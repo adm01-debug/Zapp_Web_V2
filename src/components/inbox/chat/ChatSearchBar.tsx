@@ -42,6 +42,16 @@ export function ChatSearchBar({ messages, isOpen, onClose, onNavigateToMessage, 
     if (e.key === 'ArrowDown' || (e.key === 'Enter' && !e.shiftKey)) { e.preventDefault(); navigateDown(); }
   };
 
+  /** Limpar filtros do estado vazio: zera texto digitado, filtro de tipo e filtro de data. */
+  const clearFilters = () => {
+    setQuery('');
+    setFilter('all');
+    setDatePreset('all');
+    setCustomDateFrom(null);
+    setCustomDateTo(null);
+    inputRef.current?.focus();
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -60,9 +70,9 @@ export function ChatSearchBar({ messages, isOpen, onClose, onNavigateToMessage, 
                 )}
               </div>
               <div className="flex items-center shrink-0 bg-muted rounded-xl border border-border">
-                <Button aria-label="Resultado anterior" variant="ghost" size="icon" className="w-8 h-10 rounded-l-xl rounded-r-none hover:bg-accent" onClick={navigateUp} disabled={results.length === 0}><ChevronUp className="w-4 h-4" /></Button>
+                <Button title="Resultado anterior (Shift+Enter)" aria-label="Resultado anterior (Shift+Enter)" variant="ghost" size="icon" className="w-8 h-10 rounded-l-xl rounded-r-none hover:bg-accent" onClick={navigateUp} disabled={results.length === 0}><ChevronUp className="w-4 h-4" /></Button>
                 <div className="w-px h-5 bg-border" />
-                <Button aria-label="Próximo resultado" variant="ghost" size="icon" className="w-8 h-10 rounded-r-xl rounded-l-none hover:bg-accent" onClick={navigateDown} disabled={results.length === 0}><ChevronDown className="w-4 h-4" /></Button>
+                <Button title="Próximo resultado (Enter)" aria-label="Próximo resultado (Enter)" variant="ghost" size="icon" className="w-8 h-10 rounded-r-xl rounded-l-none hover:bg-accent" onClick={navigateDown} disabled={results.length === 0}><ChevronDown className="w-4 h-4" /></Button>
               </div>
               <Button aria-label="Fechar busca" variant="ghost" size="icon" className="w-8 h-10 rounded-xl shrink-0 hover:bg-destructive/10 hover:text-destructive" onClick={onClose}><X className="w-4 h-4" /></Button>
             </div>
@@ -70,16 +80,16 @@ export function ChatSearchBar({ messages, isOpen, onClose, onNavigateToMessage, 
             <ChatSearchFilters filter={filter} setFilter={setFilter} filterCounts={filterCounts} debouncedQuery={debouncedQuery} hasDateFilter={hasDateFilter}
               datePreset={datePreset} setDatePreset={setDatePreset} customDateFrom={customDateFrom} setCustomDateFrom={setCustomDateFrom} customDateTo={customDateTo} setCustomDateTo={setCustomDateTo} />
 
-            {(debouncedQuery.trim() || filter !== 'all' || hasDateFilter) && results.length === 0 && (
+            {!debouncedQuery.trim() && (filter !== 'all' || hasDateFilter) && results.length === 0 && (
               <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-2.5 px-3 py-2 text-muted-foreground bg-muted/50 rounded-lg">
                 <Search className="w-4 h-4 opacity-40" />
-                <span className="text-xs">{debouncedQuery.trim() ? `Nenhum resultado para "${debouncedQuery.trim().slice(0, 30)}"` : 'Nenhuma mensagem encontrada'}</span>
+                <span className="text-xs">Nenhuma mensagem encontrada</span>
               </motion.div>
             )}
 
-            {(debouncedQuery.trim() || hasDateFilter) && results.length > 0 && (
+            {(debouncedQuery.trim() || hasDateFilter) && (
               <ChatSearchResultsList ref={previewListRef} results={results} activeIndex={activeIndex} debouncedQuery={debouncedQuery}
-                onSelect={(idx, id) => { setActiveIndex(idx); onNavigateToMessage(id); }} />
+                onSelect={(idx, id) => { setActiveIndex(idx); onNavigateToMessage(id); }} onClearFilters={clearFilters} />
             )}
           </div>
         </motion.div>

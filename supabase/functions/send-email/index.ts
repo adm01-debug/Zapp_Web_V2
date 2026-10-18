@@ -1,17 +1,17 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, checkRateLimit, getClientIP } from "../_shared/validation.ts";
+import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, enforceRateLimit, getClientIP } from "../_shared/validation.ts";
 import { z, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 
-// R2-API-022 (P1): o relay `send-email` era um buraco de autorização — qualquer chamador
-// admitido pelo gateway podia usar a chave Resend do projeto para conteúdo e destinatários
-// arbitrários (subject/html/text/cc/bcc/attachments/from vinham do payload, sem getUser/role).
+// R2-API-022 (P1): o relay `send-email` era um buraco de autorizacao -- qualquer chamador
+// admitido pelo gateway podia usar a chave Resend do projeto para conteudo e destinatarios
+// arbitrarios (subject/html/text/cc/bcc/attachments/from vinham do payload, sem getUser/role).
 //
-// Correção (somente este relay): o único fluxo é o convite de membro. O cliente informa apenas
+// Correcao (somente este relay): o unico fluxo e o convite de membro. O cliente informa apenas
 // o e-mail do convidado, o nome (opcional) e o cargo; o remetente, o assunto e o corpo derivam
 // de um template FIXO do servidor. Antes de tocar em RESEND_API_KEY ou no payload, a chamada
-// autentica o JWT e exige papel admin/supervisor (RPC canônica `is_admin_or_supervisor`).
+// autentica o JWT e exige papel admin/supervisor (RPC canonica `is_admin_or_supervisor`).
 // .strict(): campos fora do contrato (subject/html/text/cc/bcc/attachments/from/to/...)
-// são REJEITADOS com 422 — o .strip padrão do zod só descartaria em silêncio.
+// sao REJEITADOS com 422 -- o .strip padrao do zod so descartaria em silencio.
 const InviteAgentSchema = z.object({
   email: z.string().email("Invalid email").max(255),
   name: z.string().max(200).optional(),
@@ -32,12 +32,12 @@ const HTML_ESCAPE: Record<string, string> = {
   "'": "&#39;",
 };
 
-/** `name` vem do cliente e é interpolado no HTML — sem escape viraria markup injetado. */
+/** `name` vem do cliente e e interpolado no HTML -- sem escape viraria markup injetado. */
 function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (ch) => HTML_ESCAPE[ch]);
 }
 
-/** Template de convite do servidor: destinatário e conteúdo vinculados ao fluxo autorizado. */
+/** Template de convite do servidor: destinatario e conteudo vinculados ao fluxo autorizado. */
 export function buildInvitePayload(input: { email: string; name?: string; role?: string }) {
   const name = escapeHtml(input.name?.trim() || "colega");
   const role = input.role ?? "agent";
@@ -63,11 +63,15 @@ export async function handleSendEmailRequest(req: Request): Promise<Response> {
   const log = new Logger("send-email");
 
   const ip = getClientIP(req);
-  const rl = checkRateLimit(`send-email:${ip}`, 30, 60_000);
-  if (!rl.allowed) return errorResponse("Rate limit exceeded", 429, req);
 
   try {
-    // 1) Identidade obrigatória ANTES de ler o payload ou tocar em RESEND_API_KEY.
+    const rl = await enforceRateLimit(`send-email:${ip}`, 30, 60_000);
+    if (!rl.allowed) {
+      const limited = errorResponse("Rate limit exceeded", 429, req);
+      limited.headers.set("Retry-After", "60");
+      return limited;
+    }
+    // 1) Identidade obrigatoria ANTES de ler o payload ou tocar em RESEND_API_KEY.
     const authHeader = req.headers.get("Authorization") || req.headers.get("authorization");
     if (!authHeader || !authHeader.toLowerCase().startsWith("bearer ")) {
       return errorResponse("Missing Authorization bearer token", 401, req);
@@ -82,7 +86,7 @@ export async function handleSendEmailRequest(req: Request): Promise<Response> {
     const { data: { user }, error: userError } = await caller.auth.getUser();
     if (userError || !user) return errorResponse("Unauthorized", 401, req);
 
-    // 2) Papel privilegiado (admin/supervisor) via RPC canônica já existente.
+    // 2) Papel privilegiado (admin/supervisor) via RPC canonica ja existente.
     const { data: isStaff, error: roleError } = await caller.rpc("is_admin_or_supervisor", {
       _user_id: user.id,
     });
@@ -91,11 +95,11 @@ export async function handleSendEmailRequest(req: Request): Promise<Response> {
     }
 
     // 3) Payload estreito do convite: e-mail/nome/cargo apenas. subject/html/text/cc/bcc/
-    //    attachments/from são rejeitados pelo schema (não existem no contrato do convite).
+    //    attachments/from sao rejeitados pelo schema (nao existem no contrato do convite).
     const parsed = parseBody(InviteAgentSchema, await req.json());
     if (!parsed.success) return validationErrorResponse(parsed, req);
 
-    // 4) Só agora a chave Resend é lida e o efeito acontece.
+    // 4) So agora a chave Resend e lida e o efeito acontece.
     const RESEND_API_KEY = requireEnv("RESEND_API_KEY");
     const payload = buildInvitePayload(parsed.data);
 

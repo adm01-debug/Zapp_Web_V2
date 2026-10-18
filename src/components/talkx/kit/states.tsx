@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PrimaryButton, GhostButton } from '@/components/dashboard/overview/DashboardCard';
+import { currentTalkXForcedState } from './forcedState';
 
 /* ------------------------------------------------------------------ */
 /* Estados do sistema (prancha 17)                                    */
@@ -319,6 +320,28 @@ export interface TalkXQueryBoundaryProps {
 export function TalkXQueryBoundary({
   query, entity, onRetry, skeleton, isEmpty, empty, children,
 }: TalkXQueryBoundaryProps) {
+  // 0. X055 — prancha de referência: `?talkxState=` força um estado para
+  // conferência visual. A trava é a mesma da prancha (DEV ou VITE_TALKX_KIT=1):
+  // fora dela `currentTalkXForcedState()` devolve `null` e o boundary segue
+  // exatamente como antes (carregando -> erro -> vazio -> conteúdo).
+  const forced = currentTalkXForcedState();
+  if (forced === 'loading') {
+    return (
+      <div aria-busy="true" data-talkx-query="loading">
+        {skeleton}
+      </div>
+    );
+  }
+  if (forced === 'error') {
+    return <TalkXErrorState entity={entity} onRetry={onRetry} />;
+  }
+  if (forced === 'empty') {
+    return <div data-talkx-query="empty">{empty}</div>;
+  }
+  if (forced === 'crm') return <TalkXCrmUnavailableState />;
+  if (forced === 'wa') return <TalkXWhatsAppDisconnectedState />;
+  if (forced === 'perm') return <TalkXNoPermissionState />;
+
   // 1. Carregando (primeira carga) — nunca é erro/vazio enquanto carrega.
   if (query.isLoading) {
     return (

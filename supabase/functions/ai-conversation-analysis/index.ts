@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, checkRateLimit, getClientIP, createAuthedClient } from "../_shared/validation.ts";
+import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, createAuthedClient } from "../_shared/validation.ts";
 import { AiConversationAnalysisSchema, CONTEXT_CONTRACT_VERSION, CONTEXT_SUPERSEDED_REASON, contextCancelledEnvelope, measureConversationContext, parseBody, revalidateContextBeforeEffect, validationErrorResponse } from "../_shared/schemas.ts";
 import { normalizeSentiment, normalizeUrgency, urgencyToOperationalPriority } from "../_shared/ai-vocabulary.ts";
 import { normalizeScore } from "../_shared/ai-values.ts";
@@ -23,10 +23,11 @@ Deno.serve(async (req) => {
   const userId = extractUserIdFromRequest(req);
 
   try {
-    const ip = getClientIP(req);
-    const { allowed } = checkRateLimit(`analysis:${ip}`, 10, 60_000);
-    if (!allowed) return errorResponse("Rate limit exceeded. Please try again later.", 429, req);
-
+    // O limite desta capacidade é POR USUÁRIO, com contador compartilhado e
+    // atômico + cota diária (IA-043), decidido em `enforceAiGuards` acima. O
+    // antigo contador em memória por IP saiu: ele era por isolate (zerava no
+    // cold start) e fazia colegas atrás do mesmo NAT dividirem a cota, sem
+    // identificar quem consumiu.
     const parsed = parseBody(AiConversationAnalysisSchema, await req.json());
     if (!parsed.success) return validationErrorResponse(parsed, req);
 
@@ -62,14 +63,14 @@ Deno.serve(async (req) => {
       const { contact, recentAnalyses } = await loadContactPromptContext({
         supabase,
         contactId: visibleContactId,
-        contactColumns: 'name, company, tags, ai_priority, ai_sentiment, notes, contact_type',
+        // A coluna de ETIQUETAS do contato saiu do prompt (migration em trilha separada).
+        contactColumns: 'name, company, ai_priority, ai_sentiment, notes, contact_type',
         analysisColumns: 'sentiment, sentiment_score, summary, urgency, created_at',
       });
 
       if (contact) {
         contactContext = `\nContexto do cliente: ${contact.name || 'Cliente'}`;
         if (contact.company) contactContext += `, Empresa: ${contact.company}`;
-        if (contact.tags?.length) contactContext += `, Tags: ${contact.tags.join(', ')}`;
         if (contact.contact_type) contactContext += `, Tipo: ${contact.contact_type}`;
         // O sentimento anterior entra no prompt já no vocabulário CANÔNICO
         // (IA-021): antes o modelo recebia o valor cru, que podia estar em inglês.

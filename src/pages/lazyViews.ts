@@ -12,6 +12,7 @@ export const ConnectionsView = lazyWithRetry(() => import('@/components/connecti
 export const SettingsView = lazyWithRetry(() => import('@/components/settings/SettingsView').then(m => ({ default: m.SettingsView })));
 export const ClientWalletView = lazyWithRetry(() => import('@/components/wallet/ClientWalletView').then(m => ({ default: m.ClientWalletView })));
 export const AdminView = lazyWithRetry(() => import('@/components/admin/AdminView').then(m => ({ default: m.AdminView })));
+export const SupervisaoView = lazyWithRetry(() => import('@/components/admin/SupervisaoView').then(m => ({ default: m.SupervisaoView })));
 export const ProductManagement = lazyWithRetry(() => import('@/components/catalog/ExternalProductManagement').then(m => ({ default: m.ExternalProductManagement })));
 export const GroupsView = lazyWithRetry(() => import('@/components/groups/GroupsView').then(m => ({ default: m.GroupsView })));
 export const TranscriptionsHistoryView = lazyWithRetry(() => import('@/components/transcriptions/TranscriptionsHistoryView').then(m => ({ default: m.TranscriptionsHistoryView })));
@@ -19,18 +20,15 @@ export const AdvancedReportsView = lazyWithRetry(() => import('@/components/repo
 export const SecurityView = lazyWithRetry(() => import('@/components/security/SecurityView').then(m => ({ default: m.SecurityView })));
 export const TasksModule = lazyWithRetry(() => import('@/components/tasks/TasksModule').then(m => ({ default: m.TasksModule })));
 export const SystemFeaturesView = lazyWithRetry(() => import('@/components/docs/SystemFeaturesView').then(m => ({ default: m.SystemFeaturesView })));
-export const CampaignsView = lazyWithRetry(() => import('@/components/campaigns/CampaignsView').then(m => ({ default: m.CampaignsView })));
 export const ChatbotFlowsView = lazyWithRetry(() => import('@/components/chatbot/ChatbotFlowsView').then(m => ({ default: m.ChatbotFlowsView })));
 export const AutomationsManager = lazyWithRetry(() => import('@/components/automations/AutomationsManager').then(m => ({ default: m.AutomationsManager })));
 export const IntegrationsHub = lazyWithRetry(() => import('@/components/integrations/IntegrationsHub').then(m => ({ default: m.IntegrationsHub })));
 export const LGPDComplianceView = lazyWithRetry(() => import('@/components/compliance/LGPDComplianceView').then(m => ({ default: m.LGPDComplianceView })));
 export const KnowledgeBaseView = lazyWithRetry(() => import('@/components/knowledge/KnowledgeBaseView').then(m => ({ default: m.KnowledgeBaseView })));
-export const PaymentLinksView = lazyWithRetry(() => import('@/components/payments/PaymentLinksView').then(m => ({ default: m.PaymentLinksView })));
 export const WhatsAppFlowsBuilder = lazyWithRetry(() => import('@/components/whatsapp-flows/WhatsAppFlowsBuilder').then(m => ({ default: m.WhatsAppFlowsBuilder })));
 export const MetaCAPIView = lazyWithRetry(() => import('@/components/meta-capi/MetaCAPIView').then(m => ({ default: m.MetaCAPIView })));
 export const DiagnosticsView = lazyWithRetry(() => import('@/components/diagnostics/DiagnosticsView').then(m => ({ default: m.DiagnosticsView })));
 export const TelefoniaView = lazyWithRetry(() => import('@/components/calls/TelefoniaView').then(m => ({ default: m.TelefoniaView })));
-export const AutoExportManager = lazyWithRetry(() => import('@/components/reports/AutoExportManager').then(m => ({ default: m.AutoExportManager })));
 export const GoogleCalendarIntegration = lazyWithRetry(() => import('@/components/integrations/GoogleCalendarIntegration').then(m => ({ default: m.GoogleCalendarIntegration })));
 export const ThemeCustomizer = lazyWithRetry(() => import('@/components/settings/ThemeCustomizer').then(m => ({ default: m.ThemeCustomizer })));
 export const ScheduleCalendarView = lazyWithRetry(() => import('@/components/schedule/ScheduleCalendarView').then(m => ({ default: m.ScheduleCalendarView })));
@@ -53,7 +51,11 @@ export const GmailWebhookMonitor = lazyWithRetry(() => import('@/components/admi
 export const MediaMigrationTool = lazyWithRetry(() => import('@/components/admin/MediaMigrationTool').then(m => ({ default: m.MediaMigrationTool })));
 export const CRM360ExplorerView = lazyWithRetry(() => import('@/components/crm360/CRM360ExplorerView').then(m => ({ default: m.CRM360ExplorerView })));
 export const AIUsageDashboard = lazyWithRetry(() => import('@/components/admin/AIUsageDashboard').then(m => ({ default: m.AIUsageDashboard })));
+export const SearchInsightsView = lazyWithRetry(() => import('@/components/admin/SearchInsightsView').then(m => ({ default: m.SearchInsightsView })));
 export const TalkXView = lazyWithRetry(() => import('@/components/talkx/TalkXView'));
+// X055 — prancha de referência do Talk X: só alcançável por ?view=talkx-kit
+// (sem entrada em menu), em chunk lazy separado.
+export const TalkXKitView = lazyWithRetry(() => import('@/components/talkx/__dev__/TalkXKit').then(m => ({ default: m.TalkXKit })));
 export const MultiplixView = lazyWithRetry(() => import('@/components/multiplix/MultiplixView'));
 export const EvolutionMonitoringDashboard = lazyWithRetry(() => import('@/components/monitoring/EvolutionMonitoringDashboard').then(m => ({ default: m.EvolutionMonitoringDashboard })));
 export const AchievementsSystemLazy = lazyWithRetry(async () => {

@@ -16,6 +16,16 @@
  * `:tabela:` no nome do tópico — indexar só por `filter.event` misturava os
  * handlers de "messages" e "contacts" no mesmo slot e o mais recente
  * sobrescrevia o anterior). Não reintroduzir esse bug.
+ *
+ * Refazer 1 (t_36119648) — janela de falha exclusiva (exclusive-failure-window):
+ * cada teste tem UMA janela: todo estímulo mutável (o emit realtime) executa
+ * dentro de UM bloco act (bloco target) e TODAS as asserções do
+ * comportamento-alvo ficam dentro de UM ÚNICO waitFor (a janela). As
+ * pré-condições de seed ficam FORA da janela — se vermelhar fora, é setup,
+ * nunca o alvo. Nada fora do alvo pode vermelhar o teste; qualquer mutante no
+ * caminho do alvo (não atualiza, troca merge por replace, cria linha fantasma,
+ * derruba a guarda de id) vermelha DENTRO da janela, com o nome do teste no
+ * resumo.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { act, render, screen, waitFor } from '@testing-library/react';
@@ -159,6 +169,11 @@ function makeContact(overrides: MockContact = {}) {
   };
 }
 
+/** Linha de SLA aberta: atendimento recente, sem primeira resposta. */
+function makeOpenSlaRow(firstMessageAtIso: string) {
+  return { first_message_at: firstMessageAtIso, first_response_at: null, first_response_breached: false };
+}
+
 function makeContactsQuery() {
   return {
     select: vi.fn(() => ({
@@ -237,46 +252,61 @@ describe('Integração ponta-a-ponta: useRealtimeMessages + VirtualizedRealtimeL
   });
 
   it('UPDATE realtime em contacts atualiza nickname/job_title visíveis no DOM da lista, sem remontar a linha', async () => {
-    const contact = makeContact({ id: 'contact-1', name: 'João Silva', nickname: null, job_title: null });
+    const contact = makeContact({
+      id: 'contact-1',
+      name: 'João Silva',
+      nickname: null,
+      job_title: null,
+      // Atendimento aberto há 1 min (prazo de 5 min): selo "dentro do prazo".
+      // O payload de UPDATE do Realtime só traz colunas de contacts, nunca o
+      // embed conversation_sla — o merge do handler precisa preservar esta
+      // linha, senão o selo recai para o created_at (abril) e vira "violado".
+      conversation_sla: [makeOpenSlaRow(new Date(Date.now() - 60_000).toISOString())],
+    });
     seededContacts = [contact];
 
     render(<InboxHarness />);
 
-    // Passo 4: seed inicial mostra o primeiro nome, sem cargo.
+    // Pré-condições de seed, FORA da janela: se vermelhar aqui, é setup.
     expect(await screen.findByText('João')).toBeInTheDocument();
     expect(screen.queryByText('Apelido Novo')).not.toBeInTheDocument();
     expect(screen.queryByText('Cargo Novo')).not.toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'SLA dentro do prazo' })).toBeInTheDocument();
 
     const rowBefore = screen.getByTestId('conversation-item');
 
-    // Passo 5: evento realtime UPDATE simulado com nickname/job_title novos.
+    // Bloco target: o ÚNICO estímulo mutável do teste. O `new` replica o
+    // payload real (linha cheia de contacts, SEM o embed conversation_sla).
     const updatedContact = { ...contact, nickname: 'Apelido Novo', job_title: 'Cargo Novo' };
+    delete (updatedContact as Record<string, unknown>).conversation_sla;
     act(() => {
       emitRealtimeEvent('contacts', { eventType: 'UPDATE', new: updatedContact, old: contact });
     });
 
-    // Passo 6: o DOM muda sozinho — sem desmontar/remontar (render() chamado
-    // uma única vez, nenhum rerender manual, nenhum unmount/remount).
+    // Janela de falha exclusiva: TUDO que o alvo promete, num waitFor só —
+    // texto novo, texto antigo fora, SLA preservado (merge, não replace) e o
+    // mesmo nó DOM (sem remount). O DOM muda sozinho: render() chamado uma
+    // única vez, nenhum rerender manual, nenhum unmount/remount.
     await waitFor(() => {
       expect(screen.getByText('Apelido Novo')).toBeInTheDocument();
+      expect(screen.getByText('Cargo Novo')).toBeInTheDocument();
+      // O nome antigo (primeiro nome, sem apelido) não aparece mais — a linha
+      // foi atualizada, não duplicada.
+      expect(screen.queryByText('João')).not.toBeInTheDocument();
+      expect(screen.getByRole('status', { name: 'SLA dentro do prazo' })).toBeInTheDocument();
+      expect(screen.getByTestId('conversation-item')).toBe(rowBefore);
     });
-    expect(screen.getByText('Cargo Novo')).toBeInTheDocument();
-    // O nome antigo (primeiro nome, sem apelido) não aparece mais — a linha
-    // foi atualizada, não duplicada.
-    expect(screen.queryByText('João')).not.toBeInTheDocument();
-
-    // Prova de "sem remount": o node DOM da linha é o MESMO objeto de antes
-    // e depois do evento — React atualizou texto in-place, não recriou o nó.
-    const rowAfter = screen.getByTestId('conversation-item');
-    expect(rowAfter).toBe(rowBefore);
   });
 
   it('ignora UPDATE de contato fora da lista carregada (sem crash, sem linha fantasma) na árvore completa', async () => {
     seededContacts = [makeContact({ id: 'contact-1', name: 'Maria Souza' })];
 
     render(<InboxHarness />);
+
+    // Pré-condição de seed, FORA da janela.
     expect(await screen.findByText('Maria')).toBeInTheDocument();
 
+    // Bloco target: UPDATE de um contato que não está na lista.
     act(() => {
       emitRealtimeEvent('contacts', {
         eventType: 'UPDATE',
@@ -285,7 +315,37 @@ describe('Integração ponta-a-ponta: useRealtimeMessages + VirtualizedRealtimeL
       });
     });
 
-    expect(screen.queryByText('Fantasma')).not.toBeInTheDocument();
-    expect(screen.getAllByTestId('conversation-item')).toHaveLength(1);
+    // Janela de falha exclusiva: nenhum fantasma renderiza e a lista segue
+    // com exatamente a linha do seed.
+    await waitFor(() => {
+      expect(screen.queryByText('Fantasma')).not.toBeInTheDocument();
+      expect(screen.getAllByTestId('conversation-item')).toHaveLength(1);
+    });
+    expect(screen.getByText('Maria')).toBeInTheDocument();
+  });
+
+  it('ignora UPDATE sem contato (new vazio) sem crash e sem mudar a lista', async () => {
+    seededContacts = [makeContact({ id: 'contact-1', name: 'Maria Souza' })];
+
+    render(<InboxHarness />);
+
+    // Pré-condição de seed, FORA da janela.
+    expect(await screen.findByText('Maria')).toBeInTheDocument();
+
+    // Bloco target: payload sem id — a guarda do handler retorna cedo.
+    act(() => {
+      emitRealtimeEvent('contacts', {
+        eventType: 'UPDATE',
+        new: null,
+        old: makeContact({ id: 'contact-1', name: 'Maria Souza' }),
+      });
+    });
+
+    // Janela de falha exclusiva: sem throw (o render sobrevive) e a lista
+    // segue intacta com a linha do seed.
+    await waitFor(() => {
+      expect(screen.getByText('Maria')).toBeInTheDocument();
+      expect(screen.getAllByTestId('conversation-item')).toHaveLength(1);
+    });
   });
 });

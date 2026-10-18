@@ -1,0 +1,329 @@
+-- ============================================================================
+-- app_bootstrap() — bootstrap do app em UMA chamada (cartão t_2b931517).
+--
+-- O QUE ESTE TESTE PROVA (critério de pronto do cartão):
+--   1. UMA chamada devolve o que o boot precisa: perfil, papéis, permissões,
+--      configurações (globais + do usuário), departamentos ativos e não lidas.
+--   2. ISOLAMENTO POR USUÁRIO: o payload carrega SÓ o dado do auth.uid() da
+--      sessão — nada de outro usuário (perfil, papéis, preferências, contagem).
+--   3. ANON É NEGADO de verdade (EXECUTE revogado; não é só "não vem dado").
+--   4. A RPC NÃO ENTREGA MAIS DO QUE A RLS VIGENTE entrega hoje ao mesmo papel:
+--      permissions/role_permissions só para admin/supervisor; global_settings
+--      com o recorte de segredo; departments sem as colunas de segredo.
+--
+-- COMO PROVA ISOLAMENTO E ENFORCEMENT (papel real, não postgres):
+--   roda no banco LOCAL do cartão, com papéis REAIS via
+--   `SET LOCAL ROLE authenticated` / `anon` + claims de JWT em
+--   `request.jwt.claims`. Tudo dentro de UMA transação sem COMMIT (ROLLBACK no
+--   fim): nada fica no banco. `session_replication_role = replica` entra só
+--   durante os INSERTs de fixture, para dispensar linhas em `auth.users` e não
+--   deixar gatilhos/FK barrarem o cenário.
+--
+-- RODAR (banco local do cartão, já com a migration aplicada):
+--   zapp-db-local psql . <conjunto> -v ON_ERROR_STOP=1 < supabase/tests/app_bootstrap_rpc.sql
+--   Sem a migration aplicada o teste FALHA já no primeiro DO (função ausente).
+-- ============================================================================
+
+\set ON_ERROR_STOP on
+
+begin;
+
+-- ---------------------------------------------------------------------------
+-- Guarda de aplicação: a função tem de estar no banco (migration aplicada).
+-- ---------------------------------------------------------------------------
+do $guard$
+begin
+  if to_regprocedure('public.app_bootstrap()') is null then
+    raise exception 'public.app_bootstrap() não existe: aplique a migration 20261015223614_app_bootstrap.sql antes deste teste';
+  end if;
+  raise notice 'PASS [A0] public.app_bootstrap() existe no banco';
+end
+$guard$;
+
+-- ---------------------------------------------------------------------------
+-- Helpers (schema temporário, caem com o ROLLBACK)
+-- ---------------------------------------------------------------------------
+create function pg_temp.espera(p_rotulo text, p_atual text, p_esperado text)
+returns void
+language plpgsql
+as $h$
+begin
+  if p_atual is not distinct from p_esperado then
+    raise notice 'PASS [%] % (obtido=%)', split_part(p_rotulo, ' ', 1), p_rotulo, coalesce(p_atual, '<null>');
+  else
+    raise exception 'FALHOU [%] % — obtido=<%> esperado=<%>', split_part(p_rotulo, ' ', 1), p_rotulo, coalesce(p_atual, '<null>'), coalesce(p_esperado, '<null>');
+  end if;
+end
+$h$;
+
+-- Chama a RPC como um PAPEL REAL, com o JWT do usuário informado.
+-- Sem p_uid, manda claims vazio (sessão inexistente). Erro vira '__erro'.
+create function pg_temp.boot(p_uid uuid, p_papel text default 'authenticated')
+returns jsonb
+language plpgsql
+as $h$
+declare
+  v jsonb;
+  v_role text;
+begin
+  if p_uid is null then
+    perform set_config('request.jwt.claims', '{}', true);
+    perform set_config('request.jwt.claim.sub', '', true);
+  else
+    perform set_config('request.jwt.claims', json_build_object('sub', p_uid, 'role', p_papel)::text, true);
+    perform set_config('request.jwt.claim.sub', p_uid::text, true);
+  end if;
+
+  execute format('set local role %I', p_papel);
+  v_role := current_user;
+  if v_role <> p_papel then
+    raise exception 'não trocou para o papel % (ficou %)', p_papel, v_role;
+  end if;
+
+  begin
+    execute 'select public.app_bootstrap()' into v;
+  exception when others then
+    v := jsonb_build_object('__erro', sqlstate || ' ' || sqlerrm);
+  end;
+
+  reset role;
+  return v;
+end
+$h$;
+
+-- Conta as linhas que o PAPEL REAL enxerga numa tabela (sujeito a GRANT + RLS).
+create function pg_temp.conta(p_papel text, p_uid uuid, p_tabela text)
+returns bigint
+language plpgsql
+as $h$
+declare
+  n bigint;
+begin
+  perform set_config('request.jwt.claims', json_build_object('sub', p_uid, 'role', p_papel)::text, true);
+  -- auth.uid() prefere `request.jwt.claim.sub`; deixe-o alinhado com o claims
+  -- (senão sobra o uid da chamada anterior e a leitura vira de outro usuário).
+  perform set_config('request.jwt.claim.sub', p_uid::text, true);
+  execute format('set local role %I', p_papel);
+  if current_user <> p_papel then
+    raise exception 'não trocou para o papel % (ficou %)', p_papel, current_user;
+  end if;
+  if current_setting('row_security') <> 'on' then
+    raise exception 'row_security=% (deveria ser on)', current_setting('row_security');
+  end if;
+  execute format('select count(*) from public.%I', p_tabela) into n;
+  reset role;
+  return n;
+end
+$h$;
+
+-- ---------------------------------------------------------------------------
+-- FIXTURES (u-ids/hexis fixos; tudo volta no ROLLBACK)
+-- ---------------------------------------------------------------------------
+set local session_replication_role = replica;
+
+-- usuários: alfa (agent), bravo (agent), chefe (admin), sup (supervisor)
+insert into public.profiles (id, user_id, name, role, is_active, can_download) values
+  ('22222222-2222-2222-2222-222222222201', '11111111-1111-1111-1111-1111111111a2', 'Fixt Alfa',  'agent',      true, false),
+  ('22222222-2222-2222-2222-222222222202', '11111111-1111-1111-1111-1111111111a3', 'Fixt Bravo', 'agent',      true, false),
+  ('22222222-2222-2222-2222-222222222203', '11111111-1111-1111-1111-1111111111a1', 'Fixt Chefe', 'admin',      true, true),
+  ('22222222-2222-2222-2222-222222222204', '11111111-1111-1111-1111-1111111111a4', 'Fixt Sup',   'supervisor', true, true);
+
+insert into public.user_roles (user_id, role) values
+  ('11111111-1111-1111-1111-1111111111a2', 'agent'),
+  ('11111111-1111-1111-1111-1111111111a3', 'agent'),
+  ('11111111-1111-1111-1111-1111111111a1', 'admin'),
+  ('11111111-1111-1111-1111-1111111111a4', 'supervisor');
+
+insert into public.user_settings (id, user_id, theme, sound_volume) values
+  ('66666666-6666-6666-6666-666666666601', '11111111-1111-1111-1111-1111111111a2', 'tema-alfa',  70),
+  ('66666666-6666-6666-6666-666666666602', '11111111-1111-1111-1111-1111111111a3', 'tema-bravo', 70);
+
+insert into public.notifications (id, user_id, title, message, type, is_read) values
+  ('55555555-5555-5555-5555-555555555501', '11111111-1111-1111-1111-1111111111a2', 'N1', 'm', 'info', false),
+  ('55555555-5555-5555-5555-555555555502', '11111111-1111-1111-1111-1111111111a2', 'N2', 'm', 'info', false),
+  ('55555555-5555-5555-5555-555555555503', '11111111-1111-1111-1111-1111111111a2', 'N3', 'm', 'info', true),
+  ('55555555-5555-5555-5555-555555555504', '11111111-1111-1111-1111-1111111111a3', 'N4', 'm', 'info', false);
+
+insert into public.permissions (id, name, description, category) values
+  ('33333333-3333-3333-3333-333333333301', 'fixt_permissao_a', 'fixture', 'fixt'),
+  ('33333333-3333-3333-3333-333333333302', 'fixt_permissao_b', 'fixture', 'fixt');
+
+insert into public.role_permissions (role, permission_id) values
+  ('agent', '33333333-3333-3333-3333-333333333301'),
+  ('admin', '33333333-3333-3333-3333-333333333302');
+
+insert into public.global_settings (id, key, value, description) values
+  ('77777777-7777-7777-7777-777777777701', 'app_bootstrap_fixt_zz_api_key', 'SEGREDO-NAO-DEVE-VAZAR', 'fixture-segredo'),
+  ('77777777-7777-7777-7777-777777777702', 'app_bootstrap_fixt_zz_option',  'valor-publico',           'fixture-publico');
+
+insert into public.departments (id, name, is_active, whatsapp_mode, whatsapp_api_key) values
+  ('44444444-4444-4444-4444-444444444401', 'Fixt Dept Ativo',   true,  'none', 'CHAVE-DO-DEPTO-NAO-DEVE-VAZAR'),
+  ('44444444-4444-4444-4444-444444444402', 'Fixt Dept Inativo', false, 'none', null);
+
+set local session_replication_role = default;
+
+-- ---------------------------------------------------------------------------
+-- A) ACL e definição (a porta fechada, provada na ACL — não só no comportamento)
+-- ---------------------------------------------------------------------------
+select pg_temp.espera('A1 anon NÃO tem EXECUTE',
+  has_function_privilege('anon', 'public.app_bootstrap()', 'EXECUTE')::text, 'false');
+select pg_temp.espera('A2 authenticated TEM EXECUTE',
+  has_function_privilege('authenticated', 'public.app_bootstrap()', 'EXECUTE')::text, 'true');
+select pg_temp.espera('A3 service_role NÃO tem EXECUTE',
+  has_function_privilege('service_role', 'public.app_bootstrap()', 'EXECUTE')::text, 'false');
+select pg_temp.espera('A4 PUBLIC não tem EXECUTE na ACL',
+  (select (count(*) = 0)::text
+     from pg_proc p
+     cross join lateral aclexplode(p.proacl) a
+    where p.oid = 'public.app_bootstrap()'::regprocedure
+      and a.grantee = 0
+      and a.privilege_type = 'EXECUTE'), 'true');
+select pg_temp.espera('A5 é SECURITY DEFINER',
+  (select prosecdef::text from pg_proc where oid = 'public.app_bootstrap()'::regprocedure), 'true');
+select pg_temp.espera('A6 tem search_path fixo (public, pg_temp)',
+  (select (proconfig @> array['search_path=public, pg_temp'])::text
+     from pg_proc where oid = 'public.app_bootstrap()'::regprocedure), 'true');
+
+-- ---------------------------------------------------------------------------
+-- B) anon é NEGADO de verdade ao chamar (não é "vem vazio")
+-- ---------------------------------------------------------------------------
+select pg_temp.espera('B1 anon recebe 42501 ao chamar app_bootstrap()',
+  left(pg_temp.boot('11111111-1111-1111-1111-1111111111a2', 'anon')->>'__erro', 5), '42501');
+
+-- ---------------------------------------------------------------------------
+-- C) sessão sem usuário → resposta própria, sem dado de ninguém
+-- ---------------------------------------------------------------------------
+select pg_temp.espera('C1 sem sessão devolve not_authenticated',
+  pg_temp.boot(null, 'authenticated')->>'error', 'not_authenticated');
+
+-- ---------------------------------------------------------------------------
+-- D) ISOLAMENTO: o agente Alfa só vê o Alfa
+-- ---------------------------------------------------------------------------
+do $alfa$
+declare
+  v jsonb := pg_temp.boot('11111111-1111-1111-1111-1111111111a2');
+begin
+  perform pg_temp.espera('D1 perfil é o do Alfa',            v->'profile'->>'user_id', '11111111-1111-1111-1111-1111111111a2');
+  perform pg_temp.espera('D2 nome do perfil é o do Alfa',    v->'profile'->>'name',    'Fixt Alfa');
+  perform pg_temp.espera('D3 papéis são só os do Alfa',      v->'roles'->>0,           'agent');
+  perform pg_temp.espera('D4 papéis do Alfa são exatamente 1', jsonb_array_length(v->'roles')::text, '1');
+  perform pg_temp.espera('D5 não lidas do Alfa = 2 (a lida fora)', v->>'unread_notifications', '2');
+  perform pg_temp.espera('D6 preferências são as do Alfa',   v->'user_settings'->>'theme', 'tema-alfa');
+  perform pg_temp.espera('D7 payload NÃO traz o nome do Bravo', (position('Fixt Bravo' in v::text) = 0)::text, 'true');
+  perform pg_temp.espera('D8 payload NÃO traz o tema do Bravo', (position('tema-bravo' in v::text) = 0)::text, 'true');
+  perform pg_temp.espera('D9 payload NÃO traz o user_id do Bravo', (position('11111111-1111-1111-1111-1111111111a3' in v::text) = 0)::text, 'true');
+  perform pg_temp.espera('D10 payload NÃO traz o perfil do admin', (position('Fixt Chefe' in v::text) = 0)::text, 'true');
+end
+$alfa$;
+
+-- ---------------------------------------------------------------------------
+-- E) ISOLAMENTO: o agente Bravo só vê o Bravo (o outro lado do par)
+-- ---------------------------------------------------------------------------
+do $bravo$
+declare
+  v jsonb := pg_temp.boot('11111111-1111-1111-1111-1111111111a3');
+begin
+  perform pg_temp.espera('E1 perfil é o do Bravo',          v->'profile'->>'user_id', '11111111-1111-1111-1111-1111111111a3');
+  perform pg_temp.espera('E2 nome do perfil é o do Bravo',  v->'profile'->>'name',    'Fixt Bravo');
+  perform pg_temp.espera('E3 não lidas do Bravo = 1',       v->>'unread_notifications', '1');
+  perform pg_temp.espera('E4 preferências são as do Bravo', v->'user_settings'->>'theme', 'tema-bravo');
+  perform pg_temp.espera('E5 payload NÃO traz o nome do Alfa', (position('Fixt Alfa' in v::text) = 0)::text, 'true');
+  perform pg_temp.espera('E6 payload NÃO traz o tema do Alfa', (position('tema-alfa' in v::text) = 0)::text, 'true');
+end
+$bravo$;
+
+-- ---------------------------------------------------------------------------
+-- F) PARIDADE COM A RLS: a RPC nunca entrega mais do que a RLS entrega hoje
+--    (compara com a leitura DIRETA sob o mesmo papel real)
+-- ---------------------------------------------------------------------------
+do $paridade$
+declare
+  v_alfa  jsonb := pg_temp.boot('11111111-1111-1111-1111-1111111111a2');
+  v_sup   jsonb := pg_temp.boot('11111111-1111-1111-1111-1111111111a4');
+  v_adm   jsonb := pg_temp.boot('11111111-1111-1111-1111-1111111111a1');
+  n_direto bigint;
+begin
+  -- agente: matriz de permissões é NEGADA pela RLS; a RPC também não a entrega
+  perform pg_temp.espera('F1 agente: permissions direto (RLS) = 0',
+    pg_temp.conta('authenticated', '11111111-1111-1111-1111-1111111111a2', 'permissions')::text, '0');
+  perform pg_temp.espera('F2 agente: permissions pela RPC = 0',
+    jsonb_array_length(v_alfa->'permissions')::text, '0');
+  perform pg_temp.espera('F3 agente: role_permissions pela RPC = 0',
+    jsonb_array_length(v_alfa->'role_permissions')::text, '0');
+  perform pg_temp.espera('F4 agente: global_settings pela RPC = 0',
+    jsonb_array_length(v_alfa->'global_settings')::text, '0');
+
+  -- supervisor: lê a matriz (RLS) e a RPC devolve o MESMO tanto
+  n_direto := pg_temp.conta('authenticated', '11111111-1111-1111-1111-1111111111a4', 'permissions');
+  perform pg_temp.espera('F5 supervisor: permissions pela RPC = direto (RLS)',
+    jsonb_array_length(v_sup->'permissions')::text, n_direto::text);
+
+  -- supervisor: global_settings o MESMO tanto que a leitura direta
+  n_direto := pg_temp.conta('authenticated', '11111111-1111-1111-1111-1111111111a4', 'global_settings');
+  perform pg_temp.espera('F6 supervisor: global_settings pela RPC = direto (RLS)',
+    jsonb_array_length(v_sup->'global_settings')::text, n_direto::text);
+
+  -- admin: global_settings o MESMO tanto que a leitura direta
+  n_direto := pg_temp.conta('authenticated', '11111111-1111-1111-1111-1111111111a1', 'global_settings');
+  perform pg_temp.espera('F7 admin: global_settings pela RPC = direto (RLS)',
+    jsonb_array_length(v_adm->'global_settings')::text, n_direto::text);
+
+  -- departments: a RLS entrega a tabela inteira; a RPC entrega MENOS (só ativo)
+  n_direto := pg_temp.conta('authenticated', '11111111-1111-1111-1111-1111111111a2', 'departments');
+  perform pg_temp.espera('F8 departments pela RPC ≤ direto (RLS)',
+    (jsonb_array_length(v_alfa->'departments') <= n_direto)::text, 'true');
+  perform pg_temp.espera('F9 departments pela RPC = só o ativo', jsonb_array_length(v_alfa->'departments')::text, '1');
+end
+$paridade$;
+
+-- ---------------------------------------------------------------------------
+-- G) SEGREDOS: recorte de global_settings e das colunas de departments
+-- ---------------------------------------------------------------------------
+do $segredos$
+declare
+  v_adm jsonb := pg_temp.boot('11111111-1111-1111-1111-1111111111a1');
+  v_sup jsonb := pg_temp.boot('11111111-1111-1111-1111-1111111111a4');
+  v_agt jsonb := pg_temp.boot('11111111-1111-1111-1111-1111111111a2');
+begin
+  -- o admin ENXERGA a chave secreta do fixture (prova que o filtro não é "tudo vazio")
+  perform pg_temp.espera('G1 admin vê a chave secreta do fixture',
+    (v_adm->'global_settings' @> jsonb_build_array(jsonb_build_object('key', 'app_bootstrap_fixt_zz_api_key')))::text, 'true');
+  -- o supervisor NÃO vê a secreta, mas vê a pública
+  perform pg_temp.espera('G2 supervisor NÃO vê a chave secreta',
+    (v_sup->'global_settings' @> jsonb_build_array(jsonb_build_object('key', 'app_bootstrap_fixt_zz_api_key')))::text, 'false');
+  perform pg_temp.espera('G3 supervisor vê a chave pública',
+    (v_sup->'global_settings' @> jsonb_build_array(jsonb_build_object('key', 'app_bootstrap_fixt_zz_option')))::text, 'true');
+  -- nenhum payload carrega o VALOR do segredo nem a coluna de segredo do departamento
+  perform pg_temp.espera('G4 valor de whatsapp_api_key do departamento não vaza (nem pro admin)',
+    (position('CHAVE-DO-DEPTO-NAO-DEVE-VAZAR' in v_adm::text) = 0)::text, 'true');
+  perform pg_temp.espera('G5 departamento não traz a coluna whatsapp_api_key',
+    (position('whatsapp_api_key' in (v_agt->'departments')::text) = 0)::text, 'true');
+  perform pg_temp.espera('G6 departamento inativo NÃO aparece',
+    (v_agt->'departments' @> jsonb_build_array(jsonb_build_object('name', 'Fixt Dept Inativo')))::text, 'false');
+end
+$segredos$;
+
+-- ---------------------------------------------------------------------------
+-- H) ROLLBACK DO ARQUIVO: a linha `-- Rollback:` é executável e deixa o banco
+--    sem resíduo (a mesma instrução do topo da migration). O ROLLBACK final
+--    desfaz esta prova, então o banco local continua com a função.
+-- ---------------------------------------------------------------------------
+do $rollback$
+begin
+  drop function if exists public.app_bootstrap();
+
+  if to_regprocedure('public.app_bootstrap()') is not null then
+    raise exception 'FALHOU [H1] rollback deixou a função no banco';
+  end if;
+  raise notice 'PASS [H1] rollback executado: public.app_bootstrap() removida';
+
+  if exists (select 1 from pg_proc where proname = 'app_bootstrap') then
+    raise exception 'FALHOU [H2] sobrou objeto com nome app_bootstrap';
+  end if;
+  raise notice 'PASS [H2] sem resíduo: nenhum objeto app_bootstrap restante';
+end
+$rollback$;
+
+\echo '=== app_bootstrap: TODAS as provas passaram (A0-A6, B1, C1, D1-D10, E1-E6, F1-F9, G1-G6, H1-H2) ==='
+
+rollback;

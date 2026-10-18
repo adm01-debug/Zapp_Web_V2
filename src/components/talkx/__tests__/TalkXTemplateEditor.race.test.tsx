@@ -1,6 +1,23 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, act, cleanup } from '@testing-library/react';
+import { render, screen, fireEvent, act, cleanup, within } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+vi.mock('@/integrations/supabase/client', () => ({
+  supabase: { rpc: vi.fn().mockResolvedValue({ data: null, error: null }) },
+}));
+
+/** O editor consome o widget "Em andamento" (campanhas): mock vazio por padrão. */
+vi.mock('@/hooks/integrations/useTalkX', () => ({
+  useTalkX: () => ({ campaigns: [], isLoading: false, isError: false, error: null, isLive: false, refetchCampaigns: vi.fn() }),
+}));
+
+/** O editor passou a consumir os KPIs (react-query real): precisa do provider. */
+const withQuery = (ui: React.ReactElement) => (
+  <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+    {ui}
+  </QueryClientProvider>
+);
 
 /**
  * R2-MOD-024 (item 102 / P1) — "Respostas atrasadas de variantes e histórico são
@@ -77,14 +94,14 @@ function deferred<T>() {
 const flush = () => act(async () => { await Promise.resolve(); });
 
 function renderEditor() {
-  return render(
+  return render(withQuery(
     <TalkXTemplateEditor
       templates={[tplA as never, tplB as never]}
       isLoading={false}
       editing={tplA as never}
       onClose={vi.fn()}
     />,
-  );
+  ));
 }
 
 /** Painel de variantes: há duas cópias do botão (rail xl + faixa < xl). Usa a primeira. */
@@ -296,6 +313,35 @@ describe('R2-MOD-024 — variante do template ativo continua salvando e excluind
     expect(deleteVariant).toHaveBeenCalledWith('var-A');
   });
 
+  // X050 — excluir variante com envios: a caixinha do navegador virou o preset
+  // `excluirVariante` do kit e a contagem aparece no próprio modal.
+  it('excluir variante com envios abre o modal do kit com a contagem e só apaga depois do "Excluir"', async () => {
+    fetchVariants.mockResolvedValue([variant('var-A', 'tpl-A', 'variante do ativo')]);
+    countVariantRecipients.mockResolvedValue(7);
+
+    renderEditor();
+    fireEvent.click(variantsToggle());
+    await flush();
+
+    const textarea = screen.getAllByDisplayValue('variante do ativo')[0];
+    const row = textarea.closest('div[class*="rounded-xl"]') as HTMLElement;
+    fireEvent.click(row.querySelector('button') as HTMLElement);
+    await flush();
+
+    // Nada é apagado antes da confirmação, e a caixinha cinza do navegador não existe.
+    expect(deleteVariant).not.toHaveBeenCalled();
+    const modal = await screen.findByRole('alertdialog');
+    expect(within(modal).getByText('Excluir Variante')).toBeTruthy();
+    expect(within(modal).getByText('Envios')).toBeTruthy();
+    expect(within(modal).getByText('7')).toBeTruthy();
+
+    fireEvent.click(within(modal).getByRole('button', { name: 'Excluir' }));
+    await flush();
+
+    expect(countVariantRecipients).toHaveBeenCalledWith('var-A');
+    expect(deleteVariant).toHaveBeenCalledWith('var-A');
+  });
+
   it('interrompe o rebalanceamento de A após trocar para B durante o primeiro save', async () => {
     const pendingSave = deferred<void>();
     fetchVariants.mockImplementation((id: string) => Promise.resolve(
@@ -336,25 +382,25 @@ describe('R2-MOD-024 — inventário dos caminhos que trocam o template ativo', 
     ]));
     countVariantRecipients.mockResolvedValue(0);
 
-    const view = render(
+    const view = render(withQuery(
       <TalkXTemplateEditor
         templates={[tplA as never, tplB as never, tplDup as never]}
         isLoading={false}
         editing={tplA as never}
         onClose={vi.fn()}
       />,
-    );
+    ));
 
     // Trocar somente a prop `editing`, sem key/remontagem, não chama nenhum setter de
     // activeTemplateId: criação e duplicação fecham o editor em produção.
-    view.rerender(
+    view.rerender(withQuery(
       <TalkXTemplateEditor
         templates={[tplA as never, tplB as never, tplDup as never]}
         isLoading={false}
         editing={tplDup as never}
         onClose={vi.fn()}
       />,
-    );
+    ));
     fireEvent.click(variantsToggle());
     await flush();
     expect(fetchVariants).toHaveBeenLastCalledWith('tpl-A');

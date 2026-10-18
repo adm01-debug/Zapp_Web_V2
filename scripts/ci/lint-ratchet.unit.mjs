@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -598,4 +598,52 @@ test("nao avisa quando o baseline bate com a varredura", (t) => {
   } finally {
     cleanup();
   }
+});
+
+// E39 parte 1: em 16/10 o baseline ainda contava 105 ocorrencias ja pagas (152.956 caracteres de diff,
+// acima do teto de 90.000 do fechar, porque as 79 do Inbox sao 75% do total). Esta parte tira do
+// registro as 26 obsoletas de FORA do Inbox; as do Inbox ficam para os proximos cartoes.
+const BASELINE_LINT = path.join(import.meta.dirname, "eslint-baseline.json");
+
+const PAGAS_FORA_DO_INBOX = [
+  "src/components/admin/SupervisorCopilot.tsx|41|39|react-hooks/purity",
+  "src/components/admin/useAdminData.ts|2|1|no-restricted-imports",
+  "src/components/dashboard/TrendIndicator.tsx|40|17|react-refresh/only-export-components",
+  "src/components/gamification/GamificationProvider.tsx|193|6|react-hooks/exhaustive-deps",
+  "src/components/gamification/GamificationProvider.tsx|220|17|react-refresh/only-export-components",
+  "src/components/mobile/InAppNotificationProvider.tsx|12|17|react-refresh/only-export-components",
+  "src/components/mobile/MobileNavigation.tsx|63|14|react-refresh/only-export-components",
+  "src/components/mobile/SwipeGestures.tsx|6|10|react-refresh/only-export-components",
+  "src/components/mobile/SwipeGestures.tsx|6|19|react-refresh/only-export-components",
+  "src/hooks/chat/useChatSearch.ts|113|6|react-hooks/exhaustive-deps",
+  "src/hooks/chat/useChatSearch.ts|123|6|react-hooks/exhaustive-deps",
+  "src/hooks/chat/useChatSearch.ts|70|3|react-hooks/refs",
+  "src/hooks/chat/useChatSearch.ts|71|3|react-hooks/refs",
+  "src/hooks/evolution/useEvolutionIntegrations.ts|10|127|@typescript-eslint/no-explicit-any",
+  "src/hooks/evolution/useEvolutionIntegrations.ts|9|76|@typescript-eslint/no-explicit-any",
+  "src/hooks/integrations/useCustomEmojis.ts|47|15|react-hooks/set-state-in-effect",
+  "src/hooks/integrations/usePersonalStickers.ts|33|36|react-hooks/preserve-manual-memoization",
+  "src/hooks/reactions/useBatchReactions.ts|53|6|react-hooks/exhaustive-deps",
+  "src/hooks/reactions/useBatchReactions.ts|53|7|react-hooks/exhaustive-deps",
+  "src/hooks/system/useNotifications.ts|63|5|react-hooks/set-state-in-effect",
+  "src/hooks/system/useSearchHistory.ts|19|9|react-hooks/set-state-in-effect",
+  "src/pages/QueueDetails.tsx|3|1|no-restricted-imports",
+  "supabase/functions/migrate-media-storage/index.ts|124|13|@typescript-eslint/no-explicit-any",
+  "supabase/functions/migrate-media-storage/index.ts|155|13|@typescript-eslint/no-explicit-any",
+  "supabase/functions/migrate-media-storage/index.ts|211|13|@typescript-eslint/no-explicit-any",
+  "supabase/functions/migrate-media-storage/index.ts|237|13|@typescript-eslint/no-explicit-any",
+];
+
+test("baseline: divida ja paga fora do Inbox saiu do registro e nao volta (E39 parte 1)", () => {
+  const baseline = JSON.parse(readFileSync(BASELINE_LINT, "utf8"));
+  const registro = new Set(
+    baseline.issues.map((issue) => `${issue.file}|${issue.line}|${issue.column}|${issue.ruleId ?? "parser"}`),
+  );
+  for (const paga of PAGAS_FORA_DO_INBOX) {
+    assert.equal(registro.has(paga), false, `ocorrencia ja paga voltou ao baseline: ${paga}`);
+  }
+  assert.ok(
+    baseline.issues.some((issue) => issue.file.startsWith("src/components/inbox/")),
+    "as ocorrencias vivas do Inbox tinham de continuar registradas (a parte 1 nao toca nelas)",
+  );
 });

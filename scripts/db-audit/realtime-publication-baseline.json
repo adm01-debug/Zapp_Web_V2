@@ -3,6 +3,10 @@
   "project_ref": "tnnnlkbymytvtqngbbqh",
   "publication": "supabase_realtime",
   "tables": [
+    "public.agent_achievements",
+    "public.audio_meme_favorites",
+    "public.audio_memes",
+    "public.audit_logs",
     "public.agent_presence",
     "public.agent_stats",
     "public.calls",
@@ -21,6 +25,7 @@
     "public.queue_members",
     "public.queues",
     "public.sales_deals",
+    "public.talkx_blacklist",
     "public.talkx_campaign_events",
     "public.talkx_campaign_segments",
     "public.talkx_campaigns",

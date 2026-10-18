@@ -1,8 +1,8 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { log } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { validateFile, FileValidationResult } from '@/utils/whatsappFileTypes';
+import { validateFile, validateFileContent, FileValidationResult } from '@/utils/whatsappFileTypes';
 import { compressImage, formatCompressionInfo } from '@/utils/imageCompression';
 import { sendOutboundMessage, type OutboundMessageType } from '@/services/outbound-message.service';
 import {
@@ -81,6 +81,8 @@ export function useFileUploadLogic(opts: {
   recipientNumber?: string;
   contactId?: string;
   connectionId?: string;
+  /** PK-28: citação pendente no compositor — acompanha a mídia no envio. */
+  replyToId?: string | null;
   onFileSelect?: (file: File, category: string) => void;
   onFileSent?: (messageData: FileMessageData) => void;
   /**
@@ -92,7 +94,7 @@ export function useFileUploadLogic(opts: {
    */
   fileInputRef: React.RefObject<HTMLInputElement | null>;
 }) {
-  const { contactId, connectionId, onFileSelect, onFileSent, fileInputRef } = opts;
+  const { contactId, connectionId, replyToId, onFileSelect, onFileSent, fileInputRef } = opts;
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [filePreview, setFilePreview] = useState<FilePreview | null>(null);
@@ -110,20 +112,63 @@ export function useFileUploadLogic(opts: {
 
   const apiLoading = false;
 
+  // Registro das URLs de prévia criadas por ESTE hook: handleClose/removeFromQueue revogam
+  // na hora e o cleanup de desmonte revoga o que ainda estiver vivo (antes, sair do
+  // componente com itens na fila vazava os object URLs).
+  const previewsRef = useRef<Set<string>>(new Set());
+  // Desmonte seguro: marca o hook como fora de tela para não gravar estado depois de
+  // sair, e guarda os temporizadores do lote para cancelá-los no cleanup.
+  const mountedRef = useRef(true);
+  const timersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
+
+  const revokePreview = useCallback((url?: string) => {
+    if (!url) return;
+    URL.revokeObjectURL(url);
+    previewsRef.current.delete(url);
+  }, []);
+
+  const wait = useCallback((ms: number) => new Promise<void>(resolve => {
+    const timer = setTimeout(() => {
+      timersRef.current.delete(timer);
+      resolve();
+    }, ms);
+    timersRef.current.add(timer);
+  }), []);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    const previews = previewsRef.current;
+    const timers = timersRef.current;
+    return () => {
+      mountedRef.current = false;
+      timers.forEach(timer => clearTimeout(timer));
+      timers.clear();
+      previews.forEach(url => URL.revokeObjectURL(url));
+      previews.clear();
+    };
+  }, []);
+
   const processFilesToQueue = useCallback((files: File[]): QueuedFile[] => {
-    const processed = files.slice(0, MAX_FILES).map((file, index) => {
+    const processed = files.slice(0, MAX_FILES).map((file) => {
       const validation = validateFile(file);
       let preview: string | undefined;
       if (validation.valid && (validation.category === 'image' || file.type === 'application/pdf')) {
         preview = URL.createObjectURL(file);
+        previewsRef.current.add(preview);
       }
-      return { id: `${Date.now()}-${index}`, file, validation, preview, status: 'pending' as const, progress: 0 };
+      return { id: createStorageObjectId(), file, validation, preview, status: 'pending' as const, progress: 0 };
     });
     return processed.sort((a, b) => (categoryOrder[a.validation.category || 'document'] ?? 99) - (categoryOrder[b.validation.category || 'document'] ?? 99));
   }, []);
 
   const uploadFileToStorage = useCallback(async (file: File): Promise<UploadedPrivateObject> => {
     if (!contactId) throw new Error('Selecione uma conversa antes de enviar um arquivo.');
+
+    // U8: o tipo declarado (MIME/extensão) é do cliente e pode ser forjado. Antes de gravar,
+    // confere os primeiros bytes do arquivo: `.exe` renomeado `.pdf` é recusado aqui e nada
+    // chega ao Storage (a checagem por MIME de `validateFile` continua valendo na seleção).
+    const content = await validateFileContent(file);
+    if (!content.valid) throw new Error(content.error || 'O conteúdo do arquivo não corresponde ao tipo informado.');
 
     let fileToUpload = file;
     if (file.type.startsWith('image/') && file.type !== 'image/gif') {
@@ -153,15 +198,15 @@ export function useFileUploadLogic(opts: {
   }, [contactId]);
 
   const handleClose = useCallback(() => {
-    if (filePreview?.preview) URL.revokeObjectURL(filePreview.preview);
-    fileQueue.forEach(f => { if (f.preview) URL.revokeObjectURL(f.preview); });
+    if (filePreview?.preview) revokePreview(filePreview.preview);
+    fileQueue.forEach(f => revokePreview(f.preview));
     setFilePreview(null);
     setFileQueue([]);
     setIsMultiMode(false);
     setCaption('');
     setCurrentQueueIndex(0);
     setIsDialogOpen(false);
-  }, [filePreview, fileQueue]);
+  }, [filePreview, fileQueue, revokePreview]);
 
   const sendFileViaApi = useCallback(async (file: File, category: string | undefined, cap?: string) => {
     if (!contactId) throw new Error('Selecione uma conversa antes de enviar um arquivo.');
@@ -186,6 +231,9 @@ export function useFileUploadLogic(opts: {
         contactId, content: messageContent, messageType, mediaUrl: locatorUrl,
         caption: cap?.trim() || null, whatsappConnectionId: connectionId ?? null,
         clientMessageId,
+        // PK-28: a barra de resposta segue ativa com o diálogo de mídia aberto; sem
+        // isto a imagem/documento saía sem a citação que o texto já carregava.
+        ...(replyToId ? { replyToId } : {}),
       });
       pendingUploadsRef.current.delete(actionKey);
       return { result, mediaUrl: locatorUrl, category: messageType };
@@ -201,7 +249,7 @@ export function useFileUploadLogic(opts: {
       }
       throw error;
     }
-  }, [contactId, connectionId, uploadFileToStorage]);
+  }, [contactId, connectionId, replyToId, uploadFileToStorage]);
 
   const handleSendFile = useCallback(async () => {
     if (!filePreview || !filePreview.validation.valid) return;
@@ -213,12 +261,15 @@ export function useFileUploadLogic(opts: {
     const file = filePreview.file;
     const category = filePreview.validation.category;
     const currentCaption = caption;
-    handleClose();
     toast.info('Enviando arquivo...', { id: 'file-upload', duration: 30000 });
     try {
       const sent = await sendFileViaApi(file, category, currentCaption);
+      if (!mountedRef.current) return;
       toast.success('Arquivo enviado!', { id: 'file-upload' });
       if (sent) onFileSent?.({ ...sent.result, mediaUrl: sent.mediaUrl, messageType: sent.category });
+      // Fecha SÓ depois do sucesso. Em falha, arquivo, legenda e o cache de upload
+      // continuam na tela: "Enviar" de novo reaproveita o MESMO objeto e id (R2-INB-006).
+      handleClose();
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Unknown error');
       log.error('Error sending file:', error);
@@ -243,28 +294,77 @@ export function useFileUploadLogic(opts: {
   }, [contactId, sendFileViaApi, onFileSent]);
 
   const handleSendAllFiles = useCallback(async () => {
-    if (fileQueue.length === 0) return;
+    // Reenvia só o que ainda não foi: itens 'done' já estão entregues e reenviá-los
+    // criaria mensagem duplicada. Restam, portanto, os pendentes e os que falharam.
+    const remaining = fileQueue.filter(f => f.status !== 'done');
+    if (remaining.length === 0) { handleClose(); return; }
     setUploading(true);
+    setUploadStage('uploading');
     let successCount = 0, errorCount = 0;
+    const failedIds = new Set<string>();
     for (let i = 0; i < fileQueue.length; i++) {
+      const qf = fileQueue[i];
+      if (qf.status === 'done') continue;
+      if (!qf.validation.valid) { errorCount++; failedIds.add(qf.id); continue; }
       setCurrentQueueIndex(i);
-      if (fileQueue[i].validation.valid) {
-        const success = await sendSingleQueueFile(fileQueue[i], i);
-        if (success) successCount++;
-        else errorCount++;
-        if (i < fileQueue.length - 1) await new Promise(r => setTimeout(r, 500));
-      } else { errorCount++; }
+      const success = await sendSingleQueueFile(qf, i);
+      if (!mountedRef.current) return;
+      if (success) successCount++;
+      else { errorCount++; failedIds.add(qf.id); }
+      if (i < fileQueue.length - 1) await wait(500);
     }
+    if (!mountedRef.current) return;
     setUploading(false);
+    setUploadStage(null);
+
+    if (errorCount === 0) {
+      // Fecha SÓ quando tudo passou (antes o setTimeout(handleClose, 1000) descartava
+      // também os que falharam, sem chance de tentar de novo).
+      if (successCount > 0) toast.success(`${successCount} arquivo(s) enviado(s) com sucesso!`);
+      handleClose();
+      return;
+    }
+    // Falhou algo: mantém na fila SÓ os itens com erro (os enviados saem) para
+    // "Tentar de novo", preservando o arquivo e o cache de upload de cada um (R2-INB-006).
+    fileQueue.forEach(f => { if (!failedIds.has(f.id)) revokePreview(f.preview); });
+    // Atualização funcional: preserva o status 'error' gravado durante a rodada pelo
+    // sendSingleQueueFile (filtrar o array do closure devolveria os itens a 'pending').
+    setFileQueue(prev => prev.filter(f => failedIds.has(f.id)));
     if (successCount > 0) toast.success(`${successCount} arquivo(s) enviado(s) com sucesso!`);
-    if (errorCount > 0) toast.error(`${errorCount} arquivo(s) falharam ao enviar`);
-    setTimeout(handleClose, 1000);
-  }, [fileQueue, sendSingleQueueFile, handleClose]);
+    toast.error(`${errorCount} arquivo(s) falharam ao enviar`);
+  }, [fileQueue, sendSingleQueueFile, handleClose, revokePreview, wait]);
+
+  const retryQueueFile = useCallback(async (id: string) => {
+    const index = fileQueue.findIndex(f => f.id === id);
+    if (index < 0) return;
+    const qf = fileQueue[index];
+    setUploading(true);
+    setCurrentQueueIndex(index);
+    let success = false;
+    try {
+      success = await sendSingleQueueFile(qf, index);
+    } finally {
+      if (mountedRef.current) setUploading(false);
+    }
+    if (!mountedRef.current || !success) return;
+    // Retry do item por item: sai da fila o que foi entregue; fecha quando não sobra nada.
+    revokePreview(qf.preview);
+    const restCount = fileQueue.length - 1;
+    if (restCount === 0) {
+      toast.success('Arquivo enviado!');
+      handleClose();
+      return;
+    }
+    setFileQueue(prev => prev.filter(f => f.id !== id));
+  }, [fileQueue, sendSingleQueueFile, handleClose, revokePreview]);
 
   const handleExternalFile = useCallback((file: File) => {
     const validation = validateFile(file);
     let preview: string | undefined;
-    if (validation.valid && (validation.category === 'image' || file.type === 'application/pdf')) preview = URL.createObjectURL(file);
+    if (validation.valid && (validation.category === 'image' || file.type === 'application/pdf')) {
+      preview = URL.createObjectURL(file);
+      previewsRef.current.add(preview);
+    }
     setFilePreview({ file, validation, preview });
     setIsMultiMode(false);
     setFileQueue([]);
@@ -299,10 +399,10 @@ export function useFileUploadLogic(opts: {
   const removeFromQueue = useCallback((id: string) => {
     setFileQueue(prev => {
       const file = prev.find(f => f.id === id);
-      if (file?.preview) URL.revokeObjectURL(file.preview);
+      if (file?.preview) revokePreview(file.preview);
       return prev.filter(f => f.id !== id);
     });
-  }, []);
+  }, [revokePreview]);
 
   const canSend = !!contactId;
   const validFilesCount = fileQueue.filter(f => f.validation.valid).length;
@@ -313,6 +413,6 @@ export function useFileUploadLogic(opts: {
     uploading, uploadProgress, uploadStage, currentQueueIndex,
     apiLoading, canSend, validFilesCount, totalQueueProgress,
     handleClose, handleSendFile, handleSendAllFiles, handleFileChange,
-    handleExternalFile, handleExternalFiles, removeFromQueue,
+    handleExternalFile, handleExternalFiles, removeFromQueue, retryQueueFile,
   };
 }

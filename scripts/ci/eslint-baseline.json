@@ -49,10 +49,6 @@
       "sha256": "981f8963350e5ea4a1fbdd0527c571cba515dbc57257706bfd0c98fc4191ab74"
     },
     {
-      "path": "src/components/admin/useAdminData.ts",
-      "sha256": "c52a9d749f7b0f5157de803370811ddc951f9845e12eec881b45bd270224e348"
-    },
-    {
       "path": "src/components/admin/VisibilityGrantsManager.tsx",
       "sha256": "eb196a1070b411eb64ef3c7155a33490071217fa2df6afd28c395ac0c6c6cd40"
     },
@@ -205,10 +201,6 @@
       "sha256": "111326df4198954909043f0f88327775b242377f52e517c9b87f3abad6771fce"
     },
     {
-      "path": "src/components/dashboard/TrendIndicator.tsx",
-      "sha256": "8580d3f729e62b6fcca0d56d1c060d07a98ff5d489c7877ac66e229b96c6ccb8"
-    },
-    {
       "path": "src/components/dashboard/useSentimentData.ts",
       "sha256": "e0c34f38d55f30e74e427519f5717e809b6eb36f8b0137d97582a732d7e25516"
     },
@@ -243,10 +235,6 @@
     {
       "path": "src/components/gamification/AchievementToast.tsx",
       "sha256": "126e1c32aa234d0f07d774346be4587d0c4797753b97d7f0f187d8da64ac87d3"
-    },
-    {
-      "path": "src/components/gamification/GamificationProvider.tsx",
-      "sha256": "c5ef861ac442f7093ab6c89eb0709cc922fa783cf9e83da257f870239c7d27c4"
     },
     {
       "path": "src/components/gamification/MiniGameDialogs.tsx",
@@ -459,18 +447,6 @@
     {
       "path": "src/components/mfa/MFAVerify.tsx",
       "sha256": "b6269635ced84afdb896f52b445751bd00cebcfa35c5031fd98d9cd26d55522b"
-    },
-    {
-      "path": "src/components/mobile/InAppNotificationProvider.tsx",
-      "sha256": "7a6822d47c01de5d8fb501653b08d41c939ff81fa4f7601f85c35bac1127e116"
-    },
-    {
-      "path": "src/components/mobile/MobileNavigation.tsx",
-      "sha256": "3843616ff6e24f38759dcc46be7dae71c808e035af47fb9c85d4bf9c7f8b9011"
-    },
-    {
-      "path": "src/components/mobile/SwipeGestures.tsx",
-      "sha256": "958e006e71a7e250f2288beeeec923d84398453f7663b18f82208e2c47187620"
     },
     {
       "path": "src/components/monitoring/hooks/useEvolutionMonitoring.ts",
@@ -881,10 +857,6 @@
       "sha256": "a44fed36d3d14e5f576fade69b6a38012c975ad6ec23cad11d7a99a8502caf57"
     },
     {
-      "path": "src/hooks/evolution/useEvolutionIntegrations.ts",
-      "sha256": "8716ba0776fd4ac58376eaa0381410117bf4af9b6ff038384b1e824020fefc0a"
-    },
-    {
       "path": "src/hooks/evolution/useEvolutionMessaging.ts",
       "sha256": "e86486752703cae072bcce8f7ca425359e6c819314db0956abb46f79f90f10ed"
     },
@@ -895,14 +867,6 @@
     {
       "path": "src/hooks/inbox/useObjectionDetector.ts",
       "sha256": "8c56aea6101af17af1bf7b16d10e91bdb75bd3839996391dc971842cf350ef9e"
-    },
-    {
-      "path": "src/hooks/integrations/useCustomEmojis.ts",
-      "sha256": "01d79225188ea46336b266d7757a18acdc1a309c284c18055bc65e24aaa9f1b3"
-    },
-    {
-      "path": "src/hooks/integrations/usePersonalStickers.ts",
-      "sha256": "2b160727cdb76663161e690639d19ff1e7de3a08b853c0f625ea20c19ef4c0a5"
     },
     {
       "path": "src/hooks/integrations/useQuarantineMedia.ts",
@@ -927,10 +891,6 @@
     {
       "path": "src/hooks/performance/useTimingHooks.ts",
       "sha256": "6a38d0e660b1a9d04289fb332b79b702314eaac852cc587ac45b0170e3fd66f8"
-    },
-    {
-      "path": "src/hooks/reactions/useBatchReactions.ts",
-      "sha256": "e59823594eec8155cb275ea5b3730f0efe5dfbafd01476c1278cf10acdc77392"
     },
     {
       "path": "src/hooks/realtime/useSupabaseRealtime.ts",
@@ -961,16 +921,8 @@
       "sha256": "4c1c50f677a366d4b1ea0e639cf58126e99a8902deb0804a117548bc23542139"
     },
     {
-      "path": "src/hooks/system/useNotifications.ts",
-      "sha256": "33f0c105bc1cab0fa5548163f213b2e1db89d33a61f6bb6aab077f6639b8e622"
-    },
-    {
       "path": "src/hooks/system/useOfflineCache.ts",
       "sha256": "9ce40c53aa61c13fa649d1a54a861ce63ecb17d6220a2c57a9336ba08e199dd6"
-    },
-    {
-      "path": "src/hooks/system/useSearchHistory.ts",
-      "sha256": "842fb6a485a69356e6187944f49f7e441c2a815ee64095dff6eb6e053e64fe40"
     },
     {
       "path": "src/hooks/system/useUserSettings.ts",
@@ -1037,10 +989,6 @@
       "sha256": "70ee6a3e062d73a752a43960e709c054c35bd208ba5fc7084331986ff87e4ef6"
     },
     {
-      "path": "src/pages/QueueDetails.tsx",
-      "sha256": "52453c4ab5d682a10e7de45b7e145415e1c0184db5f79ebbd78ab74eff706b92"
-    },
-    {
       "path": "src/pages/ResetPassword.tsx",
       "sha256": "4da47251eb89251a1301ece4e86d11c33975ec27860e52be5952ca3e9c25254c"
     },
@@ -1095,10 +1043,6 @@
     {
       "path": "supabase/functions/gmail-webhook/index.ts",
       "sha256": "ce7b56638d35522933152ce280c3034336d43caee024a40eb46d386c7211ff1e"
-    },
-    {
-      "path": "supabase/functions/migrate-media-storage/index.ts",
-      "sha256": "b0cc79888645b4bced95ed5890d90ab04daf4282598a963b7e20a3ba38bd9644"
     }
   ],
   "issues": [
@@ -1327,20 +1271,6 @@
       "contextHash": "27f51951c46aafada3043de8e7a82731d6ee72302876a9f3d1247e8e941c4523"
     },
     {
-      "file": "src/components/admin/SupervisorCopilot.tsx",
-      "line": 41,
-      "column": 39,
-      "endLine": 41,
-      "endColumn": 49,
-      "severity": 2,
-      "ruleId": "react-hooks/purity",
-      "messageId": null,
-      "message": "Error: Cannot call impure function during render `Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent). <ROOT>/src/components/admin/SupervisorCopilot.tsx:41:39 39 | supabase.from('profiles').select('id, name, role, is_active').eq('is_active', true).limit(50), 40 | supabase.from('messages').select('id', { count: 'exact', head: true }) > 41 | .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()), | ^^^^^^^^^^ Cannot call impure function 42 | ]); 43 | 44 | const context = `",
-      "spanHash": "d8171d118e19556010680eb7b3001365c6aed91869027eb5edd26dca0c6c2609",
-      "lineHash": "0ea79894a9095ccc483f1b38f910cf57ddb6a0453cab4134b8ccd8ab14a9d475",
-      "contextHash": "e045df3cbb81a80c3bd264a975865e680109798ac6a80c45287a8938a5c95882"
-    },
-    {
       "file": "src/components/admin/TrainingMode.tsx",
       "line": 2,
       "column": 1,
@@ -1381,20 +1311,6 @@
       "spanHash": "541740f07063aff831ecccc90250078c240ed00673095b9a2d12fb195db650c5",
       "lineHash": "2811d1405e097fbdc4b9070ae6c3591a0e4d6a473e3e1ffff413695f1fa63e0b",
       "contextHash": "b9a21b29c74fe3255192ef654f5e88d14e73745905e323b901839950362f5ece"
-    },
-    {
-      "file": "src/components/admin/useAdminData.ts",
-      "line": 2,
-      "column": 1,
-      "endLine": 2,
-      "endColumn": 73,
-      "severity": 1,
-      "ruleId": "no-restricted-imports",
-      "messageId": "patternWithCustomMessage",
-      "message": "'@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
-      "spanHash": "474b8d90c382edaea12d9fb063b5d0237be0c6fc5b1c006f35be029752c5c024",
-      "lineHash": "474b8d90c382edaea12d9fb063b5d0237be0c6fc5b1c006f35be029752c5c024",
-      "contextHash": "3262204e0863d512990d8caa6095d8850607c72f09a698ae82f55fad5631573b"
     },
     {
       "file": "src/components/admin/VisibilityGrantsManager.tsx",
@@ -2055,20 +1971,6 @@
       "contextHash": "d67c54163580d08c91da6198cb3e8aa16995e6111120fdb6a6cc7fe12e79429a"
     },
     {
-      "file": "src/components/dashboard/TrendIndicator.tsx",
-      "line": 40,
-      "column": 17,
-      "endLine": 40,
-      "endColumn": 31,
-      "severity": 1,
-      "ruleId": "react-refresh/only-export-components",
-      "messageId": "namedExport",
-      "message": "Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.",
-      "spanHash": "59bf35c4ac07712a699babfd45d47fde1a8e1e307ee6fb0e5c9eed85143bb200",
-      "lineHash": "c271cef4c3371c38bba2772773e852c029953f1114dd9dadd41cae2c854681c8",
-      "contextHash": "f25e0747d6d44d89b8847c07bb19b25f0f10c1a8382892bb9db26b026d224faa"
-    },
-    {
       "file": "src/components/dashboard/useSentimentData.ts",
       "line": 3,
       "column": 1,
@@ -2249,34 +2151,6 @@
       "spanHash": "20abf343cd5e8a1f2f1173b1c99183c3836cb1af191f4a4af617a3601757a36b",
       "lineHash": "7d79eaacd1de02e0205dfbc5974bf5cb67759c272844d8d79afe9f024df59352",
       "contextHash": "bb6a8f79f1f211c637d6cdd05d4f1bd1895f067a8282ca3e60770033f653dd93"
-    },
-    {
-      "file": "src/components/gamification/GamificationProvider.tsx",
-      "line": 193,
-      "column": 6,
-      "endLine": 193,
-      "endColumn": 19,
-      "severity": 1,
-      "ruleId": "react-hooks/exhaustive-deps",
-      "messageId": null,
-      "message": "React Hook useEffect has missing dependencies: 'dbStats' and 'triggerLevelUp'. Either include them or remove the dependency array.",
-      "spanHash": "3a4bba00a0e2497d3fddf4b33738b57e1d544074984f0213ad716eff8509b7e3",
-      "lineHash": "a95fece0b29c9b3f73226ddb31561186e0888a6716b8688e4a4f89f7e021e1f8",
-      "contextHash": "771af62da799bb4674f3e482a0b79a7187025c1a7f140f2696a7fbb3210eb653"
-    },
-    {
-      "file": "src/components/gamification/GamificationProvider.tsx",
-      "line": 220,
-      "column": 17,
-      "endLine": 220,
-      "endColumn": 32,
-      "severity": 1,
-      "ruleId": "react-refresh/only-export-components",
-      "messageId": "namedExport",
-      "message": "Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.",
-      "spanHash": "1da0457be80f67ba5a5c59dd3ad934517ea69e9e6d0f203add7f8dbd459fb432",
-      "lineHash": "e1b430fe7bdb11522347832c4848e470b5567a3c7b7a9709eff010dc55d05f21",
-      "contextHash": "2f3383bceedf9f8b1ad659f1b81b2e211d63f2e195d6a4361f49f828658df5cc"
     },
     {
       "file": "src/components/gamification/MiniGameDialogs.tsx",
@@ -4477,62 +4351,6 @@
       "contextHash": "c052f68f7b0e23b0348c73276df55c360eb840fe5ee42fdd8b06c218c0403923"
     },
     {
-      "file": "src/components/mobile/InAppNotificationProvider.tsx",
-      "line": 12,
-      "column": 17,
-      "endLine": 12,
-      "endColumn": 37,
-      "severity": 1,
-      "ruleId": "react-refresh/only-export-components",
-      "messageId": "namedExport",
-      "message": "Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.",
-      "spanHash": "b14a2fca63349606cd4a9e2b60bb106292ac672bfb2360fad9a87e405d6902d3",
-      "lineHash": "6d4b708c52b17d673a2bec12627100fc6e4eb4a80f49b7fc884abd15b98064cb",
-      "contextHash": "15f0c88dfb924c9b86743d35986f87019f8933e5b586bebf49c5847d0748666b"
-    },
-    {
-      "file": "src/components/mobile/MobileNavigation.tsx",
-      "line": 63,
-      "column": 14,
-      "endLine": 63,
-      "endColumn": 46,
-      "severity": 1,
-      "ruleId": "react-refresh/only-export-components",
-      "messageId": "namedExport",
-      "message": "Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.",
-      "spanHash": "c55555e52ce35db3c31d043eb6f6d43788550654e1826b39c3755e8b01ecd0fa",
-      "lineHash": "ce4956dc3401d3abc7dfb6c43e89e95c80c74ae97f317774b08b1c566d27f94f",
-      "contextHash": "b17b2bbcdca9f7721652e3fe2464975f394122dee7e5715608369b077557d6d9"
-    },
-    {
-      "file": "src/components/mobile/SwipeGestures.tsx",
-      "line": 6,
-      "column": 10,
-      "endLine": 6,
-      "endColumn": 17,
-      "severity": 1,
-      "ruleId": "react-refresh/only-export-components",
-      "messageId": "namedExport",
-      "message": "Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.",
-      "spanHash": "41adaffdbbad8a28f8a89853291135a9a9565b0d48f1e54931e8aa193603a470",
-      "lineHash": "a9f7439993ac76b2dbb67d4893145130d68ae32bd2369df1048f56496f657b99",
-      "contextHash": "f71abbbde21c290e5e05151dbd89ec1825798d5c308a5726e9aac9ee3f259959"
-    },
-    {
-      "file": "src/components/mobile/SwipeGestures.tsx",
-      "line": 6,
-      "column": 19,
-      "endLine": 6,
-      "endColumn": 38,
-      "severity": 1,
-      "ruleId": "react-refresh/only-export-components",
-      "messageId": "namedExport",
-      "message": "Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.",
-      "spanHash": "e33a0563faf22a62fb3d4533d96eb4b6e1b9d4b5b33659cdb792a07ccfdb2c1d",
-      "lineHash": "a9f7439993ac76b2dbb67d4893145130d68ae32bd2369df1048f56496f657b99",
-      "contextHash": "f71abbbde21c290e5e05151dbd89ec1825798d5c308a5726e9aac9ee3f259959"
-    },
-    {
       "file": "src/components/monitoring/hooks/useEvolutionMonitoring.ts",
       "line": 2,
       "column": 1,
@@ -6508,34 +6326,6 @@
     },
     {
       "file": "src/hooks/chat/useChatSearch.ts",
-      "line": 113,
-      "column": 6,
-      "endLine": 113,
-      "endColumn": 14,
-      "severity": 1,
-      "ruleId": "react-hooks/exhaustive-deps",
-      "messageId": null,
-      "message": "React Hook useEffect has a missing dependency: 'onSearchQueryChange'. Either include it or remove the dependency array. If 'onSearchQueryChange' changes too often, find the parent component that defines it and wrap that definition in useCallback.",
-      "spanHash": "94a017696a89a5ac7af887cc0ffc7ca5b0d7d256ce6fd8f5297fecd8fa333220",
-      "lineHash": "977b375c9ab2b617eca46dc749d62f0c3d8af9f3f621a275b482d0b032fd1c0e",
-      "contextHash": "3cdc678618c03cc6f6fc0b2a73002fb33c5e946e3debafd1205834383b45ebb2"
-    },
-    {
-      "file": "src/hooks/chat/useChatSearch.ts",
-      "line": 123,
-      "column": 6,
-      "endLine": 123,
-      "endColumn": 13,
-      "severity": 1,
-      "ruleId": "react-hooks/exhaustive-deps",
-      "messageId": null,
-      "message": "React Hook useEffect has a missing dependency: 'onSearchQueryChange'. Either include it or remove the dependency array. If 'onSearchQueryChange' changes too often, find the parent component that defines it and wrap that definition in useCallback.",
-      "spanHash": "f6f350132dde601d275154a2c9464d825ed009190270db37b931cb9a857a1c23",
-      "lineHash": "c25d46451c5c7b241aeeeae8abdf6f280f0d1ee024b6018f0a620c4d563569d4",
-      "contextHash": "1125d2d92307d99dc16daac3fad3f935e21e34d30d0817c9bd5f10c89c162c32"
-    },
-    {
-      "file": "src/hooks/chat/useChatSearch.ts",
       "line": 208,
       "column": 5,
       "endLine": 208,
@@ -6547,34 +6337,6 @@
       "spanHash": "f460a8d62da63b8a162b8b30d8550bd1431ab6f6cd051cf12f5fb4b1f6b226b2",
       "lineHash": "388582a46b36265f524d151d6a99cae1416eb7ea895d52ce5fed67642b2e8e91",
       "contextHash": "f17988a1e7cdbe8a603b1b16decadc42552a20a352dad6f85185eb7dd0072583"
-    },
-    {
-      "file": "src/hooks/chat/useChatSearch.ts",
-      "line": 70,
-      "column": 3,
-      "endLine": 70,
-      "endColumn": 31,
-      "severity": 2,
-      "ruleId": "react-hooks/refs",
-      "messageId": null,
-      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/hooks/chat/useChatSearch.ts:70:3 68 | const onHighlightChangeRef = useRef(onHighlightChange); 69 | const onNavigateToMessageRef = useRef(onNavigateToMessage); > 70 | onHighlightChangeRef.current = onHighlightChange; | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot update ref during render 71 | onNavigateToMessageRef.current = onNavigateToMessage; 72 | 73 | // Compute effective date range",
-      "spanHash": "b5d0a45bded102a2bac9bb22ac2cc3eaa972450d1325dd1092bfbbb1cddb6ba6",
-      "lineHash": "a77d0080e4f403ea1f1affe4827ec044c2e013940c77dcedaa602e6b4ab2bdf7",
-      "contextHash": "b45e23fd6325bb03993eeedd9af935e391487aeaaf2390caf524a832f45e94a2"
-    },
-    {
-      "file": "src/hooks/chat/useChatSearch.ts",
-      "line": 71,
-      "column": 3,
-      "endLine": 71,
-      "endColumn": 33,
-      "severity": 2,
-      "ruleId": "react-hooks/refs",
-      "messageId": null,
-      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/hooks/chat/useChatSearch.ts:71:3 69 | const onNavigateToMessageRef = useRef(onNavigateToMessage); 70 | onHighlightChangeRef.current = onHighlightChange; > 71 | onNavigateToMessageRef.current = onNavigateToMessage; | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot update ref during render 72 | 73 | // Compute effective date range 74 | const dateRange = useMemo(() => {",
-      "spanHash": "fa92650c8f79c5b65154047146103f581c116ebce1072b74ddfc22ee5eb198fe",
-      "lineHash": "ae981a10ce7e4edd66601da1fcdd55d2e541653a47930448b4b262e30e0b7f6f",
-      "contextHash": "3927a979170d9c842c9710f4664d0433e0147dcfc8652d32be856a879cfe6db3"
     },
     {
       "file": "src/hooks/chat/useConversationAnalyses.ts",
@@ -6731,34 +6493,6 @@
       "contextHash": "732a74a07865399fbfc85e6534cb845913047184baf3f2b6c90f3345264b58fd"
     },
     {
-      "file": "src/hooks/evolution/useEvolutionIntegrations.ts",
-      "line": 10,
-      "column": 127,
-      "endLine": 10,
-      "endColumn": 130,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "9f3c19a63fc8a82e8dd9afa0afb99ef32a00ce20d2431b14287eb7b635b55a30",
-      "contextHash": "732a74a07865399fbfc85e6534cb845913047184baf3f2b6c90f3345264b58fd"
-    },
-    {
-      "file": "src/hooks/evolution/useEvolutionIntegrations.ts",
-      "line": 9,
-      "column": 76,
-      "endLine": 9,
-      "endColumn": 79,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "9355da74ec6a8bbac6bbb953f907d4d3fdf1663c25b7d69c91261f05e016c35a",
-      "contextHash": "60fd05a660c736d298d2fa9115f5439f9786656f186df218a5e52e1649e93698"
-    },
-    {
       "file": "src/hooks/evolution/useEvolutionMessaging.ts",
       "line": 6,
       "column": 76,
@@ -6827,34 +6561,6 @@
       "spanHash": "fd97e0e35e4c1e2d54a188fe6ed9f42464bc4d0816658e9482787c428b4829c7",
       "lineHash": "4bb8eb20590365d897add2826a818e1d37da0b37e2b37fc0982bbd441fc51c77",
       "contextHash": "027890e6816c0fad90d18b0a532aeb118bf7c0b33d80e4a2823445541192b9dc"
-    },
-    {
-      "file": "src/hooks/integrations/useCustomEmojis.ts",
-      "line": 47,
-      "column": 15,
-      "endLine": 47,
-      "endColumn": 26,
-      "severity": 2,
-      "ruleId": "react-hooks/set-state-in-effect",
-      "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/hooks/integrations/useCustomEmojis.ts:47:15 45 | 46 | useEffect(() => { > 47 | if (open) fetchEmojis(); | ^^^^^^^^^^^ Avoid calling setState() directly within an effect 48 | }, [open, fetchEmojis]); 49 | 50 | const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {",
-      "spanHash": "b6ebde034d4c6cbace6a8e60a246f7c67e789f9a95ddfad3c3c76da0dcec722c",
-      "lineHash": "983a942d7c0cceb74576c0e79c5f72226506e3a0693e6684bce652c6b99270bd",
-      "contextHash": "48c378120dc2a32b001e9f8be357c01ae011441d90195b691dae7d85ab4b196b"
-    },
-    {
-      "file": "src/hooks/integrations/usePersonalStickers.ts",
-      "line": 33,
-      "column": 36,
-      "endLine": 57,
-      "endColumn": 4,
-      "severity": 2,
-      "ruleId": "react-hooks/preserve-manual-memoization",
-      "messageId": null,
-      "message": "Compilation Skipped: Existing memoization could not be preserved React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `profile`, but the source dependencies were [profile?.id, queryClient]. Inferred less specific property than source. <ROOT>/src/hooks/integrations/usePersonalStickers.ts:33:36 31 | }); 32 | > 33 | const handleUpload = useCallback(async (files: FileList | null) => { | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 34 | if (!files || files.length === 0 || !profile?.id) return; | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 35 | setUploading(true); … | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 56 | finally { setUploading(false); if (fileInputRef.current) fileInputRef.current.value = ''; } | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ > 57 | }, [profile?.id, queryClient]); | ^^^^ Could not preserve existing manual memoization 58 | 59 | const toggleFavorite = useMutation({ 60 | mutationFn: async (sticker: StickerItem) => {",
-      "spanHash": "f0315b9fe3c10f14635ee7909f343b998c7683bb4e3f8ca481ae2ddc28e48efd",
-      "lineHash": "156f47f735824f615d8f7692b064947d5de446918b317dd2bd686fa3826b4de7",
-      "contextHash": "f33897f60bbd64394bd7c034a1b452b191ed5fc2221b419808f19e322f5a1866"
     },
     {
       "file": "src/hooks/integrations/useQuarantineMedia.ts",
@@ -6967,34 +6673,6 @@
       "spanHash": "fbbc0c0d32ec1ad6727e74f14fa368013522230e5e8c747205f0e599795415cc",
       "lineHash": "f1965630d5887ec77f8dcca10a5c1810735d19a85cf915ff9da2d689ef4d01b9",
       "contextHash": "8fa93a7d173bbb5e68d801d1466f0b08e2c53c9b88a48805dc7461b1153c70d8"
-    },
-    {
-      "file": "src/hooks/reactions/useBatchReactions.ts",
-      "line": 53,
-      "column": 6,
-      "endLine": 53,
-      "endColumn": 28,
-      "severity": 1,
-      "ruleId": "react-hooks/exhaustive-deps",
-      "messageId": null,
-      "message": "React Hook useEffect has a missing dependency: 'messageIds'. Either include it or remove the dependency array.",
-      "spanHash": "34cf4f14c604d4a0bc9d65d1eee198f8abef59c9b6b11b1b8a0a8e5c127a1a71",
-      "lineHash": "ad7bc46cdc3e3524890063d2c6e6099a164adb7052a538299d05dae97043a7e4",
-      "contextHash": "7a9dd9ebf25510e0daac76b655ac3cc800f837ba6158df22b64fdf681c7c7632"
-    },
-    {
-      "file": "src/hooks/reactions/useBatchReactions.ts",
-      "line": 53,
-      "column": 7,
-      "endLine": 53,
-      "endColumn": 27,
-      "severity": 1,
-      "ruleId": "react-hooks/exhaustive-deps",
-      "messageId": null,
-      "message": "React Hook useEffect has a complex expression in the dependency array. Extract it to a separate variable so it can be statically checked.",
-      "spanHash": "c199ead3f1c411b018e703c5f070d74cbb7da301f09510dd6eb053aeec792b5d",
-      "lineHash": "ad7bc46cdc3e3524890063d2c6e6099a164adb7052a538299d05dae97043a7e4",
-      "contextHash": "7a9dd9ebf25510e0daac76b655ac3cc800f837ba6158df22b64fdf681c7c7632"
     },
     {
       "file": "src/hooks/realtime/useSupabaseRealtime.ts",
@@ -7123,20 +6801,6 @@
       "contextHash": "82d0794a7f9cd80d4551db41a7032d4acdeab01a3d544ee13dd990635166b905"
     },
     {
-      "file": "src/hooks/system/useNotifications.ts",
-      "line": 63,
-      "column": 5,
-      "endLine": 63,
-      "endColumn": 23,
-      "severity": 2,
-      "ruleId": "react-hooks/set-state-in-effect",
-      "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/hooks/system/useNotifications.ts:63:5 61 | 62 | useEffect(() => { > 63 | fetchNotifications(); | ^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 64 | }, [fetchNotifications]); 65 | 66 | // Realtime subscription",
-      "spanHash": "cc6a4002db73d731159bbed913d2645f2c6073b08d104987f41ae626b8c44d3a",
-      "lineHash": "decb4c151f8cb8ff3f700dc245d5a05e53a21f8987051c839ea0eb939eb56002",
-      "contextHash": "b1cc150f226070fcbede5bb6c97af3495f472a09b54acb0f92e38f0f2af41d17"
-    },
-    {
       "file": "src/hooks/system/useOfflineCache.ts",
       "line": 83,
       "column": 7,
@@ -7149,20 +6813,6 @@
       "spanHash": "ea1c373d22402338d3ffeddf24abe108b80a86f19cfaca580a0d1febea757580",
       "lineHash": "4f649a3860149206cca472f85ed703b2e11760ef28581fc34614003c900c8bee",
       "contextHash": "e31a248e289c6cf5444ab302ba9831f15d71c7c6ff05cd0b6fef06349ebc2117"
-    },
-    {
-      "file": "src/hooks/system/useSearchHistory.ts",
-      "line": 19,
-      "column": 9,
-      "endLine": 19,
-      "endColumn": 19,
-      "severity": 2,
-      "ruleId": "react-hooks/set-state-in-effect",
-      "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/hooks/system/useSearchHistory.ts:19:9 17 | if (stored) { 18 | try { > 19 | setHistory(JSON.parse(stored)); | ^^^^^^^^^^ Avoid calling setState() directly within an effect 20 | } catch { 21 | setHistory([]); 22 | }",
-      "spanHash": "f1955511d053c5887876ed50222d56ea795c2e06a494704b98739cccde137b0a",
-      "lineHash": "fde149d39bce08c0192e6c9f7b97d0e593681cf91b39c1287cfd0839c2bcfe0a",
-      "contextHash": "8a048bffcd574cac552262c9e5aa7b335194f4f10ce4a5910198019aafccd297"
     },
     {
       "file": "src/hooks/system/useUserSettings.ts",
@@ -7485,20 +7135,6 @@
       "spanHash": "14d3f785f78cbf7dd25d104a2b373d57f9b08f96cb015d45e15b463078d2422d",
       "lineHash": "3331fea7b0209b148ed56eb9fcac3c3aae558fa97fad489b7bca22b5caa2f77f",
       "contextHash": "d5cc53082c05024085e9cde54bc039d16059eed9c2da9ef6287d338121b9cbe6"
-    },
-    {
-      "file": "src/pages/QueueDetails.tsx",
-      "line": 3,
-      "column": 1,
-      "endLine": 3,
-      "endColumn": 59,
-      "severity": 1,
-      "ruleId": "no-restricted-imports",
-      "messageId": "patternWithCustomMessage",
-      "message": "'@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
-      "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "contextHash": "c119c8646d7b4aa8f9e1da9a600129c6f31c725462ec610ed9a4b86864d2b0cf"
     },
     {
       "file": "src/pages/ResetPassword.tsx",
@@ -8017,62 +7653,6 @@
       "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
       "lineHash": "a88753b91fed20bf78f6935f0b8082dbb38be45a34c5212d08d593c72019934f",
       "contextHash": "4b092b4c2eebea676545dc7e0951d68d09eca779e74dc40707829fdd49a4f597"
-    },
-    {
-      "file": "supabase/functions/migrate-media-storage/index.ts",
-      "line": 124,
-      "column": 13,
-      "endLine": 124,
-      "endColumn": 16,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "a668a3b10c214bfaea640815b8717c943fb815a33dac70cdbe3b08b268e6f71b",
-      "contextHash": "bc9553814d64bc8ba2ee7bfc4c341d63b990ac9f311ec33dd46e637a8d13f169"
-    },
-    {
-      "file": "supabase/functions/migrate-media-storage/index.ts",
-      "line": 155,
-      "column": 13,
-      "endLine": 155,
-      "endColumn": 16,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "a668a3b10c214bfaea640815b8717c943fb815a33dac70cdbe3b08b268e6f71b",
-      "contextHash": "f4a3773b4c0c6294f5f2042021160b3b82ead642e3cc88afc1f068fc820c4140"
-    },
-    {
-      "file": "supabase/functions/migrate-media-storage/index.ts",
-      "line": 211,
-      "column": 13,
-      "endLine": 211,
-      "endColumn": 16,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "a668a3b10c214bfaea640815b8717c943fb815a33dac70cdbe3b08b268e6f71b",
-      "contextHash": "32ae1d1c779ef3639db5094ee2f4fcb37c3dc72354c74f5a21a49312498d443e"
-    },
-    {
-      "file": "supabase/functions/migrate-media-storage/index.ts",
-      "line": 237,
-      "column": 13,
-      "endLine": 237,
-      "endColumn": 16,
-      "severity": 2,
-      "ruleId": "@typescript-eslint/no-explicit-any",
-      "messageId": "unexpectedAny",
-      "message": "Unexpected any. Specify a different type.",
-      "spanHash": "d6a7cd2a7371b1a15d543196979ff74fdb027023ebf187d5d329be11055c77fd",
-      "lineHash": "a668a3b10c214bfaea640815b8717c943fb815a33dac70cdbe3b08b268e6f71b",
-      "contextHash": "3a301704ca934c1b9ba3d7af6de21312d5aeb63d8e42dcd03444f95b8c97f07b"
     }
   ]
 }

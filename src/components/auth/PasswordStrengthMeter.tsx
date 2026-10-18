@@ -190,8 +190,17 @@ export function PasswordStrengthMeter({ password, onStrengthChange }: PasswordSt
           </span>
         </div>
         
-        <div className="relative h-2 bg-muted rounded-full overflow-hidden">
+        <div
+          role="progressbar"
+          aria-label="Força da senha"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={strengthPercent}
+          aria-valuetext={strengthLabel || 'Muito fraca'}
+          className="relative h-2 bg-muted rounded-full overflow-hidden"
+        >
           <motion.div
+            aria-hidden="true"
             initial={{ width: 0 }}
             animate={{ width: `${strengthPercent}%` }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
@@ -200,6 +209,7 @@ export function PasswordStrengthMeter({ password, onStrengthChange }: PasswordSt
           {/* Animated pulse for strong passwords */}
           {strengthPercent >= 80 && (
             <motion.div
+              aria-hidden="true"
               initial={{ opacity: 0 }}
               animate={{ opacity: [0.5, 0, 0.5] }}
               transition={{ duration: 2, repeat: Infinity }}
@@ -274,6 +284,7 @@ export function PasswordStrengthMeter({ password, onStrengthChange }: PasswordSt
               className="flex items-center gap-2"
             >
               <motion.div
+                aria-hidden="true"
                 initial={false}
                 animate={{ 
                   scale: met ? [1, 1.2, 1] : 1,
@@ -295,6 +306,7 @@ export function PasswordStrengthMeter({ password, onStrengthChange }: PasswordSt
                 met ? 'text-success dark:text-success font-medium' : 'text-muted-foreground'
               }`}>
                 {req.label}
+                <span className="sr-only">{met ? ' — requisito atendido' : ' — requisito pendente'}</span>
               </span>
             </motion.div>
           );

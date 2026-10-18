@@ -3,7 +3,7 @@ import { TrendingUp } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer } from 'recharts';
 import { CHART_TICK_FONT_SIZE_SM } from '@/lib/chart-theme';
 import { DashboardCard, SectionHeader, CardSelect } from './DashboardCard';
-import { useRealSentimentData } from '../SentimentHelpers';
+import { useRealSentimentData } from '@/hooks/dashboard/useSentimentTrend';
 
 const LEGEND = [
   { key: 'positive', label: 'Positivo', dot: 'bg-dash-green', stroke: 'hsl(var(--dash-green))' },
@@ -24,6 +24,7 @@ export function SentimentTrendCard() {
         right={(
           <CardSelect
             testid="sentiment-select"
+            name="Período sentimento"
             value={period}
             onValueChange={(v) => setPeriod(v as '7' | '14' | '30')}
             options={[{ value: '7', label: '7 dias' }, { value: '14', label: '14 dias' }, { value: '30', label: '30 dias' }]}
@@ -44,7 +45,12 @@ export function SentimentTrendCard() {
               </span>
             ))}
           </div>
-          <div data-testid="sentiment-plot" className="h-[100px]">
+          <div
+            data-testid="sentiment-plot"
+            role="img"
+            aria-label={`Tendência de sentimento: ${data.length} dias, com as linhas de positivo, neutro e negativo`}
+            className="h-[100px]"
+          >
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={data} margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
                 <XAxis dataKey="date" tick={{ fontSize: CHART_TICK_FONT_SIZE_SM, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} interval={Math.max(0, Math.floor(data.length / 5) - 1)} />

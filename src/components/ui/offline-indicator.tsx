@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Wifi, WifiOff, RefreshCw, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -83,12 +83,30 @@ export function OfflineIndicator({ className }: OfflineIndicatorProps) {
 export function useOfflineStatus() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [wasOffline, setWasOffline] = useState(false);
+  // O aviso "Conexão restaurada" se esconde sozinho depois de 3 s. O id vai para uma ref
+  // limpa no unmount: sem isso o temporizador do handler sobrevivia ao componente e
+  // chamava `setWasOffline` nele já desmontado.
+  const wasOfflineTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(
+    () => () => {
+      if (wasOfflineTimerRef.current) {
+        clearTimeout(wasOfflineTimerRef.current);
+        wasOfflineTimerRef.current = null;
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     const handleOnline = () => {
       if (!isOnline) {
         setWasOffline(true);
-        setTimeout(() => setWasOffline(false), 3000);
+        if (wasOfflineTimerRef.current) clearTimeout(wasOfflineTimerRef.current);
+        wasOfflineTimerRef.current = setTimeout(() => {
+          wasOfflineTimerRef.current = null;
+          setWasOffline(false);
+        }, 3000);
       }
       setIsOnline(true);
     };

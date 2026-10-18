@@ -15,6 +15,7 @@ import { Volume2, Check, Play, Square, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { attachMediaVolume } from '@/lib/mediaVolumeElement';
+import { LOCAL_VOICE_ID } from '@/hooks/communication/useTextToSpeech';
 
 export interface ElevenLabsVoice {
   id: string;
@@ -40,6 +41,17 @@ export const ELEVENLABS_VOICES: ElevenLabsVoice[] = [
   { id: 'cgSgspJ2msm6clMCkdW9', name: 'Jessica', description: 'Expressiva e dinâmica', gender: 'female', accent: 'Americano', sampleText: 'Olá! Eu sou a Jessica, uma voz expressiva e dinâmica.' },
 ];
 
+/**
+ * HZ3-004-A — opção local (Web Speech do navegador). Fica FORA de `ELEVENLABS_VOICES`:
+ * aquele array alimenta telas que geram áudio na Edge, e `local` não é voz do provedor.
+ */
+const LOCAL_VOICE_OPTION: ElevenLabsVoice = {
+  id: LOCAL_VOICE_ID,
+  name: 'Voz do dispositivo',
+  description: 'Lê no navegador, sem enviar o texto',
+  gender: 'female',
+};
+
 interface VoiceSelectorProps {
   selectedVoiceId: string;
   onVoiceChange: (voiceId: string) => void;
@@ -47,7 +59,10 @@ interface VoiceSelectorProps {
 }
 
 export function VoiceSelector({ selectedVoiceId, onVoiceChange, className }: VoiceSelectorProps) {
-  const selectedVoice = ELEVENLABS_VOICES.find(v => v.id === selectedVoiceId) || ELEVENLABS_VOICES[0];
+  const selectedVoice =
+    selectedVoiceId === LOCAL_VOICE_ID
+      ? LOCAL_VOICE_OPTION
+      : ELEVENLABS_VOICES.find(v => v.id === selectedVoiceId) || ELEVENLABS_VOICES[0];
   const [previewingVoiceId, setPreviewingVoiceId] = useState<string | null>(null);
   const [loadingVoiceId, setLoadingVoiceId] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -145,11 +160,30 @@ export function VoiceSelector({ selectedVoiceId, onVoiceChange, className }: Voi
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-72">
-        <DropdownMenuLabel className="text-xs text-muted-foreground flex items-center justify-between">
-          <span>Vozes ElevenLabs</span>
-          <span className="text-3xs font-normal">Clique ▶ para ouvir</span>
+        <DropdownMenuLabel className="text-xs text-muted-foreground">
+          Voz da leitura
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={() => onVoiceChange(LOCAL_VOICE_ID)}
+          className="flex items-center justify-between cursor-pointer py-2.5"
+        >
+          <div className="flex flex-col min-w-0">
+            <span className="font-medium text-sm">{LOCAL_VOICE_OPTION.name}</span>
+            <span className="text-xs text-muted-foreground truncate">{LOCAL_VOICE_OPTION.description}</span>
+          </div>
+          {selectedVoiceId === LOCAL_VOICE_ID && (
+            <Check className="w-4 h-4 text-primary flex-shrink-0 ml-2" />
+          )}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel className="text-xs text-muted-foreground flex items-center justify-between">
+          <span>Vozes premium</span>
+          <span className="text-3xs font-normal">Clique ▶ para ouvir</span>
+        </DropdownMenuLabel>
+        <p className="px-2 pb-2 text-3xs text-muted-foreground">
+          Voz premium: o texto é enviado ao provedor de voz
+        </p>
         <div className="max-h-[350px] overflow-y-auto">
           {ELEVENLABS_VOICES.map((voice) => {
             const isLoading = loadingVoiceId === voice.id;

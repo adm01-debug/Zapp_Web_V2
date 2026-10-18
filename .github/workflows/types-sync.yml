@@ -3,6 +3,8 @@
 #   prova: os tipos gerados batem com o banco oficial (Gates 1 e 2)
 #   falha: PR em `automation/types-sync` ou issue `[types-sync]`; nunca passa com tipo divergente
 #   avisa: PR de types e issue de gate
+# nao-e-bug:
+#   - TYPES_SYNC_PR_TOKEN ausente: esperado -- o workflow usa GITHUB_TOKEN; o passo "Destravar os checks" aprova os runs com actions:write; um PAT funciona mas nao e necessario
 # ==================================================================
 # ZAPP-WEB · Sincronizacao assistida dos artefatos do banco
 # ==================================================================
@@ -87,13 +89,20 @@ jobs:
               core.setOutput('skip', 'false');
               return;
             }
-            const updatedAt = new Date(syncPr.updated_at);
-            const ageSec = Math.floor((Date.now() - updatedAt.getTime()) / 1000);
+            // W25: usa a data do head commit do PR (nao updated_at, que muda com comentarios).
+            // Criterio: se o commit mais recente tem < 20 min, o sync esta em andamento -- pular.
+            const { data: commit } = await github.rest.git.getCommit({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: syncPr.head.sha,
+            });
+            const headDate = new Date(commit.committer.date);
+            const ageSec = Math.floor((Date.now() - headDate.getTime()) / 1000);
             if (ageSec < 1200) {
-              core.info(`PR #${syncPr.number} atualizado há ${ageSec}s (<20min) — debounce ativo.`);
+              core.info(`PR #${syncPr.number} head commit há ${ageSec}s (<20min) — debounce ativo.`);
               core.setOutput('skip', 'true');
             } else {
-              core.info(`PR #${syncPr.number} atualizado há ${ageSec}s — prosseguindo.`);
+              core.info(`PR #${syncPr.number} head commit há ${ageSec}s — prosseguindo.`);
               core.setOutput('skip', 'false');
             }
 
@@ -105,7 +114,8 @@ jobs:
       needs.preflight.outputs.skip != 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
-    permissions:
+    environment: banco-leitura
+    permissions:  # zizmor: ignore[excessive-permissions]
       contents: write
       issues: write
       pull-requests: write
@@ -116,7 +126,7 @@ jobs:
       - name: Checkout confiavel da main
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
+          # W48: sem git log nem merge-base; fetch-depth padrao (1) e suficiente.
           persist-credentials: false
 
       - name: Setup Supabase CLI ${{ env.SUPABASE_CLI_VERSION }}
@@ -133,8 +143,10 @@ jobs:
       # E37 (auditoria de GitHub Actions, 2026-09-26): TLS verify-full + CA
       # Supabase pinada. Na epoca eram 3 workflows com DESTINO_URL (db-live-guard,
       # targeted-ledger-evidence, types-sync); este era o unico sem TLS verify-full.
-      # Hoje sao 6 workflows com DESTINO_URL: db-guard, db-migrate e supabase-sync
-      # ainda nao tem este endurecimento (ver G-37 no plano de 2026-10-01).
+      # Hoje sao 4 workflows com DESTINO_URL (db-live-guard, db-migrate,
+      # targeted-ledger-evidence e este; o supabase-sync saiu em 15/10/2026);
+      # o contrato E98 em scripts/ci/workflow-contracts.unit.mjs exige o
+      # endurecimento de TLS em todos eles.
       - name: Exigir credencial do banco oficial
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
@@ -338,6 +350,15 @@ jobs:
         with:
           bun-version: '1.4.0'
 
+      - name: 💾 Cache de dependências Bun
+        # W35: cache do bun reduz bun install de ~30s para <10s com cache quente.
+        if: steps.diff.outputs.schema_changed == 'true'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-
+
       - name: Instalar dependencias
         if: steps.diff.outputs.schema_changed == 'true'
         run: bun install --frozen-lockfile --ignore-scripts
@@ -356,13 +377,38 @@ jobs:
             echo "::warning::Gate 1 falhou: novos erros de TypeScript introduzidos pelo novo types.ts."
           fi
 
+      - name: Gate 1b — W23 — verificar se falha e apply-pendente
+        # W23: se Gate 1 falhou mas a causa e' ausencia de objeto que existe apenas
+        # no repo (migration nao aplicada em prod), classifica como "awaiting apply"
+        # e nao abre issue — o problema some quando a migration entrar no banco.
+        # W26: lote-pendente.mjs (fonte unica): exit 0 = sem drift, exit 1 = drift real,
+        # exit 2 = so apply-pendente.
+        id: gate1b
+        if: steps.diff.outputs.schema_changed == 'true' && steps.gate1.outputs.passed == 'false'
+        env:
+          DESTINO_URL: ${{ env.DESTINO_URL }}
+          PGSSLMODE: ${{ env.PGSSLMODE }}
+        run: |
+          set +e
+          node scripts/db-audit/lote-pendente.mjs > /tmp/drift.log 2>&1
+          drift_exit=$?
+          set -e
+          if [ "$drift_exit" -eq 2 ]; then
+            echo "awaiting_apply=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::Gate 1 aguardando apply de migrations pendentes — erros de TypeScript decorrem de objetos nao aplicados em prod ainda."
+          else
+            echo "awaiting_apply=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Gate 2 — usage-guard
         id: gate2
         if: steps.diff.outputs.schema_changed == 'true' && steps.gate1.outputs.passed == 'true'
         run: |
           # F-01 (auditoria 2026-09-27): mesma correção de pipefail do Gate 1.
+          # W24: --prune-obsolete poda entradas obsoletas do baseline (aviso, nao bloqueia);
+          # o arquivo atualizado entra no PR de sync via add-paths.
           set -o pipefail
-          if node scripts/db-audit/supabase-usage-guard.mjs 2>&1 | tee /tmp/guard.log; then
+          if node scripts/db-audit/supabase-usage-guard.mjs --prune-obsolete 2>&1 | tee /tmp/guard.log; then
             echo "passed=true" >> "$GITHUB_OUTPUT"
           else
             echo "passed=false" >> "$GITHUB_OUTPUT"
@@ -414,6 +460,7 @@ jobs:
       - name: Registrar falha dos gates
         if: >-
           steps.diff.outputs.schema_changed == 'true' &&
+          steps.gate1b.outputs.awaiting_apply != 'true' &&
           (steps.gate1.outputs.passed == 'false' ||
            steps.gate2.outputs.passed == 'false' ||
            steps.gate3.outputs.passed == 'false')
@@ -475,6 +522,26 @@ jobs:
               const ultimaPaginaMatch = (primeira.headers?.link || '')
                 .match(/[?&]page=(\d+)[^>]*>;\s*rel="last"/);
               const ultimaPagina = ultimaPaginaMatch ? Number(ultimaPaginaMatch[1]) : 1;
+              // W91/E51: rotacionar issue apos 20 comentarios para manter legibilidade.
+              if (ultimaPagina > 20) {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner, repo: context.repo.repo,
+                  issue_number: existing.number,
+                  body: `⚠️ Esta issue atingiu ${ultimaPagina} comentários e está sendo rotacionada para manter legibilidade (política E51/W91).\n\nÚltimo alerta antes do fechamento:\n\n---\n\n${body}`,
+                });
+                await github.rest.issues.update({
+                  owner: context.repo.owner, repo: context.repo.repo,
+                  issue_number: existing.number, state: 'closed', state_reason: 'completed',
+                });
+                try { await github.rest.issues.createLabel({ owner: context.repo.owner, repo: context.repo.repo, name: 'types-sync', color: 'e11d48', description: 'Issue de alerta do types-sync' }); } catch {}
+                await github.rest.issues.create({
+                  owner: context.repo.owner, repo: context.repo.repo,
+                  title,
+                  body: `Continuação de #${existing.number} (fechada por atingir ${ultimaPagina} comentários — E51/W91).\n\n---\n\n${body}`,
+                  labels: ['types-sync'],
+                });
+                return;
+              }
               const { data: comentarios } = await github.rest.issues.listComments({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -549,6 +616,7 @@ jobs:
             supabase/schema-catalog.json
             supabase/schema-manifest.json
             scripts/db-audit/grants-baseline.json
+            scripts/db-audit/known-violations.json
 
       - name: Exigir PR criado ou atualizado
         if: >-

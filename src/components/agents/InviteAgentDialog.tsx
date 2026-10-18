@@ -13,7 +13,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, Mail, UserPlus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useUserRole } from '@/hooks/system/useUserRole';
 import { toast } from 'sonner';
+import { describeInviteError, readInviteFailure } from '@/components/agents/inviteErrors';
 
 interface InviteAgentDialogProps {
   open: boolean;
@@ -21,10 +23,15 @@ interface InviteAgentDialogProps {
 }
 
 export function InviteAgentDialog({ open, onOpenChange }: InviteAgentDialogProps) {
+  const { isAdmin } = useUserRole();
   const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
   const [role, setRole] = useState('agent');
   const [isSending, setIsSending] = useState(false);
+
+  // Supervisor (sem admin) só convida 'agent': a Edge invite-user recusa outro
+  // papel com 403, então o seletor não oferece o que seria negado.
+  const podeEscolherPapel = isAdmin;
+  const papelEfetivo = podeEscolherPapel ? role : 'agent';
 
   const handleInvite = async () => {
     if (!email.trim()) {
@@ -34,26 +41,26 @@ export function InviteAgentDialog({ open, onOpenChange }: InviteAgentDialogProps
 
     setIsSending(true);
     try {
-      // Send invite email via edge function. O relay `send-email` autoriza a chamada
-      // (JWT + admin/supervisor) e deriva remetente, assunto e corpo de um template do
-      // servidor: o cliente só informa e-mail, nome e cargo (sem subject/html arbitrários).
-      const { error } = await supabase.functions.invoke('send-email', {
-        body: {
-          email,
-          name: name || undefined,
-          role,
-        },
+      // O convite agora vai pela Edge `invite-user`: o próprio GoTrue envia o
+      // e-mail com o caminho para criar a senha (não depende do cadastro público)
+      // e o papel é gravado no servidor. O template local `send-email` só dizia
+      // "acesse a plataforma e crie sua conta", sem link nem token.
+      const { error } = await supabase.functions.invoke('invite-user', {
+        body: { email: email.trim(), role: papelEfetivo },
       });
 
-      if (error) throw error;
+      if (error) {
+        const { status, message } = await readInviteFailure(error);
+        toast.error(describeInviteError(status, message));
+        return;
+      }
 
-      toast.success(`Convite enviado para ${email}!`);
+      toast.success(`Convite enviado para ${email.trim()}!`);
       setEmail('');
-      setName('');
       setRole('agent');
       onOpenChange(false);
-    } catch (err) {
-      toast.error('Erro ao enviar convite. Verifique a configuração de email.');
+    } catch {
+      toast.error('Não foi possível falar com o servidor. Confira a conexão e tente novamente.');
     } finally {
       setIsSending(false);
     }
@@ -74,17 +81,9 @@ export function InviteAgentDialog({ open, onOpenChange }: InviteAgentDialogProps
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label>Nome</Label>
+            <Label htmlFor="invite-agent-email">Email *</Label>
             <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Nome do agente"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Email *</Label>
-            <Input
+              id="invite-agent-email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -93,17 +92,23 @@ export function InviteAgentDialog({ open, onOpenChange }: InviteAgentDialogProps
           </div>
 
           <div className="space-y-2">
-            <Label>Cargo</Label>
-            <Select value={role} onValueChange={setRole}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="agent">Atendente</SelectItem>
-                <SelectItem value="supervisor">Supervisor</SelectItem>
-                <SelectItem value="admin">Administrador</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label htmlFor="invite-agent-role">Cargo</Label>
+            {podeEscolherPapel ? (
+              <Select value={role} onValueChange={setRole}>
+                <SelectTrigger id="invite-agent-role" aria-label="Cargo">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="agent">Atendente</SelectItem>
+                  <SelectItem value="supervisor">Supervisor</SelectItem>
+                  <SelectItem value="admin">Administrador</SelectItem>
+                </SelectContent>
+              </Select>
+            ) : (
+              <p id="invite-agent-role" className="text-sm text-muted-foreground">
+                Atendente — supervisores convidam apenas atendentes.
+              </p>
+            )}
           </div>
         </div>
 

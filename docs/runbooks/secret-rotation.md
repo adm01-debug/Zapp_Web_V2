@@ -3,6 +3,11 @@
 **Última atualização:** 2026-09-28
 **Scope:** `adm01-debug/Zapp_Web_V2` (Supabase Cloud `tnnnlkbymytvtqngbbqh`)
 
+> **W62/W63 (out/2026):** `DESTINO_URL` e os secrets de deploy estão migrando do nível repo para
+> environments (`docs/runbooks/migracao-segredos-environments.md`). Depois da migração, "atualizar o
+> secret no GitHub Actions" significa `gh secret set NOME --env AMBIENTE`: `DESTINO_URL` em
+> `banco-leitura`, `producao-ddl` e `db-ledger-evidence`; os demais em `producao-edge-functions`.
+
 ---
 
 ## DESTINO\_URL (string de conexão PostgreSQL do CI)
@@ -15,12 +20,11 @@ Usada em:
 - `db-live-guard.yml` (guarda vivo pós-merge e agendado)
 - `db-migrate.yml` (apply de migrations — **abre conexões de escrita**)
 - `types-sync.yml` (regeneração de tipos TypeScript)
-- `supabase-sync.yml` (import legado — **executa escrita destrutiva se ativado**)
 - `targeted-ledger-evidence.yml` (evidência de ledger)
 - `scripts/db-audit/check-migration-drift.mjs`
 - `scripts/db-audit/register-migration.mjs`
 
-**Antes de rotar:** confirme que nenhum run de `db-migrate.yml` ou `supabase-sync.yml` está em execução (Actions → em andamento). Esses workflows abrem conexões de escrita e podem falhar no meio da operação se a senha for invalidada durante o run.
+**Antes de rotar:** confirme que nenhum run de `db-migrate.yml` está em execução (Actions → em andamento). Esse workflow abre conexões de escrita e podem falhar no meio da operação se a senha for invalidada durante o run.
 
 Formato: `postgresql://postgres.tnnnlkbymytvtqngbbqh:SENHA@aws-0-sa-east-1.pooler.supabase.com:6543/postgres`
 

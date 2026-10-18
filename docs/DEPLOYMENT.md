@@ -22,8 +22,11 @@ Este documento descreve o processo de deploy e configuração do ZAPP-WEB.
 | Ambiente | URL | Branch |
 |----------|-----|--------|
 | **Produção (canônica)** | https://zapp-web-v2.vercel.app | `main` |
-| **Staging** | (interno) | `develop` |
-| **Local** | localhost:5173 | qualquer |
+| **Preview** | Gerada automaticamente pela Vercel por PR | qualquer branch |
+| **Local** | http://localhost:5173 | qualquer |
+
+> **Não há ambiente de staging separado.** Testes de integração usam banco local
+> (ver seção 0 do CLAUDE.md). Preview Vercel cobre validação visual de PR.
 
 ---
 
@@ -45,15 +48,15 @@ Este documento descreve o processo de deploy e configuração do ZAPP-WEB.
 
 ## Deploy Automático (Vercel)
 
-O deploy é **automático** via Vercel (projeto `zapp_web_v2`):
+O deploy do **frontend** é automático via Vercel (projeto `zapp_web_v2`, team `juca1`):
 
 1. **Merge de PR na `main`** → Rebuild automático (push direto na `main` é proibido)
-2. **Edge Functions** → Deployadas automaticamente
-3. **Assets** → CDN global
+2. **Assets** → CDN global
+
+> ⚠️ **Edge Functions NÃO sobem automaticamente.** Ver seção [Edge Functions](#edge-functions).
 
 ### Tempo médio de deploy
-- Build: ~2 minutos
-- Edge Functions: ~30 segundos
+- Build Vercel: ~2–3 minutos
 - Propagação CDN: ~1 minuto
 
 ---
@@ -75,25 +78,29 @@ bun run build
 bun run preview
 ```
 
-### 2. Deploy de Edge Functions
+### 2. Deploy de Edge Functions (manual, via workflow)
 
-```bash
-# Deploy de todas as funções
-supabase functions deploy --project-ref tnnnlkbymytvtqngbbqh
+Edge Functions são deployadas **somente** via `workflow_dispatch` do workflow
+`deploy-functions.yml` na aba Actions do GitHub. O job pausa em `Waiting` no
+environment `producao-edge-functions` até aprovação humana.
 
-# Deploy de função específica
-supabase functions deploy evolution-api --project-ref tnnnlkbymytvtqngbbqh
 ```
+GitHub Actions → deploy-functions.yml → Run workflow → Aguardar aprovação em producao-edge-functions
+```
+
+> **Não use `supabase functions deploy` direto em produção** — bypass o gate de aprovação.
+> Isso é deliberado: ver CLAUDE.md "merge ≠ deploy".
 
 ### 3. Aplicar migrations
 
-```bash
-# Aplicar migrations pendentes
-supabase db push --project-ref tnnnlkbymytvtqngbbqh
+Migrations em produção seguem o fluxo obrigatório (ver CLAUDE.md seção 1, regra 6):
 
-# Ver status das migrations
-supabase migration list --project-ref tnnnlkbymytvtqngbbqh
 ```
+arquivo em supabase/migrations/ → PR → merge em main → deploy do código →
+db-migrate.yml (apply=false, dry-run) → aprovação em producao-ddl → apply=true
+```
+
+> `supabase db push` direto em produção está proibido — bypassa o dry-run e o gate.
 
 ---
 
@@ -131,11 +138,20 @@ supabase migration list --project-ref tnnnlkbymytvtqngbbqh
 
 ## Edge Functions
 
+### Deploy (obrigatório via workflow)
+
+O deploy de Edge Functions em produção **exige** aprovação humana no environment
+`producao-edge-functions`. Nenhum agente dispara esse workflow de forma autônoma.
+
+```
+GitHub → Actions → deploy-functions.yml → Run workflow → aprovar em producao-edge-functions
+```
+
 ### Lista de funções
 
 | Função | Descrição | Secrets |
 |--------|-----------|---------|
-| `evolution-api` | Proxy WhatsApp | `EVOLUTION_API_KEY` |
+| `evolution-api` | Proxy WhatsApp (Evolution GO) | `EVOLUTION_API_KEY`, `EVOLUTION_INSTANCE_TOKEN` |
 | `evolution-webhook` | Webhook WhatsApp | `EVOLUTION_API_KEY` |
 | `ai-suggest-reply` | IA sugestão | `OPENAI_API_KEY` |
 | `ai-conversation-summary` | IA resumo | `OPENAI_API_KEY` |
@@ -146,7 +162,7 @@ supabase migration list --project-ref tnnnlkbymytvtqngbbqh
 ### Configurar secrets
 
 ```bash
-# Via CLI
+# Via CLI (development/staging)
 supabase secrets set EVOLUTION_API_KEY=xxx --project-ref tnnnlkbymytvtqngbbqh
 
 # Listar secrets
@@ -178,9 +194,10 @@ VITE_SENTRY_DSN=xxx
 ### Edge Functions (Supabase Secrets)
 
 ```bash
-# WhatsApp
-EVOLUTION_API_URL=https://evolution.atomicabr.com.br
+# WhatsApp (Evolution GO — Hostinger srv1481814)
+EVOLUTION_API_URL=https://evolution-go-rxj2.srv1481814.hstgr.cloud
 EVOLUTION_API_KEY=xxx
+EVOLUTION_INSTANCE_TOKEN=xxx
 
 # Catálogo de produtos (usadas apenas pela edge promogifts-catalog — NÃO expostas ao front)
 PROMOGIFTS_SUPABASE_URL=https://doufsxqlfjyuvxuezpln.supabase.co
@@ -224,16 +241,16 @@ CNAME: app.seudominio.com.br → cname.vercel-dns.com
 
 ## Rollback
 
-### Via Vercel
-1. Dashboard do team `juca1` > projeto `zapp_web_v2` > Deployments
+### Via Vercel (front)
+1. Dashboard do team `juca1` → projeto `zapp_web_v2` → Deployments
 2. Selecionar o último deploy de produção saudável
-3. Menu `⋯` > **Instant Rollback**
+3. Menu `⋯` → **Instant Rollback**
 
-### Via Git
+### Via Git (revert)
 ```bash
-# Reverter para commit anterior: revert + PR (o merge dispara o deploy)
+# Reverter para commit anterior: revert + PR (o merge dispara o rebuild Vercel)
 git revert HEAD
-git push origin hermes/<sua-tarefa>     # abra o PR e mergeie pelo fluxo normal
+git push origin <sua-branch>    # abra o PR e mergeie pelo fluxo normal (6 checks)
 
 # Para voltar a um commit específico, reverta aquele commit (nunca reescreva a main)
 git revert <commit-sha>
@@ -244,13 +261,8 @@ git revert <commit-sha>
 > emergência = **Instant Rollback da Vercel** (seção acima), que não toca no git.
 
 ### Migration Rollback
-```bash
-# Ver histórico
-supabase migration list
-
-# Rollback manual (criar migration de reversão)
-# NÃO há comando automático de rollback
-```
+Não há rollback automático. Crie uma nova migration de reversão seguindo o fluxo normal
+(arquivo → PR → merge → `db-migrate.yml`). O ledger de migrations é append-only.
 
 ---
 
@@ -267,8 +279,8 @@ supabase migration list
 - Release tracking
 
 ### Uptime
-- Lovable: Built-in monitoring
-- Edge Functions: Supabase monitoring
+- Edge Functions: Supabase Dashboard → Edge Functions → Logs
+- Frontend: Vercel Dashboard → Analytics
 
 ### Alertas
 - Configurar alertas no Supabase Dashboard
@@ -278,15 +290,21 @@ supabase migration list
 
 ## Checklist de Deploy
 
-- [ ] Testes passando (`bun test`)
-- [ ] Build sem erros (`bun run build`)
-- [ ] Typecheck sem erros (`bun run typecheck`)
-- [ ] Lint sem erros (`bun run lint`)
-- [ ] Migrations aplicadas
-- [ ] Edge Functions deployadas
-- [ ] Secrets configurados
+### Antes do merge (PR)
+- [ ] `bun run typecheck` sem erros
+- [ ] `bun run lint` sem erros
+- [ ] `bun test` passando
+- [ ] `bun run build` sem erros
+- [ ] `node scripts/db-audit/supabase-usage-guard.mjs` → `novas: 0`
+- [ ] Migrations em `supabase/migrations/` registradas no ledger
+
+### Pós-merge (produção)
+- [ ] Vercel rebuild concluído (automático)
+- [ ] Se há migration nova: `db-migrate.yml` (dry-run → aprovar → apply)
+- [ ] Se há edge function nova/alterada: `deploy-functions.yml` (aprovar)
+- [ ] Se houve migration: `types-sync.yml` disparado (ou aguardar auto-dispatch W33)
 - [ ] Verificar logs após deploy
-- [ ] Testar fluxos crõticos em produção
+- [ ] Testar fluxos críticos em produção
 
 ---
 
@@ -306,9 +324,9 @@ bun run build
 3. Testar localmente: `supabase functions serve`
 
 ### Migration falha
-1. Verificar SQL syntax
-2. Verificar dependências entre migrations
-3. Rodar em staging primeiro
+1. Verificar SQL syntax no arquivo local
+2. Verificar dependências entre migrations (ordem de versions)
+3. Testar no banco local (ver CLAUDE.md seção 0) antes de propor PR
 
 ---
 
@@ -319,4 +337,4 @@ bun run build
 
 ---
 
-*Última atualização: 2026-04-12*
+*Última atualização: 2026-10-15*

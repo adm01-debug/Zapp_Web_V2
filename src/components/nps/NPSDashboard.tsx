@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { motion } from '@/components/ui/motion';
 import { useNPSSurveys } from '@/hooks/business/useNPSSurveys';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton, SkeletonRegion } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { TrendingUp, TrendingDown, Minus, Users, ThumbsUp, ThumbsDown, Meh, BarChart3 } from 'lucide-react';
 
@@ -48,12 +48,45 @@ export function NPSDashboard() {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
+      <SkeletonRegion className="space-y-4" label="Carregando pesquisas NPS">
         <Skeleton className="h-40 w-full" />
         <div className="grid grid-cols-4 gap-4">
           {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-24" />)}
         </div>
-      </div>
+      </SkeletonRegion>
+    );
+  }
+
+  // Nenhuma pesquisa NPS é enviada na V2 (o envio não existe; o CSAT automático
+  // é o PD-34). Sem respostas, mostrar medidor 0 + cards zerados seria dado
+  // fabricado — o painel diz a verdade.
+  if (metrics.totalResponses === 0) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-6 w-full min-w-0"
+      >
+        <div>
+          <h2 className="text-xl font-bold text-foreground">Net Promoter Score (NPS)</h2>
+          <p className="text-sm text-muted-foreground">Meça a lealdade dos seus clientes</p>
+        </div>
+
+        <Card>
+          <CardContent
+            data-testid="nps-empty-state"
+            className="flex flex-col items-center justify-center gap-2 py-12 px-6 text-center"
+          >
+            <BarChart3 className="w-10 h-10 text-muted-foreground/40" strokeWidth={1.6} />
+            <p className="text-sm font-semibold text-foreground">Nenhuma pesquisa NPS enviada ainda</p>
+            <p className="text-xs text-muted-foreground max-w-[420px] leading-snug">
+              O NPS é calculado a partir das respostas dos clientes às pesquisas. Enquanto nenhuma
+              pesquisa for enviada e respondida não há pontuação para exibir, por isso o painel não
+              mostra gráficos nem notas zeradas.
+            </p>
+          </CardContent>
+        </Card>
+      </motion.div>
     );
   }
 

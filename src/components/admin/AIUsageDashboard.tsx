@@ -3,6 +3,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Skeleton, SkeletonRegion } from '@/components/ui/skeleton';
 import { Brain, TrendingUp, Users, Zap, Clock, RefreshCw } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useAIUsageDashboard, FUNCTION_COLORS, FUNCTION_LABELS } from '@/hooks/analytics/useAIUsageDashboard';
@@ -12,13 +13,19 @@ import { AIUsageUsersTab } from './AIUsageUsersTab';
 
 export function AIUsageDashboard() {
   const {
-    logs, isLoading, refetch, timeFilter, setTimeFilter,
+    logs, isLoading, isLoadingLogs, refetch, timeFilter, setTimeFilter,
+    isError, error, logsError,
     logsPage, setLogsPage, logsTotal, profileMap, stats,
     cobertura, filtros, custoTexto,
     userUsage, functionUsage, timelineData,
   } = useAIUsageDashboard();
 
   const functionNames = Object.keys(FUNCTION_COLORS);
+  const mensagemErro = error instanceof Error ? error.message : 'A consulta falhou. Tente novamente.';
+  const picoChamadas = timelineData.reduce((max, ponto) => {
+    const total = functionNames.reduce((soma, fn) => soma + (Number(ponto[fn]) || 0), 0);
+    return Math.max(max, total);
+  }, 0);
 
   return (
     <div className="space-y-6 w-full min-w-0">
@@ -29,16 +36,40 @@ export function AIUsageDashboard() {
         </div>
         <div className="flex items-center gap-2">
           <Select value={timeFilter} onValueChange={(v) => setTimeFilter(v as TimeFilter)}>
-            <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-[140px]" aria-label="Período"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="1h">Última 1h</SelectItem><SelectItem value="6h">Últimas 6h</SelectItem>
               <SelectItem value="24h">Últimas 24h</SelectItem><SelectItem value="7d">Últimos 7 dias</SelectItem><SelectItem value="30d">Últimos 30 dias</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" size="icon" onClick={() => refetch()}><RefreshCw className="w-4 h-4" /></Button>
+          <Button variant="outline" size="icon" onClick={() => refetch()} aria-label="Atualizar dados de uso de IA">
+            <RefreshCw className="w-4 h-4" aria-hidden="true" />
+          </Button>
         </div>
       </div>
 
+      {isError && (
+        <Card role="alert">
+          <CardContent className="py-8 text-center space-y-2">
+            <p className="text-sm font-medium text-foreground">Não foi possível carregar o consumo de IA</p>
+            <p className="text-xs text-muted-foreground">{mensagemErro}</p>
+            <Button variant="outline" size="sm" onClick={() => refetch()}>Tentar de novo</Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {isLoading ? (
+        <SkeletonRegion className="grid grid-cols-2 md:grid-cols-5 gap-4" label="Carregando consumo de IA…">
+          {[0, 1, 2, 3, 4].map(i => (
+            <Card key={i}>
+              <CardContent className="pt-4 pb-3 space-y-2">
+                <Skeleton className="h-3 w-20" delay={i * 80} />
+                <Skeleton className="h-7 w-24" delay={i * 80} />
+              </CardContent>
+            </Card>
+          ))}
+        </SkeletonRegion>
+      ) : !isError && (
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         {[
           { icon: Zap, label: 'Chamadas', value: stats.totalCalls.toLocaleString() },
@@ -50,6 +81,7 @@ export function AIUsageDashboard() {
         ))}
         <Card><CardContent className="pt-4 pb-3"><div className="flex items-center gap-2 text-muted-foreground text-xs font-medium">❌ Erros</div><p className="text-2xl font-bold text-foreground mt-1">{stats.errorCount}{stats.totalCalls > 0 && <span className="text-xs text-muted-foreground ml-1">({((stats.errorCount / stats.totalCalls) * 100).toFixed(1)}%)</span>}</p></CardContent></Card>
       </div>
+      )}
 
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
@@ -59,10 +91,23 @@ export function AIUsageDashboard() {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
+          {isLoading ? (
+            <SkeletonRegion className="grid grid-cols-1 lg:grid-cols-3 gap-4" label="Carregando gráficos de consumo de IA">
+              <Card className="lg:col-span-2"><CardContent className="pt-6"><Skeleton className="h-[280px] w-full" /></CardContent></Card>
+              <Card><CardContent className="pt-6"><Skeleton className="h-[280px] w-full" /></CardContent></Card>
+            </SkeletonRegion>
+          ) : isError ? (
+            <Card><CardContent className="py-12 text-center text-muted-foreground text-sm">Os números e gráficos do período não puderam ser carregados.</CardContent></Card>
+          ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <Card className="lg:col-span-2">
               <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Chamadas ao Longo do Tempo</CardTitle></CardHeader>
               <CardContent>
+                {timelineData.length > 0 && (
+                  <p className="sr-only">
+                    {`Gráfico de chamadas ao longo do tempo: ${timelineData.length} intervalo(s), maior intervalo com ${picoChamadas} chamada(s).`}
+                  </p>
+                )}
                 {timelineData.length > 0 ? (
                   <ResponsiveContainer width="100%" height={280}>
                     <AreaChart data={timelineData}>
@@ -80,6 +125,11 @@ export function AIUsageDashboard() {
             <Card>
               <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Distribuição por Função</CardTitle></CardHeader>
               <CardContent>
+                {functionUsage.length > 0 && (
+                  <p className="sr-only">
+                    {`Distribuição por função: ${functionUsage.map(f => `${FUNCTION_LABELS[f.name] || f.name} — ${f.tokens.toLocaleString()} tokens em ${f.calls} chamada(s)`).join('; ')}.`}
+                  </p>
+                )}
                 {functionUsage.length > 0 ? (
                   <>
                     <ResponsiveContainer width="100%" height={180}>
@@ -98,10 +148,11 @@ export function AIUsageDashboard() {
               </CardContent>
             </Card>
           </div>
+          )}
         </TabsContent>
 
         <TabsContent value="users" className="space-y-4"><AIUsageUsersTab userUsage={userUsage} profileMap={profileMap as Map<string, { name?: string; email?: string }>} /></TabsContent>
-        <TabsContent value="logs"><AIUsageLogsTab logs={logs} logsTotal={logsTotal} logsPage={logsPage} setLogsPage={setLogsPage} profileMap={profileMap as Map<string, { name?: string; email?: string }>} /></TabsContent>
+        <TabsContent value="logs"><AIUsageLogsTab logs={logs} logsTotal={logsTotal} logsPage={logsPage} setLogsPage={setLogsPage} isLoading={isLoadingLogs} logsError={logsError} onRetry={refetch} profileMap={profileMap as Map<string, { name?: string; email?: string }>} /></TabsContent>
       </Tabs>
 
       {/* Sobre o que os números foram calculados: a agregação é da janela inteira

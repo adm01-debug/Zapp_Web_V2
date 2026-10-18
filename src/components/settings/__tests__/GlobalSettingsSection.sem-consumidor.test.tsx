@@ -1,5 +1,8 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { ReactNode } from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { axe } from 'vitest-axe';
 
 const mockOrder = vi.hoisted(() => vi.fn());
 const mockSelectAposUpdate = vi.hoisted(() => vi.fn());
@@ -26,6 +29,20 @@ vi.mock('@/components/settings/LanguageSelector', () => ({
 import { GlobalSettingsSection } from '@/components/settings/GlobalSettingsSection';
 import { toast } from 'sonner';
 
+/**
+ * A tela lê as configurações globais pelo hook, que agora vive no cache do React
+ * Query: ela precisa do mesmo provider que o AppProviders monta na aplicação.
+ */
+function renderizar() {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: 0 }, mutations: { retry: false } },
+  });
+  const wrapper = ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={client}>{children}</QueryClientProvider>
+  );
+  return render(<GlobalSettingsSection />, { wrapper });
+}
+
 const settingsIniciais = [
   { id: 's1', key: 'user_creation', value: 'enabled', description: null },
   { id: 's2', key: 'check_msg_is_group', value: 'disabled', description: null },
@@ -42,7 +59,7 @@ beforeEach(() => {
 
 describe('GlobalSettingsSection — configurações sem consumidor operacional', () => {
   it('se apresenta como configuração sem execução automática e sem descrições promissoras', async () => {
-    render(<GlobalSettingsSection />);
+    renderizar();
 
     expect(await screen.findByText(/sem execução automática/i)).toBeInTheDocument();
     expect(screen.queryByText('Permite novos cadastros no sistema')).not.toBeInTheDocument();
@@ -54,8 +71,8 @@ describe('GlobalSettingsSection — configurações sem consumidor operacional',
   it('não anuncia sucesso quando a escrita não atualiza nenhuma linha', async () => {
     mockSelectAposUpdate.mockResolvedValue({ data: [], error: null });
 
-    render(<GlobalSettingsSection />);
-    const interruptor = (await screen.findAllByRole('switch'))[0];
+    renderizar();
+    const interruptor = await screen.findByRole('switch', { name: 'Criação de Usuários' });
     fireEvent.click(interruptor);
 
     await waitFor(() => {
@@ -65,13 +82,20 @@ describe('GlobalSettingsSection — configurações sem consumidor operacional',
   });
 
   it('anuncia sucesso somente quando a escrita é aceita', async () => {
-    render(<GlobalSettingsSection />);
-    const interruptor = (await screen.findAllByRole('switch'))[0];
+    renderizar();
+    const interruptor = await screen.findByRole('switch', { name: 'Criação de Usuários' });
     fireEvent.click(interruptor);
 
     await waitFor(() => {
       expect(toast.success).toHaveBeenCalledWith('Configuração atualizada');
     });
     expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it('o axe não acusa violações de label na tela', async () => {
+    renderizar();
+    await screen.findByRole('switch', { name: 'Criação de Usuários' });
+    const results = await axe(document.body, { rules: { region: { enabled: false } } });
+    expect(results.violations.filter((v) => v.id === 'label')).toEqual([]);
   });
 });

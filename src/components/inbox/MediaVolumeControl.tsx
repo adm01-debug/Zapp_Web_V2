@@ -163,7 +163,7 @@ export function MediaVolumeControl({
         side="right"
         align="center"
         collisionPadding={8}
-        className="z-[60] w-56 p-3 motion-reduce:animate-none"
+        className="z-[60] w-40 p-2.5 bg-card/90 backdrop-blur motion-reduce:animate-none"
         onClick={(event) => event.stopPropagation()}
       >
         <VolumeSliderPopoverContent

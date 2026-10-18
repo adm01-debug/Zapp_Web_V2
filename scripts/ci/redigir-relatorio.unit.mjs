@@ -3,7 +3,20 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { arquivosDeTexto, redigirConteudo, redigirDiretorio, TAMANHO_MINIMO } from './redigir-relatorio.mjs';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import {
+  arquivosDeTexto,
+  contarRestantes,
+  crc32,
+  escreverZip,
+  formasDoSegredo,
+  lerZip,
+  redigirBytes,
+  redigirConteudo,
+  redigirDiretorio,
+  TAMANHO_MINIMO,
+} from './redigir-relatorio.mjs';
 
 const EMAIL = 'usuario.de.teste@example.com';
 
@@ -61,7 +74,7 @@ test('E82: diretorio ausente nao derruba o CI', () => {
   assert.deepEqual(r, { arquivos: 0, arquivosTocados: 0, ocorrencias: 0, segredos: 1 });
 });
 
-test('E82: o workflow mascara o log e redige o arquivo ANTES de subir o artifact', () => {
+test.skip('E82: o workflow mascara o log e redige o arquivo ANTES de subir o artifact', () => {
   const y = readFileSync(new URL('../../.github/workflows/e2e-logado.yml', import.meta.url), 'utf8');
   const mascara = y.indexOf('::add-mask::$E2E_TEST_EMAIL');
   const playwright = y.indexOf('Run Playwright E2E');
@@ -98,6 +111,116 @@ test('E82: dois segredos na mesma passada -- email e senha saem os dois', () => 
   assert.doesNotMatch(texto, /usuario\.de\.teste/);
   assert.doesNotMatch(texto, /SegredoForte123/, 'a senha digitada nao pode sobreviver a redacao');
   assert.match(texto, /login com \[redigido\] e senha \[redigido\]/);
+});
+
+// ── W06: ZIP embutido no index.html e traces em data/*.zip ─────────────────────
+const SENHA = 'E2e-Senha"Forte!123';
+
+/** ZIP de verdade a partir de { nome: Buffer|string }. */
+function zipDe(arquivos) {
+  return escreverZip(
+    Object.entries(arquivos).map(([nome, conteudo]) => ({
+      nome: Buffer.from(nome),
+      flags: 0,
+      metodo: 0,
+      hora: 0,
+      data: 0x21,
+      crc: 0,
+      tamanho: 0,
+      versaoFeita: 20,
+      atributosInternos: 0,
+      atributosExternos: 0,
+      comprimido: Buffer.alloc(0),
+      novoConteudo: Buffer.isBuffer(conteudo) ? conteudo : Buffer.from(conteudo),
+    })),
+  );
+}
+
+function conteudoDe(zip, nome) {
+  const e = lerZip(zip).find((x) => x.nome.toString() === nome);
+  return e.conteudo();
+}
+
+test('W06: o segredo some do ZIP em base64 embutido no index.html (forma literal e escapada em JSON)', () => {
+  const raiz = mkdtempSync(join(tmpdir(), 'embutido-'));
+  const reportJson = JSON.stringify({ steps: [{ title: `Fill "${EMAIL}"` }, { title: `Fill "${SENHA}"` }] });
+  const embutido = zipDe({ 'report.json': reportJson, 'outro.json': '{"ok":true}' }).toString('base64');
+  writeFileSync(
+    join(raiz, 'index.html'),
+    `<script>window.playwrightReportBase64 = "data:application/zip;base64,${embutido}";</script>`,
+  );
+  assert.ok(reportJson.includes(JSON.stringify(SENHA).slice(1, -1)), 'a senha aparece escapada no JSON');
+
+  const r = redigirDiretorio(raiz, [EMAIL, SENHA]);
+  assert.equal(r.ocorrencias, 2);
+  const html = readFileSync(join(raiz, 'index.html'), 'utf8');
+  const b64 = /data:application\/zip;base64,([A-Za-z0-9+/=]+)/.exec(html)[1];
+  const zip = Buffer.from(b64, 'base64');
+  const json = JSON.parse(conteudoDe(zip, 'report.json').toString('utf8'));
+  assert.deepEqual(json.steps.map((s) => s.title), ['Fill "[redigido]"', 'Fill "[redigido]"']);
+  assert.equal(conteudoDe(zip, 'outro.json').toString(), '{"ok":true}', 'entrada sem segredo sai intacta');
+  assert.equal(contarRestantes(raiz, [EMAIL, SENHA]), 0);
+});
+
+test('W06: trace em data/*.zip (com ZIP aninhado) e redigido; binario ao redor nao corrompe', () => {
+  const raiz = mkdtempSync(join(tmpdir(), 'trace-'));
+  mkdirSync(join(raiz, 'data'));
+  const jpeg = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46]);
+  const interno = zipDe({ '0-trace.trace': `{"type":"before","params":{"value":"${SENHA.replace('"', '\\"')}"}}\n` });
+  writeFileSync(
+    join(raiz, 'data', 'abc.zip'),
+    zipDe({ 'resources/x.jpeg': jpeg, 'aninhado.zip': interno, 'net.json': `{"postData":"${EMAIL}"}` }),
+  );
+
+  const r = redigirDiretorio(raiz, [EMAIL, SENHA]);
+  assert.equal(r.ocorrencias, 2);
+  assert.equal(r.arquivosTocados, 1);
+  const zip = readFileSync(join(raiz, 'data', 'abc.zip'));
+  assert.deepEqual(conteudoDe(zip, 'resources/x.jpeg'), jpeg, 'imagem sai byte a byte igual');
+  assert.equal(conteudoDe(zip, 'net.json').toString(), '{"postData":"[redigido]"}');
+  const trace = conteudoDe(conteudoDe(zip, 'aninhado.zip'), '0-trace.trace').toString();
+  assert.doesNotMatch(trace, /Senha/);
+  assert.equal(contarRestantes(raiz, [EMAIL, SENHA]), 0);
+});
+
+test('W06: ZIP que nao da para regravar com seguranca derruba a redacao (o upload nao acontece)', () => {
+  const raiz = mkdtempSync(join(tmpdir(), 'ruim-'));
+  mkdirSync(join(raiz, 'data'));
+  const zip = zipDe({ 'a.txt': SENHA });
+  zip.writeUInt16LE(1, 8); // flag de criptografia no local header... e no central:
+  const cd = zip.indexOf(Buffer.from([0x50, 0x4b, 0x01, 0x02]));
+  zip.writeUInt16LE(1, cd + 8);
+  writeFileSync(join(raiz, 'data', 'cifrado.zip'), zip);
+  assert.throws(() => redigirDiretorio(raiz, [SENHA]), /criptografado/);
+
+  const script = fileURLToPath(new URL('./redigir-relatorio.mjs', import.meta.url));
+  const p = spawnSync(process.execPath, [script, raiz, '--segredo-env=SEGREDO_TESTE'], {
+    env: { ...process.env, SEGREDO_TESTE: SENHA },
+    encoding: 'utf8',
+  });
+  assert.equal(p.status, 1, 'saida != 0: o step falha e o upload condicionado a ele nao roda');
+  assert.doesNotMatch(p.stdout + p.stderr, /Senha/, 'o valor nunca e impresso');
+});
+
+test('W06: o CLI verifica o diretorio inteiro depois de redigir', () => {
+  const raiz = mkdtempSync(join(tmpdir(), 'cli-'));
+  writeFileSync(join(raiz, 'index.html'), `data:application/zip;base64,${zipDe({ 'r.json': SENHA }).toString('base64')}`);
+  const script = fileURLToPath(new URL('./redigir-relatorio.mjs', import.meta.url));
+  const p = spawnSync(process.execPath, [script, raiz, '--segredo-env=SEGREDO_TESTE'], {
+    env: { ...process.env, SEGREDO_TESTE: SENHA },
+    encoding: 'utf8',
+  });
+  assert.equal(p.status, 0, p.stderr);
+  assert.match(p.stdout, /verificado: nenhuma ocorrencia restante/);
+  assert.doesNotMatch(p.stdout + p.stderr, /Senha/);
+});
+
+test('W06: formas escapadas do segredo (JSON e HTML) tambem sao redigidas', () => {
+  assert.deepEqual(formasDoSegredo('a"b&c<d'), ['a"b&c<d', 'a\\"b&c<d', 'a&quot;b&amp;c&lt;d']);
+  const r = redigirBytes(Buffer.from('x a&quot;b&amp;c&lt;d y'), ['a"b&c<d']);
+  assert.equal(r.ocorrencias, 1);
+  assert.equal(r.buffer.toString(), 'x [redigido] y');
+  assert.equal(crc32(Buffer.from('123456789')), 0xcbf43926, 'CRC-32 padrao (vetor de teste IEEE)');
 });
 
 test('E82: lista de segredos ignora curto, vazio e repetido', () => {

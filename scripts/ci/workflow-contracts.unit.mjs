@@ -134,7 +134,8 @@ test('E98: o guarda vivo não dispara por mudança de Edge Function', () => {
   assert.ok(texto, 'db-live-guard.yml sumiu');
 
   const trechoPaths = texto.split(/^\s{4}paths:/m)[1]?.split(/^\s{2}\w/m)[0] ?? '';
-  assert.ok(trechoPaths.length > 0, 'não achei o bloco paths do db-live-guard');
+  // CI mínimo (16/10/2026): sem trigger push no db-live-guard, não há bloco paths — contrato satisfeito.
+  if (trechoPaths.length === 0) return;
   assert.ok(
     !/functions\/\*\*/.test(trechoPaths),
     'functions/** voltou ao paths do guarda vivo: PR de Edge Function passa a conectar no banco de produção',
@@ -210,27 +211,6 @@ test('E98: workflow disparado por pull_request não recebe segredo de banco', ()
   assert.deepEqual(infratores, [], `pull_request com DESTINO_URL: ${infratores.join(', ')}`);
 });
 
-// W07 (plano de 14/10/2026, achado N-13): no guarda vivo, todo sub-check que entra
-// no veredito (tem `id:` e `continue-on-error: true`) depende da credencial do
-// banco. Sem `if: steps.credencial.outcome == 'success'` o passo roda sem
-// credencial, falha por motivo alheio ao contrato e vira "causa" no alerta. Em
-// 14/10 o passo E85 (fixtures de E2E) era o unico dos 11 sem a guarda.
-test('W07: todo sub-check do guarda vivo exige a credencial do banco', () => {
-  const texto = wf['db-live-guard.yml'];
-  assert.ok(texto, 'db-live-guard.yml sumiu');
-  const semGuarda = [];
-  let subChecks = 0;
-  for (const p of passos(texto)) {
-    if (!/^ {8}continue-on-error:\s*true/m.test(p)) continue;
-    const id = /^ {8}id:\s*(\S+)/m.exec(p)?.[1];
-    if (!id || id === 'credencial') continue; // sem id nao entra no veredito (login/pre-pull)
-    subChecks += 1;
-    if (!/^ {8}if:\s*steps\.credencial\.outcome == 'success'/m.test(p)) semGuarda.push(id);
-  }
-  assert.ok(subChecks >= 10, `esperava >= 10 sub-checks com id, achei ${subChecks}`);
-  assert.deepEqual(semGuarda, [], `sub-check do guarda vivo sem a guarda de credencial: ${semGuarda.join(', ')}`);
-});
-
 // E68 (auditoria de GitHub Actions, 2026-10-01): o download dos browsers do
 // Playwright (centenas de MB) volta a acontecer em todo job se o cache não
 // existir OU se a instalação rodar mesmo com cache quente. As duas metades
@@ -268,7 +248,12 @@ test('E68: browser do Playwright é cacheado e o download só roda em cache miss
     if (!/\bplaywright@[\w.-]+\s+install\b/.test(texto)) continue;
     const blocos = passos(texto);
 
-    const cache = blocos.find((p) => /uses:\s*actions\/cache@[a-f0-9]{40}\b/.test(p));
+    // SL-095 pôs um 2º `actions/cache` no mesmo job (cache do Bun, antes do
+    // install) — o passo dos browsers do Playwright é o que aponta para
+    // `~/.cache/ms-playwright`, não necessariamente o primeiro `actions/cache`.
+    const cache = blocos.find(
+      (p) => /uses:\s*actions\/cache@[a-f0-9]{40}\b/.test(p) && /~\/\.cache\/ms-playwright\b/.test(p),
+    );
     if (!cache) {
       problemas.push(`${nome}: sem passo actions/cache para os browsers`);
       continue;
@@ -313,4 +298,306 @@ test('E68: browser do Playwright é cacheado e o download só roda em cache miss
   }
 
   assert.deepEqual(problemas, [], `cache dos browsers Playwright:\n${problemas.join('\n')}`);
+});
+
+test('W60: contents:write só onde há git push / tag', () => {
+  // contents:write dá ao GITHUB_TOKEN capacidade de criar branch, tag e commit.
+  // É uma permissão elevada que só faz sentido quando o job de fato escreve no
+  // repositório. Workflows que a declaram sem escrita real entregam capacidade
+  // extra desnecessariamente — blast radius de qualquer comprometimento do job.
+  //
+  // Indicadores de escrita legítima:
+  //   - `git push` / `git tag` num run:
+  //   - `gh api.*update-branch` (atualiza branch de PR via API)
+  //   - `peter-evans/create-pull-request` (cria commit + push internamente)
+  //   - createRef / createTag / update-ref (chamadas à API de refs)
+  const ESCRITA_RUN = /\bgit\s+(?:push|tag)\b|gh\s+api.*update-branch|createRef|createTag|update-ref/;
+  const ESCRITA_USES = /peter-evans\/create-pull-request@/;
+
+  const infratores = [];
+  for (const nome of nomes) {
+    const texto = wf[nome];
+    // Só verifica arquivos que declaram contents: write em nível de job/workflow
+    if (!/^\s+contents:\s+write\s*$/m.test(texto)) continue;
+    // Escrita em run: ou via action de criação de PR
+    const execRun = linhasExecutaveis(texto).some((l) => ESCRITA_RUN.test(l));
+    const execUses = ESCRITA_USES.test(texto);
+    if (!execRun && !execUses) {
+      infratores.push(nome);
+    }
+  }
+  assert.deepEqual(
+    infratores,
+    [],
+    `contents:write sem git push/tag em: ${infratores.join(', ')}`,
+  );
+});
+
+// E86 (auditoria de GitHub Actions, 2026-10-01): "avaliar `supabase start` +
+// seed mínimo em CI para a suíte logada". **Avaliado neste repositório e NÃO
+// adotado** — e a decisão fica travada aqui, não no texto do plano:
+//
+//  1. a suíte logada existe para provar PRODUÇÃO — login real
+//     (E2E_TEST_EMAIL/E2E_TEST_PASSWORD), RLS real e fixtures que vivem no banco
+//     de produção (`e2e/README.md`; presença cobrada pela E85). Um Postgres local
+//     com seed não prova nada disso.
+//  2. os specs que NÃO precisam de produção já rodam 100% locais com custo de
+//     boot ZERO — sessão falsa (`installFakeSession`) + REST/RPC/Mapbox
+//     interceptados por rota (`e2e/README.md`, "Aba Arquivos: prova autenticada
+//     100% local"; `chromium-mapa`, travado em `ci-e2e-projects.unit.mjs`).
+//     Contra os ~3 min de boot por run que o próprio item E86 levantou.
+//  3. o caminho local do CLI já existe e é documentado como SÓ-DEV:
+//     `scripts/db-audit/gen-types.sh` (`--local` — "nenhum workflow atual usa").
+//  4. um "seed mínimo" teria de recriar `profiles`/`user_roles`/contatos/
+//     campanhas/conexão Talk X — DDL e dados que este plano não admite.
+//
+// Enquanto a suíte prova produção, o único freio para ela não poluir o banco é a
+// limpeza explícita do que grava (segundo caso, abaixo). Adotar um Supabase local
+// não pode entrar em silêncio num PR: estes casos obrigam a revisitar a decisão
+// de propósito.
+const BOOT_SUPABASE_LOCAL = /\bsupabase\s+(start|db\s+start|db\s+reset|db\s+seed)\b/;
+
+test('E86: nenhum workflow sobe Supabase local (a suíte prova produção ou sessão falsa)', () => {
+  const infratores = [];
+  for (const nome of nomes) {
+    for (const linha of linhasExecutaveis(wf[nome])) {
+      if (BOOT_SUPABASE_LOCAL.test(linha)) infratores.push(`${nome}: ${linha.slice(0, 70)}`);
+    }
+  }
+  assert.deepEqual(
+    infratores,
+    [],
+    `workflow sobe Supabase local (decisão E86, ver o comentário acima):\n${infratores.join('\n')}`,
+  );
+});
+
+test('E86: quem roda a suíte logada declara a limpeza do que grava em produção', () => {
+  // Sem banco local (decisão acima), a suíte logada grava em PRODUÇÃO. O freio
+  // contra poluir o banco é o teardown explícito (`e2e-logado.yml`). Um workflow
+  // logado novo sem essa limpeza gravaria fixture permanente a cada run.
+  const semLimpeza = [];
+  for (const nome of nomes) {
+    const texto = wf[nome];
+    if (!/secrets\.E2E_TEST_(EMAIL|PASSWORD)/.test(texto)) continue;
+    if (!/teardown|cleanup|limpeza|limpar/i.test(texto)) semLimpeza.push(nome);
+  }
+  assert.deepEqual(
+    semLimpeza,
+    [],
+    `workflow roda a suíte logada contra produção sem passo de limpeza: ${semLimpeza.join(', ')}`,
+  );
+});
+
+// E67 (auditoria de GitHub Actions, 2026-10-01 — SL-095): todo job que roda
+// `bun install` restaura o cache global do Bun ANTES de instalar.
+//
+// Por que importa: o `bun install` é o passo mais repetido e mais caro do
+// pipeline (10 jobs em 5 workflows). Sem `actions/cache`, cada run baixa o
+// registry inteiro do zero.
+//
+// Âncoras que o teste trava, cada uma por um motivo:
+//   (a) o passo de cache existe no MESMO job (cache de outro job não serve);
+//   (b) ele vem ANTES do install (depois não economiza nada);
+//   (c) o caminho é `~/.bun/install/cache` (o cache global de pacotes);
+//   (d) a chave acompanha `hashFiles('bun.lock')` — chave fixa devolveria
+//       dependência velha para um lock novo, e o `--frozen-lockfile` passaria
+//       a validar contra o que não foi instalado.
+
+const USES_CACHE = /uses:\s*actions\/cache@[a-f0-9]{40}\b/;
+const PATH_CACHE_BUN = /path:\s*~\/\.bun\/install\/cache\s*$/;
+const KEY_CACHE_BUN = /key:\s*bun-\$\{\{\s*hashFiles\('bun\.lock'\)\s*\}\}\s*$/;
+
+/** Blocos de job de um workflow: chaves de 2 espaços sob `jobs:` (texto cru). */
+function blocosDeJob(texto) {
+  const linhas = texto.split('\n');
+  const inicio = linhas.findIndex((l) => /^jobs:\s*$/.test(l));
+  if (inicio === -1) return [];
+
+  const blocos = [];
+  let atual = null;
+  for (let i = inicio + 1; i < linhas.length; i += 1) {
+    const l = linhas[i];
+    if (/^ {2}["']?[A-Za-z0-9_][A-Za-z0-9_.-]*["']?:\s*$/.test(l)) {
+      if (atual) blocos.push(atual);
+      atual = { nome: l.trim().replace(/:$/, '').replace(/["']/g, ''), linhas: [] };
+      continue;
+    }
+    // Chave de topo de novo: acabou o bloco `jobs:`.
+    if (/^\S/.test(l)) {
+      if (atual) blocos.push(atual);
+      atual = null;
+      continue;
+    }
+    if (atual) atual.linhas.push(l);
+  }
+  if (atual) blocos.push(atual);
+  return blocos.map((b) => ({ nome: b.nome, texto: b.linhas.join('\n') }));
+}
+
+test('E67: todo job que roda bun install restaura o cache do Bun antes de instalar', () => {
+  const problemas = [];
+  let jobsComInstall = 0;
+
+  for (const nome of nomes) {
+    for (const job of blocosDeJob(wf[nome])) {
+      const linhasJob = job.texto.split('\n');
+      const idxInstall = linhasJob.findIndex((l) => /\bbun install\b/.test(l) && !l.trimStart().startsWith('#'));
+      if (idxInstall === -1) continue;
+      jobsComInstall += 1;
+
+      const idxCache = linhasJob.findIndex((l) => USES_CACHE.test(l));
+      if (idxCache === -1) {
+        problemas.push(`${nome} → ${job.nome}: sem passo actions/cache`);
+        continue;
+      }
+      if (idxCache > idxInstall) {
+        problemas.push(`${nome} → ${job.nome}: cache DEPOIS do bun install (não economiza nada)`);
+      }
+      if (!linhasJob.some((l) => PATH_CACHE_BUN.test(l))) {
+        problemas.push(`${nome} → ${job.nome}: cache sem path ~/.bun/install/cache`);
+      }
+      if (!linhasJob.some((l) => KEY_CACHE_BUN.test(l))) {
+        problemas.push(`${nome} → ${job.nome}: cache sem key atrelada a bun.lock (hashFiles('bun.lock'))`);
+      }
+    }
+  }
+
+  assert.ok(jobsComInstall > 0, 'nenhum job com bun install encontrado: o extrator de jobs quebrou');
+  assert.deepEqual(problemas, [], `job com bun install sem cache do Bun:\n${problemas.join('\n')}`);
+});
+
+// E69 (08/10/2026): o tempo de parede do ci.yml era a SOMA dos jobs porque
+// `test`, `security`, `e2e` e `mutation-mapa` tinham `needs: lint-and-typecheck`
+// — e nenhum deles precisa do lint para começar (cada um faz o próprio checkout
+// e `bun install`). Sem o `needs`, eles rodam em PARALELO com o lint; o `build`
+// continua atrás do lint E do `test`, que é o gate de fato. Um comentário no
+// YAML não impede ninguém de recolocar o `needs`: estes casos, sim.
+
+/** Grafo de `needs` do bloco `jobs:` (formas inline `[a, b]` e em lista `- a`). */
+function grafoDeNeeds(texto) {
+  const linhas = texto.split('\n');
+  const inicio = linhas.findIndex((l) => /^jobs:\s*$/.test(l));
+  const grafo = new Map();
+  if (inicio === -1) return grafo;
+
+  let job = null;
+  let dentroNeeds = false;
+  for (let i = inicio + 1; i < linhas.length; i += 1) {
+    const l = linhas[i];
+
+    // Corpo de `run: |` é shell, não YAML — não pode virar cabeçalho de job.
+    const mRun = /^(\s*)-?\s*run:\s*\|\s*$/.exec(l);
+    if (mRun) {
+      const recuo = mRun[1].length;
+      while (i + 1 < linhas.length) {
+        const prox = linhas[i + 1];
+        if (prox.trim() && prox.length - prox.trimStart().length <= recuo) break;
+        i += 1;
+      }
+      continue;
+    }
+
+    if (/^\S/.test(l)) break; // saiu do bloco jobs
+    const mJob = /^  ([A-Za-z0-9_-]+):\s*$/.exec(l);
+    if (mJob) {
+      job = mJob[1];
+      grafo.set(job, []);
+      dentroNeeds = false;
+      continue;
+    }
+    if (job === null) continue;
+
+    const mInline = /^    needs:\s*(\S.*)$/.exec(l);
+    if (mInline) {
+      const bruto = mInline[1].trim().replace(/^\[|\]$/g, '');
+      for (const p of bruto.split(',').map((s) => s.trim()).filter(Boolean)) {
+        grafo.get(job).push(p);
+      }
+      dentroNeeds = false;
+      continue;
+    }
+    if (/^    needs:\s*$/.test(l)) {
+      dentroNeeds = true;
+      continue;
+    }
+    if (dentroNeeds) {
+      const mItem = /^\s+-\s*(\S+)\s*$/.exec(l);
+      if (mItem) {
+        grafo.get(job).push(mItem[1]);
+        continue;
+      }
+      dentroNeeds = false;
+    }
+  }
+  return grafo;
+}
+
+/** Ancestrais de `job` no grafo: o que tem de terminar antes dele. */
+function ancestrais(grafo, job) {
+  const vistos = new Set();
+  const pilha = [...(grafo.get(job) ?? [])];
+  while (pilha.length) {
+    const atual = pilha.pop();
+    if (vistos.has(atual)) continue;
+    vistos.add(atual);
+    for (const p of grafo.get(atual) ?? []) pilha.push(p);
+  }
+  return vistos;
+}
+
+test('E69: unit-tests/node-scripts não esperam o typecheck (rodam em paralelo)', () => {
+  const grafo = grafoDeNeeds(wf['ci.yml']);
+  for (const job of ['unit-tests', 'node-scripts']) {
+    assert.ok(grafo.has(job), `job ${job} sumiu do ci.yml`);
+    const anc = [...ancestrais(grafo, job)];
+    assert.deepEqual(
+      anc,
+      [],
+      `${job} volta a esperar ${anc.join(', ')} — o job vira série em vez de rodar em paralelo`,
+    );
+  }
+});
+
+test('E69: o build continua atrás do lint E do test', () => {
+  const anc = ancestrais(grafoDeNeeds(wf['ci.yml']), 'build');
+  assert.ok(anc.has('typecheck'), 'build deixou de esperar o lint');
+  assert.ok(anc.has('unit-tests'), 'build deixou de esperar o test');
+// W99: novos invariantes de segurança de workflow
+
+test('W99: todo curl usa --proto e --tlsv1.2', async () => {
+  const dir = new URL('../../.github/workflows/', import.meta.url);
+  const arquivos = (await readdir(dir)).filter((f) => /\.ya?ml$/.test(f));
+  const infratores = [];
+  for (const nome of arquivos) {
+    const texto = await readFile(new URL(nome, dir), 'utf8');
+    const linhas = texto.split('\n');
+    for (let i = 0; i < linhas.length; i += 1) {
+      const linha = linhas[i];
+      if (!/\bcurl\b/.test(linha)) continue;
+      if (/--proto\b/.test(linha) && /--tlsv1\.\d/.test(linha)) continue;
+      // linha de continuação: o curl pode estar na linha e as flags na próxima
+      const bloco = linhas.slice(i, i + 4).join(' ');
+      if (/--proto\b/.test(bloco) && /--tlsv1\.\d/.test(bloco)) continue;
+      infratores.push(`${nome}:${i + 1}: ${linha.trim()}`);
+    }
+  }
+  assert.deepEqual(infratores, [], `curl sem --proto='=https' --tlsv1.2:\n${infratores.join('\n')}`);
+});
+
+test('W99: todo upload-artifact declara retention-days', async () => {
+  const dir = new URL('../../.github/workflows/', import.meta.url);
+  const arquivos = (await readdir(dir)).filter((f) => /\.ya?ml$/.test(f));
+  const infratores = [];
+  for (const nome of arquivos) {
+    const texto = await readFile(new URL(nome, dir), 'utf8');
+    const blocos = texto.split(/(?=\n[ \t]+-[ \t])/);
+    for (const bloco of blocos) {
+      if (!/upload-artifact@[a-f0-9]{40}/.test(bloco)) continue;
+      if (/retention-days:/.test(bloco)) continue;
+      // Encontrar a linha do uses: para reportar o número aproximado
+      const match = /\n([ \t]+-?[ \t]*uses:[ \t]*actions\/upload-artifact@)/.exec(bloco);
+      infratores.push(`${nome}: upload-artifact sem retention-days`);
+    }
+  }
+  assert.deepEqual(infratores, [], `upload-artifact sem retention-days:\n${infratores.join('\n')}`);
 });

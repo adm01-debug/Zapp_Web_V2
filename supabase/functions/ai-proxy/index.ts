@@ -22,7 +22,7 @@
  * (`PROVIDER_ID_NOT_ALLOWED`) e o campo `model` deixou de existir no schema — o modelo é
  * sempre o do cadastro do provedor (`resolveModel(provider, null)`), nunca um pedido do corpo.
  */
-import { handleCors, errorResponse, jsonResponse, Logger, requireEnv, requireAuth, checkRateLimit, getClientIP, createAuthedClient } from "../_shared/validation.ts";
+import { handleCors, errorResponse, jsonResponse, Logger, requireEnv, requireAuth, createAuthedClient } from "../_shared/validation.ts";
 import { z, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { logAiUsageDetached, extractTokenUsage, extractUserIdFromRequest, medirStream, registrarConsumoDeDiagnostico } from "../_shared/ai-usage.ts";
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
@@ -581,10 +581,10 @@ export async function handleAiProxy(req: Request): Promise<Response> {
   const userId = extractUserIdFromRequest(req);
 
   try {
-    const ip = getClientIP(req);
-    const { allowed } = checkRateLimit("proxy:" + ip, 30, 60_000);
-    if (!allowed) return errorResponse("Limite de requisicoes excedido. Tente novamente em 1 minuto.", 429, req);
-
+    // O limite é POR USUÁRIO, decidido em `enforceAiGuards` acima (contador
+    // compartilhado e atômico + cota diária, IA-043). O contador em memória por
+    // IP saiu: era por isolate, zerava no cold start e fazia colegas atrás do
+    // mesmo NAT dividirem a cota.
     const parsed = parseBody(AiProxySchema, await req.json());
     if (!parsed.success) return validationErrorResponse(parsed, req);
 

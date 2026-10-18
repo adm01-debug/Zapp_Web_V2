@@ -40,9 +40,6 @@ import { CatalogBulkBar, CATALOG_BULK_SEND_MAX } from './CatalogBulkBar';
 const CatalogBulkSendDialog = lazy(() =>
   import('./CatalogBulkSendDialog').then((m) => ({ default: m.CatalogBulkSendDialog }))
 );
-// CT-28 — "Exportar seleção" reusa os builders puros do CSV (CT-20); nada é
-// buscado na edge: as linhas são exatamente os produtos selecionados.
-import { buildCatalogCsv, catalogExportFilename, triggerCsvDownload } from './catalogExport';
 import { favoriteToProduct, CatalogErrorState, countLabel, useRateLimitCooldown, CatalogDialogFallback } from './catalogShared';
 import { TalkXPagination, TalkXEmptyState } from '@/components/talkx/talkxShared';
 import type { ContactResult } from './useSendProduct';
@@ -373,13 +370,6 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
     (snapshot) => displayedProducts.find((p) => p.id === snapshot.id) ?? snapshot
   );
 
-  /** CT-28 — "Exportar seleção": CSV com exatamente os produtos escolhidos. */
-  const handleExportSelection = () => {
-    if (selectedProducts.length === 0) return;
-    triggerCsvDownload(buildCatalogCsv(selectedProducts), catalogExportFilename('selecao', new Date()));
-    toast.success(`${selectedProducts.length} produto(s) exportado(s) em CSV`);
-  };
-
   /** CT-28 / R2-MOD-043 — "Favoritar N": favorita só quem ainda não é favorito
    * e só confirma depois da escrita (mesmo contrato da tela de Catálogo:
    * `toggle` devolve o resultado de cada persistência). */
@@ -446,14 +436,14 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
                   disabled={coolingDown}
                 />
                 {search && (
-                  <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => setSearch('')}>
+                  <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" aria-label="Limpar busca" onClick={() => setSearch('')}>
                     <X className="w-4 h-4" />
                   </Button>
                 )}
               </div>
 
               <Select value={categoryId} onValueChange={setCategoryId} disabled={coolingDown}>
-                <SelectTrigger className="w-[200px]">
+                <SelectTrigger className="w-[200px]" aria-label="Categoria">
                   <SelectValue placeholder="Categoria" />
                 </SelectTrigger>
                 <SelectContent>
@@ -477,7 +467,7 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
               </Select>
 
               <Select value={supplierId} onValueChange={setSupplierId} disabled={coolingDown}>
-                <SelectTrigger className="w-[170px]">
+                <SelectTrigger className="w-[170px]" aria-label="Fornecedor">
                   <SelectValue placeholder="Fornecedor" />
                 </SelectTrigger>
                 <SelectContent>
@@ -753,7 +743,6 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
                 onToggleSelectAll={toggleSelectAll}
                 onClear={clearSelection}
                 onSend={() => setBulkSendOpen(true)}
-                onExport={handleExportSelection}
                 onFavorite={handleFavoriteSelection}
                 maxSend={CATALOG_BULK_SEND_MAX}
               />

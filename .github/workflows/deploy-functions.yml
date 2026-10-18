@@ -36,6 +36,10 @@ on:
     paths:
       - 'supabase/functions/**'
       - 'supabase/config.toml'
+      # W70: arquivos que nao mudam o bundle publicado — nao disparar deploy por eles.
+      - '!supabase/functions/**/*.test.ts'
+      - '!supabase/functions/**/*.md'
+      - '!supabase/functions/**/fixtures/**'
   workflow_dispatch:
     inputs:
       function_name:
@@ -58,7 +62,16 @@ on:
         required: false
         default: false
         type: boolean
+      rollback_to_last_success:
+        description: 'W66: resolver automaticamente o ultimo Deployment bem-sucedido do environment e publicar com esse SHA (E61 sem automacao manual).'
+        required: false
+        default: false
+        type: boolean
 
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
 permissions:
   contents: read
 
@@ -97,10 +110,12 @@ jobs:
     # + smokes) somados ao teto de espera do passo de serializacao (MAX_WAIT_MINUTES=40
     # em scripts/edge-deploy/serialize-scope.mjs). Pinado em deploy-functions-workflow.unit.mjs.
     timeout-minutes: 100
-    # GITHUB_TOKEN elevado a contents:write apenas neste job, para o passo de
-    # tag de rastreabilidade — dispensa PAT (DEPLOY_FUNCTIONS_TOKEN).
-    permissions:
-      contents: write
+    # W60: contents:write foi removido — o passo de tag de rastreabilidade saiu
+    # de cena (Deployment do GitHub substitui a tag; ver comentario "E60" abaixo).
+    # deployments:write cobre o registro do Deployment; actions:read cobre o
+    # passo de serializacao do escopo `all`.
+    permissions:  # zizmor: ignore[excessive-permissions]
+      contents: read
       # Leitura dos runs deste workflow para o passo de serializacao do escopo `all`.
       actions: read
       # E60: registrar o Deployment de rastreabilidade (aba Deployments).
@@ -121,16 +136,63 @@ jobs:
             exit 1
           fi
 
+      # W66: resolve o SHA do ultimo Deployment bem-sucedido do environment
+      # producao-edge-functions quando rollback_to_last_success=true. O resultado
+      # fica em RESOLVED_SOURCE_REF e e usado no Checkout e nos passos seguintes
+      # em lugar de inputs.source_ref.
+      - name: Resolver ref para rollback automatico
+        if: inputs.rollback_to_last_success == true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          const token = process.env.GITHUB_TOKEN;
+          const repo  = process.env.GITHUB_REPOSITORY;
+          const env   = 'producao-edge-functions';
+          const base  = 'https://api.github.com';
+          const headers = {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/vnd.github+json',
+            'X-GitHub-Api-Version': '2022-11-28',
+          };
+          const depsRes = await fetch(
+            `${base}/repos/${repo}/deployments?environment=${encodeURIComponent(env)}&per_page=20`,
+            { headers },
+          );
+          if (!depsRes.ok) {
+            process.stderr.write(`GitHub API retornou HTTP ${depsRes.status} ao listar deployments\n`);
+            process.exit(1);
+          }
+          const deps = await depsRes.json();
+          for (const dep of deps) {
+            const stRes = await fetch(
+              `${base}/repos/${repo}/deployments/${dep.id}/statuses?per_page=5`,
+              { headers },
+            );
+            if (!stRes.ok) continue;
+            const statuses = await stRes.json();
+            if (statuses.some((s) => s.state === 'success')) {
+              const { appendFileSync } = await import('node:fs');
+              appendFileSync(process.env.GITHUB_ENV, `RESOLVED_SOURCE_REF=${dep.sha}\n`);
+              process.stdout.write(`Rollback para o ultimo Deployment bem-sucedido: ${dep.sha}\n`);
+              process.exit(0);
+            }
+          }
+          process.stderr.write(`Nenhum Deployment com status success encontrado no environment ${env}\n`);
+          process.exit(1);
+          NODE
+
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ inputs.source_ref || github.sha }}
+          ref: ${{ env.RESOLVED_SOURCE_REF || inputs.source_ref || github.sha }}
           fetch-depth: 0
           persist-credentials: false
 
       - name: Provar checkout imutavel
         env:
-          SOURCE_REF: ${{ inputs.source_ref }}
+          SOURCE_REF: ${{ env.RESOLVED_SOURCE_REF || inputs.source_ref }}
         run: |
           set -euo pipefail
           DEPLOYED_GIT_SHA=$(git rev-parse HEAD)
@@ -204,8 +266,8 @@ jobs:
           PROJECT_REF: tnnnlkbymytvtqngbbqh
           FN: ${{ inputs.function_name }}
           ROTATE_SECRETS: ${{ inputs.rotate_secrets }}
-          SOURCE_REF: ${{ inputs.source_ref }}
           DRY_RUN: ${{ inputs.dry_run }}
+          SOURCE_REF: ${{ env.RESOLVED_SOURCE_REF || inputs.source_ref }}
         run: |
           set -euo pipefail
           ARQUIVO="$RUNNER_TEMP/secrets-list.json"
@@ -383,6 +445,14 @@ jobs:
           EVIDENCIA="$RUNNER_TEMP/edge-deployment-evidence"
           node "$RUNNER_TEMP/edge-tooling/scripts/edge-deploy/deploy-plan.mjs" --manifest supabase/deployment-manifest.json --remoto "$EVIDENCIA/edge-before.json" --escopo "$FN" --saida "$EVIDENCIA/deploy-plan.json"
 
+      - name: Setup Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
+        with:
+          deno-version: '2.9.5'
+
+      - name: Typecheck das edge functions (deno check)
+        run: deno check supabase/functions/**/index.ts
+
       - name: Deploy
         if: inputs.dry_run != true
         env:
@@ -390,10 +460,10 @@ jobs:
           PROJECT_REF: tnnnlkbymytvtqngbbqh
           FN: ${{ inputs.function_name }}
         run: |
+          set -euo pipefail
           # F-02 (auditoria 2026-09-27): sem pipefail, falha do CLI do supabase
           # era mascarada pelo tee (exit 0) e só aparecia ~12 min depois quando
           # a verificação pós-deploy não encontrava o deploy esperado.
-          set -euo pipefail
           EVIDENCE_DIR="$RUNNER_TEMP/edge-deployment-evidence"
           mkdir -p "$EVIDENCE_DIR"
           DEPLOY_LOG="$EVIDENCE_DIR/deploy-output.log"
@@ -461,6 +531,25 @@ jobs:
             --output "$RUNNER_TEMP/edge-deployment-evidence/edge-smoke-evidence.json" \
             --git-sha "$DEPLOYED_GIT_SHA" \
             --run-id "$GITHUB_RUN_ID"
+
+      # W65: health check pós-deploy — aguarda 5 min para os logs estabilizarem
+      # e consulta a taxa de 5xx via Management API de analytics. Falha com
+      # ::error:: se a taxa superar o limiar (10%). Falha de transporte ou API
+      # indisponível → ::warning:: (não bloqueia o deploy: observabilidade não
+      # pode derrubar um deploy bem-sucedido). O script vive em
+      # scripts/edge-deploy/health-check.mjs (W65).
+      - name: 🏥 Verificação de saúde pós-deploy (5 min)
+        if: inputs.dry_run != true
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          FN: ${{ inputs.function_name }}
+        run: |
+          set -euo pipefail
+          node "$RUNNER_TEMP/edge-tooling/scripts/edge-deploy/health-check.mjs" \
+            --project-ref tnnnlkbymytvtqngbbqh \
+            --scope "${FN:-all}" \
+            --manifest supabase/deployment-manifest.json \
+            --threshold 0.10
 
       - name: Publicar resumo da evidencia
         if: always() && inputs.dry_run != true
