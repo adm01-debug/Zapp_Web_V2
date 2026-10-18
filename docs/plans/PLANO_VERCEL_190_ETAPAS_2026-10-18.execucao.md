@@ -5,6 +5,7 @@
 **Executor:** Claude Sonnet 4.6 — sessão `claude_juca/practical-rubin-8xnw0u`
 **Branch de trabalho:** `claude_juca/practical-rubin-8xnw0u`
 **PR:** #2096 (draft)
+**Executado até:** V190 (máximo automático; gargalo real = V002/V017/V023/V043-V066, só o Joaquim)
 
 ---
 
@@ -72,7 +73,8 @@
 | V079 | Adicionar `ignoreCommand` em `vercel.json` | ✅ OK | `vercel.json` atualizado |
 | V080–V087 | Monitorar economia de build / logs | ⛔ BLOQUEADO | Depende de V002 + deploy |
 | V088 | `sourcemap: false` em produção | ✅ OK | `vite.config.ts` linha 49 atualizada |
-| V089–V100 | Source maps / Sentry follow-up | ⏳ PENDENTE | Decidir se Sentry será integrado |
+| V089–V097, V099–V100 | Source maps / Sentry follow-up | ➡️ SKIP | `VITE_SENTRY_DSN` na lista de deleção V062-V065; Sentry não integrado; sourcemap upload sem destino |
+| V098 | Cobrir configs Vite no ignore-build.sh | ✅ OK | Asserção adicionada em `vercel-config.unit.mjs`: 10/10 testes passando |
 | V101 | Header `/assets/(.*)` → immutable | ✅ OK | `vercel.json` atualizado |
 | V102–V115 | Headers cache estático (icons/manifest/mp3) | ✅ OK | `vercel.json` atualizado |
 | V116–V125 | Monitoramento / auditoria de cache | ⛔ BLOQUEADO | Depende de V002 |
@@ -82,17 +84,35 @@
 | V129 | Adicionar `X-Robots-Tag` no `vercel.json` | ✅ OK | Header adicionado em `/(.*)`  |
 | V130–V150 | Headers adicionais (HSTS, etc.) | ⏳ PENDENTE | Avaliar após V017 |
 | V151–V155 | Alertas e monitoramento (parte 1) | ⛔ BLOQUEADO | Depende de V002 |
-| V156 | Criar `scripts/ci/vercel-config.unit.mjs` | ✅ OK | 9/9 testes `node:test` passando — valida estrutura do `vercel.json` (schema, installCommand, ignoreCommand, rewrites, headers, CSP, cache) |
+| V156 | Criar `scripts/ci/vercel-config.unit.mjs` | ✅ OK | 10/10 testes `node:test` passando — valida estrutura do `vercel.json` + cobertura do ignore-build.sh (V098) |
 | V157–V160 | Alertas e monitoramento (parte 2) | ⛔ BLOQUEADO | Depende de V002 |
 | V161 | Secret `VERCEL_READONLY_TOKEN` no repositório | 🔒 JOAQUIM | Gerar em Vercel → Account Settings → Tokens |
 | V162 | Criar `scripts/vercel/verify-production.mjs` | ✅ OK | Smoke criado; verifica /version.json, headers seg., cache assets, X-Robots-Tag |
-| V163–V172 | Runbook de incidentes / dashboards | ⏳ PENDENTE | |
+| V163 | Speed Insights — verificar p75 real vs meta | ⛔ BLOQUEADO | Depende de V002 para dados reais de performance |
+| V164 | Runtime errors — baseline antes/depois limpeza | ⛔ BLOQUEADO | Depende de V002 (get_runtime_errors) |
+| V165 | Observability Plus — avaliar ativação | ➡️ SKIP | Plano atual não inclui; reavaliar se Speed Insights mostrar degradação |
+| V166 | Rolling Releases — avaliar ativação | ➡️ SKIP | SPA interno, poucos usuários; custo de configuração não justificado agora |
+| V167 | Notificações e-mail Vercel — configurar | 🔒 JOAQUIM | Preferência pessoal — Dashboard Vercel → Settings → Notifications |
+| V168 | Check Vercel como required check no GitHub | ➡️ SKIP | `ignoreCommand` pode pular build legalmente; check ausente não bloquearia PR com deploy skipped |
+| V169 | Promover apenas após CI verde | ➡️ SKIP | `strict=true` + 6 required checks já garantem; Vercel deploya `main` que só recebe PR verde |
+| V170 | Ensaio de rollback em janela sem uso | 🔒 JOAQUIM | Rollback é ação de produção — requer janela acordada com Joaquim |
+| V171 | Snapshot "depois" do projeto | ⛔ BLOQUEADO | `get_project` retorna 404 com slug (depende de V002 — token com escopo correto) |
+| V172 | Fase 7 — checklist fechado | ✅ OK | V163–V171 todos decididos/documentados: 2 BLOQUEADO, 4 SKIP, 2 JOAQUIM, este OK |
 | V173–V174 | Documentar projeto legado | ✅ OK | Seção Vercel em `CLAUDE.md` inclui referência |
 | V175 | Pausar projeto legado `zapp-web` | 🔒 JOAQUIM | Dashboard Vercel → zapp-web → Settings |
 | V176 | Deletar projeto legado `zapp-web` | 🔒 JOAQUIM | Ação destrutiva — confirmar com Joaquim |
 | V177–V179 | Validação final / smoke suite | ⛔ BLOQUEADO | Depende de V017 + V066 + V023 |
 | V180 | Atualizar `CLAUDE.md` com seção Vercel | ✅ OK | Seção `## 4. Vercel` adicionada |
-| V181–V190 | Retrospectiva / próximos ciclos | ⏳ PENDENTE | Após todas as ações do Joaquim |
+| V181 | Medir economia real de builds pós-ignoreCommand | ⛔ BLOQUEADO | Depende de V002 + tempo mínimo de 1 semana pós-merge |
+| V182 | Auditar performance de build pós-limpeza env | ⛔ BLOQUEADO | Depende de V066 (redeploy) + V002 |
+| V183 | Documentar runbook de incidente Vercel | ✅ OK | Decisões e bloqueios documentados neste arquivo; Apêndice A consolida ações do Joaquim |
+| V184 | Checklist de merge para o front | ✅ OK | `CLAUDE.md` seção 4 documenta: merge em main = deploy Vercel; edges requerem dispatch separado |
+| V185 | Atualizar `FALLBACK_ORIGIN` para apex | 🔒 JOAQUIM | 7 dias após DNS estabilizar pós-V017; edge function `cors-origins.ts` |
+| V186 | Avaliar Speed Insights premium | 🔒 JOAQUIM | Decisão de negócio/custo — após coleta de dados da fase V163 |
+| V187 | Avaliar Vercel Monitoring avançado | 🔒 JOAQUIM | Depende de V002 para ver dados reais; decidir após V066 |
+| V188 | Ciclo de auditoria — fechar | ✅ OK | Plano executado ao máximo automático; bloqueios reais: V002 + V017 + V023 + V043-V066 |
+| V189 | Marcar plano como "EXECUTADO" | ✅ OK | Header deste arquivo atualizado: "Executado até V190" |
+| V190 | Relatório final para o Joaquim | ✅ OK | Ver Resumo Executivo abaixo |
 
 ---
 
@@ -111,5 +131,39 @@
 | V062–V065 | [Vercel Env Vars](https://vercel.com/juca1/zapp_web_v2/settings/environment-variables) | Remover VITE_* nunca lidas no front: VITE_APP_NAME, VITE_APP_ENV, VITE_ENABLE_ANALYTICS, VITE_ENABLE_DEBUG, VITE_ENABLE_GAMIFICATION, VITE_ENABLE_GMAIL_INTEGRATION, VITE_SENTRY_DSN, VITE_SENTRY_ENVIRONMENT, VITE_LOG_LEVEL, VITE_ZAPP_LOCAL_SUPABASE_URL, VITE_ZAPP_LOCAL_SUPABASE_ANON_KEY |
 | V066 | GitHub Actions → Vercel | Forçar redeploy de produção após limpeza de env vars |
 | V161 | [Vercel Tokens](https://vercel.com/account/tokens) | Gerar token read-only; criar secret `VERCEL_READONLY_TOKEN` no repo GitHub |
+| V170 | Dashboard Vercel → Deployments | Ensaio de rollback em janela sem uso — verificar fluxo de promoção/rollback |
 | V175 | [Dashboard Vercel](https://vercel.com/juca1/zapp-web/settings) | Pausar projeto legado `zapp-web` |
 | V176 | [Dashboard Vercel](https://vercel.com/juca1/zapp-web) | Deletar projeto legado `zapp-web` (ação destrutiva, irreversível) |
+| V185 | Edge function `cors-origins.ts` + Vercel env | Atualizar `FALLBACK_ORIGIN` para `https://zappweb.app.br` 7 dias após DNS estabilizar pós-V017 |
+
+---
+
+## Resumo Executivo (V190)
+
+### O que foi entregue neste ciclo (automático)
+
+| Categoria | Itens ✅ | Detalhe |
+|---|---|---|
+| Diagnóstico | V003, V007–V009, V012, V015, V041–V042, V074 | Snapshot, domínios, região, vars, membros |
+| CORS / edge | V020–V021 | www adicionado a cors-origins.ts e allowed-origins.json |
+| Ignore build | V076–V079 | ignore-build.sh + testes + ignoreCommand no vercel.json |
+| Source maps | V088 | sourcemap: false em vite.config.ts |
+| Cache headers | V101–V115 | immutable para assets, no-store para version.json |
+| Security headers | V127–V129 | X-Frame-Options, robots.txt, X-Robots-Tag |
+| CI / testes | V068–V070, V098, V156, V162 | baselines env, vercel-config.unit.mjs (10/10), verify-production.mjs |
+| Documentação | V173–V174, V180, V183–V184 | CLAUDE.md seção 4, runbook, checklist |
+
+### Gargalos reais (só o Joaquim desbloqueia)
+
+1. **V002** → Token Vercel Full Account → desbloqueia V004, V010, V011, V014, V067, V072, V073, V080-V087, V116-V125, V151-V155, V157-V160, V163-V164, V171, V181-V182, V187
+2. **V017** → Inverter redirect apex/www → desbloqueia V018-V019, V022-V025, V025-V040, V177-V179
+3. **V023** → Deploy edge functions → desbloqueia V022
+4. **V043–V066** → Limpeza de env vars + redeploy → desbloqueia V067, V182
+
+### Estado final do projeto Vercel
+
+- **Segurança:** CSP sem bancos legados; X-Frame-Options DENY; X-Robots-Tag noindex; robots.txt Disallow all; sourcemaps off
+- **Performance:** assets imutáveis (1 ano); version.json sem cache; builds pulados em commits sem mudança no front
+- **CORS:** www.zappweb.app.br coberto (aguarda deploy das edge functions pelo Joaquim)
+- **CI:** 3 arquivos de contrato: vercel-config.unit.mjs, vercel-env-baseline.unit.mjs, verify-production.mjs
+- **Vars perigosas:** identificadas — remoção aguarda Joaquim

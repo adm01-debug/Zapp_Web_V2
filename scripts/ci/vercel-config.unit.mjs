@@ -69,3 +69,13 @@ test('/version.json tem Cache-Control: no-store', () => {
   const cc = version.headers.find(h => h.key === 'Cache-Control');
   assert.ok(cc?.value.includes('no-store'), 'no-store ausente no cache de version.json');
 });
+
+// V098: arquivos de config lidos pelo Vite estão no FRONT_PATHS do ignore-build.sh.
+const IGNORE_SH = fileURLToPath(new URL('../../scripts/vercel/ignore-build.sh', import.meta.url));
+const ignoreSh = readFileSync(IGNORE_SH, 'utf8');
+
+test('ignore-build.sh cobre todos os arquivos de config do Vite', () => {
+  for (const f of ['vite.config.ts', 'tailwind.config.ts', 'postcss.config.js', 'tsconfig.json', 'tsconfig.app.json', 'tsconfig.node.json', 'index.html']) {
+    assert.ok(ignoreSh.includes(f), `${f} ausente no FRONT_PATHS de ignore-build.sh`);
+  }
+});
