@@ -142,3 +142,15 @@ test('E55: o passo de atestacao tem teto proprio de 10 min', () => {
   assert.match(bloco, /^        timeout-minutes: 10$/m);
   assert.ok(workflow.indexOf('    timeout-minutes: 100') < inicio, 'o job mantem os 100 min');
 });
+
+// GA27: deno test roda antes do deploy — nao publicar funcao com erro de comportamento
+test('GA27: deno test roda antes do Deploy e usa lock fixo do CI', () => {
+  const inicioTest = workflow.indexOf('- name: Testes das edge functions (deno test)');
+  const inicioDeploy = workflow.indexOf('- name: Deploy');
+  assert.ok(inicioTest > 0, 'passo deno test deve existir');
+  assert.ok(inicioDeploy > inicioTest, 'deno test deve vir antes do Deploy');
+  const bloco = workflow.slice(inicioTest, inicioDeploy);
+  assert.match(bloco, /deno test/, 'o passo deve chamar deno test');
+  assert.match(bloco, /--config scripts\/ci\/deno\.json/, 'deve usar o deno.json do CI com lock fixo');
+  assert.match(bloco, /supabase\/functions\/\*\*\/\*\.test\.ts/, 'deve cobrir todos os arquivos .test.ts');
+});

@@ -453,6 +453,16 @@ jobs:
       - name: Typecheck das edge functions (deno check)
         run: deno check supabase/functions/**/index.ts
 
+      - name: Testes das edge functions (deno test)
+        # GA27: roda os testes .test.ts de supabase/functions com o lock fixo do CI,
+        # para nao publicar funcao com erro de tipo ou de comportamento.
+        run: |
+          deno test \
+            --config scripts/ci/deno.json \
+            --allow-env --allow-read \
+            --no-check \
+            supabase/functions/**/*.test.ts
+
       - name: Deploy
         if: inputs.dry_run != true
         env:
