@@ -24,6 +24,11 @@ name: Auto Update PR Branches
 # o auto-merge ser ligado sem nenhum outro evento. O workflow_run nao executa
 # codigo de PR: roda o checkout da main e so chama a API.
 on:
+# DESLIGADO em 18/10/2026 (achado pela auditoria e2e, PLANO_CI_MAIN_REVISADO.md F1b): com o secret
+  # SETTINGS_GUARD_TOKEN ja existindo mas a main ainda sem protecao de branch (404), ligar este cron
+  # na mesma hora que o F1b mergeia deixa o fila-merge.mjs livre para atualizar e, com allow_auto_merge
+  # ja true, ate mergear sozinha a primeira PR de #1922/#1930 (auto-merge ligado desde 14-15/10, sem
+  # revisao, sem checks obrigatorios). Reativar junto com F3 (strict/protecao), nao antes.
   push:
     branches: [main]
   workflow_run:  # zizmor: ignore[dangerous-triggers]
@@ -31,8 +36,8 @@ on:
       - 'CI/CD Pipeline'
       - 'DB Guard (offline)'
     types: [completed]
-  schedule:
-    - cron: '7,37 * * * *'
+  #   schedule:
+  #     - cron: '7,37 * * * *'
   workflow_dispatch: {}
 
 
