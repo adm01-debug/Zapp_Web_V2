@@ -19,7 +19,7 @@ export const EXACT_ALLOWED_ORIGINS = new Set([
 export const FALLBACK_ORIGIN = 'https://zapp-web-v2.vercel.app';
 
 export const ORIGIN_PATTERNS = [
-  /^\/\/zappwebv2-[a-z0-9-]+-juca1\.vercel\.app$/,
+  /^https:\/\/zappwebv2-[a-z0-9-]+-juca1\.vercel\.app$/,
 ];
 
 // Z020: origens localhost são aceitáveis apenas fora de produção.
