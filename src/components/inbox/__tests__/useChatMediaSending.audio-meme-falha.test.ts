@@ -26,6 +26,9 @@ const estado = vi.hoisted(() => ({
   onOpenChangeRaiz: undefined as ((v: boolean) => void) | undefined,
   upload: vi.fn(),
   createSignedUrl: vi.fn(),
+  // VoiceChangerPicker usa bucket privado (createSignedUrl); getPublicUrl não
+  // existe mais nesse caminho — o espião só prova que a falha não cai nele.
+  getPublicUrl: vi.fn(),
   contatoConnectionId: 'conn-1' as string | null,
   instanceId: 'inst-1' as string | null,
   rpcs: [] as string[],
@@ -128,6 +131,18 @@ vi.mock('@/integrations/supabase/client', () => {
         getUser: async () => ({ data: { user: { id: 'u1' } } }),
       },
       storage: { from: () => ({ upload: estado.upload, createSignedUrl: estado.createSignedUrl }) },
+      // useAudioMemes assina realtime num ÚNICO canal com DOIS `.on()` encadeados
+      // (audio_memes + audio_meme_favorites) antes do `.subscribe()`.
+      channel: () => {
+        const canal: Record<string, unknown> = {};
+        canal.on = () => canal;
+        canal.subscribe = (cb?: (status: string) => void) => {
+          cb?.('SUBSCRIBED');
+          return canal;
+        };
+        return canal;
+      },
+      removeChannel: () => {},
     },
     SUPABASE_URL: 'http://localhost:54321',
     SUPABASE_ANON_KEY: 'anon-de-teste',
