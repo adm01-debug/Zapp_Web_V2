@@ -69,9 +69,10 @@ test('N-022: o pin do Playwright nos workflows é a versão do bun.lock', async 
     divergencias.push(...pinsDivergentes(texto, nome, lock));
   }
 
-  assert.ok(
-    pinados > 0,
-    'nenhum workflow pina playwright@<versão> — a comparação ficaria vazia',
+  assert.equal(
+    pinados,
+    0,
+    'workflows não devem mais pinar playwright@<versão> — versão gerenciada pelo bun.lock',
   );
   assert.deepEqual(
     divergencias,
