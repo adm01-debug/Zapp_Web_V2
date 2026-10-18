@@ -864,6 +864,11 @@ function main() {
 
   const result = compare(local.migrations, parsed.records, local.exceptionsByVersion);
   if (result.errors.length) {
+    // E53: resumo de 1 linha por divergencia como PRIMEIRA coisa no stdout, antes do
+    // log detalhado no stderr -- permite `grep '^[0-9]'` no stdout para triagem rapida.
+    for (const error of result.errors) {
+      if (DIVERGENCE_LINE_RE.test(error)) console.log(error);
+    }
     console.error('\nFALHA: drift de migrations detectado:');
     printDriftErrors(result.errors);
     console.error('\nVer docs/MIGRATIONS.md para o procedimento de reconciliacao.');
