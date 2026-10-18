@@ -244,7 +244,7 @@ describe('useTalkXSuppression — isSuppressed', () => {
     expect(await result.current.isSuppressed('5541999998888')).toBe(true);
   });
 
-  it.fails('falha FECHADO quando a consulta de contatos erra (hoje devolve false = libera o envio)', async () => {
+  it('falha FECHADO quando a consulta de contatos erra', async () => {
     phoneResult = { data: [], error: null };
     contactsResult = { data: null, error: { message: 'permission denied for table contacts' } };
     const { result } = mount();
