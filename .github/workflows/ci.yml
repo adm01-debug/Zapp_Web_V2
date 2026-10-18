@@ -1,8 +1,10 @@
 # docs:
-#   gatilho: pull_request, push na main e dispatch
-#   prova: checagem de tipos, testes de unidade e build do app
-#   falha: o run fica vermelho (a main nao tem branch protection: nada e bloqueado)
-#   avisa: autor do PR, via checks do GitHub
+#   gatilho: pull_request, push na main, merge_group e dispatch
+#   prova: lint, tipos, testes, build, security e E2E do codigo
+#   falha: PR fica vermelho e o merge e bloqueado pelos required checks
+#   avisa: autor do PR e revisor, via checks do GitHub
+# nao-e-bug:
+#   - merge_group inerte: o gatilho merge_group esta nos YAMLs mas a fila de merge nao pode ser ligada -- conta adm01-debug e tipo User, nao Organization (merge queue e exclusivo de org)
 # =================================================
 # CI minimo (16/10/2026, decisao do Joaquim): tipos + testes de unidade + build.
 # Guardas de banco, E2E, auditorias e contratos de workflow sairam do CI por PR.
@@ -242,7 +244,7 @@ jobs:
           GITLEAKS_ENABLE_UPLOAD_ARTIFACT: 'false'
           GITLEAKS_ENABLE_SUMMARY: 'false'
 
-      # W85: revisa dependências novas introduzidas no PR; falha se alguma tiver
+      # W86: revisa dependências novas introduzidas no PR; falha se alguma tiver
       # severidade HIGH ou maior. Só em pull_request: o evento push não tem diff
       # de dependências relevante (o lock já foi auditado no passo anterior).
       - name: 🔍 Dependency review
@@ -357,9 +359,8 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          # Histórico completo: o filtro de caminhos compara com a base do PR
-          # (`origin/<base>...HEAD`), o que exige o ancestral comum.
-          fetch-depth: 0
+          # W48: checkout raso; o fetch do BASE_REF abaixo traz só o ancestral necessário.
+          fetch-depth: 1
 
       # Filtro de caminhos (E70): só o módulo do mapa justifica a rodada.
       - name: 🔎 Detectar mudança no módulo do mapa (paths filter)
@@ -373,6 +374,8 @@ jobs:
             echo "map_changed=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
+          # W48: busca apenas os últimos 50 commits da base — suficiente para achar o merge-base.
+          git fetch origin "${BASE_REF}" --depth=50 --quiet
           changed="$(git diff --name-only "origin/${BASE_REF}...HEAD")"
           printf 'Arquivos alterados no PR:\n%s\n' "$changed"
           if printf '%s\n' "$changed" | grep -Eq '^(src/lib/mapbox|src/components/inbox/location-picker/)'; then

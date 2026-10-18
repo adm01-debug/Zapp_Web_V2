@@ -133,5 +133,7 @@
 
 | Workflow | Situação | Por quê não é bug |
 |---|---|---|
+| [`ci.yml`](../../.github/workflows/ci.yml) | **merge_group inerte** | o gatilho merge_group esta nos YAMLs mas a fila de merge nao pode ser ligada -- conta adm01-debug e tipo User, nao Organization (merge queue e exclusivo de org) |
 | [`crm-sync-worker.yml`](../../.github/workflows/crm-sync-worker.yml) | **schedule comentado** | decisao pendente do dono (W93); religar exige vars.CRM_SYNC_WORKER_ENABLED=true e o roteiro em docs/runbooks/CRM_INTEGRATION_ROLLOUT.md |
+| [`supabase-sync.yml`](../../.github/workflows/supabase-sync.yml) | **desarmado por design** | o secret LEGACY_IMPORT_UNLOCK nao existe -- todo dispatch falha fechado antes de escrever qualquer coisa; reativar exige criar o secret + gerar novo export a partir do banco oficial |
 | [`types-sync.yml`](../../.github/workflows/types-sync.yml) | **TYPES_SYNC_PR_TOKEN ausente** | esperado -- o workflow usa GITHUB_TOKEN; o passo "Destravar os checks" aprova os runs com actions:write; um PAT funciona mas nao e necessario |
