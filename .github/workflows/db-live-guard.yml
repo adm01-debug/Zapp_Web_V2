@@ -323,7 +323,7 @@ jobs:
           set -o pipefail
           # --sem-migrations: a perna de migrations e provada (com a regra de apply
           # pendente) no passo "Comparar migrations"; aqui ficam edges e grants.
-          node scripts/db-audit/check-triple-parity.mjs --require-live --sem-migrations 2>&1 | tee /tmp/step-triple-parity.log
+          node scripts/db-audit/check-triple-parity.mjs --require-live --sem-migrations --verbose 2>&1 | tee /tmp/step-triple-parity.log
 
       - name: Auditar configuracao runtime sem dados de clientes
         id: runtime-config
@@ -556,4 +556,4 @@ jobs:
             /tmp/step-triple-parity.log
             /tmp/step-runtime-config.log
           if-no-files-found: ignore
-          retention-days: 3
+          retention-days: 14

@@ -8,3 +8,6 @@ paths-ignore:
   - 'tests/contracts/**'
   - 'scripts/**/*.unit.mjs'
   - 'e2e/**'
+  - 'docs/**'
+  - '**/*.md'
+  - 'supabase/migrations/**'
