@@ -45,7 +45,10 @@ vi.mock('@/integrations/supabase/client', () => ({
 
 import { useTeamMessages } from '@/hooks/team-chat/useTeamMessages';
 
-function render(conversationId = 'conv-1', queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })) {
+function render(
+  conversationId = 'conv-1',
+  queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+) {
   const wrapper = ({ children }: { children: React.ReactNode }) =>
     React.createElement(QueryClientProvider, { client: queryClient }, children);
   return { ...renderHook(() => useTeamMessages(conversationId), { wrapper }), queryClient };
