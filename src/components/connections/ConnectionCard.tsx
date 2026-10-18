@@ -38,7 +38,8 @@ interface ConnectionCardProps {
   disconnecting?: boolean;
   onShowQrCode: (c: WhatsAppConnection) => void;
   onCopyId: (id: string) => void;
-  onDisconnect: (c: WhatsAppConnection) => void | Promise<void>;
+  /** `false` (ou rejeição) = a sessão NÃO caiu; o diálogo fica aberto com o motivo (t_cce2f0f7). */
+  onDisconnect: (c: WhatsAppConnection) => boolean | void | Promise<boolean | void>;
   onSetDefault: (id: string) => void;
   onDelete: (c: WhatsAppConnection) => void;
   onBusinessHours: (id: string, name: string) => void;
@@ -72,11 +73,45 @@ export function ConnectionCard({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [auditOpen, setAuditOpen] = useState(false);
 
-  // Enquanto o desconectar está em voo (estado `disconnecting` vindo da view),
-  // o diálogo fica aberto com o spinner; só fecha quando onDisconnect resolve.
+  // Enquanto o desconectar está em voo (estado `disconnecting` vindo da view,
+  // OU `disconnectPending` local — a chamada deste diálogo pode estar em
+  // curso antes da view propagar `disconnecting`), o diálogo fica aberto com
+  // o spinner; só fecha quando `onDisconnect` resolve com sucesso.
+  //
+  // t_cce2f0f7: a sessão pode NÃO cair (Evolution GO recusa, ou o vínculo
+  // local não atualiza) — `onDisconnect` devolve `false` ou rejeita. Nesses
+  // dois casos o diálogo continua aberto com o motivo em `role="alert"`;
+  // só fecha quando a chamada confirma sucesso.
   const handleConfirmDisconnect = async () => {
-    await onDisconnect(connection);
-    setConfirmDisconnect(false);
+    if (disconnectPending) return;
+    setDisconnectPending(true);
+    setDisconnectError(null);
+    try {
+      const resultado = await onDisconnect(connection);
+      if (resultado === false) {
+        setDisconnectError('Não foi possível desconectar. Tente novamente.');
+        return;
+      }
+      setConfirmDisconnect(false);
+    } catch (err) {
+      setDisconnectError(err instanceof Error ? err.message : 'Não foi possível desconectar. Tente novamente.');
+    } finally {
+      setDisconnectPending(false);
+    }
+  };
+
+  // `onOpenChange` do Radix dispara com `false` no Esc/clique fora — mesmo
+  // com o botão "Cancelar" desabilitado durante a chamada. Trava o fechamento
+  // enquanto `disconnectPending`; fora disso, fechar limpa o motivo da
+  // tentativa anterior (o erro é da tentativa, não do estado da conexão).
+  const handleDisconnectDialogOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      if (disconnectPending) return;
+      setConfirmDisconnect(false);
+      setDisconnectError(null);
+    } else {
+      setConfirmDisconnect(true);
+    }
   };
 
   return (
@@ -221,7 +256,8 @@ export function ConnectionCard({
         onOpenChange={handleDisconnectDialogOpenChange}
         connectionName={connection.name}
         phoneNumber={connection.phone_number}
-        pending={disconnecting}
+        pending={disconnecting || disconnectPending}
+        errorMessage={disconnectError ?? undefined}
         onConfirm={handleConfirmDisconnect}
       />
       {isAdmin && (
