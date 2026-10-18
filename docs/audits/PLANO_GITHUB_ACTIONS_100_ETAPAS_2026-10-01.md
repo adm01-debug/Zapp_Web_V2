@@ -150,6 +150,7 @@ Etapas cujo checkbox divergia do estado já apurado. A coluna **Evidência** tra
 | **E49** | `[~]` AGUARDA RUNTIME | PR #1579 | ci.yml roda os Deno tests por git ls-files em vez de lista fixa; guard local confirmou. |
 | **E50** | `[~]` AGUARDA RUNTIME | PR #1586 | Contratos antes órfãos aparecem no db-guard e o inventário passou; E50/#1588/#1592 são propostas paralelas fechadas. |
 | **E52** | `[~]` AGUARDA RUNTIME | PR #1748 | Grupos de concorrência distinguem schedule por run_id; vale nos dois workflows. |
+| **E53** | `[x]` CONCLUÍDA | commit c79a71538; `scripts/ci/migration-drift-stdout.unit.mjs` | stdout-first: divergência emite `/^\d{14} \| /` no stdout antes de qualquer saída do stderr; 2 unit tests provam o formato e o subprocess. |
 | **E54** | `[~]` AGUARDA RUNTIME | sem PR associado | Paridade tripla condicionada a schedule e artefato de auditoria existe; não executada nesta sessão. |
 | **E57** | `[~]` AGUARDA RUNTIME | PR #1773 | dry_run e deploy-plan existem e os testes de plano passaram; nenhum dispatch real foi feito. |
 | **E58** | `[~]` AGUARDA RUNTIME | PR #1768 | secrets-scope protege o rollback e determina alterações/rotate_secrets; suíte específica passou. |
@@ -164,10 +165,12 @@ Etapas cujo checkbox divergia do estado já apurado. A coluna **Evidência** tra
 | **E78** | `[~]` AGUARDA RUNTIME | PR #1782 | CodeQL tem paths-ignore para docs/Markdown/migrations em PR; a PR #1782 está mergeada. |
 | **E79** | `[~]` AGUARDA RUNTIME | PR #1784 | KPI e publicação semanal existem e a suíte passou; histórico completo da semana não recolhido. |
 | **E80** | `[~]` PRECISA REVALIDAÇÃO | sem PR associado | Grupos de push seguem por ref, não SHA; a taxa de 20% ainda não foi validada aqui. |
+| **E81** | `[x]` CONCLUÍDA | `playwright.config.ts` (implementado antes desta reconciliação) | `RETRIES_LOGADOS = process.env.CI ? 2 : 0` nos projetos logados; `trace: 'retain-on-failure'`; `video: 'off'`; `workers: 1` em CI, `2` local. |
 | **E82** | `[~]` AGUARDA RUNTIME | PR #1799 | Redação antes do artifact protege email e senha; add-mask sozinho não protegeria HTML. |
 | **E83** | `[~]` AGUARDA RUNTIME | PR #1806 | O workflow alerta na falha e fecha ao recuperar; não foi induzida falha de produção. |
 | **E85** | `[~]` AGUARDA RUNTIME | PR #1815 | Documento é e2e/README.md e a verificação é SQL via psql-safe; sem doc duplicada ou .test.sh solto. |
 | **E87** | `[~]` PARCIAL | PR #1823 | Quarentena vazia e usa testIgnore, não fixme; provar a seleção real antes do primeiro item. |
+| **E88** | `[x]` CONCLUÍDA | `e2e-logado.yml` (matrix grupo `deslogado-principal`, linha 88) | `firefox-auth`/`webkit-auth` já estão no grupo 2 do matrix; comentário E88 no cabeçalho do workflow documenta o rationale. |
 | **E91** | `[~]` PARCIAL | PR #1817 | Issue semanal existe; updatedAt mede atividade da PR, não o último push; revisar o git cherry. |
 | **E94** | `[~]` PRECISA REVALIDAÇÃO | sem PR associado | A baseline ainda lista copilot/Preview/Production para avaliar exclusão; não excluir como lixo. |
 | **E97** | `[~]` AGUARDA RUNTIME | PR #1852 | Modo estrito e contrato presentes e a suíte local passou; não reexecuta shellcheck/actionlint. |
@@ -686,7 +689,7 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
 - [~] **E52** · B · G-26 · `db-live-guard` e `types-sync`: `concurrency.group` passa a incluir o `head_sha` **só no
   schedule** (`db-live-guard-${{ github.ref }}-${{ github.event_name == 'schedule' && github.run_id || 'push' }}`) para o
   agendado nunca disputar grupo com push. Verificação: schedule e push simultâneos → 2 runs completos.
-- [ ] **E53** · C · G-03 · `check-migration-drift.mjs`: saída resumida de 1 linha por divergência no formato `version |
+- [x] **E53** · C · G-03 · `check-migration-drift.mjs`: saída resumida de 1 linha por divergência no formato `version |
   disco | ledger | motivo` como primeira coisa no stdout (hoje o diagnóstico útil está no meio do log). Verificação:
   snapshot test.
 - [~] **E54** · B · G-03 · `db-live-guard.yml`: no `schedule` (e só nele), rodar também `node scripts/db-audit/
@@ -803,7 +806,7 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
 
 ### Fase 6 — E2E sem depender de produção (E81–E88)
 
-- [ ] **E81** · C · G-05 · `playwright.config.ts`: `retries: process.env.CI ? 2 : 0` só para os projetos logados;
+- [x] **E81** · C · G-05 · `playwright.config.ts`: `retries: process.env.CI ? 2 : 0` só para os projetos logados;
   `trace: 'retain-on-failure'`; `video: 'off'`; `workers: 2` nos projetos deslogados. Verificação: suíte deslogada do
   `ci.yml` < 2 min.
 - [~] **E82** · B · G-05 · `e2e-logado.yml`: `::add-mask::` do `E2E_TEST_EMAIL` antes do Playwright e upload do
@@ -853,7 +856,7 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
 - [~] **E87** · C · G-05 · Quarentena formal: `e2e/quarantine.json` com spec, motivo, issue e prazo; `playwright.config`
   lê e marca `fixme`; `check-test-inventory.mjs` (E48) falha se um item passar do prazo. Verificação: item vencido →
   CI ❌.
-- [ ] **E88** · B · G-35 · `ci.yml` job `e2e`: `--project=chromium` é o único deslogado que exercita `auth.spec.ts` com
+- [x] **E88** · B · G-35 · `ci.yml` job `e2e`: `--project=chromium` é o único deslogado que exercita `auth.spec.ts` com
   Chromium; `firefox-auth`/`webkit-auth` só valem em `main` → mover para `e2e-logado` (que já instala os 3 engines) e
   deixar o PR só com Chromium. Verificação: job `e2e` de PR < 90 s com cache (E68).
 
