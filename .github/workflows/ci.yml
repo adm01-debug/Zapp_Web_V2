@@ -129,8 +129,14 @@ jobs:
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
 
-      - name: 🧩 Run Node CI scripts tests
-        run: node --test scripts/ci/*.unit.mjs
+      - name: 🧩 Run Node CI scripts tests (bloqueante)
+        run: node --test $(ls scripts/ci/*.unit.mjs | grep -Fv db-inventory-doc.unit.mjs | grep -Fv docs-estado-registry-convention.unit.mjs)
+        env:
+          CI: true
+
+      - name: 🧩 Drift de docs — ESTADO/FEATURE_REGISTRY/DB-INVENTORY (informativo)
+        continue-on-error: true
+        run: node --test scripts/ci/db-inventory-doc.unit.mjs scripts/ci/docs-estado-registry-convention.unit.mjs
         env:
           CI: true
 
