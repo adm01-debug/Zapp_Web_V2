@@ -36,11 +36,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  # W94: cancela run anterior se um novo push/schedule chegar antes do fim.
-  group: talkx-regen-${{ github.ref }}
-  cancel-in-progress: true
-
-concurrency:
+  # W94: grupo fixo — não cancela run de main (push seguido não mata deploy/guard).
   group: talkx-status-regen
   cancel-in-progress: false
 
