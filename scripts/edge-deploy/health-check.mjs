@@ -45,17 +45,18 @@ async function resolveScope(scope, manifestPath) {
 }
 
 // Monta a SQL de análise de logs de edge para a janela configurada.
-// A API de analytics do Supabase usa BigQuery-flavored SQL contra a tabela
-// `edge_logs`. O campo de status HTTP fica em metadata[offset(0)].response.statusCode
-// (array UNNEST necessário porque metadata é REPEATED).
+// Endpoint documentado: POST https://api.supabase.com/v1/projects/{ref}/analytics/endpoints/logs.all
+// com body { sql } e Authorization: Bearer <SUPABASE_ACCESS_TOKEN> (personal access token).
+// A tabela BigQuery é `edge_logs`; o campo de status HTTP é metadata[].response.status_code
+// (snake_case, REPEATED — UNNEST necessário).
 function buildLogsSql(slugs, windowMinutes) {
   const slugFilter = slugs.length > 0
-    ? `AND m.function IN (${slugs.map((s) => `'${s}'`).join(', ')})`
+    ? `AND m.function_id IN (${slugs.map((s) => `'${s}'`).join(', ')})`
     : '';
   return (
     `SELECT ` +
     `  COUNT(1) AS total, ` +
-    `  COUNTIF(CAST(m.response.statusCode AS INT64) >= 500) AS errors ` +
+    `  COUNTIF(CAST(m.response.status_code AS INT64) >= 500) AS errors ` +
     `FROM edge_logs ` +
     `  CROSS JOIN UNNEST(metadata) AS m ` +
     `WHERE timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL ${windowMinutes} MINUTE) ` +
@@ -63,8 +64,17 @@ function buildLogsSql(slugs, windowMinutes) {
   ).trim();
 }
 
+// Erro com código HTTP para distinguir 4xx (config) de 5xx (transiente).
+class HttpError extends Error {
+  constructor(status, message) {
+    super(message);
+    this.status = status;
+  }
+}
+
 // Chama a Management API de analytics do Supabase.
-// Lança se o HTTP não for 2xx; devolve null se a resposta não tiver linhas.
+// Lança HttpError se o HTTP não for 2xx; devolve null se a resposta não tiver linhas.
+// GA29: 4xx = erro de configuração (::error::); 5xx/timeout = transiente (::warning::).
 async function queryAnalytics({ projectRef, token, sql, fetchImpl = fetch }) {
   const url = `${MGMT_BASE}/v1/projects/${projectRef}/analytics/endpoints/logs.all`;
   const res = await fetchImpl(url, {
@@ -78,7 +88,7 @@ async function queryAnalytics({ projectRef, token, sql, fetchImpl = fetch }) {
   });
   if (!res.ok) {
     // Não logar o corpo da resposta: pode conter detalhes de autenticação.
-    throw new Error(`Management API retornou HTTP ${res.status} na consulta de analytics`);
+    throw new HttpError(res.status, `Management API retornou HTTP ${res.status} na consulta de analytics`);
   }
   const json = await res.json();
   // A API retorna { result: [{ total: N, errors: N }] } quando bem-sucedida.
@@ -118,8 +128,14 @@ async function main() {
       sql,
     });
   } catch (err) {
-    // Falha de transporte ou API indisponível → warning, não bloqueia o deploy.
-    console.error(`::warning::Health check falhou ao consultar a Management API: ${err.message}. Prosseguindo.`);
+    if (err instanceof HttpError && err.status >= 400 && err.status < 500) {
+      // GA29: 4xx = erro de configuração (endpoint errado, auth falhou) — falha dura.
+      console.error(`::error::Health check falhou com HTTP ${err.status}: ${err.message}. Verifique o endpoint e o SUPABASE_ACCESS_TOKEN.`);
+      process.exitCode = 1;
+    } else {
+      // 5xx ou falha de transporte/timeout → aviso, não bloqueia o deploy.
+      console.error(`::warning::Health check falhou ao consultar a Management API: ${err.message}. Prosseguindo.`);
+    }
     return;
   }
 
@@ -154,5 +170,10 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error(`::warning::health-check.mjs falhou inesperadamente: ${err.message}. Prosseguindo.`);
+  if (err instanceof HttpError && err.status >= 400 && err.status < 500) {
+    console.error(`::error::health-check.mjs falhou com HTTP ${err.status}: ${err.message}`);
+    process.exitCode = 1;
+  } else {
+    console.error(`::warning::health-check.mjs falhou inesperadamente: ${err.message}. Prosseguindo.`);
+  }
 });

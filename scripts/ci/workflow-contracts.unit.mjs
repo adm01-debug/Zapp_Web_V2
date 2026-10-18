@@ -834,3 +834,38 @@ test('GA15: db-migrate — dispara types-sync e db-live-guard apos apply bem-suc
     'disparo de db-live-guard deve usar --ref main',
   );
 });
+
+// GA29: health-check.mjs — 4xx = ::error:: (config), 5xx/timeout = ::warning:: (transiente)
+test('GA29: health-check.mjs distingue 4xx (::error::) de 5xx/timeout (::warning::)', async () => {
+  const hc = await readFile(new URL('../../scripts/edge-deploy/health-check.mjs', import.meta.url), 'utf8');
+  // GA29: classe HttpError com campo .status
+  assert.match(hc, /class HttpError/, 'health-check.mjs deve ter classe HttpError');
+  // GA29: 4xx → erro de configuração → ::error::
+  assert.match(hc, /err\.status >= 400 && err\.status < 500/, 'deve detectar 4xx explicitamente');
+  assert.match(hc, /::error::.*HTTP.*err\.status/, 'mensagem de 4xx deve usar ::error::');
+  // GA29: 5xx/timeout → aviso
+  assert.match(hc, /::warning::.*Management API/, 'falha transiente deve usar ::warning::');
+  // GA29: SQL usa status_code (snake_case), nao statusCode (camelCase errado)
+  assert.match(hc, /m\.response\.status_code/, 'SQL deve usar status_code (snake_case do BigQuery)');
+});
+
+// GA30: rollback usa grupo de concorrencia proprio — push normal nao cancela rollback
+test('GA30: rollback_to_last_success usa grupo de concorrencia separado', async () => {
+  const deploy = wf['deploy-functions.yml'];
+  assert.ok(deploy, 'deploy-functions.yml sumiu');
+  assert.match(
+    deploy,
+    /deploy-edge-rollback-/,
+    'rollback deve usar prefixo de grupo diferente de deploy-edge-functions-',
+  );
+  assert.match(
+    deploy,
+    /inputs\.rollback_to_last_success && format\('deploy-edge-rollback-/,
+    'concurrency group deve ser condicional no rollback_to_last_success',
+  );
+  assert.match(
+    deploy,
+    /dep\.sha === currentSha/,
+    'rollback deve pular deployment com SHA igual ao atual',
+  );
+});
