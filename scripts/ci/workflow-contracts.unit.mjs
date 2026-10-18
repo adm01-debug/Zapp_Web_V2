@@ -658,17 +658,28 @@ test('W72: auth.setup.ts tem teto de 180 s e timeout curto no goto /auth', async
   );
 });
 
-test('W73: curl do teardown CT-82 em e2e-logado.yml tem --max-time', () => {
-  // W73 (2026-10-18): o teardown de catalog_send_events usa curl para DELETE via
-  // REST. Sem --max-time o runner pode travar ad infinitum se o endpoint não
-  // responder. O W73 original era especificamente sobre este curl; demais workflows
-  // são cobertos separadamente.
-  const texto = wf['e2e-logado.yml'];
-  assert.ok(texto, 'e2e-logado.yml sumiu');
-  // Verifica que o bloco do teardown CT-82 tem --max-time
-  assert.ok(
-    /catalog_send_events[\s\S]{0,300}--max-time/.test(texto) ||
-    /--max-time[\s\S]{0,300}catalog_send_events/.test(texto),
-    'e2e-logado.yml: curl do teardown de catalog_send_events perdeu --max-time — runner pode travar',
-  );
+test('W73: todo curl em workflow tem --max-time (runner não trava ad infinitum)', () => {
+  // W73 (2026-10-18): curl sem --max-time pode prender o runner indefinidamente.
+  // Este contrato verifica que cada chamada curl em todos os workflows define
+  // --max-time, seja na mesma linha ou em continuação com \.
+  const infratores = [];
+  for (const [nome, texto] of Object.entries(wf)) {
+    const linhas = texto.split('\n');
+    for (let i = 0; i < linhas.length; i += 1) {
+      // Detecta início de comando curl (não comentário)
+      if (/^\s*(?:STATUS=\(|HEALTH_STATUS=\(|[A-Z_]+=\()?curl\b/.test(linhas[i]) && !/^\s*#/.test(linhas[i])) {
+        // Junta continuações de linha (\) para capturar flags espalhadas
+        let bloco = linhas[i];
+        let j = i + 1;
+        while (bloco.trimEnd().endsWith('\\') && j < linhas.length) {
+          bloco += '\n' + linhas[j];
+          j += 1;
+        }
+        if (!/--max-time\b/.test(bloco)) {
+          infratores.push(`${nome}:${i + 1}`);
+        }
+      }
+    }
+  }
+  assert.deepEqual(infratores, [], `curl(s) sem --max-time:\n${infratores.join('\n')}`);
 });
