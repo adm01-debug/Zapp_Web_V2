@@ -117,3 +117,40 @@ test('R2-INF-005: o comentario da consulta e SQL e a regressao para "#" e detect
   assert.notEqual(comBash, consulta, 'a consulta precisa ter comentario SQL (--) para a contraprova');
   assert.ok(sqlTokens(comBash).includes('#'), 'a volta do comentario de Bash tem de ser detectada');
 });
+
+// GA05: o CLI do psql grava o cabecalho "--" como elemento de statements quando
+// o apply e feito via \copy + psql em modo --tuples-only; o ledger fica com
+// ["--", "create table ...", ...]. O `flatMap(splitStatements)` filtra o "--"
+// antes da comparacao -- sem ele o run 37355980323 reprovava com
+// "quantidade de statements difere: ledger=N+1 arquivo=N".
+test('GA05: ledger com cabecalho "--" do psql CLI passa apos flatMap(splitStatements)', () => {
+  // Simula o comportamento do CLI: ledger tem "--" como primeiro elemento
+  const statementsDoArquivo = ['CREATE TABLE public.t (id int)', 'SELECT 1'];
+  const brutoComCabecalho = JSON.stringify(['--', ...statementsDoArquivo]);
+  const r = avaliarStatementsDoLedger({ bruto: brutoComCabecalho, statementsDoArquivo });
+  assert.equal(r.ok, true, 'cabecalho "--" deve ser ignorado pelo flatMap(splitStatements)');
+  assert.equal(r.total, statementsDoArquivo.length);
+});
+
+test('GA05: arquivo diferente do ledger (mesmo com cabecalho "--") continua reprovando', () => {
+  const statementsDoArquivo = ['CREATE TABLE public.t (id int)', 'SELECT 1'];
+  const ledgerDiferente = ['--', 'CREATE TABLE public.t (id int)', 'SELECT 2'];
+  const r = avaliarStatementsDoLedger({ bruto: JSON.stringify(ledgerDiferente), statementsDoArquivo });
+  assert.equal(r.ok, false);
+  assert.match(r.motivo, /statement 2/);
+});
+
+test('GA05: fixture real 20261004195051 — parser do arquivo e compativel com ledger normalizado', async () => {
+  const { parseMigrationFile } = await import('../db-audit/register-migration.mjs');
+  const { resolve, dirname } = await import('node:path');
+  const { fileURLToPath } = await import('node:url');
+  const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
+  const arquivo = resolve(root, 'supabase/migrations/20261004195051_gmail_oauth_state_attempts.sql');
+  const { statements } = parseMigrationFile(arquivo);
+  assert.ok(statements.length > 0, 'migration real deve ter ao menos um statement');
+  // Simula ledger com cabecalho "--" inserido pelo psql
+  const brutoComCabecalho = JSON.stringify(['--', ...statements]);
+  const r = avaliarStatementsDoLedger({ bruto: brutoComCabecalho, statementsDoArquivo: statements });
+  assert.equal(r.ok, true, 'fixture real com cabecalho "--" deve passar');
+  assert.equal(r.total, statements.length);
+});
