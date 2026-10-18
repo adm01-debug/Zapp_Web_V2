@@ -3,6 +3,31 @@ import type { Message } from '@/types/chat';
 
 export type { Message };
 
+/** Extensão de arquivo por subtipo MIME de áudio (sem os parâmetros, ex.: `;codecs=opus`). */
+const AUDIO_EXTENSION_BY_SUBTYPE: Record<string, string> = {
+  webm: 'webm',
+  ogg: 'ogg',
+  mp4: 'm4a',
+  mpeg: 'mp3',
+  wav: 'wav',
+  'x-wav': 'wav',
+  aac: 'aac',
+};
+
+/**
+ * O gravador do navegador não grava sempre o mesmo contêiner (webm no Chrome,
+ * mp4/ogg em outros) — gravar como `.webm`/`audio/webm` fixo, ignorando o tipo
+ * real do Blob, corrompia o arquivo para quem abrisse fora do player da V2 (o
+ * nome mentia o formato). Sem tipo de áudio reconhecido (Blob não rotulado),
+ * cai para webm — o formato mais comum do gravador local.
+ */
+function resolveAudioFormat(mimeType: string): { ext: string; contentType: string } {
+  const base = mimeType.split(';')[0]?.trim().toLowerCase() ?? '';
+  if (!base.startsWith('audio/')) return { ext: 'webm', contentType: 'audio/webm' };
+  const subtype = base.slice('audio/'.length);
+  return { ext: AUDIO_EXTENSION_BY_SUBTYPE[subtype] ?? subtype, contentType: base };
+}
+
 export class ChatService {
   static async fetchMessages(contactId: string, page = 0, pageSize = 1000) {
     const from = page * pageSize;
@@ -60,10 +85,11 @@ export class ChatService {
   }
 
   static async uploadAudio(contactId: string, blob: Blob) {
-    const fileName = `${contactId}/${Date.now()}.webm`;
+    const { ext, contentType } = resolveAudioFormat(blob.type);
+    const fileName = `${contactId}/${Date.now()}.${ext}`;
     const { error: uploadError } = await supabase.storage
       .from('audio-messages')
-      .upload(fileName, blob, { contentType: 'audio/webm' });
+      .upload(fileName, blob, { contentType });
 
     if (uploadError) throw uploadError;
 
