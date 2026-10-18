@@ -148,6 +148,7 @@ jobs:
       # o contrato E98 em scripts/ci/workflow-contracts.unit.mjs exige o
       # endurecimento de TLS em todos eles.
       - name: Exigir credencial do banco oficial
+        id: credencial
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
@@ -172,14 +173,18 @@ jobs:
           if (erros.length) process.exit(1);
           const destinoSeguro = tls.connectionString;
           console.log(`::add-mask::${destinoSeguro}`);
-          appendFileSync(process.env.GITHUB_ENV, `DESTINO_URL=${destinoSeguro}\n`);
-          appendFileSync(process.env.GITHUB_ENV, 'PGSSLMODE=verify-full\n');
+          // GA21: GITHUB_OUTPUT em vez de GITHUB_ENV — a credencial fica acessivel
+          // somente nos passos que a referenciam via steps.credencial.outputs.*,
+          // nao em TODOS os passos do job (incluindo passos com contents:write/PR).
+          appendFileSync(process.env.GITHUB_OUTPUT, `destino_seguro=${destinoSeguro}\n`);
+          appendFileSync(process.env.GITHUB_OUTPUT, 'pgsslmode=verify-full\n');
           console.log('OK: endpoint do banco oficial comprovado por fingerprint; TLS verify-full e CA Supabase pinada.');
           NODE
 
-      # DESTINO_URL (ja endurecido com TLS) e PGSSLMODE vem do GITHUB_ENV
-      # gravado pelo passo anterior — sem env: proprio aqui, que sobrescreveria
-      # com o secret cru sem TLS.
+      # DESTINO_URL (ja endurecido com TLS) vem de steps.credencial.outputs —
+      # GA21: nao usamos GITHUB_ENV para que a credencial do banco fique restrita
+      # aos passos que a referenciam explicitamente, fora do alcance de passos
+      # com permissoes de escrita (PR, Actions).
       # gen-types.sh puxa ghcr.io/supabase/postgres-meta (GitHub Container
       # Registry, nao Docker Hub). GITHUB_TOKEN le pacotes publicos sem secret extra.
       - name: ghcr.io login (previne rate-limit no gen-types)
@@ -207,6 +212,10 @@ jobs:
           fi
 
       - name: Gerar candidatos em diretorio temporario
+        env:
+          # GA21: DESTINO_URL via step output — nao GITHUB_ENV.
+          DESTINO_URL: ${{ steps.credencial.outputs.destino_seguro }}
+          PGSSLMODE: ${{ steps.credencial.outputs.pgsslmode }}
         run: |
           umask 077
           bash scripts/db-audit/gen-types.sh /tmp/types.new.ts
@@ -389,8 +398,9 @@ jobs:
         id: gate1b
         if: steps.diff.outputs.schema_changed == 'true' && steps.gate1.outputs.passed == 'false'
         env:
-          DESTINO_URL: ${{ env.DESTINO_URL }}
-          PGSSLMODE: ${{ env.PGSSLMODE }}
+          # GA21: DESTINO_URL via step output — nao GITHUB_ENV.
+          DESTINO_URL: ${{ steps.credencial.outputs.destino_seguro }}
+          PGSSLMODE: ${{ steps.credencial.outputs.pgsslmode }}
         run: |
           set +e
           node scripts/db-audit/lote-pendente.mjs > /tmp/drift.log 2>&1
