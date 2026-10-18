@@ -485,7 +485,7 @@ export async function sendAwayMessageIfNeeded(
     const telefone = typeof claim?.contact_phone === "string" ? claim.contact_phone : null;
     const texto = typeof claim?.content === "string" ? claim.content : null;
     if (claimErr || !claimToken || !instancia || !telefone || !texto) {
-      console.warn("[AWAY] claim failed:", claimErr?.message ?? "sem linha claimável");
+      console.warn("[AWAY] claim failed:", claimErr?.message ?? "sem linha clamável");
       return;
     }
 
@@ -552,7 +552,7 @@ export async function sendAwayMessageIfNeeded(
 // ─────────────────────────────────────────────────────────────────────────────
 // Chatbot IA (L1) — disparo da resposta automática a partir da mensagem recebida
 //
-// O webhook é o ÚNICO chamador da edge `chatbot-l1`: depois de gravar a fala do
+// O webhook é o Único chamador da edge `chatbot-l1`: depois de gravar a fala do
 // cliente ele a aciona ASSINADA (HMAC-SHA256 do corpo cru em
 // `x-webhook-signature`, mesmo contrato do `validateHmacRequest`) e a resposta do
 // bot sai pelo MESMO pipeline oficial da mensagem de ausência:
@@ -565,7 +565,7 @@ export async function sendAwayMessageIfNeeded(
 //      `enabled = true`. Ausência da linha = DESLIGADO — ao contrário do padrão
 //      do gate IA-009 (`readCapabilityFlag`), cuja ausência vale LIGADA: aqui a
 //      resposta automática é nova e nada responde até o dono ligar de propósito.
-//      Leitura que falha (erro do PostgREST/exceção) também FECHA.
+//      Leitura que falha (erro do PostgREST/excessão) também FECHA.
 //
 // IDEMPOTÊNCIA por mensagem: o `client_message_id` é DETERMINÍSTICO por
 // (contato, conexão, mensagem recebida). Antes de gastar IA o helper confere se
@@ -744,7 +744,7 @@ async function enviarRespostaDoBot(
     const telefone = typeof claim?.contact_phone === "string" ? claim.contact_phone : null;
     const texto = typeof claim?.content === "string" ? claim.content : null;
     if (claimErr || !claimToken || !instancia || !telefone || !texto) {
-      console.warn("[CHATBOT-L1] claim failed:", claimErr?.message ?? "sem linha claimável");
+      console.warn("[CHATBOT-L1] claim failed:", claimErr?.message ?? "sem linha clamável");
       return;
     }
 
