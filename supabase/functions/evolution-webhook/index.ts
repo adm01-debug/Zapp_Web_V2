@@ -104,15 +104,15 @@ export async function handleEvolutionWebhook(req: Request): Promise<Response> {
 
   // C9: rate-limit per IP before body is read (200 req/min covers GO burst traffic)
   const ip = getClientIP(req);
-  const rl = await enforceRateLimit(`evowh:${ip}`, 200, 60_000);
-  if (!rl.allowed) {
-    return new Response(JSON.stringify({ error: 'Too many requests' }), {
-      status: 429,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Retry-After': '60' },
-    });
-  }
 
   try {
+    const rl = await enforceRateLimit(`evowh:${ip}`, 200, 60_000);
+    if (!rl.allowed) {
+      return new Response(JSON.stringify({ error: 'Too many requests' }), {
+        status: 429,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Retry-After': '60' },
+      });
+    }
     const enforceMode = evolutionEnforceMode();
 
     // -----------------------------------------------------------------------
