@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, enforceRateLimit, getClientIP } from "../_shared/validation.ts";
+import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, enforceRateLimit, getClientIP, requireAuth } from "../_shared/validation.ts";
 
 // T15: o front não conhece mais a linha — host/usuário/porta vêm daqui. Os
 // defaults são os valores que estavam hardcoded no front; a variável de
@@ -17,18 +17,13 @@ export function provisionamentoSip(
 }
 
 /** Seams de injecao do handler. `client` substitui o client do chamador para o
- *  teste exercitar o gate de rate limit sem tocar rede. */
+ *  teste exercitar o gate de rate limit sem tocar rede.
+ *  Z017: `requireAuthFn` substitui `requireAuth` nos testes. */
 export interface GetSipCallerClient {
-  auth: {
-    getClaims: (token: string) => PromiseLike<{
-      data: { claims?: { sub?: string } } | null;
-      error: unknown;
-    }>;
-  };
   from: (table: string) => {
     select: (columns: string) => {
       eq: (column: string, value: string) => {
-        maybeSingle: () => PromiseLike<{ data: { id: string; is_active: boolean } | null; error: unknown }>;
+        maybeSingle: () => PromiseLike<{ data: { id: string } | null; error: unknown }>;
       };
     };
   };
@@ -37,6 +32,7 @@ export interface GetSipCallerClient {
 export interface GetSipPasswordDeps {
   enforceRateLimit?: (key: string, maxRequests: number, windowMs: number) => PromiseLike<{ allowed: boolean }>;
   client?: GetSipCallerClient;
+  requireAuthFn?: (req: Request) => Promise<{ userId: string } | Response>;
 }
 
 export async function handleGetSipPassword(req: Request, deps: GetSipPasswordDeps = {}): Promise<Response> {
@@ -51,29 +47,22 @@ export async function handleGetSipPassword(req: Request, deps: GetSipPasswordDep
     const ip = getClientIP(req);
     const rl = await rateLimit(`sip-pwd:${ip}`, 10, 60_000);
     if (!rl.allowed) return errorResponse("Rate limit exceeded", 429, req);
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return errorResponse('Unauthorized', 401, req);
-    }
 
+    // Z017: JWT válido + perfil ativo + política de rede (requireAuth cobre os três).
+    const _auth = await (deps.requireAuthFn ?? requireAuth)(req);
+    if (_auth instanceof Response) return _auth;
+    const userId = _auth.userId;
+
+    const authHeader = req.headers.get('Authorization') ?? '';
     const supabase: GetSipCallerClient = deps.client ??
       (createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_ANON_KEY'), {
         global: { headers: { Authorization: authHeader } },
       }) as unknown as GetSipCallerClient);
 
-    const token = authHeader.replace('Bearer ', '');
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
-      return errorResponse('Invalid or expired token', 401, req);
-    }
-
-    const userId = claimsData.claims.sub;
-    if (!userId) return errorResponse('Invalid or expired token', 401, req);
     const { data: profile, error: profileError } = await supabase
-      .from('profiles').select('id, is_active').eq('user_id', userId).maybeSingle();
+      .from('profiles').select('id').eq('user_id', userId).maybeSingle();
 
     if (profileError || !profile) return errorResponse('User profile not found', 403, req);
-    if (!profile.is_active) return errorResponse('User account is inactive', 403, req);
 
     // Pos-auth: chave por USUARIO — o segredo da linha nao vaza para uma conta
     // comprometida mesmo distribuindo requests entre IPs/isolates.

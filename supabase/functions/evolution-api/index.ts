@@ -1198,12 +1198,7 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error: unknown) {
-    const log = new Logger('evolution-api');
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    log.error('Unhandled error', { error: message });
-    return new Response(JSON.stringify({ error: message }), {
-      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return internalErrorResponse(error, req);
   }
 }
 
