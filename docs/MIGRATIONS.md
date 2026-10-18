@@ -20,7 +20,7 @@ ls supabase/migrations/*.sql | sed 's|.*/||' \
 
 # lado do banco
 psql "$DESTINO_URL" -At -c \
-  "SELECT encode(sha256(convert_to(string_agg(version, E'\n' ORDER BY version) || E'\n','UTF8')),'hex') FROM supabase_migrations.schema_migrations"
+  "SELECT encode(sha256(convert_to(string_agg(version, E'\\n' ORDER BY version) || E'\\n','UTF8')),'hex') FROM supabase_migrations.schema_migrations"
 ```
 
 O algoritmo é `sha256` nos dois lados (`sha256()` é built-in do Postgres, PG11+). Trocar
@@ -575,5 +575,4 @@ where n.nspname = 'public' and p.proname = '<funcao>';
 select table_schema, table_name from information_schema.tables
 where table_name ilike '%<nome>%';   -- confirma rename (ex.: conversations -> team_conversations)
 ```
-
 
