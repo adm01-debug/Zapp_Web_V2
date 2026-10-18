@@ -95,6 +95,8 @@ vi.mock('framer-motion', () => ({
     ),
   },
   AnimatePresence: ({ children }: { children?: import('react').ReactNode }) => children,
+  useReducedMotion: () => false,
+  MotionConfig: ({ children }: { children?: import('react').ReactNode }) => children,
 }));
 vi.mock('@/components/effects/AuroraBorealis', () => ({ AuroraBorealis: () => null }));
 vi.mock('@/components/dashboard/FloatingParticles', () => ({ FloatingParticles: () => null }));
