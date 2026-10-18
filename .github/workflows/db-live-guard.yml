@@ -323,7 +323,19 @@ jobs:
           set -o pipefail
           node scripts/db-audit/check-runtime-config.mjs /tmp/runtime-config.json 2>&1 | tee /tmp/step-runtime-config.log
 
-      # Une os 11 vereditos individuais (continue-on-error acima) num unico
+      # INV-LIVE: RLS, security_invoker, matview exposure, SECURITY DEFINER
+      # search_path, open write policies e referencias mortas — tudo numa so
+      # passada fail-closed sobre o catalogo vivo. Veja check-live-invariants.sql.
+      - name: Verificar invariantes gerais do banco vivo
+        id: live-invariants
+        if: steps.credencial.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 \
+            -f scripts/db-audit/check-live-invariants.sql 2>&1 | tee /tmp/step-live-invariants.log
+
+      # Une os 12 vereditos individuais (continue-on-error acima) num unico
       # resultado: falha o job se qualquer um falhou/foi pulado, escreve a
       # tabela no Job Summary (E59) e calcula uma assinatura estavel da causa
       # para o dedupe do alerta abaixo (E05/E06/E43/E44).
@@ -544,5 +556,6 @@ jobs:
             /tmp/step-types.log
             /tmp/step-triple-parity.log
             /tmp/step-runtime-config.log
+            /tmp/step-live-invariants.log
           if-no-files-found: ignore
           retention-days: 3
