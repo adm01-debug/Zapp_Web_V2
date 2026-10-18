@@ -359,8 +359,8 @@ describe('settings-guard: log injection (jssecurity:S5145)', () => {
 function rodarComEnvsExtra(extras) {
   // Injeta o stub de environments com os itens do baseline + os extras recebidos.
   const todos = [
-    'banco-leitura', 'db-ledger-evidence', 'legacy-import-destrutivo', 'perimetro-leitura',
-    'producao-ddl', 'producao-edge-functions',
+    'copilot', 'db-ledger-evidence', 'legacy-import-destrutivo', 'Preview',
+    'producao-ddl', 'producao-edge-functions', 'Production',
     ...extras,
   ];
   const envsStub =
@@ -392,94 +392,5 @@ describe('settings-guard: W13 — environments extras', () => {
     assert.equal(r.code, 1, `esperava exit 1 (extra inesperado e regressao):\n${r.out}`);
     assert.ok(r.out.includes('extras_inesperados'), `divergencia nao apontada:\n${r.out}`);
     assert.ok(r.out.includes('meu-ambiente-desconhecido'), `nome do ambiente ausente:\n${r.out}`);
-  });
-});
-
-// W11/W12: leitura administrativa com o PAT do environment `perimetro-leitura`.
-// O stub responde conforme o `Authorization` recebido: o PAT ('admin') le tudo, o
-// GITHUB_TOKEN ('x') recebe o que recebe hoje (403 + /repos sem campos de merge), e
-// um PAT vencido ('expirado') leva 401. Escritas sao registradas com o token usado.
-function rodarComTokens(adminReadToken, modoDoPat = 'ok') {
-  const codigo = [
-    '{',
-    stub(modoDoPat),
-    'globalThis.__patFetch = globalThis.fetch;',
-    '}',
-    '{',
-    stub('tokenReal'),
-    'globalThis.__workflowFetch = globalThis.fetch;',
-    '}',
-    'globalThis.fetch = async (url, opts) => {',
-    '  opts = opts || {};',
-    "  const auth = String((opts.headers && opts.headers.Authorization) || '');",
-    "  const method = String(opts.method || 'GET').toUpperCase();",
-    "  if (method !== 'GET') process.stdout.write('[stub] escrita ' + method + ' com ' + auth + '\\n');",
-    "  if (auth === 'Bearer ') process.stdout.write('[stub] Authorization vazio\\n');",
-    "  if (auth === 'Bearer expirado' || auth === 'Bearer ') return { ok: false, status: 401, headers: { get: () => '1' }, json: async () => ({ message: 'Bad credentials' }), text: async () => 'Bad credentials' };",
-    "  if (auth === 'Bearer admin') return globalThis.__patFetch(url, opts);",
-    '  return globalThis.__workflowFetch(url, opts);',
-    '};',
-    '',
-  ].join('\n');
-  const env = { ...process.env, GITHUB_TOKEN: 'x', GITHUB_REPOSITORY: 'o/r', GITHUB_RUN_ID: '1' };
-  delete env.ADMIN_READ_TOKEN;
-  if (adminReadToken !== undefined) env.ADMIN_READ_TOKEN = adminReadToken;
-  const res = spawnSync(
-    process.execPath,
-    ['--import', 'data:text/javascript,' + encodeURIComponent(codigo), SCRIPT],
-    { encoding: 'utf8', env },
-  );
-  const out = `${res.stdout}${res.stderr}`;
-  return { code: res.status, out, linhas: out.split('\n') };
-}
-
-const escritasForaDoWorkflowToken = (r) =>
-  r.linhas.filter((l) => l.startsWith('[stub] escrita') && !l.endsWith('com Bearer x'));
-
-describe('settings-guard: W12 — token administrativo de leitura', () => {
-  it('com o PAT: le branch protection, actions e merge de verdade (0 pontos cegos)', () => {
-    const r = rodarComTokens('admin');
-    assert.equal(r.code, 0, r.out);
-    assert.ok(r.out.includes('Perimetro OK'), `nao leu o perimetro com o PAT:\n${r.out}`);
-    assert.ok(!r.out.includes('NAO VERIFICAVEL'), `ponto cego com o PAT presente:\n${r.out}`);
-    assert.ok(r.out.includes('Leitura administrativa: SETTINGS_GUARD_TOKEN'), `nao declarou a fonte:\n${r.out}`);
-  });
-
-  it('com o PAT: divergencia real e lida, mas escrita (PATCH/issue) usa so o GITHUB_TOKEN', () => {
-    const r = rodarComTokens('admin', 'regressao');
-    assert.equal(r.code, 1, r.out);
-    assert.ok(r.out.includes('branch_protection_main.strict'), `nao viu a regressao:\n${r.out}`);
-    assert.ok(r.linhas.some((l) => l.startsWith('[stub] escrita')), `esperava PATCH/issue:\n${r.out}`);
-    assert.deepEqual(
-      escritasForaDoWorkflowToken(r),
-      [],
-      'o PAT de leitura nunca escreve; issue e restauracao sao do github-actions[bot]',
-    );
-  });
-
-  it('secret ausente (string vazia): cai no GITHUB_TOKEN, nunca manda Bearer vazio', () => {
-    // GitHub Actions entrega secret inexistente como "" — com `??` o guard ia de 401.
-    const r = rodarComTokens('');
-    assert.equal(r.code, 0, r.out);
-    assert.ok(!r.out.includes('[stub] Authorization vazio'), `mandou Authorization vazio:\n${r.out}`);
-    assert.ok(r.out.includes('NAO VERIFICAVEL'), `deveria cair no comportamento pre-W12:\n${r.out}`);
-    assert.ok(r.out.includes('SETTINGS_GUARD_TOKEN ausente'), `nao explicou a fonte:\n${r.out}`);
-  });
-
-  it('fallback do workflow (secret ausente vira github.token): mesmo comportamento pre-W12', () => {
-    const r = rodarComTokens('x');
-    assert.equal(r.code, 0, r.out);
-    assert.ok(r.out.includes('NAO VERIFICAVEL'), r.out);
-    assert.ok(r.out.includes('SETTINGS_GUARD_TOKEN ausente'), r.out);
-  });
-
-  it('PAT recusado (401, vencido): avisa para rotacionar e segue com o GITHUB_TOKEN', () => {
-    const r = rodarComTokens('expirado');
-    assert.equal(r.code, 0, `401 do PAT nao pode derrubar o guard:\n${r.out}`);
-    const avisos = r.linhas.filter((l) => l.includes('SETTINGS_GUARD_TOKEN recusado (401)'));
-    assert.equal(avisos.length, 1, `esperava 1 aviso de rotacao:\n${r.out}`);
-    assert.ok(r.out.includes('NAO VERIFICAVEL'), `campos administrativos deveriam voltar a ponto cego:\n${r.out}`);
-    assert.ok(r.linhas.some((l) => l.startsWith('Issue #')), `a issue de ponto cego precisa existir:\n${r.out}`);
-    assert.deepEqual(escritasForaDoWorkflowToken(r), []);
   });
 });

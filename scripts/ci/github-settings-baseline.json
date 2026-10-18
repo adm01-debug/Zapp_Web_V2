@@ -78,6 +78,10 @@
     "_comentario": "W13: environments criados automaticamente pela Vercel. A presenca deles nao e regressao — sao classificados como 'gerenciados pela Vercel' no settings-guard (aviso, nao erro).",
     "prefixos": ["Preview – ", "Production – "]
   },
+  "environments_vercel_managed": {
+    "_comentario": "W13: environments criados automaticamente pela Vercel. A presenca deles nao e regressao — sao classificados como 'gerenciados pela Vercel' no settings-guard (aviso, nao erro).",
+    "prefixos": ["Preview – ", "Production – "]
+  },
   "nao_verificavel_automaticamente": {
     "_comentario": [
       "Campos que o GITHUB_TOKEN NAO consegue ler — a API exige escopo 'administration', que o token de",

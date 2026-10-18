@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
+import { timingSafeStringEqual } from "../_shared/cron-secret-auth.ts";
 
 /**
  * T72 — reconciliacao dos registros de chamada com o Bitrix24 (voximplant.statistic.get).
@@ -155,7 +156,7 @@ export async function handleSyncCallRecords(req: Request) {
     const authHeader = req.headers.get("Authorization") ?? "";
     const token = authHeader.replace(/^Bearer\s+/i, "");
     const serviceRole = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
-    if (!token || token !== serviceRole) return errorResponse("Unauthorized", 401, req);
+    if (!token || !timingSafeStringEqual(token, serviceRole)) return errorResponse("Unauthorized", 401, req);
 
     const supabase = createClient(requireEnv("SUPABASE_URL"), serviceRole, { auth: { persistSession: false } });
 

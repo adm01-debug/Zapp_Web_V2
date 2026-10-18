@@ -20,13 +20,18 @@ export const FALLBACK_ORIGIN = 'https://zapp-web-v2.vercel.app';
 
 export const ORIGIN_PATTERNS = [
   /^https:\/\/zappwebv2-[a-z0-9-]+-juca1\.vercel\.app$/,
+];
+
+// Z020: origens localhost são aceitáveis apenas fora de produção.
+export const LOCALHOST_PATTERNS = [
   /^http:\/\/localhost(?::\d{1,5})?$/,
   /^http:\/\/127\.0\.0\.1(?::\d{1,5})?$/,
 ];
 
-export function isAllowedOrigin(origin: string): boolean {
+export function isAllowedOrigin(origin: string, allowLocalhost = false): boolean {
   return EXACT_ALLOWED_ORIGINS.has(origin) ||
-    ORIGIN_PATTERNS.some((pattern) => pattern.test(origin));
+    ORIGIN_PATTERNS.some((pattern) => pattern.test(origin)) ||
+    (allowLocalhost && LOCALHOST_PATTERNS.some((pattern) => pattern.test(origin)));
 }
 
 /** Valor de `Access-Control-Allow-Origin` para o pedido: a própria origem se aceita, senão o fallback. */
