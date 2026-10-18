@@ -9,6 +9,12 @@ import { render, screen, fireEvent } from '@testing-library/react';
 
 const mocks = vi.hoisted(() => ({ handleDelete: vi.fn() }));
 
+// Gate de escrita (RLS admin-only, mesma família de t_1944d290): o teste
+// exercita o fluxo de exclusão, que agora só existe para admin.
+vi.mock('@/hooks/system/useUserRole', () => ({
+  useUserRole: () => ({ isAdmin: true, loading: false }),
+}));
+
 vi.mock('@/hooks/integrations/useWhatsAppTemplates', () => ({
   TEMPLATE_CATEGORIES: [{ value: 'marketing', label: 'Marketing', color: '' }],
   TEMPLATE_LANGUAGES: [{ value: 'pt_BR', label: 'Português (BR)' }],
