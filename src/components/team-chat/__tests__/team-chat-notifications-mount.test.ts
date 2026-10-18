@@ -54,17 +54,23 @@ vi.mock('@/hooks/chat/useTeamChatNotifications', () => ({
   useActiveTeamChatConversation: h.publishActiveConversation,
   useTeamChatNotifications: vi.fn(),
 }));
-vi.mock('@/components/team-chat/TeamConversationList', () => ({ TeamConversationList: () => null }));
+vi.mock('@/components/team-chat/TeamConversationList', () => ({
+  TeamConversationList: () => null,
+}));
 vi.mock('@/components/team-chat/TeamChatPanel', () => ({ TeamChatPanel: () => null }));
 vi.mock('@/components/team-chat/TeamMemberDetails', () => ({ TeamMemberDetails: () => null }));
-vi.mock('@/components/team-chat/NewConversationDialog', () => ({ NewConversationDialog: () => null }));
+vi.mock('@/components/team-chat/NewConversationDialog', () => ({
+  NewConversationDialog: () => null,
+}));
 vi.mock('@/components/ui/button', () => ({
-  Button: ({ children }: { children: React.ReactNode }) => React.createElement('button', null, children),
+  Button: ({ children }: { children: React.ReactNode }) =>
+    React.createElement('button', null, children),
 }));
 vi.mock('lucide-react', () => ({ MessageSquare: () => null, Users: () => null, Plus: () => null }));
 vi.mock('framer-motion', () => ({
   motion: {
-    div: ({ children }: { children: React.ReactNode }) => React.createElement('div', null, children),
+    div: ({ children }: { children: React.ReactNode }) =>
+      React.createElement('div', null, children),
   },
 }));
 
