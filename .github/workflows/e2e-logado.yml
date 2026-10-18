@@ -1,5 +1,5 @@
 # docs:
-#   gatilho: push na main e dispatch sobre main
+#   gatilho: workflow_run apos CI/CD Pipeline ✅ na main; schedule a cada 2h; dispatch
 #   prova: o fluxo logado (Playwright com login real) contra producao
 #   falha: artefato do Playwright e issue/relatorio; nunca roda em PR de terceiro
 #   avisa: issue de E2E e autor do push
@@ -23,28 +23,32 @@
 name: E2E logado
 
 on:
-  push:
+  workflow_run:
+    workflows: ["CI/CD Pipeline"]
+    types: [completed]
     branches: [main]
+  schedule:
+    - cron: '7 */2 * * *'
   workflow_dispatch:
 
 permissions:
   contents: read
 
-# cancel-in-progress: false (em vez de so em push) enfileira ao inves de matar
-# uma run que ja esta rodando. Levantamento de 2026-09-26: 18/40 (45%) das runs
-# de push eram canceladas por push seguinte, varias delas a segundos de
-# terminar (suite roda em ~40-60s, bem abaixo do timeout de 15min). Com
-# cancel-in-progress:false o GitHub Actions enfileira e, se varios pushes
-# chegarem enquanto a run atual roda, so o mais recente pendente roda em
-# seguida (os intermediarios sao pulados) -- mesma semantica de "valida so o
-# commit mais novo", sem desperdicar runs quase completas.
+# cancel-in-progress: true: com workflow_run o gatilho e o fim do CI, nao um
+# push direto; se dois CIs terminarem em rapida sucessao (push seguido de
+# hotfix), so o mais recente importa. Nao ha runs "quase completas" a
+# preservar -- a suite logada levanta novas instancias de qualquer forma.
+# W71: restaurado em 2026-10-18 (regressao introduzida em lote 880 cartoes).
 concurrency:
   group: e2e-logado-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   e2e-logado:
     name: 🎭 E2E logado (Playwright)
+    if: >-
+      github.event_name != 'workflow_run' ||
+      github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     # E83: a suite logada (173 testes) estourava o timeout do job unico e a run
@@ -88,7 +92,9 @@ jobs:
       issues: write # abrir/comentar o alerta em falha e fechar quando a suite volta
     steps:
       - name: ✋ Somente executa na main
-        if: github.ref != 'refs/heads/main'
+        if: |
+          github.event_name == 'schedule' &&
+          github.ref != 'refs/heads/main'
         run: |
           echo "::error::Este workflow só pode ser disparado a partir da main (ref: ${{ github.ref }})."
           exit 1
