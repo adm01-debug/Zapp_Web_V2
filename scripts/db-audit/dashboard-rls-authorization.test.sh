@@ -69,7 +69,7 @@ expect_error() {
     -c '\set VERBOSITY verbose' -c "$sql" 2>&1)"; status=$?
   set -e
   (( status == 0 )) && { printf '%s\n' "$output" >&2; fail "$label: deveria falhar, mas passou"; }
-  [[ "$output" == *"$needle"* ]] || { printf '%s\n' "$output" >&2; fail "$label: esperava '$needle' no erro"; }
+  [[  "$output" == *"$needle"* ]] || { printf '%s\n' "$output" >&2; fail "$label: esperava '$needle' no erro"; }
   printf '[PASS] %s\n' "$label"
 }
 expect_value() {
@@ -127,7 +127,7 @@ assert_last_definer() { # $1=rotulo $2=basename do arquivo de origem $3=regex ER
 
 # Helpers SECURITY DEFINER extraidos verbatim mais abaixo:
 assert_last_definer 'helper is_admin_or_supervisor' \
-  '20251215025014_fcc5bc79-55e3-4972-8765-6a7840fdce5a.sql' \
+  '20261016170000_fix_security_definer_search_path.sql' \
   '(CREATE( OR REPLACE)? FUNCTION public\.is_admin_or_supervisor|ALTER FUNCTION[^;]*public\.is_admin_or_supervisor|DROP FUNCTION[^;]*public\.is_admin_or_supervisor)'
 assert_last_definer 'helper get_profile_id_for_user' \
   '20260909200000_harden_inbox_contact_authorization.sql' \
