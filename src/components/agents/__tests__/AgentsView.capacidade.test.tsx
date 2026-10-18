@@ -134,6 +134,10 @@ vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: (table: string) => h.makeQuery(table),
     rpc: () => Promise.resolve({ data: [], error: null }),
+    // useConnectionsHealth (composto pela tela) assina `whatsapp_connections`
+    // via Realtime — sem isso, montar a tela quebra com "channel is not a function".
+    channel: () => ({ on: () => ({ subscribe: () => ({ unsubscribe: () => {} }) }) }),
+    removeChannel: () => {},
   },
 }));
 
