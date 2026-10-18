@@ -19,6 +19,30 @@
 
 ---
 
+## Revisão de 2026-10-18 (segunda leitura, antes de qualquer execução)
+
+O plano foi relido com olhar adversarial e **corrigido** nos pontos abaixo. Quem executar deve ler esta
+seção primeiro: ela muda severidade, ordem e conteúdo de etapas.
+
+| # | O que estava errado ou faltava | Correção |
+|---|---|---|
+| R1 | §1.2 afirmava que a chave pública pode "apagar tabelas" via TRUNCATE. **PostgREST não emite TRUNCATE** e a chave `anon` não dá acesso a `psql`. Só **1** policy no repo é `USING (true)` sem `TO`; as outras 57 usam `auth.uid()`, que para `anon` é NULL. O vetor direto via REST é bem menor do que o texto dizia. | Fato 2 reescrito; Z002 mantida (menor privilégio + advisor do Supabase), mas com severidade e narrativa honestas. |
+| R2 | Z021 recomendava ligar `🏗️ Build` como primeiro required check. `Build` tem `needs: [typecheck, unit-tests]`; com 2 shards vermelhos ele fica *skipped* e, como required, **trava todo merge** (o cenário 405 que o CLAUDE.md já documentou). | Z021 re-sequenciada: `🔎 TypeCheck` primeiro (sem dependências, verde hoje); `Build` só depois de Z024–Z028. |
+| R3 | Z068 mandava aplicar 219 migrations "via `db-migrate.yml`". O workflow recebe **uma** `migration_version` por dispatch, cada um com aprovação humana. 219 dispatches é inviável. | Z068 reescrita: usar o mecanismo de **bundle** já existente no YAML (`ATOMIC_DELIVERY_BUNDLE`, linhas ~195–199) ou decisão alternativa do Joaquim. |
+| R4 | Toda etapa que toca `supabase/functions/` (Z005, Z006, Z007, Z011, Z013–Z020, FASE 4) **invalida o manifesto de novo** — ele tem `source_sha256` por função, incluindo `_shared/`. Sem regenerar no mesmo PR, cada etapa repete o ciclo 1 (68 commits). | Regra operacional nova na Parte 3; Z005 explicita. |
+| R5 | FASE 0 dizia "nada espera por nada". Z002 depende de Z001, Z003 de Z002, Z007 de Z005. | Texto corrigido. |
+| R6 | Z009, Z087, Z145, Z149, Z152–Z155 adicionam jobs ao CI de PR, **contrariando a decisão "CI mínimo" de 16/10, que foi do Joaquim**. Um executor que as fizesse seria revertido. | Nota na Parte 3: essas etapas pedem **uma** aprovação dele em bloco antes de começar. |
+| R7 | Parte 3 dizia "São 14" e listava 15 etapas [JOAQUIM]. | Corrigido: 15. |
+| R8 | Achados P1 de segurança do relatório de CI ficaram de fora: `SUPABASE_SERVICE_ROLE_KEY` ainda consumido pelo E2E (CI-46, contra o que o W74 prometeu); E2E sem `environment` usando secrets de produção (CI-47); contratos de runtime reinjetados no `db-migrate.yml` (CI-42, ciclo R5); nenhum SAST em PR (CI-53). | Entraram em Z139, Z140, Z085, Z154 — substituindo placeholders e etapas P3 triviais. |
+| R9 | Achados P1 de frontend em caminho de escrita ficaram de fora: cliente Supabase rebaixado a `any` (FE-04), 64 `as any` cobrindo payload de UPDATE (FE-06), `TONE_OPTIONS.find()!` que derruba o painel de IA (FE-11), non-null em `queryFn` (FE-09). | Z118 (varredura Sonar, valor baixo e retroativo) substituída por esses quatro. |
+| R10 | 20 `waitForTimeout` nos specs e o `auth.setup.ts` com retry por sleep (QA-18, QA-24, causa-raiz de flakiness 2×) não tinham etapa. | Z138. |
+| R11 | Z096 (usar `edge-boot.ts`, trivial) ocupava um slot enquanto EF-53 (não há como saber qual commit de cada edge está em produção; `ZAPP_BUILD_ID` nunca é setado) ficava de fora. | Z096 substituída. |
+| R12 | Z001 não mandava checar RPCs `SECURITY INVOKER` com EXECUTE para `anon` que escrevem em tabela — o único caso em que o REVOKE da Z002 quebraria algo. | Acrescentado. `record_failed_login` é DEFINER (verificado) — não é afetada. |
+| R13 | Z003 exigia "zero privilégio de escrita" sem allowlist; Z001 pode legitimar exceções (`talkx_campaign_events` tem INSERT deliberado). | Allowlist no teste. |
+| R14 | Nenhuma etapa dizia como instalar o Deno que Z005/Z009 exigem (não está no container). | Parte 3: `.github/toolchain.json` fixa `2.9.5`. |
+
+---
+
 ## Parte 1 — Diagnóstico (medido em 2026-10-17/18)
 
 ### 1.1 O estado em uma frase
@@ -30,7 +54,7 @@ A `main` não tem portão. Todo o resto deste documento é consequência disso.
 | # | Fato | Como foi medido | Consequência |
 |---|---|---|---|
 | 1 | **`main` sem branch protection e sem rulesets** ✔ VERIFICADO | `GET /branches/main/protection` → **404 "Branch not protected"**; `GET /rulesets` → `[]` | Nenhum check bloqueia merge. CI é decorativo. |
-| 2 | **`anon` tem INSERT/UPDATE/DELETE em 117 tabelas e TRUNCATE em 116** ✔ VERIFICADO | contagem sobre `supabase/schema-manifest.json` → `user_roles`, `permissions`, `role_permissions`, `password_reset_requests`, `mfa_sessions`, `ip_whitelist`, `global_settings`, `webauthn_challenges`, `security_alerts` | A chave `anon` é pública (vai no bundle). **TRUNCATE ignora RLS.** |
+| 2 | **`anon` tem INSERT/UPDATE/DELETE em 117 tabelas e TRUNCATE em 116** ✔ VERIFICADO | contagem sobre `supabase/schema-manifest.json` → `user_roles`, `permissions`, `role_permissions`, `password_reset_requests`, `mfa_sessions`, `ip_whitelist`, `global_settings`, `webauthn_challenges`, `security_alerts` | **Severidade honesta: P1, não "pode apagar tabelas".** A chave `anon` é pública, mas só fala com PostgREST, que **não emite TRUNCATE**; INSERT/UPDATE/DELETE passam por RLS, e só 1 policy do repo é `USING (true)` sem `TO`. O grant viola menor privilégio e o advisor do Supabase o acusa — revogar é certo, mas o vetor direto é estreito. (R1) |
 | 3 | **`enforceRateLimit` quebrado no `main`** ✔ VERIFICADO | `_shared/validation.ts:359-370` usa `ctx`, ausente da assinatura | Limitador persistente das 32 edges desligado; todo 429 vira 500. |
 | 4 | **Edge functions do lote de 16/10 estão fora do ar** ✔ VERIFICADO | `generate-manifest.mjs --check` → `Deployment manifest is stale` | Código mergeado ≠ código em produção. |
 | 5 | **A suíte E2E escreve no banco de PRODUÇÃO** | `e2e/fixtures/supabase-env.ts:40-47` tem `.env.production` como fonte primária | Cria campanhas e apaga contatos reais; limpeza é best-effort. |
@@ -145,20 +169,31 @@ declaradas e <40 concluídas.**
 
 ### FASE 0 — Segurança e produção: parar o sangramento (Z001–Z020)
 
-Nada nesta fase espera por nada. São 20 etapas e todas são hoje.
+São 20 etapas e todas são hoje. Dependências internas: Z001 → Z002 → Z003; Z005 → Z007. O resto é
+independente. (R5)
 
-**Z001** · **[JOAQUIM] Confirmar ao vivo os grants de escrita de `anon`.** · DB-18 ✔
+**Z001** · **[JOAQUIM] Confirmar ao vivo os grants de escrita de `anon` e mapear quem depende deles.** · DB-18 ✔
 Rodar `SELECT grantee, table_name, privilege_type FROM information_schema.role_table_grants WHERE grantee='anon' AND privilege_type IN ('INSERT','UPDATE','DELETE','TRUNCATE')` em produção (SELECT, leitura).
-O manifesto é um snapshot de 16/10 — esta etapa prova o estado atual. **Prova:** contagem ao vivo anexada ao PR.
+O manifesto é um snapshot de 16/10 — esta etapa prova o estado atual.
+**Também obrigatório (R12):** listar funções `SECURITY INVOKER` com EXECUTE para `anon` que façam
+INSERT/UPDATE/DELETE — são o único caso em que o REVOKE da Z002 quebraria algo
+(`SELECT p.proname FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND NOT p.prosecdef AND has_function_privilege('anon', p.oid, 'EXECUTE')`, depois ler o corpo).
+`record_failed_login`/`is_account_locked` são DEFINER (verificado) e não entram. `talkx_campaign_events`
+tem INSERT deliberado para `anon` — candidata a exceção. **Prova:** contagem ao vivo + lista de exceções.
 
 **Z002** · **[JOAQUIM] REVOKE em bloco dos grants de escrita de `anon`.** · DB-18, DB-19 ✔
-`REVOKE INSERT, UPDATE, DELETE, TRUNCATE, TRIGGER, REFERENCES ON ALL TABLES IN SCHEMA public FROM anon;` em migration versionada.
-**Risco:** se alguma função legítima depender disso, quebra. Z001 é pré-requisito e deve listar as exceções.
-**Prova:** 0 linhas no SELECT da Z001 após apply.
+`REVOKE INSERT, UPDATE, DELETE, TRUNCATE, TRIGGER, REFERENCES ON ALL TABLES IN SCHEMA public FROM anon;`
+em migration versionada, seguido de `GRANT` explícito só para as exceções da Z001.
+**Severidade real: P1** (R1). Não é "a chave pública apaga tabelas": PostgREST não emite TRUNCATE e
+INSERT/UPDATE/DELETE passam por RLS. É menor privilégio, defesa em profundidade e o advisor do Supabase.
+Fica na FASE 0 porque é barata, porque o `ALTER DEFAULT PRIVILEGES` de 30/09 já protege tabelas novas
+(só falta o retroativo — DB-20), e porque a próxima policy mal escrita vira exploit com esses grants.
+**Prova:** o SELECT da Z001 devolve só as exceções.
 
 **Z003** · Teste de regressão para grants de `anon`. · DB-21
-`scripts/db-audit/check-anon-write-grants.sql`: DO block que levanta exceção se `anon` tiver qualquer
-privilégio de escrita, com prova de não-vacuidade (falha se o role `anon` não existir).
+`scripts/db-audit/check-anon-write-grants.sql`: DO block que levanta exceção se `anon` tiver privilégio
+de escrita fora de uma **allowlist explícita** (as exceções da Z001, cada uma com justificativa em
+comentário — R13), com prova de não-vacuidade (falha se o role `anon` não existir).
 **Prova:** o teste falha hoje e passa depois da Z002.
 
 **Z004** · Regenerar `deployment-manifest.json` e destravar o deploy das edges. · EF-52, CI-39 ✔
@@ -167,7 +202,10 @@ privilégio de escrita, com prova de não-vacuidade (falha se o role `anon` não
 
 **Z005** · Corrigir `enforceRateLimit`. · EF-01 ✔
 `_shared/validation.ts:359` — adicionar `ctx: EnforceRateLimitContext = {}` à assinatura (a interface já
-existe em `:311`). **Prova:** `deno check supabase/functions/_shared/validation.ts` sai 0.
+existe em `:311`). **No mesmo PR:** `node scripts/edge-deploy/generate-manifest.mjs` — `_shared/` entra
+no `source_sha256` de todas as funções, então esta mudança sozinha deixa o manifesto stale de novo (R4).
+**Prova:** `deno check supabase/functions/_shared/validation.ts` sai 0 **e** `generate-manifest.mjs --check` sai 0.
+Deno não está no container: instalar a versão de `.github/toolchain.json` (`2.9.5`).
 
 **Z006** · Declarar `rateLimitLogWriter` em `RequireAuthOptions`. · EF-02
 `_shared/validation.ts:456-471`. **Prova:** mesma da Z005.
@@ -180,11 +218,17 @@ existe em `:311`). **Prova:** `deno check supabase/functions/_shared/validation.
 `src/hooks/integrations/__tests__/useTalkXSuppression.test.ts:247` é um `it.fails` que documenta:
 "falha FECHADO quando a consulta de contatos erra — hoje devolve false = **libera o envio**".
 Erro de RLS ou de rede ao checar a blacklist resulta em mensagem enviada a quem pediu opt-out.
-**Risco LGPD.** **Prova:** converter o `it.fails` em `it` que passa (fail-closed).
+**Risco LGPD.** Código-alvo: `src/hooks/integrations/useTalkXSuppression.ts` (a função que consulta a
+blacklist deve devolver "suprimido" quando a consulta falha, não `false`). Conferir também se
+`talkx-send` (edge) repete a checagem do lado do servidor — se repete e é fail-closed lá, o risco cai
+para "UI mostra errado"; se não repete, é envio real.
+**Prova:** converter o `it.fails` em `it` que passa (fail-closed), e anotar o resultado da conferência no PR.
 
 **Z009** · `deno check` de todas as edge functions no CI de PR. · EF-03
-Job novo no `ci.yml`: `deno check supabase/functions/**/index.ts`. É a causa-raiz de Z005/Z006.
-**Prova:** o job falha no commit anterior à Z005 e passa depois.
+Job novo no `ci.yml`: setup do Deno (`denoland/setup-deno` pinado por SHA, versão de `toolchain.json`) +
+`deno check supabase/functions/**/index.ts`. É a causa-raiz de Z005/Z006.
+**Atenção (R6):** adiciona job ao CI de PR, contrariando o "CI mínimo" de 16/10 — precisa da aprovação
+em bloco descrita na Parte 3. **Prova:** o job falha no commit anterior à Z005 e passa depois.
 
 **Z010** · `deno check` como gate do deploy. · EF-04
 `deploy-functions.yml`: passo de typecheck antes de `supabase functions deploy`.
@@ -213,9 +257,11 @@ o CodeQL não casa com o padrão — por isso sobreviveram a 5 rodadas de corre�
 `evolution-api/index.ts:66-71` hoje só faz `getUser()`, pulando `profiles.is_active` e a política de rede.
 **Usuário desativado com JWT válido continua enviando WhatsApp.** **Prova:** teste com perfil inativo → 403.
 
-**Z017** · `requireAuth` no `webhook-diagnostic`. · EF-13, EF-14
+**Z017** · `requireAuth` no `webhook-diagnostic` e no `get-sip-password`. · EF-13, EF-14, EF-17
 `webhook-diagnostic/index.ts:59-63`; capturar também o `error` da RPC de papel, hoje descartado.
-**Prova:** teste com perfil inativo e teste com RPC indisponível.
+`get-sip-password/index.ts:65-93` devolve a **senha SIP** no corpo e usa `getClaims` + leitura manual de
+`is_active` em vez de `requireAuth` — logo sem política de rede. Manter o duplo rate limit IP+usuário,
+que está correto. **Prova:** teste com perfil inativo e teste com RPC indisponível, nas duas funções.
 
 **Z018** · Validar `select` nas duas pontes de banco externo. · EF-15
 `external-db-bridge:159` e `external-db-proxy:137`: a allowlist cobre a tabela, não o `select`.
@@ -241,8 +287,14 @@ Hoje: 404, sem rulesets. Opção (a) restaurar branch protection com os checks q
 passam**; opção (b) registrar por escrito que o repo opera sem gate.
 **Não há opção (c).** Enquanto indefinido, todo documento que cite "required checks" está mentindo e
 um lote que não compila entra na `main` — como aconteceu em 16/10.
-**Recomendação:** (a), com apenas `🏗️ Build` obrigatório no primeiro momento. Um check verde e
-confiável vale mais que seis vermelhos.
+**Recomendação (corrigida em R2):** (a), em dois tempos.
+(1) **Hoje:** só `🔎 TypeCheck` como required — não depende de nenhum outro job e está verde no HEAD.
+(2) **Depois de Z024–Z028 deixarem `Unit Tests` e `Node CI Scripts` verdes:** acrescentar `🏗️ Build`.
+**Nunca antes:** `Build` tem `needs: [typecheck, unit-tests]`; com um shard vermelho ele fica *skipped*,
+e um required check que não reporta **bloqueia todo merge** — é o 405 "N of N expected" que o CLAUDE.md
+já viu três vezes. Um check verde e confiável vale mais que seis vermelhos.
+Ligar com `strict=true` (política vigente) e `enforce_admins=true`; registrar o estado medido no
+baseline (Z031) no mesmo turno.
 
 **Z022** · Corrigir as 51 exceções `pinned-replay`. · DB-03
 `migration-evidence.json`: as 51 entradas têm o campo `sql-sha256` (adicionado por `c41f5e573`) que não
@@ -428,7 +480,12 @@ oficial em 16/10. **Ou o lote nunca foi aplicado, ou os artefatos mentem.** Roda
 **Esta é a etapa mais importante da fase.** **Prova:** tabela objeto-a-objeto no PR.
 
 **Z068** · **[JOAQUIM] Aplicar o que a Z067 classificar como pendente.** · DB-05
-Via `db-migrate.yml` (dry-run → aprovação em `producao-ddl` → apply), nunca por MCP.
+`db-migrate.yml` recebe **uma** `migration_version` por dispatch, cada um com dry-run + aprovação humana
+em `producao-ddl`. Para 219 migrations isso é inviável (R3). O próprio workflow já tem um mecanismo de
+**bundle atômico** codificado no YAML (`ATOMIC_DELIVERY_BUNDLE`, `TALKX_RECOVERY_BUNDLE`, linhas ~195–199):
+o caminho é um PR que declare um `LOTE_880_BUNDLE` com as versions pendentes, e **um** dispatch.
+Alternativas que só o Joaquim pode escolher: lotes por semana (vários bundles), ou aplicação por `psql`
+com ele aprovando uma vez. **Nunca por MCP `db_query` em prosa** — é a origem dos 21 commits de drift.
 **Nenhuma migration nova deve entrar até este lote estar provado.**
 
 **Z069** · Regenerar catálogo e manifesto **depois** do apply, no mesmo turno. · DB-08
@@ -451,9 +508,10 @@ sempre". O SQL real existe nos arquivos. **Prova:** 62 exceções caem para 43.
 Confirmar o objeto ao vivo (`pg_get_functiondef`/`pg_indexes`) e promover para SQL real, como já foi feito
 em `e2d341ca4`.
 
-**Z074** · Mover 3 arquivos superados para `_superseded/`. · DB-44
+**Z074** · Mover 3 arquivos superados para `_superseded/` e documentar `_foreign/singu/`. · DB-44, DB-04
 `20260916230000_talkx_e93_settings.sql` (usa `CREATE POLICY IF NOT EXISTS`, que **não existe** no
 PostgreSQL — nunca rodou e nunca rodará), `20260927450000`, `20260929370000`.
+No mesmo PR: nota no `_foreign/README.md` sobre o subdiretório `singu/` (2 `.sql` que `ls _foreign/*.sql` perde).
 **Prova:** `replay-known-failures.json` cai de 21 para 18.
 
 **Z075** · Esvaziar `known-violations.json`. · DB-10
@@ -500,8 +558,14 @@ a chance de alguém reexecutar por engano não é zero.
 Ele próprio declara `"historical_content_proven": false` e não é revisitado há quase um mês.
 Ou provar cada entrada, ou apagar — um inventário que se declara não-prova dá falsa sensação de cobertura.
 
-**Z085** · Documentar o nível extra de subdiretório em `_foreign/`. · DB-04
-`_foreign/singu/` tem 2 `.sql` que qualquer script usando `ls _foreign/*.sql` perde.
+**Z085** · Tirar os contratos de runtime de dentro do `db-migrate.yml` (de novo). · CI-42, ciclo R5 (R8)
+O commit `9049c03f6` (03/10, "E62 tira os 12 contratos de runtime do db-migrate.yml") foi desfeito na
+prática: o arquivo tem hoje **1.479 linhas** com dezenas de `proof.definition_sha256 === '<64 hex>'`
+inline (`:351, :426, :489-492, :526-529, :586, :616-619, :637, :674-677, :704, :756-759, :775, :794, :811`),
+e `confirm-hash.unit.mjs:74` falha com "o workflow precisa invocar o script de validacao externo".
+Causa: adicionar contrato inline é 1 linha; em `scripts/db-audit/contracts/<versao>.sql` são 2 arquivos.
+Mover tudo para `contracts/` e deixar o YAML chamando `run-runtime-contract.mjs` (já existe, `:255`).
+**Prova:** `confirm-hash.unit.mjs` passa; zero hash literal no YAML.
 
 ---
 
@@ -520,8 +584,15 @@ Eles não rodam em workflow nenhum. É onde vive a lógica de **envio de mensage
 **24 funções** chamam provedor externo sem timeout nenhum. Um provedor lento segura o isolate até o teto.
 O padrão correto já existe em `_shared/evolution-api-proxy.ts:205-208`.
 
-**Z089–Z092** · Aplicar o timeout nas 24 funções, em 4 lotes. · EF-25
-Z089 ElevenLabs (9), Z090 Gmail (5), Z091 e-mail/alertas (6), Z092 Bitrix/mídia (4).
+**Z089–Z091** · Aplicar o timeout nas 24 funções, em 3 lotes. · EF-25
+Z089 ElevenLabs (9), Z090 Gmail (5), Z091 e-mail/alertas + Bitrix/mídia (10).
+Cada lote regenera o manifesto no mesmo PR (R4).
+
+**Z092** · Tratar 429 em POST para a Evolution GO como "reagendar", não como falha. · EF-31
+`_shared/evolution-api-proxy.ts:192-200`: `maxAttempts = isIdempotent ? MAX_RETRIES + 1 : 1` — correto
+para não duplicar envio, mas um 429 da GO em `/send/text` falha na hora, sem respeitar `Retry-After`.
+Devolver um erro tipado que `talkx-send`/`multiplix-send` tratem como reagendamento (eles já têm
+lease/backoff). **Prova:** teste com 429 + `Retry-After` → recipient volta para a fila, não para `failed`.
 
 **Z093** · `_shared/resend.ts`. · EF-26
 7 funções montam `fetch("https://api.resend.com/emails")` à mão, cada uma com tratamento de erro,
@@ -535,7 +606,13 @@ Base e header `xi-api-key` reescritos em 9 funções; `output_format=mp3_44100_1
 de `_shared`. **Duas implementações do mesmo gate de credencial** — foi assim que o 4º vazamento de token
 apareceu.
 
-**Z096** · `evolution-webhook` usa `_shared/edge-boot.ts`. · EF-29
+**Z096** · Expor qual commit de cada edge está em produção. · EF-53 (R11)
+Hoje a única versão exposta é `status/index.ts:26` → `Deno.env.get('ZAPP_BUILD_ID') ?? 'unknown'`, e
+`ZAPP_BUILD_ID` **não é setado em lugar nenhum** do `deploy-functions.yml`. "Mergeou ≠ está no ar" só se
+descobre lendo log de run. Setar `ZAPP_BUILD_ID=$GITHUB_SHA` no deploy (secret de função) e devolver
+`deployed_sha` em `/status`. É o complemento da Z004: ela conserta o deploy de hoje, esta impede que o
+descompasso volte a passar despercebido. (A troca do cache de client por `edge-boot.ts` — EF-29 — vai
+junto com a Z095, mesma função.) **Prova:** `GET /status` devolve o SHA do último deploy.
 
 **Z097** · `requireEnv` nas credenciais críticas. · EF-41, EF-42
 `?? ''` em `evolution-api:54,56,61`, `webhook-diagnostic:45,47,51`, `evolution-webhook:194-195`,
@@ -635,9 +712,18 @@ O inbox, os alertas e `voice/` nunca migraram. O pior caso é
 ~35 ocorrências. Com 797 linhas de presets de tema, um preset com `--primary` claro deixa texto branco
 ilegível — é o incidente de #755 em outra roupa.
 
-**Z118** · Varredura única de `S2871` e regras Sonar com `--fix`. · QA-30
-10 `fix(sonar)` + 2 refactor em 3 dias, com `01bbf6202` consertando a regressão de `936def714` do mesmo dia;
-a regra do comparador de `.sort()` foi corrigida **3 vezes**. Resolver por lint, não por PRs temáticas.
+**Z118** · Fechar os buracos de tipagem em caminho de **escrita** no banco. · FE-04, FE-06, FE-09, FE-11 (R9)
+(a) `useTalkXSettings.ts:11` — `const db = supabase as unknown as any` e depois `.update({...})` sem
+checagem de coluna; `talkx_settings` já existe no `types.ts`: trocar por `supabase` e deixar o erro aparecer.
+(b) 64 `as any` restantes, vários cobrindo o **payload inteiro** de um UPDATE
+(`evolution.service.ts:166`, `useAdminData.ts:372`, `useConnectionsManager.ts:346`,
+`useConversationActions.ts:318`, `useCustomEmojis.ts:234`, `useSentimentTrend.ts:104`). Os que dizem
+"RPC nova, types.ts ainda não sincronizado" já foram sincronizados (`840e37aa2`, `3f4417b3e`, `42b2b484d`).
+(c) `ToneSelector.tsx:15` — `TONE_OPTIONS.find(t => t.key === tone)!.prompt`: um tom persistido e depois
+removido da lista **derruba o painel de IA**. `?? TONE_OPTIONS[0].prompt`.
+(d) `useCampaignEditor.ts:649` — `campaign!.id` dentro de `queryFn`; capturar e lançar no topo.
+(A varredura Sonar — QA-30 — fica como regra de lint, sem PR própria.) **Prova:** `tsc` sem `as any` novo
+em `src/hooks/**` e `src/services/**`; teste para (c).
 
 **Z119** · **Criar `src/lib/queryKeys.ts`.** · FE-20
 212 chaves literais espalhadas (`'talkx-campaigns'` em 20 lugares, `'message-reactions'` em 9).
@@ -707,8 +793,34 @@ e já é usado em 6 lugares.
 Quebrada desde 12/10 (issue #1915, 17 testes). Foram 5 PRs em 2 dias, cada uma com uma causa diferente —
 sinal de que cada sessão viu só o sintoma da vez. **Fazer um diagnóstico só antes de qualquer correção.**
 
-**Z137–Z140** · Corrigir a suíte E2E logada conforme a Z136. · QA
-4 etapas reservadas; o conteúdo sai do diagnóstico.
+**Z137** · Corrigir a suíte E2E logada conforme a Z136. · QA
+Etapa reservada; o conteúdo sai do diagnóstico. Se o diagnóstico apontar mais de uma causa-raiz, abrir
+uma PR por causa **dentro desta mesma etapa**, com o mesmo sufixo `(Z137)` — não espalhar em 5 PRs sem
+diagnóstico, que foi o ciclo 10.
+
+**Z138** · Eliminar os 20 sleeps fixos e o retry por sleep do `auth.setup`. · QA-18, QA-24 (R10)
+`waitForTimeout` em `a11y-config-admin.spec.ts:118,229` (1.500 ms), `tarefas-linha-de-base.spec.ts:236,317`,
+`talkx-visual.spec.ts:85`, `inbox-contraste.spec.ts:38` (o comentário admite "margem para a tela assentar"),
+`email-navy-visual.spec.ts:117,146,548`, `auth.setup.ts:75` e mais 10. O `auth.setup.ts` já foi causa-raiz
+de flakiness **duas vezes** (`87dd50ea2` em 02/10, `58cc986f4` em 15/10) e todo o bloco autenticado depende
+dele: trocar a detecção de erro por seletor específico do banner de login e o sleep por `expect(...).toBeVisible()`.
+Também: `email-navy-visual.spec.ts:155,226,331,500` faz busy-wait sem teto sobre `axe._running` (campo
+privado) — serializar com fila própria. **Prova:** `grep -c waitForTimeout e2e/` = 0.
+
+**Z139** · Tirar `SUPABASE_SERVICE_ROLE_KEY` do E2E de verdade. · CI-46 (R8)
+O commit `2e9b80802` (15/10, "W74 tira service_role do E2E") e o comentário E25 em
+`e2e-logado.yml:243-251` celebram que "a chave mestra do banco sai do CI" — mas o **segundo** teardown
+(`:252-269`) ainda faz `curl -X DELETE` com `secrets.SUPABASE_SERVICE_ROLE_KEY` contra
+`https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/catalog_send_events`. Criar uma RPC `SECURITY DEFINER`
+para o catálogo, igual à `e2e_cleanup_conversation_closures`, e remover o secret do workflow.
+**Prova:** `grep SERVICE_ROLE .github/workflows/e2e-logado.yml` vazio.
+
+**Z140** · Mover os secrets do E2E para um `environment`. · CI-47 (R8)
+`e2e-logado.yml` consome `E2E_TEST_EMAIL`, `E2E_TEST_PASSWORD` e (até a Z139) a service_role como secrets
+de **repositório**, sem `environment:` — enquanto `db-live-guard`, `types-sync`, `db-migrate`,
+`deploy-functions` e `targeted-ledger-evidence` já declaram o seu. Criar `e2e-producao` com branch policy
+restrita à `main`. Se a Z141 (banco local) for aprovada, este environment vira o lugar dos overrides.
+**Prova:** os três secrets não existem mais no escopo de repositório.
 
 **Z141** · **[JOAQUIM] Apontar o E2E para o banco local.** · QA-21, QA-22
 A suíte escreve em **produção**: `supabase-env.ts:40-47` tem `.env.production` como fonte primária; o 7º
@@ -776,9 +888,13 @@ baseline por zero cobertura — e as 101 promises flutuantes silenciadas em `d0b
 Órfão. O repo é **público** e nenhum passo inspeciona `dist/`. Cabe no job `🏗️ Build`, que é o único que
 produz `dist/`.
 
-**Z154** · `bun audit --audit-level=high` no CI. · CI-55
+**Z154** · `bun audit --audit-level=high` no CI e CodeQL de volta em PR com filtro de paths. · CI-55, CI-53 (R8)
 Nenhum workflow verifica vulnerabilidade de dependência: sem `bun audit`, sem dependency-review, sem
-gitleaks, sem scorecard. Custa segundos.
+gitleaks, sem scorecard. Custa segundos. E **nenhum SAST roda antes do merge**: o CodeQL saiu do PR em
+16/10 (um dia depois de `279cb7960` tê-lo tornado required) e só roda às segundas — código novo fica até
+7 dias sem análise estática. Se o custo em PR era o problema, o filtro de paths do E78 (`1e4b81ebf`,
+"CodeQL deixa de rodar em PR que so mexe em docs") já existia — restaurar o gatilho com ele, não remover.
+**Prova:** PR que mexe em `src/` dispara CodeQL; PR só de `docs/` não.
 
 **Z155** · `render-workflow-docs.mjs --check` no CI. · CI-08, QA-49
 O gerador existe e `--check` não roda em lugar nenhum; `docs/ci/README.md` diz "11 workflows" quando há 14.
@@ -806,6 +922,10 @@ commits, com a suíte indo de 494 para 1.812 arquivos. Ratchet que nunca sobe é
 164 arquivos de `src/` nunca são nomeados em teste algum. Os três que produzem incidente silencioso:
 `src/lib/webauthnUtils.ts` (WebAuthn/MFA — **zero** cobertura), `src/hooks/chat/useMessageStatus.ts`
 (status de entrega de mensagem), `src/hooks/auth/useSecureProfile.ts`.
+Quarto, por ser **dinheiro**: a agregação de consumo/cobrança de IA (QA-17). O único teste da janela
+anterior é um `it.fails` (`useAIStats.test.tsx:240`, "erro de leitura vira alta de 100%") e
+`AIUsageUsersTab.tsx` não tem teste; erros de contagem faturável já aconteceram duas vezes (`#1789`, `#1711`).
+Teste de unidade sobre janela, fuso e "sessão sem request" antes de mexer de novo em IA-05x.
 
 ---
 
@@ -847,9 +967,13 @@ nova. **Maior ganho isolado desta fase.**
 `claude/<slug>-<AAMMDD-HHMM>` já carrega a informação — basta preservá-la no corpo do commit
 via `Co-Authored-By`. Sem isso, "qual sessão fez isso" é inauditável.
 
-**Z170** · Publicar a métrica "conserto de conserto". · QA-25
+**Z170** · Publicar as duas métricas que faltam: "conserto de conserto" e "flaky". · QA-25, QA-20, QA-68
 116 de 151 `fix` tocam arquivo alterado nas 48 h anteriores. É o KPI que falta — usá-lo para decidir se o
 ritmo de merge está acima da capacidade de validação.
+E no E2E: `RETRIES_LOGADOS = 2` em CI significa que um teste que falha 2 de 3 vezes é indistinguível de um
+verde — não há contagem de `flaky` publicada. `reporter: [['html'],['github'],['json']]` e só os contadores
+agregados no Job Summary (sem artefato, sem vazar e-mail — o cabeçalho do workflow explica por que o upload
+foi removido). Falhar o job acima de um limiar de `flaky`.
 
 **Z171** · **[JOAQUIM] Limite de tamanho de lote.** · DB-37, QA-40, FE-49
 O lote de 880 cartões entrou com 219 migrations e 33.838 linhas num commit, não compilou, foi revertido e
@@ -980,8 +1104,18 @@ zero; o de executá-lo é tudo. **Este documento é o último até essa régua m
 - **Antes de abrir PR:** listar PRs abertas e conferir sobreposição de arquivos (regra 3 do CLAUDE.md).
   Havia 27 PRs abertas quando este plano foi escrito. Se existe PR tocando os mesmos arquivos, **pare e avise**.
 - **Nunca trabalhar em branch de outra sessão**, mesmo que trate do mesmo assunto.
-- **Etapas [JOAQUIM] não são executáveis por agente.** São 14: Z001, Z002, Z021, Z030, Z033, Z056, Z068,
-  Z106, Z110, Z141, Z145, Z152, Z171, Z175, Z200.
+- **Etapas [JOAQUIM] não são executáveis por agente.** São 15: Z001, Z002, Z021, Z030, Z033, Z056, Z068,
+  Z106, Z110, Z141, Z145, Z152, Z171, Z175, Z200. (R7)
+- **"CI mínimo" foi decisão do Joaquim em 16/10.** As etapas que acrescentam job ou passo ao CI de PR —
+  Z009, Z087, Z145, Z149, Z152, Z153, Z154, Z155 — contrariam essa decisão. Antes de começar qualquer uma,
+  pedir **uma** aprovação em bloco, apresentando o custo (minutos de runner por PR) de cada uma. Executar
+  sem isso é ser revertido na semana seguinte. (R6)
+- **Toda etapa que toca `supabase/functions/` regenera o manifesto no mesmo PR.** O
+  `deployment-manifest.json` tem `source_sha256` por função e `_shared/` entra em todas; sem
+  `node scripts/edge-deploy/generate-manifest.mjs` no mesmo commit, a etapa deixa o deploy vermelho de novo
+  e repete o ciclo 1. Isso vale até a Z086 tirar o manifesto do versionamento. (R4)
+- **Deno não está no container.** `.github/toolchain.json` fixa `2.9.5`; instalar essa versão antes de
+  Z005, Z009, Z087 e de qualquer `deno check`. (R14)
 - **Toda etapa precisa de prova.** "Pronto" = PR mergeada + CI verde + comportamento verificado
   (log, query ou request real). Faltou um dos três → diga em que ponto parou.
 - **Se uma etapa já estiver feita** (outra sessão chegou antes), marcar `CONCLUÍDA POR <hash>` e seguir.
@@ -995,6 +1129,10 @@ zero; o de executá-lo é tudo. **Este documento é o último até essa régua m
 `enforceRateLimit` sem `ctx` em `validation.ts:359-370` · `deployment-manifest.json` stale ·
 `bun install --frozen-lockfile` passa · `role "root" does not exist` no `db-guard` ·
 Playwright `1.63.0` vs `1.64.1`.
+Na segunda leitura: `db-migrate.yml` aceita uma `migration_version` por dispatch e tem bundles hardcoded
+(`:195-199`) · manifesto tem `source_sha256` por função com `_shared/` incluído · `🏗️ Build` tem
+`needs: [typecheck, unit-tests]` · só 1 policy `USING (true)` sem `TO` em todo o repo ·
+`record_failed_login` é `SECURITY DEFINER` · Deno `2.9.5` em `toolchain.json`.
 
 ### Achados marcados `[NÃO CONFIRMADO]` — verificar antes de agir
 
