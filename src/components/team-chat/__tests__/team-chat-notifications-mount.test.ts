@@ -13,6 +13,19 @@ const h = vi.hoisted(() => ({
 
 vi.mock('@/lib/logger', () => ({
   getLogger: () => ({ info: vi.fn(), error: vi.fn() }),
+  createLogger: () => ({ info: vi.fn(), error: vi.fn() }),
+}));
+// @/providers/AppProviders é dublado abaixo como passthrough (sem contexto
+// real); DeferredProviders (App.tsx) chama useAuth() direto — dubla também,
+// senão quebra com "useAuth must be used within an AuthProvider".
+vi.mock('@/hooks/auth/useAuth', () => ({
+  useAuth: () => ({ profile: null, user: null, session: null, loading: false }),
+}));
+// Dependência real de DeferredProviders (useGlobalIncomingMessageAlerts ->
+// useSupabaseRealtime -> supabase.channel): o assunto aqui é só o listener do
+// Team Chat (TC-007), então essa cadeia vira no-op, como os outros overlays.
+vi.mock('@/hooks/realtime/useGlobalIncomingMessageAlerts', () => ({
+  useGlobalIncomingMessageAlerts: vi.fn(),
 }));
 vi.mock('@/components/ui/toaster', () => ({ Toaster: () => null }));
 vi.mock('@/components/ui/sonner', () => ({ Toaster: () => null }));

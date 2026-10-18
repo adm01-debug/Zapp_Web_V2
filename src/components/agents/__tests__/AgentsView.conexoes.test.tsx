@@ -110,6 +110,13 @@ vi.mock('@/hooks/crm/useAgentPresence', () => ({
   useAgentPresenceMap: () => ({}),
 }));
 
+// AgentsView monta o InviteAgentDialog (sempre no DOM, mesmo fechado), que lê
+// o papel via useUserRole -> useAuth. Sem AuthProvider no teste, dubla o papel
+// direto — mesmo padrão já usado em AgentsView.capacidade/.pendencias.
+vi.mock('@/hooks/system/useUserRole', () => ({
+  useUserRole: () => ({ isAdmin: true, isSupervisor: true, loading: false }),
+}));
+
 import { AgentsView } from '@/components/agents/AgentsView';
 
 function renderView() {
