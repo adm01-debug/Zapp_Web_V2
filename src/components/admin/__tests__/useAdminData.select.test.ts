@@ -18,7 +18,10 @@ vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: (t: string) => {
       const b: Record<string, unknown> = {};
-      b.select = (cols: string) => { selects.push({ table: t, cols }); return b; };
+      b.select = (cols: string) => {
+        selects.push({ table: t, cols });
+        return b;
+      };
       for (const m of ['order', 'limit', 'eq', 'in', 'neq']) b[m] = () => b;
       b.then = (resolve: (v: unknown) => unknown) =>
         Promise.resolve({ data: [], error: null }).then(resolve);
@@ -30,14 +33,18 @@ vi.mock('@/integrations/supabase/client', () => ({
 import { useAdminData } from '@/components/admin/useAdminData';
 
 describe('useAdminData — select explícito em audit_logs', () => {
-  beforeEach(() => { selects.length = 0; });
+  beforeEach(() => {
+    selects.length = 0;
+  });
 
   it('.select() da aba de auditoria usa lista explícita (sem select("*"))', async () => {
     const { result } = renderHook(() => useAdminData('audit'));
 
-    await act(async () => { await result.current.fetchData(); });
+    await act(async () => {
+      await result.current.fetchData();
+    });
 
-    const al = selects.filter(s => s.table === 'audit_logs');
+    const al = selects.filter((s) => s.table === 'audit_logs');
     expect(al.length).toBeGreaterThan(0);
     for (const s of al) expect(s.cols).not.toBe('*');
 
