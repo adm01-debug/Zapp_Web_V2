@@ -68,6 +68,10 @@ export function useKnowledgeBase() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [files, setFiles] = useState<KBFile[]>([]);
   const [loading, setLoading] = useState(true);
+  // t_1944d290: antes só checava `data` — um erro de rede/RLS deixava
+  // articles/files vazios e a tela anunciava "Nenhum arquivo enviado" com a
+  // leitura quebrada. `error` distingue "sem dado" de "a leitura falhou".
+  const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -78,6 +82,15 @@ export function useKnowledgeBase() {
         .order('updated_at', { ascending: false }),
       supabase.from('knowledge_base_files').select('*').order('created_at', { ascending: false }),
     ]);
+    const failureMessage = articlesRes.error?.message ?? filesRes.error?.message ?? null;
+    if (failureMessage) {
+      setError(failureMessage);
+      setArticles([]);
+      setFiles([]);
+      setLoading(false);
+      return;
+    }
+    setError(null);
     if (articlesRes.data)
       setArticles(articlesRes.data.map((a) => ({ ...a, tags: a.tags || [] })) as Article[]);
     if (filesRes.data) setFiles(filesRes.data as KBFile[]);
@@ -343,6 +356,7 @@ export function useKnowledgeBase() {
     articles,
     files,
     loading,
+    error,
     fetchData,
     saveArticle,
     deleteArticle,

@@ -71,6 +71,7 @@ export function KnowledgeBaseView() {
     articles,
     files,
     loading,
+    error,
     fetchData,
     saveArticle,
     deleteArticle,
@@ -221,211 +222,232 @@ export function KnowledgeBaseView() {
         }
       />
 
-      <div className="grid grid-cols-2 gap-3 px-6 pb-4 md:grid-cols-4">
-        {[
-          {
-            icon: BookOpen,
-            color: 'bg-primary/20',
-            textColor: 'text-primary',
-            label: 'Artigos',
-            value: articles.length,
-          },
-          {
-            icon: File,
-            color: 'bg-secondary/20',
-            textColor: 'text-secondary',
-            label: 'Arquivos',
-            value: files.length,
-          },
-          {
-            icon: CheckCircle,
-            color: 'bg-success/20',
-            textColor: 'text-success',
-            label: 'Publicados',
-            value: articles.filter((a) => a.is_published).length,
-          },
-          {
-            icon: Brain,
-            color: 'bg-primary/20',
-            textColor: 'text-primary',
-            label: 'Indexados',
-            value: articles.filter((a) => a.embedding_status === 'completed').length,
-          },
-        ].map(({ icon: Icon, color, textColor, label, value }) => (
-          <Card key={label} className="border-border/30 bg-card/50">
-            <CardContent className="flex items-center gap-3 p-4">
-              <div className={`h-10 w-10 rounded-lg ${color} flex items-center justify-center`}>
-                <Icon className={`h-5 w-5 ${textColor}`} />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">{label}</p>
-                <p className="text-lg font-bold">{value}</p>
-              </div>
+      {error ? (
+        // t_1944d290: leitura quebrada não pode virar "base vazia" — nem
+        // contadores zerados fabricados, nem "Nenhum arquivo enviado" (as
+        // duas leituras diriam "sem dado" quando o dado é que não chegou).
+        <div className="px-6">
+          <Card className="border-destructive/30" data-testid="kb-error">
+            <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
+              <AlertCircle className="h-8 w-8 text-destructive" />
+              <p role="alert" className="text-muted-foreground">
+                Não foi possível carregar a base de conhecimento
+              </p>
+              <Button variant="outline" onClick={fetchData}>
+                <RefreshCw className="mr-2 h-4 w-4" /> Tentar novamente
+              </Button>
             </CardContent>
           </Card>
-        ))}
-      </div>
-
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 px-6">
-        <TabsList>
-          <TabsTrigger value="articles">Artigos</TabsTrigger>
-          <TabsTrigger value="files">Arquivos</TabsTrigger>
-        </TabsList>
-        <TabsContent value="articles" className="mt-4 flex-1">
-          <div className="mb-4 flex gap-3">
-            <div className="relative max-w-sm flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Buscar artigos..."
-                className="pl-9"
-              />
-            </div>
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="w-40" aria-label="Filtrar por categoria">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas</SelectItem>
-                {CATEGORIES.map((c) => (
-                  <SelectItem key={c} value={c}>
-                    {CATEGORY_LABELS[c]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid grid-cols-1 gap-4 overflow-y-auto pb-6 md:grid-cols-2 lg:grid-cols-3">
-            <AnimatePresence>
-              {filteredArticles.map((article) => (
-                <motion.div
-                  key={article.id}
-                  layout
-                  initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
-                  animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
-                  exit={prefersReducedMotion ? undefined : { opacity: 0 }}
-                >
-                  <Card className="group h-full border-border/30 bg-card/50 transition-all hover:border-secondary/30">
-                    <CardContent className="p-4">
-                      <div className="mb-2 flex items-start justify-between">
-                        <div className="flex items-center gap-2">
-                          {statusIcon(article.embedding_status)}
-                          <Badge variant="outline" className="text-3xs">
-                            {CATEGORY_LABELS[article.category] || article.category}
-                          </Badge>
-                        </div>
-                        <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
-                            aria-label={`Editar artigo: ${article.title}`}
-                            onClick={() => openEdit(article)}
-                          >
-                            <Edit className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 text-destructive"
-                            aria-label={`Excluir artigo: ${article.title}`}
-                            onClick={() => deleteArticle(article.id)}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </div>
-                      <h2 className="mb-1 text-sm font-semibold text-foreground">
-                        {article.title}
-                      </h2>
-                      <p className="mb-3 line-clamp-3 text-xs text-muted-foreground">
-                        {article.content}
-                      </p>
-                      <div className="flex flex-wrap items-center gap-1">
-                        {article.tags.slice(0, 3).map((tag) => (
-                          <Badge key={tag} variant="secondary" className="h-4 text-3xs">
-                            {tag}
-                          </Badge>
-                        ))}
-                        {!article.is_published && (
-                          <Badge
-                            variant="outline"
-                            className="h-4 border-warning/30 text-3xs text-warning"
-                          >
-                            Rascunho
-                          </Badge>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
-        </TabsContent>
-        <TabsContent value="files" className="mt-4">
-          <div className="space-y-2 pb-6">
-            {files.map((file) => (
-              <Card key={file.id} className="border-border/30 bg-card/50">
-                <CardContent className="flex items-center gap-3 p-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted/50">
-                    <FileText className="h-5 w-5 text-muted-foreground" />
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 gap-3 px-6 pb-4 md:grid-cols-4">
+            {[
+              {
+                icon: BookOpen,
+                color: 'bg-primary/20',
+                textColor: 'text-primary',
+                label: 'Artigos',
+                value: articles.length,
+              },
+              {
+                icon: File,
+                color: 'bg-secondary/20',
+                textColor: 'text-secondary',
+                label: 'Arquivos',
+                value: files.length,
+              },
+              {
+                icon: CheckCircle,
+                color: 'bg-success/20',
+                textColor: 'text-success',
+                label: 'Publicados',
+                value: articles.filter((a) => a.is_published).length,
+              },
+              {
+                icon: Brain,
+                color: 'bg-primary/20',
+                textColor: 'text-primary',
+                label: 'Indexados',
+                value: articles.filter((a) => a.embedding_status === 'completed').length,
+              },
+            ].map(({ icon: Icon, color, textColor, label, value }) => (
+              <Card key={label} className="border-border/30 bg-card/50">
+                <CardContent className="flex items-center gap-3 p-4">
+                  <div className={`h-10 w-10 rounded-lg ${color} flex items-center justify-center`}>
+                    <Icon className={`h-5 w-5 ${textColor}`} />
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{file.file_name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {file.file_size ? `${(file.file_size / 1024).toFixed(1)} KB` : 'N/A'} •{' '}
-                      {new Date(file.created_at).toLocaleDateString('pt-BR')}
-                    </p>
-                    {file.processing_status === 'failed' && (
-                      <p role="status" className="mt-0.5 text-xs text-destructive">
-                        {MOTIVO_FALHA}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {statusIcon(file.processing_status)}
-                    <Badge variant="outline" className="text-3xs">
-                      {file.processing_status}
-                    </Badge>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="gap-1 text-secondary"
-                      aria-label={`Reprocessar arquivo: ${file.file_name}`}
-                      aria-busy={reprocessingIds.has(file.id) ? 'true' : undefined}
-                      disabled={
-                        file.processing_status === 'processing' || reprocessingIds.has(file.id)
-                      }
-                      onClick={() => handleReprocessFile(file.id, file.processing_status)}
-                    >
-                      <RefreshCw className="h-3.5 w-3.5" /> Reprocessar
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-destructive"
-                      aria-label={`Excluir arquivo: ${file.file_name}`}
-                      aria-busy={deletingIds.has(file.id) ? 'true' : undefined}
-                      disabled={deletingIds.has(file.id)}
-                      onClick={(e) => openDeleteDialog(file, e.currentTarget)}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
+                  <div>
+                    <p className="text-xs text-muted-foreground">{label}</p>
+                    <p className="text-lg font-bold">{value}</p>
                   </div>
                 </CardContent>
               </Card>
             ))}
-            {files.length === 0 && (
-              <div className="py-12 text-center text-muted-foreground">
-                <Upload className="mx-auto mb-3 h-10 w-10 opacity-30" />
-                <p className="text-sm">Nenhum arquivo enviado</p>
-              </div>
-            )}
           </div>
-        </TabsContent>
-      </Tabs>
+
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 px-6">
+            <TabsList>
+              <TabsTrigger value="articles">Artigos</TabsTrigger>
+              <TabsTrigger value="files">Arquivos</TabsTrigger>
+            </TabsList>
+            <TabsContent value="articles" className="mt-4 flex-1">
+              <div className="mb-4 flex gap-3">
+                <div className="relative max-w-sm flex-1">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Buscar artigos..."
+                    className="pl-9"
+                  />
+                </div>
+                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <SelectTrigger className="w-40" aria-label="Filtrar por categoria">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas</SelectItem>
+                    {CATEGORIES.map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {CATEGORY_LABELS[c]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-1 gap-4 overflow-y-auto pb-6 md:grid-cols-2 lg:grid-cols-3">
+                <AnimatePresence>
+                  {filteredArticles.map((article) => (
+                    <motion.div
+                      key={article.id}
+                      layout
+                      initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
+                      animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
+                      exit={prefersReducedMotion ? undefined : { opacity: 0 }}
+                    >
+                      <Card className="group h-full border-border/30 bg-card/50 transition-all hover:border-secondary/30">
+                        <CardContent className="p-4">
+                          <div className="mb-2 flex items-start justify-between">
+                            <div className="flex items-center gap-2">
+                              {statusIcon(article.embedding_status)}
+                              <Badge variant="outline" className="text-3xs">
+                                {CATEGORY_LABELS[article.category] || article.category}
+                              </Badge>
+                            </div>
+                            <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                aria-label={`Editar artigo: ${article.title}`}
+                                onClick={() => openEdit(article)}
+                              >
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 text-destructive"
+                                aria-label={`Excluir artigo: ${article.title}`}
+                                onClick={() => deleteArticle(article.id)}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+                          <h2 className="mb-1 text-sm font-semibold text-foreground">
+                            {article.title}
+                          </h2>
+                          <p className="mb-3 line-clamp-3 text-xs text-muted-foreground">
+                            {article.content}
+                          </p>
+                          <div className="flex flex-wrap items-center gap-1">
+                            {article.tags.slice(0, 3).map((tag) => (
+                              <Badge key={tag} variant="secondary" className="h-4 text-3xs">
+                                {tag}
+                              </Badge>
+                            ))}
+                            {!article.is_published && (
+                              <Badge
+                                variant="outline"
+                                className="h-4 border-warning/30 text-3xs text-warning"
+                              >
+                                Rascunho
+                              </Badge>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
+            </TabsContent>
+            <TabsContent value="files" className="mt-4">
+              <div className="space-y-2 pb-6">
+                {files.map((file) => (
+                  <Card key={file.id} className="border-border/30 bg-card/50">
+                    <CardContent className="flex items-center gap-3 p-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted/50">
+                        <FileText className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium">{file.file_name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {file.file_size ? `${(file.file_size / 1024).toFixed(1)} KB` : 'N/A'} •{' '}
+                          {new Date(file.created_at).toLocaleDateString('pt-BR')}
+                        </p>
+                        {file.processing_status === 'failed' && (
+                          <p role="status" className="mt-0.5 text-xs text-destructive">
+                            {MOTIVO_FALHA}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {statusIcon(file.processing_status)}
+                        <Badge variant="outline" className="text-3xs">
+                          {file.processing_status}
+                        </Badge>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-1 text-secondary"
+                          aria-label={`Reprocessar arquivo: ${file.file_name}`}
+                          aria-busy={reprocessingIds.has(file.id) ? 'true' : undefined}
+                          disabled={
+                            file.processing_status === 'processing' || reprocessingIds.has(file.id)
+                          }
+                          onClick={() => handleReprocessFile(file.id, file.processing_status)}
+                        >
+                          <RefreshCw className="h-3.5 w-3.5" /> Reprocessar
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-destructive"
+                          aria-label={`Excluir arquivo: ${file.file_name}`}
+                          aria-busy={deletingIds.has(file.id) ? 'true' : undefined}
+                          disabled={deletingIds.has(file.id)}
+                          onClick={(e) => openDeleteDialog(file, e.currentTarget)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+                {files.length === 0 && (
+                  <div className="py-12 text-center text-muted-foreground">
+                    <Upload className="mx-auto mb-3 h-10 w-10 opacity-30" />
+                    <p className="text-sm">Nenhum arquivo enviado</p>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
+        </>
+      )}
 
       <Dialog open={showEditor} onOpenChange={setShowEditor}>
         <DialogContent aria-describedby={undefined} size="xl">
