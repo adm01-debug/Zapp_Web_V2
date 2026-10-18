@@ -131,7 +131,18 @@ export const RULE_FIELDS: {
   },
   { value: 'email', label: 'E-mail', kind: 'text', category: 'basico' },
   { value: 'channel_type', label: 'Canal de origem', kind: 'text', category: 'basico' },
-  { value: 'lead_origin', label: 'Origem do lead', kind: 'text', category: 'basico' },
+  // Hoje só ganha o literal fixo 'whatsapp' nos contatos derivados do adapter
+  // (src/adapters/evolutionAdapter.ts) — não varia por contato real, então
+  // filtrar por ele seria um filtro morto (como lead_score/risk_score). A
+  // cópia local em src/segments/segmentRules.ts já tinha comingSoon aqui;
+  // só a fonte canônica (este array) estava desatualizada.
+  {
+    value: 'lead_origin',
+    label: 'Origem do lead',
+    kind: 'text',
+    category: 'basico',
+    comingSoon: true,
+  },
   { value: 'assigned_to', label: 'Responsável', kind: 'uuid', category: 'comercial' },
   // Tipos de contato e status de conversa vem das fontes canonicas: uma regra de segmento
   // nunca pode oferecer valor que o banco rejeita (a lista local tinha 'lead'/'sicoob_gifts',
@@ -317,6 +328,30 @@ export function splitRules(rules: SegmentRules | null | undefined): {
 // porque o escape da virgula, ao passar por esta funcao, dobrava a barra).
 const quoted = (v: string) => `"${v.replace(/[\\"]/g, (c) => (c === '\\' ? '\\\\' : '\\"'))}"`;
 
+/**
+ * t_124005a8 (refazer 2) — `real_sector`/`real_uf` vivem na ponte Singu
+ * (`companies.ramo_atividade`, `company_addresses.estado`), não em colunas de
+ * `contacts`. O front ainda não resolve essas regras em `p_contact_ids`
+ * (lista de contatos elegíveis) antes de chamar o motor — e simplesmente
+ * remover a regra (a tentativa anterior) deixava `groups: []`, que o motor
+ * lê como "sem filtro" (base inteira), ampliando a audiência sem
+ * consentimento. Enquanto a pré-resolução não existe: falha fechada, nunca
+ * manda a regra (nem o grupo sem ela) ao motor.
+ */
+const SINGU_BRIDGE_FIELDS = new Set<RuleField>(['real_sector', 'real_uf']);
+
+function assertNoUnresolvedSinguBridgeRule(rules: SegmentRules | null | undefined): void {
+  for (const group of rules?.groups ?? []) {
+    for (const rule of group.rules) {
+      if (SINGU_BRIDGE_FIELDS.has(rule.field)) {
+        throw new Error(
+          `Regra de segmento inválida: ${rule.field} precisa de p_contact_ids pré-resolvidos (ponte Singu) — o front ainda não resolve essa regra.`
+        );
+      }
+    }
+  }
+}
+
 function ruleToFilter(r: SegmentRule): string | null {
   const def = RULE_FIELDS.find((f) => f.value === r.field);
   if (!def) return null;
@@ -380,6 +415,7 @@ function ruleToFilter(r: SegmentRule): string | null {
  * silenciosamente removida: isso ampliaria a audiência sem consentimento.
  */
 export function rulesToPostgrest(rules: SegmentRules | null | undefined): string | null {
+  assertNoUnresolvedSinguBridgeRule(rules);
   const rawGroups = rules?.groups ?? [];
   const groups = rawGroups
     .map((g) => {
@@ -403,6 +439,7 @@ export function rulesToPostgrest(rules: SegmentRules | null | undefined): string
 function audienceRulesPayload(rules: SegmentRules | null | undefined): {
   groups: SegmentRuleGroup[];
 } {
+  assertNoUnresolvedSinguBridgeRule(rules);
   return { groups: rules?.groups ?? [] };
 }
 
@@ -427,7 +464,7 @@ export async function countAudience(
   rules: SegmentRules | null | undefined,
   segmentIds?: string[]
 ): Promise<number> {
-  const rpc = supabase.rpc as unknown as TalkXAudienceRpc;
+  const rpc = supabase.rpc.bind(supabase) as unknown as TalkXAudienceRpc;
   const { data, error } = await rpc('talkx_resolve_audience', {
     p_rules: audienceRulesPayload(rules),
     p_segment_ids: segmentIds ?? null,
@@ -460,7 +497,7 @@ export async function resolveAudience(
   limit = 5000,
   segmentIds?: string[]
 ): Promise<AudienceContact[]> {
-  const rpc = supabase.rpc as unknown as TalkXAudienceRpc;
+  const rpc = supabase.rpc.bind(supabase) as unknown as TalkXAudienceRpc;
   const target = Math.max(0, Math.floor(limit));
   const rows: AudienceContact[] = [];
   let after: string | null = null;
@@ -571,7 +608,7 @@ export function useSegmentLibraryStats() {
   return useQuery({
     queryKey: LIBRARY_STATS_QUERY_KEY,
     queryFn: async () => {
-      const rpc = supabase.rpc as unknown as TalkXLibraryStatsRpc;
+      const rpc = supabase.rpc.bind(supabase) as unknown as TalkXLibraryStatsRpc;
       const { data, error } = await rpc('talkx_segment_library_stats', {
         p_timezone: SEGMENT_TIMEZONE,
       });
@@ -663,7 +700,7 @@ export async function applySegmentBulkAction(input: {
   // Falha fechada ANTES de chamar o servidor: entrada inválida não aplica nada.
   if (input.action === 'tag' && !tag) throw new Error('Informe a tag para aplicar em massa.');
 
-  const rpc = supabase.rpc as unknown as TalkXBulkRpc;
+  const rpc = supabase.rpc.bind(supabase) as unknown as TalkXBulkRpc;
   const results: TalkXSegmentBulkResult[] = [];
 
   for (let start = 0; start < ids.length; start += BULK_ACTION_MAX_IDS) {
