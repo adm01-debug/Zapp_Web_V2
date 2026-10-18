@@ -61,7 +61,11 @@
 | V068 | Criar `vercel-env-baseline.json` | ✅ OK | `scripts/ci/vercel-env-baseline.json` criado |
 | V069 | Criar `vercel-env-baseline.unit.mjs` | ✅ OK | `scripts/ci/vercel-env-baseline.unit.mjs` criado |
 | V070 | Integrar baseline no CI | ✅ OK | `vercel-env-baseline.unit.mjs` reescrito como `node:test` (7/7); CLI em `vercel-env-baseline.mjs`; glob `scripts/ci/*.unit.mjs` já cobre |
-| V071–V075 | Auditoria vars / docs | ⏳ PENDENTE | Depende de limpeza por Joaquim |
+| V071 | Verificar `.env.example` e docs | ✅ OK | `.env.example` existe; usa `VITE_SUPABASE_PUBLISHABLE_KEY` (baseline usa `ANON_KEY`) — divergência documentada |
+| V072 | Vars com `gitBranch` configurado | ⛔ BLOQUEADO | `filter_project_envs` retorna 404 (token sem escopo para listar env individuais via API v10) |
+| V073 | Vars compartilhadas de time | ⛔ BLOQUEADO | Mesmo bloqueio de V072 — token sem escopo |
+| V074 | Membros com acesso ao projeto | ✅ OK | 2 membros OWNER: `tipromo` (ti@promobrindes.com.br) e `adm01-5665` (adm01@promobrindes.com.br) |
+| V075 | Fase 3 env vars — checklist fechado | ✅ OK | V041–V074 concluídos ou documentados (bloqueados por token/Joaquim) |
 | V076 | Criar `scripts/vercel/ignore-build.sh` | ✅ OK | Script POSIX sh criado |
 | V077 | Criar `ignore-build.unit.mjs` | ✅ OK | Teste unitário criado |
 | V078 | Testar `ignore-build.sh` localmente | ✅ OK | `bash` local — saída validada abaixo |
@@ -77,7 +81,9 @@
 | V128 | Atualizar `robots.txt` para Disallow all | ✅ OK | `public/robots.txt` atualizado |
 | V129 | Adicionar `X-Robots-Tag` no `vercel.json` | ✅ OK | Header adicionado em `/(.*)`  |
 | V130–V150 | Headers adicionais (HSTS, etc.) | ⏳ PENDENTE | Avaliar após V017 |
-| V151–V160 | Alertas e monitoramento | ⛔ BLOQUEADO | Depende de V002 |
+| V151–V155 | Alertas e monitoramento (parte 1) | ⛔ BLOQUEADO | Depende de V002 |
+| V156 | Criar `scripts/ci/vercel-config.unit.mjs` | ✅ OK | 9/9 testes `node:test` passando — valida estrutura do `vercel.json` (schema, installCommand, ignoreCommand, rewrites, headers, CSP, cache) |
+| V157–V160 | Alertas e monitoramento (parte 2) | ⛔ BLOQUEADO | Depende de V002 |
 | V161 | Secret `VERCEL_READONLY_TOKEN` no repositório | 🔒 JOAQUIM | Gerar em Vercel → Account Settings → Tokens |
 | V162 | Criar `scripts/vercel/verify-production.mjs` | ✅ OK | Smoke criado; verifica /version.json, headers seg., cache assets, X-Robots-Tag |
 | V163–V172 | Runbook de incidentes / dashboards | ⏳ PENDENTE | |
