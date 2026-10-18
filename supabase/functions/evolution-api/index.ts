@@ -1084,42 +1084,7 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     if (action === 'find-labels') return await proxy(`/label/findLabels/${instance}`, 'GET');
     if (action === 'handle-label') return await proxy(`/label/handleLabel/${instance}`, 'POST', { number: body.number, labelId: body.labelId, action: body.action });
 
-    // ─── 9-14. Integrations (Chatwoot, Typebot, OpenAI, Dify, Flowise, EvolutionBot) ───
-    if (action === 'set-chatwoot') return await proxy(`/chatwoot/set/${instance}`, 'POST', { enabled: body.enabled ?? true, accountId: body.accountId, token: body.token, url: body.url, signMsg: body.signMsg ?? true, reopenConversation: body.reopenConversation ?? true, conversationPending: body.conversationPending ?? false, nameInbox: body.nameInbox, mergeBrazilContacts: body.mergeBrazilContacts ?? true, importContacts: body.importContacts ?? true, importMessages: body.importMessages ?? true, daysLimitImportMessages: body.daysLimitImportMessages ?? 7, signDelimiter: body.signDelimiter, autoCreate: body.autoCreate ?? false });
-    if (action === 'get-chatwoot') return await proxy(`/chatwoot/find/${instance}`, 'GET');
-    if (action === 'delete-chatwoot') return await proxy(`/chatwoot/delete/${instance}`, 'DELETE');
-
-    if (action === 'set-typebot') return await proxy(`/typebot/set/${instance}`, 'POST', { enabled: body.enabled ?? true, url: body.url, typebot: body.typebot, expire: body.expire ?? 20, keywordFinish: body.keywordFinish ?? '#fim', delayMessage: body.delayMessage ?? 1000, unknownMessage: body.unknownMessage, listeningFromMe: body.listeningFromMe ?? false, stopBotFromMe: body.stopBotFromMe ?? true, keepOpen: body.keepOpen ?? false, debounceTime: body.debounceTime ?? 10, triggerType: body.triggerType, triggerOperator: body.triggerOperator, triggerValue: body.triggerValue });
-    if (action === 'get-typebot') return await proxy(`/typebot/find/${instance}`, 'GET');
-    if (action === 'delete-typebot') return await proxy(`/typebot/delete/${instance}`, 'DELETE');
-    if (action === 'typebot-sessions') return await proxy(`/typebot/fetchSessions/${instance}${body.typebotId ? `?typebotId=${body.typebotId}` : ''}`, 'GET');
-    if (action === 'typebot-change-status') return await proxy(`/typebot/changeStatus/${instance}`, 'POST', { remoteJid: body.remoteJid, status: body.status });
-    if (action === 'start-typebot') return await proxy(`/typebot/startTypebot/${instance}`, 'POST', { remoteJid: body.remoteJid, url: body.url, typebot: body.typebot, variables: body.variables });
-
-    if (action === 'set-openai') return await proxy(`/openai/set/${instance}`, 'POST', { enabled: body.enabled ?? true, openAiApiKey: body.openAiApiKey, expire: body.expire ?? 30, keywordFinish: body.keywordFinish ?? '#sair', delayMessage: body.delayMessage ?? 1000, listeningFromMe: body.listeningFromMe ?? false, stopBotFromMe: body.stopBotFromMe ?? true, speechToText: body.speechToText ?? false, botType: body.botType ?? 'chatCompletion', assistantId: body.assistantId, model: body.model ?? 'gpt-4o', systemMessage: body.systemMessage, maxTokens: body.maxTokens ?? 500, temperature: body.temperature ?? 0.7, triggerType: body.triggerType ?? 'all', triggerOperator: body.triggerOperator, triggerValue: body.triggerValue, functionUrl: body.functionUrl });
-    if (action === 'get-openai') return await proxy(`/openai/find/${instance}`, 'GET');
-    if (action === 'delete-openai') return await proxy(`/openai/delete/${instance}`, 'DELETE');
-
-    if (action === 'set-dify') return await proxy(`/dify/set/${instance}`, 'POST', { enabled: body.enabled ?? true, apiUrl: body.apiUrl, apiKey: body.apiKey, botType: body.botType ?? 'chatBot', expire: body.expire ?? 30, triggerType: body.triggerType ?? 'all', keywordFinish: body.keywordFinish, listeningFromMe: body.listeningFromMe ?? false, stopBotFromMe: body.stopBotFromMe ?? true, speechToText: body.speechToText ?? false });
-    if (action === 'get-dify') return await proxy(`/dify/find/${instance}`, 'GET');
-    if (action === 'delete-dify') return await proxy(`/dify/delete/${instance}`, 'DELETE');
-
-    if (action === 'set-flowise') return await proxy(`/flowise/set/${instance}`, 'POST', { enabled: body.enabled ?? true, apiUrl: body.apiUrl, apiKey: body.apiKey, chatflowId: body.chatflowId, expire: body.expire ?? 30, triggerType: body.triggerType, triggerValue: body.triggerValue });
-    if (action === 'get-flowise') return await proxy(`/flowise/find/${instance}`, 'GET');
-    if (action === 'delete-flowise') return await proxy(`/flowise/delete/${instance}`, 'DELETE');
-
-    if (action === 'set-evolution-bot') return await proxy(`/evolutionBot/set/${instance}`, 'POST', { enabled: body.enabled ?? true, expire: body.expire ?? 10, keywordFinish: body.keywordFinish ?? '#sair', delayMessage: body.delayMessage ?? 800, triggerType: body.triggerType, triggerOperator: body.triggerOperator, triggerValue: body.triggerValue, unknownMessage: body.unknownMessage, listeningFromMe: body.listeningFromMe ?? false, stopBotFromMe: body.stopBotFromMe ?? true, apiUrl: body.apiUrl, apiKey: body.apiKey });
-    if (action === 'get-evolution-bot') return await proxy(`/evolutionBot/find/${instance}`, 'GET');
-    if (action === 'delete-evolution-bot') return await proxy(`/evolutionBot/delete/${instance}`, 'DELETE');
-
-    // ─── 15-25. Infrastructure (RabbitMQ, SQS, Templates, Block, PTV, Call, Presence, Catalog, Proxy, EvoAI, N8N, Kafka, NATS, Pusher) ───
-    if (action === 'set-rabbitmq') return await proxy(`/rabbitmq/set/${instance}`, 'POST', { enabled: body.enabled ?? true, events: body.events });
-    if (action === 'get-rabbitmq') return await proxy(`/rabbitmq/find/${instance}`, 'GET');
-    if (action === 'set-sqs') return await proxy(`/sqs/set/${instance}`, 'POST', { enabled: body.enabled ?? true, events: body.events });
-    if (action === 'get-sqs') return await proxy(`/sqs/find/${instance}`, 'GET');
-    if (action === 'create-template') return await proxy(`/template/create/${instance}`, 'POST', body);
-    if (action === 'find-templates') return await proxy(`/template/find/${instance}`, 'GET');
-    if (action === 'delete-template') return await proxy(`/template/delete/${instance}`, 'DELETE', body);
+    // ─── 9. Infrastructure (Block, PTV, Presence) ───
     if (action === 'update-block-status') return await proxy(`/chat/updateBlockStatus/${instance}`, 'POST', { number: body.number, status: body.status });
     if (action === 'send-ptv') {
       let videoSource = body.video || body.mediaUrl;
@@ -1128,24 +1093,7 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       }
       return await proxy(`/message/sendPtv/${instance}`, 'POST', { number: body.number, video: videoSource, delay: body.delay });
     }
-    if (action === 'offer-call') return await proxy(`/call/offerCall/${instance}`, 'POST', { number: body.number, isVideo: body.isVideo ?? false, callDuration: body.callDuration ?? 5 });
     if (action === 'send-chat-presence') return await proxy(`/chat/sendPresence/${instance}`, 'POST', { number: body.number, presence: body.presence, delay: body.delay ?? 1200 });
-    if (action === 'get-catalog') return await proxy(`/business/getCatalog/${instance}`, 'POST', { number: body.number, limit: body.limit, cursor: body.cursor });
-    if (action === 'get-collections') return await proxy(`/business/getCollections/${instance}`, 'POST', { number: body.number, limit: body.limit, cursor: body.cursor });
-    if (action === 'set-proxy') return await proxy(`/proxy/set/${instance}`, 'POST', { enabled: body.enabled ?? true, host: body.host, port: body.port, protocol: body.protocol, username: body.username, password: body.password });
-    if (action === 'get-proxy') return await proxy(`/proxy/find/${instance}`, 'GET');
-    if (action === 'set-evoai') return await proxy(`/evoai/set/${instance}`, 'POST', { enabled: body.enabled ?? true, apiUrl: body.apiUrl, apiKey: body.apiKey, agentId: body.agentId, expire: body.expire ?? 30, triggerType: body.triggerType ?? 'all', triggerOperator: body.triggerOperator, triggerValue: body.triggerValue, keywordFinish: body.keywordFinish, delayMessage: body.delayMessage ?? 1000, unknownMessage: body.unknownMessage, listeningFromMe: body.listeningFromMe ?? false, stopBotFromMe: body.stopBotFromMe ?? true, keepOpen: body.keepOpen ?? false, debounceTime: body.debounceTime ?? 10, speechToText: body.speechToText ?? false });
-    if (action === 'get-evoai') return await proxy(`/evoai/find/${instance}`, 'GET');
-    if (action === 'delete-evoai') return await proxy(`/evoai/delete/${instance}`, 'DELETE');
-    if (action === 'set-n8n') return await proxy(`/n8n/set/${instance}`, 'POST', { enabled: body.enabled ?? true, webhookUrl: body.webhookUrl, expire: body.expire ?? 30, triggerType: body.triggerType ?? 'all', triggerOperator: body.triggerOperator, triggerValue: body.triggerValue, keywordFinish: body.keywordFinish, delayMessage: body.delayMessage ?? 1000, unknownMessage: body.unknownMessage, listeningFromMe: body.listeningFromMe ?? false, stopBotFromMe: body.stopBotFromMe ?? true, keepOpen: body.keepOpen ?? false, debounceTime: body.debounceTime ?? 10 });
-    if (action === 'get-n8n') return await proxy(`/n8n/find/${instance}`, 'GET');
-    if (action === 'delete-n8n') return await proxy(`/n8n/delete/${instance}`, 'DELETE');
-    if (action === 'set-kafka') return await proxy(`/kafka/set/${instance}`, 'POST', { enabled: body.enabled ?? true, events: body.events });
-    if (action === 'get-kafka') return await proxy(`/kafka/find/${instance}`, 'GET');
-    if (action === 'set-nats') return await proxy(`/nats/set/${instance}`, 'POST', { enabled: body.enabled ?? true, events: body.events });
-    if (action === 'get-nats') return await proxy(`/nats/find/${instance}`, 'GET');
-    if (action === 'set-pusher') return await proxy(`/pusher/set/${instance}`, 'POST', { enabled: body.enabled ?? true, appId: body.appId, key: body.key, secret: body.secret, cluster: body.cluster, events: body.events });
-    if (action === 'get-pusher') return await proxy(`/pusher/find/${instance}`, 'GET');
 
     return new Response(JSON.stringify({ error: 'Unknown action', action }), {
       status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
