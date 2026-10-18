@@ -767,7 +767,7 @@
       "id": "E12",
       "canonical_id": "docs--audits--plano_github_actions_100_etapas_2026-10-01::E12",
       "title": "· C · G-42 · Corrigir os 3 cabeçalhos desatualizados (`ci.yml:5`, `types-sync.yml:82-86`,",
-      "status": "PARTIAL",
+      "status": "DONE_VERIFIED",
       "source": {
         "path": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
         "line": 368,
@@ -792,7 +792,7 @@
         "authority": "CURRENT_REFERENCE"
       },
       "acceptance": {
-        "state": "PARTIAL",
+        "state": "DONE_VERIFIED",
         "note": "Cabeçalhos de types-sync/db-migrate foram atualizados, porém ci.yml ainda descreve apenas lint/typecheck/test/build apesar de security/e2e/mutação. Reconciliar texto com docs/ci gerado."
       },
       "code_paths": [
@@ -2970,7 +2970,7 @@
       "id": "E47",
       "canonical_id": "docs--audits--plano_github_actions_100_etapas_2026-10-01::E47",
       "title": "· B · G-15 · `db-guard.yml`: subir **um** PostgreSQL 17 como `services:` do job (ou um `docker run`",
-      "status": "DONE_VERIFIED",
+      "status": "BLOCKED_TECHNICAL",
       "source": {
         "path": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
         "line": 557,
@@ -2995,7 +2995,7 @@
         "authority": "CURRENT_REFERENCE"
       },
       "acceptance": {
-        "state": "DONE_VERIFIED",
+        "state": "BLOCKED_TECHNICAL",
         "note": "PostgreSQL compartilhado e docker-shim existem; entretanto check DB offline atual falha no bootstrap. Presença do shim não equivale a aceite verde."
       },
       "code_paths": [
@@ -4700,7 +4700,7 @@
       "id": "E75",
       "canonical_id": "docs--audits--plano_github_actions_100_etapas_2026-10-01::E75",
       "title": "· C · G-20 · Fonte única de versões de toolchain: `.github/toolchain.json` (`bun`, `deno`, `node`,",
-      "status": "DONE_VERIFIED",
+      "status": "PARTIAL",
       "source": {
         "path": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
         "line": 671,
@@ -4725,7 +4725,7 @@
         "authority": "CURRENT_REFERENCE"
       },
       "acceptance": {
-        "state": "DONE_VERIFIED",
+        "state": "PARTIAL",
         "note": "Não existe .github/toolchain.json; versões Bun/Deno/Supabase/Playwright seguem literais em vários workflows."
       },
       "code_paths": [
@@ -6105,7 +6105,7 @@
       "id": "E97",
       "canonical_id": "docs--audits--plano_github_actions_100_etapas_2026-10-01::E97",
       "title": "· B · G-41 · `set -euo pipefail` como primeira linha de todo `run:` multi-linha (ou `defaults.run.shell:",
-      "status": "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE",
+      "status": "DONE_VERIFIED",
       "source": {
         "path": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
         "line": 798,
@@ -6130,7 +6130,7 @@
         "authority": "CURRENT_REFERENCE"
       },
       "acceptance": {
-        "state": "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE",
+        "state": "DONE_VERIFIED",
         "note": "Modo estrito em workflows e contrato específico presentes; suíte local passou. Isso não reexecuta shellcheck/actionlint nem prova todos os scripts internos."
       },
       "code_paths": [

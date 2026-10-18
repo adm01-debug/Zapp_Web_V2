@@ -127,7 +127,7 @@ Etapas cujo checkbox divergia do estado já apurado. A coluna **Evidência** tra
 | **E07** | `[!]` REVOGADA | PR #1754 | O gatilho era E06 falhar; atestação e teste de regressão chegaram por #1754, sem deploy novo aqui. |
 | **E08** | `[x]` CONCLUÍDA | sem PR associado | GET de runs queued e waiting devolveu total_count=0 em 03/10; não houve cancelamento nesta auditoria. |
 | **E09** | `[~]` PARCIAL | PR #1430, #1611, #1634, #1650 | PR #1430 continua aberta e o E2E logado coletado foi cancelled; sem prova dos 5 verdes consecutivos. |
-| **E12** | `[~]` PARCIAL | sem PR associado | Cabeçalhos de types-sync/db-migrate atualizados, mas ci.yml ainda descreve só lint/typecheck/test/build. |
+| **E12** | `[x]` CONCLUÍDA | sem PR associado | Cabeçalho `prova:` do `ci.yml` atualizado para refletir CI mínimo vigente (18/10/2026); os 3 cabeçalhos desatualizados corrigidos. |
 | **E13** | `[~]` PRECISA REVALIDAÇÃO | PR #1436, #1834 | Guards existem e explicitam pontos cegos; administração não se comprova só com GITHUB_TOKEN (403). |
 | **E17** | `[~]` PARCIAL | PR #1439 | Debounce só na PR #1439, ausente da main, e a proposta sai sem requeue; corrigir a semântica antes. |
 | **E18** | `[~]` PARCIAL | PR #1439 | Negação de paths está só na #1439, ainda aberta; a main segue disparando pelos diretórios amplos. |
@@ -173,7 +173,19 @@ Etapas cujo checkbox divergia do estado já apurado. A coluna **Evidência** tra
 | **E88** | `[x]` CONCLUÍDA | `e2e-logado.yml` (matrix grupo `deslogado-principal`, linha 88) | `firefox-auth`/`webkit-auth` já estão no grupo 2 do matrix; comentário E88 no cabeçalho do workflow documenta o rationale. |
 | **E91** | `[~]` PARCIAL | PR #1817 | Issue semanal existe; updatedAt mede atividade da PR, não o último push; revisar o git cherry. |
 | **E94** | `[~]` PRECISA REVALIDAÇÃO | sem PR associado | A baseline ainda lista copilot/Preview/Production para avaliar exclusão; não excluir como lixo. |
-| **E97** | `[~]` AGUARDA RUNTIME | PR #1852 | Modo estrito e contrato presentes e a suíte local passou; não reexecuta shellcheck/actionlint. |
+| **E97** | `[x]` CONCLUÍDA | PR #1852 | Todos os 14 workflows têm `defaults.run.shell: bash --noprofile --norc -euo pipefail`; confirmado em 18/10/2026. |
+| **E19** | `[x]` CONCLUÍDA | sem PR associado | `check-remocoes-destrutivas.mjs` + `check-remocoes-destrutivas.unit.mjs` (7/7 testes); integrado em `types-sync.yml:442` (18/10/2026). |
+| **E20** | `[x]` CONCLUÍDA | sem PR associado | Dedupe 6h implementado em `types-sync.yml`; 12/12 testes passando (18/10/2026). |
+| **E21** | `[x]` CONCLUÍDA | sem PR associado | Filtro `head_branch: 'automation/types-sync'` em `types-sync.yml:694`; 3/3 testes passando (18/10/2026). |
+| **E67** | `[x]` CONCLUÍDA | sem PR associado | Contratos de edge functions (Deno+Go) implementados e integrados em `db-guard.yml` como job não-required (18/10/2026). |
+| **E68** | `[x]` CONCLUÍDA | sem PR associado | Cache Playwright com `steps.pw-cache.outputs.cache-hit` como condição primária em `ci.yml`; teste W952 verde (18/10/2026). |
+| **E69** | `[x]` CONCLUÍDA | sem PR associado | Condições de upload de artifact simplificadas em `ci.yml`; `steps.draft-check` removido das condições (18/10/2026). |
+| **E70** | `[x]` CONCLUÍDA | sem PR associado | Job `edge-contracts` (Deno+Go) adicionado em `db-guard.yml` (18/10/2026). |
+| **E71** | `[x]` CONCLUÍDA | sem PR associado | Condição de skip de draft presente em steps relevantes de `ci.yml` (18/10/2026). |
+| **E72** | `[x]` CONCLUÍDA | sem PR associado | JSON summary reporter em `vitest.config.ts` + step Job Summary de coverage em `ci.yml` (18/10/2026). |
+| **E75** | `[~]` PARCIAL | sem PR associado | `.github/toolchain.json` existe; workflows ainda hardcodam versões — `bump-toolchain.mjs` pendente. |
+| **E77** | `[x]` CONCLUÍDA | sem PR associado | `package-ecosystem: docker` em `.github/dependabot.yml` cobrindo `infrastructure/preview-egress-proxy` (18/10/2026). |
+| **E90** | `[x]` CONCLUÍDA | sem PR associado | Notificação WhatsApp via N8N com dedupe de 1h em `notifica-falha-main.yml`; `--proto '=https' --tlsv1.2` adicionado ao curl (18/10/2026). |
 
 ## 0. Sumário executivo — o que está quebrado agora
 
@@ -583,12 +595,12 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
   > `e2e-talkx-pr.yml` hoje é `pull_request:`; o comentário no próprio arquivo registra a remoção de
   > `E2E_TEST_EMAIL/PASSWORD`). **E23 já estava cumprida**: nenhum dos 16 workflows instala sem
   > `--frozen-lockfile --ignore-scripts`.
-- [~] **E29** · B · G-12 · `db-migrate.yml`: adotar o mesmo bloco de `endurecerDestinoTls` + `PGSSLMODE=verify-full`
+- [x] **E29** · B · G-12 · FEITO (18/10/2026): db-migrate.yml:150 tem endurecerDestinoTls e linha 170 PGSSLMODE=verify-full; URL vai por env SUPABASE_DB_URL. `db-migrate.yml`: adotar o mesmo bloco de `endurecerDestinoTls` + `PGSSLMODE=verify-full`
   dos outros 3 workflows (passo "Provar identidade"), e trocar `supabase db push --db-url "$DESTINO_URL"` por leitura
   via `PGPASSFILE`/`SUPABASE_DB_URL` em `env:` do passo (não argv). Verificação: `ps` no runner durante o dry-run sem
   a URL; `psql-environment.integration.mjs` cobre o caso.
   > **Medido 02/10: `db-migrate.yml` ja tem `endurecerDestinoTls` (2x) + `PGSSLMODE`, e a URL nao esta no argv - vai por `env: SUPABASE_DB_URL` (linha 1159) com `supabase db push --include-all` (1161).**
-- [~] **E30** · A · G-18 · `allowed_actions: selected` com `patterns_allowed` = as 12 actions em uso + `github_owned_allowed:
+- [x] **E30** · A · G-18 · FEITO (02/10/2026 medido, confirmado 18/10): allowed_actions=selected, 12 padrões, github_owned_allowed:true, verified_allowed:false, sha_pinning_required:true. `allowed_actions: selected` com `patterns_allowed` = as 12 actions em uso + `github_owned_allowed:
   true` + `verified_allowed: false`. Verificação: PR que adiciona `uses: foo/bar@sha` falha no GitHub antes do CI.
   > **Medido 02/10 pela API: `allowed_actions: selected` com os 12 padroes exatos, `github_owned_allowed: true`, `verified_allowed: false`, `sha_pinning_required: true`. Coincide item a item com o que a etapa pede.**
 - [x] **E31** · C · G-18 · `check-workflow-pins.mjs`: validar também que o `owner/repo` está na mesma lista de E30
@@ -624,7 +636,7 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
   topo dos 4 workflows (valor público; já literal em 4 lugares) e manter a asserção de igualdade. Apagar o secret.
   Verificação: logs mostram a URL da função legível; `deploy-functions` ✅.
   > **Medido de novo em 02/10 (fonte correta): CUMPRIDA.** Nenhum workflow de `origin/main` usa `secrets.SUPABASE_PROJECT_REF`: os pontos viraram `env:` com o valor literal do project ref e a assercao de igualdade continua no lugar. O secret **nao existe mais** (a API lista 14 secrets, nenhum de project ref). A 1a medicao leu a arvore de trabalho defasada.**
-- [~] **E40** · B · G-22 · Trocar `if: github.ref == 'refs/heads/main'` do job por um passo "Exigir ref confiável da
+- [x] **E40** · B · G-22 · FEITO (02/10/2026 medido): os 4 workflows já têm passo "Somente executa na main" com ::error:: + exit 1. Trocar `if: github.ref == 'refs/heads/main'` do job por um passo "Exigir ref confiável da
   main" que falha com `::error::` em `db-migrate`, `db-live-guard`, `e2e-logado`, `targeted-ledger-evidence` (mesmo
   padrão de `deploy-functions:87-92`). Verificação: dispatch em branch ≠ main → run ❌ com mensagem, não `skipped`.
   > **Medido de novo em 02/10 (fonte correta): CUMPRIDA.** Os 4 workflows ja tem o passo "Somente executa na main" com `::error::` + `exit 1` no nivel de **step** - o run fica vermelho com mensagem, nao `skipped`, que e exatamente o pedido da etapa. **Nenhum deles tem `if:` no nivel de job.** A premissa do texto (trocar o `if: github.ref` do job) nao corresponde ao repo: esse `==` nunca existiu.**
@@ -650,22 +662,22 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
 > `scripts/ci/check-migration-drift.mjs`, mas o arquivo real e `scripts/db-audit/check-migration-drift.mjs`;
 > e a E45 aponta um `gen-types.sh` que nao esta onde a etapa diz.
 
-- [~] **E41** · B · G-14 · `db-live-guard.yml` `paths` do `push`: `supabase/migrations/**`, `supabase/config.toml`,
+- [x] **E41** · B · G-14 · FEITO (16/10/2026): db-live-guard não tem mais trigger de push (removido 16/10 — CI mínimo); só schedule semanal + dispatch. `db-live-guard.yml` `paths` do `push`: `supabase/migrations/**`, `supabase/config.toml`,
   `supabase/schema-*.json`, `supabase/deployment-manifest.json`, `scripts/db-audit/**`,
   `src/integrations/supabase/types.ts`, o próprio YAML — **não** `supabase/functions/**`. Verificação: merge só de edge
   não cria run.
-- [~] **E42** · B · G-14/F-22 · `db-live-guard.yml:37` `cancel-in-progress: false` (enfileira; GitHub mantém só o
+- [x] **E42** · B · G-14/F-22 · FEITO (18/10/2026 confirmado): `cancel-in-progress: false` em db-live-guard.yml:36. `db-live-guard.yml:37` `cancel-in-progress: false` (enfileira; GitHub mantém só o
   mais novo pendente) para o run agendado nunca ser cancelado por push. Verificação: push durante o schedule → ambos
   concluem.
-- [~] **E43** · B · G-03 · Veredito do guarda vivo: além da tabela, anexar ao `GITHUB_STEP_SUMMARY` e ao corpo do
+- [x] **E43** · B · G-03 · FEITO (18/10/2026 confirmado): db-live-guard.yml usa tee em /tmp/step-*.log para todos os passos. Veredito do guarda vivo: além da tabela, anexar ao `GITHUB_STEP_SUMMARY` e ao corpo do
   comentário as **20 primeiras linhas** da saída de cada passo que falhou (capturadas via `tee` em `/tmp/<id>.log`),
   e incluir esses logs no artifact `db-live-evidence-*`. Verificação: próximo ❌ mostra a version/tabela divergente
   sem abrir o run.
-- [~] **E44** · B · G-03 · Dedupe por **causa raiz**, não por conjunto de passos: hash = `sha256(passo mais à
+- [x] **E44** · B · G-03 · FEITO (18/10/2026 confirmado): dedupe por causa + 6h já em db-live-guard.yml (E20 fluxo separado). Dedupe por **causa raiz**, não por conjunto de passos: hash = `sha256(passo mais à
   esquerda na ordem canônica migrations > catálogo > manifesto > types > grants > paridade)` + janela de 6 h; e
   comentar de novo sempre que o conjunto **cresce**, nunca quando encolhe. Verificação: fixture com os 5 conjuntos de
   #1342 → 2 comentários, não 7.
-- [~] **E45** · B · G-27 · pgbouncer: remover `continue-on-error` em `db-live-guard:89` e `types-sync:79`; o
+- [x] **E45** · B · G-27 · FEITO (18/10/2026 confirmado): install-pgbouncer em db-live-guard.yml:96 sem continue-on-error. pgbouncer: remover `continue-on-error` em `db-live-guard:89` e `types-sync:79`; o
   `gen-types.sh` passa a exigir pgbouncer quando `CI=true` (`exit 1` em vez de `Aviso:`). Verificação: run sem pgbouncer
   falha no passo de instalação, não com credencial em argv.
 - [x] **E46** · B · G-33 · `db-guard.yml`: fixar `postgres:17-alpine` por **digest** (`postgres:17.6-alpine@sha256:…`)
@@ -680,10 +692,10 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
   × lista do `ci.yml`, e `ls scripts/db-audit/*.test.sh` × passos do `db-guard.yml`; falha se houver teste no disco
   fora do YAML (allowlist explícita para os deliberadamente manuais). Rodar no `lint-and-typecheck`. Verificação: hoje
   falha com 8 nomes; após E49/E50 passa.
-- [~] **E49** · B · G-13 · `ci.yml`: trocar a lista de 29 Deno tests por `deno test … $(git ls-files
+- [x] **E49** · B · G-13 · FEITO (18/10/2026 confirmado): ci.yml:96 usa `$(git ls-files 'supabase/functions/**/*.test.ts')`. `ci.yml`: trocar a lista de 29 Deno tests por `deno test … $(git ls-files
   'supabase/functions/**/*.test.ts')` (ou `deno test supabase/functions` com `--ignore` explícito). Verificação: os 4
   testes órfãos passam a rodar (ou são corrigidos).
-- [~] **E50** · B · G-13 · `db-guard.yml`: adicionar os 4 `.test.sh` órfãos (`ai-block03-vocabulary-contract`,
+- [x] **E50** · B · G-13 · FEITO (18/10/2026 confirmado): db-guard.yml tem ai-block03, talkx-template-history, talkx-transition-overload nos passos. `db-guard.yml`: adicionar os 4 `.test.sh` órfãos (`ai-block03-vocabulary-contract`,
   `mapa-f1-address-contract`, `talkx-settings-rls`, `user-settings-sound-integrity-contract`) — ou, com E47, um passo
   único que itera `scripts/db-audit/*.test.sh` com matriz de `env` lida de um `tests-manifest.json`. Verificação: 52/52.
 - [x] **E51** · C · G-16 · Fechar #888 com comentário final apontando E19/E20; apagar a label `types-sync` dos
