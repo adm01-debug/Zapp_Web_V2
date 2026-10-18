@@ -17,6 +17,7 @@ import { log } from '@/lib/logger';
 import { clearEmailDraftSessions } from '@/lib/emailDraftSession';
 import { clearInboxDraftSessions } from '@/lib/inboxDraftSession';
 import { clearTeamChatDraftSessions } from '@/lib/teamChatDraftSession';
+import { offlineSendQueue } from '@/lib/offlineQueue';
 
 interface AuthContextType {
   user: User | null;
@@ -168,6 +169,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         clearInboxDraftSessions();
         // HZ2-016: idem para o rascunho do Chat de Equipe (`zapp.teamchat.draft:<uid>:*`).
         clearTeamChatDraftSessions();
+        // A fila de envio offline (IndexedDB) também é do usuário que saiu: sem
+        // isto, o texto parado no disco drenaria como o próximo atendente que
+        // logasse na mesma máquina.
+        void offlineSendQueue.clear();
       }
     });
 
@@ -245,6 +250,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       clearInboxDraftSessions();
       // HZ2-016: idem para o rascunho do Chat de Equipe.
       clearTeamChatDraftSessions();
+      // idem para a fila de envio offline (IndexedDB) — não pode depender do
+      // SIGNED_OUT que o Supabase pode não emitir.
+      void offlineSendQueue.clear();
     }
   };
 

@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { invokeEdge } from '@/lib/invokeEdge';
 import { crossTabSendDedupe } from '@/lib/crossTabSendDedupe';
+import { readAuthenticatedUserId } from '@/lib/authSession';
 import {
   drainOfflineQueueOnOpen,
   drainOfflineQueueOnReconnect,
@@ -349,6 +350,15 @@ async function enqueueAndDispatch(
 
 /** O que ficou na fila offline sai com a MESMA chave estável: sem duplicar (item 024). */
 async function deliverQueuedOfflineMessage(message: OfflineQueuedMessage): Promise<void> {
+  // A fila é por usuário: trocar de atendente na mesma máquina (sessão nova,
+  // IndexedDB continua o mesmo) não pode despachar o texto de quem saiu. Sem
+  // `userId` (item enfileirado antes desta correção) drena normalmente — não
+  // existe dono anterior para comparar. `executar()` (offlineQueue.ts) para no
+  // primeiro erro e MANTÉM a mensagem na fila; ela sai na próxima drenagem,
+  // quando o dono original estiver de volta.
+  if (message.userId && message.userId !== readAuthenticatedUserId()) {
+    throw new Error('Fila offline: mensagem pertence a outro atendente nesta aba.');
+  }
   // A drenagem obedece ao MESMO throttle do envio online: a volta da rede não
   // pode virar rajada de requests contra o servidor (item 026).
   await sendThrottle.wait();
@@ -412,6 +422,9 @@ async function enqueueOffline(
     caption: input.caption ?? null,
     replyToId: input.replyToId ?? null,
     whatsappConnectionId: input.whatsappConnectionId ?? null,
+    // Dono do item (fila é do usuário): sem isto, trocar de atendente na mesma
+    // máquina despacharia o texto de quem compôs offline e saiu.
+    userId: readAuthenticatedUserId() ?? undefined,
   });
   // `pending`: a bolha mostra "enviando" até a fila drenar — nada foi entregue ainda.
   return { id: queued.clientMessageId, status: 'pending', externalId: null, idempotent: false };
