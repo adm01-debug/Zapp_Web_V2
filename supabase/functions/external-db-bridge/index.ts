@@ -156,8 +156,13 @@ export async function handleExternalDbBridge(
 
     try {
       if (action === "select" && table) {
+        // Z018: rejeitar `select` com `(` previne injeção de função PostgREST.
+        const selectParam = params?.select as string | undefined;
+        if (selectParam && selectParam.includes('(')) {
+          return errorResponse("Invalid select parameter", 400, req);
+        }
         // deno-lint-ignore no-explicit-any
-        let query: any = supabaseAdmin.from(table).select(params?.select as string || "*", {
+        let query: any = supabaseAdmin.from(table).select(selectParam || "*", {
           count: (countMode as "exact" | "planned" | "estimated") || undefined,
         });
         if (params?.filters) {
