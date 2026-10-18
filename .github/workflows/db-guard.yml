@@ -308,10 +308,11 @@ jobs:
       # search_path em SECURITY DEFINER, policy de escrita aberta e referencia pendurada em
       # funcao/RPC e em comando de cron. A prova monta cada violacao, exige o bloqueio,
       # desfaz e exige verde.
-      - name: Simular violações dos invariantes gerais do banco vivo
+      - name: Verificar invariantes gerais do banco vivo
+        id: live-invariants
         env:
           LIVE_INVARIANTS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
-        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/check-live-invariants.test.sh
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/check-live-invariants.test.sh | tee /tmp/step-live-invariants.log
 
       - name: Provar remoção do token legado da API pública
         env:

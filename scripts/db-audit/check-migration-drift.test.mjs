@@ -82,6 +82,7 @@ function pinnedEvidence({
     kind: 'ledger-divergence/pinned-replay',
     reason,
     related_migration,
+    'sql-sha256': statementsHash(statements),
     justification: JUSTIFICATION,
     ...overrides,
   };
