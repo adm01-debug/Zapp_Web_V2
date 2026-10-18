@@ -60,7 +60,7 @@
 | V067 | Confirmar vars limpas no próximo deploy | ⛔ BLOQUEADO | Depende de V066 |
 | V068 | Criar `vercel-env-baseline.json` | ✅ OK | `scripts/ci/vercel-env-baseline.json` criado |
 | V069 | Criar `vercel-env-baseline.unit.mjs` | ✅ OK | `scripts/ci/vercel-env-baseline.unit.mjs` criado |
-| V070 | Integrar baseline no CI | ⏳ PENDENTE | Adicionar step em `ci.yml` |
+| V070 | Integrar baseline no CI | ✅ OK | `vercel-env-baseline.unit.mjs` reescrito como `node:test` (7/7); CLI em `vercel-env-baseline.mjs`; glob `scripts/ci/*.unit.mjs` já cobre |
 | V071–V075 | Auditoria vars / docs | ⏳ PENDENTE | Depende de limpeza por Joaquim |
 | V076 | Criar `scripts/vercel/ignore-build.sh` | ✅ OK | Script POSIX sh criado |
 | V077 | Criar `ignore-build.unit.mjs` | ✅ OK | Teste unitário criado |
@@ -79,7 +79,7 @@
 | V130–V150 | Headers adicionais (HSTS, etc.) | ⏳ PENDENTE | Avaliar após V017 |
 | V151–V160 | Alertas e monitoramento | ⛔ BLOQUEADO | Depende de V002 |
 | V161 | Secret `VERCEL_READONLY_TOKEN` no repositório | 🔒 JOAQUIM | Gerar em Vercel → Account Settings → Tokens |
-| V162 | Criar `scripts/vercel/verify-production.mjs` | ⏳ PENDENTE | Script de smoke pós-deploy |
+| V162 | Criar `scripts/vercel/verify-production.mjs` | ✅ OK | Smoke criado; verifica /version.json, headers seg., cache assets, X-Robots-Tag |
 | V163–V172 | Runbook de incidentes / dashboards | ⏳ PENDENTE | |
 | V173–V174 | Documentar projeto legado | ✅ OK | Seção Vercel em `CLAUDE.md` inclui referência |
 | V175 | Pausar projeto legado `zapp-web` | 🔒 JOAQUIM | Dashboard Vercel → zapp-web → Settings |
