@@ -27,10 +27,6 @@ on:
     branches: [main]
   workflow_dispatch:
 
-defaults:
-  run:
-    shell: bash --noprofile --norc -euo pipefail {0}
-
 permissions:
   contents: read
 
@@ -128,11 +124,11 @@ jobs:
 
       - name: 🎭 Install Playwright (Chromium, Firefox, WebKit)
         if: steps.pw-cache.outputs.cache-hit != 'true'
-        run: bunx playwright@1.63.0 install --with-deps chromium firefox webkit
+        run: bunx playwright install --with-deps chromium firefox webkit
 
       - name: 🔧 Dependências de sistema do Playwright (cache quente)
         if: steps.pw-cache.outputs.cache-hit == 'true'
-        run: bunx playwright@1.63.0 install-deps chromium firefox webkit
+        run: bunx playwright install-deps chromium firefox webkit
 
       # E83: cada job da matriz invoca o Playwright com os projetos do SEU grupo
       # via variavel de matriz (cada token ja leva o prefixo de projeto,
@@ -264,7 +260,7 @@ jobs:
             echo "SUPABASE_SERVICE_ROLE_KEY nao configurado - teardown de catalog_send_events pulado"
             exit 0
           fi
-          curl --proto '=https' --tlsv1.2 -sf -X DELETE \
+          curl -sf -X DELETE \
             "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/catalog_send_events?contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759" \
             -H "apikey: $SERVICE_ROLE_KEY" \
             -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
