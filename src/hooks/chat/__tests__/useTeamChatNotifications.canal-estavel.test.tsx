@@ -58,14 +58,6 @@ vi.mock('@/hooks/system/useNotificationSettings', () => ({
   useNotificationSettings: () => ({ settings: h.settings, isQuietHours: () => false }),
 }));
 
-vi.mock('@/hooks/system/usePushNotifications', () => ({
-  usePushNotifications: () => ({
-    showNotification: (...args: unknown[]) => h.show(...args),
-    isSubscribed: true,
-    permission: 'granted',
-  }),
-}));
-
 vi.mock('@/hooks/system/useNavigationHistory', () => ({ navigateToView: vi.fn() }));
 
 vi.mock('@/lib/logger', () => ({
@@ -79,6 +71,17 @@ vi.mock('@/lib/logger', () => ({
 
 import { useTeamChatNotifications } from '@/hooks/chat/useTeamChatNotifications';
 import { queryKeys } from '@/hooks/team-chat/queryKeys';
+
+// PE-75: o aviso sai pela API `Notification` direta (`showBrowserNotification`),
+// não mais por `usePushNotifications` (exigia Service Worker de aplicação,
+// `SERVICE_WORKER_ENABLED=false`). `h.show` grava o título/options de cada
+// instância criada — mesmo papel que tinha como spy do mock antigo.
+class FakeNotification {
+  static permission: NotificationPermission = 'granted';
+  constructor(title: string, options?: NotificationOptions) {
+    h.show(title, options);
+  }
+}
 
 const mensagem = (senderId = 'outro') => ({
   new: {
@@ -115,6 +118,7 @@ beforeEach(() => {
   h.rpc.mockReset();
   h.rpc.mockResolvedValue({ data: [{ id: 'outro', name: 'Ana' }], error: null });
   h.show.mockReset();
+  Object.defineProperty(window, 'Notification', { configurable: true, value: FakeNotification });
 });
 
 afterEach(() => {
@@ -152,7 +156,7 @@ describe('useTeamChatNotifications — canal estável (HZ5-09)', () => {
     });
 
     expect(h.fromTables).not.toContain('team_conversation_members');
-    expect(h.show).toHaveBeenCalledWith(expect.objectContaining({ title: '💬 Teams: Ana' }));
+    expect(h.show).toHaveBeenCalledWith('💬 Teams: Ana', expect.anything());
   });
 
   it('não notifica nem vai ao banco quando o cache diz que não é membro', async () => {
