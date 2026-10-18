@@ -32,7 +32,10 @@ const h = vi.hoisted(() => {
       );
     return chain;
   };
-  return { toastError, calls, results, makeChain };
+  // `handleCreateUser` passa pela camada padrão de Edge (`invokeEdge`, não
+  // mockado aqui — só o `supabase.functions.invoke` que ele chama por baixo).
+  const invokeFunction = vi.fn().mockResolvedValue({ data: { success: true }, error: null });
+  return { toastError, calls, results, makeChain, invokeFunction };
 });
 
 vi.mock('@/integrations/supabase/client', () => ({
@@ -45,6 +48,7 @@ vi.mock('@/integrations/supabase/client', () => ({
         getPublicUrl: () => ({ data: { publicUrl: 'https://local.test/avatar.png' } }),
       }),
     },
+    functions: { invoke: h.invokeFunction },
     rpc: vi.fn(),
   },
   SUPABASE_URL: 'https://local.test',
@@ -217,8 +221,6 @@ describe('useAdminData — senha mínima alinhada à Edge create-user', () => {
   });
 
   it('aceita 8 caracteres e chama a Edge', async () => {
-    const fetchSpy = vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) });
-    vi.stubGlobal('fetch', fetchSpy);
     const { result } = renderHook(() => useAdminData('users'));
 
     let ok = false;
@@ -232,6 +234,9 @@ describe('useAdminData — senha mínima alinhada à Edge create-user', () => {
     });
 
     expect(ok).toBe(true);
-    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    // Camada padrão de Edge (PE-43): `invokeEdge` -> `supabase.functions.invoke`,
+    // não `fetch` cru.
+    expect(h.invokeFunction).toHaveBeenCalledTimes(1);
+    expect(h.invokeFunction.mock.calls[0][0]).toBe('create-user');
   });
 });

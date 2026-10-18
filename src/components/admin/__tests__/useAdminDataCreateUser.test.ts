@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 
 // Criação de usuário passa pela camada padrão de Edge (`invokeEdge`, de
-// src/lib/supabaseHelpers, como o PE-43), com refresh de sessão em 401, leitura
+// src/lib/invokeEdge, como o PE-43), com refresh de sessão em 401, leitura
 // guardada do corpo de erro e mensagem traduzida para o CAMPO do formulário. O
 // caminho antigo era `fetch` cru com `Bearer ${session?.access_token}` (podia
 // virar 'Bearer undefined'), `await response.json()` sem guarda e a mensagem
@@ -14,8 +14,21 @@ const { mockInvokeEdge, mockRefreshSession, mockFrom, mockUpload } = vi.hoisted(
   mockUpload: vi.fn(),
 }));
 
-vi.mock('@/lib/supabaseHelpers', () => ({
-  invokeEdge: mockInvokeEdge,
+// `invokeEdge`/`supabase` de `useAdminData.ts` vêm de `@/lib/invokeEdge` e
+// `@/integrations/supabase/client` — não de `@/lib/supabaseHelpers` (módulo
+// que o hook não importa). Mockar o caminho errado deixava o `invokeEdge` e o
+// `supabase` REAIS em ação: `supabase.functions.invoke` real (sem client real)
+// lançava, caindo sempre no `catch` e devolvendo `false`, qualquer que fosse o
+// cenário do teste. `readEdgeError` (`parseEdgeError`) continua REAL via
+// `importOriginal` — é só leitura/parsing do erro, sem dependência externa, e
+// o `httpError()` abaixo já monta o formato exato que ele espera.
+vi.mock('@/lib/invokeEdge', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/invokeEdge')>();
+  return { ...actual, invokeEdge: mockInvokeEdge };
+});
+
+vi.mock('@/integrations/supabase/client', () => ({
+  SUPABASE_URL: 'https://local.test',
   supabase: {
     auth: { refreshSession: mockRefreshSession },
     from: mockFrom.mockImplementation(() => ({
@@ -86,7 +99,10 @@ describe('useAdminData.handleCreateUser — camada de Edge padrão', () => {
     expect(ok).toBe(true);
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(mockInvokeEdge).toHaveBeenCalledTimes(1);
-    const [fnName, body] = mockInvokeEdge.mock.calls[0];
+    // `invokeEdge(functionName, options)` — o corpo vai em `options.body`
+    // (contrato de `src/lib/invokeEdge.ts`), não como 2º argumento direto.
+    const [fnName, options] = mockInvokeEdge.mock.calls[0];
+    const body = (options as { body: unknown }).body;
     expect(fnName).toBe('create-user');
     expect(body).toMatchObject({
       name: 'Ana Souza',
