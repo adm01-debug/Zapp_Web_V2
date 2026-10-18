@@ -22,17 +22,51 @@ const SEGMENT_TIMEZONE = 'America/Sao_Paulo';
 /* ------------------------------------------------------------------ */
 
 export type RuleField =
-  | 'tags' | 'company' | 'contact_type' | 'conversation_status' | 'channel_type'
-  | 'consent_status' | 'lead_score' | 'risk_score' | 'ai_priority' | 'ai_sentiment'
-  | 'lead_origin' | 'updated_at' | 'created_at' | 'email'
-  | 'city' | 'state' | 'assigned_to' | 'group_category'
-  | 'real_sector' | 'real_uf';
+  | 'tags'
+  | 'company'
+  | 'contact_type'
+  | 'conversation_status'
+  | 'channel_type'
+  | 'consent_status'
+  | 'lead_score'
+  | 'risk_score'
+  | 'ai_priority'
+  | 'ai_sentiment'
+  | 'lead_origin'
+  | 'updated_at'
+  | 'created_at'
+  | 'email'
+  | 'city'
+  | 'state'
+  | 'assigned_to'
+  | 'group_category'
+  | 'real_sector'
+  | 'real_uf';
 export type RuleOp =
-  | 'eq' | 'neq' | 'contains' | 'not_contains' | 'gt' | 'gte' | 'lt' | 'lte'
-  | 'in_last_days' | 'not_in_last_days' | 'is_set' | 'is_empty';
+  | 'eq'
+  | 'neq'
+  | 'contains'
+  | 'not_contains'
+  | 'gt'
+  | 'gte'
+  | 'lt'
+  | 'lte'
+  | 'in_last_days'
+  | 'not_in_last_days'
+  | 'is_set'
+  | 'is_empty';
 
-export interface SegmentRule { id: string; field: RuleField; op: RuleOp; value: string }
-export interface SegmentRuleGroup { id: string; match: 'and' | 'or'; rules: SegmentRule[] }
+export interface SegmentRule {
+  id: string;
+  field: RuleField;
+  op: RuleOp;
+  value: string;
+}
+export interface SegmentRuleGroup {
+  id: string;
+  match: 'and' | 'or';
+  rules: SegmentRule[];
+}
 /**
  * Conector ENTRE grupos: um único valor para o segmento inteiro, sem
  * precedência mista. O motor combina os grupos com OU — a RPC de audiência
@@ -44,7 +78,10 @@ export interface SegmentRuleGroup { id: string; match: 'and' | 'or'; rules: Segm
  */
 export type SegmentJoin = 'and' | 'or';
 /** Grupos são combinados com OU entre si (como no mockup "Grupo 1 OU Grupo 2"). */
-export interface SegmentRules { groups: SegmentRuleGroup[]; join?: SegmentJoin }
+export interface SegmentRules {
+  groups: SegmentRuleGroup[];
+  join?: SegmentJoin;
+}
 
 export interface TalkXSegment {
   id: string;
@@ -62,7 +99,14 @@ export interface TalkXSegment {
   creator?: { name: string | null } | null;
 }
 
-export const RULE_FIELDS: { value: RuleField; label: string; kind: 'text' | 'array' | 'number' | 'date' | 'enum' | 'uuid'; category: 'basico' | 'comportamento' | 'comercial' | 'lgpd'; options?: string[]; comingSoon?: boolean }[] = [
+export const RULE_FIELDS: {
+  value: RuleField;
+  label: string;
+  kind: 'text' | 'array' | 'number' | 'date' | 'enum' | 'uuid';
+  category: 'basico' | 'comportamento' | 'comercial' | 'lgpd';
+  options?: string[];
+  comingSoon?: boolean;
+}[] = [
   { value: 'tags', label: 'Tags', kind: 'array', category: 'basico' },
   { value: 'company', label: 'Empresa', kind: 'text', category: 'basico' },
   { value: 'city', label: 'Cidade', kind: 'text', category: 'basico' },
@@ -78,7 +122,13 @@ export const RULE_FIELDS: { value: RuleField; label: string; kind: 'text' | 'arr
   { value: 'real_uf', label: 'UF (real)', kind: 'enum', category: 'basico' },
   // Valores canônicos dos grupos (mesma lista que classifica public.contacts.group_category),
   // para a regra nunca oferecer categoria que o banco não guarda.
-  { value: 'group_category', label: 'Grupo', kind: 'enum', category: 'basico', options: GROUP_CATEGORIES.map((c) => c.value) },
+  {
+    value: 'group_category',
+    label: 'Grupo',
+    kind: 'enum',
+    category: 'basico',
+    options: GROUP_CATEGORIES.map((c) => c.value),
+  },
   { value: 'email', label: 'E-mail', kind: 'text', category: 'basico' },
   { value: 'channel_type', label: 'Canal de origem', kind: 'text', category: 'basico' },
   { value: 'lead_origin', label: 'Origem do lead', kind: 'text', category: 'basico' },
@@ -86,43 +136,114 @@ export const RULE_FIELDS: { value: RuleField; label: string; kind: 'text' | 'arr
   // Tipos de contato e status de conversa vem das fontes canonicas: uma regra de segmento
   // nunca pode oferecer valor que o banco rejeita (a lista local tinha 'lead'/'sicoob_gifts',
   // extintos, e omitia 3 dos 6 tipos reais).
-  { value: 'contact_type', label: 'Tipo do contato', kind: 'enum', category: 'comercial', options: CONTACT_TYPES.map((t) => t.value) },
-  { value: 'conversation_status', label: 'Status da conversa', kind: 'enum', category: 'comportamento', options: [...CONVERSATION_STATUSES] },
+  {
+    value: 'contact_type',
+    label: 'Tipo do contato',
+    kind: 'enum',
+    category: 'comercial',
+    options: CONTACT_TYPES.map((t) => t.value),
+  },
+  {
+    value: 'conversation_status',
+    label: 'Status da conversa',
+    kind: 'enum',
+    category: 'comportamento',
+    options: [...CONVERSATION_STATUSES],
+  },
   // Nada calcula contacts.lead_score/risk_score (sempre 0/nulo): filtrar por eles nunca muda o
   // resultado. Ficam "em breve" (nao selecionaveis) ate existir calculo real a partir de dado do banco.
-  { value: 'lead_score', label: 'Lead score', kind: 'number', category: 'comercial', comingSoon: true },
-  { value: 'risk_score', label: 'Risco de churn', kind: 'number', category: 'comportamento', comingSoon: true },
+  {
+    value: 'lead_score',
+    label: 'Lead score',
+    kind: 'number',
+    category: 'comercial',
+    comingSoon: true,
+  },
+  {
+    value: 'risk_score',
+    label: 'Risco de churn',
+    kind: 'number',
+    category: 'comportamento',
+    comingSoon: true,
+  },
   // Opções vindas do vocabulário canônico (IA-021/IA-022): sentimento em pt-BR
   // e prioridade na escala EN do front. Uma regra de segmento nunca pode
   // oferecer valor que o banco não guarda.
-  { value: 'ai_priority', label: 'Prioridade (IA)', kind: 'enum', category: 'comportamento', options: [...OPERATIONAL_PRIORITY_VALUES] },
-  { value: 'ai_sentiment', label: 'Sentimento (IA)', kind: 'enum', category: 'comportamento', options: [...SENTIMENT_VALUES] },
+  {
+    value: 'ai_priority',
+    label: 'Prioridade (IA)',
+    kind: 'enum',
+    category: 'comportamento',
+    options: [...OPERATIONAL_PRIORITY_VALUES],
+  },
+  {
+    value: 'ai_sentiment',
+    label: 'Sentimento (IA)',
+    kind: 'enum',
+    category: 'comportamento',
+    options: [...SENTIMENT_VALUES],
+  },
   { value: 'updated_at', label: 'Última interação', kind: 'date', category: 'comportamento' },
   { value: 'created_at', label: 'Data de cadastro', kind: 'date', category: 'basico' },
-  { value: 'consent_status', label: 'Consentimento (LGPD)', kind: 'enum', category: 'lgpd', options: ['granted', 'unknown', 'revoked'] },
+  {
+    value: 'consent_status',
+    label: 'Consentimento (LGPD)',
+    kind: 'enum',
+    category: 'lgpd',
+    options: ['granted', 'unknown', 'revoked'],
+  },
 ];
 
 export const RULE_OPS: Record<string, { value: RuleOp; label: string }[]> = {
   text: [
-    { value: 'eq', label: 'é igual a' }, { value: 'neq', label: 'é diferente de' },
-    { value: 'contains', label: 'contém' }, { value: 'not_contains', label: 'não contém' },
-    { value: 'is_set', label: 'está preenchido' }, { value: 'is_empty', label: 'está vazio' },
+    { value: 'eq', label: 'é igual a' },
+    { value: 'neq', label: 'é diferente de' },
+    { value: 'contains', label: 'contém' },
+    { value: 'not_contains', label: 'não contém' },
+    { value: 'is_set', label: 'está preenchido' },
+    { value: 'is_empty', label: 'está vazio' },
   ],
-  enum: [{ value: 'eq', label: 'é igual a' }, { value: 'neq', label: 'é diferente de' }, { value: 'is_empty', label: 'está vazio' }],
+  enum: [
+    { value: 'eq', label: 'é igual a' },
+    { value: 'neq', label: 'é diferente de' },
+    { value: 'is_empty', label: 'está vazio' },
+  ],
   // uuid (ex.: public.contacts.assigned_to) aceita igualdade, mas NAO 'contem':
   // o PostgREST viraria ilike numa coluna uuid e o Postgres rejeita
   // ("operator does not exist: uuid ~~* text").
-  uuid: [{ value: 'eq', label: 'é igual a' }, { value: 'neq', label: 'é diferente de' }, { value: 'is_empty', label: 'está vazio' }],
-  array: [{ value: 'contains', label: 'contém' }, { value: 'not_contains', label: 'não contém' }, { value: 'is_empty', label: 'está vazio' }],
-  number: [
-    { value: 'eq', label: 'é igual a' }, { value: 'gt', label: 'maior que' }, { value: 'gte', label: 'maior ou igual a' },
-    { value: 'lt', label: 'menor que' }, { value: 'lte', label: 'menor ou igual a' },
+  uuid: [
+    { value: 'eq', label: 'é igual a' },
+    { value: 'neq', label: 'é diferente de' },
+    { value: 'is_empty', label: 'está vazio' },
   ],
-  date: [{ value: 'in_last_days', label: 'nos últimos (dias)' }, { value: 'not_in_last_days', label: 'há mais de (dias)' }],
+  array: [
+    { value: 'contains', label: 'contém' },
+    { value: 'not_contains', label: 'não contém' },
+    { value: 'is_empty', label: 'está vazio' },
+  ],
+  number: [
+    { value: 'eq', label: 'é igual a' },
+    { value: 'gt', label: 'maior que' },
+    { value: 'gte', label: 'maior ou igual a' },
+    { value: 'lt', label: 'menor que' },
+    { value: 'lte', label: 'menor ou igual a' },
+  ],
+  date: [
+    { value: 'in_last_days', label: 'nos últimos (dias)' },
+    { value: 'not_in_last_days', label: 'há mais de (dias)' },
+  ],
 };
 
-export const emptyRules = (): SegmentRules => ({ groups: [{ id: crypto.randomUUID(), match: 'and', rules: [] }], join: 'or' });
-export const newRule = (): SegmentRule => ({ id: crypto.randomUUID(), field: 'tags', op: 'contains', value: '' });
+export const emptyRules = (): SegmentRules => ({
+  groups: [{ id: crypto.randomUUID(), match: 'and', rules: [] }],
+  join: 'or',
+});
+export const newRule = (): SegmentRule => ({
+  id: crypto.randomUUID(),
+  field: 'tags',
+  op: 'contains',
+  value: '',
+});
 
 /**
  * O conector que vale para o segmento inteiro. Regras gravadas antes deste
@@ -130,7 +251,8 @@ export const newRule = (): SegmentRule => ({ id: crypto.randomUUID(), field: 'ta
  * o motor sempre aplicou e evita que a tela prometa um E que a contagem/entrega
  * não fazem.
  */
-export const rulesJoin = (rules: SegmentRules | null | undefined): SegmentJoin => (rules?.join === 'and' ? 'and' : 'or');
+export const rulesJoin = (rules: SegmentRules | null | undefined): SegmentJoin =>
+  rules?.join === 'and' ? 'and' : 'or';
 
 /**
  * Uma condição só é utilizável quando tem valor para o seu tipo: texto/enum/array
@@ -159,7 +281,10 @@ export function isRuleComplete(rule: SegmentRule): boolean {
  * estimativa. Grupos que ficam sem nenhuma condição completa são descartados,
  * como já faz o `rulesToPostgrest`.
  */
-export function splitRules(rules: SegmentRules | null | undefined): { complete: SegmentRules; incompleteCount: number } {
+export function splitRules(rules: SegmentRules | null | undefined): {
+  complete: SegmentRules;
+  incompleteCount: number;
+} {
   let incompleteCount = 0;
   const groups = (rules?.groups ?? [])
     .map((group) => {
@@ -200,7 +325,8 @@ function ruleToFilter(r: SegmentRule): string | null {
   if (def.comingSoon) return null;
   const v = r.value.trim();
   switch (r.op) {
-    case 'is_set': return `${r.field}.not.is.null`;
+    case 'is_set':
+      return `${r.field}.not.is.null`;
     case 'is_empty': {
       if (def.kind === 'array') return `or(${r.field}.is.null,${r.field}.eq.{})`;
       // Coluna uuid nao compara com string vazia (`eq.`): "vazio" aqui e apenas nulo.
@@ -211,14 +337,17 @@ function ruleToFilter(r: SegmentRule): string | null {
     // uma janela de d*24h: as 22h30 em SP a janela de 7 dias alcancava o 8o dia de calendario e a
     // audiencia saia um dia mais larga. Mesma semantica de dias de calendario do R3-06 (timeline).
     case 'in_last_days': {
-      const d = Number(v); if (!d) return null;
+      const d = Number(v);
+      if (!d) return null;
       return `${r.field}.gte.${zonedDayStartISO(SEGMENT_TIMEZONE, d - 1)}`;
     }
     case 'not_in_last_days': {
-      const d = Number(v); if (!d) return null;
+      const d = Number(v);
+      if (!d) return null;
       return `${r.field}.lt.${zonedDayStartISO(SEGMENT_TIMEZONE, d - 1)}`;
     }
-    default: break;
+    default:
+      break;
   }
   if (!v) return null;
   if (def.kind === 'array') {
@@ -227,15 +356,21 @@ function ruleToFilter(r: SegmentRule): string | null {
     return null;
   }
   if (def.kind === 'number') {
-    const n = Number(v); if (Number.isNaN(n)) return null;
+    const n = Number(v);
+    if (Number.isNaN(n)) return null;
     return `${r.field}.${r.op}.${n}`;
   }
   switch (r.op) {
-    case 'eq': return `${r.field}.eq.${quoted(v)}`;
-    case 'neq': return `or(${r.field}.is.null,${r.field}.neq.${quoted(v)})`;
-    case 'contains': return `${r.field}.ilike.${quoted(`*${v}*`)}`;
-    case 'not_contains': return `or(${r.field}.is.null,${r.field}.not.ilike.${quoted(`*${v}*`)})`;
-    default: return null;
+    case 'eq':
+      return `${r.field}.eq.${quoted(v)}`;
+    case 'neq':
+      return `or(${r.field}.is.null,${r.field}.neq.${quoted(v)})`;
+    case 'contains':
+      return `${r.field}.ilike.${quoted(`*${v}*`)}`;
+    case 'not_contains':
+      return `or(${r.field}.is.null,${r.field}.not.ilike.${quoted(`*${v}*`)})`;
+    default:
+      return null;
   }
 }
 
@@ -258,16 +393,23 @@ export function rulesToPostgrest(rules: SegmentRules | null | undefined): string
     })
     .filter((g) => g.filters.length > 0);
   if (groups.length === 0) return null;
-  const parts = groups.map((g) => (g.filters.length === 1 ? g.filters[0] : `${g.match}(${g.filters.join(',')})`));
+  const parts = groups.map((g) =>
+    g.filters.length === 1 ? g.filters[0] : `${g.match}(${g.filters.join(',')})`
+  );
   return parts.length === 1 ? parts[0] : parts.join(',');
 }
 
 /** Formato aceito pela RPC talkx_resolve_audience (X016): { groups: [...] }. */
-function audienceRulesPayload(rules: SegmentRules | null | undefined): { groups: SegmentRuleGroup[] } {
+function audienceRulesPayload(rules: SegmentRules | null | undefined): {
+  groups: SegmentRuleGroup[];
+} {
   return { groups: rules?.groups ?? [] };
 }
 
-type TalkXAudienceRpc = (name: string, args: Record<string, unknown>) => Promise<{
+type TalkXAudienceRpc = (
+  name: string,
+  args: Record<string, unknown>
+) => Promise<{
   data: unknown;
   error: { message: string } | null;
 }>;
@@ -281,7 +423,10 @@ const AUDIENCE_RPC_PAGE_LIMIT = 1000;
  * snapshot (deleted_at/LID/telefone/visibilidade). Antes o navegador contava via
  * PostgREST filtrando só `phone not null`, o que superestimava o público.
  */
-export async function countAudience(rules: SegmentRules | null | undefined, segmentIds?: string[]): Promise<number> {
+export async function countAudience(
+  rules: SegmentRules | null | undefined,
+  segmentIds?: string[]
+): Promise<number> {
   const rpc = supabase.rpc as unknown as TalkXAudienceRpc;
   const { data, error } = await rpc('talkx_resolve_audience', {
     p_rules: audienceRulesPayload(rules),
@@ -295,14 +440,26 @@ export async function countAudience(rules: SegmentRules | null | undefined, segm
   return Number(result?.eligible ?? 0);
 }
 
-export interface AudienceContact { id: string; name: string; nickname: string | null; phone: string; company: string | null; avatar_url: string | null; tags: string[] | null }
+export interface AudienceContact {
+  id: string;
+  name: string;
+  nickname: string | null;
+  phone: string;
+  company: string | null;
+  avatar_url: string | null;
+  tags: string[] | null;
+}
 
 /**
  * X017 — a amostra/lista do público passa a vir da RPC talkx_resolve_audience
  * (modo `page`, keyset) em vez do PostgREST no navegador. O telefone chega
  * mascarado pelo servidor e a paginação percorre até `limit` (ou o fim da lista).
  */
-export async function resolveAudience(rules: SegmentRules | null | undefined, limit = 5000, segmentIds?: string[]): Promise<AudienceContact[]> {
+export async function resolveAudience(
+  rules: SegmentRules | null | undefined,
+  limit = 5000,
+  segmentIds?: string[]
+): Promise<AudienceContact[]> {
   const rpc = supabase.rpc as unknown as TalkXAudienceRpc;
   const target = Math.max(0, Math.floor(limit));
   const rows: AudienceContact[] = [];
@@ -318,7 +475,11 @@ export async function resolveAudience(rules: SegmentRules | null | undefined, li
       p_after: after,
     });
     if (error) throw new Error(error.message);
-    const page = (data ?? {}) as { rows?: AudienceContact[]; has_more?: boolean; next_after?: string | null };
+    const page = (data ?? {}) as {
+      rows?: AudienceContact[];
+      has_more?: boolean;
+      next_after?: string | null;
+    };
     const batch = page.rows ?? [];
     rows.push(...batch);
     if (!page.has_more || batch.length === 0) break;
@@ -335,7 +496,10 @@ export function useAudienceEstimate(rules: SegmentRules | null | undefined, enab
   return useQuery({
     queryKey: ['talkx-audience-estimate', key],
     queryFn: async () => {
-      const [count, sample] = await Promise.all([countAudience(complete), resolveAudience(complete, 5)]);
+      const [count, sample] = await Promise.all([
+        countAudience(complete),
+        resolveAudience(complete, 5),
+      ]);
       return { count, sample, incompleteCount };
     },
     enabled,
@@ -386,7 +550,10 @@ export interface TalkXSegmentLibraryStats {
   series: TalkXSegmentLibraryMonth[];
 }
 
-type TalkXLibraryStatsRpc = (name: string, args: Record<string, unknown>) => Promise<{
+type TalkXLibraryStatsRpc = (
+  name: string,
+  args: Record<string, unknown>
+) => Promise<{
   data: unknown;
   error: { message: string } | null;
 }>;
@@ -405,7 +572,9 @@ export function useSegmentLibraryStats() {
     queryKey: LIBRARY_STATS_QUERY_KEY,
     queryFn: async () => {
       const rpc = supabase.rpc as unknown as TalkXLibraryStatsRpc;
-      const { data, error } = await rpc('talkx_segment_library_stats', { p_timezone: SEGMENT_TIMEZONE });
+      const { data, error } = await rpc('talkx_segment_library_stats', {
+        p_timezone: SEGMENT_TIMEZONE,
+      });
       if (error) throw new Error(error.message);
       return data as TalkXSegmentLibraryStats;
     },
@@ -442,7 +611,10 @@ export interface TalkXSegmentBulkResult {
 /** Teto de ids por chamada da RPC (t_9c7ad8fc); acima disso o lote é dividido. */
 export const BULK_ACTION_MAX_IDS = 200;
 
-type TalkXBulkRpc = (name: string, args: Record<string, unknown>) => Promise<{
+type TalkXBulkRpc = (
+  name: string,
+  args: Record<string, unknown>
+) => Promise<{
   data: unknown;
   error: { message: string; code?: string | null } | null;
 }>;
@@ -452,7 +624,7 @@ const bulkFailure = (
   segmentId: string,
   action: TalkXSegmentBulkAction,
   code: string,
-  message: string,
+  message: string
 ): TalkXSegmentBulkResult => ({
   segment_id: segmentId,
   action,
@@ -483,7 +655,9 @@ export async function applySegmentBulkAction(input: {
 }): Promise<TalkXSegmentBulkResult[]> {
   // Ids únicos, como a própria RPC faz — sem isto um id repetido ficaria "sem
   // resposta" na hora de casar as linhas devolvidas.
-  const ids = Array.from(new Set(input.ids.filter((id) => typeof id === 'string' && id.trim() !== '')));
+  const ids = Array.from(
+    new Set(input.ids.filter((id) => typeof id === 'string' && id.trim() !== ''))
+  );
   if (ids.length === 0) throw new Error('Selecione ao menos um segmento.');
   const tag = input.tag?.trim();
   // Falha fechada ANTES de chamar o servidor: entrada inválida não aplica nada.
@@ -501,7 +675,8 @@ export async function applySegmentBulkAction(input: {
     if (error) {
       // Erro de entrada/transporte desta chamada: nada dela foi aplicado. Vira
       // falha item a item em vez de derrubar o lote inteiro.
-      for (const id of chunk) results.push(bulkFailure(id, input.action, error.code ?? 'ERRO', error.message));
+      for (const id of chunk)
+        results.push(bulkFailure(id, input.action, error.code ?? 'ERRO', error.message));
       continue;
     }
 
@@ -510,9 +685,16 @@ export async function applySegmentBulkAction(input: {
     for (const id of chunk) {
       const row = byId.get(id);
       // Sem linha para o segmento não há prova de aplicação: falha, não sucesso.
-      results.push(row
-        ? { ...row, succeeded: row.succeeded === true }
-        : bulkFailure(id, input.action, 'SEM_RESPOSTA', 'O servidor não respondeu por este segmento.'));
+      results.push(
+        row
+          ? { ...row, succeeded: row.succeeded === true }
+          : bulkFailure(
+              id,
+              input.action,
+              'SEM_RESPOSTA',
+              'O servidor não respondeu por este segmento.'
+            )
+      );
     }
   }
 
@@ -564,11 +746,15 @@ export function useTalkXSegments() {
       const estimated_count = await countAudience(input.rules);
       const { data, error } = await fromTable('talkx_segments')
         .insert({ ...input, estimated_count, created_by: userId })
-        .select().single();
+        .select()
+        .single();
       if (error) throw error;
       return data as TalkXSegment;
     },
-    onSuccess: () => { invalidate(); toast.success('Segmento publicado'); },
+    onSuccess: () => {
+      invalidate();
+      toast.success('Segmento publicado');
+    },
     onError: (e: Error) => toast.error(`Erro ao salvar segmento: ${e.message}`),
   });
 
@@ -578,7 +764,11 @@ export function useTalkXSegments() {
       const patch: Record<string, unknown> = { ...updates };
       delete patch.creator;
       if (updates.rules) patch.estimated_count = await countAudience(updates.rules);
-      const { data, error } = await fromTable('talkx_segments').update(patch).eq('id', id).select().single();
+      const { data, error } = await fromTable('talkx_segments')
+        .update(patch)
+        .eq('id', id)
+        .select()
+        .single();
       if (error) throw error;
       return data as TalkXSegment;
     },
@@ -591,16 +781,22 @@ export function useTalkXSegments() {
       const { error } = await fromTable('talkx_segments').delete().eq('id', id);
       if (error) throw error;
     },
-    onSuccess: () => { invalidate(); toast.success('Segmento excluído'); },
+    onSuccess: () => {
+      invalidate();
+      toast.success('Segmento excluído');
+    },
     onError: (e: Error) => toast.error(`Erro ao excluir: ${e.message}`),
   });
 
   const refreshEstimates = useMutation({
     mutationFn: async (segments: TalkXSegment[]) => {
-      await Promise.all(segments.map(async (s) => {
-        const estimated_count = await countAudience(s.rules);
-        if (estimated_count !== s.estimated_count) await fromTable('talkx_segments').update({ estimated_count }).eq('id', s.id);
-      }));
+      await Promise.all(
+        segments.map(async (s) => {
+          const estimated_count = await countAudience(s.rules);
+          if (estimated_count !== s.estimated_count)
+            await fromTable('talkx_segments').update({ estimated_count }).eq('id', s.id);
+        })
+      );
     },
     onSuccess: () => invalidate(),
   });
@@ -611,7 +807,11 @@ export function useTalkXSegments() {
 
   const bulkAction = useMutation({
     mutationFn: (input: { action: TalkXSegmentBulkAction; ids?: string[]; tag?: string }) =>
-      applySegmentBulkAction({ action: input.action, ids: input.ids ?? selectedIds, tag: input.tag }),
+      applySegmentBulkAction({
+        action: input.action,
+        ids: input.ids ?? selectedIds,
+        tag: input.tag,
+      }),
     // A ação pode mudar status/arquivo/tags: lista e KPIs voltam do servidor.
     onSuccess: () => invalidate(),
   });
@@ -627,15 +827,19 @@ export function useTalkXSegments() {
     libraryStatsLoading: libraryStatsQuery.isLoading,
     libraryStatsError: libraryStatsQuery.error as Error | null,
     refetchLibraryStats: libraryStatsQuery.refetch,
-    createSegment, updateSegment, deleteSegment, refreshEstimates,
-    viewMode, setViewMode,
+    createSegment,
+    updateSegment,
+    deleteSegment,
+    refreshEstimates,
+    viewMode,
+    setViewMode,
     // X114 — seleção e ações em massa (RPC guardada talkx_segment_bulk_action).
     // `runBulkAction` devolve o resultado POR SEGMENTO; a tela decide o que
     // mostrar, mas item barrado pela guarda chega aqui com `succeeded: false`.
     selectedIds,
     isSelected: (id: string) => selectedIds.includes(id),
-    toggleSelect: (id: string) => setSelectedIds((prev) =>
-      (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])),
+    toggleSelect: (id: string) =>
+      setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])),
     selectAll: (ids: string[]) => setSelectedIds(Array.from(new Set(ids))),
     clearSelection: () => setSelectedIds([]),
     runBulkAction: (input: { action: TalkXSegmentBulkAction; ids?: string[]; tag?: string }) =>

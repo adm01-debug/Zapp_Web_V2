@@ -61,7 +61,17 @@ describe('supabase.rpc ligado ao cliente (Talk-X)', () => {
   it('resolveAudience percorre a página via RPC ligada ao cliente', async () => {
     state.result = {
       data: {
-        rows: [{ id: 'c-1', name: 'Ana', nickname: null, phone: '+5511****0000', company: null, avatar_url: null, tags: null }],
+        rows: [
+          {
+            id: 'c-1',
+            name: 'Ana',
+            nickname: null,
+            phone: '+5511****0000',
+            company: null,
+            avatar_url: null,
+            tags: null,
+          },
+        ],
         has_more: false,
       },
       error: null,
