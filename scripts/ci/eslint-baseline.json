@@ -17,10 +17,6 @@
       "sha256": "6c4e59158fd69c59974ef6275d4935219cc05e0c9f216fee3ede3b9215e8f1d3"
     },
     {
-      "path": "scripts/ci/workflow-contracts.unit.mjs",
-      "sha256": "cb6e6c3546137f4ab03185bd84991ce193f851655e6936abc7e12cfd5e9f1f8a"
-    },
-    {
       "path": "src/components/a11y/a11yComponents.tsx",
       "sha256": "5c62ff9a53a7ff42dc67ac1ffe65c64a7144574bdb2f13519b5e964f60e6fa4a"
     },
@@ -1494,7 +1490,7 @@
     },
     {
       "path": "supabase/functions/_shared/cron-secret-auth.ts",
-      "sha256": "321fff7bca46941938d6b64158aab12ab8508bfc82a53ffc887b7a903563dd9a"
+      "sha256": "e78ced5e21d29c760b28d42697ad196194406abe8335bf7809badf5269c65dcc"
     },
     {
       "path": "supabase/functions/_shared/evolution-control-authz.ts",
@@ -1542,15 +1538,15 @@
     },
     {
       "path": "supabase/functions/evolution-api/index.ts",
-      "sha256": "f48fc2f098ae0f343f6bd6a14109ff4b816860af477a992c714e1a95b7f1ded0"
+      "sha256": "2825e7f39012c2632312c6007c62fc2ed6e459cd0a625e41f897a00be025c90f"
     },
     {
       "path": "supabase/functions/external-db-bridge/index.ts",
-      "sha256": "2e71f9f8a5e85772898aeae028fab886096a35c2d8d0fd1eedb7088bbd72aded"
+      "sha256": "5a9762286c7ab3209c66b87c20df81925d1ce51ad0be3a3755e037ecc253882b"
     },
     {
       "path": "supabase/functions/get-sip-password/index.ts",
-      "sha256": "5cebe4c27155f7df43360a0c855f96a3f6ee8e4ef410b80f8379ad9699ce60e5"
+      "sha256": "f5d69b0eee1536b3803b6019866baf14f2344166f8295d969d385d4a0102c371"
     },
     {
       "path": "supabase/functions/gmail-oauth/index.ts",
@@ -1570,7 +1566,7 @@
     },
     {
       "path": "supabase/functions/multiplix-send/index.ts",
-      "sha256": "894b5d3743f3516abac35a73ed58c1380ecb599a042e98fb94a4ae6684f40503"
+      "sha256": "bcb0281aa97149ba02ac5a00385bbe297c8a5c3f7bc78cacf995cb7e26015403"
     },
     {
       "path": "supabase/functions/searchbox-budget-alert/index.ts",
@@ -1669,20 +1665,6 @@
       "spanHash": null,
       "lineHash": "d818a03fba070a6d80db05c1781c332665bf30a3b36645b5606756a0bfde7fab",
       "contextHash": "5d9f9c5feda4f7ae369d3d06db245120f4aecc66ad29c259211dae4599898fb6"
-    },
-    {
-      "file": "scripts/ci/workflow-contracts.unit.mjs",
-      "line": 604,
-      "column": 1,
-      "endLine": 0,
-      "endColumn": 0,
-      "severity": 2,
-      "ruleId": null,
-      "messageId": null,
-      "message": "Parsing error: Unexpected token",
-      "spanHash": null,
-      "lineHash": null,
-      "contextHash": "419e5a8f81842498d8132484d0b0f62dcd521916ad9bbcae07701fb307ed5a49"
     },
     {
       "file": "src/components/a11y/a11yComponents.tsx",
@@ -12312,9 +12294,9 @@
     },
     {
       "file": "supabase/functions/_shared/cron-secret-auth.ts",
-      "line": 87,
+      "line": 92,
       "column": 9,
-      "endLine": 87,
+      "endLine": 92,
       "endColumn": 29,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -12326,9 +12308,9 @@
     },
     {
       "file": "supabase/functions/_shared/cron-secret-auth.ts",
-      "line": 93,
+      "line": 98,
       "column": 7,
-      "endLine": 93,
+      "endLine": 98,
       "endColumn": 29,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -12746,9 +12728,9 @@
     },
     {
       "file": "supabase/functions/get-sip-password/index.ts",
-      "line": 86,
+      "line": 75,
       "column": 22,
-      "endLine": 86,
+      "endLine": 75,
       "endColumn": 46,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -12942,9 +12924,9 @@
     },
     {
       "file": "supabase/functions/multiplix-send/index.ts",
-      "line": 114,
+      "line": 106,
       "column": 7,
-      "endLine": 114,
+      "endLine": 106,
       "endColumn": 36,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
