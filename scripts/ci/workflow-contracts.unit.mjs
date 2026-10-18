@@ -629,3 +629,14 @@ test('W71: e2e-logado não dispara em push (só via workflow_run do CI/CD Pipeli
     `ci.yml mudou de nome: e2e-logado.yml espera "CI/CD Pipeline" mas ci.yml se chama "${ciNome}"`,
   );
 });
+
+test('W71: e2e-logado não roda quando workflow_run falhou', () => {
+  // Sem este guard, um CI vermelho ainda dispararia o E2E logado. O job-level
+  // `if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'`
+  // é o que impede isso. Removê-lo silenciosamente é o modo de regressão mais provável.
+  const texto = wf['e2e-logado.yml'];
+  assert.ok(
+    /conclusion\s*==\s*['"]success['"]/.test(texto),
+    'e2e-logado.yml perdeu o guard if: conclusion == success — E2E roda mesmo com CI falho',
+  );
+});
