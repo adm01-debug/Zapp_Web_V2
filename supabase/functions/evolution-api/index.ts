@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { Logger, checkRateLimit, getClientIP, getCorsHeaders, handleCors } from "../_shared/validation.ts";
+import { Logger, checkRateLimit, getClientIP, getCorsHeaders, handleCors, internalErrorResponse, requireAuth } from "../_shared/validation.ts";
 import { proxyToEvolution, resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
 import { resolveInstanceToken } from "../_shared/evolution-instance-token.ts";
 import { goHistoryNotSupported } from "../_shared/evolution-sync-actions.ts";
@@ -62,13 +62,9 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     global: { headers: { Authorization: req.headers.get('Authorization') || '' } },
   });
 
-  // E25: toda ação requer JWT válido — evolution-api não tem endpoints públicos.
-  const { data: { user: _callerUser }, error: _callerAuthError } = await callerClient.auth.getUser();
-  if (_callerAuthError || !_callerUser) {
-    return new Response(JSON.stringify({ error: true, message: 'Não autenticado.' }), {
-      status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  }
+  // Z016/E25: JWT válido + perfil ativo + política de rede (requireAuth cobre os três).
+  const _auth = await requireAuth(req);
+  if (_auth instanceof Response) return _auth;
 
   const url = new URL(req.url);
   const pathParts = url.pathname.split('/').filter(Boolean);
@@ -121,7 +117,7 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     // exigem esse papel OU visibilidade do contato alvo
     // (is_contact_visible_to_user). LEITURA segue exigindo só JWT válido (gate
     // global acima) — somente as ações de READ_ACTIONS.
-    const callerUserId = _callerUser.id;
+    const callerUserId = _auth.userId;
     const isCallerAdminOrSupervisor = async (): Promise<boolean> => {
       const { data: isAdmin } = await callerClient.rpc('is_admin_or_supervisor', { _user_id: callerUserId });
       return !!isAdmin;
@@ -228,12 +224,9 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
 
     // ─── E10/E11 (plano multi-conexão): ambas admin-only — mesmo guard usado em
     // evolution-sync/index.ts (JWT válido + is_admin_or_supervisor via RPC).
+    // Z016-CLEANUP: auth.getUser() era redundante; callerUserId já vem de requireAuth (linha 66).
     const requireAdmin = async (): Promise<Response | null> => {
-      const { data: { user }, error: userError } = await callerClient.auth.getUser();
-      if (userError || !user) {
-        return new Response(JSON.stringify({ error: true, message: 'Não autenticado.' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-      }
-      const { data: isAdmin } = await callerClient.rpc('is_admin_or_supervisor', { _user_id: user.id });
+      const { data: isAdmin } = await callerClient.rpc('is_admin_or_supervisor', { _user_id: callerUserId });
       if (!isAdmin) {
         return new Response(JSON.stringify({ error: true, message: 'Apenas administradores podem executar esta ação.' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
