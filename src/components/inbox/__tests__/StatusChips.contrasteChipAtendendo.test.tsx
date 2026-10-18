@@ -21,9 +21,15 @@
  */
 import { readFileSync } from 'node:fs';
 import { render, screen, cleanup } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { StatusChips } from '../conversation-list/StatusChips';
-import type { ChipCounts } from '@/hooks/inbox/chipCounts';
+import type { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
+
+// Só o hook de dados é dublado (o componente exige AuthProvider via useAuth);
+// os botões/chips são os REAIS — nenhum primitivo de UI é mockado.
+vi.mock('@/hooks/auth/useAuth', () => ({
+  useAuth: () => ({ user: { id: 'auth-user-1' }, profile: { id: 'perfil-atual-1' } }),
+}));
 
 // ─── WCAG 2.1: HSL (formato dos tokens) → sRGB → razão de contraste ─────────
 
@@ -142,19 +148,14 @@ function tokensDaClasse(
   return achados;
 }
 
-const counts: ChipCounts = {
-  all: 1,
-  unread: 0,
-  attending: 1,
-  waiting: 0,
-  resolved: 0,
-  archived: 0,
-};
+// A classe `status-chip-active` (auditada abaixo) só depende de `chipTab === 'attending'`
+// — `conversations` alimenta apenas o número do badge, que este teste não verifica.
+const conversations: ConversationWithMessages[] = [];
 
 /** Renderiza o `StatusChips` REAL com o chip "Em atendimento" ATIVO e devolve o par fundo×texto. */
 function medirChipAtendendo(): { fundo: string; base: string } {
   cleanup();
-  render(<StatusChips counts={counts} chipTab="attending" onChipTabChange={() => {}} />);
+  render(<StatusChips conversations={conversations} chipTab="attending" onChipTabChange={() => {}} />);
   const chip = screen.getByTestId('status-chip-attending');
   expect(chip, 'o chip ativo é o que o cartão audita').toHaveClass('status-chip-active');
   const fundos = tokensDaClasse(chip.className, 'bg', CLARO);

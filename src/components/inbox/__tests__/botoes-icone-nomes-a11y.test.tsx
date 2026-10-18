@@ -17,6 +17,11 @@ vi.mock('@/lib/logger', () => ({
   getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
 }));
 
+// TemplatesWithVariables exige AuthProvider via useAuth (só lê profile?.name).
+vi.mock('@/hooks/auth/useAuth', () => ({
+  useAuth: () => ({ user: { id: 'auth-user-1' }, profile: { id: 'perfil-atual-1', name: 'Agente' } }),
+}));
+
 const template = {
   id: 't1',
   title: 'Boas-vindas',
