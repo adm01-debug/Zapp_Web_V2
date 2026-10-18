@@ -75,8 +75,12 @@ beforeEach(() => {
   mocks.getUser.mockResolvedValue({ data: { user: { id: UID } }, error: null });
   mocks.invoke.mockResolvedValue({ data: { category: 'produto' }, error: null });
   mocks.tableFrom.mockImplementation(() => ({
+    // `fetchEmojis`/`fetchMore` encadeiam DOIS `.order()` (use_count, depois id
+    // para desempate determinístico) antes do `.range()` — ver useCustomEmojis.ts.
     select: () => ({
-      order: () => ({ limit: () => Promise.resolve({ data: [emoji()], error: null }) }),
+      order: () => ({
+        order: () => ({ range: () => Promise.resolve({ data: [emoji()], error: null }) }),
+      }),
     }),
     insert: (payload: Record<string, unknown>) => {
       inserted.push(payload);
