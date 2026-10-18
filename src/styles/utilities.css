@@ -1,126 +1,191 @@
 /* ===== UTILITY CLASSES — Typography, gradients, shadows, scrollbar ===== */
 
 .font-display {
-    font-family: var(--font-display);
-  }
+  font-family: var(--font-display);
+}
 
-  /* ===== SEMANTIC TYPOGRAPHY TOKENS ===== */
-  .text-display {
-    font-family: var(--font-display);
-    @apply text-3xl md:text-4xl font-bold tracking-tight;
-  }
+/* ===== SEMANTIC TYPOGRAPHY TOKENS ===== */
+.text-display {
+  font-family: var(--font-display);
+  @apply text-3xl font-bold tracking-tight md:text-4xl;
+}
 
-  .text-display-xl {
-    font-family: var(--font-display);
-    @apply text-4xl md:text-5xl font-bold tracking-tighter;
-  }
+.text-display-xl {
+  font-family: var(--font-display);
+  @apply text-4xl font-bold tracking-tighter md:text-5xl;
+}
 
-  .text-display-2xl {
-    font-family: var(--font-display);
-    @apply text-5xl md:text-6xl font-extrabold tracking-tighter;
-  }
+.text-display-2xl {
+  font-family: var(--font-display);
+  @apply text-5xl font-extrabold tracking-tighter md:text-6xl;
+}
 
-  .text-heading {
-    font-family: var(--font-display);
-    @apply text-xl md:text-2xl font-semibold tracking-tight;
-  }
+.text-heading {
+  font-family: var(--font-display);
+  @apply text-xl font-semibold tracking-tight md:text-2xl;
+}
 
-  .text-heading-sm {
-    font-family: var(--font-display);
-    @apply text-lg font-semibold tracking-tight;
-  }
+.text-heading-sm {
+  font-family: var(--font-display);
+  @apply text-lg font-semibold tracking-tight;
+}
 
-  .text-subheading {
-    font-family: var(--font-display);
-    @apply text-base md:text-lg font-medium;
-  }
+.text-subheading {
+  font-family: var(--font-display);
+  @apply text-base font-medium md:text-lg;
+}
 
-  .text-body {
-    font-family: var(--font-sans);
-    @apply text-base leading-relaxed;
-  }
+.text-body {
+  font-family: var(--font-sans);
+  @apply text-base leading-relaxed;
+}
 
-  .text-body-sm {
-    font-family: var(--font-sans);
-    @apply text-sm leading-relaxed;
-  }
+.text-body-sm {
+  font-family: var(--font-sans);
+  @apply text-sm leading-relaxed;
+}
 
-  .text-caption {
-    font-family: var(--font-sans);
-    @apply text-xs leading-normal text-muted-foreground;
-  }
+.text-caption {
+  font-family: var(--font-sans);
+  @apply text-xs leading-normal text-muted-foreground;
+}
 
-  .text-overline {
-    font-family: var(--font-sans);
-    @apply text-xs font-semibold uppercase tracking-widest text-muted-foreground;
-  }
+.text-overline {
+  font-family: var(--font-sans);
+  @apply text-xs font-semibold uppercase tracking-widest text-muted-foreground;
+}
 
-  .text-code {
-    font-family: var(--font-mono);
-    @apply text-sm;
-  }
+.text-code {
+  font-family: var(--font-mono);
+  @apply text-sm;
+}
 
-  .scrollbar-thin {
-    scrollbar-width: thin;
-    scrollbar-color: hsl(var(--muted-foreground) / 0.2) transparent;
-  }
-  .scrollbar-thin::-webkit-scrollbar { width: 4px; }
-  .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
-  .scrollbar-thin::-webkit-scrollbar-thumb { background: hsl(var(--muted-foreground) / 0.2); border-radius: 2px; }
-  .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground) / 0.35); }
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.2) transparent;
+}
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.2);
+  border-radius: 2px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.35);
+}
 
-  /* Gradient Text */
-  .gradient-text { @apply bg-clip-text text-transparent; background-image: var(--gradient-primary); }
-  .gradient-text-secondary { @apply bg-clip-text text-transparent; background-image: var(--gradient-secondary); }
-  .gradient-text-success { @apply bg-clip-text text-transparent; background-image: var(--gradient-success); }
-  .gradient-text-gold { @apply bg-clip-text text-transparent; background-image: var(--gradient-gold); }
+/* Gradient Text */
+.gradient-text {
+  @apply bg-clip-text text-transparent;
+  background-image: var(--gradient-primary);
+}
+.gradient-text-secondary {
+  @apply bg-clip-text text-transparent;
+  background-image: var(--gradient-secondary);
+}
+.gradient-text-success {
+  @apply bg-clip-text text-transparent;
+  background-image: var(--gradient-success);
+}
+.gradient-text-gold {
+  @apply bg-clip-text text-transparent;
+  background-image: var(--gradient-gold);
+}
 
-  /* ===== ELEVATION HIERARCHY ===== */
-  /* Level 0: Flat — no elevation, used for inline elements */
-  .elevation-0 { box-shadow: none; }
+/* ===== ELEVATION HIERARCHY ===== */
+/* Level 0: Flat — no elevation, used for inline elements */
+.elevation-0 {
+  box-shadow: none;
+}
 
-  /* Level 1: Subtle — cards, list items */
-  .elevation-1 { box-shadow: var(--shadow-xs); }
+/* Level 1: Subtle — cards, list items */
+.elevation-1 {
+  box-shadow: var(--shadow-xs);
+}
 
-  /* Level 2: Raised — active cards, dropdowns, popovers */
-  .elevation-2 { box-shadow: var(--shadow-md); }
+/* Level 2: Raised — active cards, dropdowns, popovers */
+.elevation-2 {
+  box-shadow: var(--shadow-md);
+}
 
-  /* Level 3: Floating — modals, dialogs, FABs */
-  .elevation-3 { box-shadow: var(--shadow-lg); }
+/* Level 3: Floating — modals, dialogs, FABs */
+.elevation-3 {
+  box-shadow: var(--shadow-lg);
+}
 
-  /* Level 4: Dramatic — hero elements with glow */
-  .elevation-4 { box-shadow: var(--shadow-xl), var(--shadow-glow-primary); }
+/* Level 4: Dramatic — hero elements with glow */
+.elevation-4 {
+  box-shadow: var(--shadow-xl), var(--shadow-glow-primary);
+}
 
-  /* Shadow Utilities */
-  .shadow-elevated { box-shadow: 0 4px 20px -2px hsl(var(--foreground) / 0.08); }
-  .glow-primary { box-shadow: var(--shadow-glow-primary); }
-  .glow-secondary { box-shadow: var(--shadow-glow-secondary); }
-  .glow-success { box-shadow: var(--shadow-glow-success); }
-  .glow-purple { box-shadow: var(--shadow-glow-purple); }
+/* Shadow Utilities */
+.shadow-elevated {
+  box-shadow: 0 4px 20px -2px hsl(var(--foreground) / 0.08);
+}
+.glow-primary {
+  box-shadow: var(--shadow-glow-primary);
+}
+.glow-secondary {
+  box-shadow: var(--shadow-glow-secondary);
+}
+.glow-success {
+  box-shadow: var(--shadow-glow-success);
+}
+.glow-purple {
+  box-shadow: var(--shadow-glow-purple);
+}
 
-  /* Legacy compat */
-  .glow-purple-pulse { box-shadow: var(--shadow-glow-purple); }
-  .glow-purple-pulse-slow { box-shadow: var(--shadow-glow-purple); }
-  .glow-purple-pulse-fast { box-shadow: var(--shadow-glow-purple); }
-  .glow-gradient-pulse { box-shadow: var(--shadow-glow-primary); }
-  .border-glow-purple { border-color: hsl(var(--primary) / 0.3); }
+/* Legacy compat */
+.glow-purple-pulse {
+  box-shadow: var(--shadow-glow-purple);
+}
+.glow-purple-pulse-slow {
+  box-shadow: var(--shadow-glow-purple);
+}
+.glow-purple-pulse-fast {
+  box-shadow: var(--shadow-glow-purple);
+}
+.glow-gradient-pulse {
+  box-shadow: var(--shadow-glow-primary);
+}
+.border-glow-purple {
+  border-color: hsl(var(--primary) / 0.3);
+}
 
-  /* Scroll fade indicators — apply to scrollable containers */
-  .scroll-fade-y {
-    mask-image: linear-gradient(to bottom, transparent 0, black 16px, black calc(100% - 16px), transparent 100%);
-  }
-  .scroll-fade-top {
-    mask-image: linear-gradient(to bottom, transparent 0, black 24px, black 100%);
-  }
-  .scroll-fade-bottom {
-    mask-image: linear-gradient(to bottom, black 0, black calc(100% - 24px), transparent 100%);
-  }
-  .scroll-shadow-y {
-    mask-image: linear-gradient(to bottom, transparent 0, black 16px, black calc(100% - 16px), transparent 100%);
-  }
+/* Scroll fade indicators — apply to scrollable containers */
+.scroll-fade-y {
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    black 16px,
+    black calc(100% - 16px),
+    transparent 100%
+  );
+}
+.scroll-fade-top {
+  mask-image: linear-gradient(to bottom, transparent 0, black 24px, black 100%);
+}
+.scroll-fade-bottom {
+  mask-image: linear-gradient(to bottom, black 0, black calc(100% - 24px), transparent 100%);
+}
+.scroll-shadow-y {
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    black 16px,
+    black calc(100% - 16px),
+    transparent 100%
+  );
+}
 
-  .shadow-sticky {
-    box-shadow: 0 1px 3px hsl(var(--foreground) / 0.04), 0 1px 1px hsl(var(--foreground) / 0.02);
+.shadow-sticky {
+  box-shadow:
+    0 1px 3px hsl(var(--foreground) / 0.04),
+    0 1px 1px hsl(var(--foreground) / 0.02);
 }
 
 /* ===== PROMO GIFTS SYSTEM — card-lift, card-glow ===== */
@@ -155,12 +220,10 @@
   inset: -1px;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(
-    135deg,
-    hsl(var(--primary) / 0),
-    hsl(var(--primary) / 0)
-  );
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  background: linear-gradient(135deg, hsl(var(--primary) / 0), hsl(var(--primary) / 0));
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
@@ -172,11 +235,7 @@
 }
 
 .card-glow:hover::after {
-  background: linear-gradient(
-    135deg,
-    hsl(var(--primary) / 0.15),
-    hsl(var(--primary) / 0.05)
-  );
+  background: linear-gradient(135deg, hsl(var(--primary) / 0.15), hsl(var(--primary) / 0.05));
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -199,10 +258,10 @@
    `transitionDuration` em 0s nas telas de Tarefas, não só a do arrasto. */
 @media (prefers-reduced-motion: reduce) {
   [data-rbd-draggable-id],
-  [data-testid="work-item-card"],
-  [data-testid="work-item-card"] *,
-  [data-testid="tasks-module"],
-  [data-testid="tasks-module"] * {
+  [data-testid='work-item-card'],
+  [data-testid='work-item-card'] *,
+  [data-testid='tasks-module'],
+  [data-testid='tasks-module'] * {
     transition: none !important;
   }
 }
@@ -218,12 +277,12 @@
    arquivos do domínio que não pertencem a esta etapa (cabeçalhos da Lista/Agenda, chips de
    alarme/idade, KPIs). O seletor do módulo é o que vence o `text-warning`/`text-destructive`
    do Tailwind por especificidade, sem `!important`. */
-[data-testid="tasks-module"] .text-warning,
-[data-testid="tasks-module"] .text-warning\/80 {
+[data-testid='tasks-module'] .text-warning,
+[data-testid='tasks-module'] .text-warning\/80 {
   color: hsl(var(--warning-text));
 }
 
-[data-testid="tasks-module"] .text-destructive {
+[data-testid='tasks-module'] .text-destructive {
   color: hsl(var(--destructive-text));
 }
 
@@ -231,7 +290,7 @@
    vazia", o atalho N e o cabeçalho de Concluídas) sobre o card caía a 3,0:1 e 2,5:1. O tom
    cheio do modo mantém a hierarquia — 5,7:1 no claro e 9,3:1 no escuro — e segue mais
    apagado que o `text-foreground`. */
-[data-testid="tasks-module"] :is(.text-muted-foreground\/70, .text-muted-foreground\/60) {
+[data-testid='tasks-module'] :is(.text-muted-foreground\/70, .text-muted-foreground\/60) {
   color: hsl(var(--muted-foreground));
 }
 
