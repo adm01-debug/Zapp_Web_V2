@@ -846,8 +846,8 @@
     },
     {
       "path": "supabase/functions/webhook-diagnostic/index.ts",
-      "bytes": 18085,
-      "sha256": "af1e711051e39db5b7e5b9cdc8d4c53e4272197570581e341fbda6ccd57ef0a4"
+      "bytes": 18117,
+      "sha256": "ac74582ad9e0ebf69a3d649212b51a6a1ee424f9a1bd0844b5d46a728f45d496"
     },
     {
       "path": "supabase/functions/whatsapp-webhook/index.ts",
@@ -2483,7 +2483,7 @@
       "name": "webhook-diagnostic",
       "entrypoint": "supabase/functions/webhook-diagnostic/index.ts",
       "verify_jwt": true,
-      "source_sha256": "896b5744799c57ae23e6e911c33964af514b551a829b84204b617a92a90c2f87",
+      "source_sha256": "2481103626e6163d49162850649814486214876f97684cea99694d340db9e923",
       "source_files": [
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/evolution-control-authz.ts",
@@ -2518,5 +2518,5 @@
       ]
     }
   ],
-  "manifest_sha256": "8c8b35f73864a7cd831812c023bd16c6cd99400200159d8dc0a0fc75c7e9cf08"
+  "manifest_sha256": "6d5c72cd917b180ec4b8648faa66779cf5c981b7ce79b4b3c2e019b124a575ea"
 }
