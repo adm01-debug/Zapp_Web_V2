@@ -22,6 +22,7 @@ import {
   Eye,
   Target,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import type { QueueWithMembers } from '@/hooks/business/useQueues';
 
 interface QueueCardProps {
@@ -144,9 +145,21 @@ export function QueueCard({
                         </AvatarFallback>
                       </Avatar>
                       <button
-                        aria-label={`Remover ${member.profile?.name || 'atendente'} da fila ${queue.name}`}
+                        aria-label={`Remover ${member.profile?.name || 'atendente'} da fila`}
                         onClick={() => onRemoveMember(queue.id, member.profile_id)}
-                        className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-destructive-foreground opacity-0 transition-opacity group-hover:opacity-100"
+                        className={cn(
+                          'pointer-events-none absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-destructive-foreground opacity-0 transition-opacity',
+                          // N-180.6: sem ponteiro com hover (celular/tablet) `group-hover` nunca
+                          // dispara — fica visível e alcançável por toque e por foco também.
+                          '[@media(hover:none)]:pointer-events-auto [@media(hover:none)]:opacity-100',
+                          'group-hover:pointer-events-auto group-hover:opacity-100',
+                          'focus-visible:pointer-events-auto focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                          // Área de toque ampliada (44px) sem mudar o tamanho visível (16px):
+                          // largura 24px (after:w-6) — o avatar vizinho fica a 24px de passo
+                          // (w-8 = 32px sobreposto em 8px pelo -space-x-2 do container); maior
+                          // que isso cobriria o botão do vizinho e removeria o atendente errado.
+                          "[@media(pointer:coarse)]:after:absolute [@media(pointer:coarse)]:after:left-1/2 [@media(pointer:coarse)]:after:top-1/2 [@media(pointer:coarse)]:after:h-11 [@media(pointer:coarse)]:after:w-6 [@media(pointer:coarse)]:after:-translate-x-1/2 [@media(pointer:coarse)]:after:-translate-y-1/2 [@media(pointer:coarse)]:after:content-['']"
+                        )}
                       >
                         <UserMinus className="h-2.5 w-2.5" />
                       </button>
