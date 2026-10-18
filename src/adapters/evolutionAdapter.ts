@@ -47,6 +47,7 @@ export function evolutionToRealtimeMessage(evo: EvolutionMessage): NormalizedRea
     channel_connection_id: null,
     channel_type: 'whatsapp',
     is_edited: false,
+    transcribed_at: null,
     transcription: null,
     transcription_status: null,
     is_deleted: evo.deleted_at != null,
