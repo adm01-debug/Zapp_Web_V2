@@ -62,6 +62,9 @@ vi.mock('@/lib/logger', () => ({
   log: mocks.logStub,
   logger: mocks.logStub,
   getLogger: () => mocks.logStub,
+  // outbound-message.service.ts (via useChatMediaSending/ChatPanel) chama
+  // createLogger, não só getLogger.
+  createLogger: () => mocks.logStub,
   generateCorrelationId: () => 'corr-test',
   getSessionId: () => 'sessao-test',
   logPerformance: (_l: string, fn: () => void) => fn(),
@@ -148,6 +151,8 @@ vi.mock('@/hooks/communication/useTextToSpeech', () => ({
     speed: 1,
     setSpeed: vi.fn(),
   }),
+  // VoiceSelector (na árvore montada aqui) importa esta constante direto do módulo.
+  LOCAL_VOICE_ID: 'local',
 }));
 vi.mock('@/hooks/system/useUserSettings', () => ({
   useUserSettings: () => ({ settings: {}, updateSettings: vi.fn(), saveSettings: vi.fn() }),
