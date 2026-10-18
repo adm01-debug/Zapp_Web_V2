@@ -727,8 +727,26 @@ jobs:
               core.warning(`Nao foi possivel liberar ${recusados.length} run(s) com o GITHUB_TOKEN.`);
             }
 
+      - name: Marcar PR como needs-human quando grants mudaram
+        # GA22: alteracao de grants nao e' mergeavel automaticamente — precisa de revisao humana.
+        if: >-
+          steps.pull-request.outputs.pull-request-number != '' &&
+          steps.diff.outputs.grants_changed == 'true'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ steps.pull-request.outputs.pull-request-number }}
+        run: |
+          gh pr edit "$PR_NUMBER" --add-label "needs-human" --repo "$GITHUB_REPOSITORY" || true
+          gh pr comment "$PR_NUMBER" \
+            --body "⚠️ **Revisão humana necessária:** \`grants-baseline.json\` foi alterado. Auto-merge desabilitado." \
+            --repo "$GITHUB_REPOSITORY" || true
+
       - name: Habilitar auto-merge no PR de sincronizacao
-        if: steps.pull-request.outputs.pull-request-number != ''
+        # GA22: auto-merge so' quando grants nao mudaram (sem DDL de privilegio fora do fluxo).
+        if: >-
+          steps.pull-request.outputs.pull-request-number != '' &&
+          steps.diff.outputs.grants_changed != 'true'
         continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}

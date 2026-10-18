@@ -1482,3 +1482,27 @@ jobs:
       - name: Provar paridade integral apos aplicacao
         if: inputs.apply == true
         run: node scripts/db-audit/check-migration-drift.mjs
+
+      - name: Disparar types-sync apos apply bem-sucedido
+        # GA15: sincroniza types.ts/catálogo/manifesto logo após o apply, sem esperar o
+        # agendamento semanal. Acionado só quando apply=true E todos os passos anteriores
+        # passaram (sem failure, cancelled ou error). A flag --ref main garante que o
+        # workflow usa o código já mergeado; sem ela o run sairia do branch feature.
+        if: inputs.apply == true && success()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run types-sync.yml --ref main --repo "$GITHUB_REPOSITORY" \
+            || echo "::warning::Nao foi possivel disparar types-sync apos apply — verificar permissoes de actions:write"
+
+      - name: Disparar db-live-guard apos apply bem-sucedido
+        # GA15: valida imediatamente o banco vivo apos o apply, sem esperar o agendamento
+        # diário das 06:13 UTC. Mesmo tratamento de erro que o passo acima.
+        if: inputs.apply == true && success()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run db-live-guard.yml --ref main --repo "$GITHUB_REPOSITORY" \
+            || echo "::warning::Nao foi possivel disparar db-live-guard apos apply — verificar permissoes de actions:write"

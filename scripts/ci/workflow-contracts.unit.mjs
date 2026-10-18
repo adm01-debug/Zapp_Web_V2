@@ -752,3 +752,85 @@ test('W73: todo curl em workflow tem --max-time (runner não trava ad infinitum)
   }
   assert.deepEqual(infratores, [], `curl(s) sem --max-time:\n${infratores.join('\n')}`);
 });
+
+test('GA22: types-sync — auto-merge desabilitado quando grants_changed=true', () => {
+  // GA22 (2026-10-18): grants_changed=true significa que grants-baseline.json mudou,
+  // o que pode indicar DDL de privilegio fora do fluxo. Nesse caso a PR nao pode ser
+  // mergeada automaticamente; precisa de revisao humana (label needs-human).
+  const sync = wf['types-sync.yml'];
+  assert.ok(sync, 'types-sync.yml sumiu');
+
+  // O passo de auto-merge deve exigir grants_changed != 'true'
+  const autoMergeIdx = sync.indexOf('gh pr merge --auto --squash');
+  assert.ok(autoMergeIdx > 0, 'types-sync.yml perdeu o passo gh pr merge --auto --squash');
+
+  // Pegar o bloco do step que contém o auto-merge (retroceder ate o "- name:")
+  const blocoAntes = sync.slice(0, autoMergeIdx);
+  const ultimoStepInicio = blocoAntes.lastIndexOf('      - name:');
+  const blocoStep = sync.slice(ultimoStepInicio, autoMergeIdx + 100);
+
+  assert.match(
+    blocoStep,
+    /grants_changed\s*!=\s*['"]true['"]/,
+    'o step de auto-merge deve exigir grants_changed != \'true\' na condicao if:',
+  );
+
+  // O passo de label needs-human deve existir e disparar quando grants_changed=true
+  assert.match(
+    sync,
+    /needs-human/,
+    'types-sync.yml deve ter label needs-human para PRs com grants alterados',
+  );
+  assert.match(
+    sync,
+    /grants_changed\s*==\s*['"]true['"]/,
+    'deve haver step que dispara quando grants_changed=true (para adicionar label needs-human)',
+  );
+});
+
+test('GA22: types-sync — label needs-human criada no repo (precondition)', () => {
+  // Verifica que o workflow nao usa --create-if-not-exists nem algo que crie a label
+  // automaticamente: a label 'needs-human' precisa existir no repo antes do primeiro
+  // run. Este teste documenta a precondition — nao ha como testar a existencia da label
+  // offline, mas o contrato afirma que o passo usa `gh pr edit --add-label` (nao cria).
+  const sync = wf['types-sync.yml'];
+  assert.match(
+    sync,
+    /gh pr edit.*--add-label.*needs-human/s,
+    'o step de label deve usar gh pr edit --add-label needs-human',
+  );
+});
+
+test('GA15: db-migrate — dispara types-sync e db-live-guard apos apply bem-sucedido', () => {
+  // GA15 (2026-10-18): sem disparo pos-apply, o sync de types.ts depende do agendamento
+  // semanal; o guarda vivo so' valida no dia seguinte. O contrato prova que o workflow
+  // tem os dois disparos, ambos condicionados a apply=true && success().
+  const migrate = wf['db-migrate.yml'];
+  assert.ok(migrate, 'db-migrate.yml sumiu');
+
+  // types-sync deve ser disparado
+  assert.match(
+    migrate,
+    /gh workflow run types-sync\.yml/,
+    'db-migrate.yml deve disparar types-sync.yml apos apply',
+  );
+
+  // db-live-guard deve ser disparado
+  assert.match(
+    migrate,
+    /gh workflow run db-live-guard\.yml/,
+    'db-migrate.yml deve disparar db-live-guard.yml apos apply',
+  );
+
+  // Ambos com --ref main para usar o codigo ja mergeado
+  assert.match(
+    migrate,
+    /gh workflow run types-sync\.yml --ref main/,
+    'disparo de types-sync deve usar --ref main',
+  );
+  assert.match(
+    migrate,
+    /gh workflow run db-live-guard\.yml --ref main/,
+    'disparo de db-live-guard deve usar --ref main',
+  );
+});
