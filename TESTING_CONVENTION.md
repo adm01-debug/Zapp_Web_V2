@@ -35,10 +35,10 @@ Há **cinco camadas**. Cada uma tem seu runner, seu diretório e seu motivo de e
 
 * Moram dentro da pasta da edge (`supabase/functions/<edge>/index.test.ts`) e importam o
   handler direto.
-* Runner: **Deno**, com a config `scripts/ci/deno.json` e lock próprio.
-* Comando (CI, passo "Run executable Edge handler contracts"):
-  `deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 $(git ls-files 'supabase/functions/**/*.test.ts')`.
-  O `deno check --config scripts/ci/deno.json --frozen supabase/functions/*/index.ts`
+* Runner: **Deno**, com a config `scripts/ci/deno.json`.
+* Comando (CI, passo "Testes das edge functions (deno test)" em `deploy-functions.yml`):
+  `deno test --config scripts/ci/deno.json --allow-env --allow-read --no-check supabase/functions/**/*.test.ts`.
+  O `deno check supabase/functions/**/index.ts`
   roda antes, no mesmo job.
 
 ## 4. Guardas de CI e de deploy — `scripts/**/*.unit.mjs`
@@ -48,7 +48,7 @@ Há **cinco camadas**. Cada uma tem seu runner, seu diretório e seu motivo de e
 * Runner: **`node:test`** (nativo), sem framework. Predomina `*.unit.mjs`, mas a CI
   também roda contratos `.test.mjs` de `scripts/db-audit/`.
 * Comando (CI, passo "Test CI and Edge deployment guards"):
-  `node --test scripts/ci/*.unit.mjs scripts/edge-deploy/*.unit.mjs scripts/db-audit/crm-sync-outbox-contract.test.mjs scripts/db-audit/types-sync-psql-buffer.test.mjs scripts/talkx/*.unit.mjs`.
+  `node --test scripts/ci/*.unit.mjs`.
 * Guarda de documentação entra aqui: quando um doc afirma algo do código, o teste lê os
   dois lados e falha se divergirem (ex.: `scripts/ci/dashboard-readme-drift.unit.mjs`).
 * Rodar um só: `node --test scripts/ci/<arquivo>.unit.mjs`.
