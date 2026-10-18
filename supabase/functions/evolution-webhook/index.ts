@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { getCorsHeaders, handleCors, enforceRateLimit, getClientIP } from "../_shared/validation.ts";
+import { getCorsHeaders, handleCors, enforceRateLimit, getClientIP, internalErrorResponse } from "../_shared/validation.ts";
 import {
   isRecord, normalizeEventName, toEventRecords,
   handleReactionEvent,
@@ -327,11 +327,7 @@ export async function handleEvolutionWebhook(req: Request): Promise<Response> {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error: unknown) {
-    console.error('Evolution webhook error:', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(JSON.stringify({ error: message }), {
-      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return internalErrorResponse(error, req);
   }
 }
 
