@@ -38,21 +38,24 @@ defaults:
 permissions:
   contents: read
 
-# cancel-in-progress: true: com workflow_run o gatilho e o fim do CI, nao um
-# push direto; se dois CIs terminarem em rapida sucessao (push seguido de
-# hotfix), so o mais recente importa. Nao ha runs "quase completas" a
-# preservar -- a suite logada levanta novas instancias de qualquer forma.
-# W71: restaurado em 2026-10-18 (regressao introduzida em lote 880 cartoes).
+# GA09: grupo fixo "e2e-logado" serializa as runs -- a nova aguarda em vez de
+# cancelar a atual. Com workflow_run o E2E ja e posterior ao CI; cancelar uma
+# run quase pronta geraria falsos negativos. schedule + workflow_run numa
+# janela estreita empilham uma run de cada, o que e o comportamento esperado.
 concurrency:
-  group: e2e-logado-${{ github.ref }}
-  cancel-in-progress: true
+  group: e2e-logado
+  cancel-in-progress: false
 
 jobs:
   e2e-logado:
     name: 🎭 E2E logado (Playwright)
     if: >-
-      github.event_name != 'workflow_run' ||
-      github.event.workflow_run.conclusion == 'success'
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     # E83: a suite logada (173 testes) estourava o timeout do job unico e a run

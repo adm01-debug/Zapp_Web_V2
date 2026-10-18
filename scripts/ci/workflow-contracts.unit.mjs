@@ -641,6 +641,42 @@ test('W71: e2e-logado não roda quando workflow_run falhou', () => {
   );
 });
 
+test('GA08: e2e-logado bloqueia fork — 3 condições obrigatórias no if do job', () => {
+  // GA08 (2026-10-18): o if do job deve exigir que o workflow_run venha de um
+  // push (não de uma PR de fork) E do mesmo repositório. Sem isso, PRs de forks
+  // com branch "main" disparariam o E2E logado com os secrets do repositório.
+  const texto = wf['e2e-logado.yml'];
+  assert.ok(texto, 'e2e-logado.yml sumiu');
+  assert.ok(
+    /workflow_run\.event\s*==\s*['"]push['"]/.test(texto),
+    'GA08: e2e-logado.yml falta guard workflow_run.event == push — triggers de PR de fork passam',
+  );
+  assert.ok(
+    /head_repository\.full_name\s*==\s*github\.repository/.test(texto),
+    'GA08: e2e-logado.yml falta guard head_repository.full_name == github.repository — forks disparam o E2E',
+  );
+  assert.ok(
+    /conclusion\s*==\s*['"]success['"]/.test(texto),
+    'GA08: e2e-logado.yml perdeu o guard conclusion == success — E2E roda mesmo com CI falho',
+  );
+});
+
+test('GA09: e2e-logado tem grupo de concurrency fixo e cancel-in-progress false', () => {
+  // GA09 (2026-10-18): grupo fixo serializa as runs; cancel-in-progress: false
+  // preserva a run atual em vez de cancelar. Com workflow_run o E2E já é
+  // posterior ao CI — cancelar uma run quase pronta gera falsos negativos.
+  const texto = wf['e2e-logado.yml'];
+  assert.ok(texto, 'e2e-logado.yml sumiu');
+  assert.ok(
+    /group:\s*e2e-logado(?!\S)/.test(texto),
+    'GA09: e2e-logado.yml usa grupo variável — múltiplas runs não são serializadas pelo grupo correto',
+  );
+  assert.ok(
+    /cancel-in-progress:\s*false/.test(texto),
+    'GA09: e2e-logado.yml usa cancel-in-progress: true — runs quase prontas são canceladas indevidamente',
+  );
+});
+
 test('W72: auth.setup.ts tem teto de 180 s e timeout curto no goto /auth', async () => {
   // W72 (2026-10-18): o setup de autenticação precisa falhar rápido (<2 min) quando
   // a credencial está errada ou o app não responde — não travar o job por 15 min.
