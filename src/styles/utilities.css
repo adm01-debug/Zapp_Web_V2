@@ -335,3 +335,36 @@
     transform: translate(-50%, -50%);
   }
 }
+
+/* ===== ÁREA SEGURA MOBILE (notch / indicador de home) — t_edd11f2d =====
+   `viewport-fit=cover` (index.html) estende o app atrás do notch e do indicador de
+   home no iPhone; sem estas duas classes o cabeçalho/barra fixos (MobileHeader,
+   MobileNavigation, FloatingActionButtons, BottomSheet, MobileDrawerMenu, campos de
+   envio do chat/team-chat) ficavam por baixo deles. `env(..., 0)` cai para 0 em quem
+   não tem área segura (Android, desktop) — nunca aparece como respiro indevido ali.
+   Referência: V3 src/index.css:82-96. */
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 0);
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* ===== ROLAGEM MOBILE SEM BARRA E SEM PULL-TO-REFRESH — t_edd11f2d =====
+   `.scrollbar-none` (8 pontos do src/) some com a barra de rolagem visível sem
+   desligar a rolagem em si. `overscroll-behavior-y: none` no body evita o
+   pull-to-refresh do navegador ao arrastar o topo da lista para baixo — gesto comum
+   dentro de uma conversa/lista que, sem isto, recarrega a página por acidente. */
+@media (max-width: 767px) {
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+  body {
+    overscroll-behavior-y: none;
+  }
+}
