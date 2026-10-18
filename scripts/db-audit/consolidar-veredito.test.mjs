@@ -68,7 +68,7 @@ test('todos os passos verdes aprovam e nao escrevem falha', () => {
   // Sem falha o heredoc escreve as chaves vazias, como o sed do YAML fazia.
   assert.equal(saida, 'causa=\nfalhas_lista=');
   const linhasTabela = linhasResumo(resultado).filter((l) => l.startsWith('| '));
-  assert.equal(linhasTabela.length, PASSOS.length + 1); // 11 passos + cabecalho
+  assert.equal(linhasTabela.length, PASSOS.length + 1); // 12 passos + cabecalho
   for (const passo of PASSOS) assert.ok(linhasTabela.includes(`| ${passo.nome} | ✅ |`));
 });
 
@@ -180,7 +180,7 @@ test('o CLI real escreve resumo e outputs e sai vermelho com o fixture faltando'
 
 test('todo passo que grava /tmp/step-<id>.log tem id no YAML e registro no veredito', () => {
   const ids = passosComLogNoWorkflow();
-  assert.ok(ids.length >= 11, `achei ${ids.length} passos com log; o workflow declara mais que isso`);
+  assert.ok(ids.length >= 12, `achei ${ids.length} passos com log; o workflow declara mais que isso`);
 
   const registrados = new Map(PASSOS.map((passo) => [passo.id, passo]));
   for (const id of ids) {
