@@ -569,6 +569,9 @@ function compare(migrations, records, exceptionsByVersion) {
       errors.push(`  ${version}  ${fileName}`);
     }
   }
+  // GA19: marcar se todos os erros ate agora sao so de apply-pendente (sem drift real)
+  const errCountAfterWithoutRecord = errors.length;
+
   if (withoutFile.length) {
     errors.push('Registro no banco sem arquivo no repo (DDL fora do Git):');
     for (const record of withoutFile) {
@@ -797,7 +800,11 @@ function compare(migrations, records, exceptionsByVersion) {
     }
   }
 
-  return { errors, warnings, verifiedEvidence, pinnedWithoutHistoricalContent };
+  // GA19: apply-pendente puro = so withoutRecord, sem withoutFile, sem erros de divergencia
+  const applyPendingOnly = withoutRecord.length > 0
+    && withoutFile.length === 0
+    && errors.length === errCountAfterWithoutRecord;
+  return { errors, warnings, verifiedEvidence, pinnedWithoutHistoricalContent, applyPendingOnly };
 }
 
 function printErrors(errors) {
@@ -816,6 +823,8 @@ function printDriftErrors(errors) {
 }
 
 function main() {
+  // GA19: --classificar diferencia apply-pendente (exit 3) de erro de conexao (exit 2)
+  const classificar = process.argv.includes('--classificar');
   let evidence;
   let local;
   try {
@@ -858,6 +867,9 @@ function main() {
     console.error('\nFALHA: drift de migrations detectado:');
     printDriftErrors(result.errors);
     console.error('\nVer docs/MIGRATIONS.md para o procedimento de reconciliacao.');
+    // GA19: com --classificar, diferenciar apply-pendente (3) de drift real (1).
+    // Sem --classificar, retorna 1 para manter retrocompatibilidade.
+    if (classificar && result.applyPendingOnly) return 3;
     return 1;
   }
 

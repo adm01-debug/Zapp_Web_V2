@@ -6,12 +6,13 @@
  * GITHUB_STEP_SUMMARY e sai com o mesmo código de saída:
  *   exit 0 — sem drift e sem apply-pendente (clean)
  *   exit 1 — drift real (arquivo em produção sem par no disco, ou vice-versa)
- *   exit 2 — somente apply-pendente (migrations no disco sem ledger no banco)
+ *   exit 2 — erro de conexão/parse (falha de transporte — não é drift nem apply)
+ *   exit 3 — somente apply-pendente (migrations no disco sem ledger no banco)
  *
- * Cada chamador aplica sua própria política sobre exit 2:
+ * Cada chamador aplica sua própria política sobre exit 3:
  *   db-live-guard  → em push trata como neutro (exit 0); em schedule/dispatch
- *                    mantém exit 2 para abrir issue.
- *   types-sync     → usa exit 2 para setar awaiting_apply=true e pular gates.
+ *                    mantém exit 3 para abrir issue.
+ *   types-sync     → usa exit 3 para setar awaiting_apply=true e pular gates.
  *
  * Uso:
  *   node scripts/db-audit/lote-pendente.mjs [-- <args extras para check-migration-drift>]
@@ -58,8 +59,8 @@ if (!process.env.DESTINO_URL) {
       '',
       'Todas as migrations locais estão registradas no ledger do banco.',
     ]);
-  } else if (rc === 2) {
-    // W21: --classificar retorna 2 para apply-pendente (neutro)
+  } else if (rc === 3) {
+    // GA19: --classificar retorna 3 para apply-pendente (exit 2 reservado para erro de conexao)
     writeSummary([
       '### ⏳ Lote pendente — apply aguardado',
       '',
