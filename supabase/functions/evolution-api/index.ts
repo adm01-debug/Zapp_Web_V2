@@ -857,12 +857,6 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       }
       return new Response(JSON.stringify(deleteBody), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
-    if (action === 'set-presence') return await proxy(`/instance/setPresence/${instance}`, 'POST', { presence: body.presence });
-
-    // ─── 2. Settings ───
-    if (action === 'set-settings') return await proxy(`/settings/set/${instance}`, 'POST', { rejectCall: body.rejectCall, msgCall: body.msgCall, groupsIgnore: body.groupsIgnore, alwaysOnline: body.alwaysOnline, readMessages: body.readMessages, readStatus: body.readStatus, syncFullHistory: body.syncFullHistory });
-    if (action === 'get-settings') return await proxy(`/settings/find/${instance}`, 'GET');
-
     // ─── 3. Webhook ───
     if (action === 'set-webhook') {
       // Dois contratos em uso: o painel de monitoramento manda `{ instanceName,
@@ -904,31 +898,6 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       }
       return await proxy(`/webhook/set/${instance}`, 'POST', { webhook: { enabled: wh.enabled ?? true, url: wh.url, webhookByEvents, webhookBase64, events: wh.events || ['APPLICATION_STARTUP','QRCODE_UPDATED','CONNECTION_UPDATE','MESSAGES_SET','MESSAGES_UPSERT','MESSAGES_UPDATE','MESSAGES_DELETE','MESSAGES_EDITED','SEND_MESSAGE','SEND_MESSAGE_UPDATE','CONTACTS_SET','CONTACTS_UPSERT','CONTACTS_UPDATE','PRESENCE_UPDATE','CHATS_SET','CHATS_UPSERT','CHATS_UPDATE','CHATS_DELETE','GROUPS_UPSERT','GROUP_UPDATE','GROUP_PARTICIPANTS_UPDATE','TYPEBOT_START','TYPEBOT_CHANGE_STATUS','LABELS_EDIT','LABELS_ASSOCIATION','CALL'] } });
     }
-    if (action === 'get-webhook') {
-      // `/webhook/find` é rota da v2. No GO a leitura da configuração corrente vem do
-      // registro da instância na listagem admin (`/instance/fetchInstances`, traduzida
-      // para `/instance/all`) — a mesma fonte que o webhook-diagnostic usa. Assim o
-      // painel lê a config real por flavor em vez de bater numa rota inexistente no GO.
-      if (!isGoFlavor) return await proxy(`/webhook/find/${instance}`, 'GET');
-      try {
-        const allRes = await proxy('/instance/fetchInstances', 'GET');
-        const allData = await allRes.json().catch(() => null);
-        const records: Record<string, unknown>[] = Array.isArray(allData?.data) ? allData.data : Array.isArray(allData) ? allData : [];
-        const rec = records.find((r) => r?.name === instance || r?.Name === instance) ?? {};
-        const evRaw = rec.events ?? rec.Events;
-        const events = Array.isArray(evRaw)
-          ? evRaw
-          : typeof evRaw === 'string' && evRaw ? evRaw.split(',').map((s) => s.trim()).filter(Boolean) : [];
-        const url = typeof rec.webhook === 'string' ? rec.webhook : typeof rec.Webhook === 'string' ? rec.Webhook : '';
-        return new Response(JSON.stringify({
-          webhook: { enabled: !!url, url, events, webhookByEvents: true, webhookBase64: false },
-          ...(url ? {} : { goEnvManaged: true }),
-        }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-      } catch (_err) {
-        return new Response(JSON.stringify({ error: true, message: 'Falha ao ler a configuração de webhook da instância no GO.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-      }
-    }
-
     // ─── 4. Messaging ───
     if (action === 'send-text') return await proxy(`/message/sendText/${instance}`, 'POST', { number: body.number, text: body.text, delay: body.delay, quoted: body.quoted, mentionsEveryOne: body.mentionsEveryOne, mentioned: body.mentioned });
     if (action === 'send-media') {
@@ -1019,31 +988,10 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       }
       return await proxy(`/message/sendStatus/${instance}`, 'POST', sanitized.payload);
     }
-    if (action === 'send-template') return await proxy(`/message/sendTemplate/${instance}`, 'POST', { number: body.number, template: body.template });
     if (action === 'mark-read') return await proxy(`/chat/markMessageAsRead/${instance}`, 'POST', { readMessages: body.readMessages || [body.key] });
-    if (action === 'mark-unread') return await proxy(`/chat/markMessageAsUnread/${instance}`, 'POST', { readMessages: body.readMessages || [body.key] });
     if (action === 'archive-chat') return await proxy(`/message/archiveChat/${instance}`, 'POST', { lastMessage: body.lastMessage, chat: body.chat, archive: body.archive ?? true });
     if (action === 'delete-message') return await proxy(`/message/delete/${instance}`, 'DELETE', { id: body.id, remoteJid: body.remoteJid, fromMe: body.fromMe });
     if (action === 'update-message') return await proxy(`/message/update/${instance}`, 'PUT', { number: body.number, key: body.key, text: body.text });
-
-    // ─── 5. Chat ───
-    if (action === 'find-chats') return await proxy(`/chat/findChats/${instance}`, 'POST', { where: body.where || {} });
-    // /chat/findMessages nao existe na Evolution GO (GO_GAPS D6): sem a guarda a
-    // GO devolve 404 e o chamador engole o erro em Promise.allSettled, virando
-    // "sem dados". Alem disso os 404 alimentavam o contador do circuit breaker.
-    if (action === 'find-messages') {
-      if (isGoFlavor) return goHistoryNotSupported('find-messages', corsHeaders);
-      return await proxy(`/chat/findMessages/${instance}`, 'POST', { where: body.where || {}, page: body.page, offset: body.offset });
-    }
-
-    if (action === 'find-status-messages') {
-      if (isGoFlavor) return goHistoryNotSupported('find-status-messages', corsHeaders);
-      const response = await proxy(`/chat/findMessages/${instance}`, 'POST', { where: { key: { remoteJid: 'status@broadcast' } }, page: body.page ?? 1, offset: body.offset ?? 200 });
-      const data = await response.json();
-      if (data?.error === true) return new Response(JSON.stringify(data), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-      const records = Array.isArray(data?.messages?.records) ? data.messages.records : [];
-      return new Response(JSON.stringify(records), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-    }
 
     if (action === 'find-contacts') return await proxy(`/chat/findContacts/${instance}`, 'POST', { where: body.where || {} });
     if (action === 'check-numbers') return await proxy(`/chat/whatsappNumbers/${instance}`, 'POST', { numbers: body.numbers });
@@ -1062,11 +1010,9 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     if (action === 'update-group-setting') return await proxy(`/group/updateSetting/${instance}`, 'PUT', { groupJid: body.groupJid, action: body.action });
     if (action === 'group-invite-code') return await proxy(`/group/inviteCode/${instance}?groupJid=${body.groupJid}`, 'GET');
     if (action === 'revoke-invite-code') return await proxy(`/group/revokeInviteCode/${instance}`, 'PUT', { groupJid: body.groupJid });
-    if (action === 'invite-info') return await proxy(`/group/inviteInfo/${instance}?inviteCode=${body.inviteCode}`, 'GET');
     if (action === 'accept-invite') return await proxy(`/group/acceptInviteCode/${instance}`, 'POST', { inviteCode: body.inviteCode });
     if (action === 'leave-group') return await proxy(`/group/leaveGroup/${instance}`, 'DELETE', { groupJid: body.groupJid });
     if (action === 'update-group-picture') return await proxy(`/group/updateGroupPicture/${instance}`, 'PUT', { groupJid: body.groupJid, image: body.image });
-    if (action === 'toggle-ephemeral') return await proxy(`/group/toggleEphemeral/${instance}`, 'POST', { groupJid: body.groupJid, expiration: body.expiration });
 
     // ─── 7. Profile ───
     // Com number → /chat/fetchProfile (traduzido p/ GO /user/info); sem number, própria conta.
