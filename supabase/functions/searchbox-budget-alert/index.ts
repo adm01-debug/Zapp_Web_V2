@@ -11,7 +11,7 @@
 // `internalErrorResponse`, e o handler e exportado para o teste provar isso com erro sintetico.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { handleCors, internalErrorResponse, Logger, requireEnv } from "../_shared/validation.ts";
-import { unauthorizedResponse } from "../_shared/cron-secret-auth.ts";
+import { unauthorizedResponse, timingSafeStringEqual } from "../_shared/cron-secret-auth.ts";
 
 const DESTINATARIO = "adm01@promobrindes.com.br";
 const LIMITE = 400;   // das 500 gratis; o guarda do client degrada em 450
@@ -23,7 +23,7 @@ export async function handleSearchboxBudgetAlert(req: Request): Promise<Response
 
   const secret = req.headers.get("x-cron-secret");
   const esperado = Deno.env.get("CRON_SECRET");
-  if (!secret || !esperado || secret !== esperado) {
+  if (!secret || !esperado || !timingSafeStringEqual(secret, esperado)) {
     // Falha FECHADA: sem segredo configurado, nao envia nada.
     return unauthorizedResponse({ "Content-Type": "application/json" });
   }
