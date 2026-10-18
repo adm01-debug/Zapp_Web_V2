@@ -11,7 +11,7 @@ const IMAGE_DIGEST = /@sha256:[a-f0-9]{64}/u;
 // string EXATA usada no YAML (por exemplo "24", "1.24.x"), para a comparação ser de
 // igualdade e não de faixa.
 export const TOOLCHAIN_PATH = ".github/toolchain.json";
-export const TOOLCHAIN_KEYS = ["bun", "deno", "node", "go", "supabase-cli", "playwright", "postgres-image", "actionlint", "actionlint-sha256-linux-amd64", "zizmor"];
+export const TOOLCHAIN_KEYS = ["bun", "deno", "node", "go", "supabase-cli", "postgres-image", "actionlint", "actionlint-sha256-linux-amd64", "zizmor"];
 
 const SCALAR = /^(?:'([^']*)'|"([^"]*)"|([^\s#'"]+))(?:\s+#.*)?$/u;
 const TOOLCHAIN_VERSION_INPUT = /^\s*(?:-\s*)?["']?(bun|deno|node|go)-version["']?\s*:\s*(.*)$/u;
