@@ -36,7 +36,7 @@ describe('inbox — botões de ícone com nome acessível (UK-13/UK-13b)', () =>
         templates={[template]}
         onUseTemplate={vi.fn()}
         contactData={{ name: 'Ana' }}
-      />,
+      />
     );
 
     expect(screen.getByRole('button', { name: 'Editar template' })).toBeInTheDocument();
