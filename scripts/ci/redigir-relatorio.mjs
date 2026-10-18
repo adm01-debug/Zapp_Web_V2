@@ -34,6 +34,10 @@ import { deflateRawSync, inflateRawSync } from 'node:zlib';
 // corromperia o relatório inteiro sem proteger nada.
 export const TAMANHO_MINIMO = 5;
 
+// GA38: JWTs aparecem em traces/reports do E2E sem serem passados como --segredo-env
+// (cabeçalho Authorization, campo access_token, etc.). Padrão: eyJ<header>.<payload>.<sig>
+export const RE_JWT = /(?<![A-Za-z0-9_-])eyJ[A-Za-z0-9_-]{4,}\.[A-Za-z0-9_-]{4,}\.[A-Za-z0-9_-]{4,}/gu;
+
 const BINARIOS = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp', '.zip', '.woff', '.woff2', '.ttf', '.ico', '.pdf']);
 
 export function extensaoDe(caminho) {
@@ -79,6 +83,11 @@ export function redigirConteudo(texto, segredos) {
     ocorrencias += partes.length - 1;
     saida = partes.join('[redigido]');
   }
+  // GA38: JWT automático — não depende de --segredo-env (Authorization Bearer, access_token…)
+  saida = saida.replace(/(?<![A-Za-z0-9_-])eyJ[A-Za-z0-9_-]{4,}\.[A-Za-z0-9_-]{4,}\.[A-Za-z0-9_-]{4,}/gu, () => {
+    ocorrencias += 1;
+    return '[redigido]';
+  });
   return { texto: saida, ocorrencias };
 }
 
@@ -117,6 +126,20 @@ export function redigirBytes(buffer, segredos) {
       }
       partes.push(saida.subarray(inicio));
       saida = Buffer.concat(partes);
+    }
+  }
+  // GA38: JWT em entradas de ZIP (JSON de network, traces…). latin1 é bijeção: cada byte
+  // vira exatamente um char e volta — sem perda. Bytes > 127 não casam com [A-Za-z0-9_-].
+  if (saida.includes(Buffer.from('eyJ'))) {
+    const texto = saida.toString('latin1');
+    let n = 0;
+    const redigido = texto.replace(
+      /(?<![A-Za-z0-9_-])eyJ[A-Za-z0-9_-]{4,}\.[A-Za-z0-9_-]{4,}\.[A-Za-z0-9_-]{4,}/gu,
+      () => { n += 1; return '[redigido]'; },
+    );
+    if (n > 0) {
+      saida = Buffer.from(redigido, 'latin1');
+      ocorrencias += n;
     }
   }
   return { buffer: saida, ocorrencias };
