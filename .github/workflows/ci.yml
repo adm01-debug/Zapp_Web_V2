@@ -1,6 +1,6 @@
 # docs:
 #   gatilho: pull_request, push na main, merge_group e dispatch
-#   prova: lint, tipos, testes, build, security e E2E do codigo
+#   prova: tipos, testes de unidade, build, security, E2E e scripts Node
 #   falha: PR fica vermelho e o merge e bloqueado pelos required checks
 #   avisa: autor do PR e revisor, via checks do GitHub
 # nao-e-bug:
@@ -166,6 +166,35 @@ jobs:
           path: coverage/
           retention-days: 7
           if-no-files-found: ignore
+
+      # E72 (G-32): Job Summary de coverage — lê o json-summary gerado pelo
+      # vitest (coverage/coverage-summary.json) e publica tabela no GITHUB_STEP_SUMMARY.
+      # Roda em todo evento (PR, push, dispatch) exceto drafts pulados.
+      - name: 📊 Job Summary de coverage (shard ${{ matrix.shard }})
+        if: steps.draft-check.outputs.skip != 'true' && always()
+        run: |
+          SUMMARY="coverage/coverage-summary.json"
+          if [[ ! -f "$SUMMARY" ]]; then
+            echo "## 📊 Coverage — shard ${{ matrix.shard }}" >> "$GITHUB_STEP_SUMMARY"
+            echo "_Arquivo de cobertura não encontrado (falha antes do vitest?)_" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          node -e "
+            const data = JSON.parse(require('fs').readFileSync('$SUMMARY','utf8'));
+            const t = data.total;
+            const pct = k => (t[k]?.pct ?? 0).toFixed(1);
+            const lines = [
+              '## 📊 Coverage — shard \${{ matrix.shard }}',
+              '',
+              '| Métrica | % | Cobertos / Total |',
+              '|---|---|---|',
+              \`| Statements | \${pct('statements')}% | \${t.statements?.covered??0}/\${t.statements?.total??0} |\`,
+              \`| Branches   | \${pct('branches')}%   | \${t.branches?.covered??0}/\${t.branches?.total??0}     |\`,
+              \`| Functions  | \${pct('functions')}%  | \${t.functions?.covered??0}/\${t.functions?.total??0}   |\`,
+              \`| Lines      | \${pct('lines')}%      | \${t.lines?.covered??0}/\${t.lines?.total??0}           |\`,
+            ];
+            require('fs').appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join('\n') + '\n');
+          "
 
   node-scripts:
     name: 🧩 Node CI Scripts

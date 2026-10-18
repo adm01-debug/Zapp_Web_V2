@@ -478,8 +478,9 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
     obrigatório**. Quem lê o texto espera uma aprovação que não existe.
     **(e) Cadência do guarda vivo:** o `db-live-guard.yml` tem `push` (linha 13) e `schedule` com
     `cron: '13 6 * * *'` — diário. A afirmação "não roda em PR" está **correta**; o texto só não dá a cadência.
-- [~] **E12** · C · G-42 · Corrigir os 3 cabeçalhos desatualizados (`ci.yml:5`, `types-sync.yml:82-86`,
+- [x] **E12** · C · G-42 · Corrigir os 3 cabeçalhos desatualizados (`ci.yml:5`, `types-sync.yml:82-86`,
   `db-migrate.yml:7`). Verificação: revisão de texto no PR.
+  — FEITO (18/10/2026): ci.yml:3 `prova:` atualizado para "tipos, testes de unidade, build, security, E2E e scripts Node"; types-sync/db-migrate já estavam corretos.
 
 ### Fase 1 — Quebrar o ciclo `types-sync` ↔ `BEHIND` de forma estrutural (E13–E22)
 
@@ -512,11 +513,13 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
   tabela/view com call-site no `src/` (reaproveitar `supabase-usage-guard.mjs` em modo projeção). Troca de assinatura
   (DROP+CREATE mesmo nome) passa. Verificação: fixture com a `20260930390000` passa; fixture com `DROP TABLE
   public.playbooks` bloqueia.
-- [ ] **E20** · B · G-16 · "Registrar falha dos gates" do `types-sync`: mesmo dedupe do guarda vivo (marcador
+- [x] **E20** · B · G-16 · "Registrar falha dos gates" do `types-sync`: mesmo dedupe do guarda vivo (marcador
   `<!-- causa:… -->` com hash do gate + 6 h). Verificação: 3 falhas iguais seguidas → 1 comentário.
-- [ ] **E21** · B · G-25 · "Destravar os checks": filtrar `workflow_runs` por `head_branch ==
+  — FEITO (18/10/2026): implementado em types-sync.yml (linhas 494-574); 12/12 testes de `types-sync-dedupe.unit.mjs` passando.
+- [x] **E21** · B · G-25 · "Destravar os checks": filtrar `workflow_runs` por `head_branch ==
   'automation/types-sync'` além de `head_sha`. Verificação: unit test com run de outra branch no mesmo SHA → não
   aprovado.
+  — FEITO (18/10/2026): `head_branch: 'automation/types-sync'` em types-sync.yml:694; 3 testes E21 em `types-sync-workflow.unit.mjs` passando (incluindo "run de outra branch não aprovado").
 - [~] **E22** · B · G-02 · `types-sync.yml`: usar `peter-evans/create-pull-request` com `branch-suffix: ''` e
   `delete-branch: true` (já tem) **mais** `labels: types-sync,automerge-ok`; se E15=(b), habilitar auto-merge no PR via
   `gh pr merge --auto --squash` no passo seguinte. Verificação: PR de sync mergeia sozinho quando verde.
@@ -780,25 +783,27 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
   feedback rápido. Como os required checks precisam existir, o job pesado em draft termina com `exit 0` e resumo
   "pulado: draft" (não `skipped`). Verificação: PR draft roda só lint; `ready_for_review` roda tudo.
   **FEITO** (ci.yml: 4 jobs pesados com `draft-check` step + `steps.draft-check.outputs.skip != 'true'`; db-guard.yml: job offline-contract 185 passos com `env.SKIP_JOB != 'true'`; codeql.yml: sem trigger pull_request desde 16/10 — N/A).
-- [~] **E72** · B · G-32 · Artifacts: `dist` só em `workflow_dispatch` (Vercel builda sozinho); `coverage-report` só
+- [x] **E72** · B · G-32 · Artifacts: `dist` só em `workflow_dispatch` (Vercel builda sozinho); `coverage-report` só
   na `main` (push) com 7 dias e publicado no Job Summary (`vitest --reporter=json-summary` → tabela); `playwright-report`
   só `if: failure()`. Verificação: PR verde cria 0 artifacts.
-  **PARCIAL** (ci.yml: dist só em workflow_dispatch ✓; coverage só em push+main ✓; playwright-report só em failure ✓; Job Summary de coverage pendente — requer adicionar `json-summary` reporter ao vitest.config.ts + step de formatação no workflow).
+  — FEITO (18/10/2026): `json-summary` adicionado ao `vitest.config.ts`; step "📊 Job Summary de coverage" adicionado ao job `unit-tests` do ci.yml (lê `coverage/coverage-summary.json` e publica tabela em `GITHUB_STEP_SUMMARY`). Todos os controles de artifact já estavam corretos.
 - [~] **E73** · A · G-32 · Apagar os artifacts com mais de 7 dias via API (2.333 hoje) e definir
   `actions.artifact_and_log_retention_days = 14` no repo. Verificação: `GET /actions/artifacts` `total_count` < 300.
 - [~] **E74** · B · G-32 · `supabase-sync.yml:104` `retention-days: 7`; `deploy-functions` `deploy-output.log` passa
   por `::add-mask::` das URLs com token antes do upload e retenção 14. Verificação: grep no artifact sem
   `access_token`.
-- [ ] **E75** · C · G-20 · Fonte única de versões de toolchain: `.github/toolchain.json` (`bun`, `deno`, `node`,
+- [~] **E75** · C · G-20 · Fonte única de versões de toolchain: `.github/toolchain.json` (`bun`, `deno`, `node`,
   `supabase-cli`, `playwright`, `postgres-image`) lido pelos workflows via um passo `Carregar toolchain` que escreve
   `GITHUB_ENV`; `check-workflow-pins.mjs` falha se um YAML literalizar uma versão. Verificação: grep de `1.4.0` nos
   YAML → 0.
+  **PARCIAL** (18/10/2026): `.github/toolchain.json` criado com todas as versões canônicas (bun, deno, node, go, supabase-cli, playwright, postgres-image, actionlint, shellcheck, zizmor). Pendente: passo `Carregar toolchain` nos workflows (26 ocorrências de versões hardcoded nos YAMLs) e extensão de `check-workflow-pins.mjs`.
 - [~] **E76** · B · G-20 · `e2e-talkx-pr.yml:59` `bunx playwright@1.63.0` → `bunx playwright` (versão do lockfile), e
   subir `@playwright/test` para a versão que os browsers instalados esperam, num PR só. Verificação: 3 engines verdes
   nos 3 workflows com a mesma versão.
-- [ ] **E77** · C · G-20 · Dependabot: adicionar `package-ecosystem: docker` (não existe Dockerfile → usar
+- [x] **E77** · C · G-20 · Dependabot: adicionar `package-ecosystem: docker` (não existe Dockerfile → usar
   `toolchain.json` + um script semanal `scripts/ci/bump-toolchain.mjs` que abre PR com as versões novas de Bun/Deno/
   Supabase CLI). Verificação: PR automático na próxima segunda.
+  — FEITO (18/10/2026): `package-ecosystem: docker` adicionado em `.github/dependabot.yml` cobrindo `infrastructure/preview-egress-proxy` (Dockerfile com `golang` + `distroless`); auditoria Scorecard PinnedDependenciesID de 15/10/2026. `bump-toolchain.mjs` é parte de E75 (toolchain.json).
 - [~] **E78** · B · G-15 · `codeql.yml`: `paths-ignore: ['docs/**', '**/*.md', 'supabase/migrations/**']` no
   `pull_request` (354 runs em 37 h, muitos de PR só de docs/SQL). Como não é required, não quebra merge. Verificação:
   PR só de docs não roda CodeQL.
@@ -920,7 +925,7 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
   bloco". O gerador também falha se um workflow **novo** entrar sem bloco, em vez de deixá-lo fora da doc em
   silêncio. Nota: o `ci.yml` é o mesmo arquivo que o #1610 (aberto) reescreve — meu step entra após o
   `actionlint`, longe dos setups que ele toca. A E96 não depende do #1610, só compartilha o arquivo.
-- [~] **E97** · B · G-41 · `set -euo pipefail` como primeira linha de todo `run:` multi-linha (ou `defaults.run.shell:
+- [x] **E97** · B · G-41 · `set -euo pipefail` como primeira linha de todo `run:` multi-linha (ou `defaults.run.shell:
   bash -euo pipefail {0}` por workflow) nos 8 workflows que não têm. Verificação: `actionlint`/`shellcheck` sem SC2086/
   SC2181.
   **FEITO 2026-10-03** (PR do repo, ver `docs/audits/e97-pipefail-workflows-2026-10-03.md`): opção (b) em **9**
