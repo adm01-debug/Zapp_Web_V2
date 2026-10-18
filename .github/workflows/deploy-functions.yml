@@ -466,6 +466,7 @@ jobs:
         # GA27: roda os testes .test.ts de supabase/functions com o lock fixo do CI,
         # para nao publicar funcao com erro de tipo ou de comportamento.
         run: |
+          set -euo pipefail
           deno test \
             --config scripts/ci/deno.json \
             --allow-env --allow-read \
