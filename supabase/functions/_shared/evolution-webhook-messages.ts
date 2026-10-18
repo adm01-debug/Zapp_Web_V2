@@ -485,7 +485,7 @@ export async function sendAwayMessageIfNeeded(
     const telefone = typeof claim?.contact_phone === "string" ? claim.contact_phone : null;
     const texto = typeof claim?.content === "string" ? claim.content : null;
     if (claimErr || !claimToken || !instancia || !telefone || !texto) {
-      console.warn("[AWAY] claim failed:", claimErr?.message ?? "sem linha claimável");
+      console.warn("[AWAY] claim failed:", claimErr?.message ?? "sem linha clamável");
       return;
     }
 
@@ -552,7 +552,7 @@ export async function sendAwayMessageIfNeeded(
 // ─────────────────────────────────────────────────────────────────────────────
 // Chatbot IA (L1) — disparo da resposta automática a partir da mensagem recebida
 //
-// O webhook é o ÚNICO chamador da edge `chatbot-l1`: depois de gravar a fala do
+// O webhook é o Único chamador da edge `chatbot-l1`: depois de gravar a fala do
 // cliente ele a aciona ASSINADA (HMAC-SHA256 do corpo cru em
 // `x-webhook-signature`, mesmo contrato do `validateHmacRequest`) e a resposta do
 // bot sai pelo MESMO pipeline oficial da mensagem de ausência:
@@ -565,7 +565,7 @@ export async function sendAwayMessageIfNeeded(
 //      `enabled = true`. Ausência da linha = DESLIGADO — ao contrário do padrão
 //      do gate IA-009 (`readCapabilityFlag`), cuja ausência vale LIGADA: aqui a
 //      resposta automática é nova e nada responde até o dono ligar de propósito.
-//      Leitura que falha (erro do PostgREST/exceção) também FECHA.
+//      Leitura que falha (erro do PostgREST/excessão) também FECHA.
 //
 // IDEMPOTÊNCIA por mensagem: o `client_message_id` é DETERMINÍSTICO por
 // (contato, conexão, mensagem recebida). Antes de gastar IA o helper confere se
@@ -744,7 +744,7 @@ async function enviarRespostaDoBot(
     const telefone = typeof claim?.contact_phone === "string" ? claim.contact_phone : null;
     const texto = typeof claim?.content === "string" ? claim.content : null;
     if (claimErr || !claimToken || !instancia || !telefone || !texto) {
-      console.warn("[CHATBOT-L1] claim failed:", claimErr?.message ?? "sem linha claimável");
+      console.warn("[CHATBOT-L1] claim failed:", claimErr?.message ?? "sem linha clamável");
       return;
     }
 
@@ -913,7 +913,7 @@ export async function handleOutgoingWhatsAppMessage(
   const { data: existingMessage, error: dupCheckErr } = await supabase.from('messages')
     .select('id').eq('whatsapp_connection_id', connection.id).eq('sender', 'agent').eq('external_id', externalId)
     .order('created_at', { ascending: false }).limit(1).maybeSingle();
-  if (dupCheckErr) { console.warn('[FROM_ME] maybeSingle concurrent dups:', dupCheckErr.code, externalId); }
+  if (dupCheckErr) { console.warn('[FROM_ME] maybySingle concurrent dups:', dupCheckErr.code, externalId); }
 
   // E32: persistir par LID→JID em contact_identity_map quando ambos chegam no mesmo evento.
   // Executado antes do early-return de duplicata para garantir backfill mesmo em reprocessamentos.
@@ -1079,7 +1079,7 @@ export async function handleIncomingMessage(
     p_created_at: messageCreatedAt,
   });
   if (txError) {
-    console.error('[INCOMING] ingest_inbound_message failed:', { code: txError.code, message: txError.message, externalId: key.id, bestJid, phone, messageType });
+    console.error('[INCOMING] ingest_inbound_message failed:', { code: txError.code, message: txError.message, externalId: key.id, bestJid, phone: phone ? `${phone.substring(0, 6)}***` : null, messageType });
     return;
   }
   const tx = (Array.isArray(txRows) ? txRows[0] : txRows) as {
@@ -1087,7 +1087,7 @@ export async function handleIncomingMessage(
     contact_created: boolean; message_id: string | null; outcome: 'inserted' | 'updated' | 'duplicate';
   } | null;
   if (!tx?.contact_id) {
-    console.error('[INCOMING] ingest_inbound_message returned no contact', { externalId: key.id, phone });
+    console.error('[INCOMING] ingest_inbound_message returned no contact', { externalId: key.id, phone: phone ? `${phone.substring(0, 6)}***` : null });
     return;
   }
 
@@ -1168,7 +1168,7 @@ export async function handleIncomingMessage(
           p_source_message_id: tx.message_id ?? null,
         });
         if (newId) {
-          console.warn('[OPT-OUT] ' + resolvedPhone + ' adicionado a talkx_blacklist (' + optOutKeyword + ')');
+          console.warn('[OPT-OUT] ' + resolvedPhone.substring(0, 6) + '*** adicionado a talkx_blacklist (' + optOutKeyword + ')');
           // E59: mensagem de confirmacao. O texto vem de
           // talkx_settings.optout_autoreply e sai pelo token da INSTANCIA que
           // recebeu a mensagem (resolvido no Vault via get_instance_token).
@@ -1193,13 +1193,13 @@ export async function handleIncomingMessage(
                 }, undefined, undefined, AbortSignal.timeout(15000), instanceToken);
                 if (resp.ok) {
                   console.warn(
-                    '[OPT-OUT] Confirmacao enviada (accepted, status ' + resp.status + ') para ' + resolvedPhone,
+                    '[OPT-OUT] Confirmacao enviada (accepted, status ' + resp.status + ') para ' + resolvedPhone.substring(0, 6) + '***',
                   );
                 } else {
                   const detalhe = (await resp.text().catch(() => '')).slice(0, 200);
                   console.warn(
                     '[OPT-OUT] Confirmacao RECUSADA pelo provedor (rejected, status ' + resp.status + ') para ' +
-                      resolvedPhone + (detalhe ? ' — ' + detalhe : ''),
+                      resolvedPhone.substring(0, 6) + '***' + (detalhe ? ' — ' + detalhe : ''),
                   );
                 }
               }
@@ -1213,12 +1213,12 @@ export async function handleIncomingMessage(
             );
           }
         } else if (!suppErr) {
-          console.warn('[OPT-OUT] ' + resolvedPhone + ' ja suprimido (idempotente): confirmacao nao reenviada');
+          console.warn('[OPT-OUT] ' + resolvedPhone.substring(0, 6) + '*** ja suprimido (idempotente): confirmacao nao reenviada');
         } else {
           console.warn('[OPT-OUT] Falha:', suppErr?.message);
         }
       } else {
-        console.warn('[OPT-OUT] Ignorado (sem campanha recente) para ', resolvedPhone);
+        console.warn('[OPT-OUT] Ignorado (sem campanha recente) para ', resolvedPhone.substring(0, 6) + '***');
       }
     }
   }

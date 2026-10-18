@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { getCorsHeaders, handleCors, Logger, requireEnv } from "../_shared/validation.ts";
+import { getCorsHeaders, handleCors, Logger, requireEnv, internalErrorResponse } from "../_shared/validation.ts";
 import { ensureValidToken, recordGmailAccountFailure, runGmailFullSync, sanitizeGmailErrorMessage, syncMessageIds } from "../_shared/gmail-helpers.ts";
 
 const BATCH = 3; // max contas em paralelo para evitar timeout de 60s
@@ -92,8 +92,7 @@ export async function handleGmailCronSync(req: Request): Promise<Response> {
     }
     log.done(200, { accounts: accounts.length }); return new Response(JSON.stringify({ success: true, results }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (error) {
-    const msg = error instanceof Error ? error.message : "Unknown error"; log.error("Cron failed", { error: msg });
-    return new Response(JSON.stringify({ success: false, error: msg }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return internalErrorResponse(error, req);
   }
 }
 

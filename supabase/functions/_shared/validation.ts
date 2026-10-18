@@ -359,7 +359,8 @@ function recordRateLimitDenialFor(
 export async function enforceRateLimit(
   key: string,
   maxRequests = 30,
-  windowMs = 60_000
+  windowMs = 60_000,
+  ctx: EnforceRateLimitContext = {}
 ): Promise<{ allowed: boolean; remaining: number; persistent: boolean; unavailable?: boolean }> {
   const local = checkRateLimit(key, maxRequests, windowMs);
   if (!local.allowed) {
@@ -468,6 +469,8 @@ export interface RequireAuthOptions {
   /** Leitura de `profiles.is_active` do usuário autenticado (R2-AUTH-004).
    *  Injectable p/ teste; ausente em produção = client service_role real. */
   getProfileActive?: ProfileActiveLookup;
+  /** Writer de negações de rate limit injetável p/ teste (padrão: `recordRateLimitDenial`). */
+  rateLimitLogWriter?: RateLimitLogWriter;
 }
 
 /**
