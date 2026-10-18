@@ -120,6 +120,7 @@ jobs:
             --arg at  "$WF_AT" \
             '{workflow: $wf, run_url: $run, commit: $sha, when: $at}' \
           | curl -sf -X POST "$N8N_WEBHOOK_URL" \
+              --proto '=https' --tlsv1.2 \
               --max-time 10 \
               -H "Content-Type: application/json" \
               -d @-
