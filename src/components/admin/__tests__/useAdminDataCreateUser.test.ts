@@ -100,7 +100,10 @@ describe('useAdminData.handleCreateUser — camada de Edge padrão', () => {
 
   it('e-mail duplicado vira erro do campo email, em pt-BR, sem mostrar a mensagem crua', async () => {
     mockInvokeEdge.mockRejectedValue(
-      httpError(422, JSON.stringify({ error: 'A user with this email address has already been registered' }))
+      httpError(
+        422,
+        JSON.stringify({ error: 'A user with this email address has already been registered' })
+      )
     );
     const { result } = renderHook(() => useAdminData('users'));
 
@@ -125,7 +128,8 @@ describe('useAdminData.handleCreateUser — camada de Edge padrão', () => {
       httpError(
         400,
         JSON.stringify({
-          error: "Invalid enum value. Expected 'admin' | 'supervisor' | 'agent' | 'special_agent', received 'chefe'",
+          error:
+            "Invalid enum value. Expected 'admin' | 'supervisor' | 'agent' | 'special_agent', received 'chefe'",
         })
       )
     );
@@ -166,7 +170,10 @@ describe('useAdminData.handleCreateUser — camada de Edge padrão', () => {
 
     expect(ok).toBe(false);
     expect(mockInvokeEdge).toHaveBeenCalledTimes(1);
-    expect(result.current.createUserError).toEqual({ field: null, message: 'Erro ao criar usuário' });
+    expect(result.current.createUserError).toEqual({
+      field: null,
+      message: 'Erro ao criar usuário',
+    });
     expect(toast.error).toHaveBeenCalledWith('Erro ao criar usuário');
   });
 
@@ -177,7 +184,10 @@ describe('useAdminData.handleCreateUser — camada de Edge padrão', () => {
     const ok = await cria(result);
 
     expect(ok).toBe(false);
-    expect(result.current.createUserError).toEqual({ field: null, message: 'Erro ao criar usuário' });
+    expect(result.current.createUserError).toEqual({
+      field: null,
+      message: 'Erro ao criar usuário',
+    });
     expect(toast.success).not.toHaveBeenCalled();
   });
 
@@ -214,6 +224,9 @@ describe('useAdminData.handleCreateUser — camada de Edge padrão', () => {
       field: null,
       message: 'Erro ao criar usuário',
     });
-    expect(mapCreateUserError(undefined)).toEqual({ field: null, message: 'Erro ao criar usuário' });
+    expect(mapCreateUserError(undefined)).toEqual({
+      field: null,
+      message: 'Erro ao criar usuário',
+    });
   });
 });
