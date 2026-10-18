@@ -65,6 +65,46 @@ jobs:
       - name: 🔎 Run TypeScript debt ratchet
         run: node scripts/ci/typecheck-ratchet.mjs
 
+  # ===========================================
+  # JOB 1b: Edge contracts & Go (E70 — não required por 7 d; entra via E100)
+  # ===========================================
+  edge-contracts:
+    name: 🦕 Edge contracts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: 🦕 Setup Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
+        with:
+          deno-version: '2.9.5'
+
+      - name: 🦕 Typecheck das Edge Functions (deno check)
+        run: >-
+          deno check --config scripts/ci/deno.json --frozen
+          supabase/functions/*/index.ts
+
+      # E49: glob substitui lista hardcoded — inclui todos os *.test.ts das functions.
+      - name: 🧪 Run Edge handler contracts (deno test)
+        run: |
+          # shellcheck disable=SC2046
+          deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 \
+            $(git ls-files 'supabase/functions/**/*.test.ts')
+
+      - name: 🐹 Setup Go (preview-egress-proxy)
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: '1.24.x'
+          cache-dependency-path: infrastructure/preview-egress-proxy/go.mod
+
+      - name: 🧪 Go test (preview-egress-proxy)
+        working-directory: infrastructure/preview-egress-proxy
+        run: go test ./...
+
   unit-tests:
     name: 🧪 Unit Tests (${{ matrix.shard }}/3)
     runs-on: ubuntu-24.04

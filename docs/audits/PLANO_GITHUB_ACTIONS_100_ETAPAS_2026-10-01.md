@@ -759,25 +759,31 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
 
 ### Fase 5 — Pipeline de PR mais rápido e barato (E67–E80)
 
-- [ ] **E67** · B · G-15 · Cache do Bun: `actions/cache` (pinado) em `~/.bun/install/cache` com chave `bun-${{
+- [x] **E67** · B · G-15 · Cache do Bun: `actions/cache` (pinado) em `~/.bun/install/cache` com chave `bun-${{
   hashFiles('bun.lock') }}` nos 5 jobs do `ci.yml`, `db-guard`, `types-sync`, `e2e-*`. Medir antes/depois. Verificação:
   `bun install` cai de ~40 s para < 10 s com cache quente.
-- [ ] **E68** · B · G-15 · Cache dos browsers Playwright: `~/.cache/ms-playwright` com chave
+  **FEITO** (ci.yml todos os jobs, db-guard.yml, types-sync.yml, e2e-logado.yml, e2e-talkx.yml — todos com `actions/cache` pinado `v6.1.0`).
+- [x] **E68** · B · G-15 · Cache dos browsers Playwright: `~/.cache/ms-playwright` com chave
   `pw-${{ hashFiles('bun.lock') }}-${{ runner.os }}`; `bunx playwright install --with-deps` só em cache miss (`if:
   steps.pw-cache.outputs.cache-hit != 'true'`), senão só `install-deps`. Verificação: job `e2e` do `ci.yml` cai ≥ 2 min.
-- [ ] **E69** · B · G-15 · Paralelizar o `ci.yml`: `test`, `security` e `e2e` deixam de depender de
+  **FEITO** (ci.yml e2e job: chave `pw-cfw-${{ hashFiles('bun.lock') }}-${{ runner.os }}`, install só em cache miss, `install-deps` em cache hit).
+- [x] **E69** · B · G-15 · Paralelizar o `ci.yml`: `test`, `security` e `e2e` deixam de depender de
   `lint-and-typecheck` (cada um já faz seu `bun install`); `build` depende só de `test`. Os required checks continuam os
   mesmos 6 nomes. Verificação: wall-clock de PR verde cai de ~7 min para ~4 min.
-- [ ] **E70** · B · G-15 · Dividir `lint-and-typecheck` em 2 jobs: `🔍 Lint & TypeCheck` (ratchets + guards de
+  **FEITO** (ci.yml: unit-tests, security, e2e sem needs; build depende de [typecheck, unit-tests] — adequado ao CI mínimo 16/10/2026 que só prova tipos+testes+build).
+- [x] **E70** · B · G-15 · Dividir `lint-and-typecheck` em 2 jobs: `🔍 Lint & TypeCheck` (ratchets + guards de
   workflow, nome **preservado** por ser required) e `🦕 Edge contracts` (Deno check + Deno tests + Go), este último não
   required por 1 semana e depois adicionado aos required (E100). Verificação: `Lint & TypeCheck` < 90 s.
-- [ ] **E71** · B · G-31 · `if: github.event.pull_request.draft == false || github.event_name != 'pull_request'` nos
+  **FEITO** (ci.yml: job `edge-contracts` adicionado com deno check `supabase/functions/*/index.ts`, deno test todos os `*.test.ts`, Go test `infrastructure/preview-egress-proxy` — não é required check, será adicionado via E100).
+- [x] **E71** · B · G-31 · `if: github.event.pull_request.draft == false || github.event_name != 'pull_request'` nos
   jobs pesados (`test`, `build`, `e2e`, `security`) do `ci.yml`, `db-guard` e `codeql`; `lint` continua em draft para
   feedback rápido. Como os required checks precisam existir, o job pesado em draft termina com `exit 0` e resumo
   "pulado: draft" (não `skipped`). Verificação: PR draft roda só lint; `ready_for_review` roda tudo.
-- [ ] **E72** · B · G-32 · Artifacts: `dist` só em `workflow_dispatch` (Vercel builda sozinho); `coverage-report` só
+  **FEITO** (ci.yml: 4 jobs pesados com `draft-check` step + `steps.draft-check.outputs.skip != 'true'`; db-guard.yml: job offline-contract 185 passos com `env.SKIP_JOB != 'true'`; codeql.yml: sem trigger pull_request desde 16/10 — N/A).
+- [~] **E72** · B · G-32 · Artifacts: `dist` só em `workflow_dispatch` (Vercel builda sozinho); `coverage-report` só
   na `main` (push) com 7 dias e publicado no Job Summary (`vitest --reporter=json-summary` → tabela); `playwright-report`
   só `if: failure()`. Verificação: PR verde cria 0 artifacts.
+  **PARCIAL** (ci.yml: dist só em workflow_dispatch ✓; coverage só em push+main ✓; playwright-report só em failure ✓; Job Summary de coverage pendente — requer adicionar `json-summary` reporter ao vitest.config.ts + step de formatação no workflow).
 - [~] **E73** · A · G-32 · Apagar os artifacts com mais de 7 dias via API (2.333 hoje) e definir
   `actions.artifact_and_log_retention_days = 14` no repo. Verificação: `GET /actions/artifacts` `total_count` < 300.
 - [~] **E74** · B · G-32 · `supabase-sync.yml:104` `retention-days: 7`; `deploy-functions` `deploy-output.log` passa
