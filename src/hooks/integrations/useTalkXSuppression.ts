@@ -69,7 +69,9 @@ const ACTION_BY_EVENT_TYPE: Record<SuppressionActivityEventType, SuppressionActi
 };
 
 /** Ação de um `event_type` da trilha; `null` para tipo fora do contrato. */
-export function suppressionActivityAction(eventType: string | null | undefined): SuppressionActivityAction | null {
+export function suppressionActivityAction(
+  eventType: string | null | undefined
+): SuppressionActivityAction | null {
   if (!eventType) return null;
   return (ACTION_BY_EVENT_TYPE as Record<string, SuppressionActivityAction>)[eventType] ?? null;
 }
@@ -79,19 +81,27 @@ export function suppressionActivityAction(eventType: string | null | undefined):
  * contagem na mensagem (V74/V75); sem número legível o título sai sem contagem,
  * em vez de inventar um valor.
  */
-export function suppressionActivityTitle(eventType: string | null | undefined, message: string | null | undefined): string {
+export function suppressionActivityTitle(
+  eventType: string | null | undefined,
+  message: string | null | undefined
+): string {
   switch (suppressionActivityAction(eventType)) {
-    case 'add': return 'Contato adicionado à lista';
-    case 'remove': return 'Contato removido da lista';
-    case 'update': return 'Motivo atualizado';
-    case 'export': return 'Lista exportada';
+    case 'add':
+      return 'Contato adicionado à lista';
+    case 'remove':
+      return 'Contato removido da lista';
+    case 'update':
+      return 'Motivo atualizado';
+    case 'export':
+      return 'Lista exportada';
     case 'import': {
       const digits = (message ?? '').match(/\d+/)?.[0];
       if (!digits) return 'Contatos importados';
       const n = Number(digits);
       return n === 1 ? '1 contato importado' : `${n} contatos importados`;
     }
-    default: return 'Atividade na lista de supressão';
+    default:
+      return 'Atividade na lista de supressão';
   }
 }
 
@@ -122,9 +132,13 @@ interface ContactLabelRow {
  * consultas. Supressão de telefone avulso não tem contato: aí o rótulo é o
  * telefone da própria linha da lista.
  */
-async function resolveActivityContactLabels(rows: SuppressionActivityEventRow[]): Promise<Map<string, string | null>> {
+async function resolveActivityContactLabels(
+  rows: SuppressionActivityEventRow[]
+): Promise<Map<string, string | null>> {
   const labels = new Map<string, string | null>();
-  const entityIds = Array.from(new Set(rows.map((r) => r.entity_id).filter((id): id is string => !!id)));
+  const entityIds = Array.from(
+    new Set(rows.map((r) => r.entity_id).filter((id): id is string => !!id))
+  );
   if (entityIds.length === 0) return labels;
 
   const { data: entries, error: entryError } = await fromTable('talkx_blacklist')
@@ -133,7 +147,9 @@ async function resolveActivityContactLabels(rows: SuppressionActivityEventRow[])
   if (entryError) throw entryError;
   const entryRows = (entries ?? []) as BlacklistEntryRow[];
 
-  const contactIds = Array.from(new Set(entryRows.map((e) => e.contact_id).filter((id): id is string => !!id)));
+  const contactIds = Array.from(
+    new Set(entryRows.map((e) => e.contact_id).filter((id): id is string => !!id))
+  );
   const contacts: ContactLabelRow[] = [];
   if (contactIds.length > 0) {
     const { data: contactRows, error: contactError } = await fromTable('contacts')
@@ -164,7 +180,9 @@ export interface FetchTalkXSuppressionActivityOptions {
 
 /** Leitura da trilha de supressão (eventos de entidade), mais recentes primeiro. */
 export async function fetchTalkXSuppressionActivity({
-  limit = 5, page = 0, eventType = 'all',
+  limit = 5,
+  page = 0,
+  eventType = 'all',
 }: FetchTalkXSuppressionActivityOptions = {}): Promise<SuppressionActivityPage> {
   const from = page * limit;
   let query = fromTable('talkx_campaign_events')
@@ -190,7 +208,7 @@ export async function fetchTalkXSuppressionActivity({
       id: row.id,
       action: suppressionActivityAction(row.event_type),
       title: suppressionActivityTitle(row.event_type, row.message),
-      contactLabel: row.entity_id ? labels.get(row.entity_id) ?? null : null,
+      contactLabel: row.entity_id ? (labels.get(row.entity_id) ?? null) : null,
       actorName: row.actor?.name ?? null,
       createdAt: row.created_at,
     })),
@@ -204,7 +222,10 @@ export async function fetchTalkXSuppressionActivity({
  * paginado do modal. `enabled` evita a consulta do histórico com o modal fechado.
  */
 export function useTalkXSuppressionActivity({
-  limit = 5, page = 0, eventType = 'all', enabled = true,
+  limit = 5,
+  page = 0,
+  eventType = 'all',
+  enabled = true,
 }: FetchTalkXSuppressionActivityOptions & { enabled?: boolean } = {}) {
   const query = useQuery({
     queryKey: ['talkx-suppression-activity', limit, page, eventType],
@@ -250,7 +271,10 @@ export type TalkXSuppressionStats = {
 };
 
 /** RPC que ainda não está em `types.ts` (a migration é de outra trilha). */
-type TalkXSuppressionStatsRpc = (name: string, args: Record<string, unknown>) => Promise<{
+type TalkXSuppressionStatsRpc = (
+  name: string,
+  args: Record<string, unknown>
+) => Promise<{
   data: unknown;
   error: { message: string } | null;
 }>;
@@ -309,7 +333,9 @@ export function useTalkXSuppression() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('talkx_blacklist')
-        .select('id,contact_id,phone,reason,reason_code,origin,campaign_id,blocked_by,expires_at,source_message_id,created_at')
+        .select(
+          'id,contact_id,phone,reason,reason_code,origin,campaign_id,blocked_by,expires_at,source_message_id,created_at'
+        )
         .order('created_at', { ascending: false })
         .limit(500);
       if (error) throw error;
@@ -336,7 +362,8 @@ export function useTalkXSuppression() {
       .eq('phone', normalized)
       .maybeSingle();
     // fail-closed: DB error → throw, never return false
-    if (contactErr) throw new Error((contactErr as { message: string }).message ?? String(contactErr));
+    if (contactErr)
+      throw new Error((contactErr as { message: string }).message ?? String(contactErr));
     if (!contact) return false;
 
     const { data: byContact, error: contactBlErr } = await supabase
@@ -345,13 +372,23 @@ export function useTalkXSuppression() {
       .eq('contact_id', (contact as { id: string }).id)
       .or(filter)
       .limit(1);
-    if (contactBlErr) throw new Error((contactBlErr as { message: string }).message ?? String(contactBlErr));
+    if (contactBlErr)
+      throw new Error((contactBlErr as { message: string }).message ?? String(contactBlErr));
     return !!(byContact && byContact.length > 0);
   }
 
   const addEntry = useMutation({
     mutationFn: async (input: AddBlacklistEntryInput) => {
-      const { phone: rawPhone, contact_id, reason, reason_code, origin, campaign_id, expires_at, source_message_id } = input;
+      const {
+        phone: rawPhone,
+        contact_id,
+        reason,
+        reason_code,
+        origin,
+        campaign_id,
+        expires_at,
+        source_message_id,
+      } = input;
       if (!rawPhone && !contact_id) throw new Error('phone ou contact_id obrigatório');
       let normalizedPhone: string | null = null;
       if (rawPhone !== undefined) {
@@ -370,9 +407,14 @@ export function useTalkXSuppression() {
       });
       if (error) throw error;
     },
-    onSuccess: () => { toast.success('Número adicionado à supressão'); },
+    onSuccess: () => {
+      toast.success('Número adicionado à supressão');
+    },
     onError: (err: unknown) => {
-      const msg = err instanceof Error ? err.message : (err as { message?: string })?.message ?? String(err);
+      const msg =
+        err instanceof Error
+          ? err.message
+          : ((err as { message?: string })?.message ?? String(err));
       toast.error(`Erro: ${msg}`);
     },
   });
@@ -382,9 +424,14 @@ export function useTalkXSuppression() {
       const { error } = await supabase.from('talkx_blacklist').delete().eq('id', id);
       if (error) throw error;
     },
-    onSuccess: () => { toast.success('Entrada removida'); },
+    onSuccess: () => {
+      toast.success('Entrada removida');
+    },
     onError: (err: unknown) => {
-      const msg = err instanceof Error ? err.message : (err as { message?: string })?.message ?? String(err);
+      const msg =
+        err instanceof Error
+          ? err.message
+          : ((err as { message?: string })?.message ?? String(err));
       toast.error(`Erro: ${msg}`);
     },
   });
