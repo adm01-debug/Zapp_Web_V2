@@ -866,9 +866,12 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
   **ou** cubic **ou** Copilot (não os 3 — 96 comentários em #1343), Vercel (necessário); **remover** Greptile (trial expirado, só posta aviso), ECC Tools (2
   comentários por push, sem permissão de check, zero valor) e Mermaid Sync (skipped sempre) e Supabase for GitHub
   (G-34). Registrar a lista final no CLAUDE.md. Verificação: PR nova recebe ≤ 3 comentários de bot.
-- [ ] **E90** · B · G-23 · Notificação de falha na `main` por WhatsApp via N8N (webhook `workflow_run` →
+- [x] **E90** · B · G-23 · Notificação de falha na `main` por WhatsApp via N8N (webhook `workflow_run` →
   Evolution GO `PRINCIPAL` → número do Joaquim), só para `conclusion: failure` em `e2e-logado`, `db-live-guard`,
   `deploy-functions`, `types-sync`, com dedupe de 1 h por workflow. Verificação: forçar 1 falha → 1 mensagem.
+  **FEITO** (notifica-falha-main.yml): 4 steps adicionados ao job `notificar` — calcula chave hora UTC,
+  verifica cache `lookup-only`, envia curl → N8N se cache miss, salva cache para bloquear segunda
+  notificação na mesma hora. Requer secret `N8N_WEBHOOK_FALHA_MAIN` no repo.
 - [~] **E91** · B · G-36 · `branch-hygiene-audit.yml`: além do Job Summary, atualizar o corpo da issue #378 (ou abrir
   `[branch-hygiene]`) com a tabela; listar também PRs abertas há > 7 dias sem push (hoje #1153, #1206 de 29/09).
   Verificação: issue atualizada na próxima segunda.
