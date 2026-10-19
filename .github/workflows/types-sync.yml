@@ -34,8 +34,6 @@ on:
       # E18: negação evita que o merge do PR de sync (que só altera
       # grants-baseline.json) dispare uma nova execução desnecessária.
       - '!scripts/db-audit/grants-baseline.json'
-      # GA61: known-violations.json é atualizado pelo guard sem alterar DDL.
-      - '!scripts/db-audit/known-violations.json'
       - '.github/workflows/types-sync.yml'
   schedule:
     # 05:49 em vez de 06:00: o minuto 0 concentra a fila de agendamentos do
@@ -52,9 +50,7 @@ permissions:
   contents: read
 
 concurrency:
-  # GA61: schedule e workflow_dispatch recebem run_id próprio para não cancelar
-  # entre si nem cancelar um push em andamento.
-  group: types-sync-${{ github.ref }}-${{ github.event_name == 'schedule' && github.run_id || github.event_name == 'workflow_dispatch' && github.run_id || 'push' }}
+  group: types-sync-${{ github.ref }}-${{ github.event_name == 'schedule' && github.run_id || 'push' }}
   cancel-in-progress: false
 
 env:
@@ -773,7 +769,7 @@ jobs:
             core.notice(`PR #${pr} marcado needs-human: grants alterados requerem revisao humana.`);
 
       - name: Job summary
-        if: ${{ !cancelled() }}
+        if: always()
         run: |
           {
             echo "## types-sync — $(date -u '+%Y-%m-%d %H:%M UTC')"
