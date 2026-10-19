@@ -37,6 +37,7 @@ vi.mock('@/integrations/supabase/client', () => ({
 
 vi.mock('@/lib/logger', () => ({
   getLogger: () => ({ warn: () => {}, info: () => {}, error: () => {}, debug: () => {} }),
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
 }));
 
 const account = {
