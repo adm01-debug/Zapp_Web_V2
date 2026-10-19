@@ -251,8 +251,10 @@ test('E68: browser do Playwright é cacheado e o download só roda em cache miss
     // SL-095 pôs um 2º `actions/cache` no mesmo job (cache do Bun, antes do
     // install) — o passo dos browsers do Playwright é o que aponta para
     // `~/.cache/ms-playwright`, não necessariamente o primeiro `actions/cache`.
+    // GA89 migrou para actions/cache/restore (restore em todos os eventos,
+    // save só em push) — ambas as variantes são aceitas.
     const cache = blocos.find(
-      (p) => /uses:\s*actions\/cache@[a-f0-9]{40}\b/.test(p) && /~\/\.cache\/ms-playwright\b/.test(p),
+      (p) => /uses:\s*actions\/cache(?:\/restore)?@[a-f0-9]{40}\b/.test(p) && /~\/\.cache\/ms-playwright\b/.test(p),
     );
     if (!cache) {
       problemas.push(`${nome}: sem passo actions/cache para os browsers`);

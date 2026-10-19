@@ -119,17 +119,20 @@ test('production migration has fail-closed preflight and postflight for notifica
   // E62: o braco do `case` virou arquivo de contrato. O que se prende agora e que o
   // alvo 20260922220000 continue com o contrato de runtime disponivel e que a
   // verificacao do apply continue exigindo as contagens exatas.
+  // GA16: os steps de pos-apply foram extraidos para validate-post-apply.mjs;
+  // a referencia ao contrato de atomicidade agora mora nesse script, nao no YAML.
   assert.ok(
     fs.existsSync(new URL('../db-audit/contracts/20260922220000.sql', import.meta.url)),
     'o contrato de runtime do alvo 20260922220000 tem de existir',
   );
+  const postApply = read('../../scripts/db-audit/validate-post-apply.mjs');
   assert.ok(
-    (workflow.match(/notification-delivery-atomicity-runtime\.sql/g) || []).length >= 1,
+    (postApply.match(/notification-delivery-atomicity-runtime\.sql/g) || []).length >= 1,
     'o workflow tem de continuar referenciando o contrato de atomicidade',
   );
-  assert.match(workflow, /inputs\.migration_version == '20260922220000'/);
-  assert.match(workflow, /proof\.service_execute_count === 2/);
-  assert.match(workflow, /proof\.authenticated_execute_count === 0/);
+  assert.match(postApply, /VERSION === '20260922220000'/);
+  assert.match(postApply, /proof\.service_execute_count === 2/);
+  assert.match(postApply, /proof\.authenticated_execute_count === 0/);
 });
 test('DB guard installs the pinned AST dependency before checking Realtime subscriptions', () => {
   const workflow = read('../../.github/workflows/db-guard.yml');
