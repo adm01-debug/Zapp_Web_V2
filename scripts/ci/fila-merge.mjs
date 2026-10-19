@@ -110,8 +110,13 @@ export function decidir(prs, obrigatorios) {
   const classes = prs.map((pr) => ({ pr, classe: classificar(pr, obrigatorios) }));
   const emVoo = classes.filter((c) => c.classe === 'em-voo');
   const bloqueadas = classes.filter((c) => c.classe === 'bloqueada').map((c) => c.pr.number);
+  // GA50: PRs com auto-merge cujo campo `mergeable` é CONFLICTING ficam como 'fora' em
+  // classificar(), mas vale listá-las no summary para o autor saber que precisa resolver.
+  const conflitantes = prs
+    .filter((pr) => pr.mergeable === 'CONFLICTING' && pr.autoMergeRequest && !pr.isDraft)
+    .map((pr) => pr.number);
   if (emVoo.length > 0) {
-    return { acao: 'esperar', emVoo: emVoo.map((c) => c.pr.number), bloqueadas };
+    return { acao: 'esperar', emVoo: emVoo.map((c) => c.pr.number), bloqueadas, conflitantes };
   }
   const fila = classes
     .filter((c) => c.classe === 'aguardando')
@@ -121,10 +126,10 @@ export function decidir(prs, obrigatorios) {
       const eb = String(b.autoMergeRequest.enabledAt ?? '');
       return ea === eb ? a.number - b.number : ea < eb ? -1 : 1;
     });
-  if (fila.length === 0) return { acao: 'nada', bloqueadas };
+  if (fila.length === 0) return { acao: 'nada', bloqueadas, conflitantes };
   // `fila` vai inteira, em ordem: se o update-branch da primeira for recusado
   // (403/422), o workflow tenta a próxima na mesma execução em vez de travar.
-  return { acao: 'atualizar', pr: fila[0].number, fila: fila.map((p) => p.number), restantes: fila.slice(1).map((p) => p.number), bloqueadas };
+  return { acao: 'atualizar', pr: fila[0].number, fila: fila.map((p) => p.number), restantes: fila.slice(1).map((p) => p.number), bloqueadas, conflitantes };
 }
 
 // Depois de uma recusa 403/422, o laço do workflow só tenta o próximo candidato se uma
@@ -205,6 +210,7 @@ async function main() {
     if (decisao.restantes.length) linhas.push(`Esperando a vez (sem gastar CI): #${decisao.restantes.join(', #')}.`);
   }
   if (decisao.bloqueadas.length) linhas.push(`Fora da fila até corrigir check obrigatório: #${decisao.bloqueadas.join(', #')}.`);
+  if (decisao.conflitantes?.length) linhas.push(`Conflito pendente de resolução (CONFLICTING): #${decisao.conflitantes.join(', #')}.`);
   for (const l of linhas) console.log(l);
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `### Fila de merge\n\n${linhas.map((l) => `- ${l}`).join('\n')}\n`);
   if (process.env.GITHUB_OUTPUT && decisao.acao === 'atualizar') {

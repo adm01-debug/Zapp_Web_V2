@@ -53,6 +53,11 @@ case "${1:-}" in
     db="$(_sanitize "$cname")"
     mkdir -p "$STATE"
     printf '%s' "$db" > "$STATE/$cname.db"
+    # GA70: exportar o nome do banco para GITHUB_ENV para que passos posteriores
+    # possam afirmar proof.database === 'postgres' sem ler o arquivo de estado.
+    if [[ -n "${GITHUB_ENV:-}" ]]; then
+      printf 'DOCKER_SHIM_DB=%s\n' "$db" >> "$GITHUB_ENV"
+    fi
     _svc -d postgres -tAX -c "SELECT rolname FROM pg_roles ORDER BY rolname" \
       > "$STATE/$cname.roles" 2>/dev/null || true
     # Two separate calls: psql wraps multi-statement -c in a transaction,

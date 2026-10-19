@@ -187,6 +187,10 @@ export function extrairInvocacoes(texto, versaoDoArquivo, origem = '<contrato>')
       if (!/\.sql$/.test(arquivo)) {
         throw new Error(`contrato ${origem}: arquivo de contrato nao termina em .sql ("${arquivo}")`);
       }
+      // GA18: prevenir traversal de caminho fora do diretorio de contratos.
+      if (/(?:^|\/)\.\.(?:\/|$)/.test(arquivo)) {
+        throw new Error(`contrato ${origem}: caminho do arquivo nao pode conter ".." ("${arquivo}")`);
+      }
       i += 1;
     } else {
       throw new Error(
