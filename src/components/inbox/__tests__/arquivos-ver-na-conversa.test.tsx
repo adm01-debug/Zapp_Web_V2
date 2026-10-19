@@ -58,6 +58,7 @@ vi.mock('@/lib/logger', () => ({
   getSessionId: () => 'sessao-test',
   logPerformance: (_l: string, fn: () => void) => fn(),
   logAsyncPerformance: async (_l: string, fn: () => Promise<unknown>) => fn(),
+  log: { error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }) },
 }));
 
 vi.mock('sonner', () => ({ toast: { error: mocks.toastError, success: vi.fn() } }));

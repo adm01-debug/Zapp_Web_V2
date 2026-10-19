@@ -38,7 +38,7 @@ vi.mock('@/integrations/supabase/client', () => ({
 }));
 
 vi.mock('@/lib/logger', () => ({
-  log: { warn: (...args: unknown[]) => mocks.warn(...args), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  log: { warn: (...args: unknown[]) => mocks.warn(...args), error: vi.fn(), info: vi.fn(), debug: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() })},
 }));
 
 vi.mock('../ViewersIndicator', () => ({ ViewersIndicator: () => null }));

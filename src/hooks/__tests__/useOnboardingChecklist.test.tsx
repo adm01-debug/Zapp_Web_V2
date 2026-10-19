@@ -21,7 +21,7 @@ vi.mock('@/hooks/auth/useAuth', () => ({
 }));
 
 vi.mock('@/lib/logger', () => ({
-  log: { error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() },
+  log: { error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() })},
 }));
 
 import { useOnboardingChecklist } from '@/hooks/ui/useOnboardingChecklist';

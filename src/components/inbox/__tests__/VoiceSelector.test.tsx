@@ -14,7 +14,7 @@ const { toastErro } = vi.hoisted(() => ({ toastErro: vi.fn() }));
 
 vi.mock('sonner', () => ({ toast: { error: toastErro } }));
 vi.mock('@/lib/logger', () => ({
-  log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() })},
 }));
 vi.mock('@/integrations/supabase/client', () => ({ SUPABASE_URL: 'http://tts.local' }));
 vi.mock('@/lib/edgeAuthHeaders', () => ({

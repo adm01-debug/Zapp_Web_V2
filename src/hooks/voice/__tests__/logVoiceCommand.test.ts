@@ -11,8 +11,7 @@ vi.mock('@/lib/logger', () => ({
     warn: hoisted.logWarn,
     error: hoisted.logError,
     info: vi.fn(),
-    debug: vi.fn(),
-  }),
+    debug: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() })}),
 }));
 
 vi.mock('@/integrations/supabase/client', () => ({

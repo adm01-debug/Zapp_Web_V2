@@ -37,7 +37,7 @@ vi.mock('@/integrations/supabase/client', () => ({
 }));
 
 vi.mock('@/lib/logger', () => ({
-  log: { error: vi.fn(), info: vi.fn(), warn: vi.fn(), debug: vi.fn() },
+  log: { error: vi.fn(), info: vi.fn(), warn: vi.fn(), debug: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() })},
 }));
 
 describe('useWhatsAppStatus', () => {

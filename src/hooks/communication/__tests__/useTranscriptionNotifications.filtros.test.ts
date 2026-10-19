@@ -99,8 +99,7 @@ vi.mock('@/lib/logger', () => ({
     debug: (...args: unknown[]) => h.debug(...args),
     info: vi.fn(),
     warn: vi.fn(),
-    error: vi.fn(),
-  },
+    error: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() })},
 }));
 
 const agora = () => new Date().toISOString();

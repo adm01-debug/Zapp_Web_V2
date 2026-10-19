@@ -3,7 +3,7 @@ import React from 'react';
 import { renderHook, render, act } from '@testing-library/react';
 
 vi.mock('@/lib/logger', () => ({
-  log: { error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() },
+  log: { error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() })},
 }));
 
 import {

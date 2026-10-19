@@ -22,8 +22,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter, useNavigate } from 'react-router-dom';
 
 vi.mock('@/lib/logger', () => ({
-  getLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),
-  log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  getLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() , withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() })}),
+  log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() })},
 }));
 vi.mock('@/lib/errorReporter', () => ({ reportClientError: vi.fn() }));
 

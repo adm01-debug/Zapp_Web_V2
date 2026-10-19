@@ -51,9 +51,9 @@ vi.mock('@/integrations/supabase/client', () => ({
 }));
 
 vi.mock('@/lib/logger', () => ({
-  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), error: vi.fn(), warn: vi.fn() }),
-  getLogger: () => ({ debug: vi.fn(), info: vi.fn(), error: vi.fn(), warn: vi.fn() }),
-  log: { debug: vi.fn(), info: vi.fn(), error: vi.fn() },
+  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), error: vi.fn(), warn: vi.fn() , withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() })}),
+  getLogger: () => ({ debug: vi.fn(), info: vi.fn(), error: vi.fn(), warn: vi.fn() , withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() })}),
+  log: { debug: vi.fn(), info: vi.fn(), error: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() })},
 }));
 
 import { useCatalogFavorites } from '@/hooks/integrations/useExternalCatalog';

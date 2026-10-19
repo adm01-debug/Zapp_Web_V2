@@ -94,7 +94,7 @@ vi.mock('@/hooks/system/usePushNotifications', () => ({
 }));
 
 vi.mock('@/lib/logger', () => ({
-  getLogger: () => ({ error: vi.fn(), warn: vi.fn(), debug: vi.fn(), info: vi.fn() }),
+  getLogger: () => ({ error: vi.fn(), warn: vi.fn(), debug: vi.fn(), info: vi.fn() , withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() })}),
 }));
 
 import { TeamChatNotificationsListener } from '@/components/team-chat/TeamChatNotificationsListener';

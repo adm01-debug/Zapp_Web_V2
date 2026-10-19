@@ -5,7 +5,7 @@ const callCRMIntegration = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/crmIntegration', () => ({ callCRMIntegration }));
 vi.mock('@/lib/externalProxy', () => ({ queryExternalProxy: vi.fn() }));
 vi.mock('@/lib/logger', () => ({
-  log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() })},
 }));
 
 import { ExternalCRMService } from '@/services/crm/external-crm.service';

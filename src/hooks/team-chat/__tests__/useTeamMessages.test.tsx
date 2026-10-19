@@ -37,7 +37,7 @@ vi.mock('@/hooks/auth/useAuth', () => ({
 }));
 
 vi.mock('@/lib/logger', () => ({
-  getLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),
+  getLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() , withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() })}),
 }));
 
 vi.mock('@/integrations/supabase/client', () => ({

@@ -16,7 +16,7 @@ import { INBOX_DRAFT_KEY_PREFIX, LEGACY_INBOX_DRAFT_KEY_PREFIX } from '@/lib/inb
 const cenario = vi.hoisted(() => ({ userId: 'atendente-b' as string | null, falha: false }));
 
 vi.mock('@/lib/logger', () => {
-  const loggerStub = { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() };
+  const loggerStub = { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }) };
   return { log: loggerStub, logger: loggerStub, getLogger: () => loggerStub, createLogger: () => loggerStub };
 });
 vi.mock('@/hooks/ui/use-mobile', () => ({ useIsMobile: () => false }));

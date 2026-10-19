@@ -57,6 +57,7 @@ vi.mock('@/lib/logger', () => ({
   createLogger: () => h.logger,
   log: h.logger,
   logger: h.logger,
+  log: { error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }) },
 }));
 
 import { toast } from 'sonner';

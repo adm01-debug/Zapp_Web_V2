@@ -11,7 +11,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 const h = vi.hoisted(() => ({
   insert: vi.fn(),
   toast: { success: vi.fn(), error: vi.fn() },
-  log: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+  log: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() })},
 }));
 
 vi.mock('sonner', () => ({ toast: h.toast }));

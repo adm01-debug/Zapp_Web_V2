@@ -21,7 +21,7 @@ const h = vi.hoisted(() => ({
   channel: vi.fn(),
   removeChannel: vi.fn(),
   toast: vi.fn(),
-  log: { debug: vi.fn(), error: vi.fn() },
+  log: { debug: vi.fn(), error: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() })},
   createConnection: vi.fn(),
   connectInstance: vi.fn(),
   getInstanceStatus: vi.fn(),
