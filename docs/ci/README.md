@@ -4,7 +4,7 @@
 > `--check` e falha se este arquivo divergir do bloco `# docs:` de cada workflow.
 > Para mudar o que está aqui, mude o bloco no YAML.
 
-**14 workflows.**
+**16 workflows.**
 
 | Workflow | Arquivo | Gatilho | O que prova | Quando falha | Quem é avisado | Custo/sem (min) | Falha (7 d) |
 |---|---|---|---|---|---|---|---|
@@ -22,6 +22,8 @@
 | Talk X V4 placar regen (push) | [`talkx-status-regen.yml`](../../.github/workflows/talkx-status-regen.yml) | push | o placar do Talk X regenerado a partir dos dados atuais | o job fica vermelho e o placar nao e atualizado | autor do push | — | — |
 | Targeted Ledger Evidence | [`targeted-ledger-evidence.yml`](../../.github/workflows/targeted-ledger-evidence.yml) | dispatch | a evidencia do ledger de migrations para uma version especifica | o job aborta sem publicar evidencia | operador que disparou | — | — |
 | types-sync | [`types-sync.yml`](../../.github/workflows/types-sync.yml) | push na main, agendado e dispatch | os tipos gerados batem com o banco oficial (Gates 1 e 2) | PR em `automation/types-sync` ou issue `[types-sync]`; nunca passa com tipo divergente | PR de types e issue de gate | — | — |
+| Settings Guard | [`settings-guard.yml`](../../.github/workflows/settings-guard.yml) | agendado e dispatch | o perimetro do GitHub (branch protection, merge, environments) contra o baseline versionado | issue aberta; sem escopo suficiente o guarda reporta ponto cego em vez de falhar em silencio | issue de settings | — | — |
+| V043-V065 Vercel Env Cleanup | [`vercel-env-cleanup.yml`](../../.github/workflows/vercel-env-cleanup.yml) | dispatch | lista ou remove vars perigosas/mortas do Vercel | o job fica vermelho e nada e removido | quem disparou | — | — |
 
 ## Detalhe
 
