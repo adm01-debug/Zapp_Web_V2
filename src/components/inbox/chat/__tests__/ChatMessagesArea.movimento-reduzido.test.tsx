@@ -46,6 +46,14 @@ class ResizeObserverMock {
 beforeAll(() => {
   (window as unknown as { ResizeObserver: typeof ResizeObserverMock }).ResizeObserver = ResizeObserverMock;
   (Element.prototype as unknown as { scrollTo: unknown }).scrollTo = vi.fn();
+  // @tanstack/react-virtual v3.13+ returns [] when containerSize=0 (jsdom default).
+  const _origGetBCR = Element.prototype.getBoundingClientRect;
+  Element.prototype.getBoundingClientRect = function (this: Element) {
+    if ((this as HTMLElement).getAttribute?.('role') === 'log') {
+      return { x: 0, y: 0, width: 800, height: 600, top: 0, left: 0, right: 800, bottom: 600, toJSON: () => ({}) } as DOMRect;
+    }
+    return _origGetBCR.call(this);
+  };
 });
 
 vi.mock('../MessageBubble', () => ({

@@ -65,13 +65,14 @@ export const ORDEM_CAUSA = [
   'live-invariants',
   'runtime-config',
   'triple-parity',
+  'ddl-fora-do-fluxo',
   'e2e-fixtures',
 ];
 
 /** Redacao de credencial em qualquer trecho que for para summary/alert/artefato. */
 export function redigir(texto) {
   return String(texto)
-    .replace(/postgres(?:ql)?:\/\/[^@\s]+@\S+/gi, 'postgres://***@***')
+    .replace(/postgres(?:ql)?\/\/[^@\s]+@\S+/gi, 'postgres://***@***')
     .replace(/password=[^\s&]+/g, 'password=***');
 }
 
