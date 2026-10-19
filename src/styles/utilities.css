@@ -276,3 +276,22 @@
     transform: translate(-50%, -50%);
   }
 }
+
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 0);
+}
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+@media (max-width: 767px) {
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  body {
+    overscroll-behavior-y: none;
+  }
+}

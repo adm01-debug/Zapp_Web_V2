@@ -59,7 +59,7 @@ const googleServiceOptions: ReadonlyArray<{ key: GoogleServiceKey; label: string
 
 export function AdminView() {
   const { isAdmin, isSupervisor, loading: roleLoading } = useUserRole();
-  const [activeTab, setActiveTab] = useState<'users' | 'audit' | 'crm'>('users');
+  const [activeTab, setActiveTab] = useState<AdminTab>('users');
   const [searchTerm, setSearchTerm] = useState('');
   const [editingUser, setEditingUser] = useState<UserWithRole | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -79,8 +79,11 @@ export function AdminView() {
   const [auditTo, setAuditTo] = useState('');
   const [auditPage, setAuditPage] = useState(1);
 
+  const dataTab: 'users' | 'audit' | 'crm' =
+    activeTab === 'users' || activeTab === 'audit' ? activeTab : 'crm';
+
   const { users, auditLogs, auditTotal, loading, error, fetchData, handleRoleChange, handleToggleActive, handleSaveUser, handleSaveRamal, handleCreateUser } =
-    useAdminData(activeTab as 'users' | 'audit' | 'crm', {
+    useAdminData(dataTab, {
       from: auditFrom || undefined,
       to: auditTo || undefined,
       page: auditPage,
@@ -96,6 +99,10 @@ export function AdminView() {
     if (!editAvatarPreview) return undefined;
     return () => URL.revokeObjectURL(editAvatarPreview);
   }, [editAvatarPreview]);
+
+  useEffect(() => {
+    if (activeTab === 'users') fetchData();
+  }, [activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Trocar o período volta para a primeira página: sem isso a página 3 de um
   // período novo poderia cair fora do intervalo e mostrar tabela vazia.
@@ -208,10 +215,27 @@ export function AdminView() {
         </div>
       </motion.div>
 
-      <div className="flex gap-2 flex-wrap">
-        {([['users', Users, `Usuários (${users.length})`], ['audit', History, 'Auditoria'], ['crm', Building, 'CRM 360°']] as const).map(([tab, Icon, label]) => (
-          <Button key={tab} variant={activeTab === tab ? 'default' : 'outline'} onClick={() => setActiveTab(tab as typeof activeTab)}
-            className={activeTab === tab ? 'bg-primary hover:bg-primary/90' : ''} size="sm">
+      <div role="tablist" aria-label="Seções da administração" className="flex gap-2 flex-wrap">
+        {abas.map(([tab, Icon, label]) => (
+          <Button
+            key={tab}
+            role="tab"
+            id={`tab-${tab}`}
+            aria-selected={activeTab === tab}
+            tabIndex={activeTab === tab ? 0 : -1}
+            variant={activeTab === tab ? 'default' : 'outline'}
+            onClick={() => setActiveTab(tab)}
+            onKeyDown={(e) => {
+              const idx = abas.findIndex(([t]) => t === activeTab);
+              let nextTab: AdminTab | null = null;
+              if (e.key === 'ArrowRight') nextTab = abas[(idx + 1) % abas.length][0];
+              else if (e.key === 'ArrowLeft') nextTab = abas[(idx - 1 + abas.length) % abas.length][0];
+              else if (e.key === 'Home') nextTab = abas[0][0];
+              if (nextTab) { setActiveTab(nextTab); tabsRef.current[nextTab]?.focus(); }
+            }}
+            ref={(el) => { tabsRef.current[tab] = el; }}
+            className={activeTab === tab ? 'bg-primary hover:bg-primary/90' : ''}
+            size="sm">
             <Icon className="w-4 h-4 mr-2" /> {label}
           </Button>
         ))}
