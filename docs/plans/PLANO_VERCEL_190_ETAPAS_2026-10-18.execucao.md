@@ -82,9 +82,16 @@
 | V127 | Verificar `X-Frame-Options: DENY` | ✅ OK | Já presente em `vercel.json` |
 | V128 | Atualizar `robots.txt` para Disallow all | ✅ OK | `public/robots.txt` atualizado |
 | V129 | Adicionar `X-Robots-Tag` no `vercel.json` | ✅ OK | Header adicionado em `/(.*)`  |
-| V130–V150 | Headers adicionais (HSTS, etc.) | ⏳ PENDENTE | Avaliar após V017 |
+| V130 | Reporting-Endpoints + report-to no CSP-Report-Only | ✅ OK | `vercel.json` atualizado; `vercel-snapshot-2026-10-18-depois-seguranca.json` |
+| V131–V132 | Headers de segurança existentes verificados | ✅ OK | X-Frame-Options DENY, X-Content-Type-Options nosniff, Referrer-Policy — já presentes |
+| V133 | Cross-Origin-Opener-Policy: same-origin-allow-popups | ✅ OK | `same-origin` quebraria Gmail OAuth (popup); valor correto aplicado |
+| V134 | Cross-Origin-Resource-Policy: omitido deliberadamente | ➡️ SKIP | Quebraria Vercel Speed Insights (recurso de origem cruzada) |
+| V135 | Permissions-Policy | ➡️ SKIP | Já presente com valor correto (microphone=(self) — 20 arquivos usam getUserMedia) |
+| V136–V137 | Strict-Transport-Security | ➡️ SKIP | Gerenciado automaticamente pelo Vercel em domínios verificados |
+| V138 | Firewall rules — bloquear paths maliciosos | ⏳ PENDENTE | `/wp-admin`, `/.env`, `/.git/`, `/phpmyadmin`, `/xmlrpc.php` via `put_firewall_config` |
+| V139–V150 | Auditoria / monitoramento de headers em produção | ⛔ BLOQUEADO | Depende de V002 para verificar headers reais ao vivo |
 | V151–V155 | Alertas e monitoramento (parte 1) | ⛔ BLOQUEADO | Depende de V002 |
-| V156 | Criar `scripts/ci/vercel-config.unit.mjs` | ✅ OK | 10/10 testes `node:test` passando — valida estrutura do `vercel.json` + cobertura do ignore-build.sh (V098) |
+| V156 | Criar `scripts/ci/vercel-config.unit.mjs` | ✅ OK | 12/12 testes `node:test` passando — inclui COOP e Reporting-Endpoints adicionados em V130/V133 |
 | V157–V160 | Alertas e monitoramento (parte 2) | ⛔ BLOQUEADO | Depende de V002 |
 | V161 | Secret `VERCEL_READONLY_TOKEN` no repositório | 🔒 JOAQUIM | Gerar em Vercel → Account Settings → Tokens |
 | V162 | Criar `scripts/vercel/verify-production.mjs` | ✅ OK | Smoke criado; verifica /version.json, headers seg., cache assets, X-Robots-Tag |
@@ -149,8 +156,8 @@
 | Ignore build | V076–V079 | ignore-build.sh + testes + ignoreCommand no vercel.json |
 | Source maps | V088 | sourcemap: false em vite.config.ts |
 | Cache headers | V101–V115 | immutable para assets, no-store para version.json |
-| Security headers | V127–V129 | X-Frame-Options, robots.txt, X-Robots-Tag |
-| CI / testes | V068–V070, V098, V156, V162 | baselines env, vercel-config.unit.mjs (10/10), verify-production.mjs |
+| Security headers | V127–V129, V130, V133 | X-Frame-Options, robots.txt, X-Robots-Tag, COOP, Reporting-Endpoints |
+| CI / testes | V068–V070, V098, V156, V162 | baselines env, vercel-config.unit.mjs (12/12), verify-production.mjs |
 | Documentação | V173–V174, V180, V183–V184 | CLAUDE.md seção 4, runbook, checklist |
 
 ### Gargalos reais (só o Joaquim desbloqueia)
@@ -162,8 +169,8 @@
 
 ### Estado final do projeto Vercel
 
-- **Segurança:** CSP sem bancos legados; X-Frame-Options DENY; X-Robots-Tag noindex; robots.txt Disallow all; sourcemaps off
+- **Segurança:** CSP sem bancos legados; X-Frame-Options DENY; X-Robots-Tag noindex; robots.txt Disallow all; sourcemaps off; COOP same-origin-allow-popups; Reporting-Endpoints ativo
 - **Performance:** assets imutáveis (1 ano); version.json sem cache; builds pulados em commits sem mudança no front
 - **CORS:** www.zappweb.app.br coberto (aguarda deploy das edge functions pelo Joaquim)
-- **CI:** 3 arquivos de contrato: vercel-config.unit.mjs, vercel-env-baseline.unit.mjs, verify-production.mjs
+- **CI:** 3 arquivos de contrato: vercel-config.unit.mjs (12/12), vercel-env-baseline.unit.mjs, verify-production.mjs
 - **Vars perigosas:** identificadas — remoção aguarda Joaquim

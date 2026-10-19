@@ -79,3 +79,17 @@ test('ignore-build.sh cobre todos os arquivos de config do Vite', () => {
     assert.ok(ignoreSh.includes(f), `${f} ausente no FRONT_PATHS de ignore-build.sh`);
   }
 });
+
+test('Cross-Origin-Opener-Policy é same-origin-allow-popups', () => {
+  const globalBlock = config.headers?.find(h => h.source === '/(.*)' );
+  const coop = globalBlock?.headers?.find(h => h.key === 'Cross-Origin-Opener-Policy');
+  assert.ok(coop, 'Cross-Origin-Opener-Policy ausente nos headers globais');
+  assert.equal(coop.value, 'same-origin-allow-popups');
+});
+
+test('Reporting-Endpoints define endpoint csp', () => {
+  const globalBlock = config.headers?.find(h => h.source === '/(.*)' );
+  const re = globalBlock?.headers?.find(h => h.key === 'Reporting-Endpoints');
+  assert.ok(re, 'Reporting-Endpoints ausente nos headers globais');
+  assert.ok(re.value.includes('csp='), 'Reporting-Endpoints não define endpoint csp');
+});
