@@ -48,6 +48,17 @@ class ResizeObserverMock {
 
 beforeAll(() => {
   (window as unknown as { ResizeObserver: typeof ResizeObserverMock }).ResizeObserver = ResizeObserverMock;
+  // jsdom não computa layout: clientHeight/offsetHeight ficam 0 mesmo com style.height.
+  // O virtualizer lê clientHeight do container para calcular o range visível; sem isso
+  // getVirtualItems() retorna vazio e os testes falham no CI.
+  Object.defineProperty(Element.prototype, 'clientHeight', {
+    configurable: true,
+    get() { return 600; },
+  });
+  Object.defineProperty(Element.prototype, 'offsetHeight', {
+    configurable: true,
+    get() { return 600; },
+  });
 });
 
 // Mock pesado: o alvo é o virtualizer, não as bolhas.
