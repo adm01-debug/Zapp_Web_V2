@@ -56,6 +56,30 @@ beforeAll(() => {
   (window as unknown as { ResizeObserver: typeof ResizeObserverMock }).ResizeObserver = ResizeObserverMock;
 });
 
+vi.mock('@tanstack/react-virtual', async () => {
+  const actual = await vi.importActual<typeof import('@tanstack/react-virtual')>('@tanstack/react-virtual');
+  return {
+    ...actual,
+    useVirtualizer: (opts: { count: number; getScrollElement: () => Element | null; estimateSize: () => number }) => ({
+      getVirtualItems: () =>
+        Array.from({ length: opts.count }, (_, i) => ({
+          index: i,
+          key: i,
+          start: i * opts.estimateSize(),
+          size: opts.estimateSize(),
+          lane: 0,
+          end: (i + 1) * opts.estimateSize(),
+          measureElement: undefined,
+        })),
+      getTotalSize: () => opts.count * opts.estimateSize(),
+      scrollToIndex: vi.fn(),
+      scrollToOffset: vi.fn(),
+      measure: vi.fn(),
+      options: opts,
+    }),
+  };
+});
+
 vi.mock('../MessageBubble', () => ({
   MessageBubble: ({ message }: { message: { id: string } }) => (
     <div data-testid="bubble" data-message-id={message.id} style={{ height: ALTURA_ITEM }} />
