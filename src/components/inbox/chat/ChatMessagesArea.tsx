@@ -156,8 +156,8 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
   // nova mensagem) só passam quando o usuário já está no final — evita arrastar quem está
   // lendo o histórico. Scrolls explícitos (envio próprio, navegação para mensagem citada)
   // usam forceScrollRef para contornar a guarda.
-  const scrollToFn = useCallback<NonNullable<Parameters<typeof useVirtualizer>[0]['scrollToFn']>>(
-    (offset, _options) => {
+  const scrollToFn = useCallback(
+    (offset: number) => {
       const el = scrollContainerRef.current;
       if (!el) return;
       if (!isNearBottomRef.current && !forceScrollRef.current) return;
