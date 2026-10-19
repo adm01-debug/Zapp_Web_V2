@@ -208,7 +208,8 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
             log.warn('Falha ao confirmar participação na conversa; sem notificação:', error.message);
             return;
           }
-          membership = membershipRows?.[0] ?? null;
+          const row = membershipRows?.[0];
+          membership = row ? { id: row.id, is_muted: row.is_muted ?? false } : null;
         }
 
         if (!shouldNotifyTeamMessage({
