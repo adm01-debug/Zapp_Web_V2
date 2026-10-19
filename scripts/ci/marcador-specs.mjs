@@ -29,14 +29,15 @@ export function nomesDeTestResults(dir) {
     return []; // sem test-results nao ha falha identificada -- ver o aviso em marcadorDe
   }
   return entradas
-    .filter((e) => e.isDirectory())
+    .filter((e) => e.isDirectory() && !e.name.startsWith('.playwright-artifacts-'))
     .map((e) => e.name)
     .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
 }
 
-/** Nomes validos: string, nao vazia, sem repeticao, ordenados. */
+/** Nomes validos: string, nao vazia, sem repeticao, ordenados. Tira sufixo `-retryN`. */
 function normalizar(nomes) {
-  return [...new Set((nomes ?? []).filter((n) => typeof n === 'string' && n.length > 0))]
+  return [...new Set((nomes ?? []).filter((n) => typeof n === 'string' && n.length > 0)
+    .map((n) => n.replace(/-retry\d+$/, '')))]
     .sort((a, b) => a.localeCompare(b, 'pt-BR'));
 }
 

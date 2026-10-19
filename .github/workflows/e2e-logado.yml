@@ -52,6 +52,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     if: github.event.repository.fork == false
+    # GA46: Scorecard #40 (DangerousWorkflow) dispensado — fork bloqueado no nível do job pelo `if:` acima (GA08)
     # E83: a suite logada (173 testes) estourava o timeout do job unico e a run
     # inteira caia como "cancelled". A matriz abaixo divide os mesmos 15 projetos
     # em 3 grupos, cada um com seu proprio relogio de 15 min: se um grupo ficar
@@ -279,6 +280,42 @@ jobs:
             && echo "teardown catalog_send_events OK" \
             || echo "teardown catalog_send_events falhou - nao bloqueia CI"
 
+      # GA39: revogar TODAS as sessoes ativas do usuario de teste com scope=global.
+      # Sem isso, cada CI-run acumula uma sessao aberta no Supabase Auth, que
+      # nao sao liberadas pelo logout normal (scope=local) do Playwright.
+      - name: 🔐 E2E teardown - revogar sessões globais do usuário de teste (GA39)
+        if: always()
+        continue-on-error: true
+        env:
+          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
+          E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$E2E_TEST_EMAIL" ] || [ -z "$E2E_TEST_PASSWORD" ]; then
+            echo "Credenciais ausentes — teardown de sessao global pulado"
+            exit 0
+          fi
+          RESP=$(curl --proto '=https' --tlsv1.2 -sf -X POST \
+            "${SUPABASE_URL}/auth/v1/token?grant_type=password" \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Content-Type: application/json" \
+            -d "{\"email\":\"${E2E_TEST_EMAIL}\",\"password\":\"${E2E_TEST_PASSWORD}\"}" \
+            || true)
+          ACCESS_TOKEN=$(printf '%s' "$RESP" | node -e \
+            "let d=''; process.stdin.on('data',c=>d+=c); process.stdin.on('end',()=>{ try{process.stdout.write(JSON.parse(d).access_token||'')}catch{} })")
+          if [ -z "$ACCESS_TOKEN" ]; then
+            echo "Nao foi possivel obter access_token — teardown de sessao global pulado"
+            exit 0
+          fi
+          curl --proto '=https' --tlsv1.2 -sf -X POST \
+            "${SUPABASE_URL}/auth/v1/logout?scope=global" \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+            -H "Content-Type: application/json" \
+            && echo "teardown logout global OK" \
+            || echo "teardown logout global falhou - nao bloqueia CI"
+
       # E83: alerta da suite logada, no mesmo mecanismo da E44 (db-live-guard.yml) -- um
       # marcador invisivel identifica a CAUSA (o conjunto de testes que falhou) e o alerta
       # so e repetido quando ela MUDA. Sem isso, uma suite quebrada por dias geraria um
@@ -341,12 +378,17 @@ jobs:
             const { data: abertas } = await github.rest.issues.listForRepo({
               owner, repo, state: 'open', per_page: 50,
             });
-            const issue = abertas.find((i) => i.title === titulo);
-            if (!issue) {
+            // GA42: fechar POR PREFIXO -- pode haver issues "[e2e-logado] login E2E falhou"
+            // e "[e2e-logado] Suíte logada quebrada na main" abertas ao mesmo tempo; fechar
+            // apenas a que casa pelo titulo exato deixava a outra orfã para sempre (#1946).
+            const issues = abertas.filter((i) => i.title.startsWith('[e2e-logado]'));
+            if (!issues.length) {
               core.info('nenhuma issue aberta -- nada a fechar');
               return;
             }
-            await github.rest.issues.update({
-              owner, repo, issue_number: issue.number, state: 'closed',
-            });
-            core.info(`issue #${issue.number} fechada: a suite voltou a passar na main`);
+            for (const iss of issues) {
+              await github.rest.issues.update({
+                owner, repo, issue_number: iss.number, state: 'closed',
+              });
+              core.info(`issue #${iss.number} fechada: a suite voltou a passar na main`);
+            }

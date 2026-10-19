@@ -34,6 +34,8 @@ on:
       # E18: negação evita que o merge do PR de sync (que só altera
       # grants-baseline.json) dispare uma nova execução desnecessária.
       - '!scripts/db-audit/grants-baseline.json'
+      # GA61: known-violations.json é atualizado pelo guard sem alterar DDL.
+      - '!scripts/db-audit/known-violations.json'
       - '.github/workflows/types-sync.yml'
   schedule:
     # 05:49 em vez de 06:00: o minuto 0 concentra a fila de agendamentos do
@@ -50,7 +52,9 @@ permissions:
   contents: read
 
 concurrency:
-  group: types-sync-${{ github.ref }}-${{ github.event_name == 'schedule' && github.run_id || 'push' }}
+  # GA61: schedule e workflow_dispatch recebem run_id próprio para não cancelar
+  # entre si nem cancelar um push em andamento.
+  group: types-sync-${{ github.ref }}-${{ github.event_name == 'schedule' && github.run_id || github.event_name == 'workflow_dispatch' && github.run_id || 'push' }}
   cancel-in-progress: false
 
 env:
@@ -469,26 +473,36 @@ jobs:
             }
 
       - name: Registrar falha dos gates
+        # GA23: awaiting_apply nao suprime o alerta indefinidamente — suprime ate 24h
+        # via dedupe estendido no script (causa 'typescript-pendente', janela 24h).
+        # Apos 24h sem o migration chegar a producao, a issue e aberta/comentada.
         if: >-
           steps.diff.outputs.schema_changed == 'true' &&
-          steps.gate1b.outputs.awaiting_apply != 'true' &&
           (steps.gate1.outputs.passed == 'false' ||
            steps.gate2.outputs.passed == 'false' ||
            steps.gate3.outputs.passed == 'false')
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          AWAITING_APPLY: ${{ steps.gate1b.outputs.awaiting_apply }}
         with:
           script: |
             const gate1 = '${{ steps.gate1.outputs.passed }}';
             const gate2 = '${{ steps.gate2.outputs.passed }}';
             const gate3 = '${{ steps.gate3.outputs.passed }}';
+            const awaitingApply = process.env.AWAITING_APPLY === 'true';
             // E20 (plano de 2026-10-08): a CAUSA do alerta e' o gate que falhou,
             // num identificador sem espaco. E' ela que vai no marcador invisivel do
             // corpo e decide o dedupe abaixo — mesmo mecanismo do db-live-guard.yml
             // (E05/E06/E44), que ja comentava so quando a causa mudava.
-            const causa = gate1 === 'false' ? 'typescript' :
+            // GA23: awaiting_apply usa causa 'typescript-pendente' (dedupe 24h).
+            const causaBase = gate1 === 'false' ? 'typescript' :
               gate2 === 'false' ? 'usage-guard' : 'remocoes-destrutivas';
-            const failed = gate1 === 'false' ? 'TypeScript' :
+            const causa = awaitingApply ? 'typescript-pendente' : causaBase;
+            const failedBase = gate1 === 'false' ? 'TypeScript' :
               gate2 === 'false' ? 'usage-guard' : 'remocoes destrutivas';
+            const failed = awaitingApply
+              ? `${failedBase} (aguardando apply de migration pendente)`
+              : failedBase;
             const fs = require('fs');
             const excerpt = gate1 === 'false' && fs.existsSync('/tmp/tsc.log')
               ? fs.readFileSync('/tmp/tsc.log', 'utf8').slice(0, 2000)
@@ -563,8 +577,11 @@ jobs:
               const ultimo = comentarios[0];
               const causaAnterior = ultimo?.body?.match(/<!-- causa:([a-z-]+) -->/)?.[1] ?? null;
               const idadeUltimoMs = ultimo ? Date.now() - new Date(ultimo.created_at).getTime() : Infinity;
-              if (causaAnterior === causa && idadeUltimoMs < 6 * 60 * 60 * 1000) {
-                core.info(`Dedupe: mesma causa (${causa}) ha menos de 6h; comentario suprimido.`);
+              // GA23: causa 'typescript-pendente' usa janela de 24h (migration ainda nao aplicada).
+              const dedupeMs = causa === 'typescript-pendente' ? 24 * 60 * 60 * 1000 : 6 * 60 * 60 * 1000;
+              if (causaAnterior === causa && idadeUltimoMs < dedupeMs) {
+                const janela = causa === 'typescript-pendente' ? '24h' : '6h';
+                core.info(`Dedupe: mesma causa (${causa}) ha menos de ${janela}; comentario suprimido.`);
                 return;
               }
               await github.rest.issues.createComment({
@@ -718,15 +735,45 @@ jobs:
             }
 
       - name: Habilitar auto-merge no PR de sincronizacao
-        if: steps.pull-request.outputs.pull-request-number != ''
+        # GA22: auto-merge somente quando grants nao mudaram. grants_changed=true
+        # significa permissoes do banco alteradas — exige revisao humana.
+        if: >-
+          steps.pull-request.outputs.pull-request-number != '' &&
+          steps.diff.outputs.grants_changed != 'true'
         continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ steps.pull-request.outputs.pull-request-number }}
         run: gh pr merge --auto --squash "$PR_NUMBER" --repo "$GITHUB_REPOSITORY"
 
+      - name: Marcar needs-human quando grants mudaram (GA22)
+        # GA22: grants_changed=true indica que permissoes do banco foram alteradas;
+        # o PR precisa de revisao humana antes do merge — nao entra em auto-merge.
+        if: >-
+          steps.pull-request.outputs.pull-request-number != '' &&
+          steps.diff.outputs.grants_changed == 'true'
+        continue-on-error: true
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          PR_NUMBER: ${{ steps.pull-request.outputs.pull-request-number }}
+        with:
+          script: |
+            const pr = Number(process.env.PR_NUMBER);
+            try {
+              await github.rest.issues.createLabel({
+                owner: context.repo.owner, repo: context.repo.repo,
+                name: 'needs-human', color: 'd93f0b',
+                description: 'Requer revisao humana antes do merge'
+              });
+            } catch (e) { if (e.status !== 422) throw e; }
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner, repo: context.repo.repo,
+              issue_number: pr, labels: ['needs-human']
+            });
+            core.notice(`PR #${pr} marcado needs-human: grants alterados requerem revisao humana.`);
+
       - name: Job summary
-        if: always()
+        if: ${{ !cancelled() }}
         run: |
           {
             echo "## types-sync — $(date -u '+%Y-%m-%d %H:%M UTC')"

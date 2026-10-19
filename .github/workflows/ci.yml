@@ -172,8 +172,6 @@ jobs:
       - name: 🏗️ Build for production
         run: bun run build
         env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
           VITE_CRM_INTEGRATION_ENABLED: 'true'
 
       # E72 (G-32): o artifact de dist/ so sai em workflow_dispatch (build manual,
