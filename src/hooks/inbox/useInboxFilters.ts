@@ -155,7 +155,7 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
   const setSelectedQueueId = useCallback((id: string | null) => applyPrefs({ queueId: id }), [applyPrefs]);
 
   const handleContactTypeChange = useCallback((value: string | null) => {
-    const tipo = value && value !== 'all' ? value : null;
+    const tipo = normalizeContactType(value);
     applyPrefs({ contactType: tipo });
     setSearchParams((prev) => {
       const params = new URLSearchParams(prev);

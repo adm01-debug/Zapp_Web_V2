@@ -26,6 +26,14 @@ vi.mock('@/lib/logger', () => ({
   createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
 }));
 
+// useTeamReadState cria canal 'team-read-state-*' em seu próprio useEffect, o
+// que deslocaria h.nomes[0] e dobraria h.subs. Mocado para isolar o teste
+// exclusivamente ao canal 'team-messages-*'.
+vi.mock('@/hooks/team-chat/useTeamReadState', () => ({
+  useTeamReadState: () => ({ readStates: {}, isLoading: false }),
+  deriveOwnMessageStatus: () => 'sent',
+}));
+
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     rpc: (...args: unknown[]) => h.rpc(...args),
