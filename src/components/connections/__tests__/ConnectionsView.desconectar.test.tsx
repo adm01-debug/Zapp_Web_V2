@@ -40,6 +40,7 @@ vi.mock('@/hooks/system/useUserRole', () => ({
 vi.mock('framer-motion', () => ({
   motion: { div: ({ children }: { children?: import('react').ReactNode }) => <div>{children}</div> },
   AnimatePresence: ({ children }: { children?: import('react').ReactNode }) => <>{children}</>,
+  useReducedMotion: vi.fn().mockReturnValue(false),
 }));
 vi.mock('@/components/ui/motion', () => ({
   motion: { div: ({ children }: { children?: import('react').ReactNode }) => <div>{children}</div> },
