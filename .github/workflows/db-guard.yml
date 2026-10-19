@@ -93,19 +93,20 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
-            const { owner, repo } = context.repo;
-            const pull_number = context.payload.pull_request.number;
-            const arquivos = await github.paginate(github.rest.pulls.listFiles, {
-              owner, repo, pull_number, per_page: 100,
-            });
-            if (arquivos.length >= 3000) {
-              core.setFailed('PR tem ≥ 3.000 arquivos; listFiles não cobre todos — recusando para não criar falso negativo.');
-              return;
-            }
-            const apenasDocsOuMd = arquivos.every(
-              (f) => /^docs\//.test(f.filename) || /\.md$/.test(f.filename),
+            // GA68: usa git diff em vez da API listFiles (que corta em 3.000 arquivos;
+            // supabase/ vem por último alfabeticamente e seria omitida).
+            const baseSha = context.payload.pull_request.base.sha;
+            const headSha = context.payload.pull_request.head.sha;
+            await exec.exec('git', ['fetch', '--depth=1', 'origin', baseSha, headSha]);
+            const { stdout } = await exec.getExecOutput(
+              'git', ['diff', '--name-only', baseSha, headSha],
             );
-            if (apenasDocsOuMd && arquivos.length > 0) {
+            const filenames = stdout.trim().split('\n').filter(Boolean);
+            if (filenames.length === 0) return;
+            const apenasDocsOuMd = filenames.every(
+              (f) => /^docs\//.test(f) || /\.md$/.test(f),
+            );
+            if (apenasDocsOuMd) {
               core.exportVariable('CONTRATOS_PULADOS', 'true');
               core.notice('PR toca apenas docs/markdown \u2014 contratos de DB pulados (W55).');
             }
@@ -125,16 +126,25 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
-            const owner = context.repo.owner;
-            const repo = context.repo.repo;
-            const pull_number = context.payload.pull_request.number;
-            const arquivos = await github.paginate(github.rest.pulls.listFiles, {
-              owner, repo, pull_number, per_page: 100,
+            // GA68: usa git diff em vez da API listFiles (que corta em 3.000 arquivos;
+            // supabase/ vem por último alfabeticamente e seria omitida).
+            const { owner, repo } = context.repo;
+            const baseSha = context.payload.pull_request.base.sha;
+            const headSha = context.payload.pull_request.head.sha;
+            await exec.exec('git', ['fetch', '--depth=1', 'origin', baseSha, headSha]);
+            const { stdout: diffOut } = await exec.getExecOutput(
+              'git', ['diff', '--name-status', baseSha, headSha],
+            );
+            const arquivos = diffOut.trim().split('\n').filter(Boolean).map((line) => {
+              const parts = line.split('\t');
+              const code = parts[0];
+              if (code.startsWith('R')) {
+                // R{similarity} — score 000-100; <100 significa conteúdo mudou junto com o nome.
+                const sim = parseInt(code.slice(1), 10);
+                return { filename: parts[2], status: 'renamed', additions: sim < 100 ? 1 : 0, deletions: sim < 100 ? 1 : 0 };
+              }
+              return { filename: parts[parts.length - 1], status: code === 'M' ? 'modified' : code.toLowerCase(), additions: 0, deletions: 0 };
             });
-            if (arquivos.length >= 3000) {
-              core.setFailed('PR tem ≥ 3.000 arquivos; listFiles não cobre todos — recusando para não criar falso negativo.');
-              return;
-            }
             // So bloqueia 'modified' (conteudo mudou, MESMO nome de arquivo) —
             // e exatamente o padrao do incidente de 26/09 (arquivo editado
             // depois de aplicado, drift entre ledger e disco). 'renamed' fica
@@ -167,7 +177,6 @@ jobs:
             // GA69: ler do base SHA via API em vez do checkout local (PR malicioso
             // poderia plantar um evidence.json com kind=ledger-only/name-and-file-pinned
             // para qualquer arquivo, contornando o guarda de imutabilidade).
-            const baseSha = context.payload.pull_request.base.sha;
             const evidenceResp = await github.rest.repos.getContent({
               owner, repo, path: 'scripts/db-audit/migration-evidence.json', ref: baseSha,
             });
