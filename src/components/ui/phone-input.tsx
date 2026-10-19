@@ -28,21 +28,18 @@ function formatPhone(digits: string): string {
       return `+55 ${ddd} ${rest}`;
     }
     // Fixo (10 dígitos no total): 8 após o DDD → XXXX-XXXX.
-    if (rest.length === 8) {
+    // Celular parcial (9 dígitos, usuário apagou último) começa com 9 → XXXXX-XXX.
+    if (rest.length === 8 && !rest.startsWith('9')) {
       return `+55 ${ddd} ${rest.slice(0, 4)}-${rest.slice(4)}`;
     }
-    // Celular (11 dígitos) e parciais: 5-4.
+    // Celular (11 dígitos) e parciais: 5-X.
     // Teto: no máximo 9 dígitos após o DDD.
     const capped = rest.slice(0, 9);
     return `+55 ${ddd} ${capped.slice(0, 5)}-${capped.slice(5)}`;
   }
 
-  // Parcial: usuário começou a digitar.
-  if (digits.length <= 2) return `+${digits}`;
-  if (digits.length <= 4) return `+${digits.slice(0, 2)} ${digits.slice(2)}`;
-
-  // Internacional ou incompleto.
-  return `+${digits.slice(0, 2)} ${digits.slice(2)}`;
+  // Internacional (não-BR): passthrough sem formatar espaços (E.164).
+  return `+${digits}`;
 }
 
 /** Extrai apenas os dígitos de uma string. */
@@ -69,7 +66,10 @@ export function PhoneInput({ value, onChange, placeholder = '+55 11 99999-0000',
     let digits = extractDigits(e.target.value);
 
     // Prefixa 55 quando o operador digita um DDD brasileiro direto (ex.: "11...").
-    if (digits.length >= 2 && !digits.startsWith('55')) {
+    // Não aplica quando o usuário colou/digitou E.164 internacional (começa com '+'):
+    // nesse caso, preservar o código de país que já está lá.
+    const originalValue = e.target.value.trimStart();
+    if (!originalValue.startsWith('+') && digits.length >= 2 && !digits.startsWith('55')) {
       const possibleDDD = parseInt(digits.slice(0, 2), 10);
       if (possibleDDD >= 11 && possibleDDD <= 99) {
         digits = '55' + digits;

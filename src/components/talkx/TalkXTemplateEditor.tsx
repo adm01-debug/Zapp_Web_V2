@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useTalkXTemplates, type TalkXTemplate, type TemplateInput, type TemplateVariant } from '@/hooks/integrations/useTalkXTemplates';
 import { TalkXQueryBoundary } from './kit/states';
+import { ModuleBreadcrumb } from './kit/primitives';
 import {
   useTalkXTemplateLibraryStats,
   useTalkXTemplateStats,
@@ -524,6 +525,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, initialTtab
 
       {/* === COLUNA CENTRO: editor === */}
       <div className="flex-1 min-w-0 space-y-3">
+        <ModuleBreadcrumb items={['Talk X', 'Campanhas', 'Templates']} />
         {/* X091 — faixa de KPIs da tela 05 (números da biblioteca, RPC X086) */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <KpiCard icon={FileText} color="blue" index={0} label="Total de Templates" value={libStats?.total ?? null} bars={libStats?.created_series ?? null} comparison={{ current: libStats?.created_current_month ?? null, previous: libStats?.created_previous_month ?? null, kind: 'relative' }} hint="vs. mês anterior (templates criados)" />
