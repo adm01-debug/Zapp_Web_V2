@@ -296,7 +296,7 @@ export interface AddBlacklistEntryInput {
   phone?: string;
   contact_id?: string;
   reason?: string;
-  reason_code?: string;
+  reason_code?: 'opt_out' | 'invalid_number' | 'manual' | 'lgpd' | 'no_commercial_permission' | 'bounce';
   origin?: string;
   campaign_id?: string;
   expires_at?: string;
