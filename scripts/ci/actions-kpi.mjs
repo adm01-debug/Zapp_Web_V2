@@ -175,7 +175,10 @@ export async function coletarJobs(
   { repo, token, porPagina = POR_PAGINA, maxPaginas = 100, pedir: buscar = pedir } = {},
 ) {
   const jobs = [];
-  for (const run of runs ?? []) {
+  // GA92: buscar jobs só de runs com falha — ranking de jobs lentos só importa onde houve
+  // falha, e buscar todos os 1.000+ runs da janela esgota o rate limit de 1.000/h.
+  const runsComFalha = (runs ?? []).filter((r) => FALHAS.has(r.conclusion));
+  for (const run of runsComFalha) {
     const id = run.id ?? run.run_id;
     if (id === undefined || id === null) continue;
     for (let pagina = 1; pagina <= maxPaginas; pagina += 1) {
