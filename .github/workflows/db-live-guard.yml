@@ -464,7 +464,7 @@ jobs:
             }
             const body = [
               marker,
-              `<!-- falhas:${[...currentFalhas].sort().join(',')} -->`,
+              `<!-- falhas:${[...currentFalhas].sort().join('|')} -->`,
               '**Commit da main:** `' + context.sha + '`',
               '**Run:** ' + process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY
                 + '/actions/runs/' + context.runId,
@@ -506,7 +506,7 @@ jobs:
                 });
                 await github.rest.issues.update({
                   owner: context.repo.owner, repo: context.repo.repo,
-                  issue_number: existing.number, state: 'closed', state_reason: 'completed',
+                  issue_number: existing.number, state: 'closed', state_reason: 'not_planned',
                 });
                 try { await github.rest.issues.createLabel({ owner: context.repo.owner, repo: context.repo.repo, name: 'db-live-guard', color: 'b60205', description: 'Contrato vivo do banco oficial quebrado' }); } catch {}
                 await github.rest.issues.create({
@@ -531,7 +531,7 @@ jobs:
               // detectar crescimento. Comenta de novo se set cresceu (novo
               // passo falhou), mesmo que a causa raiz seja identica.
               const lastFalhasMatch = last?.body?.match(/<!-- falhas:([^\n]*) -->/);
-              const lastFalhas = new Set(lastFalhasMatch ? lastFalhasMatch[1].split(',').filter(Boolean) : []);
+              const lastFalhas = new Set(lastFalhasMatch ? lastFalhasMatch[1].split(/[,|]/).filter(Boolean) : []);
               const grew = [...currentFalhas].some(f => !lastFalhas.has(f));
               const seisHorasMs = 6 * 60 * 60 * 1000;
               const idadeUltimoMs = last ? Date.now() - new Date(last.created_at).getTime() : Infinity;

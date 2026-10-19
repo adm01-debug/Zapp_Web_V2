@@ -37,6 +37,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
+import { contarComentarios, LIMITE_COMENTARIOS } from './issue-rotativa.mjs';
 
 const REPO = process.env.GITHUB_REPOSITORY ?? 'adm01-debug/Zapp_Web_V2';
 const TOKEN = process.env.GITHUB_TOKEN;
@@ -466,6 +467,29 @@ async function registroMaisRecenteCom(issue, marcador) {
 async function abrirOuAtualizarIssue(body, { assinatura, janelaMs, forcar = false } = {}) {
   const existing = await findIssue();
   if (existing) {
+    // GA78: rotacionar issue saturada antes do dedupe (E51/W91).
+    const total = await contarComentarios(gh, OWNER, REPO_NAME, existing.number);
+    if (total > LIMITE_COMENTARIOS) {
+      await gh('POST', `/repos/${OWNER}/${REPO_NAME}/issues/${existing.number}/comments`, {
+        body: `⚠️ Esta issue atingiu ${total} comentários e está sendo rotacionada para manter legibilidade (política E51/W91).\n\nÚltimo alerta antes do fechamento:\n\n---\n\n${body}`,
+      });
+      await gh('PATCH', `/repos/${OWNER}/${REPO_NAME}/issues/${existing.number}`, {
+        state: 'closed',
+        state_reason: 'not_planned',
+      });
+      await gh('POST', `/repos/${OWNER}/${REPO_NAME}/labels`, {
+        name: ISSUE_LABEL,
+        color: 'e11d48',
+        description: 'Perimeter regression detected by settings-guard',
+      }).catch(() => {});
+      const nova = await gh('POST', `/repos/${OWNER}/${REPO_NAME}/issues`, {
+        title: ISSUE_TITLE,
+        body: `Continuação de #${existing.number} (fechada por atingir ${total} comentários — E51/W91).\n\n---\n\n${body}`,
+        labels: [ISSUE_LABEL],
+      });
+      console.log(`Issue #${semQuebra(existing.number)} rotacionada → #${semQuebra(nova.number)}`);
+      return nova.number;
+    }
     if (assinatura && !forcar) {
       const registro = await registroMaisRecenteCom(existing, MARCADOR(assinatura));
       const idadeMs = registro?.created_at ? Date.now() - new Date(registro.created_at).getTime() : Infinity;
