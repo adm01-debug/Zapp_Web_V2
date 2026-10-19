@@ -107,12 +107,14 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
 
   const basePrefs = useMemo<InboxFilterPrefs>(() => {
     const chipTab = storedPrefs?.chipTab ?? DEFAULT_CHIP;
+    // Param explícito na URL (mesmo inválido) não cai no fallback do storage.
+    // Sem param nenhum (`null`), vale o que o dono guardou.
+    const urlTypeParam = searchParams.get('type');
     return {
       chipTab,
       ...tabsForChip(chipTab),
       queueId: storedPrefs?.queueId ?? null,
-      // O tipo do deep-link manda; sem ele, vale o que o dono guardou.
-      contactType: normalizeContactType(searchParams.get('type')) ?? storedPrefs?.contactType ?? null,
+      contactType: urlTypeParam != null ? normalizeContactType(urlTypeParam) : (storedPrefs?.contactType ?? null),
     };
   }, [storedPrefs, searchParams]);
 
