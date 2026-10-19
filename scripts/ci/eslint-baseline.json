@@ -785,10 +785,6 @@
       "sha256": "5970dab8f828d64afe3543b60a0a7515fe820ecd52c928e8814ec0de876094f0"
     },
     {
-      "path": "src/components/schedule/ScheduleCalendarView.tsx",
-      "sha256": "190fab47e9916e053bfc57c656df5c9cdb79b7b24ca47cf78e9c05fd949af3c1"
-    },
-    {
       "path": "src/components/SearchInput.tsx",
       "sha256": "04ed6aa1befd03be729bfb01cbaa83f5eb1cf1f3a7bd02464fd74636490ab385"
     },
@@ -7247,20 +7243,6 @@
       "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "contextHash": "8605b200e09cbc8019f2b55438599c2c3fd00f7025d0dbe6b3e810b74349cd7d"
-    },
-    {
-      "file": "src/components/schedule/ScheduleCalendarView.tsx",
-      "line": 63,
-      "column": 14,
-      "endLine": 0,
-      "endColumn": 0,
-      "severity": 2,
-      "ruleId": null,
-      "messageId": null,
-      "message": "Parsing error: Unterminated string literal.",
-      "spanHash": null,
-      "lineHash": "bb56067d58d49c535faac8c62f39a28e221702908addcb6b7abaea1803149448",
-      "contextHash": "b64aa68727fdca2819505d45b34c396c8353863d0ed992e81ee0ffb3b42ca561"
     },
     {
       "file": "src/components/SearchInput.tsx",
