@@ -639,6 +639,9 @@ console.error(modHash.descreverConfirmacao({
 if (process.env.GITHUB_OUTPUT) {
   appendFileSync(process.env.GITHUB_OUTPUT, `confirm_runtime_sha256=${confirmacao}\n`);
 }
+// GA04: hash também vai para stdout para captura em testes e pipelines locais.
+// Qualquer mensagem diagnóstica fica em stderr; stdout é exclusivamente o hash.
+process.stdout.write(confirmacao + '\n');
 if (process.env.APPLY === 'true' && confirmacao !== process.env.CONFIRM_RUNTIME_SHA256) {
   console.error('Confirmacao recusada: runtime, arquivo ou commit mudaram desde o dry-run; migration cancelada.');
   process.exit(1);
