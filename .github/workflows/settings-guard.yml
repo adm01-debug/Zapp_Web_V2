@@ -1,3 +1,8 @@
+# docs:
+#   gatilho: schedule (a cada 6h) + push na main + workflow_dispatch
+#   prova: compara branch protection, merge settings e environments com o baseline
+#   falha: abre ou atualiza issue com label settings-guard descrevendo a divergencia
+#   avisa: repositorio via issue
 name: Settings Guard
 on:
   schedule:

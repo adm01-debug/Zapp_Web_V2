@@ -1,3 +1,8 @@
+# docs:
+#   gatilho: pull_request (opened, synchronize, edited) em PRs que tocam Talk X
+#   prova: valida que o corpo da PR segue o template Talk X (etapa + slug)
+#   falha: bloqueia o merge da PR com erro descritivo
+#   avisa: autor da PR via check reprovado
 name: "Talk X PR body check"
 # GA57: check-talkx-pr-body.mjs existia mas não era chamado por nenhum workflow.
 # O gatilho inclui `edited` para que corrigir só o corpo da PR (sem novo push)
