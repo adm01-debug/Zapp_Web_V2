@@ -283,17 +283,17 @@ jobs:
         # githubactions:S8543: `bunx playwright` sem versao puxaria um release
         # nao verificado).
         if: steps.pw-cache.outputs.cache-hit != 'true'
-        run: bunx playwright@1.63.0 install --with-deps chromium firefox webkit
+        run: bunx playwright@1.64.1 install --with-deps chromium firefox webkit
 
       - name: 🔧 Dependências de sistema do Playwright (cache quente)
         # O cache guarda os browsers, não os pacotes do apt: com o cache quente
         # as bibliotecas do sistema ainda precisam ser instaladas.
         if: steps.pw-cache.outputs.cache-hit == 'true'
-        run: bunx playwright@1.63.0 install-deps chromium firefox webkit
+        run: bunx playwright@1.64.1 install-deps chromium firefox webkit
 
       # Projetos "chromium", "firefox-auth" e "webkit-auth" exercitam auth.spec.ts
       # deslogado (sem E2E_TEST_EMAIL/E2E_TEST_PASSWORD). Workflows de PR não podem
-      # referenciar esses secrets (scripts/ci/check-pr-workflow-secrets.mjs), então
+      # referenciar esses secrets (check-pr-workflow-secrets script), então
       # o login real roda em .github/workflows/e2e-logado.yml, depois do merge na main.
       # chromium-mapa (E71/E72 picker, E73 cadastro, E74 mapa/pino) entra AQUI também:
       # ele já roda no e2e-logado.yml (pós-merge), mas é deslogado — o projeto não
