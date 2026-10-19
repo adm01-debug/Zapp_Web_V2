@@ -65,7 +65,7 @@ vi.mock('@/services/chat.service', () => ({
   ChatService: { deleteMessage: vi.fn(async () => {}) },
 }));
 
-const loggerSpies = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), child: vi.fn() };
+const loggerSpies = vi.hoisted(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), child: vi.fn() }));
 vi.mock('@/lib/logger', () => ({
   getLogger: vi.fn(() => loggerSpies),
   createLogger: vi.fn(() => loggerSpies),
