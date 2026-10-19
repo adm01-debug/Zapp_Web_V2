@@ -710,6 +710,7 @@ function startRequestOpts(overrides: Partial<MockOpts> = {}): MockOpts {
     authUser: { id: "user-000" },
     isAdminOrSupervisor: false,
     manageAll: false,
+    dispatchCreate: true,
     ownProfileId: "profile-me",
     dispatch: dispatchRow({ status: "draft", created_by: "profile-me" }),
     connection: { id: "conn-001", status: "connected", instance_id: "PRINCIPAL" },
