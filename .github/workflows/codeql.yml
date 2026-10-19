@@ -62,9 +62,10 @@ jobs:
         with:
           category: '/language:javascript-typescript'
 
-  # Job separado de proposito: o check do job "analyze" e required na branch
-  # protection, e transformar aquele job numa matrix renomearia o check e
-  # travaria todos os merges. A linguagem "actions" analisa os .github/workflows
+  # Job separado de proposito: o check do job "analyze" NAO e required na
+  # branch protection (decisao 16/10/2026: saiu do PR; varredura semanal).
+  # Continua job separado para nao renomear o check se "analyze" virar matrix.
+  # A linguagem "actions" analisa os .github/workflows
   # em busca de injecao de expressao em run:, uso indevido de pull_request_target
   # e permissoes excessivas — 3,5k linhas de YAML que nenhum guard do repo le.
   analyze-actions:

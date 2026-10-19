@@ -204,15 +204,42 @@ async function checarBranchProtection() {
     divergencias.push({ campo: 'branch_protection_main.enforce_admins', esperado: esperado.enforce_admins, encontrado: enforceAdmins, restauravel: false });
   }
 
-  const contexts = checksDesligados ? [] : [...(checks.contexts ?? [])].sort(porCodigo);
-  const esperados = [...esperado.required_status_checks].sort(porCodigo);
-  if (contexts.join('|') !== esperados.join('|')) {
+  // GA03: usar checks.checks (campo moderno com app_id) em vez do deprecado checks.contexts.
+  const rawChecks = checksDesligados ? [] : [...(checks.checks ?? [])];
+  const encontradosContexts = rawChecks.map(c => (typeof c === 'string' ? c : c.context)).sort(porCodigo);
+  const encontradoAppIds = rawChecks.reduce((acc, c) => {
+    const ctx = typeof c === 'string' ? c : c.context;
+    acc[ctx] = typeof c === 'string' ? null : (c.app_id ?? null);
+    return acc;
+  }, {});
+  const esperadosItems = [...(esperado.required_status_checks ?? [])];
+  const esperadosContexts = esperadosItems.map(i => (typeof i === 'string' ? i : i.context)).sort(porCodigo);
+  const esperadoAppIds = esperadosItems.reduce((acc, i) => {
+    if (typeof i !== 'string') acc[i.context] = i.app_id ?? null;
+    return acc;
+  }, {});
+  if (encontradosContexts.join('|') !== esperadosContexts.join('|')) {
     divergencias.push({
       campo: 'branch_protection_main.required_status_checks',
-      esperado: esperados.join(', '),
-      encontrado: contexts.join(', ') || '(nenhum)',
+      esperado: esperadosContexts.join(', '),
+      encontrado: encontradosContexts.join(', ') || '(nenhum)',
       restauravel: false,
     });
+  } else {
+    // GA03: verificar app_id para fechar o vetor de troca de check por outro app.
+    for (const ctx of esperadosContexts) {
+      const appIdEsperado = esperadoAppIds[ctx];
+      if (appIdEsperado === undefined) continue;
+      const appIdEncontrado = encontradoAppIds[ctx] ?? null;
+      if (appIdEncontrado !== appIdEsperado) {
+        divergencias.push({
+          campo: `branch_protection_main.required_status_checks[${ctx}].app_id`,
+          esperado: appIdEsperado,
+          encontrado: appIdEncontrado,
+          restauravel: false,
+        });
+      }
+    }
   }
 
   const linearHistory = protection?.required_linear_history?.enabled ?? null;
