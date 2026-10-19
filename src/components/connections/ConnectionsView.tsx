@@ -16,7 +16,8 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { toast } from '@/lib/lazyToast';
+import { useReducedMotion } from 'framer-motion';
 import { BusinessHoursDialog } from './BusinessHoursDialog';
 import { ConnectionQueuesDialog } from './ConnectionQueuesDialog';
 import { InstanceSettingsDialog } from './InstanceSettingsDialog';
@@ -104,9 +105,11 @@ export function ConnectionsView() {
     } finally { setCheckingHealth(null); }
   };
 
+  const reduzido = useReducedMotion() ?? false;
+
   return (
     <div className="space-y-6 relative bg-background w-full min-w-0">
-      <AuroraBorealis /><FloatingParticles />
+      {!reduzido && <AuroraBorealis />}{!reduzido && <FloatingParticles />}
       
       <PageHeader title="Conexões WhatsApp" subtitle="Gerencie múltiplas conexões WhatsApp via Evolution API"
         breadcrumbs={[{ label: 'Configurações' }, { label: 'Conexões' }]}

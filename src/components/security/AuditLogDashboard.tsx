@@ -219,7 +219,7 @@ export function AuditLogDashboard() {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total de Logs', value: statValue(stats.total), icon: FileText, color: 'text-primary' },
+          { label: logs.length >= LOGS_PAGE_LIMIT ? 'Últimos 200' : 'Total de Logs', value: statValue(stats.total), icon: FileText, color: 'text-primary' },
           { label: 'Hoje', value: statValue(stats.today), icon: Calendar, color: 'text-success' },
           { label: 'Ações Sensíveis', value: statValue(stats.suspicious), icon: AlertTriangle, color: 'text-destructive' },
           { label: 'Usuários Únicos', value: statValue(stats.uniqueUsers), icon: User, color: 'text-info' },
@@ -237,6 +237,12 @@ export function AuditLogDashboard() {
           </Card>
         ))}
       </div>
+
+      {logs.length >= LOGS_PAGE_LIMIT && (
+        <p className="text-xs text-muted-foreground text-center">
+          pode haver registros mais antigos fora do recorte
+        </p>
+      )}
 
       {/* Filters */}
       <Card>
