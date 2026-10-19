@@ -68,7 +68,10 @@ export function useCustomEmojis(open: boolean) {
       .from('custom_emojis')
       .select('*')
       .order('use_count', { ascending: false })
-      .limit(CUSTOM_EMOJIS_PAGE_SIZE);
+      // Desempate determinístico: sem ele, emojis com o mesmo use_count trocam de
+      // lugar entre leituras e a paginação por `.range()` repete/pula linhas.
+      .order('id', { ascending: true })
+      .range(0, CUSTOM_EMOJIS_PAGE_SIZE - 1);
     if (!error && data) {
       const rows = data as unknown as CustomEmoji[];
       setEmojis(rows);
