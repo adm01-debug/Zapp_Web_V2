@@ -103,7 +103,7 @@ jobs:
               return;
             }
             const apenasDocsOuMd = arquivos.every(
-              (f) => /^\/docs\//.test(f.filename) || /\.md$/.test(f.filename),
+              (f) => /^docs\//.test(f.filename) || /\.md$/.test(f.filename),
             );
             if (apenasDocsOuMd && arquivos.length > 0) {
               core.exportVariable('CONTRATOS_PULADOS', 'true');
