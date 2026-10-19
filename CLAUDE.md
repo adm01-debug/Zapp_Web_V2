@@ -589,3 +589,46 @@ valor — comentários individuais não podem ter labels removidas e a issue fic
 comentário-resumo e abrir uma nova limpa** (mesmo título + link para a anterior). O
 `db-live-guard` já tem dedupe de 6 h (E44); o `types-sync` ganhará dedupe em E20.
 Referência: issue #888 (`[types-sync]`, 89 comentários), fechada em 2026-10-01.
+
+## 4. Vercel — ZAPP Web V2 (auditoria 2026-10-18)
+
+| O que | Valor |
+|---|---|
+| Projeto | `zapp_web_v2` (ID: `prj_J4wb8egzz8iL1CJnSOXJDtqnbvRp`) |
+| Team | `juca1` / `team_QyN41X0q8hrqhW80AwokbFLv` |
+| Domínio canônico | `https://zappweb.app.br` (apex — V017 a implementar pelo Joaquim) |
+| Alias de projeto | `https://zapp-web-v2.vercel.app` |
+| Preview URL pattern | `https://zappwebv2-{hash}-juca1.vercel.app` |
+| Região | `iad1` |
+| Framework | Vite / React |
+| Build | `bun run build` |
+| Output | `dist/` |
+| Node | 24.x |
+| Ignorar build | `sh scripts/vercel/ignore-build.sh` |
+| MCP Vercel | ferramentas `mcp__Vercel__*` — escrita = ação de produção |
+
+### Deploy e edge functions
+
+- **Front (Vercel):** automático na `main` — merge em `main` = deploy em produção.
+- **Edge functions:** NÃO sobem com o front. Requerem `workflow_dispatch` do `deploy-functions.yml` + aprovação de Joaquim em `producao-edge-functions`.
+- `FALLBACK_ORIGIN` atual: `https://zapp-web-v2.vercel.app`. Mudar para `https://zappweb.app.br` 7 dias após DNS estabilizar (V185).
+
+### Regras de env vars no Vercel
+
+- **Nunca** colocar chaves de servidor (OPENAI, ANTHROPIC, GROQ, EVOLUTION) — sem serverless neste projeto.
+- **Nunca** colocar `POSTGRES_*` ou `SUPABASE_SERVICE_ROLE_KEY` / `SUPABASE_JWT_SECRET` — são do back-end.
+- `VITE_ZAPP_LOCAL_SUPABASE_*` são **apenas para dev local** (WSL), não devem existir no Vercel.
+- Vars `VITE_*` injetadas no bundle são públicas — nunca colocar segredo com prefixo `VITE_`.
+- Baseline de vars esperadas: `scripts/ci/vercel-env-baseline.json`.
+- Snapshot do estado "antes": `docs/audits/vercel-snapshot-2026-10-18-antes.json`.
+
+### Ações pendentes do Joaquim (pós-auditoria 2026-10-18)
+
+1. **V017** — Inverter redirect: apex canônico, `www` → apex (Dashboard Vercel → Domains).
+2. **V023** — Deploy edge functions após merge (dispatch + aprovar `producao-edge-functions`).
+3. **V043–V065** — Remover 17 vars de integração morta + 5 chaves servidor + VITE_* não lidas.
+4. **V175/V176** — Pausar e deletar projeto legado `zapp-web` (`prj_OsErjUqsrMbwwC7S1LVfawmNgEce`).
+
+### Projeto legado
+
+- `zapp-web` (ID: `prj_OsErjUqsrMbwwC7S1LVfawmNgEce`) — **não é o projeto atual**. A ser pausado/deletado pelo Joaquim após confirmar que não tem tráfego real.
