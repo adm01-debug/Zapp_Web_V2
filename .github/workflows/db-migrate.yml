@@ -355,6 +355,8 @@ jobs:
       contents: read
       # GA15: disparo de types-sync e db-live-guard apos apply bem-sucedido.
       actions: write
+      # GA25: registrar Deployment de apply em producao-ddl para rastreabilidade de DDL.
+      deployments: write
     steps:
       - name: Checkout confiavel da main
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -455,6 +457,58 @@ jobs:
         run: >-
           supabase db push --include-all
           --skip-vault --yes
+
+      - name: Registrar Deployment de apply no GitHub (GA25)
+        # GA25: registra um Deployment 'producao-ddl' por version aplicada.
+        # O guarda vivo (db-live-guard.yml step ddl-sem-deployment) cruza o
+        # ledger com esses Deployments para detectar DDL aplicado fora do fluxo.
+        # continue-on-error: passo de observabilidade — nao bloquear o apply.
+        continue-on-error: true
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          TARGET_VERSION: ${{ inputs.migration_version }}
+          APPLY_ALL_MISSING: ${{ inputs.apply_all_missing }}
+          MISSING_VERSIONS: ${{ needs.preflight.outputs.missing_versions }}
+        with:
+          script: |
+            const versions = process.env.APPLY_ALL_MISSING === 'true'
+              ? (process.env.MISSING_VERSIONS || '').split(/\s+/).filter(Boolean)
+              : process.env.TARGET_VERSION ? [process.env.TARGET_VERSION] : [];
+            if (versions.length === 0) {
+              core.warning('GA25: nenhuma version para registrar Deployment.');
+              return;
+            }
+            for (const version of versions) {
+              let depId;
+              try {
+                const dep = await github.rest.repos.createDeployment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  ref: context.sha,
+                  environment: 'producao-ddl',
+                  description: `GA25: apply migration ${version}`,
+                  auto_merge: false,
+                  required_contexts: [],
+                  payload: { migration_version: version, applied_at: new Date().toISOString() },
+                });
+                depId = dep.data.id;
+              } catch (e) {
+                core.warning(`GA25: falha ao criar Deployment para ${version}: ${e.message}`);
+                continue;
+              }
+              try {
+                await github.rest.repos.createDeploymentStatus({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  deployment_id: depId,
+                  state: 'success',
+                  description: `migration ${version} aplicada via db-migrate.yml`,
+                });
+                core.notice(`GA25: Deployment registrado para ${version} (id=${depId}).`);
+              } catch (e) {
+                core.warning(`GA25: Deployment criado (id=${depId}) mas status falhou: ${e.message}`);
+              }
+            }
 
       - name: Validar pos-apply
         env:
