@@ -80,6 +80,11 @@ const FERRAMENTAS = [
     repo: 'rhysd/actionlint',
     changelog: 'https://github.com/rhysd/actionlint/releases',
   },
+  {
+    chave: 'zizmor-version',
+    repo: 'woodruffw/zizmor',
+    changelog: 'https://github.com/woodruffw/zizmor/releases',
+  },
 ];
 
 async function main() {

@@ -153,7 +153,7 @@ test('#365: coletarJobs consulta os jobs de cada run e herda o nome do workflow'
     }
     return { jobs: [] };
   };
-  const jobs = await coletarJobs([{ id: 1, name: 'CI' }], { repo: 'o/r', token: 't', pedir: pedirFake });
+  const jobs = await coletarJobs([{ id: 1, name: 'CI', conclusion: 'failure' }], { repo: 'o/r', token: 't', pedir: pedirFake });
   assert.equal(jobs.length, 2);
   assert.match(chamadas[0], /\/repos\/o\/r\/actions\/runs\/1\/jobs\?per_page=100&page=1$/);
   assert.equal(jobs[0].workflow_name, 'CI', 'o run da o nome do workflow quando o job nao traz');
@@ -173,7 +173,7 @@ test('#365: coletarJobs pagina um run com mais de 100 jobs', async () => {
     if (pagina === 2) return { jobs: [cheia[0]] };
     return { jobs: [] };
   };
-  const jobs = await coletarJobs([{ id: 7, name: 'CI' }], { repo: 'o/r', token: 't', pedir: pedirFake });
+  const jobs = await coletarJobs([{ id: 7, name: 'CI', conclusion: 'failure' }], { repo: 'o/r', token: 't', pedir: pedirFake });
   assert.equal(jobs.length, 101, 'a segunda pagina de jobs nao pode ser ignorada');
 });
 
