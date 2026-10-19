@@ -217,6 +217,12 @@ jobs:
             --segredo-env=E2E_TEST_EMAIL \
             --segredo-env=E2E_TEST_PASSWORD
 
+      - name: "🔏 Redigir tokens JWT do relatório"
+        if: failure() && steps.redigir.outcome == 'success'
+        run: |
+          find playwright-report/ -name "*.json" -exec \
+            sed -i 's/"access_token":"[^"]*"/"access_token":"[REDACTED]"/g; s/"refresh_token":"[^"]*"/"refresh_token":"[REDACTED]"/g' {} \; 2>/dev/null || true
+
       - name: 📎 Arquivar relatorio do Playwright (so em falha)
         if: failure() && steps.redigir.outcome == 'success'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

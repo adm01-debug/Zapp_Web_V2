@@ -400,6 +400,14 @@ jobs:
             echo "awaiting_apply=false" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Limpar credenciais do banco (GA21)
+        if: always()
+        run: |
+          # GA21: Gate 1b foi o último passo que precisa de DESTINO_URL.
+          # Limpar do GITHUB_ENV para que Gates 2/3 e passos de PR não tenham
+          # acesso ao banco acidentalmente.
+          printf 'DESTINO_URL=\nPGSSLMODE=\n' >> "$GITHUB_ENV"
+
       - name: Gate 2 — usage-guard
         id: gate2
         if: steps.diff.outputs.schema_changed == 'true' && steps.gate1.outputs.passed == 'true'
@@ -433,7 +441,10 @@ jobs:
           # F-01 (auditoria 2026-09-27): mesmo pipefail dos Gates 1 e 2 — sem ele o
           # tee sempre saia 0 e o gate passava mesmo com o script bloqueando.
           set -o pipefail
-          if node scripts/db-audit/check-remocoes-destrutivas.mjs supabase/schema-catalog.json /tmp/catalog.new.json 2>&1 | tee /tmp/gate3.log; then
+          # GA20: usar a versão commitada do catálogo como "antigo", não o arquivo
+          # já sobrescrito pelo passo "Aplicar candidatos no worktree".
+          git show HEAD:supabase/schema-catalog.json > /tmp/catalog.old.json
+          if node scripts/db-audit/check-remocoes-destrutivas.mjs /tmp/catalog.old.json /tmp/catalog.new.json 2>&1 | tee /tmp/gate3.log; then
             echo "passed=true" >> "$GITHUB_OUTPUT"
           else
             echo "passed=false" >> "$GITHUB_OUTPUT"

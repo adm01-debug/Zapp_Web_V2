@@ -453,6 +453,10 @@ jobs:
       - name: Typecheck das edge functions (deno check)
         run: deno check supabase/functions/**/index.ts
 
+      - name: "🧪 Testes unitários das edge functions (deno test)"
+        run: deno test --allow-all supabase/functions/
+        continue-on-error: true
+
       - name: Deploy
         if: inputs.dry_run != true
         env:
