@@ -37,11 +37,9 @@ on:
 
 concurrency:
   # W94: cancela run anterior se um novo push/schedule chegar antes do fim.
+  # cancel-in-progress=false em push para main: cancelar um run de main pode
+  # interromper o placar de uma etapa já mergeada (bug W94/GA99).
   group: talkx-regen-${{ github.ref }}
-  cancel-in-progress: true
-
-concurrency:
-  group: talkx-status-regen
   cancel-in-progress: false
 
 defaults:

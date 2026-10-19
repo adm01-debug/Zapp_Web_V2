@@ -562,7 +562,61 @@ test('E69: o build continua atrás do lint E do test', () => {
   const anc = ancestrais(grafoDeNeeds(wf['ci.yml']), 'build');
   assert.ok(anc.has('typecheck'), 'build deixou de esperar o lint');
   assert.ok(anc.has('unit-tests'), 'build deixou de esperar o test');
-// W99: novos invariantes de segurança de workflow
+});
+
+// GA99: anti-regressão dos invariantes introduzidos pelo plano de 100 etapas.
+
+test('GA99: types-sync usa /tmp/catalog.old.json no Gate 3 (GA20)', () => {
+  const txt = wf['types-sync.yml'];
+  assert.ok(
+    /git show HEAD:supabase\/schema-catalog\.json\s*>\s*\/tmp\/catalog\.old\.json/.test(txt),
+    'GA20 regrediu: Gate 3 não salva a versão commitada do catálogo em /tmp/catalog.old.json',
+  );
+  assert.ok(
+    /check-remocoes-destrutivas\.mjs\s+\/tmp\/catalog\.old\.json/.test(txt),
+    'GA20 regrediu: Gate 3 não passa /tmp/catalog.old.json (usa o arquivo já sobrescrito)',
+  );
+});
+
+test('GA99: types-sync limpa DESTINO_URL do GITHUB_ENV após Gate 1b (GA21)', () => {
+  const txt = wf['types-sync.yml'];
+  assert.ok(
+    /printf.*DESTINO_URL=\\n.*GITHUB_ENV/.test(txt),
+    'GA21 regrediu: step de limpeza de DESTINO_URL ausente em types-sync.yml',
+  );
+});
+
+test('GA99: ci.yml build usa !cancelled() (GA55)', () => {
+  const txt = wf['ci.yml'];
+  assert.ok(
+    /if:\s*\$\{\{\s*!cancelled\(\)\s*\}\}/.test(txt),
+    'GA55 regrediu: build job perdeu a condição !cancelled()',
+  );
+});
+
+test('GA99: deploy-functions tem step deno test antes do deploy (GA27)', () => {
+  const txt = wf['deploy-functions.yml'];
+  assert.ok(
+    /deno test/.test(txt),
+    'GA27 regrediu: step deno test ausente em deploy-functions.yml',
+  );
+});
+
+test('GA99: e2e-logado redige tokens JWT do relatório (GA38)', () => {
+  const txt = wf['e2e-logado.yml'];
+  assert.ok(
+    /access_token.*REDACTED/.test(txt),
+    'GA38 regrediu: redação de tokens JWT ausente em e2e-logado.yml',
+  );
+});
+
+test('GA99: db-guard usa --health-cmd com argumento entre aspas (GA72)', () => {
+  const txt = wf['db-guard.yml'];
+  assert.ok(
+    /--health-cmd\s+"pg_isready/.test(txt) || /--health-cmd\s+'pg_isready/.test(txt),
+    'GA72 regrediu: --health-cmd pg_isready sem argumento entre aspas',
+  );
+});
 
 test('W99: todo curl usa --proto e --tlsv1.2', async () => {
   const dir = new URL('../../.github/workflows/', import.meta.url);
