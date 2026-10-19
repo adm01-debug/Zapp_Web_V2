@@ -31,8 +31,7 @@ export type DashboardKpiRpcResult = {
 };
 
 /** Filtros do topo (E31) propagados como p_queue/p_agent, mais o período
- * escolhido (E34). `from` vira p_since no banco; `until` entra só na queryKey
- * (dashboard_kpi não aceita p_until ainda — P2 pendente).
+ * escolhido (E34). `from` vira p_from no banco (fim inclusivo); `until` vira p_until (fim exclusivo).
  *
  * - `from`/`until`: janela [from, until). `until` nulo = janela aberta.
  *   Sem `from`, a RPC usa o dia atual em America/Sao_Paulo ("hoje").

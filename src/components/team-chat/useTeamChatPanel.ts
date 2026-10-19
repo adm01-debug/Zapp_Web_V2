@@ -348,10 +348,10 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   }, []);
 
   const filteredMessages = useMemo(() => {
-    if (!searchActive) return messages;
+    if (!searchActive || searchBelowMinChars) return messages;
     if (!serverSearchMatches || !serverSearch) return [];
     return serverSearch.results;
-  }, [messages, searchActive, serverSearchMatches, serverSearch]);
+  }, [messages, searchActive, searchBelowMinChars, serverSearchMatches, serverSearch]);
 
   const checkNearBottom = useCallback(() => {
     const el = scrollRef.current;
