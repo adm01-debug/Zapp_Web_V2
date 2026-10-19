@@ -4,6 +4,7 @@ import { z } from "https://esm.sh/zod@3.23.8";
 import { getCorsHeaders, jsonResponse, errorResponse, Logger, requireEnv } from "../_shared/validation.ts";
 import { verifyMetaWebhookSignature } from "../_shared/hmac-validation.ts";
 import { shouldUpdateStatus } from "../_shared/evolution-helpers.ts";
+import { timingSafeStringEqual } from "../_shared/cron-secret-auth.ts";
 
 const WhatsAppStatusSchema = z.object({
   id: z.string().max(500),
@@ -81,7 +82,7 @@ export async function handleWhatsappWebhook(req: Request): Promise<Response> {
       return new Response('Forbidden', { status: 403, headers: getCorsHeaders(req) });
     }
 
-    if (mode === 'subscribe' && token === verifyToken) {
+    if (mode === 'subscribe' && token !== null && timingSafeStringEqual(token, verifyToken)) {
       log.info("Webhook verified successfully");
       return new Response(challenge, {
         status: 200,
