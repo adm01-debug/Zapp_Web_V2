@@ -70,7 +70,7 @@ export function ConnectionsView() {
   const handleSyncHistory = async (connection: { id: string; instance_id?: string | null }) => {
     if (!connection.instance_id) return;
     setSyncingHistory(connection.id);
-    toast('Sincronizando histórico...', { description: 'Isso pode levar alguns minutos.' });
+    toast.info('Sincronizando histórico...', { description: 'Isso pode levar alguns minutos.' });
     try {
       const { data, error } = await supabase.functions.invoke('evolution-sync', {
         body: { action: 'sync-all-messages', instanceName: connection.instance_id },
