@@ -28,7 +28,8 @@ const RAIZ = new URL('../../', import.meta.url);
 
 export function checksObrigatorios() {
   const baseline = JSON.parse(readFileSync(new URL('scripts/ci/github-settings-baseline.json', RAIZ), 'utf8'));
-  return baseline.branch_protection_main.required_status_checks;
+  const checks = baseline.branch_protection_main.required_status_checks;
+  return checks.map((c) => (typeof c === 'string' ? c : c.context));
 }
 
 const PASSOU = new Set(['SUCCESS', 'SKIPPED', 'NEUTRAL']);

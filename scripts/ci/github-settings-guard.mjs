@@ -266,16 +266,27 @@ async function checarRepo() {
   try {
     const data = await ghGraphQL(gqlQuery);
     const repoGQL = data?.repository ?? {};
+    const ausentesGQL = [];
     for (const [campo, gqlCampo] of Object.entries(MERGE_GRAPHQL_MAP)) {
       const esperado = baseline.merge?.[campo];
       if (esperado === undefined) continue;
       const raw = repoGQL[gqlCampo];
+      if (raw === undefined) {
+        ausentesGQL.push(campo);
+        continue;
+      }
       // Campos de mensagem de commit chegam em ALL_CAPS do GraphQL; normalize.
       const encontrado = typeof raw === 'string' ? raw.toUpperCase() : raw;
       const esperadoNorm = typeof esperado === 'string' ? esperado.toUpperCase() : esperado;
       if (encontrado !== esperadoNorm) {
         divergencias.push({ campo: `merge.${campo}`, esperado, encontrado, restauravel: false });
       }
+    }
+    if (ausentesGQL.length === Object.keys(baseline.merge ?? {}).length) {
+      throw new NaoVerificavel(`/repos (merge.* GraphQL)`, 200, 'resposta sem os campos de merge esperados');
+    }
+    if (ausentesGQL.length > 0) {
+      return { divergencias, cego: `200 — campos nao expostos ao token (GraphQL): ${ausentesGQL.join(', ')}`, campos: ausentesGQL };
     }
   } catch (e) {
     if (!(e instanceof NaoVerificavel)) throw e;

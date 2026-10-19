@@ -341,6 +341,7 @@ jobs:
         run: bun run test:e2e -- --project=chromium --project=chromium-theme --project=firefox-auth --project=webkit-auth --project=chromium-mapa --project=chromium-contacts-visual --project=chromium-a11y --project=chromium-email-navy --project=firefox-email-navy --project=webkit-email-navy --project=chromium-onboarding-dispensar --project=chromium-multiplix-responsivo --project=chromium-tarefas-linha-de-base
         env:
           CI: true
+          CAPTURA_DIR: /tmp/captura
 
       - name: 📋 Resumo de erro (error-context.md) no Step Summary
         # GA44: surfaça o error-context.md do Playwright no Job Summary para

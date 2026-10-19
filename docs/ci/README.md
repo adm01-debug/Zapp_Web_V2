@@ -4,7 +4,7 @@
 > `--check` e falha se este arquivo divergir do bloco `# docs:` de cada workflow.
 > Para mudar o que está aqui, mude o bloco no YAML.
 
-**16 workflows.**
+**17 workflows.**
 
 | Workflow | Arquivo | Gatilho | O que prova | Quando falha | Quem é avisado | Custo/sem (min) | Falha (7 d) |
 |---|---|---|---|---|---|---|---|
@@ -24,6 +24,7 @@
 | Talk X V4 placar regen (push + semanal) | [`talkx-status-regen.yml`](../../.github/workflows/talkx-status-regen.yml) | push na main; schedule semanal (seg 07:45 UTC); dispatch | o placar do Talk X regenerado a partir dos dados atuais | o job fica vermelho e o placar nao e atualizado | autor do push | — | — |
 | Targeted Ledger Evidence | [`targeted-ledger-evidence.yml`](../../.github/workflows/targeted-ledger-evidence.yml) | dispatch | a evidencia do ledger de migrations para uma version especifica | o job aborta sem publicar evidencia | operador que disparou | — | — |
 | types-sync | [`types-sync.yml`](../../.github/workflows/types-sync.yml) | push na main, agendado e dispatch | os tipos gerados batem com o banco oficial (Gates 1 e 2) | PR em `automation/types-sync` ou issue `[types-sync]`; nunca passa com tipo divergente | PR de types e issue de gate | — | — |
+| V043-V065 Vercel Env Cleanup | [`vercel-env-cleanup.yml`](../../.github/workflows/vercel-env-cleanup.yml) | workflow_dispatch com dry_run=1 (listagem) ou dry_run=0 (aplicar) | remove vars perigosas/mortas do projeto Vercel (V043-V065) | nenhuma var e removida; o operador ve o log de erro | operador que disparou | — | — |
 
 ## Detalhe
 
@@ -138,6 +139,13 @@
 - **O que prova:** os tipos gerados batem com o banco oficial (Gates 1 e 2)
 - **Quando falha:** PR em `automation/types-sync` ou issue `[types-sync]`; nunca passa com tipo divergente
 - **Quem é avisado:** PR de types e issue de gate
+
+### V043-V065 Vercel Env Cleanup (`vercel-env-cleanup.yml`)
+
+- **Gatilho:** workflow_dispatch com dry_run=1 (listagem) ou dry_run=0 (aplicar)
+- **O que prova:** remove vars perigosas/mortas do projeto Vercel (V043-V065)
+- **Quando falha:** nenhuma var e removida; o operador ve o log de erro
+- **Quem é avisado:** operador que disparou
 
 ## O que NÃO é bug
 

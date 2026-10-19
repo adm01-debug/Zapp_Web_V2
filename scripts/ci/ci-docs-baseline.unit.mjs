@@ -291,16 +291,16 @@ test('fixture: celula cortada em "…" e cabecalho "## " duplicado sao rejeitado
   assert.deepEqual(violacoesCabecalhoDuplicado(RECON_COMPLETA), []);
 });
 
-test('inventario: 16 YAML em .github/workflows e a fonte gerada em paridade', async () => {
+test('inventario: 17 YAML em .github/workflows e a fonte gerada em paridade', async () => {
   const arquivos = (await readdir(DIR_WF)).filter((f) => /\.ya?ml$/.test(f));
-  assert.equal(arquivos.length, 16);
+  assert.equal(arquivos.length, 17);
   const readme = await readFile(README_CI, 'utf8');
-  assert.match(readme, /\*\*16 workflows\.\*\*/);
+  assert.match(readme, /\*\*17 workflows\.\*\*/);
   for (const f of arquivos) assert.ok(readme.includes(f));
 });
 
 test('CLAUDE.md: contagem atual e fonte canonica (sem 14/17)', async () => {
-  assert.deepEqual(violacoesContagemClaude(await readFile(CLAUDE, 'utf8'), 16), []);
+  assert.deepEqual(violacoesContagemClaude(await readFile(CLAUDE, 'utf8'), 17), []);
 });
 
 test('CLAUDE.md: politica unica de strict, coerente com o baseline', async () => {
@@ -461,12 +461,10 @@ test('W95 CONTRIBUTING.md: cita branch do lote dia/AAAA-MM-DD', async () => {
 
 test('W95 CONTRIBUTING.md: lista os 6 required checks', async () => {
   const texto = await readFile(CONTRIBUTING, 'utf8');
-  assert.match(texto, /Lint.*TypeCheck|Lint & TypeCheck/);
+  assert.match(texto, /TypeCheck/);
   assert.match(texto, /Unit Tests/);
   assert.match(texto, /Build/);
-  assert.match(texto, /Security Audit/);
-  assert.match(texto, /Contrato DB offline/);
-  assert.match(texto, /E2E Tests/);
+  assert.match(texto, /Node CI Scripts/);
 });
 
 test('W95 CONTRIBUTING.md: nao referencia branch develop', async () => {

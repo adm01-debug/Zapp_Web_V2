@@ -15,8 +15,10 @@ const TITULO = '[settings-guard] perimeter regression detected';
 
 const CONTEXTS_OK =
   "['🔎 TypeCheck','🧪 Unit Tests (1/3)','🧪 Unit Tests (2/3)','🧪 Unit Tests (3/3)','🏗️ Build','🧩 Node CI Scripts']";
-const PROT_OK = `send({ required_status_checks: { strict: true, contexts: ${CONTEXTS_OK} }, enforce_admins: { enabled: true }, required_linear_history: { enabled: true }, allow_force_pushes: { enabled: false } })`;
-const PROT_REGRESSAO = `send({ required_status_checks: { strict: false, contexts: ${CONTEXTS_OK} }, enforce_admins: { enabled: true }, required_linear_history: { enabled: true }, allow_force_pushes: { enabled: false } })`;
+const CHECKS_OK =
+  "[{context:'🔎 TypeCheck',app_id:15368},{context:'🧪 Unit Tests (1/3)',app_id:15368},{context:'🧪 Unit Tests (2/3)',app_id:15368},{context:'🧪 Unit Tests (3/3)',app_id:15368},{context:'🏗️ Build',app_id:15368},{context:'🧩 Node CI Scripts',app_id:15368}]";
+const PROT_OK = `send({ required_status_checks: { strict: true, checks: ${CHECKS_OK}, contexts: ${CONTEXTS_OK} }, enforce_admins: { enabled: true }, required_linear_history: { enabled: true }, allow_force_pushes: { enabled: false } })`;
+const PROT_REGRESSAO = `send({ required_status_checks: { strict: false, checks: ${CHECKS_OK}, contexts: ${CONTEXTS_OK} }, enforce_admins: { enabled: true }, required_linear_history: { enabled: true }, allow_force_pushes: { enabled: false } })`;
 const REPO_OK =
   "send({ allow_auto_merge: true, allow_squash_merge: true, allow_merge_commit: false, allow_rebase_merge: false, delete_branch_on_merge: true, squash_merge_commit_message: 'PR_BODY', squash_merge_commit_title: 'PR_TITLE', security_and_analysis: { secret_scanning: { status: 'enabled' }, secret_scanning_push_protection: { status: 'enabled' } } })";
 const ACTIONS_OK = "send({ enabled: true, allowed_actions: 'selected', sha_pinning_required: true })";
@@ -64,7 +66,7 @@ function stub(
     semEscopo: SEM_ESCOPO,
     tokenReal: SEM_ESCOPO,
     parcial: PROT_OK,
-    injecao: "send({ required_status_checks: { strict: 'false\\n::error::forged', contexts: ['ci'] }, enforce_admins: { enabled: true }, required_linear_history: { enabled: true }, allow_force_pushes: { enabled: false } })",
+    injecao: `send({ required_status_checks: { strict: 'false\\n::error::forged', checks: ${CHECKS_OK}, contexts: ['ci'] }, enforce_admins: { enabled: true }, required_linear_history: { enabled: true }, allow_force_pushes: { enabled: false } })`,
   }[modo];
   const workflowPerms = modo === 'tokenReal' ? SEM_ESCOPO : WORKFLOW_PERMS_OK;
 
