@@ -66,7 +66,23 @@ export const loggerSpies = {
   })),
 };
 
-export const settingsCfg = {
+export const settingsCfg: {
+  soundEnabled: boolean;
+  mentionSound: boolean;
+  browserNotifications: boolean;
+  soundVolume: number;
+  slaBreachSound: boolean;
+  newMessageSound: boolean;
+  sentimentAlertEnabled: boolean;
+  messageSoundType: 'chime';
+  mentionSoundType: 'bell';
+  slaSoundType: 'alert';
+  transcriptionSoundType: 'soft';
+  quietHours?: boolean;
+} = {
+  soundEnabled: true,
+  mentionSound: true,
+  browserNotifications: false,
   soundVolume: 70,
   slaBreachSound: true,
   newMessageSound: true,
@@ -117,6 +133,9 @@ export function resetAlertKit() {
   });
 
   Object.assign(settingsCfg, {
+    soundEnabled: true,
+    mentionSound: true,
+    browserNotifications: false,
     soundVolume: 70,
     slaBreachSound: true,
     newMessageSound: true,
@@ -125,6 +144,7 @@ export function resetAlertKit() {
     mentionSoundType: 'bell',
     slaSoundType: 'alert',
     transcriptionSoundType: 'soft',
+    quietHours: undefined,
   });
 }
 
@@ -294,7 +314,10 @@ export function toastMock() {
 
 export function settingsMock() {
   return {
-    useNotificationSettings: () => settingsCfg,
+    useNotificationSettings: () => ({
+      settings: settingsCfg,
+      isQuietHours: () => Boolean(settingsCfg.quietHours),
+    }),
   };
 }
 
