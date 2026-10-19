@@ -341,6 +341,11 @@ export function orfaosDoInventario() {
     orphans.push({ file: f, yaml: 'nenhum bloco run: de workflow' });
   }
 
+  // GA73: sentido inverso — padrão em run: que não casa com nenhum arquivo no disco.
+  for (const padrao of padroesYamlSemArquivo()) {
+    orphans.push({ file: padrao, yaml: 'arquivo referenciado no YAML não existe no disco' });
+  }
+
   return orphans;
 }
 
