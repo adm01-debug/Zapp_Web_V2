@@ -105,7 +105,10 @@ async function queryAnalytics({ projectRef, token, sql, fetchImpl = fetch }) {
   });
   if (!res.ok) {
     // Não logar o corpo da resposta: pode conter detalhes de autenticação.
-    throw new Error(`Management API retornou HTTP ${res.status} na consulta de analytics`);
+    // GA29: propaga o status HTTP para distinguir 4xx (endpoint errado) de 5xx (serviço fora).
+    const err = new Error(`Management API retornou HTTP ${res.status} na consulta de analytics`);
+    err.httpStatus = res.status;
+    throw err;
   }
   const json = await res.json();
   // A API retorna { result: [{ total: N, errors: N }] } quando bem-sucedida.
@@ -153,8 +156,14 @@ async function main() {
       sql,
     });
   } catch (err) {
-    // Falha de transporte ou API indisponível → warning, não bloqueia o deploy.
-    console.error(`::warning::Health check falhou ao consultar a Management API: ${err.message}. Prosseguindo.`);
+    if (err.httpStatus >= 400 && err.httpStatus < 500) {
+      // GA29: 4xx = endpoint incorreto ou credencial recusada → falha explícita.
+      console.error(`::error::Health check: analytics retornou HTTP ${err.httpStatus} — verifique o endpoint e a credencial. ${err.message}`);
+      process.exitCode = 1;
+    } else {
+      // 5xx ou falha de transporte: serviço temporariamente indisponível → aviso, não bloqueia.
+      console.error(`::warning::Health check falhou ao consultar a Management API: ${err.message}. Prosseguindo.`);
+    }
     return;
   }
 
