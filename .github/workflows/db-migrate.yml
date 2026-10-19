@@ -98,13 +98,14 @@ jobs:
     # GA13: sem environment gate — o operador ve o output do dry-run ANTES
     # de aprovar o apply. Requer DESTINO_URL como secret de repositorio.
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 45
     outputs:
-      needs_apply: ${{ steps.check.outputs.needs_apply }}
-      apply_bundle: ${{ steps.check.outputs.apply_bundle }}
-      target_name: ${{ steps.check.outputs.target_name }}
-      apply_all_sha256: ${{ steps.check.outputs.apply_all_sha256 }}
-      missing_versions: ${{ steps.check.outputs.missing_versions }}
+      needs_apply: ${{ steps.preflight.outputs.needs_apply }}
+      apply_bundle: ${{ steps.preflight.outputs.apply_bundle }}
+      target_name: ${{ steps.preflight.outputs.target_name }}
+      apply_all_sha256: ${{ steps.preflight.outputs.apply_all_sha256 }}
+      missing_versions: ${{ steps.preflight.outputs.missing_versions }}
+      destino_url_hardened: ${{ steps.preflight.outputs.destino_url_hardened }}
     steps:
       - name: ✋ Somente executa na main
         if: github.ref != 'refs/heads/main'
@@ -209,11 +210,12 @@ jobs:
           // mascarado) sai no GITHUB_ENV tambem como SUPABASE_DB_URL.
           appendFileSync(process.env.GITHUB_ENV, `SUPABASE_DB_URL=${tls.connectionString}\n`);
           appendFileSync(process.env.GITHUB_ENV, 'PGSSLMODE=verify-full\n');
+          appendFileSync(process.env.GITHUB_OUTPUT, `destino_url_hardened=${tls.connectionString}\n`);
           console.log('OK: endpoint oficial, TLS verify-full e CA pinada.');
           NODE
 
       - name: Exigir alvo unico ou apply_all_missing autorizado
-        id: check
+        id: preflight
         # E66: repeticao SO de falha de conexao, e SO aqui -- este passo e somente
         # leitura (SELECT do ledger). O apply nunca define a variavel: repetir o
         # push seria reaplicar DDL.
@@ -306,11 +308,11 @@ jobs:
       - name: Gate de migration destrutiva (GA17)
         # GA17: bloqueia DROP/REVOKE/TRUNCATE/DELETE/ALTER...DROP sem confirmacao.
         # Para migrations destrutivas, marcar allow_destructive=true no dispatch.
-        if: steps.check.outputs.needs_apply == 'true'
+        if: steps.preflight.outputs.needs_apply == 'true'
         env:
           TARGET_VERSION: ${{ inputs.migration_version }}
           APPLY_ALL_MISSING: ${{ inputs.apply_all_missing }}
-          MISSING_VERSIONS: ${{ steps.check.outputs.missing_versions }}
+          MISSING_VERSIONS: ${{ steps.preflight.outputs.missing_versions }}
           ALLOW_DESTRUCTIVE: ${{ inputs.allow_destructive }}
         run: |
           if [ "$APPLY_ALL_MISSING" = "true" ]; then
@@ -336,7 +338,7 @@ jobs:
           fi
 
       - name: Provar paridade integral quando a versao ja existe
-        if: steps.check.outputs.needs_apply == 'false'
+        if: steps.preflight.outputs.needs_apply == 'false'
         run: node scripts/db-audit/check-migration-drift.mjs
 
       - name: Provar estado runtime antes do push
@@ -345,8 +347,8 @@ jobs:
           CONFIRM_RUNTIME_SHA256: ${{ inputs.confirm_runtime_sha256 }}
           APPLY: ${{ inputs.apply }}
           TARGET_VERSION: ${{ inputs.migration_version }}
-          NEEDS_APPLY: ${{ steps.check.outputs.needs_apply }}
-          APPLY_BUNDLE: ${{ steps.check.outputs.apply_bundle }}
+          NEEDS_APPLY: ${{ steps.preflight.outputs.needs_apply }}
+          APPLY_BUNDLE: ${{ steps.preflight.outputs.apply_bundle }}
         run: |
           # E62 (auditoria de 01/10/2026): os 12 contratos de runtime sairam daqui para
           # scripts/db-audit/contracts/<versao>.sql, executados pelo runner generico abaixo.
@@ -358,12 +360,12 @@ jobs:
           RUNTIME_JSON="$RUNTIME" node scripts/db-audit/validate-runtime-proof.mjs
 
       - name: Dry-run oficial do Supabase CLI
-        if: steps.check.outputs.needs_apply == 'true'
+        if: steps.preflight.outputs.needs_apply == 'true'
         env:
           TARGET_VERSION: ${{ inputs.migration_version }}
           APPLY_ALL_MISSING: ${{ inputs.apply_all_missing }}
-          MISSING_VERSIONS: ${{ steps.check.outputs.missing_versions }}
-          APPLY_ALL_SHA256: ${{ steps.check.outputs.apply_all_sha256 }}
+          MISSING_VERSIONS: ${{ steps.preflight.outputs.missing_versions }}
+          APPLY_ALL_SHA256: ${{ steps.preflight.outputs.apply_all_sha256 }}
         run: |
           set -euo pipefail
           supabase db push --include-all --skip-vault --dry-run --yes 2>&1 | tee dry-run.out
@@ -424,7 +426,7 @@ jobs:
         # do environment producao-ddl (overlay sobre o secret de repositorio).
         # GA14: quando apply_all_missing=true, valida confirm_apply_all_sha256.
         env:
-          DESTINO_URL_RAW: ${{ secrets.DESTINO_URL }}
+          DESTINO_URL_RAW: ${{ needs.preflight.outputs.destino_url_hardened }}
           TARGET_VERSION: ${{ inputs.migration_version }}
           CONFIRM_PROJECT_REF: ${{ inputs.confirm_project_ref }}
           CONFIRM_RUNTIME_SHA256: ${{ inputs.confirm_runtime_sha256 }}
