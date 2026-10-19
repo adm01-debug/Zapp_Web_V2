@@ -10,7 +10,7 @@ import { useTeamMessageReactions } from '@/hooks/team-chat/useTeamMessageReactio
 // eslint-disable-next-line no-restricted-imports
 import { supabase } from '@/integrations/supabase/client';
 import { uploadTeamMedia, TEAM_CHAT_FILES_BUCKET } from '@/hooks/team-chat/uploadTeamMedia';
-import { toast } from 'sonner';
+import { toast } from '@/lib/lazyToast';
 
 const log = getLogger('TeamChatPanel');
 
