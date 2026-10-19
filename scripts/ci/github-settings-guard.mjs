@@ -172,7 +172,8 @@ async function checarBranchProtection() {
       campo: 'branch_protection_main.strict',
       esperado: esperado.strict,
       encontrado: checksDesligados ? 'required_status_checks desligado' : strict,
-      restauravel: false,
+      // Sem o bloco de checks o PATCH do sub-recurso nao tem o que atualizar.
+      restauravel: !checksDesligados,
     });
   }
 
@@ -270,7 +271,7 @@ async function checarSelectedActions() {
   const sel = await ghAdmin('GET', `/repos/${OWNER}/${REPO_NAME}/actions/permissions/selected-actions`);
   const divergencias = [];
   const blPatterns = [...(baseline.selected_actions_patterns ?? [])].sort();
-  const encontradosPatterns = [...(sel?.patterns_allowed ?? [])].sort();
+  const encontradosPatterns = [...(sel?.patterns_allowed ?? [])].map((p) => p.replace(/@\*$/, '')).sort();
   if (blPatterns.join('|') !== encontradosPatterns.join('|')) {
     divergencias.push({
       campo: 'selected_actions.patterns_allowed',
