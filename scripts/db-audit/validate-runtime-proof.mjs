@@ -614,7 +614,7 @@ if (!ok) {
 // schema, entao editar o .sql entre o dry-run e o apply passava -- o
 // banco nao muda por causa de uma edicao de arquivo. Agora o
 // confirm_runtime_sha256 e' o SHA-256 de runtime + arquivo + commit.
-const { readdirSync } = await import('node:fs');
+const { readdirSync, appendFileSync } = await import('node:fs');
 const { pathToFileURL } = await import('node:url');
 const modHash = await import(pathToFileURL(`${process.cwd()}/scripts/db-audit/confirm-hash.mjs`).href);
 const candidatos = readdirSync('supabase/migrations')
@@ -636,6 +636,9 @@ console.error(modHash.descreverConfirmacao({
   commitSha: process.env.GITHUB_SHA,
   arquivo: arquivoAlvo,
 }));
+if (process.env.GITHUB_OUTPUT) {
+  appendFileSync(process.env.GITHUB_OUTPUT, `confirm_runtime_sha256=${confirmacao}\n`);
+}
 if (process.env.APPLY === 'true' && confirmacao !== process.env.CONFIRM_RUNTIME_SHA256) {
   console.error('Confirmacao recusada: runtime, arquivo ou commit mudaram desde o dry-run; migration cancelada.');
   process.exit(1);

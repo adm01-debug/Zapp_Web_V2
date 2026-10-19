@@ -228,8 +228,11 @@ jobs:
       - name: "🔏 Redigir tokens JWT do relatório"
         if: failure() && steps.redigir.outcome == 'success'
         run: |
-          find playwright-report/ -name "*.json" -exec \
-            sed -i 's/"access_token":"[^"]*"/"access_token":"[REDACTED]"/g; s/"refresh_token":"[^"]*"/"refresh_token":"[REDACTED]"/g' {} \; 2>/dev/null || true
+          # GA38: redatar access_token/refresh_token em JSON e JWT bearer em qualquer campo
+          find playwright-report/ \( -name "*.json" -o -name "*.txt" \) -exec \
+            sed -i \
+              's/"access_token":"[^"]*"/"access_token":"[REDACTED]"/g; s/"refresh_token":"[^"]*"/"refresh_token":"[REDACTED]"/g; s/eyJ[A-Za-z0-9_-]*\.[A-Za-z0-9_-]*\.[A-Za-z0-9_-]*/[JWT_REDACTED]/g; s/Authorization: Bearer [^ ]*/Authorization: Bearer [REDACTED]/g' \
+            {} \; 2>/dev/null || true
 
       - name: 📎 Arquivar relatorio do Playwright (so em falha)
         if: failure() && steps.redigir.outcome == 'success'
@@ -316,7 +319,7 @@ jobs:
             -d "$BODY" \
             || true)
           ACCESS_TOKEN=$(printf '%s' "$RESP" | node -e \
-            "let d=''; process.stdin.on('data',c=>d+=c); process.stdin.on('end',()=>{ try{process.stdout.write(JSON.parse(d).access_token||'')}catch{} })")\
+            "let d=''; process.stdin.on('data',c=>d+=c); process.stdin.on('end',()=>{ try{process.stdout.write(JSON.parse(d).access_token||'')}catch{} })") \
             || ACCESS_TOKEN=""
           if [ -z "$ACCESS_TOKEN" ]; then
             echo "::warning::Nao foi possivel obter access_token — teardown de sessao global pulado"
