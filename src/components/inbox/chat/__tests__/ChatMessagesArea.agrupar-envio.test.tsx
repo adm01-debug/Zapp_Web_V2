@@ -76,8 +76,14 @@ vi.mock('@tanstack/react-virtual', async () => {
           measureElement: undefined,
         })),
       getTotalSize: () => opts.count * opts.estimateSize(),
-      scrollToIndex: vi.fn(),
-      scrollToOffset: vi.fn(),
+      scrollToIndex: vi.fn((index: number) => {
+        const el = opts.getScrollElement() as HTMLElement | null;
+        if (el) el.scrollTo({ top: index * opts.estimateSize(), behavior: 'auto' });
+      }),
+      scrollToOffset: vi.fn((offset: number) => {
+        const el = opts.getScrollElement() as HTMLElement | null;
+        if (el) el.scrollTo({ top: offset, behavior: 'auto' });
+      }),
       measure: vi.fn(),
       options: opts,
     }),
