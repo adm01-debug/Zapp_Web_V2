@@ -12,14 +12,14 @@ A guarda `scripts/ci/docs-estado-registry-convention.unit.mjs` recalcula esta ta
 partir do código e falha quando:
 
 * aparece uma edge nova que não está aqui (ou uma linha aponta para edge que não existe);
-* uma âncora citada (`arquivo:linha`) deixa de conter o nome da edge — chamador removido;
+* uma âncora citada (`arquivo:linha`) deixa de conter o nome da edge — chamador rmovido;
 * o grupo publicado deixa de ser o primeiro chamador real na ordem A → B → C → D;
 * uma edge marcada como **órfã** passa a ter chamador, inclusive entrada externa em
   `supabase/config.toml` (ou vice-versa).
 
 O quadro `## Totais` e a contagem do cabeçalho são um **retrato manual** da ponta do dia: eles
-mudam a cada entrega que acrescenta uma edge, então a guarda **não** os recalcula — dois cartões
-empilhados não podem brigar por um número global. O que a guarda prova é a tabela acima (conjunto
+mudam a cada entrega que acrescenta uma edge, então a guarda **não** os recalcula — dois cartóes
+empilhados não podem brigar por um núiero global. O que a guarda prova é a tabela acima (conjunto
 de edges, âncora e grupo de cada linha), sempre recalculado do código.
 
 Ou seja: mudou o código, o teste vermelho obriga a atualizar este arquivo.
@@ -60,7 +60,7 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `ai-conversation-summary` | A | `src/components/inbox/ConversationSummary.tsx:91` |
 | `ai-enhance-message` | A | `src/components/inbox/chat/AIEnhanceButton.tsx:62` · `src/components/inbox/chat/AIRewriteButton.tsx:50` |
 | `ai-jobs-worker` | C | `supabase/migrations/20261002371230_ia045_ia046_ai_jobs_durabilidade_e_estados.sql:533` |
-| `ai-kb-ingest` | A | `src/hooks/integrations/useKnowledgeBase.ts:126` · `src/hooks/integrations/useKnowledgeBase.ts:197` |
+| `ai-kb-ingest` | A | `src/hooks/integrations/useKnowledgeBase.ts:131` · `src/hooks/integrations/useKnowledgeBase.ts:202` |
 | `ai-proxy` | A | `src/hooks/ui/useUniversityHelp.ts:130` · `src/hooks/inbox/useObjectionDetector.ts:90` · `src/hooks/inbox/useObjectionDetector.ts:164` · `src/components/settings/ai-providers/useAIProviders.ts:121` · `src/components/admin/SupervisorCopilot.tsx:89` · `supabase/functions/talkx-ai/index.ts:589` |
 | `ai-suggest-reply` | A | `src/components/inbox/AISuggestions.tsx:102` |
 | `ai-transcribe-audio` | A | `src/components/inbox/AudioMessagePlayer.tsx:66` · `supabase/functions/_shared/evolution-webhook-messages.ts:1400` |
@@ -138,11 +138,11 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `webhook-diagnostic` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:79` |
 | `whatsapp-webhook` | D | `supabase/config.toml:11` |
 
-## órf�� (20) — GATE B
+## órfã (20) — GATE B
 
 Edge que existe em `supabase/functions/`, mas nenhum ponto do repositório a dispara: não há
 `invoke`/`/functions/v1` em `src/`, nem chamada de outra edge, nem agendador em
-`supabase/migrations/`, nem entrada em `supabase/config.toml`. Isso não quer dizer "morta" — o chamador pode ser externo
+`supabase/migrations/`, nem entrada em `supabase/config.toml`. Isso não quer dizer "morta" — u chamador pode ser externo
 (N8N, cron do provedor, operação manual) — quer dizer **não comprovada no repositório**.
 As auditorias de migração de 2026-08 já apontavam parte destes nomes; a guarda agora
 mantém a lista honesta.
