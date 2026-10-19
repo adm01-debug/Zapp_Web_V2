@@ -7,6 +7,8 @@ const ok = (name) => ({ __typename: 'CheckRun', name, status: 'COMPLETED', concl
 const rodando = (name) => ({ __typename: 'CheckRun', name, status: 'IN_PROGRESS', conclusion: '', startedAt: '2026-10-15T10:05:00Z' });
 const falhou = (name, startedAt = '2026-10-15T10:00:00Z') => ({ __typename: 'CheckRun', name, status: 'COMPLETED', conclusion: 'FAILURE', startedAt });
 const verde = OBRIG.map(ok);
+// Tempo fixo para testes com teto GA49: 10 min após os checks de startedAt '10:00'/'10:05'
+const AGORA_TESTE = new Date('2026-10-15T10:10:00Z').getTime();
 
 function pr(number, extra = {}) {
   return {
@@ -64,9 +66,9 @@ test('classificar: BEHIND com checks verdes aguarda; com check obrigatório verm
 });
 
 test('classificar: atualizada com a main e rodando (ou verde) ocupa a vez', () => {
-  assert.equal(classificar(pr(1, { mergeStateStatus: 'BLOCKED', statusCheckRollup: OBRIG.map(rodando) }), OBRIG), 'em-voo');
-  assert.equal(classificar(pr(1, { mergeStateStatus: 'CLEAN' }), OBRIG), 'em-voo');
-  assert.equal(classificar(pr(1, { mergeStateStatus: 'UNKNOWN' }), OBRIG), 'em-voo');
+  assert.equal(classificar(pr(1, { mergeStateStatus: 'BLOCKED', statusCheckRollup: OBRIG.map(rodando) }), OBRIG, AGORA_TESTE), 'em-voo');
+  assert.equal(classificar(pr(1, { mergeStateStatus: 'CLEAN' }), OBRIG, AGORA_TESTE), 'em-voo');
+  assert.equal(classificar(pr(1, { mergeStateStatus: 'UNKNOWN' }), OBRIG, AGORA_TESTE), 'em-voo');
 });
 
 test('decidir: com uma PR em voo, ninguém mais é atualizado (o desperdicio O(N²) de 15/10)', () => {
@@ -122,8 +124,8 @@ test('UNKNOWN com auto-merge vira BEHIND quando a comparação diz que está atr
   });
   assert.deepEqual(resolvidas.map((p) => p.mergeStateStatus), ['BEHIND', 'UNKNOWN', 'UNKNOWN']);
   // h2 está em dia (ocupa a vez); h3 sem resposta fica conservador (também ocupa).
-  assert.equal(decidir(resolvidas, OBRIG).acao, 'esperar');
-  assert.equal(decidir([resolvidas[0]], OBRIG).pr, 1);
+  assert.equal(decidir(resolvidas, OBRIG, AGORA_TESTE).acao, 'esperar');
+  assert.equal(decidir([resolvidas[0]], OBRIG, AGORA_TESTE).pr, 1);
 });
 
 test('PR sem auto-merge ou draft não gasta chamada de API', async () => {

@@ -107,8 +107,8 @@ export function classificar(pr, obrigatorios, agora = Date.now()) {
   return 'em-voo';
 }
 
-export function decidir(prs, obrigatorios) {
-  const classes = prs.map((pr) => ({ pr, classe: classificar(pr, obrigatorios) }));
+export function decidir(prs, obrigatorios, agora = Date.now()) {
+  const classes = prs.map((pr) => ({ pr, classe: classificar(pr, obrigatorios, agora) }));
   const emVoo = classes.filter((c) => c.classe === 'em-voo');
   const bloqueadas = classes.filter((c) => c.classe === 'bloqueada').map((c) => c.pr.number);
   // GA50: PRs com auto-merge cujo campo `mergeable` é CONFLICTING ficam como 'fora' em
@@ -137,7 +137,7 @@ export function decidir(prs, obrigatorios) {
 // decisão recalculada AGORA ainda o autoriza: nenhuma PR em voo e ele é a PRIMEIRA da
 // fila recalculada que ainda não foi recusada nesta execução. A lista lida no início pode
 // estar velha: outra PR pode ter entrado em voo, ou uma PR mais antiga ter ficado elegível
-// e passado à frente (Codex, PRs #1950 e #1951).
+// e passado à frente (Codex, #1951).
 export function confirmarCandidato(decisao, numero, recusadas = []) {
   if (decisao.acao !== 'atualizar') return false;
   return decisao.fila.find((n) => !recusadas.includes(n)) === numero;
