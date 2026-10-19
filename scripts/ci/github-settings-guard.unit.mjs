@@ -21,7 +21,7 @@ const REPO_OK =
   "send({ allow_auto_merge: true, allow_squash_merge: true, allow_merge_commit: false, allow_rebase_merge: false, delete_branch_on_merge: true, squash_merge_commit_message: 'PR_BODY', squash_merge_commit_title: 'PR_TITLE', security_and_analysis: { secret_scanning: { status: 'enabled' }, secret_scanning_push_protection: { status: 'enabled' } } })";
 const ACTIONS_OK = "send({ enabled: true, allowed_actions: 'selected', sha_pinning_required: true })";
 const WORKFLOW_PERMS_OK = "send({ default_workflow_permissions: 'read', can_approve_pull_request_reviews: true })";
-const SELECTED_PATTERNS = "['oven-sh/setup-bun','denoland/setup-deno','supabase/setup-cli','peter-evans/create-pull-request','gitleaks/gitleaks-action','actions/cache','actions/checkout','actions/github-script','actions/setup-go','actions/setup-node','actions/upload-artifact','github/codeql-action','actions/dependency-review-action','ossf/scorecard-action','step-security/harden-runner']";
+const SELECTED_PATTERNS = "['oven-sh/setup-bun','denoland/setup-deno','supabase/setup-cli','peter-evans/create-pull-request','gitleaks/gitleaks-action','actions/cache','actions/checkout','actions/github-script','actions/setup-go','actions/setup-node','actions/upload-artifact','github/codeql-action','actions/dependency-review-action','ossf/scorecard-action']";
 const SELECTED_OK = `send({ patterns_allowed: ${SELECTED_PATTERNS} })`;
 const SEM_ESCOPO = "send({ message: 'Resource not accessible by integration' }, 403)";
 
@@ -119,8 +119,8 @@ function stub(
     "  if (method === 'GET' && p.indexOf('/issues/42/comments') !== -1) return " + comentarios + ';',
     "  if (p.endsWith('/branches/main/protection')) return " + prot + ';',
     "  if (p.endsWith('/actions/permissions/workflow')) return " + workflowPerms + ';',
+    "  if (p.indexOf('/actions/permissions/selected-actions') !== -1) return " + SELECTED_OK + ';',
     "  if (p.indexOf('/actions/permissions') !== -1) return " + actions + ';',
-    "  if (p.indexOf('/actions/selected-actions') !== -1) return " + SELECTED_OK + ';',
     "  if (method === 'GET' && p.endsWith('/rulesets')) return send([]);",
     "  if (p.indexOf('/environments') !== -1) return " + envs + ';',
     "  if (method === 'GET' && p === '/repos/o/r') return " + repo + ';',
@@ -175,7 +175,7 @@ describe('settings-guard: perimetro conforme o baseline', () => {
       r.out.includes('branch_protection_main.strict'),
       `nao apontou o campo divergente:\n${r.out}`,
     );
-    assert.ok(r.out.includes('Restaurado'), `nao tentou restaurar o que sabe restaurar:\n${r.out}`);
+    assert.ok(!r.out.includes('Restaurado'), `guard nao deveria tentar restaurar (GA77):\n${r.out}`);
   });
 
   it('required_status_checks: null e regressao (checks apagados), nunca ponto cego', () => {
@@ -286,25 +286,27 @@ describe('settings-guard: ponto cego (E95, W04, W05)', () => {
     assert.ok(r.out.includes('Issue #42 atualizada com novo comentario'), `causa nova sem comentario:\n${r.out}`);
   });
 
-  it('W05: divergencia real com restauracao EFETIVA sempre comenta (mesmo com dedupe)', () => {
+  it('W05: divergencia real dentro da janela e suprimida pelo dedupe (sem restauracao)', () => {
+    // GA77: guard nao restaura mais. Divergencia dentro de 6 h aplica dedupe normal.
     const r = rodarGuard('regressao', { issue: true, ultimoMarcador: MARCADOR_REGRESSAO, idadeMs: 60_000 });
     assert.equal(r.code, 1, r.out);
-    assert.ok(r.out.includes('Restaurado:'), `a restauracao precisa ter acontecido:\n${r.out}`);
-    assert.ok(r.out.includes('Issue #42 atualizada com novo comentario'), `restauracao sem registro:\n${r.out}`);
+    assert.ok(!r.out.includes('Restaurado'), `guard nao deveria tentar restaurar (GA77):\n${r.out}`);
+    assert.ok(r.out.includes('Dedupe:'), `dedupe nao foi aplicado dentro da janela:\n${r.out}`);
+    assert.ok(!r.out.includes('Issue #42 atualizada'), `comentou mesmo dentro da janela:\n${r.out}`);
   });
 
-  it('W05: restauracao que FALHOU nao forca comentario — o dedupe de 6 h vale', () => {
-    // Um PATCH 403 recorrente (token sem escopo) comentaria a cada 6 h se a tentativa
-    // falha contasse como "restaurei" (Devin, PR #1920).
+  it('W05: mesma causa divergente fora da janela (> 6 h) comenta de novo', () => {
+    // Apos 6 h o guard deve renovar o comentario — sem restaurar, so registrar.
+    const SEIS_HORAS_MS = 6 * 60 * 60 * 1000;
     const r = rodarGuard('regressao', {
       issue: true,
       ultimoMarcador: MARCADOR_REGRESSAO,
-      idadeMs: 60_000,
-      patchStatus: 403,
+      idadeMs: SEIS_HORAS_MS + 1000,
     });
     assert.equal(r.code, 1, r.out);
-    assert.ok(!r.out.includes('Restaurado:'), `declarou restaurado um PATCH que falhou:\n${r.out}`);
-    assert.ok(r.out.includes('Dedupe'), `tentativa falha forcou comentario repetido:\n${r.out}`);
+    assert.ok(!r.out.includes('Restaurado'), `guard nao deveria tentar restaurar (GA77):\n${r.out}`);
+    assert.ok(r.out.includes('Issue #42 atualizada com novo comentario'), `fora da janela e nao comentou:\n${r.out}`);
+    assert.ok(!r.out.includes('Dedupe'), `dentro da janela indevidamente:\n${r.out}`);
   });
 });
 
@@ -359,8 +361,8 @@ describe('settings-guard: log injection (jssecurity:S5145)', () => {
 function rodarComEnvsExtra(extras) {
   // Injeta o stub de environments com os itens do baseline + os extras recebidos.
   const todos = [
-    'copilot', 'db-ledger-evidence', 'legacy-import-destrutivo', 'Preview',
-    'producao-ddl', 'producao-edge-functions', 'Production',
+    'banco-leitura', 'db-ledger-evidence', 'legacy-import-destrutivo', 'perimetro-leitura',
+    'producao-ddl', 'producao-edge-functions',
     ...extras,
   ];
   const envsStub =
