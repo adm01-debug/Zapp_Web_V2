@@ -176,6 +176,29 @@ test('#365: coletarJobs pagina um run com mais de 100 jobs', async () => {
   assert.equal(jobs.length, 101, 'a segunda pagina de jobs nao pode ser ignorada');
 });
 
+test('GA92: coletarJobs respeita maxRuns para nao ultrapassar rate limit da API', async () => {
+  const chamadas = [];
+  const pedirFake = async (caminho) => {
+    chamadas.push(caminho);
+    return { jobs: [] };
+  };
+  // 5 runs com duracoes diferentes; maxRuns=3 deve selecionar os 3 mais longos (ids 5, 4, 3).
+  const runsComDuracao = [
+    { id: 1, name: 'CI', run_started_at: '2026-10-03T10:00:00Z', updated_at: '2026-10-03T10:01:00Z' }, // 1 min
+    { id: 2, name: 'CI', run_started_at: '2026-10-03T10:00:00Z', updated_at: '2026-10-03T10:02:00Z' }, // 2 min
+    { id: 3, name: 'CI', run_started_at: '2026-10-03T10:00:00Z', updated_at: '2026-10-03T10:05:00Z' }, // 5 min
+    { id: 4, name: 'CI', run_started_at: '2026-10-03T10:00:00Z', updated_at: '2026-10-03T10:10:00Z' }, // 10 min
+    { id: 5, name: 'CI', run_started_at: '2026-10-03T10:00:00Z', updated_at: '2026-10-03T10:20:00Z' }, // 20 min
+  ];
+  await coletarJobs(runsComDuracao, { repo: 'o/r', token: 't', maxRuns: 3, pedir: pedirFake });
+  assert.equal(chamadas.length, 3, 'so maxRuns runs devem gerar GET de jobs');
+  const idsConsultados = chamadas.map((c) => Number(new URL(c, 'http://x').pathname.match(/\/runs\/(\d+)\//)?.[1]));
+  assert.ok(idsConsultados.includes(5), 'o run mais longo (id 5) deve ter seus jobs buscados');
+  assert.ok(idsConsultados.includes(4), 'o segundo mais longo (id 4) deve ter seus jobs buscados');
+  assert.ok(idsConsultados.includes(3), 'o terceiro mais longo (id 3) deve ter seus jobs buscados');
+  assert.ok(!idsConsultados.includes(1), 'o run mais curto (id 1) nao deve gerar GET de jobs');
+});
+
 test('#365: o corpo do KPI publica o ranking real dos jobs, nao um ranking vazio', () => {
   const runs = [run('CI', 5, 'success')];
   const jobs = [

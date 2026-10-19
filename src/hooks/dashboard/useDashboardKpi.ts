@@ -13,14 +13,10 @@ const MIN_SAMPLE_FOR_DELTA = 5;
  *
  * Até 13/10/2026 a RPC fixava as janelas em hoje/ontem (E34): `resolvedToday` e
  * `resolvedYesterday` eram sempre o dia atual e o anterior. A partir de
- * dashboard_kpi(p_since, p_queue, p_agent) (E31/E34, período escolhido),
+ * dashboard_kpi(p_from, p_until, p_queue, p_agent) (E31/E34, período escolhido),
  * os campos deixam de ser "hoje/ontem" e passam a ser o PERÍODO pedido e o
  * período ANTERIOR de MESMO TAMANHO encostado nele — os nomes do contrato foram
- * mantidos para não quebrar os consumidores.
- *
- * Nota: `untilIso` entra na queryKey para invalidar o cache quando o filtro
- * "até" mudar, mas `dashboard_kpi` não aceita `p_until` — a janela de fim
- * não é enviada ao banco. Adicionar p_until à RPC é o fix correto (P2). */
+ * mantidos para não quebrar os consumidores. */
 export type DashboardKpiRpcResult = {
   resolvedToday: number;
   resolvedYesterday: number;
@@ -35,8 +31,7 @@ export type DashboardKpiRpcResult = {
 };
 
 /** Filtros do topo (E31) propagados como p_queue/p_agent, mais o período
- * escolhido (E34). `from` vira p_since no banco; `until` entra só na queryKey
- * (dashboard_kpi não aceita p_until ainda — P2 pendente).
+ * escolhido (E34). `from` vira p_from no banco (fim inclusivo); `until` vira p_until (fim exclusivo).
  *
  * - `from`/`until`: janela [from, until). `until` nulo = janela aberta.
  *   Sem `from`, a RPC usa o dia atual em America/Sao_Paulo ("hoje").
@@ -100,9 +95,10 @@ export function useDashboardKpi(filters: DashboardKpiFilters = {}) {
     queryKey: ['dashboard-kpi', fromIso, untilIso, queueId, agentId],
     queryFn: async () => {
       const { data, error } = await supabase.rpc('dashboard_kpi', {
-        p_since: fromIso ?? undefined,
-        p_queue: queueId ?? undefined,
-        p_agent: agentId ?? undefined,
+        p_from: fromIso as unknown as string | undefined,
+        p_until: untilIso as unknown as string | undefined,
+        p_queue: queueId as unknown as string | undefined,
+        p_agent: agentId as unknown as string | undefined,
       });
       if (error) throw error;
       return aggregateDashboardKpi(data as unknown as DashboardKpiRpcResult);

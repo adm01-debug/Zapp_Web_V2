@@ -61,8 +61,8 @@ const { toastMock, supabaseMock } = vi.hoisted(() => {
 vi.mock('@/integrations/supabase/client', () => ({ supabase: supabaseMock }));
 vi.mock('@/hooks/ui/use-toast', () => ({ toast: toastMock }));
 vi.mock('@/lib/logger', () => {
-  const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
-  return { log: logger, getLogger: () => logger };
+  const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn() };
+  return { log: logger, getLogger: () => logger, createLogger: vi.fn(() => logger) };
 });
 vi.mock('@/hooks/system/useUserRole', () => ({ useUserRole: () => ({ isSupervisor: false, roles: [] }) }));
 vi.mock('@/hooks/system/useCRMIntegrationEnabled', () => ({ useCRMIntegrationEnabled: () => false }));

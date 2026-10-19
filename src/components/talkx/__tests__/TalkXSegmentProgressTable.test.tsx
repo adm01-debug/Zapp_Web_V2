@@ -165,10 +165,10 @@ describe('Fila por Segmento — TalkXSegmentProgressTable (X149)', () => {
     const { container } = render(<TalkXSegmentProgressTable rows={seis} segmentNames={nomes} />);
     const html = container.innerHTML;
 
-    // nenhuma cor crua: hex, rgb( ou hsl( direto
+    // nenhuma cor crua: hex, rgb( ou hsl( literal — mas hsl(var(--...)) é token CSS, não cor fixa
     expect(html).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
     expect(html).not.toMatch(/\brgba?\(/i);
-    expect(html).not.toMatch(/\bhsla?\(/i);
+    expect(html).not.toMatch(/\bhsla?\((?!var\(--)/i);
 
     const barra = screen.getAllByTestId('talkx-segment-progress-bar')[0];
     expect(barra.className).toContain('motion-safe:transition-[width]');

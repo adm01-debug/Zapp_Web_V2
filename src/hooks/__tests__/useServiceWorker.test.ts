@@ -3,6 +3,9 @@ import { renderHook } from '@testing-library/react';
 
 vi.mock('@/lib/logger', () => ({
   log: { debug: vi.fn(), error: vi.fn(), info: vi.fn() },
+
+  getLogger: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), withCorrelation: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() })) })),
+  createLogger: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), withCorrelation: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() })) })),
 }));
 
 const mockUnregister = vi.fn().mockResolvedValue(true);

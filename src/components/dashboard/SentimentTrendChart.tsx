@@ -196,7 +196,7 @@ export function SentimentTrendChart({ onNavigateTab }: { onNavigateTab?: (tab: s
 
         <DashboardCard testid="sentiment-insights-card" variant="comfortable">
           <SectionHeader icon={Lightbulb} title="Principais insights" tileSize={44} size="lg"
-            right={onNavigateTab && <button type="button" onClick={() => onNavigateTab('reports')} className="text-[13px] font-semibold text-primary-glow hover:underline">Ver relatório</button>}
+            right={onNavigateTab && <button type="button" onClick={() => onNavigateTab('reports')} className="text-[13px] font-semibold text-[hsl(var(--primary-text))] hover:underline">Ver relatório</button>}
           />
           {insights.length === 0 ? (
             <div className="py-8 flex flex-col items-center text-muted-foreground gap-2">
@@ -225,7 +225,7 @@ export function SentimentTrendChart({ onNavigateTab }: { onNavigateTab?: (tab: s
       <div className="grid grid-cols-1 xl:grid-cols-[2fr_1fr] gap-4">
         <DashboardCard testid="sentiment-alerts-card" variant="comfortable">
           <SectionHeader icon={AlertTriangle} title="Alertas recentes de sentimento" subtitle="Conversas que precisam de atenção imediata" tileSize={44} size="lg" tileColor="red"
-            right={<button type="button" onClick={() => navigateToView('inbox')} className="text-[13px] font-semibold text-primary-glow hover:underline">Ver todos ({recent?.totalNegative ?? 0})</button>}
+            right={<button type="button" onClick={() => navigateToView('inbox')} className="text-[13px] font-semibold text-[hsl(var(--primary-text))] hover:underline">Ver todos ({recent?.totalNegative ?? 0})</button>}
           />
           {!recent || recent.alerts.length === 0 ? (
             <div className="py-8 flex flex-col items-center text-muted-foreground gap-2">

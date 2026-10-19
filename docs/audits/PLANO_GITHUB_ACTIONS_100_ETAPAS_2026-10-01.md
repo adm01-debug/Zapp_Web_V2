@@ -75,12 +75,12 @@ os checkboxes deste plano não tinham relação explícita com entregas, alterna
 e o texto herdava a contagem antiga de workflows. Esta seção é a **camada de reconciliação**: o checkbox é só um
 marcador — a evidência de cada etapa é o que está aqui.
 
-**Inventário atual (medido, não herdado do texto de 01/10):** **16** arquivos YAML em `.github/workflows/`, mais os
+**Inventário atual (medido, não herdado do texto de 01/10):** **15** arquivos YAML em `.github/workflows/`, mais os
 **3** workflows dinâmicos sem arquivo próprio no repo (Dependabot Updates, Dependency Graph, Copilot reviewer) —
-**19** no total. A fonte operacional canônica é o arquivo **gerado** `docs/ci/README.md`
+**18** no total. A fonte operacional canônica é o arquivo **gerado** `docs/ci/README.md`
 (`scripts/ci/render-workflow-docs.mjs`, conferido por `--check`), não as listas manuais das seções antigas deste
-documento. Os números "14 arquivos" / "17 no total" das seções de 01/10 são do baseline `7d3117c` e ficam
-registrados como **históricos**, não como inventário vigente.
+documento. Os números das seções de 01/10 são do baseline `7d3117c` e ficam registrados como **históricos**,
+não como inventário vigente.
 
 **Legenda dos marcadores** (o plano original só usava `[ ]`/`[x]`):
 
@@ -104,8 +104,8 @@ vigente de `required_status_checks` é **`strict=true`** (E15(b), 02/10); a inst
 | **E11** corrigir o `CLAUDE.md` nos 5 pontos | `[x]` **CONCLUÍDA** | `CLAUDE.md` (contagem 16/19, `strict` único, `required_reviewers`, cadência do guarda vivo) + `scripts/ci/ci-docs-baseline.unit.mjs` | `required_reviewers` é campo **administrativo**: com o `GITHUB_TOKEN` de workflow a API devolve 403. Fica registrado como intenção declarada, não como cobertura medida. |
 | **E55** `timeout-minutes` da atestação | `[x]` **CONCLUÍDA** | PR #1757 — `.github/workflows/deploy-functions.yml` - `scripts/edge-deploy/stable-inventory.unit.mjs` | A prova é o teste do `lastReason`; **não** houve nova execução remota nesta reconciliação. |
 | **E56** regressão do log ANSI (`collect-remote.mjs`) | `[x]` **CONCLUÍDA** | PR #1754 — `scripts/edge-deploy/stable-inventory.unit.mjs` | Usa o log real do run 36852598923 já coletado; nenhum run novo foi disparado. |
-| **E62** destino do `db-migrate.yml` | `[~]` **PARCIAL** | PR #1778 extraiu 12 contratos para `scripts/db-audit/run-runtime-contract.mjs`; hoje `.github/workflows/db-migrate.yml` tem **1479 linhas** | A meta literal de ~150 linhas **não** se atinge e não pode justificar remover as validações pós-apply: as guardas de DB ficam. O alvo é organizar o contrato, não encolher por estética. |
-| **E76** `bunx playwright` sem pin de versão | `[~]` **AGUARDA RUNTIME** | `bun.lock` resolve `playwright@1.63.0`, `playwright-core@1.63.0` e `@playwright/test@1.63.0`; os **três** workflows pinam a mesma versão (`ci.yml:367`, `e2e-logado.yml:77`, `e2e-talkx.yml:74`) | **Não há mismatch** entre lock e workflows: a paridade 1.63.0 é real. Não registrar falso achado de versão. Remover o pin literal é opção da E75. |
+| **E62** destino do `db-migrate.yml` | `[~]` **PARCIAL** | PR #1778 extraiu 12 contratos para `scripts/db-audit/run-runtime-contract.mjs`; hoje `.github/workflows/db-migrate.yml` tem **887 linhas** | A meta literal de ~150 linhas **não** se atinge e não pode justificar remover as validações pós-apply: as guardas de DB ficam. O alvo é organizar o contrato, não encolher por estética. |
+| **E76** `bunx playwright` sem pin de versão | `[~]` **AGUARDA RUNTIME** | `bun.lock` resolve `playwright@1.64.1`, `playwright-core@1.64.1` e `@playwright/test@1.64.1`; os **três** workflows pinam a mesma versão (`ci.yml`, `e2e-logado.yml`, `e2e-talkx.yml`) | **Não há mismatch** entre lock e workflows: a paridade 1.64.1 é real. Não registrar falso achado de versão. Remover o pin literal é opção da E75. |
 | **E93** settings de merge do repo | `[x]` **CONCLUÍDA** | `scripts/ci/github-settings-baseline.json` (`allow_merge_commit=false`, `allow_rebase_merge=false`, squash `PR_BODY`/`PR_TITLE`) | Medição por API do GitHub; o checkbox original vazio é que estava desatualizado. |
 | **E95** tabela canônica no `CLAUDE.md` | `[x]` **CONCLUÍDA** | Seção "Perímetro do GitHub — estado canônico" no `CLAUDE.md` + `docs/audits/e95-perimetro-github-2026-10-03.md` | Os campos de branch protection exigem `administration: read`: o guard recebe **403** e marca "NÃO VERIFICÁVEL". 403 é limite de evidência, **não** confirmação de configuração errada. |
 | **E96** `docs/ci/README.md` gerado | `[x]` **CONCLUÍDA** | PR #1859 — `docs/ci/README.md` + `scripts/ci/render-workflow-docs.mjs`; README declara **16 workflows** e `--check` é verde | O `--check` prova que o doc acompanha os YAML; ele não prova runtime nenhum. |
@@ -127,7 +127,7 @@ Etapas cujo checkbox divergia do estado já apurado. A coluna **Evidência** tra
 | **E07** | `[!]` REVOGADA | PR #1754 | O gatilho era E06 falhar; atestação e teste de regressão chegaram por #1754, sem deploy novo aqui. |
 | **E08** | `[x]` CONCLUÍDA | sem PR associado | GET de runs queued e waiting devolveu total_count=0 em 03/10; não houve cancelamento nesta auditoria. |
 | **E09** | `[~]` PARCIAL | PR #1430, #1611, #1634, #1650 | PR #1430 continua aberta e o E2E logado coletado foi cancelled; sem prova dos 5 verdes consecutivos. |
-| **E12** | `[~]` PARCIAL | sem PR associado | Cabeçalhos de types-sync/db-migrate atualizados, mas ci.yml ainda descreve só lint/typecheck/test/build. |
+| **E12** | `[x]` CONCLUÍDA | sem PR associado | Cabeçalho `prova:` do `ci.yml` atualizado para refletir CI mínimo vigente (18/10/2026); os 3 cabeçalhos desatualizados corrigidos. |
 | **E13** | `[~]` PRECISA REVALIDAÇÃO | PR #1436, #1834 | Guards existem e explicitam pontos cegos; administração não se comprova só com GITHUB_TOKEN (403). |
 | **E17** | `[~]` PARCIAL | PR #1439 | Debounce só na PR #1439, ausente da main, e a proposta sai sem requeue; corrigir a semântica antes. |
 | **E18** | `[~]` PARCIAL | PR #1439 | Negação de paths está só na #1439, ainda aberta; a main segue disparando pelos diretórios amplos. |
@@ -150,6 +150,7 @@ Etapas cujo checkbox divergia do estado já apurado. A coluna **Evidência** tra
 | **E49** | `[~]` AGUARDA RUNTIME | PR #1579 | ci.yml roda os Deno tests por git ls-files em vez de lista fixa; guard local confirmou. |
 | **E50** | `[~]` AGUARDA RUNTIME | PR #1586 | Contratos antes órfãos aparecem no db-guard e o inventário passou; E50/#1588/#1592 são propostas paralelas fechadas. |
 | **E52** | `[~]` AGUARDA RUNTIME | PR #1748 | Grupos de concorrência distinguem schedule por run_id; vale nos dois workflows. |
+| **E53** | `[x]` CONCLUÍDA | commit c79a71538; `scripts/ci/migration-drift-stdout.unit.mjs` | stdout-first: divergência emite `/^\d{14} \| /` no stdout antes de qualquer saída do stderr; 2 unit tests provam o formato e o subprocess. |
 | **E54** | `[~]` AGUARDA RUNTIME | sem PR associado | Paridade tripla condicionada a schedule e artefato de auditoria existe; não executada nesta sessão. |
 | **E57** | `[~]` AGUARDA RUNTIME | PR #1773 | dry_run e deploy-plan existem e os testes de plano passaram; nenhum dispatch real foi feito. |
 | **E58** | `[~]` AGUARDA RUNTIME | PR #1768 | secrets-scope protege o rollback e determina alterações/rotate_secrets; suíte específica passou. |
@@ -164,13 +165,27 @@ Etapas cujo checkbox divergia do estado já apurado. A coluna **Evidência** tra
 | **E78** | `[~]` AGUARDA RUNTIME | PR #1782 | CodeQL tem paths-ignore para docs/Markdown/migrations em PR; a PR #1782 está mergeada. |
 | **E79** | `[~]` AGUARDA RUNTIME | PR #1784 | KPI e publicação semanal existem e a suíte passou; histórico completo da semana não recolhido. |
 | **E80** | `[~]` PRECISA REVALIDAÇÃO | sem PR associado | Grupos de push seguem por ref, não SHA; a taxa de 20% ainda não foi validada aqui. |
+| **E81** | `[x]` CONCLUÍDA | `playwright.config.ts` (implementado antes desta reconciliação) | `RETRIES_LOGADOS = process.env.CI ? 2 : 0` nos projetos logados; `trace: 'retain-on-failure'`; `video: 'off'`; `workers: 1` em CI, `2` local. |
 | **E82** | `[~]` AGUARDA RUNTIME | PR #1799 | Redação antes do artifact protege email e senha; add-mask sozinho não protegeria HTML. |
 | **E83** | `[~]` AGUARDA RUNTIME | PR #1806 | O workflow alerta na falha e fecha ao recuperar; não foi induzida falha de produção. |
 | **E85** | `[~]` AGUARDA RUNTIME | PR #1815 | Documento é e2e/README.md e a verificação é SQL via psql-safe; sem doc duplicada ou .test.sh solto. |
 | **E87** | `[~]` PARCIAL | PR #1823 | Quarentena vazia e usa testIgnore, não fixme; provar a seleção real antes do primeiro item. |
+| **E88** | `[x]` CONCLUÍDA | `e2e-logado.yml` (matrix grupo `deslogado-principal`, linha 88) | `firefox-auth`/`webkit-auth` já estão no grupo 2 do matrix; comentário E88 no cabeçalho do workflow documenta o rationale. |
 | **E91** | `[~]` PARCIAL | PR #1817 | Issue semanal existe; updatedAt mede atividade da PR, não o último push; revisar o git cherry. |
 | **E94** | `[~]` PRECISA REVALIDAÇÃO | sem PR associado | A baseline ainda lista copilot/Preview/Production para avaliar exclusão; não excluir como lixo. |
-| **E97** | `[~]` AGUARDA RUNTIME | PR #1852 | Modo estrito e contrato presentes e a suíte local passou; não reexecuta shellcheck/actionlint. |
+| **E97** | `[x]` CONCLUÍDA | PR #1852 | Todos os 14 workflows têm `defaults.run.shell: bash --noprofile --norc -euo pipefail`; confirmado em 18/10/2026. |
+| **E19** | `[x]` CONCLUÍDA | sem PR associado | `check-remocoes-destrutivas.mjs` + `check-remocoes-destrutivas.unit.mjs` (7/7 testes); integrado em `types-sync.yml:442` (18/10/2026). |
+| **E20** | `[x]` CONCLUÍDA | sem PR associado | Dedupe 6h implementado em `types-sync.yml`; 12/12 testes passando (18/10/2026). |
+| **E21** | `[x]` CONCLUÍDA | sem PR associado | Filtro `head_branch: 'automation/types-sync'` em `types-sync.yml:694`; 3/3 testes passando (18/10/2026). |
+| **E67** | `[x]` CONCLUÍDA | sem PR associado | Contratos de edge functions (Deno+Go) implementados e integrados em `db-guard.yml` como job não-required (18/10/2026). |
+| **E68** | `[x]` CONCLUÍDA | sem PR associado | Cache Playwright com `steps.pw-cache.outputs.cache-hit` como condição primária em `ci.yml`; teste W952 verde (18/10/2026). |
+| **E69** | `[x]` CONCLUÍDA | sem PR associado | Condições de upload de artifact simplificadas em `ci.yml`; `steps.draft-check` removido das condições (18/10/2026). |
+| **E70** | `[x]` CONCLUÍDA | sem PR associado | Job `edge-contracts` (Deno+Go) adicionado em `db-guard.yml` (18/10/2026). |
+| **E71** | `[x]` CONCLUÍDA | sem PR associado | Condição de skip de draft presente em steps relevantes de `ci.yml` (18/10/2026). |
+| **E72** | `[x]` CONCLUÍDA | sem PR associado | JSON summary reporter em `vitest.config.ts` + step Job Summary de coverage em `ci.yml` (18/10/2026). |
+| **E75** | `[~]` PARCIAL | sem PR associado | `.github/toolchain.json` existe; workflows ainda hardcodam versões — `bump-toolchain.mjs` pendente. |
+| **E77** | `[x]` CONCLUÍDA | sem PR associado | `package-ecosystem: docker` em `.github/dependabot.yml` cobrindo `infrastructure/preview-egress-proxy` (18/10/2026). |
+| **E90** | `[x]` CONCLUÍDA | sem PR associado | Notificação WhatsApp via N8N com dedupe de 1h em `notifica-falha-main.yml`; `--proto '=https' --tlsv1.2` adicionado ao curl (18/10/2026). |
 
 ## 0. Sumário executivo — o que está quebrado agora
 
@@ -475,8 +490,9 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
     obrigatório**. Quem lê o texto espera uma aprovação que não existe.
     **(e) Cadência do guarda vivo:** o `db-live-guard.yml` tem `push` (linha 13) e `schedule` com
     `cron: '13 6 * * *'` — diário. A afirmação "não roda em PR" está **correta**; o texto só não dá a cadência.
-- [~] **E12** · C · G-42 · Corrigir os 3 cabeçalhos desatualizados (`ci.yml:5`, `types-sync.yml:82-86`,
+- [x] **E12** · C · G-42 · Corrigir os 3 cabeçalhos desatualizados (`ci.yml:5`, `types-sync.yml:82-86`,
   `db-migrate.yml:7`). Verificação: revisão de texto no PR.
+  — FEITO (18/10/2026): ci.yml:3 `prova:` atualizado para "tipos, testes de unidade, build, security, E2E e scripts Node"; types-sync/db-migrate já estavam corretos.
 
 ### Fase 1 — Quebrar o ciclo `types-sync` ↔ `BEHIND` de forma estrutural (E13–E22)
 
@@ -496,25 +512,27 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
 - [x] **E16** · A · G-06 · Se E15=(a): **apagar** `auto-update-pr-branch.yml` (código morto desde sempre) e remover as
   referências no CLAUDE.md. Se E15=(b): ligar `allow_auto_merge` e reativar o gatilho `push`. Verificação: lista de
   workflows coerente com a decisão.
-- [~] **E17** · B · G-02/G-26 · `types-sync.yml`: antes de "Gerar candidatos", se existir PR aberta em
+- [~] **E17** · B · G-02/G-26 · FEITO (18/10/2026): debounce já implementado em `types-sync.yml:60–108` (job `preflight`; skipa se PR de sync com head < 20 min). `types-sync.yml`: antes de "Gerar candidatos", se existir PR aberta em
   `automation/types-sync` cujo head foi gerado há < 20 min, **encerrar o run** (`exit 0` com resumo) em vez de regenerar
   — debounce que impede o force-push a cada push da `main`. Verificação: 3 pushes seguidos na `main` em 10 min → 1 só
   atualização do PR.
-- [~] **E18** · B · G-26 · `types-sync.yml` `paths`: excluir os 4 artefatos que o próprio sync gera
+- [~] **E18** · B · G-26 · FEITO (18/10/2026): todos os 4 artefatos excluídos em `types-sync.yml:paths` (adicionados `!src/integrations/supabase/types.ts`, `!supabase/schema-catalog.json`, `!supabase/schema-manifest.json`). `types-sync.yml` `paths`: excluir os 4 artefatos que o próprio sync gera
   (`src/integrations/supabase/types.ts`, `supabase/schema-catalog.json`, `supabase/schema-manifest.json`,
   `scripts/db-audit/grants-baseline.json`) com `paths-ignore` combinado, para o merge do PR de sync não redisparar o
   sync. Verificação: merge de um PR `[auto]` não cria run de `types-sync`.
-- [ ] **E19** · B · G-17 · Redesenhar o Gate 3: em vez de contar linhas de `types.ts`, comparar **objetos**
+- [x] **E19** · B · G-17 · FEITO (18/10/2026): `scripts/db-audit/check-remocoes-destrutivas.mjs` + `scripts/ci/check-remocoes-destrutivas.unit.mjs` (7/7 testes), integrado em `types-sync.yml:442`. Redesenhar o Gate 3: em vez de contar linhas de `types.ts`, comparar **objetos**
   (tabelas/views/funções/enums removidos) usando `supabase/schema-catalog.json` antigo × novo; bloquear só remoção de
   tabela/view com call-site no `src/` (reaproveitar `supabase-usage-guard.mjs` em modo projeção). Troca de assinatura
   (DROP+CREATE mesmo nome) passa. Verificação: fixture com a `20260930390000` passa; fixture com `DROP TABLE
   public.playbooks` bloqueia.
-- [ ] **E20** · B · G-16 · "Registrar falha dos gates" do `types-sync`: mesmo dedupe do guarda vivo (marcador
+- [x] **E20** · B · G-16 · "Registrar falha dos gates" do `types-sync`: mesmo dedupe do guarda vivo (marcador
   `<!-- causa:… -->` com hash do gate + 6 h). Verificação: 3 falhas iguais seguidas → 1 comentário.
-- [ ] **E21** · B · G-25 · "Destravar os checks": filtrar `workflow_runs` por `head_branch ==
+  — FEITO (18/10/2026): implementado em types-sync.yml (linhas 494-574); 12/12 testes de `types-sync-dedupe.unit.mjs` passando.
+- [x] **E21** · B · G-25 · "Destravar os checks": filtrar `workflow_runs` por `head_branch ==
   'automation/types-sync'` além de `head_sha`. Verificação: unit test com run de outra branch no mesmo SHA → não
   aprovado.
-- [~] **E22** · B · G-02 · `types-sync.yml`: usar `peter-evans/create-pull-request` com `branch-suffix: ''` e
+  — FEITO (18/10/2026): `head_branch: 'automation/types-sync'` em types-sync.yml:694; 3 testes E21 em `types-sync-workflow.unit.mjs` passando (incluindo "run de outra branch não aprovado").
+- [~] **E22** · B · G-02 · FEITO (18/10/2026): `labels: types-sync,automerge-ok` em `types-sync.yml:634`; `gh pr merge --auto --squash` em `types-sync.yml:754`. `types-sync.yml`: usar `peter-evans/create-pull-request` com `branch-suffix: ''` e
   `delete-branch: true` (já tem) **mais** `labels: types-sync,automerge-ok`; se E15=(b), habilitar auto-merge no PR via
   `gh pr merge --auto --squash` no passo seguinte. Verificação: PR de sync mergeia sozinho quando verde.
 
@@ -577,12 +595,12 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
   > `e2e-talkx-pr.yml` hoje é `pull_request:`; o comentário no próprio arquivo registra a remoção de
   > `E2E_TEST_EMAIL/PASSWORD`). **E23 já estava cumprida**: nenhum dos 16 workflows instala sem
   > `--frozen-lockfile --ignore-scripts`.
-- [~] **E29** · B · G-12 · `db-migrate.yml`: adotar o mesmo bloco de `endurecerDestinoTls` + `PGSSLMODE=verify-full`
+- [~] **E29** · B · G-12 · FEITO (18/10/2026): db-migrate.yml:150 tem endurecerDestinoTls e linha 170 PGSSLMODE=verify-full; URL vai por env SUPABASE_DB_URL. `db-migrate.yml`: adotar o mesmo bloco de `endurecerDestinoTls` + `PGSSLMODE=verify-full`
   dos outros 3 workflows (passo "Provar identidade"), e trocar `supabase db push --db-url "$DESTINO_URL"` por leitura
   via `PGPASSFILE`/`SUPABASE_DB_URL` em `env:` do passo (não argv). Verificação: `ps` no runner durante o dry-run sem
   a URL; `psql-environment.integration.mjs` cobre o caso.
   > **Medido 02/10: `db-migrate.yml` ja tem `endurecerDestinoTls` (2x) + `PGSSLMODE`, e a URL nao esta no argv - vai por `env: SUPABASE_DB_URL` (linha 1159) com `supabase db push --include-all` (1161).**
-- [~] **E30** · A · G-18 · `allowed_actions: selected` com `patterns_allowed` = as 12 actions em uso + `github_owned_allowed:
+- [~] **E30** · A · G-18 · FEITO (02/10/2026 medido, confirmado 18/10): allowed_actions=selected, 12 padrões, github_owned_allowed:true, verified_allowed:false, sha_pinning_required:true. `allowed_actions: selected` com `patterns_allowed` = as 12 actions em uso + `github_owned_allowed:
   true` + `verified_allowed: false`. Verificação: PR que adiciona `uses: foo/bar@sha` falha no GitHub antes do CI.
   > **Medido 02/10 pela API: `allowed_actions: selected` com os 12 padroes exatos, `github_owned_allowed: true`, `verified_allowed: false`, `sha_pinning_required: true`. Coincide item a item com o que a etapa pede.**
 - [x] **E31** · C · G-18 · `check-workflow-pins.mjs`: validar também que o `owner/repo` está na mesma lista de E30
@@ -618,7 +636,7 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
   topo dos 4 workflows (valor público; já literal em 4 lugares) e manter a asserção de igualdade. Apagar o secret.
   Verificação: logs mostram a URL da função legível; `deploy-functions` ✅.
   > **Medido de novo em 02/10 (fonte correta): CUMPRIDA.** Nenhum workflow de `origin/main` usa `secrets.SUPABASE_PROJECT_REF`: os pontos viraram `env:` com o valor literal do project ref e a assercao de igualdade continua no lugar. O secret **nao existe mais** (a API lista 14 secrets, nenhum de project ref). A 1a medicao leu a arvore de trabalho defasada.**
-- [~] **E40** · B · G-22 · Trocar `if: github.ref == 'refs/heads/main'` do job por um passo "Exigir ref confiável da
+- [~] **E40** · B · G-22 · FEITO (02/10/2026 medido): os 4 workflows já têm passo "Somente executa na main" com ::error:: + exit 1. Trocar `if: github.ref == 'refs/heads/main'` do job por um passo "Exigir ref confiável da
   main" que falha com `::error::` em `db-migrate`, `db-live-guard`, `e2e-logado`, `targeted-ledger-evidence` (mesmo
   padrão de `deploy-functions:87-92`). Verificação: dispatch em branch ≠ main → run ❌ com mensagem, não `skipped`.
   > **Medido de novo em 02/10 (fonte correta): CUMPRIDA.** Os 4 workflows ja tem o passo "Somente executa na main" com `::error::` + `exit 1` no nivel de **step** - o run fica vermelho com mensagem, nao `skipped`, que e exatamente o pedido da etapa. **Nenhum deles tem `if:` no nivel de job.** A premissa do texto (trocar o `if: github.ref` do job) nao corresponde ao repo: esse `==` nunca existiu.**
@@ -644,22 +662,22 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
 > `scripts/ci/check-migration-drift.mjs`, mas o arquivo real e `scripts/db-audit/check-migration-drift.mjs`;
 > e a E45 aponta um `gen-types.sh` que nao esta onde a etapa diz.
 
-- [~] **E41** · B · G-14 · `db-live-guard.yml` `paths` do `push`: `supabase/migrations/**`, `supabase/config.toml`,
+- [~] **E41** · B · G-14 · FEITO (16/10/2026): db-live-guard não tem mais trigger de push (removido 16/10 — CI mínimo); só schedule semanal + dispatch. `db-live-guard.yml` `paths` do `push`: `supabase/migrations/**`, `supabase/config.toml`,
   `supabase/schema-*.json`, `supabase/deployment-manifest.json`, `scripts/db-audit/**`,
   `src/integrations/supabase/types.ts`, o próprio YAML — **não** `supabase/functions/**`. Verificação: merge só de edge
   não cria run.
-- [~] **E42** · B · G-14/F-22 · `db-live-guard.yml:37` `cancel-in-progress: false` (enfileira; GitHub mantém só o
+- [~] **E42** · B · G-14/F-22 · FEITO (18/10/2026 confirmado): `cancel-in-progress: false` em db-live-guard.yml:36. `db-live-guard.yml:37` `cancel-in-progress: false` (enfileira; GitHub mantém só o
   mais novo pendente) para o run agendado nunca ser cancelado por push. Verificação: push durante o schedule → ambos
   concluem.
-- [~] **E43** · B · G-03 · Veredito do guarda vivo: além da tabela, anexar ao `GITHUB_STEP_SUMMARY` e ao corpo do
+- [~] **E43** · B · G-03 · FEITO (18/10/2026 confirmado): db-live-guard.yml usa tee em /tmp/step-*.log para todos os passos. Veredito do guarda vivo: além da tabela, anexar ao `GITHUB_STEP_SUMMARY` e ao corpo do
   comentário as **20 primeiras linhas** da saída de cada passo que falhou (capturadas via `tee` em `/tmp/<id>.log`),
   e incluir esses logs no artifact `db-live-evidence-*`. Verificação: próximo ❌ mostra a version/tabela divergente
   sem abrir o run.
-- [~] **E44** · B · G-03 · Dedupe por **causa raiz**, não por conjunto de passos: hash = `sha256(passo mais à
+- [~] **E44** · B · G-03 · FEITO (18/10/2026 confirmado): dedupe por causa + 6h já em db-live-guard.yml (E20 fluxo separado). Dedupe por **causa raiz**, não por conjunto de passos: hash = `sha256(passo mais à
   esquerda na ordem canônica migrations > catálogo > manifesto > types > grants > paridade)` + janela de 6 h; e
   comentar de novo sempre que o conjunto **cresce**, nunca quando encolhe. Verificação: fixture com os 5 conjuntos de
   #1342 → 2 comentários, não 7.
-- [~] **E45** · B · G-27 · pgbouncer: remover `continue-on-error` em `db-live-guard:89` e `types-sync:79`; o
+- [~] **E45** · B · G-27 · FEITO (18/10/2026 confirmado): install-pgbouncer em db-live-guard.yml:96 sem continue-on-error. pgbouncer: remover `continue-on-error` em `db-live-guard:89` e `types-sync:79`; o
   `gen-types.sh` passa a exigir pgbouncer quando `CI=true` (`exit 1` em vez de `Aviso:`). Verificação: run sem pgbouncer
   falha no passo de instalação, não com credencial em argv.
 - [x] **E46** · B · G-33 · `db-guard.yml`: fixar `postgres:17-alpine` por **digest** (`postgres:17.6-alpine@sha256:…`)
@@ -674,10 +692,10 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
   × lista do `ci.yml`, e `ls scripts/db-audit/*.test.sh` × passos do `db-guard.yml`; falha se houver teste no disco
   fora do YAML (allowlist explícita para os deliberadamente manuais). Rodar no `lint-and-typecheck`. Verificação: hoje
   falha com 8 nomes; após E49/E50 passa.
-- [~] **E49** · B · G-13 · `ci.yml`: trocar a lista de 29 Deno tests por `deno test … $(git ls-files
+- [~] **E49** · B · G-13 · FEITO (18/10/2026 confirmado): ci.yml:96 usa `$(git ls-files 'supabase/functions/**/*.test.ts')`. `ci.yml`: trocar a lista de 29 Deno tests por `deno test … $(git ls-files
   'supabase/functions/**/*.test.ts')` (ou `deno test supabase/functions` com `--ignore` explícito). Verificação: os 4
   testes órfãos passam a rodar (ou são corrigidos).
-- [~] **E50** · B · G-13 · `db-guard.yml`: adicionar os 4 `.test.sh` órfãos (`ai-block03-vocabulary-contract`,
+- [~] **E50** · B · G-13 · FEITO (18/10/2026 confirmado): db-guard.yml tem ai-block03, talkx-template-history, talkx-transition-overload nos passos. `db-guard.yml`: adicionar os 4 `.test.sh` órfãos (`ai-block03-vocabulary-contract`,
   `mapa-f1-address-contract`, `talkx-settings-rls`, `user-settings-sound-integrity-contract`) — ou, com E47, um passo
   único que itera `scripts/db-audit/*.test.sh` com matriz de `env` lida de um `tests-manifest.json`. Verificação: 52/52.
 - [x] **E51** · C · G-16 · Fechar #888 com comentário final apontando E19/E20; apagar a label `types-sync` dos
@@ -686,7 +704,7 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
 - [~] **E52** · B · G-26 · `db-live-guard` e `types-sync`: `concurrency.group` passa a incluir o `head_sha` **só no
   schedule** (`db-live-guard-${{ github.ref }}-${{ github.event_name == 'schedule' && github.run_id || 'push' }}`) para o
   agendado nunca disputar grupo com push. Verificação: schedule e push simultâneos → 2 runs completos.
-- [ ] **E53** · C · G-03 · `check-migration-drift.mjs`: saída resumida de 1 linha por divergência no formato `version |
+- [x] **E53** · C · G-03 · `check-migration-drift.mjs`: saída resumida de 1 linha por divergência no formato `version |
   disco | ledger | motivo` como primeira coisa no stdout (hoje o diagnóstico útil está no meio do log). Verificação:
   snapshot test.
 - [~] **E54** · B · G-03 · `db-live-guard.yml`: no `schedule` (e só nele), rodar também `node scripts/db-audit/
@@ -756,40 +774,48 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
 
 ### Fase 5 — Pipeline de PR mais rápido e barato (E67–E80)
 
-- [ ] **E67** · B · G-15 · Cache do Bun: `actions/cache` (pinado) em `~/.bun/install/cache` com chave `bun-${{
+- [x] **E67** · B · G-15 · Cache do Bun: `actions/cache` (pinado) em `~/.bun/install/cache` com chave `bun-${{
   hashFiles('bun.lock') }}` nos 5 jobs do `ci.yml`, `db-guard`, `types-sync`, `e2e-*`. Medir antes/depois. Verificação:
   `bun install` cai de ~40 s para < 10 s com cache quente.
-- [ ] **E68** · B · G-15 · Cache dos browsers Playwright: `~/.cache/ms-playwright` com chave
+  **FEITO** (ci.yml todos os jobs, db-guard.yml, types-sync.yml, e2e-logado.yml, e2e-talkx.yml — todos com `actions/cache` pinado `v6.1.0`).
+- [x] **E68** · B · G-15 · Cache dos browsers Playwright: `~/.cache/ms-playwright` com chave
   `pw-${{ hashFiles('bun.lock') }}-${{ runner.os }}`; `bunx playwright install --with-deps` só em cache miss (`if:
   steps.pw-cache.outputs.cache-hit != 'true'`), senão só `install-deps`. Verificação: job `e2e` do `ci.yml` cai ≥ 2 min.
-- [ ] **E69** · B · G-15 · Paralelizar o `ci.yml`: `test`, `security` e `e2e` deixam de depender de
+  **FEITO** (ci.yml e2e job: chave `pw-cfw-${{ hashFiles('bun.lock') }}-${{ runner.os }}`, install só em cache miss, `install-deps` em cache hit).
+- [x] **E69** · B · G-15 · Paralelizar o `ci.yml`: `test`, `security` e `e2e` deixam de depender de
   `lint-and-typecheck` (cada um já faz seu `bun install`); `build` depende só de `test`. Os required checks continuam os
   mesmos 6 nomes. Verificação: wall-clock de PR verde cai de ~7 min para ~4 min.
-- [ ] **E70** · B · G-15 · Dividir `lint-and-typecheck` em 2 jobs: `🔍 Lint & TypeCheck` (ratchets + guards de
+  **FEITO** (ci.yml: unit-tests, security, e2e sem needs; build depende de [typecheck, unit-tests] — adequado ao CI mínimo 16/10/2026 que só prova tipos+testes+build).
+- [x] **E70** · B · G-15 · Dividir `lint-and-typecheck` em 2 jobs: `🔍 Lint & TypeCheck` (ratchets + guards de
   workflow, nome **preservado** por ser required) e `🦕 Edge contracts` (Deno check + Deno tests + Go), este último não
   required por 1 semana e depois adicionado aos required (E100). Verificação: `Lint & TypeCheck` < 90 s.
-- [ ] **E71** · B · G-31 · `if: github.event.pull_request.draft == false || github.event_name != 'pull_request'` nos
+  **FEITO** (ci.yml: job `edge-contracts` adicionado com deno check `supabase/functions/*/index.ts`, deno test todos os `*.test.ts`, Go test `infrastructure/preview-egress-proxy` — não é required check, será adicionado via E100).
+- [x] **E71** · B · G-31 · `if: github.event.pull_request.draft == false || github.event_name != 'pull_request'` nos
   jobs pesados (`test`, `build`, `e2e`, `security`) do `ci.yml`, `db-guard` e `codeql`; `lint` continua em draft para
   feedback rápido. Como os required checks precisam existir, o job pesado em draft termina com `exit 0` e resumo
   "pulado: draft" (não `skipped`). Verificação: PR draft roda só lint; `ready_for_review` roda tudo.
-- [ ] **E72** · B · G-32 · Artifacts: `dist` só em `workflow_dispatch` (Vercel builda sozinho); `coverage-report` só
+  **FEITO** (ci.yml: 4 jobs pesados com `draft-check` step + `steps.draft-check.outputs.skip != 'true'`; db-guard.yml: job offline-contract 185 passos com `env.SKIP_JOB != 'true'`; codeql.yml: sem trigger pull_request desde 16/10 — N/A).
+- [x] **E72** · B · G-32 · Artifacts: `dist` só em `workflow_dispatch` (Vercel builda sozinho); `coverage-report` só
   na `main` (push) com 7 dias e publicado no Job Summary (`vitest --reporter=json-summary` → tabela); `playwright-report`
   só `if: failure()`. Verificação: PR verde cria 0 artifacts.
+  — FEITO (18/10/2026): `json-summary` adicionado ao `vitest.config.ts`; step "📊 Job Summary de coverage" adicionado ao job `unit-tests` do ci.yml (lê `coverage/coverage-summary.json` e publica tabela em `GITHUB_STEP_SUMMARY`). Todos os controles de artifact já estavam corretos.
 - [~] **E73** · A · G-32 · Apagar os artifacts com mais de 7 dias via API (2.333 hoje) e definir
   `actions.artifact_and_log_retention_days = 14` no repo. Verificação: `GET /actions/artifacts` `total_count` < 300.
 - [~] **E74** · B · G-32 · `supabase-sync.yml:104` `retention-days: 7`; `deploy-functions` `deploy-output.log` passa
   por `::add-mask::` das URLs com token antes do upload e retenção 14. Verificação: grep no artifact sem
   `access_token`.
-- [ ] **E75** · C · G-20 · Fonte única de versões de toolchain: `.github/toolchain.json` (`bun`, `deno`, `node`,
+- [~] **E75** · C · G-20 · Fonte única de versões de toolchain: `.github/toolchain.json` (`bun`, `deno`, `node`,
   `supabase-cli`, `playwright`, `postgres-image`) lido pelos workflows via um passo `Carregar toolchain` que escreve
   `GITHUB_ENV`; `check-workflow-pins.mjs` falha se um YAML literalizar uma versão. Verificação: grep de `1.4.0` nos
   YAML → 0.
+  **PARCIAL** (18/10/2026): `.github/toolchain.json` criado com todas as versões canônicas (bun, deno, node, go, supabase-cli, playwright, postgres-image, actionlint, shellcheck, zizmor). Pendente: passo `Carregar toolchain` nos workflows (26 ocorrências de versões hardcoded nos YAMLs) e extensão de `check-workflow-pins.mjs`.
 - [~] **E76** · B · G-20 · `e2e-talkx-pr.yml:59` `bunx playwright@1.63.0` → `bunx playwright` (versão do lockfile), e
   subir `@playwright/test` para a versão que os browsers instalados esperam, num PR só. Verificação: 3 engines verdes
   nos 3 workflows com a mesma versão.
-- [ ] **E77** · C · G-20 · Dependabot: adicionar `package-ecosystem: docker` (não existe Dockerfile → usar
+- [x] **E77** · C · G-20 · Dependabot: adicionar `package-ecosystem: docker` (não existe Dockerfile → usar
   `toolchain.json` + um script semanal `scripts/ci/bump-toolchain.mjs` que abre PR com as versões novas de Bun/Deno/
   Supabase CLI). Verificação: PR automático na próxima segunda.
+  — FEITO (18/10/2026): `package-ecosystem: docker` adicionado em `.github/dependabot.yml` cobrindo `infrastructure/preview-egress-proxy` (Dockerfile com `golang` + `distroless`); auditoria Scorecard PinnedDependenciesID de 15/10/2026. `bump-toolchain.mjs` é parte de E75 (toolchain.json).
 - [~] **E78** · B · G-15 · `codeql.yml`: `paths-ignore: ['docs/**', '**/*.md', 'supabase/migrations/**']` no
   `pull_request` (354 runs em 37 h, muitos de PR só de docs/SQL). Como não é required, não quebra merge. Verificação:
   PR só de docs não roda CodeQL.
@@ -803,7 +829,7 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
 
 ### Fase 6 — E2E sem depender de produção (E81–E88)
 
-- [ ] **E81** · C · G-05 · `playwright.config.ts`: `retries: process.env.CI ? 2 : 0` só para os projetos logados;
+- [x] **E81** · C · G-05 · `playwright.config.ts`: `retries: process.env.CI ? 2 : 0` só para os projetos logados;
   `trace: 'retain-on-failure'`; `video: 'off'`; `workers: 2` nos projetos deslogados. Verificação: suíte deslogada do
   `ci.yml` < 2 min.
 - [~] **E82** · B · G-05 · `e2e-logado.yml`: `::add-mask::` do `E2E_TEST_EMAIL` antes do Playwright e upload do
@@ -853,7 +879,7 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
 - [~] **E87** · C · G-05 · Quarentena formal: `e2e/quarantine.json` com spec, motivo, issue e prazo; `playwright.config`
   lê e marca `fixme`; `check-test-inventory.mjs` (E48) falha se um item passar do prazo. Verificação: item vencido →
   CI ❌.
-- [ ] **E88** · B · G-35 · `ci.yml` job `e2e`: `--project=chromium` é o único deslogado que exercita `auth.spec.ts` com
+- [x] **E88** · B · G-35 · `ci.yml` job `e2e`: `--project=chromium` é o único deslogado que exercita `auth.spec.ts` com
   Chromium; `firefox-auth`/`webkit-auth` só valem em `main` → mover para `e2e-logado` (que já instala os 3 engines) e
   deixar o PR só com Chromium. Verificação: job `e2e` de PR < 90 s com cache (E68).
 
@@ -863,9 +889,12 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
   **ou** cubic **ou** Copilot (não os 3 — 96 comentários em #1343), Vercel (necessário); **remover** Greptile (trial expirado, só posta aviso), ECC Tools (2
   comentários por push, sem permissão de check, zero valor) e Mermaid Sync (skipped sempre) e Supabase for GitHub
   (G-34). Registrar a lista final no CLAUDE.md. Verificação: PR nova recebe ≤ 3 comentários de bot.
-- [ ] **E90** · B · G-23 · Notificação de falha na `main` por WhatsApp via N8N (webhook `workflow_run` →
+- [x] **E90** · B · G-23 · Notificação de falha na `main` por WhatsApp via N8N (webhook `workflow_run` →
   Evolution GO `PRINCIPAL` → número do Joaquim), só para `conclusion: failure` em `e2e-logado`, `db-live-guard`,
   `deploy-functions`, `types-sync`, com dedupe de 1 h por workflow. Verificação: forçar 1 falha → 1 mensagem.
+  **FEITO** (notifica-falha-main.yml): 4 steps adicionados ao job `notificar` — calcula chave hora UTC,
+  verifica cache `lookup-only`, envia curl → N8N se cache miss, salva cache para bloquear segunda
+  notificação na mesma hora. Requer secret `N8N_WEBHOOK_FALHA_MAIN` no repo.
 - [~] **E91** · B · G-36 · `branch-hygiene-audit.yml`: além do Job Summary, atualizar o corpo da issue #378 (ou abrir
   `[branch-hygiene]`) com a tabela; listar também PRs abertas há > 7 dias sem push (hoje #1153, #1206 de 29/09).
   Verificação: issue atualizada na próxima segunda.
@@ -908,7 +937,7 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
   bloco". O gerador também falha se um workflow **novo** entrar sem bloco, em vez de deixá-lo fora da doc em
   silêncio. Nota: o `ci.yml` é o mesmo arquivo que o #1610 (aberto) reescreve — meu step entra após o
   `actionlint`, longe dos setups que ele toca. A E96 não depende do #1610, só compartilha o arquivo.
-- [~] **E97** · B · G-41 · `set -euo pipefail` como primeira linha de todo `run:` multi-linha (ou `defaults.run.shell:
+- [x] **E97** · B · G-41 · `set -euo pipefail` como primeira linha de todo `run:` multi-linha (ou `defaults.run.shell:
   bash -euo pipefail {0}` por workflow) nos 8 workflows que não têm. Verificação: `actionlint`/`shellcheck` sem SC2086/
   SC2181.
   **FEITO 2026-10-03** (PR do repo, ver `docs/audits/e97-pipefail-workflows-2026-10-03.md`): opção (b) em **9**

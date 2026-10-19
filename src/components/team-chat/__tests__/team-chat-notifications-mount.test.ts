@@ -13,6 +13,8 @@ const h = vi.hoisted(() => ({
 
 vi.mock('@/lib/logger', () => ({
   getLogger: () => ({ info: vi.fn(), error: vi.fn() }),
+
+  createLogger: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), withCorrelation: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() })) })),
 }));
 vi.mock('@/components/ui/toaster', () => ({ Toaster: () => null }));
 vi.mock('@/components/ui/sonner', () => ({ Toaster: () => null }));
@@ -48,6 +50,16 @@ vi.mock('@/components/team-chat/TeamChatNotificationsListener', () => ({
 }));
 vi.mock('@/hooks/system/useServiceWorker', () => ({ useServiceWorker: vi.fn() }));
 vi.mock('@/hooks/ui/useScreenProtection', () => ({ useScreenProtection: vi.fn() }));
+vi.mock('@/hooks/auth/useAuth', () => ({
+  useAuth: () => ({ profile: { id: 'test-id', role: 'admin' }, user: null, session: null, loading: false }),
+}));
+vi.mock('@/hooks/realtime/useGlobalIncomingMessageAlerts', () => ({
+  useGlobalIncomingMessageAlerts: vi.fn(),
+}));
+vi.mock('@/components/calls/OutboundCallDialog', () => ({ OutboundCallDialog: () => null }));
+vi.mock('@/components/notifications/SecurityPushNotificationsListener', () => ({
+  SecurityPushNotificationsListener: () => null,
+}));
 
 vi.mock('@/hooks/chat/useTeamChat', () => ({ useTeamConversations: () => ({ data: [] }) }));
 vi.mock('@/hooks/chat/useTeamChatNotifications', () => ({

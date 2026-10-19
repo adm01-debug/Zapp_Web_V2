@@ -142,17 +142,18 @@ jobs:
         if: steps.credencial.outcome == 'success'
         continue-on-error: true
         run: |
-          # W26: lote-pendente.mjs e a fonte unica da regra "apply pendente" (sobre W21/W22).
+          # GA19/W26: lote-pendente.mjs e a fonte unica da regra "apply pendente" (sobre W21/W22).
           # No evento push (lote acabou de entrar na main), apply-pendente e esperado:
           # o apply acontece no mesmo dia pelo fluxo de lote. Tratar como neutral (exit 0)
           # para nao abrir issue espuria. No schedule/dispatch: manter estrito (exit 3).
+          # exit 2 = erro de conexao/parse (nunca tratar como neutro — falha real).
           # O shell padrao e `-euo pipefail` (W44): sem o `set +e`, o exit 3 do pipeline
           # aborta o passo antes de `rc` ser lido e a regra acima nunca executa.
           set +e
           node scripts/db-audit/lote-pendente.mjs 2>&1 | tee /tmp/step-migrations.log
           rc=${PIPESTATUS[0]}
           set -e
-          if [ "$rc" -eq 2 ] && [ "$GITHUB_EVENT_NAME" = "push" ]; then
+          if [ "$rc" -eq 3 ] && [ "$GITHUB_EVENT_NAME" = "push" ]; then
             echo "::warning::Apply pendente no push — nao e drift; o schedule de amanha verificara se o apply aconteceu."
             exit 0
           fi
@@ -226,6 +227,15 @@ jobs:
           set -o pipefail
           node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 \
             -f scripts/db-audit/check-talkx-transition-contract.sql 2>&1 | tee /tmp/step-contract-talkx-transition.log
+
+      - name: Verificar invariantes gerais do banco vivo
+        id: live-invariants
+        if: steps.credencial.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 \
+            -f scripts/db-audit/check-live-invariants.sql 2>&1 | tee /tmp/step-live-invariants.log
 
       - name: Regenerar catalogo e comparar com o commitado
         id: catalog
@@ -313,7 +323,7 @@ jobs:
           set -o pipefail
           # --sem-migrations: a perna de migrations e provada (com a regra de apply
           # pendente) no passo "Comparar migrations"; aqui ficam edges e grants.
-          node scripts/db-audit/check-triple-parity.mjs --require-live --sem-migrations 2>&1 | tee /tmp/step-triple-parity.log
+          node scripts/db-audit/check-triple-parity.mjs --require-live --sem-migrations --verbose 2>&1 | tee /tmp/step-triple-parity.log
 
       - name: Auditar configuracao runtime sem dados de clientes
         id: runtime-config
@@ -323,7 +333,7 @@ jobs:
           set -o pipefail
           node scripts/db-audit/check-runtime-config.mjs /tmp/runtime-config.json 2>&1 | tee /tmp/step-runtime-config.log
 
-      # Une os 11 vereditos individuais (continue-on-error acima) num unico
+      # Une os 12 vereditos individuais (continue-on-error acima) num unico
       # resultado: falha o job se qualquer um falhou/foi pulado, escreve a
       # tabela no Job Summary (E59) e calcula uma assinatura estavel da causa
       # para o dedupe do alerta abaixo (E05/E06/E43/E44).
@@ -539,10 +549,11 @@ jobs:
             /tmp/step-acl-talkx-metrics.log
             /tmp/step-e2e-fixtures.log
             /tmp/step-contract-talkx-transition.log
+            /tmp/step-live-invariants.log
             /tmp/step-catalog.log
             /tmp/step-manifest.log
             /tmp/step-types.log
             /tmp/step-triple-parity.log
             /tmp/step-runtime-config.log
           if-no-files-found: ignore
-          retention-days: 3
+          retention-days: 14

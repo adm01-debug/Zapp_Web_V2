@@ -87,6 +87,14 @@ export function CommandPalette({
     [query, groupedCommands, quickAccessItems, recentCommands]
   );
 
+  const listboxId = 'cp-listbox';
+  const activeItemId = allItems[selectedIndex] ? `cp-opt-${allItems[selectedIndex].id}` : undefined;
+
+  React.useEffect(() => {
+    if (!activeItemId) return;
+    document.getElementById(activeItemId)?.scrollIntoView?.({ block: 'nearest' });
+  }, [activeItemId]);
+
   // R2-INF-032 (#377): cada digitação é um TERMO novo. A resposta de um termo anterior que ainda
   // estava em voo quando o debounce de 300 ms liberou a busca seguinte não pode mais virar
   // resultado — sem esta trava, a resposta do catálogo ANTIGO substituía os resultados da consulta
@@ -169,10 +177,12 @@ export function CommandPalette({
         <DialogTitle className="sr-only">Paleta de comandos</DialogTitle>
         <div className="flex items-center border-b border-border px-4">
           <Search className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-          <input ref={inputRef} value={query} onChange={(e) => handleQueryChange(e.target.value)} placeholder={placeholder}
+          <input ref={inputRef} role="combobox" aria-label="Buscar comandos" aria-expanded="true"
+            aria-controls={listboxId} aria-activedescendant={activeItemId}
+            value={query} onChange={(e) => handleQueryChange(e.target.value)} placeholder={placeholder}
             className="flex-1 px-4 py-4 text-base bg-transparent border-0 outline-none placeholder:text-muted-foreground"
             autoComplete="off" autoCorrect="off" spellCheck={false} />
-          {query && <button onClick={() => handleQueryChange('')} className="p-1.5 hover:bg-muted rounded-md transition-colors"><X className="h-4 w-4 text-muted-foreground" /></button>}
+          {query && <button type="button" aria-label="Limpar busca" onClick={() => handleQueryChange('')} className="p-1.5 hover:bg-muted rounded-md transition-colors"><X className="h-4 w-4 text-muted-foreground" /></button>}
           {isSearching && <Loader2 className="h-4 w-4 text-muted-foreground animate-spin ml-2" />}
         </div>
 
@@ -183,6 +193,12 @@ export function CommandPalette({
             <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-muted rounded font-mono">Esc</kbd>fechar</span>
           </div>
           <div className="flex items-center gap-1"><Command className="h-3 w-3" /><kbd className="px-1.5 py-0.5 bg-muted rounded font-mono">K</kbd></div>
+        </div>
+
+        <div role="status" aria-live="polite" className="sr-only">
+          {query && allItems.length > 0
+            ? `${allItems.length} resultado${allItems.length !== 1 ? 's' : ''}`
+            : ''}
         </div>
 
         <ScrollArea className="max-h-[400px]">
@@ -222,24 +238,28 @@ export function CommandPalette({
                   </div>
                 )}
                 <div className="px-2 py-1.5"><span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5"><Star className="h-3 w-3" />Acesso rápido</span></div>
-                <div className="space-y-0.5">
-                  {quickAccessItems.map((cmd, idx) => (
-                    <button key={cmd.id} onClick={() => executeCommand(cmd)}
-                      className={cn('w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors text-left group', recentCommands.length + idx === selectedIndex ? 'bg-muted' : 'hover:bg-muted/50')}>
-                      <div className="flex items-center gap-3">
-                        <span className="text-muted-foreground group-hover:text-foreground transition-colors">{cmd.icon}</span>
-                        <div><span className="text-sm font-medium">{cmd.title}</span>{cmd.description && <p className="text-xs text-muted-foreground">{cmd.description}</p>}</div>
-                      </div>
-                      {cmd.shortcut && <div className="flex gap-1">{cmd.shortcut.map((k, i) => <kbd key={i} className="px-1.5 py-0.5 bg-muted rounded text-3xs font-mono text-muted-foreground">{k}</kbd>)}</div>}
-                    </button>
-                  ))}
+                <div id={listboxId} role="listbox" aria-label="Acesso rápido" className="space-y-0.5">
+                  {quickAccessItems.map((cmd, idx) => {
+                    const qi = recentCommands.length + idx;
+                    return (
+                      <button key={cmd.id} id={`cp-opt-${cmd.id}`} role="option" aria-selected={qi === selectedIndex}
+                        onClick={() => executeCommand(cmd)}
+                        className={cn('w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors text-left group', qi === selectedIndex ? 'bg-muted' : 'hover:bg-muted/50')}>
+                        <div className="flex items-center gap-3">
+                          <span className="text-muted-foreground group-hover:text-foreground transition-colors">{cmd.icon}</span>
+                          <div><span className="text-sm font-medium">{cmd.title}</span>{cmd.description && <p className="text-xs text-muted-foreground">{cmd.description}</p>}</div>
+                        </div>
+                        {cmd.shortcut && <div className="flex gap-1">{cmd.shortcut.map((k, i) => <kbd key={i} className="px-1.5 py-0.5 bg-muted rounded text-3xs font-mono text-muted-foreground">{k}</kbd>)}</div>}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>
           )}
 
           {query && (
-            <div className="p-2">
+            <div id={listboxId} role="listbox" aria-label="Resultados" className="p-2">
               {groupedCommands.length === 0 && !isSearching && (
                 <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                   <Search className="h-8 w-8 mb-2 opacity-50" /><p className="text-sm">Nenhum resultado para "{query}"</p><p className="text-xs mt-1">Tente outros termos</p>
@@ -252,7 +272,7 @@ export function CommandPalette({
                     {group.items.map((item, idx) => {
                       const gi = groupedCommands.slice(0, groupedCommands.indexOf(group)).reduce((a, g) => a + g.items.length, 0) + idx;
                       return (
-                        <motion.button key={item.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.02 }}
+                        <motion.button key={item.id} id={`cp-opt-${item.id}`} role="option" aria-selected={gi === selectedIndex} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.02 }}
                           onClick={() => executeCommand(item)} disabled={item.disabled}
                           className={cn('w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors text-left group', gi === selectedIndex ? 'bg-muted' : 'hover:bg-muted/50', item.disabled && 'opacity-50 cursor-not-allowed')}>
                           <div className="flex items-center gap-3">

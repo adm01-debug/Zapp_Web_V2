@@ -20,7 +20,10 @@ vi.mock('@/integrations/supabase/client', () => ({
   supabase: { from: vi.fn(() => ({ insert: mocks.insert })) },
 }));
 vi.mock('sonner', () => ({ toast: { error: mocks.toastError, success: vi.fn() } }));
-vi.mock('@/lib/logger', () => ({ log: { error: mocks.logError, info: vi.fn(), warn: vi.fn() } }));
+vi.mock('@/lib/logger', () => ({ log: { error: mocks.logError, info: vi.fn(), warn: vi.fn() } ,
+  getLogger: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), withCorrelation: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() })) })),
+  createLogger: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), withCorrelation: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() })) })),
+}));
 
 import { useCreateContactPurchase } from '@/hooks/crm/useContactPurchases';
 

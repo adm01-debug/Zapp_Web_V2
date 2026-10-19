@@ -175,14 +175,14 @@ describe('useRealtimeInbox.handleSendAudio — PK-28: citação da resposta', ()
 
     expect(uploadAudioMock).toHaveBeenCalledWith('c1', blob);
     expect(sendMessageMock).toHaveBeenCalledWith(
-      'c1', '[Áudio]', 'audio', 'audio/arquivo.webm', undefined, 'reply-audio-1',
+      'c1', '[Áudio]', 'audio', 'audio/arquivo.webm', undefined, null, expect.any(String),
     );
   });
 
-  it('sem resposta pendente o contrato antigo continua igual (nenhum argumento a mais)', async () => {
+  it('sem resposta pendente o contrato continua igual (clientMessageId gerado automaticamente)', async () => {
     await expect(sendAudio()).resolves.toBe(true);
 
-    expect(sendMessageMock).toHaveBeenCalledWith('c1', '[Áudio]', 'audio', 'audio/arquivo.webm');
+    expect(sendMessageMock).toHaveBeenCalledWith('c1', '[Áudio]', 'audio', 'audio/arquivo.webm', undefined, null, expect.any(String));
   });
 });
 

@@ -128,9 +128,10 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled, onO
   // X094 — o endereço acompanha a troca feita DENTRO do editor (biblioteca lateral)
   // sem mexer no estado do React: remontar o editor aqui perderia a edição em curso
   // (R2-MOD-024 decide que só a biblioteca troca o template ativo).
-  const mirrorEditorTemplate = useCallback((templateId: string) => {
+  const mirrorEditorTemplate = useCallback((t: TalkXTemplate | null) => {
+    if (!t) return;
     const current = parseTalkXTemplateRoute(window.location.search).route;
-    replaceTalkXTemplateRoute({ templateId, ttab: current?.ttab ?? 'conteudo' });
+    replaceTalkXTemplateRoute({ templateId: t.id, ttab: current?.ttab ?? 'conteudo' });
   }, []);
 
   // Fechar o editor (salvar, duplicar ou Voltar) devolve a biblioteca e o endereço.
@@ -198,7 +199,7 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled, onO
 
 
   // ── X092 · painel lateral da tela 04 ─────────────────────────────────────────────
-  // T04-039: "Mais convertidos" é ranking por TAXA DE RESPOSTA com a base mínima A9,
+  // T04-039: este painel é ranking por TAXA DE RESPOSTA com a base mínima A9,
   // lido da view `talkx_campaign_metrics`. NUNCA é `use_count` sob este título.
   const conversion: TalkXTemplateConversionState = conversionFromHook ?? EMPTY_CONVERSION;
   const conversionByTemplate = useMemo(
@@ -348,13 +349,13 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled, onO
           subtitle="Templates que convertem, recomendações sob medida para o seu negócio."
         />
 
-        {/* T04-039/040/042/043/044 — "Mais convertidos": os 3 primeiros por TAXA DE
+        {/* T04-039/040/042/043/044 — Mais respondidos: os 3 primeiros por TAXA DE
             RESPOSTA (base mínima A9), com miniatura e "↑ N% de resposta". Sem base, o
             painel diz "sem dados ainda" — nunca mostra "mais usados" sob este título. */}
         <RailCard
           icon={TrendingUp}
           color="green"
-          title="Mais convertidos"
+          title="Mais respondidos"
           subtitle="Templates com melhor taxa de resposta."
           right={<button type="button" onClick={() => { setOrderByReply(true); setGalleryMode('list'); setPage(1); }} className="h-7 px-2 rounded-md text-2xs font-medium border border-border/60 bg-input/40 hover:bg-muted/50 shrink-0">Ver todos</button>}
         >
@@ -367,7 +368,7 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled, onO
           ) : (
             topConverted.map(({ item, template }, i) => (
               <button key={template.id} type="button" onClick={() => onUseTemplate(template.id)} className="w-full flex items-center gap-2.5 py-2.5 border-b border-border/50 last:border-0 hover:bg-muted/20 text-left rounded-xl px-1">
-                <span className="w-6 h-6 rounded-full bg-primary/15 text-primary-glow text-xs font-bold flex items-center justify-center shrink-0">{i + 1}</span>
+                <span className="w-6 h-6 rounded-full bg-primary/15 text-[hsl(var(--primary-text))] text-xs font-bold flex items-center justify-center shrink-0">{i + 1}</span>
                 {template.media_url ? (
                   <img src={template.media_url} alt="" className="w-8 h-8 rounded-lg object-cover border border-border/60 shrink-0" />
                 ) : (

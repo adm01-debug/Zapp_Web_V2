@@ -23,13 +23,16 @@ const TOKEN = 'jwt-do-usuario-de-teste';
 const SENTINELA_SERVICE_ROLE = 'valor-da-chave-mestra-que-nao-pode-viajar';
 
 /** `fetch` de mentira que registra cada chamada. Nenhuma requisicao sai da maquina. */
-function fetchFalso({ loginStatus = 200, rpcStatus = 200 } = {}) {
+function fetchFalso({ loginStatus = 200, rpcStatus = 200, logoutStatus = 204 } = {}) {
   const chamadas = [];
   const impl = async (url, opcoes = {}) => {
     chamadas.push({ url, opcoes });
     const ok = (status) => status >= 200 && status < 300;
     if (url.includes('/auth/v1/token')) {
       return { ok: ok(loginStatus), status: loginStatus, json: async () => ({ access_token: TOKEN }) };
+    }
+    if (url.includes('/auth/v1/logout')) {
+      return { ok: ok(logoutStatus), status: logoutStatus, json: async () => ({}) };
     }
     return { ok: ok(rpcStatus), status: rpcStatus, json: async () => 1 };
   };
@@ -52,7 +55,7 @@ test('autentica como o usuario de teste e chama a RPC com o JWT dele', async () 
   const { chamadas, impl } = fetchFalso();
   const r = await limparFixture({ ...args, fetchImpl: impl });
 
-  assert.equal(chamadas.length, 2, 'esperava exatamente login + RPC');
+  assert.equal(chamadas.length, 3, 'esperava exatamente login + RPC + logout');
   const [login, rpc] = chamadas;
 
   assert.equal(login.url, `${BASE}/auth/v1/token?grant_type=password`);
@@ -76,7 +79,7 @@ test('a chave mestra do banco nao entra em nenhuma requisicao', async () => {
   const codigo = await principal([RPC_PADRAO], envBase({ SUPABASE_SERVICE_ROLE_KEY: SENTINELA_SERVICE_ROLE }), impl);
 
   assert.equal(codigo, 0);
-  assert.equal(chamadas.length, 2);
+  assert.equal(chamadas.length, 3);
   const viagem = JSON.stringify(chamadas);
   assert.ok(
     !viagem.includes(SENTINELA_SERVICE_ROLE),
@@ -113,6 +116,44 @@ test('RPC recusada derruba o teardown', async () => {
     () => limparFixture({ ...args, fetchImpl: impl }),
     new RegExp(`RPC ${RPC_PADRAO} recusada \\(HTTP 403\\)`),
   );
+});
+
+// ── GA39: logout global ──────────────────────────────────────────────────────
+
+test('GA39: logout global e chamado apos a RPC com o JWT do usuario de teste', async () => {
+  const { chamadas, impl } = fetchFalso();
+  const r = await limparFixture({ ...args, fetchImpl: impl });
+
+  const logout = chamadas[2];
+  assert.match(logout.url, /\/auth\/v1\/logout\?scope=global$/);
+  assert.equal(logout.opcoes.method, 'POST');
+  assert.equal(logout.opcoes.headers.authorization, `Bearer ${TOKEN}`, 'logout usa o JWT do usuario de teste');
+  assert.equal(logout.opcoes.headers.apikey, CHAVE_PUBLICA);
+  assert.equal(r.logoutStatus, 204);
+});
+
+test('GA39: falha de logout nao derruba o teardown', async () => {
+  const { impl } = fetchFalso({ logoutStatus: 500 });
+  const r = await limparFixture({ ...args, fetchImpl: impl });
+
+  assert.equal(r.status, 200, 'status da RPC permanece OK');
+  assert.equal(r.logoutStatus, 500, 'logoutStatus reflete o HTTP do logout');
+});
+
+test('GA39: erro de rede no logout nao propaga excecao', async () => {
+  const chamadas = [];
+  const impl = async (url, opcoes = {}) => {
+    chamadas.push({ url, opcoes });
+    if (url.includes('/auth/v1/logout')) throw new Error('rede indisponivel');
+    if (url.includes('/auth/v1/token')) {
+      return { ok: true, status: 200, json: async () => ({ access_token: TOKEN }) };
+    }
+    return { ok: true, status: 200, json: async () => 1 };
+  };
+  const r = await limparFixture({ ...args, fetchImpl: impl });
+
+  assert.equal(r.status, 200);
+  assert.equal(r.logoutStatus, null, 'erro de rede no logout resulta em logoutStatus null');
 });
 
 // ── Contrato do workflow ─────────────────────────────────────────────────────

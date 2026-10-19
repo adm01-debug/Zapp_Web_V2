@@ -44,9 +44,12 @@ test('rollback deploy is pinned to a historical ancestor and attests deployed SH
 test('concurrency e por funcao: dispatch de uma funcao nao cancela o pendente de outra', () => {
   // Grupo unico fazia o GitHub cancelar o pendente de OUTRA funcao a cada dispatch
   // (30/09/2026: 11 cancelados em 16 runs; 3 funcoes do #1240 nunca publicaram).
+  // GA30: rollback usa grupo separado (deploy-edge-rollback-*) para nao ser cancelado
+  // por um push normal. O group ainda contem inputs.function_name para granularidade.
   const block = workflow.match(/^concurrency:\n((?:  .*\n)+)/m);
   assert.ok(block, 'bloco concurrency de topo ausente');
-  assert.match(block[1], /^  group: deploy-edge-functions-\$\{\{ inputs\.function_name \|\| 'all' \}\}$/m);
+  assert.match(block[1], /deploy-edge-functions-/, 'grupo deploy-edge-functions- deve existir');
+  assert.match(block[1], /inputs\.function_name/, 'grupo deve referenciar inputs.function_name');
   assert.match(block[1], /^  cancel-in-progress: false$/m);
 });
 
@@ -141,4 +144,40 @@ test('E55: o passo de atestacao tem teto proprio de 10 min', () => {
   const bloco = workflow.slice(inicio, fim);
   assert.match(bloco, /^        timeout-minutes: 10$/m);
   assert.ok(workflow.indexOf('    timeout-minutes: 100') < inicio, 'o job mantem os 100 min');
+});
+
+// GA27: deno test roda antes do deploy — nao publicar funcao com erro de comportamento
+test('GA27: deno test roda antes do Deploy e usa lock fixo do CI', () => {
+  const inicioTest = workflow.indexOf('- name: Testes das edge functions (deno test)');
+  const inicioDeploy = workflow.indexOf('- name: Deploy');
+  assert.ok(inicioTest > 0, 'passo deno test deve existir');
+  assert.ok(inicioDeploy > inicioTest, 'deno test deve vir antes do Deploy');
+  const bloco = workflow.slice(inicioTest, inicioDeploy);
+  assert.match(bloco, /deno test/, 'o passo deve chamar deno test');
+  assert.match(bloco, /--config scripts\/ci\/deno\.json/, 'deve usar o deno.json do CI com lock fixo');
+  assert.match(bloco, /supabase\/functions\/\*\*\/\*\.test\.ts/, 'deve cobrir todos os arquivos .test.ts');
+});
+
+// GA30: rollback usa grupo de concorrencia proprio — push normal nao cancela rollback
+test('GA30: rollback_to_last_success usa grupo de concorrencia separado', () => {
+  assert.match(
+    workflow,
+    /deploy-edge-rollback-/,
+    'rollback deve ter prefixo de grupo diferente de deploy-edge-functions-',
+  );
+  assert.match(
+    workflow,
+    /inputs\.rollback_to_last_success && format\('deploy-edge-rollback-/,
+    'concurrency group deve ser condicional no rollback_to_last_success',
+  );
+});
+
+// GA30: rollback pula o SHA atual — nao "reverter" para si mesmo
+test('GA30: rollback pula deployment com SHA igual ao atual', () => {
+  const inicioRollback = workflow.indexOf('- name: Resolver ref para rollback automatico');
+  const fimRollback = workflow.indexOf('- name: Checkout code');
+  assert.ok(inicioRollback > 0 && fimRollback > inicioRollback);
+  const bloco = workflow.slice(inicioRollback, fimRollback);
+  assert.match(bloco, /dep\.sha === currentSha/, 'deve comparar SHA do deployment com o SHA atual');
+  assert.match(bloco, /SHA diferente/, 'mensagem de sucesso deve mencionar SHA diferente');
 });

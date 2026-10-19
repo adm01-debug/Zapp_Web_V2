@@ -173,7 +173,8 @@ async function checarBranchProtection() {
       esperado: esperado.strict,
       encontrado: checksDesligados ? 'required_status_checks desligado' : strict,
       // Sem o bloco de checks o PATCH do sub-recurso nao tem o que atualizar.
-      restauravel: !checksDesligados,
+      // GA77: GITHUB_TOKEN não tem escopo `administration`; restauração sempre falha com 403.
+      restauravel: false,
     });
   }
 
@@ -220,7 +221,7 @@ async function checarRepo() {
     }
     const encontrado = repo[campo];
     if (encontrado !== esperado) {
-      divergencias.push({ campo: `merge.${campo}`, esperado, encontrado, restauravel: campo === 'allow_auto_merge' });
+      divergencias.push({ campo: `merge.${campo}`, esperado, encontrado, restauravel: false });
     }
   }
   if (ausentes.length === Object.keys(baseline.merge).length) {
@@ -268,10 +269,11 @@ async function checarWorkflowPermissions() {
 }
 
 async function checarSelectedActions() {
-  const sel = await ghAdmin('GET', `/repos/${OWNER}/${REPO_NAME}/actions/selected-actions`);
+  const sel = await ghAdmin('GET', `/repos/${OWNER}/${REPO_NAME}/actions/permissions/selected-actions`);
   const divergencias = [];
   const blPatterns = [...(baseline.selected_actions_patterns ?? [])].sort();
-  const encontradosPatterns = [...(sel?.patterns_allowed ?? [])].sort();
+  // A API devolve padrões com sufixo @* (ex: actions/checkout@*); normalizar antes de comparar.
+  const encontradosPatterns = [...(sel?.patterns_allowed ?? [])].map((p) => p.replace(/@.*$/, '')).sort();
   if (blPatterns.join('|') !== encontradosPatterns.join('|')) {
     divergencias.push({
       campo: 'selected_actions.patterns_allowed',
@@ -330,24 +332,11 @@ async function checarEnvironments() {
   return divergencias;
 }
 
-// ---------------------------------------------------------------- restauração
+// ---------------------------------------------------------------- sem restauração automática
+// GA77: GITHUB_TOKEN de workflow não tem escopo `administration`; qualquer PATCH
+// em branch protection ou /repos que exija esse escopo retorna 403. Todos os
+// `restauravel` estão `false`; o bloco de restauração não executa.
 
-async function restaurar(campo) {
-  if (campo === 'branch_protection_main.strict') {
-    const protection = await gh('GET', `/repos/${OWNER}/${REPO_NAME}/branches/${BRANCH}/protection`);
-    const contexts = protection?.required_status_checks?.contexts ?? [];
-    await gh('PATCH', `/repos/${OWNER}/${REPO_NAME}/branches/${BRANCH}/protection/required_status_checks`, {
-      strict: true,
-      contexts,
-    });
-    return '`branch_protection_main.strict` restaurado para `true`';
-  }
-  if (campo === 'merge.allow_auto_merge') {
-    await gh('PATCH', `/repos/${OWNER}/${REPO_NAME}`, { allow_auto_merge: true });
-    return '`merge.allow_auto_merge` restaurado para `true`';
-  }
-  return null;
-}
 
 // ---------------------------------------------------------------- issue
 
@@ -514,22 +503,8 @@ async function main() {
     return;
   }
 
-  // Restaura só o que o guard sabe restaurar; o resto vira alerta. Sucesso e falha
-  // ficam em listas separadas: so o sucesso forca comentario (Devin, PR #1920).
   const restaurados = [];
   const restauracoesEfetivas = [];
-  for (const d of divergencias.filter((x) => x.restauravel)) {
-    try {
-      const feito = await restaurar(d.campo);
-      if (feito) {
-        restaurados.push(feito);
-        restauracoesEfetivas.push(d.campo);
-        console.log(`Restaurado: ${semQuebra(d.campo)}`);
-      }
-    } catch (e) {
-      restaurados.push(`⚠️ falhou ao restaurar \`${d.campo}\`: ${e.message.split(':')[0]}`);
-    }
-  }
 
   const soCegos = divergencias.length === 0;
   const assinatura = assinaturaDe(divergencias, naoVerificaveis);

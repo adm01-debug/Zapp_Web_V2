@@ -76,7 +76,7 @@ const BULLET_LINE = /^\s*[-•]\s+(.*)$/;
 function renderVariable(raw: string, key: string, ctx: RenderContext): React.ReactNode {
   if (ctx.mode === 'raw') {
     return (
-      <span key={key} data-testid="talkx-preview-variable" className="rounded bg-primary/10 px-0.5 text-primary-glow">
+      <span key={key} data-testid="talkx-preview-variable" className="rounded bg-primary/10 px-0.5 text-[hsl(var(--primary-text))]">
         {raw}
       </span>
     );
@@ -99,7 +99,7 @@ function renderInline(part: string, key: string): React.ReactNode {
   const href = /^www\./i.test(part) ? `https://${part}` : part;
   if (/^https?:\/\//i.test(href)) {
     return (
-      <a key={key} href={href} target="_blank" rel="noopener noreferrer" className="text-primary-glow underline break-all">
+      <a key={key} href={href} target="_blank" rel="noopener noreferrer" className="text-[hsl(var(--primary-text))] underline break-all">
         {part}
       </a>
     );
@@ -257,7 +257,7 @@ function PreviewInteractive({ interactive }: { interactive?: TalkXPreviewInterac
           key={index}
           type="button"
           data-testid="talkx-preview-button"
-          className="w-full rounded-xl border border-border/60 bg-card px-2 py-1 font-medium text-primary-glow motion-safe:transition-colors hover:bg-muted/40"
+          className="w-full rounded-xl border border-border/60 bg-card px-2 py-1 font-medium text-[hsl(var(--primary-text))] motion-safe:transition-colors hover:bg-muted/40"
         >
           {button}
         </button>

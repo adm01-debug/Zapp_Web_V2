@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useSyncExternalStore } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useSyncExternalStore } from 'react';
 import {
   X, Check, Copy, ChevronLeft, ChevronRight, FileText, BarChart3, Image, Video, Music, Send, CheckCircle, XCircle, History, RotateCcw,
 } from 'lucide-react';
@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useTalkXTemplates, type TalkXTemplate, type TemplateInput, type TemplateVariant } from '@/hooks/integrations/useTalkXTemplates';
 import { TalkXQueryBoundary } from './kit/states';
+import { ModuleBreadcrumb } from './kit/primitives';
 import {
   useTalkXTemplateLibraryStats,
   useTalkXTemplateStats,
@@ -56,13 +57,19 @@ function usePainelLargo() {
 interface Props {
   templates: TalkXTemplate[];
   isLoading: boolean;
+  isError?: boolean;
+  error?: Error | null;
+  onRetry?: () => void;
   editing: TalkXTemplate | null;
+  /** Aba inicial do editor: 'ab' abre o painel de variações já expandido. */
+  initialTtab?: 'conteudo' | 'ab' | 'historico';
+  onActiveTemplateChange?: (t: TalkXTemplate | null) => void;
   onClose: () => void;
   /** X091 — clique do widget "Em andamento" abre o monitor da campanha. */
   onOpenMonitor?: (campaignId: string) => void;
 }
 
-export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, onOpenMonitor }: Props) {
+export function TalkXTemplateEditor({ templates, isLoading, editing, initialTtab, onActiveTemplateChange, onClose, onOpenMonitor }: Props) {
   const {
     createTemplate, updateTemplate, duplicateTemplate, testTemplate, fetchVersionHistory, fetchVariants,
     saveVariant, deleteVariant, countVariantRecipients,
@@ -103,7 +110,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
   const [loadingVersions, setLoadingVersions] = useState(false);
   const [showVersions, setShowVersions] = useState(false);
   const [variants, setVariants] = useState<TemplateVariant[]>([]);
-  const [showVariants, setShowVariants] = useState(false);
+  const [showVariants, setShowVariants] = useState(initialTtab === 'ab');
   const [savingVariant, setSavingVariant] = useState(false);
   // R2-MOD-024: respostas atrasadas não podem contaminar o template seguinte.
   // `activeTemplateIdRef` guarda o template REALMENTE ativo agora (independe do
@@ -119,10 +126,20 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
   const larguraLarga = usePainelLargo();
   const [painelAberto, setPainelAberto] = useState(false);
 
+  // Quando abertura via initialTtab='ab'/'historico', carrega dados imediatamente.
+  useEffect(() => {
+    if (initialTtab === 'ab' && activeTemplateId) void loadVariants(activeTemplateId);
+    if (initialTtab === 'historico' && activeTemplateId) void fetchVersions(activeTemplateId);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Fonte única de troca: invalida callbacks antigos no mesmo tick, antes do render.
   const activateTemplate = (templateId: string) => {
     activeTemplateIdRef.current = templateId;
     setActiveTemplateId(templateId);
+    onActiveTemplateChange?.(templates.find(t => t.id === templateId) ?? null);
+    if (showVariants) void loadVariants(templateId);
+    if (showVersions) void fetchVersions(templateId);
   };
 
   // Template ativo derivado de activeTemplateId (pode diferir de editing apos carga da biblioteca)
@@ -512,6 +529,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
 
       {/* === COLUNA CENTRO: editor === */}
       <div className="flex-1 min-w-0 space-y-3">
+        <ModuleBreadcrumb items={['Talk X', 'Campanhas', 'Templates']} />
         {/* X091 — faixa de KPIs da tela 05 (números da biblioteca, RPC X086) */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <KpiCard icon={FileText} color="blue" index={0} label="Total de Templates" value={libStats?.total ?? null} bars={libStats?.created_series ?? null} comparison={{ current: libStats?.created_current_month ?? null, previous: libStats?.created_previous_month ?? null, kind: 'relative' }} hint="vs. mês anterior (templates criados)" />
@@ -570,7 +588,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
             <PrimaryButton
               icon={saving ? undefined : Check}
               onClick={save}
-              className={cn((!eName.trim() || !eContent.trim() || saving) && 'opacity-50 pointer-events-none')}
+              disabled={!eName.trim() || !eContent.trim() || saving}
             >
               {saving ? 'Salvando…' : 'Salvar template'}
             </PrimaryButton>
@@ -595,6 +613,11 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
                 <SelectContent>{Object.entries(TEMPLATE_STATUS).map(([v, m]) => <SelectItem key={v} value={v}>{m.label}</SelectItem>)}</SelectContent>
               </Select>
             </div>
+          </div>
+
+          <div>
+            <Label htmlFor="tpl-desc" className="text-xs text-foreground-secondary">Descrição</Label>
+            <Input id="tpl-desc" value={eDesc} onChange={(e) => setEDesc(e.target.value)} placeholder="Descrição resumida do template…" className="mt-1.5 h-10 bg-input/40 border-border/70" />
           </div>
 
           {/* Mensagem (V26: mesmo editor do passo 2 do wizard) */}
@@ -622,7 +645,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
             <p className="text-2xs text-foreground-secondary mb-1.5">Variáveis disponíveis</p>
             <div className="flex flex-wrap gap-1.5">
               {VARIABLE_KEYS.map((v) => (
-                <button key={v} type="button" onClick={() => insertAtCursor(v)} className="h-7 px-2 rounded-md text-2xs font-mono font-medium border border-primary/30 bg-primary/10 text-primary-glow hover:bg-primary/20">{v}</button>
+                <button key={v} type="button" onClick={() => insertAtCursor(v)} className="h-7 px-2 rounded-md text-2xs font-mono font-medium border border-primary/30 bg-primary/10 text-[hsl(var(--primary-text))] hover:bg-primary/20">{v}</button>
               ))}
             </div>
           </div>
@@ -652,7 +675,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
           {/* E45: Variaveis customizadas */}
           <div>
             <p className="text-xs text-foreground-secondary mb-1.5">Variáveis personalizadas</p>
-            <p className="text-2xs text-muted-foreground mb-2">Defina variáveis próprias para este template. Serão inseridas como <span className="font-mono text-primary-glow">{'{{'}var{'}}'}</span> na mensagem.</p>
+            <p className="text-2xs text-muted-foreground mb-2">Defina variáveis próprias para este template. Serão inseridas como <span className="font-mono text-[hsl(var(--primary-text))]">{'{{'+'var'+'}}'}</span> na mensagem.</p>
             <div className="flex items-center gap-2 flex-wrap mb-2">
               {eCustomVars.map((v) => (
                 <span key={v} className="flex items-center gap-1 h-7 px-2 rounded-lg bg-violeta/10 border border-violeta/20 text-xs font-mono text-[hsl(var(--violeta-text))]">
@@ -686,7 +709,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
                     setECustomVarInput('');
                   }
                 }}
-                className="h-7 px-2 rounded-md text-2xs font-medium border border-primary/30 bg-primary/10 text-primary-glow hover:bg-primary/20 disabled:opacity-40"
+                className="h-7 px-2 rounded-md text-2xs font-medium border border-primary/30 bg-primary/10 text-[hsl(var(--primary-text))] hover:bg-primary/20 disabled:opacity-40"
               >
                 + Inserir
               </button>
@@ -698,7 +721,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
             <Label className="text-xs text-foreground-secondary">Tags</Label>
             <div className="flex items-center gap-2 mt-1.5 flex-wrap">
               {eTags.map((t) => (
-                <span key={t} className="flex items-center gap-1 h-7 px-2 rounded-lg bg-primary/10 border border-primary/20 text-xs font-medium text-primary-glow">
+                <span key={t} className="flex items-center gap-1 h-7 px-2 rounded-lg bg-primary/10 border border-primary/20 text-xs font-medium text-[hsl(var(--primary-text))]">
                   #{t}
                   <button type="button" onClick={() => setETags((p) => p.filter((x) => x !== t))} aria-label={`Remover tag ${t}`} className="hover:text-dash-red"><X className="w-3 h-3" /></button>
                 </span>

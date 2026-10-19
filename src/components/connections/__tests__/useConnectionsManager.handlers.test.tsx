@@ -37,7 +37,10 @@ vi.mock('@/integrations/supabase/client', () => ({
   },
 }));
 vi.mock('@/hooks/ui/use-toast', () => ({ toast: (...a: unknown[]) => h.toast(...a) }));
-vi.mock('@/lib/logger', () => ({ log: h.log }));
+vi.mock('@/lib/logger', () => ({ log: h.log ,
+  getLogger: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), withCorrelation: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() })) })),
+  createLogger: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), withCorrelation: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() })) })),
+}));
 vi.mock('@/lib/clipboard', () => ({ avisarCopia: vi.fn(), copiarTexto: vi.fn() }));
 vi.mock('@/hooks/integrations/useEvolutionApi', () => ({
   useEvolutionApi: () => ({
@@ -112,16 +115,17 @@ describe('handleDisconnect', () => {
     expect(h.update).not.toHaveBeenCalled();
   });
 
-  it('quando a Evolution falha, avisa e NÃO marca a linha como desconectada', async () => {
+  it('quando a Evolution falha, devolve false e NÃO marca a linha como desconectada', async () => {
     h.disconnectInstance.mockRejectedValueOnce(new Error('GO recusou'));
     const r = await mount();
 
-    await act(async () => { await r.result.current.handleDisconnect(A); });
+    let retorno: boolean | undefined;
+    await act(async () => { retorno = await r.result.current.handleDisconnect(A); });
 
+    // O aviso é responsabilidade do withToast da Evolution, não do hook.
     expect(h.update).not.toHaveBeenCalled();
-    expect(h.toast).toHaveBeenCalledWith(
-      expect.objectContaining({ title: 'Erro ao desconectar', description: 'GO recusou', variant: 'destructive' }),
-    );
+    expect(retorno).toBe(false);
+    expect(h.toast).not.toHaveBeenCalled();
   });
 });
 
@@ -179,7 +183,7 @@ describe('handleAddConnection', () => {
     h.createConnection.mockRejectedValueOnce(new Error('GO fora do ar'));
     const r = await mount();
 
-    await act(async () => { r.result.current.setNewConnection({ name: 'X', phone_number: '1' }); });
+    await act(async () => { r.result.current.setNewConnection({ name: 'X', phone_number: '11900000001' }); });
     await act(async () => { await r.result.current.handleAddConnection(); });
 
     expect(r.result.current.isCreating).toBe(false);

@@ -1,4 +1,4 @@
-import { Fragment, type ReactNode } from 'react';
+import { Fragment, type ReactNode, type ComponentPropsWithoutRef } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -87,8 +87,8 @@ export function MetaRow({ icon: Icon, label, value, valueClassName }: { icon?: L
   );
 }
 /** Cabeçalho de tabela padronizado. */
-export function Th({ children, className }: { children?: ReactNode; className?: string }) {
-  return <th className={cn('text-left text-2xs font-semibold text-foreground-secondary px-3 py-2.5 whitespace-nowrap', className)}>{children}</th>;
+export function Th({ children, className, ...props }: ComponentPropsWithoutRef<'th'>) {
+  return <th {...props} className={cn('text-left text-2xs font-semibold text-foreground-secondary px-3 py-2.5 whitespace-nowrap', className)}>{children}</th>;
 }
 export function Td({ children, className }: { children?: ReactNode; className?: string }) {
   return <td className={cn('px-3 py-3 text-xs text-foreground align-middle', className)}>{children}</td>;

@@ -128,8 +128,8 @@ export function ScheduledReportsManager() {
           ) : filtered.length === 0 ? (
             <div className="mt-4 border border-dashed border-border/60 rounded-2xl py-16 flex flex-col items-center text-muted-foreground gap-3">
               <div className="relative">
-                <FileText className="w-16 h-16 text-primary-glow" strokeWidth={1.4} />
-                <Sparkles className="w-5 h-5 text-primary-glow absolute -top-1 -right-2" />
+                <FileText className="w-16 h-16 text-[hsl(var(--primary-text))]" strokeWidth={1.4} />
+                <Sparkles className="w-5 h-5 text-[hsl(var(--primary-text))] absolute -top-1 -right-2" />
               </div>
               <p className="text-2xl font-bold text-foreground mt-2">{configs.length === 0 ? 'Nenhum relatório agendado ainda' : 'Nenhum relatório encontrado'}</p>
               <p className="text-sm text-center max-w-[460px] leading-relaxed">
@@ -208,10 +208,10 @@ export function ScheduledReportsManager() {
                 return (
                   <button key={f.value} onClick={() => { setFormFrequency(f.value); openCreate(); }}
                     className={cn('h-[84px] rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-colors',
-                      active ? 'bg-primary/15 border-primary/60 text-primary-glow' : 'border-border/60 bg-input/20 text-foreground hover:bg-muted/40')}>
+                      active ? 'bg-primary/15 border-primary/60 text-[hsl(var(--primary-text))]' : 'border-border/60 bg-input/20 text-foreground hover:bg-muted/40')}>
                     {f.value === 'monthly' ? <Calendar className="w-5 h-5" /> : f.value === 'custom' ? <Clock className="w-5 h-5" /> : f.value === 'daily' ? <Calendar className="w-5 h-5" /> : <BarChart3 className="w-5 h-5" />}
                     <span className="text-[13px] font-semibold leading-none">{f.label}</span>
-                    <span className={cn('text-2xs', active ? 'text-primary-glow/80' : 'text-muted-foreground')}>{f.sub}</span>
+                    <span className={cn('text-2xs', active ? 'text-primary/80' : 'text-muted-foreground')}>{f.sub}</span>
                   </button>
                 );
               })}

@@ -849,7 +849,7 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
                   onClick={() => setActiveTab(t.id)}
                   className={`px-3.5 py-2 text-xs font-medium whitespace-nowrap shrink-0 border-b-2 transition-colors
                     ${activeTab === t.id
-                      ? 'border-primary text-primary'
+                      ? 'border-primary text-primary-text'
                       : 'border-transparent text-foreground-secondary hover:text-foreground'}`}
                 >
                   {t.label}

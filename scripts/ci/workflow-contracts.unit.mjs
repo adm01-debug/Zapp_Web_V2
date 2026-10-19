@@ -562,6 +562,8 @@ test('E69: o build continua atrás do lint E do test', () => {
   const anc = ancestrais(grafoDeNeeds(wf['ci.yml']), 'build');
   assert.ok(anc.has('typecheck'), 'build deixou de esperar o lint');
   assert.ok(anc.has('unit-tests'), 'build deixou de esperar o test');
+});
+
 // W99: novos invariantes de segurança de workflow
 
 test('W99: todo curl usa --proto e --tlsv1.2', async () => {
@@ -600,4 +602,270 @@ test('W99: todo upload-artifact declara retention-days', async () => {
     }
   }
   assert.deepEqual(infratores, [], `upload-artifact sem retention-days:\n${infratores.join('\n')}`);
+});
+
+test('W71: e2e-logado não dispara em push (só via workflow_run do CI/CD Pipeline)', () => {
+  // W71 (2026-10-18): e2e-logado.yml migrou de on.push para on.workflow_run.
+  // Sem este contrato, restaurar o push seria silencioso — o E2E rodaria em
+  // paralelo ao CI principal e cancel-in-progress: true mataria runs em andamento.
+  const texto = wf['e2e-logado.yml'];
+  assert.ok(texto, 'e2e-logado.yml sumiu');
+  assert.ok(
+    !/^\s{2}push:/m.test(texto),
+    'e2e-logado.yml voltou a ter on.push: o E2E roda em push sem esperar o CI principal',
+  );
+  assert.ok(
+    /workflow_run:/.test(texto),
+    'e2e-logado.yml não usa on.workflow_run como gatilho principal',
+  );
+  assert.ok(
+    /workflows:\s*\["CI\/CD Pipeline"\]/.test(texto),
+    'e2e-logado.yml não referencia "CI/CD Pipeline" em on.workflow_run',
+  );
+  const ciNome = (wf['ci.yml'].match(/^name:\s*(.+)/m) ?? [])[1]?.trim() ?? '';
+  assert.equal(
+    ciNome,
+    'CI/CD Pipeline',
+    `ci.yml mudou de nome: e2e-logado.yml espera "CI/CD Pipeline" mas ci.yml se chama "${ciNome}"`,
+  );
+});
+
+test('W71: e2e-logado não roda quando workflow_run falhou', () => {
+  // Sem este guard, um CI vermelho ainda dispararia o E2E logado. O job-level
+  // `if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'`
+  // é o que impede isso. Removê-lo silenciosamente é o modo de regressão mais provável.
+  const texto = wf['e2e-logado.yml'];
+  assert.ok(
+    /conclusion\s*==\s*['"]success['"]/.test(texto),
+    'e2e-logado.yml perdeu o guard if: conclusion == success — E2E roda mesmo com CI falho',
+  );
+});
+
+test('GA08: e2e-logado bloqueia fork — 3 condições obrigatórias no if do job', () => {
+  // GA08 (2026-10-18): o if do job deve exigir que o workflow_run venha de um
+  // push (não de uma PR de fork) E do mesmo repositório. Sem isso, PRs de forks
+  // com branch "main" disparariam o E2E logado com os secrets do repositório.
+  const texto = wf['e2e-logado.yml'];
+  assert.ok(texto, 'e2e-logado.yml sumiu');
+  assert.ok(
+    /workflow_run\.event\s*==\s*['"]push['"]/.test(texto),
+    'GA08: e2e-logado.yml falta guard workflow_run.event == push — triggers de PR de fork passam',
+  );
+  assert.ok(
+    /head_repository\.full_name\s*==\s*github\.repository/.test(texto),
+    'GA08: e2e-logado.yml falta guard head_repository.full_name == github.repository — forks disparam o E2E',
+  );
+  assert.ok(
+    /conclusion\s*==\s*['"]success['"]/.test(texto),
+    'GA08: e2e-logado.yml perdeu o guard conclusion == success — E2E roda mesmo com CI falho',
+  );
+});
+
+test('GA09: e2e-logado tem grupo de concurrency fixo e cancel-in-progress false', () => {
+  // GA09 (2026-10-18): grupo fixo serializa as runs; cancel-in-progress: false
+  // preserva a run atual em vez de cancelar. Com workflow_run o E2E já é
+  // posterior ao CI — cancelar uma run quase pronta gera falsos negativos.
+  const texto = wf['e2e-logado.yml'];
+  assert.ok(texto, 'e2e-logado.yml sumiu');
+  assert.ok(
+    /group:\s*e2e-logado(?!\S)/.test(texto),
+    'GA09: e2e-logado.yml usa grupo variável — múltiplas runs não são serializadas pelo grupo correto',
+  );
+  assert.ok(
+    /cancel-in-progress:\s*false/.test(texto),
+    'GA09: e2e-logado.yml usa cancel-in-progress: true — runs quase prontas são canceladas indevidamente',
+  );
+});
+
+test('W72: auth.setup.ts tem teto de 180 s e timeout curto no goto /auth', async () => {
+  // W72 (2026-10-18): o setup de autenticação precisa falhar rápido (<2 min) quando
+  // a credencial está errada ou o app não responde — não travar o job por 15 min.
+  const texto = await readFile(
+    new URL('../../e2e/auth.setup.ts', import.meta.url),
+    'utf8',
+  );
+  assert.ok(
+    /setup\.setTimeout\(180_000\)/.test(texto),
+    'auth.setup.ts perdeu setup.setTimeout(180_000) — job vai travar 15 min com senha errada',
+  );
+  assert.ok(
+    /page\.goto\([^)]*timeout:\s*15_000/.test(texto),
+    'auth.setup.ts perdeu o timeout:15_000 no page.goto("/auth") — não distingue "app fora" de "credencial errada"',
+  );
+});
+
+test('GA10: notifica-falha-main — todo nome em workflow_run.workflows existe como name: num workflow', () => {
+  // GA10 (2026-10-18): renomear um workflow sem atualizar notifica-falha-main.yml
+  // faz o alerta deixar de disparar silenciosamente. O contrato prova que cada
+  // entrada de workflows: tem um workflow real com aquele name:.
+  const notifica = wf['notifica-falha-main.yml'];
+  assert.ok(notifica, 'notifica-falha-main.yml sumiu');
+
+  // Extrai a lista de nomes do bloco `workflow_run.workflows:`
+  const blocoWorkflows = notifica.match(/workflow_run:\s*\n\s+workflows:\s*\n((?:\s+-[^\n]+\n?)+)/);
+  assert.ok(blocoWorkflows, 'notifica-falha-main.yml perdeu o bloco workflow_run.workflows:');
+  const nomesMonitorados = [...blocoWorkflows[1].matchAll(/^\s+-\s+(.+)$/gm)].map((m) =>
+    m[1].trim(),
+  );
+  assert.ok(
+    nomesMonitorados.length > 0,
+    'notifica-falha-main.yml não tem nenhum workflow em workflow_run.workflows:',
+  );
+
+  // Todos os name: de todos os workflows carregados
+  const nomesExistentes = new Set(
+    Object.values(wf)
+      .flatMap((txt) => [...txt.matchAll(/^name:\s*(.+)$/gm)])
+      .map((m) => m[1].trim()),
+  );
+
+  const ausentes = nomesMonitorados.filter((n) => !nomesExistentes.has(n));
+  assert.deepEqual(
+    ausentes,
+    [],
+    `GA10: estes nomes em notifica-falha-main.yml não existem como name: em nenhum workflow:\n${ausentes.join('\n')}`,
+  );
+});
+
+test('W73: todo curl em workflow tem --max-time (runner não trava ad infinitum)', () => {
+  // W73 (2026-10-18): curl sem --max-time pode prender o runner indefinidamente.
+  // Este contrato verifica que cada chamada curl em todos os workflows define
+  // --max-time, seja na mesma linha ou em continuação com \.
+  const infratores = [];
+  for (const [nome, texto] of Object.entries(wf)) {
+    const linhas = texto.split('\n');
+    for (let i = 0; i < linhas.length; i += 1) {
+      // Detecta início de comando curl (não comentário)
+      if (/^\s*(?:STATUS=\(|HEALTH_STATUS=\(|[A-Z_]+=\()?curl\b/.test(linhas[i]) && !/^\s*#/.test(linhas[i])) {
+        // Junta continuações de linha (\) para capturar flags espalhadas
+        let bloco = linhas[i];
+        let j = i + 1;
+        while (bloco.trimEnd().endsWith('\\') && j < linhas.length) {
+          bloco += '\n' + linhas[j];
+          j += 1;
+        }
+        if (!/--max-time\b/.test(bloco)) {
+          infratores.push(`${nome}:${i + 1}`);
+        }
+      }
+    }
+  }
+  assert.deepEqual(infratores, [], `curl(s) sem --max-time:\n${infratores.join('\n')}`);
+});
+
+test('GA22: types-sync — auto-merge desabilitado quando grants_changed=true', () => {
+  // GA22 (2026-10-18): grants_changed=true significa que grants-baseline.json mudou,
+  // o que pode indicar DDL de privilegio fora do fluxo. Nesse caso a PR nao pode ser
+  // mergeada automaticamente; precisa de revisao humana (label needs-human).
+  const sync = wf['types-sync.yml'];
+  assert.ok(sync, 'types-sync.yml sumiu');
+
+  // O passo de auto-merge deve exigir grants_changed != 'true'
+  const autoMergeIdx = sync.indexOf('gh pr merge --auto --squash');
+  assert.ok(autoMergeIdx > 0, 'types-sync.yml perdeu o passo gh pr merge --auto --squash');
+
+  // Pegar o bloco do step que contém o auto-merge (retroceder ate o "- name:")
+  const blocoAntes = sync.slice(0, autoMergeIdx);
+  const ultimoStepInicio = blocoAntes.lastIndexOf('      - name:');
+  const blocoStep = sync.slice(ultimoStepInicio, autoMergeIdx + 100);
+
+  assert.match(
+    blocoStep,
+    /grants_changed\s*!=\s*['"]true['"]/,
+    'o step de auto-merge deve exigir grants_changed != \'true\' na condicao if:',
+  );
+
+  // O passo de label needs-human deve existir e disparar quando grants_changed=true
+  assert.match(
+    sync,
+    /needs-human/,
+    'types-sync.yml deve ter label needs-human para PRs com grants alterados',
+  );
+  assert.match(
+    sync,
+    /grants_changed\s*==\s*['"]true['"]/,
+    'deve haver step que dispara quando grants_changed=true (para adicionar label needs-human)',
+  );
+});
+
+test('GA22: types-sync — label needs-human criada no repo (precondition)', () => {
+  // Verifica que o workflow nao usa --create-if-not-exists nem algo que crie a label
+  // automaticamente: a label 'needs-human' precisa existir no repo antes do primeiro
+  // run. Este teste documenta a precondition — nao ha como testar a existencia da label
+  // offline, mas o contrato afirma que o passo usa `gh pr edit --add-label` (nao cria).
+  const sync = wf['types-sync.yml'];
+  assert.match(
+    sync,
+    /gh pr edit.*--add-label.*needs-human/s,
+    'o step de label deve usar gh pr edit --add-label needs-human',
+  );
+});
+
+test('GA15: db-migrate — dispara types-sync e db-live-guard apos apply bem-sucedido', () => {
+  // GA15 (2026-10-18): sem disparo pos-apply, o sync de types.ts depende do agendamento
+  // semanal; o guarda vivo so' valida no dia seguinte. O contrato prova que o workflow
+  // tem os dois disparos, ambos condicionados a apply=true && success().
+  const migrate = wf['db-migrate.yml'];
+  assert.ok(migrate, 'db-migrate.yml sumiu');
+
+  // types-sync deve ser disparado
+  assert.match(
+    migrate,
+    /gh workflow run types-sync\.yml/,
+    'db-migrate.yml deve disparar types-sync.yml apos apply',
+  );
+
+  // db-live-guard deve ser disparado
+  assert.match(
+    migrate,
+    /gh workflow run db-live-guard\.yml/,
+    'db-migrate.yml deve disparar db-live-guard.yml apos apply',
+  );
+
+  // Ambos com --ref main para usar o codigo ja mergeado
+  assert.match(
+    migrate,
+    /gh workflow run types-sync\.yml --ref main/,
+    'disparo de types-sync deve usar --ref main',
+  );
+  assert.match(
+    migrate,
+    /gh workflow run db-live-guard\.yml --ref main/,
+    'disparo de db-live-guard deve usar --ref main',
+  );
+});
+
+// GA29: health-check.mjs — 4xx = ::error:: (config), 5xx/timeout = ::warning:: (transiente)
+test('GA29: health-check.mjs distingue 4xx (::error::) de 5xx/timeout (::warning::)', async () => {
+  const hc = await readFile(new URL('../../scripts/edge-deploy/health-check.mjs', import.meta.url), 'utf8');
+  // GA29: classe HttpError com campo .status
+  assert.match(hc, /class HttpError/, 'health-check.mjs deve ter classe HttpError');
+  // GA29: 4xx → erro de configuração → ::error::
+  assert.match(hc, /err\.status >= 400 && err\.status < 500/, 'deve detectar 4xx explicitamente');
+  assert.match(hc, /::error::.*HTTP.*err\.status/, 'mensagem de 4xx deve usar ::error::');
+  // GA29: 5xx/timeout → aviso
+  assert.match(hc, /::warning::.*Management API/, 'falha transiente deve usar ::warning::');
+  // GA29: SQL usa status_code (snake_case), nao statusCode (camelCase errado)
+  assert.match(hc, /m\.response\.status_code/, 'SQL deve usar status_code (snake_case do BigQuery)');
+});
+
+// GA30: rollback usa grupo de concorrencia proprio — push normal nao cancela rollback
+test('GA30: rollback_to_last_success usa grupo de concorrencia separado', async () => {
+  const deploy = wf['deploy-functions.yml'];
+  assert.ok(deploy, 'deploy-functions.yml sumiu');
+  assert.match(
+    deploy,
+    /deploy-edge-rollback-/,
+    'rollback deve usar prefixo de grupo diferente de deploy-edge-functions-',
+  );
+  assert.match(
+    deploy,
+    /inputs\.rollback_to_last_success && format\('deploy-edge-rollback-/,
+    'concurrency group deve ser condicional no rollback_to_last_success',
+  );
+  assert.match(
+    deploy,
+    /dep\.sha === currentSha/,
+    'rollback deve pular deployment com SHA igual ao atual',
+  );
 });

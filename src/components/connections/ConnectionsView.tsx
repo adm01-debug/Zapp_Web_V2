@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { PhoneInput } from '@/components/ui/phone-input';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription,
 } from '@/components/ui/dialog';
@@ -16,7 +17,8 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { toast } from '@/lib/lazyToast';
+import { useReducedMotion } from 'framer-motion';
 import { BusinessHoursDialog } from './BusinessHoursDialog';
 import { ConnectionQueuesDialog } from './ConnectionQueuesDialog';
 import { InstanceSettingsDialog } from './InstanceSettingsDialog';
@@ -35,6 +37,7 @@ export function ConnectionsView() {
     syncingHistory, setSyncingHistory, evolutionLoading,
     handleAddConnection, handleShowQrCode, handleRefreshQrCode,
     handleCopyId, handleDisconnect, handleSetDefault, handleDelete, closeQrDialog,
+    addConnectionError, clearAddConnectionError,
   } = useConnectionsManager();
 
   // Trava a criação de conexão nova até o token por instância (Vault) estar
@@ -54,7 +57,10 @@ export function ConnectionsView() {
   // criava a conexão inoperante (token perdido, QR da PRINCIPAL) que a trava
   // existe para impedir.
   const openAddConnectionDialog = () => {
-    if (multiConnectionEnabled) setIsAddDialogOpen(true);
+    if (multiConnectionEnabled) {
+      clearAddConnectionError?.();
+      setIsAddDialogOpen(true);
+    }
   };
 
   const [businessHoursDialog, setBusinessHoursDialog] = useState({ open: false, connectionId: '', connectionName: '' });
@@ -69,7 +75,7 @@ export function ConnectionsView() {
   const handleSyncHistory = async (connection: { id: string; instance_id?: string | null }) => {
     if (!connection.instance_id) return;
     setSyncingHistory(connection.id);
-    toast('Sincronizando histórico...', { description: 'Isso pode levar alguns minutos.' });
+    toast.info('Sincronizando histórico...', { description: 'Isso pode levar alguns minutos.' });
     try {
       const { data, error } = await supabase.functions.invoke('evolution-sync', {
         body: { action: 'sync-all-messages', instanceName: connection.instance_id },
@@ -104,19 +110,22 @@ export function ConnectionsView() {
     } finally { setCheckingHealth(null); }
   };
 
+  const reduzido = useReducedMotion() ?? false;
+
   return (
     <div className="space-y-6 relative bg-background w-full min-w-0">
-      <AuroraBorealis /><FloatingParticles />
+      {!reduzido && <AuroraBorealis />}{!reduzido && <FloatingParticles />}
       
       <PageHeader title="Conexões WhatsApp" subtitle="Gerencie múltiplas conexões WhatsApp via Evolution API"
         breadcrumbs={[{ label: 'Configurações' }, { label: 'Conexões' }]}
         actions={
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <Dialog open={isAddDialogOpen} onOpenChange={(open) => { if (!open) clearAddConnectionError?.(); setIsAddDialogOpen(open); }}>
             <DialogTrigger asChild>
               <Button
                 className="bg-whatsapp hover:bg-whatsapp-dark text-primary-foreground"
                 disabled={!multiConnectionEnabled}
                 title={multiConnectionEnabled ? undefined : MULTI_CONNECTION_LOCKED_MESSAGE}
+                onClick={() => { if (multiConnectionEnabled) { clearAddConnectionError?.(); setIsAddDialogOpen(true); } }}
               >
                 <Plus className="w-4 h-4 mr-2" />Nova Conexão
               </Button>
@@ -124,10 +133,18 @@ export function ConnectionsView() {
             <DialogContent aria-describedby={undefined} className="sm:max-w-md">
               <DialogHeader><DialogTitle>Adicionar Nova Conexão</DialogTitle><DialogDescription>Crie uma nova instância para conectar ao WhatsApp</DialogDescription></DialogHeader>
               <div className="grid gap-4 py-4">
-                <div className="space-y-2"><Label>Nome da Conexão</Label><Input placeholder="Ex: WhatsApp Vendas" value={newConnection.name} onChange={(e) => setNewConnection({ ...newConnection, name: e.target.value })} /></div>
-                <div className="space-y-2"><Label>Número do WhatsApp</Label><Input placeholder="+55 11 99999-0000" value={newConnection.phone_number} onChange={(e) => setNewConnection({ ...newConnection, phone_number: e.target.value })} /></div>
+                <div className="space-y-2"><Label>Nome da Conexão</Label><Input placeholder="Ex: WhatsApp Vendas" value={newConnection.name} onChange={(e) => { clearAddConnectionError?.(); setNewConnection({ ...newConnection, name: e.target.value }); }} /></div>
+                <div className="space-y-2"><Label>Número do WhatsApp</Label>
+                  <PhoneInput
+                    value={newConnection.phone_number}
+                    onChange={(formatted) => { clearAddConnectionError?.(); setNewConnection({ ...newConnection, phone_number: formatted }); }}
+                  />
+                </div>
+                {addConnectionError && (
+                  <p role="alert" data-testid="add-connection-error" className="text-sm text-destructive">{addConnectionError}</p>
+                )}
                 <div className="flex justify-end gap-2 pt-4">
-                  <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} disabled={isCreating}>Cancelar</Button>
+                  <Button variant="outline" onClick={() => { clearAddConnectionError?.(); setIsAddDialogOpen(false); }} disabled={isCreating}>Cancelar</Button>
                   <Button onClick={handleAddConnection} className="bg-whatsapp hover:bg-whatsapp-dark" disabled={isCreating}>
                     {isCreating ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Criando...</> : 'Adicionar'}
                   </Button>
@@ -185,17 +202,25 @@ export function ConnectionsView() {
       </Dialog>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {[
-          { label: 'Total de Conexões', value: connections.length, color: 'text-primary' },
-          { label: 'Conectadas', value: connections.filter(c => c.status === 'connected').length, color: 'text-status-online' },
-          { label: 'Desconectadas', value: connections.filter(c => c.status !== 'connected').length, color: 'text-status-offline' },
-        ].map((stat, i) => (
-          <motion.div key={stat.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
-            <Card className="border border-secondary/20 bg-card card-glow-purple"><CardContent className="p-4"><p className="text-sm text-muted-foreground">{stat.label}</p><p className={cn('text-3xl font-bold', stat.color)}>{stat.value}</p></CardContent></Card>
-          </motion.div>
-        ))}
-      </div>
+      {(() => {
+        const total = connections.length;
+        const connected = connections.filter(c => c.status === 'connected').length;
+        const disconnected = connections.filter(c => c.status !== 'connected').length;
+        const stats = [
+          { label: 'Total de Conexões', subtitle: total === 1 ? '1 instância configurada' : `${total} instâncias configuradas`, value: total, color: 'text-primary' },
+          { label: 'Conectadas', subtitle: 'Recebendo mensagens', value: connected, color: 'text-status-online' },
+          { label: 'Desconectadas', subtitle: disconnected > 0 ? 'Precisam reconectar' : 'Tudo funcionando', value: disconnected, color: 'text-status-offline' },
+        ];
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {stats.map((stat, i) => (
+              <motion.div key={stat.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
+                <Card className="border border-secondary/20 bg-card card-glow-purple"><CardContent className="p-4"><p className="text-sm text-muted-foreground">{stat.label}</p><p className={cn('text-3xl font-bold', stat.color)}>{stat.value}</p><p className="text-xs text-muted-foreground mt-1">{stat.subtitle}</p></CardContent></Card>
+              </motion.div>
+            ))}
+          </div>
+        );
+      })()}
 
       {/* Connections List */}
       {loading ? (

@@ -28,6 +28,19 @@ vi.mock('@/hooks/integrations/useTalkXInsights', () => ({
   useTalkXInsights: () => ({ data: f.insights, isLoading: false, isError: false, error: null }),
 }));
 
+vi.mock('@/components/talkx/useTalkXLifecycle', () => ({
+  useTalkXLifecycle: () => ({
+    intent: null, isPending: false, error: null, reason: '',
+    setReason: vi.fn(), request: vi.fn().mockReturnValue(true),
+    confirm: vi.fn().mockResolvedValue(undefined), close: vi.fn().mockReturnValue(true), clearError: vi.fn(),
+  }),
+  TalkXLifecycleDialog: () => null,
+}));
+
+vi.mock('@/hooks/integrations/useTalkXOverviewStats', () => ({
+  useTalkXOverviewStats: () => ({ data: null, isLoading: false, isError: false, error: null }),
+}));
+
 // Radix (DropdownMenu do ⋮ por linha) mede o gatilho com ResizeObserver, API ausente no jsdom.
 if (typeof window.ResizeObserver === 'undefined') {
   window.ResizeObserver = class {

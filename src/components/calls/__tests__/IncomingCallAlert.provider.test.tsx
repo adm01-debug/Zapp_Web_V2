@@ -91,6 +91,8 @@ vi.mock('@/hooks/system/useNotificationSettings', () => ({
 
 vi.mock('@/lib/logger', () => ({
   getLogger: () => ({ error: vi.fn(), warn: vi.fn(), debug: vi.fn(), info: vi.fn() }),
+
+  createLogger: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), withCorrelation: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() })) })),
 }));
 
 // R2-CALL-007: o canal WhatsApp não fala com o banco pelo alerta — quem grava é

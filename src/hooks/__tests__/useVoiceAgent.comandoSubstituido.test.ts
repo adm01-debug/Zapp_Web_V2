@@ -15,8 +15,8 @@ vi.mock('sonner', () => ({
 }));
 
 vi.mock('@/lib/logger', () => {
-  const logger = { error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() };
-  return { log: logger, getLogger: () => logger };
+  const logger = { error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn(), withCorrelation: vi.fn() };
+  return { log: logger, getLogger: () => logger, createLogger: vi.fn(() => logger) };
 });
 
 const h = vi.hoisted(() => ({

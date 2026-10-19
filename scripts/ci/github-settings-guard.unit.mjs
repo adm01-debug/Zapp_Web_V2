@@ -14,14 +14,14 @@ const SCRIPT = join(dirname(fileURLToPath(import.meta.url)), 'github-settings-gu
 const TITULO = '[settings-guard] perimeter regression detected';
 
 const CONTEXTS_OK =
-  "['🔎 TypeCheck','🧪 Unit Tests (1/3)','🧪 Unit Tests (2/3)','🧪 Unit Tests (3/3)','🏗️ Build','🧩 Node CI Scripts']";
+  "['🔎 TypeCheck','🧪 Unit Tests (1/3)','🧪 Unit Tests (2/3)','🧪 Unit Tests (3/3)','🏗️ Build','🔒 Security Audit','Contrato DB offline','🎭 E2E Tests (Playwright)','🧩 Node CI Scripts']";
 const PROT_OK = `send({ required_status_checks: { strict: true, contexts: ${CONTEXTS_OK} }, enforce_admins: { enabled: true }, required_linear_history: { enabled: true }, allow_force_pushes: { enabled: false } })`;
 const PROT_REGRESSAO = `send({ required_status_checks: { strict: false, contexts: ${CONTEXTS_OK} }, enforce_admins: { enabled: true }, required_linear_history: { enabled: true }, allow_force_pushes: { enabled: false } })`;
 const REPO_OK =
   "send({ allow_auto_merge: true, allow_squash_merge: true, allow_merge_commit: false, allow_rebase_merge: false, delete_branch_on_merge: true, squash_merge_commit_message: 'PR_BODY', squash_merge_commit_title: 'PR_TITLE', security_and_analysis: { secret_scanning: { status: 'enabled' }, secret_scanning_push_protection: { status: 'enabled' } } })";
 const ACTIONS_OK = "send({ enabled: true, allowed_actions: 'selected', sha_pinning_required: true })";
 const WORKFLOW_PERMS_OK = "send({ default_workflow_permissions: 'read', can_approve_pull_request_reviews: true })";
-const SELECTED_PATTERNS = "['oven-sh/setup-bun','denoland/setup-deno','supabase/setup-cli','peter-evans/create-pull-request','gitleaks/gitleaks-action','actions/cache','actions/checkout','actions/github-script','actions/setup-go','actions/setup-node','actions/upload-artifact','github/codeql-action','actions/dependency-review-action','ossf/scorecard-action','step-security/harden-runner']";
+const SELECTED_PATTERNS = "['oven-sh/setup-bun','denoland/setup-deno','supabase/setup-cli','peter-evans/create-pull-request','gitleaks/gitleaks-action','actions/cache','actions/checkout','actions/github-script','actions/setup-go','actions/setup-node','actions/upload-artifact','github/codeql-action','actions/dependency-review-action','ossf/scorecard-action']";
 const SELECTED_OK = `send({ patterns_allowed: ${SELECTED_PATTERNS} })`;
 const SEM_ESCOPO = "send({ message: 'Resource not accessible by integration' }, 403)";
 
@@ -29,7 +29,7 @@ const SEM_ESCOPO = "send({ message: 'Resource not accessible by integration' }, 
  * Stub de `fetch` no mesmo formato do baseline real. `modo` escolhe a resposta:
  *   ok         — tudo conforme o baseline
  *   regressao  — strict=false (a regressão que o guard existe para pegar)
- *   semChecks  — `required_status_checks: null` (os 6 checks obrigatorios apagados;
+ *   semChecks  — `required_status_checks: null` (os 9 checks obrigatorios apagados;
  *                e assim que a API DESLIGA os checks — achado do Codex na PR #1920)
  *   semEscopo  — a branch protection responde 403
  *   tokenReal  — o que o GITHUB_TOKEN devolve HOJE (medido no run 38615982485):
@@ -119,8 +119,8 @@ function stub(
     "  if (method === 'GET' && p.indexOf('/issues/42/comments') !== -1) return " + comentarios + ';',
     "  if (p.endsWith('/branches/main/protection')) return " + prot + ';',
     "  if (p.endsWith('/actions/permissions/workflow')) return " + workflowPerms + ';',
+    "  if (p.endsWith('/actions/permissions/selected-actions')) return " + SELECTED_OK + ';',
     "  if (p.indexOf('/actions/permissions') !== -1) return " + actions + ';',
-    "  if (p.indexOf('/actions/selected-actions') !== -1) return " + SELECTED_OK + ';',
     "  if (method === 'GET' && p.endsWith('/rulesets')) return send([]);",
     "  if (p.indexOf('/environments') !== -1) return " + envs + ';',
     "  if (method === 'GET' && p === '/repos/o/r') return " + repo + ';',
@@ -175,7 +175,8 @@ describe('settings-guard: perimetro conforme o baseline', () => {
       r.out.includes('branch_protection_main.strict'),
       `nao apontou o campo divergente:\n${r.out}`,
     );
-    assert.ok(r.out.includes('Restaurado'), `nao tentou restaurar o que sabe restaurar:\n${r.out}`);
+    // GA77: GITHUB_TOKEN nao tem escopo `administration`; guard nao tenta restaurar.
+    assert.ok(!r.out.includes('Restaurado'), `tentou restaurar sem escopo administration:\n${r.out}`);
   });
 
   it('required_status_checks: null e regressao (checks apagados), nunca ponto cego', () => {
@@ -286,11 +287,13 @@ describe('settings-guard: ponto cego (E95, W04, W05)', () => {
     assert.ok(r.out.includes('Issue #42 atualizada com novo comentario'), `causa nova sem comentario:\n${r.out}`);
   });
 
-  it('W05: divergencia real com restauracao EFETIVA sempre comenta (mesmo com dedupe)', () => {
+  it('W05: divergencia real dentro do dedupe de 6 h suprime o comentario (GA77: sem restauracao automatica)', () => {
+    // GA77: restauravel e sempre false; forcar=false; o dedupe de 6 h aplica mesmo
+    // com divergencia real -- o comentario so sai quando a janela expirar.
     const r = rodarGuard('regressao', { issue: true, ultimoMarcador: MARCADOR_REGRESSAO, idadeMs: 60_000 });
     assert.equal(r.code, 1, r.out);
-    assert.ok(r.out.includes('Restaurado:'), `a restauracao precisa ter acontecido:\n${r.out}`);
-    assert.ok(r.out.includes('Issue #42 atualizada com novo comentario'), `restauracao sem registro:\n${r.out}`);
+    assert.ok(!r.out.includes('Restaurado:'), `guard nao deve ter restaurado nada:\n${r.out}`);
+    assert.ok(r.out.includes('Dedupe'), `dentro do dedupe deveria suprimir o comentario:\n${r.out}`);
   });
 
   it('W05: restauracao que FALHOU nao forca comentario — o dedupe de 6 h vale', () => {
@@ -358,9 +361,10 @@ describe('settings-guard: log injection (jssecurity:S5145)', () => {
 // W13: environments extras (Vercel-managed vs inesperados)
 function rodarComEnvsExtra(extras) {
   // Injeta o stub de environments com os itens do baseline + os extras recebidos.
+  // Usar exatamente os environments do baseline atual (scripts/ci/github-settings-baseline.json).
   const todos = [
-    'copilot', 'db-ledger-evidence', 'legacy-import-destrutivo', 'Preview',
-    'producao-ddl', 'producao-edge-functions', 'Production',
+    'banco-leitura', 'db-ledger-evidence', 'legacy-import-destrutivo',
+    'perimetro-leitura', 'producao-ddl', 'producao-edge-functions',
     ...extras,
   ];
   const envsStub =

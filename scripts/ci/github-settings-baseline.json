@@ -4,7 +4,7 @@
     "O github-settings-guard.mjs confere a realidade contra este arquivo; divergencia = regressao.",
     "Toda mudanca nestes campos atualiza ESTE arquivo E a tabela 'Perimetro do GitHub' no CLAUDE.md, no mesmo PR."
   ],
-  "medido_em": "2026-10-16",
+  "medido_em": "2026-10-18",
   "branch_protection_main": {
     "strict": true,
     "enforce_admins": true,
@@ -17,6 +17,9 @@
       "🧪 Unit Tests (2/3)",
       "🧪 Unit Tests (3/3)",
       "🏗️ Build",
+      "🔒 Security Audit",
+      "Contrato DB offline",
+      "🎭 E2E Tests (Playwright)",
       "🧩 Node CI Scripts"
     ]
   },
@@ -59,8 +62,7 @@
     "actions/upload-artifact",
     "github/codeql-action",
     "actions/dependency-review-action",
-    "ossf/scorecard-action",
-    "step-security/harden-runner"
+    "ossf/scorecard-action"
   ],
   "environments": [
     "banco-leitura",
@@ -73,10 +75,6 @@
   "environments_para_apagar": {
     "_comentario": "E94 concluido em 2026-10-16: copilot, Preview e Production apagados. Lista vazia.",
     "lista": []
-  },
-  "environments_vercel_managed": {
-    "_comentario": "W13: environments criados automaticamente pela Vercel. A presenca deles nao e regressao — sao classificados como 'gerenciados pela Vercel' no settings-guard (aviso, nao erro).",
-    "prefixos": ["Preview – ", "Production – "]
   },
   "environments_vercel_managed": {
     "_comentario": "W13: environments criados automaticamente pela Vercel. A presenca deles nao e regressao — sao classificados como 'gerenciados pela Vercel' no settings-guard (aviso, nao erro).",

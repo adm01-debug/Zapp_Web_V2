@@ -200,7 +200,12 @@ export function useAudioMemes(open: boolean) {
       const payload: File | Blob = converted.ok ? converted.blob : file;
       const contentType = converted.ok ? 'audio/mpeg' : (file.type || 'audio/mpeg');
       const ext = converted.ok ? 'mp3' : getFileExtensionWithDefault(file.name, 'mp3');
-      const storagePath = `meme_${Date.now()}_${crypto.randomUUID()}.${ext}`;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error('Sessão expirada: entre novamente para enviar o áudio');
+        return;
+      }
+      const storagePath = `${user.id}/meme_${Date.now()}_${crypto.randomUUID()}.${ext}`;
 
       const { error: uploadError } = await supabase.storage
         .from('audio-memes')

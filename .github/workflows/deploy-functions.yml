@@ -87,8 +87,10 @@ permissions:
 # tambem publica cada funcao, entao NAO pode rodar junto de um deploy por
 # funcao: o passo "Serializar escopo TODAS contra deploys por funcao" faz essa
 # exclusao dentro do job (a concurrency do GitHub nao a exprime).
+# GA30: rollback usa grupo proprio para nao ser cancelado por um push normal
+# na main que acione o grupo deploy-edge-functions-*.
 concurrency:
-  group: deploy-edge-functions-${{ inputs.function_name || 'all' }}
+  group: ${{ inputs.rollback_to_last_success && format('deploy-edge-rollback-{0}', inputs.function_name || 'all') || format('deploy-edge-functions-{0}', inputs.function_name || 'all') }}
   cancel-in-progress: false
 
 env:
@@ -165,7 +167,14 @@ jobs:
             process.exit(1);
           }
           const deps = await depsRes.json();
+          // GA30: o deploy atual acabou de ser criado com GITHUB_SHA — pular
+          // qualquer Deployment com o mesmo SHA para nao "rollback" para si mesmo.
+          const currentSha = process.env.GITHUB_SHA;
           for (const dep of deps) {
+            if (dep.sha === currentSha) {
+              process.stdout.write(`Pulando Deployment ${dep.id} (SHA atual: ${dep.sha})\n`);
+              continue;
+            }
             const stRes = await fetch(
               `${base}/repos/${repo}/deployments/${dep.id}/statuses?per_page=5`,
               { headers },
@@ -175,11 +184,11 @@ jobs:
             if (statuses.some((s) => s.state === 'success')) {
               const { appendFileSync } = await import('node:fs');
               appendFileSync(process.env.GITHUB_ENV, `RESOLVED_SOURCE_REF=${dep.sha}\n`);
-              process.stdout.write(`Rollback para o ultimo Deployment bem-sucedido: ${dep.sha}\n`);
+              process.stdout.write(`Rollback para o ultimo Deployment bem-sucedido (SHA diferente): ${dep.sha}\n`);
               process.exit(0);
             }
           }
-          process.stderr.write(`Nenhum Deployment com status success encontrado no environment ${env}\n`);
+          process.stderr.write(`Nenhum Deployment com status success e SHA diferente de ${currentSha} encontrado no environment ${env}\n`);
           process.exit(1);
           NODE
 
@@ -379,7 +388,7 @@ jobs:
               exit 1
             fi
             echo "Validando acesso server-side minimo ao catalogo"
-            STATUS=$(curl --proto '=https' --tlsv1.2 --silent --output /tmp/promogifts-preflight.json --write-out '%{http_code}' \
+            STATUS=$(curl --proto '=https' --tlsv1.2 --connect-timeout 10 --max-time 30 --silent --output /tmp/promogifts-preflight.json --write-out '%{http_code}' \
               "$PROMOGIFTS_SUPABASE_URL/rest/v1/products?select=id&limit=1" \
               -H "apikey: $PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY" \
               -H "Authorization: Bearer $PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY")
@@ -452,6 +461,17 @@ jobs:
 
       - name: Typecheck das edge functions (deno check)
         run: deno check supabase/functions/**/index.ts
+
+      - name: Testes das edge functions (deno test)
+        # GA27: roda os testes .test.ts de supabase/functions com o lock fixo do CI,
+        # para nao publicar funcao com erro de tipo ou de comportamento.
+        run: |
+          set -euo pipefail
+          deno test \
+            --config scripts/ci/deno.json \
+            --allow-env --allow-read \
+            --no-check \
+            supabase/functions/**/*.test.ts
 
       - name: Deploy
         if: inputs.dry_run != true

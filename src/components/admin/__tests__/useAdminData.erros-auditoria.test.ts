@@ -22,7 +22,8 @@ const h = vi.hoisted(() => {
       );
     return chain;
   };
-  return { toastError, calls, results, makeChain };
+  const invoke = vi.fn().mockResolvedValue({ data: {}, error: null });
+  return { toastError, calls, results, makeChain, invoke };
 });
 
 vi.mock('@/integrations/supabase/client', () => ({
@@ -35,6 +36,7 @@ vi.mock('@/integrations/supabase/client', () => ({
         getPublicUrl: () => ({ data: { publicUrl: 'https://local.test/avatar.png' } }),
       }),
     },
+    functions: { invoke: (...args: unknown[]) => h.invoke(...args) },
     rpc: vi.fn(),
   },
   SUPABASE_URL: 'https://local.test',
@@ -183,8 +185,6 @@ describe('useAdminData — senha mínima alinhada à Edge create-user', () => {
   });
 
   it('recusa 7 caracteres antes de chamar a Edge', async () => {
-    const fetchSpy = vi.fn();
-    vi.stubGlobal('fetch', fetchSpy);
     const { result } = renderHook(() => useAdminData('users'));
 
     let ok = true;
@@ -198,15 +198,13 @@ describe('useAdminData — senha mínima alinhada à Edge create-user', () => {
     });
 
     expect(ok).toBe(false);
-    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(h.invoke).not.toHaveBeenCalled();
     expect(h.toastError).toHaveBeenCalledWith(
       expect.stringContaining('8 caracteres'),
     );
   });
 
   it('aceita 8 caracteres e chama a Edge', async () => {
-    const fetchSpy = vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) });
-    vi.stubGlobal('fetch', fetchSpy);
     const { result } = renderHook(() => useAdminData('users'));
 
     let ok = false;
@@ -220,6 +218,6 @@ describe('useAdminData — senha mínima alinhada à Edge create-user', () => {
     });
 
     expect(ok).toBe(true);
-    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(h.invoke).toHaveBeenCalledTimes(1);
   });
 });

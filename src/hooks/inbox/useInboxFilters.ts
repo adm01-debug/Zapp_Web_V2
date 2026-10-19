@@ -1,4 +1,5 @@
 import { useMemo, useCallback, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useUrlFilters } from '@/hooks/system/useUrlFilters';
 import { InboxFiltersState } from '@/components/inbox/InboxFilters';
 import { FILTER_OPTIONS } from '@/components/inbox/ContactTypeFilter';
@@ -60,17 +61,6 @@ function tabsForChip(tab: ChipTab): { mainTab: MainTab; subTab: SubTab | null } 
   };
 }
 
-/** `?type=` é o valor de partida do deep-link; 'all' equivale a nenhum filtro. */
-function contactTypeFromUrl(): string | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    const value = new URLSearchParams(window.location.search).get('type');
-    return value && value !== 'all' ? value : null;
-  } catch {
-    return null;
-  }
-}
-
 /** Valor desconhecido (versão antiga, dado adulterado) não vira filtro. */
 function normalizeContactType(value: unknown): string | null {
   return typeof value === 'string' && value !== 'all' && FILTER_OPTIONS.some((o) => o.value === value)
@@ -114,19 +104,22 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
   // troca de conta no mesmo navegador não reaproveita o estado do anterior.
   const [draft, setDraft] = useState<Record<string, InboxFilterPrefs>>({});
 
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const basePrefs = useMemo<InboxFilterPrefs>(() => {
     const chipTab = storedPrefs?.chipTab ?? DEFAULT_CHIP;
     return {
       chipTab,
       ...tabsForChip(chipTab),
       queueId: storedPrefs?.queueId ?? null,
-      // O tipo do deep-link manda; sem ele, vale o que o dono guardou.
-      contactType: contactTypeFromUrl() ?? storedPrefs?.contactType ?? null,
+      contactType: storedPrefs?.contactType ?? null,
     };
   }, [storedPrefs]);
 
   const prefs = draft[ownerKey] ?? basePrefs;
-  const { chipTab, mainTab, subTab, queueId: selectedQueueId, contactType: selectedContactType } = prefs;
+  const { chipTab, mainTab, subTab, queueId: selectedQueueId, contactType: storedContactType } = prefs;
+  // URL param tem prioridade; sem ele, restaura a preferência persistida do usuário.
+  const selectedContactType = normalizeContactType(searchParams.get('type')) ?? storedContactType;
 
   /**
    * Aplica a mudança sobre o estado vivo do dono e persiste só o que sobrevive
@@ -164,15 +157,18 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
   const setSelectedQueueId = useCallback((id: string | null) => applyPrefs({ queueId: id }), [applyPrefs]);
 
   const handleContactTypeChange = useCallback((value: string | null) => {
-    applyPrefs({ contactType: value && value !== 'all' ? value : null });
-    const params = new URLSearchParams(window.location.search);
-    if (value && value !== 'all') {
-      params.set('type', value);
-    } else {
-      params.delete('type');
-    }
-    window.history.replaceState(null, '', params.toString() ? `?${params}` : window.location.pathname + window.location.hash);
-  }, [applyPrefs]);
+    const normalized = value && value !== 'all' ? value : null;
+    applyPrefs({ contactType: normalized });
+    setSearchParams(prev => {
+      const params = new URLSearchParams(prev);
+      if (normalized) {
+        params.set('type', normalized);
+      } else {
+        params.delete('type');
+      }
+      return params;
+    }, { replace: true });
+  }, [applyPrefs, setSearchParams]);
 
   // Convert URL filters to InboxFiltersState
   const filters = useMemo<InboxFiltersState>(() => ({

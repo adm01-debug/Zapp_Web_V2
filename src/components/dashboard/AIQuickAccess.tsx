@@ -155,7 +155,7 @@ export function AIQuickAccess({ onNavigateTab }: { onNavigateTab?: (tab: string)
                 </div>
                 <p className="text-sm text-muted-foreground line-clamp-2 mt-1.5 leading-snug">{feature.description}</p>
                 <div className="flex items-center justify-between mt-4">
-                  <span className="text-sm font-semibold text-primary-glow">{FEATURE_CTA[feature.id] ?? 'Acessar'} →</span>
+                  <span className="text-sm font-semibold text-[hsl(var(--primary-text))]">{FEATURE_CTA[feature.id] ?? 'Acessar'} →</span>
                   <div className="w-10 h-10 rounded-full bg-muted/50 border border-border/60 hover:bg-primary/20 hover:border-primary/40 flex items-center justify-center transition-colors">
                     <ArrowRight className="w-[18px] h-[18px] text-foreground" />
                   </div>

@@ -23,6 +23,8 @@ vi.mock('@/hooks/auth/useAuth', () => ({
 
 vi.mock('@/lib/logger', () => ({
   getLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),
+
+  createLogger: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), withCorrelation: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() })) })),
 }));
 
 vi.mock('@/integrations/supabase/client', () => ({
@@ -33,8 +35,10 @@ vi.mock('@/integrations/supabase/client', () => ({
       h.nomes.push(nome);
       const canal: Record<string, unknown> = {};
       canal.on = () => canal;
-      canal.subscribe = (cb: (status: string) => void) => {
-        h.subs.push(cb);
+      canal.subscribe = (cb?: (status: string) => void) => {
+        // useTeamReadState chama .subscribe() sem callback; só registrar os
+        // canais de mensagem que passam o callback de status.
+        if (cb) h.subs.push(cb);
         return canal;
       };
       return canal;
@@ -64,11 +68,14 @@ describe('useTeamMessages — tópico exclusivo e revalidação na reconexão (P
     const a = render('conv-1');
     const b = render('conv-1');
 
-    await waitFor(() => expect(h.nomes.length).toBeGreaterThanOrEqual(2));
-
-    expect(h.nomes[0].startsWith('team-messages-conv-1:')).toBe(true);
-    expect(h.nomes[1].startsWith('team-messages-conv-1:')).toBe(true);
-    expect(h.nomes[0]).not.toBe(h.nomes[1]);
+    // useTeamReadState também cria canais; filtrar só os de mensagem.
+    await waitFor(() =>
+      expect(h.nomes.filter(n => n.startsWith('team-messages-')).length).toBeGreaterThanOrEqual(2),
+    );
+    const msgNomes = h.nomes.filter(n => n.startsWith('team-messages-'));
+    expect(msgNomes[0].startsWith('team-messages-conv-1:')).toBe(true);
+    expect(msgNomes[1].startsWith('team-messages-conv-1:')).toBe(true);
+    expect(msgNomes[0]).not.toBe(msgNomes[1]);
 
     a.unmount();
     b.unmount();

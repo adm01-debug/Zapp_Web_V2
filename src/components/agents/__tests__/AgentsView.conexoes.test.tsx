@@ -52,6 +52,10 @@ const h = vi.hoisted(() => {
 });
 
 // A tela consome a MESMA fonte de conexões da V2 (store global de whatsapp_connections).
+vi.mock('@/hooks/auth/useAuth', () => ({
+  useAuth: () => ({ user: { id: 'user-1', email: 'test@test.com' }, session: null, loading: false }),
+}));
+
 vi.mock('@/hooks/connections/useConnectionsHealth', () => ({
   useConnectionsHealth: () => ({
     connections: h.state.connections,

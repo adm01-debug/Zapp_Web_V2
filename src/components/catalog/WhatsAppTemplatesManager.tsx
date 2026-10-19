@@ -9,9 +9,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Edit2, Trash2, Copy, Eye, Search, FileText, Send, CheckCircle2, Clock, XCircle, Loader2, Variable } from 'lucide-react';
+import { Plus, Edit2, Trash2, Copy, Eye, Search, FileText, Send, CheckCircle2, Clock, XCircle, Loader2, Variable, Lock } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { useUserRole } from '@/hooks/system/useUserRole';
 import {
   useWhatsAppTemplates, TEMPLATE_CATEGORIES, TEMPLATE_LANGUAGES,
   STATUS_BADGES, EMPTY_TEMPLATE, type WhatsAppTemplate,
@@ -22,6 +23,7 @@ const STATUS_ICONS: Record<string, React.ElementType> = {
 };
 
 export function WhatsAppTemplatesManager() {
+  const { isAdmin } = useUserRole();
   const {
     templates, loading, search, setSearch,
     filterCategory, setFilterCategory, filterStatus, setFilterStatus,
@@ -45,7 +47,9 @@ export function WhatsAppTemplatesManager() {
           <h2 className="text-lg md:text-xl font-bold text-foreground">Templates WhatsApp</h2>
           <p className="text-xs md:text-sm text-muted-foreground">Gerencie templates oficiais aprovados pelo WhatsApp Business API</p>
         </div>
-        <Button onClick={openNew} className="gap-2 bg-primary hover:bg-primary/90 w-full sm:w-auto"><Plus className="w-4 h-4" />Novo Template</Button>
+        {isAdmin && (
+          <Button onClick={openNew} className="gap-2 bg-primary hover:bg-primary/90 w-full sm:w-auto"><Plus className="w-4 h-4" />Novo Template</Button>
+        )}
       </div>
 
       <div className="flex gap-3 flex-wrap">
@@ -72,6 +76,13 @@ export function WhatsAppTemplatesManager() {
         </Select>
       </div>
 
+      {!isAdmin && templates.length > 0 && (
+        <div className="flex items-center gap-2 rounded-lg border border-border/50 bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
+          <Lock className="w-4 h-4 shrink-0" />
+          <span>Somente administradores podem criar, editar ou excluir templates.</span>
+        </div>
+      )}
+
       <Card className="border-secondary/20">
         <CardContent className="p-0 overflow-x-auto">
           {loading ? (
@@ -80,7 +91,9 @@ export function WhatsAppTemplatesManager() {
             <div className="p-8 text-center">
               <FileText className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
               <p className="text-muted-foreground">Nenhum template encontrado</p>
-              <Button variant="outline" className="mt-4" onClick={openNew}><Plus className="w-4 h-4 mr-2" />Criar primeiro template</Button>
+              {isAdmin && (
+                <Button variant="outline" className="mt-4" onClick={openNew}><Plus className="w-4 h-4 mr-2" />Criar primeiro template</Button>
+              )}
             </div>
           ) : (
             <Table>
@@ -116,9 +129,13 @@ export function WhatsAppTemplatesManager() {
                         <TableCell className="text-right">
                           <div className="flex gap-1 justify-end">
                             <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Visualizar ${template.name}`} onClick={() => handlePreview(template)}><Eye className="w-4 h-4" /></Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Editar ${template.name}`} onClick={() => openEdit(template)}><Edit2 className="w-4 h-4" /></Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Duplicar ${template.name}`} onClick={() => handleDuplicate(template)}><Copy className="w-4 h-4" /></Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" aria-label={`Excluir ${template.name}`} onClick={() => setPendingDelete(template)}><Trash2 className="w-4 h-4" /></Button>
+                            {isAdmin && (
+                              <>
+                                <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Editar ${template.name}`} onClick={() => openEdit(template)}><Edit2 className="w-4 h-4" /></Button>
+                                <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Duplicar ${template.name}`} onClick={() => handleDuplicate(template)}><Copy className="w-4 h-4" /></Button>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" aria-label={`Excluir ${template.name}`} onClick={() => setPendingDelete(template)}><Trash2 className="w-4 h-4" /></Button>
+                              </>
+                            )}
                           </div>
                         </TableCell>
                       </motion.tr>

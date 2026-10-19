@@ -68,7 +68,7 @@ export function GreetingBanner({ personal = false }: { personal?: boolean } = {}
 
           <div className="hidden lg:block w-px h-9 bg-border shrink-0" />
           <div className="flex flex-wrap items-center gap-1.5 shrink-0">
-            <span data-testid="gami-chip" className="h-[30px] px-3 rounded-lg text-xs font-semibold flex items-center gap-1.5 bg-primary/15 text-primary-glow">
+            <span data-testid="gami-chip" className="h-[30px] px-3 rounded-lg text-xs font-semibold flex items-center gap-1.5 bg-primary/15 text-[hsl(var(--primary-text))]">
               <Zap className="w-3.5 h-3.5" />
               {stats.xp.toLocaleString('pt-BR')} XP
             </span>

@@ -10,26 +10,25 @@ const linha = (id: string) => ({
 
 const estado = vi.hoisted(() => ({ dados: [] as unknown[] }));
 
-vi.mock('@/integrations/supabase/client', () => ({
-  supabase: {
-    from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        order: vi.fn(() => ({
-          limit: vi.fn(() => {
-            const resultado = Promise.resolve({ data: estado.dados, error: null });
-            const construtor = {
-              eq: () => construtor,
-              in: () => construtor,
-              like: () => construtor,
-              then: resultado.then.bind(resultado),
-            };
-            return construtor;
-          }),
-        })),
-      })),
-    })),
-  },
-}));
+vi.mock('@/integrations/supabase/client', () => {
+  function makeChain(): Record<string, unknown> {
+    const p = Promise.resolve({ data: estado.dados, error: null, count: estado.dados.length });
+    const m = () => makeChain();
+    return {
+      select: m, order: m, limit: m, gte: m, not: m,
+      or: m, in: m, eq: m, like: m,
+      then: p.then.bind(p),
+      catch: p.catch.bind(p),
+    };
+  }
+  return {
+    supabase: {
+      from: vi.fn(() => makeChain()),
+      channel: vi.fn(() => ({ on: vi.fn().mockReturnThis(), subscribe: vi.fn() })),
+      removeChannel: vi.fn(),
+    },
+  };
+});
 
 vi.mock('@/components/ui/select', async () => {
   const React = await import('react');

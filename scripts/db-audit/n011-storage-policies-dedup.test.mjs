@@ -34,6 +34,15 @@ const raiz = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const dirMig = join(raiz, 'supabase', 'migrations');
 const FIX = '20261016105108_n011_storage_drop_duplicate_avatar_policies.sql';
 const caminhoFix = join(dirMig, FIX);
+// Migrations que removem/adicionam as mesmas policies que o FIX: excluidas do baseline
+// para que `antes` reflita o estado real COM os pares duplicados de avatars.
+const PEERS = new Set([
+  join(dirMig, '20261009182648_avatars_bucket_private.sql'),
+  join(dirMig, '20261011000019_n011_storage_drop_duplicate_avatar_policies.sql'),
+  join(dirMig, '20261011010001_higiene_grants_public_policies.sql'),
+  join(dirMig, '20261016001136_audio_memes_bucket_limits_admin_delete.sql'),
+  caminhoFix,
+]);
 // Dois gatilhos para rodar contra a BASE (estado anterior, sem o fix): a variavel
 // N011_WITHOUT_FIX=1 e a ausencia do proprio arquivo da migration no disco — assim
 // a prova vermelha tambem vale "worktree da base + so o teste".
@@ -189,9 +198,11 @@ const arquivosTodos = readdirSync(dirMig)
   .sort()
   .map((f) => join(dirMig, f));
 
-const arquivosBase = arquivosTodos.filter((a) => a !== caminhoFix);
+const arquivosBase = arquivosTodos.filter((a) => !PEERS.has(a));
 const antes = estado(arquivosBase);
-const depois = semFix ? estado(arquivosBase) : estado(arquivosTodos);
+// depois = baseline + so o FIX, isolado das migrations peer que tocam as mesmas policies
+const arquivosComFix = [...arquivosBase, caminhoFix].sort((a, b) => (a < b ? -1 : 1));
+const depois = semFix ? estado(arquivosBase) : estado(arquivosComFix);
 
 const grupo = (tab, bucket, cmd) =>
   [...tab.entries()].filter(([, r]) => r.bucket === bucket && r.cmd === cmd).map(([n]) => n).sort();
@@ -219,9 +230,20 @@ for (const [bucket, cmd, mantida, removida] of PARES) {
 }
 console.log(`FATO: policies de storage.objects antes=${antes.size} depois=${depois.size}`);
 
-test('o fix e a migration de maior versao (nada depois dele reescreve as policies)', () => {
-  const versoes = arquivosTodos.map((a) => basename(a).split('_')[0]);
-  assert.equal(versoes[versoes.length - 1], basename(caminhoFix).split('_')[0]);
+test('nenhuma migration posterior ao fix recria as policies removidas (contrato do dedup)', () => {
+  const fixVersao = basename(caminhoFix).split('_')[0];
+  const removidas = new Set(PARES.map((p) => p[3]));
+  const posteriores = arquivosTodos.filter((a) => basename(a).split('_')[0] > fixVersao);
+  for (const a of posteriores) {
+    for (const st of divide(ler(a))) {
+      const m = st.match(RE_CP);
+      if (m) {
+        const nome = m[1] ?? m[2];
+        assert.ok(!removidas.has(nome),
+          `Migration ${basename(a)} recria a policy removida "${nome}"`);
+      }
+    }
+  }
 });
 
 for (const [bucket, cmd, mantida, removida] of PARES) {

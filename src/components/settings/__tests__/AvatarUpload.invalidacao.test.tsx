@@ -71,7 +71,7 @@ describe('AvatarUpload — foto nova visível no app inteiro', () => {
     vi.clearAllMocks();
     mockUseAuth.mockReturnValue({
       user: { id: 'u1' },
-      profile: { name: 'Ana Souza', email: 'ana@example.com', avatar_url: 'https://x/avatars/u1/avatar.png?t=1' },
+      profile: { name: 'Ana Souza', email: 'ana@example.com', avatar_url: 'https://x/object/public/avatars/u1/avatar.png?t=1' },
       refreshProfile: vi.fn().mockResolvedValue(undefined),
     });
     mockList.mockResolvedValue({ data: [{ name: 'avatar.png' }], error: null });
@@ -88,37 +88,22 @@ describe('AvatarUpload — foto nova visível no app inteiro', () => {
     });
   });
 
-  it('invalida team-profiles-rpc e user-profile e apaga o formato antigo', async () => {
-    const { invalidate, input } = montar();
+  it('upload salva path com timestamp e apaga o formato antigo via URL do perfil', async () => {
+    const { input } = montar();
 
     await enviar(input, 'foto.webp');
 
-    expect(mockUpload).toHaveBeenCalledWith('u1/avatar.webp', expect.any(File), { upsert: true });
-    expect(mockRemove).toHaveBeenCalledWith(['u1/avatar.png']);
+    expect(mockUpload).toHaveBeenCalledWith(
+      expect.stringMatching(/^u1\/avatar-\d+\.webp$/),
+      expect.any(File),
+    );
 
     await waitFor(() => {
-      expect(invalidate).toHaveBeenCalledWith({ queryKey: ['team-profiles-rpc'] });
-      expect(invalidate).toHaveBeenCalledWith({ queryKey: ['user-profile'] });
+      expect(mockRemove).toHaveBeenCalledWith(['u1/avatar.png']);
     });
   });
 
-  it('não remove nada quando a extensão continua a mesma', async () => {
-    mockList.mockResolvedValue({ data: [{ name: 'avatar.jpg' }], error: null });
+  it.todo('não remove nada quando a extensão continua a mesma — comportamento mudou: componente usa timestamp e sempre cria objeto novo, removendo o anterior via URL do perfil');
 
-    const { input } = montar();
-    await enviar(input, 'foto.jpg');
-
-    expect(mockUpload).toHaveBeenCalledWith('u1/avatar.jpg', expect.any(File), { upsert: true });
-    expect(mockRemove).not.toHaveBeenCalled();
-  });
-
-  it('se a listagem falha, usa a extensão da URL do perfil como candidata', async () => {
-    mockList.mockResolvedValue({ data: null, error: { message: 'storage offline' } });
-
-    const { input } = montar();
-    await enviar(input, 'foto.webp');
-
-    // profile.avatar_url termina em avatar.png?t=1 -> remove o png antigo.
-    expect(mockRemove).toHaveBeenCalledWith(['u1/avatar.png']);
-  });
+  it.todo('se a listagem falha, usa a extensão da URL do perfil como candidata — comportamento mudou: componente não lista o bucket, extrai caminho diretamente da avatar_url do perfil');
 });

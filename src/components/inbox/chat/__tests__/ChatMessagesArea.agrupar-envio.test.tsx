@@ -52,6 +52,19 @@ const scrollToSpy = vi.fn();
 beforeAll(() => {
   (window as unknown as { ResizeObserver: typeof ResizeObserverMock }).ResizeObserver = ResizeObserverMock;
   (Element.prototype as unknown as { scrollTo: unknown }).scrollTo = scrollToSpy;
+  // jsdom não computa layout: clientHeight/offsetHeight ficam 0 mesmo com style.height.
+  // O virtualizer lê clientHeight do container para calcular o range visível; sem isso
+  // getVirtualItems() retorna vazio e os testes falham no CI.
+  // Nota: testes que redefinem clientHeight por instância (Object.defineProperty no elemento
+  // específico) têm prioridade sobre este getter de protótipo — sem conflito.
+  Object.defineProperty(Element.prototype, 'clientHeight', {
+    configurable: true,
+    get() { return 600; },
+  });
+  Object.defineProperty(Element.prototype, 'offsetHeight', {
+    configurable: true,
+    get() { return 600; },
+  });
 });
 
 vi.mock('../MessageBubble', () => ({

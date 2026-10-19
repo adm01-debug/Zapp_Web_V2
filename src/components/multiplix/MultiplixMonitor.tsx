@@ -150,7 +150,7 @@ function ReturnsRoom({ dispatchId }: { dispatchId: string }) {
                 <button
                   type="button"
                   onClick={() => openContactChat(r.contact_id as string)}
-                  className="h-8 px-3 rounded-lg border border-primary/40 bg-primary/10 text-primary-glow text-xs font-semibold shrink-0 transition-colors motion-safe:duration-150 hover:bg-primary/20"
+                  className="h-8 px-3 rounded-lg border border-primary/40 bg-primary/10 text-[hsl(var(--primary-text))] text-xs font-semibold shrink-0 transition-colors motion-safe:duration-150 hover:bg-primary/20"
                 >
                   Abrir conversa
                 </button>
@@ -396,7 +396,7 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
             <StatusPill status={dispatch.status} map={DISPATCH_STATUS} />
             {!isDone && (<>
               {isRunning && <button type="button" onClick={() => setConfirmPause(true)} className="h-9 px-3.5 rounded-lg border border-dash-amber/40 bg-dash-amber/10 text-dash-amber text-xs font-semibold flex items-center gap-1.5 hover:bg-dash-amber/20"><Pause className="w-4 h-4" />Pausar</button>}
-              {canStart && <button type="button" onClick={() => setConfirmResume(true)} className="h-9 px-3.5 rounded-lg border border-primary/40 bg-primary/10 text-primary-glow text-xs font-semibold flex items-center gap-1.5 hover:bg-primary/20"><Play className="w-4 h-4" />{isPaused ? 'Retomar' : 'Iniciar'}</button>}
+              {canStart && <button type="button" onClick={() => setConfirmResume(true)} className="h-9 px-3.5 rounded-lg border border-primary/40 bg-primary/10 text-[hsl(var(--primary-text))] text-xs font-semibold flex items-center gap-1.5 hover:bg-primary/20"><Play className="w-4 h-4" />{isPaused ? 'Retomar' : 'Iniciar'}</button>}
               <button type="button" onClick={() => setConfirmCancel(true)} className="h-9 px-3.5 rounded-lg border border-dash-red/40 bg-dash-red/10 text-dash-red text-xs font-semibold flex items-center gap-1.5 hover:bg-dash-red/20"><Square className="w-4 h-4" />Cancelar</button>
             </>)}
           </div>
@@ -416,7 +416,7 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
         </span>
         <div className="flex items-center justify-between text-2xs text-foreground-secondary">
           <span>{progress}% concluído · {fmtInt(processed)} de {fmtInt(dispatch.total_recipients)}</span>
-          {isRunning && <span className="text-primary-glow font-medium motion-safe:animate-pulse">Enviando agora…</span>}
+          {isRunning && <span className="text-[hsl(var(--primary-text))] font-medium motion-safe:animate-pulse">Enviando agora…</span>}
           {dispatch.completed_at && <span>Concluído em {fmtDateTime(dispatch.completed_at)}</span>}
         </div>
         {/* F80: a contagem de "sem WhatsApp" pode falhar sozinha (o servidor sem o

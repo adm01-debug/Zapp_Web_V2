@@ -2,14 +2,12 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { FileText, Search, Filter, Calendar, User, Globe, AlertTriangle, Shield, Activity } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
-import { localDayKey } from '@/lib/localDay';
 import { ptBR } from 'date-fns/locale';
 
 interface AuditLog {
@@ -77,7 +75,47 @@ export function AuditLogDashboard() {
   const [entityFilter, setEntityFilter] = useState<string>('all');
   const [stats, setStats] = useState({ total: 0, today: 0, suspicious: 0, uniqueUsers: 0 });
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
-  const [truncated, setTruncated] = useState(false);
+  const [profiles, setProfiles] = useState<Record<string, string>>({});
+  const [error, setError] = useState<{ message: string } | null>(null);
+
+  // Contagens server-side — independentes dos filtros de UI da lista.
+  const fetchStats = useCallback(async () => {
+    const now = new Date();
+    const ago24h = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
+    const ago7d = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    const [totalRes, hojeRes, sensRes, userRes] = await Promise.all([
+      supabase.from('audit_logs').select('*', { count: 'exact', head: true }),
+      supabase.from('audit_logs').select('*', { count: 'exact', head: true }).gte('created_at', ago24h),
+      supabase
+        .from('audit_logs')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', ago24h)
+        .or('action.like.%delete%,action.like.%export%,action.like.role_%'),
+      supabase
+        .from('audit_logs')
+        .select('user_id')
+        .gte('created_at', ago7d)
+        .not('user_id', 'is', null),
+    ]);
+
+    if (totalRes.error) {
+      setError(totalRes.error as { message: string });
+      return;
+    }
+
+    const uniqueUsers = new Set(
+      ((userRes.data ?? []) as Array<{ user_id: string | null }>).map((r) => r.user_id),
+    ).size;
+
+    setStats({
+      total: totalRes.count ?? 0,
+      today: hojeRes.count ?? 0,
+      suspicious: sensRes.count ?? 0,
+      uniqueUsers,
+    });
+    setError(null);
+  }, []);
 
   const fetchLogs = useCallback(async () => {
     setLoading(true);
@@ -85,6 +123,7 @@ export function AuditLogDashboard() {
       .from('audit_logs')
       .select('id, action, entity_type, user_id, details, ip_address, created_at')
       .order('created_at', { ascending: false })
+      .order('id', { ascending: false })
       .limit(LOGS_PAGE_LIMIT);
 
     if (actionFilter === ROLE_FILTER_VALUE) {
@@ -96,34 +135,53 @@ export function AuditLogDashboard() {
       query = query.in('entity_type', ENTITY_TYPES_BY_FILTER[entityFilter] ?? [entityFilter]);
     }
 
-    const { data, error } = await query;
-    if (!error && data) {
+    const { data, error: fetchError } = await query;
+    if (!fetchError && data) {
       setLogs(data as AuditLog[]);
-      // A consulta corta em LOGS_PAGE_LIMIT: com a página cheia o número exibido
-      // é "os N mais recentes", não o total — o aviso na tela deixa isso claro.
-      setTruncated(data.length >= LOGS_PAGE_LIMIT);
-      
-      const today = localDayKey(new Date());
-      const todayLogs = data.filter(l => localDayKey(l.created_at) === today);
-      const uniqueUsers = new Set(data.map(l => l.user_id).filter(Boolean));
-      const suspicious = data.filter(l => isSensitiveAction(l.action));
-      
-      setStats({
-        total: data.length,
-        today: todayLogs.length,
-        suspicious: suspicious.length,
-        uniqueUsers: uniqueUsers.size,
-      });
+
+      const userIds = Array.from(
+        new Set((data as AuditLog[]).map((l) => l.user_id).filter(Boolean)),
+      ) as string[];
+
+      if (userIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, name')
+          .in('id', userIds);
+        if (profilesData) {
+          setProfiles(
+            Object.fromEntries(
+              (profilesData as Array<{ id: string; name: string }>).map((p) => [p.id, p.name]),
+            ),
+          );
+        }
+      }
     }
     setLoading(false);
   }, [actionFilter, entityFilter]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount/troca-de-filtro padrão, sem estado derivado de props para sincronizar.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount/troca-de-filtro padrão
+    fetchStats();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount/troca-de-filtro padrão
     fetchLogs();
-  }, [fetchLogs]);
+  }, [fetchStats, fetchLogs]);
 
-  const filteredLogs = logs.filter(log => {
+  // Realtime: re-executa as contagens ao chegar INSERT na tabela.
+  useEffect(() => {
+    const canal = supabase
+      .channel('audit-logs-dashboard')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'audit_logs' }, () => {
+        fetchStats();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(canal);
+    };
+  }, [fetchStats]);
+
+  const filteredLogs = logs.filter((log) => {
     if (!search) return true;
     const s = search.toLowerCase();
     return (
@@ -148,15 +206,23 @@ export function AuditLogDashboard() {
     return Activity;
   };
 
+  const statValue = (value: number): string | number => (error ? '—' : value);
+
   return (
     <div className="space-y-6 w-full min-w-0">
+      {error && (
+        <div role="alert" className="text-destructive text-sm">
+          {error.message}
+        </div>
+      )}
+
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: truncated ? 'Últimos 200' : 'Total de Logs', value: stats.total, icon: FileText, color: 'text-primary' },
-          { label: 'Hoje', value: stats.today, icon: Calendar, color: 'text-success' },
-          { label: 'Ações Sensíveis', value: stats.suspicious, icon: AlertTriangle, color: 'text-destructive' },
-          { label: 'Usuários Únicos', value: stats.uniqueUsers, icon: User, color: 'text-info' },
+          { label: logs.length >= LOGS_PAGE_LIMIT ? 'Últimos 200' : 'Total de Logs', value: statValue(stats.total), icon: FileText, color: 'text-primary' },
+          { label: 'Hoje', value: statValue(stats.today), icon: Calendar, color: 'text-success' },
+          { label: 'Ações Sensíveis', value: statValue(stats.suspicious), icon: AlertTriangle, color: 'text-destructive' },
+          { label: 'Usuários Únicos', value: statValue(stats.uniqueUsers), icon: User, color: 'text-info' },
         ].map((stat) => (
           <Card key={stat.label}>
             <CardContent className="pt-4 pb-4">
@@ -171,6 +237,12 @@ export function AuditLogDashboard() {
           </Card>
         ))}
       </div>
+
+      {logs.length >= LOGS_PAGE_LIMIT && (
+        <p className="text-xs text-muted-foreground text-center">
+          pode haver registros mais antigos fora do recorte
+        </p>
+      )}
 
       {/* Filters */}
       <Card>
@@ -232,11 +304,6 @@ export function AuditLogDashboard() {
             <FileText className="w-5 h-5" />
             Logs de Auditoria ({filteredLogs.length})
           </CardTitle>
-          {truncated && (
-            <p className="text-xs text-warning mt-1">
-              Exibindo os 200 registros mais recentes — pode haver registros mais antigos fora do recorte.
-            </p>
-          )}
         </CardHeader>
         <CardContent>
           <ScrollArea className="h-[500px]">
@@ -280,6 +347,15 @@ export function AuditLogDashboard() {
                                 <span className="flex items-center gap-1">
                                   <Globe className="w-3 h-3" />
                                   {log.ip_address}
+                                </span>
+                              </>
+                            )}
+                            {log.user_id && (
+                              <>
+                                <span>•</span>
+                                <span className="flex items-center gap-1">
+                                  <User className="w-3 h-3" />
+                                  {profiles[log.user_id] ?? log.user_id}
                                 </span>
                               </>
                             )}

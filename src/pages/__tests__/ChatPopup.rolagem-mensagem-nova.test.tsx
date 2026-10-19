@@ -11,7 +11,7 @@
  *     indicador de digitacao seguem rolando ao fim, como antes).
  */
 import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const ALTURA_JANELA = 600;
@@ -111,6 +111,8 @@ vi.mock('@/integrations/supabase/client', () => ({
 vi.mock('@/lib/logger', () => ({
   log: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
   getLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
+
+  createLogger: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), withCorrelation: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() })) })),
 }));
 
 // ---- dependencias internas do ChatPanel (precedente: ChatPopup.pagination) ----
@@ -291,6 +293,9 @@ describe('ChatPopup — rolagem com mensagem nova e indicador de digitacao (P2 #
       const el = await superficie();
       // A conversa abre no fim (comportamento esperado na entrada).
       await waitFor(() => expect(scrollToSpy).toHaveBeenCalled());
+      // Esgota o RAF de reconciliacao do virtualizer (scheduleScrollReconcile) antes de
+      // simular scroll do usuario — evita que o retry do reconcile redefina isNearBottomRef.
+      await act(async () => { await new Promise<void>(resolve => requestAnimationFrame(() => resolve())); });
       scrollToSpy.mockClear();
 
       // O agente rola ate o topo e passa a ler o historico.
@@ -318,6 +323,7 @@ describe('ChatPopup — rolagem com mensagem nova e indicador de digitacao (P2 #
       const { rerender } = renderPopup();
       const el = await superficie();
       await waitFor(() => expect(scrollToSpy).toHaveBeenCalled());
+      await act(async () => { await new Promise<void>(resolve => requestAnimationFrame(() => resolve())); });
       scrollToSpy.mockClear();
 
       rolarPara(el, CONTEUDO_30, 0);

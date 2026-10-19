@@ -1,6 +1,8 @@
 # docs:
 #   gatilho: workflow_run (conclusao dos workflows principais na main)
 #   prova: abre issue quando qualquer workflow critico falha na main
+#   falha: a issue nao e aberta -- falha silenciosa; monitorar via job summary
+#   avisa: equipe via issue no repositorio (label db-live-guard ou equivalente)
 #   workflows monitorados: ci, deploy-functions, db-migrate, db-live-guard, types-sync, e2e-logado, db-guard
 
 name: Notifica falha na main
@@ -72,3 +74,60 @@ jobs:
                 labels: ['falha-main'],
               });
             }
+
+      # E90: WhatsApp via N8N — só para os 4 workflows críticos, dedupe de 1h por workflow.
+      # Técnica: cache key = nome_workflow + hora_UTC (YYYYMMDDHH); na primeira falha da
+      # hora o cache miss dispara o webhook e salva a chave; hits seguintes na mesma hora
+      # pulam o envio. Cache TTL do GitHub Actions é de 7 dias — mais que suficiente para 1h.
+      - name: 📱 Calcular chave dedupe (E90)
+        id: dedupe-key
+        if: |
+          contains(
+            fromJSON('["E2E logado","DB Live Guard","Deploy Edge Functions","types-sync"]'),
+            github.event.workflow_run.name
+          )
+        env:
+          WF_NAME: ${{ github.event.workflow_run.name }}
+        run: |
+          HORA="$(date -u +%Y%m%d%H)"
+          SLUG="$(printf '%s' "$WF_NAME" | tr '[:upper:]' '[:lower:]' | tr ' ' '-')"
+          echo "key=n8n-whatsapp-${SLUG}-${HORA}" >> "$GITHUB_OUTPUT"
+
+      - name: 📱 Verificar dedupe (E90)
+        id: dedupe-cache
+        if: steps.dedupe-key.conclusion == 'success'
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: /tmp/n8n-dedupe
+          key: ${{ steps.dedupe-key.outputs.key }}
+          lookup-only: true
+
+      - name: 📱 Enviar WhatsApp via N8N (E90)
+        if: steps.dedupe-key.conclusion == 'success' && steps.dedupe-cache.outputs.cache-hit != 'true'
+        env:
+          N8N_WEBHOOK_URL: ${{ secrets.N8N_WEBHOOK_FALHA_MAIN }}
+          WF_NAME: ${{ github.event.workflow_run.name }}
+          WF_URL:  ${{ github.event.workflow_run.html_url }}
+          WF_SHA:  ${{ github.event.workflow_run.head_sha }}
+          WF_AT:   ${{ github.event.workflow_run.updated_at }}
+        run: |
+          mkdir -p /tmp/n8n-dedupe
+          echo "sent" > /tmp/n8n-dedupe/sent
+          jq -cn \
+            --arg wf  "$WF_NAME" \
+            --arg run "$WF_URL" \
+            --arg sha "${WF_SHA:0:7}" \
+            --arg at  "$WF_AT" \
+            '{workflow: $wf, run_url: $run, commit: $sha, when: $at}' \
+          | curl -sf -X POST "$N8N_WEBHOOK_URL" \
+              --proto '=https' --tlsv1.2 \
+              --max-time 10 \
+              -H "Content-Type: application/json" \
+              -d @-
+
+      - name: 📱 Salvar cache dedupe (E90)
+        if: steps.dedupe-key.conclusion == 'success' && steps.dedupe-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: /tmp/n8n-dedupe
+          key: ${{ steps.dedupe-key.outputs.key }}

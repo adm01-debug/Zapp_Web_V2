@@ -44,10 +44,16 @@ function toTeamMessage(row: TeamMessagePageRow): TeamMessage {
   };
 }
 
-export function useTeamMessages(conversationId: string | null) {
+export type TeamMessageRealtimeEvent =
+  | { type: 'update'; id: string; content: string; is_edited: boolean; updated_at: string }
+  | { type: 'delete'; id: string };
+
+export function useTeamMessages(conversationId: string | null, onEvent?: (event: TeamMessageRealtimeEvent) => void) {
   const { profile } = useAuth();
   const queryClient = useQueryClient();
   const markedRef = useRef<string | null>(null);
+  const onEventRef = useRef(onEvent);
+  onEventRef.current = onEvent;
 
   const query = useQuery({
     queryKey: queryKeys.messages(conversationId),
@@ -108,7 +114,27 @@ export function useTeamMessages(conversationId: string | null) {
     let jaInscrito = false;
     const channel = supabase
       .channel(`team-messages-${conversationId}` + uniqueRealtimeTopic(''))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'team_messages', filter: `conversation_id=eq.${conversationId}` }, revalidar)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'team_messages', filter: `conversation_id=eq.${conversationId}` }, (payload) => {
+        revalidar();
+        if (onEventRef.current) {
+          const { eventType, new: novo, old: velho } = payload as {
+            eventType: string;
+            new: Record<string, unknown>;
+            old: Record<string, unknown>;
+          };
+          if (eventType === 'UPDATE' && novo?.id) {
+            onEventRef.current({
+              type: 'update',
+              id: String(novo.id),
+              content: String(novo.content ?? ''),
+              is_edited: Boolean(novo.is_edited),
+              updated_at: String(novo.updated_at ?? ''),
+            });
+          } else if (eventType === 'DELETE' && velho?.id) {
+            onEventRef.current({ type: 'delete', id: String(velho.id) });
+          }
+        }
+      })
       .subscribe((status) => {
         // A queda do canal não avisa: o que ficou em memória envelhece. Só na
         // RE-inscrição (depois da primeira) a página corrente é refeita.
@@ -166,5 +192,5 @@ export function useTeamMessages(conversationId: string | null) {
     return () => { cancelado = true; };
   }, [conversationId, profile, pagina]);
 
-  return { messages, isLoading: query.isLoading };
+  return { messages, isLoading: query.isLoading, isError: query.isError, refetch: query.refetch };
 }

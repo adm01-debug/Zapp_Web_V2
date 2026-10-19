@@ -22,7 +22,7 @@ import { useSyncToCRM } from '@/hooks/integrations/useSyncToCRM';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { RefreshCw, CheckCircle2, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/lazyToast';
 import type { Conversation, Message } from '@/types/chat';
 
 interface CRMAutoSyncProps {
@@ -163,6 +163,7 @@ export function CRMSyncButton({ conversation, messageCount }: { conversation: Co
           onClick={handleSync}
           disabled={isSyncing}
           data-testid="crm-sync-button"
+          aria-label={tooltipText}
           className="w-9 h-9 border-border/30 hover:border-primary/50 hover:bg-primary/10"
         >
           {isSyncing ? (

@@ -110,7 +110,7 @@ export function GoalsTable({ goals, onConfigure }: GoalsTableProps) {
                     <td className="pr-2">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-[10px] bg-primary/15 flex items-center justify-center shrink-0">
-                          <Icon className="w-[18px] h-[18px] text-primary-glow" />
+                          <Icon className="w-[18px] h-[18px] text-[hsl(var(--primary-text))]" />
                         </div>
                         <div className="min-w-0">
                           <p className="text-sm font-semibold text-foreground truncate">{goal.label}</p>

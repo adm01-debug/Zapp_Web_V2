@@ -45,8 +45,8 @@ vi.mock('@/hooks/system/useSearchHistory', () => ({
   }),
 }));
 vi.mock('@/lib/logger', () => {
-  const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
-  return { log: logger, getLogger: () => logger };
+  const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn() };
+  return { log: logger, getLogger: () => logger, createLogger: vi.fn(() => logger) };
 });
 
 import { useGlobalSearchData, type ResultType } from '../useGlobalSearchData';

@@ -170,12 +170,23 @@ export async function coletarRuns({
 
 // Busca os jobs de cada run (paginando o proprio run, que tambem corta em 100) e
 // preenche `workflow_name` com o nome do run quando o endpoint de jobs nao o traz.
+// GA92: `maxRuns` limita o numero de runs para os quais fazemos GET de jobs (1 GET
+// por run × 1 000+ runs ultrapassa o limite de 1 000 req/h da API). Os runs mais
+// longos sao priorizados porque têm maior chance de ter os jobs mais lentos.
 export async function coletarJobs(
   runs,
-  { repo, token, porPagina = POR_PAGINA, maxPaginas = 100, pedir: buscar = pedir } = {},
+  { repo, token, porPagina = POR_PAGINA, maxPaginas = 100, maxRuns = 300, pedir: buscar = pedir } = {},
 ) {
+  const todos = runs ?? [];
+  let alvo = todos;
+  if (todos.length > maxRuns) {
+    alvo = [...todos].sort((a, b) => duracaoMinutos(b) - duracaoMinutos(a)).slice(0, maxRuns);
+    console.error(
+      `::warning::GA92: coletarJobs: ${todos.length} runs na janela; buscando jobs apenas dos ${maxRuns} mais longos para nao ultrapassar o rate limit da API.`,
+    );
+  }
   const jobs = [];
-  for (const run of runs ?? []) {
+  for (const run of alvo) {
     const id = run.id ?? run.run_id;
     if (id === undefined || id === null) continue;
     for (let pagina = 1; pagina <= maxPaginas; pagina += 1) {

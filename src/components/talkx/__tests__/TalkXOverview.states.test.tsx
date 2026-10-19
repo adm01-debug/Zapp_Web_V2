@@ -58,6 +58,20 @@ vi.mock('@/hooks/integrations/useTalkXOverviewStats', () => ({
 
 vi.mock('@/hooks/integrations/useTalkXSegments', () => ({ useTalkXSegments: () => ({ segments: [] }) }));
 vi.mock('@/hooks/integrations/useTalkXTemplates', () => ({ useTalkXTemplates: () => ({ templates: [] }) }));
+vi.mock('@/components/talkx/useTalkXLifecycle', () => ({
+  useTalkXLifecycle: () => ({
+    intent: null,
+    isPending: false,
+    error: null,
+    reason: '',
+    setReason: vi.fn(),
+    request: vi.fn().mockReturnValue(true),
+    confirm: vi.fn().mockResolvedValue(undefined),
+    close: vi.fn().mockReturnValue(true),
+    clearError: vi.fn(),
+  }),
+  TalkXLifecycleDialog: () => null,
+}));
 vi.mock('@/hooks/crm/useTeamProfiles', () => ({ useTeamProfiles: () => ({ data: [] }) }));
 vi.mock('@/hooks/crm/useContactCustomFields', () => ({ useContactCustomFields: () => ({ fields: [] }) }));
 vi.mock('@/components/talkx/TalkXCampaignWizard', () => ({
@@ -239,7 +253,7 @@ function tokensDoBloco(seletor: ':root {' | '.dark {'): Record<string, string> {
   }
   if (fim < 0) throw new Error(`bloco ${seletor} sem fechamento em tokens.css`);
   const vars: Record<string, string> = {};
-  for (const m of Array.from(TOKENS_CSS.slice(abre + 1, fim).matchAll(/--([\w-]+):\s*([^;]+);/g))) {
+  for (const m of Array.from(TOKENS_CSS.slice(abre + 1, fim).matchAll(/--(\w-]+):\s*([^;]+);/g))) {
     vars[m[1]] = m[2].trim().replace(/\s+/g, ' ');
   }
   return vars;
@@ -251,7 +265,7 @@ const TOKENS_ESCURO = { ...TOKENS_CLARO, ...tokensDoBloco('.dark {') };
 
 /** De uma classe utilitária ('dash-amber' | '[hsl(var(--warning-text))]') para o token do CSS. */
 function tokenDaClasse(util: string): string | null {
-  const literal = util.match(/^\[hsl\(var\(--([\w-]+)\)\)\]$/);
+  const literal = util.match(/^\[hsl\(var\(--(\w-]+)\)\)\]$/);
   if (literal) return literal[1];
   return util in TOKENS_CLARO ? util : null;
 }
@@ -321,7 +335,7 @@ describe('Visão geral — acessibilidade da tela 01 (TL-175A)', () => {
     render(<TalkXOverview {...baseProps} campaigns={[rascunho]} />);
 
     // TL-115: os rascunhos ficam recolhidos por padrao — expandir o bloco antes de medir.
-    fireEvent.click(screen.getByRole('button', { name: 'Rascunhos pendentes(1)' }));
+    fireEvent.click(screen.getByRole('button', { name: /Rascunhos pendentes/ }));
 
     const pilula = screen.getByRole('button', { name: 'Retomar' });
     expect(pilula.className).not.toMatch(/#[0-9a-f]{3,8}\b|rgba?\(/i);

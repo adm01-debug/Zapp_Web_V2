@@ -30,7 +30,17 @@ vi.mock('@/integrations/supabase/client', () => ({
     functions: { invoke: h.invoke },
   },
 }));
-// Padrão do app: sonner (a view não usa mais @/hooks/ui/use-toast).
+// A view importa de @/lib/lazyToast (wrapper lazy sobre sonner).
+// Mockar direto evita o problema de timing do import() dinâmico do lazyToast
+// e o TypeError por `info` ausente no mock do sonner.
+vi.mock('@/lib/lazyToast', () => ({
+  toast: {
+    success: h.success,
+    error: h.error,
+    warning: h.warning,
+    info: h.toast, // toast.info(...) → h.toast(...) — assertion do teste
+  },
+}));
 vi.mock('sonner', () => ({
   toast: Object.assign(h.toast, { success: h.success, error: h.error, warning: h.warning }),
 }));
@@ -64,6 +74,8 @@ vi.mock('@/hooks/system/useUserRole', () => ({
 }));
 vi.mock('framer-motion', () => ({
   motion: { div: ({ children }: { children?: React.ReactNode }) => <div>{children}</div> },
+  AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+  useReducedMotion: vi.fn().mockReturnValue(false),
 }));
 vi.mock('@/components/ui/motion', () => ({
   motion: { div: ({ children }: { children?: React.ReactNode }) => <div>{children}</div> },

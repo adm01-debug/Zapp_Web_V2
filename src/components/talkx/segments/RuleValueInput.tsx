@@ -103,7 +103,7 @@ export function RuleValueInput({ field, op, value, onChange }: RuleValueInputPro
             className={cn(
               'h-9 px-2.5 rounded-lg border text-xs font-medium transition-colors',
               value === String(d)
-                ? 'border-primary/60 bg-primary/15 text-primary-glow'
+                ? 'border-primary/60 bg-primary/15 text-[hsl(var(--primary-text))]'
                 : 'border-border/70 bg-input/40 text-foreground-secondary hover:bg-muted/50',
             )}
           >

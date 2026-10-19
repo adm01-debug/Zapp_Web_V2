@@ -244,7 +244,7 @@ GitHub medida em 03/10/2026 (`docs/audits/e95-perimetro-github-2026-10-03.md`).
 
 | Campo | Estado canônico | Verificado por |
 |---|---|---|
-| Branch protection — required checks | **6**: `🔍 Lint & TypeCheck` · `🧪 Unit Tests` · `🏗️ Build` · `🔒 Security Audit` · `Contrato DB offline` · `🎭 E2E Tests (Playwright)` | `settings-guard` ⚠ |
+| Branch protection — required checks | **9**: `🔎 TypeCheck` · `🧪 Unit Tests (1/3)` · `🧪 Unit Tests (2/3)` · `🧪 Unit Tests (3/3)` · `🏗️ Build` · `🔒 Security Audit` · `Contrato DB offline` · `🎭 E2E Tests (Playwright)` · `🧩 Node CI Scripts` | `settings-guard` ⚠ |
 | Branch protection — `strict` | **`true`** (política vigente desde 01/10; a opção `strict=false` foi **revogada** em 02/10 — E15(b)) | `settings-guard` ⚠ |
 | Branch protection — `enforce_admins` | `true` | `settings-guard` ⚠ |
 | Branch protection — review obrigatório | nenhum (deliberado: vários agentes com auto-merge) | — |
@@ -262,15 +262,16 @@ GitHub medida em 03/10/2026 (`docs/audits/e95-perimetro-github-2026-10-03.md`).
 
 ## Auditoria de workflows (2026-09-25) — estado dos guardas
 
-Auditoria dos 16 workflows + 3 dinâmicos (19 total), da branch protection, dos secrets e dos environments. O que passou a
+Auditoria dos 14 workflows + 3 dinâmicos (17 total), da branch protection, dos secrets e dos environments. O que passou a
 valer (confira antes de propor mudança de CI, para não refazer o que já existe):
 
-**Correção de 2026-09-26 (auditoria exaustiva de GitHub Actions) — retificada em 05/10/2026:** são **16**
-arquivos em `.github/workflows/` (`auto-update-pr-branch.yml`, `branch-hygiene-audit.yml`, `ci.yml`,
+**Correção de 2026-09-26 (auditoria exaustiva de GitHub Actions) — retificada em 19/10/2026:** são **15**
+arquivos em `.github/workflows/` (`branch-hygiene-audit.yml`, `ci.yml`,
 `codeql.yml`, `crm-sync-worker.yml`, `db-guard.yml`, `db-live-guard.yml`, `db-migrate.yml`,
-`deploy-functions.yml`, `e2e-logado.yml`, `e2e-talkx.yml`, `settings-guard.yml`, `supabase-sync.yml`,
-`talkx-status-regen.yml`, `targeted-ledger-evidence.yml`, `types-sync.yml`), mais 3 workflows dinâmicos
-que não têm arquivo próprio no repo (Dependabot Updates, Dependency Graph, Copilot reviewer) — **19 no
+`deploy-functions.yml`, `e2e-logado.yml`, `e2e-talkx.yml`, `notifica-falha-main.yml`,
+`talkx-status-regen.yml`, `targeted-ledger-evidence.yml`, `types-sync.yml`,
+`vercel-env-cleanup.yml`), mais 3 workflows dinâmicos
+que não têm arquivo próprio no repo (Dependabot Updates, Dependency Graph, Copilot reviewer) — **18 no
 total**. A fonte canônica do inventário é o **gerado** `docs/ci/README.md`
 (`scripts/ci/render-workflow-docs.mjs --check`), não esta lista manual. Plano completo em
 `docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md`.

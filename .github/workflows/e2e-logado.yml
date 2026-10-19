@@ -1,5 +1,5 @@
 # docs:
-#   gatilho: push na main e dispatch sobre main
+#   gatilho: workflow_run apos CI/CD Pipeline ✅ na main; schedule a cada 2h; dispatch
 #   prova: o fluxo logado (Playwright com login real) contra producao
 #   falha: artefato do Playwright e issue/relatorio; nunca roda em PR de terceiro
 #   avisa: issue de E2E e autor do push
@@ -23,8 +23,12 @@
 name: E2E logado
 
 on:
-  push:
+  workflow_run:
+    workflows: ["CI/CD Pipeline"]
+    types: [completed]
     branches: [main]
+  schedule:
+    - cron: '7 */2 * * *'
   workflow_dispatch:
 
 defaults:
@@ -34,21 +38,24 @@ defaults:
 permissions:
   contents: read
 
-# cancel-in-progress: false (em vez de so em push) enfileira ao inves de matar
-# uma run que ja esta rodando. Levantamento de 2026-09-26: 18/40 (45%) das runs
-# de push eram canceladas por push seguinte, varias delas a segundos de
-# terminar (suite roda em ~40-60s, bem abaixo do timeout de 15min). Com
-# cancel-in-progress:false o GitHub Actions enfileira e, se varios pushes
-# chegarem enquanto a run atual roda, so o mais recente pendente roda em
-# seguida (os intermediarios sao pulados) -- mesma semantica de "valida so o
-# commit mais novo", sem desperdicar runs quase completas.
+# GA09: grupo fixo "e2e-logado" serializa as runs -- a nova aguarda em vez de
+# cancelar a atual. Com workflow_run o E2E ja e posterior ao CI; cancelar uma
+# run quase pronta geraria falsos negativos. schedule + workflow_run numa
+# janela estreita empilham uma run de cada, o que e o comportamento esperado.
 concurrency:
-  group: e2e-logado-${{ github.ref }}
+  group: e2e-logado
   cancel-in-progress: false
 
 jobs:
   e2e-logado:
     name: 🎭 E2E logado (Playwright)
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     # E83: a suite logada (173 testes) estourava o timeout do job unico e a run
@@ -92,7 +99,9 @@ jobs:
       issues: write # abrir/comentar o alerta em falha e fechar quando a suite volta
     steps:
       - name: ✋ Somente executa na main
-        if: github.ref != 'refs/heads/main'
+        if: |
+          (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') &&
+          github.ref != 'refs/heads/main'
         run: |
           echo "::error::Este workflow só pode ser disparado a partir da main (ref: ${{ github.ref }})."
           exit 1
@@ -128,11 +137,11 @@ jobs:
 
       - name: 🎭 Install Playwright (Chromium, Firefox, WebKit)
         if: steps.pw-cache.outputs.cache-hit != 'true'
-        run: bunx playwright@1.63.0 install --with-deps chromium firefox webkit
+        run: bunx playwright@1.64.1 install --with-deps chromium firefox webkit
 
       - name: 🔧 Dependências de sistema do Playwright (cache quente)
         if: steps.pw-cache.outputs.cache-hit == 'true'
-        run: bunx playwright@1.63.0 install-deps chromium firefox webkit
+        run: bunx playwright@1.64.1 install-deps chromium firefox webkit
 
       # E83: cada job da matriz invoca o Playwright com os projetos do SEU grupo
       # via variavel de matriz (cada token ja leva o prefixo de projeto,
@@ -264,7 +273,7 @@ jobs:
             echo "SUPABASE_SERVICE_ROLE_KEY nao configurado - teardown de catalog_send_events pulado"
             exit 0
           fi
-          curl --proto '=https' --tlsv1.2 -sf -X DELETE \
+          curl --proto '=https' --tlsv1.2 --max-time 30 -sf -X DELETE \
             "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/catalog_send_events?contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759" \
             -H "apikey: $SERVICE_ROLE_KEY" \
             -H "Authorization: Bearer $SERVICE_ROLE_KEY" \

@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
-  CalendarDays, Clock, Gauge, ShieldCheck, Users, Send, MessageSquare, Target, Bookmark, Ban, FileText,
+  CalendarDays, Clock, Gauge, ShieldCheck, Users, MessageSquare, Target, Bookmark, Ban, FileText,
   Sliders, Smartphone, ShieldAlert, Check, Rocket, Pencil, AlertTriangle,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -13,24 +13,15 @@ import { PrimaryButton, Pill } from '@/components/dashboard/overview/DashboardCa
 import { cn } from '@/lib/utils';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import type { WizardState } from './TalkXCampaignWizard';
-import { IconTile, WhatsAppBubble, RailCard, MetaRow, InsightCard, OBJECTIVES, SPEED_PROFILES, fmtInt, fmtPct, fmtDateTime, fmtDurationShort, personalizePreview, extractVariables, TalkXWhatsAppDisconnectedState, TalkXConfirmDialog } from './talkxShared';
+import { IconTile, WhatsAppBubble, RailCard, MetaRow, InsightCard, OBJECTIVES, SPEED_PROFILES, fmtInt, fmtPct, fmtDateTime, fmtDurationShort, personalizePreview, extractVariables, TalkXWhatsAppDisconnectedState } from './talkxShared';
 import type { TalkXPreviewInteractive } from './TalkXMessagePreview';
 import { TalkXNoData } from './kit/states';
 import { useTalkXInsights } from '@/hooks/integrations/useTalkXInsights';
 import { formatScheduleRelative, type WizardStep } from './useCampaignEditor';
 import { useContactCustomFields } from '@/hooks/crm/useContactCustomFields';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
+import { TalkXLifecycleDialog, useTalkXLifecycle } from './useTalkXLifecycle';
 
-/**
- * X136 — as três confirmações do disparo, com o texto do mock 09.
- * Ficam DENTRO do modal do kit (`TalkXConfirmDialog`), que só libera
- * "Confirmar lançamento" quando as três estão marcadas.
- */
-const LAUNCH_CONFIRMATIONS: { id: string; label: string }[] = [
-  { id: 'consent', label: 'Confirmo que possuo o consentimento dos contatos.' },
-  { id: 'content', label: 'Revisei e estou de acordo com o conteúdo da mensagem.' },
-  { id: 'suppression', label: 'A lista de supressão foi aplicada corretamente.' },
-];
 
 function formatLocalSchedule(localDateTime: string, timezone: string): string {
   const [date = '', time = ''] = localDateTime.split('T');
@@ -103,7 +94,7 @@ export function TalkXWizardDelivery({ ed }: { ed: WizardState }) {
           <div><Label className="text-xs text-foreground-secondary">Início da janela</Label><Input type="time" value={ed.sendWindowStart} onChange={(e) => ed.setSendWindowStart(e.target.value)} className="mt-1.5 h-10 bg-input/40 border-border/70" /></div>
           <div><Label className="text-xs text-foreground-secondary">Fim da janela</Label><Input type="time" value={ed.sendWindowEnd} onChange={(e) => ed.setSendWindowEnd(e.target.value)} className="mt-1.5 h-10 bg-input/40 border-border/70" /></div>
           <div className="rounded-xl border border-primary/30 bg-primary/10 p-3 flex items-start gap-2.5">
-            <Clock className="w-4 h-4 text-primary-glow shrink-0 mt-0.5" />
+            <Clock className="w-4 h-4 text-[hsl(var(--primary-text))] shrink-0 mt-0.5" />
             <div><p className="text-xs font-semibold text-foreground">Envios apenas neste período</p><p className="text-2xs text-foreground-secondary">Fora da janela, o envio pausa e retoma automaticamente no próximo início ({ed.sendWindowStart}), no fuso {ed.scheduleTimezone}.</p></div>
           </div>
         </div>
@@ -136,7 +127,7 @@ export function TalkXWizardDelivery({ ed }: { ed: WizardState }) {
               <Slider value={ed.sendInterval} onValueChange={ed.setSendInterval} min={3} max={60} step={1} />
             </div>
             <div className="rounded-lg border border-primary/30 bg-primary/10 p-3 flex items-start gap-2.5">
-              <Sliders className="w-4 h-4 text-primary-glow shrink-0 mt-0.5" />
+              <Sliders className="w-4 h-4 text-[hsl(var(--primary-text))] shrink-0 mt-0.5" />
               <div><p className="text-xs font-semibold text-foreground">Simulação humana ativa</p><p className="text-2xs text-foreground-secondary">~{ed.messagesPerMinute} mensagens/min · {ed.estimatedTime ? `duração estimada ${ed.estimatedTime}` : 'selecione o público para estimar a duração'}.</p></div>
             </div>
           </div>
@@ -247,8 +238,7 @@ function ForecastRow({ icon: Icon, label }: { icon: React.ElementType; label: st
 }
 
 export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed: WizardState; campaign: TalkXCampaign | null; onLaunched: (id: string, status: 'scheduled' | 'sending') => void; onEditStep?: (step: 1 | 2 | 3, returnTo: 4) => void }) {
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const lifecycle = useTalkXLifecycle();
   const sample = ed.contacts?.[0];
   // Review da PR #909: sem os campos customizados reais do contato de
   // exemplo, o preview sempre mostrava "[variavel]" mesmo quando o envio
@@ -306,21 +296,6 @@ export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed
   const { data: insights } = useTalkXInsights();
   const timingInsight = insights?.find((insight) => insight.id === 'best-hour') ?? null;
   const templateInsight = insights?.find((insight) => insight.id === 'best-template') ?? null;
-
-  const launch = async () => {
-    if (!launchAllowed) return;
-    setError(null);
-    try {
-      const id = await ed.handleSave(ed.isScheduled && ed.scheduledAt ? 'schedule' : 'launch');
-      if (id) {
-        setConfirmOpen(false);
-        onLaunched(id, ed.isScheduled && ed.scheduledAt ? 'scheduled' : 'sending');
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Falha ao lançar a campanha');
-    }
-  };
-
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-[1.1fr_0.9fr_0.9fr] gap-4 min-w-0">
@@ -384,38 +359,30 @@ export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed
           </div>
         </div>
 
-        <PrimaryButton size="lg" icon={Rocket} className="w-full justify-center h-12 text-base" disabled={!launchAllowed} onClick={() => setConfirmOpen(true)}>
+        <PrimaryButton size="lg" icon={Rocket} className="w-full justify-center h-12 text-base" disabled={!launchAllowed} onClick={() => {
+          const mode = ed.isScheduled && ed.scheduledAt ? 'schedule' : 'launch';
+          lifecycle.request({
+            kind: 'start',
+            target: { id: campaign?.id ?? '' },
+            details: [
+              { label: 'Segmento', value: ed.audienceSource === 'segment' && ed.selectedSegments.length > 0 ? ed.selectedSegments.map((s) => s.name).join(', ') : 'Contatos ZAPP' },
+              { label: 'Destinatários', value: `${fmtInt(ed.eligibleCount)} contatos` },
+              { label: 'Envio', value: mode === 'schedule' ? formatLocalSchedule(ed.scheduledAt, ed.scheduleTimezone) : 'Imediato' },
+            ],
+            run: async () => {
+              const id = await ed.handleSave(mode);
+              if (!id) return false;
+              onLaunched(id, mode === 'schedule' ? 'scheduled' : 'sending');
+              return true;
+            },
+          });
+        }}>
           {ed.isScheduled && ed.scheduledAt ? 'Agendar campanha' : 'Lançar campanha'}
         </PrimaryButton>
-        {error && <p className="text-xs text-dash-red">{error}</p>}
       </div>
 
-      {/* X136 — o disparo confirma pelo modal do kit (`TalkXConfirmDialog`):
-          as 3 caixas ficam DENTRO do modal e "Confirmar lançamento" só
-          habilita com as três marcadas. Antes era um `Dialog` próprio, com as
-          confirmações num cartão de fora repetidas dentro do modal como texto. */}
-      <TalkXConfirmDialog
-        open={confirmOpen}
-        onClose={() => setConfirmOpen(false)}
-        onConfirm={() => { void launch(); }}
-        icon={Send}
-        iconColor="blue"
-        title="Confirmar disparo?"
-        description={ed.isScheduled && ed.scheduledAt
-          ? `A campanha ficará agendada para ${formatLocalSchedule(ed.scheduledAt, ed.scheduleTimezone)} e será enviada para ${fmtInt(ed.eligibleCount)} contatos. Esta ação não pode ser desfeita.`
-          : `A campanha será enviada para ${fmtInt(ed.eligibleCount)} contatos. Esta ação não pode ser desfeita.`}
-        details={[
-          { label: 'Campanha', value: ed.name || '—' },
-          { label: 'Público', value: ed.audienceSource === 'segment' ? (ed.selectedSegments.length > 0 ? ed.selectedSegments.map((s) => s.name).join(', ') : '—') : 'Contatos ZAPP' },
-          { label: 'Destinatários', value: `${fmtInt(ed.eligibleCount)} contatos` },
-          { label: 'Duração estimada', value: ed.estimatedTime ?? '—' },
-          { label: 'Envio', value: ed.isScheduled && ed.scheduledAt ? 'Agendado' : 'Imediato' },
-        ]}
-        checks={LAUNCH_CONFIRMATIONS}
-        confirmLabel={ed.isScheduled && ed.scheduledAt ? 'Confirmar agendamento' : 'Confirmar lançamento'}
-        cancelLabel="Cancelar"
-        loading={ed.saving}
-      />
+      {/* X051 — disparo pelo controlador único de ciclo de vida. */}
+      <TalkXLifecycleDialog controller={lifecycle} />
     </div>
   );
 }

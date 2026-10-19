@@ -65,7 +65,20 @@ export async function limparFixture({ rpc, url, anonKey, email, password, fetchI
   });
   if (!resposta.ok) throw new Error(`RPC ${rpc} recusada (HTTP ${resposta.status})`);
 
-  return { rpc, status: resposta.status };
+  // GA39: revogar todas as sessoes do usuario de teste para nao acumular tokens
+  // no banco entre runs. Falha de logout nao derruba o teardown.
+  let logoutStatus = null;
+  try {
+    const logout = await fetchImpl(`${base}/auth/v1/logout?scope=global`, {
+      method: 'POST',
+      headers: { apikey: anonKey, authorization: `Bearer ${token}` },
+    });
+    logoutStatus = logout.status;
+  } catch {
+    // erro de rede no logout e nao-bloqueante
+  }
+
+  return { rpc, status: resposta.status, logoutStatus };
 }
 
 /** Devolve o codigo de saida do passo (0 = ok ou pulado; 1 = falhou). */
@@ -94,6 +107,9 @@ export async function principal(argv, env = process.env, fetchImpl = globalThis.
       password: env.E2E_TEST_PASSWORD,
       fetchImpl,
     });
+    if (r.logoutStatus === null || r.logoutStatus >= 400) {
+      console.log(`::warning::teardown: logout global falhou (HTTP ${r.logoutStatus ?? 'erro de rede'})`);
+    }
     console.log(`teardown OK (rpc ${r.rpc}, HTTP ${r.status})`);
     return 0;
   } catch (erro) {

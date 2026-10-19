@@ -199,31 +199,26 @@ describe('TalkXSegments · construtor pela URL (X111)', () => {
     await waitFor(() => expect(params().has('segment')).toBe(false));
   });
 
-  it('construtor traz o cabeçalho próprio da tela 03: título, subtítulo e o ↻ que refaz lista e estimativa', async () => {
+  it('construtor (modo edit) mostra a trilha de navegação — abas superiores removidas no X079', async () => {
     window.history.replaceState(null, '', '/?view=talkx&tab=segments&segment=seg-1&mode=edit');
     renderView();
 
     await screen.findByPlaceholderText('Nome do segmento…');
-    expect(screen.getByRole('heading', { level: 1, name: 'Segmentos' })).toBeInTheDocument();
-    expect(screen.getByText('Crie, gerencie e utilize segmentos inteligentes para suas campanhas no Talk X.')).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Atualizar' }));
-    expect(f.refetch).toHaveBeenCalledTimes(1);
-    expect(f.refreshEstimates).toHaveBeenCalledWith([segmento]);
+    const trilha = screen.getByRole('navigation', { name: 'Trilha de navegação' });
+    expect(trilha).toHaveTextContent('Segmentos');
+    expect(screen.queryByRole('navigation', { name: 'Abas superiores de segmentos' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Salvar' })).toBeInTheDocument();
   });
 
-  it('as abas superiores trazem as cinco abas do mock, com Segmentos ativa e as demais ainda sem conteúdo', async () => {
+  it('modo new abre o construtor com a trilha de navegação — as abas superiores foram removidas no X079', async () => {
     window.history.replaceState(null, '', '/?view=talkx&tab=segments&mode=new');
     renderView();
 
     await screen.findByPlaceholderText('Nome do segmento…');
-    const abas = screen.getByRole('navigation', { name: 'Abas superiores de segmentos' });
-    for (const rotulo of ['Segmentos', 'Regras Avançadas', 'Audiências', 'Modelos', 'Insights com IA']) {
-      expect(within(abas).getByRole('button', { name: rotulo })).toBeInTheDocument();
-    }
-    expect(within(abas).getByRole('button', { name: 'Segmentos' })).toHaveAttribute('aria-current', 'page');
-    expect(within(abas).getByRole('button', { name: 'Regras Avançadas' })).toBeDisabled();
-    expect(within(abas).getByRole('button', { name: 'Insights com IA' })).toBeDisabled();
+    // Apenas a trilha de navegação existe no builder (abas superiores removidas no X079)
+    expect(screen.getByRole('navigation', { name: 'Trilha de navegação' })).toBeInTheDocument();
+    expect(screen.queryByRole('navigation', { name: 'Abas superiores de segmentos' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Publicar segmento' })).toBeInTheDocument();
   });
 
   it('a biblioteca (tela 02) não mostra o cabeçalho nem as abas da tela 03', async () => {

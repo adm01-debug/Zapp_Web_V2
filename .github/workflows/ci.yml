@@ -1,6 +1,6 @@
 # docs:
 #   gatilho: pull_request, push na main, merge_group e dispatch
-#   prova: lint, tipos, testes, build, security e E2E do codigo
+#   prova: tipos, testes de unidade, build, security, E2E e scripts Node
 #   falha: PR fica vermelho e o merge e bloqueado pelos required checks
 #   avisa: autor do PR e revisor, via checks do GitHub
 # nao-e-bug:
@@ -65,6 +65,46 @@ jobs:
       - name: 🔎 Run TypeScript debt ratchet
         run: node scripts/ci/typecheck-ratchet.mjs
 
+  # ===========================================
+  # JOB 1b: Edge contracts & Go (E70 — não required por 7 d; entra via E100)
+  # ===========================================
+  edge-contracts:
+    name: 🦕 Edge contracts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: 🦕 Setup Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
+        with:
+          deno-version: '2.9.5'
+
+      - name: 🦕 Typecheck das Edge Functions (deno check)
+        run: >-
+          deno check --config scripts/ci/deno.json --frozen
+          supabase/functions/*/index.ts
+
+      # E49: glob substitui lista hardcoded — inclui todos os *.test.ts das functions.
+      - name: 🧪 Run Edge handler contracts (deno test)
+        run: |
+          # shellcheck disable=SC2046
+          deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 \
+            $(git ls-files 'supabase/functions/**/*.test.ts')
+
+      - name: 🐹 Setup Go (preview-egress-proxy)
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: '1.24.x'
+          cache-dependency-path: infrastructure/preview-egress-proxy/go.mod
+
+      - name: 🧪 Go test (preview-egress-proxy)
+        working-directory: infrastructure/preview-egress-proxy
+        run: go test ./...
+
   unit-tests:
     name: 🧪 Unit Tests (${{ matrix.shard }}/3)
     runs-on: ubuntu-24.04
@@ -74,17 +114,31 @@ jobs:
         shard: [1, 2, 3]
       fail-fast: false
     steps:
+      - name: 🚫 Verificar draft (E71)
+        id: draft-check
+        run: |
+          if [[ "${{ github.event.pull_request.draft }}" == "true" && "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "## ⏩ Pulado: PR draft" >> "$GITHUB_STEP_SUMMARY"
+            echo "Jobs pesados só rodam quando o PR está pronto para revisão." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: 📥 Checkout code
+        if: steps.draft-check.outputs.skip != 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: 🧄 Setup Bun
+        if: steps.draft-check.outputs.skip != 'true'
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: '1.4.0'
 
       - name: 💾 Cache de dependências Bun
+        if: steps.draft-check.outputs.skip != 'true'
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.bun/install/cache
@@ -92,12 +146,55 @@ jobs:
           restore-keys: bun-
 
       - name: 📚 Install dependencies
+        if: steps.draft-check.outputs.skip != 'true'
         run: bun install --frozen-lockfile --ignore-scripts
 
       - name: 🧪 Run Vitest shard ${{ matrix.shard }}/3
-        run: bun vitest run --shard=${{ matrix.shard }}/3
+        if: steps.draft-check.outputs.skip != 'true'
+        run: bun vitest run --shard=${{ matrix.shard }}/3 --coverage
         env:
           CI: true
+
+      # E72 (G-32): coverage so sobe na main (push), inclusive quando a suite
+      # falha — e' justamente quando o report serve para diagnosticar. Em PR
+      # ninguem consome o artifact; em dispatch o build e' o que importa.
+      - name: Upload coverage report
+        if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coverage-shard-${{ matrix.shard }}
+          path: coverage/
+          retention-days: 7
+          if-no-files-found: ignore
+
+      # E72 (G-32): Job Summary de coverage — lê o json-summary gerado pelo
+      # vitest (coverage/coverage-summary.json) e publica tabela no GITHUB_STEP_SUMMARY.
+      # Roda em todo evento (PR, push, dispatch) exceto drafts pulados.
+      - name: 📊 Job Summary de coverage (shard ${{ matrix.shard }})
+        if: steps.draft-check.outputs.skip != 'true' && always()
+        run: |
+          SUMMARY="coverage/coverage-summary.json"
+          if [[ ! -f "$SUMMARY" ]]; then
+            echo "## 📊 Coverage — shard ${{ matrix.shard }}" >> "$GITHUB_STEP_SUMMARY"
+            echo "_Arquivo de cobertura não encontrado (falha antes do vitest?)_" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          node -e "
+            const data = JSON.parse(require('fs').readFileSync('$SUMMARY','utf8'));
+            const t = data.total;
+            const pct = k => (t[k]?.pct ?? 0).toFixed(1);
+            const lines = [
+              '## 📊 Coverage — shard \${{ matrix.shard }}',
+              '',
+              '| Métrica | % | Cobertos / Total |',
+              '|---|---|---|',
+              \`| Statements | \${pct('statements')}% | \${t.statements?.covered??0}/\${t.statements?.total??0} |\`,
+              \`| Branches   | \${pct('branches')}%   | \${t.branches?.covered??0}/\${t.branches?.total??0}     |\`,
+              \`| Functions  | \${pct('functions')}%  | \${t.functions?.covered??0}/\${t.functions?.total??0}   |\`,
+              \`| Lines      | \${pct('lines')}%      | \${t.lines?.covered??0}/\${t.lines?.total??0}           |\`,
+            ];
+            require('fs').appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join('\n') + '\n');
+          "
 
   node-scripts:
     name: 🧩 Node CI Scripts
@@ -140,17 +237,31 @@ jobs:
     timeout-minutes: 15
     needs: [typecheck, unit-tests]
     steps:
+      - name: 🚫 Verificar draft (E71)
+        id: draft-check
+        run: |
+          if [[ "${{ github.event.pull_request.draft }}" == "true" && "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "## ⏩ Pulado: PR draft" >> "$GITHUB_STEP_SUMMARY"
+            echo "Jobs pesados só rodam quando o PR está pronto para revisão." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: 📥 Checkout code
+        if: steps.draft-check.outputs.skip != 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: 🧄 Setup Bun
+        if: steps.draft-check.outputs.skip != 'true'
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: '1.4.0'
 
       - name: 💾 Cache de dependências Bun
+        if: steps.draft-check.outputs.skip != 'true'
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.bun/install/cache
@@ -158,9 +269,11 @@ jobs:
           restore-keys: bun-
 
       - name: 📚 Install dependencies
+        if: steps.draft-check.outputs.skip != 'true'
         run: bun install --frozen-lockfile --ignore-scripts
 
       - name: 🏗️ Build for production
+        if: steps.draft-check.outputs.skip != 'true'
         run: bun run build
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
@@ -180,9 +293,11 @@ jobs:
           retention-days: 3
 
       - name: 📏 Enforce initial bundle budget (performance-budget.json)
+        if: steps.draft-check.outputs.skip != 'true'
         run: node scripts/ci/bundle-budget.mjs
 
       - name: 📐 Report bundle size
+        if: steps.draft-check.outputs.skip != 'true'
         run: |
           echo "📦 Bundle Size Report"
           echo "====================="
@@ -202,18 +317,40 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
+      - name: 🚫 Verificar draft (E71)
+        id: draft-check
+        run: |
+          if [[ "${{ github.event.pull_request.draft }}" == "true" && "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "## ⏩ Pulado: PR draft" >> "$GITHUB_STEP_SUMMARY"
+            echo "Jobs pesados só rodam quando o PR está pronto para revisão." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: 📥 Checkout code
+        if: steps.draft-check.outputs.skip != 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           fetch-depth: 0
 
       - name: 🧄 Setup Bun
+        if: steps.draft-check.outputs.skip != 'true'
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: '1.4.0'
 
+      - name: 💾 Cache de dependências Bun
+        if: steps.draft-check.outputs.skip != 'true'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-
+
       - name: 📚 Install dependencies
+        if: steps.draft-check.outputs.skip != 'true'
         run: bun install --frozen-lockfile --ignore-scripts
 
       # Um unico "bun audit": o relatorio completo (inclui devDependencies) sai sempre,
@@ -222,6 +359,7 @@ jobs:
       # `|| true`: `bun audit` sai com 1 tanto para advisory quanto para falha de
       # registry, e o gate confere o codigo E o relatorio (R2-INF-009).
       - name: 🔎 Audit completo (informativo, inclui devDependencies)
+        if: steps.draft-check.outputs.skip != 'true'
         run: |
           set -euo pipefail
           status=0
@@ -230,9 +368,11 @@ jobs:
           cat audit-report.txt
 
       - name: 🔒 Audit bloqueante (HIGH/CRITICAL em dependencias de producao)
+        if: steps.draft-check.outputs.skip != 'true'
         run: node scripts/ci/audit-prod.mjs --level high --input audit-report.txt --status audit-status.txt
 
       - name: 🔍 Detect secrets introduced in commits
+        if: steps.draft-check.outputs.skip != 'true'
         # v3 roda em Node 24. O action calcula o intervalo do evento e falha
         # fechado para segredos novos, sem reabrir findings históricos já
         # inventariados. Não recebe secrets privilegiados em pull_request.
@@ -251,17 +391,39 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
+      - name: 🚫 Verificar draft (E71)
+        id: draft-check
+        run: |
+          if [[ "${{ github.event.pull_request.draft }}" == "true" && "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "## ⏩ Pulado: PR draft" >> "$GITHUB_STEP_SUMMARY"
+            echo "Jobs pesados só rodam quando o PR está pronto para revisão." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: 📥 Checkout code
+        if: steps.draft-check.outputs.skip != 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: 🧄 Setup Bun
+        if: steps.draft-check.outputs.skip != 'true'
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: '1.4.0'
 
+      - name: 💾 Cache de dependências Bun
+        if: steps.draft-check.outputs.skip != 'true'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-
+
       - name: 📚 Install dependencies
+        if: steps.draft-check.outputs.skip != 'true'
         run: bun install --frozen-lockfile --ignore-scripts
 
       # E68 (auditoria de GitHub Actions, 2026-10-01): o download dos browsers
@@ -272,6 +434,7 @@ jobs:
       # salvo por job que instala só Chromium não pode satisfazer este, que
       # precisa dos três.
       - name: 💾 Cache dos browsers Playwright
+        if: steps.draft-check.outputs.skip != 'true'
         id: pw-cache
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
@@ -282,14 +445,14 @@ jobs:
         # Só em cache miss. Versao exata resolvida no bun.lock (SonarCloud
         # githubactions:S8543: `bunx playwright` sem versao puxaria um release
         # nao verificado).
-        if: steps.pw-cache.outputs.cache-hit != 'true'
-        run: bunx playwright@1.63.0 install --with-deps chromium firefox webkit
+        if: steps.pw-cache.outputs.cache-hit != 'true' && steps.draft-check.outputs.skip != 'true'
+        run: bunx playwright@1.64.1 install --with-deps chromium firefox webkit
 
       - name: 🔧 Dependências de sistema do Playwright (cache quente)
         # O cache guarda os browsers, não os pacotes do apt: com o cache quente
         # as bibliotecas do sistema ainda precisam ser instaladas.
-        if: steps.pw-cache.outputs.cache-hit == 'true'
-        run: bunx playwright@1.63.0 install-deps chromium firefox webkit
+        if: steps.pw-cache.outputs.cache-hit == 'true' && steps.draft-check.outputs.skip != 'true'
+        run: bunx playwright@1.64.1 install-deps chromium firefox webkit
 
       # Projetos "chromium", "firefox-auth" e "webkit-auth" exercitam auth.spec.ts
       # deslogado (sem E2E_TEST_EMAIL/E2E_TEST_PASSWORD). Workflows de PR não podem
@@ -301,8 +464,9 @@ jobs:
       # (installFakeSession) com REST/RPC e Mapbox mockados, logo executam sem secret
       # algum. Sem esta linha os PRs passavam com E2E VERDE sem rodar spec alguma do
       # mapa (#463 / E75).
-      - name: 🧪 Run Playwright E2E (chromium + firefox + webkit, sem autenticação)
-        run: bun run test:e2e -- --project=chromium --project=chromium-theme --project=firefox-auth --project=webkit-auth --project=chromium-mapa --project=chromium-contacts-visual --project=chromium-a11y --project=chromium-email-navy --project=firefox-email-navy --project=webkit-email-navy
+      - name: 🧪 Run Playwright E2E (chromium, sem autenticação)
+        if: steps.draft-check.outputs.skip != 'true'
+        run: bun run test:e2e -- --project=chromium --project=chromium-theme --project=chromium-mapa --project=chromium-contacts-visual --project=chromium-a11y --project=chromium-email-navy --project=firefox-email-navy --project=webkit-email-navy
         env:
           CI: true
 
@@ -377,6 +541,14 @@ jobs:
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: '1.4.0'
+
+      - name: 💾 Cache de dependências Bun
+        if: steps.paths.outputs.map_changed == 'true'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-
 
       - name: 📚 Install dependencies
         if: steps.paths.outputs.map_changed == 'true'

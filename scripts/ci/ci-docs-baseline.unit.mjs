@@ -20,11 +20,11 @@ const MARCA = {
   DONE_VERIFIED: 'x', IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE: '~', PARTIAL: '~', NEEDS_REVALIDATION: '~',
   SUPERSEDED: '!', NOT_IMPLEMENTED: ' ', PRODUCT_DECISION_REQUIRED: ' ', BLOCKED_TECHNICAL: ' ',
 };
-const OVERRIDES = { E11: 'x', E24: ' ', E38: 'x', E39: 'x', E95: 'x' };
+const OVERRIDES = { E11: 'x', E24: ' ', E38: 'x', E39: 'x', E53: 'x', E81: 'x', E88: 'x', E95: 'x' };
 const ESTADOS = ['CONCLUÍDA', 'AGUARDA RUNTIME', 'PARCIAL', 'PRECISA REVALIDAÇÃO',
   'REVOGADA', 'PENDENTE', 'DECISÃO PENDENTE', 'BLOQUEIO TÉCNICO'];
 const NAO_CONCLUIDOS = new Set(['AGUARDA RUNTIME', 'PARCIAL', 'PRECISA REVALIDAÇÃO']);
-const CONTAGEM_ANTIGA = [/dos\s+17\s+workflows/i, /17\s+no\s+total/i, /14\s+workflows/i, /14\s+arquivos/i];
+const CONTAGEM_ANTIGA = [/dos\s+17\s+workflows/i, /19\s+no\s+total/i, /16\s+arquivos em/i];
 const TOCA_STRICT_FALSE = /strict[ ]*[:=][ ]*`?false|`strict`[^\n]{0,40}`false`/i;
 const ROTULO_HISTORICO = /revogad|REVOGAD|históric|HISTÓRIC|superad|SUPERAD|reconciliad|Reconcilia/;
 const RE_ITEM = /^\s*-\s*\[([ xX~!])\]\s*\*\*(E\d{1,3})\*\*/;
@@ -291,16 +291,16 @@ test('fixture: celula cortada em "…" e cabecalho "## " duplicado sao rejeitado
   assert.deepEqual(violacoesCabecalhoDuplicado(RECON_COMPLETA), []);
 });
 
-test('inventario: 16 YAML em .github/workflows e a fonte gerada em paridade', async () => {
+test('inventario: 15 YAML em .github/workflows e a fonte gerada em paridade', async () => {
   const arquivos = (await readdir(DIR_WF)).filter((f) => /\.ya?ml$/.test(f));
-  assert.equal(arquivos.length, 16);
+  assert.equal(arquivos.length, 15);
   const readme = await readFile(README_CI, 'utf8');
-  assert.match(readme, /\*\*16 workflows\.\*\*/);
+  assert.match(readme, /\*\*15 workflows\.\*\*/);
   for (const f of arquivos) assert.ok(readme.includes(f));
 });
 
-test('CLAUDE.md: contagem atual e fonte canonica (sem 14/17)', async () => {
-  assert.deepEqual(violacoesContagemClaude(await readFile(CLAUDE, 'utf8'), 16), []);
+test('CLAUDE.md: contagem atual e fonte canonica (sem 16/19)', async () => {
+  assert.deepEqual(violacoesContagemClaude(await readFile(CLAUDE, 'utf8'), 15), []);
 });
 
 test('CLAUDE.md: politica unica de strict, coerente com o baseline', async () => {
@@ -332,10 +332,10 @@ test('plano: nenhuma etapa superada pede reexecucao', async () => {
   }
 });
 
-test('plano: inventario atual e 16 YAML com fonte gerada', async () => {
+test('plano: inventario atual e 14 YAML com fonte gerada', async () => {
   const plano = await readFile(PLANO, 'utf8');
   const chato = achata(plano);
-  assert.match(chato, /\*\*16\*\* arquivos YAML em `\.github\/workflows\/`/);
+  assert.match(chato, /\*\*15\*\* arquivos YAML em `\.github\/workflows\/`/);
   assert.ok(plano.includes('docs/ci/README.md'));
   assert.ok(plano.includes('render-workflow-docs.mjs'));
   assert.match(chato, /403[^.]*limite de evidência/i);
@@ -354,19 +354,19 @@ test('E62/E76: os numeros citados conferem com o repositorio', async () => {
   assert.match(e62.linha, /guardas de DB|pós-apply/i);
 
   const lock = await readFile(BUN_LOCK, 'utf8');
-  assert.ok(/playwright@1\.63\.0/.test(lock));
-  assert.ok(/playwright-core@1\.63\.0/.test(lock));
-  assert.ok(/@playwright\/test@1\.63\.0/.test(lock));
+  assert.ok(/playwright@1\.64\.1/.test(lock));
+  assert.ok(/playwright-core@1\.64\.1/.test(lock));
+  assert.ok(/@playwright\/test@1\.64\.1/.test(lock));
 
   const tres = ['ci.yml', 'e2e-logado.yml', 'e2e-talkx.yml'];
   for (const f of tres) {
     const wf = await readFile(join(DIR_WF, f), 'utf8');
-    assert.ok(wf.includes('playwright@1.63.0'));
+    assert.ok(wf.includes('playwright@1.64.1'));
   }
   const e76 = rec.get('E76');
   assert.ok(e76);
   for (const f of tres) assert.ok(e76.linha.includes(f), `E76 deve citar ${f}`);
-  assert.match(e76.linha, /1\.63\.0/);
+  assert.match(e76.linha, /1\.64\.1/);
   assert.match(e76.linha, /não há mismatch/i);
 });
 

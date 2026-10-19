@@ -230,7 +230,7 @@ export function AgentPerformancePanel({ onNavigateTab }: { onNavigateTab?: (tab:
                 ))}
               </div>
               <div className="mt-4 rounded-xl bg-primary/10 border border-primary/25 p-3.5 flex items-start gap-3">
-                <Quote className="w-5 h-5 text-primary-glow shrink-0" />
+                <Quote className="w-5 h-5 text-[hsl(var(--primary-text))] shrink-0" />
                 <p className="text-[13px] text-foreground leading-snug">"Trabalho em equipe transforma atendimento em resultados."</p>
               </div>
             </DashboardCard>

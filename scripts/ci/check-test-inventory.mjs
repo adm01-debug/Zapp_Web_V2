@@ -216,6 +216,8 @@ export const ALLOWLIST_NODE = new Set([
   'scripts/talkx/gen-estados.unit.mjs',
   'scripts/talkx/lado-a-lado.unit.mjs',
   'scripts/talkx/v4-status.unit.mjs',
+  // Valida vercel.json e ignore-build.sh (offline). Passo de uma linha em ci.yml — promover pelo dono do workflow.
+  'scripts/vercel/ignore-build.unit.mjs',
 ]);
 
 // ── 1. .test.ts: disco vs ci.yml ───────────────────────────────────────────────

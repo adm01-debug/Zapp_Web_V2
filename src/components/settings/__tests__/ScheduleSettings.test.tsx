@@ -64,6 +64,9 @@ vi.mock('@/hooks/ui/use-toast', () => ({
 
 vi.mock('@/lib/logger', () => ({
   log: { error: () => {}, warn: () => {}, info: () => {}, debug: () => {} },
+
+  getLogger: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), withCorrelation: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() })) })),
+  createLogger: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), withCorrelation: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() })) })),
 }));
 
 // O seletor usa `useConnectionsManager` (o hook dono da lista de conexões, o

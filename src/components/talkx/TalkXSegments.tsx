@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Plus, Bookmark, Star, StarOff, Pencil, Trash2, Zap, BarChart3, X, MoreVertical, Users, Shield, Check, Database, Search,
-  Archive, AlertTriangle, PowerOff, Tag,
+  Archive, AlertTriangle, PowerOff, Tag, List, LayoutGrid,
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
@@ -47,6 +47,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
   // TL-134: gaveta "Meus segmentos" (<xl) e guarda de edição suja do construtor
   // (o construtor registra a guarda via onGuardChange a cada render).
   const [sideListOpen, setSideListOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const builderGuardRef = useRef<((proceed: () => void) => void) | null>(null);
   // X111 — o construtor da tela 03 vive no endereço (?view=talkx&tab=segments&segment=<id>&mode=edit|new):
   // o link direto abre o segmento, o F5 mantém a tela e voltar/avançar do navegador fecham e reabrem.
@@ -325,7 +326,15 @@ export function TalkXSegments({ onUseCampaign }: Props) {
           onFilter={(k, v) => { if (k === 'origin') setFilterOrigin(v); else setFilterStatus(v); setPage(1); }}
           hasActive={filterOrigin !== 'all' || filterStatus !== 'all' || search.trim() !== ''}
           onClear={() => { setSearch(''); setFilterOrigin('all'); setFilterStatus('all'); setPage(1); }}
-          rightSlot={<PrimaryButton icon={Plus} onClick={openNew}>Novo segmento</PrimaryButton>}
+          rightSlot={
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-0.5 rounded-lg border border-border/70 bg-input/40 p-0.5">
+                <button type="button" data-testid="segments-view-list" aria-pressed={viewMode === 'list'} onClick={() => setViewMode('list')} className={cn('h-7 w-7 rounded-md inline-flex items-center justify-center transition-colors', viewMode === 'list' ? 'bg-background shadow text-foreground' : 'text-muted-foreground hover:text-foreground')} aria-label="Visualização em lista"><List className="w-3.5 h-3.5" /></button>
+                <button type="button" data-testid="segments-view-grid" aria-pressed={viewMode === 'grid'} onClick={() => setViewMode('grid')} className={cn('h-7 w-7 rounded-md inline-flex items-center justify-center transition-colors', viewMode === 'grid' ? 'bg-background shadow text-foreground' : 'text-muted-foreground hover:text-foreground')} aria-label="Visualização em grade"><LayoutGrid className="w-3.5 h-3.5" /></button>
+              </div>
+              <PrimaryButton icon={Plus} onClick={openNew}>Novo segmento</PrimaryButton>
+            </div>
+          }
         />
 
         <TalkXBulkBar
@@ -358,8 +367,8 @@ export function TalkXSegments({ onUseCampaign }: Props) {
             empty={<div className="p-4"><TalkXEmptyState icon={Bookmark} title="Nenhum segmento salvo" description="Crie segmentos inteligentes para campanhas mais assertivas." actionLabel="Criar segmento" onAction={openNew} /></div>}
           >
            {filtered.length === 0 ? (<div className="p-4"><TalkXEmptyState icon={Search} title="Nenhum segmento encontrado" description="Ajuste os filtros ou tente outro termo." /></div>)
-           : (
-            <div className="overflow-x-auto">
+           : viewMode === 'list' ? (
+            <div data-testid="segments-list" className="overflow-x-auto">
               <table className="w-full min-w-[820px] border-collapse">
                 <thead className="bg-muted/20 border-b border-border/60"><tr>
                   <Th className="w-10"><input type="checkbox" checked={allPageSelected} onChange={toggleAllOnPage} aria-label="Selecionar todos os segmentos da página" className="w-3.5 h-3.5 accent-primary cursor-pointer" /></Th>
@@ -367,7 +376,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
                 </tr></thead>
                 <tbody>
                   {paged.map((s) => (
-                    <tr key={s.id} className={cn('border-b border-border/40 hover:bg-muted/20 cursor-pointer transition-colors', selected?.id === s.id && 'bg-primary/5')} onClick={() => setSelected(s)}>
+                    <tr key={s.id} data-testid="segment-card" className={cn('border-b border-border/40 hover:bg-muted/20 cursor-pointer transition-colors', selected?.id === s.id && 'bg-primary/5')} onClick={() => setSelected(s)}>
                       <Td><div onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selectedIds.includes(s.id)} onChange={() => toggleSelect(s.id)} aria-label={`Selecionar ${s.name}`} className="w-3.5 h-3.5 accent-primary cursor-pointer" /></div></Td>
                       <Td><button type="button" onClick={(e) => { e.stopPropagation(); void toggleFav(s); }} aria-label={s.is_favorite ? 'Remover favorito' : 'Favoritar'} className="text-muted-foreground hover:text-dash-amber">{s.is_favorite ? <Star className="w-4 h-4 text-dash-amber fill-dash-amber" /> : <StarOff className="w-4 h-4" />}</button></Td>
                       <Td>
@@ -409,6 +418,20 @@ export function TalkXSegments({ onUseCampaign }: Props) {
                   ))}
                 </tbody>
               </table>
+            </div>
+          ) : (
+            <div data-testid="segments-grid" className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4">
+              {paged.map((s) => (
+                <div key={s.id} data-testid="segment-card" className="rounded-xl border border-border/70 bg-card p-4 cursor-pointer hover:bg-muted/20 transition-colors" onClick={() => setSelected(s)}>
+                  <p className="text-sm font-semibold text-foreground mb-2">{s.name}</p>
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    <Pill label={s.origin === 'crm360' ? 'CRM 360°' : s.origin === 'zapp' ? 'ZAPP' : 'Personalizado'} tone={s.origin === 'crm360' ? 'violet' : 'info'} />
+                    <Pill label={s.status === 'active' ? 'Ativo' : 'Inativo'} tone={s.status === 'active' ? 'success' : 'muted'} />
+                  </div>
+                  <p className="text-sm text-foreground-secondary"><span className="font-bold text-foreground">{fmtInt(s.estimated_count)}</span> contatos</p>
+                  {(s.rules?.groups ?? []).flatMap((g) => g.rules).length === 0 && <p className="text-xs text-muted-foreground italic mt-1">Toda a base</p>}
+                </div>
+              ))}
             </div>
           )}
           </TalkXQueryBoundary>

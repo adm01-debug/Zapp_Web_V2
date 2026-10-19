@@ -192,7 +192,7 @@ export function ContactToolbar({
           {crmIntegrationEnabled && (
             <Button
               onClick={onOpenCRM}
-              className="h-11 px-4 rounded-xl bg-primary/20 border border-primary/50 text-primary-glow hover:bg-primary/30 font-semibold text-sm gap-2 shrink-0"
+              className="h-11 px-4 rounded-xl bg-primary/20 border border-primary/50 text-[hsl(var(--primary-text))] hover:bg-primary/30 font-semibold text-sm gap-2 shrink-0"
             >
               <Sparkles className="w-[18px] h-[18px]" />CRM 360°
             </Button>

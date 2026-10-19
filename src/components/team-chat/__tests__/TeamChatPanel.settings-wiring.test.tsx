@@ -15,7 +15,7 @@ const h = vi.hoisted(() => {
     profile: { id: 'user-1', role: 'admin' },
     messages: [],
     filteredMessages: [],
-    isSearching: false,
+    isSearchingMessages: false,
     searchError: null as string | null,
     isLoading: false,
     isMuted: false,
@@ -88,7 +88,7 @@ describe('TeamChatPanel — estados visuais da busca (SL-082)', () => {
     vi.clearAllMocks();
     h.panel.showSearch = false;
     h.panel.searchQuery = '';
-    h.panel.isSearching = false;
+    h.panel.isSearchingMessages = false;
     h.panel.searchError = null;
     h.panel.filteredMessages = [];
     h.panel.hasOlderMessages = false;
@@ -98,7 +98,7 @@ describe('TeamChatPanel — estados visuais da busca (SL-082)', () => {
   it('durante a busca mostra "Buscando mensagens…" em vez de "Nenhuma mensagem encontrada"', () => {
     h.panel.showSearch = true;
     h.panel.searchQuery = 'contrato';
-    h.panel.isSearching = true;
+    h.panel.isSearchingMessages = true;
     renderPanel();
 
     expect(screen.getByText(/Buscando mensagens/)).toBeInTheDocument();
@@ -108,7 +108,7 @@ describe('TeamChatPanel — estados visuais da busca (SL-082)', () => {
   it('o spinner da busca respeita reduzir movimento (motion-safe:)', () => {
     h.panel.showSearch = true;
     h.panel.searchQuery = 'contrato';
-    h.panel.isSearching = true;
+    h.panel.isSearchingMessages = true;
     renderPanel();
 
     const spinner = screen.getByText(/Buscando mensagens/).parentElement?.querySelector('svg');

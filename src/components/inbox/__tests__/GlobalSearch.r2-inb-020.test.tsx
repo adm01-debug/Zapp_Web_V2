@@ -197,7 +197,9 @@ const {
 });
 
 vi.mock('@/integrations/supabase/client', () => ({ supabase: supabaseMock }));
-vi.mock('@/lib/logger', () => ({ log: loggerMock, getLogger: () => loggerMock }));
+vi.mock('@/lib/logger', () => ({ log: loggerMock, getLogger: () => loggerMock ,
+  createLogger: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), withCorrelation: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() })) })),
+}));
 vi.mock('@/hooks/system/useUserRole', () => ({ useUserRole: () => ({ isSupervisor: roleState.isSupervisor, roles: [] }) }));
 vi.mock('@/hooks/system/useCRMIntegrationEnabled', () => ({ useCRMIntegrationEnabled: () => crmIntegrationState.enabled }));
 vi.mock('@/lib/crmIntegration', () => ({ callCRMIntegration: callCRMIntegrationMock }));

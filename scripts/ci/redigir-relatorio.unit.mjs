@@ -12,6 +12,7 @@ import {
   escreverZip,
   formasDoSegredo,
   lerZip,
+  RE_JWT,
   redigirBytes,
   redigirConteudo,
   redigirDiretorio,
@@ -227,4 +228,53 @@ test('E82: lista de segredos ignora curto, vazio e repetido', () => {
   const r = redigirConteudo('a SegredoForte123 b SegredoForte123', ['SegredoForte123', 'SegredoForte123', 'ab', '']);
   assert.equal(r.ocorrencias, 2, 'o repetido nao conta duas vezes');
   assert.equal(r.texto, 'a [redigido] b [redigido]');
+});
+
+// ── GA38: JWT automático (Authorization Bearer, access_token, traces de rede) ────────────────
+// JWT de mentira com formato válido: header.payload.signature (todos base64url)
+const JWT_FAKE =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9' +
+  '.eyJzdWIiOiJ1c2VyLTEyMyIsImV4cCI6OTk5OTk5OTk5OX0' +
+  '.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
+
+test('GA38: RE_JWT casa com JWT valido e nao casa com string curta', () => {
+  assert.ok(new RegExp(RE_JWT.source, RE_JWT.flags).test(JWT_FAKE), 'JWT completo deve casar');
+  assert.ok(!new RegExp(RE_JWT.source, RE_JWT.flags).test('eyJhbGc.abc.def'), 'segmentos curtos nao casam');
+  assert.ok(!new RegExp(RE_JWT.source, RE_JWT.flags).test('xeyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ4In0.AAAAAAAAAAAAAAAAAAAAAAA'), 'lookbehind bloqueia precedido de base64');
+});
+
+test('GA38: JWT em texto e redigido por redigirConteudo sem --segredo-env', () => {
+  const texto = `Authorization: Bearer ${JWT_FAKE}`;
+  const { texto: saida, ocorrencias } = redigirConteudo(texto, []);
+  assert.equal(ocorrencias, 1);
+  assert.doesNotMatch(saida, /eyJ/, 'JWT nao pode sobrar no texto');
+  assert.match(saida, /\[redigido\]/);
+});
+
+test('GA38: JWT em arquivo de texto e redigido; contarRestantes retorna 0 pos-reducao', () => {
+  const raiz = mkdtempSync(join(tmpdir(), 'jwt-txt-'));
+  writeFileSync(join(raiz, 'error-context.md'), `token: ${JWT_FAKE}\noutro conteudo seguro`);
+  redigirDiretorio(raiz, [EMAIL]); // JWT nao passado como segredo explícito
+  const conteudo = readFileSync(join(raiz, 'error-context.md'), 'utf8');
+  assert.doesNotMatch(conteudo, /eyJ/, 'JWT nao pode sobrar no arquivo');
+  assert.equal(contarRestantes(raiz, [EMAIL]), 0, 'contarRestantes deve retornar 0 pos-reducao');
+});
+
+test('GA38: JWT em entrada de texto de ZIP de trace e redigido', () => {
+  const raiz = mkdtempSync(join(tmpdir(), 'jwt-zip-'));
+  mkdirSync(join(raiz, 'data'));
+  const netJson = JSON.stringify({ headers: { Authorization: `Bearer ${JWT_FAKE}` } });
+  writeFileSync(join(raiz, 'data', 'trace.zip'), zipDe({ 'network.json': netJson }));
+  redigirDiretorio(raiz, [EMAIL]);
+  const zip = readFileSync(join(raiz, 'data', 'trace.zip'));
+  const conteudo = conteudoDe(zip, 'network.json').toString('utf8');
+  assert.doesNotMatch(conteudo, /eyJ/, 'JWT nao pode sobrar dentro do ZIP de trace');
+  assert.equal(contarRestantes(raiz, [EMAIL]), 0);
+});
+
+test('GA38: contarRestantes detecta JWT residual mesmo sem --segredo-env', () => {
+  const raiz = mkdtempSync(join(tmpdir(), 'jwt-residual-'));
+  writeFileSync(join(raiz, 'vazamento.md'), `token: ${JWT_FAKE}`);
+  // Sem redigirDiretorio: JWT permanece; contarRestantes deve detectá-lo
+  assert.ok(contarRestantes(raiz, []) > 0, 'JWT residual deve ser detectado por contarRestantes');
 });

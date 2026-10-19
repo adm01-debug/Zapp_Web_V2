@@ -31,10 +31,13 @@ on:
     paths:
       - 'supabase/migrations/**'
       - 'scripts/db-audit/**'
-      # E18: negação evita que o merge do PR de sync (que só altera
-      # grants-baseline.json) dispare uma nova execução desnecessária.
-      - '!scripts/db-audit/grants-baseline.json'
       - '.github/workflows/types-sync.yml'
+      # E18: excluir os 4 artefatos que o próprio sync gera para que o merge
+      # do PR automation/types-sync não redispare o sync.
+      - '!src/integrations/supabase/types.ts'
+      - '!supabase/schema-catalog.json'
+      - '!supabase/schema-manifest.json'
+      - '!scripts/db-audit/grants-baseline.json'
   schedule:
     # 05:49 em vez de 06:00: o minuto 0 concentra a fila de agendamentos do
     # GitHub, e este job precisa terminar antes do db-live-guard (06:13) para
@@ -148,6 +151,7 @@ jobs:
       # o contrato E98 em scripts/ci/workflow-contracts.unit.mjs exige o
       # endurecimento de TLS em todos eles.
       - name: Exigir credencial do banco oficial
+        id: credencial
         env:
           DESTINO_URL: ${{ secrets.DESTINO_URL }}
         run: |
@@ -172,14 +176,18 @@ jobs:
           if (erros.length) process.exit(1);
           const destinoSeguro = tls.connectionString;
           console.log(`::add-mask::${destinoSeguro}`);
-          appendFileSync(process.env.GITHUB_ENV, `DESTINO_URL=${destinoSeguro}\n`);
-          appendFileSync(process.env.GITHUB_ENV, 'PGSSLMODE=verify-full\n');
+          // GA21: GITHUB_OUTPUT em vez de GITHUB_ENV — a credencial fica acessivel
+          // somente nos passos que a referenciam via steps.credencial.outputs.*,
+          // nao em TODOS os passos do job (incluindo passos com contents:write/PR).
+          appendFileSync(process.env.GITHUB_OUTPUT, `destino_seguro=${destinoSeguro}\n`);
+          appendFileSync(process.env.GITHUB_OUTPUT, 'pgsslmode=verify-full\n');
           console.log('OK: endpoint do banco oficial comprovado por fingerprint; TLS verify-full e CA Supabase pinada.');
           NODE
 
-      # DESTINO_URL (ja endurecido com TLS) e PGSSLMODE vem do GITHUB_ENV
-      # gravado pelo passo anterior — sem env: proprio aqui, que sobrescreveria
-      # com o secret cru sem TLS.
+      # DESTINO_URL (ja endurecido com TLS) vem de steps.credencial.outputs —
+      # GA21: nao usamos GITHUB_ENV para que a credencial do banco fique restrita
+      # aos passos que a referenciam explicitamente, fora do alcance de passos
+      # com permissoes de escrita (PR, Actions).
       # gen-types.sh puxa ghcr.io/supabase/postgres-meta (GitHub Container
       # Registry, nao Docker Hub). GITHUB_TOKEN le pacotes publicos sem secret extra.
       - name: ghcr.io login (previne rate-limit no gen-types)
@@ -207,6 +215,10 @@ jobs:
           fi
 
       - name: Gerar candidatos em diretorio temporario
+        env:
+          # GA21: DESTINO_URL via step output — nao GITHUB_ENV.
+          DESTINO_URL: ${{ steps.credencial.outputs.destino_seguro }}
+          PGSSLMODE: ${{ steps.credencial.outputs.pgsslmode }}
         run: |
           umask 077
           bash scripts/db-audit/gen-types.sh /tmp/types.new.ts
@@ -318,6 +330,9 @@ jobs:
             cp /tmp/types.new.ts src/integrations/supabase/types.ts
           fi
           if [ "${{ steps.diff.outputs.catalog_changed }}" = true ]; then
+            # GA20: salvar catalogo atual (HEAD) antes de sobrescrever; Gate 3 precisa comparar
+            # antigo x novo — sem isso compararia novo x novo e nunca bloquearia remocao destrutiva.
+            git show HEAD:supabase/schema-catalog.json > /tmp/catalog.old.json
             cp /tmp/catalog.new.json supabase/schema-catalog.json
           fi
           if [ "${{ steps.diff.outputs.manifest_changed }}" = true ]; then
@@ -381,19 +396,20 @@ jobs:
         # W23: se Gate 1 falhou mas a causa e' ausencia de objeto que existe apenas
         # no repo (migration nao aplicada em prod), classifica como "awaiting apply"
         # e nao abre issue — o problema some quando a migration entrar no banco.
-        # W26: lote-pendente.mjs (fonte unica): exit 0 = sem drift, exit 1 = drift real,
-        # exit 2 = so apply-pendente.
+        # GA19/W26: lote-pendente.mjs (fonte unica): exit 0 = sem drift, exit 1 = drift real,
+        # exit 2 = erro de conexao/parse, exit 3 = so apply-pendente.
         id: gate1b
         if: steps.diff.outputs.schema_changed == 'true' && steps.gate1.outputs.passed == 'false'
         env:
-          DESTINO_URL: ${{ env.DESTINO_URL }}
-          PGSSLMODE: ${{ env.PGSSLMODE }}
+          # GA21: DESTINO_URL via step output — nao GITHUB_ENV.
+          DESTINO_URL: ${{ steps.credencial.outputs.destino_seguro }}
+          PGSSLMODE: ${{ steps.credencial.outputs.pgsslmode }}
         run: |
           set +e
           node scripts/db-audit/lote-pendente.mjs > /tmp/drift.log 2>&1
           drift_exit=$?
           set -e
-          if [ "$drift_exit" -eq 2 ]; then
+          if [ "$drift_exit" -eq 3 ]; then
             echo "awaiting_apply=true" >> "$GITHUB_OUTPUT"
             echo "::notice::Gate 1 aguardando apply de migrations pendentes — erros de TypeScript decorrem de objetos nao aplicados em prod ainda."
           else
@@ -432,8 +448,16 @@ jobs:
         run: |
           # F-01 (auditoria 2026-09-27): mesmo pipefail dos Gates 1 e 2 — sem ele o
           # tee sempre saia 0 e o gate passava mesmo com o script bloqueando.
+          # GA20: usar catalogo antigo salvo antes de sobrescrever (nao o novo em supabase/schema-catalog.json).
+          # Se catalog_changed=false o arquivo nao foi sobrescrito e /tmp/catalog.old.json nao existe;
+          # nesse caso antigo == novo e o gate passa trivialmente.
           set -o pipefail
-          if node scripts/db-audit/check-remocoes-destrutivas.mjs supabase/schema-catalog.json /tmp/catalog.new.json 2>&1 | tee /tmp/gate3.log; then
+          if [ -f /tmp/catalog.old.json ]; then
+            OLD_CATALOG=/tmp/catalog.old.json
+          else
+            OLD_CATALOG=supabase/schema-catalog.json
+          fi
+          if node scripts/db-audit/check-remocoes-destrutivas.mjs "$OLD_CATALOG" /tmp/catalog.new.json 2>&1 | tee /tmp/gate3.log; then
             echo "passed=true" >> "$GITHUB_OUTPUT"
           else
             echo "passed=false" >> "$GITHUB_OUTPUT"
@@ -610,7 +634,7 @@ jobs:
             - gates TypeScript, usage-guard e remoções: aprovados
 
             Revisão humana e checks da PR continuam obrigatórios.
-          labels: types-sync
+          labels: types-sync,automerge-ok
           add-paths: |
             src/integrations/supabase/types.ts
             supabase/schema-catalog.json
@@ -706,8 +730,26 @@ jobs:
               core.warning(`Nao foi possivel liberar ${recusados.length} run(s) com o GITHUB_TOKEN.`);
             }
 
+      - name: Marcar PR como needs-human quando grants mudaram
+        # GA22: alteracao de grants nao e' mergeavel automaticamente — precisa de revisao humana.
+        if: >-
+          steps.pull-request.outputs.pull-request-number != '' &&
+          steps.diff.outputs.grants_changed == 'true'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ steps.pull-request.outputs.pull-request-number }}
+        run: |
+          gh pr edit "$PR_NUMBER" --add-label "needs-human" --repo "$GITHUB_REPOSITORY" || true
+          gh pr comment "$PR_NUMBER" \
+            --body "⚠️ **Revisão humana necessária:** \`grants-baseline.json\` foi alterado. Auto-merge desabilitado." \
+            --repo "$GITHUB_REPOSITORY" || true
+
       - name: Habilitar auto-merge no PR de sincronizacao
-        if: steps.pull-request.outputs.pull-request-number != ''
+        # GA22: auto-merge so' quando grants nao mudaram (sem DDL de privilegio fora do fluxo).
+        if: >-
+          steps.pull-request.outputs.pull-request-number != '' &&
+          steps.diff.outputs.grants_changed != 'true'
         continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
