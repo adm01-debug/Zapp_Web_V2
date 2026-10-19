@@ -18,6 +18,7 @@ vi.mock('@/hooks/system/useUserRole', () => ({
   useUserRole: () => ({ isAdmin: true, isSupervisor: true, loading: false }),
 }));
 vi.mock('../useAdminData', () => ({
+  AUDIT_PAGE_SIZE: 50,
   useAdminData: () => ({
     users: [
       {
