@@ -97,8 +97,8 @@ export function useDashboardKpi(filters: DashboardKpiFilters = {}) {
       const { data, error } = await supabase.rpc('dashboard_kpi', {
         p_from: fromIso ?? undefined,
         p_until: untilIso ?? undefined,
-        p_queue: queueId ?? null,
-        p_agent: agentId ?? null,
+        p_queue: queueId ?? undefined,
+        p_agent: agentId ?? undefined,
       });
       if (error) throw error;
       return aggregateDashboardKpi(data as unknown as DashboardKpiRpcResult);
