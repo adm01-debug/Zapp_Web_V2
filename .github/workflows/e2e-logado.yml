@@ -327,7 +327,7 @@ jobs:
             -d "$BODY" \
             || true)
           ACCESS_TOKEN=$(printf '%s' "$RESP" | node -e \
-            "let d=''; process.stdin.on('data',c=>d+=c); process.stdin.on('end',()=>{ try{process.stdout.write(JSON.parse(d).access_token||'')}catch{} })") \
+            "let d=''; process.stdin.on('data',c=>d+=c); process.stdin.on('end',()=>{ try{process.stdout.write(JSON.parse(d).access_token||'')}catch{} })")\
             || ACCESS_TOKEN=""
           if [ -z "$ACCESS_TOKEN" ]; then
             echo "::warning::Nao foi possivel obter access_token — teardown de sessao global pulado"

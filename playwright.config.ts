@@ -360,6 +360,7 @@ export default defineConfig({
       // Fixture tests exercise both sides of the runtime kill switch.  This is
       // test-server-only; production still requires the build env and the
       // feature flag.  Without it, a complete CRM fixture can never reach the
+      // panel and falsely validates only the disabled state.  Without it, a complete CRM fixture can never reach the
       // panel and falsely validates only the disabled state.
       command: `VITE_CRM_INTEGRATION_ENABLED=true bun run dev -- --host 127.0.0.1 --port ${porta} --strictPort`,
       url,

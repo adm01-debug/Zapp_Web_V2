@@ -113,7 +113,7 @@ test('#463: chromium-mapa cobre as 3 specs do mapa', () => {
   for (const spec of ['location-picker', 'contact-address', 'contact-map-pin']) {
     assert.match(
       bloco,
-      new RegExp(`${spec}\\\\.spec\\\\.ts`),
+      new RegExp(`${spec}\\.spec\\.ts`),
       `chromium-mapa tem de coletar ${spec}.spec.ts`,
     );
   }
