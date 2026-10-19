@@ -8,7 +8,7 @@ import { act, renderHook } from '@testing-library/react';
 const h = vi.hoisted(() => ({
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
-  log: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  log: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() })},
   modos: { delete: 'ok' as 'ok' | 'zero-linhas' | 'envelope-erro' | 'rejeicao' },
   chamadas: { delete: 0, select: 0, cutoff: [] as string[] },
 }));

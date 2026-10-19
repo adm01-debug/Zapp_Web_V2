@@ -12,7 +12,7 @@ vi.mock('@/hooks/system/useCRMIntegrationEnabled', () => ({ useCRMIntegrationEna
 vi.mock('@/lib/crmIntegration', () => ({
   callCRMIntegration: (action: string, payload?: Record<string, unknown>) => callCRMIntegration(action, payload),
 }));
-vi.mock('@/lib/logger', () => ({ log: { error: (...a: unknown[]) => logError(...a) } }));
+vi.mock('@/lib/logger', () => ({ log: { error: (...a: unknown[]) => logError(...a), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() })} , getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }) }), createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }) }),}));
 
 import { useContactIntelligence } from '../useContactIntelligence';
 

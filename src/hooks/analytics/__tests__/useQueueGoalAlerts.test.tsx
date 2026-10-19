@@ -104,7 +104,7 @@ vi.mock('@/utils/notificationSounds', () => ({
 
 vi.mock('@/lib/logger', () => ({
   log: { error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() },
-  getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
+  getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() , withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() })}),
 }));
 
 import { useQueueGoalAlerts, QUEUE_GOAL_ALERTS_INTERVAL_MS, QUEUE_GOAL_ALERTS_STORAGE_KEY } from '@/hooks/analytics/useQueueGoalAlerts';

@@ -40,7 +40,9 @@ vi.mock('@/hooks/auth/useAuth', () => ({ useAuth: () => authState }));
 vi.mock('@/hooks/ui/useDeviceDetection', () => ({ useDeviceDetection: () => devicesState }));
 vi.mock('@/hooks/system/useUserRole', () => ({ useUserRole: () => ({ hasRole: () => false }) }));
 vi.mock('@/lib/logger', () => ({
-  log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() })},
+  getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }) }),
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }) }),
 }));
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {

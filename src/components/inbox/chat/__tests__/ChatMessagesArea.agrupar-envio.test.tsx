@@ -52,6 +52,10 @@ const scrollToSpy = vi.fn();
 beforeAll(() => {
   (window as unknown as { ResizeObserver: typeof ResizeObserverMock }).ResizeObserver = ResizeObserverMock;
   (Element.prototype as unknown as { scrollTo: unknown }).scrollTo = scrollToSpy;
+  Object.defineProperty(HTMLElement.prototype, 'offsetHeight', {
+    configurable: true,
+    get() { return 600; },
+  });
 });
 
 vi.mock('../MessageBubble', () => ({

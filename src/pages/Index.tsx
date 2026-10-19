@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useRef, forwardRef, memo, useM
 import { useQueryClient } from '@tanstack/react-query';
 import { useNavigationHistory } from '@/hooks/system/useNavigationHistory';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { SLANotificationProvider } from '@/components/notifications/SLANotificationProvider';
 import { GoalNotificationProvider } from '@/components/notifications/GoalNotificationProvider';
 import { TourProvider, DEFAULT_ONBOARDING_STEPS, useTour } from '@/components/onboarding/OnboardingTour';
@@ -17,7 +16,6 @@ import { useGmailOAuth } from '@/hooks/integrations/useGmailOAuth';
 import { useInboxUnreadTotal } from '@/hooks/inbox/useInboxUnreadTotal';
 import { Sparkles } from 'lucide-react';
 import { AppShell } from '@/components/layout/AppShell';
-import { toast } from 'sonner';
 
 // Lazy load non-critical secondary components
 const WelcomeModal = lazy(() => import('@/components/onboarding/WelcomeModal').then(m => ({ default: m.WelcomeModal })));
@@ -105,7 +103,8 @@ const IndexContent = forwardRef<HTMLDivElement>(function IndexContent(_props, _r
 
   useEffect(() => {
     if (!loadingOnboarding && hasCompletedOnboarding === false && user) {
-      setShowWelcome(true);
+      const t = setTimeout(() => setShowWelcome(true), 0);
+      return () => clearTimeout(t);
     }
   }, [loadingOnboarding, hasCompletedOnboarding, user]);
 

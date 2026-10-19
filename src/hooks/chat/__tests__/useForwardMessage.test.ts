@@ -47,7 +47,9 @@ vi.mock('@/integrations/supabase/client', () => {
 vi.mock('@/hooks/ui/use-toast', () => ({ toast: mocks.toast }));
 
 vi.mock('@/lib/logger', () => ({
-  log: { error: mocks.logError, warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  log: { error: mocks.logError, warn: vi.fn(), info: vi.fn(), debug: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() })},
+  getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }) }),
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }) }),
 }));
 
 import { useForwardMessage, type UseForwardMessageOptions } from '@/hooks/chat/useForwardMessage';

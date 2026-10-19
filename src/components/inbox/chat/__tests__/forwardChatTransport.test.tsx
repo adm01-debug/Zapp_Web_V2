@@ -56,7 +56,9 @@ vi.mock('@/hooks/tasks/useMyWorkItems', () => ({
 vi.mock('@/hooks/system/useNavigationHistory', () => ({ navigateToView: vi.fn() }));
 vi.mock('@/hooks/ui/use-toast', () => ({ toast: mocks.toast }));
 vi.mock('@/lib/logger', () => ({
-  log: { debug: vi.fn(), error: vi.fn(), warn: vi.fn(), info: vi.fn() },
+  log: { debug: vi.fn(), error: vi.fn(), warn: vi.fn(), info: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() })},
+  getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }) }),
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }) }),
 }));
 
 import { useChatPanelHandlers } from '@/components/inbox/chat/useChatPanelHandlers';

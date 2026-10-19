@@ -1,158 +1,298 @@
 /**
- * Kit compartilhado dos testes de COMPORTAMENTO dos alertas.
+ * Kit completo para testar alertas de comportamento.
  *
- * Motivo de existir: os três arquivos repetiam o mesmo andaime de mocks e o portão de qualidade
- * do Sonar (duplicação em código novo) passou de 3% para 10,9%. Aqui fica o andaime; cada teste
- * guarda só o que é dele — o gatilho e a asserção.
+ * Exporta:
+ *  - Estado mutável controlado pelos testes (callbacks, slaRulesQuery, etc.)
+ *  - Spies reutilizáveis (playNotificationSound, sonnerToast, etc.)
+ *  - resetAlertKit() para limpar entre testes
+ *  - Fábricas de mock chamadas por alertMocks.ts e alertContactMock.ts via vi.mock()
  */
 import { vi } from 'vitest';
 
-export const playNotificationSound = vi.fn();
-export const showBrowserNotification = vi.fn();
-export const requestNotificationPermission = vi.fn();
-export const toast = vi.fn();
-export const sonnerToast = { error: vi.fn(), success: vi.fn(), info: vi.fn(), warning: vi.fn() };
-export const invoke = vi.fn();
-/** Ação "Abrir conversa" dos toasts — o clique precisa levar o CONTATO_ID, não só o rótulo. */
-export const openContactChat = vi.fn();
-/** `supabase.removeChannel`: prova que a assinatura NÃO é derrubada no re-render. */
-export const removeChannel = vi.fn();
-/** Tópicos pedidos a `supabase.channel`, na ordem — prova o canal único por montagem. */
+// ──────────────────────────────────────────────────────────
+// Estado mutável — controlado diretamente pelos testes
+// ──────────────────────────────────────────────────────────
+
+/** Callbacks do Realtime coletados quando .on() é chamado. */
+export const callbacks: Array<(payload: unknown) => Promise<void> | void> = [];
+
+/** Topics dos canais criados via supabase.channel(topic). */
 export const channelTopics: string[] = [];
-/** Spies estáveis do logger: o teste confere o que foi registrado (erro sem dado pessoal). */
-export const loggerSpies = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
-/** Quando preenchido, a consulta a `contacts` rejeita — prova o try/catch do handler. */
-export const contactsQuery: { erro: Error | null } = { erro: null };
-/** Com `pendente`, a consulta a `sla_configurations` só responde quando o teste chamar `liberar()`. */
-export const slaQuery: { pendente: boolean; liberar: (() => void) | null } = {
-  pendente: false,
-  liberar: null,
-};
-/** Regras devolvidas pela consulta a `sla_rules` (a política `notify_on_warning` vem delas). */
+
+/** Controla a consulta sla_rules. */
 export const slaRulesQuery: { rows: unknown[]; erro: Error | null } = { rows: [], erro: null };
 
-/** Resultado do dedupe de notificacoes; o teste pode desligar para cobrir o caminho silencioso. */
-export const dedupeResult = { valor: true };
+/** Controla a consulta sla_configurations — suporta pausa (pendente). */
+export const slaQuery: { pendente: boolean; liberar?: () => void } = { pendente: false };
 
-/** Chamadas do dedupe, com a chave e o TTL — é o que prova a janela de 24h. */
-export const dedupeCalls: Array<{ key: string; ttlMs?: number }> = [];
+/** Controla a consulta contacts. */
+export const contactsQuery: { erro: Error | null } = { erro: null };
 
-/** Callbacks entregues pelos canais do Realtime, na ordem em que foram registrados. */
-export const callbacks: Array<(payload: unknown) => unknown> = [];
+/** Registra chamadas a claimNotificationEvent. */
+export const dedupeCalls: Array<{ key: string; ttlMs: number }> = [];
 
-/** Ajustes do painel lidos pelo `useNotificationSettings`; o teste mexe no que importa. */
-export const settingsCfg: Record<string, unknown> = {
-  soundEnabled: true,
-  browserNotifications: false,
-  messageSoundType: 'chime',
-  newMessageSound: true,
-  slaBreachSound: true,
-  slaSoundType: 'alert',
-  mentionSound: true,
-  mentionSoundType: 'ping',
-  soundVolume: 55,
-  transcriptionNotificationEnabled: true,
-  transcriptionSoundType: 'soft',
-  /** Horário de silêncio: mutável, para o teste abrir a janela DEPOIS do mount. */
-  quietHours: false,
+/** Controla o retorno de claimNotificationEvent. */
+export const dedupeResult: { valor: boolean } = { valor: true };
+
+// ──────────────────────────────────────────────────────────
+// Spies — resetados por resetAlertKit()
+// ──────────────────────────────────────────────────────────
+
+export const playNotificationSound = vi.fn();
+export const showBrowserNotification = vi.fn();
+export const requestNotificationPermission = vi.fn().mockResolvedValue(true);
+export const openContactChat = vi.fn();
+export const removeChannel = vi.fn();
+export const invoke = vi.fn();
+
+export const sonnerToast = {
+  error: vi.fn(),
+  warning: vi.fn(),
+  info: vi.fn(),
+  success: vi.fn(),
+  dismiss: vi.fn(),
 };
 
-/** Linha devolvida pelas consultas em `contacts`. */
-export const contactRow: Record<string, unknown> = { name: 'Fulano', phone: '1199' };
+export const loggerSpies = {
+  error: vi.fn(),
+  warn: vi.fn(),
+  info: vi.fn(),
+  debug: vi.fn(),
+  withCorrelation: vi.fn(() => ({
+    error: vi.fn(),
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+  })),
+};
+
+export const settingsCfg: {
+  soundEnabled: boolean;
+  mentionSound: boolean;
+  browserNotifications: boolean;
+  soundVolume: number;
+  slaBreachSound: boolean;
+  newMessageSound: boolean;
+  sentimentAlertEnabled: boolean;
+  messageSoundType: 'chime';
+  mentionSoundType: 'bell';
+  slaSoundType: 'alert';
+  transcriptionSoundType: 'soft';
+  quietHours?: boolean;
+} = {
+  soundEnabled: true,
+  mentionSound: true,
+  browserNotifications: false,
+  soundVolume: 70,
+  slaBreachSound: true,
+  newMessageSound: true,
+  sentimentAlertEnabled: true,
+  messageSoundType: 'chime' as const,
+  mentionSoundType: 'bell' as const,
+  slaSoundType: 'alert' as const,
+  transcriptionSoundType: 'soft' as const,
+};
+
+// ──────────────────────────────────────────────────────────
+// Reset
+// ──────────────────────────────────────────────────────────
+
+export function resetAlertKit() {
+  callbacks.length = 0;
+  channelTopics.length = 0;
+  dedupeCalls.length = 0;
+  dedupeResult.valor = true;
+  slaRulesQuery.rows = [];
+  slaRulesQuery.erro = null;
+  slaQuery.pendente = false;
+  slaQuery.liberar = undefined;
+  contactsQuery.erro = null;
+
+  playNotificationSound.mockReset();
+  showBrowserNotification.mockReset();
+  requestNotificationPermission.mockReset().mockResolvedValue(true);
+  openContactChat.mockReset();
+  removeChannel.mockReset();
+  invoke.mockReset();
+
+  sonnerToast.error.mockReset();
+  sonnerToast.warning.mockReset();
+  sonnerToast.info.mockReset();
+  sonnerToast.success.mockReset();
+  sonnerToast.dismiss.mockReset();
+
+  loggerSpies.error.mockReset();
+  loggerSpies.warn.mockReset();
+  loggerSpies.info.mockReset();
+  loggerSpies.debug.mockReset();
+  loggerSpies.withCorrelation.mockReset().mockReturnValue({
+    error: vi.fn(),
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+  });
+
+  Object.assign(settingsCfg, {
+    soundEnabled: true,
+    mentionSound: true,
+    browserNotifications: false,
+    soundVolume: 70,
+    slaBreachSound: true,
+    newMessageSound: true,
+    sentimentAlertEnabled: true,
+    messageSoundType: 'chime',
+    mentionSoundType: 'bell',
+    slaSoundType: 'alert',
+    transcriptionSoundType: 'soft',
+    quietHours: undefined,
+  });
+}
+
+// ──────────────────────────────────────────────────────────
+// Supabase query builder (PromiseLike + fluent chain)
+// ──────────────────────────────────────────────────────────
+
+function makeQueryBuilder(table: string) {
+  let resolvePromise!: (r: { data: unknown; error: unknown }) => void;
+  const promise = new Promise<{ data: unknown; error: unknown }>((res) => {
+    resolvePromise = res;
+  });
+
+  // Schedule resolution on next microtask so hooks can set up the query first
+  Promise.resolve().then(() => {
+    if (table === 'sla_rules') {
+      if (slaRulesQuery.erro) {
+        resolvePromise({ data: null, error: { message: slaRulesQuery.erro.message } });
+      } else {
+        resolvePromise({ data: slaRulesQuery.rows, error: null });
+      }
+    } else if (table === 'sla_configurations') {
+      if (slaQuery.pendente) {
+        slaQuery.liberar = () =>
+          resolvePromise({ data: [{ first_response_minutes: 30 }], error: null });
+      } else {
+        resolvePromise({ data: [{ first_response_minutes: 30 }], error: null });
+      }
+    } else if (table === 'contacts') {
+      if (contactsQuery.erro) {
+        resolvePromise({ data: null, error: { message: contactsQuery.erro.message } });
+      } else {
+        resolvePromise({
+          data: [
+            {
+              name: 'Contato Teste',
+              phone: '11999999999',
+              company: null,
+              job_title: null,
+              contact_type: null,
+              queue_id: null,
+              assigned_to: null,
+            },
+          ],
+          error: null,
+        });
+      }
+    } else {
+      resolvePromise({ data: [], error: null });
+    }
+  });
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const self: any = {
+    select: () => self,
+    eq: () => self,
+    neq: () => self,
+    in: () => self,
+    is: () => self,
+    not: () => self,
+    filter: () => self,
+    single: () => self,
+    maybeSingle: () => self,
+    order: () => self,
+    limit: () => self,
+    range: () => self,
+    ilike: () => self,
+    abortSignal: () => self,
+    then: (
+      onFulfilled?: (v: { data: unknown; error: unknown }) => unknown,
+      onRejected?: (e: unknown) => unknown,
+    ) => promise.then(onFulfilled, onRejected),
+    catch: (onRejected?: (e: unknown) => unknown) => promise.catch(onRejected),
+  };
+  return self;
+}
+
+// ──────────────────────────────────────────────────────────
+// Mock factories (chamadas por alertMocks.ts via vi.mock async)
+// ──────────────────────────────────────────────────────────
 
 export function notificationSoundsMock() {
   return {
-    playNotificationSound: (...args: unknown[]) => playNotificationSound(...args),
-    showBrowserNotification: (...args: unknown[]) => showBrowserNotification(...args),
-    requestNotificationPermission: (...args: unknown[]) => requestNotificationPermission(...args),
+    playNotificationSound,
+    previewSound: vi.fn(),
+    requestNotificationPermission,
+    showBrowserNotification,
   };
 }
 
-export function settingsMock() {
-  return {
-    // `isQuietHours` lê o flag a cada chamada (e não uma constante `false`): é assim que o
-    // teste consegue abrir a janela de silêncio DEPOIS do mount e provar que o alerta não
-    // fica congelado com o valor da montagem.
-    useNotificationSettings: () => ({
-      settings: settingsCfg,
-      isQuietHours: () => settingsCfg.quietHours === true,
+const _mockChannel = {
+  on: vi.fn(
+    (_event: string, _filter: unknown, cb: (payload: unknown) => void) => {
+      callbacks.push(cb);
+      return _mockChannel;
+    },
+  ),
+  subscribe: vi.fn(() => _mockChannel),
+  unsubscribe: vi.fn(),
+};
+
+const _mockSupabase = {
+  channel: vi.fn((topic: string) => {
+    channelTopics.push(topic);
+    return _mockChannel;
+  }),
+  removeChannel,
+  auth: {
+    getSession: vi.fn().mockResolvedValue({
+      data: { session: { user: { id: 'test-user' } } },
+      error: null,
     }),
-  };
-}
+  },
+  functions: { invoke },
+  from: vi.fn((table: string) => makeQueryBuilder(table)),
+};
 
 export function supabaseMock() {
-  const canal: Record<string, unknown> = {};
-  canal.on = (_evt: string, _cfg: unknown, cb: (payload: unknown) => unknown) => {
-    callbacks.push(cb);
-    return canal;
-  };
-  canal.subscribe = () => ({ unsubscribe: vi.fn() });
-
-  /** Resposta por tabela — o mesmo veredito serve para `maybeSingle()`, `single()` e o `await` da cadeia. */
-  const responder = async (tabela: string) => {
-    if (tabela === 'contacts' && contactsQuery.erro) throw contactsQuery.erro;
-    if (tabela === 'sla_configurations' && slaQuery.pendente) {
-      await new Promise<void>((resolve) => {
-        slaQuery.liberar = resolve;
-      });
-    }
-    if (tabela === 'sla_rules') {
-      if (slaRulesQuery.erro) return { data: null, error: slaRulesQuery.erro };
-      return { data: slaRulesQuery.rows, error: null };
-    }
-    return { data: contactRow, error: null };
-  };
-
-  /** Construtor encadeável: `.select().eq().order()` aguardado devolve a resposta da tabela. */
-  const chain = (tabela: string): Record<string, unknown> => {
-    const builder: Record<string, unknown> = {
-      eq: () => builder,
-      order: () => builder,
-      maybeSingle: () => responder(tabela),
-      single: () => responder(tabela),
-      then: (resolve: (v: unknown) => unknown, reject: (e: unknown) => unknown) =>
-        responder(tabela).then(resolve, reject),
-    };
-    return builder;
-  };
-
   return {
-    supabase: {
-      channel: (topico: string) => {
-        channelTopics.push(topico);
-        return canal;
-      },
-      removeChannel,
-      functions: { invoke: (...args: unknown[]) => invoke(...args) },
-      from: (tabela: string) => ({
-        select: () => chain(tabela),
-        insert: async () => ({ error: null }),
-        update: () => ({ eq: async () => ({ error: null }) }),
-      }),
-    },
+    supabase: _mockSupabase,
+    SUPABASE_URL: 'http://localhost:54321',
+    SUPABASE_ANON_KEY: 'mock-anon-key',
+    GOOGLE_OAUTH_ENABLED: false,
   };
 }
 
 export function authMock() {
-  return { useAuth: () => ({ user: { id: 'u1' } }) };
+  return {
+    useAuth: () => ({
+      user: { id: 'test-user', email: 'test@example.com' },
+      session: null,
+      signOut: vi.fn(),
+      loading: false,
+    }),
+  };
 }
 
 export function loggerMock() {
-  return { getLogger: () => loggerSpies, log: loggerSpies };
-}
-
-export function toastMock() {
-  return { toast };
-}
-
-/** Mock da ação "Abrir conversa"; registrado só pelos testes que a exercitam (o de sentimento usa a real). */
-export function sendProductMock() {
-  return { openContactChat: (...args: unknown[]) => openContactChat(...args) };
+  return {
+    getLogger: () => loggerSpies,
+    log: loggerSpies,
+    createLogger: () => loggerSpies,
+  };
 }
 
 export function dedupeMock() {
   return {
-    claimNotificationEvent: (key: string, ttlMs?: number) => {
+    claimNotificationEvent: (key: string, ttlMs = 120_000) => {
       dedupeCalls.push({ key, ttlMs });
       return dedupeResult.valor;
     },
@@ -160,35 +300,47 @@ export function dedupeMock() {
 }
 
 export function sonnerMock() {
-  return { toast: sonnerToast };
+  return {
+    toast: sonnerToast,
+    Toaster: () => null,
+  };
 }
 
-export function resetAlertKit() {
-  playNotificationSound.mockClear();
-  showBrowserNotification.mockClear();
-  invoke.mockClear();
-  openContactChat.mockClear();
-  removeChannel.mockClear();
-  loggerSpies.debug.mockClear();
-  loggerSpies.info.mockClear();
-  loggerSpies.warn.mockClear();
-  loggerSpies.error.mockClear();
-  channelTopics.length = 0;
-  contactsQuery.erro = null;
-  slaQuery.pendente = false;
-  slaQuery.liberar = null;
-  slaRulesQuery.rows = [];
-  slaRulesQuery.erro = null;
-  sonnerToast.error.mockClear();
-  sonnerToast.info.mockClear();
-  sonnerToast.warning.mockClear();
-  dedupeResult.valor = true;
-  dedupeCalls.length = 0;
-  callbacks.length = 0;
-  settingsCfg.soundEnabled = true;
-  settingsCfg.newMessageSound = true;
-  settingsCfg.slaBreachSound = true;
-  settingsCfg.mentionSound = true;
-  settingsCfg.soundVolume = 55;
-  settingsCfg.quietHours = false;
+export function toastMock() {
+  return {
+    useToast: () => ({ toast: vi.fn() }),
+  };
+}
+
+export function settingsMock() {
+  return {
+    useNotificationSettings: () => ({
+      settings: settingsCfg,
+      isQuietHours: () => Boolean(settingsCfg.quietHours),
+    }),
+  };
+}
+
+export function sendProductMock() {
+  return {
+    openContactChat,
+    useSendProduct: () => ({ send: vi.fn() }),
+  };
+}
+
+// Backwards compat
+export function createAlertBehaviorTestKit() {
+  const mockSupabaseChannel = {
+    on: vi.fn(() => mockSupabaseChannel),
+    subscribe: vi.fn(() => mockSupabaseChannel),
+    unsubscribe: vi.fn(),
+  };
+  const mockSupabase = {
+    channel: vi.fn(() => mockSupabaseChannel),
+    removeChannel: vi.fn(),
+    auth: {
+      getSession: vi.fn().mockResolvedValue({ data: { session: { user: { id: 'test-user' } } } }),
+    },
+  };
+  return { mockSupabaseChannel, mockSupabase };
 }

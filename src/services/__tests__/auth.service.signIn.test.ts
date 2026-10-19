@@ -7,7 +7,7 @@ const { authMocks, serverLoginMock } = vi.hoisted(() => ({
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: { auth: authMocks, from: vi.fn() },
 }));
-vi.mock('@/lib/logger', () => ({ log: { warn: vi.fn(), error: vi.fn() } }));
+vi.mock('@/lib/logger', () => ({ log: { warn: vi.fn(), error: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() })} , getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }) }), createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }) }),}));
 vi.mock('@/lib/serverLogin', () => ({ serverLogin: (...a: unknown[]) => serverLoginMock(...a) }));
 
 import { AuthService, NETWORK_BLOCKED_MESSAGE, NETWORK_UNAVAILABLE_MESSAGE } from '@/services/auth.service';

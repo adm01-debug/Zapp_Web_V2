@@ -11,6 +11,8 @@ vi.mock('@/hooks/ui/use-toast', () => ({ toast: vi.fn() }));
 
 vi.mock('@/lib/logger', () => ({
   log: { error: vi.fn(), info: vi.fn(), debug: vi.fn(), warn: vi.fn() },
+  getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }) }),
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }) }),
 }));
 
 vi.mock('framer-motion', () => {

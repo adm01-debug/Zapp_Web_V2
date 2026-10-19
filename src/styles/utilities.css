@@ -1,5 +1,21 @@
 /* ===== UTILITY CLASSES — Typography, gradients, shadows, scrollbar ===== */
 
+.safe-area-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.scrollbar-none {
+  scrollbar-width: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
 .font-display {
     font-family: var(--font-display);
   }

@@ -57,7 +57,7 @@ vi.mock('@/hooks/realtime/messageSender', () => ({ sendMessageToContact: vi.fn()
 vi.mock('@/hooks/ui/use-toast', () => ({ toast: vi.fn() }));
 vi.mock('@/lib/logger', () => ({
   log: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
-  getLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
+  getLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() , withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() })}),
 }));
 // O alvo é o `document.title` escrito antes de montar o painel do chat; o ChatPanel
 // (lazy) entra como marcador para o teste não carregar a lista inteira.

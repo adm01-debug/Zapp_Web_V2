@@ -20,7 +20,9 @@ vi.mock('@/hooks/auth/useAuth', () => ({
 }));
 
 vi.mock('@/lib/logger', () => ({
-  log: { info: (...args: unknown[]) => mockLogInfo(...args) },
+  log: { info: (...args: unknown[]) => mockLogInfo(...args), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() })},
+  getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }) }),
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }) }),
 }));
 
 const { useIncomingCallListener } = await import('@/hooks/communication/useIncomingCallListener');

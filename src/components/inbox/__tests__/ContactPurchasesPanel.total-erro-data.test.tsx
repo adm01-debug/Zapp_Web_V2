@@ -18,7 +18,7 @@ const h = vi.hoisted(() => ({
   insert: vi.fn(),
   refetch: vi.fn(),
   toast: { success: vi.fn(), error: vi.fn() },
-  log: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+  log: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() })},
   estado: { data: [] as Record<string, unknown>[], isLoading: false, isError: false },
 }));
 

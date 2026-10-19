@@ -38,7 +38,9 @@ vi.mock('@/lib/pdfThumbnail', () => ({
 }));
 
 vi.mock('@/lib/logger', () => ({
-  log: { warn: logWarn, error: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  log: { warn: logWarn, error: vi.fn(), info: vi.fn(), debug: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() })},
+  getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }) }),
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }) }),
 }));
 
 const STORAGE = 'https://test.supabase.co';

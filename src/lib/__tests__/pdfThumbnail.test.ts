@@ -35,7 +35,9 @@ vi.mock('pdfjs-dist/build/pdf.worker.min.mjs?url', () => ({
 }));
 
 vi.mock('@/lib/logger', () => ({
-  log: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  log: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() })},
+  getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }) }),
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }) }),
 }));
 
 import {

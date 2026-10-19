@@ -39,8 +39,9 @@ vi.mock('@/lib/logger', () => ({
     error: (...args: unknown[]) => mocks.logError(...args),
     debug: vi.fn(),
     info: vi.fn(),
-    warn: vi.fn(),
-  },
+    warn: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() })},
+  getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }) }),
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }) }),
 }));
 
 vi.mock('@/hooks/integrations/useEvolutionApi', () => ({

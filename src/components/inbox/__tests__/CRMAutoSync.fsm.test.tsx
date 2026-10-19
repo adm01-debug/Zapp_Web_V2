@@ -29,7 +29,7 @@ vi.mock('@/hooks/system/useFeatureFlag', () => ({ useFeatureFlag: mocks.useFeatu
 vi.mock('@/hooks/integrations/useSyncToCRM', () => ({
   useSyncToCRM: () => ({ syncConversation: mocks.syncConversation, isConfigured: true }),
 }));
-vi.mock('@/lib/logger', () => ({ log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() } }));
+vi.mock('@/lib/logger', () => ({ log: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() })} , getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }) }), createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }) }),}));
 
 import { CRMAutoSync } from '../CRMAutoSync';
 

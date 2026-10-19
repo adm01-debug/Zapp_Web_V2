@@ -59,7 +59,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U postgres"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
@@ -208,6 +208,8 @@ jobs:
         run: node scripts/db-audit/check-realtime-subscriptions.mjs
 
       - name: Testar comparadores de catalogo, manifesto e migrations
+        env:
+          PGUSER: postgres
         run: node --test scripts/db-audit/*.test.mjs
 
       # E47: instala o docker-shim no PATH antes do primeiro step que usa docker.

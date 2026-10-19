@@ -25,7 +25,7 @@ const mockLogs = [
 ];
 
 function queryResult(data: typeof mockLogs | null, error: Error | null = null) {
-  const result = Promise.resolve({ data, error });
+  const result = Promise.resolve({ data, error, count: data?.length ?? 0 });
   return Object.assign(result, { abortSignal: vi.fn(() => result) });
 }
 
@@ -33,11 +33,21 @@ describe('useRateLimitLogs', () => {
   afterEach(() => vi.useRealTimers());
   beforeEach(() => {
     vi.clearAllMocks();
+    const terminal = queryResult(mockLogs);
     mockFrom.mockReturnValue({
       select: vi.fn().mockReturnValue({
+        ilike: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
         order: vi.fn().mockReturnValue({
-          limit: vi.fn().mockReturnValue(queryResult(mockLogs)),
+          order: vi.fn().mockReturnValue({
+            range: vi.fn().mockReturnValue(terminal),
+            limit: vi.fn().mockReturnValue(terminal),
+          }),
+          range: vi.fn().mockReturnValue(terminal),
+          limit: vi.fn().mockReturnValue(terminal),
         }),
+        range: vi.fn().mockReturnValue(terminal),
+        limit: vi.fn().mockReturnValue(terminal),
       }),
     });
   });
@@ -81,10 +91,18 @@ describe('useRateLimitLogs', () => {
   });
 
   it('handles empty logs', async () => {
+    const emptyTerminal = queryResult([]);
     mockFrom.mockReturnValue({
       select: vi.fn().mockReturnValue({
+        ilike: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
         order: vi.fn().mockReturnValue({
-          limit: vi.fn().mockReturnValue(queryResult([])),
+          order: vi.fn().mockReturnValue({
+            range: vi.fn().mockReturnValue(emptyTerminal),
+            limit: vi.fn().mockReturnValue(emptyTerminal),
+          }),
+          range: vi.fn().mockReturnValue(emptyTerminal),
+          limit: vi.fn().mockReturnValue(emptyTerminal),
         }),
       }),
     });
@@ -97,10 +115,18 @@ describe('useRateLimitLogs', () => {
   });
 
   it('handles fetch error', async () => {
+    const errTerminal = queryResult(null, new Error('fail'));
     mockFrom.mockReturnValue({
       select: vi.fn().mockReturnValue({
+        ilike: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
         order: vi.fn().mockReturnValue({
-          limit: vi.fn().mockReturnValue(queryResult(null, new Error('fail'))),
+          order: vi.fn().mockReturnValue({
+            range: vi.fn().mockReturnValue(errTerminal),
+            limit: vi.fn().mockReturnValue(errTerminal),
+          }),
+          range: vi.fn().mockReturnValue(errTerminal),
+          limit: vi.fn().mockReturnValue(errTerminal),
         }),
       }),
     });
