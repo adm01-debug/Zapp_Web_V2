@@ -258,11 +258,15 @@ jobs:
           # Fail-closed: versao sem contrato aborta com exit 2 -- nunca vira "nada a verificar".
           RUNTIME=$(node scripts/db-audit/run-runtime-contract.mjs "$TARGET_VERSION")
           printf '%s\n' "$RUNTIME"
-          CONFIRMATION_HASH=$(RUNTIME_JSON="$RUNTIME" node scripts/db-audit/validate-runtime-proof.mjs)
-          if [ "$APPLY" = "true" ] && [ "$CONFIRMATION_HASH" != "$CONFIRM_RUNTIME_SHA256" ]; then
-            echo "::error::Confirmacao recusada: runtime, arquivo ou commit mudaram desde o dry-run; migration cancelada."
-            exit 1
-          fi
+          CONFIRMACAO=$(RUNTIME_JSON="$RUNTIME" node scripts/db-audit/validate-runtime-proof.mjs)
+          APPLY="$APPLY" CONFIRMACAO="$CONFIRMACAO" CONFIRM_RUNTIME_SHA256="$CONFIRM_RUNTIME_SHA256" \
+            node --input-type=module <<'NODE'
+          const confirmacao = process.env.CONFIRMACAO;
+          if (process.env.APPLY === 'true' && confirmacao !== process.env.CONFIRM_RUNTIME_SHA256) {
+            console.error('::error::Confirmacao recusada: runtime, arquivo ou commit mudaram desde o dry-run; migration cancelada.');
+            process.exit(1);
+          }
+          NODE
 
       - name: Dry-run oficial do Supabase CLI
         if: steps.preflight.outputs.needs_apply == 'true'
