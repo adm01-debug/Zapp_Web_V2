@@ -312,9 +312,9 @@ export function useRealtimeInbox() {
         pendingAudioSendRef.current = envio;
       }
       if (replyToId) {
-        await sendMessage(contactId, '[Áudio]', 'audio', envio.publicUrl, undefined, replyToId);
+        await sendMessage(contactId, '[Áudio]', 'audio', envio.publicUrl, undefined, replyToId, envio.clientMessageId);
       } else {
-        await sendMessage(contactId, '[Áudio]', 'audio', envio.publicUrl);
+        await sendMessage(contactId, '[Áudio]', 'audio', envio.publicUrl, undefined, undefined, envio.clientMessageId);
       }
       // Aceita: a gravação deixa de ser retentável — um áudio novo é ação nova.
       pendingAudioSendRef.current = null;
