@@ -321,7 +321,7 @@ precisam ser descartadas **antes** do `Number()`, senão "vazio" vira um retry i
 nenhum.
 
 **Agendamentos sem colisão:** types-sync `49 5 * * 1` (semanal), db-live-guard `13 6 * * *` (**diário**;
-não depende do types-sync para rodar), branch-hygiene `56 7 * * 1`, codeql `30 9 * * 1` e settings-guard
+não depende do types-sync para rodar), branch-hygiene `56 7 * * 1`, codeql `30 9 * * *` (**diário** — GA62) e settings-guard
 `15 */6 * * *`. Os dois primeiros da lista original rodavam ambos às 06:00 e disputavam o banco no mesmo minuto.
 
 **Repo:** `sha_pinning_required` ligado no GitHub (além do `check-workflow-pins.mjs`).
