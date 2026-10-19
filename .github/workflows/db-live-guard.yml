@@ -156,6 +156,8 @@ jobs:
           set -e
           if [ "$rc" -eq 3 ] && [ "$GITHUB_EVENT_NAME" = "push" ]; then
             echo "::warning::Apply pendente no push — nao e drift; o schedule de amanha verificara se o apply aconteceu."
+            # GA24: sinaliza que catalog/manifest/types devem ser neutros neste push.
+            echo "LOTE_PENDENTE_NO_PUSH=true" >> "$GITHUB_ENV"
             exit 0
           fi
           exit "$rc"
@@ -235,6 +237,12 @@ jobs:
         continue-on-error: true
         run: |
           set -o pipefail
+          # GA24: apply pendente no push — objetos da migration nao existem no banco ainda.
+          # Diff seria um falso alarme; sera verificado no proximo schedule.
+          if [ "${LOTE_PENDENTE_NO_PUSH:-}" = "true" ]; then
+            echo "GA24: apply pendente no push — catalog diff neutral; verificar no proximo schedule." | tee /tmp/step-catalog.log
+            exit 0
+          fi
           (
             set -e
             umask 077
@@ -250,6 +258,11 @@ jobs:
         continue-on-error: true
         run: |
           set -o pipefail
+          # GA24: apply pendente no push — objetos da migration nao existem no banco ainda.
+          if [ "${LOTE_PENDENTE_NO_PUSH:-}" = "true" ]; then
+            echo "GA24: apply pendente no push — manifest diff neutral; verificar no proximo schedule." | tee /tmp/step-manifest.log
+            exit 0
+          fi
           (
             set -e
             umask 077
@@ -289,6 +302,12 @@ jobs:
         continue-on-error: true
         run: |
           set -o pipefail
+          # GA24: apply pendente no push — types.ts gerado do banco nao refletiria
+          # a migration pendente; comparar agora seria falso alarme.
+          if [ "${LOTE_PENDENTE_NO_PUSH:-}" = "true" ]; then
+            echo "GA24: apply pendente no push — types.ts diff neutral; verificar no proximo schedule." | tee /tmp/step-types.log
+            exit 0
+          fi
           (
             set -e
             umask 077
