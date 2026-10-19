@@ -20,7 +20,7 @@ export function getGoalStatus(percentage: number): GoalStatus {
 
 export const GOAL_STATUS_BADGE_CLASS: Record<GoalStatusTone, string> = {
   success: 'bg-success/15 text-success border-success/30',
-  primary: 'bg-primary/15 text-primary-glow border-primary/30',
+  primary: 'bg-primary/15 text-[hsl(var(--primary-text))] border-primary/30',
   warning: 'bg-warning/15 text-warning border-warning/30',
   destructive: 'bg-destructive/15 text-destructive border-destructive/30',
 };
