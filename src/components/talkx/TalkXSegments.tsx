@@ -426,7 +426,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
                   <p className="text-sm font-semibold text-foreground mb-2">{s.name}</p>
                   <div className="flex flex-wrap gap-1 mb-2">
                     <Pill label={s.origin === 'crm360' ? 'CRM 360°' : s.origin === 'zapp' ? 'ZAPP' : 'Personalizado'} tone={s.origin === 'crm360' ? 'violet' : 'info'} />
-                    <Pill label={s.status === 'active' ? 'Ativo' : 'Inativo'} tone={s.status === 'active' ? 'ok' : 'neutral'} />
+                    <Pill label={s.status === 'active' ? 'Ativo' : 'Inativo'} tone={s.status === 'active' ? 'success' : 'muted'} />
                   </div>
                   <p className="text-sm text-foreground-secondary"><span className="font-bold text-foreground">{fmtInt(s.estimated_count)}</span> contatos</p>
                   {(s.rules?.groups ?? []).flatMap((g) => g.rules).length === 0 && <p className="text-xs text-muted-foreground italic mt-1">Toda a base</p>}
