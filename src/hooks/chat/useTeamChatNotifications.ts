@@ -1,4 +1,4 @@
-import { useEffect, useRef, useSyncExternalStore } from 'react';
+import { useEffect, useLayoutEffect, useRef, useSyncExternalStore } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -148,12 +148,16 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
   const permissionRef = useRef(permission);
   const showNotificationRef = useRef(showNotification);
 
-  // Keep refs current on every render — channel effect stays stable
-  activeIdRef.current = activeConversationId;
-  notifSettingsRef.current = notifSettings;
-  isQuietHoursRef.current = isQuietHours;
-  permissionRef.current = permission;
-  showNotificationRef.current = showNotification;
+  // Keep refs current before effects fire — channel effect stays stable.
+  // useLayoutEffect runs synchronously after DOM mutations, before the browser
+  // paints, so refs are always fresh when the realtime callback fires.
+  useLayoutEffect(() => {
+    activeIdRef.current = activeConversationId;
+    notifSettingsRef.current = notifSettings;
+    isQuietHoursRef.current = isQuietHours;
+    permissionRef.current = permission;
+    showNotificationRef.current = showNotification;
+  });
 
   useEffect(() => {
     if (!profile) return;
