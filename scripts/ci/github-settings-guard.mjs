@@ -77,6 +77,19 @@ const semQuebra = (valor) => String(valor).replace(/[\r\n\u0000-\u001f\u007f]/g,
 // ser a mesma em qualquer runner/locale; `localeCompare` muda com o ICU da máquina.
 const porCodigo = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
 
+// GA76: mapeamento REST snake_case → GraphQL camelCase para campos de merge.
+// GET /repos omite esses campos para tokens sem permissão push/admin (W04/W05).
+// A query GraphQL os expõe com read scope via o objeto Repository.
+const MERGE_GRAPHQL_MAP = {
+  allow_squash_merge: 'squashMergeAllowed',
+  allow_merge_commit: 'mergeCommitAllowed',
+  allow_rebase_merge: 'rebaseMergeAllowed',
+  allow_auto_merge: 'autoMergeAllowed',
+  delete_branch_on_merge: 'deleteBranchOnMerge',
+  squash_merge_commit_message: 'squashMergeCommitMessage',
+  squash_merge_commit_title: 'squashMergeCommitTitle',
+};
+
 /** Erro de leitura por falta de escopo — não é regressão, é ponto cego. */
 class NaoVerificavel extends Error {
   constructor(caminho, status, motivo) {
@@ -140,6 +153,16 @@ async function ghAdmin(method, path, body) {
   }
 }
 
+// GA76: wrapper GraphQL — usa o adminToken para leituras de campos de merge.
+// gh() retorna o JSON bruto, incluindo {data, errors}; unwrap aqui.
+async function ghGraphQL(query) {
+  const raw = await gh('POST', '/graphql', { query }, adminToken);
+  if (raw?.errors?.length) {
+    throw new NaoVerificavel('graphql', 200, raw.errors.map((e) => e.message).join('; '));
+  }
+  return raw?.data ?? null;
+}
+
 /** De onde vieram as leituras administrativas deste run (nunca o valor do token). */
 function fonteDaLeituraAdmin() {
   if (adminRejeitado) return 'GITHUB_TOKEN (SETTINGS_GUARD_TOKEN recusado com 401 — rotacionar)';
@@ -172,8 +195,7 @@ async function checarBranchProtection() {
       campo: 'branch_protection_main.strict',
       esperado: esperado.strict,
       encontrado: checksDesligados ? 'required_status_checks desligado' : strict,
-      // Sem o bloco de checks o PATCH do sub-recurso nao tem o que atualizar.
-      restauravel: !checksDesligados,
+      restauravel: false,
     });
   }
 
@@ -207,33 +229,55 @@ async function checarBranchProtection() {
 }
 
 async function checarRepo() {
-  const repo = await ghAdmin('GET', `/repos/${OWNER}/${REPO_NAME}`);
   const divergencias = [];
-  const ausentes = [];
-  for (const [campo, esperado] of Object.entries(baseline.merge)) {
-    // W04: o GET /repos so devolve os campos de merge para quem tem permissao
-    // push/admin. Com GITHUB_TOKEN eles simplesmente NAO vem — `null`/ausente
-    // aqui e "nao consegui ler", nunca "esta diferente".
-    if (!repo || typeof repo !== 'object' || !Object.hasOwn(repo, campo) || repo[campo] === null) {
-      ausentes.push(campo);
-      continue;
+
+  // GA76: tenta ler campos de merge via GraphQL (read scope suficiente).
+  // REST GET /repos omite esses campos para GITHUB_TOKEN sem push/admin (W04/W05).
+  const gqlFields = Object.values(MERGE_GRAPHQL_MAP).join('\n      ');
+  const gqlQuery = `{ repository(owner: "${OWNER}", name: "${REPO_NAME}") { ${gqlFields} } }`;
+  try {
+    const data = await ghGraphQL(gqlQuery);
+    const repoGQL = data?.repository ?? {};
+    for (const [campo, gqlCampo] of Object.entries(MERGE_GRAPHQL_MAP)) {
+      const esperado = baseline.merge?.[campo];
+      if (esperado === undefined) continue;
+      const raw = repoGQL[gqlCampo];
+      // Campos de mensagem de commit chegam em ALL_CAPS do GraphQL; normalize.
+      const encontrado = typeof raw === 'string' ? raw.toUpperCase() : raw;
+      const esperadoNorm = typeof esperado === 'string' ? esperado.toUpperCase() : esperado;
+      if (encontrado !== esperadoNorm) {
+        divergencias.push({ campo: `merge.${campo}`, esperado, encontrado, restauravel: false });
+      }
     }
-    const encontrado = repo[campo];
-    if (encontrado !== esperado) {
-      divergencias.push({ campo: `merge.${campo}`, esperado, encontrado, restauravel: false });
+  } catch (e) {
+    if (!(e instanceof NaoVerificavel)) throw e;
+    // Fallback: REST (W04 — pode vir cego para GITHUB_TOKEN sem push/admin).
+    const repo = await ghAdmin('GET', `/repos/${OWNER}/${REPO_NAME}`);
+    const ausentes = [];
+    for (const [campo, esperado] of Object.entries(baseline.merge ?? {})) {
+      if (!repo || typeof repo !== 'object' || !Object.hasOwn(repo, campo) || repo[campo] === null) {
+        ausentes.push(campo);
+        continue;
+      }
+      const encontrado = repo[campo];
+      if (encontrado !== esperado) {
+        divergencias.push({ campo: `merge.${campo}`, esperado, encontrado, restauravel: false });
+      }
+    }
+    if (ausentes.length === Object.keys(baseline.merge ?? {}).length) {
+      throw new NaoVerificavel(`/repos (merge.*)`, 200, 'resposta sem os campos de merge: o token nao tem permissao push/admin para le-los');
+    }
+    if (ausentes.length > 0) {
+      return { divergencias, cego: `200 — campos nao expostos ao token (GraphQL e REST): ${ausentes.join(', ')}`, campos: ausentes };
     }
   }
-  if (ausentes.length === Object.keys(baseline.merge).length) {
-    throw new NaoVerificavel(`/repos (merge.*)`, 200, 'resposta sem os campos de merge: o token nao tem permissao push/admin para le-los');
-  }
-  if (ausentes.length > 0) {
-    return { divergencias, cego: `200 — campos nao expostos ao token: ${ausentes.join(', ')}`, campos: ausentes };
-  }
-  // W14: security_and_analysis (secret_scanning*)
+
+  // W14: security_and_analysis — REST, independente do caminho de merge.
+  const repoREST = await ghAdmin('GET', `/repos/${OWNER}/${REPO_NAME}`);
   const blSec = baseline.security_and_analysis ?? {};
   for (const [chave, valorEsperado] of Object.entries(blSec)) {
-    if (chave.startsWith('_')) continue; // skip JSON comment fields
-    const encontrado = repo?.security_and_analysis?.[chave]?.status ?? null;
+    if (chave.startsWith('_')) continue;
+    const encontrado = repoREST?.security_and_analysis?.[chave]?.status ?? null;
     if (encontrado !== valorEsperado) {
       divergencias.push({ campo: `security_and_analysis.${chave}`, esperado: valorEsperado, encontrado, restauravel: false });
     }
@@ -271,7 +315,7 @@ async function checarSelectedActions() {
   const sel = await ghAdmin('GET', `/repos/${OWNER}/${REPO_NAME}/actions/permissions/selected-actions`);
   const divergencias = [];
   const blPatterns = [...(baseline.selected_actions_patterns ?? [])].sort();
-  const encontradosPatterns = [...(sel?.patterns_allowed ?? [])].map((p) => p.replace(/@\*$/, '')).sort();
+  const encontradosPatterns = [...(sel?.patterns_allowed ?? [])].sort();
   if (blPatterns.join('|') !== encontradosPatterns.join('|')) {
     divergencias.push({
       campo: 'selected_actions.patterns_allowed',
