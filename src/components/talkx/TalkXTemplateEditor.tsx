@@ -69,7 +69,7 @@ interface Props {
   onOpenMonitor?: (campaignId: string) => void;
 }
 
-export function TalkXTemplateEditor({ templates, isLoading, editing, initialTtab, onClose, onOpenMonitor }: Props) {
+export function TalkXTemplateEditor({ templates, isLoading, editing, initialTtab, onActiveTemplateChange, onClose, onOpenMonitor }: Props) {
   const {
     createTemplate, updateTemplate, duplicateTemplate, testTemplate, fetchVersionHistory, fetchVariants,
     saveVariant, deleteVariant, countVariantRecipients,
@@ -126,9 +126,10 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, initialTtab
   const larguraLarga = usePainelLargo();
   const [painelAberto, setPainelAberto] = useState(false);
 
-  // Quando abertura via initialTtab='ab', carrega variantes imediatamente.
+  // Quando abertura via initialTtab='ab'/'historico', carrega dados imediatamente.
   useEffect(() => {
     if (initialTtab === 'ab' && activeTemplateId) void loadVariants(activeTemplateId);
+    if (initialTtab === 'historico' && activeTemplateId) void fetchVersions(activeTemplateId);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -136,6 +137,9 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, initialTtab
   const activateTemplate = (templateId: string) => {
     activeTemplateIdRef.current = templateId;
     setActiveTemplateId(templateId);
+    onActiveTemplateChange?.(templates.find(t => t.id === templateId) ?? null);
+    if (showVariants) void loadVariants(templateId);
+    if (showVersions) void fetchVersions(templateId);
   };
 
   // Template ativo derivado de activeTemplateId (pode diferir de editing apos carga da biblioteca)
