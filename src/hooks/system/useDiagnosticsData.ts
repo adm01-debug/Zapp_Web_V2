@@ -287,6 +287,7 @@ export function useDiagnosticsData() {
     // Totais ESTIMADOS: não varrem a tabela inteira a cada ciclo de polling.
     const { count: messagesCount, error: messagesCountError } = await supabase
       .from('messages').select('id', { count: 'estimated', head: true });
+    if (messagesCountError) throw messagesCountError;
     // N-216: não lança para não abortar o setHealth; erros de contagem viram 'down' no banco.
     const { count: connectionsCount, error: connectionsCountError } = await supabase
       .from('whatsapp_connections').select('id', { count: 'estimated', head: true });
