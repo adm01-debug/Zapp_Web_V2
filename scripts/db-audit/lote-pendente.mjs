@@ -24,7 +24,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DRIFT_SCRIPT = path.join(__dirname, 'check-migration-drift.mjs');
+// GA19: override para testes unitários (nunca definido em produção)
+const DRIFT_SCRIPT = process.env.DRIFT_SCRIPT_OVERRIDE || path.join(__dirname, 'check-migration-drift.mjs');
 
 function writeSummary(lines) {
   const summaryPath = process.env.GITHUB_STEP_SUMMARY;

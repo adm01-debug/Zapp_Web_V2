@@ -112,6 +112,33 @@ test('W26: script real exit 0 sem DESTINO_URL (so valida local)', () => {
   assert.equal(exitCode, 0, `Script real deveria sair 0 sem DESTINO_URL; stderr=${stderr}`);
 });
 
+/** Roda o script REAL lote-pendente.mjs com um drift-script simulado via DRIFT_SCRIPT_OVERRIDE. */
+function runRealWithMock(mockExitCode, summaryPath) {
+  const tmpDir = mkdtempSync(path.join(tmpdir(), 'lote-real-'));
+  const mockScript = path.join(tmpDir, 'check-migration-drift.mjs');
+  writeFileSync(mockScript, `process.exitCode = ${mockExitCode};\n`);
+
+  const env = {
+    ...process.env,
+    DESTINO_URL: 'postgres://fake/db',
+    DRIFT_SCRIPT_OVERRIDE: mockScript,
+  };
+  if (summaryPath) env.GITHUB_STEP_SUMMARY = summaryPath;
+
+  const res = spawnSync(process.execPath, [LOTE_SCRIPT], { env, encoding: 'utf8', cwd: REPO_ROOT });
+  return { exitCode: res.status, stdout: res.stdout, stderr: res.stderr };
+}
+
+// GA19: falha de autenticação/carga (exit 2) não deve virar exit 0 nem exit 3.
+// exit 3 é reservado para "só apply pendente" — confundir auth failure com apply
+// pendente é o bug que GA19 fecha (reproduzido em run 37355980323).
+test('GA19: psql falso falhando (exit 2) → rc ∉ {0, 3} — erro de carga nao e apply-pendente', () => {
+  const { exitCode } = runRealWithMock(2);
+  assert.notEqual(exitCode, 0, 'exit 2 de auth nao deve virar exit 0');
+  assert.notEqual(exitCode, 3, 'exit 2 de auth nao deve virar exit 3 (apply-pendente)');
+  assert.equal(exitCode, 2, 'exit 2 de auth deve propagar como exit 2');
+});
+
 test('W26: db-live-guard.yml chama lote-pendente.mjs', () => {
   const yaml = readFileSync(
     path.join(REPO_ROOT, '.github/workflows/db-live-guard.yml'),
