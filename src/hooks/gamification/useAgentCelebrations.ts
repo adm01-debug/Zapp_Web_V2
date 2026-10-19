@@ -96,6 +96,8 @@ export function useAgentCelebrations(
   const conquistasConhecidas = useRef<Set<string>>(new Set());
   // Nível conhecido do perfil: só aumento vira celebração.
   const nivelConhecido = useRef<number | null>(null);
+  // Contagem de conquistas conhecida: aumento sinaliza que nova conquista chegou.
+  const achievementsCountConhecido = useRef<number | null>(null);
   // Último estado de conexão do canal, para detectar a reconexão.
   const estadoCanal = useRef<string | null>(null);
 
@@ -162,6 +164,7 @@ export function useAgentCelebrations(
     let vivo = true;
     conquistasConhecidas.current = new Set();
     nivelConhecido.current = null;
+    achievementsCountConhecido.current = null;
 
     void (async () => {
       const [conquistas, stats] = await Promise.all([
@@ -180,7 +183,10 @@ export function useAgentCelebrations(
       }
       if (stats.error) log.warn('Falha ao carregar stats do perfil', stats.error);
       const statsLinha = stats.data as AgentStats | null;
-      if (statsLinha) nivelConhecido.current = Number(statsLinha.level);
+      if (statsLinha) {
+        nivelConhecido.current = Number(statsLinha.level);
+        achievementsCountConhecido.current = Number(statsLinha.achievements_count ?? 0);
+      }
     })();
 
     return () => {
@@ -240,7 +246,15 @@ export function useAgentCelebrations(
         },
         (payload) => {
           const linha = payload.new as unknown as AgentStats | null;
-          if (linha) celebrarNivel(linha.level, linha.xp);
+          if (linha) {
+            celebrarNivel(linha.level, linha.xp);
+            const novoCount = Number(linha.achievements_count ?? 0);
+            const countAnterior = achievementsCountConhecido.current;
+            achievementsCountConhecido.current = Math.max(novoCount, countAnterior ?? 0);
+            if (countAnterior !== null && novoCount > countAnterior) {
+              void ressincronizar(profileId);
+            }
+          }
         },
       )
       .subscribe((status) => {
