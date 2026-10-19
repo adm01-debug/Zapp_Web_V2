@@ -62,7 +62,7 @@ ou rota vazia derrubam o teste até este arquivo ser atualizado.
 | `themes` | `ThemeCustomizer` | `src/components/settings/ThemeCustomizer.tsx` | Partial | `src/components/settings/ThemeCustomizer.tsx` |
 | `schedule` | `ScheduleCalendarView` | `src/components/schedule/ScheduleCalendarView.tsx` | Full | `src/components/schedule/ScheduleCalendarView.tsx` |
 | `warroom` | `WarRoomDashboard` | `src/components/dashboard/WarRoomDashboard.tsx` | Full | `src/hooks/business/useWarRoomAlerts.ts` |
-| `wa-templates` | `WhatsAppTemplatesManager` | `src/components/catalog/WhatsAppTemplatesManager.tsx` | Full | `src/hooks/integrations/useWhatsAppTemplates.ts` |
+| `wa-templates` | `WhatsAppTemplatesManager` | `src/components/catalog/WhatsAppTemplatesManager.tsx` | Full | `src/hooks/system/useUserRole.ts` |
 | `omnichannel` | `OmnichannelManager` | `src/components/omnichannel/OmnichannelManager.tsx` | Full | `src/components/omnichannel/OmnichannelManager.tsx` |
 | `churn` | `ChurnPredictionDashboard` | `src/components/ai/ChurnPredictionDashboard.tsx` | Full | `src/components/ai/ChurnPredictionDashboard.tsx` |
 | `ticket-classifier` | `AutoTicketClassifier` | `src/components/ai/AutoTicketClassifier.tsx` | Full | `src/components/ai/AutoTicketClassifier.tsx` |
