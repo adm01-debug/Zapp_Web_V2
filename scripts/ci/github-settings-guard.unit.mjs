@@ -21,7 +21,7 @@ const REPO_OK =
   "send({ allow_auto_merge: true, allow_squash_merge: true, allow_merge_commit: false, allow_rebase_merge: false, delete_branch_on_merge: true, squash_merge_commit_message: 'PR_BODY', squash_merge_commit_title: 'PR_TITLE', security_and_analysis: { secret_scanning: { status: 'enabled' }, secret_scanning_push_protection: { status: 'enabled' } } })";
 const ACTIONS_OK = "send({ enabled: true, allowed_actions: 'selected', sha_pinning_required: true })";
 const WORKFLOW_PERMS_OK = "send({ default_workflow_permissions: 'read', can_approve_pull_request_reviews: true })";
-const SELECTED_PATTERNS = "['oven-sh/setup-bun','denoland/setup-deno','supabase/setup-cli','peter-evans/create-pull-request','gitleaks/gitleaks-action','actions/cache','actions/checkout','actions/github-script','actions/setup-go','actions/setup-node','actions/upload-artifact','github/codeql-action','actions/dependency-review-action','ossf/scorecard-action','step-security/harden-runner']";
+const SELECTED_PATTERNS = "['oven-sh/setup-bun','denoland/setup-deno','supabase/setup-cli','peter-evans/create-pull-request','gitleaks/gitleaks-action','actions/cache','actions/checkout','actions/github-script','actions/setup-go','actions/setup-node','actions/upload-artifact','github/codeql-action','actions/dependency-review-action','ossf/scorecard-action']";
 const SELECTED_OK = `send({ patterns_allowed: ${SELECTED_PATTERNS} })`;
 const SEM_ESCOPO = "send({ message: 'Resource not accessible by integration' }, 403)";
 
@@ -119,8 +119,8 @@ function stub(
     "  if (method === 'GET' && p.indexOf('/issues/42/comments') !== -1) return " + comentarios + ';',
     "  if (p.endsWith('/branches/main/protection')) return " + prot + ';',
     "  if (p.endsWith('/actions/permissions/workflow')) return " + workflowPerms + ';',
+    "  if (p.indexOf('/actions/permissions/selected-actions') !== -1) return " + SELECTED_OK + ';',
     "  if (p.indexOf('/actions/permissions') !== -1) return " + actions + ';',
-    "  if (p.indexOf('/actions/selected-actions') !== -1) return " + SELECTED_OK + ';',
     "  if (method === 'GET' && p.endsWith('/rulesets')) return send([]);",
     "  if (p.indexOf('/environments') !== -1) return " + envs + ';',
     "  if (method === 'GET' && p === '/repos/o/r') return " + repo + ';',
@@ -359,8 +359,8 @@ describe('settings-guard: log injection (jssecurity:S5145)', () => {
 function rodarComEnvsExtra(extras) {
   // Injeta o stub de environments com os itens do baseline + os extras recebidos.
   const todos = [
-    'copilot', 'db-ledger-evidence', 'legacy-import-destrutivo', 'Preview',
-    'producao-ddl', 'producao-edge-functions', 'Production',
+    'banco-leitura', 'db-ledger-evidence', 'legacy-import-destrutivo', 'perimetro-leitura',
+    'producao-ddl', 'producao-edge-functions',
     ...extras,
   ];
   const envsStub =
