@@ -312,10 +312,15 @@ async function checarWorkflowPermissions() {
 }
 
 async function checarSelectedActions() {
+  // GA75: endpoint só existe quando allowed_actions === 'selected'; retornaria 404 fora disso.
+  if (baseline.actions?.allowed_actions !== 'selected') return [];
   const sel = await ghAdmin('GET', `/repos/${OWNER}/${REPO_NAME}/actions/permissions/selected-actions`);
   const divergencias = [];
-  const blPatterns = [...(baseline.selected_actions_patterns ?? [])].sort();
-  const encontradosPatterns = [...(sel?.patterns_allowed ?? [])].sort();
+  // GA75: normalizar sufixo @* e @<version> — a API pode devolver "action@*" enquanto o
+  // baseline armazena "action" (sem sufixo); sem normalização o compare sempre divergia.
+  const normalizar = (p) => p.replace(/@.*$/, '');
+  const blPatterns = [...(baseline.selected_actions_patterns ?? [])].map(normalizar).sort(porCodigo);
+  const encontradosPatterns = [...(sel?.patterns_allowed ?? [])].map(normalizar).sort(porCodigo);
   if (blPatterns.join('|') !== encontradosPatterns.join('|')) {
     divergencias.push({
       campo: 'selected_actions.patterns_allowed',
