@@ -439,3 +439,55 @@ jobs:
       - name: 🧬 Rodar mutação do mapa (E69)
         if: steps.paths.outputs.map_changed == 'true'
         run: bun run mutation:mapa
+
+  # ===========================================
+  # JOB 7: Egress Proxy — Go build contract (GA87)
+  # ===========================================
+  # GA87: prova que a imagem do preview-egress-proxy compila com o Go fixado em
+  # .github/toolchain.json e que Dockerfile e toolchain.json estao alinhados.
+  # Usa paths filter (mesmo padrao do job mutation-mapa) para nao gastar CI em
+  # pushes que nao tocam o proxy.
+  egress-proxy:
+    name: 🐹 Egress Proxy (Go build)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: 🔎 Detectar mudança no egress proxy (paths filter)
+        id: paths
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+          if [ -z "${BASE_REF:-}" ]; then
+            echo "proxy_changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git fetch origin "${BASE_REF}" --depth=50 --quiet
+          changed="$(git diff --name-only "origin/${BASE_REF}...HEAD")"
+          if printf '%s\n' "$changed" | grep -Eq '^(infrastructure/preview-egress-proxy/|\.github/toolchain\.json|\.github/workflows/ci\.yml)'; then
+            echo "proxy_changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "proxy_changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 🔍 Contrato GA87 — Dockerfile Go == toolchain.json Go
+        if: steps.paths.outputs.proxy_changed == 'true'
+        run: |
+          set -euo pipefail
+          toolchain_go=$(node -e "const t=JSON.parse(require('fs').readFileSync('.github/toolchain.json','utf8')); console.log(String(t.go).replace(/\.x$/,''))")
+          dockerfile_go=$(grep -oP '(?<=FROM golang:)\d+\.\d+' infrastructure/preview-egress-proxy/Dockerfile | head -1)
+          if [ "$toolchain_go" != "$dockerfile_go" ]; then
+            echo "::error::GA87 — versao Go dessincronizada: toolchain.json='${toolchain_go}' Dockerfile='${dockerfile_go}'"
+            exit 1
+          fi
+          echo "GA87 OK — Go alinhado: toolchain=${toolchain_go} Dockerfile=${dockerfile_go}"
+
+      - name: 🐳 docker build (sem push) — preview-egress-proxy (GA87)
+        if: steps.paths.outputs.proxy_changed == 'true'
+        run: docker build -t preview-egress-proxy:ci infrastructure/preview-egress-proxy/
