@@ -34,6 +34,8 @@ on:
       # E18: negação evita que o merge do PR de sync (que só altera
       # grants-baseline.json) dispare uma nova execução desnecessária.
       - '!scripts/db-audit/grants-baseline.json'
+      # GA61: known-violations.json é atualizado pelo guard sem alterar DDL.
+      - '!scripts/db-audit/known-violations.json'
       - '.github/workflows/types-sync.yml'
   schedule:
     # 05:49 em vez de 06:00: o minuto 0 concentra a fila de agendamentos do
@@ -50,7 +52,9 @@ permissions:
   contents: read
 
 concurrency:
-  group: types-sync-${{ github.ref }}-${{ github.event_name == 'schedule' && github.run_id || 'push' }}
+  # GA61: schedule e workflow_dispatch recebem run_id próprio para não cancelar
+  # entre si nem cancelar um push em andamento.
+  group: types-sync-${{ github.ref }}-${{ github.event_name == 'schedule' && github.run_id || github.event_name == 'workflow_dispatch' && github.run_id || 'push' }}
   cancel-in-progress: false
 
 env:
@@ -440,7 +444,6 @@ jobs:
         run: |
           # F-01 (auditoria 2026-09-27): mesmo pipefail dos Gates 1 e 2 — sem ele o
           # tee sempre saia 0 e o gate passava mesmo com o script bloqueando.
-          set -o pipefail
           # GA20: usar a versão commitada do catálogo como "antigo", não o arquivo
           # já sobrescrito pelo passo "Aplicar candidatos no worktree".
           git show HEAD:supabase/schema-catalog.json > /tmp/catalog.old.json
@@ -769,7 +772,7 @@ jobs:
             core.notice(`PR #${pr} marcado needs-human: grants alterados requerem revisao humana.`);
 
       - name: Job summary
-        if: always()
+        if: ${{ !cancelled() }}
         run: |
           {
             echo "## types-sync — $(date -u '+%Y-%m-%d %H:%M UTC')"
