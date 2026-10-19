@@ -594,11 +594,22 @@ test('GA99: ci.yml build usa !cancelled() (GA55)', () => {
   );
 });
 
-test('GA99: deploy-functions tem step deno test antes do deploy (GA27)', () => {
+test('GA99: deploy-functions tem step deno test antes do deploy, sem continue-on-error (GA27)', () => {
   const txt = wf['deploy-functions.yml'];
   assert.ok(
     /deno test/.test(txt),
     'GA27 regrediu: step deno test ausente em deploy-functions.yml',
+  );
+  // GA27: continue-on-error: true silenciaria falhas — o deploy aconteceria mesmo
+  // que todos os testes de edge functions falhassem. Este step é um gate, não
+  // observabilidade: falha DEVE bloquear.
+  const linhas = txt.split('\n');
+  const idxDeno = linhas.findIndex((l) => /\bdeno test\b/.test(l));
+  assert.ok(idxDeno !== -1, 'GA27 regrediu: linha deno test não localizada');
+  const janela = linhas.slice(Math.max(0, idxDeno - 3), idxDeno + 4).join('\n');
+  assert.ok(
+    !/continue-on-error:\s*true/.test(janela),
+    'GA27: deno test tem continue-on-error: true — falha de teste não bloqueia o deploy',
   );
 });
 

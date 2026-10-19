@@ -477,9 +477,12 @@ jobs:
       - name: Typecheck das edge functions (deno check)
         run: deno check supabase/functions/**/index.ts
 
-      - name: "🧪 Testes unitários das edge functions (deno test)"
+      - name: "\U0001F9EA Testes unitários das edge functions (deno test)"
+        # GA27: continue-on-error AUSENTE por design — falha de teste DEVE bloquear
+        # o deploy. Este step é um gate, não observabilidade. Não adicionar
+        # continue-on-error: true aqui; o teste GA99 em workflow-contracts.unit.mjs
+        # detecta a regressão.
         run: deno test --allow-all supabase/functions/
-        continue-on-error: true
 
       - name: Verificar env vars das edge functions (GA31)
         run: node scripts/ci/check-edge-envs.mjs
@@ -584,7 +587,7 @@ jobs:
       # indisponível → ::warning:: (não bloqueia o deploy: observabilidade não
       # pode derrubar um deploy bem-sucedido). O script vive em
       # scripts/edge-deploy/health-check.mjs (W65).
-      - name: 🏥 Verificação de saúde pós-deploy (5 min)
+      - name: \U0001F3E5 Verificação de saúde pós-deploy (5 min)
         if: inputs.dry_run != true
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
