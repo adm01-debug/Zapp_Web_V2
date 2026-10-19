@@ -43,12 +43,13 @@ function assert(cond, msg) {
 {
   const count = runPsql(
     ['-v', `target_version=${VERSION}`, '-v', `target_name=${TARGET_NAME}`],
-    `SELECT count(*)
-     FROM supabase_migrations.schema_migrations
-     WHERE version = :'target_version'
-       AND name = :'target_name'
-       AND statements IS NOT NULL
-       AND array_length(statements, 1) > 0;`,
+    `-- validar registro no ledger (nao aceita statements NULL nem vazio)
+SELECT count(*)
+FROM supabase_migrations.schema_migrations
+WHERE version = :'target_version'
+  AND name = :'target_name'
+  AND statements IS NOT NULL
+  AND array_length(statements, 1) > 0;`,
   );
   assert(count === '1', `Ledger nao possui o registro esperado para version=${VERSION} name=${TARGET_NAME}`);
   console.log(`OK: ledger possui exatamente version=${VERSION} name=${TARGET_NAME} com statements.`);

@@ -157,7 +157,7 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
   // lendo o histórico. Scrolls explícitos (envio próprio, navegação para mensagem citada)
   // usam forceScrollRef para contornar a guarda.
   const scrollToFn = useCallback<NonNullable<Parameters<typeof useVirtualizer>[0]['scrollToFn']>>(
-    (offset, _options, _instance) => {
+    (offset, _options) => {
       const el = scrollContainerRef.current;
       if (!el) return;
       if (!isNearBottomRef.current && !forceScrollRef.current) return;

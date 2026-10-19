@@ -85,13 +85,17 @@ test('a consulta do ledger devolve null textual em vez de linha vazia', () => {
 
 test('o passo do db-migrate exige NOT NULL e array_length antes de comparar', async () => {
   const workflow = await readFile(new URL('../../.github/workflows/db-migrate.yml', import.meta.url), 'utf8');
-  const inicio = workflow.indexOf('- name: Validar registro no ledger');
-  const fim = workflow.indexOf('- name: Validar ledger completo do bundle de entrega atomica');
-  assert.ok(inicio > 0 && fim > inicio, 'passo precisa existir e vir antes do proximo');
-  const passo = workflow.slice(inicio, fim);
-  assert.match(passo, /AND statements IS NOT NULL/);
-  assert.match(passo, /AND array_length\(statements, 1\) > 0/);
-  assert.match(passo, /verify-ledger-statements\.mjs/);
+  // GA16: passo renomeado para "Validar pos-apply", SQL movido para validate-post-apply.mjs
+  const inicio = workflow.indexOf('- name: Validar pos-apply');
+  assert.ok(inicio > 0, 'passo "Validar pos-apply" precisa existir no workflow');
+  const proximoPasso = workflow.indexOf('\n      - name:', inicio + 1);
+  const passo = workflow.slice(inicio, proximoPasso < 0 ? undefined : proximoPasso);
+  assert.match(passo, /validate-post-apply\.mjs/);
+  // O SQL agora fica em validate-post-apply.mjs
+  const script = await readFile(new URL('../../scripts/db-audit/validate-post-apply.mjs', import.meta.url), 'utf8');
+  assert.match(script, /AND statements IS NOT NULL/);
+  assert.match(script, /AND array_length\(statements, 1\) > 0/);
+  assert.match(script, /verify-ledger-statements\.mjs/);
 });
 
 // R2-INF-005: "# E65 (auditoria ...)" ficou tres linhas DENTRO do heredoc

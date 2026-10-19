@@ -26,7 +26,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-export const PASSO_VALIDAR_LEDGER = '- name: Validar registro no ledger';
+export const PASSO_VALIDAR_LEDGER = '- name: Validar pos-apply';
 
 /**
  * Devolve o script shell de um `run: |` dentro de um passo do workflow,
@@ -90,12 +90,29 @@ export function extrairHeredoc(script, tag) {
 }
 
 /**
- * A consulta SQL exata do passo "Validar registro no ledger".
+ * Extrai o SQL do passo pos-apply a partir do texto de validate-post-apply.mjs.
+ * GA16: o SQL saiu do heredoc do workflow e foi para o modulo JS.
+ * @param {string} textoScript conteudo bruto de validate-post-apply.mjs
+ * @returns {string}
+ */
+export function extrairSqlDoPosApply(textoScript) {
+  const m = /runPsql\(\s*\[[^\]]*\],\s*`([\s\S]*?)`/.exec(textoScript);
+  if (!m) throw new Error('SQL do passo pos-apply nao encontrado em validate-post-apply.mjs');
+  return m[1];
+}
+
+/**
+ * A consulta SQL exata do passo "Validar pos-apply" (GA16: era "Validar registro no ledger").
+ * Verifica que o passo existe no workflow e le o SQL de validate-post-apply.mjs.
  * @param {string} textoWorkflow
  * @returns {string}
  */
 export function extrairConsultaDoLedger(textoWorkflow) {
-  return extrairHeredoc(extrairBlocoRun(textoWorkflow, PASSO_VALIDAR_LEDGER), 'SQL');
+  if (textoWorkflow.indexOf(PASSO_VALIDAR_LEDGER) < 0) {
+    throw new Error(`passo "${PASSO_VALIDAR_LEDGER}" nao encontrado no workflow`);
+  }
+  const caminho = resolve(fileURLToPath(import.meta.url), '..', 'validate-post-apply.mjs');
+  return extrairSqlDoPosApply(readFileSync(caminho, 'utf8'));
 }
 
 export function caminhoPadraoDoWorkflow() {

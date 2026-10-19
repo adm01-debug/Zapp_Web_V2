@@ -480,7 +480,7 @@ jobs:
       - name: "\U0001F9EA Testes unitários das edge functions (deno test)"
         # GA27: continue-on-error AUSENTE por design — falha de teste DEVE bloquear
         # o deploy. Este step é um gate, não observabilidade. Não adicionar
-        # continue-on-error: true aqui; o teste GA99 em workflow-contracts.unit.mjs
+        # a flag continue-on-error aqui; o teste GA99 em workflow-contracts.unit.mjs
         # detecta a regressão.
         run: deno test --allow-all supabase/functions/
 
