@@ -65,6 +65,12 @@ vi.mock('@/services/chat.service', () => ({
   ChatService: { deleteMessage: vi.fn(async () => {}) },
 }));
 
+const loggerSpies = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), child: vi.fn() };
+vi.mock('@/lib/logger', () => ({
+  getLogger: vi.fn(() => loggerSpies),
+  createLogger: vi.fn(() => loggerSpies),
+}));
+
 function makeMessage(id: string, sender: 'contact' | 'agent', timestamp: Date): Message {
   return {
     id,
