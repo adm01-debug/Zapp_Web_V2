@@ -55,6 +55,7 @@ export function useKnowledgeBase() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [files, setFiles] = useState<KBFile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -62,8 +63,12 @@ export function useKnowledgeBase() {
       supabase.from('knowledge_base_articles').select('*').order('updated_at', { ascending: false }),
       supabase.from('knowledge_base_files').select('*').order('created_at', { ascending: false }),
     ]);
-    if (articlesRes.data) setArticles(articlesRes.data.map((a) => ({ ...a, tags: a.tags || [] })) as Article[]);
-    if (filesRes.data) setFiles(filesRes.data as KBFile[]);
+    const err = articlesRes.error?.message ?? filesRes.error?.message ?? null;
+    setError(err);
+    if (!err) {
+      if (articlesRes.data) setArticles(articlesRes.data.map((a) => ({ ...a, tags: a.tags || [] })) as Article[]);
+      if (filesRes.data) setFiles(filesRes.data as KBFile[]);
+    }
     setLoading(false);
   }, []);
 
@@ -223,5 +228,5 @@ export function useKnowledgeBase() {
     return false;
   }, [fetchData]);
 
-  return { articles, files, loading, fetchData, saveArticle, deleteArticle, uploadFile, deleteFile, reprocessFile };
+  return { articles, files, loading, error, fetchData, saveArticle, deleteArticle, uploadFile, deleteFile, reprocessFile };
 }
