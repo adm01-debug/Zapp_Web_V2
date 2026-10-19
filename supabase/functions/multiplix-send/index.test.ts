@@ -700,6 +700,7 @@ function batchSendingOpts(phonePrefix: string, length = 25): MockOpts {
     dispatch: dispatchRow({ status: "sending", total_recipients: length }),
     recipients,
     suppressedPhones: recipients.map((r) => String(r.destino_e164)),
+    connection: { id: "conn-001", status: "connected", instance_id: "PRINCIPAL" },
   };
 }
 
@@ -709,8 +710,10 @@ function startRequestOpts(overrides: Partial<MockOpts> = {}): MockOpts {
     authUser: { id: "user-000" },
     isAdminOrSupervisor: false,
     manageAll: false,
+    dispatchCreate: true,
     ownProfileId: "profile-me",
     dispatch: dispatchRow({ status: "draft", created_by: "profile-me" }),
+    connection: { id: "conn-001", status: "connected", instance_id: "PRINCIPAL" },
     ...overrides,
   };
 }

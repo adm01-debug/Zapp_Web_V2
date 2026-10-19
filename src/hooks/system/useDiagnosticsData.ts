@@ -288,9 +288,9 @@ export function useDiagnosticsData() {
     const { count: messagesCount, error: messagesCountError } = await supabase
       .from('messages').select('id', { count: 'estimated', head: true });
     if (messagesCountError) throw messagesCountError;
+    // N-216: não lança para não abortar o setHealth; erros de contagem viram 'down' no banco.
     const { count: connectionsCount, error: connectionsCountError } = await supabase
       .from('whatsapp_connections').select('id', { count: 'estimated', head: true });
-    if (connectionsCountError) throw connectionsCountError;
 
     const realtime = await probeRealtime();
 
@@ -313,7 +313,7 @@ export function useDiagnosticsData() {
     const lastHealthCheckAt = healthCheckLogs[0]?.checked_at ?? null;
 
     setHealth({
-      database: classifyHealth(dbError, dbLatency, 500, 2000),
+      database: classifyHealth(dbError ?? connectionsCountError ?? null, dbLatency, 500, 2000),
       storage: classifyHealth(storageError, storageLatency, 1000, 3000),
       realtime: realtime.status,
       edgeFunctions: classifyHeartbeat(heartbeatError, lastHealthCheckAt, Date.now()),
@@ -323,8 +323,8 @@ export function useDiagnosticsData() {
       lastHealthCheckAt,
       healthCheckLogs,
       contactsCount: contactsCount || 0,
-      messagesCount: messagesCount || 0,
-      connectionsCount: connectionsCount || 0,
+      messagesCount: messagesCountError ? 0 : (messagesCount || 0),
+      connectionsCount: connectionsCountError ? 0 : (connectionsCount || 0),
     });
   };
 

@@ -75,6 +75,7 @@ vi.mock('@/lib/logger', () => ({
     debug: vi.fn(),
     info: vi.fn(),
   }),
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
 }));
 
 import { useTeamChatNotifications } from '@/hooks/chat/useTeamChatNotifications';
@@ -124,14 +125,14 @@ afterEach(() => {
 
 describe('useTeamChatNotifications — canal estável (HZ5-09)', () => {
   it('assina um único canal com tópico exclusivo por instância', () => {
-    renderHook(() => useTeamChatNotifications(null));
+    renderHook(() => useTeamChatNotifications(null), { wrapper: wrapper(new QueryClient({ defaultOptions: { queries: { retry: false } } })) });
 
     expect(h.channelNames).toHaveLength(1);
     expect(String(h.channelNames[0])).toMatch(/^team-chat-notifications:/);
   });
 
   it('mexer no volume não recria o canal', () => {
-    const { rerender } = renderHook(() => useTeamChatNotifications(null));
+    const { rerender } = renderHook(() => useTeamChatNotifications(null), { wrapper: wrapper(new QueryClient({ defaultOptions: { queries: { retry: false } } })) });
     expect(h.channelNames).toHaveLength(1);
 
     h.settings = { ...h.settings, soundVolume: 90 };

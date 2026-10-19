@@ -38,7 +38,7 @@ beforeEach(() => {
 });
 
 describe('useDashboardKpi — período escolhido (E34)', () => {
-  it('manda o período como p_from/p_until (fim exclusivo) junto de fila e agente', async () => {
+  it('manda p_from e p_until junto de fila e agente', async () => {
     const from = new Date('2026-10-06T03:00:00.000Z');
     const until = new Date('2026-10-13T02:59:59.999Z');
 
@@ -53,15 +53,15 @@ describe('useDashboardKpi — período escolhido (E34)', () => {
     });
   });
 
-  it('sem período, manda p_from/p_until nulos (a RPC cai no dia atual em America/Sao_Paulo)', async () => {
+  it('sem período, manda todos os parâmetros como undefined (a RPC cai no dia atual em America/Sao_Paulo)', async () => {
     const { result } = renderHook(() => useDashboardKpi(), { wrapper });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(rpc).toHaveBeenCalledWith('dashboard_kpi', {
-      p_from: null,
-      p_until: null,
-      p_queue: null,
-      p_agent: null,
+      p_from: undefined,
+      p_until: undefined,
+      p_queue: undefined,
+      p_agent: undefined,
     });
   });
 

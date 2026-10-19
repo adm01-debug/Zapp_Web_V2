@@ -138,7 +138,7 @@ describe('useRealtimeInbox.handleSendAudio — falha sinalizada ao chamador (#35
     await expect(sendAudio()).resolves.toBe(true);
 
     expect(uploadAudioMock).toHaveBeenCalledWith('c1', blob);
-    expect(sendMessageMock).toHaveBeenCalledWith('c1', '[Áudio]', 'audio', 'audio/arquivo.webm', undefined, null, expect.any(String));
+    expect(sendMessageMock).toHaveBeenCalledWith('c1', '[Áudio]', 'audio', 'audio/arquivo.webm', undefined, undefined, expect.any(String));
   });
 
   it('não anuncia sucesso falso: falha do envio rejeita mesmo se o refresh cair', async () => {
@@ -175,14 +175,14 @@ describe('useRealtimeInbox.handleSendAudio — PK-28: citação da resposta', ()
 
     expect(uploadAudioMock).toHaveBeenCalledWith('c1', blob);
     expect(sendMessageMock).toHaveBeenCalledWith(
-      'c1', '[Áudio]', 'audio', 'audio/arquivo.webm', undefined, 'reply-audio-1',
+      'c1', '[Áudio]', 'audio', 'audio/arquivo.webm', undefined, 'reply-audio-1', expect.any(String),
     );
   });
 
-  it('sem resposta pendente o contrato antigo continua igual (nenhum argumento a mais)', async () => {
+  it('sem resposta pendente o contrato continua igual exceto pelo clientMessageId de deduplicação', async () => {
     await expect(sendAudio()).resolves.toBe(true);
 
-    expect(sendMessageMock).toHaveBeenCalledWith('c1', '[Áudio]', 'audio', 'audio/arquivo.webm');
+    expect(sendMessageMock).toHaveBeenCalledWith('c1', '[Áudio]', 'audio', 'audio/arquivo.webm', undefined, undefined, expect.any(String));
   });
 });
 

@@ -81,7 +81,7 @@ export const RULE_FIELDS: { value: RuleField; label: string; kind: 'text' | 'arr
   { value: 'group_category', label: 'Grupo', kind: 'enum', category: 'basico', options: GROUP_CATEGORIES.map((c) => c.value) },
   { value: 'email', label: 'E-mail', kind: 'text', category: 'basico' },
   { value: 'channel_type', label: 'Canal de origem', kind: 'text', category: 'basico' },
-  { value: 'lead_origin', label: 'Origem do lead', kind: 'text', category: 'basico' },
+  { value: 'lead_origin', label: 'Origem do lead', kind: 'text', category: 'basico', comingSoon: true },
   { value: 'assigned_to', label: 'Responsável', kind: 'uuid', category: 'comercial' },
   // Tipos de contato e status de conversa vem das fontes canonicas: uma regra de segmento
   // nunca pode oferecer valor que o banco rejeita (a lista local tinha 'lead'/'sicoob_gifts',
@@ -190,7 +190,7 @@ export function splitRules(rules: SegmentRules | null | undefined): { complete: 
 // como separador de filtros — escapa-la geraria uma barra invertida espuria
 // no valor buscado (achado do Codex na PR #896: "Acme, Inc" deixava de bater
 // porque o escape da virgula, ao passar por esta funcao, dobrava a barra).
-const quoted = (v: string) => `"${v.replace(/[\\"]/g, (c) => (c === '\\' ? '\\\\' : '\\"'))}"`;
+const quoted = (v: string) => `"${v.replace(/[\\"|]/g, (c) => (c === '\\' ? '\\\\' : '\\"'))}"`;
 
 function ruleToFilter(r: SegmentRule): string | null {
   const def = RULE_FIELDS.find((f) => f.value === r.field);
@@ -198,6 +198,9 @@ function ruleToFilter(r: SegmentRule): string | null {
   // "Em breve" nunca gera filtro PostgREST: a coluna não é calculada e qualquer
   // filtro sobre ela seria morto (sempre 0/nulo). Falha fechada via rulesToPostgrest.
   if (def.comingSoon) return null;
+  // real_sector/real_uf requerem pré-resolução via p_contact_ids na RPC; sem ela
+  // o filtro PostgREST seria inválido. Falha fechada até o front implementar.
+  if (r.field === 'real_sector' || r.field === 'real_uf') return null;
   const v = r.value.trim();
   switch (r.op) {
     case 'is_set': return `${r.field}.not.is.null`;
@@ -258,13 +261,20 @@ export function rulesToPostgrest(rules: SegmentRules | null | undefined): string
     })
     .filter((g) => g.filters.length > 0);
   if (groups.length === 0) return null;
-  const parts = groups.map((g) => (g.filters.length === 1 ? g.filters[0] : `${g.match}(${g.filters.join(',')})`));
+  const parts = groups.map((g) => (g.filters.length === 1 ? g.filters[0] : `${g.match}(${g.filters.join(',')})`))
   return parts.length === 1 ? parts[0] : parts.join(',');
 }
 
 /** Formato aceito pela RPC talkx_resolve_audience (X016): { groups: [...] }. */
 function audienceRulesPayload(rules: SegmentRules | null | undefined): { groups: SegmentRuleGroup[] } {
-  return { groups: rules?.groups ?? [] };
+  const groups = rules?.groups ?? [];
+  for (const g of groups) {
+    const realField = g.rules.find((r) => r.field === 'real_uf' || r.field === 'real_sector');
+    if (realField) {
+      throw new Error(`Campo ${realField.field} requer pré-resolução via p_contact_ids`);
+    }
+  }
+  return { groups };
 }
 
 type TalkXAudienceRpc = (name: string, args: Record<string, unknown>) => Promise<{
@@ -282,7 +292,7 @@ const AUDIENCE_RPC_PAGE_LIMIT = 1000;
  * PostgREST filtrando só `phone not null`, o que superestimava o público.
  */
 export async function countAudience(rules: SegmentRules | null | undefined, segmentIds?: string[]): Promise<number> {
-  const rpc = supabase.rpc as unknown as TalkXAudienceRpc;
+  const rpc = supabase.rpc.bind(supabase) as unknown as TalkXAudienceRpc;
   const { data, error } = await rpc('talkx_resolve_audience', {
     p_rules: audienceRulesPayload(rules),
     p_segment_ids: segmentIds ?? null,
@@ -303,7 +313,7 @@ export interface AudienceContact { id: string; name: string; nickname: string | 
  * mascarado pelo servidor e a paginação percorre até `limit` (ou o fim da lista).
  */
 export async function resolveAudience(rules: SegmentRules | null | undefined, limit = 5000, segmentIds?: string[]): Promise<AudienceContact[]> {
-  const rpc = supabase.rpc as unknown as TalkXAudienceRpc;
+  const rpc = supabase.rpc.bind(supabase) as unknown as TalkXAudienceRpc;
   const target = Math.max(0, Math.floor(limit));
   const rows: AudienceContact[] = [];
   let after: string | null = null;

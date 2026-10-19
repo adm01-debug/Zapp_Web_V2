@@ -41,6 +41,8 @@ const { estado, logError } = vi.hoisted(() => ({
 
 vi.mock('@/lib/logger', () => ({
   log: { error: logError, warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
 }));
 
 interface Resposta {

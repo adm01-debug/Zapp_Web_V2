@@ -10393,6 +10393,16 @@ export type Database = {
         }
         Relationships: []
       }
+      team_message_read_state: {
+        Row: {
+          all_read: boolean | null
+          conversation_id: string | null
+          member_count: number | null
+          message_id: string | null
+          read_count: number | null
+        }
+        Relationships: []
+      }
       whatsapp_connections_agent: {
         Row: {
           id: string | null

@@ -89,7 +89,13 @@ vi.mock('@/hooks/system/usePushNotifications', () => ({
 
 vi.mock('@/lib/logger', () => ({
   getLogger: () => ({ error: vi.fn(), warn: vi.fn(), debug: vi.fn(), info: vi.fn() }),
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
 }));
+
+vi.mock('@tanstack/react-query', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@tanstack/react-query')>();
+  return { ...actual, useQueryClient: () => ({ getQueryData: () => undefined }) };
+});
 
 import { useTeamChatNotifications } from '@/hooks/chat/useTeamChatNotifications';
 

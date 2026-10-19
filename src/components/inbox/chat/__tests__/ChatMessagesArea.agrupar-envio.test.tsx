@@ -52,6 +52,42 @@ const scrollToSpy = vi.fn();
 beforeAll(() => {
   (window as unknown as { ResizeObserver: typeof ResizeObserverMock }).ResizeObserver = ResizeObserverMock;
   (Element.prototype as unknown as { scrollTo: unknown }).scrollTo = scrollToSpy;
+  // jsdom retorna clientHeight=0; o virtualizer usa clientHeight para calcular
+  // quantos itens renderizar — sem isso, nenhum item fica visível no teste.
+  Object.defineProperty(HTMLElement.prototype, 'clientHeight', {
+    configurable: true,
+    get() { return 600; },
+  });
+});
+
+vi.mock('@tanstack/react-virtual', async () => {
+  const actual = await vi.importActual<typeof import('@tanstack/react-virtual')>('@tanstack/react-virtual');
+  return {
+    ...actual,
+    useVirtualizer: (opts: { count: number; getScrollElement: () => Element | null; estimateSize: () => number }) => ({
+      getVirtualItems: () =>
+        Array.from({ length: opts.count }, (_, i) => ({
+          index: i,
+          key: i,
+          start: i * opts.estimateSize(),
+          size: opts.estimateSize(),
+          lane: 0,
+          end: (i + 1) * opts.estimateSize(),
+          measureElement: undefined,
+        })),
+      getTotalSize: () => opts.count * opts.estimateSize(),
+      scrollToIndex: vi.fn((index: number) => {
+        const el = opts.getScrollElement() as HTMLElement | null;
+        if (el) el.scrollTo({ top: index * opts.estimateSize(), behavior: 'auto' });
+      }),
+      scrollToOffset: vi.fn((offset: number) => {
+        const el = opts.getScrollElement() as HTMLElement | null;
+        if (el) el.scrollTo({ top: offset, behavior: 'auto' });
+      }),
+      measure: vi.fn(),
+      options: opts,
+    }),
+  };
 });
 
 vi.mock('../MessageBubble', () => ({

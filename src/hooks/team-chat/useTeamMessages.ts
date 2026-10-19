@@ -44,10 +44,16 @@ function toTeamMessage(row: TeamMessagePageRow): TeamMessage {
   };
 }
 
-export function useTeamMessages(conversationId: string | null) {
+type RealtimeEvent = { type: 'update' | 'delete'; id: string; [key: string]: unknown };
+
+export function useTeamMessages(conversationId: string | null, onEvent?: (event: RealtimeEvent) => void) {
   const { profile } = useAuth();
   const queryClient = useQueryClient();
   const markedRef = useRef<string | null>(null);
+  const onEventRef = useRef(onEvent);
+  useEffect(() => {
+    onEventRef.current = onEvent;
+  });
 
   const query = useQuery({
     queryKey: queryKeys.messages(conversationId),
@@ -108,7 +114,17 @@ export function useTeamMessages(conversationId: string | null) {
     let jaInscrito = false;
     const channel = supabase
       .channel(`team-messages-${conversationId}` + uniqueRealtimeTopic(''))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'team_messages', filter: `conversation_id=eq.${conversationId}` }, revalidar)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'team_messages', filter: `conversation_id=eq.${conversationId}` }, (payload) => {
+        revalidar();
+        const cb = onEventRef.current;
+        if (cb) {
+          const isDel = payload.eventType === 'DELETE';
+          const record = (isDel ? payload.old : payload.new) as { id?: string } | undefined;
+          if (record?.id) {
+            cb({ type: isDel ? 'delete' : 'update', id: record.id, ...(payload.new as Record<string, unknown>) });
+          }
+        }
+      })
       .subscribe((status) => {
         // A queda do canal não avisa: o que ficou em memória envelhece. Só na
         // RE-inscrição (depois da primeira) a página corrente é refeita.
@@ -166,5 +182,5 @@ export function useTeamMessages(conversationId: string | null) {
     return () => { cancelado = true; };
   }, [conversationId, profile, pagina]);
 
-  return { messages, isLoading: query.isLoading };
+  return { messages, isLoading: query.isLoading, isError: query.isError, refetch: query.refetch };
 }

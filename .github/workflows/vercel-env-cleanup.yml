@@ -15,8 +15,14 @@ jobs:
     name: Remove vars perigosas/mortas do Vercel
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
 
       - name: Setup Node 20
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -27,4 +33,6 @@ jobs:
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_READONLY_TOKEN }}
           DRY_RUN: ${{ inputs.dry_run }}
-        run: node scripts/ci/vercel-env-cleanup.mjs
+        run: |
+          set -euo pipefail
+          node scripts/ci/vercel-env-cleanup.mjs

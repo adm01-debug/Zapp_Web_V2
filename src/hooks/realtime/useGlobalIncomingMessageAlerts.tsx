@@ -83,7 +83,10 @@ export function useGlobalIncomingMessageAlerts({
         title: `Nova mensagem de ${contact.name}`,
         description: message.content?.trim() || 'Mídia ou anexo sem texto',
         action: (
-          <ToastAction altText="Abrir a conversa" onClick={() => openContactChat(contact.id)}>
+          <ToastAction
+            altText="Abrir a conversa"
+            onClick={() => openContactChat(contact.id)}
+          >
             Ver conversa
           </ToastAction>
         ),

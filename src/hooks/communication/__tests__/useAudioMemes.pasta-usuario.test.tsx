@@ -28,6 +28,9 @@ vi.mock('@/integrations/supabase/client', () => ({
     functions: { invoke: mocks.invoke },
     from: mocks.tableFrom,
     auth: { getUser: mocks.getUser },
+    // R2-INB-044 — o hook abre canal de realtime com o picker aberto.
+    channel: vi.fn(() => ({ on: vi.fn().mockReturnThis(), subscribe: vi.fn().mockReturnThis() })),
+    removeChannel: vi.fn(),
   },
 }));
 

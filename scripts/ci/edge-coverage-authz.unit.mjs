@@ -37,6 +37,9 @@ const ESTE_ARQUIVO = fileURLToPath(import.meta.url);
 const DIR_CI = path.dirname(ESTE_ARQUIVO);
 const RAIZ = path.resolve(DIR_CI, '..', '..');
 
+// Testes 7 e 8 exigem deno; se não estiver instalado, são pulados.
+const denoDisponivel = !spawnSync('deno', ['--version'], { timeout: 5_000 }).error;
+
 /** Piso da régua: cobertura de linhas agregada dos 5 helpers. */
 export const MIN_LINE_COVERAGE_PCT = 50;
 
@@ -66,6 +69,8 @@ export const TEST_FILES = [
 export const TESTES_AUTH_FORA_DA_MEDICAO = [
   'ai-auth-service-path.test.ts',
   'ai-audio-authz-runtime.test.ts',
+  'gmail-reauth-required.test.ts',
+  'require-auth-profile-active.test.ts',
   'webhook-auth-gates.test.ts',
   'webhook-auth-shadow.test.ts',
 ];
@@ -147,7 +152,7 @@ export function montarArgsDenoTest(dirCobertura, repoRoot = RAIZ) {
     path.join(repoRoot, DENO_CONFIG_REL),
     '--frozen',
     // Mesmas permissões que a CI (`.github/workflows/ci.yml`) dá aos testes
-    // das Edge Functions. Faltar `--allow-read` deixa teste que lê o handler
+    // das Edge Functions. Faltar `--allow-read` deixa teste que lé�o handler
     // do disco vermelho — e a guarda abaixo passa a reprovar por isso.
     '--allow-env',
     '--allow-read',
@@ -230,7 +235,7 @@ export function renderRelatorio(resumo) {
   for (const t of TEST_FILES) linhas.push(`- \`${t}\``);
   linhas.push('');
   linhas.push(
-    'Fora da medição de propósito: `supabase/functions/_shared/__tests__/ai-auth-service-path.test.ts` exercita o mesmo `ai-auth.ts` da régua e contaminaria a conta.',
+    'Fora da medição de proósito: `supabase/functions/_shared/__tests__/ai-auth-service-path.test.ts` exercita o mesmo `ai-auth.ts` da régua e contaminaria a conta.',
   );
   linhas.push('');
   linhas.push('Como reproduzir:');
@@ -312,7 +317,7 @@ test('N217: status de teste vermelho invalida a medição (nunca engole falha)',
   const stderr = [
     ' ERRORS ',
     '',
-    'matriz é exaustiva => ./supabase/functions/_shared/__tests__/evolution-control-authz.test.ts:93:6',
+    'matriz hé exaustiva => ./supabase/functions/_shared/__tests__/evolution-control-authz.test.ts:93:6',
     '',
     'FAILED | 42 passed | 1 failed',
   ].join('\n');
@@ -365,7 +370,7 @@ function medicaoUmaVez() {
   return medicaoCompartilhada;
 }
 
-test('N217: medição do zero via deno agrega >= 50% e inclui os 5 helpers', () => {
+test('N217: medição do zero via deno agrega >= 50% e inclui os 5 helpers', { skip: !denoDisponivel }, () => {
   const { resumo, statusTestes, saidaTestes } = medicaoUmaVez();
   const falhasStatus = avaliarStatusTestes(statusTestes, saidaTestes);
   assert.deepEqual(falhasStatus, [], `teste vermelho invalida a medição: ${falhasStatus.join('; ')}`);
@@ -377,7 +382,7 @@ test('N217: medição do zero via deno agrega >= 50% e inclui os 5 helpers', () 
   }
 });
 
-test('N217: docs bate com medição fresca e segunda execução é idêntica', () => {
+test('N217: docs bate com medição fresca e segunda execução é idêntica', { skip: !denoDisponivel }, () => {
   const fresca = medirDoZero();
   const relatorio = renderRelatorio(fresca.resumo);
   assert.equal(

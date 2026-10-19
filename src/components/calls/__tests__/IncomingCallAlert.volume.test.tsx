@@ -149,6 +149,7 @@ vi.mock('@/hooks/system/useNotificationSettings', () => ({
 
 vi.mock('@/lib/logger', () => ({
   getLogger: () => ({ error: vi.fn(), warn: vi.fn(), debug: vi.fn(), info: vi.fn() }),
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
 }));
 
 // `useTerminoRemoto` assina o realtime (`supabase.channel(...).on(...).subscribe()`);

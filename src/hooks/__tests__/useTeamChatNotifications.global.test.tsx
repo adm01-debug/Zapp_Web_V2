@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, act, cleanup } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 /**
  * TC-007 — o listener de notificações do Team Chat só era montado dentro de
@@ -95,10 +96,16 @@ vi.mock('@/hooks/system/usePushNotifications', () => ({
 
 vi.mock('@/lib/logger', () => ({
   getLogger: () => ({ error: vi.fn(), warn: vi.fn(), debug: vi.fn(), info: vi.fn() }),
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
 }));
 
 import { TeamChatNotificationsListener } from '@/components/team-chat/TeamChatNotificationsListener';
 import { setActiveTeamChatConversation } from '@/hooks/chat/useTeamChatNotifications';
+
+function renderWithQC(ui: React.ReactElement) {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>);
+}
 
 const mensagem = (senderId: string, conversationId = 'c1') => ({
   new: {
@@ -134,7 +141,7 @@ describe('TC-007 — listener global de notificações do Team Chat', () => {
   });
 
   it('alerta mesmo com a view do Team Chat desmontada (usuário em outra tela)', async () => {
-    render(<TeamChatNotificationsListener />);
+    renderWithQC(<TeamChatNotificationsListener />);
 
     expect(h.handler).toBeTruthy();
     await h.handler!(mensagem('outro', 'c1'));
@@ -145,7 +152,7 @@ describe('TC-007 — listener global de notificações do Team Chat', () => {
   it('não abre canal sem usuário autenticado', () => {
     h.profile = null;
 
-    render(<TeamChatNotificationsListener />);
+    renderWithQC(<TeamChatNotificationsListener />);
 
     expect(h.channelCalls).toBe(0);
     expect(h.handler).toBeNull();
@@ -153,7 +160,7 @@ describe('TC-007 — listener global de notificações do Team Chat', () => {
 
   it('não alerta a conversa em foco publicada pela view, mas alerta as demais', async () => {
     setActiveTeamChatConversation('c1');
-    render(<TeamChatNotificationsListener />);
+    renderWithQC(<TeamChatNotificationsListener />);
 
     await h.handler!(mensagem('outro', 'c1'));
     expect(grafo.rampas).toHaveLength(0);
@@ -164,7 +171,7 @@ describe('TC-007 — listener global de notificações do Team Chat', () => {
 
   it('volta a alertar quando a view é fechada (foco limpo)', async () => {
     setActiveTeamChatConversation('c1');
-    render(<TeamChatNotificationsListener />);
+    renderWithQC(<TeamChatNotificationsListener />);
 
     act(() => { setActiveTeamChatConversation(null); });
 

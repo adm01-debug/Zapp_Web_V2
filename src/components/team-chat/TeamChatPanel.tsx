@@ -124,8 +124,9 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
         {s.isLoading ? (
           <div className="space-y-3">{Array.from({ length: 4 }).map((_, i) => <div key={i} className={cn("flex", i % 2 === 0 ? "justify-start" : "justify-end")}><Skeleton className="h-10 rounded-2xl" style={{ width: 120 + (i % 3) * 60 }} /></div>)}</div>
         ) : s.searchError ? (
-          <div role="alert" className="flex items-center justify-center gap-2 py-12 text-sm text-destructive">
-            <AlertCircle className="w-4 h-4" aria-hidden /> {s.searchError}
+          <div role="alert" className="flex flex-col items-center justify-center gap-3 py-12 text-sm text-destructive">
+            <div className="flex items-center gap-2"><AlertCircle className="w-4 h-4" aria-hidden /> {s.searchErrorMessage}</div>
+            <Button variant="ghost" size="sm" className="text-xs" onClick={s.retrySearch}>Tentar novamente</Button>
           </div>
         ) : s.isSearching ? (
           <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">

@@ -1,6 +1,6 @@
- import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
- import { useInboxUIState } from '@/hooks/inbox/useInboxUIState';
- import { ChatService } from '@/services/chat.service';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useInboxUIState } from '@/hooks/inbox/useInboxUIState';
+import { ChatService } from '@/services/chat.service';
 import { useOfflineCache } from '@/hooks/system/useOfflineCache';
 import { useMessages } from '@/hooks/chat/useMessages';
 import { useRealtimeMessages, ConversationWithMessages, ConversationContact } from '@/hooks/chat/useRealtimeMessages';
@@ -75,18 +75,18 @@ export function useRealtimeInbox() {
 
   // These features only available on local for now
   const { sendMessage, markAsRead } = localRealtime;
-   const { newMessageNotification, dismissNotification, setSelectedContact, setSoundEnabled } = localRealtime;
-   const uiState = useInboxUIState();
-   const { selectedContactId, setSelectedContactId, soundOn, setSoundOn, setPendingContactId } = uiState;
-   // Retentativa de áudio: vive enquanto a gravação não é aceita nem descartada.
-   const pendingAudioSendRef = useRef<EnvioDeAudioPendente | null>(null);
-   const [selectedContactFallback, setSelectedContactFallback] = useState<{
-     contactId: string;
-     contact: ConversationContact;
-   } | null>(null);
-   // Resultado da consulta do contato fora da lista: carregando / erro / não encontrado.
-   const [selectedContactLookup, setSelectedContactLookup] = useState<SelectedContactLookup | null>(null);
-   const [isOnline, setIsOnline] = useState(true);
+  const { newMessageNotification, dismissNotification, setSelectedContact, setSoundEnabled } = localRealtime;
+  const uiState = useInboxUIState();
+  const { selectedContactId, setSelectedContactId, soundOn, setSoundOn, setPendingContactId } = uiState;
+  // Retentativa de áudio: vive enquanto a gravação não é aceita nem descartada.
+  const pendingAudioSendRef = useRef<EnvioDeAudioPendente | null>(null);
+  const [selectedContactFallback, setSelectedContactFallback] = useState<{
+    contactId: string;
+    contact: ConversationContact;
+  } | null>(null);
+  // Resultado da consulta do contato fora da lista: carregando / erro / não encontrado.
+  const [selectedContactLookup, setSelectedContactLookup] = useState<SelectedContactLookup | null>(null);
+  const [isOnline, setIsOnline] = useState(true);
   const { profile } = useAuth();
 
   const { conversations: cachedConversations, usingCache } = useOfflineCache(conversations, loading);
@@ -236,11 +236,11 @@ export function useRealtimeInbox() {
     }
   }, [newMessageNotification, handleSelectConversation, dismissNotification]);
 
-   const toggleSound = useCallback(() => {
-     const v = !soundOn;
-     setSoundOn(v);
-     setSoundEnabled(v);
-   }, [soundOn, setSoundOn, setSoundEnabled]);
+  const toggleSound = useCallback(() => {
+    const v = !soundOn;
+    setSoundOn(v);
+    setSoundEnabled(v);
+  }, [soundOn, setSoundOn, setSoundEnabled]);
 
   const refreshActiveConversation = useCallback(async () => {
     await Promise.all([refetch(), refetchSelectedMessages()]);
@@ -266,68 +266,72 @@ export function useRealtimeInbox() {
     }
   }, [selectedContactId, sendMessage]);
 
-   // R2-INB-022 (mantido) + R2-INB-058: o elo de baixo da cadeia do áudio precisa SINALIZAR a
-   // falha ao chamador. `handleSendAudio` REJEITA quando não há contato selecionado e quando
-   // `ChatService.uploadAudio`/`sendMessage` rejeita (preservando o erro original, mesmo que o
-   // refresh da conversa caia), e resolve `true` no sucesso — o valor que o `ChatPanel` lê para
-   // fechar o gravador. Antes ela resolvia `false`/saía em silêncio, então quem está acima não
-   // distinguia "áudio enviado" de "áudio descartado".
-   // Sem toast para falha de TRANSPORTE: o aviso ao usuário é da camada de cima
-   // (`useChatPanelHandlers.handleAudioSend` / TextToAudioButton); duplicar faria o mesmo
-   // erro aparecer duas vezes.
-   // EXCEÇÃO (PE-24): áudio fora dos limites do WhatsApp é recusado AQUI, antes do upload,
-   // e o motivo é avisado aqui — esta é a camada que conhece a mensagem exata da validação
-   // (a de cima só tem um texto genérico). A gravação não sobe para o bucket.
-   const handleSendAudio = useCallback(async (blob: Blob): Promise<boolean> => {
-     if (!selectedContactId) throw new Error('Selecione uma conversa primeiro');
-     const contactId = selectedContactId;
-     const ptt = await validatePttBlob(blob);
-     if (!ptt.ok) {
-       const motivo = ptt.message ?? 'Áudio inválido.';
-       toast({ title: 'Áudio não enviado', description: motivo, variant: 'destructive' });
-       throw new Error(motivo);
-     }
-     try {
-       // Idempotência POR GRAVAÇÃO: a resposta de um despacho pode se perder
-       // depois de o POST já ter saído. Sem estado, a retentativa subia um
-       // arquivo novo (nome com `Date.now()`) e mandava outro
-       // `client_message_id` — duas notas de voz no WhatsApp do cliente. Aqui a
-       // MESMA gravação reenvia o objeto já subido e o mesmo id de entrega, e o
-       // `UNIQUE (contact_id, client_message_id)` do servidor deduplica.
-       const pendente = pendingAudioSendRef.current;
-       const mesmaGravacao = pendente && pendente.blob === blob && pendente.contactId === contactId;
-       if (!mesmaGravacao) {
-         // Outra gravação (ou outra conversa): a anterior não é mais retentável.
-         pendingAudioSendRef.current = null;
-       }
-       let envio = mesmaGravacao ? pendente : null;
-       if (!envio) {
-         const audioObjectUrl = await ChatService.uploadAudio(contactId, blob);
-         envio = {
-           blob,
-           contactId,
-           publicUrl: audioObjectUrl,
-           clientMessageId: criarIdDeEnvioDeAudio(),
-         };
-         pendingAudioSendRef.current = envio;
-       }
-       await sendMessage(contactId, '[Áudio]', 'audio', envio.publicUrl, undefined, null, envio.clientMessageId);
-       // Aceita: a gravação deixa de ser retentável — um áudio novo é ação nova.
-       pendingAudioSendRef.current = null;
-       return true;
-     } catch (err) {
-       log.error('Error in handleSendAudio:', err);
-       throw err;
-     } finally {
-       // Falha do refresh não pode substituir o erro do transporte que está subindo
-       // (`throw err` acima) nem sugerir que o áudio não saiu quando ele saiu.
-       try {
-         await refreshActiveConversation();
-       } catch (refreshErr) {
-         log.warn('Audio send finished, but conversation refresh failed:', refreshErr);
-       }
-     }
-   }, [selectedContactId, sendMessage, refreshActiveConversation]);
+  // R2-INB-022 (mantido) + R2-INB-058: o elo de baixo da cadeia do áudio precisa SINALIZAR a
+  // falha ao chamador. `handleSendAudio` REJEITA quando não há contato selecionado e quando
+  // `ChatService.uploadAudio`/`sendMessage` rejeita (preservando o erro original, mesmo que o
+  // refresh da conversa caia), e resolve `true` no sucesso — o valor que o `ChatPanel` lê para
+  // fechar o gravador. Antes ela resolvia `false`/saía em silêncio, então quem está acima não
+  // distinguia "áudio enviado" de "áudio descartado".
+  // Sem toast para falha de TRANSPORTE: o aviso ao usuário é da camada de cima
+  // (`useChatPanelHandlers.handleAudioSend` / TextToAudioButton); duplicar faria o mesmo
+  // erro aparecer duas vezes.
+  // EXCEÇÃO (PE-24): áudio fora dos limites do WhatsApp é recusado AQUI, antes do upload,
+  // e o motivo é avisado aqui — esta é a camada que conhece a mensagem exata da validação
+  // (a de cima só tem um texto genérico). A gravação não sobe para o bucket.
+  const handleSendAudio = useCallback(async (blob: Blob, replyToId?: string | null): Promise<boolean> => {
+    if (!selectedContactId) throw new Error('Selecione uma conversa primeiro');
+    const contactId = selectedContactId;
+    const ptt = await validatePttBlob(blob);
+    if (!ptt.ok) {
+      const motivo = ptt.message ?? 'Áudio inválido.';
+      toast({ title: 'Áudio não enviado', description: motivo, variant: 'destructive' });
+      throw new Error(motivo);
+    }
+    try {
+      // Idempotência POR GRAVAÇÃO: a resposta de um despacho pode se perder
+      // depois de o POST já ter saído. Sem estado, a retentativa subia um
+      // arquivo novo (nome com `Date.now()`) e mandava outro
+      // `client_message_id` — duas notas de voz no WhatsApp do cliente. Aqui a
+      // MESMA gravação reenvia o objeto já subido e o mesmo id de entrega, e o
+      // `UNIQUE (contact_id, client_message_id)` do servidor deduplica.
+      const pendente = pendingAudioSendRef.current;
+      const mesmaGravacao = pendente && pendente.blob === blob && pendente.contactId === contactId;
+      if (!mesmaGravacao) {
+        // Outra gravação (ou outra conversa): a anterior não é mais retentável.
+        pendingAudioSendRef.current = null;
+      }
+      let envio = mesmaGravacao ? pendente : null;
+      if (!envio) {
+        const audioObjectUrl = await ChatService.uploadAudio(contactId, blob);
+        envio = {
+          blob,
+          contactId,
+          publicUrl: audioObjectUrl,
+          clientMessageId: criarIdDeEnvioDeAudio(),
+        };
+        pendingAudioSendRef.current = envio;
+      }
+      if (replyToId) {
+        await sendMessage(contactId, '[Áudio]', 'audio', envio.publicUrl, undefined, replyToId, envio.clientMessageId);
+      } else {
+        await sendMessage(contactId, '[Áudio]', 'audio', envio.publicUrl, undefined, undefined, envio.clientMessageId);
+      }
+      // Aceita: a gravação deixa de ser retentável — um áudio novo é ação nova.
+      pendingAudioSendRef.current = null;
+      return true;
+    } catch (err) {
+      log.error('Error in handleSendAudio:', err);
+      throw err;
+    } finally {
+      // Falha do refresh não pode substituir o erro do transporte que está subindo
+      // (`throw err` acima) nem sugerir que o áudio não saiu quando ele saiu.
+      try {
+        await refreshActiveConversation();
+      } catch (refreshErr) {
+        log.warn('Audio send finished, but conversation refresh failed:', refreshErr);
+      }
+    }
+  }, [selectedContactId, sendMessage, refreshActiveConversation]);
 
   // Descarte explícito do estado de retentativa (o usuário cancelou a gravação):
   // a próxima tentativa com o MESMO blob volta a subir e a gerar id novo.
@@ -383,31 +387,31 @@ export function useRealtimeInbox() {
     cachedSelectedMessages,
   ]);
 
-   return {
-     ...uiState,
-     isOnline,
-     profile,
-     toggleSound,
-     conversations, cachedConversations, usingCache,
-     selectedMessagesFromCache,
-     loading, error,
-     selectedMessagesLoading,
-     selectedMessagesError,
-     selectedContactFallbackStatus,
-     selectedContactFallbackError,
-     refetchSelectedMessages,
-     hasOlderMessages: !USE_EXTERNAL_DB && localMsgs.hasOlder,
-     loadingOlderMessages: !USE_EXTERNAL_DB && localMsgs.loadingOlder,
-     loadOlderMessages: !USE_EXTERNAL_DB ? localMsgs.loadOlderMessages : async () => {},
-     newMessageNotification, dismissNotification,
-     legacyConversation, legacyMessages,
-     handleSelectConversation,
-     handleNotificationView,
-     handleSendMessage,
-     handleSendAudio,
-     discardPendingAudioSend,
-     refetch,
-     setSelectedContact,
-     markAsRead,
-   };
+  return {
+    ...uiState,
+    isOnline,
+    profile,
+    toggleSound,
+    conversations, cachedConversations, usingCache,
+    selectedMessagesFromCache,
+    loading, error,
+    selectedMessagesLoading,
+    selectedMessagesError,
+    selectedContactFallbackStatus,
+    selectedContactFallbackError,
+    refetchSelectedMessages,
+    hasOlderMessages: !USE_EXTERNAL_DB && localMsgs.hasOlder,
+    loadingOlderMessages: !USE_EXTERNAL_DB && localMsgs.loadingOlder,
+    loadOlderMessages: !USE_EXTERNAL_DB ? localMsgs.loadOlderMessages : async () => {},
+    newMessageNotification, dismissNotification,
+    legacyConversation, legacyMessages,
+    handleSelectConversation,
+    handleNotificationView,
+    handleSendMessage,
+    handleSendAudio,
+    discardPendingAudioSend,
+    refetch,
+    setSelectedContact,
+    markAsRead,
+  };
 }

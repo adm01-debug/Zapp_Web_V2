@@ -412,7 +412,7 @@ export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed
           { label: 'Envio', value: ed.isScheduled && ed.scheduledAt ? 'Agendado' : 'Imediato' },
         ]}
         checks={LAUNCH_CONFIRMATIONS}
-        confirmLabel={ed.isScheduled && ed.scheduledAt ? 'Confirmar agendamento' : 'Confirmar lançamento'}
+        confirmLabel={ed.isScheduled && ed.scheduledAt ? 'Confirmar agendamento' : 'Confirmar envio'}
         cancelLabel="Cancelar"
         loading={ed.saving}
       />

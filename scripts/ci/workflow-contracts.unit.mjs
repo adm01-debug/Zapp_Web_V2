@@ -245,7 +245,7 @@ test('E68: browser do Playwright é cacheado e o download só roda em cache miss
 
   for (const nome of nomes) {
     const texto = wf[nome];
-    if (!/\bplaywright@[\w.-]+\s+install\b/.test(texto)) continue;
+    if (!/\bplaywright(?:@[\w.-]+)?\s+install\b/.test(texto)) continue;
     const blocos = passos(texto);
 
     // SL-095 pôs um 2º `actions/cache` no mesmo job (cache do Bun, antes do
@@ -285,14 +285,14 @@ test('E68: browser do Playwright é cacheado e o download só roda em cache miss
     const miss = blocos.find(
       (p) =>
         new RegExp(`if:\\s*steps\\.${id}\\.outputs\\.cache-hit\\s*!=\\s*'true'`).test(p) &&
-        /\bplaywright@[\w.-]+\s+install\s+--with-deps\b/.test(p),
+        /\bplaywright(?:@[\w.-]+)?\s+install\s+--with-deps\b/.test(p),
     );
     if (!miss) problemas.push(`${nome}: 'install --with-deps' não está sob steps.${id}.outputs.cache-hit != 'true'`);
 
     const hit = blocos.find(
       (p) =>
         new RegExp(`if:\\s*steps\\.${id}\\.outputs\\.cache-hit\\s*==\\s*'true'`).test(p) &&
-        /\bplaywright@[\w.-]+\s+install-deps\b/.test(p),
+        /\bplaywright(?:@[\w.-]+)?\s+install-deps\b/.test(p),
     );
     if (!hit) problemas.push(`${nome}: sem 'install-deps' sob cache hit (pacote do apt não vive no cache)`);
   }
@@ -562,6 +562,8 @@ test('E69: o build continua atrás do lint E do test', () => {
   const anc = ancestrais(grafoDeNeeds(wf['ci.yml']), 'build');
   assert.ok(anc.has('typecheck'), 'build deixou de esperar o lint');
   assert.ok(anc.has('unit-tests'), 'build deixou de esperar o test');
+});
+
 // W99: novos invariantes de segurança de workflow
 
 test('W99: todo curl usa --proto e --tlsv1.2', async () => {

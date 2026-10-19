@@ -2,7 +2,7 @@
   "_comment": "Falhas ESPERADAS do replay local (scripts/db-audit/replay-local.sh). Cada entrada e uma migration que nao aplica em banco vazio por motivo JA investigado e medido no banco canonico. O replay fica VERDE quando nao ha falha fora desta lista - e isso o transforma em gate contra drift novo. NUNCA adicione entrada sem medir o objeto no canonico e/ou apontar a versao substituta: o valor deste arquivo e ser a fronteira entre 'esperado' e 'regressao'.",
   "_metodo": "Medir o objeto real no canonico antes de aceitar: pg_proc (funcao ou coluna), pg_policies, information_schema. Receita em docs/MIGRATIONS.md secao 7.",
   "_contexto": "docs/audits/REPLAY_LOCAL_MIGRATIONS_2026-10-03.md",
-  "_atualizado_em": "2026-10-04",
+  "_atualizado_em": "2026-10-18",
   "esperadas": {
     "20260906000001_e31_contacts_is_lid_legacy.sql": {
       "categoria": "ambiente",
@@ -52,10 +52,6 @@
       "categoria": "ordem-idempotencia",
       "motivo": "policy 'talkx_blacklist_update' does not exist NESTE PONTO do replay: o arquivo roda antes da migration que cria a politica. Canonico: a politica existe (junto de outras 3 em talkx_blacklist). Ordem, nao defeito."
     },
-    "20260927570000_talkx_e27_realtime_campaign_events.sql": {
-      "categoria": "ordem-idempotencia",
-      "motivo": "relation 'talkx_campaign_events' is already member of publication. Causa MEDIDA (nao e a imagem): a irma duplicada 20260927500001_talkx_e27_realtime_campaign_events.sql declara o MESMO conjunto (as 3 tabelas do E27) e aplica antes; sozinha, esta migration aplica sem erro. A publicacao termina com as 3 tabelas do E27, entao nao ha intencao perdida nem migration nova a fazer - uma versao nova, aplicada depois, nao desfaz a falha do arquivo anterior. Prova: scripts/db-audit/talkx-e27-replay-divergence.test.sh. Decisao 20261001-114300-7eb1 (opcao 2: nao editar migration aplicada)."
-    },
     "20260928200000_conversation_tasks_realtime_drift.sql": {
       "categoria": "ordem-idempotencia",
       "motivo": "relation 'conversation_tasks' is already member of publication. Mesmo caso do anterior."
@@ -87,6 +83,22 @@
     "20261003192707_fixture_e2e_aba_arquivos_segunda_midia.sql": {
       "categoria": "ambiente",
       "motivo": "Mesma causa da 20261003182707: segunda midia da fixture E2E, depende do contato que so existe no canonico. Canonico: aplicada (ledger 20261003192707). Medido em 04/10/2026."
+    },
+    "20261011003008_talkx_n102c_window_open.sql": {
+      "categoria": "arquivo-superado",
+      "motivo": "cannot change return type of existing function. A funcao foi criada em version anterior com assinatura diferente; esta migration tenta redefinir sem DROP. Canonico: funcao existe com a assinatura nova. Efeito real: nenhum."
+    },
+    "20261012192938_team_chat_media_path_sender_conversation.sql": {
+      "categoria": "cascata-objeto-existe-no-canonico",
+      "motivo": "column 'media_path' of relation 'team_chat_media_acl_r2_db_020_rb' does not exist no replay. A tabela nao e criada no banco vazio (depende de migration anterior que falha). Canonico: coluna existe."
+    },
+    "20261013210002_realtime_canais_privados.sql": {
+      "categoria": "ambiente",
+      "motivo": "relation 'realtime.messages' does not exist. A extensao realtime do Supabase nao esta disponivel na imagem postgres:17-alpine do replay. Canonico: publicacao existe."
+    },
+    "20261013230007_my_active_sessions.sql": {
+      "categoria": "ambiente",
+      "motivo": "relation 'auth.sessions' does not exist. O schema auth do Supabase nao esta disponivel na imagem postgres:17-alpine do replay. Canonico: objeto existe no banco oficial."
     }
   }
 }

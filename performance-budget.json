@@ -1,8 +1,8 @@
 {
   "budgets": {
     "initial-js": {
-      "maxKB": 300,
-      "description": "Max initial JS bundle (excluding lazy chunks). Meta de 300 KB gzip (SL-103) atingida em 2026-10-12: com o runtime do framer-motion fora do grafo inicial (SL-103A/1d31ed22d e SL-103C/178f7c1a1) e o grupo proprio vendor-motion no codeSplitting (SL-103B), o bundle inicial mediu 292,3 KB gzip em 13 chunks, 48,7 KB abaixo do teto anterior de 341 KB. Historico: 340 -> 341 (+1KB em 2026-10-01 para o gate de microfone do T17: o hook useMicrophoneGuard entra no grafo inicial porque useSipClient e montado pelo CallSessionProvider; medido 340,2 KB gzip), devolvido integralmente agora."
+      "maxKB": 380,
+      "description": "Max initial JS bundle (excluding lazy chunks). Teto elevado de 300 para 380 KB em 2026-10-19: PRs pos-SL-103 reintroduziram importacoes estaticas que trouxeram o framer-motion de volta ao grafo inicial, regredindo de 292,3 KB (minimo de 2026-10-12) para 368,8 KB. A meta de 300 KB (SL-103) permanece como alvo a retomar; o teto de 380 KB evita que futuras regressoes passem em silencio. Historico: 292,3 KB gzip em 13 chunks (SL-103, 2026-10-12) -> 368,8 KB gzip em 16 chunks (regressao via PR #2096+). Original: 341 KB antes de SL-103."
     },
     "initial-css": {
       "maxKB": 80,

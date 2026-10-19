@@ -16,11 +16,13 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { contactNotesKey } from '@/hooks/crm/useContactNotes';
 import { conversationTabCountsKey } from '@/hooks/chat/useConversationTabCounts';
 import { MentionInput } from './MentionInput';
+import { useMentionableProfileNames } from '@/hooks/inbox/useMentionableProfiles';
 
 export function InternalNotesPanel({ contactId }: { contactId: string }) {
   const [newNote, setNewNote] = useState('');
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { data: mentionableNames } = useMentionableProfileNames();
 
   const { data: notes, isLoading, error, refetch } = useQuery({
     queryKey: ['internal-notes', contactId],
@@ -60,7 +62,14 @@ export function InternalNotesPanel({ contactId }: { contactId: string }) {
   });
 
   const renderNoteContent = (content: string) => {
-    const parts = content.split(/(@\w+)/g);
+    const sortedNames = mentionableNames
+      ? [...mentionableNames].sort((a, b) => b.length - a.length)
+      : undefined;
+    const mentionPattern =
+      sortedNames && sortedNames.length > 0
+        ? `(@(?:${sortedNames.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})|@\\w+)`
+        : `(@\\w+)`;
+    const parts = content.split(new RegExp(mentionPattern, 'g'));
     return parts.map((part, i) => {
       if (part.startsWith('@')) {
         return <Badge key={i} variant="secondary" className="text-xs mx-0.5">{part}</Badge>;

@@ -8,7 +8,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration="$repo_root/supabase/migrations/20260930290000_talk_me_queue_claim.sql"
 hardening_migration="$repo_root/supabase/migrations/20260930310000_harden_talk_me_authorization_and_groups.sql"
 provenance_trigger_migration="$repo_root/supabase/migrations/20261006114108_r2_db_022_provenance_trigger.sql"
-pending_migration="$repo_root/supabase/migrations/20261011010000_talk_me_list_pending_messages.sql"
+pending_migration="$repo_root/supabase/migrations/20261011010003_talk_me_list_pending_messages.sql"
 pending_origins_migration="$repo_root/supabase/migrations/20261011010100_talk_me_pending_history_origins.sql"
 postgres_image="${TALK_ME_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-v2-talk-me-test-$$"
@@ -40,7 +40,7 @@ expect_error() {
   status=$?
   set -e
   (( status != 0 )) || fail "$label: deveria falhar"
-  [[ "$output" == *"$needle"* ]] || { printf '%s\n' "$output" >&2; fail "$label: erro nao continha '$needle'"; }
+  [[  "$output" == *"$needle"* ]] || { printf '%s\n' "$output" >&2; fail "$label: erro nao continha '$needle'"; }
   printf '[PASS] %s\n' "$label"
 }
 
@@ -57,8 +57,7 @@ pending_version="$(basename "$pending_migration" | cut -d_ -f1)"
 pending_origins_version="$(basename "$pending_origins_migration" | cut -d_ -f1)"
 [[ "$pending_version" > "$provenance_version" ]] || fail "migration de historico pendente deve ser posterior ao trigger de proveniencia"
 [[ "$pending_origins_version" > "$provenance_version" ]] || fail "migration de origens do historico pendente deve ser posterior ao trigger de proveniencia"
-printf '[PASS] A0 migrations do historico pendente ficam depois do trigger de proveniencia
-'
+printf '[PASS] A0 migrations do historico pendente ficam depois do trigger de proveniencia\n'
 
 docker run --rm -d --name "$container_name" -e POSTGRES_PASSWORD=test_only "$postgres_image" >/dev/null
 ready_checks=0
@@ -387,7 +386,7 @@ docker exec "$container_name" psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d pos
   -c "BEGIN; LOCK TABLE public.messages IN ACCESS EXCLUSIVE MODE; SELECT pg_sleep(3); COMMIT" \
   >"$tmp_dir/message-lock.out" 2>"$tmp_dir/message-lock.err" & lock_pid=$!
 for _ in $(seq 1 30); do
-  [[ "$(psql_sql "SELECT count(*) FROM pg_locks WHERE relation='public.messages'::regclass AND mode='AccessExclusiveLock' AND granted")" == '1' ]] && break
+  [[  "$(psql_sql "SELECT count(*) FROM pg_locks WHERE relation='public.messages'::regclass AND mode='AccessExclusiveLock' AND granted")" == '1' ]] && break
   sleep 0.1
 done
 set +e
@@ -396,7 +395,7 @@ docker exec "$container_name" psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d pos
   >"$tmp_dir/revoked-race.out" 2>"$tmp_dir/revoked-race.err" & race_pid=$!
 set -e
 for _ in $(seq 1 30); do
-  [[ "$(psql_sql "SELECT count(*) FROM pg_stat_activity WHERE query LIKE '%talk_me_claim(''c1000000-0000-0000-0000-000000000012'')%' AND wait_event_type='Lock'")" == '1' ]] && break
+  [[  "$(psql_sql "SELECT count(*) FROM pg_stat_activity WHERE query LIKE '%talk_me_claim(''c1000000-0000-0000-0000-000000000012'')%' AND wait_event_type='Lock'")" == '1' ]] && break
   sleep 0.1
 done
 psql_sql "UPDATE public.queue_members SET is_active=false WHERE queue_id='$queue1' AND profile_id='a1000000-0000-0000-0000-000000000002'" >/dev/null

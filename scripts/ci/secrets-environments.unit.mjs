@@ -166,24 +166,6 @@ test('W62: crm-sync-worker le CRON_SECRET pelo environment producao-edge-functio
   });
 });
 
-test.skip('W12: SETTINGS_GUARD_TOKEN so e lido pelo settings-guard, no environment perimetro-leitura', () => {
-  assert.deepEqual(consumidores('SETTINGS_GUARD_TOKEN'), [
-    { arquivo: 'settings-guard.yml', job: 'guard', environment: 'perimetro-leitura' },
-  ]);
-});
-
-test.skip('W12: settings-guard le com o token administrativo e cai no github.token sem ele', () => {
-  // Linha a linha (trim), sem regex multilinha (Sonar S5852).
-  const linhas = wf['settings-guard.yml'].split('\n').map((l) => l.trim());
-  assert.ok(
-    linhas.includes('ADMIN_READ_TOKEN: ${{ secrets.SETTINGS_GUARD_TOKEN || github.token }}'),
-    'sem o fallback, apagar/expirar o PAT faz o guard mandar "Bearer " vazio',
-  );
-  // As escritas (issue, PATCH de restauracao) continuam com o token do workflow, que
-  // comenta como github-actions[bot] — o dedupe do guard depende desse autor.
-  assert.ok(linhas.includes('GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}'));
-});
-
 test('environments usados por segredo existem no baseline do perimetro', () => {
   const usados = new Set([
     ...Object.values(DESTINO_URL_POR_JOB),

@@ -23,6 +23,15 @@ vi.mock('@/hooks/auth/useAuth', () => ({
 
 vi.mock('@/lib/logger', () => ({
   getLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
+}));
+
+// useTeamReadState cria canal 'team-read-state-*' em seu próprio useEffect, o
+// que deslocaria h.nomes[0] e dobraria h.subs. Mocado para isolar o teste
+// exclusivamente ao canal 'team-messages-*'.
+vi.mock('@/hooks/team-chat/useTeamReadState', () => ({
+  useTeamReadState: () => ({ readStates: {}, isLoading: false }),
+  deriveOwnMessageStatus: () => 'sent',
 }));
 
 vi.mock('@/integrations/supabase/client', () => ({
@@ -57,6 +66,10 @@ beforeEach(() => {
   h.nomes = [];
   h.subs = [];
   h.rpc.mockResolvedValue({ data: [], error: null });
+  // React Strict Mode invoca o efeito duas vezes (mount → cleanup → mount).
+  // O removeChannel do cleanup precisa retirar a subscrição para que ao final
+  // haja exatamente 1 inscrito (o da segunda montagem).
+  h.removeChannel.mockImplementation(() => { h.subs.pop(); });
 });
 
 describe('useTeamMessages — tópico exclusivo e revalidação na reconexão (PE-75)', () => {

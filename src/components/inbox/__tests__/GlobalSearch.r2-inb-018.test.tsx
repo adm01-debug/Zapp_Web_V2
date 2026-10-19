@@ -64,7 +64,11 @@ vi.mock('@/lib/logger', () => {
   const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
   return { log: logger, getLogger: () => logger };
 });
-vi.mock('@/hooks/system/useUserRole', () => ({ useUserRole: () => ({ isSupervisor: false, roles: [] }) }));
+vi.mock('@/hooks/system/useUserRole', () => ({
+  useUserRole: () => ({ isSupervisor: false, roles: [] }),
+  getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
+}));
 vi.mock('@/hooks/system/useCRMIntegrationEnabled', () => ({ useCRMIntegrationEnabled: () => false }));
 /**
  * Isolamento do histórico de buscas (R2-PLAT-006): o hook passou a escopar o

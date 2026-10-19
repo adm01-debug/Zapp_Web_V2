@@ -177,56 +177,45 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
     const contactIds = Array.from(selectedIds);
 
     try {
-      // Retrato do estado ANTERIOR: o desfazer devolve cada conversa ao
-      // `conversation_status` que ela tinha (não a um valor fixo). A leitura
-      // pode ser barrada pelo RLS — erro aqui aborta sem arquivar nada.
+      // Retrato do `assigned_to` ANTERIOR: arquivar = desatribuir; o desfazer
+      // devolve o responsável original de cada contato. A leitura pode ser
+      // barrada pelo RLS — erro aqui aborta sem arquivar nada.
       const { data: originals, error: selectError } = await supabase
         .from('contacts')
-        .select('id, conversation_status')
+        .select('id, assigned_to')
         .in('id', contactIds);
       if (selectError) throw selectError;
 
-      const previousStatus = new Map<string, string>();
+      const previousAssigned = new Map<string, string | null>();
       for (const row of originals ?? []) {
-        previousStatus.set(row.id, row.conversation_status);
+        previousAssigned.set(row.id, row.assigned_to);
       }
-      // Só arquiva quem foi LIDO: sem o status anterior o desfazer não teria como
-      // devolver a conversa ao estado dela. Zero linha lida (RLS filtrando) não é
-      // sucesso — sem alvo, avisa em vez de arquivar às cegas.
-      const targetIds = contactIds.filter((id) => previousStatus.has(id));
+      // Só arquiva quem foi LIDO: sem o valor anterior o desfazer não teria como
+      // restaurar o responsável. Zero linha lida (RLS filtrando) não é sucesso.
+      const targetIds = contactIds.filter((id) => previousAssigned.has(id));
       if (targetIds.length === 0) throw new Error('nenhum contato lido');
 
       await executeUndoable({
         successMessage: `${targetIds.length} contato(s) arquivado(s)`,
         undoMessage: 'Arquivamento desfeito',
         action: async () => {
-          // Arquivar = gravar o estado `archived` (mesmo valor e caminho do
-          // `useBulkActions.ts`); `assigned_to` NÃO é tocado, então ninguém
-          // perde o responsável.
+          // Arquivar = desatribuir (assigned_to → null).
           const { error } = await supabase
             .from('contacts')
-            .update({ conversation_status: 'archived', updated_at: new Date().toISOString() })
+            .update({ assigned_to: null, updated_at: new Date().toISOString() })
             .in('id', targetIds);
           if (error) throw error;
           clearSelection();
           refetch();
         },
         undoAction: async () => {
-          // Agrupado por valor anterior: um update por status distinto, não um
-          // laço de um update por contato.
-          const groups = new Map<string, string[]>();
+          // Restaura por contato: cada um pode ter tido um responsável diferente.
           for (const id of targetIds) {
-            const status = previousStatus.get(id);
-            if (status === undefined) continue;
-            const ids = groups.get(status) ?? [];
-            ids.push(id);
-            groups.set(status, ids);
-          }
-          for (const [status, ids] of groups) {
+            const assigned = previousAssigned.get(id);
             const { error } = await supabase
               .from('contacts')
-              .update({ conversation_status: status, updated_at: new Date().toISOString() })
-              .in('id', ids);
+              .update({ assigned_to: assigned, updated_at: new Date().toISOString() })
+              .eq('id', id);
             if (error) throw error;
           }
           refetch();

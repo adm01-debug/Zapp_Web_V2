@@ -368,7 +368,7 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
                         <Td className="text-right">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <button type="button" disabled={rowActions.pendingId === c.id} aria-busy={rowActions.pendingId === c.id} className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 inline-flex items-center justify-center hover:bg-muted/50 disabled:opacity-70" aria-label="Ações">
+                              <button type="button" disabled={rowActions.pendingId === c.id} aria-busy={rowActions.pendingId === c.id} className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 inline-flex items-center justify-center hover:bg-muted/50 disabled:opacity-70" aria-label={`Ações de ${c.name}`}>
                                 {rowActions.pendingId === c.id
                                   ? <Loader2 className="w-4 h-4 motion-safe:animate-spin" />
                                   : <MoreVertical className="w-4 h-4" />}

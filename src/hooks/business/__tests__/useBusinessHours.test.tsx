@@ -32,7 +32,11 @@ const h = vi.hoisted(() => ({
 }));
 
 vi.mock('@/hooks/ui/use-toast', () => ({ toast: h.toast }));
-vi.mock('@/lib/logger', () => ({ log: { error: h.logError } }));
+vi.mock('@/lib/logger', () => ({
+  log: { error: h.logError },
+  getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
+}));
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {

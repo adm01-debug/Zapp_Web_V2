@@ -8,7 +8,7 @@
  *             reportados explicitamente e nunca inferidos como pendentes.
  */
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { getCorsHeaders, handleCors, Logger } from "../_shared/validation.ts";
+import { getCorsHeaders, handleCors, internalErrorResponse, Logger } from "../_shared/validation.ts";
 import { EMAIL_FONT_STACK } from "../_shared/email-font-stack.ts";
 
 /**
@@ -227,7 +227,7 @@ export async function handleTalkxReport(req: Request, deps: TalkxReportDeps): Pr
 
   } catch (err) {
     log.error('Unhandled error', { err });
-    return jsonErr(req, { ok: false, reason: 'internal_error', message: err instanceof Error ? err.message : 'Erro desconhecido' }, 500);
+    return internalErrorResponse(err, req);
   }
 }
 

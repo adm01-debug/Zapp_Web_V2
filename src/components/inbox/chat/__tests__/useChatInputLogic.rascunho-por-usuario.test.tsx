@@ -19,7 +19,11 @@ vi.mock('@/lib/logger', () => {
   const loggerStub = { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() };
   return { log: loggerStub, logger: loggerStub, getLogger: () => loggerStub, createLogger: () => loggerStub };
 });
-vi.mock('@/hooks/ui/use-mobile', () => ({ useIsMobile: () => false }));
+vi.mock('@/hooks/ui/use-mobile', () => ({
+  useIsMobile: () => false,
+  getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
+}));
 vi.mock('@/services/auth.service', () => ({
   AuthService: {
     getSession: vi.fn(async () => {

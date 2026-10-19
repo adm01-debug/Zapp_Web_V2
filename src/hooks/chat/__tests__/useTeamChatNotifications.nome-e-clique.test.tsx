@@ -1,5 +1,15 @@
 import { act, cleanup, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { ReactNode } from 'react';
+
+function renderWithQC(hook: () => unknown) {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const wrapper = ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+  );
+  return renderHook(hook, { wrapper });
+}
 
 /**
  * PE-75 — a notificação do chat interno tinha dois defeitos: o nome do
@@ -74,6 +84,7 @@ vi.mock('@/hooks/system/useNavigationHistory', () => ({
 
 vi.mock('@/lib/logger', () => ({
   getLogger: () => ({ error: vi.fn(), warn: vi.fn(), debug: vi.fn(), info: vi.fn() }),
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
 }));
 
 import { useTeamChatNotifications } from '@/hooks/chat/useTeamChatNotifications';
@@ -144,7 +155,7 @@ describe('useTeamChatNotifications — nome do remetente e clique (PE-75)', () =
   it('usa o nome do remetente vindo de get_team_profiles', async () => {
     h.rpc.mockResolvedValue({ data: [{ id: 'outro', name: 'Ana' }], error: null });
 
-    renderHook(() => useTeamChatNotifications(null));
+    renderWithQC(() => useTeamChatNotifications(null));
     await act(async () => { await h.handler!(mensagem()); });
 
     expect(h.rpc).toHaveBeenCalledWith('get_team_profiles');
@@ -156,7 +167,7 @@ describe('useTeamChatNotifications — nome do remetente e clique (PE-75)', () =
   it('cai para "Colega" quando a RPC falha', async () => {
     h.rpc.mockResolvedValue({ data: null, error: { message: 'denied' } });
 
-    renderHook(() => useTeamChatNotifications(null));
+    renderWithQC(() => useTeamChatNotifications(null));
     await act(async () => { await h.handler!(mensagem()); });
 
     expect(emitidas()[0].title).toBe('💬 Teams: Colega');
@@ -165,7 +176,7 @@ describe('useTeamChatNotifications — nome do remetente e clique (PE-75)', () =
   it('mostra o aviso de desktop sem Service Worker de aplicação (push desligado)', async () => {
     h.rpc.mockResolvedValue({ data: [{ id: 'outro', name: 'Ana' }], error: null });
 
-    renderHook(() => useTeamChatNotifications(null));
+    renderWithQC(() => useTeamChatNotifications(null));
     await act(async () => { await h.handler!(mensagem()); });
 
     // `navigator.serviceWorker` aqui não tem `ready`: o aviso não depende dele.
@@ -177,7 +188,7 @@ describe('useTeamChatNotifications — nome do remetente e clique (PE-75)', () =
   it('o clique na notificação direta abre o Chat Interno', async () => {
     h.rpc.mockResolvedValue({ data: [{ id: 'outro', name: 'Ana' }], error: null });
 
-    renderHook(() => useTeamChatNotifications(null));
+    renderWithQC(() => useTeamChatNotifications(null));
     await act(async () => { await h.handler!(mensagem()); });
 
     act(() => { emitidas()[0].onclick?.(); });
@@ -187,7 +198,7 @@ describe('useTeamChatNotifications — nome do remetente e clique (PE-75)', () =
   });
 
   it('o clique repassado pelo service worker continua abrindo o Chat Interno', () => {
-    renderHook(() => useTeamChatNotifications(null));
+    renderWithQC(() => useTeamChatNotifications(null));
 
     expect(h.swAdd).toHaveBeenCalledWith('message');
 
@@ -200,7 +211,7 @@ describe('useTeamChatNotifications — nome do remetente e clique (PE-75)', () =
   });
 
   it('ignora um clique de notificação de outro tipo', () => {
-    renderHook(() => useTeamChatNotifications(null));
+    renderWithQC(() => useTeamChatNotifications(null));
 
     act(() => {
       h.swListener!({ data: { type: 'NOTIFICATION_CLICK', data: { type: 'security' } } });

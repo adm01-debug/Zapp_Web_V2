@@ -13,6 +13,7 @@ const h = vi.hoisted(() => ({
 
 vi.mock('@/lib/logger', () => ({
   getLogger: () => ({ info: vi.fn(), error: vi.fn() }),
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
 }));
 vi.mock('@/components/ui/toaster', () => ({ Toaster: () => null }));
 vi.mock('@/components/ui/sonner', () => ({ Toaster: () => null }));
@@ -48,6 +49,13 @@ vi.mock('@/components/team-chat/TeamChatNotificationsListener', () => ({
 }));
 vi.mock('@/hooks/system/useServiceWorker', () => ({ useServiceWorker: vi.fn() }));
 vi.mock('@/hooks/ui/useScreenProtection', () => ({ useScreenProtection: vi.fn() }));
+vi.mock('@/hooks/auth/useAuth', () => ({
+  useAuth: () => ({ profile: null, user: null, session: null, loading: false }),
+  AuthProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+vi.mock('@/hooks/realtime/useGlobalIncomingMessageAlerts', () => ({
+  useGlobalIncomingMessageAlerts: vi.fn(),
+}));
 
 vi.mock('@/hooks/chat/useTeamChat', () => ({ useTeamConversations: () => ({ data: [] }) }));
 vi.mock('@/hooks/chat/useTeamChatNotifications', () => ({
