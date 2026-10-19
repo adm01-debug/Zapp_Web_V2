@@ -17,7 +17,7 @@ const PERIOD_OPTIONS = [
 function EmptyBlock({ icon: Icon, title, sub, action }: { icon: React.ElementType; title: string; sub: string; action?: React.ReactNode }) {
   return (
     <div className="flex flex-col items-center py-8 text-muted-foreground gap-2">
-      <Icon className="w-9 h-9 text-primary-glow/70" strokeWidth={1.6} />
+      <Icon className="w-9 h-9 text-primary/70" strokeWidth={1.6} />
       <p className="text-sm font-semibold text-foreground text-center">{title}</p>
       <p className="text-xs text-center max-w-[360px] leading-snug">{sub}</p>
       {action && <div className="mt-2">{action}</div>}
@@ -266,7 +266,7 @@ export function SatisfactionMetrics() {
               <div className="flex items-start gap-3">
                 <div className="w-11 h-11 rounded-xl bg-dash-tile-blue flex items-center justify-center shrink-0"><Lightbulb className="w-5 h-5 text-white" /></div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-primary-glow">Dica</p>
+                  <p className="text-sm font-bold text-[hsl(var(--primary-text))]">Dica</p>
                   <p className="text-[13px] text-muted-foreground mt-0.5 leading-snug">Incentive seus clientes a avaliarem os atendimentos. A satisfação do cliente ajuda a identificar pontos de melhoria e reconhecer sua equipe.</p>
                 </div>
                 <button onClick={() => setTipDismissed(true)} className="shrink-0 w-7 h-7 rounded-md flex items-center justify-center hover:bg-muted/60"><X className="w-4 h-4 text-muted-foreground" /></button>

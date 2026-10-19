@@ -152,7 +152,7 @@ function RailBanner({ products, onApplyFilter }: Pick<CatalogRailProps, 'product
       <button
         type="button"
         onClick={() => onApplyFilter?.('new_30d')}
-        className={`mt-3 text-[13px] font-semibold text-primary-glow hover:underline ${CATALOG_FOCUS_VISIBLE}`}
+        className={`mt-3 text-[13px] font-semibold text-[hsl(var(--primary-text))] hover:underline ${CATALOG_FOCUS_VISIBLE}`}
       >
         {CATALOG_RAIL_COPY.bannerCta} →
       </button>

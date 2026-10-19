@@ -368,7 +368,7 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled, onO
           ) : (
             topConverted.map(({ item, template }, i) => (
               <button key={template.id} type="button" onClick={() => onUseTemplate(template.id)} className="w-full flex items-center gap-2.5 py-2.5 border-b border-border/50 last:border-0 hover:bg-muted/20 text-left rounded-xl px-1">
-                <span className="w-6 h-6 rounded-full bg-primary/15 text-primary-glow text-xs font-bold flex items-center justify-center shrink-0">{i + 1}</span>
+                <span className="w-6 h-6 rounded-full bg-primary/15 text-[hsl(var(--primary-text))] text-xs font-bold flex items-center justify-center shrink-0">{i + 1}</span>
                 {template.media_url ? (
                   <img src={template.media_url} alt="" className="w-8 h-8 rounded-lg object-cover border border-border/60 shrink-0" />
                 ) : (
