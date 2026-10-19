@@ -74,3 +74,14 @@ describe('useSentimentAlerts', () => {
       })),
     });
   });
+
+  it('monta sem lançar erros', () => {
+    expect(() => renderHook(() => useSentimentAlerts())).not.toThrow();
+  });
+
+  it('não invoca função quando sentimentAlertEnabled é false', () => {
+    Object.assign(mockSettings, { sentimentAlertEnabled: false });
+    renderHook(() => useSentimentAlerts());
+    expect(mockFunctionsInvoke).not.toHaveBeenCalled();
+  });
+});
