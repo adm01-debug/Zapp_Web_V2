@@ -10,8 +10,10 @@ const DIR_WORKFLOWS = join(RAIZ, '.github/workflows');
 
 const conteudoNotifica = readFileSync(NOTIFICA, 'utf8');
 
-// Extrai a lista de workflows do bloco `workflow_run: workflows: [...]`
-const blocoMatch = conteudoNotifica.match(/workflow_run:\s*\n\s*workflows:\s*\[([\s\S]*?)\]/);
+// Extrai a lista de workflows do bloco `workflow_run: workflows: [...]` (inline ou block list)
+const inlineMatch = conteudoNotifica.match(/workflow_run:\s*\n\s*workflows:\s*\[([\s\S]*?)\]/);
+const blockMatch = conteudoNotifica.match(/workflow_run:\s*\n\s*workflows:\s*\n((?:[ \t]+-[^\n]+\n?)+)/);
+const blocoMatch = inlineMatch ?? blockMatch;
 if (!blocoMatch) {
   process.stderr.write('::error::Não encontrado bloco workflow_run.workflows em notifica-falha-main.yml\n');
   process.exit(1);

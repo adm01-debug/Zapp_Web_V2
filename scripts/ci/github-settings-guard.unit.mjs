@@ -81,6 +81,13 @@ function stub(
     parcial: "send({ id: 1, allow_auto_merge: true, delete_branch_on_merge: true })",
   }[modo] ?? REPO_OK;
 
+  // GA76: GraphQL e o caminho primario para os 7 campos de merge/repo.
+  const graphql = {
+    tokenReal: SEM_ESCOPO,
+    parcial: "send({ data: { repository: { autoMergeAllowed: true, deleteBranchOnMerge: true } } })",
+    injecao: "send({ data: { repository: { squashMergeAllowed: 'true\\\\n::error::forged3', mergeCommitAllowed: false, rebaseMergeAllowed: false, autoMergeAllowed: true, deleteBranchOnMerge: true, squashMergeCommitMessage: 'PR_BODY', squashMergeCommitTitle: 'PR_TITLE' } } })",
+  }[modo] ?? "send({ data: { repository: { squashMergeAllowed: true, mergeCommitAllowed: false, rebaseMergeAllowed: false, autoMergeAllowed: true, deleteBranchOnMerge: true, squashMergeCommitMessage: 'PR_BODY', squashMergeCommitTitle: 'PR_TITLE' } } })";
+
   const actions = modo === 'tokenReal' ? SEM_ESCOPO : ACTIONS_OK;
   const envs =
     "send({ environments: [{ name: 'banco-leitura' },{ name: 'db-ledger-evidence' },{ name: 'legacy-import-destrutivo' },{ name: 'perimetro-leitura' },{ name: 'producao-ddl' },{ name: 'producao-edge-functions' }] })";
@@ -128,6 +135,7 @@ function stub(
     `  if (method === 'PATCH') return send({ message: 'patch' }, ${Number(patchStatus)});`,
     "  if (method === 'POST' && p.indexOf('/comments') !== -1) return send({ id: 7 });",
     "  if (method === 'POST' && p.indexOf('/issues') !== -1) return send({ number: '999\\n::error::forged2' });",
+    "  if (method === 'POST' && p === '/graphql') return " + graphql + ';',
     '  return send({});',
     '};',
     '',
