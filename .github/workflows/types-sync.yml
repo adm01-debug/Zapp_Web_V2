@@ -110,22 +110,26 @@ jobs:
               core.setOutput('skip', 'false');
             }
 
-  sync:
-    name: Propor sync de types + catalogo + manifesto + grants
+  # GA21: DESTINO_URL fica confinado ao job ler-banco (environment: banco-leitura).
+  # O job gates-e-pr nunca recebe a credencial — verificavel por `env | grep -c DESTINO` = 0.
+  ler-banco:
+    name: Ler banco e gerar candidatos de sincronizacao
     needs: preflight
     if: >-
       github.ref == 'refs/heads/main' &&
       needs.preflight.outputs.skip != 'true'
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 20
     environment: banco-leitura
-    permissions:  # zizmor: ignore[excessive-permissions]
-      contents: write
-      issues: write
-      pull-requests: write
-      # actions: write apenas para liberar os checks do PR que este job abre
-      # (ver o passo "Destravar os checks do PR de sincronizacao").
-      actions: write
+    permissions:
+      contents: read
+    outputs:
+      schema_changed: ${{ steps.diff.outputs.schema_changed }}
+      types_changed: ${{ steps.diff.outputs.types_changed }}
+      catalog_changed: ${{ steps.diff.outputs.catalog_changed }}
+      manifest_changed: ${{ steps.diff.outputs.manifest_changed }}
+      grants_changed: ${{ steps.diff.outputs.grants_changed }}
+      awaiting_apply: ${{ steps.gate1b.outputs.awaiting_apply }}
     steps:
       - name: Checkout confiavel da main
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -348,15 +352,79 @@ jobs:
             scripts/db-audit/grants-baseline.json
           retention-days: 14
 
-      - name: Setup Bun
+      - name: Gate 1b — W23/GA21 — verificar se drift e' apply-pendente
+        # GA21: roda aqui (job com credencial) para evitar que DESTINO_URL vaze
+        # para gates-e-pr. Resultado exportado como output do job e consumido em
+        # gates-e-pr sem nova chamada ao banco.
+        # W23/W26: exit 3 = so apply-pendente (awaiting_apply=true suprime alerta).
+        id: gate1b
         if: steps.diff.outputs.schema_changed == 'true'
+        env:
+          DESTINO_URL: ${{ env.DESTINO_URL }}
+          PGSSLMODE: ${{ env.PGSSLMODE }}
+        run: |
+          set +e
+          node scripts/db-audit/lote-pendente.mjs > /tmp/drift.log 2>&1
+          drift_exit=$?
+          set -e
+          if [ "$drift_exit" -eq 3 ]; then
+            echo "awaiting_apply=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "awaiting_apply=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  gates-e-pr:
+    name: Gates e PR de sincronizacao
+    needs: [preflight, ler-banco]
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      needs.preflight.outputs.skip != 'true' &&
+      needs.ler-banco.outputs.schema_changed == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:  # zizmor: ignore[excessive-permissions]
+      contents: write
+      issues: write
+      pull-requests: write
+      # actions: write apenas para liberar os checks do PR que este job abre
+      # (ver o passo "Destravar os checks do PR de sincronizacao").
+      actions: write
+    steps:
+      - name: Checkout confiavel da main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Baixar candidatos (artifact do job ler-banco)
+        uses: actions/download-artifact@c850b930e6ba138125429b7e5c93fc707a7f8427 # v4.1.4
+        with:
+          name: types-sync-candidates-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /tmp/candidates
+
+      - name: Aplicar candidatos no worktree
+        run: |
+          if [ "${{ needs.ler-banco.outputs.types_changed }}" = true ]; then
+            cp /tmp/candidates/src/integrations/supabase/types.ts src/integrations/supabase/types.ts
+          fi
+          if [ "${{ needs.ler-banco.outputs.catalog_changed }}" = true ]; then
+            cp /tmp/candidates/supabase/schema-catalog.json supabase/schema-catalog.json
+          fi
+          if [ "${{ needs.ler-banco.outputs.manifest_changed }}" = true ]; then
+            cp /tmp/candidates/supabase/schema-manifest.json supabase/schema-manifest.json
+          fi
+          if [ "${{ needs.ler-banco.outputs.grants_changed }}" = true ]; then
+            cp /tmp/candidates/scripts/db-audit/grants-baseline.json scripts/db-audit/grants-baseline.json
+          fi
+          # GA21/GA20: Gate 3 precisa do catalogo candidato em /tmp/catalog.new.json.
+          cp supabase/schema-catalog.json /tmp/catalog.new.json
+
+      - name: Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: '1.4.0'
 
       - name: 💾 Cache de dependências Bun
         # W35: cache do bun reduz bun install de ~30s para <10s com cache quente.
-        if: steps.diff.outputs.schema_changed == 'true'
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.bun/install/cache
@@ -364,12 +432,10 @@ jobs:
           restore-keys: bun-
 
       - name: Instalar dependencias
-        if: steps.diff.outputs.schema_changed == 'true'
         run: bun install --frozen-lockfile --ignore-scripts
 
       - name: Gate 1 — TypeScript nao piora
         id: gate1
-        if: steps.diff.outputs.schema_changed == 'true'
         run: |
           # F-01 (auditoria 2026-09-27): sem pipefail, tee sempre exitava 0 e
           # gate1.outputs.passed ficava 'true' mesmo com node falhando.
@@ -381,40 +447,9 @@ jobs:
             echo "::warning::Gate 1 falhou: novos erros de TypeScript introduzidos pelo novo types.ts."
           fi
 
-      - name: Gate 1b — W23 — verificar se falha e apply-pendente
-        # W23: se Gate 1 falhou mas a causa e' ausencia de objeto que existe apenas
-        # no repo (migration nao aplicada em prod), classifica como "awaiting apply"
-        # e nao abre issue — o problema some quando a migration entrar no banco.
-        # W26: lote-pendente.mjs (fonte unica): exit 0 = sem drift, exit 1 = drift real,
-        # exit 2 = erro de carga, exit 3 = so apply-pendente.
-        id: gate1b
-        if: steps.diff.outputs.schema_changed == 'true' && steps.gate1.outputs.passed == 'false'
-        env:
-          DESTINO_URL: ${{ env.DESTINO_URL }}
-          PGSSLMODE: ${{ env.PGSSLMODE }}
-        run: |
-          set +e
-          node scripts/db-audit/lote-pendente.mjs > /tmp/drift.log 2>&1
-          drift_exit=$?
-          set -e
-          if [ "$drift_exit" -eq 3 ]; then
-            echo "awaiting_apply=true" >> "$GITHUB_OUTPUT"
-            echo "::notice::Gate 1 aguardando apply de migrations pendentes — erros de TypeScript decorrem de objetos nao aplicados em prod ainda."
-          else
-            echo "awaiting_apply=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Limpar credenciais do banco (GA21)
-        if: always()
-        run: |
-          # GA21: Gate 1b foi o último passo que precisa de DESTINO_URL.
-          # Limpar do GITHUB_ENV para que Gates 2/3 e passos de PR não tenham
-          # acesso ao banco acidentalmente.
-          printf 'DESTINO_URL=\nPGSSLMODE=\n' >> "$GITHUB_ENV"
-
       - name: Gate 2 — usage-guard
         id: gate2
-        if: steps.diff.outputs.schema_changed == 'true' && steps.gate1.outputs.passed == 'true'
+        if: needs.ler-banco.outputs.schema_changed == 'true' && steps.gate1.outputs.passed == 'true'
         run: |
           # F-01 (auditoria 2026-09-27): mesma correção de pipefail do Gate 1.
           # W24: --prune-obsolete poda entradas obsoletas do baseline (aviso, nao bloqueia);
@@ -440,7 +475,7 @@ jobs:
       # como artifact para aplicacao manual com revisao humana.
       - name: Gate 3 — remocoes destrutivas
         id: gate3
-        if: steps.diff.outputs.schema_changed == 'true' && steps.gate2.outputs.passed == 'true'
+        if: needs.ler-banco.outputs.schema_changed == 'true' && steps.gate2.outputs.passed == 'true'
         run: |
           # F-01 (auditoria 2026-09-27): mesmo pipefail dos Gates 1 e 2 — sem ele o
           # tee sempre saia 0 e o gate passava mesmo com o script bloqueando.
@@ -455,7 +490,7 @@ jobs:
           fi
 
       - name: Garantir label types-sync
-        if: steps.diff.outputs.schema_changed == 'true'
+        if: needs.ler-banco.outputs.schema_changed == 'true'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
@@ -476,13 +511,13 @@ jobs:
         # via dedupe estendido no script (causa 'typescript-pendente', janela 24h).
         # Apos 24h sem o migration chegar a producao, a issue e aberta/comentada.
         if: >-
-          steps.diff.outputs.schema_changed == 'true' &&
+          needs.ler-banco.outputs.schema_changed == 'true' &&
           (steps.gate1.outputs.passed == 'false' ||
            steps.gate2.outputs.passed == 'false' ||
            steps.gate3.outputs.passed == 'false')
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
-          AWAITING_APPLY: ${{ steps.gate1b.outputs.awaiting_apply }}
+          AWAITING_APPLY: ${{ needs.ler-banco.outputs.awaiting_apply }}
         with:
           script: |
             const gate1 = '${{ steps.gate1.outputs.passed }}';
@@ -601,7 +636,7 @@ jobs:
 
       - name: Falhar quando um gate rejeitar a proposta
         if: >-
-          steps.diff.outputs.schema_changed == 'true' &&
+          needs.ler-banco.outputs.schema_changed == 'true' &&
           (steps.gate1.outputs.passed == 'false' ||
            steps.gate2.outputs.passed == 'false' ||
            steps.gate3.outputs.passed == 'false')
@@ -612,7 +647,7 @@ jobs:
       - name: Abrir ou atualizar PR de sincronizacao
         id: pull-request
         if: >-
-          steps.diff.outputs.schema_changed == 'true' &&
+          needs.ler-banco.outputs.schema_changed == 'true' &&
           steps.gate1.outputs.passed == 'true' &&
           steps.gate2.outputs.passed == 'true' &&
           steps.gate3.outputs.passed == 'true'
@@ -630,10 +665,10 @@ jobs:
             Sincronização automatizada a partir do banco oficial.
 
             - main de origem: `${{ github.sha }}`
-            - types.ts alterado: `${{ steps.diff.outputs.types_changed }}`
-            - catálogo alterado: `${{ steps.diff.outputs.catalog_changed }}`
-            - manifesto alterado: `${{ steps.diff.outputs.manifest_changed }}`
-            - baseline de grants alterado: `${{ steps.diff.outputs.grants_changed }}`
+            - types.ts alterado: `${{ needs.ler-banco.outputs.types_changed }}`
+            - catálogo alterado: `${{ needs.ler-banco.outputs.catalog_changed }}`
+            - manifesto alterado: `${{ needs.ler-banco.outputs.manifest_changed }}`
+            - baseline de grants alterado: `${{ needs.ler-banco.outputs.grants_changed }}`
             - gates TypeScript, usage-guard e remoções: aprovados
 
             Revisão humana e checks da PR continuam obrigatórios.
@@ -647,7 +682,7 @@ jobs:
 
       - name: Exigir PR criado ou atualizado
         if: >-
-          steps.diff.outputs.schema_changed == 'true' &&
+          needs.ler-banco.outputs.schema_changed == 'true' &&
           steps.gate1.outputs.passed == 'true' &&
           steps.gate2.outputs.passed == 'true' &&
           steps.gate3.outputs.passed == 'true'
@@ -738,7 +773,7 @@ jobs:
         # significa permissoes do banco alteradas — exige revisao humana.
         if: >-
           steps.pull-request.outputs.pull-request-number != '' &&
-          steps.diff.outputs.grants_changed != 'true'
+          needs.ler-banco.outputs.grants_changed != 'true'
         continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
@@ -750,7 +785,7 @@ jobs:
         # o PR precisa de revisao humana antes do merge — nao entra em auto-merge.
         if: >-
           steps.pull-request.outputs.pull-request-number != '' &&
-          steps.diff.outputs.grants_changed == 'true'
+          needs.ler-banco.outputs.grants_changed == 'true'
         continue-on-error: true
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
@@ -779,9 +814,9 @@ jobs:
             echo
             echo "| Item | Alterado |"
             echo "|---|---|"
-            echo "| types.ts | ${{ steps.diff.outputs.types_changed || 'n/a' }} |"
-            echo "| schema-catalog.json | ${{ steps.diff.outputs.catalog_changed || 'n/a' }} |"
-            echo "| schema-manifest.json | ${{ steps.diff.outputs.manifest_changed || 'n/a' }} |"
-            echo "| grants-baseline.json | ${{ steps.diff.outputs.grants_changed || 'n/a' }} |"
+            echo "| types.ts | ${{ needs.ler-banco.outputs.types_changed || 'n/a' }} |"
+            echo "| schema-catalog.json | ${{ needs.ler-banco.outputs.catalog_changed || 'n/a' }} |"
+            echo "| schema-manifest.json | ${{ needs.ler-banco.outputs.manifest_changed || 'n/a' }} |"
+            echo "| grants-baseline.json | ${{ needs.ler-banco.outputs.grants_changed || 'n/a' }} |"
             echo "| PR | ${{ steps.pull-request.outputs.pull-request-number || 'n/a' }} |"
           } >> "$GITHUB_STEP_SUMMARY"
