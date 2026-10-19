@@ -8,7 +8,7 @@
 # ===================
 # DEFAULT OWNER
 # ===================
-# Todas as mudanças requerem aprovação do admin
+# Declarativo — sem revisão obrigatória (agentes usam auto-merge; ver CLAUDE.md)
 * @adm01-debug
 
 # ===================

@@ -29,6 +29,9 @@ name: Talk X V4 placar regen (push + semanal)
 on:
   push:
     branches: [main]
+    paths:
+      - 'docs/talkx/**'
+      - 'scripts/talkx/**'
   schedule:
     # W92: regen semanal — seg 07:45 UTC (agendamento sem colisão com branch-hygiene
     # 07:56 e types-sync 05:49; jitter de 15 min antes das 08:00).
@@ -52,6 +55,7 @@ permissions:
 jobs:
   regen:
     runs-on: ubuntu-24.04
+    timeout-minutes: 10
     permissions:  # zizmor: ignore[excessive-permissions]
       contents: write
       # Obrigatorio para o create-pull-request criar o PR: sem esta permissao o
@@ -67,7 +71,7 @@ jobs:
       - name: Checkout (histórico completo)
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
+          fetch-depth: 1
           persist-credentials: false
 
       - name: Regenera STATUS.md
