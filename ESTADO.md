@@ -65,7 +65,7 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `ai-suggest-reply` | A | `src/components/inbox/AISuggestions.tsx:102` |
 | `ai-transcribe-audio` | A | `src/components/inbox/AudioMessagePlayer.tsx:66` · `supabase/functions/_shared/evolution-webhook-messages.ts:1400` |
 | `ai-usage-outbox-drain` | E | — sem chamador no repositório — |
-| `approve-password-reset` | A | `src/hooks/security/usePasswordResetRequests.ts:15` · `src/hooks/security/usePasswordResetRequests.ts:51` · `src/hooks/security/usePasswordResetRequests.ts:72` · `src/components/security/PasswordResetRequestsPanel.tsx:31` · `src/components/security/PasswordResetRequestsPanel.tsx:43` |
+| `approve-password-reset` | A | `src/hooks/security/usePasswordResetRequests.ts:51` · `src/hooks/security/usePasswordResetRequests.ts:72` · `src/components/security/PasswordResetRequestsPanel.tsx:31` · `src/components/security/PasswordResetRequestsPanel.tsx:43` |
 | `auth-login` | A | `src/lib/serverLogin.ts:149` · `supabase/config.toml:39` |
 | `auto-close-conversations` | E | — sem chamador no repositório — |
 | `automation-suggest-reply` | A | `src/hooks/chat/useAutomationSuggestions.ts:192` |
@@ -138,7 +138,7 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `webhook-diagnostic` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:79` |
 | `whatsapp-webhook` | D | `supabase/config.toml:11` |
 
-## órfã (20) — GATE B
+## órf�� (20) — GATE B
 
 Edge que existe em `supabase/functions/`, mas nenhum ponto do repositório a dispara: não há
 `invoke`/`/functions/v1` em `src/`, nem chamada de outra edge, nem agendador em
