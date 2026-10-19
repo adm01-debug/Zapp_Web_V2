@@ -152,7 +152,7 @@ jobs:
           node scripts/db-audit/lote-pendente.mjs 2>&1 | tee /tmp/step-migrations.log
           rc=${PIPESTATUS[0]}
           set -e
-          if [ "$rc" -eq 2 ] && [ "$GITHUB_EVENT_NAME" = "push" ]; then
+          if [ "$rc" -eq 3 ] && [ "$GITHUB_EVENT_NAME" = "push" ]; then
             echo "::warning::Apply pendente no push — nao e drift; o schedule de amanha verificara se o apply aconteceu."
             exit 0
           fi

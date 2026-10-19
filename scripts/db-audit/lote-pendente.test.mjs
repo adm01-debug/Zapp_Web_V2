@@ -3,7 +3,7 @@
  * Verifica que:
  * 1. Exit 0 do drift-script → exit 0 e summary "sem drift"
  * 2. Exit 1 do drift-script → exit 1 e summary "drift real"
- * 3. Exit 2 do drift-script → exit 2 e summary "apply aguardado"
+ * 3. Exit 3 do drift-script → exit 3 e summary "apply aguardado"
  * 4. GITHUB_STEP_SUMMARY é escrito quando definido
  * 5. db-live-guard.yml e types-sync.yml chamam lote-pendente.mjs
  */
@@ -45,7 +45,7 @@ const rc = result.status;
 const summaryPath = process.env.GITHUB_STEP_SUMMARY;
 if (summaryPath) {
   if (rc === 0) appendFileSync(summaryPath, '### ✅ Lote pendente — sem drift\\n');
-  else if (rc === 2) appendFileSync(summaryPath, '### ⏳ Lote pendente — apply aguardado\\n');
+  else if (rc === 3) appendFileSync(summaryPath, '### ⏳ Lote pendente — apply aguardado\\n');
   else appendFileSync(summaryPath, '### ❌ Lote pendente — drift real detectado\\n');
 }
 process.exitCode = rc;
@@ -92,13 +92,13 @@ test('W26: exit 1 escreve summary "drift real"', () => {
   assert.ok(summary.includes('drift real'), `Summary deve conter "drift real"; got: ${summary}`);
 });
 
-test('W26: exit 2 escreve summary "apply aguardado"', () => {
+test('W26: exit 3 escreve summary "apply aguardado"', () => {
   const tmpDir = mkdtempSync(path.join(tmpdir(), 'lote-sum-'));
   const summaryPath = path.join(tmpDir, 'summary.md');
   writeFileSync(summaryPath, '');
-  const { exitCode } = runWithMock(2, summaryPath);
+  const { exitCode } = runWithMock(3, summaryPath);
   const summary = readFileSync(summaryPath, 'utf8');
-  assert.equal(exitCode, 2, 'exit 2 esperado');
+  assert.equal(exitCode, 3, 'exit 3 esperado');
   assert.ok(summary.includes('apply aguardado'), `Summary deve conter "apply aguardado"; got: ${summary}`);
 });
 
