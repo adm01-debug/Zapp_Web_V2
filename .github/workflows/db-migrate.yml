@@ -43,8 +43,19 @@ on:
   workflow_dispatch:
     inputs:
       migration_version:
-        description: 'Versao exata, com 14 digitos (ex: 20260830170000).'
-        required: true
+        description: 'Versao exata, com 14 digitos (ex: 20260830170000). Obrigatorio quando apply_all_missing=false.'
+        required: false
+        default: ''
+        type: string
+      apply_all_missing:
+        description: 'Marcado = aplica todas as versions locais ausentes do ledger, em ordem (GA14).'
+        required: false
+        default: false
+        type: boolean
+      confirm_apply_all_sha256:
+        description: 'Para apply com apply_all_missing: sha256 da lista de versions + sha256 de cada arquivo + github.sha, exibido pelo dry-run.'
+        required: false
+        default: ''
         type: string
       confirm_project_ref:
         description: 'Digite o project-ref oficial para confirmar o destino.'
@@ -87,6 +98,8 @@ jobs:
       needs_apply: ${{ steps.check.outputs.needs_apply }}
       apply_bundle: ${{ steps.check.outputs.apply_bundle }}
       target_name: ${{ steps.check.outputs.target_name }}
+      apply_all_sha256: ${{ steps.check.outputs.apply_all_sha256 }}
+      missing_versions: ${{ steps.check.outputs.missing_versions }}
     steps:
       - name: ✋ Somente executa na main
         if: github.ref != 'refs/heads/main'
@@ -135,7 +148,9 @@ jobs:
           TARGET_VERSION: ${{ inputs.migration_version }}
           CONFIRM_PROJECT_REF: ${{ inputs.confirm_project_ref }}
           CONFIRM_RUNTIME_SHA256: ${{ inputs.confirm_runtime_sha256 }}
+          CONFIRM_APPLY_ALL_SHA256: ${{ inputs.confirm_apply_all_sha256 }}
           APPLY: ${{ inputs.apply }}
+          APPLY_ALL_MISSING: ${{ inputs.apply_all_missing }}
         run: |
           if [ -z "$DESTINO_URL_RAW" ]; then
             echo "::error::DESTINO_URL ausente."
@@ -145,13 +160,25 @@ jobs:
             echo "::error::Project-ref de confirmacao incorreto."
             exit 1
           fi
-          if ! printf '%s' "$TARGET_VERSION" | grep -Eq '^[0-9]{14}$'; then
-            echo "::error::migration_version precisa ter exatamente 14 digitos."
-            exit 1
+          # GA14: migration_version obrigatorio apenas quando apply_all_missing=false
+          if [ "$APPLY_ALL_MISSING" != "true" ]; then
+            if ! printf '%s' "$TARGET_VERSION" | grep -Eq '^[0-9]{14}$'; then
+              echo "::error::migration_version precisa ter exatamente 14 digitos quando apply_all_missing=false."
+              exit 1
+            fi
           fi
-          if [ "$APPLY" = "true" ] && ! printf '%s' "$CONFIRM_RUNTIME_SHA256" | grep -Eq '^[a-f0-9]{64}$'; then
-            echo "::error::Apply exige confirm_runtime_sha256 completo e lowercase."
-            exit 1
+          if [ "$APPLY" = "true" ]; then
+            if [ "$APPLY_ALL_MISSING" = "true" ]; then
+              if ! printf '%s' "$CONFIRM_APPLY_ALL_SHA256" | grep -Eq '^[a-f0-9]{64}$'; then
+                echo "::error::Apply com apply_all_missing exige confirm_apply_all_sha256 completo e lowercase."
+                exit 1
+              fi
+            else
+              if ! printf '%s' "$CONFIRM_RUNTIME_SHA256" | grep -Eq '^[a-f0-9]{64}$'; then
+                echo "::error::Apply exige confirm_runtime_sha256 completo e lowercase."
+                exit 1
+              fi
+            fi
           fi
           node --input-type=module <<'NODE'
           import {
@@ -180,15 +207,17 @@ jobs:
           console.log('OK: endpoint oficial, TLS verify-full e CA pinada.');
           NODE
 
-      - name: Exigir alvo unico ou bundle atomico conhecido
+      - name: Exigir alvo unico ou apply_all_missing autorizado
         id: check
         # E66: repeticao SO de falha de conexao, e SO aqui -- este passo e somente
         # leitura (SELECT do ledger). O apply nunca define a variavel: repetir o
         # push seria reaplicar DDL.
+        # GA14: remove os 3 bundles fixos; apply_all_missing aceita qualquer lote.
         env:
           PSQL_CONNECT_RETRIES: '2'
           TARGET_VERSION: ${{ inputs.migration_version }}
           APPLY: ${{ inputs.apply }}
+          APPLY_ALL_MISSING: ${{ inputs.apply_all_missing }}
         run: |
           umask 077
           find supabase/migrations -maxdepth 1 -type f -name '*.sql' \
@@ -205,25 +234,44 @@ jobs:
           fi
           comm -23 /tmp/local-versions /tmp/remote-versions > /tmp/missing-versions
           MISSING_COUNT=$(wc -l < /tmp/missing-versions | tr -d ' ')
+          # GA14: modo apply_all_missing — aplica todas as versions ausentes em ordem
+          if [ "$APPLY_ALL_MISSING" = "true" ]; then
+            if [ "$MISSING_COUNT" = "0" ]; then
+              echo "needs_apply=false" >> "$GITHUB_OUTPUT"
+              echo "apply_bundle=false" >> "$GITHUB_OUTPUT"
+              echo "target_name=all-missing-none" >> "$GITHUB_OUTPUT"
+              echo "apply_all_sha256=" >> "$GITHUB_OUTPUT"
+              echo "missing_versions=" >> "$GITHUB_OUTPUT"
+              echo "OK: apply_all_missing=true mas nenhuma migration pendente."
+              exit 0
+            fi
+            # Hash composto: github.sha + version:sha256(arquivo) para cada version em ordem
+            HASH_PARTS="$GITHUB_SHA"
+            while IFS= read -r v; do
+              MATCH=$(find supabase/migrations -maxdepth 1 -type f -name "${v}_*.sql" | head -1)
+              if [ -z "$MATCH" ]; then
+                echo "::error::Version $v ausente como arquivo .sql em supabase/migrations/"
+                exit 1
+              fi
+              FILE_SHA=$(sha256sum "$MATCH" | cut -d' ' -f1)
+              HASH_PARTS="$HASH_PARTS $v:$FILE_SHA"
+            done < /tmp/missing-versions
+            APPLY_ALL_SHA256=$(printf '%s' "$HASH_PARTS" | sha256sum | cut -d' ' -f1)
+            MISSING_VERSIONS_SPACE=$(tr '\n' ' ' < /tmp/missing-versions | sed 's/ $//')
+            echo "needs_apply=true" >> "$GITHUB_OUTPUT"
+            echo "apply_bundle=false" >> "$GITHUB_OUTPUT"
+            echo "target_name=all-missing-${MISSING_COUNT}" >> "$GITHUB_OUTPUT"
+            echo "apply_all_sha256=$APPLY_ALL_SHA256" >> "$GITHUB_OUTPUT"
+            echo "missing_versions=$MISSING_VERSIONS_SPACE" >> "$GITHUB_OUTPUT"
+            echo "OK: apply_all_missing — $MISSING_COUNT versions ausentes; sha256=$APPLY_ALL_SHA256"
+            exit 0
+          fi
+          # Modo alvo unico (apply_all_missing=false)
           MISSING_VERSION=$(sed -n '1p' /tmp/missing-versions)
-          ATOMIC_DELIVERY_BUNDLE=$'20260909250000\n20260909260000\n20260909270000'
-          TALKX_RECOVERY_BUNDLE=$'20260911130000\n20260911140000\n20260911150000\n20260911160000\n20260911170000\n20260911180000\n20260911190000\n20260911200000\n20260912110000\n20260912120000\n20260912130000'
           if [ "$MISSING_COUNT" = "1" ] && [ "$MISSING_VERSION" = "$TARGET_VERSION" ]; then
             NEEDS_APPLY=true
-            APPLY_BUNDLE=false
-          elif [ "$TARGET_VERSION" = "20260909270000" ] \
-            && [ "$MISSING_COUNT" = "3" ] \
-            && diff -u <(printf '%s\n' "$ATOMIC_DELIVERY_BUNDLE") /tmp/missing-versions; then
-            NEEDS_APPLY=true
-            APPLY_BUNDLE=true
-          elif [ "$TARGET_VERSION" = "20260912130000" ] \
-            && [ "$MISSING_COUNT" = "11" ] \
-            && diff -u <(printf '%s\n' "$TALKX_RECOVERY_BUNDLE") /tmp/missing-versions; then
-            NEEDS_APPLY=true
-            APPLY_BUNDLE=true
           elif [ "$MISSING_COUNT" = "0" ] && grep -Fxq "$TARGET_VERSION" /tmp/remote-versions; then
             NEEDS_APPLY=false
-            APPLY_BUNDLE=false
           else
             echo "::error::O conjunto de versions ausentes nao corresponde exatamente ao alvo informado."
             echo "missing_count=$MISSING_COUNT"
@@ -244,8 +292,10 @@ jobs:
             exit 1
           fi
           echo "needs_apply=$NEEDS_APPLY" >> "$GITHUB_OUTPUT"
-          echo "apply_bundle=$APPLY_BUNDLE" >> "$GITHUB_OUTPUT"
+          echo "apply_bundle=false" >> "$GITHUB_OUTPUT"
           echo "target_name=$TARGET_NAME" >> "$GITHUB_OUTPUT"
+          echo "apply_all_sha256=" >> "$GITHUB_OUTPUT"
+          echo "missing_versions=" >> "$GITHUB_OUTPUT"
           echo "OK: estado da migration alvo confirmado: version=$TARGET_VERSION needs_apply=$NEEDS_APPLY"
 
       - name: Provar paridade integral quando a versao ja existe
@@ -274,12 +324,17 @@ jobs:
         if: steps.check.outputs.needs_apply == 'true'
         env:
           TARGET_VERSION: ${{ inputs.migration_version }}
-          APPLY_BUNDLE: ${{ steps.check.outputs.apply_bundle }}
+          APPLY_ALL_MISSING: ${{ inputs.apply_all_missing }}
+          MISSING_VERSIONS: ${{ steps.check.outputs.missing_versions }}
+          APPLY_ALL_SHA256: ${{ steps.check.outputs.apply_all_sha256 }}
         run: |
           set -euo pipefail
           supabase db push --include-all --skip-vault --dry-run --yes 2>&1 | tee dry-run.out
-          if [ "$APPLY_BUNDLE" = "true" ]; then
-            node scripts/db-audit/dry-run-plan.mjs --arquivo dry-run.out --esperado "$TARGET_VERSION" --bundle
+          if [ "$APPLY_ALL_MISSING" = "true" ]; then
+            # GA14: valida todas as versions ausentes via avaliarPlanoDoDryRunApplyAll
+            printf '%s\n' $MISSING_VERSIONS > /tmp/apply-all-expected.txt
+            node scripts/db-audit/dry-run-plan.mjs --arquivo dry-run.out --apply-all /tmp/apply-all-expected.txt
+            echo "::notice::apply_all_missing sha256 para confirmar no apply: $APPLY_ALL_SHA256"
           else
             node scripts/db-audit/dry-run-plan.mjs --arquivo dry-run.out --esperado "$TARGET_VERSION"
           fi
@@ -296,6 +351,10 @@ jobs:
     # E66: 45 min originais eram para um job unico. Com o split, 20 min
     # cobrem setup + re-validacao + apply + pos-apply do job de apply.
     timeout-minutes: 20
+    permissions:
+      contents: read
+      # GA15: disparo de types-sync e db-live-guard apos apply bem-sucedido.
+      actions: write
     steps:
       - name: Checkout confiavel da main
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -324,11 +383,15 @@ jobs:
         # apply — o operador aprova apos ver o dry-run, mas pode haver mudanca
         # de ambiente entre os dois jobs. Esta re-validacao usa o DESTINO_URL
         # do environment producao-ddl (overlay sobre o secret de repositorio).
+        # GA14: quando apply_all_missing=true, valida confirm_apply_all_sha256.
         env:
           DESTINO_URL_RAW: ${{ secrets.DESTINO_URL }}
           TARGET_VERSION: ${{ inputs.migration_version }}
           CONFIRM_PROJECT_REF: ${{ inputs.confirm_project_ref }}
           CONFIRM_RUNTIME_SHA256: ${{ inputs.confirm_runtime_sha256 }}
+          CONFIRM_APPLY_ALL_SHA256: ${{ inputs.confirm_apply_all_sha256 }}
+          APPLY_ALL_MISSING: ${{ inputs.apply_all_missing }}
+          EXPECTED_APPLY_ALL_SHA256: ${{ needs.preflight.outputs.apply_all_sha256 }}
         run: |
           if [ -z "$DESTINO_URL_RAW" ]; then
             echo "::error::DESTINO_URL ausente."
@@ -338,9 +401,21 @@ jobs:
             echo "::error::Project-ref de confirmacao incorreto."
             exit 1
           fi
-          if ! printf '%s' "$CONFIRM_RUNTIME_SHA256" | grep -Eq '^[a-f0-9]{64}$'; then
-            echo "::error::confirm_runtime_sha256 ausente ou invalido no job de apply."
-            exit 1
+          if [ "$APPLY_ALL_MISSING" = "true" ]; then
+            # GA14: fechar TOCTOU para apply_all — operator confirmou o hash; re-comparar
+            if ! printf '%s' "$CONFIRM_APPLY_ALL_SHA256" | grep -Eq '^[a-f0-9]{64}$'; then
+              echo "::error::confirm_apply_all_sha256 ausente ou invalido no job de apply."
+              exit 1
+            fi
+            if [ "$CONFIRM_APPLY_ALL_SHA256" != "$EXPECTED_APPLY_ALL_SHA256" ]; then
+              echo "::error::confirm_apply_all_sha256 nao corresponde ao sha256 calculado no preflight."
+              exit 1
+            fi
+          else
+            if ! printf '%s' "$CONFIRM_RUNTIME_SHA256" | grep -Eq '^[a-f0-9]{64}$'; then
+              echo "::error::confirm_runtime_sha256 ausente ou invalido no job de apply."
+              exit 1
+            fi
           fi
           node --input-type=module <<'NODE'
           import {
@@ -389,3 +464,13 @@ jobs:
 
       - name: Provar paridade integral apos aplicacao
         run: node scripts/db-audit/check-migration-drift.mjs
+
+      - name: Disparar types-sync e contrato vivo pos-apply
+        # GA15: dispara types-sync (regenera tipos TypeScript) e db-live-guard
+        # (verifica paridade banco-codigo) apos apply bem-sucedido.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run types-sync.yml --ref main
+          gh workflow run db-live-guard.yml --ref main
+          echo "OK: disparado types-sync e db-live-guard via workflow_dispatch."

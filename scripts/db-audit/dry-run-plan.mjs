@@ -23,7 +23,7 @@ const LINHA_LISTA = /^Would push these migrations:\s*(.+)$/;
 // linha propria com marcador:  "Would push these migrations:" / " • 2026...sql". Mesmo contrato: so' entra o que estiver
 // sob o cabecalho e terminar em .sql; qualquer outra linha encerra a lista, e saida fora destes formatos continua recusada.
 const CABECALHO_LISTA = /^Would push these migrations:\s*$/;
-const LINHA_ITEM = /^[\u2022*-]\s+(\S+\.sql)\s*$/;
+const LINHA_ITEM = /^[•*-]\s+(\S+\.sql)\s*$/;
 
 /**
  * Le a saida do dry-run. Devolve as migrations anunciadas em ordem, com version
@@ -155,6 +155,23 @@ if (process.argv[1]?.endsWith('dry-run-plan.mjs')) {
     return i === -1 ? undefined : args[i + 1];
   };
   const arquivo = valor('--arquivo');
+  // GA14: --apply-all <versoes-file> usa avaliarPlanoDoDryRunApplyAll (W58/W27)
+  const applyAllFile = valor('--apply-all');
+  if (applyAllFile) {
+    if (!arquivo) {
+      console.error('uso: node scripts/db-audit/dry-run-plan.mjs --arquivo <saida-do-dry-run> --apply-all <versoes-file>');
+      process.exit(2);
+    }
+    const esperados = readFileSync(applyAllFile, 'utf8').trim().split('\n').filter(Boolean);
+    const resultado = avaliarPlanoDoDryRunApplyAll({ texto: readFileSync(arquivo, 'utf8'), esperados });
+    if (!resultado.ok) {
+      console.error(`::error::Dry-run recusado: ${resultado.motivo}`);
+      process.exit(1);
+    }
+    console.log(`OK: o dry-run anuncia exatamente o autorizado (${resultado.migracoes.length} migration(s)):`);
+    console.log(mensagemDoPlano(resultado));
+    process.exit(0);
+  }
   const esperado = valor('--esperado');
   const permitirBundle = args.includes('--bundle');
   if (!arquivo || !/^\d{14}$/.test(String(esperado ?? ''))) {
