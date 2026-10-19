@@ -857,7 +857,6 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       }
       return new Response(JSON.stringify(deleteBody), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
-    if (action === 'set-presence') return await proxy(`/instance/setPresence/${instance}`, 'POST', { presence: body.presence });
 
     // ─── 2. Settings ───
     if (action === 'set-settings') return await proxy(`/settings/set/${instance}`, 'POST', { rejectCall: body.rejectCall, msgCall: body.msgCall, groupsIgnore: body.groupsIgnore, alwaysOnline: body.alwaysOnline, readMessages: body.readMessages, readStatus: body.readStatus, syncFullHistory: body.syncFullHistory });
@@ -1027,7 +1026,6 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     if (action === 'update-message') return await proxy(`/message/update/${instance}`, 'PUT', { number: body.number, key: body.key, text: body.text });
 
     // ─── 5. Chat ───
-    if (action === 'find-chats') return await proxy(`/chat/findChats/${instance}`, 'POST', { where: body.where || {} });
     // /chat/findMessages nao existe na Evolution GO (GO_GAPS D6): sem a guarda a
     // GO devolve 404 e o chamador engole o erro em Promise.allSettled, virando
     // "sem dados". Alem disso os 404 alimentavam o contador do circuit breaker.
