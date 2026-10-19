@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 
 import { supabase } from '@/integrations/supabase/client';
 import { fromTable } from '@/lib/supabaseHelpers';
+import type { Database } from '@/integrations/supabase/types';
 
 /* -------------------------------------------------------------------------- */
 /* X184 — Atividade recente da lista, lida dos eventos de ENTIDADE             */
@@ -296,7 +297,7 @@ export interface AddBlacklistEntryInput {
   phone?: string;
   contact_id?: string;
   reason?: string;
-  reason_code?: string;
+  reason_code?: Database["public"]["Enums"]["talkx_blacklist_reason"];
   origin?: string;
   campaign_id?: string;
   expires_at?: string;
