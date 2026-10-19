@@ -17,7 +17,7 @@ on:
   # 16/10/2026 (decisao do Joaquim, CI minimo): saiu do PR; varredura semanal + dispatch.
   workflow_dispatch:
   schedule:
-    - cron: '30 9 * * 1' # segunda 06:30 BRT
+    - cron: '30 9 * * *' # diario 06:30 BRT
 
 
 defaults:

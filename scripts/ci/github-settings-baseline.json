@@ -59,8 +59,7 @@
     "actions/upload-artifact",
     "github/codeql-action",
     "actions/dependency-review-action",
-    "ossf/scorecard-action",
-    "step-security/harden-runner"
+    "ossf/scorecard-action"
   ],
   "environments": [
     "banco-leitura",
@@ -73,10 +72,6 @@
   "environments_para_apagar": {
     "_comentario": "E94 concluido em 2026-10-16: copilot, Preview e Production apagados. Lista vazia.",
     "lista": []
-  },
-  "environments_vercel_managed": {
-    "_comentario": "W13: environments criados automaticamente pela Vercel. A presenca deles nao e regressao — sao classificados como 'gerenciados pela Vercel' no settings-guard (aviso, nao erro).",
-    "prefixos": ["Preview – ", "Production – "]
   },
   "environments_vercel_managed": {
     "_comentario": "W13: environments criados automaticamente pela Vercel. A presenca deles nao e regressao — sao classificados como 'gerenciados pela Vercel' no settings-guard (aviso, nao erro).",
