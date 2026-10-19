@@ -1,45 +1,64 @@
 #!/usr/bin/env node
-// GA10: garante que cada entrada em notifica-falha-main.yml.workflow_run.workflows
-// corresponde exatamente ao campo `name:` de um arquivo em .github/workflows/.
-import { readFileSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
+// GA10: verifica que todos os workflows listados em notifica-falha-main.yml
+// existem como `name:` em .github/workflows/*.yml
+import { readFile, readdir } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const RAIZ = process.cwd();
-const NOTIFICA = join(RAIZ, '.github/workflows/notifica-falha-main.yml');
-const DIR_WORKFLOWS = join(RAIZ, '.github/workflows');
+const ROOT = path.resolve(fileURLToPath(import.meta.url), '../../..');
+const WORKFLOWS_DIR = path.join(ROOT, '.github/workflows');
 
-const conteudoNotifica = readFileSync(NOTIFICA, 'utf8');
+const arquivos = (await readdir(WORKFLOWS_DIR)).filter((f) => f.endsWith('.yml'));
+const conteudos = {};
+for (const f of arquivos) {
+  conteudos[f] = await readFile(path.join(WORKFLOWS_DIR, f), 'utf8');
+}
 
-// Extrai a lista de workflows do bloco `workflow_run: workflows: [...]` (inline ou block list)
-const inlineMatch = conteudoNotifica.match(/workflow_run:\s*\n\s*workflows:\s*\[([\s\S]*?)\]/);
-const blockMatch = conteudoNotifica.match(/workflow_run:\s*\n\s*workflows:\s*\n((?:[ \t]+-[^\n]+\n?)+)/);
-const blocoMatch = inlineMatch ?? blockMatch;
-if (!blocoMatch) {
-  process.stderr.write('::error::Não encontrado bloco workflow_run.workflows em notifica-falha-main.yml\n');
+const nomesReais = new Set();
+for (const [, txt] of Object.entries(conteudos)) {
+  const m = /^name:\s+(.+?)\s*$/m.exec(txt);
+  if (m) nomesReais.add(m[1]);
+}
+
+const notifica = conteudos['notifica-falha-main.yml'];
+if (!notifica) {
+  process.stderr.write('::error::notifica-falha-main.yml não encontrado\n');
   process.exit(1);
 }
 
-const nomes = blocoMatch[1]
-  .split('\n')
-  .map((l) => l.trim().replace(/^-\s*/, '').replace(/^["']|["']$/g, ''))
-  .filter(Boolean);
-
-// Coleta todos os `name:` dos workflows
-const arquivos = readdirSync(DIR_WORKFLOWS).filter((f) => f.endsWith('.yml') || f.endsWith('.yaml'));
-const nomesReais = new Set();
-for (const arquivo of arquivos) {
-  const texto = readFileSync(join(DIR_WORKFLOWS, arquivo), 'utf8');
-  const m = texto.match(/^name:\s*(.+)$/m);
-  if (m) nomesReais.add(m[1].trim());
-}
-
-let falhou = false;
-for (const nome of nomes) {
-  if (!nomesReais.has(nome)) {
-    process.stderr.write(`::error::notifica-falha-main.yml referencia "${nome}" mas nenhum workflow tem esse nome.\n`);
-    falhou = true;
+const linhas = notifica.split('\n');
+let dentroWorkflows = false;
+const nomesListados = [];
+for (const linha of linhas) {
+  if (/^\s{4}workflows:\s*$/.test(linha)) {
+    dentroWorkflows = true;
+    continue;
+  }
+  if (dentroWorkflows) {
+    const m = /^\s{6}-\s+(.+?)\s*$/.exec(linha);
+    if (m) {
+      nomesListados.push(m[1]);
+      continue;
+    }
+    if (/^\s{4}\S/.test(linha)) {
+      dentroWorkflows = false;
+    }
   }
 }
 
-if (falhou) process.exit(1);
-process.stdout.write(`OK: todos os ${nomes.length} workflows referenciados no notifica-falha existem.\n`);
+if (nomesListados.length === 0) {
+  process.stderr.write('::error::Nenhum nome de workflow encontrado em notifica-falha-main.yml\n');
+  process.exit(1);
+}
+
+const ausentes = nomesListados.filter((n) => !nomesReais.has(n));
+if (ausentes.length > 0) {
+  process.stderr.write(
+    `::error::notifica-falha-main.yml lista workflows inexistentes: ${ausentes.join(', ')}\n`,
+  );
+  process.exit(1);
+}
+
+console.log(
+  `OK: todos os ${nomesListados.length} nomes do notifica-falha existem como name: em .github/workflows/*.yml`,
+);

@@ -174,7 +174,7 @@ test('E98: a lista de exceções não cresce em silêncio', () => {
   assert.equal(EXCECOES_TLS.size, 1, 'exceção de TLS mudou: confirme se o motivo ainda vale');
 });
 
-// E97 (auditoria de GitHub Actions, 2026-10-01): todo workflow com passo shell
+// E97 (auditoria de GitHub Actions, 2026-10-01 — SL-095): todo workflow com passo shell
 // roda com `-euo pipefail`. Sem isto, um `run:` multi-linha segue depois do
 // primeiro comando que falha — e o gate passa sem ter testado nada.
 //
@@ -659,10 +659,40 @@ test('W99: todo upload-artifact declara retention-days', async () => {
     for (const bloco of blocos) {
       if (!/upload-artifact@[a-f0-9]{40}/.test(bloco)) continue;
       if (/retention-days:/.test(bloco)) continue;
-      // Encontrar a linha do uses: para reportar o número aproximado
-      const match = /\n([ \t]+-?[ \t]*uses:[ \t]*actions\/upload-artifact@)/.exec(bloco);
       infratores.push(`${nome}: upload-artifact sem retention-days`);
     }
   }
   assert.deepEqual(infratores, [], `upload-artifact sem retention-days:\n${infratores.join('\n')}`);
+});
+
+test('GA10: todos os nomes listados em notifica-falha-main.yml existem como name: nos workflows', () => {
+  const notifica = wf['notifica-falha-main.yml'];
+  assert.ok(notifica, 'notifica-falha-main.yml sumiu');
+  const nomesReais = new Set();
+  for (const [, txt] of Object.entries(wf)) {
+    const m = /^name:\s+(.+?)\s*$/m.exec(txt);
+    if (m) nomesReais.add(m[1]);
+  }
+  const linhas = notifica.split('\n');
+  let dentroWorkflows = false;
+  const nomesListados = [];
+  for (const linha of linhas) {
+    if (/^\s{4}workflows:\s*$/.test(linha)) { dentroWorkflows = true; continue; }
+    if (dentroWorkflows) {
+      const m = /^\s{6}-\s+(.+?)\s*$/.exec(linha);
+      if (m) { nomesListados.push(m[1]); continue; }
+      if (/^\s{4}\S/.test(linha)) dentroWorkflows = false;
+    }
+  }
+  assert.ok(nomesListados.length > 0, 'Nenhum nome encontrado em notifica-falha-main.yml');
+  const ausentes = nomesListados.filter((n) => !nomesReais.has(n));
+  assert.deepEqual(ausentes, [], `notifica-falha lista workflows inexistentes: ${ausentes.join(', ')}`);
+});
+
+test('GA99: e2e-logado tem o if: de GA08 (fork bloqueado, só workflow_dispatch ou workflow_run limpo)', () => {
+  const txt = wf['e2e-logado.yml'];
+  assert.ok(
+    /workflow_dispatch/.test(txt) && /workflow_run\.conclusion/.test(txt) && /head_repository\.full_name/.test(txt),
+    'GA08 regrediu: e2e-logado.yml perdeu o if: de GA08 (workflow_dispatch OR workflow_run limpo)',
+  );
 });
