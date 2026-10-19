@@ -21,10 +21,6 @@
       "sha256": "cb6e6c3546137f4ab03185bd84991ce193f851655e6936abc7e12cfd5e9f1f8a"
     },
     {
-      "path": "scripts/db-audit/talkx-schedule-timezone-contract.test.mjs",
-      "sha256": "06867c1280f088afa159f166ec17fe572dc6038ab4e0fc024aeb74fd90cdde17"
-    },
-    {
       "path": "src/components/a11y/a11yComponents.tsx",
       "sha256": "5c62ff9a53a7ff42dc67ac1ffe65c64a7144574bdb2f13519b5e964f60e6fa4a"
     },
@@ -821,10 +817,6 @@
       "sha256": "67410196c447902b84ad57c458874d860ccdbf086cf594ef3fc63c9acafde771"
     },
     {
-      "path": "src/components/settings/__tests__/ScheduleSettings.test.tsx",
-      "sha256": "6d4fd2f5e974416624718c53fdc211e725aefbc78711545acd3ad3dc238d15e1"
-    },
-    {
       "path": "src/components/settings/ai-providers/AIProviderHealthPanel.tsx",
       "sha256": "47ea69ef6ef6fcf9ac34c4ab1fa133f2fc5a77dfaee1d414b9663faffd8c5676"
     },
@@ -1145,10 +1137,6 @@
       "sha256": "ecadc53900f13a22755a010cb5013b7aea4211591e542a1acdf22767bfa3fdeb"
     },
     {
-      "path": "src/hooks/__tests__/usePushNotifications.sem-assinatura.test.ts",
-      "sha256": "67a26b255400fd935b4bc40d5966f122e333c6fa17eef37e3ed4c0a163d4d2b0"
-    },
-    {
       "path": "src/hooks/analytics/usePerformanceOptimizations.ts",
       "sha256": "c1b3f6454720beb7402079ef00f54db84be4e8b1a438ca2215c724f14d4eade5"
     },
@@ -1366,7 +1354,7 @@
     },
     {
       "path": "src/hooks/ui/useScreenProtection.ts",
-      "sha256": "36215d927d77b07a77e4789668a7a7e1c3a8b25d9adc900b1fa2f7eedaf5fba4"
+      "sha256": "9f5e65f6b29678466b0ccab920d2e5c5a644c410271772f86224578ed3e5d4c6"
     },
     {
       "path": "src/hooks/ui/useSidebarCollapse.ts",
@@ -1699,20 +1687,6 @@
       "spanHash": null,
       "lineHash": null,
       "contextHash": "419e5a8f81842498d8132484d0b0f62dcd521916ad9bbcae07701fb307ed5a49"
-    },
-    {
-      "file": "scripts/db-audit/talkx-schedule-timezone-contract.test.mjs",
-      "line": 89,
-      "column": 31,
-      "endLine": 0,
-      "endColumn": 0,
-      "severity": 2,
-      "ruleId": null,
-      "messageId": null,
-      "message": "Parsing error: Invalid regular expression flag",
-      "spanHash": null,
-      "lineHash": "b14942cd2592ec42c73cca3a8ed4328a0ec50ee3eafb5c91da50c3adcec41827",
-      "contextHash": "54d8a07336f007b97990d427ed54ce8b7ee2d4f0b844c983da6fe8619c4d0d65"
     },
     {
       "file": "src/components/a11y/a11yComponents.tsx",
@@ -7399,20 +7373,6 @@
       "contextHash": "969a76751dee3b435b51b2bc6b7dd4b825a7ccd1119d04c63fe4cb33a8a807b5"
     },
     {
-      "file": "src/components/settings/__tests__/ScheduleSettings.test.tsx",
-      "line": 66,
-      "column": 23,
-      "endLine": 0,
-      "endColumn": 0,
-      "severity": 2,
-      "ruleId": null,
-      "messageId": null,
-      "message": "Parsing error: Declaration or statement expected.",
-      "spanHash": null,
-      "lineHash": "854957daf2f2254c8ae96344294cb9fc892ce49c68d460ec1ca8b96967011bc7",
-      "contextHash": "baf0a33f5b4e3d4552cbeb0275b9ce81994cf2477094c0a9af63be0d01c88258"
-    },
-    {
       "file": "src/components/settings/ai-providers/AIProviderHealthPanel.tsx",
       "line": 2,
       "column": 1,
@@ -10211,20 +10171,6 @@
       "spanHash": "86f7ec7454df93de871c2152fbcd42d66de409995eeab9d3606cbd41b0eb0ca5",
       "lineHash": "72e2376e7569138dd26b98d1b81a6248a8b9558df0c60d285b08483f2bfad5d4",
       "contextHash": "f340798703ad4a02e74a68e3105b4cf2e3c4d6ffbd40353368aed901e39b82a2"
-    },
-    {
-      "file": "src/hooks/__tests__/usePushNotifications.sem-assinatura.test.ts",
-      "line": 21,
-      "column": 42,
-      "endLine": 0,
-      "endColumn": 0,
-      "severity": 2,
-      "ruleId": null,
-      "messageId": null,
-      "message": "Parsing error: ',' expected.",
-      "spanHash": null,
-      "lineHash": "52f743e8b88c8e44d95390e068f30c62c5410cffd43d812b109941d5863de801",
-      "contextHash": "23999674a785219e08e5fb6f0af43c7e42999ec7ebac6371c7c456dfa0d8c627"
     },
     {
       "file": "src/hooks/analytics/usePerformanceOptimizations.ts",
