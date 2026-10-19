@@ -88,7 +88,7 @@
 | V134 | Cross-Origin-Resource-Policy: omitido deliberadamente | ➡️ SKIP | Quebraria Vercel Speed Insights (recurso de origem cruzada) |
 | V135 | Permissions-Policy | ➡️ SKIP | Já presente com valor correto (microphone=(self) — 20 arquivos usam getUserMedia) |
 | V136–V137 | Strict-Transport-Security | ➡️ SKIP | Gerenciado automaticamente pelo Vercel em domínios verificados |
-| V138 | Firewall rules — bloquear paths maliciosos | ⏳ PENDENTE | `/wp-admin`, `/.env`, `/.git/`, `/phpmyadmin`, `/xmlrpc.php` via `put_firewall_config` |
+| V138 | Firewall rules — bloquear paths maliciosos | 🔒 JOAQUIM | API retorna 404 "Seawall Config not found" (GET e PUT) — WAF não ativado neste projeto. Ativar em Project Settings → Security → Web Application Firewall, depois via MCP |
 | V139–V150 | Auditoria / monitoramento de headers em produção | ⛔ BLOQUEADO | Depende de V002 para verificar headers reais ao vivo |
 | V151–V155 | Alertas e monitoramento (parte 1) | ⛔ BLOQUEADO | Depende de V002 |
 | V156 | Criar `scripts/ci/vercel-config.unit.mjs` | ✅ OK | 12/12 testes `node:test` passando — inclui COOP e Reporting-Endpoints adicionados em V130/V133 |
@@ -130,13 +130,14 @@
 | V002 | [Vercel Tokens](https://vercel.com/account/tokens) | Gerar token com `Full Account` scope; adicionar secret `VERCEL_READONLY_TOKEN` no repo |
 | V016 | Painel do registrador do domínio | Verificar e reduzir TTL do DNS para ≤ 300s antes da inversão |
 | V017 | [Dashboard Vercel → Domains](https://vercel.com/juca1/zapp_web_v2/settings/domains) | Remover redirect de `zappweb.app.br` → `www`; configurar `www.zappweb.app.br` → `zappweb.app.br` |
-| V023 | GitHub Actions → `deploy-functions.yml` | `workflow_dispatch` + aprovar em `producao-edge-functions` (após merge desta PR) |
+| V023 | GitHub Actions → `deploy-functions.yml` | `workflow_dispatch` + aprovação em `producao-edge-functions` (após merge desta PR) |
 | V024 | [Supabase Auth Settings](https://supabase.com/dashboard/project/tnnnlkbymytvtqngbbqh/auth/url-configuration) | Adicionar `https://www.zappweb.app.br` em Redirect URLs |
 | V043–V051 | [Vercel Env Vars](https://vercel.com/juca1/zapp_web_v2/settings/environment-variables) | Remover 17 vars da integração `icfg_l6F3AhnOcvXqyj1eMSD7Jpxb` (POSTGRES_*, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_JWT_SECRET, SUPABASE_SECRET_KEY, NX_DAEMON, TURBO_*) |
 | V052 | — | Decidir se SUPABASE_SERVICE_ROLE_KEY e SUPABASE_JWT_SECRET precisam ser rotacionadas |
 | V053–V061 | [Vercel Env Vars](https://vercel.com/juca1/zapp_web_v2/settings/environment-variables) | Remover OPENAI_API_KEY, ANTHROPIC_API_KEY, GROQ_API_KEY, EVOLUTION_API_KEY, EVOLUTION_API_URL (não há serverless neste projeto) |
 | V062–V065 | [Vercel Env Vars](https://vercel.com/juca1/zapp_web_v2/settings/environment-variables) | Remover VITE_* nunca lidas no front: VITE_APP_NAME, VITE_APP_ENV, VITE_ENABLE_ANALYTICS, VITE_ENABLE_DEBUG, VITE_ENABLE_GAMIFICATION, VITE_ENABLE_GMAIL_INTEGRATION, VITE_SENTRY_DSN, VITE_SENTRY_ENVIRONMENT, VITE_LOG_LEVEL, VITE_ZAPP_LOCAL_SUPABASE_URL, VITE_ZAPP_LOCAL_SUPABASE_ANON_KEY |
 | V066 | GitHub Actions → Vercel | Forçar redeploy de produção após limpeza de env vars |
+| V138 | [Vercel Project Settings → Security](https://vercel.com/juca1/zapp_web_v2/settings/security) | Ativar Web Application Firewall; depois disparar via MCP: bloquear `/wp-admin`, `/wp-login.php`, `/.env`, `/.git/`, `/phpmyadmin`, `/xmlrpc.php` |
 | V161 | [Vercel Tokens](https://vercel.com/account/tokens) | Gerar token read-only; criar secret `VERCEL_READONLY_TOKEN` no repo GitHub |
 | V170 | Dashboard Vercel → Deployments | Ensaio de rollback em janela sem uso — verificar fluxo de promoção/rollback |
 | V175 | [Dashboard Vercel](https://vercel.com/juca1/zapp-web/settings) | Pausar projeto legado `zapp-web` |
@@ -169,8 +170,8 @@
 
 ### Estado final do projeto Vercel
 
-- **Segurança:** CSP sem bancos legados; X-Frame-Options DENY; X-Robots-Tag noindex; robots.txt Disallow all; sourcemaps off; COOP same-origin-allow-popups; Reporting-Endpoints ativo
+- **Segurança:** CSP sem bancos legados; X-Frame-Options DENY; X-Robots-Tag noindex; robots.txt Disallow all; sourcemaps off
 - **Performance:** assets imutáveis (1 ano); version.json sem cache; builds pulados em commits sem mudança no front
 - **CORS:** www.zappweb.app.br coberto (aguarda deploy das edge functions pelo Joaquim)
-- **CI:** 3 arquivos de contrato: vercel-config.unit.mjs (12/12), vercel-env-baseline.unit.mjs, verify-production.mjs
+- **CI:** 3 arquivos de contrato: vercel-config.unit.mjs, vercel-env-baseline.unit.mjs, verify-production.mjs
 - **Vars perigosas:** identificadas — remoção aguarda Joaquim

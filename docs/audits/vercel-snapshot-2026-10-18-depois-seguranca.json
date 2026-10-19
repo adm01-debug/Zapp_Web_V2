@@ -21,7 +21,8 @@
     "Strict-Transport-Security": "gerenciado automaticamente pelo Vercel em domínios verificados"
   },
   "firewall_v138": {
-    "status": "a_aplicar_via_mcp_vercel",
+    "status": "bloqueado_waf_nao_ativado",
+    "reason": "PUT e GET /v1/security/firewall/config retornam 404 'Seawall Config not found' — WAF precisa ser ativado em Project Settings → Security → Web Application Firewall antes do apply via MCP",
     "paths_to_block": ["/wp-admin", "/wp-login.php", "/.env", "/.git/", "/phpmyadmin", "/xmlrpc.php"]
   },
   "vercel_project": {
