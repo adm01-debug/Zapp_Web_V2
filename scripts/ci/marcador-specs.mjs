@@ -89,4 +89,3 @@ export function tituloDe(nomes) {
   if (eLoginFalhou(nomes)) return '[e2e-logado] login E2E falhou';
   return '[e2e-logado] Suíte logada quebrada na main';
 }
-
