@@ -98,6 +98,10 @@ jobs:
             const arquivos = await github.paginate(github.rest.pulls.listFiles, {
               owner, repo, pull_number, per_page: 100,
             });
+            if (arquivos.length >= 3000) {
+              core.setFailed('PR tem ≥ 3.000 arquivos; listFiles não cobre todos — recusando para não criar falso negativo.');
+              return;
+            }
             const apenasDocsOuMd = arquivos.every(
               (f) => /^\/docs\//.test(f.filename) || /\.md$/.test(f.filename),
             );
@@ -127,6 +131,10 @@ jobs:
             const arquivos = await github.paginate(github.rest.pulls.listFiles, {
               owner, repo, pull_number, per_page: 100,
             });
+            if (arquivos.length >= 3000) {
+              core.setFailed('PR tem ≥ 3.000 arquivos; listFiles não cobre todos — recusando para não criar falso negativo.');
+              return;
+            }
             // So bloqueia 'modified' (conteudo mudou, MESMO nome de arquivo) —
             // e exatamente o padrao do incidente de 26/09 (arquivo editado
             // depois de aplicado, drift entre ledger e disco). 'renamed' fica

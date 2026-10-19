@@ -54,15 +54,21 @@ test('E83: workflow tem estrategia de matriz com timeout proprio por grupo', () 
   assert.ok(content.includes('strategy:'), 'workflow tem strategy');
   assert.ok(content.includes('matrix:'), 'workflow tem matrix');
   assert.ok(content.includes('fail-fast: false'), 'matriz nao aborta no primeiro falho');
-  assert.ok(content.includes('timeout-minutes: 15'), 'cada job tem timeout de 15 min');
+  // GA12: timeout agora e' por grupo via matrix.timeout_minutes; o job usa a expressao.
+  assert.ok(
+    content.includes('timeout-minutes: ${{ matrix.timeout_minutes }}'),
+    'job usa timeout proprio por grupo via matrix.timeout_minutes',
+  );
   assert.ok(gruposDaMatriz(content).length >= 2, 'matriz define pelo menos 2 grupos de projetos');
 });
 
-test('E83: matriz tem 3 grupos (authenticated + 2 deslogados)', () => {
+test('E83: matriz tem 4 grupos (2 autenticados + 2 deslogados)', () => {
   const content = readFileSync(WORKFLOW, 'utf8');
   const grupos = gruposDaMatriz(content);
-  assert.equal(grupos.length, 3, `matriz tem ${grupos.length} grupos (esperado 3)`);
-  assert.ok(content.includes('name: authenticated'), 'grupo authenticated existe');
+  // GA12: authenticated dividido em chromium-autenticado + cross-browser-autenticado.
+  assert.equal(grupos.length, 4, `matriz tem ${grupos.length} grupos (esperado 4)`);
+  assert.ok(content.includes('name: chromium-autenticado'), 'grupo chromium-autenticado existe');
+  assert.ok(content.includes('name: cross-browser-autenticado'), 'grupo cross-browser-autenticado existe');
   assert.ok(content.includes('name: deslogado-principal'), 'grupo deslogado-principal existe');
   assert.ok(content.includes('name: deslogado-secundario'), 'grupo deslogado-secundario existe');
 });
@@ -86,20 +92,24 @@ test('E83: a uniao da matriz e EXATAMENTE a lista original (15 projetos)', () =>
   const nomes = gruposDaMatriz(content)
     .flat()
     .map((t) => t.replace(/^--project=/, ''));
+  // GA12: setup aparece em 2 grupos (autenticados rodam independentemente); deduplica antes de comparar.
+  const unicos = [...new Set(nomes)];
   assert.deepEqual(
-    [...nomes].sort(),
+    [...unicos].sort(),
     [...ORIGINAIS].sort(),
-    `uniao da matriz difere da lista original (matriz: ${nomes.length}, original: ${ORIGINAIS.length})`,
+    `uniao da matriz difere da lista original (matriz: ${unicos.length}, original: ${ORIGINAIS.length})`,
   );
 });
 
-test('E83: projeto setup nao esta duplicado entre grupos de matriz', () => {
+test('E83: projeto setup aparece em exatamente 2 grupos de matriz (autenticados)', () => {
   const content = readFileSync(WORKFLOW, 'utf8');
   const nomes = gruposDaMatriz(content)
     .flat()
     .map((t) => t.replace(/^--project=/, ''));
   const n = nomes.filter((x) => x === 'setup').length;
-  assert.equal(n, 1, 'setup aparece em exatamente um grupo de matriz');
+  // GA12: setup roda em 2 grupos (chromium-autenticado e cross-browser-autenticado) porque cada
+  // job autentica independentemente (nao ha compartilhamento de storageState entre jobs).
+  assert.equal(n, 2, `setup aparece em exatamente 2 grupos de matriz (autenticados); encontrado em ${n}`);
 });
 
 test('E83: comando de run usa matrix.projects sem lista hardcoded', () => {

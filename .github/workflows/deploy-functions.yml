@@ -40,6 +40,9 @@ on:
       - '!supabase/functions/**/*.test.ts'
       - '!supabase/functions/**/*.md'
       - '!supabase/functions/**/fixtures/**'
+      # GA35: __fixtures__ (duplo underscore) é a convenção do Deno/Supabase CLI,
+      # diferente de fixtures/ (sem underscore) — os dois precisam ser excluídos.
+      - '!supabase/functions/**/__fixtures__/**'
   workflow_dispatch:
     inputs:
       function_name:
@@ -173,6 +176,11 @@ jobs:
             if (!stRes.ok) continue;
             const statuses = await stRes.json();
             if (statuses.some((s) => s.state === 'success')) {
+              // GA30: pular o SHA atual — rollback precisa de um commit anterior diferente.
+              if (dep.sha === process.env.GITHUB_SHA) {
+                process.stdout.write(`Pulando deployment do SHA atual (${dep.sha.slice(0, 8)}) — buscando anterior com SHA diferente...\n`);
+                continue;
+              }
               const { appendFileSync } = await import('node:fs');
               appendFileSync(process.env.GITHUB_ENV, `RESOLVED_SOURCE_REF=${dep.sha}\n`);
               process.stdout.write(`Rollback para o ultimo Deployment bem-sucedido: ${dep.sha}\n`);
@@ -312,7 +320,11 @@ jobs:
           if [ -n "$CRON_SECRET" ]; then
             echo "Setando CRON_SECRET nas edges"
             if [ "$REESCREVER" = "true" ]; then
-              supabase secrets set CRON_SECRET="$CRON_SECRET" --project-ref "$PROJECT_REF"
+              # GA32: env-file evita que o valor apareça no argv (visível em /proc).
+              _tf=$(mktemp); chmod 600 "$_tf"
+              printf 'CRON_SECRET=%s\n' "$CRON_SECRET" > "$_tf"
+              supabase secrets set --env-file "$_tf" --project-ref "$PROJECT_REF"
+              rm -f "$_tf"
             fi
           fi
           # Deploy total (FN vazio) também inclui crm-integration e deve falhar
@@ -367,10 +379,11 @@ jobs:
           carriers|id,company_id
           CRM_EMAIL_CONTEXT_SCHEMA
             if [ "$REESCREVER" = "true" ]; then
-              supabase secrets set \
-                EXTERNAL_SUPABASE_URL="$EXTERNAL_SUPABASE_URL" \
-                EXTERNAL_SUPABASE_SERVICE_ROLE_KEY="$EXTERNAL_SUPABASE_SERVICE_ROLE_KEY" \
-                --project-ref "$PROJECT_REF"
+              _tf=$(mktemp); chmod 600 "$_tf"
+              printf 'EXTERNAL_SUPABASE_URL=%s\nEXTERNAL_SUPABASE_SERVICE_ROLE_KEY=%s\n' \
+                "$EXTERNAL_SUPABASE_URL" "$EXTERNAL_SUPABASE_SERVICE_ROLE_KEY" > "$_tf"
+              supabase secrets set --env-file "$_tf" --project-ref "$PROJECT_REF"
+              rm -f "$_tf"
             fi
           fi
           if [ "$FN" = "promogifts-catalog" ] || [ -z "$FN" ]; then
@@ -390,10 +403,11 @@ jobs:
             node -e "const fs=require('fs');const d=JSON.parse(fs.readFileSync('/tmp/promogifts-preflight.json','utf8'));if(!Array.isArray(d))process.exit(1);console.log('OK: catalogo acessivel; linhas amostradas='+d.length)"
             echo "Setando endpoint e credencial server-side do catalogo nas edges"
             if [ "$REESCREVER" = "true" ]; then
-              supabase secrets set \
-                PROMOGIFTS_SUPABASE_URL="$PROMOGIFTS_SUPABASE_URL" \
-                PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY="$PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY" \
-                --project-ref "$PROJECT_REF"
+              _tf=$(mktemp); chmod 600 "$_tf"
+              printf 'PROMOGIFTS_SUPABASE_URL=%s\nPROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY=%s\n' \
+                "$PROMOGIFTS_SUPABASE_URL" "$PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY" > "$_tf"
+              supabase secrets set --env-file "$_tf" --project-ref "$PROJECT_REF"
+              rm -f "$_tf"
             fi
           fi
           # fetch-link-preview nunca pode ser promovida sem o proxy HTTPS e
@@ -418,10 +432,11 @@ jobs:
           console.log('OK: configuracao do proxy de previews validada.');
           NODE
             if [ "$REESCREVER" = "true" ]; then
-              supabase secrets set \
-                PREVIEW_EGRESS_PROXY_URL="$PREVIEW_EGRESS_PROXY_URL" \
-                PREVIEW_EGRESS_SHARED_SECRET="$PREVIEW_EGRESS_SHARED_SECRET" \
-                --project-ref "$PROJECT_REF"
+              _tf=$(mktemp); chmod 600 "$_tf"
+              printf 'PREVIEW_EGRESS_PROXY_URL=%s\nPREVIEW_EGRESS_SHARED_SECRET=%s\n' \
+                "$PREVIEW_EGRESS_PROXY_URL" "$PREVIEW_EGRESS_SHARED_SECRET" > "$_tf"
+              supabase secrets set --env-file "$_tf" --project-ref "$PROJECT_REF"
+              rm -f "$_tf"
             fi
           fi
 
@@ -456,6 +471,9 @@ jobs:
       - name: "🧪 Testes unitários das edge functions (deno test)"
         run: deno test --allow-all supabase/functions/
         continue-on-error: true
+
+      - name: Verificar env vars das edge functions (GA31)
+        run: node scripts/ci/check-edge-envs.mjs
 
       - name: Deploy
         if: inputs.dry_run != true
@@ -497,7 +515,7 @@ jobs:
           node "$RUNNER_TEMP/edge-tooling/scripts/edge-deploy/unchanged-from-log.mjs" "$EVIDENCE_DIR/deploy-output.log" "$EVIDENCE_DIR/unchanged-functions.json"
 
       - name: Capturar e validar manifesto remoto pos-deploy
-        if: inputs.dry_run != true
+        if: ${{ !cancelled() && inputs.dry_run != true }}
         # E55 (auditoria de 01/10/2026): teto proprio do passo. O job inteiro tem
         # 100 min, mas a atestacao nao pode consumir esse orcamento: se a Management
         # API nao estabilizar em 10 min, o passo falha com a ultima causa observada

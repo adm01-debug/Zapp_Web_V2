@@ -155,6 +155,38 @@ test('fork em dia com a main segura a fila; nenhuma interna é atualizada junto'
   assert.deepEqual(d.emVoo, [1]);
 });
 
+test('GA50: PR com mergeable=CONFLICTING fica fora da fila', () => {
+  assert.equal(classificar(pr(1, { mergeable: 'CONFLICTING', mergeStateStatus: 'BEHIND' }), OBRIG), 'fora');
+  assert.equal(classificar(pr(1, { mergeable: 'CONFLICTING', mergeStateStatus: 'BLOCKED' }), OBRIG), 'fora');
+  // MERGEABLE e ausente não devem afetar
+  assert.equal(classificar(pr(1, { mergeable: 'MERGEABLE' }), OBRIG), 'aguardando');
+});
+
+test('GA49: PR em dia com checks todos COMPLETED e CANCELLED → bloqueada (não trava a fila para sempre)', () => {
+  const cancelado = (name) => ({ __typename: 'CheckRun', name, status: 'COMPLETED', conclusion: 'CANCELLED', startedAt: '2026-10-15T10:00:00Z', completedAt: '2026-10-15T10:05:00Z' });
+  const rollupCancelado = OBRIG.map(cancelado);
+  // PR em dia (BLOCKED = checando) com todos COMPLETED+CANCELLED → bloqueada
+  assert.equal(classificar(pr(1, { mergeStateStatus: 'BLOCKED', statusCheckRollup: rollupCancelado }), OBRIG), 'bloqueada');
+  // PR BEHIND com CANCELLED ainda aguarda (update-branch vai re-trigar)
+  assert.equal(classificar(pr(1, { mergeStateStatus: 'BEHIND', statusCheckRollup: rollupCancelado }), OBRIG), 'aguardando');
+});
+
+test('GA49 teto: PR em dia sem check em andamento há > 45 min → bloqueada', () => {
+  const agora = new Date('2026-10-15T12:00:00Z').getTime();
+  const velhoCompleto = (name) => ({ __typename: 'CheckRun', name, status: 'COMPLETED', conclusion: 'SUCCESS', startedAt: '2026-10-15T10:00:00Z', completedAt: '2026-10-15T10:55:00Z' }); // 65 min atrás
+  const rollupVelho = OBRIG.map(velhoCompleto);
+  assert.equal(classificar(pr(1, { mergeStateStatus: 'BLOCKED', statusCheckRollup: rollupVelho }), OBRIG, agora), 'bloqueada');
+});
+
+test('GA49 teto: check IN_PROGRESS protege a PR do teto temporal', () => {
+  const agora = new Date('2026-10-15T12:00:00Z').getTime();
+  const rollupMisto = [
+    { __typename: 'CheckRun', name: OBRIG[0], status: 'COMPLETED', conclusion: 'SUCCESS', startedAt: '2026-10-15T10:00:00Z', completedAt: '2026-10-15T10:55:00Z' },
+    { __typename: 'CheckRun', name: OBRIG[1], status: 'IN_PROGRESS', conclusion: '', startedAt: '2026-10-15T11:55:00Z' },
+  ];
+  assert.equal(classificar(pr(1, { mergeStateStatus: 'BLOCKED', statusCheckRollup: rollupMisto }), OBRIG, agora), 'em-voo');
+});
+
 test('confirmarCandidato: só autoriza o próximo não recusado, com ninguém em voo', () => {
   const fila = { acao: 'atualizar', pr: 1, fila: [1, 2], restantes: [2], bloqueadas: [] };
   assert.equal(confirmarCandidato(fila, 2, [1]), true);

@@ -63,6 +63,33 @@ function buildLogsSql(slugs, windowMinutes) {
   ).trim();
 }
 
+// GA29: verifica se as funcoes estao listadas na Management API antes do warmup.
+// Lanca se o HTTP nao for 2xx ou se algum slug estiver ausente.
+async function checkFunctionsDeployed({ projectRef, token, slugs, fetchImpl = fetch }) {
+  const url = `${MGMT_BASE}/v1/projects/${projectRef}/functions`;
+  const res = await fetchImpl(url, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    signal: AbortSignal.timeout(30_000),
+  });
+  if (!res.ok) {
+    throw new Error(`Management API retornou HTTP ${res.status} ao listar functions`);
+  }
+  const fns = await res.json();
+  if (!Array.isArray(fns)) {
+    throw new Error('Resposta inesperada da Management API (esperado array de functions)');
+  }
+  if (slugs.length === 0) return;
+  const deployedSlugs = new Set(fns.map((fn) => fn.slug ?? fn.name).filter(Boolean));
+  const missing = slugs.filter((s) => !deployedSlugs.has(s));
+  if (missing.length > 0) {
+    throw new Error(`Functions nao encontradas na Management API apos o deploy: ${missing.join(', ')}`);
+  }
+}
+
 // Chama a Management API de analytics do Supabase.
 // Lança se o HTTP não for 2xx; devolve null se a resposta não tiver linhas.
 async function queryAnalytics({ projectRef, token, sql, fetchImpl = fetch }) {
@@ -101,6 +128,14 @@ async function main() {
     console.log(`[health-check] Ensaio — escopo: ${nomeScope}; funções: ${slugs.length || '(todas)'}`);
     console.log('[health-check] Dry run: sem espera e sem chamada à API.');
     return;
+  }
+
+  // GA29: confirmar que as funcoes estao listadas na Management API antes de aguardar warmup.
+  try {
+    await checkFunctionsDeployed({ projectRef: args.projectRef, token, slugs });
+    console.log(`[health-check] Functions verificadas na Management API (${slugs.length || 'todas'}).`);
+  } catch (err) {
+    console.error(`::warning::Health check nao conseguiu verificar functions: ${err.message}. Prosseguindo.`);
   }
 
   if (args.waitMs > 0) {

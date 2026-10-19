@@ -254,7 +254,9 @@ jobs:
       # A URL vem do mesmo secret que o ci.yml ja entrega ao app.
       # Sem as credenciais o script e PULADO (exit 0), como no step antigo.
       - name: 🧹 E2E teardown - limpar fixture de conversation_closures
-        if: always()
+        # GA44: dispatch manual de branch que não seja main não toca produção —
+        # teardown de banco de produção só faz sentido quando o teste rodou contra ele.
+        if: always() && (github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main')
         continue-on-error: true
         env:
           SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
@@ -270,7 +272,7 @@ jobs:
       # contact_id 04dff4dc-... e o contato de teste E2E (dedicado).
       # Requer o secret SUPABASE_SERVICE_ROLE_KEY; se ausente, o step e pulado.
       - name: 🧹 E2E teardown - limpar envios de catálogo (CT-82)
-        if: always()
+        if: always() && (github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main')
         continue-on-error: true
         env:
           SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
@@ -291,7 +293,7 @@ jobs:
       # Sem isso, cada CI-run acumula uma sessao aberta no Supabase Auth, que
       # nao sao liberadas pelo logout normal (scope=local) do Playwright.
       - name: 🔐 E2E teardown - revogar sessões globais do usuário de teste (GA39)
-        if: always()
+        if: always() && (github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main')
         continue-on-error: true
         env:
           SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
@@ -303,16 +305,21 @@ jobs:
             echo "Credenciais ausentes — teardown de sessao global pulado"
             exit 0
           fi
+          # GA43: jq -n --arg garante que caracteres especiais no email/senha
+          # não quebram o JSON nem criam injeção de shell.
+          BODY=$(jq -n --arg email "$E2E_TEST_EMAIL" --arg password "$E2E_TEST_PASSWORD" \
+            '{"email":$email,"password":$password}')
           RESP=$(curl --proto '=https' --tlsv1.2 -sf -X POST \
             "${SUPABASE_URL}/auth/v1/token?grant_type=password" \
             -H "apikey: ${SUPABASE_ANON_KEY}" \
             -H "Content-Type: application/json" \
-            -d "{\"email\":\"${E2E_TEST_EMAIL}\",\"password\":\"${E2E_TEST_PASSWORD}\"}" \
+            -d "$BODY" \
             || true)
           ACCESS_TOKEN=$(printf '%s' "$RESP" | node -e \
-            "let d=''; process.stdin.on('data',c=>d+=c); process.stdin.on('end',()=>{ try{process.stdout.write(JSON.parse(d).access_token||'')}catch{} })")
+            "let d=''; process.stdin.on('data',c=>d+=c); process.stdin.on('end',()=>{ try{process.stdout.write(JSON.parse(d).access_token||'')}catch{} })") \
+            || ACCESS_TOKEN=""
           if [ -z "$ACCESS_TOKEN" ]; then
-            echo "Nao foi possivel obter access_token — teardown de sessao global pulado"
+            echo "::warning::Nao foi possivel obter access_token — teardown de sessao global pulado"
             exit 0
           fi
           curl --proto '=https' --tlsv1.2 -sf -X POST \
@@ -321,7 +328,7 @@ jobs:
             -H "Authorization: Bearer ${ACCESS_TOKEN}" \
             -H "Content-Type: application/json" \
             && echo "teardown logout global OK" \
-            || echo "teardown logout global falhou - nao bloqueia CI"
+            || echo "::warning::teardown logout global falhou - nao bloqueia CI"
 
       # E83: alerta da suite logada, no mesmo mecanismo da E44 (db-live-guard.yml) -- um
       # marcador invisivel identifica a CAUSA (o conjunto de testes que falhou) e o alerta
