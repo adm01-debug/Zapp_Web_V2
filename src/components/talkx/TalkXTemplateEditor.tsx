@@ -588,7 +588,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, initialTtab
             <PrimaryButton
               icon={saving ? undefined : Check}
               onClick={save}
-              className={cn((!eName.trim() || !eContent.trim() || saving) && 'opacity-50 pointer-events-none')}
+              disabled={!eName.trim() || !eContent.trim() || saving}
             >
               {saving ? 'Salvando…' : 'Salvar template'}
             </PrimaryButton>
