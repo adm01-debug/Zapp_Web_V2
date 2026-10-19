@@ -632,3 +632,16 @@ Referência: issue #888 (`[types-sync]`, 89 comentários), fechada em 2026-10-01
 ### Projeto legado
 
 - `zapp-web` (ID: `prj_OsErjUqsrMbwwC7S1LVfawmNgEce`) — **não é o projeto atual**. A ser pausado/deletado pelo Joaquim após confirmar que não tem tráfego real.
+
+## CI sem desperdício
+
+Princípios de custo-benefício do CI. A cada mudança de workflow, avaliar:
+
+- **Cache agressivo:** `bun.lock` → cache Bun; `postgres:17-alpine` como serviço único compartilhado (E47). Nunca `docker pull` sem cache.
+- **Sem reruns desnecessários:** `concurrency.cancel-in-progress` nos workflows de PR; `paths:` restritivos para não disparar workflow a cada push irrelevante (ex.: `'!scripts/db-audit/grants-baseline.json'` em `types-sync.yml`).
+- **Shards de teste:** Unit Tests em 3 shards paralelos; E2E por browser isolado. Nunca rodar tudo em sequência.
+- **Timeouts explícitos:** todo job tem `timeout-minutes`. Sem timeout = runner preso custa crédito.
+- **Artifacts só quando precisar:** `retention-days: 3` para artifacts de debug; `14` para candidatos de sync. Sem artifact = sem custo de armazenamento.
+- **Agendamentos escalonados:** `49 5 * * 1` (types-sync), `13 6 * * *` (db-live-guard), `30 9 * * *` (CodeQL — GA62) — nunca dois jobs pesados no mesmo minuto.
+- **`continue-on-error: true`** em passos de pré-pull e login que não bloqueiam. Falha de infra não bloqueia CI.
+- **Reaproveitar outputs de job:** `needs.ler-banco.outputs.*` em vez de reconsultar o banco duas vezes (GA21).

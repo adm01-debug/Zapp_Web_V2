@@ -373,6 +373,12 @@ jobs:
             echo "awaiting_apply=false" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: GA99 — limpar DESTINO_URL do GITHUB_ENV apos Gate 1b
+        if: always()
+        run: |
+          printf 'DESTINO_URL=\n' >> "$GITHUB_ENV"
+          printf 'PGSSLMODE=\n' >> "$GITHUB_ENV"
+
   gates-e-pr:
     name: Gates e PR de sincronizacao
     needs: [preflight, ler-banco]

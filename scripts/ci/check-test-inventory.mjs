@@ -302,6 +302,14 @@ export function suitesNodeOrfas() {
   return orfaosNode(suitesNodeNoDisco(), padroesNodeDosWorkflows());
 }
 
+// GA73: sentido inverso — padrões em run: que não casam com nenhum arquivo no disco.
+// Cobre suites renomeadas ou apagadas sem atualizar o YAML correspondente.
+export function padroesYamlSemArquivo() {
+  const padroes = padroesNodeDosWorkflows();
+  const suitesNoDisco = suitesNodeNoDisco();
+  return padroes.filter((padrao) => !suitesNoDisco.some((f) => casaPadrao(f, padrao)));
+}
+
 // ── 4. Detectar órfãos ────────────────────────────────────────────────────────
 
 /**

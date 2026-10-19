@@ -80,7 +80,7 @@ const DESTINO_URL_POR_JOB = {
   'db-migrate.yml:preflight': null,
   'db-migrate.yml:apply': 'producao-ddl',
   'targeted-ledger-evidence.yml:export-encrypted-evidence': 'db-ledger-evidence',
-  'types-sync.yml:sync': 'banco-leitura',
+  'types-sync.yml:ler-banco': 'banco-leitura',
 };
 
 // W62: segredos de deploy. Todos vivem (ou vao viver) so em producao-edge-functions.

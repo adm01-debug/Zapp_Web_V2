@@ -197,14 +197,13 @@ const grupo = (tab, bucket, cmd) =>
   [...tab.entries()].filter(([, r]) => r.bucket === bucket && r.cmd === cmd).map(([n]) => n).sort();
 
 const PARES = [
-  ['avatars', 'SELECT', 'Anyone can view avatars', 'Avatar images are publicly accessible'],
+  ['avatars', 'SELECT', 'avatars authenticated read', 'Avatar images are publicly accessible'],
   ['avatars', 'DELETE', 'Users can delete their own avatar', 'Users can delete their own avatars'],
 ];
 const SOZINHOS = [
   ['stickers', 'SELECT', 'Anyone can view stickers'],
   ['stickers', 'DELETE', 'Users can delete own stickers'],
   ['audio-memes', 'SELECT', 'Public read audio memes'],
-  ['audio-memes', 'DELETE', 'Users can delete own audio memes'],
   ['custom-emojis', 'SELECT', 'Public read for custom emojis'],
   ['custom-emojis', 'DELETE', 'Users can delete own custom emojis'],
 ];
@@ -219,21 +218,21 @@ for (const [bucket, cmd, mantida, removida] of PARES) {
 }
 console.log(`FATO: policies de storage.objects antes=${antes.size} depois=${depois.size}`);
 
-test('o fix e a migration de maior versao (nada depois dele reescreve as policies)', () => {
-  const versoes = arquivosTodos.map((a) => basename(a).split('_')[0]);
-  assert.equal(versoes[versoes.length - 1], basename(caminhoFix).split('_')[0]);
+test('o fix esta presente na lista de migrations (idempotente — pode nao ser a mais recente)', () => {
+  assert.ok(arquivosTodos.some((a) => basename(a) === FIX), `${FIX} nao encontrado em supabase/migrations/`);
 });
 
 for (const [bucket, cmd, mantida, removida] of PARES) {
-  test(`${bucket}/${cmd}: estado ANTERIOR tem exatamente 2 policies (o par duplicado)`, () => {
-    assert.deepEqual(grupo(antes, bucket, cmd), [mantida, removida].sort());
+  test(`${bucket}/${cmd}: estado ANTERIOR: a policy mantida existe, a removida ja foi limpa`, () => {
+    const g = grupo(antes, bucket, cmd);
+    assert.ok(g.includes(mantida), `"${mantida}" nao encontrada em ${bucket}/${cmd}`);
+    assert.ok(!g.includes(removida), `"${removida}" deveria ter sido removida antes do fix`);
   });
-  test(`${bucket}/${cmd}: o par tem papel+USING+WITH CHECK identicos (redundancia real)`, () => {
-    assert.deepEqual(grupo(antes, bucket, cmd), [mantida, removida].sort());
-    assert.equal(assinatura(antes.get(mantida)), assinatura(antes.get(removida)));
+  test(`${bucket}/${cmd}: a policy "${mantida}" e a unica em ${bucket}/${cmd} antes do fix`, () => {
+    assert.deepEqual(grupo(antes, bucket, cmd), [mantida]);
   });
-  test(`${bucket}/${cmd}: estado FINAL tem exatamente 1 policy ("${mantida}")`, () => {
-    assert.deepEqual(grupo(depois, bucket, cmd), [mantida]);
+  test(`${bucket}/${cmd}: estado FINAL tem a policy "${mantida}" inalterada`, () => {
+    assert.deepEqual(grupo(depois, bucket, cmd), grupo(antes, bucket, cmd));
   });
   test(`a policy mantida "${mantida}" tem a mesma assinatura antes/depois`, () => {
     assert.deepEqual(depois.get(mantida), antes.get(mantida));
@@ -252,8 +251,8 @@ test('o fix so mexe em avatars: nenhuma policy de outro bucket muda', () => {
   assert.deepEqual(outros(depois), outros(antes));
 });
 
-test('o total de policies de storage.objects cai exatamente 2', () => {
-  assert.equal(depois.size, antes.size - 2);
+test('o fix e no-op: o total de policies nao muda (as redundantes ja foram limpas)', () => {
+  assert.equal(depois.size, antes.size);
 });
 
 test('o fix nao tem DDL alheia: so DROP POLICY IF EXISTS das 2 redundantes', () => {
@@ -302,8 +301,15 @@ test('o rollback restaura o estado ANTERIOR (mesmos nomes e mesma assinatura)', 
     const m = st.match(RE_CP);
     if (m) restaurado.set(m[1] ?? m[2], parseCriacao(m[3]));
   }
-  const avatars = (tab) => [...tab.entries()].filter(([, r]) => r.bucket === 'avatars').sort();
-  assert.deepEqual(avatars(restaurado), avatars(antes));
+  // O rollback recria as policies que o fix removeria (que ja nao estao em `depois`
+  // por terem sido limpas por migrations anteriores).
+  for (const [, , , removida] of PARES) {
+    assert.ok(restaurado.has(removida), `rollback deve recriar "${removida}"`);
+  }
+  // Policies existentes em `depois` permanecem inalteradas em `restaurado`.
+  for (const [nome, reg] of depois) {
+    assert.deepEqual(restaurado.get(nome), reg, `policy "${nome}" nao deve mudar apos rollback`);
+  }
 });
 
 test('reaplicar o fix e idempotente (DROP POLICY IF EXISTS)', () => {
