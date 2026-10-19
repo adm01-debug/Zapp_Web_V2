@@ -175,7 +175,7 @@ describe('settings-guard: perimetro conforme o baseline', () => {
       r.out.includes('branch_protection_main.strict'),
       `nao apontou o campo divergente:\n${r.out}`,
     );
-    assert.ok(r.out.includes('Restaurado'), `nao tentou restaurar o que sabe restaurar:\n${r.out}`);
+    assert.ok(!r.out.includes('Restaurado'), `guard nao deveria tentar restaurar (GA77):\n${r.out}`);
   });
 
   it('required_status_checks: null e regressao (checks apagados), nunca ponto cego', () => {
@@ -286,25 +286,27 @@ describe('settings-guard: ponto cego (E95, W04, W05)', () => {
     assert.ok(r.out.includes('Issue #42 atualizada com novo comentario'), `causa nova sem comentario:\n${r.out}`);
   });
 
-  it('W05: divergencia real com restauracao EFETIVA sempre comenta (mesmo com dedupe)', () => {
+  it('W05: divergencia real dentro da janela e suprimida pelo dedupe (sem restauracao)', () => {
+    // GA77: guard nao restaura mais. Divergencia dentro de 6 h aplica dedupe normal.
     const r = rodarGuard('regressao', { issue: true, ultimoMarcador: MARCADOR_REGRESSAO, idadeMs: 60_000 });
     assert.equal(r.code, 1, r.out);
-    assert.ok(r.out.includes('Restaurado:'), `a restauracao precisa ter acontecido:\n${r.out}`);
-    assert.ok(r.out.includes('Issue #42 atualizada com novo comentario'), `restauracao sem registro:\n${r.out}`);
+    assert.ok(!r.out.includes('Restaurado'), `guard nao deveria tentar restaurar (GA77):\n${r.out}`);
+    assert.ok(r.out.includes('Dedupe:'), `dedupe nao foi aplicado dentro da janela:\n${r.out}`);
+    assert.ok(!r.out.includes('Issue #42 atualizada'), `comentou mesmo dentro da janela:\n${r.out}`);
   });
 
-  it('W05: restauracao que FALHOU nao forca comentario — o dedupe de 6 h vale', () => {
-    // Um PATCH 403 recorrente (token sem escopo) comentaria a cada 6 h se a tentativa
-    // falha contasse como "restaurei" (Devin, PR #1920).
+  it('W05: mesma causa divergente fora da janela (> 6 h) comenta de novo', () => {
+    // Apos 6 h o guard deve renovar o comentario — sem restaurar, so registrar.
+    const SEIS_HORAS_MS = 6 * 60 * 60 * 1000;
     const r = rodarGuard('regressao', {
       issue: true,
       ultimoMarcador: MARCADOR_REGRESSAO,
-      idadeMs: 60_000,
-      patchStatus: 403,
+      idadeMs: SEIS_HORAS_MS + 1000,
     });
     assert.equal(r.code, 1, r.out);
-    assert.ok(!r.out.includes('Restaurado:'), `declarou restaurado um PATCH que falhou:\n${r.out}`);
-    assert.ok(r.out.includes('Dedupe'), `tentativa falha forcou comentario repetido:\n${r.out}`);
+    assert.ok(!r.out.includes('Restaurado'), `guard nao deveria tentar restaurar (GA77):\n${r.out}`);
+    assert.ok(r.out.includes('Issue #42 atualizada com novo comentario'), `fora da janela e nao comentou:\n${r.out}`);
+    assert.ok(!r.out.includes('Dedupe'), `dentro da janela indevidamente:\n${r.out}`);
   });
 });
 
