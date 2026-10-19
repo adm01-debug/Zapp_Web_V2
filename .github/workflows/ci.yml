@@ -338,7 +338,7 @@ jobs:
       # algum. Sem esta linha os PRs passavam com E2E VERDE sem rodar spec alguma do
       # mapa (#463 / E75).
       - name: 🧪 Run Playwright E2E (chromium + firefox + webkit, sem autenticação)
-        run: bun run test:e2e -- --project=chromium --project=chromium-theme --project=firefox-auth --project=webkit-auth --project=chromium-mapa --project=chromium-contacts-visual --project=chromium-a11y --project=chromium-email-navy --project=firefox-email-navy --project=webkit-email-navy
+        run: bun run test:e2e -- --project=chromium --project=chromium-theme --project=firefox-auth --project=webkit-auth --project=chromium-mapa --project=chromium-contacts-visual --project=chromium-a11y --project=chromium-email-navy --project=firefox-email-navy --project=webkit-email-navy --project=chromium-onboarding-dispensar --project=chromium-multiplix-responsivo --project=chromium-tarefas-linha-de-base
         env:
           CI: true
 
@@ -409,9 +409,9 @@ jobs:
             echo "map_changed=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          # W48: busca apenas os últimos 50 commits da base — suficiente para achar o merge-base.
-          git fetch origin "${BASE_REF}" --depth=50 --quiet
-          changed="$(git diff --name-only "origin/${BASE_REF}...HEAD")"
+          # W48: busca commits da base para achar o merge-base; usa --unshallow se necessário.
+          git fetch origin "${BASE_REF}" --depth=500 --quiet || git fetch origin "${BASE_REF}" --unshallow --quiet || true
+          changed="$(git diff --name-only "origin/${BASE_REF}...HEAD" 2>/dev/null || echo "")"
           printf 'Arquivos alterados no PR:\n%s\n' "$changed"
           if printf '%s\n' "$changed" | grep -Eq '^(src/lib/mapbox|src/components/inbox/location-picker/)'; then
             echo "map_changed=true" >> "$GITHUB_OUTPUT"
@@ -468,8 +468,8 @@ jobs:
             echo "proxy_changed=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          git fetch origin "${BASE_REF}" --depth=50 --quiet
-          changed="$(git diff --name-only "origin/${BASE_REF}...HEAD")"
+          git fetch origin "${BASE_REF}" --depth=500 --quiet || git fetch origin "${BASE_REF}" --unshallow --quiet || true
+          changed="$(git diff --name-only "origin/${BASE_REF}...HEAD" 2>/dev/null || echo "")"
           if printf '%s\n' "$changed" | grep -Eq '^(infrastructure/preview-egress-proxy/|\.github/toolchain\.json|\.github/workflows/ci\.yml)'; then
             echo "proxy_changed=true" >> "$GITHUB_OUTPUT"
           else

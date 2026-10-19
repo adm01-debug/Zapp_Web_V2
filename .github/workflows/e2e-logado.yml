@@ -84,7 +84,7 @@ jobs:
           # talkx, conversation, catalog. Cada grupo roda `setup` de forma
           # independente (login proprio, sem compartilhar storageState cross-job).
           - name: cross-browser-autenticado
-            projects: --project=setup --project=firefox-talkx --project=webkit-talkx --project=firefox-conversation --project=webkit-conversation --project=firefox-catalog --project=webkit-catalog
+            projects: --project=setup --project=chromium-talkx --project=firefox-talkx --project=webkit-talkx --project=firefox-conversation --project=webkit-conversation --project=firefox-catalog --project=webkit-catalog
             workers: 2
             timeout_minutes: 25
           # Grupo 3: deslogados nos browsers principais + mapa (sessao FALSA,
