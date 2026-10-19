@@ -152,7 +152,7 @@ export default defineConfig({
       // para que as specs do mapa entrem EXPLICITAMENTE no `e2e-logado.yml` sem
       // arrastar a dependência do login real (etapa E75 do plano MAPA).
       name: 'chromium-mapa',
-      testMatch: [/location-picker\.spec\.ts/, /contact-address\.spec\.ts/, /contact-map-pin\.spec\.ts/],
+      testMatch: ['**/location-picker.spec.ts', '**/contact-address.spec.ts', '**/contact-map-pin.spec.ts'],
       use: { ...devices['Desktop Chrome'] },
     },
     {

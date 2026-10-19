@@ -146,9 +146,17 @@ jobs:
         run: bun install --frozen-lockfile --ignore-scripts
 
       - name: 🧩 Run Node CI scripts tests
-        run: node --test scripts/ci/*.unit.mjs scripts/db-audit/*.unit.mjs scripts/vercel/*.unit.mjs
+        run: node --test --experimental-coverage --coverage-dir=coverage-report scripts/ci/*.unit.mjs scripts/db-audit/*.unit.mjs scripts/vercel/*.unit.mjs
         env:
           CI: true
+
+      - name: 📈 Upload coverage report
+        if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coverage-report
+          path: coverage-report/
+          retention-days: 7
 
   build:
     name: 🏗️ Build
@@ -327,10 +335,9 @@ jobs:
           path: ~/.cache/ms-playwright
           key: pw-cfw-${{ hashFiles('bun.lock') }}-${{ runner.os }}
 
-      # Projetos "chromium", "firefox-auth" e "webkit-auth" exercitam auth.spec.ts
-      # deslogado (sem E2E_TEST_EMAIL/E2E_TEST_PASSWORD). Workflows de PR não podem
-      # referenciar esses secrets (scripts/ci/check-pr-workflow-secrets.mjs), então
-      # o login real roda em .github/workflows/e2e-logado.yml, depois do merge na main.
+      # Projeto "chromium" (+ variantes deslogadas) exercita auth.spec.ts sem secret.
+      # firefox-auth/webkit-auth são cobertura cross-browser de auth: só rodam no
+      # e2e-logado.yml (pós-merge na main) — E88 proíbe listá-los aqui.
       # chromium-mapa (E71/E72 picker, E73 cadastro, E74 mapa/pino) entra AQUI também:
       # ele já roda no e2e-logado.yml (pós-merge), mas é deslogado — o projeto não
       # declara `setup` nem `storageState`; as specs autenticam por sessão FALSA
@@ -338,7 +345,7 @@ jobs:
       # algum. Sem esta linha os PRs passavam com E2E VERDE sem rodar spec alguma do
       # mapa (#463 / E75).
       - name: 🧪 Run Playwright E2E (chromium + firefox + webkit, sem autenticação)
-        run: bun run test:e2e -- --project=chromium --project=chromium-theme --project=firefox-auth --project=webkit-auth --project=chromium-mapa --project=chromium-contacts-visual --project=chromium-a11y --project=chromium-email-navy --project=firefox-email-navy --project=webkit-email-navy --project=chromium-onboarding-dispensar --project=chromium-multiplix-responsivo --project=chromium-tarefas-linha-de-base
+        run: bun run test:e2e -- --project=chromium --project=chromium-theme --project=chromium-mapa --project=chromium-contacts-visual --project=chromium-a11y --project=chromium-email-navy --project=firefox-email-navy --project=webkit-email-navy --project=chromium-onboarding-dispensar --project=chromium-multiplix-responsivo --project=chromium-tarefas-linha-de-base
         env:
           CI: true
           CAPTURA_DIR: /tmp/captura

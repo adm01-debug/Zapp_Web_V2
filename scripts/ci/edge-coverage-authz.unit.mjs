@@ -66,6 +66,8 @@ export const TEST_FILES = [
 export const TESTES_AUTH_FORA_DA_MEDICAO = [
   'ai-auth-service-path.test.ts',
   'ai-audio-authz-runtime.test.ts',
+  'gmail-reauth-required.test.ts',
+  'require-auth-profile-active.test.ts',
   'webhook-auth-gates.test.ts',
   'webhook-auth-shadow.test.ts',
 ];
@@ -74,6 +76,8 @@ export const SHARED_DIR_REL = 'supabase/functions/_shared';
 export const TESTS_DIR_REL = 'supabase/functions/_shared/__tests__';
 export const DOCS_REL = 'docs/audits/edge-functions-authz-coverage.md';
 export const DENO_CONFIG_REL = 'scripts/ci/deno.json';
+
+const denoDisponivel = !spawnSync('deno', ['--version']).error;
 
 /**
  * Só casa um `SF:` cujo caminho COMPLETO termina em `/_shared/<helper>` (o que
@@ -365,7 +369,7 @@ function medicaoUmaVez() {
   return medicaoCompartilhada;
 }
 
-test('N217: medição do zero via deno agrega >= 50% e inclui os 5 helpers', () => {
+test('N217: medição do zero via deno agrega >= 50% e inclui os 5 helpers', { skip: !denoDisponivel }, () => {
   const { resumo, statusTestes, saidaTestes } = medicaoUmaVez();
   const falhasStatus = avaliarStatusTestes(statusTestes, saidaTestes);
   assert.deepEqual(falhasStatus, [], `teste vermelho invalida a medição: ${falhasStatus.join('; ')}`);
@@ -377,7 +381,7 @@ test('N217: medição do zero via deno agrega >= 50% e inclui os 5 helpers', () 
   }
 });
 
-test('N217: docs bate com medição fresca e segunda execução é idêntica', () => {
+test('N217: docs bate com medição fresca e segunda execução é idêntica', { skip: !denoDisponivel }, () => {
   const fresca = medirDoZero();
   const relatorio = renderRelatorio(fresca.resumo);
   assert.equal(

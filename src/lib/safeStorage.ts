@@ -1,9 +1,7 @@
 /**
  * Safe localStorage wrapper that handles exceptions (quota exceeded, private mode, etc.)
  */
-import { getLogger } from '@/lib/logger';
-
-const log = getLogger('SafeStorage');
+import { log } from '@/lib/logger';
 
 export function safeGetItem(key: string): string | null {
   try {
