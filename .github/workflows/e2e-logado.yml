@@ -50,42 +50,49 @@ jobs:
   e2e-logado:
     name: 🎭 E2E logado (Playwright)
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: ${{ matrix.timeout_minutes }}
     if: github.event.repository.fork == false
     # GA46: Scorecard #40 (DangerousWorkflow) dispensado — fork bloqueado no nível do job pelo `if:` acima (GA08)
     # E83: a suite logada (173 testes) estourava o timeout do job unico e a run
     # inteira caia como "cancelled". A matriz abaixo divide os mesmos 15 projetos
-    # em 3 grupos, cada um com seu proprio relogio de 15 min: se um grupo ficar
-    # lento, os outros terminam independentes. fail-fast: false para um grupo
-    # vermelho nao cancelar os demais. A uniao dos 3 grupos e EXATAMENTE a lista
-    # original (nem mais, nem menos) -- travado em e2e/quarantine.unit.mjs.
+    # em 4 grupos, cada um com seu proprio relogio (timeout_minutes): se um grupo
+    # ficar lento, os outros terminam independentes. fail-fast: false para um grupo
+    # vermelho nao cancelar os demais. A uniao UNICA dos 4 grupos e EXATAMENTE a
+    # lista original (nem mais, nem menos) -- travado em e2e/quarantine.unit.mjs.
+    # GA12: o grupo `authenticated` original foi dividido em `chromium-autenticado`
+    # (setup + chromium, 30 min) e `cross-browser-autenticado` (firefox/webkit, 25
+    # min). Cada grupo autentica de forma independente (setup proprio por grupo, sem
+    # compartilhamento de storageState entre jobs da matriz).
     strategy:
       fail-fast: false
       matrix:
         include:
-          # Grupo 1: autenticados -- o `setup` gera o storageState e os 8
-          # projetos com `dependencies: ['setup']` o consomem. Rodam no MESMO
-          # job para o login real acontecer uma vez so (sem concorrencia).
-          - name: authenticated
-            projects: --project=setup --project=chromium-e2e-core --project=chromium-authenticated --project=firefox-talkx --project=webkit-talkx --project=firefox-conversation --project=webkit-conversation --project=firefox-catalog --project=webkit-catalog
-            # A05: este grupo carrega 205 dos 248 testes do workflow (172 deles no
-            # `chromium-authenticated`, que e' o projeto-catch-all). Com o pool padrao
-            # do CI (`workers: 1` no playwright.config.ts) a suite roda ~9,8 s por
-            # teste, ou seja ~33 min -- muito acima dos 15 min do job, e e' por isso
-            # que as runs logadas sao canceladas desde 02/10. 4 e' o numero de vCPU do
-            # runner `ubuntu-latest` e deixa a maior parte do tempo do teste em espera
-            # de browser (I/O), nao em CPU. Os 2 grupos deslogados sao pequenos
-            # (16 e 27 testes) e seguem com 1, sem mudanca de comportamento.
+          # Grupo 1: Chromium autenticado -- `setup` gera o storageState e os
+          # projetos chromium-e2e-core e chromium-authenticated o consomem.
+          # chromium-authenticated e' o projeto catch-all com 172+ testes.
+          # 30 min para acomodar o grupo mais lento com 4 workers.
+          - name: chromium-autenticado
+            projects: --project=setup --project=chromium-e2e-core --project=chromium-authenticated
             workers: 4
-          # Grupo 2: deslogados nos browsers principais + mapa (sessao FALSA,
+            timeout_minutes: 30
+          # Grupo 2: Firefox e WebKit autenticados -- browsers alternativos para
+          # talkx, conversation, catalog. Cada grupo roda `setup` de forma
+          # independente (login proprio, sem compartilhar storageState cross-job).
+          - name: cross-browser-autenticado
+            projects: --project=setup --project=firefox-talkx --project=webkit-talkx --project=firefox-conversation --project=webkit-conversation --project=firefox-catalog --project=webkit-catalog
+            workers: 2
+            timeout_minutes: 25
+          # Grupo 3: deslogados nos browsers principais + mapa (sessao FALSA,
           # sem secrets de login).
           - name: deslogado-principal
             projects: --project=chromium-mapa --project=firefox-auth --project=webkit-auth
             workers: 1
-          # Grupo 3: telefonia nos 3 browsers (sessao FALSA, sem secrets).
+            timeout_minutes: 15
+          # Grupo 4: telefonia nos 3 browsers (sessao FALSA, sem secrets).
           - name: deslogado-secundario
             projects: --project=chromium-telefonia --project=firefox-telefonia --project=webkit-telefonia
             workers: 1
+            timeout_minutes: 15
     # E83: as permissoes de escrita ficam no JOB, nunca no nivel do workflow -- o zizmor
     # reprova `write` no topo (excessive-permissions, severidade alta) porque o escopo
     # vale para todos os jobs. Foi o que reprovou o merge do #1784.
@@ -327,11 +334,11 @@ jobs:
           TITULO: "[e2e-logado] Suíte logada quebrada na main"
         with:
           script: |
-            const { marcadorDe, nomesDeTestResults, corpoDe } = await import(
+            const { marcadorDe, nomesDeTestResults, corpoDe, tituloDe } = await import(
               `${process.env.GITHUB_WORKSPACE}/scripts/ci/marcador-specs.mjs`
             );
-            const titulo = process.env.TITULO;
             const nomes = nomesDeTestResults('test-results');
+            const titulo = tituloDe(nomes);
             const marcador = marcadorDe(nomes);
             const owner = context.repo.owner;
             const repo = context.repo.repo;
@@ -368,11 +375,8 @@ jobs:
       - name: ✅ Fechar a issue quando a suite volta
         if: success()
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        env:
-          TITULO: "[e2e-logado] Suíte logada quebrada na main"
         with:
           script: |
-            const titulo = process.env.TITULO;
             const owner = context.repo.owner;
             const repo = context.repo.repo;
             const { data: abertas } = await github.rest.issues.listForRepo({
