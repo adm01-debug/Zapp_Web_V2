@@ -51,7 +51,9 @@ export function useTeamMessages(conversationId: string | null, onEvent?: (event:
   const queryClient = useQueryClient();
   const markedRef = useRef<string | null>(null);
   const onEventRef = useRef(onEvent);
-  onEventRef.current = onEvent;
+  useEffect(() => {
+    onEventRef.current = onEvent;
+  });
 
   const query = useQuery({
     queryKey: queryKeys.messages(conversationId),

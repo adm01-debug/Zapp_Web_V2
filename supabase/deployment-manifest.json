@@ -586,8 +586,8 @@
     },
     {
       "path": "supabase/functions/evolution-api/index.ts",
-      "bytes": 14,
-      "sha256": "3f6edb0b55c7d40e492e6341c35f52aefcb34f31c7d149491d385b5c078f069d"
+      "bytes": 89020,
+      "sha256": "9d0b0c073889f35d5359ebaef9b05c1a9e92596674628bc7c7eaa978b611ba69"
     },
     {
       "path": "supabase/functions/evolution-sync/index.ts",
@@ -1656,8 +1656,24 @@
       "name": "evolution-api",
       "entrypoint": "supabase/functions/evolution-api/index.ts",
       "verify_jwt": true,
-      "source_sha256": "7ec02de6298a693cc0c5c645e4e94602c61b5a91efb2a931109d2538b63d41cd",
+      "source_sha256": "ff715acb61276af69d9aa2ae47d3bacbba62fc8a1b673d57ed959e0187cebd4d",
       "source_files": [
+        "supabase/functions/_shared/cors-origins.ts",
+        "supabase/functions/_shared/evolution-api-proxy.ts",
+        "supabase/functions/_shared/evolution-control-authz.ts",
+        "supabase/functions/_shared/evolution-go-routes.ts",
+        "supabase/functions/_shared/evolution-instance-token.ts",
+        "supabase/functions/_shared/evolution-send.ts",
+        "supabase/functions/_shared/evolution-session-routes.ts",
+        "supabase/functions/_shared/evolution-sync-actions.ts",
+        "supabase/functions/_shared/evolution-types.ts",
+        "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/media-egress.ts",
+        "supabase/functions/_shared/rate-limit-log.ts",
+        "supabase/functions/_shared/request-policy.ts",
+        "supabase/functions/_shared/schemas.ts",
+        "supabase/functions/_shared/ssrf.ts",
+        "supabase/functions/_shared/validation.ts",
         "supabase/functions/evolution-api/index.ts"
       ]
     },
@@ -2502,5 +2518,5 @@
       ]
     }
   ],
-  "manifest_sha256": "a0a5cdffc587ab9aa6ba3718dafa9a092011e5e3e6b03b1c9509ed6efafb20e6"
+  "manifest_sha256": "ff96405e33ba78854bca0e5ddab80e64c9f13dc376affac721d1a4f6c518c1fb"
 }
