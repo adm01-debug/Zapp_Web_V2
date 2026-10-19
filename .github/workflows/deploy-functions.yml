@@ -91,7 +91,8 @@ permissions:
 # funcao: o passo "Serializar escopo TODAS contra deploys por funcao" faz essa
 # exclusao dentro do job (a concurrency do GitHub nao a exprime).
 concurrency:
-  group: deploy-edge-functions-${{ inputs.function_name || 'all' }}
+  # GA30: rollback usa grupo próprio para que um push automático não o cancele.
+  group: ${{ inputs.rollback_to_last_success == true && 'deploy-edge-functions-rollback' || format('deploy-edge-functions-{0}', inputs.function_name || 'all') }}
   cancel-in-progress: false
 
 env:
@@ -139,10 +140,13 @@ jobs:
             exit 1
           fi
 
-      # W66: resolve o SHA do ultimo Deployment bem-sucedido do environment
-      # producao-edge-functions quando rollback_to_last_success=true. O resultado
-      # fica em RESOLVED_SOURCE_REF e e usado no Checkout e nos passos seguintes
-      # em lugar de inputs.source_ref.
+      # GA30: resolve o SHA do ultimo Deployment bem-sucedido do environment
+      # producao-edge-functions quando rollback_to_last_success=true, pulando o
+      # SHA atual (que é o que está em produção agora — precisamos de um anterior).
+      # AVISO: rollback de edge com migration aplicada NÃO reverte o banco.
+      # Se a migration for incompatível com o código antigo, abra um PR de revert
+      # da migration ANTES de disparar o rollback.
+      # O resultado fica em RESOLVED_SOURCE_REF e é usado no Checkout seguinte.
       - name: Resolver ref para rollback automatico
         if: inputs.rollback_to_last_success == true
         env:
