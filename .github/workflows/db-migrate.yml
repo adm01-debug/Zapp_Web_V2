@@ -1,5 +1,5 @@
 # docs:
-#   gatilho: dispatch na main, com o job gateado por environment
+#   gatilho: dispatch na main, com o apply gateado por environment
 #   prova: dry-run obrigatorio e apply com hash estrutural da migration
 #   falha: nada e aplicado; o dry-run precisa passar antes
 #   avisa: operador que disparou e a issue de ops
@@ -14,6 +14,15 @@
 # prova apenas que o schema public nao mudou entre dry-run e apply. Para
 # aplicar, o operador confirma o hash integral do dry-run; o workflow consulta
 # o runtime novamente para fechar a janela TOCTOU.
+#
+# GA13 (2026-10-19): os dois jobs originais (preflight + apply embutidos num
+# job unico gateado por producao-ddl) foram separados:
+#   preflight — sem environment gate; roda checkout, identidade, ledger,
+#               runtime e dry-run; o operador ve o output ANTES de aprovar.
+#   apply     — environment: producao-ddl; re-valida identidade e runtime
+#               (fechamento TOCTOU) e entao aplica.
+# Prerequisito: DESTINO_URL deve ser secret de repositorio (alem de estar
+# em producao-ddl), pois o job preflight nao herda segredos de environment.
 #
 # ROTA ATUAL (decisao de 2026-09-26, ver CLAUDE.md secao "Decisoes de
 # 2026-09-26"): com varias sessoes paralelas trabalhando, o DDL do dia a dia
@@ -68,15 +77,16 @@ env:
   OFFICIAL_PROJECT_REF: 'tnnnlkbymytvtqngbbqh'
 
 jobs:
-  migrate:
-    name: Migration oficial com preflight
-    # Aprovacao humana obrigatoria antes de qualquer DDL tocar producao. Soma-se
-    # ao dry-run + confirmacao de hash; nao substitui nenhum dos dois.
-    environment: producao-ddl
+  preflight:
+    name: Preflight e dry-run
+    # GA13: sem environment gate — o operador ve o output do dry-run ANTES
+    # de aprovar o apply. Requer DESTINO_URL como secret de repositorio.
     runs-on: ubuntu-24.04
-    # E66 (auditoria de 01/10/2026): 25 min nao cobriam preflight + dry-run +
-    # apply + as validacoes de ledger/runtime do file completo.
-    timeout-minutes: 45
+    timeout-minutes: 25
+    outputs:
+      needs_apply: ${{ steps.check.outputs.needs_apply }}
+      apply_bundle: ${{ steps.check.outputs.apply_bundle }}
+      target_name: ${{ steps.check.outputs.target_name }}
     steps:
       - name: ✋ Somente executa na main
         if: github.ref != 'refs/heads/main'
@@ -171,7 +181,7 @@ jobs:
           NODE
 
       - name: Exigir alvo unico ou bundle atomico conhecido
-        id: preflight
+        id: check
         # E66: repeticao SO de falha de conexao, e SO aqui -- este passo e somente
         # leitura (SELECT do ledger). O apply nunca define a variavel: repetir o
         # push seria reaplicar DDL.
@@ -239,7 +249,7 @@ jobs:
           echo "OK: estado da migration alvo confirmado: version=$TARGET_VERSION needs_apply=$NEEDS_APPLY"
 
       - name: Provar paridade integral quando a versao ja existe
-        if: steps.preflight.outputs.needs_apply == 'false'
+        if: steps.check.outputs.needs_apply == 'false'
         run: node scripts/db-audit/check-migration-drift.mjs
 
       - name: Provar estado runtime antes do push
@@ -248,8 +258,8 @@ jobs:
           CONFIRM_RUNTIME_SHA256: ${{ inputs.confirm_runtime_sha256 }}
           APPLY: ${{ inputs.apply }}
           TARGET_VERSION: ${{ inputs.migration_version }}
-          NEEDS_APPLY: ${{ steps.preflight.outputs.needs_apply }}
-          APPLY_BUNDLE: ${{ steps.preflight.outputs.apply_bundle }}
+          NEEDS_APPLY: ${{ steps.check.outputs.needs_apply }}
+          APPLY_BUNDLE: ${{ steps.check.outputs.apply_bundle }}
         run: |
           # E62 (auditoria de 01/10/2026): os 12 contratos de runtime sairam daqui para
           # scripts/db-audit/contracts/<versao>.sql, executados pelo runner generico abaixo.
@@ -261,10 +271,10 @@ jobs:
           RUNTIME_JSON="$RUNTIME" node scripts/db-audit/validate-runtime-proof.mjs
 
       - name: Dry-run oficial do Supabase CLI
-        if: steps.preflight.outputs.needs_apply == 'true'
+        if: steps.check.outputs.needs_apply == 'true'
         env:
           TARGET_VERSION: ${{ inputs.migration_version }}
-          APPLY_BUNDLE: ${{ steps.preflight.outputs.apply_bundle }}
+          APPLY_BUNDLE: ${{ steps.check.outputs.apply_bundle }}
         run: |
           set -euo pipefail
           supabase db push --include-all --skip-vault --dry-run --yes 2>&1 | tee dry-run.out
@@ -274,19 +284,108 @@ jobs:
             node scripts/db-audit/dry-run-plan.mjs --arquivo dry-run.out --esperado "$TARGET_VERSION"
           fi
 
+  apply:
+    name: Apply com aprovacao humana
+    needs: preflight
+    # GA13: somente o apply e gateado por environment. O operador ja viu o
+    # output do dry-run no job preflight antes de clicar "Approve" aqui.
+    # Se apply=false (dry-run apenas), este job nao roda.
+    if: inputs.apply == true && needs.preflight.outputs.needs_apply == 'true'
+    environment: producao-ddl
+    runs-on: ubuntu-24.04
+    # E66: 45 min originais eram para um job unico. Com o split, 20 min
+    # cobrem setup + re-validacao + apply + pos-apply do job de apply.
+    timeout-minutes: 20
+    steps:
+      - name: Checkout confiavel da main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Provar checkout imutavel
+        run: test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+
+      - name: Setup Supabase CLI ${{ env.SUPABASE_CLI_VERSION }}
+        uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3.0.1
+        with:
+          version: ${{ env.SUPABASE_CLI_VERSION }}
+
+      - name: Instalar cliente PostgreSQL
+        run: bash scripts/ci/install-postgresql-client.sh
+
+      - name: Re-provar identidade e TLS (fechamento TOCTOU)
+        # GA13: re-valida no job de apply para fechar a janela entre dry-run e
+        # apply — o operador aprova apos ver o dry-run, mas pode haver mudanca
+        # de ambiente entre os dois jobs. Esta re-validacao usa o DESTINO_URL
+        # do environment producao-ddl (overlay sobre o secret de repositorio).
+        env:
+          DESTINO_URL_RAW: ${{ secrets.DESTINO_URL }}
+          TARGET_VERSION: ${{ inputs.migration_version }}
+          CONFIRM_PROJECT_REF: ${{ inputs.confirm_project_ref }}
+          CONFIRM_RUNTIME_SHA256: ${{ inputs.confirm_runtime_sha256 }}
+        run: |
+          if [ -z "$DESTINO_URL_RAW" ]; then
+            echo "::error::DESTINO_URL ausente."
+            exit 1
+          fi
+          if [ "$CONFIRM_PROJECT_REF" != "$OFFICIAL_PROJECT_REF" ]; then
+            echo "::error::Project-ref de confirmacao incorreto."
+            exit 1
+          fi
+          if ! printf '%s' "$CONFIRM_RUNTIME_SHA256" | grep -Eq '^[a-f0-9]{64}$'; then
+            echo "::error::confirm_runtime_sha256 ausente ou invalido no job de apply."
+            exit 1
+          fi
+          node --input-type=module <<'NODE'
+          import {
+            carregarIdentidadeEsperada,
+            endurecerDestinoTls,
+            validarDestino,
+            validarSupabaseCa,
+          } from './scripts/db-audit/database-identity.mjs';
+          import { appendFileSync } from 'node:fs';
+          const identidade = carregarIdentidadeEsperada('scripts/db-audit/database-identity.json');
+          const erros = validarDestino(process.env.DESTINO_URL_RAW, identidade);
+          erros.push(...validarSupabaseCa());
+          const tls = endurecerDestinoTls(process.env.DESTINO_URL_RAW);
+          erros.push(...tls.erros);
+          for (const erro of erros) console.error('ERRO: ' + erro);
+          if (erros.length) process.exit(1);
+          console.log(`::add-mask::${tls.connectionString}`);
+          appendFileSync(process.env.GITHUB_ENV, `DESTINO_URL=${tls.connectionString}\n`);
+          appendFileSync(process.env.GITHUB_ENV, `SUPABASE_DB_URL=${tls.connectionString}\n`);
+          appendFileSync(process.env.GITHUB_ENV, 'PGSSLMODE=verify-full\n');
+          console.log('OK: re-validacao TOCTOU — endpoint oficial, TLS verify-full e CA pinada.');
+          NODE
+
+      - name: Re-provar estado runtime (confirmar hash do dry-run)
+        env:
+          CONFIRM_RUNTIME_SHA256: ${{ inputs.confirm_runtime_sha256 }}
+          APPLY: 'true'
+          TARGET_VERSION: ${{ inputs.migration_version }}
+          NEEDS_APPLY: 'true'
+          APPLY_BUNDLE: ${{ needs.preflight.outputs.apply_bundle }}
+        run: |
+          RUNTIME=$(node scripts/db-audit/run-runtime-contract.mjs "$TARGET_VERSION")
+          printf '%s\n' "$RUNTIME"
+          RUNTIME_JSON="$RUNTIME" node scripts/db-audit/validate-runtime-proof.mjs
+
       - name: Aplicar alvo unico ou bundle ordenado autorizado
-        if: inputs.apply == true && steps.preflight.outputs.needs_apply == 'true'
         run: >-
           supabase db push --include-all
           --skip-vault --yes
 
       - name: Validar pos-apply
-        if: inputs.apply == true || steps.preflight.outputs.needs_apply == 'false'
         env:
           TARGET_VERSION: ${{ inputs.migration_version }}
-          TARGET_NAME: ${{ steps.preflight.outputs.target_name }}
+          TARGET_NAME: ${{ needs.preflight.outputs.target_name }}
         run: node scripts/db-audit/validate-post-apply.mjs
 
       - name: Provar paridade integral apos aplicacao
-        if: inputs.apply == true
         run: node scripts/db-audit/check-migration-drift.mjs
