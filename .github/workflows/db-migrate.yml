@@ -71,6 +71,11 @@ on:
         required: false
         default: ''
         type: string
+      allow_destructive:
+        description: 'GA17: marcado = permite migration com DROP/REVOKE/TRUNCATE/DELETE/ALTER...DROP. Padrao: bloqueado.'
+        required: false
+        default: false
+        type: boolean
 
 defaults:
   run:
@@ -298,6 +303,38 @@ jobs:
           echo "missing_versions=" >> "$GITHUB_OUTPUT"
           echo "OK: estado da migration alvo confirmado: version=$TARGET_VERSION needs_apply=$NEEDS_APPLY"
 
+      - name: Gate de migration destrutiva (GA17)
+        # GA17: bloqueia DROP/REVOKE/TRUNCATE/DELETE/ALTER...DROP sem confirmacao.
+        # Para migrations destrutivas, marcar allow_destructive=true no dispatch.
+        if: steps.check.outputs.needs_apply == 'true'
+        env:
+          TARGET_VERSION: ${{ inputs.migration_version }}
+          APPLY_ALL_MISSING: ${{ inputs.apply_all_missing }}
+          MISSING_VERSIONS: ${{ steps.check.outputs.missing_versions }}
+          ALLOW_DESTRUCTIVE: ${{ inputs.allow_destructive }}
+        run: |
+          if [ "$APPLY_ALL_MISSING" = "true" ]; then
+            FILES=$(for v in $MISSING_VERSIONS; do
+              find supabase/migrations -maxdepth 1 -type f -name "${v}_*.sql"
+            done)
+          else
+            FILES=$(find supabase/migrations -maxdepth 1 -type f -name "${TARGET_VERSION}_*.sql")
+          fi
+          DESTRUCTIVE=$(grep -ihEn \
+            '^\s*(DROP|REVOKE|TRUNCATE)\s|^\s*DELETE\s+FROM\s|ALTER\s+.*\s+DROP\s' \
+            $FILES 2>/dev/null || true)
+          if [ -n "$DESTRUCTIVE" ]; then
+            if [ "$ALLOW_DESTRUCTIVE" != "true" ]; then
+              echo "::error::GA17: migration contem DDL destrutivo. Releia o CLAUDE.md (regra 6) e"
+              echo "::error::dispatch novamente com allow_destructive=true somente se o deploy do codigo"
+              echo "::error::compativel ja estiver em producao."
+              printf '%s\n' "$DESTRUCTIVE"
+              exit 1
+            fi
+            echo "::warning::GA17: migration destrutiva aprovada por allow_destructive=true:"
+            printf '%s\n' "$DESTRUCTIVE"
+          fi
+
       - name: Provar paridade integral quando a versao ja existe
         if: steps.check.outputs.needs_apply == 'false'
         run: node scripts/db-audit/check-migration-drift.mjs
@@ -464,51 +501,12 @@ jobs:
         # ledger com esses Deployments para detectar DDL aplicado fora do fluxo.
         # continue-on-error: passo de observabilidade — nao bloquear o apply.
         continue-on-error: true
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           TARGET_VERSION: ${{ inputs.migration_version }}
           APPLY_ALL_MISSING: ${{ inputs.apply_all_missing }}
           MISSING_VERSIONS: ${{ needs.preflight.outputs.missing_versions }}
-        with:
-          script: |
-            const versions = process.env.APPLY_ALL_MISSING === 'true'
-              ? (process.env.MISSING_VERSIONS || '').split(/\s+/).filter(Boolean)
-              : process.env.TARGET_VERSION ? [process.env.TARGET_VERSION] : [];
-            if (versions.length === 0) {
-              core.warning('GA25: nenhuma version para registrar Deployment.');
-              return;
-            }
-            for (const version of versions) {
-              let depId;
-              try {
-                const dep = await github.rest.repos.createDeployment({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  ref: context.sha,
-                  environment: 'producao-ddl',
-                  description: `GA25: apply migration ${version}`,
-                  auto_merge: false,
-                  required_contexts: [],
-                  payload: { migration_version: version, applied_at: new Date().toISOString() },
-                });
-                depId = dep.data.id;
-              } catch (e) {
-                core.warning(`GA25: falha ao criar Deployment para ${version}: ${e.message}`);
-                continue;
-              }
-              try {
-                await github.rest.repos.createDeploymentStatus({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  deployment_id: depId,
-                  state: 'success',
-                  description: `migration ${version} aplicada via db-migrate.yml`,
-                });
-                core.notice(`GA25: Deployment registrado para ${version} (id=${depId}).`);
-              } catch (e) {
-                core.warning(`GA25: Deployment criado (id=${depId}) mas status falhou: ${e.message}`);
-              }
-            }
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/db-migrate/register-deployments.mjs
 
       - name: Validar pos-apply
         env:
