@@ -50,6 +50,16 @@ vi.mock('@/components/team-chat/TeamChatNotificationsListener', () => ({
 }));
 vi.mock('@/hooks/system/useServiceWorker', () => ({ useServiceWorker: vi.fn() }));
 vi.mock('@/hooks/ui/useScreenProtection', () => ({ useScreenProtection: vi.fn() }));
+vi.mock('@/hooks/auth/useAuth', () => ({
+  useAuth: () => ({ profile: { id: 'test-id', role: 'admin' }, user: null, session: null, loading: false }),
+}));
+vi.mock('@/hooks/realtime/useGlobalIncomingMessageAlerts', () => ({
+  useGlobalIncomingMessageAlerts: vi.fn(),
+}));
+vi.mock('@/components/calls/OutboundCallDialog', () => ({ OutboundCallDialog: () => null }));
+vi.mock('@/components/notifications/SecurityPushNotificationsListener', () => ({
+  SecurityPushNotificationsListener: () => null,
+}));
 
 vi.mock('@/hooks/chat/useTeamChat', () => ({ useTeamConversations: () => ({ data: [] }) }));
 vi.mock('@/hooks/chat/useTeamChatNotifications', () => ({

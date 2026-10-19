@@ -22,7 +22,7 @@ import { useSyncToCRM } from '@/hooks/integrations/useSyncToCRM';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { RefreshCw, CheckCircle2, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/lazyToast';
 import type { Conversation, Message } from '@/types/chat';
 
 interface CRMAutoSyncProps {
