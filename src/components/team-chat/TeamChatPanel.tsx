@@ -113,7 +113,7 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
               <Input ref={s.searchInputRef} value={s.searchQuery} onChange={e => s.setSearchQuery(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Escape') { s.setShowSearch(false); s.setSearchQuery(''); } }}
                 placeholder="Buscar nas mensagens..." className="h-8 text-sm" />
-              {s.searchQuery && !s.isSearching && !s.searchError && <span className="text-xs text-muted-foreground whitespace-nowrap">{s.filteredMessages.length} resultado{s.filteredMessages.length !== 1 ? 's' : ''}</span>}
+              {s.searchQuery && !s.isSearchingMessages && !s.searchError && <span className="text-xs text-muted-foreground whitespace-nowrap">{s.filteredMessages.length} resultado{s.filteredMessages.length !== 1 ? 's' : ''}</span>}
               <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => { s.setShowSearch(false); s.setSearchQuery(''); }} aria-label="Fechar busca"><X className="w-3.5 h-3.5" /></Button>
             </div>
           </motion.div>
@@ -125,9 +125,9 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
           <div className="space-y-3">{Array.from({ length: 4 }).map((_, i) => <div key={i} className={cn("flex", i % 2 === 0 ? "justify-start" : "justify-end")}><Skeleton className="h-10 rounded-2xl" style={{ width: 120 + (i % 3) * 60 }} /></div>)}</div>
         ) : s.searchError ? (
           <div role="alert" className="flex items-center justify-center gap-2 py-12 text-sm text-destructive">
-            <AlertCircle className="w-4 h-4" aria-hidden /> {s.searchError}
+            <AlertCircle className="w-4 h-4" aria-hidden /> Não foi possível buscar as mensagens. Tente novamente.
           </div>
-        ) : s.isSearching ? (
+        ) : s.isSearchingMessages ? (
           <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
             <Loader2 className="w-4 h-4 motion-safe:animate-spin" aria-hidden /> Buscando mensagens…
           </div>
