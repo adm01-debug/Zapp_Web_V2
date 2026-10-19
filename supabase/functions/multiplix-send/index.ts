@@ -9,7 +9,6 @@
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { enforceRateLimit, getCorsHeaders, handleCors, Logger } from "../_shared/validation.ts";
-import { timingSafeStringEqual } from "../_shared/cron-secret-auth.ts";
 import { evoFetch, extractMessageId } from "../_shared/evolution-send.ts";
 import { DEFAULT_SCHEDULE_TIMEZONE, deliveryWindowStatus } from "../_shared/talkx-window.ts";
 import { resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
@@ -40,6 +39,18 @@ import {
   type ContentBlockRow,
   type ResolvedBlock,
 } from "../_shared/multiplix-content.ts";
+
+// Z011: implementacao timing-safe sem early-return no length mismatch (evita
+// side-channel de tamanho de secret).
+function timingSafeStringEqual(a: string, b: string): boolean {
+  const enc = new TextEncoder();
+  const ab = enc.encode(a);
+  const bb = enc.encode(b);
+  const maxLen = Math.max(ab.length, bb.length);
+  let diff = 0;
+  for (let i = 0; i < maxLen; i++) diff |= (ab[i] ?? 0) ^ (bb[i] ?? 0);
+  return diff === 0 && ab.length === bb.length;
+}
 
 // F37/F43: as duplicatas locais (`getGreeting`, `personalizeMultiplix`,
 // `randomBetween`, `sleep`, `prepareMedia`, `send`) foram removidas — todas vêm do
