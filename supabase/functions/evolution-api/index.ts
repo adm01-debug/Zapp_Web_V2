@@ -1036,15 +1036,6 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       return await proxy(`/chat/findMessages/${instance}`, 'POST', { where: body.where || {}, page: body.page, offset: body.offset });
     }
 
-    if (action === 'find-status-messages') {
-      if (isGoFlavor) return goHistoryNotSupported('find-status-messages', corsHeaders);
-      const response = await proxy(`/chat/findMessages/${instance}`, 'POST', { where: { key: { remoteJid: 'status@broadcast' } }, page: body.page ?? 1, offset: body.offset ?? 200 });
-      const data = await response.json();
-      if (data?.error === true) return new Response(JSON.stringify(data), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-      const records = Array.isArray(data?.messages?.records) ? data.messages.records : [];
-      return new Response(JSON.stringify(records), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-    }
-
     if (action === 'find-contacts') return await proxy(`/chat/findContacts/${instance}`, 'POST', { where: body.where || {} });
     if (action === 'check-numbers') return await proxy(`/chat/whatsappNumbers/${instance}`, 'POST', { numbers: body.numbers });
     if (action === 'get-media-base64') return await proxy(`/chat/getBase64FromMediaMessage/${instance}`, 'POST', { message: body.message, convertToMp4: body.convertToMp4 ?? false });
