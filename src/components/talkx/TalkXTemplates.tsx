@@ -198,8 +198,8 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled, onO
 
 
   // ── X092 · painel lateral da tela 04 ─────────────────────────────────────────────
-  // T04-039: "Mais convertidos" é ranking por TAXA DE RESPOSTA com a base mínima A9,
-  // lido da view `talkx_campaign_metrics`. NUNCA é `use_count` sob este título.
+  // T04-039: painel de taxa de resposta (base mínima A9), lido da view
+  // `talkx_campaign_metrics`. NUNCA é `use_count` sob este título.
   const conversion: TalkXTemplateConversionState = conversionFromHook ?? EMPTY_CONVERSION;
   const conversionByTemplate = useMemo(
     () => new Map((conversion.ranking?.items ?? []).map((item) => [item.templateId, item])),
@@ -348,13 +348,12 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled, onO
           subtitle="Templates que convertem, recomendações sob medida para o seu negócio."
         />
 
-        {/* T04-039/040/042/043/044 — "Mais convertidos": os 3 primeiros por TAXA DE
-            RESPOSTA (base mínima A9), com miniatura e "↑ N% de resposta". Sem base, o
-            painel diz "sem dados ainda" — nunca mostra "mais usados" sob este título. */}
+        {/* T04-039/040/042/043/044 — top-3 por TAXA DE RESPOSTA (base mínima A9),
+            com miniatura e "↑ N% de resposta". Sem base, o painel diz "sem dados ainda". */}
         <RailCard
           icon={TrendingUp}
           color="green"
-          title="Mais convertidos"
+          title="Maior taxa de resposta"
           subtitle="Templates com melhor taxa de resposta."
           right={<button type="button" onClick={() => { setOrderByReply(true); setGalleryMode('list'); setPage(1); }} className="h-7 px-2 rounded-md text-2xs font-medium border border-border/60 bg-input/40 hover:bg-muted/50 shrink-0">Ver todos</button>}
         >
