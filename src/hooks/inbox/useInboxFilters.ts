@@ -117,8 +117,9 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
   }, [storedPrefs]);
 
   const prefs = draft[ownerKey] ?? basePrefs;
-  const { chipTab, mainTab, subTab, queueId: selectedQueueId } = prefs;
-  const selectedContactType = normalizeContactType(searchParams.get('type'));
+  const { chipTab, mainTab, subTab, queueId: selectedQueueId, contactType: storedContactType } = prefs;
+  // URL param tem prioridade; sem ele, restaura a preferência persistida do usuário.
+  const selectedContactType = normalizeContactType(searchParams.get('type')) ?? storedContactType;
 
   /**
    * Aplica a mudança sobre o estado vivo do dono e persiste só o que sobrevive
@@ -156,16 +157,18 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
   const setSelectedQueueId = useCallback((id: string | null) => applyPrefs({ queueId: id }), [applyPrefs]);
 
   const handleContactTypeChange = useCallback((value: string | null) => {
+    const normalized = value && value !== 'all' ? value : null;
+    applyPrefs({ contactType: normalized });
     setSearchParams(prev => {
       const params = new URLSearchParams(prev);
-      if (value && value !== 'all') {
-        params.set('type', value);
+      if (normalized) {
+        params.set('type', normalized);
       } else {
         params.delete('type');
       }
       return params;
     }, { replace: true });
-  }, [setSearchParams]);
+  }, [applyPrefs, setSearchParams]);
 
   // Convert URL filters to InboxFiltersState
   const filters = useMemo<InboxFiltersState>(() => ({

@@ -75,6 +75,13 @@ interface WarRoomAgentBase extends Omit<WarRoomAgent, 'status'> {
 }
 
 /**
+ * Teto de linhas que os RPCs `warroom_agent_today` e `warroom_queue_stats` podem devolver.
+ * Acima disso o dado é parcial (a PostgREST corta silenciosamente) — o hook lança erro para
+ * que a central de supervisão mostre falha em vez de total cortado.
+ */
+export const WARROOM_MAX_ROWS = 200;
+
+/**
  * War Room.
  *
  * R2-MOD-030: cadastro habilitado (`profiles.is_active`) **não** é presença; contato atribuído
@@ -102,6 +109,9 @@ export function useWarRoomData({ refetchInterval = 30000 }: WarRoomDataOptions =
       if (activeProfiles.error) throw activeProfiles.error;
 
       const rows = (today.data ?? []) as unknown as WarRoomAgentRpcRow[];
+      if (rows.length > WARROOM_MAX_ROWS) {
+        throw new Error(`warroom_agent_today devolveu ${rows.length} linhas — dado parcial, recuse o subtotal`);
+      }
       const userIdByProfile = new Map(
         (activeProfiles.data ?? []).map(p => [p.id, p.user_id ?? null] as const),
       );
@@ -145,6 +155,9 @@ export function useWarRoomData({ refetchInterval = 30000 }: WarRoomDataOptions =
       if (error) throw error;
 
       const rows = (data ?? []) as unknown as WarRoomQueueRpcRow[];
+      if (rows.length > WARROOM_MAX_ROWS) {
+        throw new Error(`warroom_queue_stats devolveu ${rows.length} linhas — dado parcial, recuse o subtotal`);
+      }
       return rows.map((q): WarRoomQueue => ({
         id: q.id,
         name: q.name,
