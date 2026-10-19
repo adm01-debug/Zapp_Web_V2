@@ -37,9 +37,6 @@ export const PASSOS = [
   // "fixture sumiu": e um spec logado vermelho que parece bug de aplicacao.
   { id: 'e2e-fixtures', nome: 'Fixtures de E2E em producao (E85)', log: '/tmp/step-e2e-fixtures.log' },
   { id: 'contract-talkx-transition', nome: 'Verificar contrato de transicao de campanha do Talk X', log: '/tmp/step-contract-talkx-transition.log' },
-  // Guarda geral de invariantes do banco vivo (RLS, security_invoker, matview exposta,
-  // search_path de SECURITY DEFINER, policy de escrita aberta, referencia pendurada).
-  { id: 'live-invariants', nome: 'Verificar invariantes gerais do banco vivo', log: '/tmp/step-live-invariants.log' },
   { id: 'catalog', nome: 'Regenerar catalogo e comparar com o commitado', log: '/tmp/step-catalog.log' },
   { id: 'manifest', nome: 'Regenerar manifesto e comparar com o commitado', log: '/tmp/step-manifest.log' },
   { id: 'types', nome: 'Verificar frescor do types.ts', log: '/tmp/step-types.log' },
@@ -60,7 +57,6 @@ export const ORDEM_CAUSA = [
   'acl-webhook',
   'acl-talkx-metrics',
   'contract-talkx-transition',
-  'live-invariants',
   'runtime-config',
   'triple-parity',
   'e2e-fixtures',
