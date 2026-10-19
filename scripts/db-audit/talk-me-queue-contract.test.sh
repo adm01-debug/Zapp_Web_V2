@@ -40,7 +40,7 @@ expect_error() {
   status=$?
   set -e
   (( status != 0 )) || fail "$label: deveria falhar"
-  [[ "$output" == *"$needle"* ]] || { printf '%s\n' "$output" >&2; fail "$label: erro nao continha '$needle'"; }
+  [[  "$output" == *"$needle"* ]] || { printf '%s\n' "$output" >&2; fail "$label: erro nao continha '$needle'"; }
   printf '[PASS] %s\n' "$label"
 }
 
@@ -386,7 +386,7 @@ docker exec "$container_name" psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d pos
   -c "BEGIN; LOCK TABLE public.messages IN ACCESS EXCLUSIVE MODE; SELECT pg_sleep(3); COMMIT" \
   >"$tmp_dir/message-lock.out" 2>"$tmp_dir/message-lock.err" & lock_pid=$!
 for _ in $(seq 1 30); do
-  [["$(psql_sql "SELECT count(*) FROM pg_locks WHERE relation='public.messages'::regclass AND mode='AccessExclusiveLock' AND granted")" == '1' ]] && break
+  [[  "$(psql_sql "SELECT count(*) FROM pg_locks WHERE relation='public.messages'::regclass AND mode='AccessExclusiveLock' AND granted")" == '1' ]] && break
   sleep 0.1
 done
 set +e
@@ -395,7 +395,7 @@ docker exec "$container_name" psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d pos
   >"$tmp_dir/revoked-race.out" 2>"$tmp_dir/revoked-race.err" & race_pid=$!
 set -e
 for _ in $(seq 1 30); do
-  [[ "$(psql_sql "SELECT count(*) FROM pg_stat_activity WHERE query LIKE '%talk_me_claim(''c1000000-0000-0000-0000-000000000012'')%' AND wait_event_type='Lock'")" == '1' ]] && break
+  [[  "$(psql_sql "SELECT count(*) FROM pg_stat_activity WHERE query LIKE '%talk_me_claim(''c1000000-0000-0000-0000-000000000012'')%' AND wait_event_type='Lock'")" == '1' ]] && break
   sleep 0.1
 done
 psql_sql "UPDATE public.queue_members SET is_active=false WHERE queue_id='$queue1' AND profile_id='a1000000-0000-0000-0000-000000000002'" >/dev/null
@@ -425,7 +425,7 @@ set -e
 successes=0
 (( status1 == 0 )) && successes=$((successes + 1))
 (( status2 == 0 )) && successes=$((successes + 1))
-[["$successes" == '1' ]] || fail "D1 concorrencia: esperado 1 vencedor, obtidos $successes"
+[[ "$successes" == '1' ]] || fail "D1 concorrencia: esperado 1 vencedor, obtidos $successes"
 printf '[PASS] D1 dois aceites simultaneos produzem exatamente um vencedor\n'
 expect_value 'D2 contato concorrente termina com exatamente um responsavel' '1' \
   "SELECT count(*) FROM public.contacts WHERE id='$contact8' AND assigned_to IN ('a1000000-0000-0000-0000-000000000001','a1000000-0000-0000-0000-000000000002')"
