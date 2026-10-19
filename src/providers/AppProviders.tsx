@@ -1,4 +1,3 @@
-import { MotionConfig } from "framer-motion";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { AuthProvider } from "@/hooks/auth/useAuth";
@@ -9,12 +8,23 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeInitializer } from "@/components/ThemeInitializer";
 import { ErrorBoundary } from "@/components/errors/ErrorBoundary";
 import { getLogger } from "@/lib/logger";
-import { useRef, useState } from "react";
+import { useRef, useState, lazy, Suspense, type ReactNode } from "react";
 import { AlertTriangle } from "lucide-react";
 import { QuarantineMonitorProvider } from "@/providers/QuarantineMonitorProvider";
 import { CallSessionProvider } from "@/providers/CallSessionProvider";
 
 const log = getLogger('AppProviders');
+
+// A11Y: MotionConfig com reducedMotion="user" cobre todos os consumidores de
+// motion.* abaixo. Carregado lazy para manter o framer-motion fora do bundle
+// inicial — quem anima primeiro faz o fetch; enquanto isso, children ja renderizam.
+const LazyMotionConfig = lazy(() =>
+  import('framer-motion').then((mod) => ({
+    default: ({ children }: { children: ReactNode }) => (
+      <mod.MotionConfig reducedMotion="user">{children}</mod.MotionConfig>
+    ),
+  }))
+);
 
 const MAX_RETRIES = 3;
 
@@ -122,15 +132,6 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
 
   return (
     <ErrorBoundary resetKey={errorKey} onError={handleError} onReset={handleReset}>
-      {/*
-        A11Y: configura o framer-motion do app inteiro de uma vez so. Com
-        `reducedMotion="user"`, quem pede `prefers-reduced-motion: reduce` no
-        sistema deixa de receber animacao de transform/layout em TODOS os
-        consumidores de `motion.*` (antes cada tela ligava seu proprio
-        MotionConfig ou nenhum). O caso de `pathLength` das ilustracoes, que o
-        reducedMotion nao cobre, tem portao proprio em empty-state-illustration-art.
-      */}
-      <MotionConfig reducedMotion="user">
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <HighContrastProvider>
@@ -140,7 +141,16 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
                 <ThemeInitializer />
                 <QuarantineMonitorProvider>
                   <CallSessionProvider>
-                    {children}
+                    {/*
+                      A11Y: MotionConfig lazy — framer-motion fora do bundle
+                      inicial. Children renderizam imediatamente via fallback;
+                      reducedMotion="user" entra assim que o chunk carrega.
+                    */}
+                    <Suspense fallback={<>{children}</>}>
+                      <LazyMotionConfig>
+                        {children}
+                      </LazyMotionConfig>
+                    </Suspense>
                   </CallSessionProvider>
                 </QuarantineMonitorProvider>
               </TooltipProvider>
@@ -148,7 +158,6 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
           </HighContrastProvider>
         </AuthProvider>
       </QueryClientProvider>
-      </MotionConfig>
     </ErrorBoundary>
   );
 }

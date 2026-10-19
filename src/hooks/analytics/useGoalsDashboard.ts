@@ -15,6 +15,9 @@ export interface Goal {
   icon: React.ElementType;
   color: string;
   priority: 'high' | 'medium' | 'low';
+  /** false quando não há dados suficientes para calcular a métrica (ex: taxa sem atendimentos).
+   *  Metas com hasData=false ficam na lista mas são excluídas da média overallProgress. */
+  hasData?: boolean;
 }
 
 export const PERIOD_OPTIONS = [
@@ -122,11 +125,11 @@ export function useGoalsDashboard() {
     queryKey: ['goals-analyses', period, profile?.id],
     queryFn: async () => {
       if (!profile?.id) return { total: 0, resolved: 0 };
-      const base = () => supabase.from('conversation_analyses').select('id', { count: 'exact', head: true })
-        .eq('analyzed_by', profile.id).gte('created_at', dateRange.from.toISOString()).lte('created_at', dateRange.to.toISOString());
+      const base = () => supabase.from('contacts').select('id', { count: 'exact', head: true })
+        .eq('assigned_to', profile.id).gte('created_at', dateRange.from.toISOString()).lte('created_at', dateRange.to.toISOString());
       const { count: total, error: totalError } = await base();
       if (totalError) throw totalError;
-      const { count: resolved, error: resolvedError } = await base().eq('status', 'resolvido');
+      const { count: resolved, error: resolvedError } = await base().eq('conversation_status', 'resolved');
       if (resolvedError) throw resolvedError;
       return { total: total ?? 0, resolved: resolved ?? 0 };
     },
@@ -173,14 +176,16 @@ export function useGoalsDashboard() {
     if (isResolutionGoalActive) {
       allGoals.push({ id: 'resolution-rate', label: 'Taxa de Resolução', description: 'Percentual de conversas resolvidas',
         target: getGoalTarget('resolution_rate', period, customGoals), current: resolutionRate, unit: '%',
-        icon: CheckCircle2, color: 'hsl(var(--chart-3))', priority: 'medium' });
+        icon: CheckCircle2, color: 'hsl(var(--chart-3))', priority: 'medium',
+        hasData: totalAnalyses > 0 });
     }
     return allGoals;
   }, [messagesCount, contactsCount, analysesCounts, period, customGoals]);
 
   const overallProgress = useMemo(() => {
-    if (goals.length === 0) return 0;
-    return Math.round(goals.reduce((acc, g) => acc + Math.min((g.current / g.target) * 100, 100), 0) / goals.length);
+    const computables = goals.filter(g => g.hasData !== false);
+    if (computables.length === 0) return 0;
+    return Math.round(computables.reduce((acc, g) => acc + Math.min((g.current / g.target) * 100, 100), 0) / computables.length);
   }, [goals]);
 
   const completedGoals = useMemo(() => goals.filter(g => g.current >= g.target).length, [goals]);

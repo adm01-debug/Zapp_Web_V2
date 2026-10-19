@@ -20,7 +20,6 @@ import { getLogger } from '@/lib/logger';
 import { RealtimeService } from '@/services/realtime.service';
 import { toast } from '@/hooks/ui/use-toast';
 import { ToastAction } from '@/components/ui/toast';
-import { openContactChat } from '@/components/catalog/useSendProduct';
 import type { ConversationContact, RealtimeMessage } from '../chat/useRealtimeMessages';
 import { normalizeMessage } from './realtimeUtils';
 import { usePublishIncomingAlertIdentity } from './incomingAlertScope';
@@ -83,7 +82,14 @@ export function useGlobalIncomingMessageAlerts({
         title: `Nova mensagem de ${contact.name}`,
         description: message.content?.trim() || 'Mídia ou anexo sem texto',
         action: (
-          <ToastAction altText="Abrir a conversa" onClick={() => openContactChat(contact.id)}>
+          <ToastAction
+            altText="Abrir a conversa"
+            onClick={() => {
+              void import('@/components/catalog/useSendProduct').then(
+                ({ openContactChat }) => openContactChat(contact.id)
+              );
+            }}
+          >
             Ver conversa
           </ToastAction>
         ),

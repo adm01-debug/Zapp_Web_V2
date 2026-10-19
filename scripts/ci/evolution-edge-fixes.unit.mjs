@@ -279,7 +279,9 @@ test("proxyToEvolution: erro não expõe corpo bruto da GO via campo 'details'",
 test("rotas sem equivalente na GO foram removidas do handler (SL-075 E43)", () => {
   // E43: as rotas sem equivalente na GO sairam do handler (404 antes de I/O).
   for (const action of [
-    "find-messages", "find-status-messages", "find-chats", "set-presence",
+    // find-messages: mantida no handler com guard isGoFlavor (goHistoryNotSupported) para
+    // evitar 404 silencioso no circuit breaker (GO_GAPS D6) — nao e remocao completa.
+    "find-status-messages", "find-chats", "set-presence",
     "set-settings", "get-settings", "get-webhook", "send-template",
     "mark-unread", "invite-info", "toggle-ephemeral", "offer-call",
     "set-chatwoot", "get-chatwoot", "delete-chatwoot", "set-typebot",

@@ -35,6 +35,14 @@ import { fileURLToPath } from 'node:url';
 
 const ESTE_ARQUIVO = fileURLToPath(import.meta.url);
 const DIR_CI = path.dirname(ESTE_ARQUIVO);
+
+// N217: se o deno não estiver instalado no runner, os testes que precisam dele
+// são pulados em vez de falhar com ENOENT — aplica-se só aos dois testes de
+// medição real; os testes unitários (parseLcov, régua, classificação) sempre rodam.
+const DENO_DISPONIVEL = (() => {
+  const r = spawnSync('deno', ['--version'], { encoding: 'utf8' });
+  return !r.error;
+})();
 const RAIZ = path.resolve(DIR_CI, '..', '..');
 
 /** Piso da régua: cobertura de linhas agregada dos 5 helpers. */
@@ -365,7 +373,7 @@ function medicaoUmaVez() {
   return medicaoCompartilhada;
 }
 
-test('N217: medição do zero via deno agrega >= 50% e inclui os 5 helpers', () => {
+test('N217: medição do zero via deno agrega >= 50% e inclui os 5 helpers', { skip: !DENO_DISPONIVEL }, () => {
   const { resumo, statusTestes, saidaTestes } = medicaoUmaVez();
   const falhasStatus = avaliarStatusTestes(statusTestes, saidaTestes);
   assert.deepEqual(falhasStatus, [], `teste vermelho invalida a medição: ${falhasStatus.join('; ')}`);
@@ -377,7 +385,7 @@ test('N217: medição do zero via deno agrega >= 50% e inclui os 5 helpers', () 
   }
 });
 
-test('N217: docs bate com medição fresca e segunda execução é idêntica', () => {
+test('N217: docs bate com medição fresca e segunda execução é idêntica', { skip: !DENO_DISPONIVEL }, () => {
   const fresca = medirDoZero();
   const relatorio = renderRelatorio(fresca.resumo);
   assert.equal(
