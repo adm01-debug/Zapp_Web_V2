@@ -145,8 +145,26 @@ jobs:
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
 
+      - name: 🦕 Setup Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
+        with:
+          deno-version: '2.9.5'
+
+      - name: 🦕 Deno check edge functions
+        run: deno check --config scripts/ci/deno.json --frozen supabase/functions/*/index.ts
+
+      - name: 🦕 Run executable Edge handler contracts
+        run: >-
+          deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1
+          $(git ls-files 'supabase/functions/**/*.test.ts')
+
       - name: 🧩 Run Node CI scripts tests
-        run: node --test --experimental-coverage --coverage-dir=coverage-report scripts/ci/*.unit.mjs scripts/db-audit/*.unit.mjs scripts/vercel/*.unit.mjs
+        run: >-
+          node --test scripts/ci/*.unit.mjs
+          scripts/edge-deploy/*.unit.mjs
+          scripts/db-audit/crm-sync-outbox-contract.test.mjs
+          scripts/db-audit/types-sync-psql-buffer.test.mjs
+          scripts/talkx/*.unit.mjs
         env:
           CI: true
 
