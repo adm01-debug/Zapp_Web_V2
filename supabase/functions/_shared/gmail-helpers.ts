@@ -364,6 +364,12 @@ export type GmailAccountFailure = "reauth_required" | "error";
 
 export const GMAIL_REAUTH_MESSAGE = "Sessão do Gmail expirada — reconecte a conta";
 
+export const GMAIL_REAUTH_HTTP_STATUS = 409;
+
+export function gmailReauthErrorPayload(): { code: string; message: string } {
+  return { code: "reauth_required", message: GMAIL_REAUTH_MESSAGE };
+}
+
 const GMAIL_REAUTH_MARKERS = ["invalid_grant", "unauthorized_client", "expired or revoked", "revoked"];
 
 export function isGmailReauthError(error: unknown): boolean {
