@@ -58,6 +58,10 @@ beforeEach(() => {
   h.nomes = [];
   h.subs = [];
   h.rpc.mockResolvedValue({ data: [], error: null });
+  // React Strict Mode invoca o efeito duas vezes (mount → cleanup → mount).
+  // O removeChannel do cleanup precisa retirar a subscrição para que ao final
+  // haja exatamente 1 inscrito (o da segunda montagem).
+  h.removeChannel.mockImplementation(() => { h.subs.pop(); });
 });
 
 describe('useTeamMessages — tópico exclusivo e revalidação na reconexão (PE-75)', () => {
