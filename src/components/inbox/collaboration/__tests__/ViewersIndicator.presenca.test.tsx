@@ -28,6 +28,8 @@ const h = vi.hoisted(() => ({
 
 vi.mock('@/lib/logger', () => ({
   getLogger: () => ({ warn: h.warn, info: vi.fn(), error: vi.fn(), debug: vi.fn() }),
+
+  createLogger: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), withCorrelation: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() })) })),
 }));
 
 vi.mock('@/integrations/supabase/client', () => ({
