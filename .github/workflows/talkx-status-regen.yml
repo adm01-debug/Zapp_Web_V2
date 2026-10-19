@@ -100,7 +100,7 @@ jobs:
             - main de origem: `${{ github.sha }}`
             - arquivo: `docs/talkx/v4/STATUS.md`
 
-            Revisão humana e checks da PR continuam obrigatórios.
+            Merge automático habilitado — entra em main assim que os checks passarem.
           add-paths: |
             docs/talkx/v4/STATUS.md
 
