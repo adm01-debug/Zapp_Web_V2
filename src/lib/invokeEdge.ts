@@ -31,9 +31,9 @@
 import type { FunctionInvokeOptions, FunctionsResponse } from '@supabase/functions-js';
 
 import { supabase } from '@/integrations/supabase/client';
-import { getLogger, generateCorrelationId } from '@/lib/logger';
+import { createLogger, generateCorrelationId } from '@/lib/logger';
 
-const log = getLogger('edge-invoke');
+const log = createLogger('edge-invoke');
 
 /** Cabeçalho canônico do id (compatível com a V3). */
 export const CORRELATION_HEADER = 'x-correlation-id';
