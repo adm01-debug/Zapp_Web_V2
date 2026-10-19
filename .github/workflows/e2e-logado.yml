@@ -51,6 +51,7 @@ jobs:
     name: 🎭 E2E logado (Playwright)
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    if: github.event.repository.fork == false
     # E83: a suite logada (173 testes) estourava o timeout do job unico e a run
     # inteira caia como "cancelled". A matriz abaixo divide os mesmos 15 projetos
     # em 3 grupos, cada um com seu proprio relogio de 15 min: se um grupo ficar

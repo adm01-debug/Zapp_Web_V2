@@ -65,6 +65,14 @@ jobs:
       - name: 🔎 Run TypeScript debt ratchet
         run: node scripts/ci/typecheck-ratchet.mjs
 
+      - name: 🛡️ Verificar integridade do CLAUDE.md
+        run: node scripts/ci/claude-md-guard.mjs
+        env:
+          GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+
+      - name: 🔗 Verificar nomes de workflows no notifica-falha
+        run: node scripts/ci/check-notifica-falha-names.mjs
+
   unit-tests:
     name: 🧪 Unit Tests (${{ matrix.shard }}/3)
     runs-on: ubuntu-24.04
