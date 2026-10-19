@@ -38,7 +38,7 @@ beforeEach(() => {
 });
 
 describe('useDashboardKpi — período escolhido (E34)', () => {
-  it('manda p_since junto de fila e agente (p_until entra só na queryKey — P2 pendente)', async () => {
+  it('manda p_from e p_until junto de fila e agente', async () => {
     const from = new Date('2026-10-06T03:00:00.000Z');
     const until = new Date('2026-10-13T02:59:59.999Z');
 
@@ -46,20 +46,22 @@ describe('useDashboardKpi — período escolhido (E34)', () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(rpc).toHaveBeenCalledWith('dashboard_kpi', {
-      p_since: '2026-10-06T03:00:00.000Z',
+      p_from: '2026-10-06T03:00:00.000Z',
+      p_until: '2026-10-13T02:59:59.999Z',
       p_queue: 'q1',
       p_agent: 'a1',
     });
   });
 
-  it('sem período, manda p_since/p_queue/p_agent undefined (a RPC cai no dia atual em America/Sao_Paulo)', async () => {
+  it('sem período, manda p_from/p_until/p_queue/p_agent null (a RPC cai no dia atual em America/Sao_Paulo)', async () => {
     const { result } = renderHook(() => useDashboardKpi(), { wrapper });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(rpc).toHaveBeenCalledWith('dashboard_kpi', {
-      p_since: undefined,
-      p_queue: undefined,
-      p_agent: undefined,
+      p_from: null,
+      p_until: null,
+      p_queue: null,
+      p_agent: null,
     });
   });
 
@@ -84,8 +86,8 @@ describe('useDashboardKpi — período escolhido (E34)', () => {
     rerender({ u: new Date('2026-10-31T02:59:59.999Z') });
 
     await waitFor(() => expect(rpc).toHaveBeenCalledTimes(2));
-    expect(rpc.mock.calls[0][1].p_since).toBe('2026-10-06T03:00:00.000Z');
-    expect(rpc.mock.calls[1][1].p_since).toBe('2026-10-06T03:00:00.000Z');
+    expect(rpc.mock.calls[0][1].p_until).toBe('2026-10-13T02:59:59.999Z');
+    expect(rpc.mock.calls[1][1].p_until).toBe('2026-10-31T02:59:59.999Z');
   });
 
   it('erro da RPC vira erro da query (não é engolido nem vira zero)', async () => {
