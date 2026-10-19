@@ -151,6 +151,10 @@ REVOKE TRUNCATE, REFERENCES, TRIGGER ON TABLE public.multiplix_audience_members 
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.multiplix_audiences TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.multiplix_audience_members TO authenticated;
 
+-- O trigger function precisa de EXECUTE para anon e authenticated: o contrato DB chama a
+-- funcao diretamente como cada papel para verificar o grant (convencao do modulo).
+GRANT EXECUTE ON FUNCTION public.multiplix_audiences_validate_shared_roles() TO anon, authenticated;
+
 ALTER TABLE public.multiplix_audiences ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.multiplix_audiences FORCE ROW LEVEL SECURITY;
 ALTER TABLE public.multiplix_audience_members ENABLE ROW LEVEL SECURITY;
