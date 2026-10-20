@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=admin-crm-dashboard-explorer
+ID=26101323168646
+BRANCH=v2/admin-crm-dashboard-explorer-26101323168646
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-crm-dashboard-explorer-26101323168646
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T23:16:42-03:00
+KANBAN=t_cd3c8b81
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-crm-dashboard-explorer-26101323168646/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-26101323168646
+PRONTO_SHA=53b0676d9a0f4b00c3b0c279bc73880b8a24f757

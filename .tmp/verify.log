@@ -1,0 +1,8 @@
+OK      db_guard        1s
+FALHOU  tipos          78s  (ver /home/joaquim_ataides/.local/state/zapp-verify/56d85174d2cd/tipos.log)
+/home/joaquim_ataides/arquitetura-v2/typecheck-rapido/tc-rapido.sh: line 21: 1217134 Killed                  node node_modules/typescript/bin/tsc -p tsconfig.$p.json --noEmit --incremental --tsBuildIn
+tc-rapido: tsc saiu 137 em app (falha de execução, NÃO é aprovação)
+tipos.sh: typecheck rápido falhou na EXECUÇÃO; refazendo com o ratchet completo
+ERRO no typecheck ratchet: tsc -b falhou com exit null: 
+VERIFY: VERMELHO em tipos (79s)
+VERIFY_EXIT=1

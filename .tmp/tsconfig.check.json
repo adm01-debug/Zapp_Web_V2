@@ -1,0 +1,12 @@
+{
+  "extends": "../tsconfig.app.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "skipLibCheck": true,
+    "types": ["vitest/globals", "node"]
+  },
+  "files": [
+    "../src/components/admin/AdminCRMDashboard.tsx",
+    "../src/components/admin/__tests__/AdminCRMDashboard.explorer-crm360.test.tsx"
+  ]
+}

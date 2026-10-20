@@ -1,0 +1,7 @@
+0000000000000000000000000000000000000000 338a420d1e0fa57f993a1b5d8064e0d80f54d6c0 Hermes Senior <hermes-senior@promobrindes.local> 1791944201 -0300	
+338a420d1e0fa57f993a1b5d8064e0d80f54d6c0 338a420d1e0fa57f993a1b5d8064e0d80f54d6c0 Hermes Senior <hermes-senior@promobrindes.local> 1791944202 -0300	reset: moving to HEAD
+338a420d1e0fa57f993a1b5d8064e0d80f54d6c0 c837ced8d877da0fc769ae48b681b2ae62eab8e1 Hermes Senior <hermes-senior@promobrindes.local> 1791944352 -0300	commit: fix(admin-crm): botao Explorer Completo navega para o CRM 360 pela navegacao do app
+c837ced8d877da0fc769ae48b681b2ae62eab8e1 3e96996c9cba2ade8b1fc91827a4c8ff42a51bab Hermes Senior <hermes-senior@promobrindes.local> 1791944390 -0300	commit: docs(admin-crm): relato do cartao t_cd3c8b81
+3e96996c9cba2ade8b1fc91827a4c8ff42a51bab aceebcd86c597405a7dfe9b118d050f0c2f1185e Hermes Senior <hermes-senior@promobrindes.local> 1791944694 -0300	commit: fix(admin-crm): Top 5 mostra o cliente e falha deixa de virar zero no painel CRM
+aceebcd86c597405a7dfe9b118d050f0c2f1185e 59596b9150301d733c86ec6d9bf8ae8de6010b9e Hermes Senior <hermes-senior@promobrindes.local> 1791945581 -0300	commit: docs(admin-crm): relato final do cartao t_cd3c8b81
+59596b9150301d733c86ec6d9bf8ae8de6010b9e 53b0676d9a0f4b00c3b0c279bc73880b8a24f757 Hermes Senior <hermes-senior@promobrindes.local> 1791971446 -0300	commit: docs(admin): relato do cartao t_cd3c8b81 com verify verde

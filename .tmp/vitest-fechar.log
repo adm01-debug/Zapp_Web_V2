@@ -1,0 +1,10 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-crm-dashboard-explorer-26101323168646
+
+····
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  06:51:20
+   Duration  2.30s (transform 310ms, setup 331ms, import 409ms, tests 434ms, environment 927ms)
+
