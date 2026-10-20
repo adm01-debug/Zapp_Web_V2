@@ -1,0 +1,35 @@
+DO
+NOTICE:  PK-16 PARTE 1 OK (catalogo: bucket privado, 3 policies canonicas com admin no DELETE, sem policy permissiva, expurgo configuravel, realtime presente)
+BEGIN
+INSERT 0 3
+INSERT 0 1
+INSERT 0 2
+UPDATE 1
+INSERT 0 2
+SET
+                              set_config                               
+-----------------------------------------------------------------------
+ {"sub":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaa0001","role":"authenticated"}
+(1 row)
+
+INSERT 0 1
+RESET
+SET
+                              set_config                               
+-----------------------------------------------------------------------
+ {"sub":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaa0001","role":"authenticated"}
+(1 row)
+
+INSERT 0 1
+RESET
+DO
+NOTICE:  PK-16 2.2 OK (pasta alheia no temporario negada com 42501)
+NOTICE:  PK-16 2.2b OK (pasta alheia no audio-memes negada com 42501)
+DO
+NOTICE:  PK-16 2.3 OK (admin apaga objeto de outro autor no audio-memes: 1 linha)
+DO
+DO
+NOTICE:  PK-16 2.3b OK (atendente nao apaga objeto de outro autor: 0 linhas)
+DO
+NOTICE:  PK-16 2.4 OK (vencido enfileirado, novo ignorado; veredito {"bucket": "voice-changer-tmp", "enqueued": 1, "ttl_hours": 24})
+ROLLBACK
