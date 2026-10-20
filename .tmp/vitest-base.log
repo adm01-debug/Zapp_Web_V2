@@ -1,0 +1,940 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/anexos-progresso-upload-aviso-26101614146a2c/.tmp/prova-base
+
+····x·-···xx·····xxxxxxx
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/inbox/__tests__/ChatPanel.scheduled-media.test.tsx > ChatPanel — anexo agendado no path canônico do contato > limpa o objeto do storage e relança quando a persistência do agendamento falha
+AssertionError: expected null to be an instance of Error
+ ❯ src/components/inbox/__tests__/ChatPanel.scheduled-media.test.tsx:272:19
+    270|     expect(mocks.scheduleMessage).toHaveBeenCalledTimes(1);
+    271|     // Relança: o diálogo mantém o botão e não anuncia "Mensagem agend…
+    272|     expect(error).toBeInstanceOf(Error);
+       |                   ^
+    273|     expect((error as Error).message).toBe('insert falhou');
+    274|     // Aviso claro na tela, com o motivo real.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  src/components/inbox/__tests__/ChatPanel.scheduled-media.test.tsx > ChatPanel — anexo agendado no path canônico do contato > limpa o objeto e relança quando a referência durável (locator) não é gerada
+AssertionError: expected null to be an instance of Error
+ ❯ src/components/inbox/__tests__/ChatPanel.scheduled-media.test.tsx:291:19
+    289|     await waitFor(() => expect(mocks.remove).toHaveBeenCalledTimes(1));
+    290|     expect(mocks.scheduleMessage).not.toHaveBeenCalled();
+    291|     expect(error).toBeInstanceOf(Error);
+       |                   ^
+    292|     expect(mocks.toast).toHaveBeenCalledWith(
+    293|       expect.objectContaining({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  src/components/inbox/__tests__/FileUploader.progresso-upload.test.tsx > FileUploader — progresso real do upload e falha que fica na tela > a barra acompanha os bytes que o upload consome (role=progressbar, valor atual)
+TestingLibraryElementError: Unable to find role="progressbar" and name "Progresso de grande.pdf"
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m>[39m
+    [36m<input[39m
+      [33maccept[39m=[32m"image/jpeg,image/png,image/webp,video/mp4,video/3gpp,audio/aac,audio/amr,audio/mpeg,audio/ogg,audio/opus,audio/mp4,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain,text/csv,application/zip,application/x-rar-compressed,application/vnd.rar,image/webp"[39m
+      [33mclass[39m=[32m"hidden"[39m
+      [33mmultiple[39m=[32m""[39m
+      [33mtype[39m=[32m"file"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33mdata-state[39m=[32m"closed"[39m
+      [33mtabindex[39m=[32m"0"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33maria-label[39m=[32m"Anexar arquivo"[39m
+        [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:shadow-glow-accent-sm h-10 w-10 text-muted-foreground hover:text-primary hover:bg-primary/10"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-paperclip w-5 h-5"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mheight[39m=[32m"24"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"24"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m16 6-8.414 8.586a2 2 0 0 0 2.829 2.829l8.414-8.586a4 4 0 1 0-5.657-5.657l-8.379 8.551a6 6 0 1 0 8.485 8.485l8.379-8.551"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"fixed inset-0 z-50 bg-background/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-labelledby[39m=[32m"radix-_r_2_"[39m
+    [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 w-full translate-x-[-50%] translate-y-[-50%] gap-4 border border-border/60 bg-background p-6 shadow-2xl shadow-background/50 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-2xl max-w-lg sm:max-w-lg max-h-[85vh] overflow-hidden flex flex-col"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mid[39m=[32m"radix-_r_1_"[39m
+    [33mrole[39m=[32m"dialog"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+    [36m>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"text-lg font-display font-semibold leading-none tracking-tight flex items-center gap-2"[39m
+        [33mid[39m=[32m"radix-_r_2_"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-upload w-5 h-5"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mheight[39m=[32m"24"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"24"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M12 3v12"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m17 8-5-5-5 5"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0mEnviar Arquivo[0m
+      [36m</h2>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [33mid[39m=[32m"radix-_r_3_"[39m
+      [36m>[39m
+        [0mFormatos suportados: imagens, vídeos, áudios e documentos[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-4"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"border rounded-lg overflow-hidden bg-muted/30"[39m
+      [36m>[39m
+        [36m<iframe[39m
+          [33mclass[39m=[32m"w-full h-[280px] border-0"[39m
+          [33msrc[39m=[32m"blob:nodedata:c3bc319f-43ee-4be4-8255-a69033c8a455#toolbar=0&navpanes=0"[39m
+          [33mtitle[39m=[32m"PDF Preview"[39m
+        [36m/>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"relative border rounded-lg p-4 bg-muted/50"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-start gap-4"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex-shrink-0"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-20 h-20 bg-primary/10 rounded-lg flex items-center justify-center text-primary"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-file-text w-5...
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m>[39m
+    [36m<input[39m
+      [33maccept[39m=[32m"image/jpeg,image/png,image/webp,video/mp4,video/3gpp,audio/aac,audio/amr,audio/mpeg,audio/ogg,audio/opus,audio/mp4,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain,text/csv,application/zip,application/x-rar-compressed,application/vnd.rar,image/webp"[39m
+      [33mclass[39m=[32m"hidden"[39m
+      [33mmultiple[39m=[32m""[39m
+      [33mtype[39m=[32m"file"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33mdata-state[39m=[32m"closed"[39m
+      [33mtabindex[39m=[32m"0"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33maria-label[39m=[32m"Anexar arquivo"[39m
+        [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:shadow-glow-accent-sm h-10 w-10 text-muted-foreground hover:text-primary hover:bg-primary/10"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-paperclip w-5 h-5"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mheight[39m=[32m"24"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"24"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m16 6-8.414 8.586a2 2 0 0 0 2.829 2.829l8.414-8.586a4 4 0 1 0-5.657-5.657l-8.379 8.551a6 6 0 1 0 8.485 8.485l8.379-8.551"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"fixed inset-0 z-50 bg-background/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-labelledby[39m=[32m"radix-_r_2_"[39m
+    [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 w-full translate-x-[-50%] translate-y-[-50%] gap-4 border border-border/60 bg-background p-6 shadow-2xl shadow-background/50 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-2xl max-w-lg sm:max-w-lg max-h-[85vh] overflow-hidden flex flex-col"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mid[39m=[32m"radix-_r_1_"[39m
+    [33mrole[39m=[32m"dialog"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+    [36m>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"text-lg font-display font-semibold leading-none tracking-tight flex items-center gap-2"[39m
+        [33mid[39m=[32m"radix-_r_2_"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-upload w-5 h-5"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mheight[39m=[32m"24"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"24"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M12 3v12"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m17 8-5-5-5 5"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0mEnviar Arquivo[0m
+      [36m</h2>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [33mid[39m=[32m"radix-_r_3_"[39m
+      [36m>[39m
+        [0mFormatos suportados: imagens, vídeos, áudios e documentos[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-4"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"border rounded-lg overflow-hidden bg-muted/30"[39m
+      [36m>[39m
+        [36m<iframe[39m
+          [33mclass[39m=[32m"w-full h-[280px] border-0"[39m
+          [33msrc[39m=[32m"blob:nodedata:c3bc319f-43ee-4be4-8255-a69033c8a455#toolbar=0&navpanes=0"[39m
+          [33mtitle[39m=[32m"PDF Preview"[39m
+        [36m/>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"relative border rounded-lg p-4 bg-muted/50"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-start gap-4"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex-shrink-0"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-20 h-20 bg-primary/10 rounded-lg flex items-center justify-center text-primary"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-file-text w-5...
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/components/inbox/__tests__/FileUploader.progresso-upload.test.tsx:162:32
+    160|
+    161|     // A barra existe, é acessível e mostra o valor do pedaço já consu…
+    162|     const barra = await screen.findByRole('progressbar', { name: 'Prog…
+       |                                ^
+    163|     await waitFor(() => expect(barra).toHaveAttribute('aria-valuenow',…
+    164|     expect(screen.getByText('Fazendo upload... 50%')).toBeInTheDocumen…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  src/components/inbox/__tests__/FileUploader.progresso-upload.test.tsx > FileUploader — progresso real do upload e falha que fica na tela > falha única mantém o arquivo na tela e o toast de erro oferece "Tentar de novo"
+AssertionError: expected undefined to be 8000 // Object.is equality
+
+- Expected:
+8000
+
++ Received:
+undefined
+
+ ❯ src/components/inbox/__tests__/FileUploader.progresso-upload.test.tsx:191:29
+    189|     const [mensagem, opcoes] = ultimoToastDeErro();
+    190|     expect(mensagem).toContain('entrega indisponível');
+    191|     expect(opcoes.duration).toBe(8000);
+       |                             ^
+    192|     expect(opcoes.action?.label).toBe('Tentar de novo');
+    193|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  src/components/inbox/__tests__/FileUploader.progresso-upload.test.tsx > FileUploader — progresso real do upload e falha que fica na tela > no lote, o que falhou fica na lista e o toast de erro retenta pelo mesmo caminho
+TypeError: Cannot read properties of undefined (reading 'duration')
+ ❯ src/components/inbox/__tests__/FileUploader.progresso-upload.test.tsx:215:19
+    213|     const [mensagem, opcoes] = ultimoToastDeErro();
+    214|     expect(mensagem).toContain('1 arquivo(s) falharam');
+    215|     expect(opcoes.duration).toBe(8000);
+       |                   ^
+    216|     expect(opcoes.action?.label).toBe('Tentar de novo');
+    217|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  src/components/inbox/__tests__/FileUploader.progresso-upload.test.tsx > FileUploader — progresso real do upload e falha que fica na tela > desmontar no meio do upload dispensa o aviso "Enviando arquivo..." em vez de deixa-lo preso
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'file-upload' ]
+
+Number of calls: 0
+
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body[39m
+    [33mstyle[39m=[32m""[39m
+  [36m>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ src/components/inbox/__tests__/FileUploader.progresso-upload.test.tsx:246:52
+    244|     await act(async () => { liberarUpload(); });
+    245|
+    246|     await waitFor(() => expect(mocks.toastDismiss).toHaveBeenCalledWit…
+       |                                                    ^
+    247|     expect(mocks.toastSuccess).not.toHaveBeenCalled();
+    248|   });
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  src/components/inbox/__tests__/FileUploader.progresso-upload.test.tsx > FileUploader — progresso real do upload e falha que fica na tela > sem suporte a corpo em stream (Firefox/Safari), sobe o File original sem duplex e mostra estado indeterminado
+TestingLibraryElementError: Unable to find an accessible element with the role "progressbar" and name "Progresso de sem-suporte-stream.pdf"
+
+Here are the accessible roles:
+
+  dialog:
+
+  Name "Enviar Arquivo":
+  [36m<div[39m
+    [33maria-labelledby[39m=[32m"radix-_r_m_"[39m
+    [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 w-full translate-x-[-50%] translate-y-[-50%] gap-4 border border-border/60 bg-background p-6 shadow-2xl shadow-background/50 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-2xl max-w-lg sm:max-w-lg max-h-[85vh] overflow-hidden flex flex-col"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mid[39m=[32m"radix-_r_l_"[39m
+    [33mrole[39m=[32m"dialog"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Enviar Arquivo":
+  [36m<h2[39m
+    [33mclass[39m=[32m"text-lg font-display font-semibold leading-none tracking-tight flex items-center gap-2"[39m
+    [33mid[39m=[32m"radix-_r_m_"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+    [33mid[39m=[32m"radix-_r_n_"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"font-medium text-sm truncate"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-xs text-muted-foreground mt-1"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"font-medium mb-2"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Fechar envio":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Fechar envio"[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:bg-accent hover:text-accent-foreground hover:shadow-glow-accent-sm flex-shrink-0 h-8 w-8"[39m
+  [36m/>[39m
+
+  Name "Cancelar":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-secondary/50 hover:shadow-glow-secondary-sm h-10 px-4 py-2"[39m
+  [36m/>[39m
+
+  Name "Enviar":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden text-primary-foreground shadow-sm hover:shadow-glow-primary-lg before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent before:translate-x-[-200%] hover:before:translate-x-[200%] before:transition-transform before:duration-700 h-10 px-4 py-2 bg-whatsapp hover:bg-whatsapp-dark"[39m
+  [36m/>[39m
+
+  Name "Fechar":
+  [36m<button[39m
+    [33mclass[39m=[32m"absolute right-4 top-4 rounded-lg p-1 opacity-70 ring-offset-background transition-all hover:opacity-100 hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  textbox:
+
+  Name "Legenda (opcional)":
+  [36m<input[39m
+    [33mclass[39m=[32m"flex w-full rounded-xl border bg-background text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 md:text-sm border-input focus-visible:outline-none focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-primary/20 focus-visible:shadow-glow-primary-sm h-10 px-3 py-2"[39m
+    [33mid[39m=[32m"caption"[39m
+    [33mplaceholder[39m=[32m"Adicione uma legenda..."[39m
+    [33mvalue[39m=[32m""[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  list:
+
+  Name "":
+  [36m<ul[39m
+    [33mclass[39m=[32m"space-y-1"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m>[39m
+    [36m<input[39m
+      [33maccept[39m=[32m"image/jpeg,image/png,image/webp,video/mp4,video/3gpp,audio/aac,audio/amr,audio/mpeg,audio/ogg,audio/opus,audio/mp4,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain,text/csv,application/zip,application/x-rar-compressed,application/vnd.rar,image/webp"[39m
+      [33mclass[39m=[32m"hidden"[39m
+      [33mmultiple[39m=[32m""[39m
+      [33mtype[39m=[32m"file"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33mdata-state[39m=[32m"closed"[39m
+      [33mtabindex[39m=[32m"0"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33maria-label[39m=[32m"Anexar arquivo"[39m
+        [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:shadow-glow-accent-sm h-10 w-10 text-muted-foreground hover:text-primary hover:bg-primary/10"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-paperclip w-5 h-5"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mheight[39m=[32m"24"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"24"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m16 6-8.414 8.586a2 2 0 0 0 2.829 2.829l8.414-8.586a4 4 0 1 0-5.657-5.657l-8.379 8.551a6 6 0 1 0 8.485 8.485l8.379-8.551"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"fixed inset-0 z-50 bg-background/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-labelledby[39m=[32m"radix-_r_m_"[39m
+    [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 w-full translate-x-[-50%] translate-y-[-50%] gap-4 border border-border/60 bg-background p-6 shadow-2xl shadow-background/50 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-2xl max-w-lg sm:max-w-lg max-h-[85vh] overflow-hidden flex flex-col"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mid[39m=[32m"radix-_r_l_"[39m
+    [33mrole[39m=[32m"dialog"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+    [36m>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"text-lg font-display font-semibold leading-none tracking-tight flex items-center gap-2"[39m
+        [33mid[39m=[32m"radix-_r_m_"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-upload w-5 h-5"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mheight[39m=[32m"24"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"24"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M12 3v12"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m17 8-5-5-5 5"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0mEnviar Arquivo[0m
+      [36m</h2>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [33mid[39m=[32m"radix-_r_n_"[39m
+      [36m>[39m
+        [0mFormatos suportados: imagens, vídeos, áudios e documentos[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-4"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"border rounded-lg overflow-hidden bg-muted/30"[39m
+      [36m>[39m
+        [36m<iframe[39m
+          [33mclass[39m=[32m"w-full h-[280px] border-0"[39m
+          [33msrc[39m=[32m"blob:nodedata:fa1a532f-0c76-4dbb-9c86-b102eae6f6e8#toolbar=0&navpanes=0"[39m
+          [33mtitle[39m=[32m"PDF Preview"[39m
+        [36m/>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"relative border rounded-lg p-4 bg-muted/50"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-start gap-4"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex-shrink-0"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-20 h-20 bg-primary/10 rounded-lg flex items-center justify-center text-primary"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-file-text w-5...
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/inbox/__tests__/FileUploader.progresso-upload.test.tsx:274:28
+    272|
+    273|       // Tela em estado indeterminado: barra sem valor, mesmo nome ace…
+    274|       const barra = screen.getByRole('progressbar', { name: 'Progresso…
+       |                            ^
+    275|       expect(barra).not.toHaveAttribute('aria-valuenow');
+    276|       expect(screen.getByTestId('upload-indeterminado')).toHaveTextCon…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  src/components/inbox/__tests__/FileUploader.progresso-upload.test.tsx > FileUploader — progresso real do upload e falha que fica na tela > arquivo sem stream() não deixa a barra parada em 0%: mostra estado indeterminado
+TestingLibraryElementError: Unable to find an accessible element with the role "progressbar" and name "Progresso de basico-sem-stream.pdf"
+
+Here are the accessible roles:
+
+  dialog:
+
+  Name "Enviar Arquivo":
+  [36m<div[39m
+    [33maria-labelledby[39m=[32m"radix-_r_q_"[39m
+    [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 w-full translate-x-[-50%] translate-y-[-50%] gap-4 border border-border/60 bg-background p-6 shadow-2xl shadow-background/50 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-2xl max-w-lg sm:max-w-lg max-h-[85vh] overflow-hidden flex flex-col"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mid[39m=[32m"radix-_r_p_"[39m
+    [33mrole[39m=[32m"dialog"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Enviar Arquivo":
+  [36m<h2[39m
+    [33mclass[39m=[32m"text-lg font-display font-semibold leading-none tracking-tight flex items-center gap-2"[39m
+    [33mid[39m=[32m"radix-_r_q_"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+    [33mid[39m=[32m"radix-_r_r_"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"font-medium text-sm truncate"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-xs text-muted-foreground mt-1"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"font-medium mb-2"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Fechar envio":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Fechar envio"[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:bg-accent hover:text-accent-foreground hover:shadow-glow-accent-sm flex-shrink-0 h-8 w-8"[39m
+  [36m/>[39m
+
+  Name "Cancelar":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-secondary/50 hover:shadow-glow-secondary-sm h-10 px-4 py-2"[39m
+  [36m/>[39m
+
+  Name "Enviar":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden text-primary-foreground shadow-sm hover:shadow-glow-primary-lg before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent before:translate-x-[-200%] hover:before:translate-x-[200%] before:transition-transform before:duration-700 h-10 px-4 py-2 bg-whatsapp hover:bg-whatsapp-dark"[39m
+  [36m/>[39m
+
+  Name "Fechar":
+  [36m<button[39m
+    [33mclass[39m=[32m"absolute right-4 top-4 rounded-lg p-1 opacity-70 ring-offset-background transition-all hover:opacity-100 hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  textbox:
+
+  Name "Legenda (opcional)":
+  [36m<input[39m
+    [33mclass[39m=[32m"flex w-full rounded-xl border bg-background text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 md:text-sm border-input focus-visible:outline-none focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-primary/20 focus-visible:shadow-glow-primary-sm h-10 px-3 py-2"[39m
+    [33mid[39m=[32m"caption"[39m
+    [33mplaceholder[39m=[32m"Adicione uma legenda..."[39m
+    [33mvalue[39m=[32m""[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  list:
+
+  Name "":
+  [36m<ul[39m
+    [33mclass[39m=[32m"space-y-1"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m>[39m
+    [36m<input[39m
+      [33maccept[39m=[32m"image/jpeg,image/png,image/webp,video/mp4,video/3gpp,audio/aac,audio/amr,audio/mpeg,audio/ogg,audio/opus,audio/mp4,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain,text/csv,application/zip,application/x-rar-compressed,application/vnd.rar,image/webp"[39m
+      [33mclass[39m=[32m"hidden"[39m
+      [33mmultiple[39m=[32m""[39m
+      [33mtype[39m=[32m"file"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33mdata-state[39m=[32m"closed"[39m
+      [33mtabindex[39m=[32m"0"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33maria-label[39m=[32m"Anexar arquivo"[39m
+        [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:shadow-glow-accent-sm h-10 w-10 text-muted-foreground hover:text-primary hover:bg-primary/10"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-paperclip w-5 h-5"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mheight[39m=[32m"24"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"24"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m16 6-8.414 8.586a2 2 0 0 0 2.829 2.829l8.414-8.586a4 4 0 1 0-5.657-5.657l-8.379 8.551a6 6 0 1 0 8.485 8.485l8.379-8.551"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"fixed inset-0 z-50 bg-background/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-labelledby[39m=[32m"radix-_r_q_"[39m
+    [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 w-full translate-x-[-50%] translate-y-[-50%] gap-4 border border-border/60 bg-background p-6 shadow-2xl shadow-background/50 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-2xl max-w-lg sm:max-w-lg max-h-[85vh] overflow-hidden flex flex-col"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mid[39m=[32m"radix-_r_p_"[39m
+    [33mrole[39m=[32m"dialog"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+    [36m>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"text-lg font-display font-semibold leading-none tracking-tight flex items-center gap-2"[39m
+        [33mid[39m=[32m"radix-_r_q_"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-upload w-5 h-5"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mheight[39m=[32m"24"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"24"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M12 3v12"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m17 8-5-5-5 5"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0mEnviar Arquivo[0m
+      [36m</h2>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [33mid[39m=[32m"radix-_r_r_"[39m
+      [36m>[39m
+        [0mFormatos suportados: imagens, vídeos, áudios e documentos[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-4"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"border rounded-lg overflow-hidden bg-muted/30"[39m
+      [36m>[39m
+        [36m<iframe[39m
+          [33mclass[39m=[32m"w-full h-[280px] border-0"[39m
+          [33msrc[39m=[32m"blob:nodedata:8f89ce43-a5db-43d2-901c-b8dd6baaf88c#toolbar=0&navpanes=0"[39m
+          [33mtitle[39m=[32m"PDF Preview"[39m
+        [36m/>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"relative border rounded-lg p-4 bg-muted/50"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-start gap-4"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex-shrink-0"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-20 h-20 bg-primary/10 rounded-lg flex items-center justify-center text-primary"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-file-text w-5...
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/inbox/__tests__/FileUploader.progresso-upload.test.tsx:298:26
+    296|     await waitFor(() => expect(mocks.upload).toHaveBeenCalled());
+    297|
+    298|     const barra = screen.getByRole('progressbar', { name: 'Progresso d…
+       |                          ^
+    299|     expect(barra).not.toHaveAttribute('aria-valuenow');
+    300|     expect(screen.getByTestId('upload-indeterminado')).toHaveTextConte…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  src/components/inbox/__tests__/FileUploader.progresso-upload.test.tsx > FileUploader — progresso real do upload e falha que fica na tela > no lote sem bytes para acompanhar, itens e total mostram progresso indeterminado
+Error: [2mexpect([22m[31melement[39m[2m).not.toHaveAttribute([22m[32m[32m"aria-valuenow"[32m[39m[2m) // element.hasAttribute("aria-valuenow")[22m
+
+Expected the element not to have attribute:
+[32m  aria-valuenow[39m
+Received:
+[31m  aria-valuenow="0"[39m
+ ❯ src/components/inbox/__tests__/FileUploader.progresso-upload.test.tsx:318:27
+    316|     // Item em envio: barra indeterminada com o mesmo nome acessível (…
+    317|     const barraItem = screen.getByRole('progressbar', { name: 'Progres…
+    318|     expect(barraItem).not.toHaveAttribute('aria-valuenow');
+       |                           ^
+    319|     // Total do lote: indeterminado enquanto nenhum item inacabado tem…
+    320|     const barraTotal = screen.getByRole('progressbar', { name: 'Progre…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  src/components/inbox/__tests__/useFileUploadLogic.u7.test.tsx > useFileUploadLogic — U7: fila, limites e compressão > em lote parcial reporta quantos foram enviados e quantos falharam
+AssertionError: expected "vi.fn()" to be called with arguments: [ StringContaining{…}, …(1) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   StringContaining "1 arquivo(s) falharam",
+-   ObjectContaining {
+-     "action": ObjectContaining {
+-       "label": "Tentar de novo",
+-     },
+-     "duration": 8000,
+-   },
++   "1 arquivo(s) falharam ao enviar",
+  ]
+
+
+Number of calls: 1
+
+ ❯ src/components/inbox/__tests__/useFileUploadLogic.u7.test.tsx:188:30
+    186|
+    187|     await waitFor(() => expect(mocks.toastSuccess).toHaveBeenCalledWit…
+    188|     expect(mocks.toastError).toHaveBeenCalledWith(
+       |                              ^
+    189|       expect.stringContaining('1 arquivo(s) falharam'),
+    190|       expect.objectContaining({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  10 failed | 13 passed | 1 todo (24)
+   Start at  14:43:58
+   Duration  14.37s (transform 909ms, setup 981ms, import 2.11s, tests 12.61s, environment 3.37s)
+

@@ -1,0 +1,877 @@
+diff --git a/src/components/inbox/ChatPanel.tsx b/src/components/inbox/ChatPanel.tsx
+index e1ea6560bf..78688a6532 100644
+--- a/src/components/inbox/ChatPanel.tsx
++++ b/src/components/inbox/ChatPanel.tsx
+@@ -398,9 +398,19 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio,
+       closeDialog('scheduleDialog');
+     } catch (err) {
+       // Falha de upload, de locator ou de persistência: remove o objeto órfão
+-      // best-effort e não anuncia sucesso (nenhum closeDialog no caminho de erro).
++      // best-effort, avisa na tela e RELANÇA. Sem o relançamento o
++      // `ScheduleMessageDialog` tratava a promessa como sucesso, anunciava "Mensagem
++      // agendada!" e fechava — agendamento que não existe em lugar nenhum (N8).
+       if (storagePath) await removeStoredObjectBestEffort('whatsapp-media', storagePath);
+       log.error('Failed to schedule message:', err);
++      toast({
++        title: 'Não foi possível agendar',
++        description: attachment
++          ? `Falha ao agendar o anexo "${attachment.name}": ${err instanceof Error ? err.message : 'erro desconhecido'}. Tente de novo.`
++          : 'A mensagem não foi salva. Tente de novo.',
++        variant: 'destructive',
++      });
++      throw err;
+     }
+   };
+ 
+diff --git a/src/components/inbox/FileUploader.tsx b/src/components/inbox/FileUploader.tsx
+index 224a8fb81f..62faddf90e 100644
+--- a/src/components/inbox/FileUploader.tsx
++++ b/src/components/inbox/FileUploader.tsx
+@@ -97,7 +97,14 @@ function QueueFileItem({ queuedFile, onRemove, onRetry, disabled }: { queuedFile
+               </motion.span>
+             )}
+           </div>
+-          {(queuedFile.status === 'uploading' || queuedFile.status === 'sending') && <Progress value={queuedFile.progress} className="h-1 mt-2" aria-label={`Progresso de ${queuedFile.file.name}`} />}
++          {(queuedFile.status === 'uploading' || queuedFile.status === 'sending') && (
++            queuedFile.indeterminate ? (
++              /* Sem evento de bytes: indeterminado com o mesmo aria-label, nunca 0% parado. */
++              <Progress aria-label={`Progresso de ${queuedFile.file.name}`} className="h-1 mt-2" />
++            ) : (
++              <Progress value={queuedFile.progress} className="h-1 mt-2" aria-label={`Progresso de ${queuedFile.file.name}`} />
++            )
++          )}
+         </div>
+         {queuedFile.status === 'error' && queuedFile.validation.valid && (
+           <motion.div
+@@ -134,13 +141,17 @@ export const FileUploader = forwardRef<FileUploaderRef, FileUploaderProps>(({
+ 
+   const {
+     isDialogOpen, filePreview, fileQueue, isMultiMode, caption, setCaption,
+-    uploading, uploadProgress, uploadStage, currentQueueIndex,
++    uploading, uploadProgress, uploadStage, currentQueueIndex, uploadIndeterminate,
+     apiLoading, canSend, validFilesCount, totalQueueProgress,
+     handleClose, handleSendFile, handleSendAllFiles, handleFileChange,
+     handleExternalFile, handleExternalFiles, removeFromQueue, retryQueueFile,
+   } = useFileUploadLogic({ instanceName, recipientNumber, contactId, connectionId, onFileSelect, onFileSent, fileInputRef });
+ 
+   const failedCount = fileQueue.filter(f => f.status === 'error').length;
++  // Total do lote: indeterminado quando NENHUM item inacabado tem bytes para acompanhar
++  // (todos sem `stream()` ou navegador sem corpo em stream) — nunca média parada em 0%.
++  const pendentesLote = fileQueue.filter(f => f.status !== 'done');
++  const totalIndeterminado = uploading && pendentesLote.length > 0 && pendentesLote.every(f => f.indeterminate || !f.validation.valid);
+ 
+   useImperativeHandle(ref, () => ({
+     handleExternalFile,
+@@ -233,11 +244,30 @@ export const FileUploader = forwardRef<FileUploaderRef, FileUploaderProps>(({
+               )}
+               <AnimatePresence>
+                 {uploading && (
+-                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-2">
+-                    <Progress value={uploadProgress} className="h-2" aria-label={`Progresso de ${filePreview.file.name}`} />
+-                    <p className="text-xs text-muted-foreground text-center">
+-                      {uploadStage === 'uploading' ? `Fazendo upload... ${uploadProgress}%` : `Enviando via WhatsApp... ${uploadProgress}%`}
+-                    </p>
++                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-2" aria-busy={uploading}>
++                    {/* Sem evento de bytes no navegador a barra fica indeterminada: melhor
++                        dizer "enviando" do que cravar 0% enquanto o arquivo sobe. */}
++                    {uploadIndeterminate ? (
++                      <>
++                        {/* Sem evento de bytes não há porcentagem honesta: Progress
++                            indeterminado (sem `value`, logo sem `aria-valuenow`) com o
++                            MESMO aria-label da barra determinada. */}
++                        <Progress
++                          aria-label={`Progresso de ${filePreview.file.name}`}
++                          className="motion-safe:animate-pulse motion-reduce:animate-none"
++                        />
++                        <p className="text-xs text-muted-foreground text-center" data-testid="upload-indeterminado">
++                        {uploadStage === 'uploading' ? 'Fazendo upload...' : 'Enviando via WhatsApp...'}
++                      </p>
++                      </>
++                    ) : (
++                      <>
++                        <Progress value={uploadProgress} className="h-2" aria-label={`Progresso de ${filePreview.file.name}`} />
++                        <p className="text-xs text-muted-foreground text-center">
++                          {uploadStage === 'uploading' ? `Fazendo upload... ${uploadProgress}%` : `Enviando via WhatsApp... ${uploadProgress}%`}
++                        </p>
++                      </>
++                    )}
+                   </motion.div>
+                 )}
+               </AnimatePresence>
+@@ -262,7 +292,11 @@ export const FileUploader = forwardRef<FileUploaderRef, FileUploaderProps>(({
+ 
+           {isMultiMode && uploading && (
+             <div className="space-y-2">
+-              <Progress value={totalQueueProgress} className="h-2" aria-label="Progresso total" />
++              {totalIndeterminado ? (
++                <Progress aria-label="Progresso total" className="motion-safe:animate-pulse motion-reduce:animate-none" />
++              ) : (
++                <Progress value={totalQueueProgress} className="h-2" aria-label="Progresso total" />
++              )}
+               <p className="text-xs text-muted-foreground text-center">Enviando arquivo {currentQueueIndex + 1} de {fileQueue.length}...</p>
+             </div>
+           )}
+diff --git a/src/components/inbox/__tests__/ChatPanel.scheduled-media.test.tsx b/src/components/inbox/__tests__/ChatPanel.scheduled-media.test.tsx
+index 5814bd636c..fefdfaac90 100644
+--- a/src/components/inbox/__tests__/ChatPanel.scheduled-media.test.tsx
++++ b/src/components/inbox/__tests__/ChatPanel.scheduled-media.test.tsx
+@@ -22,6 +22,7 @@ const mocks = vi.hoisted(() => ({
+   getPublicUrl: vi.fn(),
+   remove: vi.fn(),
+   scheduleMessage: vi.fn(),
++  toast: vi.fn(),
+   dialogsProps: { current: null as null | Record<string, unknown> },
+ }));
+ 
+@@ -73,7 +74,7 @@ vi.mock('@/hooks/system/useUserSettings', () => ({
+   useUserSettings: () => ({ settings: {}, updateSettings: vi.fn(), saveSettings: vi.fn() }),
+ }));
+ 
+-vi.mock('@/hooks/ui/use-toast', () => ({ toast: vi.fn() }));
++vi.mock('@/hooks/ui/use-toast', () => ({ toast: mocks.toast }));
+ 
+ vi.mock('@/hooks/chat/useScheduledMessages', () => ({
+   useScheduledMessages: () => ({
+@@ -180,14 +181,24 @@ function renderPanel() {
+   );
+ }
+ 
+-/** Invoca o handler de agendamento capturado de ChatDialogs. */
++/**
++ * Invoca o handler de agendamento capturado de ChatDialogs.
++ * A falha é devolvida (e não lançada): o handler RELANÇA de propósito, para o diálogo não
++ * anunciar sucesso quando o agendamento não existe — os testes de erro conferem isso.
++ */
+ async function scheduleAttachment(file: File, scheduledAt = new Date(Date.now() + 3600_000)) {
+   const props = mocks.dialogsProps.current as unknown as {
+     onScheduleMessage: (message: string, scheduledAt: Date, attachment?: File) => Promise<void>;
+   };
++  let error: unknown = null;
+   await act(async () => {
+-    await props.onScheduleMessage('Olá, segue o anexo', scheduledAt, file);
++    try {
++      await props.onScheduleMessage('Olá, segue o anexo', scheduledAt, file);
++    } catch (err) {
++      error = err;
++    }
+   });
++  return { error };
+ }
+ 
+ beforeEach(() => {
+@@ -248,24 +259,43 @@ describe('ChatPanel — anexo agendado no path canônico do contato', () => {
+     expect(payload.messageType).toBe('image');
+   });
+ 
+-  it('limpa o objeto do storage quando a persistência do agendamento falha', async () => {
++  it('limpa o objeto do storage e relança quando a persistência do agendamento falha', async () => {
+     mocks.scheduleMessage.mockRejectedValueOnce(new Error('insert falhou'));
+     renderPanel();
+-    await scheduleAttachment(createFile());
++    const { error } = await scheduleAttachment(createFile());
+ 
+     await waitFor(() => expect(mocks.remove).toHaveBeenCalledTimes(1));
+     const [uploadedPath] = mocks.upload.mock.calls[0] as [string];
+     expect(mocks.remove.mock.calls[0][0]).toEqual([uploadedPath]);
+     expect(mocks.scheduleMessage).toHaveBeenCalledTimes(1);
++    // Relança: o diálogo mantém o botão e não anuncia "Mensagem agendada!" (N8).
++    expect(error).toBeInstanceOf(Error);
++    expect((error as Error).message).toBe('insert falhou');
++    // Aviso claro na tela, com o motivo real.
++    expect(mocks.toast).toHaveBeenCalledWith(
++      expect.objectContaining({
++        title: 'Não foi possível agendar',
++        variant: 'destructive',
++        description: expect.stringContaining('insert falhou'),
++      }),
++    );
+   });
+ 
+-  it('limpa o objeto quando a referência durável (locator) não é gerada', async () => {
++  it('limpa o objeto e relança quando a referência durável (locator) não é gerada', async () => {
+     mocks.getPublicUrl.mockReturnValue({ data: null });
+     renderPanel();
+-    await scheduleAttachment(createFile());
++    const { error } = await scheduleAttachment(createFile());
+ 
+     await waitFor(() => expect(mocks.remove).toHaveBeenCalledTimes(1));
+     expect(mocks.scheduleMessage).not.toHaveBeenCalled();
++    expect(error).toBeInstanceOf(Error);
++    expect(mocks.toast).toHaveBeenCalledWith(
++      expect.objectContaining({
++        title: 'Não foi possível agendar',
++        variant: 'destructive',
++        description: expect.stringContaining('foto do cliente.png'),
++      }),
++    );
+   });
+ 
+   it.each([
+diff --git a/src/components/inbox/__tests__/FileUploader.progresso-upload.test.tsx b/src/components/inbox/__tests__/FileUploader.progresso-upload.test.tsx
+new file mode 100644
+index 0000000000..6ec1815162
+--- /dev/null
++++ b/src/components/inbox/__tests__/FileUploader.progresso-upload.test.tsx
+@@ -0,0 +1,328 @@
++/**
++ * PK-27 (auditoria de paridade V3 → V2, doc chat-1, achados N7): a barra de progresso do
++ * FileUploader era código morto — `uploadProgress`/`uploadStage` existiam e nunca eram
++ * atualizados (o diálogo ficava sem nenhuma indicação durante o upload) e o toast de erro
++ * sumia no prazo padrão, sem retentativa.
++ *
++ * O que este teste prova, pela TELA e pelo componente REAL:
++ *  1. a barra segue o evento REAL de bytes do upload: a requisição consome o corpo do
++ *     arquivo como stream (`duplex: 'half'`, suportado pelo Storage SDK) e cada pedaço
++ *     consumido aparece em `role="progressbar"` / `aria-valuenow` e no texto do diálogo;
++ *  2. o aviso de "Enviando arquivo..." não expira sozinho (`duration: Infinity`);
++ *  3. na falha, o arquivo continua na tela, o toast de erro fica 8 s e a ação
++ *     "Tentar de novo" reenvia de verdade — sem refazer o upload (R2-INB-006).
++ *
++ * Nota de ambiente: o `Blob` do jsdom não implementa `stream()` (todos os navegadores
++ * usados no produto implementam). O arquivo de teste recebe a implementação real do
++ * navegador por `Object.defineProperty`, e o upload mockado lê esse stream exatamente como
++ * o `fetch` do Storage SDK lê — é o consumo real dos bytes que move a barra.
++ */
++import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
++import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
++import { FileUploader } from '@/components/inbox/FileUploader';
++import { TooltipProvider } from '@/components/ui/tooltip';
++
++const mocks = vi.hoisted(() => ({
++  storageFrom: vi.fn(),
++  upload: vi.fn(),
++  getPublicUrl: vi.fn(),
++  remove: vi.fn(),
++  tableFrom: vi.fn(),
++  sendOutboundMessage: vi.fn(),
++  toastInfo: vi.fn(),
++  toastSuccess: vi.fn(),
++  toastError: vi.fn(),
++  toastWarning: vi.fn(),
++  toastDismiss: vi.fn(),
++}));
++
++vi.mock('framer-motion', async (importOriginal) => {
++  const actual = await importOriginal<typeof import('framer-motion')>();
++  return { ...actual, useReducedMotion: () => false };
++});
++
++vi.mock('@/integrations/supabase/client', () => ({
++  supabase: {
++    storage: { from: mocks.storageFrom },
++    from: mocks.tableFrom,
++  },
++}));
++
++vi.mock('@/services/outbound-message.service', () => ({
++  sendOutboundMessage: mocks.sendOutboundMessage,
++}));
++
++vi.mock('sonner', () => ({
++  toast: {
++    info: mocks.toastInfo,
++    success: mocks.toastSuccess,
++    error: mocks.toastError,
++    warning: mocks.toastWarning,
++    dismiss: mocks.toastDismiss,
++  },
++}));
++
++vi.mock('@/lib/logger', () => ({
++  log: { debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
++}));
++
++const CONTACT_ID = 'contato-1';
++const LOCATOR_URL = 'https://project.test/storage/v1/object/public/whatsapp-media/locator';
++const sentOk = { id: 'msg-1', status: 'sent', externalId: 'ext-1', idempotent: false };
++
++function pdf(name: string) {
++  return new File(['x'], name, { type: 'application/pdf' });
++}
++
++/**
++ * Arquivo com o `stream()` de verdade (o que qualquer navegador do produto tem): dois
++ * pedaços de 8 bytes, então o primeiro consumo já reporta 50% do total.
++ */
++function pdfEmStream(name: string) {
++  const chunks = [new Uint8Array(8), new Uint8Array(8)];
++  const file = new File(chunks, name, { type: 'application/pdf' });
++  Object.defineProperty(file, 'stream', {
++    configurable: true,
++    value: () => new ReadableStream<Uint8Array>({
++      start(controller) {
++        chunks.forEach((chunk) => controller.enqueue(chunk));
++        controller.close();
++      },
++    }),
++  });
++  return file;
++}
++
++function reconcileChain(result: { data: unknown; error: unknown }) {
++  const chain = {
++    select: () => chain,
++    eq: () => chain,
++    limit: () => Promise.resolve(result),
++  };
++  return chain;
++}
++
++function renderUploader() {
++  return render(
++    <TooltipProvider>
++      <FileUploader contactId={CONTACT_ID} />
++    </TooltipProvider>,
++  );
++}
++
++function chooseFiles(container: HTMLElement, files: File[]) {
++  const input = container.querySelector('input[type="file"]') as HTMLInputElement;
++  fireEvent.change(input, { target: { files } });
++}
++
++/** Última chamada do toast de erro, na forma (mensagem, opções). */
++function ultimoToastDeErro(): [string, { duration?: number; action?: { label: string; onClick: () => void } }] {
++  const calls = mocks.toastError.mock.calls;
++  expect(calls.length).toBeGreaterThan(0);
++  return calls[calls.length - 1] as never;
++}
++
++beforeEach(() => {
++  vi.clearAllMocks();
++  mocks.storageFrom.mockReturnValue({
++    upload: mocks.upload,
++    getPublicUrl: mocks.getPublicUrl,
++    remove: mocks.remove,
++  });
++  mocks.upload.mockResolvedValue({ error: null });
++  mocks.getPublicUrl.mockReturnValue({ data: { publicUrl: LOCATOR_URL } });
++  mocks.remove.mockResolvedValue({ error: null });
++  mocks.sendOutboundMessage.mockResolvedValue(sentOk);
++  mocks.tableFrom.mockReturnValue(reconcileChain({ data: [{ id: 'msg-1' }], error: null }));
++});
++
++afterEach(() => {
++  vi.resetAllMocks();
++  vi.restoreAllMocks();
++});
++
++describe('FileUploader — progresso real do upload e falha que fica na tela', () => {
++  it('a barra acompanha os bytes que o upload consome (role=progressbar, valor atual)', async () => {
++    let liberarUpload: () => void = () => {};
++    const seguraUpload = new Promise<void>((resolve) => { liberarUpload = resolve; });
++
++    mocks.upload.mockImplementation(async (_path: string, body: unknown) => {
++      const reader = (body as ReadableStream<Uint8Array>).getReader();
++      await reader.read(); // primeiro pedaço consumido: o progresso real já foi reportado
++      await seguraUpload;  // upload no meio do caminho
++      while (!(await reader.read()).done) { /* consome o resto */ }
++      return { error: null };
++    });
++
++    const { container } = renderUploader();
++    chooseFiles(container, [pdfEmStream('grande.pdf')]);
++    fireEvent.click(screen.getByRole('button', { name: /^enviar$/i }));
++
++    // A barra existe, é acessível e mostra o valor do pedaço já consumido (1 de 2 = 50%).
++    const barra = await screen.findByRole('progressbar', { name: 'Progresso de grande.pdf' });
++    await waitFor(() => expect(barra).toHaveAttribute('aria-valuenow', '50'));
++    expect(screen.getByText('Fazendo upload... 50%')).toBeInTheDocument();
++    // O aviso de envio não expira sozinho no meio de um arquivo grande.
++    expect(mocks.toastInfo).toHaveBeenCalledWith(
++      'Enviando arquivo...',
++      expect.objectContaining({ id: 'file-upload', duration: Infinity }),
++    );
++
++    await act(async () => { liberarUpload(); });
++    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
++  });
++
++  it('falha única mantém o arquivo na tela e o toast de erro oferece "Tentar de novo"', async () => {
++    mocks.sendOutboundMessage
++      .mockRejectedValueOnce(new Error('entrega indisponível'))
++      .mockResolvedValueOnce(sentOk);
++
++    const { container } = renderUploader();
++    chooseFiles(container, [pdf('contrato.pdf')]);
++    fireEvent.click(screen.getByRole('button', { name: /^enviar$/i }));
++
++    await waitFor(() => expect(mocks.toastError).toHaveBeenCalled());
++    // O anexo não é descartado: continua à vista com o botão habilitado.
++    expect(screen.getByText('contrato.pdf')).toBeInTheDocument();
++    expect(screen.getByRole('button', { name: /^enviar$/i })).toBeEnabled();
++
++    const [mensagem, opcoes] = ultimoToastDeErro();
++    expect(mensagem).toContain('entrega indisponível');
++    expect(opcoes.duration).toBe(8000);
++    expect(opcoes.action?.label).toBe('Tentar de novo');
++
++    // A ação do toast reenvia de verdade, reusando o MESMO objeto (nenhum upload novo).
++    await act(async () => { opcoes.action?.onClick(); });
++    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
++    expect(mocks.sendOutboundMessage).toHaveBeenCalledTimes(2);
++    expect(mocks.upload).toHaveBeenCalledTimes(1);
++  });
++
++  it('no lote, o que falhou fica na lista e o toast de erro retenta pelo mesmo caminho', async () => {
++    mocks.sendOutboundMessage.mockImplementation((input: { content?: string }) =>
++      input.content === 'falha.pdf'
++        ? Promise.reject(new Error('fila cheia'))
++        : Promise.resolve(sentOk),
++    );
++
++    const { container } = renderUploader();
++    chooseFiles(container, [pdf('falha.pdf'), pdf('ok.pdf')]);
++    fireEvent.click(screen.getByRole('button', { name: /enviar 2 arquivos/i }));
++
++    await waitFor(() => expect(mocks.toastError).toHaveBeenCalled(), { timeout: 6000 });
++    const [mensagem, opcoes] = ultimoToastDeErro();
++    expect(mensagem).toContain('1 arquivo(s) falharam');
++    expect(opcoes.duration).toBe(8000);
++    expect(opcoes.action?.label).toBe('Tentar de novo');
++
++    // Só o que falhou sobra na lista, marcado em erro — não some sozinho.
++    expect(screen.getByText('falha.pdf')).toBeInTheDocument();
++    expect(screen.getByText('Erro')).toBeInTheDocument();
++    await waitFor(() => expect(screen.queryByText('ok.pdf')).not.toBeInTheDocument());
++
++    // O "Tentar de novo" do toast reenvia o que ficou na fila e fecha ao concluir.
++    mocks.sendOutboundMessage.mockResolvedValue(sentOk);
++    await act(async () => { opcoes.action?.onClick(); });
++    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument(), { timeout: 6000 });
++    expect(mocks.upload).toHaveBeenCalledTimes(2);
++    expect(mocks.sendOutboundMessage).toHaveBeenCalledTimes(3);
++  });
++
++  it('desmontar no meio do upload dispensa o aviso "Enviando arquivo..." em vez de deixa-lo preso', async () => {
++    let liberarUpload!: () => void;
++    const seguraUpload = new Promise<void>((r) => { liberarUpload = r; });
++    mocks.upload.mockImplementation(async () => { await seguraUpload; return { error: null }; });
++
++    const { container, unmount } = renderUploader();
++    chooseFiles(container, [pdf('grande-desmonta.pdf')]);
++    fireEvent.click(screen.getByRole('button', { name: /^enviar$/i }));
++    await waitFor(() => expect(mocks.upload).toHaveBeenCalled());
++    expect(mocks.toastInfo).toHaveBeenCalledWith('Enviando arquivo...', expect.objectContaining({ id: 'file-upload' }));
++
++    // Sai da conversa no meio do upload: o `toast.success` do caminho feliz nunca roda.
++    unmount();
++    await act(async () => { liberarUpload(); });
++
++    await waitFor(() => expect(mocks.toastDismiss).toHaveBeenCalledWith('file-upload'));
++    expect(mocks.toastSuccess).not.toHaveBeenCalled();
++  });
++
++  it('sem suporte a corpo em stream (Firefox/Safari), sobe o File original sem duplex e mostra estado indeterminado', async () => {
++    let liberarUpload!: () => void;
++    const seguraUpload = new Promise<void>((r) => { liberarUpload = r; });
++    mocks.upload.mockImplementation(async () => { await seguraUpload; return { error: null }; });
++    // Firefox/Safari: aceitam o init do Request mas IGNORAM `duplex`
++    // (o getter nunca e lido) e nao fixam Content-Type em corpo de stream.
++    class RequestSemDuplex {
++      headers = { has: () => false };
++      constructor(_url: string, _init?: Record<string, unknown>) { /* `duplex` ignorado */ }
++    }
++    vi.stubGlobal('Request', RequestSemDuplex);
++    try {
++      const { container } = renderUploader();
++      const arquivo = pdfEmStream('sem-suporte-stream.pdf');
++      chooseFiles(container, [arquivo]);
++      fireEvent.click(screen.getByRole('button', { name: /^enviar$/i }));
++      await waitFor(() => expect(mocks.upload).toHaveBeenCalled());
++
++      // Corpo original, sem `duplex`: nada de stream serializado como texto.
++      const [, corpo, opcoes] = mocks.upload.mock.calls[0] as [string, unknown, { duplex?: string }];
++      expect(corpo).toBe(arquivo);
++      expect(opcoes.duplex).toBeUndefined();
++
++      // Tela em estado indeterminado: barra sem valor, mesmo nome acessível.
++      const barra = screen.getByRole('progressbar', { name: 'Progresso de sem-suporte-stream.pdf' });
++      expect(barra).not.toHaveAttribute('aria-valuenow');
++      expect(screen.getByTestId('upload-indeterminado')).toHaveTextContent('Fazendo upload...');
++
++      await act(async () => { liberarUpload(); });
++      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
++      expect(mocks.toastSuccess).toHaveBeenCalledWith('Arquivo enviado!', expect.objectContaining({ id: 'file-upload' }));
++    } finally {
++      vi.unstubAllGlobals();
++    }
++  });
++
++  it('arquivo sem stream() não deixa a barra parada em 0%: mostra estado indeterminado', async () => {
++    let liberarUpload!: () => void;
++    const seguraUpload = new Promise<void>((r) => { liberarUpload = r; });
++    mocks.upload.mockImplementation(async () => { await seguraUpload; return { error: null }; });
++
++    const { container } = renderUploader();
++    // O Blob do jsdom não implementa `stream()`: mesmo com navegador capaz,
++    // não há bytes para acompanhar.
++    chooseFiles(container, [pdf('basico-sem-stream.pdf')]);
++    fireEvent.click(screen.getByRole('button', { name: /^enviar$/i }));
++    await waitFor(() => expect(mocks.upload).toHaveBeenCalled());
++
++    const barra = screen.getByRole('progressbar', { name: 'Progresso de basico-sem-stream.pdf' });
++    expect(barra).not.toHaveAttribute('aria-valuenow');
++    expect(screen.getByTestId('upload-indeterminado')).toHaveTextContent('Fazendo upload...');
++
++    await act(async () => { liberarUpload(); });
++    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
++  });
++
++  it('no lote sem bytes para acompanhar, itens e total mostram progresso indeterminado', async () => {
++    let liberarUpload!: () => void;
++    const seguraUpload = new Promise<void>((r) => { liberarUpload = r; });
++    mocks.upload.mockImplementation(async () => { await seguraUpload; return { error: null }; });
++
++    const { container } = renderUploader();
++    chooseFiles(container, [pdf('lote-a.pdf'), pdf('lote-b.pdf')]);
++    fireEvent.click(screen.getByRole('button', { name: /enviar 2 arquivos/i }));
++    await waitFor(() => expect(mocks.upload).toHaveBeenCalled());
++
++    // Item em envio: barra indeterminada com o mesmo nome acessível (nunca 0% parado).
++    const barraItem = screen.getByRole('progressbar', { name: 'Progresso de lote-a.pdf' });
++    expect(barraItem).not.toHaveAttribute('aria-valuenow');
++    // Total do lote: indeterminado enquanto nenhum item inacabado tem bytes.
++    const barraTotal = screen.getByRole('progressbar', { name: 'Progresso total' });
++    expect(barraTotal).not.toHaveAttribute('aria-valuenow');
++
++    await act(async () => { liberarUpload(); });
++    await waitFor(() => expect(mocks.toastSuccess).toHaveBeenCalledWith(
++      '2 arquivo(s) enviado(s) com sucesso!',
++    ));
++  });
++});
+diff --git a/src/components/inbox/__tests__/useFileUploadLogic.u7.test.tsx b/src/components/inbox/__tests__/useFileUploadLogic.u7.test.tsx
+index 36ccf04c11..94d653ed1e 100644
+--- a/src/components/inbox/__tests__/useFileUploadLogic.u7.test.tsx
++++ b/src/components/inbox/__tests__/useFileUploadLogic.u7.test.tsx
+@@ -185,7 +185,13 @@ describe('useFileUploadLogic — U7: fila, limites e compressão', () => {
+     });
+ 
+     await waitFor(() => expect(mocks.toastSuccess).toHaveBeenCalledWith(expect.stringContaining('1 arquivo(s) enviado(s)')));
+-    expect(mocks.toastError).toHaveBeenCalledWith(expect.stringContaining('1 arquivo(s) falharam'));
++    expect(mocks.toastError).toHaveBeenCalledWith(
++      expect.stringContaining('1 arquivo(s) falharam'),
++      expect.objectContaining({
++        duration: 8000,
++        action: expect.objectContaining({ label: 'Tentar de novo' }),
++      }),
++    );
+   });
+ 
+   it('removeFromQueue revoga o object URL do preview removido', () => {
+diff --git a/src/components/inbox/useFileUploadLogic.ts b/src/components/inbox/useFileUploadLogic.ts
+index 477a0cebea..4a41cbcb31 100644
+--- a/src/components/inbox/useFileUploadLogic.ts
++++ b/src/components/inbox/useFileUploadLogic.ts
+@@ -1,4 +1,4 @@
+-import { useState, useRef, useCallback, useEffect } from 'react';
++import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
+ import { log } from '@/lib/logger';
+ import { supabase } from '@/integrations/supabase/client';
+ import { toast } from 'sonner';
+@@ -38,6 +38,12 @@ interface QueuedFile extends FilePreview {
+   status: 'pending' | 'uploading' | 'sending' | 'done' | 'error';
+   progress: number;
+   error?: string;
++  /**
++   * Sem evento de bytes para acompanhar (navegador sem corpo em stream ou arquivo
++   * sem `stream()`): a barra deste item e indeterminada, nunca um 0% parado.
++   * Decidido na criacao da fila e reconfirmado ao iniciar o envio do item.
++   */
++  indeterminate?: boolean;
+ }
+ 
+ const categoryOrder: Record<string, number> = { image: 0, video: 1, audio: 2, document: 3, sticker: 4 };
+@@ -76,6 +82,58 @@ function mediaActionKey(contactId: string, file: File, category: string | undefi
+ 
+ export type { FileMessageData, FilePreview, QueuedFile };
+ 
++/** Estágios do envio de anexo exibidos na barra de progresso. */
++export type UploadStage = 'uploading' | 'sending';
++
++/**
++ * O Storage SDK aceita o corpo do upload como `ReadableStream` (`FileBody` +
++ * `duplex: 'half'`). É esse caminho que da progresso REAL a barra: o arquivo vai por um
++ * stream que conta os bytes consumidos pela propria requisicao, sem reimplementar o
++ * transporte (mesmo caminho, mesmos cabecalhos e mesmos erros do SDK) e sem dependencia
++ * nova. Navegador sem suporte a corpo em stream (ex.: Safari) cai no envio normal, sem
++ * evento de bytes — nesse caso a tela mostra a barra indeterminada, nunca um 0% falso.
++ *
++ * Deteccao canonica: o Chrome LE o campo `duplex` do init e nao fixa Content-Type em
++ * corpo de stream; Firefox e Safari nao lancam erro — aceitam o init, ignoram `duplex`
++ * e serializariam o stream como texto, gravando o anexo corrompido (a string
++ * "[object ReadableStream]"). Por isso a sonda usa um getter em `duplex` que marca
++ * quando foi lido e exige as duas coisas: getter lido E sem Content-Type.
++ */
++function canStreamUploadBody(): boolean {
++  if (typeof Request === 'undefined' || typeof ReadableStream === 'undefined') return false;
++  try {
++    let duplexLido = false;
++    const sonda = new Request('http://localhost/stream-upload-probe', {
++      method: 'POST',
++      body: new ReadableStream(),
++      get duplex() {
++        duplexLido = true;
++        return 'half';
++      },
++    } as RequestInit);
++    return duplexLido && !sonda.headers.has('Content-Type');
++  } catch {
++    return false;
++  }
++}
++
++/**
++ * Stream que avisa o progresso (0–99) a cada pedaco consumido pela requisicao. O 100 e
++ * reservado para quem confirma o upload com o servidor — a barra nao anuncia fim antes
++ * da resposta.
++ */
++function fileStreamWithProgress(file: File, onProgress: (percent: number) => void): ReadableStream<Uint8Array> {
++  const total = file.size;
++  let sent = 0;
++  return file.stream().pipeThrough(new TransformStream<Uint8Array, Uint8Array>({
++    transform(chunk, controller) {
++      sent += chunk.byteLength;
++      onProgress(total > 0 ? Math.min(99, Math.round((sent / total) * 100)) : 0);
++      controller.enqueue(chunk);
++    },
++  }));
++}
++
+ export function useFileUploadLogic(opts: {
+   instanceName?: string;
+   recipientNumber?: string;
+@@ -107,6 +165,27 @@ export function useFileUploadLogic(opts: {
+   // retry refazia o upload (novo locator -> nova actionKey) e apagava o objeto que uma
+   // linha ja enfileirada referencia (R2-INB-006).
+   const pendingUploadsRef = useRef(new Map<string, PendingMediaUpload>());
++  // Acoes tardias dos toasts de falha: o clique em "Tentar de novo" chega depois do
++  // render, entao o handler atual e lido do ref (um closure da falha guardaria o estado
++  // antigo de arquivo/fila).
++  const retryFileRef = useRef<(() => Promise<void>) | null>(null);
++  const retryQueueRef = useRef<(() => Promise<void>) | null>(null);
++  // Capacidade do navegador não muda durante a sessão: mede uma vez.
++  const streamUploadSupported = useMemo(() => canStreamUploadBody(), []);
++  // Decisão ÚNICA de suporte: o upload (`uploadFileToStorage`) e a tela
++  // (`uploadIndeterminate`) leem este ref, nunca medem de novo. Medir duas vezes
++  // abriria divergência (um lado com stream, o outro sem).
++  const streamSupportRef = useRef(streamUploadSupported);
++  // Arquivo sem `stream()` também não gera evento de bytes, mesmo com suporte no
++  // navegador (ex.: Blob do jsdom nos testes, navegador antigo): a barra dele é
++  // indeterminada em vez de ficar parada em 0%.
++  const arquivoReportaBytes = useCallback(
++    (file: File) => streamSupportRef.current && typeof file.stream === 'function',
++    [],
++  );
++  // Envio atual gera eventos de bytes? `false` => barra indeterminada. Resetado no
++  // `handleClose` para o próximo envio partir do estado padrão.
++  const [uploadReportsBytes, setUploadReportsBytes] = useState(true);
+ 
+   const apiLoading = false;
+ 
+@@ -154,12 +233,12 @@ export function useFileUploadLogic(opts: {
+         preview = URL.createObjectURL(file);
+         previewsRef.current.add(preview);
+       }
+-      return { id: `${Date.now()}-${index}`, file, validation, preview, status: 'pending' as const, progress: 0 };
++      return { id: `${Date.now()}-${index}`, file, validation, preview, status: 'pending' as const, progress: 0, indeterminate: !arquivoReportaBytes(file) };
+     });
+     return processed.sort((a, b) => (categoryOrder[a.validation.category || 'document'] ?? 99) - (categoryOrder[b.validation.category || 'document'] ?? 99));
+-  }, []);
++  }, [arquivoReportaBytes]);
+ 
+-  const uploadFileToStorage = useCallback(async (file: File): Promise<UploadedPrivateObject> => {
++  const uploadFileToStorage = useCallback(async (file: File, onProgress?: (percent: number) => void): Promise<UploadedPrivateObject> => {
+     if (!contactId) throw new Error('Selecione uma conversa antes de enviar um arquivo.');
+ 
+     let fileToUpload = file;
+@@ -178,7 +257,24 @@ export function useFileUploadLogic(opts: {
+     // torna qualquer limpeza/auditoria rastreável até o contato de origem.
+     const filePath = `${contactId}/${createStorageObjectId()}-${safeFileName}`;
+ 
+-    const { error } = await supabase.storage.from('whatsapp-media').upload(filePath, fileToUpload, { cacheControl: '31536000', upsert: false });
++    const reportProgress = onProgress;
++    // Corpo em stream quando o navegador permite: e o evento que alimenta a barra com os
++    // bytes que ja sairam de verdade. Sem suporte, sobe o arquivo direto (sem progresso
++    // de bytes) e a tela usa a barra indeterminada. Lê a decisão ÚNICA medida no mount
++    // (`streamSupportRef`), nunca mede de novo aqui.
++    const streamable = !!reportProgress && typeof fileToUpload.stream === 'function' && streamSupportRef.current;
++    const body: File | ReadableStream<Uint8Array> = reportProgress && streamable
++      ? fileStreamWithProgress(fileToUpload, reportProgress)
++      : fileToUpload;
++
++    const { error } = await supabase.storage.from('whatsapp-media').upload(filePath, body, {
++      cacheControl: '31536000',
++      upsert: false,
++      contentType: fileToUpload.type || 'application/octet-stream',
++      // Sem corpo em stream, nenhum `duplex`: passar `duplex` com corpo serializado
++      // como texto e o que corrompia o anexo no Firefox/Safari.
++      ...(streamable ? { duplex: 'half' as const } : {}),
++    });
+     if (error) throw new Error(`Erro ao fazer upload: ${error.message}`);
+ 
+     const { data: locatorData } = supabase.storage.from('whatsapp-media').getPublicUrl(filePath);
+@@ -197,10 +293,21 @@ export function useFileUploadLogic(opts: {
+     setIsMultiMode(false);
+     setCaption('');
+     setCurrentQueueIndex(0);
++    // Zera o estado da barra: o envio seguinte não herda estágio nem percentual.
++    setUploading(false);
++    setUploadStage(null);
++    setUploadProgress(0);
++    setUploadReportsBytes(true);
+     setIsDialogOpen(false);
+   }, [filePreview, fileQueue, revokePreview]);
+ 
+-  const sendFileViaApi = useCallback(async (file: File, category: string | undefined, cap?: string) => {
++  const sendFileViaApi = useCallback(async (
++    file: File,
++    category: string | undefined,
++    cap?: string,
++    onUploadProgress?: (percent: number) => void,
++    onStage?: (stage: UploadStage) => void,
++  ) => {
+     if (!contactId) throw new Error('Selecione uma conversa antes de enviar um arquivo.');
+     const actionKey = mediaActionKey(contactId, file, category);
+ 
+@@ -208,9 +315,18 @@ export function useFileUploadLogic(opts: {
+     // reenviar o arquivo criaria outro objeto/locator e outra acao (R2-INB-006).
+     let pending = pendingUploadsRef.current.get(actionKey);
+     if (!pending) {
+-      const uploaded = await uploadFileToStorage(file);
++      onStage?.('uploading');
++      const uploaded = await uploadFileToStorage(file, onUploadProgress);
++      // 100 so depois da resposta do Storage: a barra nao anuncia fim antes da hora.
++      onUploadProgress?.(100);
++      onStage?.('sending');
+       pending = { ...uploaded, clientMessageId: createStorageObjectId() };
+       pendingUploadsRef.current.set(actionKey, pending);
++    } else {
++      // Retry com objeto ja gravado: nao ha bytes para acompanhar, o estágio vai direto
++      // para o despacho.
++      onUploadProgress?.(100);
++      onStage?.('sending');
+     }
+     const { locatorUrl, storagePath, clientMessageId } = pending;
+ 
+@@ -250,27 +366,61 @@ export function useFileUploadLogic(opts: {
+     const file = filePreview.file;
+     const category = filePreview.validation.category;
+     const currentCaption = caption;
+-    toast.info('Enviando arquivo...', { id: 'file-upload', duration: 30000 });
++    // Barra e estágio ligados desde o começo do envio (antes o estágio 'uploading' nunca
++    // aparecia no envio de um arquivo só e a barra ficava invisível).
++    setUploadProgress(0);
++    setUploadStage('uploading');
++    setUploading(true);
++    setUploadReportsBytes(arquivoReportaBytes(file));
++    // Sem prazo fixo: um arquivo de 100 MB não pode perder o aviso no meio do upload.
++    toast.info('Enviando arquivo...', { id: 'file-upload', duration: Infinity });
++    let falhou = false;
+     try {
+-      const sent = await sendFileViaApi(file, category, currentCaption);
++      // `setUploadProgress` é o callback do evento real de bytes do upload.
++      const sent = await sendFileViaApi(file, category, currentCaption, setUploadProgress, setUploadStage);
+       if (!mountedRef.current) return;
++      setUploadProgress(100);
+       toast.success('Arquivo enviado!', { id: 'file-upload' });
+       if (sent) onFileSent?.({ ...sent.result, mediaUrl: sent.mediaUrl, messageType: sent.category });
+       // Fecha SÓ depois do sucesso. Em falha, arquivo, legenda e o cache de upload
+       // continuam na tela: "Enviar" de novo reaproveita o MESMO objeto e id (R2-INB-006).
+       handleClose();
+     } catch (err) {
++      falhou = true;
+       const error = err instanceof Error ? err : new Error('Unknown error');
+       log.error('Error sending file:', error);
+-      toast.error(error.message || 'Erro ao enviar arquivo', { id: 'file-upload' });
++      // 8 s e ação de retentativa: o aviso não pode sumir antes de o usuário ler.
++      toast.error(error.message || 'Erro ao enviar arquivo', {
++        id: 'file-upload',
++        duration: 8000,
++        action: { label: 'Tentar de novo', onClick: () => { void retryFileRef.current?.(); } },
++      });
++    } finally {
++      if (mountedRef.current) {
++        setUploading(false);
++        setUploadStage(null);
++      } else if (!falhou) {
++        // Desmontou no meio do upload com sucesso: o `return` acima pula o
++        // `toast.success` com o mesmo id e o aviso infinito ficaria preso na tela.
++        // Só dispensa quando NÃO houve falha — na falha o `toast.error` (mesmo id)
++        // já substituiu o aviso e precisa continuar visível por 8 s.
++        toast.dismiss('file-upload');
++      }
+     }
+-  }, [filePreview, contactId, caption, handleClose, sendFileViaApi, onFileSelect, onFileSent]);
++  }, [filePreview, contactId, caption, handleClose, sendFileViaApi, onFileSelect, onFileSent, arquivoReportaBytes]);
+ 
+   const sendSingleQueueFile = useCallback(async (queuedFile: QueuedFile, index: number): Promise<boolean> => {
+     if (!queuedFile.validation.valid || !contactId) return false;
+-    setFileQueue(prev => prev.map((f, i) => i === index ? { ...f, status: 'uploading', progress: 0 } : f));
++    const reportsBytes = arquivoReportaBytes(queuedFile.file);
++    setFileQueue(prev => prev.map((f, i) => i === index ? { ...f, status: 'uploading', progress: 0, indeterminate: !reportsBytes } : f));
++    // Progresso por item: o MESMO evento de bytes do upload, gravado no arquivo da fila
++    // (antes só existiam 0 e 100, sem nada no meio).
++    const reportItemProgress = (percent: number) => {
++      if (!mountedRef.current) return;
++      setFileQueue(prev => prev.map((f, i) => i === index ? { ...f, progress: Math.max(f.progress, percent) } : f));
++    };
+     try {
+-      const sent = await sendFileViaApi(queuedFile.file, queuedFile.validation.category, undefined);
++      const sent = await sendFileViaApi(queuedFile.file, queuedFile.validation.category, undefined, reportItemProgress);
+       setFileQueue(prev => prev.map((f, i) => i === index ? { ...f, status: 'done', progress: 100 } : f));
+       if (sent) onFileSent?.({ ...sent.result, mediaUrl: sent.mediaUrl, messageType: sent.category });
+       return true;
+@@ -280,7 +430,7 @@ export function useFileUploadLogic(opts: {
+       setFileQueue(prev => prev.map((f, i) => i === index ? { ...f, status: 'error', error: error.message } : f));
+       return false;
+     }
+-  }, [contactId, sendFileViaApi, onFileSent]);
++  }, [contactId, sendFileViaApi, onFileSent, arquivoReportaBytes]);
+ 
+   const handleSendAllFiles = useCallback(async () => {
+     // Reenvia só o que ainda não foi: itens 'done' já estão entregues e reenviá-los
+@@ -320,7 +470,11 @@ export function useFileUploadLogic(opts: {
+     // sendSingleQueueFile (filtrar o array do closure devolveria os itens a 'pending').
+     setFileQueue(prev => prev.filter(f => failedIds.has(f.id)));
+     if (successCount > 0) toast.success(`${successCount} arquivo(s) enviado(s) com sucesso!`);
+-    toast.error(`${errorCount} arquivo(s) falharam ao enviar`);
++    // 8 s e ação de retentativa: o aviso de falha não pode sumir antes de o usuário ler.
++    toast.error(`${errorCount} arquivo(s) falharam ao enviar`, {
++      duration: 8000,
++      action: { label: 'Tentar de novo', onClick: () => { void retryQueueRef.current?.(); } },
++    });
+   }, [fileQueue, sendSingleQueueFile, handleClose, revokePreview, wait]);
+ 
+   const retryQueueFile = useCallback(async (id: string) => {
+@@ -347,6 +501,13 @@ export function useFileUploadLogic(opts: {
+     setFileQueue(prev => prev.filter(f => f.id !== id));
+   }, [fileQueue, sendSingleQueueFile, handleClose, revokePreview]);
+ 
++  // Os toasts de falha guardam a ação "Tentar de novo"; o clique chega depois do render,
++  // então o ref sempre aponta para o handler atual (arquivo/fila do momento do clique).
++  useEffect(() => {
++    retryFileRef.current = handleSendFile;
++    retryQueueRef.current = handleSendAllFiles;
++  }, [handleSendFile, handleSendAllFiles]);
++
+   const handleExternalFile = useCallback((file: File) => {
+     const validation = validateFile(file);
+     let preview: string | undefined;
+@@ -396,10 +557,14 @@ export function useFileUploadLogic(opts: {
+   const canSend = !!contactId;
+   const validFilesCount = fileQueue.filter(f => f.validation.valid).length;
+   const totalQueueProgress = fileQueue.length > 0 ? Math.round(fileQueue.reduce((acc, f) => acc + f.progress, 0) / fileQueue.length) : 0;
++  // O navegador só reporta bytes se aceitar corpo em stream E o arquivo tiver `stream()`;
++  // sem isso a barra não pode fingir porcentagem — vira indeterminada (Safari, por ex.,
++  // ou arquivo sem `stream()`), nunca um 0% parado.
++  const uploadIndeterminate = uploading && (!streamUploadSupported || !uploadReportsBytes);
+ 
+   return {
+     isDialogOpen, filePreview, fileQueue, isMultiMode, caption, setCaption,
+-    uploading, uploadProgress, uploadStage, currentQueueIndex,
++    uploading, uploadProgress, uploadStage, currentQueueIndex, uploadIndeterminate,
+     apiLoading, canSend, validFilesCount, totalQueueProgress,
+     handleClose, handleSendFile, handleSendAllFiles, handleFileChange,
+     handleExternalFile, handleExternalFiles, removeFromQueue, retryQueueFile,
