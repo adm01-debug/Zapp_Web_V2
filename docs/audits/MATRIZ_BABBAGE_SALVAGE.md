@@ -161,7 +161,7 @@ done < <(git diff --name-status <merge-base> origin/claude/confident-babbage-ivg
 | E58 `useTeamMessages` com `useInfiniteQuery` | 🟢 OK_M | `main` usa `get_team_messages_page` |
 | E59 `useMarkConversationRead` | 🟢 OK_M | `main` chama `mark_team_conversation_read` (5 refs). *Arquivo `useMarkConversationRead.ts` em si é ausente na main → ver §5 (portável).* |
 | E60 `uploadTeamMedia` em `<uid>/<cid>/` | 🟢 OK_M | `main` usa `media_path` (18 refs) + `uploadTeamMedia` (11 refs) |
-| E61 `useResolvedStorageUrl` | 🔵 PORT | ausente na `main`; branch tem helper limpo via `useQuery` + `createSignedUrl` |
+| E61 `useResolvedStorageUrl` | ✅ OK_NA_MAIN | **corrigido 20/10 pelo coordenador**: o helper EXISTE na `main` em `src/hooks/storage/useResolvedStorageUrl.ts`; o simbolo aparece em 56 arquivos e e importado no escopo team-chat. O arquivo do branch e variante - **nao portar** |
 | E62 `useTeamChatMutations` | 🟢 OK_M | arquivo existe na `main` (DIFERENTE) |
 | E63 `useTeamMessageReactions` (só realtime) | 🟢 OK_M | arquivo existe na `main` |
 | E64 `useTeamReadState` sobre a view | 🟢 OK_M | `main` tem `useTeamReadState.ts` próprio (F9, N-070) |
@@ -180,7 +180,7 @@ done < <(git diff --name-status <merge-base> origin/claude/confident-babbage-ivg
 | E73 `TeamConversationList` | 🟡 DIV | arquivo existe na `main`; branch não trouxe |
 | E74 `GroupManagementDialog` ligado | 🟡 DIV | arquivo existe na `main`; branch não trouxe |
 | E75 `TransferConversationDialog` reescrito | 🟡 DIV | arquivo existe na `main`; branch não trouxe |
-| E76 presença real (`useAgentPresenceMap`) | 🔵 PORT | `useAgentPresenceMap.ts` existe **só no branch**; `main` não tem o arquivo |
+| E76 presenca real (`useAgentPresenceMap`) | ✅ OK_NA_MAIN | **corrigido 20/10 pelo coordenador**: `git grep -l useAgentPresenceMap origin/main -- src/` = 18 arquivos (23 contando `useAgentPresence`). A capacidade existe na `main`; o arquivo do branch e variante - **nao portar** |
 | E77 TTS persistido | 🟡 DIV | arquivo existe na `main`; branch não trouxe |
 | E78 estatísticas ligadas | 🟢 OK_M | `ParticipantStatsGraph` tem consumidor na `main` |
 
@@ -384,3 +384,15 @@ git show origin/claude/confident-babbage-ivgmmn:src/hooks/team-chat/useTeamUnrea
 ```
 
 *Documento gerado em 2026-10-20 a partir de worktree próprio de `origin/main` (`d7af7a671c`), sem tocar a working tree de outro agente. Somente leitura sobre o branch; nenhum push/merge alterou `main`.*
+
+## Verificacao independente do coordenador (20/10/2026)
+
+Checagem dos 4 itens marcados PORT, contra o repositorio e o banco vivo. Dois vereditos estavam errados e foram corrigidos na tabela acima.
+
+- **E76 -> OK_NA_MAIN.** `git grep -l useAgentPresenceMap origin/main -- src/` = 18 arquivos (23 contando `useAgentPresence`). A presenca ja existe na main.
+- **E61 -> OK_NA_MAIN.** Definicao em `src/hooks/storage/useResolvedStorageUrl.ts`; simbolo em 56 arquivos, importado no escopo team-chat. A main ja resolve URL assinada de storage.
+- **E52 -> mantido PORT, e so documentacao.** O unico artefato e o proprio doc de decisao; a coluna `team_message_receipts.conversation_id` existe viva em producao e `src/hooks/team-chat/useTeamReadState.ts` ja a usa (5 ocorrencias). Nao ha codigo a portar.
+- **E90 -> mantido PORT, lacuna real confirmada por duas fontes.** A main navega para o modulo sem o parametro `cid` e `notificationclick` tem 0 ocorrencias em src/. A correcao exige `src/hooks/chat/useTeamChatNotifications.ts`, arquivo da PR #2080, portanto NAO foi implementada, para nao criar conflito entre agentes.
+- **E83 nao esta sem artefato em lugar nenhum.** O branch tem o hook de resgate, portado com adaptacao a main na PR #2131.
+
+Conclusao desta verificacao: o salvage da branch abandonada e praticamente vazio - sobram E83 (implementado na PR #2131) e E90 (bloqueado pela PR #2080).
