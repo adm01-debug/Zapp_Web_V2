@@ -75,7 +75,13 @@ beforeEach(() => {
   mocks.getUser.mockResolvedValue({ data: { user: { id: UID } }, error: null });
   mocks.invoke.mockResolvedValue({ data: { category: 'produto' }, error: null });
   mocks.tableFrom.mockImplementation(() => ({
-    select: () => ({ order: () => ({ limit: () => Promise.resolve({ data: [emoji()], error: null }) }) }),
+    // `fetchEmojis`/`fetchMore` encadeiam DOIS `.order()` (use_count, depois id
+    // para desempate determinístico) antes do `.range()` — ver useCustomEmojis.ts.
+    select: () => ({
+      order: () => ({
+        order: () => ({ range: () => Promise.resolve({ data: [emoji()], error: null }) }),
+      }),
+    }),
     insert: (payload: Record<string, unknown>) => {
       inserted.push(payload);
       return Promise.resolve({ error: null });
@@ -84,7 +90,8 @@ beforeEach(() => {
     delete: () => ({ eq: () => Promise.resolve({ error: null }) }),
   }));
   mocks.storageFrom.mockImplementation((bucket: string) => ({
-    upload: (path: string, file: unknown, opts: unknown) => mocks.storageUpload(bucket, path, file, opts),
+    upload: (path: string, file: unknown, opts: unknown) =>
+      mocks.storageUpload(bucket, path, file, opts),
     remove: (paths: string[]) => mocks.storageRemove(bucket, paths),
     getPublicUrl: (path: string) => ({ data: { publicUrl: `${BASE}${path}` } }),
   }));
@@ -94,7 +101,11 @@ beforeEach(() => {
 
 function arquivo(nome: string, tipo: string, bytes: number): FileList {
   const file = new File([new Uint8Array(bytes)], nome, { type: tipo });
-  return { 0: file, length: 1, item: (i: number) => (i === 0 ? file : null) } as unknown as FileList;
+  return {
+    0: file,
+    length: 1,
+    item: (i: number) => (i === 0 ? file : null),
+  } as unknown as FileList;
 }
 
 async function montar() {
@@ -108,7 +119,9 @@ async function montar() {
 async function selecionar(files: FileList) {
   const view = await montar();
   await act(async () => {
-    await view.result.current.handleFileSelect({ target: { files } } as unknown as React.ChangeEvent<HTMLInputElement>);
+    await view.result.current.handleFileSelect({
+      target: { files },
+    } as unknown as React.ChangeEvent<HTMLInputElement>);
   });
   return view;
 }
