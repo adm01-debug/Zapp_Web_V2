@@ -1,23 +1,33 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: senior (area-sql-banco)
 
-## O que mudou e por quê
-- src/hooks/inbox/useInboxFilters.ts: o `useMemo` de `filteredConversations` ganhou um ramo `chipTab === 'archived'` ANTES do ramo `mainTab === 'open'`. O chip deriva `mainTab 'open' | subTab null` (setChipTab), e esse ramo exige `conversation_status open|waiting` — sem o ramo novo a lista de Arquivadas ficava vazia. O ramo novo filtra `contact.conversation_status === 'archived'` e, como busca/tipo de contato/status/tags/agente/data são aplicados depois, mantém esses filtros por cima; o filtro de fila (`selectedQueueId`), que hoje só existe no ramo 'open', foi replicado nele.
-- src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx (novo): 5 testes chamando o hook REAL via renderHook — Arquivadas lista só arquivadas; arquivadas ausentes de Todas/Não lidas/Em atendimento/Aguardando/Resolvidas; busca dentro de Arquivadas; fila dentro de Arquivadas; e lista vazia sem erro quando não há arquivadas.
+## Pontos do revisor
 
-## O que conferi no código atual (dia/2026-10-11)
-- Item 2 (arquivadas fora dos outros chips): os chips Todas/Não lidas/Em atendimento/Aguardando derivam `mainTab 'open'` (status open|waiting) e Resolvidas usa `mainTab 'resolved'` — nenhum deles conhece 'archived', então já excluíam as arquivadas; o teste cobre os cinco chips e confirma. Não havia ramo vazando arquivadas para os chips.
-- Item 3 (persistência): `chipTab` é `useState` local (useInboxFilters.ts:19), não é persistido em URL/storage (só `search`, `type` e os `filters` vão para a URL). Logo o comportamento de 'archived' ao trocar de chip e voltar é o mesmo dos outros chips (reinicia), e não há valor guardado que possa quebrar a lista. Nada a mudar.
-- Item 4 (estado vazio): com o chip ativo e nenhuma arquivada, `filteredConversations` fica vazio e a sidebar cai no estado vazio com a microcopy neutra "Sem conversas" (ConversationListSidebar.tsx:251 — fallback, não é "sem conversas abertas"). Já é coerente; não alterei o arquivo (está fora dos caminhos permitidos do cartão e a mudança seria visual, que é do B1).
+Ponto 1: `assume_conversation` bloqueava `conversation_status='resolved'`, mas o critério pede reabrir como `open`.
+- Mudei `supabase/migrations/20261011094027_assume_return_conversation.sql`: no assumir, só `archived` continua retornando `conversation_not_active`; `resolved` passa pelo fluxo normal e o `UPDATE` já grava `conversation_status='open'`.
+- Teste que prova: `scripts/db-audit/assume-return-conversation.test.sh` agora cobre `admin assume conversa resolved e reabre como open` e valida a auditoria `previous_status=resolved|status=open`.
+- Vermelho sem a correção: `MUTACAO F` troca o guard de volta para `IN ('resolved','archived')` e o contrato falha com `conversation_not_active` no caso de `resolved`.
+- Verde depois: `ASSUME_RETURN_TEST_POSTGRES_IMAGE=postgres:17-alpine bash scripts/db-audit/assume-return-conversation.test.sh` terminou com `[OK] contrato assumir/devolver a fila verificado: 12 assercoes (postgres:17-alpine)`.
 
-## Prova
-- vermelho antes (só o teste novo, sem a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx` → `Tests 4 failed | 1 passed (5)` (Arquivadas devolvia 'aberta' etc.).
-- verde depois (com a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx src/hooks/inbox/__tests__/useInboxFilters.fsm-padrao.test.tsx src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `Test Files 3 passed (3); Tests 10 passed (10)`.
-- regressão da pasta inteira: `npx vitest run src/hooks/inbox` → `Test Files 19 passed (19); Tests 92 passed | 1 expected fail (93)`.
+Ponto 2: o teste usava `C_RES` para provar conversa encerrada e não distinguia `resolved` de conversa realmente bloqueada.
+- Mudei `scripts/db-audit/assume-return-conversation.test.sh`: adicionei `C_ARCH` em `archived` para o erro `conversation_not_active`, mantive `C_RES` só para reabertura, e explicitei que takeover de conversa já `open` mantém `open`.
+- Teste que prova: o mesmo contrato verifica `admin assume conversa ja open e mantem open (takeover)`, `admin assume conversa resolved e reabre como open` e `devolver conversa arquivada (conversation_not_active)`.
+- Vermelho sem a cobertura: `MUTACAO F` mostra que voltar a bloquear `resolved` derruba o contrato; `archived` segue bloqueado no contrato verde.
+- Verde depois: mesmo comando SQL em Postgres 17 descartável passou.
 
-## Sobre o aviso do juiz (arquivo fora de 'ARQUIVOS QUE PODE TOCAR')
-- `src/components/inbox/__tests__/StatusChips.test.tsx` (e `StatusChips.tsx`) aparecem no diff da branch porque o cartão PAI t_2bcde689 não estava em `dia/2026-10-11`: segui a instrução do próprio cartão ("traga com git cherry-pick <sha>") e apliquei `git cherry-pick -x 452075a32` (commit f14f8de63). Não editei esses arquivos — são 100% do B1 e indispensáveis aqui porque o chip `archived` (tipo `ChipTab`) vem deles. Meu diff de código é só em `useInboxFilters.ts` + teste novo.
+## Arquivos alterados
+scripts/ci/check-test-inventory.mjs
+scripts/db-audit/assume-return-conversation.test.sh
+src/integrations/supabase/types.ts
+supabase/migrations/20261011094027_assume_return_conversation.sql
 
-## O que NÃO fiz e por quê
-- Não mexi em archiveContact/bulkArchive/useBulkActions (proibido pelo cartão), nem em migration/banco/Edge.
-- Não alterei a microcopy de lista vazia nem o StatusChips: fora dos caminhos permitidos e é do B1.
-- Não apliquei exclusão de arquivadas no ramo `mainTab 'search'` (deep-link de contato pendente de RealtimeInboxView, que não é chip): mudar ali sairia do escopo dos cinco chips e poderia quebrar o deep-link; o cartão lista os chips Todas/Não lidas/Em atendimento/Aguardando, cobertos.
+## Verificações rodadas
+- `ASSUME_RETURN_TEST_POSTGRES_IMAGE=postgres:17-alpine bash scripts/db-audit/assume-return-conversation.test.sh` — OK, `[OK] contrato assumir/devolver a fila verificado: 12 assercoes (postgres:17-alpine)`.
+- `node --test scripts/ci/check-test-inventory.unit.mjs` — OK, 7 testes passaram.
+- `git diff --check HEAD` — OK, sem saída.
+- `hermes-tarefa-fechar "fix(db): restringe assumir e devolver a filas do usuario" .tmp/relato.md` — OK na segunda chamada do juiz barato, fila local V2 registrada; avisos do juiz seguem para o revisor por serem conferência/escopo já explicado neste relato.
+
+## Observação de escopo
+- `scripts/db-audit/assume-return-conversation.test.sh` é indispensável porque o defeito está em RPC SQL e precisa executar o SQL real; regex ou mock não provaria o comportamento.
+- `scripts/ci/check-test-inventory.mjs` só recebeu a entrada de allowlist/justificativa para a suíte shell nova, sem afrouxar o verificador.
+- `src/integrations/supabase/types.ts` acompanha a assinatura das duas RPCs criadas pela migration; o comportamento é provado pelo contrato SQL real em Postgres descartável.
+- O aviso do juiz sobre `updated_at` não procede para este diff: o contrato prova `updated_at avanca so na linha tocada (1 linha por PK) = true|true`, e as RPCs atualizam por PK/`assigned_to` condicional, não fazem UPDATE em massa.

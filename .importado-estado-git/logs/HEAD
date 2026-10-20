@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 afccdbed7146590d060b08e843dd1f90fbab0f06 Hermes Senior <hermes-senior@promobrindes.local> 1791741428 -0300	
+afccdbed7146590d060b08e843dd1f90fbab0f06 afccdbed7146590d060b08e843dd1f90fbab0f06 Hermes Senior <hermes-senior@promobrindes.local> 1791741429 -0300	reset: moving to HEAD
+afccdbed7146590d060b08e843dd1f90fbab0f06 3c17a3e2f1198af0a91777cd05427354b22a8413 Hermes Senior <hermes-senior@promobrindes.local> 1791741821 -0300	commit: fix(db): restringe assumir e devolver a filas do usuario
+3c17a3e2f1198af0a91777cd05427354b22a8413 c25b7630ec028f0f2fa35cdfafde1560cb81e633 Hermes Senior <hermes-senior@promobrindes.local> 1791742045 -0300	commit: test(db): explicita takeover open e bloqueio resolved
+c25b7630ec028f0f2fa35cdfafde1560cb81e633 c9729f78c4ced2f64d967c5728a2b47ce6a2a47e Hermes Senior <hermes-senior@promobrindes.local> 1791742326 -0300	commit: fix(db): reabre conversa resolvida ao assumir
+c9729f78c4ced2f64d967c5728a2b47ce6a2a47e b5dbe7bcab49905e783aa013d5528e47ff57f6d9 Hermes Senior <hermes-senior@promobrindes.local> 1791742417 -0300	commit: test(db): cobre reabertura de conversa resolved
