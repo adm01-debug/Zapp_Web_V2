@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=atalhos-sem-executor
+ID=2610151755a5bc
+BRANCH=v2/atalhos-sem-executor-2610151755a5bc
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/atalhos-sem-executor-2610151755a5bc
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-15T17:55:32-03:00
+KANBAN=t_3d996237
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/atalhos-sem-executor-2610151755a5bc/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-15
+DB_LOCAL=v2-2610151755a5bc
+PRONTO_SHA=a8727a0bac760049b139987ce454f71743784b8d

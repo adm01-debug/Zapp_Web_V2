@@ -1,0 +1,82 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/atalhos-sem-executor-2610151755a5bc/.tmp/prova-base
+
+·········x·········xx····
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/hooks/shortcuts/__tests__/atalhosSemExecutor.test.ts [ src/hooks/shortcuts/__tests__/atalhosSemExecutor.test.ts ]
+TypeError: criarAcoesGlobais is not a function
+ ❯ src/hooks/shortcuts/__tests__/atalhosSemExecutor.test.ts:22:18
+     20|  */
+     21| const EXECUTORES = new Set([
+     22|   ...Object.keys(criarAcoesGlobais({ pathname: '/', navigate: vi.fn() …
+       |                  ^
+     23|   'show-shortcuts-help',
+     24|   'open-command-palette',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/inbox/__tests__/InboxEmptyChat.atalhos.test.tsx > InboxEmptyChat — dicas dos atalhos reais > mantém o estado vazio compartilhado e lista só o atalho que funciona
+Error: [2mexpect([22m[31melement[39m[2m).not.toBeInTheDocument()[22m
+
+[31mexpected document not to contain element, found <span
+  class="text-xs text-muted-foreground"
+>
+  Próxima conversa
+</span> instead[39m
+ ❯ src/components/inbox/__tests__/InboxEmptyChat.atalhos.test.tsx:59:56
+     57|     // t_3d996237: `prev-conversation`/`next-conversation` não têm exe…
+     58|     // as dicas Alt+↑/↓ saíram da barra em vez de prometer tecla morta.
+     59|     expect(screen.queryByText('Próxima conversa')).not.toBeInTheDocume…
+       |                                                        ^
+     60|     expect(screen.queryByText('Conversa anterior')).not.toBeInTheDocum…
+     61|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/components/keyboard/__tests__/KeyboardShortcutsDialog.test.tsx > etapa 84 — painel de ajuda exibe os rótulos de Tarefas > não afeta os atalhos globais, que continuam com o texto inline
+Error: [2mexpect([22m[31melement[39m[2m).not.toBeInTheDocument()[22m
+
+[31mexpected document not to contain element, found <span
+  class="text-sm text-foreground truncate"
+>
+  Enviar mensagem
+</span> instead[39m
+ ❯ src/components/keyboard/__tests__/KeyboardShortcutsDialog.test.tsx:67:55
+     65|
+     66|     // t_3d996237: `send-message` não tem executor — fora da ajuda.
+     67|     expect(screen.queryByText('Enviar mensagem')).not.toBeInTheDocumen…
+       |                                                       ^
+     68|     // "Busca global" aparece duas vezes: como atalho (`global-search`…
+     69|     // lista de dicas globais do rodapé.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  src/components/settings/__tests__/KeyboardShortcutsSettings.test.tsx > etapa 84 — tela de atalhos exibe nome e descrição das Tarefas > lista só os atalhos que têm executor — nenhuma tecla sem efeito
+Error: [2mexpect([22m[31melement[39m[2m).not.toBeInTheDocument()[22m
+
+[31mexpected document not to contain element, found <span
+  class="font-medium text-foreground"
+>
+  Enviar mensagem
+</span> instead[39m
+ ❯ src/components/settings/__tests__/KeyboardShortcutsSettings.test.tsx:74:55
+     72|     // não lê a tecla gravada — sem executor no registry, sai da tela …
+     73|     // prometer um remapeamento que não muda nada.
+     74|     expect(screen.queryByText('Enviar mensagem')).not.toBeInTheDocumen…
+       |                                                       ^
+     75|     expect(screen.queryByText('Envia a mensagem atual')).not.toBeInThe…
+     76|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  4 failed | 2 passed (6)
+      Tests  3 failed | 22 passed (25)
+   Start at  18:46:30
+   Duration  9.75s (transform 4.00s, setup 3.59s, import 10.53s, tests 7.10s, environment 10.68s)
+

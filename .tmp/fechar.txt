@@ -1,0 +1,6 @@
+On branch v2/atalhos-sem-executor-2610151755a5bc
+nothing to commit, working tree clean
+AVISOS DO JUIZ MANTIDOS (seguem para o revisor):
+  1. Você mexeu em arquivo que o cartão não lista em 'ARQUIVOS QUE PODE TOCAR': src/components/inbox/InboxEmptyChat.tsx, src/components/inbox/KeyboardShortcutsHelp.tsx, src/components/inbox/__tests__/InboxEmptyChat.atalhos.test.tsx, src/components/keyboard/KeyboardShortcutsDialog.tsx, src/components/keyboard/__tests__/KeyboardShortcutsDialog.test.tsx, src/components/settings/KeyboardShortcutsSettings.t
+FECHADO (modo V2, local): v2/atalhos-sem-executor-2610151755a5bc @ a8727a0ba — verificação: zapp-verify --rapido. Na fila do integrador: /home/joaquim_ataides/hermes-workspaces/.v2-fila/2610151755a5bc.json
+Nada foi enviado ao GitHub. Termine o cartão com kanban_complete.

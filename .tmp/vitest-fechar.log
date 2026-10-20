@@ -1,0 +1,10 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/atalhos-sem-executor-2610151755a5bc
+
+····························
+
+ Test Files  6 passed (6)
+      Tests  28 passed (28)
+   Start at  18:46:16
+   Duration  10.03s (transform 2.14s, setup 2.54s, import 7.89s, tests 4.87s, environment 11.03s)
+

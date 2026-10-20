@@ -1,0 +1,12 @@
+11	5	src/components/inbox/InboxEmptyChat.tsx
+6	3	src/components/inbox/KeyboardShortcutsHelp.tsx
+13	10	src/components/inbox/__tests__/InboxEmptyChat.atalhos.test.tsx
+5	1	src/components/keyboard/KeyboardShortcutsDialog.tsx
+2	1	src/components/keyboard/__tests__/KeyboardShortcutsDialog.test.tsx
+9	2	src/components/settings/KeyboardShortcutsSettings.tsx
+6	3	src/components/settings/__tests__/KeyboardShortcutsSettings.test.tsx
+3	1	src/components/ui/__tests__/command-palette-acoes.test.tsx
+4	2	src/hooks/__tests__/useCustomShortcuts.instancias.test.tsx
+47	0	src/hooks/shortcuts/__tests__/atalhosSemExecutor.test.ts
+52	0	src/hooks/shortcuts/defaultShortcuts.ts
+24	7	src/hooks/ui/useGlobalKeyboardShortcuts.ts

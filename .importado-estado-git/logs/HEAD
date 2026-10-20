@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 d723a9010796f1ea4aea5270d881da2974328ba4 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792097731 -0300	
+d723a9010796f1ea4aea5270d881da2974328ba4 d723a9010796f1ea4aea5270d881da2974328ba4 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792097732 -0300	reset: moving to HEAD
+d723a9010796f1ea4aea5270d881da2974328ba4 405ebe4034c72266945ebbaf1cde71962cb2c08f Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792099012 -0300	commit: fix(atalhos): tira da tela de atalhos os ids sem executor
+405ebe4034c72266945ebbaf1cde71962cb2c08f a8727a0bac760049b139987ce454f71743784b8d Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792099628 -0300	commit: fix(atalhos): dica do Inbox tambem corta atalho sem executor
