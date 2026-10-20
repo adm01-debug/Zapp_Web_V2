@@ -1,0 +1,908 @@
+diff --git a/src/components/tasks/__tests__/TasksBoardMode.a11y.test.tsx b/src/components/tasks/__tests__/TasksBoardMode.a11y.test.tsx
+index cce34f920e..9e5d8566b8 100644
+--- a/src/components/tasks/__tests__/TasksBoardMode.a11y.test.tsx
++++ b/src/components/tasks/__tests__/TasksBoardMode.a11y.test.tsx
+@@ -13,10 +13,10 @@
+  *     quando o arrasto sai de cena (`pointer: coarse`); o caso dirige o fluxo
+  *     inteiro por eventos de teclado (Enter no gatilho, ↓ para andar no menu,
+  *     Enter para mover) e confere que a escrita chegou na fronteira (Supabase).
+- *  3. **A faixa de colunas nomeia cada coluna.** Na tela estreita as 5 colunas
+- *     viram um carrossel: cada coluna tem um dot com nome acessível
+- *     "Ir para <coluna>" (e o dot da coluna à vista carrega `aria-current`),
+- *     além das setas "Coluna anterior"/"Próxima coluna".
++ *  3. **A faixa de colunas nomeia cada coluna.** Na tela estreita cada coluna
++ *     tem uma aba com nome acessível (etapa 099: as abas substituíram as setas
++ *     ‹ › e os 5 dots do carrossel), a aba da coluna à vista carrega
++ *     `aria-selected` e aponta por `aria-controls` para o painel da coluna.
+  *
+  * LACUNA REGISTRADA (o `it.todo` no fim do arquivo): o CONTÊINER da coluna não
+  * tem papel nem nome acessível — `BoardColumn.tsx` é uma `<div>` sem
+@@ -45,11 +45,11 @@ import { TasksModule } from '@/components/tasks/TasksModule';
+ import { TooltipProvider } from '@/components/ui/tooltip';
+ 
+ /**
+- * Rótulos das 5 colunas como o produto os chama (spec do Quadro). É uma lista
+- * LITERAL de propósito: se ela vier de `KANBAN_COLUMNS`, o esperado passa a ser
+- * uma cópia do código testado e a asserção vira tautologia.
++ * Rótulos CURTOS das 5 colunas — o texto das abas da tela estreita (etapa 099).
++ * É uma lista LITERAL de propósito: se ela vier de `KANBAN_COLUMNS`, o esperado
++ * passa a ser uma cópia do código testado e a asserção vira tautologia.
+  */
+-const ROTULOS_DAS_COLUNAS = ['Caixa de entrada', 'A fazer', 'Fazendo', 'Aguardando', 'Concluído'];
++const ABAS_DAS_COLUNAS = ['Entrada', 'A fazer', 'Fazendo', 'Aguardando', 'Concluído'];
+ 
+ /** O módulo guarda o último modo em `tasks-mode` (é ele que escolhe o Quadro). */
+ function usarModoQuadro() {
+@@ -200,32 +200,31 @@ describe('E22 — o menu "Mover para" do card opera só com teclado', () => {
+   });
+ });
+ 
+-describe('E22 — a faixa de colunas nomeia cada coluna do Quadro', () => {
+-  it('cada coluna tem um dot com nome acessível e o da coluna à vista fica marcado', async () => {
++describe('E22/etapa 099 — as abas nomeiam cada coluna do Quadro (tela estreita)', () => {
++  it('cada coluna tem uma aba com nome acessível e a da coluna à vista fica marcada', async () => {
+     setSelectResult({ data: [], error: null });
+     const devolverMidia = fingirMidia(TELA_ESTREITA);
+     try {
+       renderQuadro();
+-      await screen.findByTestId('board-dots');
+-
+-      for (const rotulo of ROTULOS_DAS_COLUNAS) {
+-        expect(
+-          screen.getByRole('button', { name: `Ir para ${rotulo}` }),
+-          `dot da coluna "${rotulo}"`,
+-        ).toBeTruthy();
+-      }
+-
+-      // O dot diz QUAL coluna está à vista (não só existe e é nomeado).
+-      expect(screen.getByRole('button', { name: 'Ir para Caixa de entrada' }))
+-        .toHaveAttribute('aria-current', 'true');
+-      for (const rotulo of ROTULOS_DAS_COLUNAS.slice(1)) {
+-        expect(screen.getByRole('button', { name: `Ir para ${rotulo}` }))
+-          .not.toHaveAttribute('aria-current');
++      const abas = await screen.findByTestId('board-tabs');
++
++      // Etapa 099: as abas substituíram as setas ‹ › e os 5 dots do carrossel —
++      // a lista é LITERAL de propósito, para não virar cópia de `KANBAN_COLUMNS`.
++      const botoes = within(abas).getAllByRole('tab');
++      expect(botoes.map(b => b.textContent)).toEqual(ABAS_DAS_COLUNAS);
++
++      // A aba diz QUAL coluna está à vista (não só existe e é nomeada).
++      expect(within(abas).getByRole('tab', { name: 'Entrada' }))
++        .toHaveAttribute('aria-selected', 'true');
++      for (const rotulo of ABAS_DAS_COLUNAS.slice(1)) {
++        expect(within(abas).getByRole('tab', { name: rotulo }))
++          .toHaveAttribute('aria-selected', 'false');
+       }
+ 
+-      // As setas da faixa também são controles nomeados, com o limite de cada ponta.
+-      expect(screen.getByRole('button', { name: 'Coluna anterior' })).toBeDisabled();
+-      expect(screen.getByRole('button', { name: 'Próxima coluna' })).toBeEnabled();
++      // A aba à vista aponta para o painel que monta a coluna.
++      const painel = screen.getByRole('tabpanel');
++      expect(within(abas).getByRole('tab', { name: 'Entrada' })).toHaveAttribute('aria-controls', painel.id);
++      expect(painel).toHaveAttribute('aria-labelledby', 'board-tab-backlog');
+     } finally {
+       devolverMidia();
+     }
+diff --git a/src/components/tasks/__tests__/contratosVisiveis.test.tsx b/src/components/tasks/__tests__/contratosVisiveis.test.tsx
+index 7b05dddab3..3ee76c62f8 100644
+--- a/src/components/tasks/__tests__/contratosVisiveis.test.tsx
++++ b/src/components/tasks/__tests__/contratosVisiveis.test.tsx
+@@ -7,7 +7,8 @@
+  *   T3 — ordem das abas Lista/Quadro/Agenda (`ModeSwitcher`);
+  *   T4 — destinos do menu "Mover para" (`WorkItemCard`/`MoveTargets`);
+  *   T5 — `shortLabel` das colunas (`workItem.types`);
+- *   T6 — o contêiner da linha das colunas é a faixa flex com vão (`.flex.gap-3`).
++ *   T6 — o contêiner da linha das colunas é a faixa com vão (`.grid.gap-3` desde
++ *        a etapa 099; antes era `.flex.gap-3` do carrossel).
+  *
+  * Cada caso mede a ORDEM/RÓTULO que o componente REAL renderiza no DOM (nunca o
+  * array do código): trocar a ordem ou o rótulo em produção fica vermelho. O
+@@ -94,10 +95,12 @@ describe('Contratos visíveis das Tarefas (T1, T3, T4, T5, T6)', () => {
+       expect(coluna.textContent, `coluna ${i}`).toContain(ROTULOS_DAS_COLUNAS[i]);
+     });
+ 
+-    // T6 — as 5 colunas são irmãs na MESMA linha, que é a faixa flex com o vão.
++    // T6 — as 5 colunas são irmãs no MESMO contêiner, que é a faixa com o vão.
++    // Etapa 099: a faixa deixou de ser `flex` (carrossel) e virou `grid`, que é
++    // quem distribui as 5 faixas de largura igual e quebra linha quando não cabe.
+     const trilho = colunas[0].parentElement!;
+     expect(trilho.children, 'as colunas e o trilho não podem se separar').toHaveLength(5);
+-    expect(trilho.className).toMatch(/(^|\s)flex(\s|$)/);
++    expect(trilho.className).toMatch(/(^|\s)grid(\s|$)/);
+     expect(trilho.className).toMatch(/(^|\s)gap-3(\s|$)/);
+   });
+ 
+diff --git a/src/components/tasks/__tests__/quadroArrastarTecladoRolagem.test.tsx b/src/components/tasks/__tests__/quadroArrastarTecladoRolagem.test.tsx
+index 19b9510ccb..b781e79c3a 100644
+--- a/src/components/tasks/__tests__/quadroArrastarTecladoRolagem.test.tsx
++++ b/src/components/tasks/__tests__/quadroArrastarTecladoRolagem.test.tsx
+@@ -326,14 +326,17 @@ describe('etapa 097 — teclado do Quadro', () => {
+ });
+ 
+ 
+-describe('etapa 098 — rolagem horizontal', () => {
+-  it('o trilho rola com snap e encaixe animado, e a coluna rola por dentro', () => {
++describe('etapa 098 — sombras de borda do trilho', () => {
++  it('o trilho é grade (não rola de lado) e a coluna rola por dentro', () => {
+     renderQuadro({ byStatus: { ...VAZIO, backlog: [item({ id: 'b1', status: 'backlog' })] } });
+ 
++    // Etapa 099: o trilho deixou de ser carrossel — quem distribui a largura é a
++    // grelha (1 faixa na tela estreita, 2/3/5 em md/lg/xl), então não há
++    // `overflow-x-auto` nem snap para rolar de lado.
+     const t = trilho()!;
+-    expect(t.className).toMatch(/(^|\s)overflow-x-auto(\s|$)/);
+-    expect(t.className).toMatch(/(^|\s)snap-x(\s|$)/);
+-    expect(t.className).toContain('motion-safe:scroll-smooth');
++    expect(t.className).toMatch(/(^|\s)grid(\s|$)/);
++    expect(t.className).not.toMatch(/(^|\s)overflow-x-auto(\s|$)/);
++    expect(t.className).not.toMatch(/(^|\s)snap-x(\s|$)/);
+ 
+     expect(coluna('backlog')!.querySelector('[class*="overflow-y-auto"]')).toBeTruthy();
+   });
+@@ -347,7 +350,9 @@ describe('etapa 098 — rolagem horizontal', () => {
+     const larguraVisivel = 300;
+     let larguraTotal = 900;
+     let deslocamento = 0;
+-    const ehTrilho = (el: HTMLElement) => String(el.className ?? '').includes('overflow-x-auto');
++    // Etapa 099: o trilho não carrega mais `overflow-x-auto` (virou grade); a
++    // âncora das medidas agora é o `data-testid` dele.
++    const ehTrilho = (el: HTMLElement) => el.dataset?.testid === 'board-track';
+     const restaurar = () => {
+       for (const [nome, descritor] of descritoresOriginais) {
+         if (descritor) Object.defineProperty(HTMLElement.prototype, nome, descritor);
+diff --git a/src/components/tasks/__tests__/quadroLarguraFocoContraste.test.tsx b/src/components/tasks/__tests__/quadroLarguraFocoContraste.test.tsx
+index f17197914b..4544099a49 100644
+--- a/src/components/tasks/__tests__/quadroLarguraFocoContraste.test.tsx
++++ b/src/components/tasks/__tests__/quadroLarguraFocoContraste.test.tsx
+@@ -219,8 +219,15 @@ function trilhoEcolunas() {
+   return { trilho, colunas: Array.from(trilho.querySelectorAll<HTMLElement>('[data-board-column]')) };
+ }
+ 
+-describe('E16 — as 5 colunas cabem na largura total (1440) e viram carrossel abaixo', () => {
+-  it('o piso das colunas + os vãos cabem em 1440 (sidebar aberta) e não cabem em 1024', () => {
++describe('E16 — as 5 colunas cabem nas faixas da grade e o trilho não rola de lado', () => {
++  // Etapa 099: o "carrossel abaixo de 1024/alto de 1440" desta suíte foi
++  // substituído pelo responsivo de 3 faixas (grade). O piso legível de 200px
++  // continua sendo o mesmo; o que mudou é QUEM distribui a largura — a grelha
++  // (md: 2 faixas, lg: 3, xl: 5) — e onde o piso é solto (`xl:min-w-0`, porque
++  // 5×200+48 não caberia em 1280 com a sidebar aberta). A conta da cascata do
++  // `min-w` em cada faixa está no teste da etapa 099
++  // (`quadroResponsivoAbas.test.tsx`); aqui fica a conta do piso do conjunto.
++  it('o piso das colunas + os vãos cabem em 768/1024/1440 — e é o xl que solta o piso em 1280', () => {
+     renderQuadro({ todo: [item()] });
+     const { trilho, colunas } = trilhoEcolunas();
+     expect(colunas).toHaveLength(5);
+@@ -228,38 +235,47 @@ describe('E16 — as 5 colunas cabem na largura total (1440) e viram carrossel a
+     const gap = gapDe(trilho.className);
+     const pisos = colunas.map(c => pisoDeLargura(c.className));
+     expect(new Set(pisos).size, `as 5 colunas têm pisos diferentes: ${pisos.join('/')}`).toBe(1);
+-    const piso = pisos[0] * colunas.length + gap * (colunas.length - 1);
++    const piso = pisos[0];
++    expect(piso, 'o piso legível da coluna').toBe(200);
+ 
+     const sidebar = tokenPx(tokensCss, 'sidebar-w');
+     const gutter = tokenPx(tokensCss, 'layout-gutter');
+-
+-    // 1440 com a sidebar aberta: no pior caso com gutter dos DOIS lados do conteúdo…
+-    const guttersLaterais = gutter * 2;
+-    const totalComGutters = sidebar + guttersLaterais + piso;
+-    expect(totalComGutters).toBe(1376);
+-    expect(
+-      totalComGutters,
+-      `em 1440 com sidebar (${sidebar}px) + 2×gutter (${guttersLaterais}px), as 5 colunas pedem ${piso}px = ${totalComGutters}px`,
+-    ).toBeLessThanOrEqual(1440);
+-    // …e, depois da E05/E14 (`layout:'full'`, sem gutter), sobra ainda mais espaço.
+-    expect(sidebar + piso, `em 1440 com sidebar: ${sidebar + piso}px`).toBeLessThanOrEqual(1440);
+-    // Abaixo de 1024 o piso não cabe — é exatamente por isso que o trilho precisa rolar.
+-    expect(sidebar + piso, 'o carrossel de ≤1024 depende de o piso não caber').toBeGreaterThan(1024);
++    const sobra = (largura: number) => largura - sidebar - gutter * 2;
++    const conjunto = (faixas: number) => piso * faixas + gap * (faixas - 1);
++
++    // 1440 com a sidebar aberta e gutter dos DOIS lados do conteúdo (o caso mais apertado
++    // da E16 original): as cinco colunas continuam cabendo.
++    expect(sidebar + gutter * 2 + conjunto(5), `em 1440: ${sidebar + gutter * 2 + conjunto(5)}px`)
++      .toBeLessThanOrEqual(1440);
++
++    // 768 (md = 2 faixas) e 1024 (lg = 3 faixas): o piso de 200px cabe em cada faixa.
++    expect(conjunto(2), `em 768 com sidebar: as 2 faixas pedem ${conjunto(2)}px de ${sobra(768)}px`)
++      .toBeLessThanOrEqual(sobra(768));
++    expect(conjunto(3), `em 1024 com sidebar: as 3 faixas pedem ${conjunto(3)}px de ${sobra(1024)}px`)
++      .toBeLessThanOrEqual(sobra(1024));
++
++    // 1280 (xl = 5 faixas): com o piso de md o conjunto ESTOURARIA — é exatamente
++    // por isso que a coluna solta o piso em xl (`xl:min-w-0`).
++    expect(conjunto(5), `sem soltar o piso em xl: ${conjunto(5)}px de ${sobra(1280)}px`)
++      .toBeGreaterThan(sobra(1280));
+   });
+ 
+-  it('o trilho rola como carrossel e as colunas crescem juntas até preenchê-lo', () => {
++  it('o trilho é grade que quebra linha (não é mais o carrossel) e nenhuma coluna fixa a largura', () => {
+     renderQuadro({ todo: [item()] });
+     const { trilho, colunas } = trilhoEcolunas();
+ 
+-    // O trilho é a válvula de escape: é ele que rola (com snap) quando o piso não cabe.
+-    expect(trilho.className).toMatch(/(^|\s)overflow-x-auto(\s|$)/);
+-    expect(trilho.className).toMatch(/(^|\s)snap-x(\s|$)/);
++    // Quem distribui a largura agora é a grelha — o trilho deixou de ser a
++    // válvula de escape do `overflow-x-auto`/snap da etapa 094.
++    expect(trilho.className).toMatch(/(^|\s)grid(\s|$)/);
++    expect(trilho.className).not.toMatch(/(^|\s)overflow-x-auto(\s|$)/);
++    expect(trilho.className).not.toMatch(/(^|\s)snap-x(\s|$)/);
+     expect(trilho.className).toMatch(/(^|\s)min-w-0(\s|$)/);
+ 
+-    // Nenhuma coluna fixa a largura: todas crescem juntas até preencher o trilho.
++    // Nenhuma coluna fixa a largura e todas soltam o piso na faixa do xl, onde
++    // quem manda é o `minmax(0,1fr)` da grelha.
+     for (const [i, coluna] of colunas.entries()) {
+-      expect(coluna.className, `coluna ${i} precisa ser flexível`).toMatch(/(^|\s)(flex-1|grow)(\s|$)/);
+       expect(coluna.className, `coluna ${i} não pode fixar a largura`).not.toMatch(/(^|\s)shrink-0(\s|$)/);
++      expect(coluna.className, `coluna ${i} precisa soltar o piso em xl`).toMatch(/(^|\s)xl:min-w-0(\s|$)/);
+     }
+   });
+ });
+diff --git a/src/components/tasks/__tests__/quadroResponsivoAbas.test.tsx b/src/components/tasks/__tests__/quadroResponsivoAbas.test.tsx
+new file mode 100644
+index 0000000000..96b44d50c6
+--- /dev/null
++++ b/src/components/tasks/__tests__/quadroResponsivoAbas.test.tsx
+@@ -0,0 +1,349 @@
++/**
++ * Etapa 099 — responsivo do Quadro: uma coluna por vez com abas no topo
++ * (abaixo de 768 px) e as cinco colunas sem rolagem horizontal (a partir de
++ * 1280 px).
++ *
++ * O que esta prova cobre, e por qual caminho REAL:
++ *
++ *  1. ESTRUTURA (`<768`) — o Quadro monta UMA coluna por vez e troca de coluna
++ *     pelas abas; o conteúdo da coluna é o cartão de verdade (`WorkItemCard`),
++ *     não um stub. Nenhum contêiner do quadro declara rolagem horizontal — é o
++ *     teste que prova a ausência, porque o jsdom não calcula layout.
++ *  2. ARITMÉTICA — o piso `min-w-*` das colunas é lido do `className`
++ *     RENDERIZADO, por faixa (md e xl), contra o espaço disponível montado com
++ *     os tokens REAIS (`--sidebar-w` e `--layout-gutter`, de `tokens.css`).
++ *     Como o jsdom não mede, essa conta é a prova de "sem rolagem" nas faixas
++ *     em que a grade distribui a largura. NÃO é medição de navegador: nenhum
++ *     projeto do Playwright cobre Tarefas.
++ *  3. TECLADO E SEMÂNTICA — as abas são `tablist`/`tab`/`tabpanel`, com um
++ *     único ponto de tabulação (roving `tabIndex`) e setas/Home/End; a árvore
++ *     passa no axe.
++ */
++import { describe, it, expect, vi, afterEach } from 'vitest';
++import fs from 'node:fs';
++import path from 'node:path';
++import type { ReactNode } from 'react';
++import { render, screen, within, fireEvent, cleanup } from '@testing-library/react';
++import { axe } from 'vitest-axe';
++
++import { makeTaskRow } from '@/test/mocks/tarefas';
++import { TooltipProvider } from '@/components/ui/tooltip';
++import { TasksBoardMode } from '@/components/tasks/board/TasksBoardMode';
++import type { WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
++
++/** O `@hello-pangea/dnd` não roda no jsdom — mesmo mock da E16. */
++vi.mock('@hello-pangea/dnd', () => ({
++  DragDropContext: ({ children }: { children: ReactNode }) => children,
++  Droppable: ({ children }: { children: (p: unknown, s: unknown) => ReactNode }) =>
++    children({ innerRef: () => undefined, droppableProps: {}, placeholder: null }, { isDraggingOver: false }),
++  Draggable: ({ children }: { children: (p: unknown, s: unknown) => ReactNode }) =>
++    children({ innerRef: () => undefined, draggableProps: {}, dragHandleProps: {} }, { isDragging: false }),
++}));
++
++afterEach(() => cleanup());
++
++// ─── Ambiente de mídia (a mesma fonte do componente: pointerMedia/matchMedia) ───
++/** Mente sobre as media queries do ambiente e devolve o desfazer. */
++function fingirMidia(matches: (consulta: string) => boolean) {
++  const original = window.matchMedia;
++  window.matchMedia = ((consulta: string) => ({
++    matches: matches(consulta),
++    media: consulta,
++    onchange: null,
++    addListener: () => {},
++    removeListener: () => {},
++    addEventListener: () => {},
++    removeEventListener: () => {},
++    dispatchEvent: () => false,
++  })) as unknown as typeof window.matchMedia;
++  return () => { window.matchMedia = original; };
++}
++
++/** Abaixo de `md`: o corte de `useNarrowViewport` (§ pointerMedia.ts). */
++const TELA_ESTREITA = (consulta: string) => consulta.includes('max-width: 767px');
++
++// ─── Tokens reais (é deles que sai o espaço disponível) ───
++const tokensCss = fs.readFileSync(
++  path.resolve(__dirname, '../../../styles/tokens.css'),
++  'utf8',
++);
++function tokenPx(nome: string): number {
++  const m = tokensCss.match(new RegExp(`--${nome}:\\s*([\\d.]+)(px|rem)`));
++  if (!m) throw new Error(`token --${nome} não encontrado no CSS do app`);
++  return m[2] === 'px' ? Number(m[1]) : Number(m[1]) * 16;
++}
++
++/** Escala do Tailwind de volta para px (`min-w-[200px]`, `min-w-5` = 20px). */
++function escalaTailwind(token: string): number | null {
++  const px = token.match(/^\[(\d+(?:\.\d+)?)px\]$/);
++  if (px) return Number(px[1]);
++  if (/^\d+(?:\.\d+)?$/.test(token)) return Number(token) * 4;
++  return null;
++}
++
++/**
++ * O piso de largura que a coluna impõe NAQUELA faixa — modelo do cascade do
++ * Tailwind: a variante sem prefixo vale sempre e a de MAIOR ponto de quebra
++ * (a última na folha de estilo) ganha das menores. Usar o "maior `min-w-*` do
++ * `className`" mentiria: em `xl` o `min-w-0` do `xl` vence o `md:min-w-[200px]`.
++ */
++const PONTOS_DE_QUEBRA = ['', 'sm', 'md', 'lg', 'xl'] as const;
++function pisoNaFaixa(className: string, faixa: 'md' | 'xl'): number {
++  const limite = PONTOS_DE_QUEBRA.indexOf(faixa);
++  let piso = 0;
++  let vencedor = -1;
++  for (const cls of className.split(/\s+/)) {
++    const m = cls.match(/^((?:[a-z]+:)*)min-w-(.+)$/);
++    if (!m) continue;
++    const prefixo = m[1].replace(/:$/, '');
++    const ponto = PONTOS_DE_QUEBRA.indexOf(prefixo as typeof PONTOS_DE_QUEBRA[number]);
++    if (ponto === -1 || ponto > limite) continue; // variante que ainda não vale
++    const px = escalaTailwind(m[2]);
++    if (px === null) throw new Error(`o teste não sabe converter a classe de largura: ${cls}`);
++    if (ponto >= vencedor) { vencedor = ponto; piso = px; }
++  }
++  return piso;
++}
++
++/** O vão entre as colunas, lido do próprio trilho (`gap-3` = 12px). */
++function gapDe(className: string): number {
++  const m = className
++    .split(/\s+/)
++    .map(c => c.match(/^(?:[a-z]+:)?gap-(\d+|\[\d+px\])$/))
++    .find(Boolean);
++  if (!m) throw new Error(`o trilho não declara um \`gap\` que o teste saiba ler: ${className}`);
++  return escalaTailwind(m[1])!;
++}
++
++// ─── Harness da tela (o mesmo da E16: o componente REAL, sem wrapper de dados) ───
++const VAZIO: Record<WorkItemStatus, WorkItem[]> = {
++  backlog: [], todo: [], doing: [], waiting: [], done: [], cancelled: [],
++};
++const item = (over: Record<string, unknown> = {}) => makeTaskRow(over) as unknown as WorkItem;
++
++function renderQuadro(byStatus: Partial<Record<WorkItemStatus, WorkItem[]>> = {}) {
++  return render(
++    <TooltipProvider>
++      <div data-testid="tasks-module">
++        <TasksBoardMode
++          byStatus={{ ...VAZIO, ...byStatus }}
++          isLoading={false}
++          onMove={vi.fn()}
++          onReorder={vi.fn()}
++          onOpen={vi.fn()}
++          onDelete={vi.fn()}
++          onCreate={vi.fn()}
++          onOpenContact={vi.fn()}
++        />
++      </div>
++    </TooltipProvider>,
++  );
++}
++
++/** O trilho é o pai das colunas (`data-board-column` é do próprio componente). */
++function colunasMontadas(container: HTMLElement): HTMLElement[] {
++  return Array.from(container.querySelectorAll<HTMLElement>('[data-board-column]'));
++}
++
++describe('etapa 099 — abaixo de 768px: uma coluna por vez, com abas no topo', () => {
++  const CAIXA = item({ id: 'b1', title: 'Ligar para o cliente', status: 'backlog' });
++  const FAZENDO = item({ id: 'd1', title: 'Orçamento da feira', status: 'doing' });
++
++  it('monta uma coluna só, nomeia as abas e troca de coluna pelo clique', async () => {
++    const devolverMidia = fingirMidia(TELA_ESTREITA);
++    try {
++      const { container } = renderQuadro({ backlog: [CAIXA], doing: [FAZENDO] });
++
++      const abas = await screen.findByTestId('board-tabs');
++      expect(abas).toHaveAttribute('role', 'tablist');
++      expect(abas.getAttribute('aria-label'), 'a faixa de abas precisa de nome acessível').toBeTruthy();
++
++      const botoes = within(abas).getAllByRole('tab');
++      expect(botoes.map(b => b.textContent)).toEqual([
++        'Entrada', 'A fazer', 'Fazendo', 'Aguardando', 'Concluído',
++      ]);
++
++      // UMA coluna por vez — a primeira (Caixa de entrada) é a que está à vista.
++      const colunas = colunasMontadas(container);
++      expect(colunas).toHaveLength(1);
++      expect(colunas[0]).toHaveAttribute('data-board-column', 'backlog');
++      expect(within(colunas[0]).getByText('Ligar para o cliente')).toBeTruthy();
++      expect(screen.queryByText('Orçamento da feira'), 'a coluna fora da aba não pode ficar montada').toBeNull();
++
++      // O painel da aba é o contêiner da coluna (tablist → tabpanel).
++      const painel = container.querySelector<HTMLElement>('[role="tabpanel"]')!;
++      expect(botoes[0]).toHaveAttribute('aria-controls', painel.id);
++      expect(painel).toHaveAttribute('aria-labelledby', botoes[0].id);
++      expect(botoes[0]).toHaveAttribute('aria-selected', 'true');
++
++      // Trocar de aba troca a coluna montada — e o cartão da outra coluna aparece.
++      fireEvent.click(within(abas).getByRole('tab', { name: 'Fazendo' }));
++      const depois = colunasMontadas(container);
++      expect(depois).toHaveLength(1);
++      expect(depois[0]).toHaveAttribute('data-board-column', 'doing');
++      expect(within(depois[0]).getByText('Orçamento da feira')).toBeTruthy();
++      expect(screen.queryByText('Ligar para o cliente')).toBeNull();
++      expect(within(abas).getByRole('tab', { name: 'Fazendo' })).toHaveAttribute('aria-selected', 'true');
++    } finally {
++      devolverMidia();
++    }
++  });
++
++  it('nenhum contêiner do quadro rola de lado: o trilho é uma coluna e a faixa de abas quebra linha', async () => {
++    const devolverMidia = fingirMidia(TELA_ESTREITA);
++    try {
++      const { container } = renderQuadro({ backlog: [CAIXA] });
++      const abas = await screen.findByTestId('board-tabs');
++      const coluna = colunasMontadas(container)[0];
++
++      // A faixa de abas é a única "trilha" horizontal: ela quebra linha em vez de rolar.
++      expect(abas.className).toContain('flex-wrap');
++      expect(abas.className).not.toContain('overflow-x-auto');
++
++      // A coluna e todos os seus ancestrais até o quadro estão sem rolagem horizontal.
++      for (let no: HTMLElement | null = coluna; no && no !== container.parentElement; no = no.parentElement) {
++        expect(no.className ?? '', `ancestral ${no.tagName} declara rolagem horizontal`).not.toContain('overflow-x-auto');
++        expect(no.className ?? '').not.toContain('snap-x');
++      }
++    } finally {
++      devolverMidia();
++    }
++  });
++
++  it('as abas andam só com o teclado (setas, Home e End) e mantêm um ponto de tabulação', async () => {
++    const devolverMidia = fingirMidia(TELA_ESTREITA);
++    try {
++      renderQuadro({ backlog: [CAIXA], doing: [FAZENDO] });
++      const abas = await screen.findByTestId('board-tabs');
++      const botoes = within(abas).getAllByRole('tab');
++
++      // Roving tabIndex: só a aba ativa é parada do Tab.
++      expect(botoes.map(b => b.tabIndex)).toEqual([0, -1, -1, -1, -1]);
++
++      botoes[0].focus();
++      fireEvent.keyDown(botoes[0], { key: 'ArrowRight' });
++      expect(within(abas).getAllByRole('tab')[1]).toHaveAttribute('aria-selected', 'true');
++      expect(document.activeElement).toBe(within(abas).getAllByRole('tab')[1]);
++
++      fireEvent.keyDown(document.activeElement as HTMLElement, { key: 'End' });
++      expect(within(abas).getAllByRole('tab')[4]).toHaveAttribute('aria-selected', 'true');
++
++      fireEvent.keyDown(document.activeElement as HTMLElement, { key: 'ArrowRight' });
++      expect(within(abas).getAllByRole('tab')[0], 'a seta dá a volta na faixa').toHaveAttribute('aria-selected', 'true');
++
++      fireEvent.keyDown(document.activeElement as HTMLElement, { key: 'ArrowLeft' });
++      expect(within(abas).getAllByRole('tab')[4]).toHaveAttribute('aria-selected', 'true');
++
++      fireEvent.keyDown(document.activeElement as HTMLElement, { key: 'Home' });
++      expect(within(abas).getAllByRole('tab')[0]).toHaveAttribute('aria-selected', 'true');
++    } finally {
++      devolverMidia();
++    }
++  });
++
++  it('as 5 abas mantêm alvo de toque de 40px, sem classe contradizendo o piso', async () => {
++    const devolverMidia = fingirMidia(TELA_ESTREITA);
++    try {
++      renderQuadro({ backlog: [CAIXA] });
++      const abas = await screen.findByTestId('board-tabs');
++      const botoes = within(abas).getAllByRole('tab');
++      expect(botoes).toHaveLength(5);
++
++      // Todo `min-h-*` declarado em cada aba, já convertido para px — inclusive
++      // variante com prefixo, porque é ela que vence no cascade quando vale.
++      const pisos = botoes.map(b =>
++        b.className
++          .split(/\s+/)
++          .filter(c => /^(?:[a-z]+:)?min-h-/.test(c))
++          .map(c => {
++            const px = escalaTailwind(c.replace(/^((?:[a-z]+:)?)min-h-/, ''));
++            if (px === null) throw new Error(`o teste não sabe converter a altura da aba: ${c}`);
++            return px;
++          }),
++      );
++
++      // As cinco abas continuam iguais entre si: nenhuma com piso próprio.
++      expect(
++        pisos.every(p => p.join('/') === pisos[0].join('/')),
++        `as abas divergem no piso de altura: ${pisos.map(p => p.join('+')).join(' | ')}`,
++      ).toBe(true);
++
++      for (const [i, p] of pisos.entries()) {
++        expect(p.length, `aba ${i} não declara altura mínima`).toBeGreaterThan(0);
++        for (const px of p) {
++          expect(px, `aba ${i}: ${px}px fica abaixo do alvo de toque de 40px`).toBeGreaterThanOrEqual(40);
++        }
++      }
++    } finally {
++      devolverMidia();
++    }
++  });
++
++  it('a tela estreita do Quadro passa no axe', async () => {
++    const devolverMidia = fingirMidia(TELA_ESTREITA);
++    try {
++      const { container } = renderQuadro({ backlog: [CAIXA] });
++      await screen.findByTestId('board-tabs');
++      expect(await axe(container)).toHaveNoViolations();
++    } finally {
++      devolverMidia();
++    }
++  });
++});
++
++describe('etapa 099 — as cinco colunas sem rolagem a partir de 1280px', () => {
++  it('o trilho é uma grade: 2 faixas em 768 e 5 faixas em 1280, sem rolagem horizontal', () => {
++    const { container } = renderQuadro({ todo: [item()] });
++    const colunas = colunasMontadas(container);
++    expect(colunas).toHaveLength(5);
++
++    const trilho = colunas[0].parentElement!;
++    expect(trilho.className, 'o trilho deixa de ser o carrossel: agora é grade').toContain('grid');
++    expect(trilho.className).not.toContain('overflow-x-auto');
++    expect(trilho.className).not.toContain('snap-x');
++    expect(trilho.className).toMatch(/(^|\s)md:grid-cols-2(\s|$)/);
++    expect(trilho.className).toMatch(/(^|\s)lg:grid-cols-3(\s|$)/);
++    expect(trilho.className).toMatch(/(^|\s)xl:grid-cols-5(\s|$)/);
++
++    const gap = gapDe(trilho.className);
++    const sidebar = tokenPx('sidebar-w');
++    const gutter = tokenPx('layout-gutter');
++
++    // ── 768px (md): duas faixas, e o piso de 200px cabe dentro de cada uma ──
++    const disponivel768 = 768 - sidebar - gutter * 2;
++    const pisoMd = pisoNaFaixa(colunas[0].className, 'md');
++    expect(pisoMd, 'o piso legível da coluna em md').toBe(200);
++    expect(pisoMd * 2 + gap, `em 768 com sidebar (${sidebar}px) + 2×gutter: as 2 colunas pedem ${pisoMd * 2 + gap}px`)
++      .toBeLessThanOrEqual(disponivel768);
++
++    // ── 1024px (lg): três faixas com o mesmo piso ──
++    const disponivel1024 = 1024 - sidebar - gutter * 2;
++    expect(pisoMd * 3 + gap * 2, `em 1024: as 3 colunas pedem ${pisoMd * 3 + gap * 2}px`)
++      .toBeLessThanOrEqual(disponivel1024);
++
++    // ── 1280px (xl): cinco faixas de largura igual (minmax(0,1fr)) ──
++    const disponivel1280 = 1280 - sidebar - gutter * 2;
++    const faixa = (disponivel1280 - gap * 4) / 5;
++    expect(faixa, 'cada uma das 5 colunas em 1280px').toBeGreaterThanOrEqual(160);
++    const pisoXl = pisoNaFaixa(colunas[0].className, 'xl');
++    expect(pisoXl, 'em xl a coluna não impõe piso: quem manda é a faixa de 1fr')
++      .toBeLessThanOrEqual(faixa);
++    // E o `xl:min-w-0` não é enfeite: com o piso de md o conjunto estouraria 1280.
++    expect(pisoMd * 5 + gap * 4, `sem soltar o piso em xl, as 5 colunas pedem ${pisoMd * 5 + gap * 4}px`)
++      .toBeGreaterThan(disponivel1280);
++  });
++
++  it('as colunas continuam iguais entre si e nenhuma fixa a largura', () => {
++    const { container } = renderQuadro({ todo: [item()] });
++    const colunas = colunasMontadas(container);
++
++    const larguras = colunas.map(c =>
++      c.className.split(/\s+/).find(t => /^(?:[a-z]+:)?w-/.test(t)) ?? null,
++    );
++    expect(new Set(larguras).size, `nenhuma coluna pode fixar largura: ${larguras.join('/')}`).toBe(1);
++    expect(larguras[0]).toBeNull();
++    for (const [i, coluna] of colunas.entries()) {
++      expect(coluna.className, `coluna ${i} não pode travar o encolhimento`).not.toMatch(/(^|\s)shrink-0(\s|$)/);
++    }
++  });
++});
+diff --git a/src/components/tasks/__tests__/taskComponents.test.tsx b/src/components/tasks/__tests__/taskComponents.test.tsx
+index 5bc9d292ed..b30716d74b 100644
+--- a/src/components/tasks/__tests__/taskComponents.test.tsx
++++ b/src/components/tasks/__tests__/taskComponents.test.tsx
+@@ -250,8 +250,10 @@ describe('Tarefas — componentes dos três modos', () => {
+     const esperados = ['Caixa de entrada', 'A fazer', 'Fazendo', 'Aguardando', 'Concluído'];
+     const titulos   = esperados.map(rotulo => screen.getByText(rotulo));
+ 
+-    // 1) a linha que contem as colunas nao inverte a ordem visual (flex-row-reverse)
+-    const linha = titulos[0].closest('.flex.gap-3') as HTMLElement | null;
++    // 1) a linha que contem as colunas nao inverte a ordem visual (flex-row-reverse).
++    // Etapa 099: a faixa virou grade (era `.flex.gap-3`), entao a ancora do
++    // contêiner passou a ser a classe `gap-3` dele.
++    const linha = titulos[0].closest('.gap-3') as HTMLElement | null;
+     expect(linha).toBeTruthy();
+     expect(linha!.className).not.toMatch(/reverse/);
+ 
+diff --git a/src/components/tasks/board/BoardColumn.tsx b/src/components/tasks/board/BoardColumn.tsx
+index 3afbe217d0..d145d8ea86 100644
+--- a/src/components/tasks/board/BoardColumn.tsx
++++ b/src/components/tasks/board/BoardColumn.tsx
+@@ -80,21 +80,23 @@ export function BoardColumn({
+     : visibleItems.length > 0 ? String(visibleItems.length) : '';
+ 
+   return (
+-    // E16: as colunas DIVIDEM a largura do trilho (`flex-1`) com um piso legível de 200px.
+-    // Antes eram fixas em 232px (260px no `xl`): as cinco somavam 1348px e não cabiam em
+-    // 1440 com sidebar aberta e gutter dos dois lados (1440 − 256 − 2×36 = 1112px).
+-    // Agora o piso do conjunto é 5×200 + 4×12 = 1048px, então cabe em 1440 sem rolagem.
+-    // Abaixo de 1048px de trilho, o flexbox não encolhe mais e o `overflow-x-auto` + snap
+-    // assume. As setas/‹› e os dots existem só no corte mobile de `pointerMedia.ts`
+-    // (`max-width: 767px`); em larguras intermediárias, a condução é o próprio scroll.
++    // Etapa 099: a coluna deixou de ser item de flexbox do carrossel e virou
++    // ITEM DE GRELHA. O trilho decide quantas caem por linha (`grid-cols-1` na
++    // tela estreita, 2/3/5 em md/lg/xl) e a coluna só impõe o piso:
++    //   • `md:min-w-[200px]` — o mesmo piso legível da E16, que cabe nas 2
++    //     faixas de 768px e nas 3 de 1024px (conta no teste da etapa 099);
++    //   • `xl:min-w-0` — a partir de 1280px quem manda é a faixa `minmax(0,1fr)`
++    //     da grelha: as cinco colunas aparecem sem rolagem horizontal (5×200+48
++    //     não caberia em 1280 com a sidebar aberta: 5 faixas dão ~180px cada).
+     <div
+       data-board-column={status}
+       {...(realceEspera ? { 'data-testid': 'board-waiting-emphasis' } : {})}
+       className={[
+-        'flex flex-col flex-1 min-w-[200px] h-full min-h-0 rounded-[14px] border bg-card overflow-hidden snap-start',
+-        // Etapa 093: recolhida, a coluna para de dividir a largura (`flex-none`)
+-        // e mantém o piso de 200px — o cabeçalho é o que sobra.
+-        colapsada ? 'flex-none w-[200px]' : '',
++        'flex flex-col min-w-0 md:min-w-[200px] xl:min-w-0 h-full min-h-0 rounded-[14px] border bg-card overflow-hidden',
++        // Etapa 093: recolhida, a coluna para de dividir a largura e fica só com
++        // o cabeçalho — `w-full` respeita a faixa que a grelha deu a ela (nada
++        // de largura fixa, que estouraria a faixa de ~180px do `xl`).
++        colapsada ? 'w-full' : '',
+         // Etapa 83: recusa por limite cheio — a BORDA muda sempre (o aviso não
+         // depende de animação); o tranco curto só existe sem movimento reduzido.
+         shake ? 'border-destructive motion-safe:animate-wiggle' : 'border-border/70',
+diff --git a/src/components/tasks/board/TasksBoardMode.tsx b/src/components/tasks/board/TasksBoardMode.tsx
+index 696b5bebb5..11b64cef70 100644
+--- a/src/components/tasks/board/TasksBoardMode.tsx
++++ b/src/components/tasks/board/TasksBoardMode.tsx
+@@ -1,7 +1,6 @@
+ import { useCallback, useEffect, useRef, useState } from 'react';
+ import { DragDropContext, type DropResult } from '@hello-pangea/dnd';
+ import { toast } from 'sonner';
+-import { ChevronLeft, ChevronRight } from 'lucide-react';
+ import { BoardColumn }      from './BoardColumn';
+ import type { WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
+ import type { WorkItemInput, MoveOpts } from '@/hooks/tasks/useMyWorkItems';
+@@ -35,11 +34,15 @@ interface Props extends WorkItemCardActions {
+ // Etapa 094: as colunas do trilho na ordem — a mesma fonte do `boardInteracao`.
+ const BOARD_COLUMNS: WorkItemStatus[] = BOARD_ORDER;
+ 
+-/** Rótulo da coluna na faixa de navegação (mesma fonte das colunas). */
+-function rotuloDaColuna(status: WorkItemStatus): string {
+-  return KANBAN_COLUMNS.find(c => c.status === status)?.label ?? status;
++/** Etapa 099: rótulo CURTO — é o texto da aba na tela estreita. */
++function rotuloCurtoDaColuna(status: WorkItemStatus): string {
++  return KANBAN_COLUMNS.find(c => c.status === status)?.shortLabel ?? status;
+ }
+ 
++/** Ids da relação ABA (`tab`) → painel (`tabpanel`) da tela estreita. */
++const ID_PAINEL_ABAS = 'board-tabpanel';
++const idDaAba = (status: WorkItemStatus) => `board-tab-${status}`;
++
+ 
+ export function TasksBoardMode({
+   byStatus, isLoading, doingCount, byStatusFull, onMove, onMoveTo, onRequestWaitingReason, onReorder, onOpen, onDelete, onCreate,
+@@ -63,7 +66,7 @@ export function TasksBoardMode({
+     tremorTimer.current = window.setTimeout(() => setColunaTremendo(null), 600);
+   }, []);
+   // Etapa 81: no ponteiro grosso o arrasto sai de cena e o `MoveToMenu` do card
+-  // assume; na tela estreita as setas e os dots conduzem a faixa de colunas.
++  // assume; na tela estreita (etapa 099) as ABAS no topo conduzem as colunas.
+   const dragDesligado = usePointerCoarse();
+   const telaEstreita  = useNarrowViewport();
+   const pressaoArrasto = usePressaoLonga();
+@@ -75,6 +78,7 @@ export function TasksBoardMode({
+     ? BOARD_COLUMNS
+     : BOARD_COLUMNS.filter(s => s !== 'done');
+   const trilhoRef     = useRef<HTMLDivElement>(null);
++  const abasRef       = useRef<HTMLDivElement>(null);
+   const [colunaVisivel, setColunaVisivel] = useState(0);
+   // Etapa 098: sombras das bordas — só onde ainda há conteúdo escondido.
+   const [bordas, setBordas] = useState({ esq: false, dir: false });
+@@ -86,24 +90,6 @@ export function TasksBoardMode({
+     setBordas(bordasDeRolagem(trilho));
+   }, []);
+ 
+-  /** Qual coluna está encostada à esquerda da faixa (o snap alinha por ali). */
+-  const aoRolar = useCallback(() => {
+-    const trilho = trilhoRef.current;
+-    if (!trilho) return;
+-    atualizarBordas();
+-    const base = trilho.getBoundingClientRect().left;
+-    let indice = 0;
+-    let menorDistancia = Number.POSITIVE_INFINITY;
+-    Array.from(trilho.children).forEach((coluna, i) => {
+-      const distancia = Math.abs(coluna.getBoundingClientRect().left - base);
+-      if (distancia < menorDistancia) {
+-        menorDistancia = distancia;
+-        indice = i;
+-      }
+-    });
+-    setColunaVisivel(indice);
+-  }, [atualizarBordas]);
+-
+   useEffect(() => {
+     atualizarBordas();
+     const trilho = trilhoRef.current;
+@@ -118,19 +104,33 @@ export function TasksBoardMode({
+     };
+   }, [atualizarBordas]);
+ 
+-  /** Leva a faixa até a coluna pedida (setas e dots). */
++  /**
++   * Etapa 099: troca a coluna à vista na tela estreita (clique/teclado nas
++   * abas). Não é mais rolagem: o trilho deixa de ser carrossel, então a aba
++   * ativa É a coluna montada. O foco segue a aba escolhida (roving tabIndex).
++   */
+   const irParaColuna = useCallback((indice: number) => {
+-    const trilho = trilhoRef.current;
+-    if (!trilho) return;
+-    const alvo = trilho.children[indice] as HTMLElement | undefined;
+-    if (!alvo) return;
+-    const deslocamento = alvo.getBoundingClientRect().left - trilho.getBoundingClientRect().left;
+-    const destino = trilho.scrollLeft + deslocamento;
+-    // `scrollTo` anima no navegador; ambientes sem ele (jsdom) não podem quebrar o clique.
+-    if (typeof trilho.scrollTo === 'function') trilho.scrollTo({ left: destino, behavior: 'smooth' });
+-    else trilho.scrollLeft = destino;
++    setColunaVisivel(indice);
++    abasRef.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[indice]?.focus();
+   }, []);
+ 
++  /**
++   * Etapa 099: setas/Home/End andam entre as abas — o padrão de `tablist`
++   * (a aba ativa é a única parada do Tab; andar é pela seta).
++   */
++  const aoTecladoDasAbas = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
++    const total = colunasVisiveis.length;
++    const atual = Math.min(colunaVisivel, total - 1);
++    let destino: number | null = null;
++    if (e.key === 'ArrowRight') destino = (atual + 1) % total;
++    else if (e.key === 'ArrowLeft') destino = (atual - 1 + total) % total;
++    else if (e.key === 'Home') destino = 0;
++    else if (e.key === 'End') destino = total - 1;
++    if (destino === null) return;
++    e.preventDefault();
++    irParaColuna(destino);
++  }, [colunaVisivel, colunasVisiveis.length, irParaColuna]);
++
+   // Etapa 87: a decisão do arrasto (portão do Aguardando + trava de WIP 3/3) saiu
+   // daqui para `resolveDragEnd` (função pura, em .ts); este handler só interpreta.
+   //
+@@ -228,6 +228,12 @@ export function TasksBoardMode({
+   }, [aplicarDecisao, byStatus, byStatusFull, doingCount, dragSourceStatus]);
+ 
+   const ultimaColuna = colunasVisiveis.length - 1;
++  // Etapa 099: com o toggle "Concluídas" desligado a faixa encurta — a coluna à
++  // vista nunca pode passar da última aba.
++  const colunaAtiva = Math.min(colunaVisivel, ultimaColuna);
++  // Na tela estreita o trilho monta UMA coluna — a da aba ativa. Daí para cima
++  // valem as cinco: quem decide quantas caem por linha é a grade (md/lg/xl).
++  const colunasNoTrilho = telaEstreita ? [colunasVisiveis[colunaAtiva]] : colunasVisiveis;
+ 
+   return (
+     <DragDropContext
+@@ -258,38 +264,50 @@ export function TasksBoardMode({
+           </button>
+         </div>
+ 
+-        {/* Etapa 81: setas ‹ › — só na tela estreita, onde as 5 colunas não cabem */}
++        {/* Etapa 099: abaixo de 768px as cinco colunas viram UMA coluna por vez e
++            a troca é por estas abas (D1: Quadro por estado). `flex-wrap` é de
++            propósito: a faixa quebra linha em vez de ganhar rolagem lateral, e é
++            ela quem substitui as antigas setas e os dots do carrossel. */}
+         {telaEstreita && (
+-          <div className="flex w-full min-w-0 items-center gap-2" data-testid="board-nav">
+-            <button
+-              type="button"
+-              data-testid="board-prev"
+-              aria-label="Coluna anterior"
+-              disabled={colunaVisivel === 0}
+-              onClick={() => irParaColuna(colunaVisivel - 1)}
+-              className="h-8 w-8 shrink-0 rounded-lg border border-border/70 flex items-center justify-center transition-colors hover:bg-muted disabled:opacity-40 disabled:hover:bg-transparent"
+-            >
+-              <ChevronLeft className="h-4 w-4" />
+-            </button>
+-            <span className="flex-1 min-w-0 truncate text-center text-[13px] font-semibold text-foreground">
+-              {rotuloDaColuna(colunasVisiveis[Math.min(colunaVisivel, ultimaColuna)])}
+-            </span>
+-            <button
+-              type="button"
+-              data-testid="board-next"
+-              aria-label="Próxima coluna"
+-              disabled={colunaVisivel === ultimaColuna}
+-              onClick={() => irParaColuna(colunaVisivel + 1)}
+-              className="h-8 w-8 shrink-0 rounded-lg border border-border/70 flex items-center justify-center transition-colors hover:bg-muted disabled:opacity-40 disabled:hover:bg-transparent"
+-            >
+-              <ChevronRight className="h-4 w-4" />
+-            </button>
++          <div
++            ref={abasRef}
++            role="tablist"
++            aria-label="Estados do Quadro"
++            data-testid="board-tabs"
++            onKeyDown={aoTecladoDasAbas}
++            className="flex w-full min-w-0 flex-wrap items-center gap-1"
++          >
++            {colunasVisiveis.map((status, i) => {
++              const ativa = i === colunaAtiva;
++              return (
++                <button
++                  key={status}
++                  type="button"
++                  role="tab"
++                  id={idDaAba(status)}
++                  aria-selected={ativa}
++                  aria-controls={ID_PAINEL_ABAS}
++                  tabIndex={ativa ? 0 : -1}
++                  onClick={() => irParaColuna(i)}
++                  className={`min-h-10 shrink-0 rounded-lg border px-3 text-xs font-medium transition-colors ${
++                    ativa
++                      ? 'border-primary/40 bg-primary/10 text-foreground'
++                      : 'border-border/70 text-muted-foreground hover:bg-muted'
++                  }`}
++                >
++                  {rotuloCurtoDaColuna(status)}
++                </button>
++              );
++            })}
+           </div>
+         )}
+ 
+         {/* Etapa 098: o trilho embrulhado pelas sombras de borda — elas marcam onde
+-            ainda ha coluna escondida; `motion-safe:scroll-smooth` da o encaixe
+-            animado do snap (etapa 094) e respeita quem pediu menos movimento. */}
++            ainda ha coluna escondida. Etapa 099: o trilho deixou de ser carrossel
++            (`overflow-x-auto`/snap saíram) e virou GRELHA — 1 coluna por vez na
++            tela estreita e, de 768px para cima, 2/3/5 faixas que quebram linha em
++            vez de rolar de lado. As sombras seguem medidas como rede de
++            segurança: só aparecem se algo voltar a transbordar na horizontal. */}
+         <div className="relative flex-1 min-h-0 flex w-full min-w-0">
+           {bordas.esq && (
+             <div
+@@ -307,11 +325,15 @@ export function TasksBoardMode({
+           )}
+           <div
+             ref={trilhoRef}
+-            onScroll={aoRolar}
++            onScroll={atualizarBordas}
+             onKeyDown={handleTeclado}
+-            className="flex w-full min-w-0 gap-3 h-full overflow-x-auto snap-x snap-mandatory motion-safe:scroll-smooth pb-4"
++            data-testid="board-track"
++            id={telaEstreita ? ID_PAINEL_ABAS : undefined}
++            role={telaEstreita ? 'tabpanel' : undefined}
++            aria-labelledby={telaEstreita ? idDaAba(colunasVisiveis[colunaAtiva]) : undefined}
++            className="grid w-full min-w-0 flex-1 gap-3 h-full min-h-0 pb-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 md:content-start md:overflow-y-auto"
+           >
+-          {colunasVisiveis.map(status => (
++          {colunasNoTrilho.map(status => (
+             <BoardColumn
+               key={status}
+               status={status}
+@@ -337,25 +359,6 @@ export function TasksBoardMode({
+           ))}
+           </div>
+         </div>
+-
+-        {/* Etapa 81: 5 dots — indicador de página (só na tela estreita) */}
+-        {telaEstreita && (
+-          <div className="flex w-full items-center justify-center gap-1.5" data-testid="board-dots">
+-            {colunasVisiveis.map((status, i) => (
+-              <button
+-                key={status}
+-                type="button"
+-                data-testid={`board-dot-${i}`}
+-                aria-label={`Ir para ${rotuloDaColuna(status)}`}
+-                aria-current={colunaVisivel === i ? 'true' : undefined}
+-                onClick={() => irParaColuna(i)}
+-                className={`h-1.5 rounded-full transition-all ${
+-                  colunaVisivel === i ? 'w-4 bg-primary' : 'w-1.5 bg-muted-foreground/40 hover:bg-muted-foreground/70'
+-                }`}
+-              />
+-            ))}
+-          </div>
+-        )}
+       </div>
+     </DragDropContext>
+   );

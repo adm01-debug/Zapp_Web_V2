@@ -1,0 +1,8 @@
+27	28	src/components/tasks/__tests__/TasksBoardMode.a11y.test.tsx
+6	3	src/components/tasks/__tests__/contratosVisiveis.test.tsx
+11	6	src/components/tasks/__tests__/quadroArrastarTecladoRolagem.test.tsx
+38	22	src/components/tasks/__tests__/quadroLarguraFocoContraste.test.tsx
+349	0	src/components/tasks/__tests__/quadroResponsivoAbas.test.tsx
+4	2	src/components/tasks/__tests__/taskComponents.test.tsx
+13	11	src/components/tasks/board/BoardColumn.tsx
+85	82	src/components/tasks/board/TasksBoardMode.tsx

@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=abas-quadro-alvo-40px
+ID=2610161409a0a7
+BRANCH=v2/abas-quadro-alvo-40px-2610161409a0a7
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/abas-quadro-alvo-40px-2610161409a0a7
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-16T14:09:07-03:00
+KANBAN=t_7f02d94c
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/abas-quadro-alvo-40px-2610161409a0a7/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-16
+DB_LOCAL=v2-2610161409a0a7
+PRONTO_SHA=d9c924f13150ef10847a9bb119d50988cf20baff

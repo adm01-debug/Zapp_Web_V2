@@ -1,0 +1,111 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/abas-quadro-alvo-40px-2610161409a0a7
+
+···········stderr | src/components/tasks/__tests__/TasksBoardMode.a11y.test.tsx > E22 — o Quadro anuncia a movimentação na região viva > nasce vazia e narra "Movida para Fazendo (2 de 3)" com a contagem real do alvo
+In HTML, <li> cannot be a descendant of <li>.
+This will cause a hydration error.
+
+  ...
+    <QueryClientProvider client={{}}>
+      <TasksModule>
+        <TasksUiProvider>
+          <div data-testid="tasks-module" className="flex flex-...">
+            <div>
+            <PageHeader variant="plain" title="Tarefas" subtitle="Seu espaço..." actions={<TasksHeaderMenu>} ...>
+              <header className="flex flex-...">
+                <div className="flex items...">
+                  <Breadcrumb>
+                    <nav ref={null} aria-label="breadcrumb">
+                      <BreadcrumbList>
+                        <ol ref={null} className="flex flex-...">
+                          <BreadcrumbItem>
+                          <BreadcrumbItem>
+>                           <li ref={null} className="inline-flex items-center gap-1.5">
+                              <BreadcrumbSeparator>
+>                               <li role="presentation" aria-hidden="true" className={"[&>svg]:size-3.5"}>
+                              ...
+                ...
+            ...
+
+<li> cannot contain a nested <li>.
+See this log for the ancestor stack trace.
+
+········Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+······stderr | src/components/tasks/__tests__/quadroArrastarTecladoRolagem.test.tsx > etapa 098 — sombras de borda do trilho > as sombras das bordas aparecem no carregamento e acompanham scroll/resize
+An update to TasksBoardMode inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+·····-stderr | src/components/tasks/__tests__/contratosVisiveis.test.tsx > Contratos visíveis das Tarefas (T1, T3, T4, T5, T6) > T4/T5) o menu "Mover para" lista as 5 colunas na ordem contratada, com o rótulo curto
+An update to ForwardRef(MenuItemImpl) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(MenuItemImpl) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(MenuContentImpl) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+····stderr | src/components/tasks/__tests__/taskComponents.test.tsx > Tarefas — componentes dos três modos > etapa 15: o Quadro leva o índice de destino no onMove
+An update to TasksBoardMode inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+·stderr | src/components/tasks/__tests__/taskComponents.test.tsx > Tarefas — componentes dos três modos > #423: no Quadro FILTRADO o onMove leva o índice já traduzido para a coluna completa
+An update to TasksBoardMode inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+···········Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+·····Not implemented: Window's scrollTo() method
+···
+
+ Test Files  6 passed (6)
+      Tests  54 passed | 1 todo (55)
+   Start at  14:22:58
+   Duration  11.97s (transform 2.93s, setup 2.16s, import 13.07s, tests 10.21s, environment 7.82s)
+

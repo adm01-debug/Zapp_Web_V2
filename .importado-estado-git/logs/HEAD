@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 d723a9010796f1ea4aea5270d881da2974328ba4 Hermes Senior <hermes-senior@promobrindes.local> 1792170546 -0300	
+d723a9010796f1ea4aea5270d881da2974328ba4 d723a9010796f1ea4aea5270d881da2974328ba4 Hermes Senior <hermes-senior@promobrindes.local> 1792170547 -0300	reset: moving to HEAD
+d723a9010796f1ea4aea5270d881da2974328ba4 6607b43c15003d37b834ec70d61d01d0e7ff2d64 Hermes Senior <hermes-senior@promobrindes.local> 1792170581 -0300	cherry-pick: feat(tarefas): quadro vira grade responsiva com abas e cinco colunas em 1280
+6607b43c15003d37b834ec70d61d01d0e7ff2d64 d9c924f13150ef10847a9bb119d50988cf20baff Hermes Senior <hermes-senior@promobrindes.local> 1792170674 -0300	commit: fix(tarefas): abas do Quadro com alvo de toque de 40px
