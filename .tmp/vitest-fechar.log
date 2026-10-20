@@ -1,0 +1,10 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/balao-midia-sem-url-26101305422dbd
+
+················
+
+ Test Files  1 passed (1)
+      Tests  16 passed (16)
+   Start at  05:51:01
+   Duration  7.09s (transform 1.04s, setup 842ms, import 2.67s, tests 371ms, environment 1.67s)
+

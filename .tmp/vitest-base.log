@@ -1,0 +1,53 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/balao-midia-sem-url-26101305422dbd/.tmp/prova-base
+
+xxxxxxx·········
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/inbox/chat/__tests__/MessageBubble.midiaSemUrl.test.tsx > MessageBubble — mídia sem URL não deixa o balão vazio > tipo image sem mediaUrl mostra "Mídia indisponível" com o rótulo (Imagem)
+ FAIL  src/components/inbox/chat/__tests__/MessageBubble.midiaSemUrl.test.tsx > MessageBubble — mídia sem URL não deixa o balão vazio > tipo video sem mediaUrl mostra "Mídia indisponível" com o rótulo (Vídeo)
+ FAIL  src/components/inbox/chat/__tests__/MessageBubble.midiaSemUrl.test.tsx > MessageBubble — mídia sem URL não deixa o balão vazio > tipo audio sem mediaUrl mostra "Mídia indisponível" com o rótulo (Áudio)
+ FAIL  src/components/inbox/chat/__tests__/MessageBubble.midiaSemUrl.test.tsx > MessageBubble — mídia sem URL não deixa o balão vazio > tipo document sem mediaUrl mostra "Mídia indisponível" com o rótulo (Documento)
+ FAIL  src/components/inbox/chat/__tests__/MessageBubble.midiaSemUrl.test.tsx > MessageBubble — mídia sem URL não deixa o balão vazio > tipo sticker sem mediaUrl mostra "Mídia indisponível" com o rótulo (Figurinha)
+AssertionError: expected null not to be null
+ ❯ src/components/inbox/chat/__tests__/MessageBubble.midiaSemUrl.test.tsx:140:24
+    138|
+    139|     const cartao = container.querySelector('[data-testid="media-indisp…
+    140|     expect(cartao).not.toBeNull();
+       |                        ^
+    141|     expect(container.querySelectorAll('[data-testid="media-indisponive…
+    142|     expect(cartao?.getAttribute('data-media-label')).toBe(label);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  src/components/inbox/chat/__tests__/MessageBubble.midiaSemUrl.test.tsx > MessageBubble — mídia sem URL não deixa o balão vazio > é um role=note com rótulo acessível que nomeia o que falta
+AssertionError: expected null not to be null
+ ❯ src/components/inbox/chat/__tests__/MessageBubble.midiaSemUrl.test.tsx:151:22
+    149|
+    150|     const nota = container.querySelector('[role="note"]');
+    151|     expect(nota).not.toBeNull();
+       |                      ^
+    152|     expect(nota?.getAttribute('aria-label')).toContain('Vídeo indispon…
+    153|     // o ícone é decorativo
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  src/components/inbox/chat/__tests__/MessageBubble.midiaSemUrl.test.tsx > MessageBubble — mídia sem URL não deixa o balão vazio > vale para o balão RECEBIDO e para o ENVIADO (nenhum dos dois fica vazio)
+AssertionError: expected null not to be null
+ ❯ src/components/inbox/chat/__tests__/MessageBubble.midiaSemUrl.test.tsx:160:88
+    158|   it('vale para o balão RECEBIDO e para o ENVIADO (nenhum dos dois fic…
+    159|     const recebido = renderBubble({ type: 'image', mediaUrl: undefined…
+    160|     expect(recebido.container.querySelector('[data-testid="media-indis…
+       |                                                                                        ^
+    161|     recebido.unmount();
+    162|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 9 passed (16)
+   Start at  05:51:15
+   Duration  3.74s (transform 487ms, setup 653ms, import 1.07s, tests 296ms, environment 1.42s)
+

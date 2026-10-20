@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=balao-midia-sem-url
+ID=26101305422dbd
+BRANCH=v2/balao-midia-sem-url-26101305422dbd
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/balao-midia-sem-url-26101305422dbd
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T05:42:34-03:00
+KANBAN=t_a1470de4
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/balao-midia-sem-url-26101305422dbd/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-26101305422dbd
+PRONTO_SHA=df71454af190cc0a76123a6cfed6800d85db881e

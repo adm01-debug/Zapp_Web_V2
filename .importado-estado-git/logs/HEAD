@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 96dd72dc5f5db919bdbb4ffdc269510addca6165 Hermes Senior <hermes-senior@promobrindes.local> 1791880952 -0300	
+96dd72dc5f5db919bdbb4ffdc269510addca6165 96dd72dc5f5db919bdbb4ffdc269510addca6165 Hermes Senior <hermes-senior@promobrindes.local> 1791880954 -0300	reset: moving to HEAD
+96dd72dc5f5db919bdbb4ffdc269510addca6165 df71454af190cc0a76123a6cfed6800d85db881e Hermes Senior <hermes-senior@promobrindes.local> 1791881308 -0300	commit: fix(inbox): balao de midia sem URL mostra cartao de midia indisponivel
+df71454af190cc0a76123a6cfed6800d85db881e 042831cef7f52b797ac43ba117019057a932a8c5 Hermes Senior <hermes-senior@promobrindes.local> 1792026750 -0300	commit: fix(inbox): refazer balao de midia sem URL com dois estados e role status
