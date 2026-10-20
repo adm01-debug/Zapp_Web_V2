@@ -68,6 +68,8 @@ export const TESTES_AUTH_FORA_DA_MEDICAO = [
   'ai-audio-authz-runtime.test.ts',
   'webhook-auth-gates.test.ts',
   'webhook-auth-shadow.test.ts',
+  'gmail-reauth-required.test.ts',
+  'require-auth-profile-active.test.ts',
 ];
 
 export const SHARED_DIR_REL = 'supabase/functions/_shared';
