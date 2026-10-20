@@ -1,6 +1,6 @@
 # Importacao do trabalho do Zapp Web V2 espalhado no WSL
 
-Gerado por importar.py em 20/10/2026 13:58. Rodada: 1 (importar).
+Gerado por importar.py em 20/10/2026 15:07. Rodada: 2 (conferir e apagar).
 
 ## Como achar as coisas
 
@@ -13,7 +13,7 @@ Gerado por importar.py em 20/10/2026 13:58. Rodada: 1 (importar).
 
 Ver uma foto: `git show --stat <ref>` · listar: `git for-each-ref refs/importado refs/heads/importado`
 
-## Refs criadas (8576)
+## Refs criadas (8580)
 
 15fa3ceefee7e8a8cb38cd10c648332c0081e426 refs/heads/importado/arquivos-avulsos
 8eed2c40b02f1678bf7eabaece238b7568e76a13 refs/heads/importado/bundle-Zapp_Web_V2_all_refs/hermes/contraste-elemento-s43-2610040649e49d
@@ -1170,6 +1170,7 @@ dcbee7f4ad9ff68bbc9e107af4e432255b5cb145 refs/importado/estado/mensagens-favorit
 91fb8c2748e7f6585f7e48e56184533a0ec4fda5 refs/importado/estado/merge-contatos-preserva-dados-2610130206b4f6
 89fde364717371a04d39bcc73e7c81d91e6ac583 refs/importado/estado/merge-contatos-testes-preserva-dados-261013025182b6
 917935979a0fc79312b701beb77848000c2e9648 refs/importado/estado/merge-inventario-conflitos-por-area-2610160233ec5c
+42d813c957eca59a9330080c165f7cb756aa708b refs/importado/estado/merge-invokeedge-26101713341c82
 4f5e113a67cd39b087b3d3fceb5ba43d1ad62467 refs/importado/estado/message-favoritos-fixar-reportar-2610110-2610111151630c
 cb24ccbc8cdcd6e341d6ce0c47e15b920ea5e313 refs/importado/estado/message-favoritos-fixar-reportar-2610110956b1c0
 01733587fc01d34305af1aa2ad0a5b0e842de623 refs/importado/estado/message-reactions-user-id-26101020412837
@@ -2348,10 +2349,13 @@ e03a75a8d14992678032282ad716b9d8c1d975d7 refs/importado/estado/sync20-31-pr1930-
 92a07170f3c317051f5ee9b7efa31ddcfeb6afbf refs/importado/estado/sync20-33-pr2003-radar-cv-051-060-2610171240b751
 a95fe252f9a54f3dfab7db07f6022af3263a1e43 refs/importado/estado/sync20-35-pr1987-veredito-2610171240d5b9
 6188f2fe23324b25021cbbdfc8f264d9e5656d54 refs/importado/estado/sync20-37-merge-b03-functions-dia-base-2610171307f300
+aae27046eec6281e20eb87ddb745656d56a6b678 refs/importado/estado/sync20-38-b07-hooks-38-261017130793d8
 5bccf983f160dc52c233783b222d15f40a91dbdd refs/importado/estado/sync20-39-merge-b00-mecanico-global-2610171306b5d5
 524c151841b59625b406a133f89501c1388bace3 refs/importado/estado/sync20-40-pr1983-salvamento-47-divergent-26101713076697
 9c67afc32cad397b8bc6ac429b4f23648ab55c34 refs/importado/estado/sync20-41-ci-pin-e2e-mapa-ts-2610171307a66a
+cc245c8a97ca2cd2e04b2d0ccb081681b96d1435 refs/importado/estado/sync20-42-merge-b08-hooks-37-26101713254f22
 c76bcc423dc66239d587ca84c1def0cacf281af8 refs/importado/estado/sync20-43-b02-fusao-manual-19-2610171331595e
+06c065b47b686bb7d0832185523af169d629a1b8 refs/importado/estado/sync20-44-merge-b09-components-dia-base-261017132554cd
 319d3e5ddb8c6ef49c897b5244bc3f9617f5fbe4 refs/importado/estado/t-005bd7f8-2610091646e1d1
 0ae660525b01d417d8604b3650fa4752aacd195c refs/importado/estado/t-008cd32b-26100903021634
 5aa1b58b59dd4a3b71e81fbea897f6447b3ec0cc refs/importado/estado/t-0091315a-26101012249c1b

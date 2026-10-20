@@ -495,3 +495,101 @@
 20/10 13:58:16    copias de banco que nao entram (somem com as pastas): kanban.db x3 350 MB, board.db x1 117 MB, kanban.db-shm x1 0 MB, kanban.db-wal x1 0 MB
 20/10 13:58:16 refs: antes 14381, depois 14400; refs antigas que mudaram durante a execucao (outros chats podem mexer nas branches deles): 0
 20/10 13:58:16 RESUMO: {"worktrees: recapturadas (disco mudou ou o git status nao conferia)": 129, "worktrees: segredos locais (vao para ~/.secrets, nao para o git)": 1, "worktrees: commits extras (ORIG_HEAD/rebase/fetch) com ref propria": 0, "worktrees: pastas regeneraveis (nao entram)": 2808, "worktrees: ficaram por repositorio desconhecido dentro": 0}
+20/10 13:58:16 indice gravado e conferido na branch importado/indice (8576 refs listadas)
+20/10 13:58:16 FIM_OK
+20/10 14:17:17 ======================================================================
+20/10 14:17:17 INICIO RODADA 2: conferir e apagar
+20/10 14:17:17 autoteste OK: arvore recalculada aqui == git (7555 arquivos); hash de arquivo == git
+20/10 14:17:18 commits preservados no repositorio: 56657
+20/10 14:17:19 Kanban: 796 cartoes abertos
+20/10 14:17:25 passo 4: worktrees: 3122 saem, 181 ficam {'estado da fabrica (.integra)': 10, 'atividade nas ultimas 72 h': 14, 'cartao aberto no Kanban': 153, 'travada': 1, 'usada por servico': 3}
+20/10 14:18:02    lote 1-40: importadas, conferidas e apagadas
+20/10 14:18:41    lote 41-80: importadas, conferidas e apagadas
+20/10 14:19:21    lote 81-120: importadas, conferidas e apagadas
+20/10 14:19:57    lote 121-160: importadas, conferidas e apagadas
+20/10 14:20:32    lote 161-200: importadas, conferidas e apagadas
+20/10 14:21:10    lote 201-240: importadas, conferidas e apagadas
+20/10 14:21:49    lote 241-280: importadas, conferidas e apagadas
+20/10 14:22:23    lote 281-320: importadas, conferidas e apagadas
+20/10 14:23:00    lote 321-360: importadas, conferidas e apagadas
+20/10 14:23:35    lote 361-400: importadas, conferidas e apagadas
+20/10 14:24:13    lote 401-440: importadas, conferidas e apagadas
+20/10 14:24:50    lote 441-480: importadas, conferidas e apagadas
+20/10 14:25:29    lote 481-520: importadas, conferidas e apagadas
+20/10 14:26:05    lote 521-560: importadas, conferidas e apagadas
+20/10 14:26:43    lote 561-600: importadas, conferidas e apagadas
+20/10 14:27:24    lote 601-640: importadas, conferidas e apagadas
+20/10 14:27:59    lote 641-680: importadas, conferidas e apagadas
+20/10 14:28:35    lote 681-720: importadas, conferidas e apagadas
+20/10 14:29:13    lote 721-760: importadas, conferidas e apagadas
+20/10 14:29:50    lote 761-800: importadas, conferidas e apagadas
+20/10 14:30:30    lote 801-840: importadas, conferidas e apagadas
+20/10 14:31:09    lote 841-880: importadas, conferidas e apagadas
+20/10 14:31:49    lote 881-920: importadas, conferidas e apagadas
+20/10 14:32:27    lote 921-960: importadas, conferidas e apagadas
+20/10 14:33:09    lote 961-1000: importadas, conferidas e apagadas
+20/10 14:33:46    lote 1001-1040: importadas, conferidas e apagadas
+20/10 14:34:23    lote 1041-1080: importadas, conferidas e apagadas
+20/10 14:35:01    lote 1081-1120: importadas, conferidas e apagadas
+20/10 14:35:37    lote 1121-1160: importadas, conferidas e apagadas
+20/10 14:36:13    lote 1161-1200: importadas, conferidas e apagadas
+20/10 14:36:52    lote 1201-1240: importadas, conferidas e apagadas
+20/10 14:37:29    lote 1241-1280: importadas, conferidas e apagadas
+20/10 14:38:06    lote 1281-1320: importadas, conferidas e apagadas
+20/10 14:38:46    lote 1321-1360: importadas, conferidas e apagadas
+20/10 14:39:27    lote 1361-1400: importadas, conferidas e apagadas
+20/10 14:40:02    lote 1401-1440: importadas, conferidas e apagadas
+20/10 14:40:37    lote 1441-1480: importadas, conferidas e apagadas
+20/10 14:41:16    lote 1481-1520: importadas, conferidas e apagadas
+20/10 14:41:54    lote 1521-1560: importadas, conferidas e apagadas
+20/10 14:42:31    lote 1561-1600: importadas, conferidas e apagadas
+20/10 14:43:03    lote 1601-1640: importadas, conferidas e apagadas
+20/10 14:43:38    lote 1641-1680: importadas, conferidas e apagadas
+20/10 14:44:15    lote 1681-1720: importadas, conferidas e apagadas
+20/10 14:44:48    lote 1721-1760: importadas, conferidas e apagadas
+20/10 14:45:21    lote 1761-1800: importadas, conferidas e apagadas
+20/10 14:46:06    lote 1801-1840: importadas, conferidas e apagadas
+20/10 14:46:53    lote 1841-1880: importadas, conferidas e apagadas
+20/10 14:47:31    lote 1881-1920: importadas, conferidas e apagadas
+20/10 14:48:07    lote 1921-1960: importadas, conferidas e apagadas
+20/10 14:48:42    lote 1961-2000: importadas, conferidas e apagadas
+20/10 14:49:19    lote 2001-2040: importadas, conferidas e apagadas
+20/10 14:49:55    lote 2041-2080: importadas, conferidas e apagadas
+20/10 14:50:32    lote 2081-2120: importadas, conferidas e apagadas
+20/10 14:51:08    lote 2121-2160: importadas, conferidas e apagadas
+20/10 14:51:45    lote 2161-2200: importadas, conferidas e apagadas
+20/10 14:52:24    lote 2201-2240: importadas, conferidas e apagadas
+20/10 14:53:02    lote 2241-2280: importadas, conferidas e apagadas
+20/10 14:53:36    lote 2281-2320: importadas, conferidas e apagadas
+20/10 14:54:13    lote 2321-2360: importadas, conferidas e apagadas
+20/10 14:54:48    lote 2361-2400: importadas, conferidas e apagadas
+20/10 14:55:25    lote 2401-2440: importadas, conferidas e apagadas
+20/10 14:56:05    lote 2441-2480: importadas, conferidas e apagadas
+20/10 14:56:40    lote 2481-2520: importadas, conferidas e apagadas
+20/10 14:57:18    lote 2521-2560: importadas, conferidas e apagadas
+20/10 14:57:57    lote 2561-2600: importadas, conferidas e apagadas
+20/10 14:58:32    lote 2601-2640: importadas, conferidas e apagadas
+20/10 14:59:15    lote 2641-2680: importadas, conferidas e apagadas
+20/10 14:59:52    lote 2681-2720: importadas, conferidas e apagadas
+20/10 15:00:27    lote 2721-2760: importadas, conferidas e apagadas
+20/10 15:01:02    lote 2761-2800: importadas, conferidas e apagadas
+20/10 15:01:39    lote 2801-2840: importadas, conferidas e apagadas
+20/10 15:02:18    lote 2841-2880: importadas, conferidas e apagadas
+20/10 15:02:56    lote 2881-2920: importadas, conferidas e apagadas
+20/10 15:03:38    lote 2921-2960: importadas, conferidas e apagadas
+20/10 15:04:21    lote 2961-3000: importadas, conferidas e apagadas
+20/10 15:05:15    lote 3001-3040: importadas, conferidas e apagadas
+20/10 15:05:55    lote 3041-3080: importadas, conferidas e apagadas
+20/10 15:06:19    lote 3081-3120: importadas, conferidas e apagadas
+20/10 15:06:20    lote 3121-3122: importadas, conferidas e apagadas
+20/10 15:06:20 refs: antes 14400, depois 14404; refs antigas que mudaram durante a execucao (outros chats podem mexer nas branches deles): 0
+20/10 15:06:20 passo 6: clone n142 FICA (repositorio desconhecido dentro ou protegido)
+20/10 15:06:25 passo 6: clone retomar apagado
+20/10 15:06:30 passo 6: clone t_682cc676 apagado
+20/10 15:06:30 passo 6: clone clone-ws FICA (repositorio desconhecido dentro ou protegido)
+20/10 15:06:31 passo 6: clone r2a5 apagado
+20/10 15:06:32 passo 6: clone chat-h353953 apagado
+20/10 15:06:32 passo 6: clone mapa-zapp-v2 apagado
+20/10 15:06:33 passo 6: clone qa4-ref apagado
+20/10 15:07:11 passo 6: 71 raizes avulsas apagadas
+20/10 15:07:11 RESUMO: {"segredos locais guardados em ~/.secrets": 1, "worktrees: apagadas": 3122, "worktrees: segredos locais (vao para ~/.secrets, nao para o git)": 0, "worktrees: commits extras (ORIG_HEAD/rebase/fetch) com ref propria": 0, "worktrees: pastas regeneraveis (nao entram)": 83, "worktrees: ficaram por repositorio desconhecido dentro": 0}

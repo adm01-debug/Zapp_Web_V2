@@ -64,7 +64,6 @@
 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/merge-evolution-hooks-services-26101713557ee0	atividade nas ultimas 72 h
 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/merge-hooks-b07-2610171448899f	cartao aberto no Kanban
 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/merge-hooks-b08-2610171448f9ec	cartao aberto no Kanban
-/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/merge-invokeedge-26101713341c82	atividade nas ultimas 72 h
 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/message-attempts-log-2610110930194b	cartao aberto no Kanban
 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/message-delivery-attempts-261011100456c9	cartao aberto no Kanban
 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/message-delivery-attempts-26101113152a2b	cartao aberto no Kanban
@@ -129,9 +128,6 @@
 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/sla-open-rows-sweep-261016021398f4	cartao aberto no Kanban
 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/sso-callback-porteiro-26101407357c3f	cartao aberto no Kanban
 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/storage-buckets-publicos-sem-listagem-26-2610151832e83f	cartao aberto no Kanban
-/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/sync20-38-b07-hooks-38-261017130793d8	atividade nas ultimas 72 h
-/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/sync20-42-merge-b08-hooks-37-26101713254f22	atividade nas ultimas 72 h
-/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/sync20-44-merge-b09-components-dia-base-261017132554cd	atividade nas ultimas 72 h
 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/sync20-46-merge-b04-misc-2610171355940c	atividade nas ultimas 72 h
 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/sync20-47-b10-components-2610171434c182	atividade nas ultimas 72 h
 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/sync20-48-merge-b05-misc-20-2610171434a052	atividade nas ultimas 72 h
