@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 505588add9df77ca154585230fcc83eefd175e43 Hermes Senior <hermes-senior@promobrindes.local> 1791723683 -0300	
+505588add9df77ca154585230fcc83eefd175e43 505588add9df77ca154585230fcc83eefd175e43 Hermes Senior <hermes-senior@promobrindes.local> 1791723684 -0300	reset: moving to HEAD
+505588add9df77ca154585230fcc83eefd175e43 25f597c1c965a1ceca19d5c82e1f88dc325b73f4 Hermes Senior <hermes-senior@promobrindes.local> 1791723746 -0300	cherry-pick: feat(db): RPCs assumir_conversa e devolver_conversa_fila
+25f597c1c965a1ceca19d5c82e1f88dc325b73f4 19f21dce939a3c433d5af1b73fa71aa87e2d7394 Hermes Senior <hermes-senior@promobrindes.local> 1791723746 -0300	cherry-pick: test(db): prova o gatilho de updated_at no assume/devolver a fila
+19f21dce939a3c433d5af1b73fa71aa87e2d7394 ded29ed3c9ce9e1ccb47f705eb3eb57a1e6d53ae Hermes Senior <hermes-senior@promobrindes.local> 1791724437 -0300	commit: feat(inbox): hook de assumir e devolver conversa para a fila
+ded29ed3c9ce9e1ccb47f705eb3eb57a1e6d53ae 1c2b20b8d2a071ede0ff98247ee9332315b21d24 Hermes Senior <hermes-senior@promobrindes.local> 1791724487 -0300	commit (amend): feat(inbox): hook de assumir e devolver conversa para a fila

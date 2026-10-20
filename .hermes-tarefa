@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=assumir-devolver-fila-hook
+ID=2610111001cf93
+BRANCH=v2/assumir-devolver-fila-hook-2610111001cf93
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/assumir-devolver-fila-hook-2610111001cf93
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-11T10:01:24-03:00
+KANBAN=t_a8569ebe
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/assumir-devolver-fila-hook-2610111001cf93/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-11
+DB_LOCAL=v2-2610111001cf93
+PRONTO_SHA=1c2b20b8d2a071ede0ff98247ee9332315b21d24

@@ -1,0 +1,10 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/assumir-devolver-fila-hook-2610111001cf93
+
+··············
+
+ Test Files  1 passed (1)
+      Tests  14 passed (14)
+   Start at  10:25:26
+   Duration  1.61s (transform 125ms, setup 262ms, import 122ms, tests 197ms, environment 820ms)
+

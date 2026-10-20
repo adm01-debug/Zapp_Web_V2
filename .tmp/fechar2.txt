@@ -1,0 +1,10 @@
+AVISOS DO JUIZ MANTIDOS (seguem para o revisor):
+  1. Você mexeu em arquivo que o cartão não lista em 'ARQUIVOS QUE PODE TOCAR': scripts/ci/check-test-inventory.mjs, scripts/db-audit/assume-return-conversation.test.sh, src/integrations/supabase/types.ts, supabase/migrations/20261011094027_assume_return_conversation.sql. Reverta (achado fora do escopo vira comentário no cartão) ou explique no relato por que foi indispensável.
+  *. CONFERÊNCIA: supabase/migrations/20261011094027_assume_return_conversation.sql: o UPDATE em `contacts` dispara o gatilho BEFORE UPDATE que regrava updated_at em TODAS as linhas tocadas (recusa real de 06/10). Desligue só esse gatilho na transação ou preserve a coluna, e prove com uma linha antes/depois.
+OK      db_guard        0s
+FALHOU  tipos           0s  (ver /home/joaquim_ataides/.local/state/zapp-verify/356cf49c4495/tipos.log)
+tc-rapido: erro sem diagnóstico reconhecível
+tipos.sh: typecheck rápido falhou na EXECUÇÃO; refazendo com o ratchet completo
+ERRO no typecheck ratchet: TypeScript local nao encontrado. Execute a instalacao das dependencias primeiro.
+VERIFY: VERMELHO em tipos (0s)
+ERRO: verificação falhou (log: /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/assumir-devolver-fila-hook-2610111001cf93/.tmp/verify-2610111001cf93.log)
