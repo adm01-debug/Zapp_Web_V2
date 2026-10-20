@@ -1,0 +1,3 @@
+1	0	src/integrations/supabase/types.ts
+195	0	supabase/migrations/20261015223614_app_bootstrap.sql
+329	0	supabase/tests/app_bootstrap_rpc.sql

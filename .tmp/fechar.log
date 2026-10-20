@@ -1,0 +1,6 @@
+On branch v2/app-bootstrap-rpc-2610151932feb3
+nothing to commit, working tree clean
+ANTES DE ENTREGAR (isto NÃO é falha de verificação; nada foi verificado nem entregue ainda) — o juiz automático apontou:
+  1. Algum teste novo não chama o código que você mudou (confere um literal, uma cópia feita à mão ou só um mock). Faça o teste exercitar o código real.
+Corrija (commit novo) e feche de novo. Se o aviso não procede, rode este MESMO comando de novo sem mudar nada: a entrega segue, e explique no relato por quê. Não bloqueie o cartão por causa disto.
+EXIT=3

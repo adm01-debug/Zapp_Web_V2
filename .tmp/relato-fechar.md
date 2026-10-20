@@ -1,0 +1,34 @@
+Especialista: workersql
+- Verificação rápida (zapp-verify --rapido) no fechar: OK db_guard 0s;OK tipos 151s;OK lint 3s;OK migrations 0s
+
+## FATOS MEDIDOS PELO FECHAR (15/10 20:13, gerados por máquina: valem mais que números escritos à mão)
+```
+ src/integrations/supabase/types.ts                 |   1 +
+ .../migrations/20261015223614_app_bootstrap.sql    | 195 ++++++++++++
+ supabase/tests/app_bootstrap_rpc.sql               | 329 +++++++++++++++++++++
+ 3 files changed, 525 insertions(+)
+```
+- Nenhum arquivo de teste alterado neste cartão (há código alterado SEM teste novo: o revisor exige teste que prove)
+- Passada adversarial da 1ª entrega: sem critérios refutados
+- Portão do integrador (mesmo Jev da fila) simulado no fechar: revisar — caminho sensível: supabase/migrations/20261015223614_app_bootstrap.sql, supabase/tests/app_bootstrap_rpc.sql; padrão sensível: caminho:supabase/migrations/, caminho:supabase/tests/, padrão:SECURITY DEFINER, padrão:\bGRANT\b, padrão:\bREVOKE\b, padrão:auth\.(uid|role)\(\)
+
+
+## O que mudou e por quê
+- `supabase/migrations/20261015223614_app_bootstrap.sql` (novo): cria `public.app_bootstrap()` — SECURITY DEFINER, STABLE, `SET search_path = public, pg_temp`, e CADA bloco filtrando por `auth.uid()` na mão (a RLS não barra leitura dentro de DEFINER). Devolve numa chamada: `profile` (colunas curadas da própria linha), `roles`, `permissions`, `role_permissions`, `global_settings`, `user_settings`, `departments` (só ativos) e `unread_notifications`. Grants só para o usuário logado: `revoke all ... from public, anon, service_role; grant execute ... to authenticated`. Rollback completo no topo (drop function). Migration ADITIVA: não altera tabela, coluna, policy nem dado existente.
+- `supabase/tests/app_bootstrap_rpc.sql` (novo): prova no banco LOCAL com papéis REAIS (`SET LOCAL ROLE anon/authenticated` + claims de JWT), fixtures determinísticas sintéticas e `ROLLBACK` no fim (nada fica no banco). Cobre ACL (anon/service_role/PUBLIC negados; authenticated permitido), a chamada real do anon recebendo 42501, ausência de sessão devolvendo `not_authenticated`, isolamento entre dois agentes (o payload de um não carrega dado do outro) e segredos (chave global com sufixo `_api_key` e `whatsapp_api_key` de departamento não vazam).
+- `src/integrations/supabase/types.ts`: registra `app_bootstrap: { Args: never; Returns: Json }` na seção Functions, que é o tipo que o cliente usa para chamar a RPC.
+
+Decisão de contrato (para não ser lida como escopo a mais): `permissions` e `role_permissions` só vão para admin/supervisor, igual à policy vigente `20260830080000` ("Admin supervisor can view ...") — agente comum recebe array vazio; `global_settings` repete o recorte da policy `20261011192905` (admin lê tudo; supervisor só o que NÃO é segredo — chave terminando em `_api_key/_secret/_token`; papel comum não lê nada); `departments` omite `whatsapp_api_key`/`whatsapp_instance_id`, o que é mais restrito que a policy `departments_select` (USING true). O teste compara cada bloco com a leitura DIRETA sob o mesmo papel, provando que a RPC não amplia acesso. `unread_notifications` conta `is_read is not true` (linha nula conta como não lida).
+
+## Prova
+- vermelho antes: `zapp-db-local psql . v2-2610151932feb3 -v ON_ERROR_STOP=1 < supabase/tests/app_bootstrap_rpc.sql` (com a função dropada) → `ERROR: public.app_bootstrap() não existe: aplique a migration 20261015223614_app_bootstrap.sql antes deste teste`
+- verde depois: mesmo comando → todas as linhas `PASS` e `=== app_bootstrap: TODAS as provas passaram (A0-A6, B1, C1, D1-D10, E1-E6, F1-F9, G1-G6, H1-H2) ===`, zero `FALHOU`
+- migration: `hermes-db-migrar supabase/migrations/20261015223614_app_bootstrap.sql` → `APLICADA no banco LOCAL 'v2-2610151932feb3' (produção não foi tocada)`
+- `zapp-verify . --rapido` → `OK db_guard`, `OK tipos`, `OK lint`, `OK migrations`, `VERIFY: VERDE SEM BANCO (500s)`, exit 0
+
+## O que NÃO fiz e por quê
+- Não liguei a RPC em tela/hook nenhum: o cartão autoriza só a migration, `supabase/tests/` e `types.ts`; trocar as leituras separadas do boot no front é de outro cartão (telas/hooks).
+- Não toquei produção, não reescrevi migration existente e não mudei GRANT de objeto que já existia.
+- Registro: este cartão estava parado desde 14/10 porque a guarda estava congelada (`MODO_V2` ausente, exit 75 em todos os runs). Com o marcador reposto o workspace abriu normalmente e a entrega saiu nesta rodada.
+- Sobre o aviso do fechar "há código alterado sem nenhum teste novo/alterado neste commit (`src/integrations/supabase/types.ts`)": é alarme falso do heurístico, que só enxerga teste de vitest/TS. O teste deste cartão é a suíte de banco `supabase/tests/app_bootstrap_rpc.sql`, que está NO commit junto com a migration e roda com os papéis reais no banco local (vermelho→verde acima). O `types.ts`, por sua vez, é só o registro do tipo da função que a migration criou — não há comportamento de TypeScript novo a testar. Rodei de novo o MESMO comando de fechar sem mudar nada.
+- Sobre o segundo aviso do juiz ("algum teste novo não chama o código que você mudou / confere um literal, uma cópia à mão ou só um mock"): também não procede. O teste NÃO copia a função nem confere literal — `pg_temp.boot()` executa `select public.app_bootstrap()` contra a função REAL aplicada no banco local, sob `SET LOCAL ROLE authenticated` com claims de JWT, e as asserções comparam o payload devolvido por ela (perfil, papéis, não lidas, permissões, segredos, ACL e paridade com a RLS). Se a função voltar ao comportamento errado ou sumir, o teste falha (é o vermelho provado acima). O juiz enxerga teste só em vitest/TS e não reconhece suíte `supabase/tests/*.sql`. Repeti o MESMO comando de fechar sem mudar nada.

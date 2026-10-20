@@ -1,0 +1,16 @@
+PROJETO=Zapp_Web_V2
+SLUG=app-bootstrap-rpc
+ID=2610151932feb3
+BRANCH=v2/app-bootstrap-rpc-2610151932feb3
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/app-bootstrap-rpc-2610151932feb3
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-15T19:32:44-03:00
+KANBAN=t_2b931517
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/app-bootstrap-rpc-2610151932feb3/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-15
+DB_LOCAL=v2-2610151932feb3
+APLICADA_LOCAL=20261015223614_app_bootstrap.sql sha=f34a22e9156422ce
+PRONTO_SHA=1b52dd6e3631b7b2705e4661bb58ff9fdc67b140

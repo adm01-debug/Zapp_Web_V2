@@ -1,0 +1,1 @@
+{"versao": "pronto-5", "estado": "ok", "avisos": [], "fatos": {"files_changed": 3, "test_files_changed": 1, "files": ["src/integrations/supabase/types.ts", "supabase/migrations/20261015223614_app_bootstrap.sql", "supabase/tests/app_bootstrap_rpc.sql"], "diff_truncated": true}}

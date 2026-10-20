@@ -1,0 +1,117 @@
+Task t_2b931517: feat(db): bootstrap do app em uma chamada (perfil, papéis, permissões, configurações, departamentos, não lidas)
+  status:    running
+  assignee:  workersql
+  workspace: scratch @ C:\Users\Joaquim Ataides\AppData\Local\hermes\kanban\boards\zapp-web-v2\workspaces\t_2b931517
+  max-retries: 2 (default)
+  created:   2026-10-13 08:53 by claude
+  started:   2026-10-13 16:38
+  children:  t_ddfcb3da
+
+Body:
+ESPECIALISTA DA ÁREA: workersql (banco, migrations e RLS). Abra a skill de área do seu perfil antes de editar. A PRIMEIRA LINHA do `.tmp/relato.md` deve ser EXATAMENTE `Especialista: workersql`; o relato diz o que mudou, o comando de verificação rodado e a linha de resultado (ex.: `Test Files 3 passed, Tests 27 passed`), sem 'parcial'.
+CONTEXTO: auditoria de paridade V3 -> V2 dos docs docs/estado 10 a 12 e 17 a 40 (inbox components, team-chat, security/queues, layout/talkx, email/voice, shared, hooks, integrations, services, lib, backend, infra, testes) (plano em `docs/plans/PLANO_PARIDADE_V3_DOCS_10_A_40_2026-10-12.md`; enquanto não integrado: `~/hermes-workspaces/.assets/paridade-resto/`). A V3 é só REFERÊNCIA (repositório em `~/projetos/Zapp_Web_V3`, leia com `git -C ~/projetos/Zapp_Web_V3 show origin/main:<caminho>`); a V2 costuma estar melhor: NÃO devolva o que a V2 já faz melhor. FORA DE ESCOPO (decisões do dono): tags/etiquetas de contato ou conversa (função excluída do sistema), exportar/importar/edição em massa, ciclo de vida de negócios (criar/editar/ganhar/perder deal), SLA de Resolução, webhook externo de alerta, persistir QR no navegador. Os achados abaixo foram CONFERIDOS no código da branch viva e no banco real em 12/10/2026; antes de editar, confirme no código ATUAL (a branch do dia muda) e, se algo já estiver feito, prove no relato.
+REGRAS: o cartão compila e passa sozinho (`zapp-verify . --rapido` verde); atualize ou crie testes dos arquivos que tocar e liste-os no relato; sem dependência nova; migrations só ADITIVAS, com `-- Rollback:` completo no topo, `SET search_path` e grants explícitos, e PROVA no banco LOCAL com o papel real (agent/anon/service_role) mostrando o que passa e o que é negado; NADA vai para produção (quem aplica é o Joaquim). Texto de interface em pt-BR; nada novo que exporte, baixe, copie ou imprima dados; sem log de telefone, token ou texto de mensagem.
+
+PROBLEMA (evidência conferida)
+A V3 troca 6+ leituras do boot por `rpc_app_bootstrap` (staleTime 60 s). O boot da V2 faz leituras separadas (`user_roles`, `role_permissions`, configurações globais e do usuário). Nenhuma migration da V2 tem `app_bootstrap`. PE-96 trata só o erro de `usePermissions`.
+
+O QUE FAZER
+1. RPC `app_bootstrap()` SECURITY DEFINER filtrada por `auth.uid()`, `search_path` fixo, grants só para `authenticated`, devolvendo perfil, papéis, permissões, configurações e departamentos ativos (nada de dado de outro usuário); prova com papéis (anon negado, cada usuário vê só o seu); `-- Rollback:`.
+
+ARQUIVOS QUE PODE TOCAR
+- supabase/migrations/<ts>_app_bootstrap.sql (novo)
+- supabase/tests/
+- src/integrations/supabase/types.ts
+
+CRITÉRIO DE PRONTO
+1. Uma chamada devolve o necessário.
+2. Isolamento por usuário provado.
+3. `zapp-verify . --rapido` verde.
+
+
+Latest summary:
+Guarda congelada: falta ~/.local/libexec/hermes-guard/MODO_V2 (existe CONGELADO; diretório do guard alterado 14/10 10:45), então hermes-tarefa-iniciar/fechar saem exit 75 e nenhum workspace pode ser aberto — nenhum workspace jamais existiu para este cartão. Recriar o marcador é ato do dono (Joaquim/Claude) e contornar a guarda é proibido. Documentado no comentário 13911; mesmo bloqueio já registrado por outros agentes (t_bbf7a369, decisões 2026-10-14-t_*). Observação: os 17 runs anteriores deste cartão morreram com exit 75 rotulado como "rate-limited", que é o exit do CONGELADO.
+
+Comments (2):
+  [2026-10-14 11:42] workersql: **Bloqueio de infra/guarda (não é defeito do cartão).** Data: 14/10/2026 ~11:45, perfil workersql.
+
+SINTOMA
+`hermes-tarefa-iniciar Zapp_Web_V2 app-bootstrap-rpc` sai com **exit 75** e a mensagem "CONGELADO: o modo V1 ... suspenso ... estacione e pare". Sem workspace, não há como rodar a verificação nem `hermes-tarefa-fechar` (mesmo guard).
+
+CAUSA APURADA (só leitura, nada alterado)
+- `hermes-tarefa-iniciar` (linhas 5-10) e `hermes-tarefa-fechar` (linhas 5-8) exigem o marcador `~/.local/libexec/hermes-guard/MODO_V2`; ele **não existe** (listagem completa do diretório: 57 entradas, nenhuma `MODO*`; `ls -la .../MODO_V2` → No such file or directory).
+- Diretório do guard modificado em **14/10 10:45:15** (= arquivo removido); o último trabalho meu fechado foi 10:36. `~/hermes-workspaces/.por-cartao/` tem último mtime **10:39** e nenhum workspace novo desde 10:45 → a fábrica inteira parou nesse horário, não só este cartão.
+- Nenhum workspace jamais foi aberto para este cartão: `~/.hermes-workspaces/.por-cartao/t_2b931517` não existe, então **não há entrega parcial para resgatar**.
+- Não contornei o guard e não recriei o marcador (é arquivo do dono, proibido a agente — regras 07/08/10).
+
+JÁ REGISTRADO POR OUTROS AGENTES
+- Cartão t_bbf7a369 (hugo) documentou o mesmo em `~/.hermes-workspaces/.tmp-bloqueio-t_bbf7a369.txt` (14/10 11:15).
+- Decisões em `~/.hermes-workspaces/.decisoes/2026-10-14-t_*.md` (ex.: t_0334a884, t_2268df2e, t_3310a016, t_3f8e489f, t_418c3af5, t_420d83f3): coordenador manteve bloqueado, aguardando o Joaquim/Claude recriar `MODO_V2` ou confirmar a pausa.
+
+VIÉS DO DISPATCHER A CORRIGIR
+Os **17 runs anteriores** deste cartão morreram com `exit_code 75`, rotulados "rate-limited (quota wall)". 75 é o exit do CONGELADO aqui — parte dessas mortes foi este bloqueio, não cota do provedor.
+
+ESTADO DO CARTÃO
+O cartão em si está claro e pronto para executar (RPC `app_bootstrap()` SECURITY DEFINER, filtro `auth.uid()`, search_path fixo, grant só para `authenticated`, prova com papel real, `-- Rollback:`); o workspace previsto seria `v2/app-bootstrap-rpc-<id>`.
+  [2026-10-15 14:15] default: UNBLOCK: guarda restaurada (MODO_V2 voltou): retomar a abertura/fechamento do cartao
+
+Events (140):
+  [2026-10-14 11:40] [run 16656] claimed {'lock': 'Joaquim:28864', 'expires': 1791989706, 'run_id': 16656}
+  [2026-10-14 11:40] [run 16656] spawned {'pid': 19628, 'started_at': '|179198880668'}
+  [2026-10-14 11:40] [run 16656] heartbeat
+  [2026-10-14 11:41] [run 16656] heartbeat
+  [2026-10-14 11:42] commented {'author': 'workersql', 'len': 2095}
+  [2026-10-14 11:42] [run 16656] blocked {'reason': 'Guarda congelada: falta ~/.local/libexec/hermes-guard/MODO_V2 (existe CONGELADO; diretório do guard alterado 14/10 10:45), então hermes-tarefa-iniciar/fechar saem exit 75 e nenhum workspace pode ser aberto — nenhum workspace jamais existiu para este cartão. Recriar o marcador é ato do dono (Joaquim/Claude) e contornar a guarda é proibido. Documentado no comentário 13911; mesmo bloqueio já registrado por outros agentes (t_bbf7a369, decisões 2026-10-14-t_*). Observação: os 17 runs anteriores deste cartão morreram com exit 75 rotulado como "rate-limited", que é o exit do CONGELADO.', 'kind': 'capability', 'recurrences': 1, 'source_status': 'ready'}
+  [2026-10-15 14:15] commented {'author': 'default', 'len': 84}
+  [2026-10-15 14:15] unblocked
+  [2026-10-15 14:18] reprioritized {'priority': 5}
+  [2026-10-15 19:32] [run 18678] claimed {'lock': 'Joaquim:38172', 'expires': 1792104437, 'run_id': 18678}
+  [2026-10-15 19:32] [run 18678] spawned {'pid': 38080, 'started_at': '|179210353772'}
+  [2026-10-15 19:32] [run 18678] heartbeat
+  [2026-10-15 19:33] [run 18678] heartbeat
+  [2026-10-15 19:34] [run 18678] heartbeat
+  [2026-10-15 19:35] [run 18678] heartbeat
+  [2026-10-15 19:36] [run 18678] heartbeat
+  [2026-10-15 19:37] [run 18678] heartbeat
+  [2026-10-15 19:38] [run 18678] heartbeat
+  [2026-10-15 19:39] [run 18678] heartbeat
+  [2026-10-15 19:40] [run 18678] heartbeat
+
+Runs (19):
+  #12821 rate_limited @workersql  34s  2026-10-13 16:38
+        ! pid 44548 exited rate-limited (quota wall) — requeued without counting a failure
+  #13019 rate_limited @workersql  36s  2026-10-13 16:46
+        ! pid 41968 exited rate-limited (quota wall) — requeued without counting a failure
+  #13195 rate_limited @workersql  58s  2026-10-13 16:51
+        ! pid 26320 exited rate-limited (quota wall) — requeued without counting a failure
+  #13393 rate_limited @workersql  35s  2026-10-13 16:58
+        ! pid 27240 exited rate-limited (quota wall) — requeued without counting a failure
+  #13550 rate_limited @workersql  38s  2026-10-13 17:04
+        ! pid 36736 exited rate-limited (quota wall) — requeued without counting a failure
+  #13826 rate_limited @workersql  23s  2026-10-13 17:13
+        ! pid 41124 exited rate-limited (quota wall) — requeued without counting a failure
+  #14010 rate_limited @workersql  22s  2026-10-13 17:19
+        ! pid 26544 exited rate-limited (quota wall) — requeued without counting a failure
+  #14188 rate_limited @workersql  40s  2026-10-13 17:25
+        ! pid 43368 exited rate-limited (quota wall) — requeued without counting a failure
+  #14398 rate_limited @workersql  34s  2026-10-13 17:32
+        ! pid 22276 exited rate-limited (quota wall) — requeued without counting a failure
+  #14576 rate_limited @workersql  33s  2026-10-13 17:38
+        ! pid 40552 exited rate-limited (quota wall) — requeued without counting a failure
+  #14738 rate_limited @workersql  33s  2026-10-13 17:44
+        ! pid 9084 exited rate-limited (quota wall) — requeued without counting a failure
+  #14923 rate_limited @workersql  33s  2026-10-13 17:50
+        ! pid 25964 exited rate-limited (quota wall) — requeued without counting a failure
+  #15218 rate_limited @workersql  51s  2026-10-13 17:59
+        ! pid 44020 exited rate-limited (quota wall) — requeued without counting a failure
+  #15405 rate_limited @workersql  42s  2026-10-13 18:06
+        ! pid 35736 exited rate-limited (quota wall) — requeued without counting a failure
+  #15675 rate_limited @workersql  33s  2026-10-13 18:15
+        ! pid 36976 exited rate-limited (quota wall) — requeued without counting a failure
+  #15859 rate_limited @workersql  33s  2026-10-13 18:21
+        ! pid 39152 exited rate-limited (quota wall) — requeued without counting a failure
+  #16065 rate_limited @workersql  52s  2026-10-13 18:28
+        ! pid 24924 exited rate-limited (quota wall) — requeued without counting a failure
+  #16656 blocked      @workersql  120s  2026-10-14 11:40
+        → Guarda congelada: falta ~/.local/libexec/hermes-guard/MODO_V2 (existe CONGELADO; diretório do guard alterado 14/10 10:45), então hermes-tarefa-iniciar/fechar sa
+  #18678 running      @workersql  active  2026-10-15 19:32
