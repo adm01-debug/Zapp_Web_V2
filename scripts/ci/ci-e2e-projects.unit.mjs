@@ -77,9 +77,11 @@ function projetosDoConfig(ts) {
 
 const ciYml = ler('.github/workflows/ci.yml');
 const logadoYml = ler('.github/workflows/e2e-logado.yml');
+const talkxYml = ler('.github/workflows/e2e-talkx.yml');
 const config = ler('playwright.config.ts');
 const doCi = projetosNoWorkflow(ciYml);
 const doLogado = projetosNoWorkflow(logadoYml);
+const doTalkx = projetosNoWorkflow(talkxYml);
 const projetos = projetosDoConfig(config);
 
 test('#463: o job E2E obrigatorio do ci.yml coleta o modulo MAPA (chromium-mapa)', () => {
@@ -127,8 +129,12 @@ test('#463: todo --project= do ci.yml existe de fato no playwright.config.ts', (
 test('#463: nenhum project listado no ci.yml depende de login real', () => {
   for (const nome of doCi) {
     const bloco = projetos.get(nome);
+    // GA47: storageState VAZIO explicito ({ cookies: [], origins: [] }) ZERA a
+    // sessao (ver playwright-config-e81.unit.mjs) -- e o oposto de depender do
+    // login real. So o storageState herdado/de arquivo (e2e/.auth) e proibido no PR.
+    const semSessaoZerada = bloco.replace(/storageState:\s*\{\s*cookies:\s*\[\],\s*origins:\s*\[\]\s*\}/g, '');
     assert.doesNotMatch(
-      bloco,
+      semSessaoZerada,
       /dependencies:\s*\[|storageState:/,
       `"${nome}" no ci.yml arrastaria o login real para um workflow de PR`,
     );
@@ -182,6 +188,61 @@ test('E88: todo --project= do e2e-logado.yml existe de fato no playwright.config
     assert.ok(
       projetos.has(nome),
       `e2e-logado.yml referencia o project "${nome}", que não existe no config`,
+    );
+  }
+});
+
+// GA47: contrato INVERSO -- todo projeto do playwright.config.ts roda em algum
+// workflow (ci.yml, e2e-logado.yml ou e2e-talkx.yml) ou esta na ALLOWLIST com
+// prazo (data futura ISO). Projeto orfao e spec que nunca roda: o teste reprova.
+// Hoje a allowlist esta vazia (GA47 zerou os orfaos); ela existe para o proximo
+// projeto dedicado sem workflow ainda.
+const ALLOWLIST_ORFAOS = {
+  // exemplo: "chromium-novo": { prazo: "2026-12-31", motivo: "issue #0000" },
+};
+
+test('GA47: nenhum projeto do playwright.config.ts e orfao', () => {
+  const cobertos = new Set([...doCi, ...doLogado, ...doTalkx]);
+  const orfaos = [...projetos.keys()].filter((n) => !cobertos.has(n) && !(n in ALLOWLIST_ORFAOS));
+  assert.deepEqual(
+    orfaos,
+    [],
+    `projetos sem workflow (adicionar a um workflow ou a ALLOWLIST_ORFAOS com prazo): ${orfaos.join(", ")}`,
+  );
+});
+
+test('GA47: allowlist de orfaos so aceita prazo futuro com motivo', () => {
+  const hoje = new Date().toISOString().slice(0, 10);
+  for (const [nome, item] of Object.entries(ALLOWLIST_ORFAOS)) {
+    assert.ok(
+      projetos.has(nome),
+      `allowlist referencia "${nome}", que nem existe no playwright.config.ts`,
+    );
+    assert.match(
+      String(item.prazo ?? ""),
+      /^\\d{4}-\\d{2}-\\d{2}$/,
+      `allowlist "${nome}" sem prazo ISO (AAAA-MM-DD)`,
+    );
+    assert.ok(item.prazo >= hoje, `prazo de "${nome}" venceu (${item.prazo})`);
+    assert.ok(
+      typeof item.motivo === "string" && item.motivo.length > 0,
+      `allowlist "${nome}" sem motivo`,
+    );
+  }
+});
+
+test('GA47: chromium-telefonia roda no ci.yml (deslogado, sessao falsa)', () => {
+  assert.ok(
+    doCi.includes("chromium-telefonia"),
+    "ci.yml precisa listar --project=chromium-telefonia (GA47: deslogado com sessao falsa, sem secrets)",
+  );
+});
+
+test('GA47: email-navy FF/WebKit continuam cobertos no e2e-logado.yml', () => {
+  for (const nome of ["firefox-email-navy", "webkit-email-navy"]) {
+    assert.ok(
+      doLogado.includes(nome),
+      `"${nome}" saiu do ci.yml e tem de estar no e2e-logado.yml (senao a cobertura cross-browser some)`,
     );
   }
 });

@@ -15,6 +15,8 @@ import {
   redigirBytes,
   redigirConteudo,
   redigirDiretorio,
+  redigirPadroes,
+  redigirZip,
   TAMANHO_MINIMO,
 } from './redigir-relatorio.mjs';
 
@@ -227,4 +229,61 @@ test('E82: lista de segredos ignora curto, vazio e repetido', () => {
   const r = redigirConteudo('a SegredoForte123 b SegredoForte123', ['SegredoForte123', 'SegredoForte123', 'ab', '']);
   assert.equal(r.ocorrencias, 2, 'o repetido nao conta duas vezes');
   assert.equal(r.texto, 'a [redigido] b [redigido]');
+});
+
+test('GA38: JWT, Bearer e access/refresh_token sao redigidos sem conhecer o valor', () => {
+  const jwt = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0In0.aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789-_';
+  const entrada = `token ${jwt} e Authorization: Bearer ${jwt} e {"access_token":"abc123xyz","refresh_token":"rfrsh-456"} e url?a=1&access_token=abc123xyz`;
+  const r = redigirPadroes(entrada);
+  assert.equal(r.ocorrencias, 5, 'jwt x2 + bearer + access x2 (json e query) + refresh');
+  assert.doesNotMatch(r.texto, /eyJ/);
+  assert.doesNotMatch(r.texto, /abc123xyz/);
+  assert.doesNotMatch(r.texto, /rfrsh-456/);
+  assert.match(r.texto, /Bearer \[redigido\]/);
+  // texto limpo nao muda nem conta
+  const limpo = redigirPadroes('relatorio sem segredo nenhum');
+  assert.equal(limpo.ocorrencias, 0);
+  assert.equal(limpo.texto, 'relatorio sem segredo nenhum');
+});
+
+test('GA38: JWT dentro de ZIP solto e redigido e some da contagem de restantes', () => {
+  const jwt = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0In0.aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789-_';
+  const raiz = arvore();
+  writeFileSync(join(raiz, 'data', 'trace.zip'), (function () {
+    const nome = Buffer.from('trace.json');
+    const dados = Buffer.from(JSON.stringify({ token: jwt }), 'utf8');
+    const local = Buffer.alloc(30 + nome.length + dados.length);
+    local.writeUInt32LE(0x04034b50, 0);
+    local.writeUInt16LE(20, 4);
+    local.writeUInt16LE(0, 8);
+    local.writeUInt16LE(0, 10);
+    local.writeUInt32LE(crc32(dados), 14);
+    local.writeUInt32LE(dados.length, 18);
+    local.writeUInt32LE(dados.length, 22);
+    local.writeUInt16LE(nome.length, 26);
+    local.writeUInt16LE(0, 28);
+    nome.copy(local, 30);
+    dados.copy(local, 30 + nome.length);
+    const central = Buffer.alloc(46 + nome.length);
+    central.writeUInt32LE(0x02014b50, 0);
+    central.writeUInt16LE(20, 6);
+    central.writeUInt16LE(0, 8);
+    central.writeUInt16LE(0, 10);
+    central.writeUInt32LE(crc32(dados), 16);
+    central.writeUInt32LE(dados.length, 20);
+    central.writeUInt32LE(dados.length, 24);
+    central.writeUInt16LE(nome.length, 28);
+    central.writeUInt32LE(0, 42);
+    nome.copy(central, 46);
+    const fim = Buffer.alloc(22);
+    fim.writeUInt32LE(0x06054b50, 0);
+    fim.writeUInt16LE(1, 8);
+    fim.writeUInt16LE(1, 10);
+    fim.writeUInt32LE(central.length, 12);
+    fim.writeUInt32LE(local.length, 16);
+    return Buffer.concat([local, central, fim]);
+  })());
+  const r = redigirDiretorio(raiz, [`x-${EMAIL}-y`]);
+  assert.ok(r.ocorrencias >= 1, 'o JWT do zip entra na contagem');
+  assert.equal(contarRestantes(raiz, [`x-${EMAIL}-y`]), 0, 'nada legivel sobrevive');
 });

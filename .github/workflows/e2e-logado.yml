@@ -3,6 +3,10 @@
 #   prova: o fluxo logado (Playwright com login real) contra producao
 #   falha: artefato do Playwright e issue/relatorio; nunca roda em PR de terceiro
 #   avisa: issue de E2E e autor do push
+# GA46: a dispensa do Dangerous-Workflow (Scorecard #40) fica pronta com GA08
+# (job so roda em workflow_run success de push na main, sem checkout de fork).
+# Ate la, o risco esta contido: checkout sempre da main, sem input externo no
+# github-script. Ver docs/audits/DECISOES-JOAQUIM-FASES-2-3.md.
 # ==========================================================================
 # ZAPP-WEB · E2E logado (Playwright, login real)
 # ==========================================================================
@@ -65,7 +69,7 @@ jobs:
           # projetos com `dependencies: ['setup']` o consomem. Rodam no MESMO
           # job para o login real acontecer uma vez so (sem concorrencia).
           - name: authenticated
-            projects: --project=setup --project=chromium-e2e-core --project=chromium-authenticated --project=firefox-talkx --project=webkit-talkx --project=firefox-conversation --project=webkit-conversation --project=firefox-catalog --project=webkit-catalog
+            projects: --project=setup --project=chromium-e2e-core --project=chromium-authenticated --project=firefox-talkx --project=webkit-talkx --project=firefox-conversation --project=webkit-conversation --project=firefox-catalog --project=webkit-catalog --project=chromium-talkx
             # A05: este grupo carrega 205 dos 248 testes do workflow (172 deles no
             # `chromium-authenticated`, que e' o projeto-catch-all). Com o pool padrao
             # do CI (`workers: 1` no playwright.config.ts) a suite roda ~9,8 s por
@@ -78,7 +82,7 @@ jobs:
           # Grupo 2: deslogados nos browsers principais + mapa (sessao FALSA,
           # sem secrets de login).
           - name: deslogado-principal
-            projects: --project=chromium-mapa --project=firefox-auth --project=webkit-auth
+            projects: --project=chromium-mapa --project=firefox-auth --project=webkit-auth --project=firefox-email-navy --project=webkit-email-navy --project=chromium-onboarding-dispensar --project=chromium-multiplix-responsivo --project=chromium-tarefas-linha-de-base
             workers: 1
           # Grupo 3: telefonia nos 3 browsers (sessao FALSA, sem secrets).
           - name: deslogado-secundario
@@ -225,6 +229,29 @@ jobs:
           if-no-files-found: ignore
           retention-days: 3
 
+      # GA44: o error-context.md (snapshot de acessibilidade) so e resumido DEPOIS
+      # do redator e apenas se ele passou -- o arquivo cru pode conter a senha
+      # digitada. O resumo vai para o step summary, nunca para artifact.
+      - name: Resumir error-context pos-redacao
+        if: failure() && github.ref == 'refs/heads/main' && steps.redigir.outcome == 'success'
+        run: |
+          set -euo pipefail
+          {
+            echo '## E2E error-context (conteudo ja redigido)'
+            echo ''
+            ACHOU=false
+            while IFS= read -r -d '' f; do
+              ACHOU=true
+              echo "### $f"
+              echo ''
+              echo '```'
+              cat "$f"
+              echo '```'
+              echo ''
+            done < <(find test-results -name 'error-context.md' -print0 2>/dev/null || true)
+            if [ "$ACHOU" = false ]; then echo 'Nenhum error-context.md (falha fora de spec -- ver log).'; fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
       # Teardown: apaga linhas de fixture geradas pelo E2E em producao.
       # contact_id 04dff4dc-c6b1-4283-ac22-bd8639804759 e o contato de teste
       # que o E2E usa em conversation.spec.ts / messaging.spec.ts.
@@ -239,7 +266,7 @@ jobs:
       # A URL vem do mesmo secret que o ci.yml ja entrega ao app.
       # Sem as credenciais o script e PULADO (exit 0), como no step antigo.
       - name: 🧹 E2E teardown - limpar fixture de conversation_closures
-        if: always()
+        if: always() && github.ref == 'refs/heads/main'
         continue-on-error: true
         env:
           SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
@@ -255,7 +282,7 @@ jobs:
       # contact_id 04dff4dc-... e o contato de teste E2E (dedicado).
       # Requer o secret SUPABASE_SERVICE_ROLE_KEY; se ausente, o step e pulado.
       - name: 🧹 E2E teardown - limpar envios de catálogo (CT-82)
-        if: always()
+        if: always() && github.ref == 'refs/heads/main'
         continue-on-error: true
         env:
           SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
@@ -264,30 +291,48 @@ jobs:
             echo "SUPABASE_SERVICE_ROLE_KEY nao configurado - teardown de catalog_send_events pulado"
             exit 0
           fi
+          HDR_CT82="$(mktemp)"; chmod 600 "$HDR_CT82"
+          { printf 'header = "apikey: %s\n' "$SERVICE_ROLE_KEY"; printf 'header = "Authorization: Bearer %s\n' "$SERVICE_ROLE_KEY"; } > "$HDR_CT82"
           curl --proto '=https' --tlsv1.2 -sf -X DELETE \
             "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/catalog_send_events?contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759" \
-            -H "apikey: $SERVICE_ROLE_KEY" \
-            -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
+            -K "$HDR_CT82" \
             -H "Content-Type: application/json" \
             && echo "teardown catalog_send_events OK" \
-            || echo "teardown catalog_send_events falhou - nao bloqueia CI"
+            || echo "::warning::teardown catalog_send_events falhou - nao bloqueia CI"
+
+      # GA39 (defensivo): revoga a sessao aberta pelo proprio teardown (logout
+      # simples, SEM scope=global) para nao acumular sessoes do usuario de teste.
+      # O logout GLOBAL espera GA09 (grupo de concurrency fixo): com runs em
+      # paralelo, ele derrubaria o run vizinho. Requer os mesmos secrets do teste.
+      - name: E2E logout - revogar sessao do teardown
+        if: always() && github.ref == 'refs/heads/main'
+        continue-on-error: true
+        env:
+          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
+          E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
+        run: node scripts/ci/e2e-teardown.mjs logout
 
       # E83: alerta da suite logada, no mesmo mecanismo da E44 (db-live-guard.yml) -- um
       # marcador invisivel identifica a CAUSA (o conjunto de testes que falhou) e o alerta
       # so e repetido quando ela MUDA. Sem isso, uma suite quebrada por dias geraria um
       # comentario por execucao e a issue viraria ruido que ninguem le.
       - name: 🚨 Abrir/comentar a issue da suite logada
-        if: failure()
+        if: failure() && github.ref == 'refs/heads/main'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           TITULO: "[e2e-logado] Suíte logada quebrada na main"
         with:
           script: |
-            const { marcadorDe, nomesDeTestResults, corpoDe } = await import(
+            const { marcadorDe, nomesDeTestResults, corpoDe, tituloDe } = await import(
               `${process.env.GITHUB_WORKSPACE}/scripts/ci/marcador-specs.mjs`
             );
-            const titulo = process.env.TITULO;
+            // GA42: a issue e achada pelo PREFIXO [e2e-logado] (o titulo exato
+            // varia: login E2E falhou vs suite quebrada). O titulo exato nunca
+            // fechava (#1946).
             const nomes = nomesDeTestResults('test-results');
+            const titulo = tituloDe(nomes);
             const marcador = marcadorDe(nomes);
             const owner = context.repo.owner;
             const repo = context.repo.repo;
@@ -295,7 +340,7 @@ jobs:
             const { data: abertas } = await github.rest.issues.listForRepo({
               owner, repo, state: 'open', per_page: 50,
             });
-            const issue = abertas.find((i) => i.title === titulo);
+            const issue = abertas.find((i) => typeof i.title === 'string' && i.title.startsWith('[e2e-logado]'));
 
             if (!issue) {
               await github.rest.issues.create({
@@ -322,19 +367,19 @@ jobs:
             core.info('comentario novo: a causa mudou');
 
       - name: ✅ Fechar a issue quando a suite volta
-        if: success()
+        if: success() && github.ref == 'refs/heads/main'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           TITULO: "[e2e-logado] Suíte logada quebrada na main"
         with:
           script: |
-            const titulo = process.env.TITULO;
+            // GA42: fecha qualquer [e2e-logado]* aberta (ver nota no passo de alerta).
             const owner = context.repo.owner;
             const repo = context.repo.repo;
             const { data: abertas } = await github.rest.issues.listForRepo({
               owner, repo, state: 'open', per_page: 50,
             });
-            const issue = abertas.find((i) => i.title === titulo);
+            const issue = abertas.find((i) => typeof i.title === 'string' && i.title.startsWith('[e2e-logado]'));
             if (!issue) {
               core.info('nenhuma issue aberta -- nada a fechar');
               return;

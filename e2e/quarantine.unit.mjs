@@ -25,8 +25,14 @@ const ORIGINAIS = [
   'firefox-conversation',
   'webkit-conversation',
   'firefox-catalog',
+  'chromium-talkx',
   'webkit-catalog',
   'chromium-telefonia',
+  'firefox-email-navy',
+  'webkit-email-navy',
+  'chromium-onboarding-dispensar',
+  'chromium-multiplix-responsivo',
+  'chromium-tarefas-linha-de-base',
   'firefox-telefonia',
   'webkit-telefonia',
 ];
@@ -81,7 +87,7 @@ test('E83: cada token da matriz leva o prefixo --project=', () => {
   }
 });
 
-test('E83: a uniao da matriz e EXATAMENTE a lista original (15 projetos)', () => {
+test('E83: a uniao da matriz e EXATAMENTE a lista original (21 projetos)', () => {
   const content = readFileSync(WORKFLOW, 'utf8');
   const nomes = gruposDaMatriz(content)
     .flat()
