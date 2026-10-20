@@ -1,0 +1,83 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/alvos-toque-44px-refazer1-261013154315fc/.tmp/prova-base
+
+xxxxx·
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/ui/__tests__/alvos-toque-44px.test.tsx > alvo de toque 44px — contrato da classe no primitivo (desenho intacto) > fechar do dialog e do sheet carregam alvo-toque-44
+Error: [2mexpect([22m[31melement[39m[2m).toHaveClass([22m[32m[32m"alvo-toque-44"[32m[39m[2m)[22m
+
+Expected the element to have class:
+[32m  alvo-toque-44[39m
+Received:
+[31m  absolute right-4 top-4 rounded-lg p-1 opacity-70 ring-offset-background transition-all hover:opacity-100 hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none[39m
+ ❯ src/components/ui/__tests__/alvos-toque-44px.test.tsx:41:59
+     39|       </Dialog>,
+     40|     );
+     41|     expect(screen.getByRole('button', { name: 'Close' })).toHaveClass(…
+       |                                                           ^
+     42|     cleanup();
+     43|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/components/ui/__tests__/alvos-toque-44px.test.tsx > alvo de toque 44px — contrato da classe no primitivo (desenho intacto) > checkbox e radio carregam alvo-toque-44 e são posicionados (relative)
+Error: [2mexpect([22m[31melement[39m[2m).toHaveClass([22m[32m[32m"alvo-toque-44"[32m[39m[2m)[22m
+
+Expected the element to have class:
+[32m  alvo-toque-44[39m
+Received:
+[31m  peer h-4 w-4 shrink-0 rounded-sm border border-primary ring-offset-background data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50[39m
+ ❯ src/components/ui/__tests__/alvos-toque-44px.test.tsx:57:22
+     55|     render(<Checkbox aria-label="Selecionar" />);
+     56|     const checkbox = screen.getByRole('checkbox', { name: 'Selecionar'…
+     57|     expect(checkbox).toHaveClass(CLASSE);
+       |                      ^
+     58|     expect(checkbox).toHaveClass('relative');
+     59|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/components/ui/__tests__/alvos-toque-44px.test.tsx > alvo de toque 44px — botões usam a variante Tailwind, não a classe > button: os tamanhos abaixo de 44px ganham a variante; lg/xl/icon-lg não
+TypeError: Cannot read properties of undefined (reading 'split')
+ ❯ src/components/ui/__tests__/alvos-toque-44px.test.tsx:80:45
+     78|       );
+     79|       const botao = screen.getByRole('button', { name: `botao ${size}`…
+     80|       for (const token of ALVO_TOQUE_GROSSO.split(' ')) {
+       |                                             ^
+     81|         expect(botao, `botao ${size} sem ${token}`).toHaveClass(token);
+     82|       }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/components/ui/__tests__/alvos-toque-44px.test.tsx > alvo de toque 44px — botões usam a variante Tailwind, não a classe > icon-button: sm e default ganham a variante; lg/xl já medem 48px+
+TypeError: Cannot read properties of undefined (reading 'split')
+ ❯ src/components/ui/__tests__/alvos-toque-44px.test.tsx:104:51
+    102|       const { unmount } = render(<IconButton size={size} showTooltip={…
+    103|       const botao = screen.getByRole('button', { name: `icone ${size}`…
+    104|       expect(botao).toHaveClass(ALVO_TOQUE_GROSSO.split(' ')[0]);
+       |                                                   ^
+    105|       expect(botao).not.toHaveClass(CLASSE);
+    106|       unmount();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  src/components/ui/__tests__/alvos-toque-44px.test.tsx > alvo de toque 44px — a regra só existe em ponteiro grosso, e só mexe no ::after > a regra coarse dá ao ::after 44x44 (área de toque, sem tocar no desenho)
+AssertionError: a regra coarse sumiu de src/styles/utilities.css: expected null not to be null
+ ❯ src/components/ui/__tests__/alvos-toque-44px.test.tsx:129:75
+    127|   it('a regra coarse dá ao ::after 44x44 (área de toque, sem tocar no …
+    128|     const bloco = css.match(/@media\s*\(pointer:\s*coarse\)\s*\{([\s\S…
+    129|     expect(bloco, 'a regra coarse sumiu de src/styles/utilities.css').…
+       |                                                                           ^
+    130|     const dentro = bloco![1];
+    131|     expect(dentro).toContain(`.${CLASSE}::after`);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 1 passed (6)
+   Start at  19:06:37
+   Duration  1.60s (transform 209ms, setup 222ms, import 390ms, tests 256ms, environment 575ms)
+

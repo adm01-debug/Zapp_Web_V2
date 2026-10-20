@@ -1,0 +1,646 @@
+diff --git a/e2e/a11y-toque-44px.spec.ts b/e2e/a11y-toque-44px.spec.ts
+new file mode 100644
+index 0000000000..a1a16a3cdb
+--- /dev/null
++++ b/e2e/a11y-toque-44px.spec.ts
+@@ -0,0 +1,278 @@
++/**
++ * t_17d91156 / refazer t_9a266076 — alvos de toque de 44x44 CSS px em PONTEIRO GROSSO.
++ *
++ * Mede PIXEL REAL no Chromium com emulação de celular (`devices['Pixel 5']`:
++ * `isMobile` + `hasTouch`, que é o que faz o Chromium reportar
++ * `matchMedia('(pointer: coarse)') === true`).
++ *
++ * O gate NÃO mede o `boundingBox()` do desenho: por decisão do refazer t_9a266076 o
++ * desenho continua pequeno (16px no checkbox, 16-24px no X) e é a ÁREA DE TOQUE que
++ * cresce para 44x44 por um `::after` centrado (`.alvo-toque-44`, utilities.css). Então a
++ * prova é de hit-test: nos quatro cantos de um quadrado de 44x44 centrado no controle,
++ * `document.elementFromPoint` tem de devolver o PRÓPRIO controle (o `::after` faz parte da
++ * caixa de hit-test do elemento). Este é o único jeito de medir o alvo de verdade — o
++ * jsdom não aplica media query e o `boundingBox()` mediria o desenho, não o alvo.
++ *
++ * O mesmo arquivo prova o outro lado: no ponteiro FINO (mouse, projeto `chromium-a11y`) os
++ * dois alvos continuam compactos e o clique continua fechando/abrindo — ou seja a regra
++ * `@media (pointer: coarse)` NÃO muda o visual do desktop.
++ *
++ * Deslogado e determinístico: sessão FALSA (`installFakeSession`) + REST mocks; a rede
++ * real fica barrada por `bloquearRedeReal` (qualquer request não mockada aparece no
++ * `afterEach`). Nada de credencial ou dado de produção (regra R1).
++ */
++import { test, expect, devices, type Locator, type Page } from '@playwright/test';
++import { contactCards, gotoContacts } from './fixtures/contacts-page';
++import { bloquearRedeReal, json, mockAppShell, type Registro } from './fixtures/mapa-mocks';
++import { installFakeSession } from './fixtures/talkx-demo';
++
++/** Duas linhas para a tela não cair no estado vazio (o checkbox vive no ContactCard). */
++const CONTATOS = [
++  {
++    id: '3f1c9a10-0000-4000-8000-000000000001',
++    name: 'Ana Teste',
++    surname: 'Alvo',
++    contact_type: 'cliente',
++    created_at: '2026-09-01T12:00:00.000Z',
++    updated_at: '2026-09-01T12:00:00.000Z',
++    phone: '+551****0001',
++    email: 'ana.alvo@e2e.local',
++    company: 'Promo Brindes',
++    job_title: 'Compradora',
++    tags: ['e2e'],
++    avatar_url: null,
++    total_count: 2,
++  },
++  {
++    id: '3f1c9a10-0000-4000-8000-000000000002',
++    name: 'Bruno Teste',
++    surname: 'Alvo',
++    contact_type: 'cliente',
++    created_at: '2026-09-02T12:00:00.000Z',
++    updated_at: '2026-09-02T12:00:00.000Z',
++    phone: '+551****0002',
++    email: 'bruno.alvo@e2e.local',
++    company: 'Promo Brindes',
++    job_title: 'Diretor',
++    tags: ['e2e'],
++    avatar_url: null,
++    total_count: 2,
++  },
++];
++
++async function mockContatos(page: Page): Promise<void> {
++  // A lista da tela vem da RPC `search_contacts` (não do /rest/v1/contacts).
++  await page.route(/\/rest\/v1\/rpc\/search_contacts/, (route) => json(route, CONTATOS));
++  await page.route(/\/rest\/v1\/rpc\/contacts_count_by_type/, (route) =>
++    json(route, [{ contact_type: 'cliente', count: CONTATOS.length }]),
++  );
++  await page.route(/\/rest\/v1\/rpc\/get_last_message_dates/, (route) => json(route, []));
++  await page.route(/\/rest\/v1\/rpc\/can_delete_contacts/, (route) =>
++    json(route, CONTATOS.map((c) => ({ contact_id: c.id, can_delete: true }))),
++  );
++  await page.route(/\/rest\/v1\/contacts/, (route) => json(route, CONTATOS));
++  await page.route(/\/rest\/v1\/messages/, (route) => json(route, []));
++}
++
++async function preparar(page: Page, registro: Registro): Promise<void> {
++  // Ordem: o guarda entra primeiro e os mocks específicos depois (no Playwright a
++  // última rota registrada vence).
++  await bloquearRedeReal(page, registro);
++  await mockAppShell(page, registro);
++  await mockContatos(page);
++  await installFakeSession(page);
++  await gotoContacts(page);
++}
++
++/** Caixa DESENHADA do alvo em px (prova que o desenho não inflou). */
++async function caixa(alvo: Locator, nome: string) {
++  const medida = await alvo.boundingBox();
++  expect(medida, `${nome}: alvo sem caixa renderizada`).not.toBeNull();
++  return medida!;
++}
++
++/**
++ * Prova a ÁREA DE TOQUE de 44x44: nos quatro cantos de um quadrado de 44x44 centrado no
++ * centro do controle, quem recebe o ponteiro é o próprio controle (`::after` conta como
++ * parte dele). Se a regra coarse sumir, os cantos caem em outro elemento e o teste falha.
++ */
++async function areaToque44(alvo: Locator, nome: string): Promise<void> {
++  const cantos = await alvo.evaluate((el) => {
++    const r = el.getBoundingClientRect();
++    const cx = r.left + r.width / 2;
++    const cy = r.top + r.height / 2;
++    // metade de 44, menos 1px para os pontos ficarem DENTRO do alvo
++    const d = 21;
++    const pontos: Array<[number, number]> = [
++      [cx - d, cy - d],
++      [cx + d, cy - d],
++      [cx - d, cy + d],
++      [cx + d, cy + d],
++    ];
++    return pontos.map(([x, y]) => {
++      const alvoPonto = document.elementFromPoint(x, y);
++      return !!alvoPonto && (alvoPonto === el || el.contains(alvoPonto));
++    });
++  });
++  expect(cantos, `${nome}: os 4 cantos do alvo de 44x44 nao recebem o toque`).toEqual([
++    true,
++    true,
++    true,
++    true,
++  ]);
++}
++
++/** Fechar do dialog (Radix DialogPrimitive.Close) do "Adicionar Contato". */
++async function abrirDialogo(page: Page): Promise<Locator> {
++  // O FAB é `fixed z-20` e no celular os cards da lista passam por cima dele no hit-test,
++  // então ele é acionado pelo teclado (o que também prova que ele é alcançável por foco).
++  const fab = page.getByTestId('contact-create-fab');
++  await fab.focus();
++  await fab.press('Enter');
++  const dialogo = page.getByRole('dialog', { name: 'Adicionar Contato' });
++  await expect(dialogo).toBeVisible({ timeout: 15_000 });
++  return dialogo;
++}
++
++/**
++ * Espera a animação de entrada do Radix terminar. Durante ela o `boundingBox()` devolve o
++ * tamanho ESCALADO (`zoom-in-95`) e a medida sai 43,8px em vez de 44px.
++ */
++async function esperarEntrada(page: Page, dialogo: Locator): Promise<void> {
++  await page.waitForTimeout(250);
++  await dialogo.evaluate(async (el) => {
++    const animacoes = el.getAnimations({ subtree: true });
++    await Promise.race([
++      Promise.all(animacoes.map((a) => a.finished.catch(() => undefined))),
++      new Promise((resolve) => setTimeout(resolve, 1000)),
++    ]);
++  });
++}
++
++test.use({ storageState: { cookies: [], origins: [] } });
++
++/**
++ * Emulação de toque do projeto `chromium-a11y` (que usa Desktop Chrome). `defaultBrowserType`
++ * não pode ser trocado dentro de um describe, então só os campos de contexto entram: é
++ * `isMobile` + `hasTouch` que fazem o Chromium reportar `(pointer: coarse)`.
++ */
++const PIXEL_5 = devices['Pixel 5'];
++
++test.describe('alvos de toque 44px — celular (ponteiro grosso)', () => {
++  test.use({
++    viewport: PIXEL_5.viewport,
++    deviceScaleFactor: PIXEL_5.deviceScaleFactor,
++    isMobile: PIXEL_5.isMobile,
++    hasTouch: PIXEL_5.hasTouch,
++    userAgent: PIXEL_5.userAgent,
++  });
++
++  let registro: Registro;
++
++  test.beforeEach(async ({ page }) => {
++    registro = { writesApp: [], mapbox: [], redeBarrada: [] };
++    await preparar(page, registro);
++  });
++
++  test.afterEach(() => {
++    expect(registro.redeBarrada).toEqual([]);
++  });
++
++  test('emulação touch ativa o media query (o teste mediria o media query errado se não)', async ({ page }) => {
++    expect(await page.evaluate(() => window.matchMedia('(pointer: coarse)').matches)).toBe(true);
++  });
++
++  test('checkbox de seleção e fechar do dialog têm área de toque de 44x44 sem inflar o desenho', async ({ page }) => {
++    // ── Checkbox de seleção do contato (vista Cards, padrão da tela) ──
++    await page.getByTitle('Cards').click();
++    await expect(contactCards(page)).toHaveCount(2);
++    const checkbox = page.getByRole('checkbox', { name: 'Selecionar Ana Teste' });
++    await expect(checkbox).toBeVisible();
++
++    // O DESENHO continua 16px (o refazer t_9a266076 tirou o `min-*` que inflava a caixa).
++    const c = await caixa(checkbox, 'checkbox de seleção');
++    expect(c.width, `largura do checkbox: ${c.width}px`).toBeLessThanOrEqual(20);
++    expect(c.height, `altura do checkbox: ${c.height}px`).toBeLessThanOrEqual(20);
++
++    // ... mas a ÁREA DE TOQUE é 44x44: os 4 cantos do quadrado de 44 acertam o checkbox.
++    await areaToque44(checkbox, 'checkbox de seleção');
++
++    // ── Botão pequeno (`size="icon"` + `w-8 h-8`): aqui o alvo cresce pela variante
++    // Tailwind `[@media(pointer:coarse)]:min-h-[44px] min-w-[44px]` da cva do Button
++    // (não pela classe `.alvo-toque-44`, que sumiu para não reexibir botão `hidden`). ──
++    const acoes = page.getByRole('button', { name: 'Ações do contato Ana Teste' });
++    const a = await caixa(acoes, 'ações do contato');
++    expect(a.width, `largura das ações: ${a.width}px`).toBeGreaterThanOrEqual(44);
++    expect(a.height, `altura das ações: ${a.height}px`).toBeGreaterThanOrEqual(44);
++    const minH = await acoes.evaluate((el) => getComputedStyle(el).minHeight);
++    expect(minH, `min-height computado das ações: ${minH}`).toBe('44px');
++
++    // O alvo maior continua sendo o controle de verdade: o toque marca a seleção.
++    await checkbox.click();
++    await expect(page.getByRole('checkbox', { name: 'Desmarcar Ana Teste' })).toHaveAttribute(
++      'data-state',
++      'checked',
++    );
++
++    // ── Botão fechar do dialog ──
++    const dialogo = await abrirDialogo(page);
++    const fechar = dialogo.getByRole('button', { name: 'Close' });
++    await expect(fechar).toBeVisible();
++    await esperarEntrada(page, dialogo);
++
++    // O X desenhado continua pequeno (24px com p-1 + ícone de 16px).
++    const f = await caixa(fechar, 'fechar do dialog');
++    expect(f.width, `largura do fechar: ${f.width}px`).toBeLessThanOrEqual(32);
++    expect(f.height, `altura do fechar: ${f.height}px`).toBeLessThanOrEqual(32);
++
++    // Área de toque de 44x44 medida por hit-test.
++    await areaToque44(fechar, 'fechar do dialog');
++
++    // E o alvo maior não quebrou a ação: o X ainda fecha o dialog. No celular emulado o
++    // Playwright erra o ponto do clique no X (o viewport visual não coincide com o de
++    // layout), então aqui o fechamento é por teclado — também é caminho de gente.
++    await fechar.press('Enter');
++    await expect(page.getByRole('dialog', { name: 'Adicionar Contato' })).toHaveCount(0);
++  });
++});
++
++test.describe('alvos de toque 44px — desktop (ponteiro fino)', () => {
++  let registro: Registro;
++
++  test.beforeEach(async ({ page }) => {
++    registro = { writesApp: [], mapbox: [], redeBarrada: [] };
++    await preparar(page, registro);
++  });
++
++  test.afterEach(() => {
++    expect(registro.redeBarrada).toEqual([]);
++  });
++
++  test('ponteiro fino: nada muda no visual — os alvos continuam compactos', async ({ page }) => {
++    expect(await page.evaluate(() => window.matchMedia('(pointer: coarse)').matches)).toBe(false);
++
++    await page.getByTitle('Cards').click();
++    await expect(contactCards(page)).toHaveCount(2);
++    const c = await caixa(page.getByRole('checkbox', { name: 'Selecionar Ana Teste' }), 'checkbox de seleção');
++    expect(c.width, `largura do checkbox no desktop: ${c.width}px`).toBeLessThanOrEqual(24);
++    expect(c.height, `altura do checkbox no desktop: ${c.height}px`).toBeLessThanOrEqual(24);
++
++    // O botão pequeno segue compacto no mouse (a variante coarse não se aplica).
++    const a = await caixa(
++      page.getByRole('button', { name: 'Ações do contato Ana Teste' }),
++      'ações do contato no desktop',
++    );
++    expect(a.width, `largura das ações no desktop: ${a.width}px`).toBeLessThanOrEqual(32);
++    expect(a.height, `altura das ações no desktop: ${a.height}px`).toBeLessThanOrEqual(32);
++
++    const dialogo = await abrirDialogo(page);
++    await esperarEntrada(page, dialogo);
++    const f = await caixa(dialogo.getByRole('button', { name: 'Close' }), 'fechar do dialog');
++    expect(f.width, `largura do fechar no desktop: ${f.width}px`).toBeLessThanOrEqual(32);
++    expect(f.height, `altura do fechar no desktop: ${f.height}px`).toBeLessThanOrEqual(32);
++
++    // Ponteiro fino continua fechando no clique (o caminho do mouse).
++    await dialogo.getByRole('button', { name: 'Close' }).click();
++    await expect(page.getByRole('dialog', { name: 'Adicionar Contato' })).toHaveCount(0);
++  });
++});
+diff --git a/playwright.config.ts b/playwright.config.ts
+index 4ed52cefe1..d1dd9e0d84 100644
+--- a/playwright.config.ts
++++ b/playwright.config.ts
+@@ -133,7 +133,7 @@ export default defineConfig({
+       // As specs do módulo MAPA (E71-E74) ficam de fora: usam sessão FALSA e não
+       // podem depender do login real — ver o projeto `chromium-mapa` abaixo.
+       name: 'chromium-authenticated',
+-      testIgnore: /auth\.spec\.ts|auth\.setup\.ts|conversation\.spec\.ts|messaging\.spec\.ts|location-picker\.spec\.ts|contact-address\.spec\.ts|contact-map-pin\.spec\.ts|contacts-snapshots\.spec\.ts|a11y-contraste\.spec\.ts|talkx-launch\.spec\.ts|telefonia\.spec\.ts|tarefas-linha-de-base\.spec\.ts|multiplix-responsivo\.spec\.ts/,
++      testIgnore: /auth\.spec\.ts|auth\.setup\.ts|conversation\.spec\.ts|messaging\.spec\.ts|location-picker\.spec\.ts|contact-address\.spec\.ts|contact-map-pin\.spec\.ts|contacts-snapshots\.spec\.ts|a11y-contraste\.spec\.ts|a11y-toque-44px\.spec\.ts|talkx-launch\.spec\.ts|telefonia\.spec\.ts|tarefas-linha-de-base\.spec\.ts|multiplix-responsivo\.spec\.ts/,
+       retries: RETRIES_LOGADOS,
+       dependencies: ['setup'],
+       use: {
+@@ -177,7 +177,7 @@ export default defineConfig({
+       // e backend mockado — DESLOGADO (sem setup, sem secrets), mesmo padrao de
+       // chromium-contacts-visual. Roda no job e2e do ci.yml.
+       name: 'chromium-a11y',
+-      testMatch: /a11y-(contraste|config-admin)\.spec\.ts/,
++      testMatch: /a11y-(contraste|config-admin|toque-44px)\.spec\.ts/,
+       use: { ...devices['Desktop Chrome'] },
+     },
+     {
+diff --git a/src/components/ui/__tests__/alvos-toque-44px.test.tsx b/src/components/ui/__tests__/alvos-toque-44px.test.tsx
+new file mode 100644
+index 0000000000..9a1c12644c
+--- /dev/null
++++ b/src/components/ui/__tests__/alvos-toque-44px.test.tsx
+@@ -0,0 +1,147 @@
++import { afterEach, describe, expect, it } from 'vitest';
++import { readFileSync } from 'node:fs';
++import { resolve } from 'node:path';
++import { cleanup, render, screen } from '@testing-library/react';
++
++import { Dialog, DialogContent, DialogTitle } from '../dialog';
++import { Sheet, SheetContent, SheetTitle } from '../sheet';
++import { Checkbox } from '../checkbox';
++import { RadioGroup, RadioGroupItem } from '../radio-group';
++import { ALVO_TOQUE_GROSSO, Button } from '../button';
++import { IconButton } from '../icon-button';
++
++/**
++ * t_17d91156 / refazer t_9a266076 — contrato do alvo de toque de 44px. O jsdom NÃO aplica
++ * media query, então aqui só se trava o CONTRATO de duas metades que o refazer separou:
++ *
++ *  1. ÁREA DE TOQUE SEM MUDAR O DESENHO (`alvo-toque-44`): o X do dialog/sheet, o checkbox
++ *     e o radio trazem a classe; a regra coarse dá a ela um `::after` de 44px centrado (a
++ *     caixa de hit-test cresce, o desenho/borda/fundo ficam do tamanho normal). O alvo
++ *     precisa ser posicionado para o `::after` ancorar nele — por isto o checkbox/radio
++ *     carregam `relative` (o X já é `absolute`).
++ *  2. BOTÕES pequenos: ganham a variante Tailwind `ALVO_TOQUE_GROSSO` na cva, não a classe
++ *     (o Button/IconButton têm `overflow-hidden`, que recortaria o `::after`).
++ *
++ * A MEDIÇÃO em pixel real (Chromium com emulação de toque, medindo o que o ponteiro
++ * realmente acerta) fica em `e2e/a11y-toque-44px.spec.ts`; este arquivo é a rede barata
++ * contra alguém apagar a classe, a regra ou voltar com `display: inline-flex` / `min-*`.
++ */
++const CLASSE = 'alvo-toque-44';
++afterEach(cleanup);
++
++describe('alvo de toque 44px — contrato da classe no primitivo (desenho intacto)', () => {
++  it('fechar do dialog e do sheet carregam alvo-toque-44', () => {
++    render(
++      <Dialog open>
++        <DialogContent>
++          <DialogTitle>Dialogo de teste</DialogTitle>
++        </DialogContent>
++      </Dialog>,
++    );
++    expect(screen.getByRole('button', { name: 'Close' })).toHaveClass(CLASSE);
++    cleanup();
++
++    render(
++      <Sheet open>
++        <SheetContent>
++          <SheetTitle>Painel de teste</SheetTitle>
++        </SheetContent>
++      </Sheet>,
++    );
++    expect(screen.getByRole('button', { name: 'Close' })).toHaveClass(CLASSE);
++  });
++
++  it('checkbox e radio carregam alvo-toque-44 e são posicionados (relative)', () => {
++    render(<Checkbox aria-label="Selecionar" />);
++    const checkbox = screen.getByRole('checkbox', { name: 'Selecionar' });
++    expect(checkbox).toHaveClass(CLASSE);
++    expect(checkbox).toHaveClass('relative');
++
++    render(
++      <RadioGroup defaultValue="a">
++        <RadioGroupItem value="a" aria-label="Opcao A" />
++      </RadioGroup>,
++    );
++    const radio = screen.getByRole('radio', { name: 'Opcao A' });
++    expect(radio).toHaveClass(CLASSE);
++    expect(radio).toHaveClass('relative');
++  });
++});
++
++describe('alvo de toque 44px — botões usam a variante Tailwind, não a classe', () => {
++  it('button: os tamanhos abaixo de 44px ganham a variante; lg/xl/icon-lg não', () => {
++    for (const size of ['default', 'sm', 'icon', 'icon-sm'] as const) {
++      const { unmount } = render(
++        <Button size={size} aria-label={`botao ${size}`}>
++          ok
++        </Button>,
++      );
++      const botao = screen.getByRole('button', { name: `botao ${size}` });
++      for (const token of ALVO_TOQUE_GROSSO.split(' ')) {
++        expect(botao, `botao ${size} sem ${token}`).toHaveClass(token);
++      }
++      expect(botao, `botao ${size} não deve carregar ${CLASSE}`).not.toHaveClass(CLASSE);
++      unmount();
++    }
++
++    for (const size of ['lg', 'xl', 'icon-lg'] as const) {
++      const { unmount } = render(
++        <Button size={size} aria-label={`botao ${size}`}>
++          ok
++        </Button>,
++      );
++      const botao = screen.getByRole('button', { name: `botao ${size}` });
++      expect(botao, `botao ${size} já mede 44px+`).not.toHaveClass(CLASSE);
++      expect(botao).not.toHaveClass(ALVO_TOQUE_GROSSO.split(' ')[0]);
++      unmount();
++    }
++  });
++
++  it('icon-button: sm e default ganham a variante; lg/xl já medem 48px+', () => {
++    for (const size of ['sm', 'default'] as const) {
++      const { unmount } = render(<IconButton size={size} showTooltip={false} aria-label={`icone ${size}`} />);
++      const botao = screen.getByRole('button', { name: `icone ${size}` });
++      expect(botao).toHaveClass(ALVO_TOQUE_GROSSO.split(' ')[0]);
++      expect(botao).not.toHaveClass(CLASSE);
++      unmount();
++    }
++
++    for (const size of ['lg', 'xl'] as const) {
++      const { unmount } = render(<IconButton size={size} showTooltip={false} aria-label={`icone ${size}`} />);
++      const botao = screen.getByRole('button', { name: `icone ${size}` });
++      expect(botao).not.toHaveClass(CLASSE);
++      expect(botao).not.toHaveClass(ALVO_TOQUE_GROSSO.split(' ')[0]);
++      unmount();
++    }
++  });
++});
++
++describe('alvo de toque 44px — a regra só existe em ponteiro grosso, e só mexe no ::after', () => {
++  // Sem os comentários: os comentários citam a classe e dariam falso positivo no
++  // "fora do media query". O que se mede aqui é a DECLARAÇÃO real.
++  const css = readFileSync(resolve(process.cwd(), 'src/styles/utilities.css'), 'utf8').replace(
++    /\/\*[\s\S]*?\*\//g,
++    '',
++  );
++
++  it('a regra coarse dá ao ::after 44x44 (área de toque, sem tocar no desenho)', () => {
++    const bloco = css.match(/@media\s*\(pointer:\s*coarse\)\s*\{([\s\S]*?)\n\}/);
++    expect(bloco, 'a regra coarse sumiu de src/styles/utilities.css').not.toBeNull();
++    const dentro = bloco![1];
++    expect(dentro).toContain(`.${CLASSE}::after`);
++    expect(dentro).toMatch(/width:\s*44px/);
++    expect(dentro).toMatch(/height:\s*44px/);
++    // Regressão t_9a266076: a versão anterior inflava a CAIXA (`min-width`/`min-height`)
++    // com `display: inline-flex`, o que reexibia botão escondido (`hidden md:inline-flex`)
++    // e pintava bloco de 44px no checkbox/radio/X. A classe NÃO pode voltar a fazer isso.
++    expect(dentro).not.toMatch(/\.alvo-toque-44\s*\{/);
++    expect(dentro).not.toContain('display:');
++    expect(dentro).not.toMatch(/min-width:\s*44px/);
++    expect(dentro).not.toMatch(/min-height:\s*44px/);
++  });
++
++  it('a classe não recebe 44px fora do media query (o desktop não muda)', () => {
++    const foraDaCoarse = css.replace(/@media\s*\(pointer:\s*coarse\)\s*\{[\s\S]*?\n\}/, '');
++    expect(foraDaCoarse).not.toContain(CLASSE);
++  });
++});
+diff --git a/src/components/ui/button.tsx b/src/components/ui/button.tsx
+index 7a67414de2..5d37c9d98d 100644
+--- a/src/components/ui/button.tsx
++++ b/src/components/ui/button.tsx
+@@ -4,6 +4,16 @@ import { cva, type VariantProps } from "class-variance-authority";
+ import { Loader2 } from "lucide-react";
+ import { cn } from "@/lib/utils";
+ 
++/**
++ * t_17d91156 / refazer t_9a266076 — alvo de toque de 44x44 em ponteiro grosso.
++ * Só os tamanhos pequenos (abaixo de 44px) precisam disto; `lg`/`xl`/`icon-lg` já têm
++ * h-11/h-12/h-12. É variante Tailwind (não a classe `.alvo-toque-44` do utilitários.css):
++ * o Button tem `overflow-hidden`, que recortaria o `::after` de 44px usado no X/checkbox.
++ * `min-h`/`min-w` não brigam com `h-10`/`h-8` no `twMerge`, e em ponteiro fino nada muda.
++ */
++export const ALVO_TOQUE_GROSSO =
++  "[@media(pointer:coarse)]:min-h-[44px] [@media(pointer:coarse)]:min-w-[44px]";
++
+ const buttonVariants = cva(
+   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden",
+   {
+@@ -23,12 +33,12 @@ const buttonVariants = cva(
+         success: "bg-success text-success-foreground hover:bg-success/90 hover:shadow-glow-success-md",
+       },
+       size: {
+-        default: "h-10 px-4 py-2",
+-        sm: "h-9 rounded-md px-3",
++        default: `h-10 px-4 py-2 ${ALVO_TOQUE_GROSSO}`,
++        sm: `h-9 rounded-md px-3 ${ALVO_TOQUE_GROSSO}`,
+         lg: "h-11 rounded-md px-8",
+         xl: "h-12 rounded-lg px-10 text-base",
+-        icon: "h-10 w-10",
+-        "icon-sm": "h-8 w-8",
++        icon: `h-10 w-10 ${ALVO_TOQUE_GROSSO}`,
++        "icon-sm": `h-8 w-8 ${ALVO_TOQUE_GROSSO}`,
+         "icon-lg": "h-12 w-12",
+       },
+     },
+diff --git a/src/components/ui/checkbox.tsx b/src/components/ui/checkbox.tsx
+index 759a41ce20..b5d3acb287 100644
+--- a/src/components/ui/checkbox.tsx
++++ b/src/components/ui/checkbox.tsx
+@@ -11,7 +11,7 @@ const Checkbox = React.forwardRef<
+   <CheckboxPrimitive.Root
+     ref={ref}
+     className={cn(
+-      "peer h-4 w-4 shrink-0 rounded-sm border border-primary ring-offset-background data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
++      "peer relative h-4 w-4 shrink-0 rounded-sm border border-primary ring-offset-background data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 alvo-toque-44",
+       className,
+     )}
+     {...props}
+diff --git a/src/components/ui/dialog.tsx b/src/components/ui/dialog.tsx
+index 6c4e44b0a9..92d9604d44 100644
+--- a/src/components/ui/dialog.tsx
++++ b/src/components/ui/dialog.tsx
+@@ -77,7 +77,7 @@ const DialogContent = React.forwardRef<
+     >
+       {children}
+       {showCloseButton && (
+-        <DialogPrimitive.Close className="absolute right-4 top-4 rounded-lg p-1 opacity-70 ring-offset-background transition-all hover:opacity-100 hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
++        <DialogPrimitive.Close className="absolute right-4 top-4 z-10 rounded-lg p-1 opacity-70 ring-offset-background transition-all hover:opacity-100 hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none alvo-toque-44">
+           <X className="h-4 w-4" />
+           <span className="sr-only">Close</span>
+         </DialogPrimitive.Close>
+diff --git a/src/components/ui/icon-button.tsx b/src/components/ui/icon-button.tsx
+index 692ecf2093..9253971bda 100644
+--- a/src/components/ui/icon-button.tsx
++++ b/src/components/ui/icon-button.tsx
+@@ -4,6 +4,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
+ import { motion, HTMLMotionProps } from 'framer-motion';
+ import { cn } from '@/lib/utils';
+ import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
++import { ALVO_TOQUE_GROSSO } from './button';
+ 
+ const iconButtonVariants = cva(
+   [
+@@ -24,8 +25,8 @@ const iconButtonVariants = cva(
+         muted: 'bg-muted text-muted-foreground hover:bg-muted/80',
+       },
+       size: {
+-        sm: 'h-8 w-8',
+-        default: 'h-10 w-10',
++        sm: `h-8 w-8 ${ALVO_TOQUE_GROSSO}`,
++        default: `h-10 w-10 ${ALVO_TOQUE_GROSSO}`,
+         lg: 'h-12 w-12',
+         xl: 'h-14 w-14',
+       },
+diff --git a/src/components/ui/micro-interactions/buttons.tsx b/src/components/ui/micro-interactions/buttons.tsx
+index 3df4e49487..c55573173e 100644
+--- a/src/components/ui/micro-interactions/buttons.tsx
++++ b/src/components/ui/micro-interactions/buttons.tsx
+@@ -23,7 +23,16 @@ interface RippleButtonProps {
+ }
+ 
+ const rippleVariants = {
+-  default: 'rgba(255, 255, 255, 0.3)',
++  // Branco do ripple (o mesmo brilho da família `via-white/*` dos botões). Token, não
++  // literal: em `src/styles/tokens.css` `--primary-foreground` é `0 0% 100%` (branco) tanto
++  // no tema claro (linha 110) quanto no escuro (linha 446), então o pixel renderizado é
++  // idêntico ao branco translúcido que estava aqui antes.
++  // EXCEÇÃO registrada no refazer t_9a266076: no ALTO CONTRASTE ESCURO o token vira
++  // `0 0% 0%` (accessibility.css:35) porque o `--primary` de lá é o violeta claro
++  // (258 100% 65%) — ou seja, nesse modo o ripple fica ESCURO sobre o violeta, que é
++  // exatamente o par de contraste do próprio botão (preto sobre violeta claro). No alto
++  // contraste CLARO o token segue branco (accessibility.css:12).
++  default: 'hsl(var(--primary-foreground) / 0.3)',
+   primary: 'hsl(var(--primary) / 0.4)',
+   ghost: 'hsl(var(--foreground) / 0.1)',
+   neon: 'hsl(var(--primary) / 0.6)',
+diff --git a/src/components/ui/micro-interactions/feedback.tsx b/src/components/ui/micro-interactions/feedback.tsx
+index acd3820c46..b5b2c6b390 100644
+--- a/src/components/ui/micro-interactions/feedback.tsx
++++ b/src/components/ui/micro-interactions/feedback.tsx
+@@ -71,7 +71,7 @@ export function FeedbackAnimation({ type, show, size = 48 }: FeedbackAnimationPr
+           style={{ width: size, height: size }}
+         >
+           <motion.svg width={size * 0.5} height={size * 0.5} viewBox="0 0 24 24" fill="none"
+-            stroke={type === 'success' ? 'hsl(142 76% 36%)' : 'hsl(var(--destructive))'}
++            stroke={type === 'success' ? 'hsl(var(--success))' : 'hsl(var(--destructive))'}
+             strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
+           >
+             <motion.path d={path} initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.3, delay: 0.1 }} />
+diff --git a/src/components/ui/radio-group.tsx b/src/components/ui/radio-group.tsx
+index 5d32e58a4e..ecd250e3ae 100644
+--- a/src/components/ui/radio-group.tsx
++++ b/src/components/ui/radio-group.tsx
+@@ -20,7 +20,7 @@ const RadioGroupItem = React.forwardRef<
+     <RadioGroupPrimitive.Item
+       ref={ref}
+       className={cn(
+-        "aspect-square h-4 w-4 rounded-full border border-primary text-primary ring-offset-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
++        "relative aspect-square h-4 w-4 rounded-full border border-primary text-primary ring-offset-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 alvo-toque-44",
+         className,
+       )}
+       {...props}
+diff --git a/src/components/ui/sheet.tsx b/src/components/ui/sheet.tsx
+index 334f8d9caf..0c5be60217 100644
+--- a/src/components/ui/sheet.tsx
++++ b/src/components/ui/sheet.tsx
+@@ -57,7 +57,7 @@ const SheetContent = React.forwardRef<React.ElementRef<typeof SheetPrimitive.Con
+       <SheetOverlay />
+       <SheetPrimitive.Content ref={ref} className={cn(sheetVariants({ side }), className)} {...props}>
+         {children}
+-        <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity data-[state=open]:bg-secondary hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
++        <SheetPrimitive.Close className="absolute right-4 top-4 z-10 rounded-sm opacity-70 ring-offset-background transition-opacity data-[state=open]:bg-secondary hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none alvo-toque-44">
+           <X className="h-4 w-4" />
+           <span className="sr-only">Close</span>
+         </SheetPrimitive.Close>
+diff --git a/src/styles/utilities.css b/src/styles/utilities.css
+index 2b4122f865..b8961f621c 100644
+--- a/src/styles/utilities.css
++++ b/src/styles/utilities.css
+@@ -245,3 +245,34 @@
+ .chip-active.chip-active {
+   color: hsl(var(--primary-text));
+ }
++
++/* ===== ALVO DE TOQUE 44px — SOMENTE EM PONTEIRO GROSSO (toque) =====
++   t_17d91156, ajustado no refazer t_9a266076. WCAG 2.5.5 (AAA) e Apple HIG pedem
++   44x44 CSS px de alvo para o toque; os primitivos da UI (fechar do dialog/sheet,
++   checkbox, radio) nascem com 16-24px, que é o tamanho certo para o mouse.
++   Aqui a ÁREA DE TOQUE ganha 44x44 APENAS quando o apontador é grosso, SEM alterar o
++   desenho: um `::after` centrado de 44x44 faz parte da caixa de hit-test do PRÓPRIO
++   controle (o toque acerta o elemento), mas não muda `display`, borda, fundo nem o
++   tamanho visível. Foi assim que o refazer corrigiu dois efeitos colaterais da versão
++   anterior: (a) `display: inline-flex` sobrescrevia `hidden`/`sm:hidden`/`flex`/`grid`
++   que o consumidor passa ao Button/IconButton (`hidden md:inline-flex`) e reexibia
++   botão escondido no celular; (b) inflar a caixa desenhada pintava um quadrado/círculo
++   de 44px com borda no checkbox/radio e um bloco de 44px no X do sheet
++   (`data-[state=open]:bg-secondary`).
++   Os BOTÕES pequenos (Button/IconButton) NÃO usam esta classe: ganham a variante
++   Tailwind `[@media(pointer:coarse)]:min-h-[44px] [@media(pointer:coarse)]:min-w-[44px]`
++   na cva, que o `twMerge` resolve com `h-8`/`h-10` e fica na camada de utilitários.
++   O elemento precisa estar posicionado para o `::after` ancorar nele: o X já é
++   `absolute`; o checkbox/radio trazem `relative`.
++   Prova em pixel real: e2e/a11y-toque-44px.spec.ts (Chromium, devices['Pixel 5']). */
++@media (pointer: coarse) {
++  .alvo-toque-44::after {
++    content: '';
++    position: absolute;
++    top: 50%;
++    left: 50%;
++    width: 44px;
++    height: 44px;
++    transform: translate(-50%, -50%);
++  }
++}

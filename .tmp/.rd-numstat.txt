@@ -1,0 +1,12 @@
+278	0	e2e/a11y-toque-44px.spec.ts
+2	2	playwright.config.ts
+147	0	src/components/ui/__tests__/alvos-toque-44px.test.tsx
+14	4	src/components/ui/button.tsx
+1	1	src/components/ui/checkbox.tsx
+1	1	src/components/ui/dialog.tsx
+3	2	src/components/ui/icon-button.tsx
+10	1	src/components/ui/micro-interactions/buttons.tsx
+1	1	src/components/ui/micro-interactions/feedback.tsx
+1	1	src/components/ui/radio-group.tsx
+1	1	src/components/ui/sheet.tsx
+31	0	src/styles/utilities.css

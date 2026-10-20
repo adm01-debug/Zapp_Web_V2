@@ -1,0 +1,10 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/alvos-toque-44px-refazer1-261013154315fc
+
+······
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  19:06:33
+   Duration  1.87s (transform 360ms, setup 200ms, import 574ms, tests 315ms, environment 600ms)
+

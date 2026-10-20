@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=alvos-toque-44px-refazer1
+ID=261013154315fc
+BRANCH=v2/alvos-toque-44px-refazer1-261013154315fc
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/alvos-toque-44px-refazer1-261013154315fc
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T15:43:48-03:00
+KANBAN=t_9a266076
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/alvos-toque-44px-refazer1-261013154315fc/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-261013154315fc
+PRONTO_SHA=660d1826c7bad0b46f145b038e7b4cfd1f7a1f1e
