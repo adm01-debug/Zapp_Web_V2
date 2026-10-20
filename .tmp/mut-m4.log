@@ -1,0 +1,38 @@
+[WebServer] $ vite --host "127.0.0.1" --port "5173" --strictPort
+
+Running 1 test using 1 worker
+
+[WebServer] 
+[WebServer] warn - The class `motion-safe:duration-[120ms]` is ambiguous and matches multiple utilities.
+[WebServer] warn - If this is content and not a class, replace it with `motion-safe:duration-&lsqb;120ms&rsqb;` to silence this warning.
+[WebServer] 
+[WebServer] warn - The class `motion-safe:duration-[200ms]` is ambiguous and matches multiple utilities.
+[WebServer] warn - If this is content and not a class, replace it with `motion-safe:duration-&lsqb;200ms&rsqb;` to silence this warning.
+  ✘  1 [chromium-auth-deslogado] › e2e/auth-teclado.spec.ts:79:3 › Teclado na tela de login › o campo alcançado por TAB mostra o foco visível (43.3s)
+
+
+  1) [chromium-auth-deslogado] › e2e/auth-teclado.spec.ts:79:3 › Teclado na tela de login › o campo alcançado por TAB mostra o foco visível 
+
+    Test timeout of 30000ms exceeded while running "beforeEach" hook.
+
+      30 |   let registro: Registro;
+      31 |
+    > 32 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      33 |     registro = { writesApp: [], mapbox: [], redeBarrada: [] };
+      34 |     await bloquearRedeReal(page, registro);
+      35 |     await page.goto('/auth');
+        at /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auth-e2e-a11y-teclado-sessao-2610130907310c/e2e/auth-teclado.spec.ts:32:8
+
+    Error Context: test-results/auth-teclado-Teclado-na-te-c2d75-r-TAB-mostra-o-foco-visível-chromium-auth-deslogado/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/auth-teclado-Teclado-na-te-c2d75-r-TAB-mostra-o-foco-visível-chromium-auth-deslogado/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/auth-teclado-Teclado-na-te-c2d75-r-TAB-mostra-o-foco-visível-chromium-auth-deslogado/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium-auth-deslogado] › e2e/auth-teclado.spec.ts:79:3 › Teclado na tela de login › o campo alcançado por TAB mostra o foco visível 

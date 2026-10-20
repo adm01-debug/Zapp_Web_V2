@@ -1,0 +1,16 @@
+[WebServer] $ vite --host "127.0.0.1" --port "5173" --strictPort
+
+Running 4 tests using 1 worker
+
+[WebServer] 
+[WebServer] warn - The class `motion-safe:duration-[120ms]` is ambiguous and matches multiple utilities.
+[WebServer] warn - If this is content and not a class, replace it with `motion-safe:duration-&lsqb;120ms&rsqb;` to silence this warning.
+[WebServer] 
+[WebServer] warn - The class `motion-safe:duration-[200ms]` is ambiguous and matches multiple utilities.
+[WebServer] warn - If this is content and not a class, replace it with `motion-safe:duration-&lsqb;200ms&rsqb;` to silence this warning.
+  ✓  1 [chromium-auth-deslogado] › e2e/auth-teclado.spec.ts:51:3 › Teclado na tela de login › TAB: e-mail antes da senha antes de Entrar, sem controle inesperado no meio (13.2s)
+  ✓  2 [chromium-auth-deslogado] › e2e/auth-teclado.spec.ts:79:3 › Teclado na tela de login › o campo alcançado por TAB mostra o foco visível (3.2s)
+  ✓  3 [chromium-auth-deslogado] › e2e/auth-teclado.spec.ts:100:3 › Teclado na tela de login › erro de validação aparece e o foco continua no campo (2.8s)
+  ✓  4 [chromium-auth-deslogado] › e2e/auth-teclado.spec.ts:115:3 › Teclado na tela de login › o botão do olho é operável por teclado e anuncia o estado (3.3s)
+
+  4 passed (24.9s)

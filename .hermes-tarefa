@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=auth-e2e-a11y-teclado-sessao
+ID=2610130907310c
+BRANCH=v2/auth-e2e-a11y-teclado-sessao-2610130907310c
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auth-e2e-a11y-teclado-sessao-2610130907310c
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T09:07:55-03:00
+KANBAN=t_041b173c
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auth-e2e-a11y-teclado-sessao-2610130907310c/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-2610130907310c
+PRONTO_SHA=217369440ca8e5e9906764393ed536bf3d17b59d

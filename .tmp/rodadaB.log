@@ -1,0 +1,102 @@
+[WebServer] $ vite --host "127.0.0.1" --port "5390" --strictPort
+
+Running 18 tests using 1 worker
+
+[WebServer] 
+[WebServer] warn - The class `motion-safe:duration-[120ms]` is ambiguous and matches multiple utilities.
+[WebServer] warn - If this is content and not a class, replace it with `motion-safe:duration-&lsqb;120ms&rsqb;` to silence this warning.
+[WebServer] 
+[WebServer] warn - The class `motion-safe:duration-[200ms]` is ambiguous and matches multiple utilities.
+[WebServer] warn - If this is content and not a class, replace it with `motion-safe:duration-&lsqb;200ms&rsqb;` to silence this warning.
+  ✘   1 [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:148:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /auth — light (20.2s)
+[WebServer] 10:19:30 AM [vite] (client) [console.warn] [2026-10-13T13:19:30.754Z] [WARN] [App] [sid:b501979f] [A11Y] 1 accessibility violation(s) detected
+[WebServer] 10:19:30 AM [vite] (client) [console.warn] [2026-10-13T13:19:30.755Z] [WARN] [App] [sid:b501979f] [A11Y] SERIOUS: color-contrast — Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds (1 element(s))
+  ✓   2 [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:148:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /auth — dark (10.0s)
+  ✓   3 [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:148:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /forgot-password — light (8.3s)
+  ✓   4 [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:148:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /forgot-password — dark (6.9s)
+[WebServer] 10:19:51 AM [vite] (client) [console.warn] [2026-10-13T13:19:51.089Z] [WARN] [App] [sid:6ce317d2] [AuthService] Failed to fetch profile {"message":"rede real bloqueada no E2E"}
+[WebServer] 10:19:51 AM [vite] (client) [console.warn] [2026-10-13T13:19:51.298Z] [WARN] [QuarantineMonitor] [sid:6ce317d2] Falha ao detectar role admin {"message":"rede real bloqueada no E2E"}
+[WebServer] 10:19:52 AM [vite] (client) [console.warn] [2026-10-13T13:19:52.533Z] [WARN] [App] [sid:6ce317d2] Failed to load notification settings: {"message":"rede real bloqueada no E2E"}
+  ✓   5 [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:148:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /reset-password — light (6.9s)
+[WebServer] 10:19:58 AM [vite] (client) [console.warn] [2026-10-13T13:19:58.116Z] [WARN] [App] [sid:087c89bb] [AuthService] Failed to fetch profile {"message":"rede real bloqueada no E2E"}
+[WebServer] 10:19:58 AM [vite] (client) [console.warn] [2026-10-13T13:19:58.117Z] [WARN] [QuarantineMonitor] [sid:087c89bb] Falha ao detectar role admin {"message":"rede real bloqueada no E2E"}
+[WebServer] 10:19:59 AM [vite] (client) [console.warn] [2026-10-13T13:19:59.431Z] [WARN] [App] [sid:087c89bb] Failed to load notification settings: {"message":"rede real bloqueada no E2E"}
+  ✓   6 [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:148:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /reset-password — dark (6.8s)
+  ✓   7 [chromium-auth-deslogado] › e2e/auth-sessao-guard.spec.ts:167:5 › Guarda de sessão nas rotas protegidas › sessão ausente manda para /auth guardando a origem (/queues/comparison) (8.3s)
+  ✓   8 [chromium-auth-deslogado] › e2e/auth-sessao-guard.spec.ts:174:5 › Guarda de sessão nas rotas protegidas › sessão expirada manda para /auth guardando a origem (/queues/comparison) (8.3s)
+  ✓   9 [chromium-auth-deslogado] › e2e/auth-sessao-guard.spec.ts:181:5 › Guarda de sessão nas rotas protegidas › sessão corrompida manda para /auth guardando a origem (/queues/comparison) (7.7s)
+[WebServer] 10:20:29 AM [vite] (client) [console.warn] [2026-10-13T13:20:29.145Z] [WARN] [App] [sid:c27723b2] [AuthService] Failed to fetch profile {"message":"rede real bloqueada no E2E"}
+[WebServer] 10:20:29 AM [vite] (client) [console.warn] [2026-10-13T13:20:29.411Z] [WARN] [QuarantineMonitor] [sid:c27723b2] Falha ao detectar role admin {"message":"rede real bloqueada no E2E"}
+  ✓  10 [chromium-auth-deslogado] › e2e/auth-sessao-guard.spec.ts:188:5 › Guarda de sessão nas rotas protegidas › sessão válida NÃO cai no login — prova que a chave do storage é a certa (/queues/comparison) (4.5s)
+  ✓  11 [chromium-auth-deslogado] › e2e/auth-sessao-guard.spec.ts:167:5 › Guarda de sessão nas rotas protegidas › sessão ausente manda para /auth guardando a origem (/sla) (8.0s)
+  ✓  12 [chromium-auth-deslogado] › e2e/auth-sessao-guard.spec.ts:174:5 › Guarda de sessão nas rotas protegidas › sessão expirada manda para /auth guardando a origem (/sla) (7.5s)
+  ✓  13 [chromium-auth-deslogado] › e2e/auth-sessao-guard.spec.ts:181:5 › Guarda de sessão nas rotas protegidas › sessão corrompida manda para /auth guardando a origem (/sla) (8.5s)
+[WebServer] 10:20:57 AM [vite] (client) [console.warn] [2026-10-13T13:20:57.264Z] [WARN] [App] [sid:f2b58e1e] [AuthService] Failed to fetch profile {"message":"rede real bloqueada no E2E"}
+[WebServer] 10:20:57 AM [vite] (client) [console.warn] [2026-10-13T13:20:57.358Z] [WARN] [QuarantineMonitor] [sid:f2b58e1e] Falha ao detectar role admin {"message":"rede real bloqueada no E2E"}
+  ✓  14 [chromium-auth-deslogado] › e2e/auth-sessao-guard.spec.ts:188:5 › Guarda de sessão nas rotas protegidas › sessão válida NÃO cai no login — prova que a chave do storage é a certa (/sla) (3.7s)
+  ✓  15 [chromium-auth-deslogado] › e2e/auth-teclado.spec.ts:55:3 › Teclado na tela de login › TAB: e-mail antes da senha antes de Entrar, sem controle inesperado no meio (9.2s)
+  ✓  16 [chromium-auth-deslogado] › e2e/auth-teclado.spec.ts:85:3 › Teclado na tela de login › o campo alcançado por TAB mostra o foco visível (12.1s)
+  ✓  17 [chromium-auth-deslogado] › e2e/auth-teclado.spec.ts:122:3 › Teclado na tela de login › erro de validação aparece e o foco continua no campo (6.0s)
+  ✓  18 [chromium-auth-deslogado] › e2e/auth-teclado.spec.ts:137:3 › Teclado na tela de login › o botão do olho é operável por teclado e anuncia o estado (6.3s)
+
+
+  1) [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:148:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /auth — light 
+
+    Error: /auth (light): violação SERIOUS/CRITICAL fora do previsto
+    [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "nos": 3,
+        "alvos": [
+          {
+            "seletor": ".min-w-0.flex-col[data-testid=\"social-proof-item\"]:nth-child(1) > .break-words.leading-tight.text-2xs",
+            "html": "<div class=\"text-2xs leading-tight break-words text-muted-foreground\">Usuários ativos</div>",
+            "motivo": "Fix any of the following:\n  Element has insufficient color contrast of 3.32 (foreground color: #898d97, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "seletor": ".min-w-0.flex-col[data-testid=\"social-proof-item\"]:nth-child(2) > .font-bold.text-sm.text-foreground",
+            "html": "<div class=\"text-sm font-bold text-foreground\">1M+</div>",
+            "motivo": "Fix any of the following:\n  Element has insufficient color contrast of 2.19 (foreground color: #adafb2, background color: #ffffff, font size: 10.5pt (14px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "seletor": ".min-w-0.flex-col[data-testid=\"social-proof-item\"]:nth-child(2) > .break-words.leading-tight.text-2xs",
+            "html": "<div class=\"text-2xs leading-tight break-words text-muted-foreground\">Mensagens/dia</div>",
+            "motivo": "Fix any of the following:\n  Element has insufficient color contrast of 1.69 (foreground color: #c5c7cc, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 3
+
+    - Array []
+    + Array [
+    +   "color-contrast",
+    + ]
+
+      184 |           bloqueantes,
+      185 |           `${tela.rota} (${tema}): violação SERIOUS/CRITICAL fora do previsto\n${JSON.stringify(violacoes, null, 2)}`,
+    > 186 |         ).toEqual(BLOQUEANTES_CONHECIDAS[`${tela.rota}|${tema}`] ?? []);
+          |           ^
+      187 |
+      188 |         // Anti-vacuidade da medição: o axe precisa ter analisado os campos DESTA tela —
+      189 |         // medir uma página que não montou o formulário passaria sem medir nada.
+        at /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auth-e2e-a11y-teclado-sessao-2610130907310c/e2e/auth-a11y.spec.ts:186:11
+
+    Error Context: test-results/auth-a11y-A11y-das-telas-d-aae3a-OUS-CRITICAL-0-auth-—-light-chromium-auth-deslogado/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/auth-a11y-A11y-das-telas-d-aae3a-OUS-CRITICAL-0-auth-—-light-chromium-auth-deslogado/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/auth-a11y-A11y-das-telas-d-aae3a-OUS-CRITICAL-0-auth-—-light-chromium-auth-deslogado/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:148:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /auth — light 
+  17 passed (2.6m)

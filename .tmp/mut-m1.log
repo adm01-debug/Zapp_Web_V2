@@ -1,0 +1,156 @@
+[WebServer] $ vite --host "127.0.0.1" --port "5173" --strictPort
+
+Running 10 tests using 1 worker
+
+[WebServer] 
+[WebServer] warn - The class `motion-safe:duration-[120ms]` is ambiguous and matches multiple utilities.
+[WebServer] warn - If this is content and not a class, replace it with `motion-safe:duration-&lsqb;120ms&rsqb;` to silence this warning.
+[WebServer] 
+[WebServer] warn - The class `motion-safe:duration-[200ms]` is ambiguous and matches multiple utilities.
+[WebServer] warn - If this is content and not a class, replace it with `motion-safe:duration-&lsqb;200ms&rsqb;` to silence this warning.
+  ✘   1 [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:127:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /auth — light (17.4s)
+  ✘   2 [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:127:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /auth — dark (4.2s)
+  ✓   3 [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:127:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /forgot-password — light (3.5s)
+  ✓   4 [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:127:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /forgot-password — dark (3.4s)
+[WebServer] 9:47:26 AM [vite] (client) [console.warn] [2026-10-13T12:47:26.301Z] [WARN] [App] [sid:b561379b] [AuthService] Failed to fetch profile {"message":"rede real bloqueada no E2E"}
+[WebServer] 9:47:26 AM [vite] (client) [console.warn] [2026-10-13T12:47:26.322Z] [WARN] [QuarantineMonitor] [sid:b561379b] Falha ao detectar role admin {"message":"rede real bloqueada no E2E"}
+[WebServer] 9:47:27 AM [vite] (client) [console.warn] [2026-10-13T12:47:27.079Z] [WARN] [App] [sid:b561379b] Failed to load notification settings: {"message":"rede real bloqueada no E2E"}
+  ✓   5 [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:127:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /reset-password — light (3.3s)
+[WebServer] 9:47:29 AM [vite] (client) [console.warn] [2026-10-13T12:47:29.676Z] [WARN] [App] [sid:14c97e37] [AuthService] Failed to fetch profile {"message":"rede real bloqueada no E2E"}
+[WebServer] 9:47:29 AM [vite] (client) [console.warn] [2026-10-13T12:47:29.722Z] [WARN] [QuarantineMonitor] [sid:14c97e37] Falha ao detectar role admin {"message":"rede real bloqueada no E2E"}
+  ✓   6 [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:127:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /reset-password — dark (3.7s)
+  ✓   7 [chromium-auth-deslogado] › e2e/auth-teclado.spec.ts:51:3 › Teclado na tela de login › TAB: e-mail antes da senha antes de Entrar, sem controle inesperado no meio (3.7s)
+  ✓   8 [chromium-auth-deslogado] › e2e/auth-teclado.spec.ts:79:3 › Teclado na tela de login › o campo alcançado por TAB mostra o foco visível (3.7s)
+  ✓   9 [chromium-auth-deslogado] › e2e/auth-teclado.spec.ts:100:3 › Teclado na tela de login › erro de validação aparece e o foco continua no campo (4.1s)
+[WebServer] 9:47:48 AM [vite] (client) [console.warn] [2026-10-13T12:47:48.668Z] [WARN] [App] [sid:572aaadc] [A11Y] 1 accessibility violation(s) detected
+[WebServer] 9:47:48 AM [vite] (client) [console.warn] [2026-10-13T12:47:48.669Z] [WARN] [App] [sid:572aaadc] [A11Y] CRITICAL: button-name — Ensure buttons have discernible text (1 element(s))
+  ✘  10 [chromium-auth-deslogado] › e2e/auth-teclado.spec.ts:115:3 › Teclado na tela de login › o botão do olho é operável por teclado e anuncia o estado (31.2s)
+
+
+  1) [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:127:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /auth — light 
+
+    Error: /auth (light): violação SERIOUS/CRITICAL fora do previsto
+    [
+      {
+        "id": "button-name",
+        "impact": "critical",
+        "nos": 1,
+        "alvos": [
+          {
+            "seletor": ".hover\\:shadow-glow-accent-sm",
+            "html": "<button class=\"inline-flex items-ce...\" type=\"button\" tabindex=\"-1\" aria-pressed=\"false\">",
+            "motivo": "Fix any of the following:\n  Element does not have inner text that is visible to screen readers\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+          }
+        ]
+      }
+    ]
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 3
+
+    - Array []
+    + Array [
+    +   "button-name",
+    + ]
+
+      151 |           bloqueantes,
+      152 |           `${tela.rota} (${tema}): violação SERIOUS/CRITICAL fora do previsto\n${JSON.stringify(violacoes, null, 2)}`,
+    > 153 |         ).toEqual(BLOQUEANTES_CONHECIDAS[tela.rota] ?? []);
+          |           ^
+      154 |
+      155 |         // Anti-vacuidade da medição: o axe precisa ter analisado os campos DESTA tela —
+      156 |         // medir uma página que não montou o formulário passaria sem medir nada.
+        at /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auth-e2e-a11y-teclado-sessao-2610130907310c/e2e/auth-a11y.spec.ts:153:11
+
+    Error Context: test-results/auth-a11y-A11y-das-telas-d-aae3a-OUS-CRITICAL-0-auth-—-light-chromium-auth-deslogado/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/auth-a11y-A11y-das-telas-d-aae3a-OUS-CRITICAL-0-auth-—-light-chromium-auth-deslogado/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/auth-a11y-A11y-das-telas-d-aae3a-OUS-CRITICAL-0-auth-—-light-chromium-auth-deslogado/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:127:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /auth — dark 
+
+    Error: /auth (dark): violação SERIOUS/CRITICAL fora do previsto
+    [
+      {
+        "id": "button-name",
+        "impact": "critical",
+        "nos": 1,
+        "alvos": [
+          {
+            "seletor": ".hover\\:shadow-glow-accent-sm",
+            "html": "<button class=\"inline-flex items-ce...\" type=\"button\" tabindex=\"-1\" aria-pressed=\"false\">",
+            "motivo": "Fix any of the following:\n  Element does not have inner text that is visible to screen readers\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+          }
+        ]
+      }
+    ]
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 3
+
+    - Array []
+    + Array [
+    +   "button-name",
+    + ]
+
+      151 |           bloqueantes,
+      152 |           `${tela.rota} (${tema}): violação SERIOUS/CRITICAL fora do previsto\n${JSON.stringify(violacoes, null, 2)}`,
+    > 153 |         ).toEqual(BLOQUEANTES_CONHECIDAS[tela.rota] ?? []);
+          |           ^
+      154 |
+      155 |         // Anti-vacuidade da medição: o axe precisa ter analisado os campos DESTA tela —
+      156 |         // medir uma página que não montou o formulário passaria sem medir nada.
+        at /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auth-e2e-a11y-teclado-sessao-2610130907310c/e2e/auth-a11y.spec.ts:153:11
+
+    Error Context: test-results/auth-a11y-A11y-das-telas-d-e0fed-IOUS-CRITICAL-0-auth-—-dark-chromium-auth-deslogado/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/auth-a11y-A11y-das-telas-d-e0fed-IOUS-CRITICAL-0-auth-—-dark-chromium-auth-deslogado/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/auth-a11y-A11y-das-telas-d-e0fed-IOUS-CRITICAL-0-auth-—-dark-chromium-auth-deslogado/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [chromium-auth-deslogado] › e2e/auth-teclado.spec.ts:115:3 › Teclado na tela de login › o botão do olho é operável por teclado e anuncia o estado 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.focus: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for getByRole('button', { name: 'Mostrar senha' })
+
+
+      119 |     await expect(senha).toHaveAttribute('type', 'password');
+      120 |
+    > 121 |     await page.getByRole('button', { name: 'Mostrar senha' }).focus();
+          |                                                               ^
+      122 |     await page.keyboard.press('Enter');
+      123 |
+      124 |     // Alterna para texto e o estado é anunciado (aria-pressed + nome muda).
+        at /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auth-e2e-a11y-teclado-sessao-2610130907310c/e2e/auth-teclado.spec.ts:121:63
+
+    Error Context: test-results/auth-teclado-Teclado-na-te-989ad--teclado-e-anuncia-o-estado-chromium-auth-deslogado/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/auth-teclado-Teclado-na-te-989ad--teclado-e-anuncia-o-estado-chromium-auth-deslogado/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/auth-teclado-Teclado-na-te-989ad--teclado-e-anuncia-o-estado-chromium-auth-deslogado/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3 failed
+    [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:127:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /auth — light 
+    [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:127:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /auth — dark 
+    [chromium-auth-deslogado] › e2e/auth-teclado.spec.ts:115:3 › Teclado na tela de login › o botão do olho é operável por teclado e anuncia o estado 
+  7 passed (1.4m)

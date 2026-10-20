@@ -1,0 +1,8 @@
+0000000000000000000000000000000000000000 96dd72dc5f5db919bdbb4ffdc269510addca6165 Hermes Senior <hermes-senior@promobrindes.local> 1791893274 -0300	
+96dd72dc5f5db919bdbb4ffdc269510addca6165 96dd72dc5f5db919bdbb4ffdc269510addca6165 Hermes Senior <hermes-senior@promobrindes.local> 1791893275 -0300	reset: moving to HEAD
+96dd72dc5f5db919bdbb4ffdc269510addca6165 13ca45c46a7f18311688e6cbf4b49752230ed92a Hermes Senior <hermes-senior@promobrindes.local> 1791898281 -0300	commit: test(e2e): cobre a11y, teclado e guarda de sessão nas telas de auth
+13ca45c46a7f18311688e6cbf4b49752230ed92a 0055af9acb4e158625b594867eb0c768a194b05b Hermes Senior <hermes-senior@promobrindes.local> 1791898805 -0300	commit (amend): test(e2e): cobre a11y, teclado e guarda de sessão nas telas de auth
+0055af9acb4e158625b594867eb0c768a194b05b e8f0564c0bc07f1e8e6d20f2db0249de4783ca61 Hermes Senior <hermes-senior@promobrindes.local> 1791898878 -0300	commit: docs(e2e): relato do cartão das telas de auth
+e8f0564c0bc07f1e8e6d20f2db0249de4783ca61 7f8dab62e9ee5f246011e05984bfc82384c9a558 Hermes Senior <hermes-senior@promobrindes.local> 1791898931 -0300	commit: docs(e2e): relato do cartão das telas de auth — números do diff e justificativa do projeto novo
+7f8dab62e9ee5f246011e05984bfc82384c9a558 217369440ca8e5e9906764393ed536bf3d17b59d Hermes Senior <hermes-senior@promobrindes.local> 1791899240 -0300	commit: fix(e2e): importa type Locator no spec de teclado
+217369440ca8e5e9906764393ed536bf3d17b59d 4b4c4787ab3000052e291e0ab47633fb9a1cbb65 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792029709 -0300	commit: docs(e2e): [refazer 1] prova de mutacao da guarda de sessao no relato

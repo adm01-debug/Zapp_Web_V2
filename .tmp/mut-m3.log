@@ -1,0 +1,74 @@
+[WebServer] $ vite --host "127.0.0.1" --port "5173" --strictPort
+
+Running 4 tests using 1 worker
+
+[WebServer] 
+[WebServer] warn - The class `motion-safe:duration-[120ms]` is ambiguous and matches multiple utilities.
+[WebServer] warn - If this is content and not a class, replace it with `motion-safe:duration-&lsqb;120ms&rsqb;` to silence this warning.
+[WebServer] 
+[WebServer] warn - The class `motion-safe:duration-[200ms]` is ambiguous and matches multiple utilities.
+[WebServer] warn - If this is content and not a class, replace it with `motion-safe:duration-&lsqb;200ms&rsqb;` to silence this warning.
+  ✘  1 [chromium-auth-deslogado] › e2e/auth-teclado.spec.ts:51:3 › Teclado na tela de login › TAB: e-mail antes da senha antes de Entrar, sem controle inesperado no meio (20.5s)
+  ✘  2 [chromium-auth-deslogado] › e2e/auth-teclado.spec.ts:79:3 › Teclado na tela de login › o campo alcançado por TAB mostra o foco visível (4.4s)
+  ✓  3 [chromium-auth-deslogado] › e2e/auth-teclado.spec.ts:100:3 › Teclado na tela de login › erro de validação aparece e o foco continua no campo (4.6s)
+  ✓  4 [chromium-auth-deslogado] › e2e/auth-teclado.spec.ts:115:3 › Teclado na tela de login › o botão do olho é operável por teclado e anuncia o estado (5.2s)
+
+
+  1) [chromium-auth-deslogado] › e2e/auth-teclado.spec.ts:51:3 › Teclado na tela de login › TAB: e-mail antes da senha antes de Entrar, sem controle inesperado no meio 
+
+    Error: senha precisa vir na ordem; trilha: login-email → Esqueci minha senha → Entrar
+
+    expect(received).toBeGreaterThan(expected)
+
+    Expected: > 0
+    Received:   -1
+
+      61 |
+      62 |     expect(sequencia[0], `a tabulação começa no e-mail; veio: ${trilha}`).toBe('login-email');
+    > 63 |     expect(idx('login-password'), `senha precisa vir na ordem; trilha: ${trilha}`).toBeGreaterThan(0);
+         |                                                                                    ^
+      64 |     expect(idx('Entrar'), `Entrar precisa ser alcançado por TAB; trilha: ${trilha}`).toBeGreaterThan(
+      65 |       idx('login-password'),
+      66 |     );
+        at /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auth-e2e-a11y-teclado-sessao-2610130907310c/e2e/auth-teclado.spec.ts:63:84
+
+    Error Context: test-results/auth-teclado-Teclado-na-te-50499-controle-inesperado-no-meio-chromium-auth-deslogado/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/auth-teclado-Teclado-na-te-50499-controle-inesperado-no-meio-chromium-auth-deslogado/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/auth-teclado-Teclado-na-te-50499-controle-inesperado-no-meio-chromium-auth-deslogado/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium-auth-deslogado] › e2e/auth-teclado.spec.ts:79:3 › Teclado na tela de login › o campo alcançado por TAB mostra o foco visível 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: "login-password"
+    Received: ""
+
+      93 |     });
+      94 |
+    > 95 |     expect(foco?.id).toBe('login-password');
+         |                      ^
+      96 |     expect(foco?.focusVisible, `:focus-visible do alvo: ${JSON.stringify(foco)}`).toBe(true);
+      97 |     expect(foco!.contorno || foco!.sombra, `sem contorno nem anel de foco: ${JSON.stringify(foco)}`).toBe(true);
+      98 |   });
+        at /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auth-e2e-a11y-teclado-sessao-2610130907310c/e2e/auth-teclado.spec.ts:95:22
+
+    Error Context: test-results/auth-teclado-Teclado-na-te-c2d75-r-TAB-mostra-o-foco-visível-chromium-auth-deslogado/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/auth-teclado-Teclado-na-te-c2d75-r-TAB-mostra-o-foco-visível-chromium-auth-deslogado/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/auth-teclado-Teclado-na-te-c2d75-r-TAB-mostra-o-foco-visível-chromium-auth-deslogado/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [chromium-auth-deslogado] › e2e/auth-teclado.spec.ts:51:3 › Teclado na tela de login › TAB: e-mail antes da senha antes de Entrar, sem controle inesperado no meio 
+    [chromium-auth-deslogado] › e2e/auth-teclado.spec.ts:79:3 › Teclado na tela de login › o campo alcançado por TAB mostra o foco visível 
+  2 passed (41.0s)

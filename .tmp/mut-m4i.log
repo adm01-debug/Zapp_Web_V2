@@ -1,0 +1,47 @@
+[WebServer] $ vite --host "127.0.0.1" --port "5390" --strictPort
+
+Running 2 tests using 1 worker
+
+[WebServer] 
+[WebServer] warn - The class `motion-safe:duration-[120ms]` is ambiguous and matches multiple utilities.
+[WebServer] warn - If this is content and not a class, replace it with `motion-safe:duration-&lsqb;120ms&rsqb;` to silence this warning.
+[WebServer] 
+[WebServer] warn - The class `motion-safe:duration-[200ms]` is ambiguous and matches multiple utilities.
+[WebServer] warn - If this is content and not a class, replace it with `motion-safe:duration-&lsqb;200ms&rsqb;` to silence this warning.
+  ✘  1 [chromium-auth-deslogado] › e2e/auth-teclado.spec.ts:85:3 › Teclado na tela de login › o campo alcançado por TAB mostra o foco visível (15.3s)
+DEBUG_SEM={"outline":"none 3px rgb(24, 28, 37)","sombra":"none","cls":"flex w-full rounded-xl border bg-background text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 duration-200 md:text-sm focus-visible:outline-none h-10 px-3 py-2 pl-10 pr-10 glass border-border/50 transition-all"}
+DEBUG_COM={"id":"login-password","outline":"solid 2px rgba(24, 28, 37, 0)","sombra":"none","cls":"flex w-full rounded-xl border bg-background text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 duration-200 md:text-sm focus-visible:outline-none h-10 px-3 py-2 pl-10 pr-10 glass border-border/50 transition-all"}
+  ✓  2 [chromium-auth-deslogado] › e2e/auth-teclado.spec.ts:160:3 › Teclado na tela de login › DEBUG foco (4.0s)
+
+
+  1) [chromium-auth-deslogado] › e2e/auth-teclado.spec.ts:85:3 › Teclado na tela de login › o campo alcançado por TAB mostra o foco visível 
+
+    Error: sem indicador de foco visível (nada mudou em relação ao estado sem foco: {"semFoco":{"contorno":false,"sombra":"none"},"foco":{"id":"login-password","focusVisible":true,"contorno":false,"sombra":"none"}})
+
+    expect(received).not.toEqual(expected) // deep equality
+
+    Expected: not {"contorno": false, "sombra": "none"}
+
+
+      117 |       { contorno: foco!.contorno, sombra: foco!.sombra },
+      118 |       `sem indicador de foco visível (nada mudou em relação ao estado sem foco: ${JSON.stringify({ semFoco, foco })})`,
+    > 119 |     ).not.toEqual({ contorno: semFoco.contorno, sombra: semFoco.sombra });
+          |           ^
+      120 |   });
+      121 |
+      122 |   test('erro de validação aparece e o foco continua no campo', async ({ page }) => {
+        at /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auth-e2e-a11y-teclado-sessao-2610130907310c/e2e/auth-teclado.spec.ts:119:11
+
+    Error Context: test-results/auth-teclado-Teclado-na-te-c2d75-r-TAB-mostra-o-foco-visível-chromium-auth-deslogado/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/auth-teclado-Teclado-na-te-c2d75-r-TAB-mostra-o-foco-visível-chromium-auth-deslogado/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/auth-teclado-Teclado-na-te-c2d75-r-TAB-mostra-o-foco-visível-chromium-auth-deslogado/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium-auth-deslogado] › e2e/auth-teclado.spec.ts:85:3 › Teclado na tela de login › o campo alcançado por TAB mostra o foco visível 
+  1 passed (24.4s)

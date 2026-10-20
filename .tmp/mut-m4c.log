@@ -1,0 +1,6 @@
+
+Running 1 test using 1 worker
+
+  ✓  1 [chromium-auth-deslogado] › e2e/auth-teclado.spec.ts:83:3 › Teclado na tela de login › o campo alcançado por TAB mostra o foco visível (3.7s)
+
+  1 passed (4.9s)

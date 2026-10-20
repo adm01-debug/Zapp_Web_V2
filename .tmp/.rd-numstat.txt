@@ -1,0 +1,4 @@
+226	0	e2e/auth-a11y.spec.ts
+206	0	e2e/auth-sessao-guard.spec.ts
+177	0	e2e/auth-teclado.spec.ts
+12	1	playwright.config.ts

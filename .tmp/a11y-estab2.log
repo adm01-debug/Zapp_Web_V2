@@ -1,0 +1,114 @@
+[WebServer] $ vite --host "127.0.0.1" --port "5390" --strictPort
+
+Running 6 tests using 1 worker
+
+[WebServer] 
+[WebServer] warn - The class `motion-safe:duration-[120ms]` is ambiguous and matches multiple utilities.
+[WebServer] warn - If this is content and not a class, replace it with `motion-safe:duration-&lsqb;120ms&rsqb;` to silence this warning.
+[WebServer] 
+[WebServer] warn - The class `motion-safe:duration-[200ms]` is ambiguous and matches multiple utilities.
+[WebServer] warn - If this is content and not a class, replace it with `motion-safe:duration-&lsqb;200ms&rsqb;` to silence this warning.
+  ✘  1 [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:130:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /auth — light (1.4m)
+[WebServer] 10:12:57 AM [vite] (client) [console.warn] [2026-10-13T13:12:57.413Z] [WARN] [App] [sid:bf7bcc9d] [A11Y] 1 accessibility violation(s) detected
+[WebServer] 10:12:57 AM [vite] (client) [console.warn] [2026-10-13T13:12:57.414Z] [WARN] [App] [sid:bf7bcc9d] [A11Y] SERIOUS: color-contrast — Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds (1 element(s))
+  ✘  2 [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:130:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /auth — dark (7.6s)
+  ✓  3 [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:130:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /forgot-password — light (6.8s)
+  ✓  4 [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:130:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /forgot-password — dark (6.8s)
+[WebServer] 10:13:19 AM [vite] (client) [console.warn] [2026-10-13T13:13:19.696Z] [WARN] [App] [sid:2537c245] [AuthService] Failed to fetch profile {"message":"rede real bloqueada no E2E"}
+[WebServer] 10:13:19 AM [vite] (client) [console.warn] [2026-10-13T13:13:19.967Z] [WARN] [QuarantineMonitor] [sid:2537c245] Falha ao detectar role admin {"message":"rede real bloqueada no E2E"}
+[WebServer] 10:13:25 AM [vite] (client) [console.warn] [2026-10-13T13:13:25.618Z] [WARN] [App] [sid:2537c245] Failed to load notification settings: {"message":"rede real bloqueada no E2E"}
+  ✓  5 [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:130:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /reset-password — light (13.1s)
+[WebServer] 10:13:33 AM [vite] (client) [console.warn] [2026-10-13T13:13:33.588Z] [WARN] [App] [sid:39010b90] [AuthService] Failed to fetch profile {"message":"rede real bloqueada no E2E"}
+[WebServer] 10:13:33 AM [vite] (client) [console.warn] [2026-10-13T13:13:33.590Z] [WARN] [QuarantineMonitor] [sid:39010b90] Falha ao detectar role admin {"message":"rede real bloqueada no E2E"}
+[WebServer] 10:13:36 AM [vite] (client) [console.warn] [2026-10-13T13:13:36.029Z] [WARN] [App] [sid:39010b90] Failed to load notification settings: {"message":"rede real bloqueada no E2E"}
+[WebServer] 10:13:37 AM [vite] (client) [Unhandled rejection] Unknown Error: Axe is already running. Use `await axe.run()` to wait for the previous run to finish before starting a new run.
+[WebServer] 
+[WebServer] 10:13:37 AM [vite] (client) [console.error] [2026-10-13T13:13:37.445Z] [ERROR] [App] [sid:39010b90] Unhandled promise rejection: Axe is already running. Use `await axe.run()` to wait for the previous run to finish before starting a new run.
+[WebServer] 10:13:37 AM [vite] (client) [console.error] [2026-10-13T13:13:37.459Z] [ERROR] [App] [sid:39010b90] Unhandled promise rejection: Axe is already running. Use `await axe.run()` to wait for the previous run to finish before starting a new run.
+  ✓  6 [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:130:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /reset-password — dark (11.5s)
+
+
+  1) [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:130:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /auth — light 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('main', { name: /acesso à plataforma/i })
+    Expected: visible
+    Timeout: 60000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByRole('main', { name: /acesso à plataforma/i }) with timeout 60000ms
+      - waiting for getByRole('main', { name: /acesso à plataforma/i })
+
+
+      136 |         // 60 s: a primeira tela do arquivo paga o boot do dev server sob carga (a V2 mede
+      137 |         // 20-30 s nesse caso); sem isso o teste falha por lentidão, não por a11y.
+    > 138 |         await expect(tela.ancoragem(page)).toBeVisible({ timeout: 60_000 });
+          |                                            ^
+      139 |
+      140 |         // Anti-vacuidade: medir uma tela que não montou o formulário passaria sem medir nada.
+      141 |         for (const campo of tela.campos) {
+        at /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auth-e2e-a11y-teclado-sessao-2610130907310c/e2e/auth-a11y.spec.ts:138:44
+
+    Error Context: test-results/auth-a11y-A11y-das-telas-d-aae3a-OUS-CRITICAL-0-auth-—-light-chromium-auth-deslogado/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/auth-a11y-A11y-das-telas-d-aae3a-OUS-CRITICAL-0-auth-—-light-chromium-auth-deslogado/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/auth-a11y-A11y-das-telas-d-aae3a-OUS-CRITICAL-0-auth-—-light-chromium-auth-deslogado/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:130:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /auth — dark 
+
+    Error: /auth (dark): violação SERIOUS/CRITICAL fora do previsto
+    [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "nos": 1,
+        "alvos": [
+          {
+            "seletor": ".hover\\:text-primary\\/80",
+            "html": "<a class=\"text-xs text-primary hover:text-primary/80 hover:underline transition-colors\" href=\"/forgot-password\" data-discover=\"true\">Esqueci minha senha</a>",
+            "motivo": "Fix any of the following:\n  Element has insufficient color contrast of 3.42 (foreground color: #2463eb, background color: #18181b, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 3
+
+    - Array []
+    + Array [
+    +   "color-contrast",
+    + ]
+
+      166 |           bloqueantes,
+      167 |           `${tela.rota} (${tema}): violação SERIOUS/CRITICAL fora do previsto\n${JSON.stringify(violacoes, null, 2)}`,
+    > 168 |         ).toEqual(BLOQUEANTES_CONHECIDAS[tela.rota] ?? []);
+          |           ^
+      169 |
+      170 |         // Anti-vacuidade da medição: o axe precisa ter analisado os campos DESTA tela —
+      171 |         // medir uma página que não montou o formulário passaria sem medir nada.
+        at /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auth-e2e-a11y-teclado-sessao-2610130907310c/e2e/auth-a11y.spec.ts:168:11
+
+    Error Context: test-results/auth-a11y-A11y-das-telas-d-e0fed-IOUS-CRITICAL-0-auth-—-dark-chromium-auth-deslogado/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/auth-a11y-A11y-das-telas-d-e0fed-IOUS-CRITICAL-0-auth-—-dark-chromium-auth-deslogado/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/auth-a11y-A11y-das-telas-d-e0fed-IOUS-CRITICAL-0-auth-—-dark-chromium-auth-deslogado/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:130:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /auth — light 
+    [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:130:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /auth — dark 
+  4 passed (2.4m)

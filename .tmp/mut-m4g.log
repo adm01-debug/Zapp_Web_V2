@@ -1,0 +1,48 @@
+[WebServer] $ vite --host "127.0.0.1" --port "5390" --strictPort
+
+Running 1 test using 1 worker
+
+[WebServer] 
+[WebServer] warn - The class `motion-safe:duration-[120ms]` is ambiguous and matches multiple utilities.
+[WebServer] warn - If this is content and not a class, replace it with `motion-safe:duration-&lsqb;120ms&rsqb;` to silence this warning.
+[WebServer] 
+[WebServer] warn - The class `motion-safe:duration-[200ms]` is ambiguous and matches multiple utilities.
+[WebServer] warn - If this is content and not a class, replace it with `motion-safe:duration-&lsqb;200ms&rsqb;` to silence this warning.
+  ✘  1 [chromium-auth-deslogado] › e2e/auth-teclado.spec.ts:85:3 › Teclado na tela de login › o campo alcançado por TAB mostra o foco visível (1.2m)
+
+
+  1) [chromium-auth-deslogado] › e2e/auth-teclado.spec.ts:85:3 › Teclado na tela de login › o campo alcançado por TAB mostra o foco visível 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('main', { name: /acesso à plataforma/i })
+    Expected: visible
+    Timeout: 60000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByRole('main', { name: /acesso à plataforma/i }) with timeout 60000ms
+      - waiting for getByRole('main', { name: /acesso à plataforma/i })
+
+
+      38 |     await bloquearRedeReal(page, registro);
+      39 |     await page.goto('/auth');
+    > 40 |     await expect(page.getByRole('main', { name: /acesso à plataforma/i })).toBeVisible({ timeout: 60_000 });
+         |                                                                            ^
+      41 |     await expect(page.locator('#login-email')).toBeVisible();
+      42 |   });
+      43 |
+        at /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auth-e2e-a11y-teclado-sessao-2610130907310c/e2e/auth-teclado.spec.ts:40:76
+
+    Error Context: test-results/auth-teclado-Teclado-na-te-c2d75-r-TAB-mostra-o-foco-visível-chromium-auth-deslogado/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/auth-teclado-Teclado-na-te-c2d75-r-TAB-mostra-o-foco-visível-chromium-auth-deslogado/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/auth-teclado-Teclado-na-te-c2d75-r-TAB-mostra-o-foco-visível-chromium-auth-deslogado/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium-auth-deslogado] › e2e/auth-teclado.spec.ts:85:3 › Teclado na tela de login › o campo alcançado por TAB mostra o foco visível 

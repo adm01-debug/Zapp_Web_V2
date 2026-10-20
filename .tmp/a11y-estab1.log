@@ -1,0 +1,134 @@
+[WebServer] $ vite --host "127.0.0.1" --port "5390" --strictPort
+
+Running 6 tests using 1 worker
+
+[WebServer] 
+[WebServer] warn - The class `motion-safe:duration-[120ms]` is ambiguous and matches multiple utilities.
+[WebServer] warn - If this is content and not a class, replace it with `motion-safe:duration-&lsqb;120ms&rsqb;` to silence this warning.
+[WebServer] 
+[WebServer] warn - The class `motion-safe:duration-[200ms]` is ambiguous and matches multiple utilities.
+[WebServer] warn - If this is content and not a class, replace it with `motion-safe:duration-&lsqb;200ms&rsqb;` to silence this warning.
+  ✘  1 [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:130:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /auth — light (31.0s)
+[WebServer] 10:09:45 AM [vite] (client) [console.warn] [2026-10-13T13:09:45.521Z] [WARN] [App] [sid:0d90e88c] [A11Y] 1 accessibility violation(s) detected
+[WebServer] 10:09:45 AM [vite] (client) [console.warn] [2026-10-13T13:09:45.522Z] [WARN] [App] [sid:0d90e88c] [A11Y] SERIOUS: color-contrast — Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds (1 element(s))
+  ✘  2 [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:130:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /auth — dark (12.3s)
+  ✓  3 [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:130:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /forgot-password — light (6.1s)
+  ✓  4 [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:130:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /forgot-password — dark (7.7s)
+[WebServer] 10:10:07 AM [vite] (client) [console.warn] [2026-10-13T13:10:07.531Z] [WARN] [App] [sid:37e1a253] [AuthService] Failed to fetch profile {"message":"rede real bloqueada no E2E"}
+[WebServer] 10:10:07 AM [vite] (client) [console.warn] [2026-10-13T13:10:07.630Z] [WARN] [QuarantineMonitor] [sid:37e1a253] Falha ao detectar role admin {"message":"rede real bloqueada no E2E"}
+[WebServer] 10:10:09 AM [vite] (client) [console.warn] [2026-10-13T13:10:09.180Z] [WARN] [App] [sid:37e1a253] Failed to load notification settings: {"message":"rede real bloqueada no E2E"}
+  ✓  5 [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:130:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /reset-password — light (7.6s)
+  ✘  6 [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:130:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /reset-password — dark (1.0m)
+
+
+  1) [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:130:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /auth — light 
+
+    Error: page.evaluate: Error: Axe is already running. Use `await axe.run()` to wait for the previous run to finish before starting a new run.
+        at assert (http://127.0.0.1:5390/node_modules/.vite/deps/@axe-core_react.js?v=e2f54172:6220:22)
+        at Object.run4 [as run] (http://127.0.0.1:5390/node_modules/.vite/deps/@axe-core_react.js?v=e2f54172:44133:6)
+        at eval (eval at evaluate (:311:30), <anonymous>:3:25)
+        at UtilityScript.evaluate (<anonymous>:313:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at assert (http://127.0.0.1:5390/node_modules/.vite/deps/@axe-core_react.js?v=e2f54172:6220:22)
+        at Object.run4 (http://127.0.0.1:5390/node_modules/.vite/deps/@axe-core_react.js?v=e2f54172:44133:6)
+        at eval (eval at evaluate (:311:30), <anonymous>:3:25)
+        at UtilityScript.evaluate (<anonymous>:313:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at medir (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auth-e2e-a11y-teclado-sessao-2610130907310c/e2e/auth-a11y.spec.ts:37:15)
+        at /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auth-e2e-a11y-teclado-sessao-2610130907310c/e2e/auth-a11y.spec.ts:161:45
+
+    Error Context: test-results/auth-a11y-A11y-das-telas-d-aae3a-OUS-CRITICAL-0-auth-—-light-chromium-auth-deslogado/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/auth-a11y-A11y-das-telas-d-aae3a-OUS-CRITICAL-0-auth-—-light-chromium-auth-deslogado/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/auth-a11y-A11y-das-telas-d-aae3a-OUS-CRITICAL-0-auth-—-light-chromium-auth-deslogado/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:130:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /auth — dark 
+
+    Error: /auth (dark): violação SERIOUS/CRITICAL fora do previsto
+    [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "nos": 1,
+        "alvos": [
+          {
+            "seletor": ".hover\\:text-primary\\/80",
+            "html": "<a class=\"text-xs text-primary hover:text-primary/80 hover:underline transition-colors\" href=\"/forgot-password\" data-discover=\"true\">Esqueci minha senha</a>",
+            "motivo": "Fix any of the following:\n  Element has insufficient color contrast of 3.42 (foreground color: #2463eb, background color: #18181b, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 3
+
+    - Array []
+    + Array [
+    +   "color-contrast",
+    + ]
+
+      166 |           bloqueantes,
+      167 |           `${tela.rota} (${tema}): violação SERIOUS/CRITICAL fora do previsto\n${JSON.stringify(violacoes, null, 2)}`,
+    > 168 |         ).toEqual(BLOQUEANTES_CONHECIDAS[tela.rota] ?? []);
+          |           ^
+      169 |
+      170 |         // Anti-vacuidade da medição: o axe precisa ter analisado os campos DESTA tela —
+      171 |         // medir uma página que não montou o formulário passaria sem medir nada.
+        at /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auth-e2e-a11y-teclado-sessao-2610130907310c/e2e/auth-a11y.spec.ts:168:11
+
+    Error Context: test-results/auth-a11y-A11y-das-telas-d-e0fed-IOUS-CRITICAL-0-auth-—-dark-chromium-auth-deslogado/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/auth-a11y-A11y-das-telas-d-e0fed-IOUS-CRITICAL-0-auth-—-dark-chromium-auth-deslogado/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/auth-a11y-A11y-das-telas-d-e0fed-IOUS-CRITICAL-0-auth-—-dark-chromium-auth-deslogado/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:130:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /reset-password — dark 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText(/^nova senha$/i).first()
+    Expected: visible
+    Timeout: 60000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByText(/^nova senha$/i).first() with timeout 60000ms
+      - waiting for getByText(/^nova senha$/i).first()
+
+
+      136 |         // 60 s: a primeira tela do arquivo paga o boot do dev server sob carga (a V2 mede
+      137 |         // 20-30 s nesse caso); sem isso o teste falha por lentidão, não por a11y.
+    > 138 |         await expect(tela.ancoragem(page)).toBeVisible({ timeout: 60_000 });
+          |                                            ^
+      139 |
+      140 |         // Anti-vacuidade: medir uma tela que não montou o formulário passaria sem medir nada.
+      141 |         for (const campo of tela.campos) {
+        at /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auth-e2e-a11y-teclado-sessao-2610130907310c/e2e/auth-a11y.spec.ts:138:44
+
+    Error Context: test-results/auth-a11y-A11y-das-telas-d-4508e-CAL-0-reset-password-—-dark-chromium-auth-deslogado/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/auth-a11y-A11y-das-telas-d-4508e-CAL-0-reset-password-—-dark-chromium-auth-deslogado/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/auth-a11y-A11y-das-telas-d-4508e-CAL-0-reset-password-—-dark-chromium-auth-deslogado/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3 failed
+    [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:130:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /auth — light 
+    [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:130:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /auth — dark 
+    [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:130:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /reset-password — dark 
+  3 passed (2.3m)

@@ -1,0 +1,42 @@
+[WebServer] $ vite --host "127.0.0.1" --port "5390" --strictPort
+
+Running 18 tests using 1 worker
+
+[WebServer] 
+[WebServer] warn - The class `motion-safe:duration-[120ms]` is ambiguous and matches multiple utilities.
+[WebServer] warn - If this is content and not a class, replace it with `motion-safe:duration-&lsqb;120ms&rsqb;` to silence this warning.
+[WebServer] 
+[WebServer] warn - The class `motion-safe:duration-[200ms]` is ambiguous and matches multiple utilities.
+[WebServer] warn - If this is content and not a class, replace it with `motion-safe:duration-&lsqb;200ms&rsqb;` to silence this warning.
+  ✓   1 [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:163:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /auth — light (24.7s)
+[WebServer] 10:26:51 AM [vite] (client) [console.warn] [2026-10-13T13:26:51.421Z] [WARN] [App] [sid:45302ef9] [A11Y] 1 accessibility violation(s) detected
+[WebServer] 10:26:51 AM [vite] (client) [console.warn] [2026-10-13T13:26:51.422Z] [WARN] [App] [sid:45302ef9] [A11Y] SERIOUS: color-contrast — Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds (1 element(s))
+  ✓   2 [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:163:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /auth — dark (10.1s)
+  ✓   3 [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:163:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /forgot-password — light (14.1s)
+  ✓   4 [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:163:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /forgot-password — dark (8.3s)
+[WebServer] 10:27:20 AM [vite] (client) [console.warn] [2026-10-13T13:27:20.008Z] [WARN] [App] [sid:79695f1b] [AuthService] Failed to fetch profile {"message":"rede real bloqueada no E2E"}
+[WebServer] 10:27:20 AM [vite] (client) [console.warn] [2026-10-13T13:27:20.076Z] [WARN] [QuarantineMonitor] [sid:79695f1b] Falha ao detectar role admin {"message":"rede real bloqueada no E2E"}
+[WebServer] 10:27:21 AM [vite] (client) [console.warn] [2026-10-13T13:27:21.727Z] [WARN] [App] [sid:79695f1b] Failed to load notification settings: {"message":"rede real bloqueada no E2E"}
+  ✓   5 [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:163:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /reset-password — light (7.2s)
+[WebServer] 10:27:26 AM [vite] (client) [console.warn] [2026-10-13T13:27:26.336Z] [WARN] [App] [sid:e130322e] [AuthService] Failed to fetch profile {"message":"rede real bloqueada no E2E"}
+[WebServer] 10:27:26 AM [vite] (client) [console.warn] [2026-10-13T13:27:26.372Z] [WARN] [QuarantineMonitor] [sid:e130322e] Falha ao detectar role admin {"message":"rede real bloqueada no E2E"}
+[WebServer] 10:27:27 AM [vite] (client) [console.warn] [2026-10-13T13:27:27.840Z] [WARN] [App] [sid:e130322e] Failed to load notification settings: {"message":"rede real bloqueada no E2E"}
+  ✓   6 [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:163:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /reset-password — dark (5.5s)
+  ✓   7 [chromium-auth-deslogado] › e2e/auth-sessao-guard.spec.ts:167:5 › Guarda de sessão nas rotas protegidas › sessão ausente manda para /auth guardando a origem (/queues/comparison) (7.0s)
+  ✓   8 [chromium-auth-deslogado] › e2e/auth-sessao-guard.spec.ts:174:5 › Guarda de sessão nas rotas protegidas › sessão expirada manda para /auth guardando a origem (/queues/comparison) (8.0s)
+  ✓   9 [chromium-auth-deslogado] › e2e/auth-sessao-guard.spec.ts:181:5 › Guarda de sessão nas rotas protegidas › sessão corrompida manda para /auth guardando a origem (/queues/comparison) (7.3s)
+[WebServer] 10:27:54 AM [vite] (client) [console.warn] [2026-10-13T13:27:54.551Z] [WARN] [App] [sid:6b4d321b] [AuthService] Failed to fetch profile {"message":"rede real bloqueada no E2E"}
+[WebServer] 10:27:54 AM [vite] (client) [console.warn] [2026-10-13T13:27:54.623Z] [WARN] [QuarantineMonitor] [sid:6b4d321b] Falha ao detectar role admin {"message":"rede real bloqueada no E2E"}
+  ✓  10 [chromium-auth-deslogado] › e2e/auth-sessao-guard.spec.ts:188:5 › Guarda de sessão nas rotas protegidas › sessão válida NÃO cai no login — prova que a chave do storage é a certa (/queues/comparison) (3.4s)
+  ✓  11 [chromium-auth-deslogado] › e2e/auth-sessao-guard.spec.ts:167:5 › Guarda de sessão nas rotas protegidas › sessão ausente manda para /auth guardando a origem (/sla) (6.4s)
+  ✓  12 [chromium-auth-deslogado] › e2e/auth-sessao-guard.spec.ts:174:5 › Guarda de sessão nas rotas protegidas › sessão expirada manda para /auth guardando a origem (/sla) (6.7s)
+  ✓  13 [chromium-auth-deslogado] › e2e/auth-sessao-guard.spec.ts:181:5 › Guarda de sessão nas rotas protegidas › sessão corrompida manda para /auth guardando a origem (/sla) (6.6s)
+[WebServer] 10:28:17 AM [vite] (client) [console.warn] [2026-10-13T13:28:17.573Z] [WARN] [App] [sid:53f87963] [AuthService] Failed to fetch profile {"message":"rede real bloqueada no E2E"}
+[WebServer] 10:28:17 AM [vite] (client) [console.warn] [2026-10-13T13:28:17.749Z] [WARN] [QuarantineMonitor] [sid:53f87963] Falha ao detectar role admin {"message":"rede real bloqueada no E2E"}
+  ✓  14 [chromium-auth-deslogado] › e2e/auth-sessao-guard.spec.ts:188:5 › Guarda de sessão nas rotas protegidas › sessão válida NÃO cai no login — prova que a chave do storage é a certa (/sla) (3.3s)
+  ✓  15 [chromium-auth-deslogado] › e2e/auth-teclado.spec.ts:55:3 › Teclado na tela de login › TAB: e-mail antes da senha antes de Entrar, sem controle inesperado no meio (6.2s)
+  ✓  16 [chromium-auth-deslogado] › e2e/auth-teclado.spec.ts:85:3 › Teclado na tela de login › o campo alcançado por TAB mostra o foco visível (4.7s)
+  ✓  17 [chromium-auth-deslogado] › e2e/auth-teclado.spec.ts:122:3 › Teclado na tela de login › erro de validação aparece e o foco continua no campo (4.2s)
+  ✓  18 [chromium-auth-deslogado] › e2e/auth-teclado.spec.ts:137:3 › Teclado na tela de login › o botão do olho é operável por teclado e anuncia o estado (4.7s)
+
+  18 passed (2.4m)

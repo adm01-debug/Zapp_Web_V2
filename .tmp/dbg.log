@@ -1,0 +1,8 @@
+
+Running 1 test using 1 worker
+
+DEBUG_SEM={"outline":"none 3px rgb(24, 28, 37)","sombra":"none","cls":"flex w-full rounded-xl border bg-background text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 duration-200 md:text-sm focus-visible:outline-none focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-primary/20 focus-visible:shadow-glow-primary-sm h-10 px-3 py-2 pl-10 pr-10 glass border-border/50 focus:border-primary/50 focus:ring-primary/20 transition-all"}
+DEBUG_COM={"id":"login-password","outline":"solid 2px rgba(0, 0, 0, 0)","sombra":"rgb(246, 247, 249) 0px 0px 0px 0px, rgba(36, 99, 235, 0.2) 0px 0px 0px 4px, rgba(36, 99, 235, 0.3) 0px 0px 15px 0px","cls":"flex w-full rounded-xl border bg-background text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 duration-200 md:text-sm focus-visible:outline-none focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-primary/20 focus-visible:shadow-glow-primary-sm h-10 px-3 py-2 pl-10 pr-10 glass border-border/50 focus:border-primary/50 focus:ring-primary/20 transition-all"}
+  ✓  1 [chromium-auth-deslogado] › e2e/auth-teclado.spec.ts:160:3 › Teclado na tela de login › DEBUG foco (3.1s)
+
+  1 passed (4.0s)

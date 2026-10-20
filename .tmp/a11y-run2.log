@@ -1,0 +1,24 @@
+[WebServer] $ vite --host "127.0.0.1" --port "5173" --strictPort
+
+Running 6 tests using 1 worker
+
+[WebServer] 
+[WebServer] warn - The class `motion-safe:duration-[120ms]` is ambiguous and matches multiple utilities.
+[WebServer] warn - If this is content and not a class, replace it with `motion-safe:duration-&lsqb;120ms&rsqb;` to silence this warning.
+[WebServer] 
+[WebServer] warn - The class `motion-safe:duration-[200ms]` is ambiguous and matches multiple utilities.
+[WebServer] warn - If this is content and not a class, replace it with `motion-safe:duration-&lsqb;200ms&rsqb;` to silence this warning.
+  ✓  1 [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:127:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /auth — light (16.7s)
+  ✓  2 [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:127:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /auth — dark (3.5s)
+  ✓  3 [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:127:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /forgot-password — light (3.4s)
+  ✓  4 [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:127:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /forgot-password — dark (3.0s)
+[WebServer] 9:45:34 AM [vite] (client) [console.warn] [2026-10-13T12:45:34.660Z] [WARN] [App] [sid:f2f5bd1a] [AuthService] Failed to fetch profile {"message":"rede real bloqueada no E2E"}
+[WebServer] 9:45:34 AM [vite] (client) [console.warn] [2026-10-13T12:45:34.691Z] [WARN] [QuarantineMonitor] [sid:f2f5bd1a] Falha ao detectar role admin {"message":"rede real bloqueada no E2E"}
+[WebServer] 9:45:35 AM [vite] (client) [console.warn] [2026-10-13T12:45:35.632Z] [WARN] [App] [sid:f2f5bd1a] Failed to load notification settings: {"message":"rede real bloqueada no E2E"}
+  ✓  5 [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:127:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /reset-password — light (3.1s)
+[WebServer] 9:45:37 AM [vite] (client) [console.warn] [2026-10-13T12:45:37.709Z] [WARN] [App] [sid:89defabf] [AuthService] Failed to fetch profile {"message":"rede real bloqueada no E2E"}
+[WebServer] 9:45:37 AM [vite] (client) [console.warn] [2026-10-13T12:45:37.714Z] [WARN] [QuarantineMonitor] [sid:89defabf] Falha ao detectar role admin {"message":"rede real bloqueada no E2E"}
+[WebServer] 9:45:38 AM [vite] (client) [console.warn] [2026-10-13T12:45:38.604Z] [WARN] [App] [sid:89defabf] Failed to load notification settings: {"message":"rede real bloqueada no E2E"}
+  ✓  6 [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:127:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /reset-password — dark (2.9s)
+
+  6 passed (35.7s)

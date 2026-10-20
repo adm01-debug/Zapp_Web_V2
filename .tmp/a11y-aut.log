@@ -1,0 +1,132 @@
+
+Running 3 tests using 1 worker
+
+  ✓  1 [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:115:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /auth — light (29.3s)
+  ✓  2 [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:115:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /forgot-password — light (4.1s)
+  ✘  3 [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:115:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /reset-password — light (3.2s)
+
+
+  1) [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:115:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /reset-password — light 
+
+    Error: /reset-password (light): violação SERIOUS/CRITICAL
+    [
+      {
+        "id": "button-name",
+        "impact": "critical",
+        "nos": 1,
+        "alvos": [
+          {
+            "seletor": ".absolute",
+            "html": "<button type=\"button\" class=\"absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground\">",
+            "motivo": "Fix any of the following:\n  Element does not have inner text that is visible to screen readers\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+          }
+        ]
+      },
+      {
+        "id": "landmark-one-main",
+        "impact": "moderate",
+        "nos": 1,
+        "alvos": [
+          {
+            "seletor": "html",
+            "html": "<html lang=\"pt-BR\" class=\"light\" data-preset-id=\"corporate\" style=\"color-scheme: light;...\">",
+            "motivo": "Fix all of the following:\n  Document does not have a main landmark"
+          }
+        ]
+      },
+      {
+        "id": "page-has-heading-one",
+        "impact": "moderate",
+        "nos": 1,
+        "alvos": [
+          {
+            "seletor": "html",
+            "html": "<html lang=\"pt-BR\" class=\"light\" data-preset-id=\"corporate\" style=\"color-scheme: light;...\">",
+            "motivo": "Fix all of the following:\n  Page must have a level-one heading"
+          }
+        ]
+      },
+      {
+        "id": "region",
+        "impact": "moderate",
+        "nos": 5,
+        "alvos": [
+          {
+            "seletor": "h3",
+            "html": "<h3 class=\"text-2xl font-semibold leading-none tracking-tight\">Nova Senha</h3>",
+            "motivo": "Fix any of the following:\n  Some page content is not contained by landmarks"
+          },
+          {
+            "seletor": "p",
+            "html": "<p class=\"text-sm text-muted-foreground\">Digite sua nova senha</p>",
+            "motivo": "Fix any of the following:\n  Some page content is not contained by landmarks"
+          },
+          {
+            "seletor": "label[for=\"password\"]",
+            "html": "<label class=\"text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70\" for=\"password\">Nova Senha</label>",
+            "motivo": "Fix any of the following:\n  Some page content is not contained by landmarks"
+          },
+          {
+            "seletor": "#password",
+            "html": "<input class=\"flex w-full rounded-...\" id=\"password\" type=\"password\" value=\"\">",
+            "motivo": "Fix any of the following:\n  Some page content is not contained by landmarks"
+          },
+          {
+            "seletor": ".space-y-2:nth-child(2)",
+            "html": "<div class=\"space-y-2\">",
+            "motivo": "Fix any of the following:\n  Some page content is not contained by landmarks"
+          }
+        ]
+      }
+    ]
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  -  1
+    + Received  + 21
+
+    - Array []
+    + Array [
+    +   Object {
+    +     "alvos": Array [
+    +       Object {
+    +         "html": "<button type=\"button\" class=\"absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground\">",
+    +         "motivo": "Fix any of the following:
+    +   Element does not have inner text that is visible to screen readers
+    +   aria-label attribute does not exist or is empty
+    +   aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty
+    +   Element has no title attribute
+    +   Element does not have an implicit (wrapped) <label>
+    +   Element does not have an explicit <label>
+    +   Element's default semantics were not overridden with role=\"none\" or role=\"presentation\"",
+    +         "seletor": ".absolute",
+    +       },
+    +     ],
+    +     "id": "button-name",
+    +     "impact": "critical",
+    +     "nos": 1,
+    +   },
+    + ]
+
+      134 |           filtrarViolacoesBloqueantes(violacoes),
+      135 |           `${tela.rota} (${tema}): violação SERIOUS/CRITICAL\n${JSON.stringify(violacoes, null, 2)}`,
+    > 136 |         ).toEqual([]);
+          |           ^
+      137 |
+      138 |         // Anti-vacuidade da medição: o axe precisa ter analisado os campos DESTA tela —
+      139 |         // medir uma página que não montou o formulário passaria sem medir nada.
+        at /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auth-e2e-a11y-teclado-sessao-2610130907310c/e2e/auth-a11y.spec.ts:136:11
+
+    Error Context: test-results/auth-a11y-A11y-das-telas-d-c5159-AL-0-reset-password-—-light-chromium-auth-deslogado/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/auth-a11y-A11y-das-telas-d-c5159-AL-0-reset-password-—-light-chromium-auth-deslogado/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/auth-a11y-A11y-das-telas-d-c5159-AL-0-reset-password-—-light-chromium-auth-deslogado/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium-auth-deslogado] › e2e/auth-a11y.spec.ts:115:7 › A11y das telas de autenticação (axe SERIOUS/CRITICAL = 0) › /reset-password — light 
+  2 passed (39.7s)
