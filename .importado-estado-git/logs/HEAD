@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 d723a9010796f1ea4aea5270d881da2974328ba4 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792110034 -0300	
+d723a9010796f1ea4aea5270d881da2974328ba4 d723a9010796f1ea4aea5270d881da2974328ba4 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792110036 -0300	reset: moving to HEAD
+d723a9010796f1ea4aea5270d881da2974328ba4 d04842db55511b58cf31413830a41d1db9d04950 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792110113 -0300	cherry-pick: feat(db): rpc rpc_queue_goal_metrics com metricas reais e visibilidade por papel (PM-02)
+d04842db55511b58cf31413830a41d1db9d04950 713e94dbdffbbc7407dfe0296d2ca1511f4e73ef Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792110914 -0300	commit: feat(filas): avisos de limite das metas com metrica real da fila (PM-02)
+713e94dbdffbbc7407dfe0296d2ca1511f4e73ef c6fb1b813343e27777439a0b24942688456ce58e Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792111490 -0300	commit: fix(hooks): tipa a rpc de metricas com o padrao PendingDatabaseRpc

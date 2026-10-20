@@ -1,0 +1,9 @@
+4	0	src/components/notifications/GoalNotificationProvider.tsx
+66	12	src/components/queues/QueuesView.tsx
+131	0	src/components/queues/__tests__/QueuesView.metricasRpc.test.tsx
+8	0	src/components/queues/__tests__/QueuesView.test.tsx
+287	0	src/hooks/analytics/__tests__/useQueueGoalAlerts.test.tsx
+161	0	src/hooks/analytics/useQueueGoalAlerts.ts
+120	0	src/hooks/business/useQueueGoals.ts
+177	0	supabase/migrations/20261015232316_rpc_queue_goal_metrics.sql
+430	0	supabase/tests/rpc_queue_goal_metrics.sql

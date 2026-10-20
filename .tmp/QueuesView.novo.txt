@@ -1,0 +1,1 @@
+Cópia temporária de trabalho (já restaurada em src/components/queues/QueuesView.tsx) — sem código.

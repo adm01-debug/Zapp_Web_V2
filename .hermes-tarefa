@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=avisos-limite-fila
+ID=2610152120dedb
+BRANCH=v2/avisos-limite-fila-2610152120dedb
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/avisos-limite-fila-2610152120dedb
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-15T21:20:36-03:00
+KANBAN=t_549f87e1
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/avisos-limite-fila-2610152120dedb/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-15
+DB_LOCAL=v2-2610152120dedb
+PRONTO_SHA=c6fb1b813343e27777439a0b24942688456ce58e

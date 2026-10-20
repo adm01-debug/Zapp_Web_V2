@@ -1,0 +1,1502 @@
+diff --git a/src/components/notifications/GoalNotificationProvider.tsx b/src/components/notifications/GoalNotificationProvider.tsx
+index bd4bdfb26c..1a138a9282 100644
+--- a/src/components/notifications/GoalNotificationProvider.tsx
++++ b/src/components/notifications/GoalNotificationProvider.tsx
+@@ -1,10 +1,14 @@
+ import { forwardRef } from 'react';
+ import { useGoalNotifications } from '@/hooks/analytics/useGoalNotifications';
++import { useQueueGoalAlerts } from '@/hooks/analytics/useQueueGoalAlerts';
+ 
+ export const GoalNotificationProvider = forwardRef<HTMLDivElement, { children: React.ReactNode }>(
+   function GoalNotificationProvider({ children }, _ref) {
+     // Initialize goal notifications monitoring
+     useGoalNotifications();
++    // Avisos de limite das metas de FILA (contatos aguardando, espera, pendentes e taxa de
++    // atribuição) — a montagem única aqui é o que evita aviso repetido por tela.
++    useQueueGoalAlerts();
+     return <>{children}</>;
+   }
+ );
+diff --git a/src/components/queues/QueuesView.tsx b/src/components/queues/QueuesView.tsx
+index 7ce1f6c1d5..810d98966c 100644
+--- a/src/components/queues/QueuesView.tsx
++++ b/src/components/queues/QueuesView.tsx
+@@ -9,7 +9,16 @@ import { Skeleton } from '@/components/ui/skeleton';
+ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+ import { Plus, Clock, BarChart3, AlertTriangle } from 'lucide-react';
+ import { useQueues, QueueWithMembers } from '@/hooks/business/useQueues';
+-import { useQueueGoals, QueueAlert } from '@/hooks/business/useQueueGoals';
++import {
++  useQueueGoals,
++  useQueueGoalMetrics,
++  QUEUE_GOAL_METRICS,
++  goalMetricPercent,
++  worstCrossedGoalBand,
++  formatGoalMetricValue,
++  QueueAlert,
++  type QueueGoalMetricDefinition,
++} from '@/hooks/business/useQueueGoals';
+ import { CreateQueueDialog } from './CreateQueueDialog';
+ import { EditQueueDialog } from './EditQueueDialog';
+ import { AddMemberDialog } from './AddMemberDialog';
+@@ -17,10 +26,28 @@ import { QueueGoalsDialog } from './QueueGoalsDialog';
+ import { QueueAlertsDisplay } from './QueueAlertsDisplay';
+ import { QueueCard } from './QueueCard';
+ 
++/**
++ * Texto do alerta por métrica. O valor é sempre o que a RPC mediu (`waiting_contacts`,
++ * `avg_wait_minutes`, `messages_pending`, `assignment_rate`) — nenhuma conta montada aqui.
++ */
++function queueAlertMessage(def: QueueGoalMetricDefinition, value: number, target: number): string {
++  switch (def.key) {
++    case 'waiting_contacts':
++      return `${formatGoalMetricValue(value)} contatos aguardando atendimento`;
++    case 'avg_wait_minutes':
++      return `Espera média de ${formatGoalMetricValue(value)} min (limite ${formatGoalMetricValue(target)} min)`;
++    case 'messages_pending':
++      return `${formatGoalMetricValue(value)} mensagens sem resposta (limite ${formatGoalMetricValue(target)})`;
++    case 'assignment_rate':
++      return `Taxa de atribuição em ${formatGoalMetricValue(value)}% (mínimo ${formatGoalMetricValue(target)}%)`;
++  }
++}
++
+ export function QueuesView() {
+   const navigate = useNavigate();
+   const { queues, loading, createQueue, updateQueue, deleteQueue, addMember, removeMember } = useQueues();
+   const { goals } = useQueueGoals();
++  const { metrics } = useQueueGoalMetrics();
+   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+   const [editDialogOpen, setEditDialogOpen] = useState(false);
+   const [addMemberDialogOpen, setAddMemberDialogOpen] = useState(false);
+@@ -34,20 +61,47 @@ export function QueuesView() {
+     const allAlerts: QueueAlert[] = [];
+     queues.forEach(queue => {
+       const queueGoal = goals[queue.id];
++      // Sem meta cadastrada (ou com alertas desligados) não há alerta.
+       if (!queueGoal || !queueGoal.alerts_enabled) return;
+-      const activeMembers = queue.members.filter(m => m.is_active).length;
+-      const assignmentRate = queue.waiting_count + activeMembers > 0 ? Math.round((activeMembers / (queue.waiting_count + activeMembers)) * 100) : 100;
+-      if (queue.waiting_count > queueGoal.max_waiting_contacts) {
+-        const alertKey = `${queue.id}-waiting_contacts`;
+-        if (!dismissedAlerts.has(alertKey)) allAlerts.push({ type: 'waiting_contacts', queueId: queue.id, queueName: queue.name, queueColor: queue.color, message: `${queue.waiting_count} contatos aguardando atendimento`, severity: queue.waiting_count > queueGoal.max_waiting_contacts * 1.5 ? 'critical' : 'warning', currentValue: queue.waiting_count, threshold: queueGoal.max_waiting_contacts });
+-      }
+-      if (assignmentRate < queueGoal.min_assignment_rate && queue.waiting_count > 0) {
+-        const alertKey = `${queue.id}-assignment_rate`;
+-        if (!dismissedAlerts.has(alertKey)) allAlerts.push({ type: 'assignment_rate', queueId: queue.id, queueName: queue.name, queueColor: queue.color, message: 'Taxa de atribuição abaixo do esperado', severity: assignmentRate < queueGoal.min_assignment_rate * 0.5 ? 'critical' : 'warning', currentValue: assignmentRate, threshold: queueGoal.min_assignment_rate });
+-      }
++      // Sem métrica da RPC não há alerta: ou a fila está fora da visibilidade do usuário (a RPC só
++      // devolve fila de membro para quem não é staff) ou a medição ainda não chegou. A conta antiga
++      // (`membros ativos / (membros ativos + aguardando)`) era inventada no front.
++      const metric = metrics[queue.id];
++      if (!metric) return;
++
++      QUEUE_GOAL_METRICS.forEach(def => {
++        const bruto = metric[def.key];
++        // `null` = não medido (sem base no período): não avisa. `0` = dado medido (fila vazia).
++        if (bruto === null || bruto === undefined) return;
++        const value = Number(bruto);
++        if (!Number.isFinite(value)) return;
++
++        const target = Number(queueGoal[def.goalKey]);
++        const percent = goalMetricPercent(value, target);
++        // Meta zerada não define percentual — sem faixa, sem alerta.
++        if (percent === null) return;
++        const band = worstCrossedGoalBand(percent, def.direction);
++        if (band === null) return;
++
++        const alertKey = `${queue.id}-${def.alertType}`;
++        if (dismissedAlerts.has(alertKey)) return;
++
++        allAlerts.push({
++          type: def.alertType,
++          queueId: queue.id,
++          queueName: metric.queue_name || queue.name,
++          queueColor: queue.color,
++          message: queueAlertMessage(def, value, target),
++          severity: def.direction === 'max'
++            ? (band >= 100 ? 'critical' : 'warning')
++            : (band <= 25 ? 'critical' : 'warning'),
++          currentValue: value,
++          threshold: target,
++        });
++      });
+     });
+     return allAlerts;
+-  }, [queues, goals, dismissedAlerts]);
++  }, [queues, goals, metrics, dismissedAlerts]);
+ 
+   const getQueueAlertCount = (queueId: string) => alerts.filter(a => a.queueId === queueId).length;
+ 
+diff --git a/src/components/queues/__tests__/QueuesView.metricasRpc.test.tsx b/src/components/queues/__tests__/QueuesView.metricasRpc.test.tsx
+new file mode 100644
+index 0000000000..95de0f8905
+--- /dev/null
++++ b/src/components/queues/__tests__/QueuesView.metricasRpc.test.tsx
+@@ -0,0 +1,131 @@
++/**
++ * Cartão t_549f87e1 (PM-02) — a TELA de filas passa a usar a métrica REAL da RPC
++ * `rpc_queue_goal_metrics()`, não a conta inventada no front.
++ *
++ * Prova do defeito (vermelho antes, verde depois): a fila q1 tem `waiting_count` (contagem de
++ * contatos que o hook de filas calcula) igual a 0 e, ao mesmo tempo, a RPC responde
++ * `waiting_contacts: 15`. Antes desta entrega o alerta de espera só olhava `waiting_count` e a
++ * conta `membros_ativos / (membros_ativos + aguardando)` — com contagem 0 nada aparecia (o alerta
++ * sumia) e a taxa de atribuição era inventada como 100 %. Com a RPC, os dois alertas aparecem com
++ * o número medido.
++ */
++import { describe, it, expect, vi, beforeEach } from 'vitest';
++import { render, screen, waitFor } from '@testing-library/react';
++import { MemoryRouter } from 'react-router-dom';
++
++const mockQueues = [
++  { id: 'q1', name: 'Suporte', color: '#3B82F6', is_active: true, max_wait_time_minutes: 30, priority: 1, description: null, created_at: '', updated_at: '' },
++];
++
++const mockGoals = [
++  { id: 'g1', queue_id: 'q1', max_waiting_contacts: 10, max_avg_wait_minutes: 15, min_assignment_rate: 80, max_messages_pending: 50, alerts_enabled: true },
++];
++
++// A RPC devolve a métrica REAL: 15 aguardando (limite 10) e taxa de atribuição de 20 % (mínimo 80 %).
++// `avg_wait_minutes` e `messages_pending` vêm NULL de propósito (não medidos nesta fila): NULL não
++// pode virar alerta.
++const mockMetrics = vi.hoisted(() => [
++  {
++    queue_id: 'q1',
++    queue_name: 'Suporte (nome real da RPC)',
++    coverage: 'completa',
++    contacts_open: 15,
++    waiting_contacts: 15,
++    avg_wait_minutes: null,
++    assignment_rate: 20,
++    received_contacts: 20,
++    assigned_contacts: 4,
++    messages_pending: null,
++  },
++]);
++
++// waiting_count do hook de filas: ZERO. É justamente o valor que escondia o alerta antes.
++const mockWaitingCounts: Record<string, number> = { q1: 0 };
++
++function contactsCountBuilder(queueIdRef: { id: string }) {
++  return {
++    eq: vi.fn((column: string, value: unknown) => {
++      if (column === 'queue_id') queueIdRef.id = String(value);
++      return contactsCountBuilder(queueIdRef);
++    }),
++    is: vi.fn(() => contactsCountBuilder(queueIdRef)),
++    not: vi.fn(() => Promise.resolve({ count: mockWaitingCounts[queueIdRef.id] ?? 0, error: null })),
++  };
++}
++
++vi.mock('@/integrations/supabase/client', () => ({
++  supabase: {
++    channel: vi.fn().mockReturnValue({
++      on: vi.fn().mockReturnThis(),
++      subscribe: vi.fn().mockReturnValue({ unsubscribe: vi.fn() }),
++    }),
++    removeChannel: vi.fn(),
++    rpc: vi.fn().mockResolvedValue({ data: mockMetrics, error: null }),
++    from: vi.fn().mockImplementation((table: string) => {
++      if (table === 'queues') {
++        return { select: vi.fn().mockReturnValue({ order: vi.fn().mockResolvedValue({ data: mockQueues, error: null }) }) };
++      }
++      if (table === 'queue_members') {
++        return { select: vi.fn().mockResolvedValue({ data: [], error: null }) };
++      }
++      if (table === 'queue_goals') {
++        return { select: vi.fn().mockResolvedValue({ data: mockGoals, error: null }) };
++      }
++      if (table === 'contacts') {
++        return { select: vi.fn(() => contactsCountBuilder({ id: '' })) };
++      }
++      return { select: vi.fn().mockResolvedValue({ data: [], error: null }) };
++    }),
++  },
++}));
++
++vi.mock('@/hooks/ui/use-toast', () => ({ useToast: () => ({ toast: vi.fn() }) }));
++
++vi.mock('@/lib/logger', () => ({
++  log: { error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() },
++  getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
++}));
++
++vi.mock('@/components/effects/AuroraBorealis', () => ({ AuroraBorealis: () => null }));
++vi.mock('@/components/dashboard/FloatingParticles', () => ({ FloatingParticles: () => null }));
++vi.mock('@/components/queues/CreateQueueDialog', () => ({ CreateQueueDialog: () => null }));
++vi.mock('@/components/queues/AddMemberDialog', () => ({ AddMemberDialog: () => null }));
++vi.mock('@/components/queues/QueueGoalsDialog', () => ({ QueueGoalsDialog: () => null }));
++
++import { QueuesView } from '@/components/queues/QueuesView';
++
++describe('QueuesView — alertas vêm da RPC de métricas, não de conta inventada (PM-02)', () => {
++  beforeEach(() => {
++    vi.clearAllMocks();
++  });
++
++  it('mostra o alerta de espera mesmo com waiting_count 0, usando o valor medido pela RPC', async () => {
++    render(
++      <MemoryRouter>
++        <QueuesView />
++      </MemoryRouter>
++    );
++
++    // Com a conta antiga (waiting_count = 0) este alerta NÃO existia.
++    await waitFor(() => {
++      expect(screen.getByText('15 contatos aguardando atendimento')).toBeInTheDocument();
++    });
++    expect(screen.getByText('Alertas Ativos (2)')).toBeInTheDocument();
++  });
++
++  it('usa o nome da fila e a taxa de atribuição que a RPC devolveu', async () => {
++    render(
++      <MemoryRouter>
++        <QueuesView />
++      </MemoryRouter>
++    );
++
++    await waitFor(() => {
++      expect(screen.getByText('Taxa de atribuição em 20% (mínimo 80%)')).toBeInTheDocument();
++    });
++    // Métricas NULL (espera e mensagens pendentes) ficam de fora — nada de alerta inventado.
++    expect(screen.queryByText(/Espera média/)).not.toBeInTheDocument();
++    expect(screen.queryByText(/mensagens sem resposta/)).not.toBeInTheDocument();
++    expect(screen.getAllByRole('button', { name: /^Dispensar alerta / })).toHaveLength(2);
++  });
++});
+diff --git a/src/components/queues/__tests__/QueuesView.test.tsx b/src/components/queues/__tests__/QueuesView.test.tsx
+index d5e17d3100..e1d0e0df0e 100644
+--- a/src/components/queues/__tests__/QueuesView.test.tsx
++++ b/src/components/queues/__tests__/QueuesView.test.tsx
+@@ -18,6 +18,13 @@ import { render, screen, waitFor } from '@testing-library/react';
+ import { axe } from 'vitest-axe';
+ import { MemoryRouter } from 'react-router-dom';
+ 
++// Métrica REAL que a RPC `rpc_queue_goal_metrics()` devolve (cartão t_549f87e1). Desde PM-02 os
++// alertas da tela saem destes valores, e não mais da conta `membros ativos / aguardando`.
++const mockMetrics = vi.hoisted(() => [
++  { queue_id: 'q1', queue_name: 'Suporte', coverage: 'completa', contacts_open: 15, waiting_contacts: 15, avg_wait_minutes: null, assignment_rate: 20, received_contacts: 20, assigned_contacts: 4, messages_pending: null },
++  { queue_id: 'q2', queue_name: 'Vendas', coverage: 'completa', contacts_open: 0, waiting_contacts: 0, avg_wait_minutes: null, assignment_rate: 100, received_contacts: 0, assigned_contacts: 0, messages_pending: 0 },
++]);
++
+ const mockQueues = [
+   { id: 'q1', name: 'Suporte', color: '#3B82F6', is_active: true, max_wait_time_minutes: 30, priority: 1, description: null, created_at: '', updated_at: '' },
+   { id: 'q2', name: 'Vendas', color: '#10B981', is_active: true, max_wait_time_minutes: 15, priority: 2, description: null, created_at: '', updated_at: '' },
+@@ -54,6 +61,7 @@ vi.mock('@/integrations/supabase/client', () => ({
+       subscribe: vi.fn().mockReturnValue({ unsubscribe: vi.fn() }),
+     }),
+     removeChannel: vi.fn(),
++    rpc: vi.fn().mockResolvedValue({ data: mockMetrics, error: null }),
+     from: vi.fn().mockImplementation((table: string) => {
+       if (table === 'queues') {
+         return {
+diff --git a/src/hooks/analytics/__tests__/useQueueGoalAlerts.test.tsx b/src/hooks/analytics/__tests__/useQueueGoalAlerts.test.tsx
+new file mode 100644
+index 0000000000..f0a1881ef3
+--- /dev/null
++++ b/src/hooks/analytics/__tests__/useQueueGoalAlerts.test.tsx
+@@ -0,0 +1,287 @@
++/**
++ * Cartão t_549f87e1 (PM-02, avisos de limite das metas de fila).
++ *
++ * O hook REAL `useQueueGoalAlerts` roda sobre um mock de `rpc_queue_goal_metrics` e prova:
++ *  1. as faixas 50 → 75 → 100 % do limite avisam UMA vez cada, e a quarta varredura no mesmo dia
++ *     não repete nada (a chave anunciada persiste em `sessionStorage`);
++ *  2. `null` (não medido) não avisa e `0` (dado — fila vazia) não vira aviso nem derruba a métrica
++ *     seguinte da mesma fila;
++ *  3. taxa de atribuição é INVERTIDA: cai para 25 % do mínimo e avisa; 100 % do mínimo não avisa;
++ *  4. as quatro métricas são avaliadas (todas as faixas que o cartão pede);
++ *  5. a varredura roda a cada 5 min por `useVisiblePolling` (que já pausa em aba oculta) e o nome
++ *     no aviso é o nome REAL da fila vindo da RPC.
++ */
++import { describe, it, expect, vi, beforeEach } from 'vitest';
++import { renderHook, act } from '@testing-library/react';
++
++interface MetricsRow {
++  queue_id: string;
++  queue_name: string;
++  coverage: string;
++  contacts_open: number | null;
++  waiting_contacts: number | null;
++  avg_wait_minutes: number | null;
++  assignment_rate: number | null;
++  received_contacts: number | null;
++  assigned_contacts: number | null;
++  messages_pending: number | null;
++}
++
++const h = vi.hoisted(() => ({
++  state: {
++    rows: [] as MetricsRow[],
++    rpcError: null as { message: string } | null,
++    rpcCalls: 0,
++    polling: { task: null as null | ((signal?: AbortSignal) => Promise<void>), intervalMs: 0, enabled: true },
++    toastWarning: vi.fn(),
++    playSound: vi.fn(),
++    browserNotification: vi.fn(),
++    settings: {
++      soundEnabled: true,
++      soundVolume: 70,
++      browserNotifications: true,
++      goalSoundType: 'chime',
++    },
++    quiet: false,
++  },
++}));
++
++vi.mock('@/integrations/supabase/client', () => ({
++  supabase: {
++    rpc: vi.fn(async () => {
++      h.state.rpcCalls += 1;
++      return h.state.rpcError
++        ? { data: null, error: h.state.rpcError }
++        : { data: h.state.rows, error: null };
++    }),
++  },
++}));
++
++vi.mock('@/hooks/auth/useAuth', () => ({
++  useAuth: () => ({ user: { id: 'u1' } }),
++}));
++
++vi.mock('@/hooks/system/useNotificationSettings', () => ({
++  useNotificationSettings: () => ({
++    settings: h.state.settings,
++    isQuietHours: () => h.state.quiet,
++  }),
++}));
++
++vi.mock('@/hooks/business/useQueueGoals', async (importOriginal) => {
++  const real = await importOriginal<typeof import('@/hooks/business/useQueueGoals')>();
++  return {
++    ...real,
++    useQueueGoals: () => ({
++      goals: {
++        q1: {
++          id: 'g1', queue_id: 'q1', max_waiting_contacts: 10, max_avg_wait_minutes: 15,
++          min_assignment_rate: 80, max_messages_pending: 50, alerts_enabled: true,
++        },
++      },
++    }),
++  };
++});
++
++vi.mock('@/hooks/realtime/useVisiblePolling', () => ({
++  useVisiblePolling: (task: (signal?: AbortSignal) => Promise<void>, intervalMs: number, enabled: boolean) => {
++    h.state.polling = { task, intervalMs, enabled };
++  },
++}));
++
++vi.mock('sonner', () => ({
++  toast: {
++    warning: (...args: unknown[]) => h.state.toastWarning(...args),
++    success: vi.fn(),
++    error: vi.fn(),
++  },
++}));
++
++vi.mock('@/utils/notificationSounds', () => ({
++  playNotificationSound: (...args: unknown[]) => h.state.playSound(...args),
++  showBrowserNotification: (...args: unknown[]) => h.state.browserNotification(...args),
++}));
++
++vi.mock('@/lib/logger', () => ({
++  log: { error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() },
++  getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
++}));
++
++import { useQueueGoalAlerts, QUEUE_GOAL_ALERTS_INTERVAL_MS, QUEUE_GOAL_ALERTS_STORAGE_KEY } from '@/hooks/analytics/useQueueGoalAlerts';
++
++function row(overrides: Partial<MetricsRow> = {}): MetricsRow {
++  return {
++    queue_id: 'q1',
++    queue_name: 'Suporte Real',
++    coverage: 'completa',
++    contacts_open: 12,
++    waiting_contacts: 0,
++    avg_wait_minutes: 0,
++    assignment_rate: 100,
++    received_contacts: 20,
++    assigned_contacts: 20,
++    messages_pending: 0,
++    ...overrides,
++  };
++}
++
++async function varredura(signal?: AbortSignal) {
++  await act(async () => {
++    await h.state.polling.task!(signal);
++  });
++}
++
++describe('useQueueGoalAlerts — avisos de limite das metas de fila', () => {
++  beforeEach(() => {
++    vi.clearAllMocks();
++    sessionStorage.clear();
++    h.state.rows = [];
++    h.state.rpcError = null;
++    h.state.rpcCalls = 0;
++    h.state.quiet = false;
++  });
++
++  it('avisa uma vez cada faixa (50, 75 e 100% do limite) e não repete na varredura seguinte', async () => {
++    renderHook(() => useQueueGoalAlerts());
++
++    h.state.rows = [row({ waiting_contacts: 5 })];   // 50 % de 10
++    await varredura();
++    h.state.rows = [row({ waiting_contacts: 8 })];   // 80 % -> cruza 75 (e já cruzou 50)
++    await varredura();
++    h.state.rows = [row({ waiting_contacts: 10 })];  // 100 %
++    await varredura();
++
++    expect(h.state.toastWarning).toHaveBeenCalledTimes(3);
++    const titulos = h.state.toastWarning.mock.calls.map((c) => c[0] as string);
++    expect(titulos).toEqual([
++      'Fila Suporte Real: 50% do limite',
++      'Fila Suporte Real: 75% do limite',
++      'Fila Suporte Real: 100% do limite',
++    ]);
++
++    // Quarta varredura no mesmo nível: nada novo.
++    await varredura();
++    expect(h.state.toastWarning).toHaveBeenCalledTimes(3);
++  });
++
++  it('não repete a faixa já anunciada depois de REMONTAR (a chave fica na sessão)', async () => {
++    const first = renderHook(() => useQueueGoalAlerts());
++    h.state.rows = [row({ waiting_contacts: 6 })];
++    await varredura();
++    expect(h.state.toastWarning).toHaveBeenCalledTimes(1);
++    first.unmount();
++
++    renderHook(() => useQueueGoalAlerts());
++    await varredura();
++    expect(h.state.toastWarning).toHaveBeenCalledTimes(1);
++    expect(sessionStorage.getItem(QUEUE_GOAL_ALERTS_STORAGE_KEY)).toContain('q1:waiting_contacts:50');
++  });
++
++  it('NULL (não medido) não avisa e 0 (dado) não derruba as outras métricas da mesma fila', async () => {
++    renderHook(() => useQueueGoalAlerts());
++
++    // Fila sem base: todas as métricas nulas.
++    h.state.rows = [row({
++      coverage: 'sem_base', waiting_contacts: null, avg_wait_minutes: null,
++      assignment_rate: null, messages_pending: null,
++    })];
++    await varredura();
++    expect(h.state.toastWarning).not.toHaveBeenCalled();
++
++    // `waiting_contacts: 0` é dado (0 % de 10) e não avisa; `messages_pending: 60` estoura 50.
++    h.state.rows = [row({ waiting_contacts: 0, messages_pending: 60, avg_wait_minutes: null })];
++    await varredura();
++    expect(h.state.toastWarning).toHaveBeenCalledTimes(1);
++    expect(h.state.toastWarning.mock.calls[0][0]).toBe('Fila Suporte Real: 100% do limite');
++    expect(h.state.toastWarning.mock.calls[0][1]).toEqual({
++      description: 'Mensagens sem resposta: 60 (limite 50)',
++    });
++  });
++
++  it('taxa de atribuição é invertida: avisa ao CAIR para 25% do mínimo e ignora quem está em 100%', async () => {
++    renderHook(() => useQueueGoalAlerts());
++
++    // 100 % do mínimo de 80 (meta cumprida) não avisa.
++    h.state.rows = [row({ waiting_contacts: 0, assignment_rate: 100, messages_pending: 0 })];
++    await varredura();
++    expect(h.state.toastWarning).not.toHaveBeenCalled();
++
++    // 20 de 80 = 25 % -> faixa invertida mais grave (25 %).
++    h.state.rows = [row({ waiting_contacts: 0, assignment_rate: 20 })];
++    await varredura();
++    expect(h.state.toastWarning).toHaveBeenCalledTimes(1);
++    expect(h.state.toastWarning.mock.calls[0][0]).toBe('Fila Suporte Real: 25% do mínimo');
++    expect(h.state.toastWarning.mock.calls[0][1]).toEqual({
++      description: 'Taxa de atribuição: 20% (mínimo 80%)',
++    });
++  });
++
++  it('avalia as QUATRO métricas do cartão, cada uma na sua faixa', async () => {
++    renderHook(() => useQueueGoalAlerts());
++
++    h.state.rows = [row({
++      waiting_contacts: 10,      // 100 % de 10  -> faixa 100
++      avg_wait_minutes: 8,       // ~53 % de 15  -> faixa 50
++      messages_pending: 40,      // 80 % de 50   -> faixa 75
++      assignment_rate: 40,       // 50 % de 80   -> invertida: faixa 50
++    })];
++    await varredura();
++
++    expect(h.state.toastWarning).toHaveBeenCalledTimes(4);
++    const chamadas = h.state.toastWarning.mock.calls.map((c) => [c[0], (c[1] as { description: string }).description]);
++    expect(chamadas).toEqual([
++      ['Fila Suporte Real: 100% do limite', 'Contatos aguardando: 10 (limite 10)'],
++      ['Fila Suporte Real: 50% do limite', 'Espera média: 8 (limite 15)'],
++      ['Fila Suporte Real: 75% do limite', 'Mensagens sem resposta: 40 (limite 50)'],
++      ['Fila Suporte Real: 50% do mínimo', 'Taxa de atribuição: 40% (mínimo 80%)'],
++    ]);
++  });
++
++  it('varre a cada 5 min (useVisiblePolling pausa em aba oculta) e só com usuário logado', () => {
++    const { unmount } = renderHook(() => useQueueGoalAlerts());
++    expect(h.state.polling.intervalMs).toBe(5 * 60 * 1000);
++    expect(h.state.polling.intervalMs).toBe(QUEUE_GOAL_ALERTS_INTERVAL_MS);
++    expect(h.state.polling.enabled).toBe(true);
++    expect(typeof h.state.polling.task).toBe('function');
++    unmount();
++  });
++
++  it('RPC com erro fica MUDO: sem métrica real não se anuncia limite', async () => {
++    renderHook(() => useQueueGoalAlerts());
++    h.state.rpcError = { message: 'permission denied' };
++    await varredura();
++    expect(h.state.toastWarning).not.toHaveBeenCalled();
++    expect(h.state.playSound).not.toHaveBeenCalled();
++  });
++
++  it('não anuncia varredura que termina depois da desmontagem (signal abortado)', async () => {
++    const { unmount } = renderHook(() => useQueueGoalAlerts());
++    h.state.rows = [row({ waiting_contacts: 10 })];
++    unmount();
++
++    const controller = new AbortController();
++    controller.abort();
++    await varredura(controller.signal);
++
++    expect(h.state.toastWarning).not.toHaveBeenCalled();
++  });
++
++  it('som, notificação do navegador e horário silencioso seguem useNotificationSettings', async () => {
++    renderHook(() => useQueueGoalAlerts());
++    h.state.rows = [row({ waiting_contacts: 10 })];
++
++    h.state.quiet = true;
++    await varredura();
++    expect(h.state.toastWarning).toHaveBeenCalledTimes(1);
++    expect(h.state.playSound).not.toHaveBeenCalled();          // silêncio respeitado
++    expect(h.state.browserNotification).toHaveBeenCalledTimes(1);
++
++    // Faixa nova (mensagens pendentes) com som ligado -> toca com a preferência do usuário.
++    h.state.quiet = false;
++    h.state.rows = [row({ waiting_contacts: 10, messages_pending: 60 })];
++    await varredura();
++    expect(h.state.playSound).toHaveBeenCalledWith('goal_achieved', 'chime', 70);
++    expect(h.state.toastWarning).toHaveBeenCalledTimes(2);
++    expect(h.state.browserNotification).toHaveBeenCalledTimes(2);
++  });
++});
+diff --git a/src/hooks/analytics/useQueueGoalAlerts.ts b/src/hooks/analytics/useQueueGoalAlerts.ts
+new file mode 100644
+index 0000000000..d62661bb0a
+--- /dev/null
++++ b/src/hooks/analytics/useQueueGoalAlerts.ts
+@@ -0,0 +1,161 @@
++/**
++ * Avisos de limite das metas de fila (PM-02, cartão t_549f87e1).
++ *
++ * O que este hook faz: a cada `QUEUE_GOAL_ALERTS_INTERVAL_MS` (5 min, e só com a aba visível e
++ * online, via `useVisiblePolling`) chama `rpc_queue_goal_metrics()` — a métrica REAL de cada fila,
++ * nunca uma conta montada no front — e compara com a meta da fila. Ao CRUZAR uma faixa
++ * (50/75/100 % do limite para "quanto menor melhor"; 25/50/75 % do mínimo para a taxa de
++ * atribuição, que é invertida) o usuário recebe UM aviso, com o nome real da fila.
++ *
++ * Regras que sustentam o "uma vez por faixa":
++ *  - a faixa já anunciada fica em `sessionStorage` com o dia local na chave, então recarregar a
++ *    página, remontar o provider ou outro componente usar o hook não repete o mesmo aviso;
++ *  - `null` (não medido) NÃO avisa, e `0` (dado — fila vazia) também não cruza faixa nenhuma;
++ *  - uma meta zerada não tem percentual: sem aviso, em vez de `Infinity %`;
++ *  - se a RPC falhar, o hook fica MUDO em vez de anunciar valor inventado.
++ *
++ * Visibilidade é do servidor: a RPC devolve as filas ativas para staff e só as filas em que o
++ * usuário é membro ativo para quem não é staff. Sem usuário logado não há chamada.
++ */
++import { useCallback, useEffect, useRef } from 'react';
++import { toast } from 'sonner';
++import { useAuth } from '@/hooks/auth/useAuth';
++import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
++import { useVisiblePolling } from '@/hooks/realtime/useVisiblePolling';
++import {
++  crossedGoalBands,
++  fetchQueueGoalMetrics,
++  formatGoalMetricValue,
++  goalMetricPercent,
++  QUEUE_GOAL_METRICS,
++  worstCrossedGoalBand,
++  useQueueGoals,
++  type QueueGoalMetricsRow,
++} from '@/hooks/business/useQueueGoals';
++import { playNotificationSound, showBrowserNotification } from '@/utils/notificationSounds';
++import { log } from '@/lib/logger';
++import { localDayKey } from '@/lib/localDay';
++
++/** 5 minutos entre varreduras (cartão t_549f87e1). */
++export const QUEUE_GOAL_ALERTS_INTERVAL_MS = 5 * 60 * 1000;
++export const QUEUE_GOAL_ALERTS_STORAGE_KEY = 'queue-goal-alerts:v1';
++
++function alertKey(queueId: string, metric: string, band: number, day: string): string {
++  return `${queueId}:${metric}:${band}:${day}`;
++}
++
++function readAnnouncedKeys(): Set<string> {
++  try {
++    const raw = sessionStorage.getItem(QUEUE_GOAL_ALERTS_STORAGE_KEY);
++    if (!raw) return new Set<string>();
++    const parsed: unknown = JSON.parse(raw);
++    return new Set<string>(Array.isArray(parsed) ? (parsed as string[]) : []);
++  } catch {
++    // sessionStorage bloqueado (aba privada/modo restrito): a dedupe vale só nesta montagem.
++    return new Set<string>();
++  }
++}
++
++function persistAnnouncedKeys(keys: Set<string>) {
++  try {
++    sessionStorage.setItem(QUEUE_GOAL_ALERTS_STORAGE_KEY, JSON.stringify([...keys]));
++  } catch {
++    // Sem persistência o aviso pode repetir no próximo carregamento — repetir é aceitável,
++    // deixar de avisar não é.
++  }
++}
++
++export function useQueueGoalAlerts() {
++  const { user } = useAuth();
++  const { goals } = useQueueGoals();
++  const { settings, isQuietHours } = useNotificationSettings();
++
++  // Metas e preferências entram por ref para que a varredura seja estável: um objetivo salvo na
++  // tela não reinicia o intervalo nem dispara varredura extra.
++  const goalsRef = useRef(goals);
++  useEffect(() => {
++    goalsRef.current = goals;
++  }, [goals]);
++
++  const preferencesRef = useRef({ settings, isQuietHours });
++  useEffect(() => {
++    preferencesRef.current = { settings, isQuietHours };
++  }, [settings, isQuietHours]);
++
++  const checkQueueGoalAlerts = useCallback(async (signal?: AbortSignal) => {
++    if (!user) return;
++
++    let rows: QueueGoalMetricsRow[];
++    try {
++      rows = await fetchQueueGoalMetrics();
++    } catch (error) {
++      // Sem métrica real não há aviso: anunciar limite a partir de conta inventada é pior que ficar mudo.
++      log.warn('Não foi possível medir as metas das filas:', error);
++      return;
++    }
++
++    // A varredura pode terminar depois do logout ou da desmontagem: aí não se anuncia mais nada.
++    if (signal?.aborted) return;
++
++    const announced = readAnnouncedKeys();
++    const day = localDayKey(new Date()) ?? 'sem-dia';
++    let anunciou = false;
++
++    for (const row of rows) {
++      const goal = goalsRef.current[row.queue_id];
++      if (!goal || !goal.alerts_enabled) continue;
++
++      for (const metric of QUEUE_GOAL_METRICS) {
++        const bruto = row[metric.key];
++        // `null` = não medido (fila sem base, métrica sem base no período): não avisa.
++        if (bruto === null || bruto === undefined) continue;
++        const value = Number(bruto);
++        if (!Number.isFinite(value)) continue;
++
++        const target = Number(goal[metric.goalKey]);
++        const percent = goalMetricPercent(value, target);
++        // Meta zerada não define percentual — sem faixa, sem aviso.
++        if (percent === null) continue;
++
++        const crossed = crossedGoalBands(percent, metric.direction);
++        if (crossed.length === 0) continue;
++
++        const novas = crossed.filter((band) => !announced.has(alertKey(row.queue_id, metric.key, band, day)));
++        if (novas.length === 0) continue;
++
++        const band = worstCrossedGoalBand(percent, metric.direction) ?? novas[0];
++
++        // Marca TODAS as faixas já cruzadas: um salto de 40 % para 100 % anuncia só a faixa mais
++        // grave, mas não repete 50/75 na varredura seguinte.
++        crossed.forEach((b) => announced.add(alertKey(row.queue_id, metric.key, b, day)));
++        anunciou = true;
++
++        const { settings: preferencias, isQuietHours: emSilencio } = preferencesRef.current;
++        const queueName = row.queue_name;
++        const title = metric.direction === 'max'
++          ? `Fila ${queueName}: ${band}% do limite`
++          : `Fila ${queueName}: ${band}% do mínimo`;
++        const description = metric.direction === 'max'
++          ? `${metric.label}: ${formatGoalMetricValue(value)} (limite ${formatGoalMetricValue(target)})`
++          : `${metric.label}: ${formatGoalMetricValue(value)}% (mínimo ${formatGoalMetricValue(target)}%)`;
++
++        toast.warning(title, { description });
++
++        if (preferencias.soundEnabled && !emSilencio()) {
++          playNotificationSound('goal_achieved', preferencias.goalSoundType, preferencias.soundVolume);
++        }
++        if (preferencias.browserNotifications) {
++          showBrowserNotification(title, description, {
++            tag: `queue-goal-${row.queue_id}-${metric.key}`,
++          });
++        }
++      }
++    }
++
++    if (anunciou) persistAnnouncedKeys(announced);
++  }, [user]);
++
++  useVisiblePolling(checkQueueGoalAlerts, QUEUE_GOAL_ALERTS_INTERVAL_MS, !!user);
++
++  return { checkQueueGoalAlerts };
++}
+diff --git a/src/hooks/business/useQueueGoals.ts b/src/hooks/business/useQueueGoals.ts
+index 9f692d89ec..8f69dca451 100644
+--- a/src/hooks/business/useQueueGoals.ts
++++ b/src/hooks/business/useQueueGoals.ts
+@@ -25,6 +25,126 @@ export interface QueueAlert {
+   threshold: number;
+ }
+ 
++/**
++ * Linha de `public.rpc_queue_goal_metrics()` (PM-02, cartão t_35099565): as métricas REAIS por
++ * fila visível ao usuário. `null` = não medido (fila sem base ou métrica sem base no período) e
++ * `0` = dado (fila existe e está vazia). Trocar um pelo outro inventa alerta (NULL tratado como
++ * zero) ou esconde fila estourada (zero tratado como sem medição).
++ */
++export interface QueueGoalMetricsRow {
++  queue_id: string;
++  queue_name: string;
++  coverage: string;
++  contacts_open: number | null;
++  waiting_contacts: number | null;
++  avg_wait_minutes: number | null;
++  assignment_rate: number | null;
++  received_contacts: number | null;
++  assigned_contacts: number | null;
++  messages_pending: number | null;
++}
++
++export interface QueueGoalMetricDefinition {
++  /** Coluna da RPC e nome estável da métrica na dedupe do aviso. */
++  key: 'waiting_contacts' | 'avg_wait_minutes' | 'messages_pending' | 'assignment_rate';
++  /** Tipo do alerta em `QueueAlert`/`QueueAlertsDisplay`. */
++  alertType: QueueAlert['type'];
++  label: string;
++  goalKey: keyof Pick<QueueGoal, 'max_waiting_contacts' | 'max_avg_wait_minutes' | 'max_messages_pending' | 'min_assignment_rate'>;
++  /**
++   * `max` = quanto MENOR melhor (contatos aguardando, espera, pendentes): a faixa é cruzada ao
++   * SUBIR para 50/75/100 % do limite. `min` = quanto MAIOR melhor (taxa de atribuição): a faixa é
++   * cruzada ao CAIR para 25/50/75 % do mínimo — as faixas invertidas do cartão.
++   */
++  direction: 'max' | 'min';
++}
++
++export const QUEUE_GOAL_METRICS: readonly QueueGoalMetricDefinition[] = [
++  { key: 'waiting_contacts', alertType: 'waiting_contacts', label: 'Contatos aguardando', goalKey: 'max_waiting_contacts', direction: 'max' },
++  { key: 'avg_wait_minutes', alertType: 'wait_time', label: 'Espera média', goalKey: 'max_avg_wait_minutes', direction: 'max' },
++  { key: 'messages_pending', alertType: 'messages_pending', label: 'Mensagens sem resposta', goalKey: 'max_messages_pending', direction: 'max' },
++  { key: 'assignment_rate', alertType: 'assignment_rate', label: 'Taxa de atribuição', goalKey: 'min_assignment_rate', direction: 'min' },
++];
++
++/** Faixas do cartão: quem sobe cruza 50/75/100 % do limite; quem cai cruza 25/50/75 % do mínimo. */
++export const QUEUE_GOAL_BANDS = [50, 75, 100] as const;
++export const QUEUE_GOAL_BANDS_INVERTED = [25, 50, 75] as const;
++
++/** % do alvo. `null` quando o alvo é zero (não há percentual definido) — nunca `Infinity`. */
++export function goalMetricPercent(value: number, target: number): number | null {
++  if (!Number.isFinite(value) || !Number.isFinite(target) || target <= 0) return null;
++  return (value / target) * 100;
++}
++
++export function crossedGoalBands(percent: number, direction: 'max' | 'min'): number[] {
++  return direction === 'max'
++    ? QUEUE_GOAL_BANDS.filter((band) => percent >= band)
++    : QUEUE_GOAL_BANDS_INVERTED.filter((band) => percent <= band);
++}
++
++/** Faixa mais grave já cruzada: a maior % no limite superior, a menor % no mínimo. */
++export function worstCrossedGoalBand(percent: number, direction: 'max' | 'min'): number | null {
++  const crossed = crossedGoalBands(percent, direction);
++  if (crossed.length === 0) return null;
++  return direction === 'max' ? Math.max(...crossed) : Math.min(...crossed);
++}
++
++/** Número como o aviso mostra: inteiro quando inteiro, uma casa quando tem fração. */
++export function formatGoalMetricValue(value: number): string {
++  return Number.isInteger(value) ? String(value) : value.toFixed(1);
++}
++
++/**
++ * `types.ts` é gerado do banco e ainda não conhece esta RPC (ela nasceu na migration
++ * 20261015232316); o cast some quando a regeneração rodar. Mesmo padrão de useAIUsageDashboard.ts.
++ */
++type PendingDatabaseRpc = (
++  fn: string,
++  args?: Record<string, unknown>,
++) => Promise<{ data: unknown; error: { message: string } | null }>;
++
++/** Busca as métricas reais das filas. Lança quando a RPC falha — quem chama decide o que fazer. */
++export async function fetchQueueGoalMetrics(): Promise<QueueGoalMetricsRow[]> {
++  const rpc = supabase.rpc as unknown as PendingDatabaseRpc;
++  const { data, error } = await rpc('rpc_queue_goal_metrics');
++  if (error) throw error;
++  return (Array.isArray(data) ? data : []) as QueueGoalMetricsRow[];
++}
++
++/**
++ * Métricas reais das filas (RPC do PM-02). A visibilidade é do SERVIDOR: staff vê todas as filas
++ * ativas, quem não é staff vê só as filas em que é membro ativo, e quem não é nem uma coisa nem
++ * outra recebe zero linhas. Por isso a tela não filtra por papel — ela mostra o que a RPC devolve.
++ */
++export function useQueueGoalMetrics() {
++  const [metrics, setMetrics] = useState<Record<string, QueueGoalMetricsRow>>({});
++  const [loading, setLoading] = useState(true);
++
++  const fetchMetrics = useCallback(async () => {
++    try {
++      const rows = await fetchQueueGoalMetrics();
++
++      const metricsMap: Record<string, QueueGoalMetricsRow> = {};
++      rows.forEach((row) => {
++        metricsMap[row.queue_id] = row;
++      });
++
++      setMetrics(metricsMap);
++    } catch (error) {
++      log.error('Error fetching queue goal metrics:', error);
++    } finally {
++      setLoading(false);
++    }
++  }, []);
++
++  useEffect(() => {
++    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount padrão, sem estado derivado de props para sincronizar.
++    void fetchMetrics();
++  }, [fetchMetrics]);
++
++  return { metrics, loading, refetch: fetchMetrics };
++}
++
+ export function useQueueGoals() {
+   const [goals, setGoals] = useState<Record<string, QueueGoal>>({});
+   const [loading, setLoading] = useState(true);
+diff --git a/supabase/migrations/20261015232316_rpc_queue_goal_metrics.sql b/supabase/migrations/20261015232316_rpc_queue_goal_metrics.sql
+new file mode 100644
+index 0000000000..ab72908ec3
+--- /dev/null
++++ b/supabase/migrations/20261015232316_rpc_queue_goal_metrics.sql
+@@ -0,0 +1,177 @@
++-- rpc_queue_goal_metrics
++-- Rollback: dropa a RPC public.rpc_queue_goal_metrics(); nao cria tabela, coluna, indice,
++-- Rollback: policy, trigger nem dado, e nao concede acesso a nenhum objeto que ja existia.
++-- Rollback (SQL executavel, na ordem):
++--   DROP FUNCTION IF EXISTS public.rpc_queue_goal_metrics();
++--
++-- PARIDADE V3 (docs/estado/24-hooks-raiz-2.md, 2a passada): a V3 alimenta os alertas de
++-- 50/75/100 % dos limites de fila com o rpc_queue_goal_metrics. A V2 nao tinha a RPC e a
++-- "taxa de atribuicao" era inventada na tela (membros ativos / (esperando + ativos)).
++-- Aqui a RPC nasce com as definicoes REAIS da V2 (a V2 e a fonte da verdade):
++--   * conversas abertas = contacts da fila com deleted_at IS NULL e conversation_status
++--     fora de 'resolved'/'archived' (mesma definicao que a caixa de entrada usa).
++--   * aguardando = conversas abertas da fila com assigned_to IS NULL.
++--   * espera media = queue_positions dos contatos AINDA aguardando: minutos desde
++--     entered_at; quando a fila nao registrou o instante de entrada, usa a estimativa da
++--     propria fila (estimated_wait_minutes). Sem nenhuma posicao -> NULL.
++--   * taxa de atribuicao (janela de 7 dias) = contactos RECEBIDOS na fila no periodo vs
++--     eventos reais de atribuicao em conversation_events ('assign'/'unassign'): so conta
++--     como atribuido o contato cujo ULTIMO evento da janela e 'assign' (quem foi
++--     desatribuido por ultimo nao infla a taxa). Sem contato recebido -> NULL (nunca 0).
++--     O cartao pede "unread_count das conversas abertas"; a V2 nao tem coluna unread_count
++--     (a V3 tem) - o equivalente da V2 e o indice parcial idx_messages_unread_contact
++--     (sender='contact' AND is_read=false), usado aqui, sem mensagem apagada.
++--   * 0 e dado; NULL e "sem base": fila sem NENHUM contato devolve as metricas NULL e
++--     coverage='sem_base'. Fila com contato mas sem posicao de espera / sem recebido no
++--     periodo devolve coverage='parcial' e so a metrica sem base em NULL.
++--   * coverage: 'sem_base' | 'parcial' | 'completa'.
++-- Visibilidade (cartao): staff (admin/supervisor) ve todas as filas ativas; qualquer outro
++-- perfil autenticado ve apenas as filas de que e membro ativo (queue_members). Quem nao e
++-- staff nem membro recebe ZERO linhas - nao ha oraculo de fila alheia.
++-- As metas (queue_goals) NAO entram aqui: o painel ja le queue_goals direto; o cartao pede
++-- as metricas + coverage.
++CREATE OR REPLACE FUNCTION public.rpc_queue_goal_metrics()
++RETURNS TABLE(
++  queue_id uuid,
++  queue_name text,
++  coverage text,
++  contacts_open bigint,
++  waiting_contacts bigint,
++  avg_wait_minutes numeric,
++  assignment_rate numeric,
++  received_contacts bigint,
++  assigned_contacts bigint,
++  messages_pending bigint
++)
++LANGUAGE sql
++STABLE
++SECURITY DEFINER
++SET search_path = public, pg_temp
++AS $function$
++  WITH visible AS (
++    SELECT q.id, q.name
++    FROM public.queues q
++    WHERE q.is_active
++      AND (
++        public.is_admin_or_supervisor(auth.uid())
++        OR EXISTS (
++          SELECT 1
++          FROM public.queue_members qm
++          WHERE qm.queue_id = q.id
++            AND qm.is_active
++            AND qm.profile_id = public.get_profile_id_for_user(auth.uid())
++        )
++      )
++  ),
++  base AS (
++    SELECT c.queue_id AS qid,
++           count(*) AS all_total,
++           count(*) FILTER (
++             WHERE c.conversation_status NOT IN ('resolved', 'archived')
++           ) AS open_total,
++           count(*) FILTER (
++             WHERE c.conversation_status NOT IN ('resolved', 'archived')
++               AND c.assigned_to IS NULL
++           ) AS waiting_total
++    FROM public.contacts c
++    WHERE c.queue_id IS NOT NULL
++      AND c.deleted_at IS NULL
++    GROUP BY c.queue_id
++  ),
++  wait_time AS (
++    SELECT qp.queue_id AS qid,
++           round(
++             avg(
++               CASE
++                 WHEN qp.entered_at IS NOT NULL
++                   THEN extract(epoch FROM (now() - qp.entered_at)) / 60.0
++                 ELSE qp.estimated_wait_minutes::numeric
++               END
++             ),
++             1
++           ) AS media
++    FROM public.queue_positions qp
++    JOIN public.contacts c ON c.id = qp.contact_id
++    WHERE c.queue_id = qp.queue_id
++      AND c.deleted_at IS NULL
++      AND c.conversation_status NOT IN ('resolved', 'archived')
++      AND c.assigned_to IS NULL
++    GROUP BY qp.queue_id
++  ),
++  received AS (
++    SELECT c.queue_id AS qid,
++           count(*) AS total
++    FROM public.contacts c
++    WHERE c.queue_id IS NOT NULL
++      AND c.deleted_at IS NULL
++      AND c.created_at > now() - interval '7 days'
++    GROUP BY c.queue_id
++  ),
++  last_ev AS (
++    SELECT DISTINCT ON (ce.contact_id)
++           ce.contact_id,
++           ce.event_type
++    FROM public.conversation_events ce
++    WHERE ce.event_type IN ('assign', 'unassign')
++      AND ce.created_at > now() - interval '7 days'
++    ORDER BY ce.contact_id, ce.created_at DESC, ce.id DESC
++  ),
++  assigned AS (
++    SELECT c.queue_id AS qid,
++           count(*) AS total
++    FROM public.contacts c
++    JOIN last_ev e ON e.contact_id = c.id AND e.event_type = 'assign'
++    WHERE c.queue_id IS NOT NULL
++      AND c.deleted_at IS NULL
++      AND c.created_at > now() - interval '7 days'
++    GROUP BY c.queue_id
++  ),
++  pending AS (
++    SELECT c.queue_id AS qid,
++           count(*) AS total
++    FROM public.messages m
++    JOIN public.contacts c ON c.id = m.contact_id
++    WHERE c.queue_id IS NOT NULL
++      AND c.deleted_at IS NULL
++      AND c.conversation_status NOT IN ('resolved', 'archived')
++      AND m.sender = 'contact'
++      AND m.is_read = false
++      AND coalesce(m.is_deleted, false) = false
++    GROUP BY c.queue_id
++  )
++  SELECT v.id,
++         v.name,
++         CASE
++           WHEN b.qid IS NULL THEN 'sem_base'
++           WHEN wt.media IS NOT NULL
++                AND coalesce(r.total, 0) > 0 THEN 'completa'
++           ELSE 'parcial'
++         END,
++         CASE WHEN b.qid IS NULL THEN NULL ELSE b.open_total END,
++         CASE WHEN b.qid IS NULL THEN NULL ELSE b.waiting_total END,
++         wt.media,
++         CASE
++           WHEN coalesce(r.total, 0) > 0
++             THEN round(100.0 * coalesce(a.total, 0) / r.total, 1)
++           ELSE NULL
++         END,
++         CASE WHEN b.qid IS NULL THEN NULL ELSE coalesce(r.total, 0) END,
++         CASE WHEN b.qid IS NULL THEN NULL ELSE coalesce(a.total, 0) END,
++         CASE WHEN b.qid IS NULL THEN NULL ELSE coalesce(p.total, 0) END
++  FROM visible v
++  LEFT JOIN base b ON b.qid = v.id
++  LEFT JOIN wait_time wt ON wt.qid = v.id
++  LEFT JOIN received r ON r.qid = v.id
++  LEFT JOIN assigned a ON a.qid = v.id
++  LEFT JOIN pending p ON p.qid = v.id
++  ORDER BY v.name, v.id;
++$function$;
++
++COMMENT ON FUNCTION public.rpc_queue_goal_metrics() IS
++  'Metricas reais por fila (conversas abertas, aguardando, espera media, taxa de atribuicao em 7 dias, mensagens pendentes) + coverage. NULL = sem base. Visivel a staff ou membro ativo da fila.';
++
++-- Permissao pela assinatura exata e so para quem o cartao manda: `authenticated`.
++-- PUBLIC, anon e service_role nunca chamam (o papel entrou no REVOKE para nao ficar com
++-- acesso implicito herdado de PUBLIC).
++REVOKE ALL ON FUNCTION public.rpc_queue_goal_metrics() FROM PUBLIC, anon, authenticated, service_role;
++GRANT EXECUTE ON FUNCTION public.rpc_queue_goal_metrics() TO authenticated;
+diff --git a/supabase/tests/rpc_queue_goal_metrics.sql b/supabase/tests/rpc_queue_goal_metrics.sql
+new file mode 100644
+index 0000000000..342b84bc66
+--- /dev/null
++++ b/supabase/tests/rpc_queue_goal_metrics.sql
+@@ -0,0 +1,430 @@
++-- Suite da RPC public.rpc_queue_goal_metrics() (cartao PM-02, paridade V3 dos limites de fila).
++--
++-- COMO RODAR (banco LOCAL do cartao, nunca producao):
++--   hermes-db-migrar supabase/migrations/20261015232316_rpc_queue_goal_metrics.sql
++--   zapp-db-local psql . v2-2610152019c517 < supabase/tests/rpc_queue_goal_metrics.sql
++--
++-- O QUE PROVA (cada bloco por PAPEL REAL, com SET LOCAL ROLE + request.jwt.claims):
++--   P1  admin (staff) ve as 4 filas ativas e as metricas REAIS batem fila a fila
++--       (conversas abertas, aguardando, espera media medida, taxa de atribuicao, pendentes);
++--   P2  supervisor (staff) ve o mesmo conjunto do admin;
++--   P3  agente MEMBRO ativo de UMA fila ve SO essa fila (fila alheia nao vaza);
++--   P4  agente que e membro INATIVO (is_active = false) nao ve a fila;
++--   P5  authenticated sem papel e sem vinculo recebe ZERO linhas (sem oraculo de fila alheia);
++--   P6  anon e NEGADO por ACL (42501) - nem entra no corpo da funcao;
++--   P7  fila SEM nenhum contato: metricas NULL e coverage = 'sem_base' (nunca 0 inventado);
++--   P8  fila com contato ja resolvido: aguardando = 0 (0 e DADO) e taxa = NULL (sem recebido);
++--   P9  fila INATIVA nao aparece nem para staff;
++--   P10 taxa de atribuicao usa conversation_events: quem foi desatribuido por ultimo
++--       ('unassign' mais recente que 'assign') NAO conta como atribuido;
++--   P11 pendentes: so mensagem recebida (sender='contact'), nao lida e nao apagada de
++--       conversa ABERTA da fila; conversa resolvida e mensagem lida/apagada nao contam;
++--   P12 ACL exata: EXECUTE so para authenticated (nunca PUBLIC, anon ou service_role),
++--       SECURITY DEFINER ligado e search_path fixo;
++--   P13 a linha "-- Rollback (SQL executavel, na ordem)" roda no banco local (DROP) e o
++--       ROLLBACK da transacao devolve a RPC - nada fica pela metade.
++--
++-- Cria dados SINTETICOS e desfaz tudo no ROLLBACK final (nao sobra linha no banco).
++-- Sem EXCEPTION = suite verde. ON_ERROR_STOP: o primeiro erro para a suite (saida != 0).
++\set ON_ERROR_STOP on
++BEGIN;
++
++-- =====================================================================
++-- Fixtures (como postgres, dentro da transacao)
++-- =====================================================================
++-- replica: o gatilho de auth.users nao deve barrar a fixture (o profile e criado logo abaixo).
++SET LOCAL session_replication_role = replica;
++INSERT INTO auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at)
++VALUES
++  ('11111111-1111-4111-8111-000000000001', 'authenticated', 'authenticated', 'adm.qgm@test.local',   '', now(), now(), now()),
++  ('11111111-1111-4111-8111-000000000002', 'authenticated', 'authenticated', 'sup.qgm@test.local',   '', now(), now(), now()),
++  ('11111111-1111-4111-8111-000000000003', 'authenticated', 'authenticated', 'agente.qgm@test.local','', now(), now(), now()),
++  ('11111111-1111-4111-8111-000000000004', 'authenticated', 'authenticated', 'fora.qgm@test.local',  '', now(), now(), now());
++SET LOCAL session_replication_role = DEFAULT;
++
++-- handle_new_user cria o profile; o upsert cobre os dois mundos (gatilho presente ou nao).
++INSERT INTO public.profiles (user_id, name) VALUES
++  ('11111111-1111-4111-8111-000000000001', 'Admin QGM (sintetico)'),
++  ('11111111-1111-4111-8111-000000000002', 'Super QGM (sintetico)'),
++  ('11111111-1111-4111-8111-000000000003', 'Agente QGM (sintetico)'),
++  ('11111111-1111-4111-8111-000000000004', 'Fora QGM (sintetico)')
++ON CONFLICT (user_id) DO UPDATE SET name = EXCLUDED.name;
++
++-- O papel efetivo para a RPC vem de user_roles (fonte do is_admin_or_supervisor);
++-- profiles.role nao e tocado aqui (ha gatilho anti-escalonamento em profiles).
++
++
++-- Staff = papel em user_roles (a fonte que is_admin_or_supervisor consulta).
++INSERT INTO public.user_roles (user_id, role) VALUES
++  ('11111111-1111-4111-8111-000000000001', 'admin'),
++  ('11111111-1111-4111-8111-000000000002', 'supervisor');
++
++-- Filas: alfa (com metricas) / beta (do agente) / vazia / inativa / so-resolvidas.
++INSERT INTO public.queues (id, name, color, is_active) VALUES
++  ('33333333-3333-4333-8333-000000000001', 'Alfa QGM',     '#3B82F6', true),
++  ('33333333-3333-4333-8333-000000000002', 'Beta QGM',     '#3B82F6', true),
++  ('33333333-3333-4333-8333-000000000003', 'Vazia QGM',    '#3B82F6', true),
++  ('33333333-3333-4333-8333-000000000004', 'Inativa QGM',  '#3B82F6', false),
++  ('33333333-3333-4333-8333-000000000005', 'Resolvida QGM','#3B82F6', true);
++
++-- Agente e membro ATIVO de Beta; e membro INATIVO de Alfa (P4).
++INSERT INTO public.queue_members (queue_id, profile_id, is_active) VALUES
++  ('33333333-3333-4333-8333-000000000002',
++   (SELECT id FROM public.profiles WHERE user_id = '11111111-1111-4111-8111-000000000003'), true),
++  ('33333333-3333-4333-8333-000000000001',
++   (SELECT id FROM public.profiles WHERE user_id = '11111111-1111-4111-8111-000000000003'), false),
++  ('33333333-3333-4333-8333-000000000001',
++   (SELECT id FROM public.profiles WHERE user_id = '11111111-1111-4111-8111-000000000004'), false);
++
++-- Alfa: 5 contatos no total (4 abertos, sendo 2 aguardando), 4 recebidos na janela
++-- (c1, c2, c3, c5) - c4 aguarda mas chegou ha 30 dias.
++-- Beta: 1 contato aberto e aguardando, recebido na janela.
++-- Resolvida: 1 contato recebido FORA da janela e ja resolvido.
++-- Inativa: 1 contato aberto (nao pode aparecer por causa do is_active).
++INSERT INTO public.contacts (id, name, phone, conversation_status, assigned_to, queue_id, created_at) VALUES
++  ('44444444-4444-4444-8444-000000000001', 'A1 aberto atribuido',   '+550000000001', 'open',     (SELECT id FROM public.profiles WHERE user_id = '11111111-1111-4111-8111-000000000001'), '33333333-3333-4333-8333-000000000001', now() - interval '2 hours'),
++  ('44444444-4444-4444-8444-000000000002', 'A2 aberto atribuido',   '+550000000002', 'open',     (SELECT id FROM public.profiles WHERE user_id = '11111111-1111-4111-8111-000000000002'), '33333333-3333-4333-8333-000000000001', now() - interval '2 hours'),
++  ('44444444-4444-4444-8444-000000000003', 'A3 aguardando',         '+550000000003', 'open',     NULL, '33333333-3333-4333-8333-000000000001', now() - interval '3 hours'),
++  ('44444444-4444-4444-8444-000000000004', 'A4 aguardando antigo',  '+550000000004', 'waiting',  NULL, '33333333-3333-4333-8333-000000000001', now() - interval '30 days'),
++  ('44444444-4444-4444-8444-000000000005', 'A5 resolvido',          '+550000000005', 'resolved', (SELECT id FROM public.profiles WHERE user_id = '11111111-1111-4111-8111-000000000001'), '33333333-3333-4333-8333-000000000001', now() - interval '2 hours'),
++  ('44444444-4444-4444-8444-000000000008', 'B1 aguardando',         '+550000000008', 'open',     NULL, '33333333-3333-4333-8333-000000000002', now() - interval '1 hour'),
++  ('44444444-4444-4444-8444-000000000009', 'E1 resolvido antigo',   '+550000000009', 'resolved', NULL, '33333333-3333-4333-8333-000000000005', now() - interval '30 days'),
++  ('44444444-4444-4444-8444-000000000010', 'I1 aberto na inativa',  '+550000000010', 'open',     NULL, '33333333-3333-4333-8333-000000000004', now() - interval '1 hour');
++
++-- Espera: A3 entrou ha 10 minutos (medida); A4 NAO tem posicao; B1 so tem a estimativa
++-- da propria fila (entered_at NULL, estimated_wait_minutes 25).
++INSERT INTO public.queue_positions (id, contact_id, queue_id, position, estimated_wait_minutes, entered_at) VALUES
++  ('66666666-6666-4666-8666-000000000001', '44444444-4444-4444-8444-000000000003', '33333333-3333-4333-8333-000000000001', 1, NULL, now() - interval '10 minutes'),
++  ('66666666-6666-4666-8666-000000000002', '44444444-4444-4444-8444-000000000008', '33333333-3333-4333-8333-000000000002', 1, 25,   NULL);
++
++-- Atribuicao na janela: A1 'assign' (conta); A2 'assign' e depois 'unassign' (NAO conta);
++-- A3 e A5 sem evento. A4 so teve 'assign' fora da janela (nao conta).
++INSERT INTO public.conversation_events (id, contact_id, event_type, to_agent_id, created_at) VALUES
++  ('77777777-7777-4777-8777-000000000001', '44444444-4444-4444-8444-000000000001', 'assign',   (SELECT id FROM public.profiles WHERE user_id = '11111111-1111-4111-8111-000000000001'), now() - interval '1 hour'),
++  ('77777777-7777-4777-8777-000000000002', '44444444-4444-4444-8444-000000000002', 'assign',   (SELECT id FROM public.profiles WHERE user_id = '11111111-1111-4111-8111-000000000002'), now() - interval '90 minutes'),
++  ('77777777-7777-4777-8777-000000000003', '44444444-4444-4444-8444-000000000002', 'unassign', NULL, now() - interval '30 minutes'),
++  ('77777777-7777-4777-8777-000000000004', '44444444-4444-4444-8444-000000000004', 'assign',   (SELECT id FROM public.profiles WHERE user_id = '11111111-1111-4111-8111-000000000001'), now() - interval '30 days'),
++  ('77777777-7777-4777-8777-000000000005', '44444444-4444-4444-8444-000000000008', 'assign',   (SELECT id FROM public.profiles WHERE user_id = '11111111-1111-4111-8111-000000000003'), now() - interval '30 minutes');
++
++-- Pendentes em Alfa = 2 (m1 do A1 e m3 do A3, ambos nao lidos e nao apagados).
++-- m2 lida, m4 do agente, m5 apagada e m6 de conversa resolvida NAO contam.
++INSERT INTO public.messages (id, contact_id, sender, content, message_type, is_read, is_deleted) VALUES
++  ('55555555-5555-4555-8555-000000000001', '44444444-4444-4444-8444-000000000001', 'contact', 'm1 pendente',        'text', false, false),
++  ('55555555-5555-4555-8555-000000000002', '44444444-4444-4444-8444-000000000001', 'contact', 'm2 lida',            'text', true,  false),
++  ('55555555-5555-4555-8555-000000000003', '44444444-4444-4444-8444-000000000003', 'contact', 'm3 pendente',        'text', false, false),
++  ('55555555-5555-4555-8555-000000000004', '44444444-4444-4444-8444-000000000003', 'agent',   'm4 do agente',       'text', false, false),
++  ('55555555-5555-4555-8555-000000000005', '44444444-4444-4444-8444-000000000001', 'contact', 'm5 apagada',         'text', false, true),
++  ('55555555-5555-4555-8555-000000000006', '44444444-4444-4444-8444-000000000005', 'contact', 'm6 de resolvida',    'text', false, false),
++  ('55555555-5555-4555-8555-000000000007', '44444444-4444-4444-8444-000000000009', 'contact', 'm7 de resolvida',    'text', false, false);
++
++-- =====================================================================
++-- P12 - contrato no catalogo (como postgres, antes de qualquer papel)
++-- =====================================================================
++DO $p12$
++DECLARE
++  v_def boolean;
++  v_cfg text;
++  v_public boolean;
++BEGIN
++  SELECT p.prosecdef, coalesce(array_to_string(p.proconfig, ','), '')
++    INTO v_def, v_cfg
++  FROM pg_proc p
++  JOIN pg_namespace n ON n.oid = p.pronamespace
++  WHERE n.nspname = 'public'
++    AND p.proname = 'rpc_queue_goal_metrics'
++    AND pg_get_function_identity_arguments(p.oid) = '';
++
++  IF v_def IS NULL THEN
++    RAISE EXCEPTION 'P12: public.rpc_queue_goal_metrics() nao foi criada';
++  END IF;
++  IF v_def IS NOT TRUE THEN
++    RAISE EXCEPTION 'P12: a RPC nao e SECURITY DEFINER';
++  END IF;
++  IF v_cfg NOT LIKE '%search_path=public, pg_temp%' THEN
++    RAISE EXCEPTION 'P12: search_path nao esta fixo em public, pg_temp (esta: %)', v_cfg;
++  END IF;
++
++  -- EXECUTE: so authenticated. PUBLIC NUNCA (senao todo papel herdado entra pelo default).
++  SELECT EXISTS (
++    SELECT 1
++    FROM pg_proc p
++    JOIN pg_namespace n ON n.oid = p.pronamespace
++    CROSS JOIN LATERAL aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) a
++    WHERE n.nspname = 'public'
++      AND p.proname = 'rpc_queue_goal_metrics'
++      AND pg_get_function_identity_arguments(p.oid) = ''
++      AND a.grantee = 0
++  ) INTO v_public;
++  IF v_public THEN
++    RAISE EXCEPTION 'P12: PUBLIC ficou com EXECUTE na RPC';
++  END IF;
++
++  IF NOT has_function_privilege('authenticated', 'public.rpc_queue_goal_metrics()', 'EXECUTE') THEN
++    RAISE EXCEPTION 'P12: authenticated NAO pode executar a RPC';
++  END IF;
++  IF has_function_privilege('anon', 'public.rpc_queue_goal_metrics()', 'EXECUTE') THEN
++    RAISE EXCEPTION 'P12: anon NAO devia poder executar a RPC';
++  END IF;
++  IF has_function_privilege('service_role', 'public.rpc_queue_goal_metrics()', 'EXECUTE') THEN
++    RAISE EXCEPTION 'P12: service_role NAO devia poder executar a RPC (cartao: so authenticated)';
++  END IF;
++END;
++$p12$;
++
++-- =====================================================================
++-- P1 - admin (staff) ve tudo e as metricas batem
++-- =====================================================================
++SELECT set_config(
++  'request.jwt.claims',
++  json_build_object('sub', '11111111-1111-4111-8111-000000000001', 'role', 'authenticated')::text,
++  true
++);
++SET LOCAL ROLE authenticated;
++
++DO $p1$
++DECLARE
++  r record;
++  v_count integer;
++BEGIN
++  SELECT count(*) INTO v_count FROM public.rpc_queue_goal_metrics() WHERE queue_name LIKE '%QGM%';
++  IF v_count <> 4 THEN
++    RAISE EXCEPTION 'P1: admin devia ver 4 filas ativas, viu %', v_count;
++  END IF;
++
++  -- Alfa: abertos 4 (A1..A4), aguardando 2 (A3, A4), espera 10.0 (A3), recebidos 4,
++  -- atribuidos 1 (so A1 - A2 terminou 'unassign'), taxa 25.0, pendentes 2.
++  -- Comparacao com IS DISTINCT FROM: NULL nunca passa por engano (nem tapa buraco).
++  SELECT * INTO r FROM public.rpc_queue_goal_metrics() WHERE queue_name = 'Alfa QGM';
++  IF NOT FOUND THEN
++    RAISE EXCEPTION 'P1: fila Alfa QGM nao apareceu para o admin';
++  END IF;
++  IF r.coverage IS DISTINCT FROM 'completa'
++     OR r.contacts_open IS DISTINCT FROM 4::bigint
++     OR r.waiting_contacts IS DISTINCT FROM 2::bigint
++     OR r.avg_wait_minutes IS DISTINCT FROM 10.0::numeric
++     OR r.received_contacts IS DISTINCT FROM 4::bigint
++     OR r.assigned_contacts IS DISTINCT FROM 1::bigint
++     OR r.assignment_rate IS DISTINCT FROM 25.0::numeric
++     OR r.messages_pending IS DISTINCT FROM 2::bigint THEN
++    RAISE EXCEPTION 'P1: Alfa fora do esperado -> coverage=% abertos=% aguardando=% espera=% recebidos=% atribuidos=% taxa=% pendentes=%',
++      r.coverage, r.contacts_open, r.waiting_contacts, r.avg_wait_minutes,
++      r.received_contacts, r.assigned_contacts, r.assignment_rate, r.messages_pending;
++  END IF;
++
++  -- Beta: sem posicao medida, cai na estimativa da propria fila (25) e taxa 100.0.
++  SELECT * INTO r FROM public.rpc_queue_goal_metrics() WHERE queue_name = 'Beta QGM';
++  IF NOT FOUND THEN
++    RAISE EXCEPTION 'P1: fila Beta QGM nao apareceu para o admin';
++  END IF;
++  IF r.coverage IS DISTINCT FROM 'completa'
++     OR r.contacts_open IS DISTINCT FROM 1::bigint
++     OR r.waiting_contacts IS DISTINCT FROM 1::bigint
++     OR r.avg_wait_minutes IS DISTINCT FROM 25.0::numeric
++     OR r.received_contacts IS DISTINCT FROM 1::bigint
++     OR r.assigned_contacts IS DISTINCT FROM 1::bigint
++     OR r.assignment_rate IS DISTINCT FROM 100.0::numeric
++     OR r.messages_pending IS DISTINCT FROM 0::bigint THEN
++    RAISE EXCEPTION 'P1: Beta fora do esperado -> coverage=% abertos=% aguardando=% espera=% recebidos=% atribuidos=% taxa=% pendentes=%',
++      r.coverage, r.contacts_open, r.waiting_contacts, r.avg_wait_minutes,
++      r.received_contacts, r.assigned_contacts, r.assignment_rate, r.messages_pending;
++  END IF;
++END;
++$p1$;
++
++-- =====================================================================
++-- P2 - supervisor (staff) ve o mesmo conjunto
++-- =====================================================================
++RESET ROLE;
++SELECT set_config(
++  'request.jwt.claims',
++  json_build_object('sub', '11111111-1111-4111-8111-000000000002', 'role', 'authenticated')::text,
++  true
++);
++SET LOCAL ROLE authenticated;
++
++DO $p2$
++DECLARE
++  v_nomes text;
++BEGIN
++  SELECT string_agg(queue_name, ',' ORDER BY queue_name) INTO v_nomes
++  FROM public.rpc_queue_goal_metrics() WHERE queue_name LIKE '%QGM%';
++
++  IF v_nomes IS DISTINCT FROM 'Alfa QGM,Beta QGM,Resolvida QGM,Vazia QGM' THEN
++    RAISE EXCEPTION 'P2: supervisor devia ver as 4 filas ativas, viu [%]', coalesce(v_nomes, 'vazio');
++  END IF;
++END;
++$p2$;
++
++-- =====================================================================
++-- P3/P4 - agente membro ATIVO de Beta ve so Beta; membro inativo de Alfa nao ve Alfa
++-- =====================================================================
++RESET ROLE;
++SELECT set_config(
++  'request.jwt.claims',
++  json_build_object('sub', '11111111-1111-4111-8111-000000000003', 'role', 'authenticated')::text,
++  true
++);
++SET LOCAL ROLE authenticated;
++
++DO $p3$
++DECLARE
++  v_nomes text;
++  r record;
++BEGIN
++  SELECT string_agg(queue_name, ',' ORDER BY queue_name) INTO v_nomes
++  FROM public.rpc_queue_goal_metrics() WHERE queue_name LIKE '%QGM%';
++
++  IF v_nomes IS DISTINCT FROM 'Beta QGM' THEN
++    RAISE EXCEPTION 'P3: agente membro de Beta devia ver so Beta, viu [%]', coalesce(v_nomes, 'vazio');
++  END IF;
++
++  SELECT * INTO r FROM public.rpc_queue_goal_metrics() WHERE queue_name = 'Beta QGM';
++  IF NOT FOUND THEN
++    RAISE EXCEPTION 'P3: agente membro nao viu a fila Beta QGM';
++  END IF;
++  IF r.queue_id IS DISTINCT FROM '33333333-3333-4333-8333-000000000002'::uuid THEN
++    RAISE EXCEPTION 'P3: agente recebeu a fila errada (%)', r.queue_id;
++  END IF;
++END;
++$p3$;
++
++-- =====================================================================
++-- P5 - authenticated sem papel e sem vinculo: zero linhas (nao erro, nao vaza fila alheia)
++-- =====================================================================
++RESET ROLE;
++SELECT set_config(
++  'request.jwt.claims',
++  json_build_object('sub', '11111111-1111-4111-8111-000000000004', 'role', 'authenticated')::text,
++  true
++);
++SET LOCAL ROLE authenticated;
++
++DO $p5$
++DECLARE
++  v_count integer;
++BEGIN
++  SELECT count(*) INTO v_count FROM public.rpc_queue_goal_metrics();
++  IF v_count <> 0 THEN
++    RAISE EXCEPTION 'P5: perfil sem papel e sem vinculo devia receber 0 linhas, recebeu %', v_count;
++  END IF;
++END;
++$p5$;
++
++-- =====================================================================
++-- P6 - anon NEGADO por ACL (42501), nem entra no corpo da funcao
++-- =====================================================================
++RESET ROLE;
++SELECT set_config('request.jwt.claims', json_build_object('role', 'anon')::text, true);
++SET LOCAL ROLE anon;
++
++DO $p6$
++DECLARE
++  v_negado boolean := false;
++BEGIN
++  BEGIN
++    PERFORM * FROM public.rpc_queue_goal_metrics();
++  EXCEPTION
++    WHEN insufficient_privilege THEN
++      v_negado := true;
++  END;
++
++  IF NOT v_negado THEN
++    RAISE EXCEPTION 'P6: anon conseguiu executar a RPC (devia dar 42501)';
++  END IF;
++END;
++$p6$;
++
++-- =====================================================================
++-- P7/P8/P9 - sem base (NULL), 0 como dado, fila inativa fora (volta ao staff)
++-- =====================================================================
++RESET ROLE;
++SELECT set_config(
++  'request.jwt.claims',
++  json_build_object('sub', '11111111-1111-4111-8111-000000000001', 'role', 'authenticated')::text,
++  true
++);
++SET LOCAL ROLE authenticated;
++
++DO $p789$
++DECLARE
++  r record;
++BEGIN
++  -- P7: fila sem NENHUM contato -> nada de 0 inventado.
++  SELECT * INTO r FROM public.rpc_queue_goal_metrics() WHERE queue_name = 'Vazia QGM';
++  IF NOT FOUND THEN
++    RAISE EXCEPTION 'P7: fila Vazia QGM nao apareceu para o admin';
++  END IF;
++  IF r.coverage IS DISTINCT FROM 'sem_base'
++     OR r.contacts_open IS NOT NULL
++     OR r.waiting_contacts IS NOT NULL
++     OR r.avg_wait_minutes IS NOT NULL
++     OR r.assignment_rate IS NOT NULL
++     OR r.received_contacts IS NOT NULL
++     OR r.assigned_contacts IS NOT NULL
++     OR r.messages_pending IS NOT NULL THEN
++    RAISE EXCEPTION 'P7: fila vazia devia ser sem_base com tudo NULL (coverage=%, abertos=%, aguardando=%, espera=%, taxa=%, pendentes=%)',
++      r.coverage, r.contacts_open, r.waiting_contacts, r.avg_wait_minutes, r.assignment_rate, r.messages_pending;
++  END IF;
++
++  -- P8: contato resolvido -> aguardando 0 (dado), taxa NULL (nada recebido na janela),
++  -- pendentes 0 (mensagem da conversa resolvida nao conta).
++  SELECT * INTO r FROM public.rpc_queue_goal_metrics() WHERE queue_name = 'Resolvida QGM';
++  IF NOT FOUND THEN
++    RAISE EXCEPTION 'P8: fila Resolvida QGM nao apareceu para o admin';
++  END IF;
++  IF r.coverage IS DISTINCT FROM 'parcial'
++     OR r.contacts_open IS DISTINCT FROM 0::bigint
++     OR r.waiting_contacts IS DISTINCT FROM 0::bigint
++     OR r.avg_wait_minutes IS NOT NULL
++     OR r.received_contacts IS DISTINCT FROM 0::bigint
++     OR r.assigned_contacts IS DISTINCT FROM 0::bigint
++     OR r.assignment_rate IS NOT NULL
++     OR r.messages_pending IS DISTINCT FROM 0::bigint THEN
++    RAISE EXCEPTION 'P8: resolvida fora do esperado -> coverage=% abertos=% aguardando=% espera=% recebidos=% atribuidos=% taxa=% pendentes=%',
++      r.coverage, r.contacts_open, r.waiting_contacts, r.avg_wait_minutes,
++      r.received_contacts, r.assigned_contacts, r.assignment_rate, r.messages_pending;
++  END IF;
++
++  -- P9: fila inativa nao aparece nem para staff.
++  IF EXISTS (SELECT 1 FROM public.rpc_queue_goal_metrics() WHERE queue_name = 'Inativa QGM') THEN
++    RAISE EXCEPTION 'P9: fila inativa apareceu para o admin';
++  END IF;
++END;
++$p789$;
++
++RESET ROLE;
++
++-- =====================================================================
++-- P13 - a linha do Rollback roda de verdade, e o ROLLBACK devolve a RPC
++-- =====================================================================
++DO $p13$
++BEGIN
++  DROP FUNCTION IF EXISTS public.rpc_queue_goal_metrics();
++  IF EXISTS (
++    SELECT 1
++    FROM pg_proc p
++    JOIN pg_namespace n ON n.oid = p.pronamespace
++    WHERE n.nspname = 'public' AND p.proname = 'rpc_queue_goal_metrics'
++  ) THEN
++    RAISE EXCEPTION 'P13: o DROP do Rollback nao removeu a RPC';
++  END IF;
++  RAISE NOTICE 'P13: linha do Rollback executada com sucesso (DROP FUNCTION)';
++END;
++$p13$;
++
++ROLLBACK;
++
++-- Confere que o ROLLBACK devolveu a suite ao estado pos-migration (a RPC continua la).
++DO $fim$
++BEGIN
++  IF NOT EXISTS (
++    SELECT 1
++    FROM pg_proc p
++    JOIN pg_namespace n ON n.oid = p.pronamespace
++    WHERE n.nspname = 'public' AND p.proname = 'rpc_queue_goal_metrics'
++  ) THEN
++    RAISE EXCEPTION 'fim: a RPC sumiu depois do ROLLBACK';
++  END IF;
++  RAISE NOTICE 'rpc_queue_goal_metrics: suite VERDE (P1-P13)';
++END;
++$fim$;

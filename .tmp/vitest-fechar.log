@@ -1,0 +1,72 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/avisos-limite-fila-2610152120dedb
+
+·········stderr | src/components/queues/__tests__/QueuesView.metricasRpc.test.tsx > QueuesView — alertas vêm da RPC de métricas, não de conta inventada (PM-02) > mostra o alerta de espera mesmo com waiting_count 0, usando o valor medido pela RPC
+In HTML, <li> cannot be a descendant of <li>.
+This will cause a hydration error.
+
+  <MemoryRouter>
+    <Router basename={undefined} location={{pathname:"/", ...}} navigationType="POP" navigator={{index:0, ...}} ...>
+      <QueuesView>
+        <div className="space-y-6 ...">
+          <AuroraBorealis>
+          <FloatingParticles>
+          <PageHeader title="Filas de A..." subtitle="Organize e..." breadcrumbs={[...]} actions={<div>}>
+            <header className="flex flex-...">
+              <div className="flex items...">
+                <Breadcrumb>
+                  <nav ref={null} aria-label="breadcrumb">
+                    <BreadcrumbList>
+                      <ol ref={null} className="flex flex-...">
+                        <BreadcrumbItem>
+                        <BreadcrumbItem>
+>                         <li ref={null} className="inline-flex items-center gap-1.5">
+                            <BreadcrumbSeparator>
+>                             <li role="presentation" aria-hidden="true" className={"[&>svg]:size-3.5"}>
+                            ...
+                        ...
+              ...
+          ...
+
+<li> cannot contain a nested <li>.
+See this log for the ancestor stack trace.
+
+stderr | src/components/queues/__tests__/QueuesView.test.tsx > QueuesView — alertas de fila usam a contagem real de espera (R2-QUE-002) > dispara o alerta de espera para a fila acima do limite e ignora a fila zerada
+In HTML, <li> cannot be a descendant of <li>.
+This will cause a hydration error.
+
+  <MemoryRouter>
+    <Router basename={undefined} location={{pathname:"/", ...}} navigationType="POP" navigator={{index:0, ...}} ...>
+      <QueuesView>
+        <div className="space-y-6 ...">
+          <AuroraBorealis>
+          <FloatingParticles>
+          <PageHeader title="Filas de A..." subtitle="Organize e..." breadcrumbs={[...]} actions={<div>}>
+            <header className="flex flex-...">
+              <div className="flex items...">
+                <Breadcrumb>
+                  <nav ref={null} aria-label="breadcrumb">
+                    <BreadcrumbList>
+                      <ol ref={null} className="flex flex-...">
+                        <BreadcrumbItem>
+                        <BreadcrumbItem>
+>                         <li ref={null} className="inline-flex items-center gap-1.5">
+                            <BreadcrumbSeparator>
+>                             <li role="presentation" aria-hidden="true" className={"[&>svg]:size-3.5"}>
+                            ...
+                        ...
+              ...
+          ...
+
+<li> cannot contain a nested <li>.
+See this log for the ancestor stack trace.
+
+··Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+·Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+·
+
+ Test Files  3 passed (3)
+      Tests  13 passed (13)
+   Start at  21:45:50
+   Duration  5.13s (transform 1.34s, setup 1.42s, import 3.43s, tests 2.62s, environment 3.33s)
+
