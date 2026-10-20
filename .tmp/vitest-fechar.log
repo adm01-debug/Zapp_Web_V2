@@ -1,0 +1,37 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/a11y-nome-papel-6-pontos-2610101800fbc9
+
+stderr | src/components/docs/__tests__/SystemFeaturesView.a11y.test.tsx > SystemFeaturesView — cabeçalho de seção acessível (t_90dcdcc8) > o cabeçalho de seção é botão com tabIndex e aria-expanded
+In HTML, <div> cannot be a descendant of <p>.
+This will cause a hydration error.
+
+  <SystemFeaturesView>
+    <div className="h-full fle...">
+      <div className="border-b b...">
+        <div className="flex items...">
+          <div>
+            <h1>
+>           <p className="text-sm text-muted-foreground mt-1">
+              <span>
+              <span>
+              <Badge variant="secondary" className="text-xs" data-testid="catalog-st...">
+>               <div
+>                 ref={null}
+>                 className="inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold transition-color..."
+>                 data-testid="catalog-status-badge"
+>               >
+            ...
+          ...
+        ...
+      ...
+
+<p> cannot contain a nested <div>.
+See this log for the ancestor stack trace.
+
+·········
+
+ Test Files  6 passed (6)
+      Tests  9 passed (9)
+   Start at  18:08:44
+   Duration  2.96s (transform 1.46s, setup 886ms, import 3.15s, tests 2.09s, environment 3.60s)
+
