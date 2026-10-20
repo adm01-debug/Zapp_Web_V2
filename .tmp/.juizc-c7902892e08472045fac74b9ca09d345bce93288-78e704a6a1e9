@@ -1,0 +1,1 @@
+{"versao": "pronto-5", "estado": "ok", "avisos": [], "fatos": {"files_changed": 4, "test_files_changed": 2, "files": ["src/integrations/supabase/types.ts", "supabase/migrations/20261011192817_admin_login_attempts_rpc.sql", "supabase/tests/admin_login_attempts.sql", "tests/contracts/admin-login-attempts-rpc.contract.test.ts"], "diff_truncated": true, "test_cases_added": 6}}

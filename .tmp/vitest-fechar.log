@@ -1,0 +1,10 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-login-attempts-26101116111cf8
+
+······
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  16:59:09
+   Duration  386ms (transform 39ms, setup 0ms, import 59ms, tests 8ms, environment 0ms)
+

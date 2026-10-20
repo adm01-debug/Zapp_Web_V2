@@ -1,0 +1,16 @@
+PROJETO=Zapp_Web_V2
+SLUG=admin-login-attempts
+ID=26101116111cf8
+BRANCH=v2/admin-login-attempts-26101116111cf8
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-login-attempts-26101116111cf8
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-11T16:11:30-03:00
+KANBAN=t_b0724fdc
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-login-attempts-26101116111cf8/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-11
+DB_LOCAL=v2-26101116111cf8
+APLICADA_LOCAL=20261011192817_admin_login_attempts_rpc.sql sha=70a0a28e6ed3809a
+PRONTO_SHA=c7902892e08472045fac74b9ca09d345bce93288

@@ -1,0 +1,26 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-login-attempts-26101116111cf8/.tmp/prova-base
+
+
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/contracts/admin-login-attempts-rpc.contract.test.ts [ tests/contracts/admin-login-attempts-rpc.contract.test.ts ]
+Error: migration admin_login_attempts_rpc nao encontrada
+ ❯ lerMigration tests/contracts/admin-login-attempts-rpc.contract.test.ts:16:20
+     14| function lerMigration(): string {
+     15|   const nome = readdirSync(DIR_MIGRACOES).find((f) => f.includes('admi…
+     16|   if (!nome) throw new Error('migration admin_login_attempts_rpc nao e…
+       |                    ^
+     17|   return readFileSync(join(DIR_MIGRACOES, nome), 'utf8');
+     18| }
+ ❯ tests/contracts/admin-login-attempts-rpc.contract.test.ts:20:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  16:59:11
+   Duration  379ms (transform 37ms, setup 0ms, import 0ms, tests 0ms, environment 0ms)
+

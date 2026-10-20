@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 5eb097cff11a0b1df52d8b295219127a5bb64015 Hermes Senior <hermes-senior@promobrindes.local> 1791745889 -0300	
+5eb097cff11a0b1df52d8b295219127a5bb64015 5eb097cff11a0b1df52d8b295219127a5bb64015 Hermes Senior <hermes-senior@promobrindes.local> 1791745890 -0300	reset: moving to HEAD
+5eb097cff11a0b1df52d8b295219127a5bb64015 e1a4a75d262b0ad52abb7f107cdad9c8bd721bfb Hermes Senior <hermes-senior@promobrindes.local> 1791748234 -0300	commit: feat(admin): RPCs admin_login_attempts e admin_blocked_accounts para o painel de auth
+e1a4a75d262b0ad52abb7f107cdad9c8bd721bfb c7902892e08472045fac74b9ca09d345bce93288 Hermes Senior <hermes-senior@promobrindes.local> 1791748740 -0300	commit: test(admin): contrato das RPCs admin_login_attempts e admin_blocked_accounts
