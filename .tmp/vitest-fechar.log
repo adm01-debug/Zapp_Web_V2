@@ -1,0 +1,11 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/anexos-progresso-upload-aviso-2610151622b92e
+
+····Not implemented: Window's scrollTo() method
+··-·············
+
+ Test Files  3 passed (3)
+      Tests  19 passed | 1 todo (20)
+   Start at  17:07:54
+   Duration  6.82s (transform 1.83s, setup 2.42s, import 4.06s, tests 3.66s, environment 6.51s)
+

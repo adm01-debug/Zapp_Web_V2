@@ -1,0 +1,379 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/anexos-progresso-upload-aviso-2610151622b92e/.tmp/prova-base
+
+····x·-···xx·····xxx
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/inbox/__tests__/ChatPanel.scheduled-media.test.tsx > ChatPanel — anexo agendado no path canônico do contato > limpa o objeto do storage e relança quando a persistência do agendamento falha
+AssertionError: expected null to be an instance of Error
+ ❯ src/components/inbox/__tests__/ChatPanel.scheduled-media.test.tsx:272:19
+    270|     expect(mocks.scheduleMessage).toHaveBeenCalledTimes(1);
+    271|     // Relança: o diálogo mantém o botão e não anuncia "Mensagem agend…
+    272|     expect(error).toBeInstanceOf(Error);
+       |                   ^
+    273|     expect((error as Error).message).toBe('insert falhou');
+    274|     // Aviso claro na tela, com o motivo real.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  src/components/inbox/__tests__/ChatPanel.scheduled-media.test.tsx > ChatPanel — anexo agendado no path canônico do contato > limpa o objeto e relança quando a referência durável (locator) não é gerada
+AssertionError: expected null to be an instance of Error
+ ❯ src/components/inbox/__tests__/ChatPanel.scheduled-media.test.tsx:291:19
+    289|     await waitFor(() => expect(mocks.remove).toHaveBeenCalledTimes(1));
+    290|     expect(mocks.scheduleMessage).not.toHaveBeenCalled();
+    291|     expect(error).toBeInstanceOf(Error);
+       |                   ^
+    292|     expect(mocks.toast).toHaveBeenCalledWith(
+    293|       expect.objectContaining({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  src/components/inbox/__tests__/FileUploader.progresso-upload.test.tsx > FileUploader — progresso real do upload e falha que fica na tela > a barra acompanha os bytes que o upload consome (role=progressbar, valor atual)
+TestingLibraryElementError: Unable to find role="progressbar" and name "Progresso de grande.pdf"
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m>[39m
+    [36m<input[39m
+      [33maccept[39m=[32m"image/jpeg,image/png,image/webp,video/mp4,video/3gpp,audio/aac,audio/amr,audio/mpeg,audio/ogg,audio/opus,audio/mp4,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain,text/csv,application/zip,application/x-rar-compressed,application/vnd.rar,image/webp"[39m
+      [33mclass[39m=[32m"hidden"[39m
+      [33mmultiple[39m=[32m""[39m
+      [33mtype[39m=[32m"file"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33mdata-state[39m=[32m"closed"[39m
+      [33mtabindex[39m=[32m"0"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33maria-label[39m=[32m"Anexar arquivo"[39m
+        [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:shadow-glow-accent-sm h-10 w-10 text-muted-foreground hover:text-primary hover:bg-primary/10"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-paperclip w-5 h-5"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mheight[39m=[32m"24"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"24"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m16 6-8.414 8.586a2 2 0 0 0 2.829 2.829l8.414-8.586a4 4 0 1 0-5.657-5.657l-8.379 8.551a6 6 0 1 0 8.485 8.485l8.379-8.551"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"fixed inset-0 z-50 bg-background/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-labelledby[39m=[32m"radix-_r_2_"[39m
+    [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 w-full translate-x-[-50%] translate-y-[-50%] gap-4 border border-border/60 bg-background p-6 shadow-2xl shadow-background/50 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-2xl max-w-lg sm:max-w-lg max-h-[85vh] overflow-hidden flex flex-col"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mid[39m=[32m"radix-_r_1_"[39m
+    [33mrole[39m=[32m"dialog"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+    [36m>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"text-lg font-display font-semibold leading-none tracking-tight flex items-center gap-2"[39m
+        [33mid[39m=[32m"radix-_r_2_"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-upload w-5 h-5"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mheight[39m=[32m"24"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"24"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M12 3v12"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m17 8-5-5-5 5"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0mEnviar Arquivo[0m
+      [36m</h2>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [33mid[39m=[32m"radix-_r_3_"[39m
+      [36m>[39m
+        [0mFormatos suportados: imagens, vídeos, áudios e documentos[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-4"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"border rounded-lg overflow-hidden bg-muted/30"[39m
+      [36m>[39m
+        [36m<iframe[39m
+          [33mclass[39m=[32m"w-full h-[280px] border-0"[39m
+          [33msrc[39m=[32m"blob:nodedata:e016cda7-5a66-4de0-9103-72f38f8c9125#toolbar=0&navpanes=0"[39m
+          [33mtitle[39m=[32m"PDF Preview"[39m
+        [36m/>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"relative border rounded-lg p-4 bg-muted/50"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-start gap-4"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex-shrink-0"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-20 h-20 bg-primary/10 rounded-lg flex items-center justify-center text-primary"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-file-text w-5...
+
+Ignored nodes: comments, script, style
+[36m<body[39m
+  [33mdata-scroll-locked[39m=[32m"1"[39m
+  [33mstyle[39m=[32m"pointer-events: none;"[39m
+[36m>[39m
+  [36m<span[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-radix-focus-guard[39m=[32m""[39m
+    [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+  [36m>[39m
+    [36m<input[39m
+      [33maccept[39m=[32m"image/jpeg,image/png,image/webp,video/mp4,video/3gpp,audio/aac,audio/amr,audio/mpeg,audio/ogg,audio/opus,audio/mp4,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain,text/csv,application/zip,application/x-rar-compressed,application/vnd.rar,image/webp"[39m
+      [33mclass[39m=[32m"hidden"[39m
+      [33mmultiple[39m=[32m""[39m
+      [33mtype[39m=[32m"file"[39m
+    [36m/>[39m
+    [36m<div[39m
+      [33mdata-state[39m=[32m"closed"[39m
+      [33mtabindex[39m=[32m"0"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33maria-label[39m=[32m"Anexar arquivo"[39m
+        [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:shadow-glow-accent-sm h-10 w-10 text-muted-foreground hover:text-primary hover:bg-primary/10"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-paperclip w-5 h-5"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mheight[39m=[32m"24"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"24"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m16 6-8.414 8.586a2 2 0 0 0 2.829 2.829l8.414-8.586a4 4 0 1 0-5.657-5.657l-8.379 8.551a6 6 0 1 0 8.485 8.485l8.379-8.551"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"fixed inset-0 z-50 bg-background/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"[39m
+    [33mdata-aria-hidden[39m=[32m"true"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+  [36m/>[39m
+  [36m<div[39m
+    [33maria-labelledby[39m=[32m"radix-_r_2_"[39m
+    [33mclass[39m=[32m"fixed left-[50%] top-[50%] z-50 w-full translate-x-[-50%] translate-y-[-50%] gap-4 border border-border/60 bg-background p-6 shadow-2xl shadow-background/50 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-2xl max-w-lg sm:max-w-lg max-h-[85vh] overflow-hidden flex flex-col"[39m
+    [33mdata-state[39m=[32m"open"[39m
+    [33mid[39m=[32m"radix-_r_1_"[39m
+    [33mrole[39m=[32m"dialog"[39m
+    [33mstyle[39m=[32m"pointer-events: auto;"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col space-y-1.5 text-center sm:text-left"[39m
+    [36m>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"text-lg font-display font-semibold leading-none tracking-tight flex items-center gap-2"[39m
+        [33mid[39m=[32m"radix-_r_2_"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-upload w-5 h-5"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mheight[39m=[32m"24"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"24"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M12 3v12"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m17 8-5-5-5 5"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0mEnviar Arquivo[0m
+      [36m</h2>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [33mid[39m=[32m"radix-_r_3_"[39m
+      [36m>[39m
+        [0mFormatos suportados: imagens, vídeos, áudios e documentos[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-4"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"border rounded-lg overflow-hidden bg-muted/30"[39m
+      [36m>[39m
+        [36m<iframe[39m
+          [33mclass[39m=[32m"w-full h-[280px] border-0"[39m
+          [33msrc[39m=[32m"blob:nodedata:e016cda7-5a66-4de0-9103-72f38f8c9125#toolbar=0&navpanes=0"[39m
+          [33mtitle[39m=[32m"PDF Preview"[39m
+        [36m/>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"relative border rounded-lg p-4 bg-muted/50"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-start gap-4"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex-shrink-0"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"w-20 h-20 bg-primary/10 rounded-lg flex items-center justify-center text-primary"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-file-text w-5...
+ ❯ waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/components/inbox/__tests__/FileUploader.progresso-upload.test.tsx:160:32
+    158|
+    159|     // A barra existe, é acessível e mostra o valor do pedaço já consu…
+    160|     const barra = await screen.findByRole('progressbar', { name: 'Prog…
+       |                                ^
+    161|     await waitFor(() => expect(barra).toHaveAttribute('aria-valuenow',…
+    162|     expect(screen.getByText('Fazendo upload... 50%')).toBeInTheDocumen…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  src/components/inbox/__tests__/FileUploader.progresso-upload.test.tsx > FileUploader — progresso real do upload e falha que fica na tela > falha única mantém o arquivo na tela e o toast de erro oferece "Tentar de novo"
+AssertionError: expected undefined to be 8000 // Object.is equality
+
+- Expected:
+8000
+
++ Received:
+undefined
+
+ ❯ src/components/inbox/__tests__/FileUploader.progresso-upload.test.tsx:189:29
+    187|     const [mensagem, opcoes] = ultimoToastDeErro();
+    188|     expect(mensagem).toContain('entrega indisponível');
+    189|     expect(opcoes.duration).toBe(8000);
+       |                             ^
+    190|     expect(opcoes.action?.label).toBe('Tentar de novo');
+    191|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  src/components/inbox/__tests__/FileUploader.progresso-upload.test.tsx > FileUploader — progresso real do upload e falha que fica na tela > no lote, o que falhou fica na lista e o toast de erro retenta pelo mesmo caminho
+TypeError: Cannot read properties of undefined (reading 'duration')
+ ❯ src/components/inbox/__tests__/FileUploader.progresso-upload.test.tsx:213:19
+    211|     const [mensagem, opcoes] = ultimoToastDeErro();
+    212|     expect(mensagem).toContain('1 arquivo(s) falharam');
+    213|     expect(opcoes.duration).toBe(8000);
+       |                   ^
+    214|     expect(opcoes.action?.label).toBe('Tentar de novo');
+    215|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  src/components/inbox/__tests__/useFileUploadLogic.u7.test.tsx > useFileUploadLogic — U7: fila, limites e compressão > em lote parcial reporta quantos foram enviados e quantos falharam
+AssertionError: expected "vi.fn()" to be called with arguments: [ StringContaining{…}, …(1) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   StringContaining "1 arquivo(s) falharam",
+-   ObjectContaining {
+-     "action": ObjectContaining {
+-       "label": "Tentar de novo",
+-     },
+-     "duration": 8000,
+-   },
++   "1 arquivo(s) falharam ao enviar",
+  ]
+
+
+Number of calls: 1
+
+ ❯ src/components/inbox/__tests__/useFileUploadLogic.u7.test.tsx:188:30
+    186|
+    187|     await waitFor(() => expect(mocks.toastSuccess).toHaveBeenCalledWit…
+    188|     expect(mocks.toastError).toHaveBeenCalledWith(
+       |                              ^
+    189|       expect.stringContaining('1 arquivo(s) falharam'),
+    190|       expect.objectContaining({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  6 failed | 13 passed | 1 todo (20)
+   Start at  17:08:07
+   Duration  14.78s (transform 7.54s, setup 2.40s, import 12.04s, tests 8.57s, environment 5.15s)
+

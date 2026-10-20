@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=anexos-progresso-upload-aviso
+ID=2610151622b92e
+BRANCH=v2/anexos-progresso-upload-aviso-2610151622b92e
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/anexos-progresso-upload-aviso-2610151622b92e
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-15T16:22:06-03:00
+KANBAN=t_d50c6f5f
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/anexos-progresso-upload-aviso-2610151622b92e/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-15
+DB_LOCAL=v2-2610151622b92e
+PRONTO_SHA=2c47fffe354817cc4174c1dbfb6e2fffa92e52ea

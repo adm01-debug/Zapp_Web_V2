@@ -1,0 +1,6 @@
+OK      db_guard        0s
+OK      tipos        1338s
+OK      lint            7s
+OK      migrations      1s
+AVISO   banco_local  NÃO VERIFICADO: sem nome de conjunto (passe o nome como terceiro argumento)
+VERIFY: VERDE SEM BANCO (1346s) — o banco NÃO foi verificado; registros em /home/joaquim_ataides/.local/state/zapp-verify/b22031bf6a57

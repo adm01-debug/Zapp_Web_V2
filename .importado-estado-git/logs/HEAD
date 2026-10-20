@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 e7d156b8a74c0b165e19c9549bba19377137b0fc Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792092125 -0300	
+e7d156b8a74c0b165e19c9549bba19377137b0fc e7d156b8a74c0b165e19c9549bba19377137b0fc Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792092126 -0300	reset: moving to HEAD
+e7d156b8a74c0b165e19c9549bba19377137b0fc cb5fb77b5252a5f15a2da1981d1048afcb213a14 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792094484 -0300	commit: fix(inbox): liga a barra de anexo ao progresso real e mantem a falha visivel
+cb5fb77b5252a5f15a2da1981d1048afcb213a14 2c47fffe354817cc4174c1dbfb6e2fffa92e52ea Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792094687 -0300	commit: chore(inbox): ajusta comentario do estado da barra de envio

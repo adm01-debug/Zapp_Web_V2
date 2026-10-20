@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/anexos-progresso-upload-aviso-2610151622b92e
+
+
+ Test Files  6 passed | 1 skipped (7)
+      Tests  29 passed | 10 todo (39)
+   Start at  17:00:19
+   Duration  20.51s (transform 9.59s, setup 10.58s, import 20.85s, tests 9.14s, environment 23.82s)
+
