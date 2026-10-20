@@ -1,0 +1,6 @@
+20	9	src/components/automations/AutomationCard.tsx
+9	2	src/components/automations/AutomationsManager.tsx
+8	5	src/components/automations/__tests__/AutomationEditorDialog.test.tsx
+227	0	src/components/automations/__tests__/AutomationsManager.obsoleta.test.tsx
+79	0	src/components/automations/__tests__/automationConstants.test.ts
+26	3	src/components/automations/automationConstants.ts

@@ -1,0 +1,7 @@
+0000000000000000000000000000000000000000 338a420d1e0fa57f993a1b5d8064e0d80f54d6c0 Hermes Senior <hermes-senior@promobrindes.local> 1791972002 -0300	
+338a420d1e0fa57f993a1b5d8064e0d80f54d6c0 338a420d1e0fa57f993a1b5d8064e0d80f54d6c0 Hermes Senior <hermes-senior@promobrindes.local> 1791972003 -0300	reset: moving to HEAD
+338a420d1e0fa57f993a1b5d8064e0d80f54d6c0 1f4ac627699ea3de6b6dfb5e022a1081a90f9ba2 Hermes Senior <hermes-senior@promobrindes.local> 1791972572 -0300	commit: chore(automacoes): remove opções de tag do editor e marca registro antigo como obsoleto
+1f4ac627699ea3de6b6dfb5e022a1081a90f9ba2 41ed976b8467416b0cfca895eeafdc375395dff3 Hermes Senior <hermes-senior@promobrindes.local> 1791972695 -0300	commit: docs(automacoes): relato do cartao t_23deb8a0
+41ed976b8467416b0cfca895eeafdc375395dff3 b7cac83937f5ab62a0c6d20e9748e26092fe3c78 Hermes Senior <hermes-senior@promobrindes.local> 1791972941 -0300	commit: docs(automacoes): prova do cartao no relato (vermelho/verde e zapp-verify)
+b7cac83937f5ab62a0c6d20e9748e26092fe3c78 37440837021e27662ff3ecb14356284a7562f922 Hermes Senior <hermes-senior@promobrindes.local> 1791972986 -0300	commit: docs(automacoes): justifica AutomationCard fora da lista de arquivos
+37440837021e27662ff3ecb14356284a7562f922 a48acc8eed5aa4dbe9e1e40a325a1c05dbcc5714 Hermes Senior <hermes-senior@promobrindes.local> 1792038579 -0300	commit: fix(automacoes): obsoleta ativa pode ser desligada e busca tag documentada (refazer 1)
