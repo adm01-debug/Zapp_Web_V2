@@ -1,0 +1,184 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-erros-senha-4338f11e-2610122157054f/.tmp/prova-base
+
+···xxxxxxxx·
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts > useAdminData — erro nunca vira lista vazia silenciosa > erro ao carregar profiles expõe estado de erro e avisa por toast
+AssertionError: expected undefined to be truthy
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts:72:34
+     70|     });
+     71|
+     72|     expect(result.current.error).toBeTruthy();
+       |                                  ^
+     73|     expect(h.toastError).toHaveBeenCalledTimes(1);
+     74|     expect(result.current.users).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts > useAdminData — erro nunca vira lista vazia silenciosa > erro ao carregar user_roles expõe estado de erro e avisa por toast
+AssertionError: expected undefined to be truthy
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts:87:34
+     85|     });
+     86|
+     87|     expect(result.current.error).toBeTruthy();
+       |                                  ^
+     88|     expect(h.toastError).toHaveBeenCalledTimes(1);
+     89|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts > useAdminData — erro nunca vira lista vazia silenciosa > erro na auditoria expõe estado de erro em vez de lista vazia
+AssertionError: expected undefined to be truthy
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts:99:34
+     97|     });
+     98|
+     99|     expect(result.current.error).toBeTruthy();
+       |                                  ^
+    100|     expect(h.toastError).toHaveBeenCalledTimes(1);
+    101|     expect(result.current.auditLogs).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts > useAdminData — erro nunca vira lista vazia silenciosa > sucesso não deixa estado de erro ligado
+AssertionError: expected undefined to be null
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts:113:34
+    111|     });
+    112|
+    113|     expect(result.current.error).toBeNull();
+       |                                  ^
+    114|     expect(h.toastError).not.toHaveBeenCalled();
+    115|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts > useAdminData — auditoria com filtro de data e paginação > aplica gte/lte com o dia inteiro e range 1-based
+AssertionError: expected undefined to deeply equal [ 'created_at', …(1) ]
+
+- Expected:
+[
+  "created_at",
+  "2026-10-01T00:00:00.000Z",
+]
+
++ Received:
+undefined
+
+ ❯ src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts:135:52
+    133|     });
+    134|
+    135|     expect(callsFor('audit_logs', 'gte')[0]?.args).toEqual([
+       |                                                    ^
+    136|       'created_at',
+    137|       '2026-10-01T00:00:00.000Z',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts > useAdminData — auditoria com filtro de data e paginação > sem filtro usa a primeira página e não manda gte/lte
+AssertionError: expected undefined to deeply equal [ +0, NaN ]
+
+- Expected:
+[
+  0,
+  NaN,
+]
+
++ Received:
+undefined
+
+ ❯ src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts:155:54
+    153|     });
+    154|
+    155|     expect(callsFor('audit_logs', 'range')[0]?.args).toEqual([0, AUDIT…
+       |                                                      ^
+    156|     expect(callsFor('audit_logs', 'gte')).toHaveLength(0);
+    157|     expect(callsFor('audit_logs', 'lte')).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts > useAdminData — senha mínima alinhada à Edge create-user > expõe a régua de 8 caracteres da Edge
+AssertionError: expected undefined to be 8 // Object.is equality
+
+- Expected:
+8
+
++ Received:
+undefined
+
+ ❯ src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts:169:33
+    167|
+    168|   it('expõe a régua de 8 caracteres da Edge', () => {
+    169|     expect(MIN_PASSWORD_LENGTH).toBe(8);
+       |                                 ^
+    170|   });
+    171|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts > useAdminData — senha mínima alinhada à Edge create-user > recusa 7 caracteres antes de chamar a Edge
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "https://local.test/functions/v1/create-user",
+      Object {
+        "body": "{"name":"Ana","email":"ana@example.test","password":"1234567","role":"agent"}",
+        "headers": Object {
+          "Authorization": "Bearer tok",
+          "Content-Type": "application/json",
+        },
+        "method": "POST",
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts:188:26
+    186|
+    187|     expect(ok).toBe(false);
+    188|     expect(fetchSpy).not.toHaveBeenCalled();
+       |                          ^
+    189|     expect(h.toastError).toHaveBeenCalledWith(
+    190|       expect.stringContaining('8 caracteres'),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  8 failed | 4 passed (12)
+   Start at  22:06:34
+   Duration  943ms (transform 150ms, setup 349ms, import 88ms, tests 66ms, environment 1.09s)
+

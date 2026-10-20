@@ -1,0 +1,1 @@
+{"versao": "pronto-5", "estado": "ok", "avisos": [], "fatos": {"files_changed": 4, "test_files_changed": 2, "files": [".tmp/relato.md", "src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts", "src/components/admin/__tests__/useAdminDataColumns.test.ts", "src/components/admin/useAdminData.ts"], "diff_truncated": false, "test_cases_added": 9}}

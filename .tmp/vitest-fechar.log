@@ -1,0 +1,10 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-erros-senha-4338f11e-2610122157054f
+
+············
+
+ Test Files  2 passed (2)
+      Tests  12 passed (12)
+   Start at  22:06:32
+   Duration  966ms (transform 162ms, setup 358ms, import 90ms, tests 52ms, environment 1.13s)
+

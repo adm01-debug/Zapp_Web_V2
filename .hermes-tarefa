@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=admin-erros-senha-4338f11e
+ID=2610122157054f
+BRANCH=v2/admin-erros-senha-4338f11e-2610122157054f
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-erros-senha-4338f11e-2610122157054f
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-12T21:57:38-03:00
+KANBAN=t_0438f11e
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-erros-senha-4338f11e-2610122157054f/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-12
+DB_LOCAL=v2-2610122157054f
+PRONTO_SHA=23d5f122ffb07a27b4fce599e38f7245a9da61b5

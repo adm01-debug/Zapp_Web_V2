@@ -1,0 +1,7 @@
+0000000000000000000000000000000000000000 96dd72dc5f5db919bdbb4ffdc269510addca6165 Hermes Senior <hermes-senior@promobrindes.local> 1791853057 -0300	
+96dd72dc5f5db919bdbb4ffdc269510addca6165 96dd72dc5f5db919bdbb4ffdc269510addca6165 Hermes Senior <hermes-senior@promobrindes.local> 1791853058 -0300	reset: moving to HEAD
+96dd72dc5f5db919bdbb4ffdc269510addca6165 eaa35eb7fc481be123639c86e509213884226a2b Hermes Senior <hermes-senior@promobrindes.local> 1791853461 -0300	commit: fix(admin): erros de consulta visiveis e senha minima alinhada a Edge
+eaa35eb7fc481be123639c86e509213884226a2b 60a80762fcfac2b9e70052a63c4827055ac13a5c Hermes Senior <hermes-senior@promobrindes.local> 1791853489 -0300	commit: chore(admin): relato do cartao t_0438f11e
+60a80762fcfac2b9e70052a63c4827055ac13a5c 23d5f122ffb07a27b4fce599e38f7245a9da61b5 Hermes Senior <hermes-senior@promobrindes.local> 1791853533 -0300	commit: chore(admin): relato direto do cartao t_0438f11e
+23d5f122ffb07a27b4fce599e38f7245a9da61b5 9fb6f8b3c6acac5d600248bcade563f391331d7a Hermes Senior <hermes-senior@promobrindes.local> 1792021020 -0300	commit: fix(admin): refazer 1 — filtro de auditoria no fuso local e ajustes da recusa
+9fb6f8b3c6acac5d600248bcade563f391331d7a 52bd83ee67c94d73f90d1d4ed8f67e43de49eb50 Hermes Senior <hermes-senior@promobrindes.local> 1792021032 -0300	commit: chore(admin): relato do refazer 1 do cartao t_f5cae12f
