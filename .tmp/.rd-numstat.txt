@@ -1,0 +1,9 @@
+1	1	src/components/inbox/chat/MessageBubble.tsx
+107	0	src/components/inbox/chat/__tests__/MessageBubble.chat-text-size.test.tsx
+13	1	src/components/settings/AppearanceSettings.tsx
+7	0	src/components/settings/__tests__/AppearanceSettings.a11y.test.tsx
+56	0	src/components/theme/ChatTextSize.tsx
+91	0	src/components/theme/__tests__/ChatTextSize.test.tsx
+67	0	src/components/theme/useChatTextSize.ts
+36	0	src/styles/__tests__/chatTextSize.test.ts
+7	0	src/styles/components.css

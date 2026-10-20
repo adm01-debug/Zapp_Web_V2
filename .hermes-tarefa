@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=aparencia-tamanho-texto-chat
+ID=2610130537e450
+BRANCH=v2/aparencia-tamanho-texto-chat-2610130537e450
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/aparencia-tamanho-texto-chat-2610130537e450
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T05:37:14-03:00
+KANBAN=t_9165e813
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/aparencia-tamanho-texto-chat-2610130537e450/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-2610130537e450
+PRONTO_SHA=14532bb8a3f9c5c98364af4d70b87a305e05ef06

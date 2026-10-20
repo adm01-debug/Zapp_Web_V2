@@ -1,0 +1,10 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/aparencia-tamanho-texto-chat-2610130537e450
+
+················
+
+ Test Files  4 passed (4)
+      Tests  16 passed (16)
+   Start at  06:03:20
+   Duration  6.01s (transform 4.00s, setup 1.55s, import 6.60s, tests 2.14s, environment 5.28s)
+
