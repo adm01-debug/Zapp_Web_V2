@@ -1,0 +1,28 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/aviso-tipo-notificacao-som-recusado-2610161528a89e/.tmp/prova-base
+
+x··
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/notifications/__tests__/NotificationTypeCards.recusa-navegador.test.tsx > NotificationTypeCards — aviso quando o navegador recusa tocar o som > recusa (false): avisa que o navegador não deixou tocar e não grava preferência
+AssertionError: expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Number of calls: 0
+
+ ❯ src/components/notifications/__tests__/NotificationTypeCards.recusa-navegador.test.tsx:76:30
+     74|
+     75|     expect(h.playNotificationSound).toHaveBeenCalledWith('message', 'c…
+     76|     expect(vi.mocked(toast)).toHaveBeenCalledWith(
+       |                              ^
+     77|       expect.objectContaining({
+     78|         title: expect.stringContaining('não deixou tocar o som'),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  15:32:35
+   Duration  2.08s (transform 646ms, setup 254ms, import 683ms, tests 514ms, environment 490ms)
+

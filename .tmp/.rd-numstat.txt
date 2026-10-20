@@ -1,0 +1,2 @@
+20	3	src/components/notifications/NotificationTypeCards.tsx
+108	0	src/components/notifications/__tests__/NotificationTypeCards.recusa-navegador.test.tsx
