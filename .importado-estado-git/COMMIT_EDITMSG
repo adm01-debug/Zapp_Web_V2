@@ -1,0 +1,10 @@
+test(auth): [refazer 1] cenarios e2e de sessao e citacao da recusa
+
+P1: 3 cenarios em e2e/auth.spec.ts (projeto chromium, deslogado) —
+sessao persiste apos refresh, logout limpa chaves sb-*, token
+corrompido cai no login sem loop. Sessao sintetica + backend
+mockado + rede real barrada; nenhum acesso a producao.
+P2: self-acceptance cobre recusa 2615f548 no cabecalho do
+ForgotPassword.fluxo.test.tsx.
+P3/P4: cobertura 1 a 1 e primeira linha no .tmp/relato.md
+(fora do versionamento).

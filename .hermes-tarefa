@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=auth-testes-recuperacao-mfa-rota-protegi
+ID=26101302065771
+BRANCH=v2/auth-testes-recuperacao-mfa-rota-protegi-26101302065771
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auth-testes-recuperacao-mfa-rota-protegi-26101302065771
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T02:06:06-03:00
+KANBAN=t_62a7ee39
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auth-testes-recuperacao-mfa-rota-protegi-26101302065771/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-26101302065771
+PRONTO_SHA=8ef29988658d5ea06ef95aa4925d4598d5da2d58

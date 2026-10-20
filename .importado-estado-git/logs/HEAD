@@ -1,0 +1,7 @@
+0000000000000000000000000000000000000000 96dd72dc5f5db919bdbb4ffdc269510addca6165 Hermes Senior <hermes-senior@promobrindes.local> 1791867964 -0300	
+96dd72dc5f5db919bdbb4ffdc269510addca6165 96dd72dc5f5db919bdbb4ffdc269510addca6165 Hermes Senior <hermes-senior@promobrindes.local> 1791867965 -0300	reset: moving to HEAD
+96dd72dc5f5db919bdbb4ffdc269510addca6165 08e585156603a675dc180f6c550303b151fd7838 Hermes Senior <hermes-senior@promobrindes.local> 1791868036 -0300	cherry-pick: fix(auth): logout aguardado, erro de boot, papel ao vivo e storage seguro
+08e585156603a675dc180f6c550303b151fd7838 d69be415a6e744d3cdf906bc66e883039b82b1bb Hermes Senior <hermes-senior@promobrindes.local> 1791868036 -0300	cherry-pick: chore(auth): deixa o relato da tarefa fora do versionamento
+d69be415a6e744d3cdf906bc66e883039b82b1bb 8ef29988658d5ea06ef95aa4925d4598d5da2d58 Hermes Senior <hermes-senior@promobrindes.local> 1791868714 -0300	commit: test(auth): cobre recuperacao de senha, MFA, /2fa e callback SSO
+8ef29988658d5ea06ef95aa4925d4598d5da2d58 8ef29988658d5ea06ef95aa4925d4598d5da2d58 Hermes Senior <hermes-senior@promobrindes.local> 1792024625 -0300	reset: moving to HEAD
+8ef29988658d5ea06ef95aa4925d4598d5da2d58 b52224d368eb6e39b48580a175b8b0e6c85c4a63 Hermes Senior <hermes-senior@promobrindes.local> 1792024715 -0300	commit: test(auth): [refazer 1] cenarios e2e de sessao e citacao da recusa

@@ -1,0 +1,619 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auth-testes-recuperacao-mfa-rota-protegi-26101302065771/.tmp/prova-base
+
+··················Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+·stderr | src/pages/__tests__/ResetPassword.fluxo.test.tsx > ResetPassword — envio > chama updateUser com a senha digitada e mostra sucesso
+An update to ResetPassword inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ResetPassword inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+·stderr | src/pages/__tests__/ResetPassword.fluxo.test.tsx > ResetPassword — envio > erro do Supabase é mostrado ao usuário
+An update to ResetPassword inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ResetPassword inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+Not implemented: Window's scrollTo() method
+··················stdout | src/hooks/auth/__tests__/useAuth.bootstrap-erro.test.tsx > AuthProvider — erro de boot e retry > marca bootstrapError quando a leitura da sessão falha
+[2026-10-13T05:35:15.478Z] [INFO] [App] [sid:f8f35b89] [BOOT] AuthProvider initialized, starting session check
+
+stderr | src/hooks/auth/__tests__/useAuth.bootstrap-erro.test.tsx > AuthProvider — erro de boot e retry > marca bootstrapError quando a leitura da sessão falha
+[2026-10-13T05:35:15.483Z] [ERROR] [App] [sid:f8f35b89] [BOOT] Error fetching session: Error: rede fora
+    at /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auth-testes-recuperacao-mfa-rota-protegi-26101302065771/.tmp/prova-base/src/hooks/auth/__tests__/useAuth.bootstrap-erro.test.tsx:61:59
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auth-testes-recuperacao-mfa-rota-protegi-26101302065771/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auth-testes-recuperacao-mfa-rota-protegi-26101302065771/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auth-testes-recuperacao-mfa-rota-protegi-26101302065771/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auth-testes-recuperacao-mfa-rota-protegi-26101302065771/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auth-testes-recuperacao-mfa-rota-protegi-26101302065771/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auth-testes-recuperacao-mfa-rota-protegi-26101302065771/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auth-testes-recuperacao-mfa-rota-protegi-26101302065771/node_modules/@vitest/runner/dist/chunk-artifact.js:2956:64
+
+stdout | src/hooks/auth/__tests__/useAuth.bootstrap-erro.test.tsx > AuthProvider — erro de boot e retry > marca bootstrapError quando a leitura da sessão falha
+[2026-10-13T05:35:15.487Z] [INFO] [App] [sid:f8f35b89] [BOOT] Auth initial load finished
+
+stdout | src/hooks/auth/__tests__/useAuth.bootstrap-erro.test.tsx > AuthProvider — erro de boot e retry > retryBootstrap refaz a leitura e limpa o erro quando o servidor responde
+[2026-10-13T05:35:15.550Z] [INFO] [App] [sid:f8f35b89] [BOOT] AuthProvider initialized, starting session check
+
+stderr | src/hooks/auth/__tests__/useAuth.bootstrap-erro.test.tsx > AuthProvider — erro de boot e retry > retryBootstrap refaz a leitura e limpa o erro quando o servidor responde
+[2026-10-13T05:35:15.551Z] [ERROR] [App] [sid:f8f35b89] [BOOT] Error fetching session: Error: rede fora
+    at /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auth-testes-recuperacao-mfa-rota-protegi-26101302065771/.tmp/prova-base/src/hooks/auth/__tests__/useAuth.bootstrap-erro.test.tsx:72:30
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auth-testes-recuperacao-mfa-rota-protegi-26101302065771/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auth-testes-recuperacao-mfa-rota-protegi-26101302065771/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auth-testes-recuperacao-mfa-rota-protegi-26101302065771/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auth-testes-recuperacao-mfa-rota-protegi-26101302065771/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auth-testes-recuperacao-mfa-rota-protegi-26101302065771/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auth-testes-recuperacao-mfa-rota-protegi-26101302065771/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auth-testes-recuperacao-mfa-rota-protegi-26101302065771/node_modules/@vitest/runner/dist/chunk-artifact.js:2956:64
+
+stdout | src/hooks/auth/__tests__/useAuth.bootstrap-erro.test.tsx > AuthProvider — erro de boot e retry > retryBootstrap refaz a leitura e limpa o erro quando o servidor responde
+[2026-10-13T05:35:15.551Z] [INFO] [App] [sid:f8f35b89] [BOOT] Auth initial load finished
+
+x·····xx·stdout | src/hooks/auth/__tests__/useAuth.bootstrap-erro.test.tsx > AuthProvider — erro de boot e retry > boot normal (sessão nula) não marca erro
+[2026-10-13T05:35:20.582Z] [INFO] [App] [sid:f8f35b89] [BOOT] AuthProvider initialized, starting session check
+
+stdout | src/hooks/auth/__tests__/useAuth.bootstrap-erro.test.tsx > AuthProvider — erro de boot e retry > boot normal (sessão nula) não marca erro
+[2026-10-13T05:35:20.584Z] [INFO] [App] [sid:f8f35b89] [BOOT] Initial session retrieved: No User
+[2026-10-13T05:35:20.585Z] [INFO] [App] [sid:f8f35b89] [BOOT] Auth initial load finished
+
+xxxxxxxxxxxx
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/__tests__/safeStorage.adapter.test.ts > createSafeStorage > persiste no localStorage quando ele está disponível
+TypeError: createSafeStorage is not a function
+ ❯ src/lib/__tests__/safeStorage.adapter.test.ts:19:21
+     17|
+     18|   it('persiste no localStorage quando ele está disponível', () => {
+     19|     const storage = createSafeStorage();
+       |                     ^
+     20|     storage.setItem('zapp-sessao', 'token-1');
+     21|     expect(localStorage.getItem('zapp-sessao')).toBe('token-1');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/15]⎯
+
+ FAIL  src/lib/__tests__/safeStorage.adapter.test.ts > createSafeStorage > cai para a memória quando o acesso ao localStorage lança
+TypeError: createSafeStorage is not a function
+ ❯ src/lib/__tests__/safeStorage.adapter.test.ts:33:21
+     31|
+     32|     // Criar o adapter não pode lançar (é o que derrubava o boot da pá…
+     33|     const storage = createSafeStorage();
+       |                     ^
+     34|
+     35|     expect(storage.getItem('zapp-sessao')).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/15]⎯
+
+ FAIL  src/lib/__tests__/safeStorage.adapter.test.ts > createSafeStorage > mantém o valor em memória quando a escrita no localStorage falha
+TypeError: createSafeStorage is not a function
+ ❯ src/lib/__tests__/safeStorage.adapter.test.ts:47:21
+     45|     });
+     46|
+     47|     const storage = createSafeStorage();
+       |                     ^
+     48|     storage.setItem('zapp-sessao', 'token-3');
+     49|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/15]⎯
+
+ FAIL  src/components/auth/__tests__/ProtectedRoute.boot-erro.test.tsx > ProtectedRoute — boot sem conexão > mostra a tela de erro de boot com "Tentar de novo" e não redireciona
+TestingLibraryElementError: Unable to find an element with the text: /não foi possível confirmar/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div>[39m
+      [0mTELA DE LOGIN[0m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div>[39m
+        [0mTELA DE LOGIN[0m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper ../../node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/auth/__tests__/ProtectedRoute.boot-erro.test.tsx:79:11
+     77|     cenario();
+     78|
+     79|     await waitFor(() => expect(screen.getByText(/não foi possível conf…
+       |           ^
+     80|     expect(screen.queryByText('TELA DE LOGIN')).toBeNull();
+     81|     expect(screen.queryByText('CONTEUDO PROTEGIDO')).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/15]⎯
+
+ FAIL  src/components/auth/__tests__/ProtectedRoute.logout-aguardado.test.tsx > ProtectedRoute — logout aguardado antes de navegar > na tela de verificação só navega para /auth depois que o signOut termina
+AssertionError: expected "vi.fn()" to be called with arguments: [ '/auth' ]
+
+Number of calls: 0
+
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33maria-busy[39m=[32m"true"[39m
+        [33maria-label[39m=[32m"Verificando acesso"[39m
+        [33mclass[39m=[32m"min-h-screen flex items-center justify-center bg-background"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col items-center gap-4 max-w-xs text-center px-4"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-loader-circle w-8 h-8 animate-spin text-primary"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 12a9 9 0 1 1-6.219-8.56"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-foreground font-medium"[39m
+          [36m>[39m
+            [0mVerificando acesso...[0m
+          [36m</p>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"mt-8 pt-8 border-t border-border w-full"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-xs text-muted-foreground mb-4 italic"[39m
+            [36m>[39m
+              [0mSe o carregamento demorar muito, tente:[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-col gap-2"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"text-xs px-4 py-2 bg-muted hover:bg-muted/80 rounded-md transition-colors"[39m
+              [36m>[39m
+                [0mRecarregar Página[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"text-xs px-4 py-2 text-destructive hover:bg-destructive/10 rounded-md transition-colors"[39m
+              [36m>[39m
+                [0mSair e Entrar Novamente[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ src/components/auth/__tests__/ProtectedRoute.logout-aguardado.test.tsx:89:47
+     87|
+     88|     resolver?.();
+     89|     await waitFor(() => expect(estado.assign).toHaveBeenCalledWith('/a…
+       |                                               ^
+     90|   });
+     91|
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/15]⎯
+
+ FAIL  src/components/auth/__tests__/ProtectedRoute.logout-aguardado.test.tsx > ProtectedRoute — logout aguardado antes de navegar > navega mesmo se o signOut falhar (limpeza local não pode travar a saída)
+AssertionError: expected "vi.fn()" to be called with arguments: [ '/auth' ]
+
+Number of calls: 0
+
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33maria-busy[39m=[32m"true"[39m
+        [33maria-label[39m=[32m"Verificando acesso"[39m
+        [33mclass[39m=[32m"min-h-screen flex items-center justify-center bg-background"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col items-center gap-4 max-w-xs text-center px-4"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-loader-circle w-8 h-8 animate-spin text-primary"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 12a9 9 0 1 1-6.219-8.56"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-foreground font-medium"[39m
+          [36m>[39m
+            [0mVerificando acesso...[0m
+          [36m</p>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"mt-8 pt-8 border-t border-border w-full"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-xs text-muted-foreground mb-4 italic"[39m
+            [36m>[39m
+              [0mSe o carregamento demorar muito, tente:[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-col gap-2"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"text-xs px-4 py-2 bg-muted hover:bg-muted/80 rounded-md transition-colors"[39m
+              [36m>[39m
+                [0mRecarregar Página[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"text-xs px-4 py-2 text-destructive hover:bg-destructive/10 rounded-md transition-colors"[39m
+              [36m>[39m
+                [0mSair e Entrar Novamente[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ src/components/auth/__tests__/ProtectedRoute.logout-aguardado.test.tsx:99:47
+     97|     botao.click();
+     98|
+     99|     await waitFor(() => expect(estado.assign).toHaveBeenCalledWith('/a…
+       |                                               ^
+    100|   });
+    101|
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/15]⎯
+
+ FAIL  src/components/auth/__tests__/ProtectedRoute.logout-aguardado.test.tsx > ProtectedRoute — logout aguardado antes de navegar > na tela de erro do MFA o botão também espera o logout
+AssertionError: expected "vi.fn()" to be called with arguments: [ '/auth' ]
+
+Number of calls: 0
+
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"min-h-screen flex items-center justify-center bg-background p-4 text-center"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"space-y-4"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"text-2xl font-bold text-destructive"[39m
+          [36m>[39m
+            [0mErro ao verificar autenticação[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-muted-foreground"[39m
+          [36m>[39m
+            [0mNão foi possível confirmar o nível de segurança da sessão.[0m
+          [36m</p>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex gap-2 justify-center"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"px-4 py-2 bg-primary text-primary-foreground rounded-md"[39m
+            [36m>[39m
+              [0mTentar Novamente[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"px-4 py-2 text-destructive hover:bg-destructive/10 rounded-md transition-colors"[39m
+            [36m>[39m
+              [0mSair e Entrar Novamente[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ src/components/auth/__tests__/ProtectedRoute.logout-aguardado.test.tsx:124:47
+    122|
+    123|     resolver?.();
+    124|     await waitFor(() => expect(estado.assign).toHaveBeenCalledWith('/a…
+       |                                               ^
+    125|   });
+    126| });
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/15]⎯
+
+ FAIL  src/hooks/auth/__tests__/useAuth.bootstrap-erro.test.tsx > AuthProvider — erro de boot e retry > marca bootstrapError quando a leitura da sessão falha
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ src/hooks/auth/__tests__/useAuth.bootstrap-erro.test.tsx:66:43
+     64|
+     65|     await waitFor(() => expect(result.current.loading).toBe(false));
+     66|     expect(result.current.bootstrapError).toBe(true);
+       |                                           ^
+     67|     expect(result.current.user).toBeNull();
+     68|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/15]⎯
+
+ FAIL  src/hooks/auth/__tests__/useAuth.bootstrap-erro.test.tsx > AuthProvider — erro de boot e retry > retryBootstrap refaz a leitura e limpa o erro quando o servidor responde
+AssertionError: expected undefined to be true // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ src/hooks/auth/__tests__/useAuth.bootstrap-erro.test.tsx:76:63
+     74|
+     75|     const { result } = renderHook(() => useAuth(), { wrapper });
+     76|     await waitFor(() => expect(result.current.bootstrapError).toBe(tru…
+       |                                                               ^
+     77|
+     78|     act(() => result.current.retryBootstrap());
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/15]⎯
+
+ FAIL  src/hooks/auth/__tests__/useAuth.bootstrap-erro.test.tsx > AuthProvider — erro de boot e retry > boot normal (sessão nula) não marca erro
+AssertionError: expected undefined to be false // Object.is equality
+
+- Expected:
+false
+
++ Received:
+undefined
+
+ ❯ src/hooks/auth/__tests__/useAuth.bootstrap-erro.test.tsx:95:43
+     93|
+     94|     await waitFor(() => expect(result.current.loading).toBe(false));
+     95|     expect(result.current.bootstrapError).toBe(false);
+       |                                           ^
+     96|   });
+     97| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/15]⎯
+
+ FAIL  src/hooks/system/__tests__/useUserRole.realtime.test.tsx > useUserRole — papel e perfil ao vivo (Realtime) > assina user_roles e profiles filtrados pelo user_id em UM canal
+AssertionError: expected +0 to be 2 // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+- Expected
++ Received
+
+- 2
++ 0
+
+ ❯ src/hooks/system/__tests__/useUserRole.realtime.test.tsx:91:60
+     89|     const { result } = cenario();
+     90|
+     91|     await waitFor(() => expect(harness.assinaturas.length).toBe(2));
+       |                                                            ^
+     92|
+     93|     expect(harness.canais).toBe(1);
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/15]⎯
+
+ FAIL  src/hooks/system/__tests__/useUserRole.realtime.test.tsx > useUserRole — papel e perfil ao vivo (Realtime) > invalida o cache de papéis quando a linha de user_roles muda
+AssertionError: expected +0 to be 2 // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+- Expected
++ Received
+
+- 2
++ 0
+
+ ❯ src/hooks/system/__tests__/useUserRole.realtime.test.tsx:105:60
+    103|   it('invalida o cache de papéis quando a linha de user_roles muda', a…
+    104|     const { invalidate } = cenario();
+    105|     await waitFor(() => expect(harness.assinaturas.length).toBe(2));
+       |                                                            ^
+    106|
+    107|     const dePapeis = harness.assinaturas.find((a) => a.tabela === 'use…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/15]⎯
+
+ FAIL  src/hooks/system/__tests__/useUserRole.realtime.test.tsx > useUserRole — papel e perfil ao vivo (Realtime) > revalida o perfil quando a linha de profiles muda
+AssertionError: expected +0 to be 2 // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+- Expected
++ Received
+
+- 2
++ 0
+
+ ❯ src/hooks/system/__tests__/useUserRole.realtime.test.tsx:116:60
+    114|   it('revalida o perfil quando a linha de profiles muda', async () => {
+    115|     cenario();
+    116|     await waitFor(() => expect(harness.assinaturas.length).toBe(2));
+       |                                                            ^
+    117|
+    118|     const dePerfil = harness.assinaturas.find((a) => a.tabela === 'pro…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/15]⎯
+
+ FAIL  src/hooks/system/__tests__/useUserRole.realtime.test.tsx > useUserRole — papel e perfil ao vivo (Realtime) > encerra o canal no cleanup e não assina sem usuário
+AssertionError: expected +0 to be 2 // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+- Expected
++ Received
+
+- 2
++ 0
+
+ ❯ src/hooks/system/__tests__/useUserRole.realtime.test.tsx:126:60
+    124|   it('encerra o canal no cleanup e não assina sem usuário', async () =…
+    125|     const { rerender, unmount } = cenario();
+    126|     await waitFor(() => expect(harness.assinaturas.length).toBe(2));
+       |                                                            ^
+    127|
+    128|     // Logout: o canal do usuário que saiu tem de sair junto.
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/15]⎯
+
+ FAIL  src/hooks/system/__tests__/useUserRole.realtime.test.tsx > useUserRole — papel e perfil ao vivo (Realtime) > duas telas ao mesmo tempo dividem UM canal e só fecham quando a última sai
+AssertionError: expected +0 to be 2 // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+- Expected
++ Received
+
+- 2
++ 0
+
+ ❯ src/hooks/system/__tests__/useUserRole.realtime.test.tsx:140:60
+    138|     const segunda = cenario();
+    139|
+    140|     await waitFor(() => expect(harness.assinaturas.length).toBe(2));
+       |                                                            ^
+    141|     // Tópico igual não pode virar dois canais nem dois conjuntos de c…
+    142|     expect(harness.canais).toBe(1);
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/15]⎯
+
+
+ Test Files  5 failed | 8 passed (13)
+      Tests  15 failed | 44 passed (59)
+   Start at  02:35:03
+   Duration  39.90s (transform 4.03s, setup 6.25s, import 10.89s, tests 57.06s, environment 20.53s)
+
