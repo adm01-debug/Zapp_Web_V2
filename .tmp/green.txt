@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c
+
+
+ Test Files  2 passed (2)
+      Tests  14 passed (14)
+   Start at  16:30:01
+   Duration  42.96s (transform 1.32s, setup 1.10s, import 1.08s, tests 64.53s, environment 2.24s)
+

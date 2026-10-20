@@ -1,0 +1,127 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c
+
+·stderr | src/hooks/inbox/__tests__/useRealtimeInbox.sendAudio.test.tsx > useRealtimeInbox.handleSendAudio — falha sinalizada ao chamador (#350-C) > rejeita com o erro do upload quando o envio do áudio falha
+[2026-10-15T19:44:58.469Z] [ERROR] [useRealtimeInbox] [sid:36ca0ab7] Error in handleSendAudio: Error: upload falhou
+    at /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/src/hooks/inbox/__tests__/useRealtimeInbox.sendAudio.test.tsx:122:39
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2956:64
+
+stderr | src/hooks/inbox/__tests__/useRealtimeInbox.audio-idempotencia.test.tsx > useRealtimeInbox.handleSendAudio — retentativa idempotente da mesma gravação > reusa o objeto já subido e o MESMO client_message_id na retentativa
+[2026-10-15T19:44:58.463Z] [ERROR] [useRealtimeInbox] [sid:20d0ac27] Error in handleSendAudio: Error: resposta perdida
+    at /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/src/hooks/inbox/__tests__/useRealtimeInbox.audio-idempotencia.test.tsx:130:43
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2956:64
+
+·stderr | src/hooks/inbox/__tests__/useRealtimeInbox.sendAudio.test.tsx > useRealtimeInbox.handleSendAudio — falha sinalizada ao chamador (#350-C) > rejeita com o erro do transporte quando a mensagem de áudio falha
+[2026-10-15T19:45:02.494Z] [ERROR] [useRealtimeInbox] [sid:36ca0ab7] Error in handleSendAudio: Error: envio falhou
+    at /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/src/hooks/inbox/__tests__/useRealtimeInbox.sendAudio.test.tsx:130:39
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2956:64
+
+··stderr | src/hooks/inbox/__tests__/useRealtimeInbox.audio-idempotencia.test.tsx > useRealtimeInbox.handleSendAudio — retentativa idempotente da mesma gravação > gravação nova (o usuário gravou de novo) tem upload e id próprios
+[2026-10-15T19:45:06.525Z] [ERROR] [useRealtimeInbox] [sid:20d0ac27] Error in handleSendAudio: Error: resposta perdida
+    at /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/src/hooks/inbox/__tests__/useRealtimeInbox.audio-idempotencia.test.tsx:149:43
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2956:64
+
+·stderr | src/hooks/inbox/__tests__/useRealtimeInbox.sendAudio.test.tsx > useRealtimeInbox.handleSendAudio — falha sinalizada ao chamador (#350-C) > não anuncia sucesso falso: falha do envio rejeita mesmo se o refresh cair
+[2026-10-15T19:45:10.550Z] [ERROR] [useRealtimeInbox] [sid:36ca0ab7] Error in handleSendAudio: Error: upload falhou
+    at /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/src/hooks/inbox/__tests__/useRealtimeInbox.sendAudio.test.tsx:145:39
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2956:64
+
+stderr | src/hooks/inbox/__tests__/useRealtimeInbox.sendAudio.test.tsx > useRealtimeInbox.handleSendAudio — falha sinalizada ao chamador (#350-C) > não anuncia sucesso falso: falha do envio rejeita mesmo se o refresh cair
+[2026-10-15T19:45:10.579Z] [WARN] [useRealtimeInbox] [sid:36ca0ab7] Audio send finished, but conversation refresh failed: Error: refresh falhou
+    at /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/src/hooks/inbox/__tests__/useRealtimeInbox.sendAudio.test.tsx:146:35
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2956:64
+
+··stderr | src/hooks/inbox/__tests__/useRealtimeInbox.audio-idempotencia.test.tsx > useRealtimeInbox.handleSendAudio — retentativa idempotente da mesma gravação > descartar a gravação (cancelamento) volta a subir e a gerar id novo
+[2026-10-15T19:45:14.576Z] [ERROR] [useRealtimeInbox] [sid:20d0ac27] Error in handleSendAudio: Error: resposta perdida
+    at /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/src/hooks/inbox/__tests__/useRealtimeInbox.audio-idempotencia.test.tsx:166:43
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2956:64
+
+stderr | src/hooks/inbox/__tests__/useRealtimeInbox.sendAudio.test.tsx > useRealtimeInbox.handleSendAudio — falha sinalizada ao chamador (#350-C) > não duplica o aviso ao usuário (o toast fica na camada de cima)
+[2026-10-15T19:45:14.613Z] [ERROR] [useRealtimeInbox] [sid:36ca0ab7] Error in handleSendAudio: Error: upload falhou
+    at /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/src/hooks/inbox/__tests__/useRealtimeInbox.sendAudio.test.tsx:153:39
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2956:64
+
+······stderr | src/hooks/inbox/__tests__/useRealtimeInbox.audio-idempotencia.test.tsx > useRealtimeInbox.handleSendAudio — retentativa idempotente da mesma gravação > troca de conversa não reusa o id da conversa anterior
+[2026-10-15T19:45:30.653Z] [ERROR] [useRealtimeInbox] [sid:20d0ac27] Error in handleSendAudio: Error: resposta perdida
+    at /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/src/hooks/inbox/__tests__/useRealtimeInbox.audio-idempotencia.test.tsx:196:43
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/node_modules/@vitest/runner/dist/chunk-artifact.js:2956:64
+
+·
+
+ Test Files  2 passed (2)
+      Tests  14 passed (14)
+   Start at  16:44:51
+   Duration  43.63s (transform 1.53s, setup 1.51s, import 1.64s, tests 64.55s, environment 2.73s)
+

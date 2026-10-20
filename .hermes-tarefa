@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=audio-retentativa-idempotente
+ID=2610151619366c
+BRANCH=v2/audio-retentativa-idempotente-2610151619366c
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-15T16:19:20-03:00
+KANBAN=t_1a6ea143
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-retentativa-idempotente-2610151619366c/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-15
+DB_LOCAL=v2-2610151619366c
+PRONTO_SHA=376bc20a7ce1886f4ba1c0f600ab8b4486156d28
