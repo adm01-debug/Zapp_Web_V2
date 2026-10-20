@@ -1,0 +1,8 @@
+2	2	src/components/catalog/ExternalProductManagement.tsx
+102	0	src/components/catalog/__tests__/ExternalProductManagement.a11y.test.tsx
+13	1	src/components/docs/SystemFeaturesView.tsx
+42	0	src/components/docs/__tests__/SystemFeaturesView.a11y.test.tsx
+9	0	src/components/groups/GroupsView.tsx
+105	0	src/components/groups/__tests__/GroupsView.a11y.test.tsx
+47	0	src/components/inbox/__tests__/StatusChips.a11y.test.tsx
+3	1	src/components/inbox/conversation-list/StatusChips.tsx

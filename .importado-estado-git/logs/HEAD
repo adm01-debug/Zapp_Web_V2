@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 453e6b69f9cabf1a293492139de5520a29f576fe Hermes Senior <hermes-senior@promobrindes.local> 1791929939 -0300	
+453e6b69f9cabf1a293492139de5520a29f576fe 453e6b69f9cabf1a293492139de5520a29f576fe Hermes Senior <hermes-senior@promobrindes.local> 1791929940 -0300	reset: moving to HEAD
+453e6b69f9cabf1a293492139de5520a29f576fe 724df3b8819d865a35e739817ded8d6569619cbb Hermes Senior <hermes-senior@promobrindes.local> 1791930308 -0300	commit: fix(a11y): nome e papel acessivel nos controles sem nome (grupos, ajuda, filtros, grade)
+724df3b8819d865a35e739817ded8d6569619cbb f7e58ecbeb51efa16744d6e5ddfba55836f97556 Hermes Senior <hermes-senior@promobrindes.local> 1791930380 -0300	commit: docs(a11y): relato do cartao a11y nome e papel (6 controles)
+f7e58ecbeb51efa16744d6e5ddfba55836f97556 0027383cad0cdd164ec787aa86daee352adc02db Hermes Senior <hermes-senior@promobrindes.local> 1791930520 -0300	commit: chore(a11y): destrackeia .tmp/relato.md (ja coberto pelo .gitignore)
+0027383cad0cdd164ec787aa86daee352adc02db fb570cb6dd04d781b511cecbac15e906525384ef Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792035498 -0300	commit: fix(a11y): ignora tecla de filho nos cards grupo e ajuda (refazer t_12c888c1)
