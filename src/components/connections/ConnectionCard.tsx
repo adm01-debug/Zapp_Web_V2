@@ -38,7 +38,7 @@ interface ConnectionCardProps {
   disconnecting?: boolean;
   onShowQrCode: (c: WhatsAppConnection) => void;
   onCopyId: (id: string) => void;
-  onDisconnect: (c: WhatsAppConnection) => void | Promise<void>;
+  onDisconnect: (c: WhatsAppConnection) => void | boolean | Promise<void | boolean>;
   onSetDefault: (id: string) => void;
   onDelete: (c: WhatsAppConnection) => void;
   onBusinessHours: (id: string, name: string) => void;
@@ -71,12 +71,34 @@ export function ConnectionCard({
   const [disconnectError, setDisconnectError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [auditOpen, setAuditOpen] = useState(false);
+  const desconectando = disconnectPending || disconnecting;
 
-  // Enquanto o desconectar está em voo (estado `disconnecting` vindo da view),
-  // o diálogo fica aberto com o spinner; só fecha quando onDisconnect resolve.
+  // O hook devolve `false` quando a sessão NÃO caiu (a Evolution recusou ou o
+  // vínculo local não atualizou): o diálogo só fecha no sucesso e a falha vira
+  // `errorMessage` (role="alert"), como manda o t_cce2f0f7.
   const handleConfirmDisconnect = async () => {
-    await onDisconnect(connection);
-    setConfirmDisconnect(false);
+    setDisconnectError(null);
+    setDisconnectPending(true);
+    try {
+      const ok = await onDisconnect(connection);
+      if (ok === false) {
+        setDisconnectError('Não foi possível desconectar. A sessão continua ativa — tente novamente.');
+        return;
+      }
+      setConfirmDisconnect(false);
+    } catch {
+      setDisconnectError('Não foi possível desconectar. A sessão continua ativa — tente novamente.');
+    } finally {
+      setDisconnectPending(false);
+    }
+  };
+
+  // Em voo o diálogo fica travado (as duas saídas bloqueadas). Ao fechar, o
+  // motivo da tentativa anterior é limpo: o erro é da tentativa, não do estado.
+  const handleDisconnectDialogOpenChange = (open: boolean) => {
+    if (disconnectPending) return;
+    if (!open) setDisconnectError(null);
+    setConfirmDisconnect(open);
   };
 
   return (
@@ -160,16 +182,16 @@ export function ConnectionCard({
                 </motion.div>
               )}
               {connection.status === 'connected' && (
-                <motion.div whileHover={{ scale: disconnecting ? 1 : 1.05 }} whileTap={{ scale: disconnecting ? 1 : 0.95 }}>
+                <motion.div whileHover={{ scale: desconectando ? 1 : 1.05 }} whileTap={{ scale: desconectando ? 1 : 0.95 }}>
                   <Button
                     variant="outline"
                     size="sm"
-                    disabled={disconnecting}
-                    aria-busy={disconnecting}
-                    className={cn(disconnecting && 'motion-safe:animate-pulse')}
+                    disabled={desconectando}
+                    aria-busy={desconectando}
+                    className={cn(desconectando && 'motion-safe:animate-pulse')}
                     onClick={() => setConfirmDisconnect(true)}
                   >
-                    {disconnecting
+                    {desconectando
                       ? <><Loader2 className="w-4 h-4 mr-2 motion-safe:animate-spin" />Desconectando…</>
                       : <><WifiOff className="w-4 h-4 mr-2" />Desconectar</>}
                   </Button>
@@ -221,7 +243,8 @@ export function ConnectionCard({
         onOpenChange={handleDisconnectDialogOpenChange}
         connectionName={connection.name}
         phoneNumber={connection.phone_number}
-        pending={disconnecting}
+        pending={desconectando}
+        errorMessage={disconnectError ?? undefined}
         onConfirm={handleConfirmDisconnect}
       />
       {isAdmin && (
