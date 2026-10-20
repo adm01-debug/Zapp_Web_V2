@@ -1,0 +1,35 @@
+BEGIN
+DROP FUNCTION
+BEGIN
+WARNING:  there is already a transaction in progress
+INSERT 0 3
+SELECT 1
+INSERT 0 1
+SET
+INSERT 0 7
+INSERT 0 6
+SET
+SET
+ERROR:  function public.agent_workload() does not exist
+LINE 12:     select * from public.agent_workload()
+                           ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+QUERY:  with esperado as (
+    select p.id as profile_id,
+           (select count(*) from public.contacts c
+             where c.assigned_to = p.id and c.conversation_status = 'open' and c.deleted_at is null)::int as open_chats,
+           (select count(*) from public.contacts c
+             where c.assigned_to = p.id and c.conversation_status = 'waiting' and c.deleted_at is null)::int as waiting_chats,
+           (select max(m.created_at) from public.messages m
+             where m.sender = 'agent' and m.agent_id = p.id
+               and m.created_at >= now() - interval '30 days') as last_send_at
+      from public.profiles p
+  ), real as (
+    select * from public.agent_workload()
+  )
+  select count(*)                     from esperado e
+    full join real r on r.profile_id = e.profile_id
+   where e.open_chats is distinct from r.open_chats
+      or e.waiting_chats is distinct from r.waiting_chats
+      or e.last_send_at is distinct from r.last_send_at
+CONTEXT:  PL/pgSQL function inline_code_block line 8 at SQL statement

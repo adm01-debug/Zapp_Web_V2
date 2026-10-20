@@ -1,0 +1,16 @@
+PROJETO=Zapp_Web_V2
+SLUG=agent-workload-rpc
+ID=26101410372190
+BRANCH=v2/agent-workload-rpc-26101410372190
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/agent-workload-rpc-26101410372190
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-14T10:37:31-03:00
+KANBAN=t_31f0d04b
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/agent-workload-rpc-26101410372190/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-14
+DB_LOCAL=v2-26101410372190
+APLICADA_LOCAL=20261014133908_agent_workload.sql sha=e77af76fdafb725a
+PRONTO_SHA=3d523573e0b07968bc0c8b1a934075ed9b739368
