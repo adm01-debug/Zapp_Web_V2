@@ -1,0 +1,77 @@
+# docs:
+#   gatilho: agendado e dispatch
+#   prova: o perimetro do GitHub (branch protection, merge, environments) contra o baseline versionado
+#   falha: issue aberta; sem escopo suficiente o guarda reporta ponto cego em vez de falhar em silencio
+#   avisa: issue de settings
+name: Settings Guard
+
+on:
+  schedule:
+    # Verifica configurações a cada 6h (00:15, 06:15, 12:15, 18:15 UTC)
+    - cron: '15 */6 * * *'
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: settings-guard
+  cancel-in-progress: false
+
+jobs:
+  guard:
+    name: Verificar branch protection e allow_auto_merge
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    environment: perimetro-leitura
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: 🟩 Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+
+      - name: 🛡️ Verificar e restaurar configurações
+        # Política esperada: strict=true, allow_auto_merge=true.
+        # Se houver regressão: restaura via PATCH e abre/atualiza issue [settings-guard].
+        # Se OK: fecha a issue [settings-guard] se estiver aberta.
+        # W04/W05 (14/10/2026): campo que o GITHUB_TOKEN nao consegue ler (403, ou
+        # 200 sem o campo) e PONTO CEGO, nao divergencia. So ponto cego = job verde
+        # com ::warning:: e 1 comentario por assinatura a cada 7 dias; divergencia
+        # real = job vermelho e comentario com dedupe de 6 h por causa.
+        run: node scripts/ci/github-settings-guard.mjs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # W11/W12: PAT fine-grained (administration:read + metadata:read, so este repo,
+          # 90 dias) do environment perimetro-leitura, para eliminar o ponto cego de branch
+          # protection (403 com GITHUB_TOKEN). Fallback para github.token: sem o secret o
+          # guard roda como antes do W12 (campos administrativos = NAO VERIFICAVEL), nunca
+          # quebra. So LEITURA usa este token; issue e PATCH seguem com o GITHUB_TOKEN.
+          # Criacao/rotacao: docs/runbooks/migracao-segredos-environments.md.
+          ADMIN_READ_TOKEN: ${{ secrets.SETTINGS_GUARD_TOKEN || github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          # W17: script salva snapshot JSON do perímetro em perimeter-snapshot.json
+          PERIMETER_SNAPSHOT_PATH: perimeter-snapshot.json
+
+      - name: 📦 Publicar snapshot do perímetro
+        # W17: artifact com o JSON do perímetro medido neste run.
+        # A próxima regressão de strict/allow_auto_merge ganha uma janela de 6h datada.
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: perimeter-snapshot-${{ github.run_id }}
+          path: perimeter-snapshot.json
+          if-no-files-found: ignore
+          retention-days: 14
