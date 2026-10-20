@@ -1,0 +1,14 @@
+--- supervisor executa (espera 1 realocado para o supervisor presente) ---
+{"sub":"00000000-0000-0000-0000-0000000000c1","role":"authenticated"}
+1
+contatos do ausente restantes: 0
+contatos do supervisor: 1
+eventos: 1
+--- agente sem papel na tabela user_roles (espera raise do guard) ---
+ERROR:  reassign_absent_agents: requer perfil admin ou supervisor
+CONTEXT:  PL/pgSQL function reassign_absent_agents(integer) line 11 at RAISE
+{"sub":"00000000-0000-0000-0000-0000000000c2","role":"authenticated"}
+--- anon (espera negacao de EXECUTE) ---
+ERROR:  permission denied for function reassign_absent_agents
+{"sub":"00000000-0000-0000-0000-0000000000ff","role":"anon"}
+--- has_function_privilege(anon) = f ---

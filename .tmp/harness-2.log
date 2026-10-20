@@ -1,0 +1,42 @@
+NOTICE:  trigger "trg_prevent_contact_assignee_hijack" for relation "public.contacts" does not exist, skipping
+[PASS] RED: criterio antigo trata quem tem heartbeat como ausente (b3 perde os 5 contatos)
+[PASS] RED: quem tem heartbeat foi para o substituto escolhido por user_sessions (b4 = 9)
+[PASS] GREEN: b3 (heartbeat fresco, sem user_sessions) NAO perde a carteira
+[PASS] GREEN: retorno conta 4 contatos (b2=2, b7=1 offline, b6=1 parado)
+[PASS] GREEN: ausente1 (sem heartbeat) realocado para o candidato fresco b4
+[PASS] GREEN: offline explicito b7 realocado (nao online)
+[PASS] GREEN: heartbeat parado b6 realocado (frescor importa)
+[PASS] GREEN: substituto fresco b4 recebeu os 4
+[PASS] GREEN: fila q2 sem candidato fresco NAO move nada (b5 mantem 2)
+[PASS] gatilho: b3 (nao movido) mantem updated_at original (5)
+[PASS] gatilho: so as 4 linhas movidas tiveram updated_at regravado
+[PASS] FSM: reatribuicao nao muda conversation_status (segue 'open')
+[PASS] GREEN: eventos gravados = 4 ('absence_reassign')
+[PASS] GREEN: evento aponta origem/destino corretos
+[PASS] Trigger vivo: nao-admin nao desvia contato alheio
+[PASS] service_role: UPDATE sob a funcao passa no trigger (4 realocados)
+[PASS] service_role: b4 recebeu os 4
+[PASS] service_role: eventos gravados = 4 ('absence_reassign')
+[PASS] Authenticated nao-admin e barrado (raise do guard)
+[PASS] inactive_minutes NULL -> 22023
+[PASS] inactive_minutes negativo -> 22023
+[PASS] GREEN: default de inactive_minutes e 2
+[PASS] ACL: authenticated executa
+[PASS] ACL: service_role executa
+[PASS] ACL: anon NAO executa
+[PASS] ACL: PUBLIC NAO executa
+[PASS] Parametro omitido usa o default 2 (4 realocados)
+[PASS] Explicito 30 governa: janela larga inclui b6 como fresco (5 realocados)
+[PASS] Explicito 30: b4 recebe 3 (e1, e2, f7)
+[PASS] Explicito 30: b6 mantem f6 e recebe q2 (b6=3)
+[PASS] Explicito 30: b3 presente mantem os 5
+[PASS] Rollback roda: volta default 30 e o criterio antigo
+[PASS] Rollback: authenticated executa
+[PASS] Rollback: service_role executa
+[PASS] Rollback: anon NAO executa
+[PASS] Rollback: PUBLIC NAO executa
+[PASS] pos-rollback: criterio antigo restaurado por comportamento (9 realocados)
+[PASS] pos-rollback: b3 perde os 5 (criterio user_sessions)
+[PASS] pos-rollback: b4 concentra os 9
+
+TODOS OS BLOCOS PASSARAM

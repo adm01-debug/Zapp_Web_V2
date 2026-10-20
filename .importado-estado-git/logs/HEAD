@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 d723a9010796f1ea4aea5270d881da2974328ba4 Hermes Senior <hermes-senior@promobrindes.local> 1792168973 -0300	
+d723a9010796f1ea4aea5270d881da2974328ba4 d723a9010796f1ea4aea5270d881da2974328ba4 Hermes Senior <hermes-senior@promobrindes.local> 1792168974 -0300	reset: moving to HEAD
+d723a9010796f1ea4aea5270d881da2974328ba4 e5aada35a759833c172e31454693f1730fde7eb9 Hermes Senior <hermes-senior@promobrindes.local> 1792169049 -0300	commit (cherry-pick): fix(banco): reatribuicao por ausencia usa heartbeat de agent_presence
+e5aada35a759833c172e31454693f1730fde7eb9 69f31dfb8c92ae7563686482be5ead3b3c35df69 Hermes Senior <hermes-senior@promobrindes.local> 1792169052 -0300	commit (cherry-pick): chore(ci): registra harness de presenca no inventario de testes
+69f31dfb8c92ae7563686482be5ead3b3c35df69 3b4c6e3f9801605e52c619b972be7a8f5d4b63a2 Hermes Senior <hermes-senior@promobrindes.local> 1792169055 -0300	commit (cherry-pick): fix(banco): refazer 1 usa trigger real, rollback total e prova governanca do parametro
