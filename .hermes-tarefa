@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=a11y-icon-buttons-mobile-inbox
+ID=26101517274a68
+BRANCH=v2/a11y-icon-buttons-mobile-inbox-26101517274a68
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/a11y-icon-buttons-mobile-inbox-26101517274a68
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-15T17:27:48-03:00
+KANBAN=t_6b581677
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/a11y-icon-buttons-mobile-inbox-26101517274a68/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-15
+DB_LOCAL=v2-26101517274a68
+PRONTO_SHA=3977cac6d908491dafa03afafd16313ddc31b494

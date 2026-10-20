@@ -1,0 +1,13 @@
+168	0	src/__tests__/a11y/icon-button-names.test.ts
+151	0	src/__tests__/a11y/icon-buttons-baseline.json
+236	0	src/__tests__/a11y/scan-icon-buttons.ts
+1	0	src/components/inbox/AISuggestions.tsx
+1	1	src/components/inbox/AdvancedMessageMenu.tsx
+1	1	src/components/inbox/AudioMessagePlayer.tsx
+2	1	src/components/inbox/CRMAutoSync.tsx
+3	3	src/components/inbox/InteractiveMessageBuilder.tsx
+1	0	src/components/inbox/KeyboardShortcutsHelp.tsx
+1	0	src/components/inbox/MessageContextActions.tsx
+2	2	src/components/inbox/TemplatesWithVariables.tsx
+65	0	src/components/inbox/__tests__/botoes-icone-nomes-a11y.test.tsx
+1	1	src/components/inbox/contact-details/sidebar/SidebarRow.tsx

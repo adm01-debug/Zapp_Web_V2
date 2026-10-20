@@ -1,0 +1,10 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/a11y-icon-buttons-mobile-inbox-26101517274a68
+
+······················
+
+ Test Files  2 passed (2)
+      Tests  22 passed (22)
+   Start at  17:40:45
+   Duration  8.51s (transform 1.74s, setup 785ms, import 2.82s, tests 6.88s, environment 2.38s)
+

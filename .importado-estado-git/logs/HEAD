@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 e7d156b8a74c0b165e19c9549bba19377137b0fc Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792096066 -0300	
+e7d156b8a74c0b165e19c9549bba19377137b0fc e7d156b8a74c0b165e19c9549bba19377137b0fc Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792096068 -0300	reset: moving to HEAD
+e7d156b8a74c0b165e19c9549bba19377137b0fc 054f28fee7c72f71218af6fca414657fb7ca8b57 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792096172 -0300	cherry-pick: test(a11y): trava botão de ícone sem nome acessível (UK-13/UK-13b)
+054f28fee7c72f71218af6fca414657fb7ca8b57 3977cac6d908491dafa03afafd16313ddc31b494 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792096696 -0300	commit: fix(a11y): nome acessível nos botões de ícone do inbox (UK-13b)
