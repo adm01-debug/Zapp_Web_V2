@@ -378,3 +378,19 @@ Resultado: **39 idênticos, 1 divergente** (`20260928430000…`).
   não reverificados aqui.
 - **Não incluído:** os 22 arquivos `202609*team_chat*` adicionais que não fazem parte do diff de merge-base
   → branch (o escopo pedido são os 40), e qualquer arquivo fora de `supabase/migrations/`.
+
+---
+
+## Correcao do coordenador (20/10/2026) - o risco de replay NAO se reproduz
+
+A secao sobre o que exige migration corretiva conclui que a divergencia do arquivo 20260928430000 altera efeito no schema num replay. Medicao no harness oficial do repo mostra o oposto.
+
+Mecanismo verificado:
+- No replay, team_message_receipts.conversation_id e criada por 20260928440000, POSTERIOR ao 20260928430000.
+- A policy de SELECT do 20260928430000 referencia conversation_id.
+- Aplicando 20260928430000 num banco limpo, o ARQUIVO falha no meio (ERROR: column conversation_id does not exist) e com ON_ERROR_STOP=1 o resto do arquivo nao roda: NENHUMA das duas policies na forma fraca e criada.
+- Sem elas, a guarda if not exists do 20261003272707 da verdadeiro e cria AS DUAS na forma canonica.
+
+Prova: scripts/db-audit/replay-local.sh, 1046 migrations em origin/main pura e 1047 no branch; inspecao de pg_policies ao final mostra SELECT com is_admin_or_supervisor OR join e INSERT com AND EXISTS, texto identico nos dois. A falha do 20260928430000 ja esta allowlistada em scripts/db-audit/replay-known-failures.json.
+
+Consequencia: em producao E em replay o schema termina canonico. O arquivo 20260928430000 da main e enganoso se lido isoladamente, mas nao gera defeito. A migration do PR #2137 e reafirmacao idempotente e defensiva - OPCIONAL, nao obrigatoria. Esta secao substitui a conclusao da secao anterior.
