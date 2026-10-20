@@ -1,0 +1,2 @@
+231	20	supabase/functions/auto-close-conversations/index.test.ts
+140	16	supabase/functions/auto-close-conversations/index.ts

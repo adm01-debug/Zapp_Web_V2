@@ -1,0 +1,6 @@
+On branch v2/auto-close-conversations-lote-200-2610131830d27c
+nothing to commit, working tree clean
+ANTES DE ENTREGAR — um juiz adversarial conferiu o CRITÉRIO DE PRONTO contra o DIFF e não achou prova para:
+   * Critério 3: O diff só insere em messages com status 'sending'. O comentário do cartão admite que nada despacha essa mensagem, então ela não é entregue; 
+Entregue o que falta (commit novo) ou, se o ponto não procede, rode este MESMO comando de novo sem mudar nada e explique no relato por quê.
+EXIT=3

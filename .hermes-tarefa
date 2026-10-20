@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=auto-close-conversations-lote-200
+ID=2610131830d27c
+BRANCH=v2/auto-close-conversations-lote-200-2610131830d27c
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auto-close-conversations-lote-200-2610131830d27c
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T18:30:17-03:00
+KANBAN=t_ec25181f
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auto-close-conversations-lote-200-2610131830d27c/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-2610131830d27c
+PRONTO_SHA=0fe6cec34893554f764b3180711a5d5e9a961bd5
