@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=alertas-crise-globais-supervisao-2610151
+ID=26101614567373
+BRANCH=v2/alertas-crise-globais-supervisao-2610151-26101614567373
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/alertas-crise-globais-supervisao-2610151-26101614567373
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-16T14:56:21-03:00
+KANBAN=t_a93514fd
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/alertas-crise-globais-supervisao-2610151-26101614567373/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-16
+DB_LOCAL=v2-26101614567373
+PRONTO_SHA=9a18da7c2c295cdbcdd29ac71c087699cf82e18b

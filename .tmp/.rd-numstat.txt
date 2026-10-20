@@ -1,0 +1,11 @@
+11	0	src/App.tsx
+159	0	src/hooks/__tests__/useWarRoomAlerts.cicloAtual.behavior.test.tsx
+8	1	src/hooks/__tests__/useWarRoomAlerts.test.tsx
+16	7	src/hooks/__tests__/useWarRoomAlertsMute.behavior.test.tsx
+206	0	src/hooks/business/__tests__/useGlobalCrisisAlerts.test.tsx
+224	0	src/hooks/business/__tests__/useGlobalCrisisAlerts.warRoomMute.test.tsx
+75	0	src/hooks/business/useGlobalCrisisAlerts.tsx
+38	21	src/hooks/business/useWarRoomAlerts.ts
+114	0	src/hooks/business/warRoomAlertNotice.ts
+61	1	src/utils/__tests__/notificationSounds.test.ts
+7	2	src/utils/notificationSounds.ts
