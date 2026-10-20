@@ -40,9 +40,6 @@ concurrency:
   group: talkx-regen-${{ github.ref }}
   cancel-in-progress: true
 
-concurrency:
-  group: talkx-status-regen
-  cancel-in-progress: false
 
 defaults:
   run:
