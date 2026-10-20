@@ -1,0 +1,17 @@
+PROJETO=Zapp_Web_V2
+SLUG=audit-admin-changes
+ID=261013012225d2
+BRANCH=v2/audit-admin-changes-261013012225d2
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audit-admin-changes-261013012225d2
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T01:22:52-03:00
+KANBAN=t_c5f212b8
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audit-admin-changes-261013012225d2/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-261013012225d2
+APLICADA_LOCAL=20261013042745_audit_admin_changes.sql sha=a4d528e6e3de6783
+APLICADA_LOCAL=20261013042745_audit_admin_changes.sql sha=a4d528e6e3de6783
+PRONTO_SHA=33598d96e60f03d1b6dbd45e3113369d325c52ac
