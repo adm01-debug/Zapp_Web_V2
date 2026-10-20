@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=auditoria-email-admin
+ID=261015151604eb
+BRANCH=v2/auditoria-email-admin-261015151604eb
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auditoria-email-admin-261015151604eb
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-15T15:16:24-03:00
+KANBAN=t_a9c81c8a
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auditoria-email-admin-261015151604eb/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-15
+DB_LOCAL=v2-261015151604eb
+PRONTO_SHA=7844e383bd9c528582f9a4200e45e8c592f0682d
