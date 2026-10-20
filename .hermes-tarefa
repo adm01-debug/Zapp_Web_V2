@@ -1,0 +1,16 @@
+PROJETO=Zapp_Web_V2
+SLUG=admin-unlock-login
+ID=2610152154a6d0
+BRANCH=v2/admin-unlock-login-2610152154a6d0
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-unlock-login-2610152154a6d0
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-15T21:54:34-03:00
+KANBAN=t_8ea464f2
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-unlock-login-2610152154a6d0/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-15
+DB_LOCAL=v2-2610152154a6d0
+APLICADA_LOCAL=20261016005650_admin_unlock_login.sql sha=4b4f0e4100179070
+PRONTO_SHA=d577fffee0685e1c68fa4c02ba74d7850fb13288

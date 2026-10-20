@@ -1,0 +1,2 @@
+100	0	supabase/migrations/20261016005650_admin_unlock_login.sql
+368	0	supabase/tests/admin_unlock_login_autorizacao.sql

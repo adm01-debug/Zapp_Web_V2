@@ -1,0 +1,66 @@
+psql:supabase/tests/admin_unlock_login_autorizacao.sql:92: WARNING:  "wal_level" is insufficient to publish logical changes
+HINT:  Set "wal_level" to "logical" before creating subscriptions.
+── aplicando as migrations REAIS (user_roles/audit_logs, login_attempts, is_admin, RLS, RPC do cartao) ──
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-unlock-login-2610152154a6d0/supabase/migrations/20260315115805_edf10d24-a610-4b78-8518-d96ca963f800.sql:3: NOTICE:  policy "Service can manage challenges" for relation "public.webauthn_challenges" does not exist, skipping
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-unlock-login-2610152154a6d0/supabase/migrations/20260315115805_edf10d24-a610-4b78-8518-d96ca963f800.sql:24: NOTICE:  policy "Users can insert messages" for relation "public.messages" does not exist, skipping
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-unlock-login-2610152154a6d0/supabase/migrations/20260315115805_edf10d24-a610-4b78-8518-d96ca963f800.sql:28: NOTICE:  policy "Authenticated users can delete connections" for relation "public.whatsapp_connections" does not exist, skipping
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-unlock-login-2610152154a6d0/supabase/migrations/20260315115805_edf10d24-a610-4b78-8518-d96ca963f800.sql:29: NOTICE:  policy "Authenticated users can insert connections" for relation "public.whatsapp_connections" does not exist, skipping
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-unlock-login-2610152154a6d0/supabase/migrations/20260315115805_edf10d24-a610-4b78-8518-d96ca963f800.sql:30: NOTICE:  policy "Authenticated users can update connections" for relation "public.whatsapp_connections" does not exist, skipping
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-unlock-login-2610152154a6d0/supabase/migrations/20260315115805_edf10d24-a610-4b78-8518-d96ca963f800.sql:33: NOTICE:  policy "System can insert notifications" for relation "public.notifications" does not exist, skipping
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-unlock-login-2610152154a6d0/supabase/migrations/20260404162520_249862a5-69cf-466f-a6dd-4ae620eca775.sql:2: NOTICE:  policy "Only service role can insert login attempts" for relation "public.login_attempts" does not exist, skipping
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-unlock-login-2610152154a6d0/supabase/migrations/20260404162520_249862a5-69cf-466f-a6dd-4ae620eca775.sql:3: NOTICE:  policy "Authenticated users cannot insert login attempts" for relation "public.login_attempts" does not exist, skipping
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-unlock-login-2610152154a6d0/supabase/migrations/20260404162520_249862a5-69cf-466f-a6dd-4ae620eca775.sql:4: NOTICE:  policy "Only admins can directly read login attempts" for relation "public.login_attempts" does not exist, skipping
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-unlock-login-2610152154a6d0/supabase/migrations/20260404162520_249862a5-69cf-466f-a6dd-4ae620eca775.sql:5: NOTICE:  policy "Only admins can view login attempts" for relation "public.login_attempts" does not exist, skipping
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-unlock-login-2610152154a6d0/supabase/migrations/20260830080000_fn_is_admin_and_fix_permissions_rls.sql:26: NOTICE:  policy "Admins can manage permissions" for relation "public.permissions" does not exist, skipping
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-unlock-login-2610152154a6d0/supabase/migrations/20260830080000_fn_is_admin_and_fix_permissions_rls.sql:32: NOTICE:  policy "Admins can manage role permissions" for relation "public.role_permissions" does not exist, skipping
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-unlock-login-2610152154a6d0/supabase/migrations/20260830080000_fn_is_admin_and_fix_permissions_rls.sql:63: NOTICE:  policy "Authenticated can view permissions" for relation "public.permissions" does not exist, skipping
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-unlock-login-2610152154a6d0/supabase/migrations/20260830080000_fn_is_admin_and_fix_permissions_rls.sql:68: NOTICE:  policy "Authenticated can view role permissions" for relation "public.role_permissions" does not exist, skipping
+  [sem_guarda] o guard de admin foi retirado da RPC (dentro da transacao)
+
+── T0: forma da RPC e fronteira de ACL ──────────────────────────────────
+psql:supabase/tests/admin_unlock_login_autorizacao.sql:234: NOTICE:  PASS [T0a admin_unlock_login e SECURITY DEFINER] -> true
+ espera 
+--------
+ 
+(1 row)
+
+psql:supabase/tests/admin_unlock_login_autorizacao.sql:237: NOTICE:  PASS [T0b admin_unlock_login fixa o search_path] -> true
+ espera 
+--------
+ 
+(1 row)
+
+psql:supabase/tests/admin_unlock_login_autorizacao.sql:239: NOTICE:  PASS [T0c authenticated TEM EXECUTE na RPC] -> true
+ espera 
+--------
+ 
+(1 row)
+
+psql:supabase/tests/admin_unlock_login_autorizacao.sql:241: NOTICE:  PASS [T0d anon NAO tem EXECUTE na RPC] -> false
+ espera 
+--------
+ 
+(1 row)
+
+psql:supabase/tests/admin_unlock_login_autorizacao.sql:246: NOTICE:  PASS [T0e PUBLIC NAO tem EXECUTE na RPC (papel-sonda sem outro vinculo)] -> false
+ espera 
+--------
+ 
+(1 row)
+
+psql:supabase/tests/admin_unlock_login_autorizacao.sql:248: NOTICE:  PASS [T0f RLS ligada em login_attempts] -> true
+ espera 
+--------
+ 
+(1 row)
+
+psql:supabase/tests/admin_unlock_login_autorizacao.sql:250: NOTICE:  PASS [T0g RLS ligada em audit_logs] -> true
+ espera 
+--------
+ 
+(1 row)
+
+
+── BLOCO A: agente, supervisor e anonimo NAO destravam ninguem ──────────
+psql:supabase/tests/admin_unlock_login_autorizacao.sql:258: ERROR:  LA FALHOU [T1 agente nao destrava (admin_required)]: esperava erro SQLSTATE 42501, veio: OK 1
+CONTEXT:  PL/pgSQL function pg_temp_6.espera_erro(text,text,text) line 4 at RAISE

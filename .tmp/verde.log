@@ -1,0 +1,210 @@
+psql:supabase/tests/admin_unlock_login_autorizacao.sql:88: WARNING:  "wal_level" is insufficient to publish logical changes
+HINT:  Set "wal_level" to "logical" before creating subscriptions.
+── aplicando as migrations REAIS (user_roles/audit_logs, login_attempts, is_admin, RLS, RPC do cartao) ──
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-unlock-login-2610152154a6d0/supabase/migrations/20260830080000_fn_is_admin_and_fix_permissions_rls.sql:26: NOTICE:  policy "Admins can manage permissions" for relation "public.permissions" does not exist, skipping
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-unlock-login-2610152154a6d0/supabase/migrations/20260830080000_fn_is_admin_and_fix_permissions_rls.sql:32: NOTICE:  policy "Admins can manage role permissions" for relation "public.role_permissions" does not exist, skipping
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-unlock-login-2610152154a6d0/supabase/migrations/20260830080000_fn_is_admin_and_fix_permissions_rls.sql:63: NOTICE:  policy "Authenticated can view permissions" for relation "public.permissions" does not exist, skipping
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-unlock-login-2610152154a6d0/supabase/migrations/20260830080000_fn_is_admin_and_fix_permissions_rls.sql:68: NOTICE:  policy "Authenticated can view role permissions" for relation "public.role_permissions" does not exist, skipping
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-unlock-login-2610152154a6d0/supabase/migrations/20260404162520_249862a5-69cf-466f-a6dd-4ae620eca775.sql:2: NOTICE:  policy "Only service role can insert login attempts" for relation "public.login_attempts" does not exist, skipping
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-unlock-login-2610152154a6d0/supabase/migrations/20260404162520_249862a5-69cf-466f-a6dd-4ae620eca775.sql:3: NOTICE:  policy "Authenticated users cannot insert login attempts" for relation "public.login_attempts" does not exist, skipping
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-unlock-login-2610152154a6d0/supabase/migrations/20260404162520_249862a5-69cf-466f-a6dd-4ae620eca775.sql:4: NOTICE:  policy "Only admins can directly read login attempts" for relation "public.login_attempts" does not exist, skipping
+psql:/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-unlock-login-2610152154a6d0/supabase/migrations/20260404162520_249862a5-69cf-466f-a6dd-4ae620eca775.sql:5: NOTICE:  policy "Only admins can view login attempts" for relation "public.login_attempts" does not exist, skipping
+
+── T0: forma da RPC e fronteira de ACL ──────────────────────────────────
+psql:supabase/tests/admin_unlock_login_autorizacao.sql:224: NOTICE:  PASS [T0a admin_unlock_login e SECURITY DEFINER] -> true
+ espera 
+--------
+ 
+(1 row)
+
+psql:supabase/tests/admin_unlock_login_autorizacao.sql:227: NOTICE:  PASS [T0b admin_unlock_login fixa o search_path] -> true
+ espera 
+--------
+ 
+(1 row)
+
+psql:supabase/tests/admin_unlock_login_autorizacao.sql:229: NOTICE:  PASS [T0c authenticated TEM EXECUTE na RPC] -> true
+ espera 
+--------
+ 
+(1 row)
+
+psql:supabase/tests/admin_unlock_login_autorizacao.sql:231: NOTICE:  PASS [T0d anon NAO tem EXECUTE na RPC] -> false
+ espera 
+--------
+ 
+(1 row)
+
+psql:supabase/tests/admin_unlock_login_autorizacao.sql:236: NOTICE:  PASS [T0e PUBLIC NAO tem EXECUTE na RPC (papel-sonda sem outro vinculo)] -> false
+ espera 
+--------
+ 
+(1 row)
+
+psql:supabase/tests/admin_unlock_login_autorizacao.sql:238: NOTICE:  PASS [T0f RLS ligada em login_attempts] -> true
+ espera 
+--------
+ 
+(1 row)
+
+psql:supabase/tests/admin_unlock_login_autorizacao.sql:240: NOTICE:  PASS [T0g RLS ligada em audit_logs] -> true
+ espera 
+--------
+ 
+(1 row)
+
+
+── BLOCO A: agente, supervisor e anonimo NAO destravam ninguem ──────────
+psql:supabase/tests/admin_unlock_login_autorizacao.sql:248: NOTICE:  PASS [T1 agente nao destrava (admin_required)] -> ERRO 42501 admin_required
+ espera_erro 
+-------------
+ 
+(1 row)
+
+psql:supabase/tests/admin_unlock_login_autorizacao.sql:251: NOTICE:  PASS [T1b a recusa e nomeada admin_required] -> ERRO 42501 admin_required
+ espera_contem 
+---------------
+ 
+(1 row)
+
+psql:supabase/tests/admin_unlock_login_autorizacao.sql:254: NOTICE:  PASS [T1c a linha do alvo continua la (sem efeito parcial)] -> 1/7/true
+ espera 
+--------
+ 
+(1 row)
+
+psql:supabase/tests/admin_unlock_login_autorizacao.sql:259: NOTICE:  PASS [T2 supervisor nao destrava (autoridade e do admin)] -> ERRO 42501 admin_required
+ espera_erro 
+-------------
+ 
+(1 row)
+
+psql:supabase/tests/admin_unlock_login_autorizacao.sql:264: NOTICE:  PASS [T3 anonimo nao executa a RPC (ACL)] -> ERRO 42501 permission denied for function admin_unlock_login
+ espera_erro 
+-------------
+ 
+(1 row)
+
+psql:supabase/tests/admin_unlock_login_autorizacao.sql:268: NOTICE:  PASS [T4 nenhuma tentativa negada gerou auditoria] -> 0
+ espera 
+--------
+ 
+(1 row)
+
+
+── BLOCO B: autorizacao ANTES da entrada ────────────────────────────────
+psql:supabase/tests/admin_unlock_login_autorizacao.sql:276: NOTICE:  PASS [T5 agente com e-mail vazio para no guard (42501, nao 22023)] -> ERRO 42501 admin_required
+ espera_erro 
+-------------
+ 
+(1 row)
+
+psql:supabase/tests/admin_unlock_login_autorizacao.sql:281: NOTICE:  PASS [T6 admin com e-mail vazio -> invalid_email] -> ERRO 22023 invalid_email
+ espera_erro 
+-------------
+ 
+(1 row)
+
+psql:supabase/tests/admin_unlock_login_autorizacao.sql:285: NOTICE:  PASS [T7 admin com e-mail nulo -> invalid_email] -> ERRO 22023 invalid_email
+ espera_erro 
+-------------
+ 
+(1 row)
+
+psql:supabase/tests/admin_unlock_login_autorizacao.sql:287: NOTICE:  PASS [T7b nenhuma entrada invalida criou trilha] -> 0
+ espera 
+--------
+ 
+(1 row)
+
+
+── BLOCO C: o ADMIN destrava e a trilha registra QUEM destravou ─────────
+psql:supabase/tests/admin_unlock_login_autorizacao.sql:296: NOTICE:  PASS [T8 admin destrava a conta bloqueada] -> OK 1
+ espera 
+--------
+ 
+(1 row)
+
+psql:supabase/tests/admin_unlock_login_autorizacao.sql:298: NOTICE:  PASS [T8b a linha de tentativas sumiu (attempt_count/locked_until zerados)] -> 0
+ espera 
+--------
+ 
+(1 row)
+
+psql:supabase/tests/admin_unlock_login_autorizacao.sql:302: NOTICE:  PASS [T9a exatamente 1 linha login_unlock] -> 1
+ espera 
+--------
+ 
+(1 row)
+
+psql:supabase/tests/admin_unlock_login_autorizacao.sql:304: NOTICE:  PASS [T9b entity_type = login_attempts] -> login_attempts
+ espera 
+--------
+ 
+(1 row)
+
+psql:supabase/tests/admin_unlock_login_autorizacao.sql:307: NOTICE:  PASS [T9c quem destravou (user_id) e o admin] -> 11111111-1111-1111-1111-11111111111a
+ espera 
+--------
+ 
+(1 row)
+
+psql:supabase/tests/admin_unlock_login_autorizacao.sql:310: NOTICE:  PASS [T9d entity_id aponta a linha apagada] -> 1a000000-0000-0000-0000-000000000001
+ espera 
+--------
+ 
+(1 row)
+
+psql:supabase/tests/admin_unlock_login_autorizacao.sql:313: NOTICE:  PASS [T9e details traz tentativas e o estado do bloqueio] -> 7/true
+ espera 
+--------
+ 
+(1 row)
+
+psql:supabase/tests/admin_unlock_login_autorizacao.sql:318: NOTICE:  PASS [T10a o log registra o e-mail MASCARADO] -> a***@empresa.com
+ espera 
+--------
+ 
+(1 row)
+
+psql:supabase/tests/admin_unlock_login_autorizacao.sql:323: NOTICE:  PASS [T10b o e-mail completo nao aparece em coluna nenhuma da trilha] -> 0
+ espera 
+--------
+ 
+(1 row)
+
+psql:supabase/tests/admin_unlock_login_autorizacao.sql:328: NOTICE:  PASS [T11 a linha da outra conta fica intacta] -> 1/5/true
+ espera 
+--------
+ 
+(1 row)
+
+psql:supabase/tests/admin_unlock_login_autorizacao.sql:330: NOTICE:  PASS [T11b sobrou exatamente a linha da outra conta] -> 1
+ espera 
+--------
+ 
+(1 row)
+
+
+── BLOCO D: conta ja destravada (sem oraculo e sem trilha falsa) ───────
+psql:supabase/tests/admin_unlock_login_autorizacao.sql:339: NOTICE:  PASS [T12a e-mail ja destravado -> no-op silencioso] -> OK 1
+ espera 
+--------
+ 
+(1 row)
+
+psql:supabase/tests/admin_unlock_login_autorizacao.sql:341: NOTICE:  PASS [T12b e-mail que nunca existiu -> mesma resposta] -> OK 1
+ espera 
+--------
+ 
+(1 row)
+
+psql:supabase/tests/admin_unlock_login_autorizacao.sql:343: NOTICE:  PASS [T12c no-op nao cria trilha (continua 1 linha)] -> 1
+ espera 
+--------
+ 
+(1 row)
+
+
+LA OK: agente/supervisor/anonimo nao destravam; o admin destrava, a linha some
+       e fica 1 linha de auditoria com QUEM destravou e o e-mail mascarado.

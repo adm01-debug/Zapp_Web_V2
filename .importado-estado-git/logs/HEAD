@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 d723a9010796f1ea4aea5270d881da2974328ba4 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792112073 -0300	
+d723a9010796f1ea4aea5270d881da2974328ba4 d723a9010796f1ea4aea5270d881da2974328ba4 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792112074 -0300	reset: moving to HEAD
+d723a9010796f1ea4aea5270d881da2974328ba4 d577fffee0685e1c68fa4c02ba74d7850fb13288 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792113366 -0300	commit: feat(db): RPC admin_unlock_login com guard de admin e auditoria (LA1/LA2)
