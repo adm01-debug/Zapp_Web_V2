@@ -1,0 +1,2 @@
+ERRO: esta migration já foi aplicada no banco local desta tarefa (edite com uma migration nova)
+rc=1

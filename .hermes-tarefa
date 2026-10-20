@@ -1,0 +1,16 @@
+PROJETO=Zapp_Web_V2
+SLUG=automation-runtime
+ID=2610111602b52d
+BRANCH=v2/automation-runtime-2610111602b52d
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/automation-runtime-2610111602b52d
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-11T16:02:48-03:00
+KANBAN=t_d94b77b2
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/automation-runtime-2610111602b52d/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-11
+DB_LOCAL=v2-2610111602b52d
+APLICADA_LOCAL=20261011190932_automation_runtime.sql sha=10f58f4159bb4411
+PRONTO_SHA=40856fc119c613d910f3d534c9658bcd5f296f98
