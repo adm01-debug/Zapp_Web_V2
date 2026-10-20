@@ -16,7 +16,9 @@ vi.mock('@/integrations/supabase/client', () => ({
     channel: (...args: unknown[]) => mockChannel(...args),
     removeChannel: (...args: unknown[]) => mockRemoveChannel(...args),
     auth: {
-      onAuthStateChange: vi.fn().mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } }),
+      onAuthStateChange: vi
+        .fn()
+        .mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } }),
       getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
     },
   },
@@ -25,7 +27,7 @@ vi.mock('@/integrations/supabase/client', () => ({
 const mockUseAuth = vi.fn();
 vi.mock('@/hooks/auth/useAuth', () => ({
   useAuth: () => mockUseAuth(),
-  AuthProvider: ({ children }: { children?: import("react").ReactNode }) => children,
+  AuthProvider: ({ children }: { children?: import('react').ReactNode }) => children,
 }));
 
 vi.mock('@/lib/logger', () => ({
@@ -33,6 +35,8 @@ vi.mock('@/lib/logger', () => ({
   // O toast do `reminder_due` arrasta a cadeia de tarefas (useSendProduct →
   // useCatalogContactSearch), que cria o logger por `getLogger`.
   getLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),
+  // `invokeEdge` (na mesma cadeia) cria o logger por `createLogger`.
+  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),
 }));
 
 import { useNotifications } from '@/hooks/system/useNotifications';
@@ -45,8 +49,24 @@ function createWrapper() {
 }
 
 const mockNotifications = [
-  { id: 'n1', user_id: 'u1', title: 'New message', message: 'You have a new message', type: 'message', is_read: false, created_at: '2024-01-01' },
-  { id: 'n2', user_id: 'u1', title: 'SLA alert', message: 'SLA breached', type: 'sla', is_read: true, created_at: '2024-01-02' },
+  {
+    id: 'n1',
+    user_id: 'u1',
+    title: 'New message',
+    message: 'You have a new message',
+    type: 'message',
+    is_read: false,
+    created_at: '2024-01-01',
+  },
+  {
+    id: 'n2',
+    user_id: 'u1',
+    title: 'SLA alert',
+    message: 'SLA breached',
+    type: 'sla',
+    is_read: true,
+    created_at: '2024-01-02',
+  },
 ];
 
 describe('useNotifications', () => {
