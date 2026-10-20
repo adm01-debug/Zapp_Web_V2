@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=atalho-m-mute-audio
+ID=261015155937e9
+BRANCH=v2/atalho-m-mute-audio-261015155937e9
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/atalho-m-mute-audio-261015155937e9
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-15T15:59:34-03:00
+KANBAN=t_546cff3f
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/atalho-m-mute-audio-261015155937e9/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-15
+DB_LOCAL=v2-261015155937e9
+PRONTO_SHA=613325d89117cd957ba519d206b382bb483f3a14

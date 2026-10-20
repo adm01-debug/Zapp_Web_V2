@@ -1,0 +1,10 @@
+OK      db_guard        1s
+FALHOU  tipos         375s  (ver /home/joaquim_ataides/.local/state/zapp-verify/81d172a35af6/tipos.log)
+zapp-sem: esperando vaga no pool 'pesado' (3 em uso) há 60s
+zapp-sem: esperando vaga no pool 'pesado' (3 em uso) há 121s
+zapp-sem: esperando vaga no pool 'pesado' (3 em uso) há 181s
+Typecheck ratchet: baseline=0, atual=1, removidas=0, novas=1
+FALHA: novos erros de tipo detectados:
+  src/hooks/__tests__/useGlobalKeyboardShortcuts.audioMute.test.tsx(64,21) error TS2345 - Argument of type 'EventTarget' is not assignable to parameter of type 'Element | Node | Window | Document'. Ty
+Corrija os novos erros. Atualize o baseline somente quando a nova divida tiver aprovacao explicita.
+VERIFY: VERMELHO em tipos (376s)

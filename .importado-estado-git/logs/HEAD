@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 e7d156b8a74c0b165e19c9549bba19377137b0fc Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792090772 -0300	
+e7d156b8a74c0b165e19c9549bba19377137b0fc e7d156b8a74c0b165e19c9549bba19377137b0fc Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792090774 -0300	reset: moving to HEAD
+e7d156b8a74c0b165e19c9549bba19377137b0fc 70001255739fecd266fbbd2f0b621b1cd40ed5a8 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792091433 -0300	commit: feat(chat): atalho M silencia o audio em reproducao
+70001255739fecd266fbbd2f0b621b1cd40ed5a8 f6102f7c62a68da2730f0903cff8768b62df472e Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792091825 -0300	commit: fix(chat): atalho M cede o toque ao controle de volume focado
+f6102f7c62a68da2730f0903cff8768b62df472e 09a92b3717d96384eef9aa76ab4176751669cd7a Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792092033 -0300	commit: refactor(chat): move o barramento de audio para src/hooks/communication
+09a92b3717d96384eef9aa76ab4176751669cd7a 613325d89117cd957ba519d206b382bb483f3a14 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792092857 -0300	commit: test(chat): tipa o alvo do teclar no teste do atalho M

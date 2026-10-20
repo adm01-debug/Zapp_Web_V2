@@ -1,0 +1,6 @@
+OK      db_guard        0s
+FALHOU  tipos          60s  (ver /home/joaquim_ataides/.local/state/zapp-verify/81d172a35af6/tipos.log)
+tc-rapido: erro sem diagnóstico reconhecível
+tipos.sh: typecheck rápido falhou na EXECUÇÃO; refazendo com o ratchet completo
+ERRO no typecheck ratchet: TypeScript local nao encontrado. Execute a instalacao das dependencias primeiro.
+VERIFY: VERMELHO em tipos (60s)

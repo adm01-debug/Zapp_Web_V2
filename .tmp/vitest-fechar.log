@@ -1,0 +1,10 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/atalho-m-mute-audio-261015155937e9
+
+·········
+
+ Test Files  2 passed (2)
+      Tests  9 passed (9)
+   Start at  16:40:45
+   Duration  5.61s (transform 3.32s, setup 2.34s, import 2.40s, tests 223ms, environment 2.90s)
+

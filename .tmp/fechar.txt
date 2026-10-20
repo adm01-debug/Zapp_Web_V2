@@ -1,0 +1,5 @@
+On branch v2/atalho-m-mute-audio-261015155937e9
+nothing to commit, working tree clean
+ANTES DE ENTREGAR (isto NÃO é falha de verificação; nada foi verificado nem entregue ainda) — o juiz automático apontou:
+  1. Você mexeu em arquivo que o cartão não lista em 'ARQUIVOS QUE PODE TOCAR': src/components/ui/VolumeTriggerButton.tsx, src/lib/__tests__/audioPlaybackBus.test.ts, src/lib/audioPlaybackBus.ts. Reverta (achado fora do escopo vira comentário no cartão) ou explique no relato por que foi indispensável.
+Corrija (commit novo) e feche de novo. Se o aviso não procede, rode este MESMO comando de novo sem mudar nada: a entrega segue, e explique no relato por quê. Não bloqueie o cartão por causa disto.

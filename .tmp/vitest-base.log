@@ -1,0 +1,143 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/atalho-m-mute-audio-261015155937e9/.tmp/prova-base
+
+·xx···
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/hooks/communication/__tests__/audioPlaybackBus.test.ts [ src/hooks/communication/__tests__/audioPlaybackBus.test.ts ]
+Error: Failed to resolve import "@/hooks/communication/audioPlaybackBus" from "src/hooks/communication/__tests__/audioPlaybackBus.test.ts". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/atalho-m-mute-audio-261015155937e9/.tmp/prova-base/src/hooks/communication/__tests__/audioPlaybackBus.test.ts:9:51
+  7  |  */
+  8  |  import { beforeEach, describe, expect, it } from "vitest";
+  9  |  import { getActiveAudioId, toggleMuteActive } from "@/hooks/communication/audioPlaybackBus";
+     |                                                      ^
+  10 |  import { getPlayingAudioId, pauseExclusiveAudio, playExclusiveAudio } from "@/hooks/chat/useExclusiveAudio";
+  11 |  import { DEFAULT_MEDIA_VOLUME_STATE, getSnapshot, setMuted, setVolume } from "@/lib/mediaVolumeStore";
+ ❯ TransformPluginContext._formatLog ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30602:39
+ ❯ TransformPluginContext.error ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30599:14
+ ❯ normalizeUrl ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27842:18
+ ❯ ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27905:30
+ ❯ TransformPluginContext.transform ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27873:4
+ ❯ EnvironmentPluginContainer.transform ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30387:14
+ ❯ loadAndTransform ../../node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:24646:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/hooks/__tests__/useGlobalKeyboardShortcuts.audioMute.test.tsx > atalho M — mudo do áudio em reprodução > com áudio tocando o M silencia e o toque seguinte restaura o volume anterior
+AssertionError: expected { volume: 60, muted: false } to deeply equal { volume: 60, muted: true }
+
+- Expected
++ Received
+
+  {
+-   "muted": true,
++   "muted": false,
+    "volume": 60,
+  }
+
+ ❯ src/hooks/__tests__/useGlobalKeyboardShortcuts.audioMute.test.tsx:93:27
+     91|
+     92|     teclar('m');
+     93|     expect(getSnapshot()).toEqual({ volume: 60, muted: true });
+       |                           ^
+     94|     expect(toast.info).toHaveBeenCalledWith('🔇 Áudio silenciado', { d…
+     95|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/hooks/__tests__/useGlobalKeyboardShortcuts.audioMute.test.tsx > atalho M — mudo do áudio em reprodução > o botão do balão reflete o mudo com aria-pressed e rótulo pt-BR
+TestingLibraryElementError: Unable to find a label with the text of: Áudios e vídeos mudos
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"relative inline-flex items-center gap-0.5"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33maria-disabled[39m=[32m"false"[39m
+        [33maria-expanded[39m=[32m"false"[39m
+        [33maria-haspopup[39m=[32m"dialog"[39m
+        [33maria-label[39m=[32m"Volume dos áudios e vídeos: 80%"[39m
+        [33maria-pressed[39m=[32m"false"[39m
+        [33mclass[39m=[32m"relative inline-flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 h-6 w-6 rounded-md hover:bg-foreground/10"[39m
+        [33mtitle[39m=[32m"Volume dos áudios e vídeos: 80%"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-volume2 lucide-volume-2 h-[14px] w-[14px]"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mheight[39m=[32m"24"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"24"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M16 9a5 5 0 0 1 0 6"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M19.364 18.364a9 9 0 0 0 0-12.728"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</button>[39m
+      [36m<button[39m
+        [33maria-expanded[39m=[32m"false"[39m
+        [33maria-haspopup[39m=[32m"dialog"[39m
+        [33maria-label[39m=[32m"Ajustar volume das mídias"[39m
+        [33mclass[39m=[32m"inline-flex items-center justify-center rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 h-4 w-4 hover:bg-foreground/10"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-chevron-up h-3 w-3"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mheight[39m=[32m"24"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"24"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m18 15-6-6-6 6"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</button>[39m
+    [36m</span>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getAllByLabelText ../../node_modules/@testing-library/dom/dist/queries/label-text.js:111:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/hooks/__tests__/useGlobalKeyboardShortcuts.audioMute.test.tsx:110:19
+    108|
+    109|     teclar('m');
+    110|     expect(screen.getByLabelText(MEDIA_VOLUME_LABEL_MUTED)).toHaveAttr…
+       |                   ^
+    111|   });
+    112|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 4 passed (6)
+   Start at  16:40:54
+   Duration  4.76s (transform 1.10s, setup 1.81s, import 1.34s, tests 246ms, environment 3.04s)
+

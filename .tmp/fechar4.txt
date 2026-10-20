@@ -1,0 +1,5 @@
+On branch v2/atalho-m-mute-audio-261015155937e9
+nothing to commit, working tree clean
+ANTES DE ENTREGAR — um juiz adversarial conferiu o CRITÉRIO DE PRONTO contra o DIFF e não achou prova para:
+   * Critério 3: O diff não traz evidência do zapp-verify; só o relato afirma verde, e isso não é prova.
+Entregue o que falta (commit novo) ou, se o ponto não procede, rode este MESMO comando de novo sem mudar nada e explique no relato por quê.
