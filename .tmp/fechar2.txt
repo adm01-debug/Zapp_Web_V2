@@ -1,0 +1,6 @@
+On branch v2/auditoria-painel-totais-reais-26101522272bcd
+nothing to commit, working tree clean
+ANTES DE ENTREGAR — um juiz adversarial conferiu o CRITÉRIO DE PRONTO contra o DIFF e não achou prova para:
+   * Critério 2: O diff não traz relato sobre realtime ativo; o canal e o teste existem, mas o relato do agente está truncado e não afirma isso. 
+   * Critério 3: O relato termina em 'OK db_' truncado; o diff não traz evidência de que zapp-verify --rapido ficou verde.
+Entregue o que falta (commit novo) ou, se o ponto não procede, rode este MESMO comando de novo sem mudar nada e explique no relato por quê.

@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auditoria-painel-totais-reais-26101522272bcd
+
+
+ Test Files  1 passed (1)
+      Tests  30 passed (30)
+   Start at  23:45:14
+   Duration  4.38s (transform 551ms, setup 321ms, import 828ms, tests 2.31s, environment 759ms)
+

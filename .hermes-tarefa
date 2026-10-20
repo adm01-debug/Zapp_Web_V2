@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=auditoria-painel-totais-reais
+ID=26101522272bcd
+BRANCH=v2/auditoria-painel-totais-reais-26101522272bcd
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auditoria-painel-totais-reais-26101522272bcd
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-15T22:27:45-03:00
+KANBAN=t_7d74e43f
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auditoria-painel-totais-reais-26101522272bcd/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-15
+DB_LOCAL=v2-26101522272bcd
+PRONTO_SHA=ee1b55384d580ba9fb11eb8bf826f0515d011c18

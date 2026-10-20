@@ -1,0 +1,6 @@
+55	64	src/components/security/AuditLogDashboard.tsx
+99	0	src/components/security/__tests__/AuditLogDashboard.hoje-janela24h.test.tsx
+0	90	src/components/security/__tests__/AuditLogDashboard.hoje-local.test.tsx
+163	34	src/components/security/__tests__/AuditLogDashboard.test.tsx
+251	0	src/hooks/security/useAuditLogDashboard.ts
+292	0	src/test/mocks/auditLogsServer.ts

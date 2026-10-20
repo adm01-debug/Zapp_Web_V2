@@ -1,0 +1,111 @@
+migrations: 829 ok, 21 falha(s) de 852 (1 reaplicadas como supabase_admin) | seed: ok | 397s
+[rls] só produção=0 só local=2 diferentes=0
+    só local: ai_usage_outbox
+    só local: outbox_events
+[columns] só produção=0 só local=26 diferentes=0
+    só local: ai_usage_outbox.created_at
+    só local: ai_usage_outbox.id
+    só local: ai_usage_outbox.motivo
+    só local: ai_usage_outbox.payload
+    só local: ai_usage_outbox.processed_at
+    só local: ai_usage_outbox.tentativas
+    só local: outbox_events.algoritmo
+    só local: outbox_events.assinatura
+[indexes] só produção=1 só local=7 diferentes=0
+    só produção: conversation_closures.conversation_closures_contact_day_uidx
+    só local: ai_usage_outbox.ai_usage_outbox_pkey
+    só local: ai_usage_outbox.idx_ai_usage_outbox_pendentes
+    só local: outbox_events.idx_outbox_events_pendentes
+    só local: outbox_events.outbox_events_origem_event_id_unico
+    só local: outbox_events.outbox_events_pkey
+    só local: sla_configurations.sla_configurations_single_active_default_idx
+    só local: talkx_segments.idx_talkx_segments_tags
+[defaults] só produção=0 só local=9 diferentes=0
+    só local: ai_usage_outbox.created_at
+    só local: ai_usage_outbox.id
+    só local: ai_usage_outbox.tentativas
+    só local: outbox_events.algoritmo
+    só local: outbox_events.created_at
+    só local: outbox_events.id
+    só local: outbox_events.tentativas
+    só local: talkx_segments.tags
+[policies] só produção=0 só local=2 diferentes=2
+    só local: ai_usage_outbox.ai_usage_outbox_service_role
+    só local: outbox_events.outbox_events_service_role
+    diferente: global_settings."Admins can manage global settings"
+    diferente: global_settings."Admins can view global settings"
+[triggers] só produção=0 só local=3 diferentes=1
+    só local: conversation_closures.trg_reject_repeated_conversation_closure_without_reopen
+    só local: department_invitations.department_invitations_code_format_insert_trg
+    só local: team_message_reactions.team_reactions_force_conversation_id_trig
+    diferente: team_message_receipts.team_receipts_fill_conversation_id_trig
+[functions] só produção=2 só local=14 diferentes=31
+    só produção: f:resolve_talkx_outcome_unknown(p_recipient_id uuid, p_resolution text, p_note text, p_confirm_duplicate_risk 
+    só produção: f:retry_talkx_recipients(p_campaign_id uuid, p_recipient_ids uuid[])
+    só local: f:add_contact_tag(p_contact_id uuid, p_tag text)
+    só local: f:close_stale_calls()
+    só local: f:consume_login_gate(p_email text, p_ip text, p_ip_max integer, p_ip_window_seconds integer, p_email_max integ
+    só local: f:e2e_cleanup_conversation_closures()
+    só local: f:enforce_department_invitations_code_format_on_insert()
+    só local: f:reject_repeated_conversation_closure_without_reopen()
+    só local: f:remove_contact_tag(p_contact_id uuid, p_tag text)
+    só local: f:resolve_talkx_outcome_unknown(p_recipient_id uuid, p_resolution text, p_note text, p_confirm_duplicate_risk 
+    diferente: f:accept_department_invite(p_code text)
+    diferente: f:complete_multiplix_dispatch_if_drained(p_dispatch_id uuid)
+    diferente: f:complete_multiplix_dispatch_if_items_drained(p_dispatch_id uuid)
+    diferente: f:count_searchbox_sessions_this_month()
+    diferente: f:create_department_invite(p_department_id uuid, p_max_uses integer, p_expires_hours integer)
+    diferente: f:create_team_group_conversation(p_name text, p_member_ids uuid[], p_department_id uuid)
+    diferente: f:dashboard_kpi(p_since timestamp with time zone, p_queue uuid, p_agent uuid)
+    diferente: f:enforce_talkx_campaign_mutability()
+[constraints] só produção=1 só local=14 diferentes=4
+    só produção: relation:department_invitations.department_invitations_code_format
+    só local: relation:ai_usage_outbox.ai_usage_outbox_pkey
+    só local: relation:department_invitations.department_invitations_status_check
+    só local: relation:department_invitations.department_invitations_use_count_within_max
+    só local: relation:outbox_events.outbox_events_algoritmo_sha256
+    só local: relation:outbox_events.outbox_events_assinatura_hmac
+    só local: relation:outbox_events.outbox_events_event_id_nao_vazio
+    só local: relation:outbox_events.outbox_events_origem_event_id_unico
+    só local: relation:outbox_events.outbox_events_origem_nao_vazia
+    diferente: relation:department_audit_logs.department_audit_logs_action_check
+    diferente: relation:talkx_segments.talkx_segments_status_check
+    diferente: relation:team_messages.team_messages_content_not_empty
+    diferente: relation:team_messages.team_messages_media_consistency
+[routine_grants] só produção=18 só local=37 diferentes=0
+    só produção: f:add_agent_xp(p_profile_id uuid, p_xp integer)|authenticated|EXECUTE|grantor=postgres
+    só produção: f:effective_role(_user_id uuid)|authenticated|EXECUTE|grantor=postgres
+    só produção: f:fn_list_audio_meme_categories()|authenticated|EXECUTE|grantor=postgres
+    só produção: f:grant_agent_achievement(p_profile_id uuid, p_type text, p_name text, p_description text, p_xp_reward integer
+    só produção: f:increment_agent_messages(p_profile_id uuid, p_type text)|authenticated|EXECUTE|grantor=postgres
+    só produção: f:is_country_allowed(check_country_code text)|authenticated|EXECUTE|grantor=postgres
+    só produção: f:is_country_blocked(check_country_code text)|authenticated|EXECUTE|grantor=postgres
+    só produção: f:is_ip_blocked(check_ip text)|authenticated|EXECUTE|grantor=postgres
+    só local: f:add_contact_tag(p_contact_id uuid, p_tag text)|authenticated|EXECUTE|grantor=postgres
+    só local: f:add_contact_tag(p_contact_id uuid, p_tag text)|postgres|EXECUTE|grantor=postgres
+    só local: f:add_contact_tag(p_contact_id uuid, p_tag text)|service_role|EXECUTE|grantor=postgres
+    só local: f:close_stale_calls()|postgres|EXECUTE|grantor=postgres
+    só local: f:close_stale_calls()|service_role|EXECUTE|grantor=postgres
+    só local: f:consume_login_gate(p_email text, p_ip text, p_ip_max integer, p_ip_window_seconds integer, p_email_max integ
+    só local: f:consume_login_gate(p_email text, p_ip text, p_ip_max integer, p_ip_window_seconds integer, p_email_max integ
+    só local: f:e2e_cleanup_conversation_closures()|authenticated|EXECUTE|grantor=postgres
+[relation_grants] só produção=8 só local=32 diferentes=0
+    só produção: r:public.whatsapp_connections|anon|MAINTAIN|grantor=postgres
+    só produção: r:public.whatsapp_connections|anon|SELECT|grantor=postgres
+    só produção: r:public.whatsapp_connections|authenticated|REFERENCES|grantor=postgres
+    só produção: r:public.whatsapp_connections|authenticated|TRIGGER|grantor=postgres
+    só produção: r:public.whatsapp_connections|authenticated|TRUNCATE|grantor=postgres
+    só produção: v:public.whatsapp_connections_agent|anon|SELECT|grantor=postgres
+    só produção: v:public.whatsapp_connections_public|anon|SELECT|grantor=postgres
+    só produção: v:public.whatsapp_connections_safe|anon|SELECT|grantor=postgres
+    só local: r:public.ai_usage_outbox|postgres|DELETE|grantor=postgres
+    só local: r:public.ai_usage_outbox|postgres|INSERT|grantor=postgres
+    só local: r:public.ai_usage_outbox|postgres|MAINTAIN|grantor=postgres
+    só local: r:public.ai_usage_outbox|postgres|REFERENCES|grantor=postgres
+    só local: r:public.ai_usage_outbox|postgres|SELECT|grantor=postgres
+    só local: r:public.ai_usage_outbox|postgres|TRIGGER|grantor=postgres
+    só local: r:public.ai_usage_outbox|postgres|TRUNCATE|grantor=postgres
+    só local: r:public.ai_usage_outbox|postgres|UPDATE|grantor=postgres
+ESTRUTURA: 214 diferença(s) em relação ao retrato da produção
+TRAVAS: conferidas (DNS da produção preso, agendador desligado, pg_net sem envio)
+rc=0
