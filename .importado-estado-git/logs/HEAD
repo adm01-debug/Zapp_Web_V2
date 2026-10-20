@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 d723a9010796f1ea4aea5270d881da2974328ba4 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792119159 -0300	
+d723a9010796f1ea4aea5270d881da2974328ba4 d723a9010796f1ea4aea5270d881da2974328ba4 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792119160 -0300	reset: moving to HEAD
+d723a9010796f1ea4aea5270d881da2974328ba4 099c91c5c980a1b8fc1c30911cd7962961a8d646 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792126854 -0300	commit: fix(a11y): documento e vídeo do balão abrem pelo teclado; `VideoFullscreen` vira diálogo (Esc, foco, papel)

@@ -1,0 +1,1114 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/a11y-balao-teclado-videofullscreen-dialo-26101523526a62/.tmp/prova-base
+
+xxx·x······xxxxx··stderr | src/hooks/communication/__tests__/mediaVolume.players.test.tsx > S42 — AudioMessagePlayer (via useAudioPlayer) obedece > o áudio do balão obedece (volume, mudo, desmudo e desmontar)
+An update to AudioMessagePlayer inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+·······stderr | src/hooks/communication/__tests__/mediaVolume.players.test.tsx > S43 — AudioPlayButton (player do cartão da aba Arquivos) > o áudio criado por `new Audio()` obedece (volume, mudo, desmudo e desmontar)
+An update to AudioPlayButton inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+···stdout | src/components/inbox/__tests__/DocumentPreviewDownloadPermission.r2-inb-031.test.tsx > DocumentPreview — permissão de download (R2-INB-031) > com can_download=true baixa: fetch na URL assinada e anchor com o nome do arquivo
+[2026-10-16T05:13:07.176Z] [DEBUG] [App] [sid:6434338d] File downloaded successfully { fileName: 'contrato.pdf' }
+
+Not implemented: navigation to another Document
+·····stderr | src/components/inbox/__tests__/ImagePreviewVideoFullscreen.aria.test.tsx > VideoFullscreen — aria-labels nos botões > axe button-name zerado no ImagePreview e no VideoFullscreen
+Couldn't load preload assets:  Error: Preload assets timed out.
+    at Timeout._onTimeout (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/a11y-balao-teclado-videofullscreen-dialo-26101523526a62/node_modules/axe-core/axe.js:20417:25)
+    at listOnTimeout (node:internal/timers:635:17)
+    at processTimers (node:internal/timers:571:7)
+
+·stderr | src/components/inbox/__tests__/VideoFullscreen.dialogo.test.tsx > U2 — VideoFullscreen é um diálogo > axe sem violação no diálogo renderizado
+Couldn't load preload assets:  Error: Preload assets timed out.
+    at Timeout._onTimeout (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/a11y-balao-teclado-videofullscreen-dialo-26101523526a62/node_modules/axe-core/axe.js:20417:25)
+    at listOnTimeout (node:internal/timers:635:17)
+    at processTimers (node:internal/timers:571:7)
+
+·xx
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/inbox/__tests__/MediaPreview.teclado.test.tsx > U2 — documento do balão abre pelo teclado > o cartão é um botão com nome acessível e entra na ordem do Tab
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Abrir documento contrato.pdf"
+
+Here are the accessible roles:
+
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-sm font-medium truncate text-foreground"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Baixar contrato.pdf":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Baixar contrato.pdf"[39m
+    [33mclass[39m=[32m"flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors bg-primary/10 hover:bg-primary/20 text-primary"[39m
+    [33mtitle[39m=[32m"Baixar contrato.pdf"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex items-center gap-3 p-3 rounded-lg min-w-[240px] max-w-[300px] cursor-pointer transition-all bg-muted/50 hover:bg-muted/70 border border-border/30"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center bg-card"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-file-text w-8 h-8 text-destructive"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mheight[39m=[32m"24"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"24"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M14 2v5a1 1 0 0 0 1 1h5"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M10 9H8"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M16 13H8"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M16 17H8"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex-1 min-w-0"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-sm font-medium truncate text-foreground"[39m
+        [36m>[39m
+          [0mcontrato.pdf[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center gap-2 text-xs text-muted-foreground"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"font-medium"[39m
+          [36m>[39m
+            [0mPDF[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m•[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m2.0 KB[0m
+          [36m</span>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<button[39m
+        [33maria-label[39m=[32m"Baixar contrato.pdf"[39m
+        [33mclass[39m=[32m"flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors bg-primary/10 hover:bg-primary/20 text-primary"[39m
+        [33mtitle[39m=[32m"Baixar contrato.pdf"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-download w-4 h-4"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mheight[39m=[32m"24"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"24"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M12 15V3"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m7 10 5 5 5-5"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/inbox/__tests__/MediaPreview.teclado.test.tsx:94:27
+     92|   it('o cartão é um botão com nome acessível e entra na ordem do Tab',…
+     93|     renderDocumento();
+     94|     const cartao = screen.getByRole('button', { name: 'Abrir documento…
+       |                           ^
+     95|
+     96|     expect(cartao).toHaveAttribute('tabindex', '0');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  src/components/inbox/__tests__/MediaPreview.teclado.test.tsx > U2 — documento do balão abre pelo teclado > Enter no cartão abre o documento em nova aba
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Abrir documento contrato.pdf"
+
+Here are the accessible roles:
+
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-sm font-medium truncate text-foreground"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Baixar contrato.pdf":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Baixar contrato.pdf"[39m
+    [33mclass[39m=[32m"flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors bg-primary/10 hover:bg-primary/20 text-primary"[39m
+    [33mtitle[39m=[32m"Baixar contrato.pdf"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex items-center gap-3 p-3 rounded-lg min-w-[240px] max-w-[300px] cursor-pointer transition-all bg-muted/50 hover:bg-muted/70 border border-border/30"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center bg-card"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-file-text w-8 h-8 text-destructive"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mheight[39m=[32m"24"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"24"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M14 2v5a1 1 0 0 0 1 1h5"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M10 9H8"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M16 13H8"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M16 17H8"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex-1 min-w-0"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-sm font-medium truncate text-foreground"[39m
+        [36m>[39m
+          [0mcontrato.pdf[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center gap-2 text-xs text-muted-foreground"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"font-medium"[39m
+          [36m>[39m
+            [0mPDF[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m•[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m2.0 KB[0m
+          [36m</span>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<button[39m
+        [33maria-label[39m=[32m"Baixar contrato.pdf"[39m
+        [33mclass[39m=[32m"flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors bg-primary/10 hover:bg-primary/20 text-primary"[39m
+        [33mtitle[39m=[32m"Baixar contrato.pdf"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-download w-4 h-4"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mheight[39m=[32m"24"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"24"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M12 15V3"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m7 10 5 5 5-5"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/inbox/__tests__/MediaPreview.teclado.test.tsx:104:27
+    102|     renderDocumento();
+    103|
+    104|     const cartao = screen.getByRole('button', { name: 'Abrir documento…
+       |                           ^
+    105|     cartao.focus();
+    106|     expect(document.activeElement).toBe(cartao);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  src/components/inbox/__tests__/MediaPreview.teclado.test.tsx > U2 — documento do balão abre pelo teclado > Espaço abre o documento e o preventDefault evita rolar a conversa
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Abrir documento contrato.pdf"
+
+Here are the accessible roles:
+
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-sm font-medium truncate text-foreground"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Baixar contrato.pdf":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Baixar contrato.pdf"[39m
+    [33mclass[39m=[32m"flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors bg-primary/10 hover:bg-primary/20 text-primary"[39m
+    [33mtitle[39m=[32m"Baixar contrato.pdf"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex items-center gap-3 p-3 rounded-lg min-w-[240px] max-w-[300px] cursor-pointer transition-all bg-muted/50 hover:bg-muted/70 border border-border/30"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center bg-card"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-file-text w-8 h-8 text-destructive"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mheight[39m=[32m"24"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"24"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M14 2v5a1 1 0 0 0 1 1h5"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M10 9H8"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M16 13H8"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M16 17H8"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex-1 min-w-0"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-sm font-medium truncate text-foreground"[39m
+        [36m>[39m
+          [0mcontrato.pdf[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center gap-2 text-xs text-muted-foreground"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"font-medium"[39m
+          [36m>[39m
+            [0mPDF[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m•[0m
+          [36m</span>[39m
+          [36m<span>[39m
+            [0m2.0 KB[0m
+          [36m</span>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<button[39m
+        [33maria-label[39m=[32m"Baixar contrato.pdf"[39m
+        [33mclass[39m=[32m"flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors bg-primary/10 hover:bg-primary/20 text-primary"[39m
+        [33mtitle[39m=[32m"Baixar contrato.pdf"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-download w-4 h-4"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mheight[39m=[32m"24"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"24"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M12 15V3"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m7 10 5 5 5-5"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/inbox/__tests__/MediaPreview.teclado.test.tsx:117:27
+    115|     renderDocumento();
+    116|
+    117|     const cartao = screen.getByRole('button', { name: 'Abrir documento…
+       |                           ^
+    118|     // fireEvent devolve false quando o handler chamou preventDefault.
+    119|     const naoConsumido = fireEvent.keyDown(cartao, { key: ' ' });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  src/components/inbox/__tests__/MediaPreview.teclado.test.tsx > U2 — vídeo do balão abre pelo teclado > o quadro do vídeo é um botão e o Enter abre a tela cheia
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Abrir vídeo em tela cheia"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Tela cheia":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Tela cheia"[39m
+    [33mclass[39m=[32m"absolute top-2 right-2 p-1.5 rounded-full bg-background/50 text-primary-foreground opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background/70"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"space-y-2"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"relative rounded-lg overflow-hidden max-w-[300px] cursor-pointer"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"absolute inset-0 bg-muted animate-pulse flex items-center justify-center"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-loader-circle w-8 h-8 animate-spin text-muted-foreground"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M21 12a9 9 0 1 1-6.219-8.56"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</div>[39m
+          [36m<video[39m
+            [33mclass[39m=[32m"w-full max-h-[200px] object-cover rounded-lg"[39m
+            [33mloop[39m=[32m""[39m
+            [33mplaysinline[39m=[32m""[39m
+            [33msrc[39m=[32m"https://cdn.test/clipe.mp4"[39m
+          [36m/>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Tela cheia"[39m
+            [33mclass[39m=[32m"absolute top-2 right-2 p-1.5 rounded-full bg-background/50 text-primary-foreground opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background/70"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-maximize w-3.5 h-3.5"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M8 3H5a2 2 0 0 0-2 2v3"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M21 8V5a2 2 0 0 0-2-2h-3"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M3 16v3a2 2 0 0 0 2 2h3"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M16 21h3a2 2 0 0 0 2-2v-3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/inbox/__tests__/MediaPreview.teclado.test.tsx:147:27
+    145|     render(<VideoPreview url="https://cdn.test/clipe.mp4" isSent={fals…
+    146|
+    147|     const quadro = screen.getByRole('button', { name: 'Abrir vídeo em …
+       |                           ^
+    148|     expect(quadro).toHaveAttribute('tabindex', '0');
+    149|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  src/components/inbox/__tests__/VideoFullscreen.dialogo.test.tsx > U2 — VideoFullscreen é um diálogo > tem papel de diálogo, é modal e tem nome acessível
+TestingLibraryElementError: Unable to find an accessible element with the role "dialog" and name "Vídeo em tela cheia"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "1x":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:shadow-glow-secondary-md rounded-md h-9 px-3 font-semibold text-xs"[39m
+  [36m/>[39m
+
+  Name "Baixar":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Baixar"[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:shadow-glow-secondary-md h-10 w-10 opacity-50 cursor-not-allowed"[39m
+    [33mdisabled[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "Fechar":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Fechar"[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:shadow-glow-secondary-md h-10 w-10"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"fixed inset-0 z-50 bg-background flex items-center justify-center"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"absolute top-4 right-4 flex items-center gap-2 z-10"[39m
+    [36m>[39m
+      [36m<div />[39m
+      [36m<div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:shadow-glow-secondary-md rounded-md h-9 px-3 font-semibold text-xs"[39m
+        [36m>[39m
+          [0m1[0m
+          [0mx[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Baixar"[39m
+          [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:shadow-glow-secondary-md h-10 w-10 opacity-50 cursor-not-allowed"[39m
+          [33mdisabled[39m=[32m""[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-download w-4 h-4"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 15V3"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m7 10 5 5 5-5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Fechar"[39m
+          [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:shadow-glow-secondary-md h-10 w-10"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-x w-4 h-4"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M18 6 6 18"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m6 6 12 12"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<video[39m
+      [33mautoplay[39m=[32m""[39m
+      [33mclass[39m=[32m"max-w-[90vw] max-h-[85vh] rounded-lg shadow-2xl"[39m
+      [33mcontrols[39m=[32m""[39m
+      [33mcontrolslist[39m=[32m"nodownload"[39m
+      [33mcrossorigin[39m=[32m"anonymous"[39m
+      [33mplaysinline[39m=[32m""[39m
+      [33msrc[39m=[32m"https://cdn.test/clipe-em-tela-cheia.mp4"[39m
+    [36m/>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/inbox/__tests__/VideoFullscreen.dialogo.test.tsx:101:28
+     99|     abrir();
+    100|
+    101|     const dialogo = screen.getByRole('dialog', { name: 'Vídeo em tela …
+       |                            ^
+    102|     expect(dialogo).toHaveAttribute('aria-modal', 'true');
+    103|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  src/components/inbox/__tests__/VideoFullscreen.dialogo.test.tsx > U2 — VideoFullscreen é um diálogo > abre com o foco no botão Fechar
+AssertionError: expected <body><div></div>
+…(1)</body> to be <button …(2)>…(1)</button> // Object.is equality
+
+- Expected
++ Received
+
+@@ -1,5 +1,54 @@
++ <body>
++   <div />
++   <div
++     class="fixed inset-0 z-50 bg-background flex items-center justify-center"
++   >
++     <div
++       class="absolute top-4 right-4 flex items-center gap-2 z-10"
++     >
++       <div />
++       <div>
++         <button
++           class="inline-flex items-center justify-center gap-2 whitespace-nowrap ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:shadow-glow-secondary-md rounded-md h-9 px-3 font-semibold text-xs"
++         >
++           1
++           x
++         </button>
++       </div>
++       <div>
++         <button
++           aria-label="Baixar"
++           class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:shadow-glow-secondary-md h-10 w-10 opacity-50 cursor-not-allowed"
++           disabled=""
++         >
++           <svg
++             aria-hidden="true"
++             class="lucide lucide-download w-4 h-4"
++             fill="none"
++             height="24"
++             stroke="currentColor"
++             stroke-linecap="round"
++             stroke-linejoin="round"
++             stroke-width="2"
++             viewBox="0 0 24 24"
++             width="24"
++             xmlns="http://www.w3.org/2000/svg"
++           >
++             <path
++               d="M12 15V3"
++             />
++             <path
++               d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
++             />
++             <path
++               d="m7 10 5 5 5-5"
++             />
++           </svg>
++         </button>
++       </div>
++       <div>
+          <button
+            aria-label="Fechar"
+            class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:shadow-glow-secondary-md h-10 w-10"
+          >
+            <svg
+@@ -21,5 +70,18 @@
+              <path
+                d="m6 6 12 12"
+              />
+            </svg>
+          </button>
++       </div>
++     </div>
++     <video
++       autoplay=""
++       class="max-w-[90vw] max-h-[85vh] rounded-lg shadow-2xl"
++       controls=""
++       controlslist="nodownload"
++       crossorigin="anonymous"
++       playsinline=""
++       src="https://cdn.test/clipe-em-tela-cheia.mp4"
++     />
++   </div>
++ </body>
+
+ ❯ src/components/inbox/__tests__/VideoFullscreen.dialogo.test.tsx:108:36
+    106|     abrir();
+    107|
+    108|     expect(document.activeElement).toBe(screen.getByRole('button', { n…
+       |                                    ^
+    109|   });
+    110|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+ FAIL  src/components/inbox/__tests__/VideoFullscreen.dialogo.test.tsx > U2 — VideoFullscreen é um diálogo > Esc fecha o vídeo e devolve o foco ao gatilho
+TestingLibraryElementError: Unable to find an accessible element with the role "dialog" and name "Vídeo em tela cheia"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Ver em tela cheia":
+  [36m<button[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------button:
+
+  Name "1x":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:shadow-glow-secondary-md rounded-md h-9 px-3 font-semibold text-xs"[39m
+  [36m/>[39m
+
+  Name "Baixar":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Baixar"[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:shadow-glow-secondary-md h-10 w-10 opacity-50 cursor-not-allowed"[39m
+    [33mdisabled[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "Fechar":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Fechar"[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:shadow-glow-secondary-md h-10 w-10"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div>[39m
+      [36m<button[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mVer em tela cheia[0m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"fixed inset-0 z-50 bg-background flex items-center justify-center"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"absolute top-4 right-4 flex items-center gap-2 z-10"[39m
+    [36m>[39m
+      [36m<div />[39m
+      [36m<div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:shadow-glow-secondary-md rounded-md h-9 px-3 font-semibold text-xs"[39m
+        [36m>[39m
+          [0m1[0m
+          [0mx[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Baixar"[39m
+          [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:shadow-glow-secondary-md h-10 w-10 opacity-50 cursor-not-allowed"[39m
+          [33mdisabled[39m=[32m""[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-download w-4 h-4"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 15V3"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m7 10 5 5 5-5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Fechar"[39m
+          [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:shadow-glow-secondary-md h-10 w-10"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-x w-4 h-4"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M18 6 6 18"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m6 6 12 12"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<video[39m
+      [33mautoplay[39m=[32m""[39m
+      [33mclass[39m=[32m"max-w-[90vw] max-h-[85vh] rounded-lg shadow-2xl"[39m
+      [33mcontrols[39m=[32m""[39m
+      [33mcontrolslist[39m=[32m"nodownload"[39m
+      [33mcrossorigin[39m=[32m"anonymous"[39m
+      [33mplaysinline[39m=[32m""[39m
+      [33msrc[39m=[32m"https://cdn.test/clipe-em-tela-cheia.mp4"[39m
+    [36m/>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/inbox/__tests__/VideoFullscreen.dialogo.test.tsx:116:19
+    114|     gatilho.focus();
+    115|     fireEvent.click(gatilho);
+    116|     expect(screen.getByRole('dialog', { name: 'Vídeo em tela cheia' })…
+       |                   ^
+    117|
+    118|     fireEvent.keyDown(screen.getByRole('button', { name: 'Fechar' }), …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯
+
+ FAIL  src/components/inbox/__tests__/VideoFullscreen.dialogo.test.tsx > U2 — VideoFullscreen é um diálogo > Esc do diálogo não vaza para o painel de baixo
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      KeyboardEvent {
+        "isTrusted": false,
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ src/components/inbox/__tests__/VideoFullscreen.dialogo.test.tsx:133:34
+    131|       // não deu preventDefault (a tecla segue legível), mas não subiu…
+    132|       expect(naoConsumido).toBe(true);
+    133|       expect(escutaDoPainel).not.toHaveBeenCalled();
+       |                                  ^
+    134|     } finally {
+    135|       document.removeEventListener('keydown', escutaDoPainel);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯
+
+ FAIL  src/components/inbox/__tests__/VideoFullscreen.dialogo.test.tsx > U2 — VideoFullscreen é um diálogo > o controle de velocidade anuncia a velocidade atual
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Velocidade de reprodução: 1x"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "1x":
+  [36m<button[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:shadow-glow-secondary-md rounded-md h-9 px-3 font-semibold text-xs"[39m
+  [36m/>[39m
+
+  Name "Baixar":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Baixar"[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:shadow-glow-secondary-md h-10 w-10 opacity-50 cursor-not-allowed"[39m
+    [33mdisabled[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "Fechar":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Fechar"[39m
+    [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:shadow-glow-secondary-md h-10 w-10"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"fixed inset-0 z-50 bg-background flex items-center justify-center"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"absolute top-4 right-4 flex items-center gap-2 z-10"[39m
+    [36m>[39m
+      [36m<div />[39m
+      [36m<div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:shadow-glow-secondary-md rounded-md h-9 px-3 font-semibold text-xs"[39m
+        [36m>[39m
+          [0m1[0m
+          [0mx[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Baixar"[39m
+          [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:shadow-glow-secondary-md h-10 w-10 opacity-50 cursor-not-allowed"[39m
+          [33mdisabled[39m=[32m""[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-download w-4 h-4"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 15V3"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m7 10 5 5 5-5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Fechar"[39m
+          [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:shadow-glow-secondary-md h-10 w-10"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-x w-4 h-4"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M18 6 6 18"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m6 6 12 12"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<video[39m
+      [33mautoplay[39m=[32m""[39m
+      [33mclass[39m=[32m"max-w-[90vw] max-h-[85vh] rounded-lg shadow-2xl"[39m
+      [33mcontrols[39m=[32m""[39m
+      [33mcontrolslist[39m=[32m"nodownload"[39m
+      [33mcrossorigin[39m=[32m"anonymous"[39m
+      [33mplaysinline[39m=[32m""[39m
+      [33msrc[39m=[32m"https://cdn.test/clipe-em-tela-cheia.mp4"[39m
+    [36m/>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/inbox/__tests__/VideoFullscreen.dialogo.test.tsx:142:31
+    140|     abrir();
+    141|
+    142|     const velocidade = screen.getByRole('button', { name: 'Velocidade …
+       |                               ^
+    143|     fireEvent.click(velocidade);
+    144|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/11]⎯
+
+ FAIL  src/components/inbox/__tests__/VideoFullscreen.dialogo.test.tsx > U2 — VideoFullscreen respeita reduzir movimento > com reduzir movimento, entra sem fade (initial=false)
+AssertionError: expected undefined to be false // Object.is equality
+
+- Expected:
+false
+
++ Received:
+undefined
+
+ ❯ src/components/inbox/__tests__/VideoFullscreen.dialogo.test.tsx:181:28
+    179|
+    180|     const props = propsDoDialogo();
+    181|     expect(props?.initial).toBe(false);
+       |                            ^
+    182|     expect(props?.exit).toEqual({ opacity: 1 });
+    183|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/11]⎯
+
+ FAIL  src/components/inbox/__tests__/VideoFullscreen.dialogo.test.tsx > U2 — VideoFullscreen respeita reduzir movimento > sem reduzir movimento, entra com fade e sai com fade
+AssertionError: expected undefined to deeply equal { opacity: +0 }
+
+- Expected:
+{
+  "opacity": 0,
+}
+
++ Received:
+undefined
+
+ ❯ src/components/inbox/__tests__/VideoFullscreen.dialogo.test.tsx:190:28
+    188|
+    189|     const props = propsDoDialogo();
+    190|     expect(props?.initial).toEqual({ opacity: 0 });
+       |                            ^
+    191|     expect(props?.exit).toEqual({ opacity: 0 });
+    192|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/11]⎯
+
+
+ Test Files  2 failed | 4 passed (6)
+      Tests  11 failed | 26 passed (37)
+   Start at  02:13:01
+   Duration  13.88s (transform 3.59s, setup 1.90s, import 7.28s, tests 23.50s, environment 6.40s)
+

@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=a11y-balao-teclado-videofullscreen-dialo
+ID=26101523526a62
+BRANCH=v2/a11y-balao-teclado-videofullscreen-dialo-26101523526a62
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/a11y-balao-teclado-videofullscreen-dialo-26101523526a62
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-15T23:52:40-03:00
+KANBAN=t_90d387e2
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/a11y-balao-teclado-videofullscreen-dialo-26101523526a62/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-15
+DB_LOCAL=v2-26101523526a62
+PRONTO_SHA=099c91c5c980a1b8fc1c30911cd7962961a8d646

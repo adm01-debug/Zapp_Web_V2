@@ -1,0 +1,8 @@
+35	2	src/components/inbox/MediaPreview.tsx
+30	6	src/components/inbox/VideoFullscreen.tsx
+1	1	src/components/inbox/__tests__/DocumentPreviewDownloadPermission.r2-inb-031.test.tsx
+2	0	src/components/inbox/__tests__/ImagePreviewVideoFullscreen.aria.test.tsx
+162	0	src/components/inbox/__tests__/MediaPreview.teclado.test.tsx
+193	0	src/components/inbox/__tests__/VideoFullscreen.dialogo.test.tsx
+2	0	src/components/inbox/__tests__/VideoIosFallback.test.tsx
+1	0	src/hooks/communication/__tests__/mediaVolume.players.test.tsx
