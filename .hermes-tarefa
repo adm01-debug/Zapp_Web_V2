@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=audio-player-a11y
+ID=2610152109114a
+BRANCH=v2/audio-player-a11y-2610152109114a
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-player-a11y-2610152109114a
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-15T21:09:30-03:00
+KANBAN=t_e2be6c16
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-player-a11y-2610152109114a/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-15
+DB_LOCAL=v2-2610152109114a
+PRONTO_SHA=4689d801dbbe0c4e55cc2f8df854152464b44327

@@ -1,0 +1,18 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-player-a11y-2610152109114a
+
+Not implemented: HTMLMediaElement's pause() method
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+·Not implemented: HTMLMediaElement's pause() method
+·Not implemented: HTMLMediaElement's pause() method
+·Not implemented: HTMLMediaElement's pause() method
+Not implemented: HTMLMediaElement's pause() method
+··Not implemented: HTMLMediaElement's pause() method
+Not implemented: HTMLMediaElement's pause() method
+··
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  21:25:54
+   Duration  6.74s (transform 1.37s, setup 789ms, import 2.16s, tests 1.73s, environment 1.76s)
+
