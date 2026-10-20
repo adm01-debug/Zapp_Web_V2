@@ -1,0 +1,67 @@
+[0m[38;5;245mrunning 13 tests from ./supabase/functions/automation-suggest-reply/index.test.ts[0m
+RLS: contato sem mensagem visível devolve sugestões vazias e NÃO chama a IA ...
+[0m[38;5;245m------- output -------[0m
+{"level":"info","fn":"automation-suggest-reply","rid":"f52194aa","ms":1,"msg":"Sem mensagem recebida visível para o contato","linhas":0}
+[0m[38;5;245m----- output end -----[0m
+RLS: contato sem mensagem visível devolve sugestões vazias e NÃO chama a IA ... [0m[32mok[0m [0m[38;5;245m(13ms)[0m
+sem mensagem RECEBIDA do cliente (só do atendente) também devolve vazio ...
+[0m[38;5;245m------- output -------[0m
+{"level":"info","fn":"automation-suggest-reply","rid":"c2590256","ms":0,"msg":"Sem mensagem recebida visível para o contato","linhas":1}
+[0m[38;5;245m----- output end -----[0m
+sem mensagem RECEBIDA do cliente (só do atendente) também devolve vazio ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+a busca da base usa a ÚLTIMA mensagem recebida, não a do atendente ...
+[0m[38;5;245m------- output -------[0m
+{"level":"info","fn":"automation-suggest-reply","rid":"11613d5f","ms":0,"msg":"Gerando sugestões da automação","linhas":2,"artigos":0}
+{"level":"info","fn":"automation-suggest-reply","rid":"11613d5f","ms":1,"msg":"completed 200","status":200,"durationMs":1}
+[0m[38;5;245m----- output end -----[0m
+a busca da base usa a ÚLTIMA mensagem recebida, não a do atendente ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+sem artigo relevante a sugestão sai com source null (200) ...
+[0m[38;5;245m------- output -------[0m
+{"level":"info","fn":"automation-suggest-reply","rid":"3c2c68dd","ms":0,"msg":"Gerando sugestões da automação","linhas":2,"artigos":0}
+{"level":"info","fn":"automation-suggest-reply","rid":"3c2c68dd","ms":0,"msg":"completed 200","status":200,"durationMs":0}
+[0m[38;5;245m----- output end -----[0m
+sem artigo relevante a sugestão sai com source null (200) ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+artigo citado pelo modelo vira fonte com o título carimbado NO SERVIDOR ...
+[0m[38;5;245m------- output -------[0m
+{"level":"info","fn":"automation-suggest-reply","rid":"54234017","ms":0,"msg":"Gerando sugestões da automação","linhas":2,"artigos":1}
+{"level":"info","fn":"automation-suggest-reply","rid":"54234017","ms":1,"msg":"completed 200","status":200,"durationMs":1}
+[0m[38;5;245m----- output end -----[0m
+artigo citado pelo modelo vira fonte com o título carimbado NO SERVIDOR ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+article_id alucinado (fora dos artigos oferecidos) vira source null ...
+[0m[38;5;245m------- output -------[0m
+{"level":"info","fn":"automation-suggest-reply","rid":"23b54576","ms":1,"msg":"Gerando sugestões da automação","linhas":2,"artigos":1}
+{"level":"info","fn":"automation-suggest-reply","rid":"23b54576","ms":1,"msg":"completed 200","status":200,"durationMs":1}
+[0m[38;5;245m----- output end -----[0m
+article_id alucinado (fora dos artigos oferecidos) vira source null ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+limite de IA: guarda 429 → 429 com código estável e sem chamar o provedor ... [0m[32mok[0m [0m[38;5;245m(760µs)[0m
+orçamento estourado (BUDGET_EXCEEDED) → 429 com código ai_budget_exceeded ...
+[0m[38;5;245m------- output -------[0m
+{"level":"info","fn":"automation-suggest-reply","rid":"81b8bfb4","ms":0,"msg":"Gerando sugestões da automação","linhas":2,"artigos":0}
+[0m[38;5;245m----- output end -----[0m
+orçamento estourado (BUDGET_EXCEEDED) → 429 com código ai_budget_exceeded ... [0m[32mok[0m [0m[38;5;245m(716µs)[0m
+429 do provedor (sem BUDGET_EXCEEDED) → 429 com código rate_limited ...
+[0m[38;5;245m------- output -------[0m
+{"level":"info","fn":"automation-suggest-reply","rid":"2700c949","ms":1,"msg":"Gerando sugestões da automação","linhas":2,"artigos":0}
+[0m[38;5;245m----- output end -----[0m
+429 do provedor (sem BUDGET_EXCEEDED) → 429 com código rate_limited ... [0m[32mok[0m [0m[38;5;245m(791µs)[0m
+saída do modelo com forma errada não vira resposta normal (502) ...
+[0m[38;5;245m------- output -------[0m
+{"level":"info","fn":"automation-suggest-reply","rid":"94418fe0","ms":0,"msg":"Gerando sugestões da automação","linhas":2,"artigos":0}
+{"level":"warn","fn":"automation-suggest-reply","rid":"94418fe0","ms":1,"msg":"Saída do modelo rejeitada pelo contrato"}
+[0m[38;5;245m----- output end -----[0m
+saída do modelo com forma errada não vira resposta normal (502) ... [0m[32mok[0m [0m[38;5;245m(887µs)[0m
+mais de 3 sugestões é rejeitado pelo contrato (502) ...
+[0m[38;5;245m------- output -------[0m
+{"level":"info","fn":"automation-suggest-reply","rid":"2661e4dc","ms":0,"msg":"Gerando sugestões da automação","linhas":2,"artigos":0}
+{"level":"warn","fn":"automation-suggest-reply","rid":"2661e4dc","ms":0,"msg":"Saída do modelo rejeitada pelo contrato"}
+[0m[38;5;245m----- output end -----[0m
+mais de 3 sugestões é rejeitado pelo contrato (502) ... [0m[32mok[0m [0m[38;5;245m(362µs)[0m
+contact_id ausente ou fora do formato UUID é recusado (400) sem tocar no banco ... [0m[32mok[0m [0m[38;5;245m(396µs)[0m
+falha de leitura das mensagens não inventa contexto: vazio (200) ...
+[0m[38;5;245m------- output -------[0m
+{"level":"warn","fn":"automation-suggest-reply","rid":"421d41f5","ms":0,"msg":"Falha ao ler mensagens do contato","erro":1}
+[0m[38;5;245m----- output end -----[0m
+falha de leitura das mensagens não inventa contexto: vazio (200) ... [0m[32mok[0m [0m[38;5;245m(459µs)[0m
+
+[0m[32mok[0m | 13 passed | 0 failed [0m[38;5;245m(33ms)[0m
+

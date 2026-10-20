@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=a2e44b38
+ID=2610152334b8a8
+BRANCH=v2/a2e44b38-2610152334b8a8
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/a2e44b38-2610152334b8a8
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-15T23:34:11-03:00
+KANBAN=t_a2e44b38
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/a2e44b38-2610152334b8a8/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-15
+DB_LOCAL=v2-2610152334b8a8
+PRONTO_SHA=acb5dbe430ccdc5a507acd83aa1f3161a04c2c90

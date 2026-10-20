@@ -1,0 +1,6 @@
+On branch v2/a2e44b38-2610152334b8a8
+nothing to commit, working tree clean
+ANTES DE ENTREGAR — um juiz adversarial conferiu seus 'Ponto k' contra o DIFF e não achou prova para:
+   * Ponto 5: Saída do node --test não é verificável no diff, e o relato reordena os pontos da recusa em vez de responder 'Ponto k' na ordem.
+Corrija de verdade (commit novo) ou, se o ponto realmente não procede, rode este MESMO comando de novo sem mudar nada e diga no relato por quê.
+exit=3

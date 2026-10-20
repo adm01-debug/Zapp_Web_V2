@@ -1,0 +1,4 @@
+7: Base: `dia/2026-10-11`. 82 edges com `index.ts` em `supabase/functions/`.
+40: | A | 55 |
+45: | **total** | **82** |
+65: | `automation-suggest-reply` | A | `src/hooks/chat/useAutomationSuggestions.ts:192` |

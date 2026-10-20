@@ -1,0 +1,12 @@
+On branch v2/a2e44b38-2610152334b8a8
+nothing to commit, working tree clean
+ANTES DE ENTREGAR — o relato não bate com o diff real deste commit (checagem mecânica):
+   * RD2 a lista 'git diff --name-only' do relato difere do diff real; no diff e fora da lista: ESTADO.md
+Corrija o relato (.tmp/relato.md) para citar o que o diff realmente muda — ou o diff, se sobrou/faltou arquivo — e feche de novo. Se está certo assim, rode este MESMO comando de novo sem mudar nada.
+exit=3
+On branch v2/a2e44b38-2610152334b8a8
+nothing to commit, working tree clean
+ANTES DE ENTREGAR (isto NÃO é falha de verificação; nada foi verificado nem entregue ainda) — o juiz automático apontou:
+  1. Você mexeu em arquivo que o cartão não lista em 'ARQUIVOS QUE PODE TOCAR': ESTADO.md. Reverta (achado fora do escopo vira comentário no cartão) ou explique no relato por que foi indispensável.
+Corrija (commit novo) e feche de novo. Se o aviso não procede, rode este MESMO comando de novo sem mudar nada: a entrega segue, e explique no relato por quê. Não bloqueie o cartão por causa disto.
+exit=3
