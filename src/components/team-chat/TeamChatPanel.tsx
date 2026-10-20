@@ -12,6 +12,7 @@ import { TeamChatHeader } from './TeamChatHeader';
 import { TeamChatInputArea } from './TeamChatInputArea';
 import { TeamMessageItem } from './TeamMessageItem';
 import { useTeamChatPanel } from './useTeamChatPanel';
+import { EnterDepartmentByCode } from './EnterDepartmentByCode';
 
 /* eslint-disable react-hooks/refs, react-hooks/immutability */
 
@@ -91,6 +92,7 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
               Este canal é exclusivo para membros do departamento. Solicite um convite ao administrador.
             </p>
           </div>
+          <EnterDepartmentByCode />
         </div>
       </div>
     );
