@@ -1,0 +1,507 @@
+diff --git a/src/hooks/__tests__/useWhatsAppStatus.test.ts b/src/hooks/__tests__/useWhatsAppStatus.test.ts
+index 41efa3de4d..1ce2d6fea6 100644
+--- a/src/hooks/__tests__/useWhatsAppStatus.test.ts
++++ b/src/hooks/__tests__/useWhatsAppStatus.test.ts
+@@ -98,6 +98,31 @@ describe('useWhatsAppStatus', () => {
+     expect(mockInvoke).toHaveBeenCalledTimes(2);
+   });
+ 
++  // ========== PH-03: alvo do status (contrato com a Edge) ==========
++  // Sem `number`, a Edge não sabe de quem é o status e devolve 400 — o hook é o
++  // único chamador e precisa mandar o telefone.
++  it('envia o telefone do contato como `number` no find-status-messages', async () => {
++    mockMaybeSingle
++      .mockResolvedValueOnce({ data: { whatsapp_connection_id: 'conn1' } })
++      .mockResolvedValueOnce({ data: { instance_id: 'inst1' } });
++
++    mockInvoke
++      .mockResolvedValueOnce({ data: [] })
++      .mockResolvedValueOnce({ data: {} });
++
++    const { result } = renderHook(() => useWhatsAppStatus('+551****9999'));
++
++    await waitFor(() => {
++      expect(result.current.loading).toBe(false);
++    });
++
++    const chamada = mockInvoke.mock.calls.find(
++      ([path]) => path === 'evolution-api/find-status-messages',
++    );
++    expect(chamada, 'find-status-messages precisa ser chamado').toBeTruthy();
++    expect(chamada?.[1]).toMatchObject({ body: { number: '+551****9999' } });
++  });
++
+   // ========== FALLBACK CONNECTION ==========
+   it('uses fallback connection when contact has no whatsapp_connection_id', async () => {
+     mockMaybeSingle
+diff --git a/src/hooks/integrations/useWhatsAppStatus.ts b/src/hooks/integrations/useWhatsAppStatus.ts
+index 0547158e71..e12659b55c 100644
+--- a/src/hooks/integrations/useWhatsAppStatus.ts
++++ b/src/hooks/integrations/useWhatsAppStatus.ts
+@@ -214,7 +214,7 @@ export function useWhatsAppStatus(phone: string | undefined): WhatsAppStatusData
+       const [statusResult] = await Promise.allSettled([
+         supabase.functions.invoke('evolution-api/find-status-messages', {
+           method: 'POST',
+-          body: { instanceName: resolvedInstance, page: 1, offset: 200 },
++          body: { instanceName: resolvedInstance, number: phone, page: 1, offset: 200 },
+         }),
+         supabase.functions.invoke('evolution-api/send-chat-presence', {
+           method: 'POST',
+diff --git a/supabase/functions/_shared/__tests__/evolution-control-authz.test.ts b/supabase/functions/_shared/__tests__/evolution-control-authz.test.ts
+index 823391cece..435ac1645f 100644
+--- a/supabase/functions/_shared/__tests__/evolution-control-authz.test.ts
++++ b/supabase/functions/_shared/__tests__/evolution-control-authz.test.ts
+@@ -52,11 +52,14 @@ Deno.test("classifyEvolutionAction - envios diretos e mutações de conversa sã
+     "send-text", "send-media", "send-audio", "send-template", "send-ptv",
+     "send-reaction", "send-status", "send-chat-presence", "offer-call",
+     "mark-read", "mark-unread", "archive-chat",
++    // PH-03: status/stories de um contato — escopo de contato, não JWT puro.
++    "find-status-messages",
+   ]) {
+     assertEquals(classifyEvolutionAction(action), "send", `${action} deve ser send`);
+   }
+   assert(SEND_ACTIONS.has("send-text"));
+   assert(SEND_ACTIONS.has("offer-call"));
++  assert(!READ_ACTIONS.has("find-status-messages"), "status de contato não pode voltar para o gate de JWT");
+ });
+ 
+ Deno.test("classifyEvolutionAction - leituras seguem liberadas a autenticados", () => {
+diff --git a/supabase/functions/_shared/evolution-control-authz.ts b/supabase/functions/_shared/evolution-control-authz.ts
+index 91c31a6a70..a10639cfb8 100644
+--- a/supabase/functions/_shared/evolution-control-authz.ts
++++ b/supabase/functions/_shared/evolution-control-authz.ts
+@@ -18,6 +18,9 @@
+  *     ações de conversa que não entregam conteúdo mas mutam o estado remoto de
+  *     um chat (mark-read/unread, archive-chat, send-reaction): o escopo é o
+  *     contato da conversa, resolvido por `number` ou pelo JID do alvo.
++ *     `find-status-messages` (stories) entra aqui pelo mesmo escopo: não muta
++ *     estado, mas devolve dado pessoal de um número — antes, em READ_ACTIONS,
++ *     um `agent` lia os status de QUALQUER número (PH-03).
+  *   - `read`    → qualquer usuário autenticado (comportamento atual preservado;
+  *     a leitura sensível de diagnóstico é tratada separadamente em
+  *     `webhook-diagnostic`). Somente as ações listadas em READ_ACTIONS.
+@@ -123,6 +126,11 @@ export const SEND_ACTIONS: ReadonlySet<string> = new Set([
+   'mark-read',
+   'mark-unread',
+   'archive-chat',
++  // PH-03: leitura de status/stories de UM contato. Não entrega conteúdo nem
++  // muta o provedor, mas devolve dado pessoal de um número — por isso segue o
++  // escopo de contato das SEND (admin/supervisor OU visibilidade do alvo) em
++  // vez do gate de JWT das READ, onde devolvia os status de qualquer número.
++  'find-status-messages',
+ ]);
+ 
+ /**
+@@ -143,7 +151,6 @@ export const READ_ACTIONS: ReadonlySet<string> = new Set([
+   // chat / mensagens (consultas)
+   'find-chats',
+   'find-messages',
+-  'find-status-messages',
+   'find-contacts',
+   'check-numbers',
+   'get-media-base64',
+diff --git a/supabase/functions/evolution-api/index.test.ts b/supabase/functions/evolution-api/index.test.ts
+index 13f7bf012b..c139838845 100644
+--- a/supabase/functions/evolution-api/index.test.ts
++++ b/supabase/functions/evolution-api/index.test.ts
+@@ -643,3 +643,218 @@ Deno.test("TRA-002/#18: instância PADRÃO sem token no Vault mantém o fallback
+     await c.stop();
+   }
+ });
++
++// ─── PH-03: status/stories só do contato que o usuário pode ver ─────────────
++// Defeito: `find-status-messages` era READ (qualquer autenticado) e devolvia o
++// feed `status@broadcast` da instância inteira; o filtro por contato existia
++// SÓ no navegador. Agora exige o alvo (number/JID), valida a visibilidade do
++// contato e filtra os registros no servidor.
++const PH03_CONTATO = "5511999999999";
++const PH03_OUTRO = "5521888888888";
++
++function statusRecord(participant: string, id: string, fromMe = false): Record<string, unknown> {
++  return {
++    key: { remoteJid: "status@broadcast", fromMe, id, participant: `${participant}@s.whatsapp.net` },
++    fromMe,
++    remoteJid: "status@broadcast",
++    participant: `${participant}@s.whatsapp.net`,
++    messageTimestamp: 1,
++  };
++}
++
++function createStatusFake(records: unknown[]) {
++  const posts: Array<{ path: string }> = [];
++  const server = Deno.serve({ hostname: "127.0.0.1", port: 0, onListen() {} }, async (req) => {
++    posts.push({ path: new URL(req.url).pathname });
++    await req.text();
++    return new Response(JSON.stringify({ messages: { records } }), {
++      status: 200,
++      headers: { "Content-Type": "application/json" },
++    });
++  });
++  const addr = server.addr;
++  if (addr.transport !== "tcp") throw new Error("status-fake: esperava listener TCP");
++  return { url: `http://127.0.0.1:${addr.port}`, posts, stop: () => server.shutdown() };
++}
++
++/** Conexão + contato existem no banco local; o token da conexão está no Vault. */
++function makeStatusServiceClient(): any {
++  return {
++    from: (table: string) => {
++      if (table === "whatsapp_connections") return makeQuery({ id: "conn-1" });
++      if (table === "contacts") return makeQuery({ id: "contact-1" });
++      return makeQuery(null);
++    },
++    rpc: (fn: string) => fn === "get_instance_token"
++      ? Promise.resolve({ data: "vault-instance-token", error: null })
++      : Promise.resolve({ data: null, error: null }),
++  };
++}
++
++Deno.test("PH-03: find-status-messages devolve SÓ o status do contato pedido", async () => {
++  const fake = createStatusFake([
++    statusRecord(PH03_CONTATO, "A1"),
++    statusRecord(PH03_CONTATO, "A2"),
++    statusRecord(PH03_OUTRO, "B1"),
++    statusRecord(PH03_CONTATO, "meu", true),
++  ]);
++  Deno.env.set("EVOLUTION_API_URL", fake.url);
++  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
++  try {
++    const res = await handleEvolutionApi(
++      controlRequest("find-status-messages", { instanceName: "PRINCIPAL", number: PH03_CONTATO, page: 1, offset: 200 }),
++      { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase: makeStatusServiceClient() },
++    );
++    assertEquals(res.status, 200);
++    const lista = await res.json();
++    assert(Array.isArray(lista), "deve devolver uma lista de status");
++    assertEquals(lista.length, 2, "só os status do contato (fora o de outro número e o da própria conta)");
++    assert(
++      lista.every((r: { participant?: string }) => r.participant?.startsWith(PH03_CONTATO)),
++      "nenhum status de outro número pode sair",
++    );
++  } finally {
++    await fake.stop();
++  }
++});
++
++Deno.test("PH-03: find-status-messages sem number devolve 400 e não chama o provedor", async () => {
++  const fake = createStatusFake([]);
++  Deno.env.set("EVOLUTION_API_URL", fake.url);
++  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
++  try {
++    const res = await handleEvolutionApi(
++      controlRequest("find-status-messages", { instanceName: "PRINCIPAL", page: 1 }),
++      { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase: makeStatusServiceClient() },
++    );
++    assertEquals(res.status, 400, "sem alvo é falha de payload (400), não leitura global");
++    assertEquals(fake.posts.length, 0, "não pode consultar o provedor sem alvo");
++  } finally {
++    await fake.stop();
++  }
++});
++
++Deno.test("PH-03: agente sem o contato na carteira recebe 403 e o provedor não é chamado", async () => {
++  const fake = createStatusFake([statusRecord(PH03_OUTRO, "B1")]);
++  Deno.env.set("EVOLUTION_API_URL", fake.url);
++  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
++  try {
++    const res = await handleEvolutionApi(
++      controlRequest("find-status-messages", { instanceName: "PRINCIPAL", number: PH03_OUTRO, page: 1 }),
++      {
++        callerClient: makeCallerClient({ isAdminOrSupervisor: false, contactVisible: false }),
++        supabase: makeStatusServiceClient(),
++      },
++    );
++    assertEquals(res.status, 403, "agente sem visibilidade do contato é negado");
++    const json = await res.json();
++    assertEquals(json?.message, "Sem permissão para acessar este contato/conexão.", "403 neutro, sem revelar se o contato existe");
++    assertEquals(fake.posts.length, 0, "a negação acontece antes de qualquer I/O no provedor");
++  } finally {
++    await fake.stop();
++  }
++});
++
++Deno.test("PH-03: na GO find-status-messages continua devolvendo goHistoryNotSupported", async () => {
++  const fake = createStatusFake([statusRecord(PH03_CONTATO, "A1")]);
++  Deno.env.set("EVOLUTION_API_URL", fake.url);
++  Deno.env.set("EVOLUTION_API_FLAVOR", "go");
++  try {
++    const res = await handleEvolutionApi(
++      controlRequest("find-status-messages", { instanceName: "PRINCIPAL", number: PH03_CONTATO, page: 1 }),
++      { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase: makeStatusServiceClient() },
++    );
++    assertEquals(res.status, 200);
++    const json = await res.json();
++    assertEquals(json?.notSupported, true, "na GO a rota não é suportada");
++    assertEquals(fake.posts.length, 0, "na GO nem chega ao /chat/findMessages");
++  } finally {
++    await fake.stop();
++  }
++});
++
++// ─── PH-03 [refazer 1] ponto 1: agulha sem DDD vazava entre DDDs ─────────────
++// Defeito da entrega anterior: `statusPhoneNeedles` mantinha a forma local de
++// 8 dígitos (sem DDD e sem o 9) e `statusMatchesPhone` casava por `endsWith`
++// nos dois sentidos — um status de OUTRO DDD com os mesmos 8 dígitos finais
++// saía no lugar (ou junto) do contato pedido, e candidato curto (ex.: "9")
++// casava com qualquer agulha via `needle.endsWith(digits)`.
++Deno.test("PH-03 [refazer1]: status de outro DDD com os mesmos 8 dígitos finais NÃO sai", async () => {
++  const CONTATO = "5511987654321"; // DDD 11
++  const OUTRO_DDD_MESMO_FINAL = "5521987654321"; // DDD 21, mesmos 8 finais
++  const fake = createStatusFake([
++    statusRecord(CONTATO, "C1"),
++    statusRecord(OUTRO_DDD_MESMO_FINAL, "D1"),
++  ]);
++  Deno.env.set("EVOLUTION_API_URL", fake.url);
++  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
++  try {
++    const res = await handleEvolutionApi(
++      controlRequest("find-status-messages", { instanceName: "PRINCIPAL", number: CONTATO, page: 1, offset: 200 }),
++      { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase: makeStatusServiceClient() },
++    );
++    assertEquals(res.status, 200);
++    const lista = await res.json();
++    assertEquals(lista.length, 1, "só o status do DDD do contato pedido pode sair");
++    assert(
++      (lista[0].participant as string).startsWith(CONTATO),
++      "o único registro devolvido é do contato pedido",
++    );
++  } finally {
++    await fake.stop();
++  }
++});
++
++// ─── PH-03 [refazer 1] ponto 2: "log sem telefone" (item 4 dos testes) ───────
++// O cartão exige prova de que o caminho não loga o telefone: captura tudo que
++// passa por console.* durante a chamada real e afirma que nenhum registro
++// contém os dígitos do contato (forma com e sem DDI).
++Deno.test("PH-03 [refazer1]: find-status-messages não registra o telefone em console.*", async () => {
++  const fake = createStatusFake([statusRecord(PH03_CONTATO, "A1")]);
++  Deno.env.set("EVOLUTION_API_URL", fake.url);
++  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
++  const gravados: string[] = [];
++  const captura = (...args: unknown[]) => {
++    gravados.push(args.map((a) => {
++      try {
++        return typeof a === "string" ? a : JSON.stringify(a);
++      } catch {
++        return String(a);
++      }
++    }).join(" "));
++  };
++  const originais = {
++    log: console.log,
++    info: console.info,
++    warn: console.warn,
++    error: console.error,
++    debug: console.debug,
++  };
++  console.log = captura as typeof console.log;
++  console.info = captura as typeof console.info;
++  console.warn = captura as typeof console.warn;
++  console.error = captura as typeof console.error;
++  console.debug = captura as typeof console.debug;
++  try {
++    const res = await handleEvolutionApi(
++      controlRequest("find-status-messages", { instanceName: "PRINCIPAL", number: PH03_CONTATO, page: 1, offset: 200 }),
++      { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase: makeStatusServiceClient() },
++    );
++    assertEquals(res.status, 200);
++    await res.json();
++  } finally {
++    console.log = originais.log;
++    console.info = originais.info;
++    console.warn = originais.warn;
++    console.error = originais.error;
++    console.debug = originais.debug;
++    await fake.stop();
++  }
++  const nacional = PH03_CONTATO.startsWith("55") ? PH03_CONTATO.slice(2) : PH03_CONTATO;
++  for (const forma of [PH03_CONTATO, nacional]) {
++    assert(
++      !gravados.some((linha) => linha.includes(forma)),
++      `nenhum registro de console pode conter o telefone (${forma}); gravados: ${JSON.stringify(gravados).slice(0, 300)}`,
++    );
++  }
++});
+diff --git a/supabase/functions/evolution-api/index.ts b/supabase/functions/evolution-api/index.ts
+index db7617f7f8..1e8440da7f 100644
+--- a/supabase/functions/evolution-api/index.ts
++++ b/supabase/functions/evolution-api/index.ts
+@@ -16,6 +16,73 @@ import {
+   sessionStateFromV2,
+ } from "../_shared/evolution-session-routes.ts";
+ 
++/**
++ * PH-03 — espelho servidor do filtro de status/stories por contato.
++ *
++ * O hook (src/hooks/integrations/useWhatsAppStatus.ts) já filtrava no cliente,
++ * mas o handler devolvia os status de QUALQUER número da instância: um chamador
++ * direto (ou o próprio agente, via `evolution-api/find-status-messages`) recebia
++ * a lista inteira — dado pessoal de contatos fora da carteira dele.
++ *
++ * No registro de status o `remoteJid` é sempre `status@broadcast`; o autor está
++ * em `participant` (e, conforme o flavor, em `remoteJidAlt`/`key.participant`).
++ *
++ * REGRA ESTRITA [refazer 1]: só valem variantes COM DDD (com/sem DDI 55,
++ * com/sem o 9 extra). A forma local de 8 dígitos (sem DDD) foi REMOVIDA das
++ * agulhas: ela casava por `endsWith` com o status de OUTRO contato de DDD
++ * diferente e mesmo final. Candidato com menos de 10 dígitos nunca casa
++ * (antes, `needle.endsWith(digits)` aceitava candidato curto como "9").
++ * Sem agulha válida, nada é devolvido (negação por padrão).
++ */
++export function statusPhoneNeedles(phone: string): string[] {
++  const digits = String(phone ?? "").replace(/\D/g, "");
++  if (!digits) return [];
++  const values = new Set<string>();
++  const push = (value: string) => {
++    if (value.length >= 10) values.add(value);
++  };
++  // Forma nacional (DDD + local), com e sem o DDI 55 da entrada.
++  const national = digits.startsWith("55") ? digits.slice(2) : digits;
++  push(digits);
++  push(national);
++  push(`55${national}`);
++  if (national.length === 11) {
++    // DDD + 9 + 8 dígitos: vale também sem o 9, com e sem DDI.
++    const sem9 = `${national.slice(0, 2)}${national.slice(3)}`;
++    push(sem9);
++    push(`55${sem9}`);
++  } else if (national.length === 10) {
++    // DDD + 8 dígitos: vale também com o 9, com e sem DDI.
++    const com9 = `${national.slice(0, 2)}9${national.slice(2)}`;
++    push(com9);
++    push(`55${com9}`);
++  }
++  return Array.from(values);
++}
++
++function statusMatchesPhone(candidate: unknown, needles: string[]): boolean {
++  if (typeof candidate !== "string" || !candidate) return false;
++  const digits = candidate.replace(/\D/g, "");
++  if (digits.length < 10) return false;
++  return needles.some((needle) => needle.length >= 10 && digits.endsWith(needle));
++}
++
++/** O status/stories é do contato pedido (exclui o que é da própria conta). */
++export function isStatusFromContact(record: Record<string, unknown>, needles: string[]): boolean {
++  if (!record || typeof record !== "object") return false;
++  const key = (record.key ?? {}) as Record<string, unknown>;
++  if (record.fromMe ?? key.fromMe ?? false) return false;
++  const fields = [
++    record.remoteJid,
++    record.remoteJidAlt,
++    record.participant,
++    key.remoteJid,
++    key.remoteJidAlt,
++    key.participant,
++  ];
++  return fields.some((value) => statusMatchesPhone(value, needles));
++}
++
+ /** Dependências injetáveis nos testes (mesma forma das edges com guard). */
+ export interface EvolutionApiDeps {
+   /** client service-role (grava/atualiza whatsapp_connections etc.). */
+@@ -137,30 +204,63 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
+     const resolveSendTarget = (): string =>
+       jidToDigits(body.number) || jidToDigits(body.remoteJid) || jidToDigits(body.chat) ||
+       jidToDigits((body.key as Record<string, unknown> | undefined)?.remoteJid);
+-    const resolveSendAccess = async (): Promise<EvolutionAuthzDecision> => {
+-      if (await isCallerAdminOrSupervisor()) return { allowed: true };
++    // PH-03: find-status-messages devolve o status/stories de um número. Sem o
++    // alvo, a leitura virava "todos os status da instância" — falha de payload
++    // (400), não permissão. Fica ANTES do gate de 'send' para que a ausência do
++    // parâmetro saia como 400 (mesmo formato único de E45), e não como o 403
++    // "Destinatário obrigatório" do caminho de envio.
++    if (action === 'find-status-messages' && !resolveSendTarget()) {
++      // 400 (e não o 422 do helper de schema): a ausência do alvo é falha de
++      // payload específica desta ação; o card pede 400 e o corpo segue o mesmo
++      // envelope de E45 para o chamador não ter dois formatos de erro.
++      return new Response(JSON.stringify({
++        error: {
++          code: 'VALIDATION_ERROR',
++          message: 'Payload inválido: number (telefone/JID do contato) é obrigatório para find-status-messages.',
++          fields: [{ path: 'number', message: 'Informe o telefone/JID do contato.', code: 'custom' }],
++        },
++      }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
++    }
++    // Núcleo comum dos gates de escopo de contato: resolve conexão → número/
++    // JID → contato local → visibilidade. Devolve só o MOTIVO; cada gate abaixo
++    // escolhe (e mantém) a mensagem que o chamador já exibe.
++    type TargetResolution =
++      | { ok: true }
++      | { ok: false; reason: 'no_connection' | 'no_target' | 'no_contact' | 'not_visible' };
++    const resolveTargetResolution = async (): Promise<TargetResolution> => {
+       // Falha de modo seguro: sem vínculo com a conexão, sem número ou sem
+-      // contato local visível, o envio direto é negado (grupo/número fora da
+-      // carteira do agente exige admin/supervisor).
++      // contato local visível, o alvo é negado (grupo/número fora da carteira
++      // do agente exige admin/supervisor).
+       const { data: conn, error: connErr } = await supabase
+         .from('whatsapp_connections').select('id').eq('instance_id', instance).maybeSingle();
+-      if (connErr || !conn) {
+-        return { allowed: false, status: 403, message: 'Sem permissão para enviar por esta conexão.' };
+-      }
++      if (connErr || !conn) return { ok: false, reason: 'no_connection' };
+       const number = resolveSendTarget();
+-      if (!number) {
+-        return { allowed: false, status: 403, message: 'Destinatário (number) é obrigatório para envio.' };
+-      }
++      if (!number) return { ok: false, reason: 'no_target' };
+       const { data: contact } = await supabase
+         .from('contacts').select('id').eq('phone', number).eq('whatsapp_connection_id', conn.id).maybeSingle();
+-      if (!contact) {
+-        return { allowed: false, status: 403, message: 'Sem permissão para enviar para este contato/conexão.' };
+-      }
++      if (!contact) return { ok: false, reason: 'no_contact' };
+       const { data: visible } = await callerClient.rpc('is_contact_visible_to_user', { _contact_id: contact.id, _user_id: callerUserId });
+-      if (!visible) {
+-        return { allowed: false, status: 403, message: 'Sem permissão para enviar para este contato/conexão.' };
+-      }
+-      return { allowed: true };
++      if (!visible) return { ok: false, reason: 'not_visible' };
++      return { ok: true };
++    };
++    const resolveSendAccess = async (): Promise<EvolutionAuthzDecision> => {
++      if (await isCallerAdminOrSupervisor()) return { allowed: true };
++      const r = await resolveTargetResolution();
++      if (r.ok) return { allowed: true };
++      const message = r.reason === 'no_connection'
++        ? 'Sem permissão para enviar por esta conexão.'
++        : r.reason === 'no_target'
++          ? 'Destinatário (number) é obrigatório para envio.'
++          : 'Sem permissão para enviar para este contato/conexão.';
++      return { allowed: false, status: 403, message };
++    };
++    // PH-03: mesmo escopo de contato, mas mensagem NEUTRA — a leitura de status
++    // não deve revelar a quem não tem acesso se o contato existe ou não.
++    const resolveStatusAccess = async (): Promise<EvolutionAuthzDecision> => {
++      if (await isCallerAdminOrSupervisor()) return { allowed: true };
++      const r = await resolveTargetResolution();
++      if (r.ok) return { allowed: true };
++      return { allowed: false, status: 403, message: 'Sem permissão para acessar este contato/conexão.' };
+     };
+     const actionKind = classifyEvolutionAction(action);
+     if (actionKind === 'control') {
+@@ -170,7 +270,9 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
+       }
+     }
+     if (actionKind === 'send') {
+-      const decision = await resolveSendAccess();
++      const decision = action === 'find-status-messages'
++        ? await resolveStatusAccess()
++        : await resolveSendAccess();
+       if (!decision.allowed) {
+         return new Response(JSON.stringify({ error: true, message: decision.message }), { status: decision.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+       }
+@@ -916,7 +1018,10 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
+       const data = await response.json();
+       if (data?.error === true) return new Response(JSON.stringify(data), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+       const records = Array.isArray(data?.messages?.records) ? data.messages.records : [];
+-      return new Response(JSON.stringify(records), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
++      // PH-03: só os status do contato pedido (o alvo já foi validado no gate).
++      const needles = statusPhoneNeedles(resolveSendTarget());
++      const scoped = (records as Record<string, unknown>[]).filter((record) => isStatusFromContact(record, needles));
++      return new Response(JSON.stringify(scoped), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+     }
+ 
+     if (action === 'find-contacts') return await proxy(`/chat/findContacts/${instance}`, 'POST', { where: body.where || {} });

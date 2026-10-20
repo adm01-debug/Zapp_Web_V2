@@ -1,0 +1,6 @@
+25	0	src/hooks/__tests__/useWhatsAppStatus.test.ts
+1	1	src/hooks/integrations/useWhatsAppStatus.ts
+3	0	supabase/functions/_shared/__tests__/evolution-control-authz.test.ts
+8	1	supabase/functions/_shared/evolution-control-authz.ts
+215	0	supabase/functions/evolution-api/index.test.ts
+124	19	supabase/functions/evolution-api/index.ts
