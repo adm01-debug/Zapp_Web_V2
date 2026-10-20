@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 32c68d56a37876f05e2bf2d96e5d2535436a024a Hermes Senior <hermes-senior@promobrindes.local> 1791735578 -0300	
+32c68d56a37876f05e2bf2d96e5d2535436a024a 32c68d56a37876f05e2bf2d96e5d2535436a024a Hermes Senior <hermes-senior@promobrindes.local> 1791735579 -0300	reset: moving to HEAD
+32c68d56a37876f05e2bf2d96e5d2535436a024a 41b61467a235eee78da90793c99ec4a8f18479a7 Hermes Senior <hermes-senior@promobrindes.local> 1791735707 -0300	commit (cherry-pick): fix(chat): adiar para a próxima semana no dia certo e preservar o adiamento anterior
+41b61467a235eee78da90793c99ec4a8f18479a7 bb0bf9c4d2f88694638bf90b87d4aa3c7c4cfbaa Hermes Senior <hermes-senior@promobrindes.local> 1791736059 -0300	commit: fix(hooks): [refazer 1] apaga todas as linhas antigas do snooze e reverte se o delete falhar
+bb0bf9c4d2f88694638bf90b87d4aa3c7c4cfbaa f9dbdd1254f6e0b992a55fa5f3edb2c57eb06dfd Hermes Senior <hermes-senior@promobrindes.local> 1791736139 -0300	commit: chore(relato): registra prova do refazer 1 do snooze

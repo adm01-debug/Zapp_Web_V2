@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=adiar-conversa-proxima-semana-t-7bd13b76
+ID=2610111319bfc6
+BRANCH=v2/adiar-conversa-proxima-semana-t-7bd13b76-2610111319bfc6
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/adiar-conversa-proxima-semana-t-7bd13b76-2610111319bfc6
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-11T13:19:39-03:00
+KANBAN=t_7bd13b76
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/adiar-conversa-proxima-semana-t-7bd13b76-2610111319bfc6/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-11
+DB_LOCAL=v2-2610111319bfc6
+PRONTO_SHA=f9dbdd1254f6e0b992a55fa5f3edb2c57eb06dfd

@@ -1,0 +1,10 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/adiar-conversa-proxima-semana-t-7bd13b76-2610111319bfc6
+
+······························
+
+ Test Files  3 passed (3)
+      Tests  30 passed (30)
+   Start at  13:29:01
+   Duration  2.63s (transform 590ms, setup 753ms, import 734ms, tests 1.35s, environment 2.68s)
+
