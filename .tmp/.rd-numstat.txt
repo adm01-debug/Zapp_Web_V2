@@ -1,0 +1,4 @@
+4	1	src/components/inbox/ChatPanel.tsx
+176	41	src/components/inbox/ScheduleMessageDialog.tsx
+50	2	src/components/inbox/__tests__/ChatPanel.scheduled-media.test.tsx
+145	0	src/components/inbox/__tests__/ScheduleMessageDialog.test.tsx

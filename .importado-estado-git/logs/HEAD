@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 96dd72dc5f5db919bdbb4ffdc269510addca6165 Hermes Senior <hermes-senior@promobrindes.local> 1791852227 -0300	
+96dd72dc5f5db919bdbb4ffdc269510addca6165 96dd72dc5f5db919bdbb4ffdc269510addca6165 Hermes Senior <hermes-senior@promobrindes.local> 1791852228 -0300	reset: moving to HEAD
+96dd72dc5f5db919bdbb4ffdc269510addca6165 e88941b54d6e2bb3e36edf727a7ae03e77998cbc Hermes Senior <hermes-senior@promobrindes.local> 1791852751 -0300	commit: fix(inbox): falha ao agendar mantem o dialogo aberto com recuperacao
+e88941b54d6e2bb3e36edf727a7ae03e77998cbc ce2ce408b48c9471da0a0c3940f3d1285680c6f2 Hermes Senior <hermes-senior@promobrindes.local> 1791852827 -0300	commit (amend): fix(inbox): falha ao agendar mantem o dialogo aberto com recuperacao
+ce2ce408b48c9471da0a0c3940f3d1285680c6f2 8b7c7e7e9a3aab5d4a4067433ae2d260e17ea11c Hermes Senior <hermes-senior@promobrindes.local> 1791853051 -0300	commit (amend): fix(inbox): falha ao agendar mantem o dialogo aberto com recuperacao
+8b7c7e7e9a3aab5d4a4067433ae2d260e17ea11c 2beeb29a949d368ad26652431b136e04a3ef0887 Hermes Senior <hermes-senior@promobrindes.local> 1792021596 -0300	commit: fix(inbox): refazer 1 agendar mensagem foca tentativa erro e fecha uma vez

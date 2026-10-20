@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=agendar-mensagem-sucesso-falha
+ID=26101221432c9a
+BRANCH=v2/agendar-mensagem-sucesso-falha-26101221432c9a
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/agendar-mensagem-sucesso-falha-26101221432c9a
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-12T21:43:48-03:00
+KANBAN=t_6b297314
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/agendar-mensagem-sucesso-falha-26101221432c9a/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-12
+DB_LOCAL=v2-26101221432c9a
+PRONTO_SHA=8b7c7e7e9a3aab5d4a4067433ae2d260e17ea11c
