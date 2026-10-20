@@ -1,0 +1,4 @@
+7	0	.github/workflows/db-guard.yml
+630	0	scripts/db-audit/assume-return-conversation.test.sh
+8	0	src/integrations/supabase/types.ts
+226	0	supabase/migrations/20261011094027_assume_return_conversation.sql

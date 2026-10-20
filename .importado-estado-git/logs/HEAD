@@ -1,0 +1,8 @@
+0000000000000000000000000000000000000000 d723a9010796f1ea4aea5270d881da2974328ba4 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792117094 -0300	
+d723a9010796f1ea4aea5270d881da2974328ba4 d723a9010796f1ea4aea5270d881da2974328ba4 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792117096 -0300	reset: moving to HEAD
+d723a9010796f1ea4aea5270d881da2974328ba4 07282faa9e5844e70f764f6399c89b74b0ea2f2a Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792117128 -0300	commit (cherry-pick): fix(db): reabre conversa resolvida ao assumir
+07282faa9e5844e70f764f6399c89b74b0ea2f2a e6b14955578a63a98f7687d27580a38f681b92ad Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792117309 -0300	commit: fix(ci): fixa a imagem do contrato assumir/devolver no DB Guard
+e6b14955578a63a98f7687d27580a38f681b92ad 0f9f1a89af5264f43e30fe6eb8aa76521c7de5d7 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792117524 -0300	commit: docs(db): relato do refazer com a prova por ponto
+0f9f1a89af5264f43e30fe6eb8aa76521c7de5d7 7a424645f2b1b65e0b9ace2939c8713b9f586fb4 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792117565 -0300	commit: docs(db): explica o teste do cartao fora de src/tests
+7a424645f2b1b65e0b9ace2939c8713b9f586fb4 6208f3b2d23b33d4edf8eb173d6d92545f673b17 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792117609 -0300	commit: docs(db): responde aos pontos do juiz barato
+6208f3b2d23b33d4edf8eb173d6d92545f673b17 e3857d3925c0ad778cb6038a51a5b497c89adf64 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792117739 -0300	commit: docs(db): faixa do relato sem lista que envelhece
