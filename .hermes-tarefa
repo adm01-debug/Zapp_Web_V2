@@ -1,0 +1,17 @@
+PROJETO=Zapp_Web_V2
+SLUG=admin-cron-jobs
+ID=2610111703c0e0
+BRANCH=v2/admin-cron-jobs-2610111703c0e0
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-cron-jobs-2610111703c0e0
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-11T17:03:18-03:00
+KANBAN=t_ac2fa555
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-cron-jobs-2610111703c0e0/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-11
+DB_LOCAL=v2-2610111703c0e0
+APLICADA_LOCAL=20261011171146_admin_cron_jobs.sql sha=f889d02e53f2f1ae
+APLICADA_LOCAL=20261011173000_admin_cron_jobs.sql sha=8352dbe04e0bde64
+PRONTO_SHA=d2f008acc1023fd824f95d451b2d9f8147b67d99

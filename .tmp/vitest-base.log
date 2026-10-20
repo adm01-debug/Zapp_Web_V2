@@ -1,0 +1,26 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-cron-jobs-2610111703c0e0/.tmp/prova-base
+
+
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/contracts/admin-cron-jobs-rpc.contract.test.ts [ tests/contracts/admin-cron-jobs-rpc.contract.test.ts ]
+Error: migration admin_cron_jobs nao encontrada
+ ❯ lerMigration tests/contracts/admin-cron-jobs-rpc.contract.test.ts:17:20
+     15| function lerMigration(): string {
+     16|   const nome = readdirSync(DIR_MIGRACOES).find((f) => f.includes('admi…
+     17|   if (!nome) throw new Error('migration admin_cron_jobs nao encontrada…
+       |                    ^
+     18|   return readFileSync(join(DIR_MIGRACOES, nome), 'utf8');
+     19| }
+ ❯ tests/contracts/admin-cron-jobs-rpc.contract.test.ts:21:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  17:46:11
+   Duration  480ms (transform 56ms, setup 0ms, import 0ms, tests 0ms, environment 0ms)
+

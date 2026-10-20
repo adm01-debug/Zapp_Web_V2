@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 5eb097cff11a0b1df52d8b295219127a5bb64015 Hermes Senior <hermes-senior@promobrindes.local> 1791748997 -0300	
+5eb097cff11a0b1df52d8b295219127a5bb64015 5eb097cff11a0b1df52d8b295219127a5bb64015 Hermes Senior <hermes-senior@promobrindes.local> 1791748998 -0300	reset: moving to HEAD
+5eb097cff11a0b1df52d8b295219127a5bb64015 ef634a410673035fcd7b8952087b15a754f0cd0b Hermes Senior <hermes-senior@promobrindes.local> 1791750842 -0300	commit: feat(admin): RPCs admin_list_cron_jobs e admin_toggle_cron_job com auditoria
+ef634a410673035fcd7b8952087b15a754f0cd0b cbd00b763e679a89494ee1ee2ce38367dd8b8413 Hermes Senior <hermes-senior@promobrindes.local> 1791750894 -0300	commit (amend): feat(admin): RPCs admin_list_cron_jobs e admin_toggle_cron_job com auditoria
+cbd00b763e679a89494ee1ee2ce38367dd8b8413 d2f008acc1023fd824f95d451b2d9f8147b67d99 Hermes Senior <hermes-senior@promobrindes.local> 1791751521 -0300	commit: test(admin): contrato em Postgres descartavel das RPCs de cron jobs
