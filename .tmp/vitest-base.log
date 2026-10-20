@@ -1,0 +1,540 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/agentes-lista-erros-presenca-26101515120740/.tmp/prova-base
+
+xx··xxx·xxx··x·····xstderr | src/hooks/admin/__tests__/useSupervisorQueue.test.tsx > useSupervisorQueue — visibilidade da aba > aba oculta não consulta; ao voltar recarrega uma vez e retoma o polling
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/hooks/admin/__tests__/useSupervisorQueue.test.tsx > useSupervisorQueue — visibilidade da aba > aba oculta não consulta; ao voltar recarrega uma vez e retoma o polling
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/hooks/admin/__tests__/useSupervisorQueue.test.tsx > useSupervisorQueue — visibilidade da aba > aba oculta não consulta; ao voltar recarrega uma vez e retoma o polling
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/hooks/admin/__tests__/useSupervisorQueue.test.tsx > useSupervisorQueue — visibilidade da aba > aba oculta não consulta; ao voltar recarrega uma vez e retoma o polling
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/hooks/admin/__tests__/useSupervisorQueue.test.tsx > useSupervisorQueue — visibilidade da aba > com o polling desligado (refreshMs 0) voltar para a aba ainda recarrega uma vez
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+xxx
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/hooks/__tests__/useAgents.leitura.test.tsx > useAgents — erro de leitura de cada consulta > leitura boa: nenhum erro exposto e a lista completa
+AssertionError: expected TypeError: __vite_ssr_import_1__.supabase… to be null
+
+- Expected:
+null
+
++ Received:
+TypeError {
+  "message": "__vite_ssr_import_1__.supabase.from(...).select(...).order is not a function",
+}
+
+ ❯ src/hooks/__tests__/useAgents.leitura.test.tsx:106:34
+    104|     const result = await montar();
+    105|
+    106|     expect(result.current.error).toBeNull();
+       |                                  ^
+    107|     expect(result.current.errors).toEqual({ profiles: null, queues: nu…
+    108|     expect(result.current.agents.map((a) => a.id)).toEqual(['p1']);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/13]⎯
+
+ FAIL  src/hooks/__tests__/useAgents.leitura.test.tsx > useAgents — erro de leitura de cada consulta > erro nos perfis é devolvido (antes era descartado)
+TypeError: Cannot read properties of undefined (reading 'profiles')
+ ❯ src/hooks/__tests__/useAgents.leitura.test.tsx:115:34
+    113|     const result = await montar();
+    114|
+    115|     expect(result.current.errors.profiles?.message).toBe('perfis fora …
+       |                                  ^
+    116|     expect(result.current.error?.message).toBe('perfis fora do ar');
+    117|     expect(result.current.agents).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/13]⎯
+
+ FAIL  src/hooks/__tests__/useAgents.leitura.test.tsx > useAgents — erro de leitura de cada consulta > erro nas filas é devolvido e a lista fica sem fila atribuída
+TypeError: Cannot read properties of undefined (reading 'queues')
+ ❯ src/hooks/__tests__/useAgents.leitura.test.tsx:124:34
+    122|     const result = await montar();
+    123|
+    124|     expect(result.current.errors.queues?.message).toBe('filas fora do …
+       |                                  ^
+    125|     expect(result.current.error?.message).toBe('filas fora do ar');
+    126|     expect(result.current.errors.profiles).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/13]⎯
+
+ FAIL  src/hooks/__tests__/useAgents.leitura.test.tsx > useAgents — erro de leitura de cada consulta > erro nos vínculos (membros) é devolvido e a lista fica sem fila atribuída
+TypeError: Cannot read properties of undefined (reading 'members')
+ ❯ src/hooks/__tests__/useAgents.leitura.test.tsx:134:34
+    132|     const result = await montar();
+    133|
+    134|     expect(result.current.errors.members?.message).toBe('vínculos fora…
+       |                                  ^
+    135|     expect(result.current.error?.message).toBe('vínculos fora do ar');
+    136|     expect(result.current.agents[0].queues).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/13]⎯
+
+ FAIL  src/hooks/__tests__/useAgents.leitura.test.tsx > useAgents — erro de leitura de cada consulta > erro nos chats ativos deixa a capacidade indisponível (null), nunca 0
+TypeError: Cannot read properties of undefined (reading 'activeChats')
+ ❯ src/hooks/__tests__/useAgents.leitura.test.tsx:143:34
+    141|     const result = await montar();
+    142|
+    143|     expect(result.current.errors.activeChats?.message).toBe('contatos …
+       |                                  ^
+    144|     expect(result.current.error?.message).toBe('contatos fora do ar');
+    145|     expect(result.current.agents[0].activeChats).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/13]⎯
+
+ FAIL  src/hooks/__tests__/useAgents.presence.test.tsx > useAgents + presença > usa só o status publicado pelo agente conectado; sem presença publicada é offline (updated_at não conta)
+AssertionError: expected undefined to be 'away' // Object.is equality
+
+- Expected:
+"away"
+
++ Received:
+undefined
+
+ ❯ src/hooks/__tests__/useAgents.presence.test.tsx:59:21
+     57|
+     58|     const byId = Object.fromEntries(result.current.agents.map((a) => […
+     59|     expect(byId.u2).toBe('away');
+       |                     ^
+     60|     // u1 tem perfil atualizado agora e nenhuma linha de presença: con…
+     61|     expect(byId.u1).toBe('offline');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/13]⎯
+
+ FAIL  src/hooks/__tests__/useAgents.test.tsx > useAgents > combina os dados dos atendentes ATIVOS e deixa a conta desativada fora da lista
+AssertionError: expected [] to deeply equal [ 'p1', 'p3' ]
+
+- Expected
++ Received
+
+- [
+-   "p1",
+-   "p3",
+- ]
++ []
+
+ ❯ src/hooks/__tests__/useAgents.test.tsx:94:52
+     92|
+     93|     // p2 é is_active: false — não atende, então não entra na lista ne…
+     94|     expect(result.current.agents.map((a) => a.id)).toEqual(['p1', 'p3'…
+       |                                                    ^
+     95|     expect(result.current.stats.totalAgents).toBe(2);
+     96|     expect(result.current.error).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/13]⎯
+
+ FAIL  src/hooks/__tests__/useAgents.test.tsx > useAgents > sem presença publicada o status é offline — updated_at do perfil não é presença
+AssertionError: expected undefined to be 'offline' // Object.is equality
+
+- Expected:
+"offline"
+
++ Received:
+undefined
+
+ ❯ src/hooks/__tests__/useAgents.test.tsx:109:21
+    107|     // p3 tem updated_at de agora; mesmo assim, sem linha de presença,…
+    108|     const byId = Object.fromEntries(result.current.agents.map((a) => […
+    109|     expect(byId.p3).toBe('offline');
+       |                     ^
+    110|     expect(byId.p1).toBe('offline');
+    111|     expect(result.current.stats.onlineCount).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/13]⎯
+
+ FAIL  src/hooks/__tests__/useAgents.test.tsx > useAgents > a capacidade sai da consulta de conversas abertas (2 do p1) e é 0 só quando a leitura deu certo
+TypeError: Cannot read properties of undefined (reading 'activeChats')
+ ❯ src/hooks/__tests__/useAgents.test.tsx:124:21
+    122|
+    123|     const porId = Object.fromEntries(result.current.agents.map((a) => …
+    124|     expect(porId.p1.activeChats).toBe(2);
+       |                     ^
+    125|     // p3 não tem conversa aberta: 0 de verdade (leitura boa), não "in…
+    126|     expect(porId.p3.activeChats).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/13]⎯
+
+ FAIL  src/hooks/admin/__tests__/useSupervisorQueue.test.tsx > useSupervisorQueue — nomes indisponíveis > falha nos perfis marca `namesUnavailable` (e a recuperação limpa a marca)
+AssertionError: expected undefined to be false // Object.is equality
+
+- Expected:
+false
+
++ Received:
+undefined
+
+ ❯ src/hooks/admin/__tests__/useSupervisorQueue.test.tsx:369:45
+    367|     const { result } = renderHook(() => useSupervisorQueue({ refreshMs…
+    368|     await waitFor(() => expect(result.current.loading).toBe(false));
+    369|     expect(result.current.namesUnavailable).toBe(false);
+       |                                             ^
+    370|     expect(result.current.rows[0].agentName).toBe('Bruno');
+    371|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/13]⎯
+
+ FAIL  src/hooks/admin/__tests__/useSupervisorQueue.test.tsx > useSupervisorQueue — nomes indisponíveis > falha nas filas também marca `namesUnavailable` (nome da fila ausente não é silêncio)
+AssertionError: expected undefined to be false // Object.is equality
+
+- Expected:
+false
+
++ Received:
+undefined
+
+ ❯ src/hooks/admin/__tests__/useSupervisorQueue.test.tsx:400:45
+    398|     await waitFor(() => expect(result.current.loading).toBe(false));
+    399|     expect(result.current.rows[0].queueName).toBe('Comercial');
+    400|     expect(result.current.namesUnavailable).toBe(false);
+       |                                             ^
+    401|
+    402|     h.rpcError = { message: 'filas fora do ar' };
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/13]⎯
+
+ FAIL  src/hooks/admin/__tests__/useSupervisorQueue.test.tsx > useSupervisorQueue — visibilidade da aba > aba oculta não consulta; ao voltar recarrega uma vez e retoma o polling
+AssertionError: expected [ { table: 'contacts', …(1) }, …(3) ] to have a length of +0 but got 4
+
+- Expected
++ Received
+
+- 0
++ 4
+
+ ❯ src/hooks/admin/__tests__/useSupervisorQueue.test.tsx:440:36
+    438|     // Oculta: nem a carga inicial consulta o banco.
+    439|     await new Promise((r) => setTimeout(r, 80));
+    440|     expect(buildersDa('contacts')).toHaveLength(0);
+       |                                    ^
+    441|     expect(result.current.loading).toBe(true);
+    442|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/13]⎯
+
+ FAIL  src/hooks/admin/__tests__/useSupervisorQueue.test.tsx > useSupervisorQueue — visibilidade da aba > com o polling desligado (refreshMs 0) voltar para a aba ainda recarrega uma vez
+AssertionError: expected [ { table: 'contacts', …(1) } ] to have a length of +0 but got 1
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ src/hooks/admin/__tests__/useSupervisorQueue.test.tsx:474:36
+    472|     const { result } = renderHook(() => useSupervisorQueue({ refreshMs…
+    473|     await new Promise((r) => setTimeout(r, 40));
+    474|     expect(buildersDa('contacts')).toHaveLength(0);
+       |                                    ^
+    475|
+    476|     definirOculta(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/13]⎯
+
+
+ Test Files  4 failed (4)
+      Tests  13 failed | 10 passed (23)
+   Start at  15:56:04
+   Duration  3.74s (transform 934ms, setup 1.68s, import 1.58s, tests 2.24s, environment 5.74s)
+

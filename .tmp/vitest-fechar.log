@@ -1,0 +1,10 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/agentes-lista-erros-presenca-26101515120740
+
+·······················
+
+ Test Files  4 passed (4)
+      Tests  23 passed (23)
+   Start at  15:55:56
+   Duration  4.29s (transform 851ms, setup 1.61s, import 1.29s, tests 2.03s, environment 6.31s)
+

@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=agentes-lista-erros-presenca
+ID=26101515120740
+BRANCH=v2/agentes-lista-erros-presenca-26101515120740
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/agentes-lista-erros-presenca-26101515120740
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-15T15:12:22-03:00
+KANBAN=t_b663f124
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/agentes-lista-erros-presenca-26101515120740/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-15
+DB_LOCAL=v2-26101515120740
+PRONTO_SHA=ab904166fadcfe7aa9311b38782d965b4fff8a02

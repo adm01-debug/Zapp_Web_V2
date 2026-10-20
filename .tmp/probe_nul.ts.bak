@@ -1,0 +1,3 @@
+declare const a: number | null;
+const b = a / 5;
+export const c = b;

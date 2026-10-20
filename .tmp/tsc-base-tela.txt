@@ -1,0 +1,1 @@
+src/components/agents/AgentsView.tsx(197,38): error TS18047: 'agent.activeChats' is possibly 'null'.

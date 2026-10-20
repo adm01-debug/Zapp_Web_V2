@@ -1,0 +1,7 @@
+18	13	src/components/agents/AgentsView.tsx
+149	0	src/hooks/__tests__/useAgents.leitura.test.tsx
+17	4	src/hooks/__tests__/useAgents.presence.test.tsx
+37	13	src/hooks/__tests__/useAgents.test.tsx
+126	0	src/hooks/admin/__tests__/useSupervisorQueue.test.tsx
+47	12	src/hooks/admin/useSupervisorQueue.ts
+75	44	src/hooks/crm/useAgents.ts

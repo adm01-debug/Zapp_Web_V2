@@ -1,0 +1,13 @@
+import sqlite3, os
+
+for cand in [os.path.expanduser('~/.hermes/kanban.db'), os.environ.get('HERMES_KANBAN_DB', '')]:
+    if not cand or not os.path.exists(cand):
+        print('skip', cand)
+        continue
+    con = sqlite3.connect(cand)
+    cur = con.cursor()
+    cur.execute("select name from sqlite_master where type='table'")
+    print('DB', cand, '->', [r[0] for r in cur.fetchall()])
+    con.close()
+print('ENV HERMES_KANBAN_DB =', os.environ.get('HERMES_KANBAN_DB'))
+print('ENV HERMES_KANBAN_TASK =', os.environ.get('HERMES_KANBAN_TASK'))
