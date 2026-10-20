@@ -1,0 +1,16 @@
+PROJETO=Zapp_Web_V2
+SLUG=anon-truncate-17-tabelas
+ID=2610102042c8e0
+BRANCH=v2/anon-truncate-17-tabelas-2610102042c8e0
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/anon-truncate-17-tabelas-2610102042c8e0
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-10T20:42:58-03:00
+KANBAN=t_007f8fb0
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/anon-truncate-17-tabelas-2610102042c8e0/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-10
+DB_LOCAL=v2-2610102042c8e0
+APLICADA_LOCAL=20261011003020_revoke_anon_privileges_contact_messages.sql sha=b14092dd8641bb08
+PRONTO_SHA=b6f5c02a5ce3a7782ba58e8a663d5636f0188d5a

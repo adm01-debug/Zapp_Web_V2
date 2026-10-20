@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 03db8d720c0d789ef192769dfa19c099e799def4 Hermes Senior <hermes-senior@promobrindes.local> 1791675777 -0300	
+03db8d720c0d789ef192769dfa19c099e799def4 03db8d720c0d789ef192769dfa19c099e799def4 Hermes Senior <hermes-senior@promobrindes.local> 1791675778 -0300	reset: moving to HEAD
+03db8d720c0d789ef192769dfa19c099e799def4 7e1a91cbb0b87d52eed978827d0f6b1865eb4005 Hermes Senior <hermes-senior@promobrindes.local> 1791676562 -0300	commit: fix(db): revoga privilegios de tabela do papel anon nas 17 tabelas de contatos/mensagens (SEC-RLS_CONTATOS_MENSAGENS-05)
+7e1a91cbb0b87d52eed978827d0f6b1865eb4005 b6f5c02a5ce3a7782ba58e8a663d5636f0188d5a Hermes Senior <hermes-senior@promobrindes.local> 1791676648 -0300	commit: ci(db): registra o teste de revogacao de anon nas 17 tabelas no db-guard
