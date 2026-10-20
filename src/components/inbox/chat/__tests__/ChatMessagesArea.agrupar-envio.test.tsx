@@ -51,6 +51,14 @@ const scrollToSpy = vi.fn();
 
 beforeAll(() => {
   (window as unknown as { ResizeObserver: typeof ResizeObserverMock }).ResizeObserver = ResizeObserverMock;
+
+  // jsdom nao calcula layout: com altura zero no elemento de rolagem o
+  // @tanstack/react-virtual nao devolve item nenhum (o virtual-core le
+  // `clientHeight` do conteiner de rolagem e `offsetHeight` de cada linha).
+  // A medida entra pelo prototipo; o ResizeObserver nao serve aqui porque
+  // nesta versao o payload do observer e ignorado.
+  Object.defineProperty(HTMLElement.prototype, "clientHeight", { configurable: true, get: () => 600 });
+  Object.defineProperty(HTMLElement.prototype, "offsetHeight", { configurable: true, get: () => 120 });
   (Element.prototype as unknown as { scrollTo: unknown }).scrollTo = scrollToSpy;
 });
 
