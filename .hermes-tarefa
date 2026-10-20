@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=analises-conversa-cache-query-t-fc794700
+ID=26101615025066
+BRANCH=v2/analises-conversa-cache-query-t-fc794700-26101615025066
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/analises-conversa-cache-query-t-fc794700-26101615025066
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-16T15:02:52-03:00
+KANBAN=t_fc794700
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/analises-conversa-cache-query-t-fc794700-26101615025066/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-16
+DB_LOCAL=v2-26101615025066
+PRONTO_SHA=5efa38a1292a95cdd0296a400551161de971cb77

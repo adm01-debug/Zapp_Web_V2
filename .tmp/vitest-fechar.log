@@ -1,0 +1,10 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/analises-conversa-cache-query-t-fc794700-26101615025066
+
+············
+
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Start at  15:07:57
+   Duration  1.31s (transform 71ms, setup 152ms, import 73ms, tests 476ms, environment 484ms)
+
