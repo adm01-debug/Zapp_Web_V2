@@ -1,0 +1,16 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-papel-rpc-261013-26101301267393
+
+stderr | src/pages/admin/__tests__/useRolesPageState.rpc.test.tsx > useRolesPageState — mutações por RPC (R2-AUTH-036) > código desconhecido cai na mensagem genérica sem vazar o erro cru
+[roles] RPC recusada com código não mapeado: permission_denied_for_role_x
+
+stderr | src/pages/admin/__tests__/useRolesPageState.rpc.test.tsx > useRolesPageState — mutações por RPC (R2-AUTH-036) > exceção do client (rede) vira erro genérico e não deixa updating preso
+[roles] RPC recusada com código não mapeado: network down
+
+········
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  01:33:54
+   Duration  2.04s (transform 264ms, setup 354ms, import 181ms, tests 105ms, environment 1.10s)
+

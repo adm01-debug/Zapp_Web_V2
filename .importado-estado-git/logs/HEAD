@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 96dd72dc5f5db919bdbb4ffdc269510addca6165 Hermes Senior <hermes-senior@promobrindes.local> 1791865611 -0300	
+96dd72dc5f5db919bdbb4ffdc269510addca6165 96dd72dc5f5db919bdbb4ffdc269510addca6165 Hermes Senior <hermes-senior@promobrindes.local> 1791865612 -0300	reset: moving to HEAD
+96dd72dc5f5db919bdbb4ffdc269510addca6165 01e0343a574eef3a77bc63ada22aa8cc30cba885 Hermes Senior <hermes-senior@promobrindes.local> 1791865647 -0300	cherry-pick: feat(admin): RPCs admin_add_role e admin_remove_role com travas e auditoria
+01e0343a574eef3a77bc63ada22aa8cc30cba885 156f3703945228d9bb757b6cb7c437ec5fd82c89 Hermes Senior <hermes-senior@promobrindes.local> 1791865871 -0300	commit: fix(admin): roles usa as RPCs admin_add_role/admin_remove_role e traduz as travas
+156f3703945228d9bb757b6cb7c437ec5fd82c89 0b1efb99d31e214c1dd7d0d911e8e657d5dbc4f1 Hermes Senior <hermes-senior@promobrindes.local> 1791865922 -0300	cherry-pick: chore(git): tira .tmp/relato.md do versionamento (ja constava no .gitignore)

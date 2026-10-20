@@ -1,0 +1,165 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-papel-rpc-261013-26101301267393/.tmp/prova-base
+
+xxxxxxxx
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/admin/__tests__/useRolesPageState.rpc.test.tsx > useRolesPageState — mutações por RPC (R2-AUTH-036) > concede papel por admin_add_role, nunca por INSERT direto, e invalida o cache
+Error: a escrita direta em user_roles não deve mais acontecer
+ ❯ src/pages/admin/__tests__/useRolesPageState.rpc.test.tsx:60:13
+     58|   from.mockImplementation((table: string) => {
+     59|     if (table === 'user_roles') {
+     60|       throw new Error('a escrita direta em user_roles não deve mais ac…
+       |             ^
+     61|     }
+     62|     return {
+ ❯ Object.from src/pages/admin/__tests__/useRolesPageState.rpc.test.tsx:35:35
+ ❯ Object.handleAddRole src/pages/admin/useRolesPageState.ts:79:38
+ ❯ src/pages/admin/__tests__/useRolesPageState.rpc.test.tsx:80:28
+ ❯ ../../node_modules/@testing-library/react/dist/act-compat.js:47:24
+ ❯ process.env.NODE_ENV.exports.act ../../node_modules/react/cjs/react.development.js:890:22
+ ❯ Proxy.<anonymous> ../../node_modules/@testing-library/react/dist/act-compat.js:46:25
+ ❯ src/pages/admin/__tests__/useRolesPageState.rpc.test.tsx:79:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  src/pages/admin/__tests__/useRolesPageState.rpc.test.tsx > useRolesPageState — mutações por RPC (R2-AUTH-036) > revoga papel por admin_remove_role, nunca por DELETE direto, e invalida o cache
+Error: a escrita direta em user_roles não deve mais acontecer
+ ❯ src/pages/admin/__tests__/useRolesPageState.rpc.test.tsx:60:13
+     58|   from.mockImplementation((table: string) => {
+     59|     if (table === 'user_roles') {
+     60|       throw new Error('a escrita direta em user_roles não deve mais ac…
+       |             ^
+     61|     }
+     62|     return {
+ ❯ Object.from src/pages/admin/__tests__/useRolesPageState.rpc.test.tsx:35:35
+ ❯ Object.handleRemoveRole src/pages/admin/useRolesPageState.ts:88:38
+ ❯ src/pages/admin/__tests__/useRolesPageState.rpc.test.tsx:103:28
+ ❯ ../../node_modules/@testing-library/react/dist/act-compat.js:47:24
+ ❯ process.env.NODE_ENV.exports.act ../../node_modules/react/cjs/react.development.js:890:22
+ ❯ Proxy.<anonymous> ../../node_modules/@testing-library/react/dist/act-compat.js:46:25
+ ❯ src/pages/admin/__tests__/useRolesPageState.rpc.test.tsx:102:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  src/pages/admin/__tests__/useRolesPageState.rpc.test.tsx > useRolesPageState — mutações por RPC (R2-AUTH-036) > traduz cannot_demote_last_admin, mantém o diálogo aberto e não recarrega
+Error: a escrita direta em user_roles não deve mais acontecer
+ ❯ src/pages/admin/__tests__/useRolesPageState.rpc.test.tsx:60:13
+     58|   from.mockImplementation((table: string) => {
+     59|     if (table === 'user_roles') {
+     60|       throw new Error('a escrita direta em user_roles não deve mais ac…
+       |             ^
+     61|     }
+     62|     return {
+ ❯ Object.from src/pages/admin/__tests__/useRolesPageState.rpc.test.tsx:35:35
+ ❯ Object.handleRemoveRole src/pages/admin/useRolesPageState.ts:88:38
+ ❯ src/pages/admin/__tests__/useRolesPageState.rpc.test.tsx:124:28
+ ❯ ../../node_modules/@testing-library/react/dist/act-compat.js:47:24
+ ❯ process.env.NODE_ENV.exports.act ../../node_modules/react/cjs/react.development.js:890:22
+ ❯ Proxy.<anonymous> ../../node_modules/@testing-library/react/dist/act-compat.js:46:25
+ ❯ src/pages/admin/__tests__/useRolesPageState.rpc.test.tsx:123:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  src/pages/admin/__tests__/useRolesPageState.rpc.test.tsx > useRolesPageState — mutações por RPC (R2-AUTH-036) > traduz cannot_remove_own_admin na remoção do próprio administrador
+Error: a escrita direta em user_roles não deve mais acontecer
+ ❯ src/pages/admin/__tests__/useRolesPageState.rpc.test.tsx:60:13
+     58|   from.mockImplementation((table: string) => {
+     59|     if (table === 'user_roles') {
+     60|       throw new Error('a escrita direta em user_roles não deve mais ac…
+       |             ^
+     61|     }
+     62|     return {
+ ❯ Object.from src/pages/admin/__tests__/useRolesPageState.rpc.test.tsx:35:35
+ ❯ Object.handleRemoveRole src/pages/admin/useRolesPageState.ts:88:38
+ ❯ src/pages/admin/__tests__/useRolesPageState.rpc.test.tsx:144:28
+ ❯ ../../node_modules/@testing-library/react/dist/act-compat.js:47:24
+ ❯ process.env.NODE_ENV.exports.act ../../node_modules/react/cjs/react.development.js:890:22
+ ❯ Proxy.<anonymous> ../../node_modules/@testing-library/react/dist/act-compat.js:46:25
+ ❯ src/pages/admin/__tests__/useRolesPageState.rpc.test.tsx:143:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  src/pages/admin/__tests__/useRolesPageState.rpc.test.tsx > useRolesPageState — mutações por RPC (R2-AUTH-036) > traduz role_already_assigned e libera updating sem fechar o diálogo
+Error: a escrita direta em user_roles não deve mais acontecer
+ ❯ src/pages/admin/__tests__/useRolesPageState.rpc.test.tsx:60:13
+     58|   from.mockImplementation((table: string) => {
+     59|     if (table === 'user_roles') {
+     60|       throw new Error('a escrita direta em user_roles não deve mais ac…
+       |             ^
+     61|     }
+     62|     return {
+ ❯ Object.from src/pages/admin/__tests__/useRolesPageState.rpc.test.tsx:35:35
+ ❯ Object.handleAddRole src/pages/admin/useRolesPageState.ts:79:38
+ ❯ src/pages/admin/__tests__/useRolesPageState.rpc.test.tsx:163:28
+ ❯ ../../node_modules/@testing-library/react/dist/act-compat.js:47:24
+ ❯ process.env.NODE_ENV.exports.act ../../node_modules/react/cjs/react.development.js:890:22
+ ❯ Proxy.<anonymous> ../../node_modules/@testing-library/react/dist/act-compat.js:46:25
+ ❯ src/pages/admin/__tests__/useRolesPageState.rpc.test.tsx:162:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  src/pages/admin/__tests__/useRolesPageState.rpc.test.tsx > useRolesPageState — mutações por RPC (R2-AUTH-036) > traduz role_not_assigned, admin_required e jwt_session_required
+Error: a escrita direta em user_roles não deve mais acontecer
+ ❯ src/pages/admin/__tests__/useRolesPageState.rpc.test.tsx:60:13
+     58|   from.mockImplementation((table: string) => {
+     59|     if (table === 'user_roles') {
+     60|       throw new Error('a escrita direta em user_roles não deve mais ac…
+       |             ^
+     61|     }
+     62|     return {
+ ❯ Object.from src/pages/admin/__tests__/useRolesPageState.rpc.test.tsx:35:35
+ ❯ Object.handleRemoveRole src/pages/admin/useRolesPageState.ts:88:38
+ ❯ src/pages/admin/__tests__/useRolesPageState.rpc.test.tsx:188:30
+ ❯ ../../node_modules/@testing-library/react/dist/act-compat.js:47:24
+ ❯ process.env.NODE_ENV.exports.act ../../node_modules/react/cjs/react.development.js:890:22
+ ❯ Proxy.<anonymous> ../../node_modules/@testing-library/react/dist/act-compat.js:46:25
+ ❯ src/pages/admin/__tests__/useRolesPageState.rpc.test.tsx:187:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  src/pages/admin/__tests__/useRolesPageState.rpc.test.tsx > useRolesPageState — mutações por RPC (R2-AUTH-036) > código desconhecido cai na mensagem genérica sem vazar o erro cru
+Error: a escrita direta em user_roles não deve mais acontecer
+ ❯ src/pages/admin/__tests__/useRolesPageState.rpc.test.tsx:60:13
+     58|   from.mockImplementation((table: string) => {
+     59|     if (table === 'user_roles') {
+     60|       throw new Error('a escrita direta em user_roles não deve mais ac…
+       |             ^
+     61|     }
+     62|     return {
+ ❯ Object.from src/pages/admin/__tests__/useRolesPageState.rpc.test.tsx:35:35
+ ❯ Object.handleRemoveRole src/pages/admin/useRolesPageState.ts:88:38
+ ❯ src/pages/admin/__tests__/useRolesPageState.rpc.test.tsx:204:28
+ ❯ ../../node_modules/@testing-library/react/dist/act-compat.js:47:24
+ ❯ process.env.NODE_ENV.exports.act ../../node_modules/react/cjs/react.development.js:890:22
+ ❯ Proxy.<anonymous> ../../node_modules/@testing-library/react/dist/act-compat.js:46:25
+ ❯ src/pages/admin/__tests__/useRolesPageState.rpc.test.tsx:203:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  src/pages/admin/__tests__/useRolesPageState.rpc.test.tsx > useRolesPageState — mutações por RPC (R2-AUTH-036) > exceção do client (rede) vira erro genérico e não deixa updating preso
+Error: a escrita direta em user_roles não deve mais acontecer
+ ❯ src/pages/admin/__tests__/useRolesPageState.rpc.test.tsx:60:13
+     58|   from.mockImplementation((table: string) => {
+     59|     if (table === 'user_roles') {
+     60|       throw new Error('a escrita direta em user_roles não deve mais ac…
+       |             ^
+     61|     }
+     62|     return {
+ ❯ Object.from src/pages/admin/__tests__/useRolesPageState.rpc.test.tsx:35:35
+ ❯ Object.handleRemoveRole src/pages/admin/useRolesPageState.ts:88:38
+ ❯ src/pages/admin/__tests__/useRolesPageState.rpc.test.tsx:220:28
+ ❯ ../../node_modules/@testing-library/react/dist/act-compat.js:47:24
+ ❯ process.env.NODE_ENV.exports.act ../../node_modules/react/cjs/react.development.js:890:22
+ ❯ Proxy.<anonymous> ../../node_modules/@testing-library/react/dist/act-compat.js:46:25
+ ❯ src/pages/admin/__tests__/useRolesPageState.rpc.test.tsx:219:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed (8)
+   Start at  01:33:59
+   Duration  2.03s (transform 262ms, setup 475ms, import 200ms, tests 96ms, environment 977ms)
+

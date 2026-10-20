@@ -1,0 +1,5 @@
+20	0	src/integrations/supabase/types.ts
+228	0	src/pages/admin/__tests__/useRolesPageState.rpc.test.tsx
+69	8	src/pages/admin/useRolesPageState.ts
+129	0	supabase/migrations/20261013035338_admin_add_remove_role_rpc.sql
+288	0	supabase/tests/user_roles_add_remove_role.sql

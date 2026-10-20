@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=admin-papel-rpc-261013
+ID=26101301267393
+BRANCH=v2/admin-papel-rpc-261013-26101301267393
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-papel-rpc-261013-26101301267393
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T01:26:52-03:00
+KANBAN=t_7055f245
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-papel-rpc-261013-26101301267393/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-26101301267393
+PRONTO_SHA=0b1efb99d31e214c1dd7d0d911e8e657d5dbc4f1

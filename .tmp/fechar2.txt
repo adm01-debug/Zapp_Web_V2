@@ -1,0 +1,10 @@
+AVISOS DO JUIZ MANTIDOS (seguem para o revisor):
+  1. Você mexeu em arquivo que o cartão não lista em 'ARQUIVOS QUE PODE TOCAR': src/integrations/supabase/types.ts, supabase/migrations/20261013035338_admin_add_remove_role_rpc.sql, supabase/tests/user_roles_add_remove_role.sql. Reverta (achado fora do escopo vira comentário no cartão) ou explique no relato por que foi indispensável.
+OK      db_guard        0s
+FALHOU  tipos          16s  (ver /home/joaquim_ataides/.local/state/zapp-verify/e4b576ef3341/tipos.log)
+tc-rapido: erro sem diagnóstico reconhecível
+tipos.sh: typecheck rápido falhou na EXECUÇÃO; refazendo com o ratchet completo
+ERRO no typecheck ratchet: TypeScript local nao encontrado. Execute a instalacao das dependencias primeiro.
+VERIFY: VERMELHO em tipos (16s)
+ERRO: verificação falhou (log: /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-papel-rpc-261013-26101301267393/.tmp/verify-26101301267393.log)
+RC=1
