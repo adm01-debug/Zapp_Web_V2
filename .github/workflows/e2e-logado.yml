@@ -1,5 +1,5 @@
 # docs:
-#   gatilho: push na main e dispatch sobre main
+#   gatilho: fim do CI na main (workflow_run) e dispatch sobre main
 #   prova: o fluxo logado (Playwright com login real) contra producao
 #   falha: artefato do Playwright e issue/relatorio; nunca roda em PR de terceiro
 #   avisa: issue de E2E e autor do push
@@ -23,9 +23,11 @@
 name: E2E logado
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
+  workflow_run:
+    workflows: [CI/CD Pipeline]
+    branches: [main]
+    types: [completed]
 
 defaults:
   run:
@@ -42,8 +44,11 @@ permissions:
 # chegarem enquanto a run atual roda, so o mais recente pendente roda em
 # seguida (os intermediarios sao pulados) -- mesma semantica de "valida so o
 # commit mais novo", sem desperdicar runs quase completas.
+# GA09: grupo FIXO (sem ref/sha) — nunca duas runs in_progress ao mesmo tempo.
+# cancel-in-progress: false enfileira em vez de matar: se um dispatch chegar com
+# a run atual rodando, so o mais novo pendente roda em seguida.
 concurrency:
-  group: e2e-logado-${{ github.ref }}
+  group: e2e-logado
   cancel-in-progress: false
 
 jobs:
@@ -51,6 +56,13 @@ jobs:
     name: 🎭 E2E logado (Playwright)
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    # GA08: fecha o fork com branch `main` (Scorecard #40) e o passo "Pular se
+    # CI falhou" que nao pulava nada — o if vive no JOB, nao num step.
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_repository.full_name == github.repository)
     # E83: a suite logada (173 testes) estourava o timeout do job unico e a run
     # inteira caia como "cancelled". A matriz abaixo divide os mesmos 15 projetos
     # em 3 grupos, cada um com seu proprio relogio de 15 min: se um grupo ficar
@@ -75,15 +87,18 @@ jobs:
             # de browser (I/O), nao em CPU. Os 2 grupos deslogados sao pequenos
             # (16 e 27 testes) e seguem com 1, sem mudanca de comportamento.
             workers: 4
+            global_timeout_ms: 660000
           # Grupo 2: deslogados nos browsers principais + mapa (sessao FALSA,
           # sem secrets de login).
           - name: deslogado-principal
             projects: --project=chromium-mapa --project=firefox-auth --project=webkit-auth
             workers: 1
+            global_timeout_ms: 600000
           # Grupo 3: telefonia nos 3 browsers (sessao FALSA, sem secrets).
           - name: deslogado-secundario
             projects: --project=chromium-telefonia --project=firefox-telefonia --project=webkit-telefonia
             workers: 1
+            global_timeout_ms: 600000
     # E83: as permissoes de escrita ficam no JOB, nunca no nivel do workflow -- o zizmor
     # reprova `write` no topo (excessive-permissions, severidade alta) porque o escopo
     # vale para todos os jobs. Foi o que reprovou o merge do #1784.
@@ -188,7 +203,9 @@ jobs:
           fi
 
       - name: 📐 Run Playwright E2E (login real)
-        run: bun run test:e2e -- ${{ matrix.projects }} --workers=${{ matrix.workers }}
+        run: |
+          set -euo pipefail
+          bun run test:e2e -- ${{ matrix.projects }} --workers=${{ matrix.workers }} --global-timeout=${{ matrix.global_timeout_ms }} 2>&1 | tee "e2e-saida-${{ matrix.name }}.log"
         env:
           CI: true
           E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
@@ -197,6 +214,18 @@ jobs:
           # (mesmo secret que o ci.yml entrega ao app; nao e privilegiada). Sem
           # ela o spec pula em vez de falhar.
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+
+      # GA12: orcamento da suite — teste que nao rodou (timeout global ou
+      # interrupcao) reprova o job em vez de passar silencioso.
+      - name: ⏱️ Orçamento GA12 - nenhum teste sem rodar
+        if: always()
+        run: |
+          f="e2e-saida-${{ matrix.name }}.log"
+          if [ -f "$f" ] && grep -Eq '[1-9][0-9]* did not run' "$f"; then
+            echo "::error::orçamento estourado em ${{ matrix.name }}"
+            exit 1
+          fi
+          echo "orçamento OK em ${{ matrix.name }}: nenhum teste sem rodar"
 
       # E82: o ::add-mask:: protege o LOG. O `playwright-report` e um artifact HTML com o
       # e-mail gravado dentro (titulo de teste, argumento do fill(), URL) -- subir o

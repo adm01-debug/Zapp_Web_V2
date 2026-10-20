@@ -26,7 +26,11 @@ permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.event.pull_request.number || github.ref }}
+  # GA58: o dispatch manual ganha o proprio grupo (run_id unico) em vez de
+  # disputar/cancelar o grupo do push. Push na main compartilha o grupo por
+  # ref de proposito: um grupo por SHA nunca cancelaria nada e a fila de
+  # builds da main cresceria sem fim (comentario honesto em vez de SHA).
+  group: ci-${{ github.event_name == 'workflow_dispatch' && github.run_id || github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
@@ -65,6 +69,12 @@ jobs:
       - name: 🔎 Run TypeScript debt ratchet
         run: node scripts/ci/typecheck-ratchet.mjs
 
+      # GA02: trava anti-apagao do CLAUDE.md (wipe placeholder de 15/10).
+      # Reprova o check se as secoes obrigatorias sumirem ou o arquivo
+      # encolher mais de 30% vs HEAD.
+      - name: 🛡️ Trava anti-apagao do CLAUDE.md (GA02)
+        run: node scripts/ci/check-claude-md-integrity.mjs
+
   unit-tests:
     name: 🧪 Unit Tests (${{ matrix.shard }}/3)
     runs-on: ubuntu-24.04
@@ -94,8 +104,11 @@ jobs:
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
 
+      # GA56: `timeout 11m` interno — sai com erro (exit 124) antes do teto de
+      # 12 min do job; sem isso o runner mata o passo como `cancelled` e o
+      # agregado marcaria o check como pulado em vez de vermelho.
       - name: 🧪 Run Vitest shard ${{ matrix.shard }}/3
-        run: bun vitest run --shard=${{ matrix.shard }}/3
+        run: timeout 11m bun vitest run --shard=${{ matrix.shard }}/3
         env:
           CI: true
 

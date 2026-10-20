@@ -55,6 +55,24 @@ test('conteudo diferente e recusado nomeando o statement', () => {
   assert.match(r.motivo, /statement 2/);
 });
 
+test('GA05: cabecalho `--` do CLI no ledger e normalizado (run 37355980323)', () => {
+  const arquivo = ['create table a ();', 'select 1;'];
+  const ledgerComCabecalho = JSON.stringify([
+    '-- ledger exportado pelo CLI em 2026-10-15',
+    'create table a ();',
+    'select 1;',
+  ]);
+  const r = avaliarStatementsDoLedger({ bruto: ledgerComCabecalho, statementsDoArquivo: arquivo });
+  assert.equal(r.ok, true);
+  assert.equal(r.total, 2);
+});
+
+test('GA05: arquivo diferente continua reprovando mesmo com cabecalho', () => {
+  const ledgerComCabecalho = JSON.stringify(['-- cabecalho do CLI', 'create table a ();', 'select 2;']);
+  const r = avaliarStatementsDoLedger({ bruto: ledgerComCabecalho, statementsDoArquivo: ['create table a ();', 'select 1;'] });
+  assert.equal(r.ok, false);
+});
+
 test('ledger igual ao arquivo passa e informa o total', () => {
   const r = avaliarStatementsDoLedger({ bruto: ARQUIVO, statementsDoArquivo: JSON.parse(ARQUIVO) });
   assert.equal(r.ok, true);
