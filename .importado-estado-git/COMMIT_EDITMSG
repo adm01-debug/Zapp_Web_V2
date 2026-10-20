@@ -1,0 +1,7 @@
+test(banco): refaz prova da trilha de auditoria administrativa em script db-audit
+
+Substitui supabase/tests/audit_admin_changes.sql por
+scripts/db-audit/audit-admin-changes.test.sh (padrao db-audit: PG17
+descartavel, roles reais, migration aplicada de verdade, rollback
+executado) + registro na ALLOWLIST do check-test-inventory. Migration
+20261013042745 inalterada.
