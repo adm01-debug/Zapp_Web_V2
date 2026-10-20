@@ -1,0 +1,16 @@
+PROJETO=Zapp_Web_V2
+SLUG=admin-email-health
+ID=26101117016dff
+BRANCH=v2/admin-email-health-26101117016dff
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-email-health-26101117016dff
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-11T17:01:24-03:00
+KANBAN=t_f7a0c254
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-email-health-26101117016dff/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-11
+DB_LOCAL=v2-26101117016dff
+APLICADA_LOCAL=20261011200753_admin_email_accounts_health.sql sha=86405ec28ea3f67b
+PRONTO_SHA=b0f7a5bec4e6507d76f733609eec0937164e7c4b

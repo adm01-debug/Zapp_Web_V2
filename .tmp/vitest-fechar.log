@@ -1,0 +1,10 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-email-health-26101117016dff
+
+·······
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  17:25:37
+   Duration  324ms (transform 28ms, setup 0ms, import 44ms, tests 8ms, environment 0ms)
+

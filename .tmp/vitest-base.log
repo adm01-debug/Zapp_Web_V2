@@ -1,0 +1,26 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-email-health-26101117016dff/.tmp/prova-base
+
+
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/contracts/admin-email-health-rpc.contract.test.ts [ tests/contracts/admin-email-health-rpc.contract.test.ts ]
+Error: migration admin_email_accounts_health nao encontrada
+ ❯ lerMigration tests/contracts/admin-email-health-rpc.contract.test.ts:19:20
+     17|     (f) => f.includes('admin_email_accounts_health') && f.endsWith('.s…
+     18|   );
+     19|   if (!nome) throw new Error('migration admin_email_accounts_health na…
+       |                    ^
+     20|   return readFileSync(join(DIR_MIGRACOES, nome), 'utf8');
+     21| }
+ ❯ tests/contracts/admin-email-health-rpc.contract.test.ts:23:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  17:25:39
+   Duration  346ms (transform 29ms, setup 0ms, import 0ms, tests 0ms, environment 0ms)
+
