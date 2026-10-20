@@ -3,13 +3,33 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button, MotionButton } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
-  DropdownMenuSeparator, DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-  Smartphone, MoreVertical, Trash2, Copy, QrCode, Wifi, WifiOff,
-  Star, Clock, Loader2, RefreshCw, History, Link2, Settings,
-  BatteryCharging, BatteryLow, BatteryMedium, BatteryFull, FileClock, HeartPulse,
+  Smartphone,
+  MoreVertical,
+  Trash2,
+  Copy,
+  QrCode,
+  Wifi,
+  WifiOff,
+  Star,
+  Clock,
+  Loader2,
+  RefreshCw,
+  History,
+  Link2,
+  Settings,
+  BatteryCharging,
+  BatteryLow,
+  BatteryMedium,
+  BatteryFull,
+  FileClock,
+  HeartPulse,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -38,7 +58,8 @@ interface ConnectionCardProps {
   disconnecting?: boolean;
   onShowQrCode: (c: WhatsAppConnection) => void;
   onCopyId: (id: string) => void;
-  onDisconnect: (c: WhatsAppConnection) => void | Promise<void>;
+  /** `false` (ou rejeição) = a sessão NÃO caiu; o diálogo fica aberto com o motivo (t_cce2f0f7). */
+  onDisconnect: (c: WhatsAppConnection) => boolean | void | Promise<boolean | void>;
   onSetDefault: (id: string) => void;
   onDelete: (c: WhatsAppConnection) => void;
   onBusinessHours: (id: string, name: string) => void;
@@ -54,10 +75,21 @@ interface ConnectionCardProps {
 }
 
 export function ConnectionCard({
-  connection, syncingHistory, disconnecting = false,
-  onShowQrCode, onCopyId, onDisconnect, onSetDefault, onDelete,
-  onBusinessHours, onQueues, onSettings, onSyncHistory,
-  historyNotSupported = false, onHealthCheck, checkingHealth,
+  connection,
+  syncingHistory,
+  disconnecting = false,
+  onShowQrCode,
+  onCopyId,
+  onDisconnect,
+  onSetDefault,
+  onDelete,
+  onBusinessHours,
+  onQueues,
+  onSettings,
+  onSyncHistory,
+  historyNotSupported = false,
+  onHealthCheck,
+  checkingHealth,
 }: ConnectionCardProps) {
   const status = statusConfig[connection.status] || statusConfig.disconnected;
   const StatusIcon = status.icon;
@@ -72,95 +104,202 @@ export function ConnectionCard({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [auditOpen, setAuditOpen] = useState(false);
 
-  // Enquanto o desconectar está em voo (estado `disconnecting` vindo da view),
-  // o diálogo fica aberto com o spinner; só fecha quando onDisconnect resolve.
+  // Enquanto o desconectar está em voo (estado `disconnecting` vindo da view,
+  // OU `disconnectPending` local — a chamada deste diálogo pode estar em
+  // curso antes da view propagar `disconnecting`), o diálogo fica aberto com
+  // o spinner; só fecha quando `onDisconnect` resolve com sucesso.
+  //
+  // t_cce2f0f7: a sessão pode NÃO cair (Evolution GO recusa, ou o vínculo
+  // local não atualiza) — `onDisconnect` devolve `false` ou rejeita. Nesses
+  // dois casos o diálogo continua aberto com o motivo em `role="alert"`;
+  // só fecha quando a chamada confirma sucesso.
   const handleConfirmDisconnect = async () => {
-    await onDisconnect(connection);
-    setConfirmDisconnect(false);
+    if (disconnectPending) return;
+    setDisconnectPending(true);
+    setDisconnectError(null);
+    try {
+      const resultado = await onDisconnect(connection);
+      if (resultado === false) {
+        setDisconnectError('Não foi possível desconectar. Tente novamente.');
+        return;
+      }
+      setConfirmDisconnect(false);
+    } catch (err) {
+      setDisconnectError(
+        err instanceof Error ? err.message : 'Não foi possível desconectar. Tente novamente.'
+      );
+    } finally {
+      setDisconnectPending(false);
+    }
+  };
+
+  // `onOpenChange` do Radix dispara com `false` no Esc/clique fora — mesmo
+  // com o botão "Cancelar" desabilitado durante a chamada. Trava o fechamento
+  // enquanto `disconnectPending`; fora disso, fechar limpa o motivo da
+  // tentativa anterior (o erro é da tentativa, não do estado da conexão).
+  const handleDisconnectDialogOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      if (disconnectPending) return;
+      setConfirmDisconnect(false);
+      setDisconnectError(null);
+    } else {
+      setConfirmDisconnect(true);
+    }
   };
 
   return (
     <motion.div whileHover={{ y: -2, boxShadow: '0 8px 30px hsl(var(--primary) / 0.1)' }}>
-      <Card className="border border-secondary/20 bg-card hover:border-secondary/40 transition-all min-w-0">
+      <Card className="min-w-0 border border-secondary/20 bg-card transition-all hover:border-secondary/40">
         <CardContent className="p-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex min-w-0 items-center gap-4">
               <motion.div
                 animate={connection.status === 'connecting' ? { rotate: 360 } : {}}
-                transition={{ duration: 1, repeat: connection.status === 'connecting' ? Infinity : 0, ease: 'linear' }}
-                className={cn('w-12 h-12 shrink-0 rounded-xl flex items-center justify-center', connection.status === 'connected' ? 'bg-whatsapp/10' : 'bg-muted')}
+                transition={{
+                  duration: 1,
+                  repeat: connection.status === 'connecting' ? Infinity : 0,
+                  ease: 'linear',
+                }}
+                className={cn(
+                  'flex h-12 w-12 shrink-0 items-center justify-center rounded-xl',
+                  connection.status === 'connected' ? 'bg-whatsapp/10' : 'bg-muted'
+                )}
               >
-                <Smartphone className={cn('w-6 h-6', connection.status === 'connected' ? 'text-whatsapp' : 'text-muted-foreground')} />
+                <Smartphone
+                  className={cn(
+                    'h-6 w-6',
+                    connection.status === 'connected' ? 'text-whatsapp' : 'text-muted-foreground'
+                  )}
+                />
               </motion.div>
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <h3 className="truncate font-semibold">{connection.name}</h3>
-                  {connection.is_default && <Badge variant="secondary" className="text-xs"><Star className="w-3 h-3 mr-1" />Padrão</Badge>}
-                  <Badge variant="outline" className={cn('text-xs',
-                    connection.status === 'connected' && 'border-status-online text-status-online',
-                    !['connected', 'connecting', 'pending', 'qr_pending'].includes(connection.status) && 'border-status-offline text-status-offline',
-                    ['connecting', 'pending', 'qr_pending'].includes(connection.status) && 'border-status-away text-status-away'
-                  )}>
-                    <StatusIcon className={cn('w-3 h-3 mr-1', connection.status === 'connecting' && 'animate-spin')} />
+                  {connection.is_default && (
+                    <Badge variant="secondary" className="text-xs">
+                      <Star className="mr-1 h-3 w-3" />
+                      Padrão
+                    </Badge>
+                  )}
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      'text-xs',
+                      connection.status === 'connected' &&
+                        'border-status-online text-status-online',
+                      !['connected', 'connecting', 'pending', 'qr_pending'].includes(
+                        connection.status
+                      ) && 'border-status-offline text-status-offline',
+                      ['connecting', 'pending', 'qr_pending'].includes(connection.status) &&
+                        'border-status-away text-status-away'
+                    )}
+                  >
+                    <StatusIcon
+                      className={cn(
+                        'mr-1 h-3 w-3',
+                        connection.status === 'connecting' && 'animate-spin'
+                      )}
+                    />
                     {status.label}
                   </Badge>
                   <BusinessHoursIndicator connectionId={connection.id} />
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="truncate text-sm text-muted-foreground">{connection.phone_number}</p>
+                  <p className="truncate text-sm text-muted-foreground">
+                    {connection.phone_number}
+                  </p>
                   {connection.battery_level != null && (
                     <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                      {connection.is_plugged ? <BatteryCharging className="w-3.5 h-3.5 text-success" /> :
-                       connection.battery_level <= 20 ? <BatteryLow className="w-3.5 h-3.5 text-destructive" /> :
-                       connection.battery_level <= 50 ? <BatteryMedium className="w-3.5 h-3.5 text-warning" /> :
-                       <BatteryFull className="w-3.5 h-3.5 text-success" />}
+                      {connection.is_plugged ? (
+                        <BatteryCharging className="h-3.5 w-3.5 text-success" />
+                      ) : connection.battery_level <= 20 ? (
+                        <BatteryLow className="h-3.5 w-3.5 text-destructive" />
+                      ) : connection.battery_level <= 50 ? (
+                        <BatteryMedium className="h-3.5 w-3.5 text-warning" />
+                      ) : (
+                        <BatteryFull className="h-3.5 w-3.5 text-success" />
+                      )}
                       {connection.battery_level}%
                     </span>
                   )}
                   {(connection.retry_count ?? 0) > 0 && (
-                    <Badge variant="outline" className="text-3xs border-warning/30 text-warning">
+                    <Badge variant="outline" className="border-warning/30 text-3xs text-warning">
                       Tentativa {connection.retry_count}/{connection.max_retries || 5}
                     </Badge>
                   )}
                 </div>
                 {connection.health_status && (
-                  <div className="flex items-center gap-2 mt-1">
+                  <div className="mt-1 flex items-center gap-2">
                     <span className="relative flex h-2 w-2">
-                      {connection.health_status === 'healthy' && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />}
-                      <span className={cn('relative inline-flex rounded-full h-2 w-2',
-                        connection.health_status === 'healthy' && 'bg-success',
-                        connection.health_status === 'degraded' && 'bg-warning',
-                        (connection.health_status === 'error' || connection.health_status === 'timeout' || connection.health_status === 'disconnected') && 'bg-destructive',
-                      )} />
+                      {connection.health_status === 'healthy' && (
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-75" />
+                      )}
+                      <span
+                        className={cn(
+                          'relative inline-flex h-2 w-2 rounded-full',
+                          connection.health_status === 'healthy' && 'bg-success',
+                          connection.health_status === 'degraded' && 'bg-warning',
+                          (connection.health_status === 'error' ||
+                            connection.health_status === 'timeout' ||
+                            connection.health_status === 'disconnected') &&
+                            'bg-destructive'
+                        )}
+                      />
                     </span>
                     <span className="text-3xs text-muted-foreground">
-                      {connection.health_status === 'healthy' ? 'Saudável' : connection.health_status === 'degraded' ? 'Degradado' :
-                       connection.health_status === 'timeout' ? 'Timeout' : connection.health_status === 'error' ? 'Erro' : 'Desconectado'}
-                      {connection.health_response_ms != null && <> · {connection.health_response_ms}ms</>}
+                      {connection.health_status === 'healthy'
+                        ? 'Saudável'
+                        : connection.health_status === 'degraded'
+                          ? 'Degradado'
+                          : connection.health_status === 'timeout'
+                            ? 'Timeout'
+                            : connection.health_status === 'error'
+                              ? 'Erro'
+                              : 'Desconectado'}
+                      {connection.health_response_ms != null && (
+                        <> · {connection.health_response_ms}ms</>
+                      )}
                     </span>
                   </div>
                 )}
-                {connection.last_health_check && !Number.isNaN(new Date(connection.last_health_check).getTime()) && (
-                  <p className="text-3xs text-muted-foreground mt-1">
-                    Último check {formatDistanceToNow(new Date(connection.last_health_check), { addSuffix: true, locale: ptBR })}
-                  </p>
-                )}
+                {connection.last_health_check &&
+                  !Number.isNaN(new Date(connection.last_health_check).getTime()) && (
+                    <p className="mt-1 text-3xs text-muted-foreground">
+                      Último check{' '}
+                      {formatDistanceToNow(new Date(connection.last_health_check), {
+                        addSuffix: true,
+                        locale: ptBR,
+                      })}
+                    </p>
+                  )}
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button variant="outline" size="sm" onClick={() => onCopyId(connection.id)}><Copy className="w-4 h-4 mr-2" />Copiar ID</Button>
+                <Button variant="outline" size="sm" onClick={() => onCopyId(connection.id)}>
+                  <Copy className="mr-2 h-4 w-4" />
+                  Copiar ID
+                </Button>
               </motion.div>
               {connection.status !== 'connected' && (
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Button variant="outline" size="sm" onClick={() => onShowQrCode(connection)} className="border-whatsapp text-whatsapp hover:bg-whatsapp hover:text-primary-foreground">
-                    <QrCode className="w-4 h-4 mr-2" />Conectar
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onShowQrCode(connection)}
+                    className="border-whatsapp text-whatsapp hover:bg-whatsapp hover:text-primary-foreground"
+                  >
+                    <QrCode className="mr-2 h-4 w-4" />
+                    Conectar
                   </Button>
                 </motion.div>
               )}
               {connection.status === 'connected' && (
-                <motion.div whileHover={{ scale: disconnecting ? 1 : 1.05 }} whileTap={{ scale: disconnecting ? 1 : 0.95 }}>
+                <motion.div
+                  whileHover={{ scale: disconnecting ? 1 : 1.05 }}
+                  whileTap={{ scale: disconnecting ? 1 : 0.95 }}
+                >
                   <Button
                     variant="outline"
                     size="sm"
@@ -169,44 +308,98 @@ export function ConnectionCard({
                     className={cn(disconnecting && 'motion-safe:animate-pulse')}
                     onClick={() => setConfirmDisconnect(true)}
                   >
-                    {disconnecting
-                      ? <><Loader2 className="w-4 h-4 mr-2 motion-safe:animate-spin" />Desconectando…</>
-                      : <><WifiOff className="w-4 h-4 mr-2" />Desconectar</>}
+                    {disconnecting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 motion-safe:animate-spin" />
+                        Desconectando…
+                      </>
+                    ) : (
+                      <>
+                        <WifiOff className="mr-2 h-4 w-4" />
+                        Desconectar
+                      </>
+                    )}
                   </Button>
                 </motion.div>
               )}
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <MotionButton variant="ghost" size="icon" aria-label={`Ações da conexão ${connection.name}`}><MoreVertical className="w-4 h-4" /></MotionButton>
+                  <MotionButton
+                    variant="ghost"
+                    size="icon"
+                    aria-label={`Ações da conexão ${connection.name}`}
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                  </MotionButton>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => onSetDefault(connection.id)}><Star className="w-4 h-4 mr-2" />Definir como padrão</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onShowQrCode(connection)}><QrCode className="w-4 h-4 mr-2" />Gerar QR Code</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onBusinessHours(connection.id, connection.name)}><Clock className="w-4 h-4 mr-2" />Horário de Atendimento</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onQueues(connection.id, connection.name)}><Link2 className="w-4 h-4 mr-2" />Vincular Filas</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onSetDefault(connection.id)}>
+                    <Star className="mr-2 h-4 w-4" />
+                    Definir como padrão
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onShowQrCode(connection)}>
+                    <QrCode className="mr-2 h-4 w-4" />
+                    Gerar QR Code
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onBusinessHours(connection.id, connection.name)}>
+                    <Clock className="mr-2 h-4 w-4" />
+                    Horário de Atendimento
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onQueues(connection.id, connection.name)}>
+                    <Link2 className="mr-2 h-4 w-4" />
+                    Vincular Filas
+                  </DropdownMenuItem>
                   {connection.instance_id && (
-                    <DropdownMenuItem onClick={() => onSettings(connection.instance_id!, connection.name)}><Settings className="w-4 h-4 mr-2" />Configurações & Perfil</DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => onSettings(connection.instance_id!, connection.name)}
+                    >
+                      <Settings className="mr-2 h-4 w-4" />
+                      Configurações & Perfil
+                    </DropdownMenuItem>
                   )}
                   {connection.instance_id && !historyNotSupported && (
-                    <DropdownMenuItem disabled={syncingHistory === connection.id} onClick={() => onSyncHistory(connection)}>
-                      {syncingHistory === connection.id ? <Loader2 className="w-4 h-4 mr-2 motion-safe:animate-spin" /> : <History className="w-4 h-4 mr-2" />}
+                    <DropdownMenuItem
+                      disabled={syncingHistory === connection.id}
+                      onClick={() => onSyncHistory(connection)}
+                    >
+                      {syncingHistory === connection.id ? (
+                        <Loader2 className="mr-2 h-4 w-4 motion-safe:animate-spin" />
+                      ) : (
+                        <History className="mr-2 h-4 w-4" />
+                      )}
                       Sincronizar Histórico
                     </DropdownMenuItem>
                   )}
                   {isSupervisor && onHealthCheck && (
-                    <DropdownMenuItem disabled={checkingHealth === connection.id} onClick={() => onHealthCheck(connection)}>
-                      {checkingHealth === connection.id ? <Loader2 className="w-4 h-4 mr-2 motion-safe:animate-spin" /> : <HeartPulse className="w-4 h-4 mr-2" />}
+                    <DropdownMenuItem
+                      disabled={checkingHealth === connection.id}
+                      onClick={() => onHealthCheck(connection)}
+                    >
+                      {checkingHealth === connection.id ? (
+                        <Loader2 className="mr-2 h-4 w-4 motion-safe:animate-spin" />
+                      ) : (
+                        <HeartPulse className="mr-2 h-4 w-4" />
+                      )}
                       Checar agora
                     </DropdownMenuItem>
                   )}
                   {isAdmin && (
                     <>
                       {connection.instance_id && (
-                        <DropdownMenuItem onClick={() => setAuditOpen(true)}><FileClock className="w-4 h-4 mr-2" />Auditoria da conexão</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setAuditOpen(true)}>
+                          <FileClock className="mr-2 h-4 w-4" />
+                          Auditoria da conexão
+                        </DropdownMenuItem>
                       )}
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem className="text-destructive" onClick={() => setConfirmDelete(true)}><Trash2 className="w-4 h-4 mr-2" />Excluir</DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="text-destructive"
+                        onClick={() => setConfirmDelete(true)}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Excluir
+                      </DropdownMenuItem>
                     </>
                   )}
                 </DropdownMenuContent>
@@ -221,7 +414,8 @@ export function ConnectionCard({
         onOpenChange={handleDisconnectDialogOpenChange}
         connectionName={connection.name}
         phoneNumber={connection.phone_number}
-        pending={disconnecting}
+        pending={disconnecting || disconnectPending}
+        errorMessage={disconnectError ?? undefined}
         onConfirm={handleConfirmDisconnect}
       />
       {isAdmin && (
