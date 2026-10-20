@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 96dd72dc5f5db919bdbb4ffdc269510addca6165 Hermes Senior <hermes-senior@promobrindes.local> 1791873158 -0300	
+96dd72dc5f5db919bdbb4ffdc269510addca6165 96dd72dc5f5db919bdbb4ffdc269510addca6165 Hermes Senior <hermes-senior@promobrindes.local> 1791873159 -0300	reset: moving to HEAD
+96dd72dc5f5db919bdbb4ffdc269510addca6165 5c98d1d200325bb47664ae52ca788f80c3594f4d Hermes Senior <hermes-senior@promobrindes.local> 1791875963 -0300	commit: fix(seguranca): autoria nao falsificavel em encerramentos, eventos, chamadas e e-mail; funcoes de papel sem oraculo
+5c98d1d200325bb47664ae52ca788f80c3594f4d da2b9d879aa1ed31cfd0dbbe0fa313964d4c501f Hermes Senior <hermes-senior@promobrindes.local> 1791876105 -0300	commit: docs(banco): precisao do comentario sobre WITH CHECK implicito do Postgres
+da2b9d879aa1ed31cfd0dbbe0fa313964d4c501f 039b9274cca61673b5bbaba014958b12ade9e917 Hermes Senior <hermes-senior@promobrindes.local> 1791876213 -0300	commit: docs(banco): relato da entrega de autoria e oraculo de papel
+039b9274cca61673b5bbaba014958b12ade9e917 bf1a2552ffc802557415f04ec9f6c75f3e95e077 Hermes Senior <hermes-senior@promobrindes.local> 1791876250 -0300	commit: docs(banco): relato bate com os tres arquivos do diff

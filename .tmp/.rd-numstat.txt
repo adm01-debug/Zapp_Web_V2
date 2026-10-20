@@ -1,0 +1,2 @@
+215	0	supabase/migrations/20261013210006_autoria_e_oraculo_de_papel.sql
+282	0	supabase/tests/autoria_e_oraculo_de_papel.sql

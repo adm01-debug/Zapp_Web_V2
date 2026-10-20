@@ -1,5 +1,7 @@
 -- autoria_e_oraculo_de_papel
--- Rollback: devolve os 4 corpos anteriores das funcoes de papel, recria as 4 policies originais (sem autoria/WITH CHECK) e remove os 2 gatilhos + 2 funcoes de gatilho desta migration.
+-- Rollback: devolve os 4 corpos anteriores das funcoes de papel (com o EXECUTE para
+-- public/anon que elas tinham), recria as 4 policies originais (sem autoria/WITH CHECK)
+-- e remove os 2 gatilhos + 2 funcoes de gatilho desta migration.
 -- Rollback (SQL executável, na ordem):
 --   create or replace function public.has_role(_user_id uuid, _role public.app_role) returns boolean language sql stable security definer set search_path = public as $f$ select exists (select 1 from public.user_roles where user_id = _user_id and role = _role) $f$;
 --   create or replace function public.is_admin_or_supervisor(_user_id uuid) returns boolean language sql stable security definer set search_path = public as $f$ select exists (select 1 from public.user_roles where user_id = _user_id and role in ('admin','supervisor')) $f$;
@@ -17,6 +19,12 @@
 --   create policy "Users can update their calls" on public.calls for update to authenticated using (agent_id in (select id from public.profiles where user_id = auth.uid()));
 --   drop policy if exists "Users can update messages of own accounts" on public.email_messages;
 --   create policy "Users can update messages of own accounts" on public.email_messages for update to authenticated using (exists (select 1 from public.gmail_accounts ga where ga.id = gmail_account_id and (ga.user_id = auth.uid() or public.is_admin_or_supervisor(auth.uid()))));
+--   grant execute on function public.has_role(uuid, public.app_role) to public, anon;
+--   grant execute on function public.is_admin_or_supervisor(uuid) to public, anon;
+--   grant execute on function public.is_admin(uuid) to public, anon;
+--   grant execute on function public.get_profile_role_for_check(uuid) to public, anon;
+--   (as 4 funcoes de papel nascem com EXECUTE para PUBLIC por padrao; a migration
+--   revoga de public/anon e o rollback devolve, alem dos corpos, esse EXECUTE).
 --
 -- Defeitos corrigidos (um por frente):
 --   F1 (autoria)  conversation_closures.closed_by e conversation_events.performed_by nao
@@ -37,9 +45,14 @@
 --                 comum so consulta o proprio uid. Fail-closed (retorna false/vazio),
 --                 sem excecao que distinga usuario existente de inexistente.
 --
--- Sem DDL destrutivo: nenhum DROP de tabela/coluna, nenhum DELETE/TRUNCATE, nenhum GRANT
--- novo. As funcoes de gatilho nascem com EXECUTE fechado (PUBLIC/anon/authenticated),
--- como manda 20261001191230.
+-- Sem DDL destrutivo: nenhum DROP de tabela/coluna, nenhum DELETE/TRUNCATE. Ha
+-- REVOKE de PUBLIC/anon + GRANT a authenticated/service_role nas 4 funcoes de papel
+-- (fechamento exigido pela guarda check-secdef-public-execute) e nas 2 funcoes de
+-- gatilho novas (EXECUTE fechado de PUBLIC/anon/authenticated), como manda
+-- 20261001191230. As policies de INSERT de closures/eventos sao recriadas com WITH
+-- CHECK de autoria espelhando o gatilho (a de eventos troca 'performed_by is null
+-- or performed_by = ...' por 'performed_by = ...', pois o gatilho carimba sempre o
+-- chamador). O Rollback no topo desfaz tudo isso.
 
 -- ============================================================================
 -- F1. Autoria nao falsificavel (gatilho BEFORE INSERT)

@@ -1,0 +1,16 @@
+PROJETO=Zapp_Web_V2
+SLUG=autoria-oraculo-papel
+ID=2610130332ad03
+BRANCH=v2/autoria-oraculo-papel-2610130332ad03
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/autoria-oraculo-papel-2610130332ad03
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T03:32:39-03:00
+KANBAN=t_a0b61d68
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/autoria-oraculo-papel-2610130332ad03/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-2610130332ad03
+APLICADA_LOCAL=20261013210006_autoria_e_oraculo_de_papel.sql sha=d87f1dc484f1cf7e
+PRONTO_SHA=bf1a2552ffc802557415f04ec9f6c75f3e95e077

@@ -40,7 +40,8 @@ insert into public.user_roles (user_id, role) values
 
 insert into public.contacts (id, name, phone, assigned_to) values
   ('00000000-0000-0000-0000-0000000c0001', 'Contato Um',  '+5511900000001', '00000000-0000-0000-0000-0000000f0002'),
-  ('00000000-0000-0000-0000-0000000c0002', 'Contato Dois','+5511900000002', '00000000-0000-0000-0000-0000000f0002');
+  ('00000000-0000-0000-0000-0000000c0002', 'Contato Dois','+5511900000002', '00000000-0000-0000-0000-0000000f0002'),
+  ('00000000-0000-0000-0000-0000000c0003', 'Contato Tres','+5511900000003', '00000000-0000-0000-0000-0000000f0002');
 
 insert into public.calls (id, contact_id, agent_id, direction, status) values
   ('00000000-0000-0000-0000-0000000d0005', '00000000-0000-0000-0000-0000000c0001', '00000000-0000-0000-0000-0000000f0002', 'outbound', 'ended');
@@ -113,6 +114,53 @@ begin
     raise exception 'F1d FALHOU: autoria forjada do evento persistiu (%)', v_perf;
   end if;
   raise notice 'F1d OK: autoria forjada do evento foi sobrescrita';
+end $$;
+
+-- ============================================================================
+-- F1e/F1f. RPCs DEFINER chamadas por autenticado passam pelo mesmo carimbo
+-- ============================================================================
+-- F1e: set_conversation_status como agente grava o closure com o chamador
+-- (antes: closed_by NULL) e a RPC segue funcionando sob a nova WITH CHECK.
+-- Usa contato virgem (c0003): o insert direto de F1a sincroniza o status do
+-- contato via trg_sync_contact_status_on_closure e o re-fechamento sem
+-- reabertura e rejeitado — a RPC faria no-op e nao haveria linha para conferir.
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000a0002","role":"authenticated"}';
+set local role authenticated;
+do $$
+declare v_closed uuid; v_st text;
+begin
+  perform public.set_conversation_status('00000000-0000-0000-0000-0000000c0003', 'resolved', 'f1e-teste');
+  select conversation_status into v_st from public.contacts where id = '00000000-0000-0000-0000-0000000c0003';
+  if v_st is distinct from 'resolved' then
+    raise exception 'F1e FALHOU: set_conversation_status nao resolveu (status=%)', v_st;
+  end if;
+  select closed_by into v_closed from public.conversation_closures where contact_id = '00000000-0000-0000-0000-0000000c0003' and close_reason = 'f1e-teste';
+  if v_closed is distinct from '00000000-0000-0000-0000-0000000f0002' then
+    raise exception 'F1e FALHOU: closure da RPC ficou closed_by=% (esperado o chamador)', v_closed;
+  end if;
+  raise notice 'F1e OK: set_conversation_status grava o chamador e resolve';
+end $$;
+
+-- F1f: transfer_conversation como autenticado (admin) grava o evento com o
+-- chamador (a RPC ja escrevia o autor explicito: o gatilho preserva o valor) e
+-- a transferencia segue atomica sob a nova policy de INSERT de eventos.
+-- (Agente nao-admin nao transfere para outro agente: o gatilho
+-- prevent_contact_assignee_hijack nega — comportamento anterior preservado.)
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000a0001","role":"authenticated"}';
+set local role authenticated;
+do $$
+declare v_event uuid; v_perf uuid; v_assigned uuid;
+begin
+  select public.transfer_conversation('00000000-0000-0000-0000-0000000c0002', '00000000-0000-0000-0000-0000000f0003', null, 'f1f-teste') into v_event;
+  select assigned_to into v_assigned from public.contacts where id = '00000000-0000-0000-0000-0000000c0002';
+  if v_assigned is distinct from '00000000-0000-0000-0000-0000000f0003' then
+    raise exception 'F1f FALHOU: transferencia nao moveu o contato (assigned_to=%)', v_assigned;
+  end if;
+  select performed_by into v_perf from public.conversation_events where id = v_event;
+  if v_perf is distinct from '00000000-0000-0000-0000-0000000f0001' then
+    raise exception 'F1f FALHOU: evento da transferencia ficou performed_by=% (esperado o chamador admin)', v_perf;
+  end if;
+  raise notice 'F1f OK: transfer_conversation grava o chamador e move o contato';
 end $$;
 
 -- ============================================================================
@@ -206,6 +254,22 @@ begin
     raise exception 'F3e FALHOU: agente nao pode estar marcado como admin (%)', v;
   end if;
   raise notice 'F3a-e OK: agente nao consulta papel alheio e nao ha oraculo';
+end $$;
+
+-- (a2) o usuario comum CONTINUA consultando o proprio papel (nao foi bloqueado
+-- junto): has_role proprio = true e get_profile_role_for_check proprio = 1 linha.
+do $$
+declare v boolean; v_n int;
+begin
+  v := public.has_role('00000000-0000-0000-0000-0000000a0002', 'agent');
+  if v is not true then
+    raise exception 'F3m FALHOU: agente nao consulta o proprio papel (has_role proprio=%)', v;
+  end if;
+  select count(*) into v_n from public.get_profile_role_for_check('00000000-0000-0000-0000-0000000a0002');
+  if v_n <> 1 then
+    raise exception 'F3n FALHOU: get_profile_role_for_check proprio devolveu % linha(s)', v_n;
+  end if;
+  raise notice 'F3m-n OK: usuario comum segue consultando o proprio papel';
 end $$;
 
 -- (b) admin pode consultar qualquer papel (regra interna preservada).

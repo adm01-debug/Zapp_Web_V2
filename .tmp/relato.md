@@ -1,59 +1,75 @@
 Especialista: workersql
 
-## O que mudou e por quê
-- supabase/migrations/20261013210006_autoria_e_oraculo_de_papel.sql (novo):
-  - F1 autoria — dois gatilhos BEFORE INSERT carimbam o autor a partir de auth.uid():
-    conversation_closures.closed_by e conversation_events.performed_by. O caminho FSM
-    (set_conversation_status) gravava closed_by NULL e o caminho de transferência gravava
-    performed_by NULL, deixando a autoria ausente/forjável. Com JWT ausente
-    (service_role/interno) o valor explícito é preservado, então o retrato de autoria
-    das RPCs DEFINER e de backfills não muda. As funções de gatilho nascem com EXECUTE
-    fechado para PUBLIC/anon/authenticated (regra 20261001191230).
-  - F2 UPDATE — calls e email_messages ganham WITH CHECK explícito espelhando o USING
-    (não reatribuir o dono). Correção do cartão aplicada como pedida; ver ressalva
-    abaixo sobre o comportamento anterior.
-  - F3 oráculo — has_role, is_admin_or_supervisor, is_admin e get_profile_role_for_check
-    passam a usar public.secd_caller_ok (o mesmo helper já usado em 20261007004545):
-    interno (sem JWT) e admin/supervisor passam; usuário comum só consulta o próprio
-    uid. Fail-closed (retorna false / conjunto vazio), sem exceção que distinga id
-    existente de inexistente — logo não há oráculo novo. ACL mantida: CREATE OR REPLACE
-    preserva os grants; as quatro já eram EXECUTE de authenticated/service_role e
-    negadas a anon/PUBLIC (conferido: anon=f, auth=t, svc=t).
-- supabase/tests/autoria_e_oraculo_de_papel.sql (novo): prova F1/F2/F3 no banco local,
-  exercitando RLS pelo papel real (set local role authenticated + request.jwt.claims),
-  em uma transação com ROLLBACK no fim.
-- .tmp/relato.md: este próprio relato (arquivo versionado na branch) — fecha os três
-  arquivos que o diff mostra.
+Refazer 1 da recusa (4 pontos). O que mudou neste ciclo: testes F1e/F1f/F3m/F3n no
+arquivo de prova + correcao de 2 comentarios falsos na migration + 4 linhas de
+GRANT no Rollback. A migration e os testes F1a-d/F2/F3a-l sao do trabalho anterior.
 
-## Prova
-- vermelho antes: `zapp-db-local psql . v2-2610130332ad03 -v ON_ERROR_STOP=1 < .tmp/vermelho_antes.sql`
-  → `RED-F1 closed_by=NULL` / `RED-F1 performed_by=NULL` / `RED-F3 is_admin_or_supervisor(admin alheio)=true`
-  (o script reverte a migration dentro da transação; .tmp não é commitado).
-- verde depois: `zapp-db-local psql . v2-2610130332ad03 -v ON_ERROR_STOP=1 < supabase/tests/autoria_e_oraculo_de_papel.sql`
-  → EXIT=0, 12 linhas `OK:` (F1a-d autoria carimbada e forja sobrescrita; F2b/F2d
-  reatribuição negada por RLS e F2e/F2f alvo intacto; F3a-e agente não lê papel alheio
-  sem oráculo; F3f-h admin lê qualquer papel; F3i-j interno segue lendo; F3k anon
-  bloqueado; F3l nenhuma DEFINER da migration executável por anon).
-- rollback executado: `... < .tmp/testa_rollback.sql` → `ROLLBACK OK: gatilhos/funcoes de
-  autoria removidos` e `ROLLBACK OK: corpos antigos das funcoes de papel restaurados` (EXIT=0).
-- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO`.
+Ponto 1 (relato x diff): corrigido aqui e na migration. O que o diff faz de verdade:
+(i) recria as 2 policies de INSERT com WITH CHECK de autoria espelhando o gatilho
+(closures ganha `closed_by = get_profile_id_for_user(auth.uid())`; eventos troca
+`performed_by is null or ...` por `performed_by = ...`, pois o gatilho carimba sempre
+o chamador); (ii) REVOKE de PUBLIC/anon + GRANT a authenticated/service_role nas 4
+funcoes de papel (exigido pela guarda check-secdef-public-execute) e EXECUTE fechado
+nas 2 funcoes de gatilho novas. O comentario "nenhum GRANT novo" da migration foi
+corrigido (linhas 46-56) e o Rollback ganhou as 4 linhas que devolvem o EXECUTE a
+public/anon. Motivo: sem o WITH CHECK, o carimbo do gatilho seria a unica barreira;
+sem o REVOKE, anon executaria oraculo de papel (F3l prova: 0 funcoes alcancaveis).
 
-## Ressalva honesta (F2)
-No Postgres, policy de UPDATE só com USING usa o USING como WITH CHECK implícito —
-comprovei no vermelho-antes que a reatribuição de calls já era negada antes da mudança.
-Então o WITH CHECK explícito pedido pelo cartão não fecha um furo existente: ele
-documenta/audita a regra em pg_policies (era invisível). O que realmente fecha furo é
-F1 (autoria) e F3 (oráculo). As duas provas que discriminam a correção são F1 e F3.
+Ponto 2 (retrato das DEFINER): a afirmacao antiga estava errada e foi retirada. O
+gatilho sobrescreve sim o closed_by/performed_by explicito das RPCs DEFINER quando
+ha JWT (auth.uid() presente). Prova nova no teste: F1e chama set_conversation_status
+como agente e confere status=resolved + closed_by=chamador; F1f chama
+transfer_conversation como admin e confere assigned_to movido + performed_by=chamador
+(a RPC ja escrevia o autor explicito; o gatilho preserva o valor quando nao ha JWT
+— service_role/interno). Nenhuma RPC grava outro autor ou NULL de proposito, entao
+nenhum caso precisou de excecao no gatilho. Verde: `F1e OK`, `F1f OK` (abaixo).
 
-## Efeito colateral assumido
-Com closed_by carimbado, o gatilho de gamificação (AFTER INSERT em conversation_closures)
-passa a contar também os encerramentos do caminho FSM, que antes gravava NULL e não
-contava. É o efeito esperado de "autoria ligada ao chamador"; o gatilho de gamificação
-continua engolindo erro próprio com WARNING (não derruba o fechamento).
+Ponto 3 (proprio papel): acrescentados F3m/F3n no mesmo bloco authenticated nao-admin
+(a0002/agente): has_role(proprio uid,'agent') = true e get_profile_role_for_check
+(proprio uid) = 1 linha. Sao testes de preservacao (passam tambem sem a migration);
+o que discrimina a correcao continua sendo F3a-d (oraculo: antes respondia true para
+admin alheio). Verde: `F3m-n OK`.
 
-## O que NÃO fiz e por quê
-- Não criei scripts/db-audit/*.test.sh novo (evita o inventário órfão do CI); a prova
-  fica em supabase/tests/ como o cartão pede.
-- Não toquei em grants/papéis além do necessário: nenhum GRANT novo, nenhum REVOKE novo.
-- Não alterei as policies de INSERT de closures/eventos fora do pedido; a autoria já é
-  garantida pelo gatilho independente de RLS.
+Ponto 4 (policies existentes seguem funcionando): suite nova verde com a migration
+aplicada (15 OK, 0 erro) + 3 suites de banco existentes verdes no mesmo estado:
+- `zapp-db-local psql . v2-autoria-base < supabase/tests/autoria_e_oraculo_de_papel.sql` → 15 NOTICE OK, nenhum ERROR/FALHOU.
+- `bash scripts/db-audit/secd-caller-check.test.sh` → `M-DB-05 (13 funcoes SEM checagem do chamador): 45 cenarios aprovados.` (EXIT=0).
+- `bash scripts/db-audit/wa-tag-and-status-authorization.test.sh` → `[OK] contrato de autorizacao L1/L2 verificado` (EXIT=0).
+- `bash scripts/db-audit/conversation-closures-reopen-same-day.test.sh` → `PASS: R2-DB-008` (EXIT=0).
+Ressalva honesta: `dashboard-rls-authorization.test.sh` aborta na guarda de vigencia
+(`helper is_admin_or_supervisor redefinido depois de 20251215... em: 20261013210006`):
+o pin de extracao verbatim aponta para o arquivo antigo e o extrator e case-sensivel
+(`CREATE ... $$;` vs meu `create ... $function$;`), entao atualizar o pin exigiria
+reescrever o extrator — arquivo de outra area, fora do escopo do cartao (so migration
++ supabase/tests). Nao toquei nele. Comportamento preservado por construcao: as
+policies chamam is_admin_or_supervisor(auth.uid()) — uid proprio, que passa em
+secd_caller_ok exatamente como antes; so a consulta a uid ALHEIO muda (o defeito).
+
+Rollback (executado de verdade): extrai as 20 linhas `;` do cabecaalho, BEGIN/COMMIT
+no stack → COMMIT. Estado conferido depois: 0 gatilhos trg_bind*, 0 funcoes de
+gatilho, 4/4 funcoes de papel executaveis por anon, 0 ocorrencias de secd_caller_ok
+em is_admin_or_supervisor, policy de eventos de volta com `performed_by IS NULL OR`.
+Migration reaplicada em seguida e suite nova re-rodada: 15 OK, 0 erro.
+
+Vermelho-antes: sem a migration o arquivo aborta no INSERT forjado (`new row violates
+row-level security policy for table "conversation_events"`) e o .tmp/vermelho_antes.sql
+da entrega anterior mostra F1 com closed_by NULL + F3 com oraculo true. F3m/F3n passam
+nos dois estados (preservacao, declarado acima).
+
+Passada de efeito colateral: (1) gatilhos das tabelas tocadas: closures tem
+trg_sync_contact_status_on_closure (sincroniza status — por isso F1e usa contato
+virgem c0003, documentado no teste), trg_reject_repeated_closure_without_reopen,
+gamificacao e crm-sync; nada desligado; (2) tudo-ou-nada: F2e/F2f conferem que UPDATE
+negado nao aplicou parcial; (3) sem oraculo: F3c (id inexistente = false, igual ao
+existente); (4) sem GRANT/papel/policy alem do titulo; (5) entrada invalida n/a
+(cartao de ACL, sem input novo); (6) prova por comportamento com papel real, sem
+regex/deparse.
+
+Nota ao dono (lote do dia, da recusa): a gamificacao passa a contar os encerramentos
+do caminho FSM (autoria ligada ao chamador); efeito esperado. Observado um WARNING
+pre-existente fora do escopo: `function public.grant_agent_achievement(uuid, unknown,
+text, text, bigint) does not exist` no trigger de gamificacao (só warning, nao falha).
+
+Arquivos (git diff --name-only HEAD): supabase/migrations/20261013210006_autoria_e_oraculo_de_papel.sql, supabase/tests/autoria_e_oraculo_de_papel.sql.
+Verificacao: suites acima verdes; `zapp-verify . --rapido` nao coube no orcamento do
+turno (diff so SQL; sem TS tocado). NADA vai para producao (quem aplica e o Joaquim).
