@@ -1,0 +1,8 @@
+paths:
+  "**/*":
+    ignore:
+      - 'SC2129'
+      - 'SC2012'
+  ".github/workflows/branch-hygiene-audit.yml":
+    ignore:
+      - 'could not parse as YAML'

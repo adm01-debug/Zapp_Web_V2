@@ -1,0 +1,979 @@
+[
+  {
+    "path": "src/components/BulkActionsBar.tsx",
+    "exports": [
+      "BulkActionsBar"
+    ],
+    "classification": "DEAD_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "No static/dynamic literal imports or reexports resolved by TS AST; final symbol/config/graph/runtime checks remain",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/components/SearchInput.tsx",
+    "exports": [
+      "SearchInput"
+    ],
+    "classification": "DEAD_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "No static/dynamic literal imports or reexports resolved by TS AST; final symbol/config/graph/runtime checks remain",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/components/a11y/KeyboardNavigation.tsx",
+    "exports": [],
+    "classification": "DEAD_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "No static/dynamic literal imports or reexports resolved by TS AST; final symbol/config/graph/runtime checks remain",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/components/cognitive/ProgressiveDisclosure.tsx",
+    "exports": [
+      "useDisclosureLevel",
+      "DisclosureProvider",
+      "ExpandableSection",
+      "ShowMore",
+      "ContextualTooltip",
+      "DisclosureLevelSelector"
+    ],
+    "classification": "DEAD_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "No static/dynamic literal imports or reexports resolved by TS AST; final symbol/config/graph/runtime checks remain",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/components/dashboard/DraggableWidgetContainer.tsx",
+    "exports": [
+      "DraggableWidgetContainer"
+    ],
+    "classification": "DEAD_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "No static/dynamic literal imports or reexports resolved by TS AST; final symbol/config/graph/runtime checks remain",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/components/dashboard/MetricComparison.tsx",
+    "exports": [
+      "MetricComparison",
+      "ComparisonCard",
+      "TeamComparison"
+    ],
+    "classification": "DEAD_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "No static/dynamic literal imports or reexports resolved by TS AST; final symbol/config/graph/runtime checks remain",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/components/dashboard/MetricComponents.tsx",
+    "exports": [],
+    "classification": "DEAD_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "No static/dynamic literal imports or reexports resolved by TS AST; final symbol/config/graph/runtime checks remain",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/components/dashboard/RealtimeMetricsPanel.tsx",
+    "exports": [
+      "RealtimeMetricsPanel"
+    ],
+    "classification": "DEAD_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "No static/dynamic literal imports or reexports resolved by TS AST; final symbol/config/graph/runtime checks remain",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/components/dashboard/SatisfactionAgentRanking.tsx",
+    "exports": [
+      "SatisfactionAgentRanking"
+    ],
+    "classification": "DEAD_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "No static/dynamic literal imports or reexports resolved by TS AST; final symbol/config/graph/runtime checks remain",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/components/dashboard/TrendIndicator.tsx",
+    "exports": [
+      "TrendData",
+      "calculateTrend",
+      "TrendIndicator",
+      "CompactTrendBadge",
+      "TrendSparkline"
+    ],
+    "classification": "DEAD_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "No static/dynamic literal imports or reexports resolved by TS AST; final symbol/config/graph/runtime checks remain",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/components/effects/ParallaxContainer.tsx",
+    "exports": [
+      "ParallaxContainer",
+      "ParallaxImage",
+      "ParallaxText",
+      "ScrollReveal",
+      "ScrollProgressBar",
+      "FloatingElement",
+      "GlowingOrb"
+    ],
+    "classification": "DEAD_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "No static/dynamic literal imports or reexports resolved by TS AST; final symbol/config/graph/runtime checks remain",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/components/effects/ScrollEffects.tsx",
+    "exports": [
+      "MagneticButton",
+      "TextReveal",
+      "Counter",
+      "GradientText",
+      "ShimmerEffect",
+      "PerspectiveCard",
+      "RippleButton",
+      "BlurReveal"
+    ],
+    "classification": "DEAD_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "No static/dynamic literal imports or reexports resolved by TS AST; final symbol/config/graph/runtime checks remain",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/components/inbox/AIToolsPopover.tsx",
+    "exports": [
+      "AIToolsPopover"
+    ],
+    "classification": "DEAD_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "No static/dynamic literal imports or reexports resolved by TS AST; final symbol/config/graph/runtime checks remain",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/components/inbox/LinkPreview.tsx",
+    "exports": [
+      "LinkPreview",
+      "TextWithLinks"
+    ],
+    "classification": "DEAD_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "No static/dynamic literal imports or reexports resolved by TS AST; final symbol/config/graph/runtime checks remain",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/components/inbox/MessageContextActions.tsx",
+    "exports": [
+      "MessageContextActions"
+    ],
+    "classification": "DEAD_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "No static/dynamic literal imports or reexports resolved by TS AST; final symbol/config/graph/runtime checks remain",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/components/inbox/MessageContextMenu.tsx",
+    "exports": [
+      "MessageContextMenu"
+    ],
+    "classification": "DEAD_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "No static/dynamic literal imports or reexports resolved by TS AST; final symbol/config/graph/runtime checks remain",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/components/inbox/MessagePreview.tsx",
+    "exports": [
+      "MessagePreview",
+      "useHasFormattableContent"
+    ],
+    "classification": "DEAD_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "No static/dynamic literal imports or reexports resolved by TS AST; final symbol/config/graph/runtime checks remain",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/components/inbox/SentimentIndicator.tsx",
+    "exports": [
+      "SentimentLevel",
+      "getSentimentFromScore",
+      "SentimentIndicator",
+      "SentimentBar"
+    ],
+    "classification": "DEAD_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "No static/dynamic literal imports or reexports resolved by TS AST; final symbol/config/graph/runtime checks remain",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/components/inbox/SpeedSelector.tsx",
+    "exports": [
+      "SpeedSelector"
+    ],
+    "classification": "DEAD_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "No static/dynamic literal imports or reexports resolved by TS AST; final symbol/config/graph/runtime checks remain",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/components/inbox/SwipeableListItem.tsx",
+    "exports": [
+      "SwipeableListItem"
+    ],
+    "classification": "DEAD_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "No static/dynamic literal imports or reexports resolved by TS AST; final symbol/config/graph/runtime checks remain",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/components/inbox/TemplatesWithVariables.tsx",
+    "exports": [
+      "TemplatesWithVariables"
+    ],
+    "classification": "DEAD_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "No static/dynamic literal imports or reexports resolved by TS AST; final symbol/config/graph/runtime checks remain",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/components/inbox/chat/ChatHeaderToolbar.tsx",
+    "exports": [
+      "ChatHeaderToolbar"
+    ],
+    "classification": "DEAD_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "No static/dynamic literal imports or reexports resolved by TS AST; final symbol/config/graph/runtime checks remain",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/components/inbox/chat/dialogKeys.ts",
+    "exports": [
+      "DialogKey",
+      "DialogState",
+      "ActiveTool"
+    ],
+    "classification": "DEAD_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "No static/dynamic literal imports or reexports resolved by TS AST; final symbol/config/graph/runtime checks remain",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/components/inbox/chat/index.ts",
+    "exports": [],
+    "classification": "UNUSED_BARREL_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Barrel currently has no module importer; exported public surface is not removal proof",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/components/mobile/index.ts",
+    "exports": [],
+    "classification": "UNUSED_BARREL_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Barrel currently has no module importer; exported public surface is not removal proof",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/components/performance/index.ts",
+    "exports": [],
+    "classification": "UNUSED_BARREL_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Barrel currently has no module importer; exported public surface is not removal proof",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/components/reports/ScheduledReportsManager.tsx",
+    "exports": [
+      "ScheduledReportsManager"
+    ],
+    "classification": "DEAD_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "No static/dynamic literal imports or reexports resolved by TS AST; final symbol/config/graph/runtime checks remain",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/components/team-chat/GroupManagementDialog.tsx",
+    "exports": [
+      "GroupManagementDialog"
+    ],
+    "classification": "UNWIRED_PLANNED_FEATURE",
+    "deletion_confidence": "DELETE-X",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Files belong to unconnected Team Chat planned work; classify as planned/legacy until successor decision",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/components/team-chat/ParticipantStatsGraph.tsx",
+    "exports": [
+      "ParticipantStatsGraph"
+    ],
+    "classification": "UNWIRED_PLANNED_FEATURE",
+    "deletion_confidence": "DELETE-X",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Files belong to unconnected Team Chat planned work; classify as planned/legacy until successor decision",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/components/team-chat/TeamChatA11y.tsx",
+    "exports": [
+      "TeamChatSkipLink",
+      "TeamChatAnnouncer",
+      "getMessageAriaProps",
+      "useFocusTrap",
+      "usePrefersReducedMotion"
+    ],
+    "classification": "UNWIRED_PLANNED_FEATURE",
+    "deletion_confidence": "DELETE-X",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Files belong to unconnected Team Chat planned work; classify as planned/legacy until successor decision",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/components/team-chat/TeamMessageItem.tsx",
+    "exports": [],
+    "classification": "UNWIRED_PLANNED_FEATURE",
+    "deletion_confidence": "DELETE-X",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Files belong to unconnected Team Chat planned work; classify as planned/legacy until successor decision",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/components/team-chat/TeamPerformancePanel.tsx",
+    "exports": [
+      "TeamPerformancePanel"
+    ],
+    "classification": "UNWIRED_PLANNED_FEATURE",
+    "deletion_confidence": "DELETE-X",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Files belong to unconnected Team Chat planned work; classify as planned/legacy until successor decision",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/components/team-chat/TransferConversationDialog.tsx",
+    "exports": [
+      "TransferConversationDialog"
+    ],
+    "classification": "UNWIRED_PLANNED_FEATURE",
+    "deletion_confidence": "DELETE-X",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Files belong to unconnected Team Chat planned work; classify as planned/legacy until successor decision",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/components/ui/EmptyState.tsx",
+    "exports": [
+      "EmptyState"
+    ],
+    "classification": "UNUSED_UI_PRIMITIVE_CANDIDATE",
+    "deletion_confidence": "DELETE-D",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Shared UI primitives may be retained for design system and future planned consumers",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/components/ui/SkeletonList.tsx",
+    "exports": [
+      "SkeletonList",
+      "StaggerList"
+    ],
+    "classification": "UNUSED_UI_PRIMITIVE_CANDIDATE",
+    "deletion_confidence": "DELETE-D",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Shared UI primitives may be retained for design system and future planned consumers",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/components/ui/emoji-picker.tsx",
+    "exports": [
+      "EmojiPicker",
+      "QuickReactionPicker",
+      "FloatingReaction"
+    ],
+    "classification": "UNUSED_UI_PRIMITIVE_CANDIDATE",
+    "deletion_confidence": "DELETE-D",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Shared UI primitives may be retained for design system and future planned consumers",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/components/ui/empty-states.tsx",
+    "exports": [
+      "EmptyStateContext",
+      "EmptyState",
+      "InboxEmptyState",
+      "ContactsEmptyState",
+      "DashboardEmptyState",
+      "SearchEmptyState",
+      "NotificationsEmptyState",
+      "TagsEmptyState",
+      "CallsEmptyState",
+      "TranscriptionsEmptyState"
+    ],
+    "classification": "UNUSED_UI_PRIMITIVE_CANDIDATE",
+    "deletion_confidence": "DELETE-D",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Shared UI primitives may be retained for design system and future planned consumers",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/components/ui/form.tsx",
+    "exports": [],
+    "classification": "UNUSED_UI_PRIMITIVE_CANDIDATE",
+    "deletion_confidence": "DELETE-D",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Shared UI primitives may be retained for design system and future planned consumers",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/components/ui/hover-card.tsx",
+    "exports": [],
+    "classification": "UNUSED_UI_PRIMITIVE_CANDIDATE",
+    "deletion_confidence": "DELETE-D",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Shared UI primitives may be retained for design system and future planned consumers",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/components/ui/menubar.tsx",
+    "exports": [],
+    "classification": "UNUSED_UI_PRIMITIVE_CANDIDATE",
+    "deletion_confidence": "DELETE-D",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Shared UI primitives may be retained for design system and future planned consumers",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/components/ui/pagination.tsx",
+    "exports": [],
+    "classification": "UNUSED_UI_PRIMITIVE_CANDIDATE",
+    "deletion_confidence": "DELETE-D",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Shared UI primitives may be retained for design system and future planned consumers",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/components/ui/quick-peek.tsx",
+    "exports": [
+      "QuickPeek"
+    ],
+    "classification": "UNUSED_UI_PRIMITIVE_CANDIDATE",
+    "deletion_confidence": "DELETE-D",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Shared UI primitives may be retained for design system and future planned consumers",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/components/ui/resizable.tsx",
+    "exports": [],
+    "classification": "UNUSED_UI_PRIMITIVE_CANDIDATE",
+    "deletion_confidence": "DELETE-D",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Shared UI primitives may be retained for design system and future planned consumers",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/components/ui/sidebar.tsx",
+    "exports": [],
+    "classification": "UNUSED_UI_PRIMITIVE_CANDIDATE",
+    "deletion_confidence": "DELETE-D",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Shared UI primitives may be retained for design system and future planned consumers",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/components/ui/use-toast.ts",
+    "exports": [],
+    "classification": "UNUSED_UI_PRIMITIVE_CANDIDATE",
+    "deletion_confidence": "DELETE-D",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Shared UI primitives may be retained for design system and future planned consumers",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/hooks/analytics/index.ts",
+    "exports": [],
+    "classification": "UNUSED_BARREL_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Barrel currently has no module importer; exported public surface is not removal proof",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/hooks/auth/index.ts",
+    "exports": [],
+    "classification": "UNUSED_BARREL_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Barrel currently has no module importer; exported public surface is not removal proof",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/hooks/business/index.ts",
+    "exports": [],
+    "classification": "UNUSED_BARREL_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Barrel currently has no module importer; exported public surface is not removal proof",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/hooks/chat/index.ts",
+    "exports": [],
+    "classification": "UNUSED_BARREL_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Barrel currently has no module importer; exported public surface is not removal proof",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/hooks/communication/index.ts",
+    "exports": [],
+    "classification": "UNUSED_BARREL_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Barrel currently has no module importer; exported public surface is not removal proof",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/hooks/crm/index.ts",
+    "exports": [],
+    "classification": "UNUSED_BARREL_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Barrel currently has no module importer; exported public surface is not removal proof",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/hooks/dashboard/index.ts",
+    "exports": [],
+    "classification": "UNUSED_BARREL_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Barrel currently has no module importer; exported public surface is not removal proof",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/hooks/evolution/index.ts",
+    "exports": [],
+    "classification": "UNUSED_BARREL_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Barrel currently has no module importer; exported public surface is not removal proof",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/hooks/gamification/index.ts",
+    "exports": [],
+    "classification": "UNUSED_BARREL_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Barrel currently has no module importer; exported public surface is not removal proof",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/hooks/gmail/index.ts",
+    "exports": [],
+    "classification": "UNUSED_BARREL_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Barrel currently has no module importer; exported public surface is not removal proof",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/hooks/groups/index.ts",
+    "exports": [],
+    "classification": "UNUSED_BARREL_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Barrel currently has no module importer; exported public surface is not removal proof",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/hooks/inbox/index.ts",
+    "exports": [],
+    "classification": "UNUSED_BARREL_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Barrel currently has no module importer; exported public surface is not removal proof",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/hooks/integrations/index.ts",
+    "exports": [],
+    "classification": "UNUSED_BARREL_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Barrel currently has no module importer; exported public surface is not removal proof",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/hooks/integrations/useTalkXSuppression.ts",
+    "exports": [
+      "BlacklistReasonCode",
+      "BlacklistEntry",
+      "BlacklistInput",
+      "useTalkXSuppression"
+    ],
+    "classification": "DEAD_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "No static/dynamic literal imports or reexports resolved by TS AST; final symbol/config/graph/runtime checks remain",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/hooks/performance/index.ts",
+    "exports": [],
+    "classification": "UNUSED_BARREL_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Barrel currently has no module importer; exported public surface is not removal proof",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/hooks/reactions/index.ts",
+    "exports": [],
+    "classification": "UNUSED_BARREL_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Barrel currently has no module importer; exported public surface is not removal proof",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/hooks/realtime/index.ts",
+    "exports": [],
+    "classification": "UNUSED_BARREL_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Barrel currently has no module importer; exported public surface is not removal proof",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/hooks/shortcuts/index.ts",
+    "exports": [],
+    "classification": "UNUSED_BARREL_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Barrel currently has no module importer; exported public surface is not removal proof",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/hooks/sip/index.ts",
+    "exports": [],
+    "classification": "UNUSED_BARREL_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Barrel currently has no module importer; exported public surface is not removal proof",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/hooks/sla/index.ts",
+    "exports": [],
+    "classification": "UNUSED_BARREL_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Barrel currently has no module importer; exported public surface is not removal proof",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/hooks/sticker-picker/index.ts",
+    "exports": [],
+    "classification": "UNUSED_BARREL_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Barrel currently has no module importer; exported public surface is not removal proof",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/hooks/system/index.ts",
+    "exports": [],
+    "classification": "UNUSED_BARREL_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Barrel currently has no module importer; exported public surface is not removal proof",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/hooks/tasks/useMyTasks.ts",
+    "exports": [],
+    "classification": "DEAD_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "No static/dynamic literal imports or reexports resolved by TS AST; final symbol/config/graph/runtime checks remain",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/hooks/team-chat/index.ts",
+    "exports": [],
+    "classification": "UNUSED_BARREL_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Barrel currently has no module importer; exported public surface is not removal proof",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/hooks/team-chat/useTeamPresence.ts",
+    "exports": [
+      "PresenceUser",
+      "useTeamPresence"
+    ],
+    "classification": "UNWIRED_PLANNED_FEATURE",
+    "deletion_confidence": "DELETE-X",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Files belong to unconnected Team Chat planned work; classify as planned/legacy until successor decision",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/hooks/team-chat/useTeamTyping.ts",
+    "exports": [
+      "useTeamTyping"
+    ],
+    "classification": "UNWIRED_PLANNED_FEATURE",
+    "deletion_confidence": "DELETE-X",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Files belong to unconnected Team Chat planned work; classify as planned/legacy until successor decision",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/hooks/team-chat/useTeamUnreadCount.ts",
+    "exports": [
+      "useTeamUnreadCount"
+    ],
+    "classification": "UNWIRED_PLANNED_FEATURE",
+    "deletion_confidence": "DELETE-X",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Files belong to unconnected Team Chat planned work; classify as planned/legacy until successor decision",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/hooks/ui/index.ts",
+    "exports": [],
+    "classification": "UNUSED_BARREL_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Barrel currently has no module importer; exported public surface is not removal proof",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/hooks/voice/index.ts",
+    "exports": [],
+    "classification": "UNUSED_BARREL_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Barrel currently has no module importer; exported public surface is not removal proof",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/i18n/team-chat.ts",
+    "exports": [
+      "TeamChatStringKey"
+    ],
+    "classification": "UNWIRED_PLANNED_FEATURE",
+    "deletion_confidence": "DELETE-X",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Files belong to unconnected Team Chat planned work; classify as planned/legacy until successor decision",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/lib/a11y.ts",
+    "exports": [
+      "announceStatus",
+      "announceAlert"
+    ],
+    "classification": "DEAD_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "No static/dynamic literal imports or reexports resolved by TS AST; final symbol/config/graph/runtime checks remain",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/lib/aiJobs/status.ts",
+    "exports": [
+      "AiJobStatus",
+      "isTerminalAiJobStatus",
+      "canTransitionAiJob"
+    ],
+    "classification": "DEAD_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "No static/dynamic literal imports or reexports resolved by TS AST; final symbol/config/graph/runtime checks remain",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/lib/debounce.ts",
+    "exports": [
+      "debounce",
+      "useDebouncedCallback"
+    ],
+    "classification": "DEAD_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "No static/dynamic literal imports or reexports resolved by TS AST; final symbol/config/graph/runtime checks remain",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/lib/motion.ts",
+    "exports": [],
+    "classification": "DEAD_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "No static/dynamic literal imports or reexports resolved by TS AST; final symbol/config/graph/runtime checks remain",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/main.tsx",
+    "exports": [],
+    "classification": "ACTIVE_ENTRY_OR_CONFIGURATION",
+    "deletion_confidence": "DELETE-X",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Entrypoint referenced by index.html",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/services/index.ts",
+    "exports": [],
+    "classification": "UNUSED_BARREL_CANDIDATE",
+    "deletion_confidence": "DELETE-B",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Barrel currently has no module importer; exported public surface is not removal proof",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/test/mocks/auth.tsx",
+    "exports": [
+      "MockAuthProvider"
+    ],
+    "classification": "TEST_SUPPORT_CANDIDATE",
+    "deletion_confidence": "DELETE-D",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Test support: external and setup consumers must be checked",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/test/setup.ts",
+    "exports": [],
+    "classification": "ACTIVE_ENTRY_OR_CONFIGURATION",
+    "deletion_confidence": "DELETE-X",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Vitest setupFiles referenced by vitest.config.ts",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  },
+  {
+    "path": "src/vite-env.d.ts",
+    "exports": [],
+    "classification": "ACTIVE_ENTRY_OR_CONFIGURATION",
+    "deletion_confidence": "DELETE-X",
+    "caveat": "Not dead-code proof: entrypoints, registries, assets, symbols, dynamic construction and external consumers must be checked.",
+    "reason": "Ambient declarations included by tsconfig",
+    "deletion_authorized": false,
+    "evidence": "import-graph.json at baseline 2e7cf81c"
+  }
+]

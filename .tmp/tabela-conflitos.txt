@@ -1,0 +1,45 @@
+TOTAL=578
+POR-TIPO: {'add/add': 283, 'content': 285, 'modify/delete': 10}
+POR-AREA:
+   314  src/components
+   113  src/hooks
+    73  supabase/functions
+    14  src/outros
+    13  scripts
+    11  src/lib
+     9  docs
+     7  raiz/outros
+     7  src/pages
+     6  .github
+     5  e2e
+     4  supabase/outros
+     2  supabase/migrations
+CRUZADA area x tipo:
+     1  .github  [add/add]
+     5  .github  [content]
+     6  docs  [add/add]
+     3  docs  [content]
+     4  e2e  [add/add]
+     1  e2e  [content]
+     6  raiz/outros  [add/add]
+     1  raiz/outros  [content]
+     7  scripts  [add/add]
+     6  scripts  [content]
+   157  src/components  [add/add]
+   149  src/components  [content]
+     8  src/components  [modify/delete]
+    47  src/hooks  [add/add]
+    64  src/hooks  [content]
+     2  src/hooks  [modify/delete]
+    10  src/lib  [add/add]
+     1  src/lib  [content]
+     1  src/outros  [add/add]
+    13  src/outros  [content]
+     5  src/pages  [add/add]
+     2  src/pages  [content]
+    35  supabase/functions  [add/add]
+    38  supabase/functions  [content]
+     2  supabase/migrations  [add/add]
+     2  supabase/outros  [add/add]
+     2  supabase/outros  [content]
+MODIFY/DELETE deletado-em: {'origin': 7, 'dia': 3}

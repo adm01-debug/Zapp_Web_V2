@@ -1,0 +1,65 @@
+import {
+  ArrowRight, CheckCircle, FileText, AlertTriangle,
+  Users, Clock, Star, Archive, Bell, Zap, MessageSquare, Package,
+} from 'lucide-react';
+
+export interface SlashCommand {
+  id: string;
+  command: string;
+  label: string;
+  description: string;
+  icon: typeof ArrowRight;
+  category: 'actions' | 'templates' | 'notes' | 'tags' | 'priority';
+  color: string;
+  /**
+   * Letra do catálogo do comando. NÃO é um atalho de teclado: nenhum destes
+   * comandos é disparado por `⌘<letra>` — o hover da lista não a exibe mais
+   * (mostrava um atalho que não existia). O contrato de unicidade dela segue
+   * no teste de invariantes (U7); o atalho de verdade, quando existe, vai em
+   * `shortcutLabel`.
+   */
+  shortcut?: string;
+  /** Atalho real, já implementado e testado. Sem ele o hover não mostra nada. */
+  shortcutLabel?: string;
+  subCommands?: { id: string; label: string; value: string }[];
+}
+
+export const SLASH_COMMANDS: SlashCommand[] = [
+  { id: 'transfer', command: '/transfer', label: 'Transferir', description: 'Transferir conversa para outro agente ou fila', icon: ArrowRight, category: 'actions', color: 'text-info', shortcut: 'T', subCommands: [{ id: 'agent', label: 'Para Agente', value: 'agent' }, { id: 'queue', label: 'Para Fila', value: 'queue' }] },
+  { id: 'resolve', command: '/resolve', label: 'Resolver', description: 'Marcar conversa como resolvida', icon: CheckCircle, category: 'actions', color: 'text-success', shortcut: 'R' },
+  { id: 'template', command: '/template', label: 'Template', description: 'Inserir um template de mensagem', icon: FileText, category: 'templates', color: 'text-primary', shortcut: 'M' },
+  // R2-INB-021 (item 317): /note e /tag saíram da lista. Eles só limpavam o
+  // input e mostravam um aviso (não abriam editor de nota nem seletor de tag),
+  // então a lista anunciava uma operação que não existia. Só voltam quando o
+  // destino por trás existir (nota: aba Notas preparada para receber o comando;
+  // tag: seletor de tags dentro do chat).
+  { id: 'priority', command: '/priority', label: 'Prioridade', description: 'Definir prioridade da conversa', icon: AlertTriangle, category: 'priority', color: 'text-warning', shortcut: 'P', subCommands: [{ id: 'high', label: '🔴 Alta', value: 'high' }, { id: 'medium', label: '🟡 Média', value: 'medium' }, { id: 'low', label: '🟢 Baixa', value: 'low' }] },
+  { id: 'assign', command: '/assign', label: 'Atribuir', description: 'Atribuir conversa a um agente', icon: Users, category: 'actions', color: 'text-primary', shortcut: 'A' },
+  { id: 'snooze', command: '/snooze', label: 'Adiar', description: 'Adiar conversa para depois', icon: Clock, category: 'actions', color: 'text-muted-foreground', shortcut: 'S', subCommands: [{ id: '1h', label: 'Em 1 hora', value: '1h' }, { id: '3h', label: 'Em 3 horas', value: '3h' }, { id: 'tomorrow', label: 'Amanhã', value: 'tomorrow' }, { id: 'nextweek', label: 'Próxima semana', value: 'nextweek' }] },
+  { id: 'star', command: '/star', label: 'Favoritar', description: 'Marcar conversa como favorita', icon: Star, category: 'actions', color: 'text-warning', shortcut: 'F' },
+  { id: 'archive', command: '/archive', label: 'Arquivar', description: 'Arquivar esta conversa', icon: Archive, category: 'actions', color: 'text-muted-foreground', shortcut: 'Q' },
+  { id: 'remind', command: '/remind', label: 'Lembrete', description: 'Criar tarefa com alarme para este contato', icon: Bell, category: 'actions', color: 'text-destructive', shortcut: 'L' },
+  { id: 'quick', command: '/quick', label: 'Resposta Rápida', description: 'Usar uma resposta rápida salva', icon: Zap, category: 'templates', color: 'text-success', shortcut: 'K' },
+  { id: 'summary', command: '/summary', label: 'Resumo IA', description: 'Gerar resumo da conversa com IA', icon: MessageSquare, category: 'actions', color: 'text-accent', shortcut: 'I' },
+  { id: 'produto', command: '/produto', label: 'Catálogo', description: 'Buscar e enviar produto do catálogo', icon: Package, category: 'actions', color: 'text-success', shortcut: 'C' },
+  // L8 (paridade V3→V2, doc 11): o sussurro (nota interna) só existia por Alt+W
+  // no campo de mensagem. `shortcutLabel` é o atalho REAL — o hover da lista
+  // deixa de anunciar `⌘W`, que não dispara nada.
+  { id: 'whisper', command: '/whisper', label: 'Sussurro', description: 'Ligar ou desligar o modo sussurro (nota interna)', icon: EyeOff, category: 'actions', color: 'text-info', shortcut: 'W', shortcutLabel: 'Alt+W' },
+];
+
+export const categoryColors: Record<string, string> = {
+  actions: 'bg-info/10 text-info',
+  templates: 'bg-primary/10 text-primary',
+  notes: 'bg-warning/10 text-warning',
+  tags: 'bg-info/10 text-info',
+  priority: 'bg-warning/10 text-warning',
+};
+
+export const categoryLabels: Record<string, string> = {
+  actions: 'Ações',
+  templates: 'Templates',
+  notes: 'Notas',
+  tags: 'Tags',
+  priority: 'Prioridade',
+};

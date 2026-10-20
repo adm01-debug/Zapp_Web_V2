@@ -1,0 +1,23 @@
+src/components/contacts/ContactActivityTimeline.tsx(134,9): error TS1005: ',' expected.
+src/components/contacts/ContactActivityTimeline.tsx(159,9): error TS1005: 'try' expected.
+src/components/contacts/ContactActivityTimeline.tsx(168,5): error TS1472: 'catch' or 'finally' expected.
+src/components/contacts/ContactActivityTimeline.tsx(169,4): error TS1128: Declaration or statement expected.
+src/components/contacts/ContactActivityTimeline.tsx(169,46): error TS1005: ';' expected.
+src/components/contacts/ContactsView.tsx(122,6): error TS17008: JSX element 'MotionConfig' has no corresponding closing tag.
+src/components/contacts/ContactsView.tsx(277,1): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/components/contacts/ContactsView.tsx(278,1): error TS1005: '</' expected.
+src/components/tasks/board/TasksBoardMode.tsx(390,9): error TS1005: ')' expected.
+src/components/tasks/board/TasksBoardMode.tsx(391,9): error TS17002: Expected corresponding JSX closing tag for 'DragDropContext'.
+src/components/tasks/board/TasksBoardMode.tsx(392,5): error TS1005: ')' expected.
+src/components/tasks/board/TasksBoardMode.tsx(393,3): error TS1109: Expression expected.
+src/hooks/groups/actions.ts(140,5): error TS1005: ',' expected.
+src/hooks/inbox/useRealtimeInbox.ts(276,4): error TS1128: Declaration or statement expected.
+src/hooks/inbox/useRealtimeInbox.ts(276,65): error TS1005: ';' expected.
+src/hooks/inbox/useRealtimeInbox.ts(395,1): error TS1128: Declaration or statement expected.
+src/hooks/team-chat/useTeamMessages.ts(178,3): error TS1128: Declaration or statement expected.
+src/hooks/team-chat/useTeamMessages.ts(178,4): error TS1128: Declaration or statement expected.
+src/hooks/team-chat/useTeamMessages.ts(178,39): error TS1005: ';' expected.
+src/hooks/team-chat/useTeamMessages.ts(181,1): error TS1128: Declaration or statement expected.
+src/providers/AppProviders.tsx(142,9): error TS17002: Expected corresponding JSX closing tag for 'ErrorBoundary'.
+src/providers/AppProviders.tsx(143,5): error TS1005: ')' expected.
+src/providers/AppProviders.tsx(144,3): error TS1109: Expression expected.

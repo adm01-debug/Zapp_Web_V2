@@ -1,0 +1,120 @@
+{
+  "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+  "method": "Case-insensitive CREATE FUNCTION name search across every root migration SQL, sorted by migration filename; not a live catalog read",
+  "rootSqlFiles": 779,
+  "definitions": {
+    "dashboard_contact_counts": [
+      {
+        "path": "supabase/migrations/20260925162737_dashboard_fase3_contact_counts_rpc.sql",
+        "line": 8,
+        "sha256": "d3aa11b80f4c9013071685128bc84b3fff709b71aeefd10f70a0fb38c1418275"
+      },
+      {
+        "path": "supabase/migrations/20260925172511_dashboard_fase4_filters_e31_e32_e33.sql",
+        "line": 91,
+        "sha256": "9a4ba2c4e064b03d32f922008a5e39b59bcfacca6f63e758e4e3695a4ae75ae1"
+      },
+      {
+        "path": "supabase/migrations/20260925221406_dashboard_fix_p_agent_uuid_perf_and_fanout.sql",
+        "line": 30,
+        "sha256": "02d6435b586ba4098052a105540e40f8152c5ec85be56d0f0f4859cce252a7fa"
+      },
+      {
+        "path": "supabase/migrations/20260930400000_dashboard_contact_counts_filter_deleted_at.sql",
+        "line": 13,
+        "sha256": "0cb8963e105f6e76971f3e406209b10519922456c42bfb08c06463848b896bea"
+      }
+    ],
+    "search_my_calls": [
+      {
+        "path": "supabase/migrations/20260926800000_calls_telefonia_v2.sql",
+        "line": 123,
+        "sha256": "f7d1204cabcc9ed87b2a56048a68ca89be1ea1cef9dc719246175b0fb79e8dc0"
+      }
+    ],
+    "multiplix_create_draft": [
+      {
+        "path": "supabase/migrations/20260929630000_multiplix_create_draft.sql",
+        "line": 37,
+        "sha256": "3b5f82d2b3f950db4ec68d5fee8db553883dc29cfcfeade70e93f2a617312c51"
+      },
+      {
+        "path": "supabase/migrations/20261001211230_f31_multiplix_dispatch_recipient_columns.sql",
+        "line": 95,
+        "sha256": "8716445e2a10691f6a6cc8314dbc67b4844c7ef27e67cd5c895e25d2b1a628ac"
+      }
+    ],
+    "transition_multiplix_dispatch": [
+      {
+        "path": "supabase/migrations/20260926180000_multiplix_send_engine.sql",
+        "line": 48,
+        "sha256": "8312b3de0b8205c4cec107a2a2174fc5dc92f7a3e6d960d6268e56d51387dfea"
+      },
+      {
+        "path": "supabase/migrations/20260927600000_fix_multiplix_dispatch_start_sending.sql",
+        "line": 9,
+        "sha256": "06de3c6909f9a89fbbe823df3922d477e3cce395845ccc71df7ce45ea780832e"
+      },
+      {
+        "path": "supabase/migrations/20260929600000_multiplix_send_engine_fixes.sql",
+        "line": 144,
+        "sha256": "fb6abbf8b00ebaa0bc926ff2dd1388843cb2751c2138788d8a28fce155ecacef"
+      },
+      {
+        "path": "supabase/migrations/20261002521230_f59_transition_dispatch_enum_cast.sql",
+        "line": 34,
+        "sha256": "a5b80c021d4d984609e67ff22a9fc509ec2adc9e6a8a246421978e7528b83241"
+      }
+    ],
+    "list_multiplix_claimable_items": [
+      {
+        "path": "supabase/migrations/20261002621230_f55_claimable_items_por_bloco.sql",
+        "line": 34,
+        "sha256": "887d3fb8135658cf68c022534be92af85c182cf0a9e757e66099c3c9d2c1b604"
+      }
+    ],
+    "record_multiplix_item_sent": [
+      {
+        "path": "supabase/migrations/20261001231230_f32b_multiplix_item_queue_rpcs.sql",
+        "line": 247,
+        "sha256": "b5c7ee913599cbbf641a753f59a8fa676cc294c69df321d6e6200a3082e9738c"
+      }
+    ],
+    "complete_multiplix_dispatch_if_drained": [
+      {
+        "path": "supabase/migrations/20260926180000_multiplix_send_engine.sql",
+        "line": 406,
+        "sha256": "8312b3de0b8205c4cec107a2a2174fc5dc92f7a3e6d960d6268e56d51387dfea"
+      },
+      {
+        "path": "supabase/migrations/20260929600000_multiplix_send_engine_fixes.sql",
+        "line": 90,
+        "sha256": "fb6abbf8b00ebaa0bc926ff2dd1388843cb2751c2138788d8a28fce155ecacef"
+      }
+    ],
+    "complete_multiplix_dispatch_if_items_drained": [
+      {
+        "path": "supabase/migrations/20261001231230_f32b_multiplix_item_queue_rpcs.sql",
+        "line": 588,
+        "sha256": "b5c7ee913599cbbf641a753f59a8fa676cc294c69df321d6e6200a3082e9738c"
+      }
+    ],
+    "multiplix_confirm_dispatch": [
+      {
+        "path": "supabase/migrations/20261001341230_f51_multiplix_confirm_dispatch.sql",
+        "line": 77,
+        "sha256": "edeb3b2d42ae47bc82ba9a4d33db965d91fb0a39558827dc0b0899510abff340"
+      },
+      {
+        "path": "supabase/migrations/20261001351230_f51a_multiplix_confirm_dispatch_fn.sql",
+        "line": 19,
+        "sha256": "953a5ebb25e5d884d7bef457a587774a56b30a571bbf304c14910796e985f363"
+      },
+      {
+        "path": "supabase/migrations/20261002461230_f51c_multiplix_confirm_dispatch_contrato.sql",
+        "line": 26,
+        "sha256": "759b6d7fbc4edb49651b631a1fba5af28a0d1ad4544cb70184566ea5e1ff53dc"
+      }
+    ]
+  }
+}

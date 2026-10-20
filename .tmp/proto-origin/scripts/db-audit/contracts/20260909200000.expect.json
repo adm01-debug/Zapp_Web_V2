@@ -1,0 +1,26 @@
+{
+  "always": {
+    "note_table_count": 1,
+    "function_count": 4,
+    "note_rls_enabled": true,
+    "policy_count": {"$min": 0}
+  },
+  "after": {
+    "safe_function_count": 4,
+    "definition_sha256": "55078d2e365413bea0b93777ec63e70063def445760d0ae8f516670b86070771",
+    "caller_bound_count": 3,
+    "rpc_authorized_count": 1,
+    "policy_count": 4,
+    "policy_signature_count": 4,
+    "identity_trigger_count": 1,
+    "authenticated_api_execute_count": 4,
+    "anon_api_execute_count": 0,
+    "guard_authenticated_execute": false,
+    "guard_anon_execute": false,
+    "anon_note_access": false,
+    "authenticated_note_crud": true,
+    "authenticated_note_extra": false,
+    "service_note_crud": true,
+    "service_note_extra": false
+  }
+}

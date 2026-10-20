@@ -1,0 +1,159 @@
+import { useState } from 'react';
+import { X, Archive, Forward, CheckCheck, Undo2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { TransferDialog } from './TransferDialog';
+
+interface BulkActionsToolbarProps {
+  selectedCount: number;
+  onMarkAsRead: () => void;
+  /**
+   * Pode devolver promise: o lote transfere contato por contato via RPC e
+   * REJEITA quando algum falha (`useInboxBulkActions.bulkTransfer`). O diálogo
+   * precisa esperar essa promise para só fechar no sucesso.
+   */
+  onTransfer: (type: 'agent' | 'queue', targetId: string, message?: string) => void | Promise<void>;
+  onArchive: () => void;
+  onClearSelection: () => void;
+  isLoading?: boolean;
+}
+
+export function BulkActionsToolbar({
+  selectedCount,
+  onMarkAsRead,
+  onTransfer,
+  onArchive,
+  onClearSelection,
+  isLoading = false,
+}: BulkActionsToolbarProps) {
+  const [showTransferDialog, setShowTransferDialog] = useState(false);
+  const reduceMotion = useReducedMotion() ?? false;
+
+  return (
+    <>
+      {/*
+        O `AnimatePresence` tem de ficar SEMPRE montado: com o `if (selectedCount === 0)
+        return null` no topo do componente, a subárvore saía do React antes de o
+        `AnimatePresence` ver a troca e a animação `exit` nunca rodava (a barra piscava
+        fora). Agora o filho é CONDICIONAL dentro dele, com `key` estável, e o
+        movimento de entrada/saída respeita `prefers-reduced-motion`.
+      */}
+      <AnimatePresence>
+        {selectedCount > 0 && (
+          <motion.div
+            key="bulk-actions-toolbar"
+            role="toolbar"
+            aria-label="Ações em lote"
+            initial={{ opacity: 0, y: reduceMotion ? 0 : -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: reduceMotion ? 0 : -20 }}
+            className="absolute top-0 left-0 right-0 z-20 h-10 bg-primary/95 backdrop-blur-sm border-b border-primary-foreground/20 px-3 flex items-center"
+          >
+          <div className="flex items-center justify-between gap-4 w-full">
+            <div className="flex items-center gap-3">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={onClearSelection}
+                    className="text-primary-foreground hover:bg-primary-foreground/20 w-8 h-8"
+                    aria-label="Limpar seleção"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Limpar seleção (Esc)</TooltipContent>
+              </Tooltip>
+              <Badge
+                variant="secondary"
+                data-testid="bulk-selection-count"
+                aria-live="polite"
+                aria-atomic="true"
+                className="bg-primary-foreground/20 text-primary-foreground border-0"
+              >
+                {selectedCount} selecionado{selectedCount > 1 ? 's' : ''}
+              </Badge>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onMarkAsRead}
+                    disabled={isLoading}
+                    className="text-primary-foreground hover:bg-primary-foreground/20 gap-2"
+                    aria-label="Marcar como lido"
+                  >
+                    <CheckCheck className="w-4 h-4" />
+                    <span className="hidden sm:inline">Marcar como lido</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Marcar como lido (R)</TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowTransferDialog(true)}
+                    disabled={isLoading}
+                    className="text-primary-foreground hover:bg-primary-foreground/20 gap-2"
+                    aria-label="Transferir"
+                  >
+                    <Forward className="w-4 h-4" />
+                    <span className="hidden sm:inline">Transferir</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Transferir para agente ou fila</TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onArchive}
+                    disabled={isLoading}
+                    className="text-primary-foreground hover:bg-primary-foreground/20 gap-2"
+                    aria-label="Arquivar"
+                  >
+                    <Archive className="w-4 h-4" />
+                    <span className="hidden sm:inline">Arquivar</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <div className="flex items-center gap-1.5">
+                    Arquivar selecionados
+                    <kbd className="text-3xs px-1 py-0.5 bg-muted/50 rounded font-mono">Del</kbd>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">Você pode desfazer em 5s</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/*
+        `onTransfer` vai direto para a TransferDialog: ela mantém o diálogo
+        ABERTO enquanto o resultado não volta (mostra "Transferindo…") e só
+        fecha no sucesso. Antes, a barra fechava o diálogo na hora — com o lote
+        rejeitando em falha, isso escondia o resumo e deixava a rejeição sem
+        tratamento. O resumo do lote (quantos transferiram / quantos falharam)
+        sai no toast do hook.
+      */}
+      <TransferDialog
+        open={showTransferDialog}
+        onOpenChange={setShowTransferDialog}
+        onTransfer={onTransfer}
+      />
+    </>
+  );
+}

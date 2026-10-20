@@ -1,0 +1,19 @@
+{
+  "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "status": "FINITE_PRODUCTION_RECUT_BODIES_READ",
+  "assigned_files": 10,
+  "assigned_lines": 1055,
+  "paths": [
+    "src/hooks/dashboard/useRecentConversationEvents.ts",
+    "src/hooks/dashboard/useDashboardUrlFilters.ts",
+    "src/hooks/dashboard/useTodayHourlyVolume.ts",
+    "src/hooks/dashboard/useQueueHealth.ts",
+    "src/hooks/business/useWarRoomAlerts.ts",
+    "src/hooks/business/useDemandPrediction.ts",
+    "src/components/transcriptions/TranscriptionsHistoryView.tsx",
+    "src/components/transcriptions/TranscriptionContactGroup.tsx",
+    "src/components/meta-capi/MetaCAPIView.tsx",
+    "src/features/talk-me/types.ts"
+  ],
+  "limit": "Corpos desses dez auxiliares lidos; não equivale a encerrar todos os testes. Roster posterior de 73 testes possui adjudicação própria."
+}
