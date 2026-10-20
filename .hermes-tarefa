@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=assume-return-conversation
+ID=261011112785a0
+BRANCH=v2/assume-return-conversation-261011112785a0
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/assume-return-conversation-261011112785a0
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-11T11:27:06-03:00
+KANBAN=t_675d0cac
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/assume-return-conversation-261011112785a0/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-11
+DB_LOCAL=v2-261011112785a0
+PRONTO_SHA=730ec6b2053bdf775b62fb0f92f64fe761ae435f

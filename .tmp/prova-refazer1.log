@@ -1,0 +1,153 @@
+[OK] arquivo do repo: REVOKE/GRANT, SECURITY DEFINER com search_path, portao auth.uid() e sem auth.uid() em assigned_to
+[OK] bootstrap: roles, auth.uid(), helpers reais, FSM real, guarda de responsavel real e seeds
+
+── ANTES: a RPC "Assumir" nao existe (lacuna V2) ──────────────────────────
+[OK] ANTES: to_regprocedure(assume_conversation) = <null>
+[OK] ANTES: to_regprocedure(return_conversation_to_queue) = <null>
+[OK] ANTES: nenhuma das duas RPCs existe
+
+── DEPOIS: aplicando o SQL real da migration ─────────────────────────────
+[OK] DEPOIS: has_function_privilege(authenticated,public.assume_conversation(uuid),EXECUTE) = t
+[OK] DEPOIS: has_function_privilege(authenticated,public.return_conversation_to_queue(uuid,text),EXECUTE) = t
+[OK] DEPOIS: has_function_privilege(anon,public.assume_conversation(uuid),EXECUTE) = f
+[OK] DEPOIS: has_function_privilege(anon,public.return_conversation_to_queue(uuid,text),EXECUTE) = f
+[OK] DEPOIS: admin assume contato na fila = true|10000000-0000-0000-0000-0000000000a1|open
+[OK] DEPOIS: estado apos admin assumir (open + responsavel) = 10000000-0000-0000-0000-0000000000a1|open
+[OK] DEPOIS: auditoria de assumir = 1 linha = 1
+[OK] DEPOIS: auditoria sem chave de dado pessoal = 0
+[OK] DEPOIS: updated_at avanca so na linha tocada (1 linha por PK) = true|true
+[OK] DEPOIS: membro da fila assume contato livre = true|10000000-0000-0000-0000-0000000000a2|open
+[OK] DEPOIS: dono nao-admin devolve a fila = true
+[OK] DEPOIS: estado apos dono devolver (sem dono + waiting, queue mantida) = |waiting|40000000-0000-0000-0000-0000000000a1
+[OK] DEPOIS: auditoria de devolver pelo dono = 1 linha = 1
+[OK] DEPOIS: motivo do dono gravado na auditoria = resolvido pelo dono
+[OK] DEPOIS: agente fora da fila e barrado (42501)
+[OK] DEPOIS: contato ja tem outro responsavel (already_assigned)
+[OK] DEPOIS: admin assume por cima de outro (takeover) = true|10000000-0000-0000-0000-0000000000a1|open
+[OK] DEPOIS: assumir conversa encerrada (conversation_not_active)
+[OK] DEPOIS: quem nao e o dono nao pode devolver (42501)
+[OK] DEPOIS: admin devolve a fila = true
+[OK] DEPOIS: estado apos devolver (sem dono + waiting, queue mantida) = |waiting|40000000-0000-0000-0000-0000000000a1
+[OK] DEPOIS: motivo gravado na auditoria de devolver = sem tempo
+[OK] DEPOIS: devolver e idempotente (sem 2a linha de auditoria) = 1
+[OK] DEPOIS: devolver conversa encerrada (conversation_not_active)
+[OK] DEPOIS: anon nao tem EXECUTE (42501)
+[OK] DEPOIS: sem JWT e barrado (not_authenticated)
+[OK] DEPOIS: contato inexistente (contact_not_found)
+[OK] DEPOIS: contato sem fila e barrado para nao-admin (42501)
+[OK] DEPOIS: admin assume contato sem fila = true|10000000-0000-0000-0000-0000000000a1|open
+[OK] DEPOIS: o contrato inteiro passa com a migration aplicada
+
+── CORRIDA: dois assumir concorrentes ────────────────────────────────────
+[OK] CORRIDA: corrida: exatamente um responsavel = 10000000-0000-0000-0000-0000000000a2
+[OK] CORRIDA: corrida: uma unica linha de auditoria = 1
+[OK] CORRIDA: corrida resolve com um vencedor (CONTEXT:  PL/pgSQL function assume_conversation(uuid) line 62 at RAISE)
+[OK] CORRIDA: exatamente um vencedor e uma unica linha de auditoria
+
+── ROLLBACK: extraido do proprio arquivo ─────────────────────────────────
+[OK] ROLLBACK: assume_conversation removida = <null>
+[OK] ROLLBACK: return_conversation_to_queue removida = <null>
+[OK] REAPLICACAO: has_function_privilege(authenticated,public.assume_conversation(uuid),EXECUTE) = t
+[OK] REAPLICACAO: has_function_privilege(authenticated,public.return_conversation_to_queue(uuid,text),EXECUTE) = t
+[OK] REAPLICACAO: has_function_privilege(anon,public.assume_conversation(uuid),EXECUTE) = f
+[OK] REAPLICACAO: has_function_privilege(anon,public.return_conversation_to_queue(uuid,text),EXECUTE) = f
+[OK] REAPLICACAO: admin assume contato na fila = true|10000000-0000-0000-0000-0000000000a1|open
+[OK] REAPLICACAO: estado apos admin assumir (open + responsavel) = 10000000-0000-0000-0000-0000000000a1|open
+[OK] REAPLICACAO: auditoria de assumir = 1 linha = 1
+[OK] REAPLICACAO: auditoria sem chave de dado pessoal = 0
+[OK] REAPLICACAO: updated_at avanca so na linha tocada (1 linha por PK) = true|true
+[OK] REAPLICACAO: membro da fila assume contato livre = true|10000000-0000-0000-0000-0000000000a2|open
+[OK] REAPLICACAO: dono nao-admin devolve a fila = true
+[OK] REAPLICACAO: estado apos dono devolver (sem dono + waiting, queue mantida) = |waiting|40000000-0000-0000-0000-0000000000a1
+[OK] REAPLICACAO: auditoria de devolver pelo dono = 1 linha = 1
+[OK] REAPLICACAO: motivo do dono gravado na auditoria = resolvido pelo dono
+[OK] REAPLICACAO: agente fora da fila e barrado (42501)
+[OK] REAPLICACAO: contato ja tem outro responsavel (already_assigned)
+[OK] REAPLICACAO: admin assume por cima de outro (takeover) = true|10000000-0000-0000-0000-0000000000a1|open
+[OK] REAPLICACAO: assumir conversa encerrada (conversation_not_active)
+[OK] REAPLICACAO: quem nao e o dono nao pode devolver (42501)
+[OK] REAPLICACAO: admin devolve a fila = true
+[OK] REAPLICACAO: estado apos devolver (sem dono + waiting, queue mantida) = |waiting|40000000-0000-0000-0000-0000000000a1
+[OK] REAPLICACAO: motivo gravado na auditoria de devolver = sem tempo
+[OK] REAPLICACAO: devolver e idempotente (sem 2a linha de auditoria) = 1
+[OK] REAPLICACAO: devolver conversa encerrada (conversation_not_active)
+[OK] REAPLICACAO: anon nao tem EXECUTE (42501)
+[OK] REAPLICACAO: sem JWT e barrado (not_authenticated)
+[OK] REAPLICACAO: contato inexistente (contact_not_found)
+[OK] REAPLICACAO: contato sem fila e barrado para nao-admin (42501)
+[OK] REAPLICACAO: admin assume contato sem fila = true|10000000-0000-0000-0000-0000000000a1|open
+[OK] ROLLBACK: as duas funcoes somem; reaplicar restaura e o contrato volta a passar (idempotencia)
+
+── MUTACAO A: copia sem o portao de fila (not_authorized) ────────────────
+[EVIDENCIA] [OK] MUTACAO A: has_function_privilege(authenticated,public.assume_conversation(uuid),EXECUTE) = t
+[EVIDENCIA] [OK] MUTACAO A: has_function_privilege(authenticated,public.return_conversation_to_queue(uuid,text),EXECUTE) = t
+[EVIDENCIA] [OK] MUTACAO A: has_function_privilege(anon,public.assume_conversation(uuid),EXECUTE) = f
+[EVIDENCIA] [OK] MUTACAO A: has_function_privilege(anon,public.return_conversation_to_queue(uuid,text),EXECUTE) = f
+[EVIDENCIA] [OK] MUTACAO A: admin assume contato na fila = true|10000000-0000-0000-0000-0000000000a1|open
+[EVIDENCIA] [OK] MUTACAO A: estado apos admin assumir (open + responsavel) = 10000000-0000-0000-0000-0000000000a1|open
+[EVIDENCIA] [OK] MUTACAO A: auditoria de assumir = 1 linha = 1
+[EVIDENCIA] [OK] MUTACAO A: auditoria sem chave de dado pessoal = 0
+[EVIDENCIA] [OK] MUTACAO A: updated_at avanca so na linha tocada (1 linha por PK) = true|true
+[EVIDENCIA] [OK] MUTACAO A: membro da fila assume contato livre = true|10000000-0000-0000-0000-0000000000a2|open
+[EVIDENCIA] [OK] MUTACAO A: dono nao-admin devolve a fila = true
+[EVIDENCIA] [OK] MUTACAO A: estado apos dono devolver (sem dono + waiting, queue mantida) = |waiting|40000000-0000-0000-0000-0000000000a1
+[EVIDENCIA] [OK] MUTACAO A: auditoria de devolver pelo dono = 1 linha = 1
+[EVIDENCIA] [OK] MUTACAO A: motivo do dono gravado na auditoria = resolvido pelo dono
+[EVIDENCIA] [FAIL] MUTACAO A: agente fora da fila e barrado (42501): erro divergente (esperava 42501): BEGIN
+[EVIDENCIA] SET
+[EVIDENCIA] SET
+[EVIDENCIA] SET
+[EVIDENCIA] ERROR:  P0001: already_assigned
+[EVIDENCIA] CONTEXT:  PL/pgSQL function assume_conversation(uuid) line 50 at RAISE
+[EVIDENCIA] LOCATION:  exec_stmt_raise, pl_exec.c:3897
+[OK] MUTACAO A: sem o portao de fila o contrato FALHA (um de fora assume)
+
+── MUTACAO B: copia sem o portao "ja tem dono" (already_assigned) ────────
+[EVIDENCIA] [OK] MUTACAO B: has_function_privilege(authenticated,public.assume_conversation(uuid),EXECUTE) = t
+[EVIDENCIA] [OK] MUTACAO B: has_function_privilege(authenticated,public.return_conversation_to_queue(uuid,text),EXECUTE) = t
+[EVIDENCIA] [OK] MUTACAO B: has_function_privilege(anon,public.assume_conversation(uuid),EXECUTE) = f
+[EVIDENCIA] [OK] MUTACAO B: has_function_privilege(anon,public.return_conversation_to_queue(uuid,text),EXECUTE) = f
+[EVIDENCIA] [OK] MUTACAO B: admin assume contato na fila = true|10000000-0000-0000-0000-0000000000a1|open
+[EVIDENCIA] [OK] MUTACAO B: estado apos admin assumir (open + responsavel) = 10000000-0000-0000-0000-0000000000a1|open
+[EVIDENCIA] [OK] MUTACAO B: auditoria de assumir = 1 linha = 1
+[EVIDENCIA] [OK] MUTACAO B: auditoria sem chave de dado pessoal = 0
+[EVIDENCIA] [OK] MUTACAO B: updated_at avanca so na linha tocada (1 linha por PK) = true|true
+[EVIDENCIA] [OK] MUTACAO B: membro da fila assume contato livre = true|10000000-0000-0000-0000-0000000000a2|open
+[EVIDENCIA] [OK] MUTACAO B: dono nao-admin devolve a fila = true
+[EVIDENCIA] [OK] MUTACAO B: estado apos dono devolver (sem dono + waiting, queue mantida) = |waiting|40000000-0000-0000-0000-0000000000a1
+[EVIDENCIA] [OK] MUTACAO B: auditoria de devolver pelo dono = 1 linha = 1
+[EVIDENCIA] [OK] MUTACAO B: motivo do dono gravado na auditoria = resolvido pelo dono
+[EVIDENCIA] [OK] MUTACAO B: agente fora da fila e barrado (42501)
+[EVIDENCIA] [FAIL] MUTACAO B: contato ja tem outro responsavel (already_assigned): passou (esperava erro already_assigned): BEGIN
+[EVIDENCIA] SET
+[EVIDENCIA] SET
+[EVIDENCIA] SET
+[EVIDENCIA]                                                                                              assume_conversation                                                                                              
+[EVIDENCIA] --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+[EVIDENCIA]  {"ok": true, "queue_id": "40000000-0000-0000-0000-0000000000a1", "contact_id": "30000000-0000-0000-0000-000000000003", "assigned_to": "10000000-0000-0000-0000-0000000000a3", "conversation_status": "open"}
+[EVIDENCIA] (1 row)
+[EVIDENCIA] 
+[EVIDENCIA] COMMIT
+[OK] MUTACAO B: sem o portao "ja tem dono" o contrato FALHA (um membro rouba a conversa)
+
+── MUTACAO C: copia sem o WHERE condicional do UPDATE ───────────────────
+[EVIDENCIA] [FAIL] MUTACAO C: a 2a sessao venceu junto (esperava conflito): {"ok": true, "queue_id": "40000000-0000-0000-0000-0000000000a1", "contact_id": "30000000-0000-0000-0000-000000000005", "assigned_to": "10000000-0000-0000-0000-0000000000a3", "conversation_status": "open"}
+[OK] MUTACAO C: sem o WHERE condicional os dois venceriam a corrida (contrato FALHA)
+
+── MUTACAO D: copia sem a barreira do dono no devolver (so admin devolve) ──
+[EVIDENCIA] [OK] MUTACAO D: has_function_privilege(authenticated,public.assume_conversation(uuid),EXECUTE) = t
+[EVIDENCIA] [OK] MUTACAO D: has_function_privilege(authenticated,public.return_conversation_to_queue(uuid,text),EXECUTE) = t
+[EVIDENCIA] [OK] MUTACAO D: has_function_privilege(anon,public.assume_conversation(uuid),EXECUTE) = f
+[EVIDENCIA] [OK] MUTACAO D: has_function_privilege(anon,public.return_conversation_to_queue(uuid,text),EXECUTE) = f
+[EVIDENCIA] [OK] MUTACAO D: admin assume contato na fila = true|10000000-0000-0000-0000-0000000000a1|open
+[EVIDENCIA] [OK] MUTACAO D: estado apos admin assumir (open + responsavel) = 10000000-0000-0000-0000-0000000000a1|open
+[EVIDENCIA] [OK] MUTACAO D: auditoria de assumir = 1 linha = 1
+[EVIDENCIA] [OK] MUTACAO D: auditoria sem chave de dado pessoal = 0
+[EVIDENCIA] [OK] MUTACAO D: updated_at avanca so na linha tocada (1 linha por PK) = true|true
+[EVIDENCIA] [OK] MUTACAO D: membro da fila assume contato livre = true|10000000-0000-0000-0000-0000000000a2|open
+[EVIDENCIA] ERROR:  not_authorized
+[EVIDENCIA] CONTEXT:  PL/pgSQL function return_conversation_to_queue(uuid,text) line 42 at RAISE
+[EVIDENCIA] [FAIL] MUTACAO D: dono nao-admin devolve a fila deveria ser true, obtido 
+[OK] MUTACAO D: sem a barreira do dono o contrato FALHA (dono nao-admin barrado)
+
+[OK] contrato assumir/devolver a fila verificado: 10 assercoes (postgres:17-alpine)
