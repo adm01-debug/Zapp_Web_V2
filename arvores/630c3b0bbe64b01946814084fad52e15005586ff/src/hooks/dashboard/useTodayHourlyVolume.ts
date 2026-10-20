@@ -1,0 +1,80 @@
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { appDayKey, appHour, appShiftDayKey } from '@/lib/localDay';
+
+// Bucket agregado pela RPC dashboard_hourly_volume (E22): 1 linha por (dia, hora)
+// com a contagem já somada no servidor — nunca mais linha por mensagem crua (achado
+// A6: o cap silencioso de 1000 linhas do PostgREST truncava a amostra de 8 dias).
+export type HourlyBucket = { day: string; hour: number; message_count: number };
+
+/** Fila/agente do filtro do topo (E32) — propagados como p_queue/p_agent para
+ * a RPC. Para não-staff, dashboard_hourly_volume trava p_agent = auth.uid() no
+ * servidor (E33), igual dashboard_kpi/dashboard_contact_counts. */
+export interface HourlyVolumeFilters {
+  queueId?: string | null;
+  agentId?: string | null;
+}
+
+export function aggregateHourlyVolume(buckets: HourlyBucket[], now = new Date()) {
+  // R2-MOD-075: 'hoje', a 'hora atual' e as chaves dos 7 dias têm de sair do fuso do APP
+  // (America/Sao_Paulo), o mesmo em que `dashboard_hourly_volume` derivou `day`/`hour`. Com
+  // `startOfDay`/`format`/`getHours` (fuso do dispositivo) o mesmo instante e os mesmos buckets
+  // eram jogados para o dia anterior e a hora corrente ficava zerada em qualquer fuso != SP.
+  const currentHour = appHour(now);
+  const todayKey = appDayKey(now);
+
+  const todayByHour: (number | null)[] = Array.from({ length: 24 }, (_, h) => (h > currentHour ? null : 0));
+
+  // últimos 7 dias, hoje incluído (para o select "Últimos 7 dias (por dia)").
+  const last7Keys = Array.from({ length: 7 }, (_, i) => appShiftDayKey(todayKey, -(6 - i)));
+  const countsByDay = new Map<string, number>(last7Keys.map((k) => [k, 0]));
+
+  // 7 dias ANTERIORES a hoje (exclui hoje) — base do avg7dCurrentHour.
+  const priorKeys = Array.from({ length: 7 }, (_, i) => appShiftDayKey(todayKey, -(i + 1)));
+  const countsAtHourByPriorDay = new Map<string, number>(priorKeys.map((k) => [k, 0]));
+
+  for (const b of buckets) {
+    if (countsByDay.has(b.day)) countsByDay.set(b.day, (countsByDay.get(b.day) ?? 0) + b.message_count);
+
+    if (b.day === todayKey) {
+      if (b.hour <= currentHour) todayByHour[b.hour] = (todayByHour[b.hour] ?? 0) + b.message_count;
+    } else if (countsAtHourByPriorDay.has(b.day) && b.hour === currentHour) {
+      countsAtHourByPriorDay.set(b.day, (countsAtHourByPriorDay.get(b.day) ?? 0) + b.message_count);
+    }
+  }
+
+  const last7ByDay = last7Keys.map((date) => ({ date, count: countsByDay.get(date) ?? 0 }));
+  const currentHourCount = todayByHour[currentHour] ?? 0;
+  const priorCounts = [...countsAtHourByPriorDay.values()];
+  const avg7dCurrentHour = priorCounts.length
+    ? Math.round((priorCounts.reduce((a, b) => a + b, 0) / priorCounts.length) * 10) / 10
+    : null;
+
+  return { todayByHour, last7ByDay, currentHour, currentHourCount, avg7dCurrentHour };
+}
+
+// dashboard_hourly_volume (E22, com p_queue/p_agent desde E32) ja esta em producao
+// (DDL aplicada via MCP), mas o types.ts gerado ainda nao foi sincronizado com essa
+// RPC (nao ha generate_typescript_types para este projeto self-hosted; so o workflow
+// types-sync semanal). Cast local via 'unknown' (evita @typescript-eslint/no-explicit-any)
+// ate a proxima sincronizacao.
+type DashboardHourlyVolumeRpc = (
+  fn: 'dashboard_hourly_volume',
+  args: { p_days: number; p_queue: string | null; p_agent: string | null },
+) => Promise<{ data: unknown; error: { message: string } | null }>;
+
+export function useTodayHourlyVolume(filters: HourlyVolumeFilters = {}) {
+  const { queueId = null, agentId = null } = filters;
+  return useQuery({
+    // E32: fila/agente entram na queryKey — trocar o filtro do topo tem que
+    // invalidar o cache do gráfico (antes o VolumeChart era cego a eles, A9).
+    queryKey: ['today-hourly-volume', queueId, agentId],
+    queryFn: async () => {
+      const rpc = supabase.rpc as unknown as DashboardHourlyVolumeRpc;
+      const { data, error } = await rpc('dashboard_hourly_volume', { p_days: 8, p_queue: queueId, p_agent: agentId });
+      if (error) throw error;
+      return aggregateHourlyVolume((data ?? []) as HourlyBucket[]);
+    },
+    staleTime: 120_000, // E28: volume tolera 120s (gráfico por hora, não precisa de segundo a segundo)
+  });
+}

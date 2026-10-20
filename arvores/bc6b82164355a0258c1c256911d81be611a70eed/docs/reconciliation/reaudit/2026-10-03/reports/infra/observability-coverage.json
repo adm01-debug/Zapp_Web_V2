@@ -1,0 +1,706 @@
+{
+  "schema_version": 1,
+  "area": "infra_observability",
+  "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "source_root": "/workspace/scratch/f8f9b9cbce53/reaudit/source",
+  "scope": "Lote finito explicitamente delegado de monitoring, diagnostics, performance, web-vitals e useDiagnosticsData; somente arquivos de produto da matriz sem leitura integral, com apoios declarados.",
+  "target_snapshot": {
+    "file": "observability-targets.json",
+    "sha256": "a163a4d629803dc0a7476ccaec2d7bd3f7c7116406f1c452258eac867562b260",
+    "matrix_sha256_at_selection": "3e4a4a8e76834e487d34b49cada5fbd6cef62af394d7653f3197fdbba591e67b"
+  },
+  "counts": {
+    "total": 37,
+    "semantic": 32,
+    "targeted": 5
+  },
+  "primary_files": 27,
+  "primary_lines": 4550,
+  "primary_remaining_not_fully_read": 0,
+  "absent_directories": [
+    "src/hooks/monitoring"
+  ],
+  "inventory": [
+    {
+      "path": "src/components/monitoring/MonitoringDiagnosticPanel.tsx",
+      "sha256": "33ab42ee626322fc9bcdbe832046ad3dd560b9bfd111112ef0af5e173e20eb84",
+      "bytes": 12805,
+      "lines": 202,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          202
+        ]
+      ],
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "observability_delegated",
+      "review_basis": "Execução manual do diagnóstico, erro/loading, metadados, recomendações e exportação TXT/PDF. Confronto de dados da Edge com os rótulos; autorização/backend e estatística global permanecem API001/API037, sem nova contagem."
+    },
+    {
+      "path": "src/components/performance/PerformanceMonitor.tsx",
+      "sha256": "a5a7ad68039227a5fa4c45a141f8fb99021ca0edfc944fc31310e3206fe707f1",
+      "bytes": 14139,
+      "lines": 291,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          291
+        ]
+      ],
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "observability_delegated",
+      "review_basis": "collectMetrics: Navigation/Paint, memória/rede opcionais, classificação, score, snapshot e timer; histórico/seleção/limpeza e JSX. Ausência de APIs vira valores bons no score; cleanup depende de hook externo. Métricas de cache locais não certificam taxa real."
+    },
+    {
+      "path": "src/lib/web-vitals.ts",
+      "sha256": "1ec1771de586802ede66a77abb32f033ad36607c934c42b65b8c2fa54acd562d",
+      "bytes": 6741,
+      "lines": 187,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          187
+        ]
+      ],
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "observability_delegated",
+      "review_basis": "Observadores LCP/FID/CLS/INP, inicialização idempotente, Map limitado por nome, visibilidade, TTFB e thresholds do budget. CLS soma shifts sem janela dentro do ciclo visível e INP usa máximo bruto; efeito restrito ao coletor local, separado do Speed Insights."
+    },
+    {
+      "path": "src/components/diagnostics/DiagnosticsView.tsx",
+      "sha256": "9e23c355bbd03e5be2ee5d8102d88b32d551505b8032156d42ae2d862092ed8d",
+      "bytes": 18946,
+      "lines": 324,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          324
+        ]
+      ],
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "observability_delegated",
+      "review_basis": "Cards de conexões/mensagens, HealthBadge, textos de estado operacional, erros e Refresh; segue o hook useDiagnosticsData. Realtime ativo é afirmado a partir de constante, e erros rápidos da coleta podem virar saudáveis."
+    },
+    {
+      "path": "src/components/monitoring/MonitoringStatsCards.tsx",
+      "sha256": "6329681044c353e56a8cf0041dda9d663e55a3aee50090548caa5fcc59ee6237",
+      "bytes": 6562,
+      "lines": 164,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          164
+        ]
+      ],
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "observability_delegated",
+      "review_basis": "Indicadores por dados, empty state, ratio e sparkline; uptime anunciado 24h vem do período selecionado. Texto Sem dados preservado no subtítulo, mas valor e estilo ainda vêm de 100% por default."
+    },
+    {
+      "path": "src/components/monitoring/EvolutionMonitoringDashboard.tsx",
+      "sha256": "97802933f3d40202b9b802b28f0a90c1a671979e46e7aa37e82a04b703fea257",
+      "bytes": 14640,
+      "lines": 346,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          346
+        ]
+      ],
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "observability_delegated",
+      "review_basis": "Composição de período, notificações, conexões, webhook, diagnóstico, SLA, heatmap e loading; rastreado que os mesmos healthLogs filtrados abastecem cartões 24h e grade 7d. LastUpdatedBadge exibe relógio, não reivindicação explícita de última coleta."
+    },
+    {
+      "path": "src/components/monitoring/MonitoringConnectionsList.tsx",
+      "sha256": "1022c60dd9825cd7c4b22b65220543fee6a1bd65dcb80b530eb6779bf3568ead",
+      "bytes": 8339,
+      "lines": 135,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          135
+        ]
+      ],
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "observability_delegated",
+      "review_basis": "QR/conectar/reiniciar por instância, chave de pendência, status/latência e mensagens de erro. Ramos data.error===true são tratados; ausência de QR retorna informação. Nenhum envio real ou reinício executado."
+    },
+    {
+      "path": "src/hooks/system/useDiagnosticsData.ts",
+      "sha256": "c665f66b86eb8a1116c77e34150d25fa0554a82e75684dc9c7ed867d4b46628a",
+      "bytes": 10019,
+      "lines": 288,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          288
+        ]
+      ],
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "observability_delegated",
+      "review_basis": "Todas as consultas, contagens, erros recentes, saúde DB/Storage/Edge/Realtime, atualização e polling. Retornos error não lançados são ignorados em várias consultas; latência é usada como sucesso e realtime não é testado."
+    },
+    {
+      "path": "src/components/monitoring/hooks/useMonitoringData.ts",
+      "sha256": "2f866d9a0e6d6ea033f64f2063f50feacf684c4a873616e3e0f408a2d079d7ee",
+      "bytes": 6575,
+      "lines": 115,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          115
+        ]
+      ],
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "observability_delegated",
+      "review_basis": "computeUptime, uptime por instância, sparkline, consultas por período, limites, totais e formação de buckets. Vazio vira100%, consulta já limita janela e chaves por hora divergem de buckets 10min/1d. Erros e concorrência de fetch ficam explicitados."
+    },
+    {
+      "path": "src/components/monitoring/MonitoringAvailabilityHeatmap.tsx",
+      "sha256": "1aac00d58a918f0ba45d98c3df251108f0fa4c73fb63e99d7a4b03e88741c6b0",
+      "bytes": 6103,
+      "lines": 151,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          151
+        ]
+      ],
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "observability_delegated",
+      "review_basis": "Grade7d/24h, agrupamento de checks, tooltip, ratio e cores. Células sem dados são corretamente cinzas; agregado vazio=100 e dados recebidos podem ser apenas1h/12h. Não se atribuiu saúde a cada célula vazia."
+    },
+    {
+      "path": "src/components/performance/OptimizedImage.tsx",
+      "sha256": "6bfe27d42bba58f627241cf2c8ebc0b9a8fc11792db92139de75b3a3ac76175a",
+      "bytes": 7654,
+      "lines": 296,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          296
+        ]
+      ],
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "observability_delegated",
+      "review_basis": "IntersectionObserver, lazy image, skeleton, src/srcset/error/load, prioridade, estilos e OptimizedAvatar. Estados não reiniciam em troca de src e props podem substituir handlers, mas busca produtiva só encontrou exports/definições: limitações latentes, sem novo achado de fluxo ativo."
+    },
+    {
+      "path": "src/components/monitoring/MonitoringEventTimeline.tsx",
+      "sha256": "5cb261bbe0469725c3f84122b5768763c4f07e863964aac5bb2615f6b6e3a5d9",
+      "bytes": 8884,
+      "lines": 209,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          209
+        ]
+      ],
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "observability_delegated",
+      "review_basis": "Carga de mensagens1h e últimos15 health logs, merge/ordem/corte, filtro, pausa e intervalo15s. Health logs sem filtro1h podem aparecer sob Última hora; tabela deixa sua idade visível. Nenhuma alegação de canal realtime foi inferida de LiveDot."
+    },
+    {
+      "path": "src/components/diagnostics/ConnectionHealthPanel.tsx",
+      "sha256": "0f418c91323a4f4c3486d7bb4012068de5e3c3185eed26843820e798e1ae18e7",
+      "bytes": 11945,
+      "lines": 270,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          270
+        ]
+      ],
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "observability_delegated",
+      "review_basis": "Consultas com AbortSignal/timeout, polling visível de dados armazenados, execução manual, resumo/status/histórico. Polled fetch não invoca auto-fix. Checks(7d) usa últimos50 sem filtro temporal; ausência de latência contribui0 na média."
+    },
+    {
+      "path": "src/components/performance/VirtualizedList.tsx",
+      "sha256": "8fdff5ec13e797224e68f2aa8f9099e67f2f123a1e50d87e13c1db24e28febfd",
+      "bytes": 7727,
+      "lines": 264,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          264
+        ]
+      ],
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "observability_delegated",
+      "review_basis": "Virtualizer, medições/overscan/keys/scroll, empty/loading/end reached e VirtualizedGrid. Callbacks de fim/guardas de coluna têm contratos latentes; nenhum consumidor JSX produtivo encontrado no escopo de busca. Sem promover export a bug ativo."
+    },
+    {
+      "path": "src/components/monitoring/MonitoringWebhookPanel.tsx",
+      "sha256": "f327581d0bd5e4fe20081d87c5eac448df6f09078acb4ed1ba720293ae102339",
+      "bytes": 8828,
+      "lines": 176,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          176
+        ]
+      ],
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "observability_delegated",
+      "review_basis": "Estado/filtros/eventos esperados, cópia, configuração e verificação manual; erros da API tratados. Configuração única e check por instância foram cruzados com API037; nenhum achado duplicado de tráfego global."
+    },
+    {
+      "path": "src/components/monitoring/hooks/useMonitoringActions.ts",
+      "sha256": "f40ba54499837efec5bdcdeb3d43548978bde230eb820cf6906def1845b8be94",
+      "bytes": 4938,
+      "lines": 88,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          88
+        ]
+      ],
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "observability_delegated",
+      "review_basis": "Invocações de obter/configurar/verificar webhook e diagnóstico, estados loading/result, toast e erros retornados/lançados. Somente leitura de fonte; mutações do handler ficam com providers."
+    },
+    {
+      "path": "src/components/monitoring/MonitoringHealthLogs.tsx",
+      "sha256": "97379a21599297acafb35bd0ceed3d7554823ab3d95bba997b2515600a2113b4",
+      "bytes": 7051,
+      "lines": 124,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          124
+        ]
+      ],
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "observability_delegated",
+      "review_basis": "Filtro/status/contadores/tabela, metadados, ordem e empty state; todos os cálculos são do dataset recebido. Não há prova de cobertura temporal maior que o fetch."
+    },
+    {
+      "path": "src/components/monitoring/MonitoringSLAPanel.tsx",
+      "sha256": "9b0edabce5756c3f769f552641ab09c5fda09c7faa524908e3196122e64b3cee",
+      "bytes": 6358,
+      "lines": 148,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          148
+        ]
+      ],
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "observability_delegated",
+      "review_basis": "Meta99.5, attainment, progresso, contagem e detalhe por instância. Afirma últimas24h com stats derivados do período selecionado; zero amostras resulta Atingido por uptime100."
+    },
+    {
+      "path": "src/components/performance/Prefetcher.tsx",
+      "sha256": "7f25dc06c1c196cb55101add0f1a93c841e267240190909271b4f506e0ebce37",
+      "bytes": 5011,
+      "lines": 187,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          187
+        ]
+      ],
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "observability_delegated",
+      "review_basis": "Prefetch por hover/delay, hooks/cleanup, loader catch, CriticalRoutePrefetcher e resource hints. Caminhos legados sem consumidor produtivo encontrado; sem inferir ganho de navegação ou bug ativo só por export."
+    },
+    {
+      "path": "src/components/monitoring/hooks/useMonitoringNotifications.ts",
+      "sha256": "3f66983c2eb74e343477dc86296e120ea97d0b2c7270e843109abd1038d26106",
+      "bytes": 3111,
+      "lines": 70,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          70
+        ]
+      ],
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "observability_delegated",
+      "review_basis": "Estado anterior, transição de conexão, mute/volume/horário silencioso, áudio e desktop notification. Contextos de áudio e preferências de notificação registrados como fronteira de revisão; sem chamar Notification/áudio reais."
+    },
+    {
+      "path": "src/components/performance/LazyRoutes.tsx",
+      "sha256": "98b6ff89eeeddee4df1348269d096837b2f0382110c77a41835e1a88b27cec89",
+      "bytes": 6816,
+      "lines": 161,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          161
+        ]
+      ],
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "observability_delegated",
+      "review_basis": "Mapas de imports dinâmicos, fallbacks Suspense, factory/HOC e placeholders. Exports e nomes conferidos; presença de lazy wrapper não é métrica de bundle/runtime."
+    },
+    {
+      "path": "src/components/performance/HotRoutePrefetcher.tsx",
+      "sha256": "7956b374b461abc0ed31e6ce417844af59208694c236f646fc268b4b37c1d596",
+      "bytes": 2009,
+      "lines": 59,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          59
+        ]
+      ],
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "observability_delegated",
+      "review_basis": "Uso ativo pelo Index, política saveData/2g, idle/timer, fila de imports, captura de falha e cancel flag. Cancelamento impede novos imports; não alegado cancelamento de import em andamento."
+    },
+    {
+      "path": "src/components/monitoring/MonitoringMessageChart.tsx",
+      "sha256": "add3ef18394dd94b624f1272a6d528df92316ac76351004105b6013cd50ee4bf",
+      "bytes": 4533,
+      "lines": 83,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          83
+        ]
+      ],
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "observability_delegated",
+      "review_basis": "Selecionador de período, toggle enviados/recebidos, área/tooltip e ligação hourlyData. Não reconcilia soma plotada com total consultado; consumidor do defeito de buckets."
+    },
+    {
+      "path": "src/components/performance/metricThresholds.ts",
+      "sha256": "3136069a204129b76f954e7fe60994d751fc62e26f4fe758dcc74c7a7e682ef4",
+      "bytes": 853,
+      "lines": 19,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          19
+        ]
+      ],
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "observability_delegated",
+      "review_basis": "Funções puras de limiares; sem estado desconhecido. PerformanceMonitor duplica limiares inline, portanto testes do helper isolado não provam o ramo de coleta no painel."
+    },
+    {
+      "path": "src/components/monitoring/hooks/useEvolutionMonitoring.ts",
+      "sha256": "432cee260294b361c1d943bd2aa7043f60784c08290691ba8928b00692a6ab1d",
+      "bytes": 2462,
+      "lines": 57,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          57
+        ]
+      ],
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "observability_delegated",
+      "review_basis": "Período inicial12h, refetch, interval, listener de conexão, troca de período e exposição de estados/actions. Sem request fence/abort entre períodos; janela de healthLogs é a seleção atual."
+    },
+    {
+      "path": "src/components/performance/hotRoutePrefetch.ts",
+      "sha256": "61ac040d9d66aa2972605acd80a631c63ddd483689842ff758acebe99a02b67e",
+      "bytes": 1924,
+      "lines": 40,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          40
+        ]
+      ],
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "observability_delegated",
+      "review_basis": "Tabela das cinco views quentes e decisão por connection/saveData/2g. Nenhum import é executado na declaração; decisão desconhecida permite prefetch."
+    },
+    {
+      "path": "src/components/monitoring/MonitoringSkeletons.tsx",
+      "sha256": "faf4e276d9069230e9db66c361c0cd3d46eefcfcd38578d7289daccd0bb91f6a",
+      "bytes": 3285,
+      "lines": 96,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          96
+        ]
+      ],
+      "full_file_read": true,
+      "primary_delegated": true,
+      "layer": "observability_delegated",
+      "review_basis": "Skeletons acessíveis dos painéis, estrutura, variabilidade visual e nenhum efeito de produto; leitura completa sem achado novo."
+    },
+    {
+      "path": "src/components/monitoring/hooks/types.ts",
+      "sha256": "4564f84805039c7199daca72211a4f91425e6e169bfa2a2f5f3ec941864286c9",
+      "bytes": 2158,
+      "lines": 90,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          90
+        ]
+      ],
+      "full_file_read": true,
+      "primary_delegated": false,
+      "layer": "observability_support",
+      "review_basis": "Tipos de conexão/check/mensagem/uptime, periodMs/bucketCounts e conjunto HEALTHY. Nenhum valor externo validado pelo TypeScript em runtime."
+    },
+    {
+      "path": "src/components/performance/index.ts",
+      "sha256": "6b7b9cefc835ce5e42b154d9062c9a5670806e19f62436080d16f065686a4e26",
+      "bytes": 552,
+      "lines": 16,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          16
+        ]
+      ],
+      "full_file_read": true,
+      "primary_delegated": false,
+      "layer": "observability_support",
+      "review_basis": "Barrel de exports completo; existência de export não promove helper/virtualização a fluxo ativo."
+    },
+    {
+      "path": "src/hooks/analytics/usePerformanceSnapshots.ts",
+      "sha256": "53af871c26874ca6981a66dc74d2926a1f5641c73bd077a577e9c4e4877d43d0",
+      "bytes": 2748,
+      "lines": 99,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          99
+        ]
+      ],
+      "full_file_read": true,
+      "primary_delegated": false,
+      "layer": "observability_support",
+      "review_basis": "Hook completo: insert de telemetria, query de histórico, auth/profile, janela/limite e clearOldSnapshots. DELETE resolve com error e ainda anuncia sucesso; não inferida RLS/visibilidade global a partir da falta de filtro."
+    },
+    {
+      "path": "src/lib/logger.ts",
+      "sha256": "f45d5ba0fed8fcd36784de3223c995206f9767e7c961d5dab5f4badca8e1666e",
+      "bytes": 4034,
+      "lines": 131,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          131
+        ]
+      ],
+      "full_file_read": true,
+      "primary_delegated": false,
+      "layer": "observability_support",
+      "review_basis": "Logger completo, correlação e filtros DEV. info/debug são suprimidos fora de DEV: resultados do coletor Web Vitals não foram atribuídos a logs de produção ou a Speed Insights."
+    },
+    {
+      "path": "src/pages/ViewRouter.tsx",
+      "sha256": "6cf287e71a19309582ed6406005bd43710fed41505b6c8127b825e130bf4c530",
+      "bytes": 10236,
+      "lines": 258,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        [
+          1,
+          155
+        ]
+      ],
+      "full_file_read": false,
+      "primary_delegated": false,
+      "layer": "observability_support",
+      "review_basis": "Mapa das rotas diagnostics/performance/evolution-monitor e gate NavigationService.canAccess após carga de papéis/permissões. Consumo efetivo demonstrado, não alegação de acesso anônimo."
+    },
+    {
+      "path": "src/pages/lazyViews.ts",
+      "sha256": "51085b5e5bb6a4691131275cccf1d9c74c6b91be14f5e4b71811c99d09d84e3f",
+      "bytes": 8257,
+      "lines": 62,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        [
+          1,
+          60
+        ]
+      ],
+      "full_file_read": false,
+      "primary_delegated": false,
+      "layer": "observability_support",
+      "review_basis": "Bindings lazy dos três painéis e demais exports no trecho. Não promovida leitura das linhas finais não vistas."
+    },
+    {
+      "path": "src/pages/Index.tsx",
+      "sha256": "971796f4112ea03b82db11b40592e340314767f4dd1a8d0df6ac5b80335e2268",
+      "bytes": 8318,
+      "lines": 196,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        [
+          20,
+          40
+        ],
+        [
+          115,
+          148
+        ]
+      ],
+      "full_file_read": false,
+      "primary_delegated": false,
+      "layer": "observability_support",
+      "review_basis": "Binding lazy e montagem ativa de HotRoutePrefetcher em Suspense. Trechos restantes fora deste lote."
+    },
+    {
+      "path": "src/main.tsx",
+      "sha256": "df91ccf7d1d34c0321952a8ac9dcf9849a8b8092190912382d16c3aa9c742a1f",
+      "bytes": 3637,
+      "lines": 82,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        [
+          1,
+          50
+        ]
+      ],
+      "full_file_read": false,
+      "primary_delegated": false,
+      "layer": "observability_support",
+      "review_basis": "Inicialização do coletor manual e import separado de Speed Insights; handlers de erro e preparação do root. Não confundir os dois canais de coleta."
+    },
+    {
+      "path": "src/components/performance/__tests__/PerformanceMonitor.test.tsx",
+      "sha256": "d49ed3fee78ced04a2cbc11add01ee108e69d452c4f2144e220d6001c7dd6981",
+      "bytes": 10034,
+      "lines": 320,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        [
+          1,
+          140
+        ]
+      ],
+      "full_file_read": false,
+      "primary_delegated": false,
+      "layer": "observability_support",
+      "review_basis": "Inspeção inicial do teste/mocks de navegação, memória/rede e painel. Sem execução ou alegação de cobertura dos demais casos não lidos."
+    },
+    {
+      "path": "src/lib/__tests__/web-vitals-budget.test.ts",
+      "sha256": "3990316d15c353fbc44f021f7e0a3c273fb96e66c9e8b1bf408d231ce15c481e",
+      "bytes": 1931,
+      "lines": 50,
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          50
+        ]
+      ],
+      "full_file_read": true,
+      "primary_delegated": false,
+      "layer": "observability_support",
+      "review_basis": "Teste integral verifica origem dos thresholds via mock e getRating; não alimenta PerformanceObserver nem comprova agregação CLS/INP."
+    }
+  ],
+  "controls": [
+    "Nenhum endpoint de produto, SQL, Storage, mensagem, modelo pago ou browser autenticado foi acionado.",
+    "Todos os27 corpos primários tiveram leitura integral, com trechos truncados reabertos antes da classificação.",
+    "Roteamento e gate de acesso foram lidos; APIs de backend continuam sob revisão providers, sem duplicar API001/API021/API037/API043.",
+    "Testes de suporte lidos não contam como teste executado. Probes serão documentados separadamente com pins anteriores à importação."
+  ],
+  "remaining_gaps": [
+    "Sem observação em browser real, permissões atuais, dados de produção, SDK de navegador ou métricas de usuário.",
+    "Ramos latentes de componentes exportados sem consumidor produtivo não viraram falhas alcançáveis por suposição.",
+    "Não é revisão integral de todos os testes nem de diretórios vizinhos; limites dos apoios permanecem nas faixas por arquivo."
+  ]
+}

@@ -1,0 +1,100 @@
+[
+  {
+    "path": "docs/design/salesview-journey/01-barra-claro.png",
+    "width": 1280,
+    "height": 900,
+    "bytes": 350467,
+    "sha256": "1199ddfcb6668af3bbd48f7219f5cef478207865e16c1d6ac32885273e18c5ce"
+  },
+  {
+    "path": "docs/design/salesview-journey/01-barra.png",
+    "width": 1280,
+    "height": 900,
+    "bytes": 86471,
+    "sha256": "4b1aff0d41a73057c6030a8392a22fabbd64f4c41028edfa2b88c2a56032e072"
+  },
+  {
+    "path": "docs/design/salesview-journey/02-salesview-vazio.png",
+    "width": 1280,
+    "height": 900,
+    "bytes": 157632,
+    "sha256": "9f30845c79604ae2e3c43fc636a44ad1c1e5f2bacd6f4c7e40399abc8fa78484"
+  },
+  {
+    "path": "docs/design/salesview-journey/03-salesview-cheio.png",
+    "width": 1280,
+    "height": 900,
+    "bytes": 157632,
+    "sha256": "9f30845c79604ae2e3c43fc636a44ad1c1e5f2bacd6f4c7e40399abc8fa78484"
+  },
+  {
+    "path": "docs/design/salesview-journey/04-journey-claro.png",
+    "width": 1280,
+    "height": 900,
+    "bytes": 194629,
+    "sha256": "e3f9864ae896d4428f37edc5e1608247ef0fa812dc5617f47b7162afbdd0bd19"
+  },
+  {
+    "path": "docs/design/salesview-journey/04-journey.png",
+    "width": 1280,
+    "height": 900,
+    "bytes": 137432,
+    "sha256": "99bc0230d19b56303de5ab264e06ecaa5e02cb196672367d50c7030550e47438"
+  },
+  {
+    "path": "docs/design/salesview-journey/05-sidebar.png",
+    "width": 1280,
+    "height": 900,
+    "bytes": 154560,
+    "sha256": "cb14af0f9b7007ccda1f1191b9b78f47132d4a72ae992a13a89304d6d511119b"
+  },
+  {
+    "path": "docs/design/salesview-journey/06-claro-contraste.png",
+    "width": 1280,
+    "height": 900,
+    "bytes": 156994,
+    "sha256": "ac728bf09390dacab4833e4ead3d1235b4a190a1da01fdbbafb7028f7d491fe2"
+  },
+  {
+    "path": "docs/design/salesview-journey/07-alto-contraste.png",
+    "width": 1280,
+    "height": 900,
+    "bytes": 158890,
+    "sha256": "60d030c39006302f412989e28f36e79216976342e1d3ed4b8bb0aef1733df189"
+  },
+  {
+    "path": "docs/design/salesview-journey/item6-reload.png",
+    "width": 1280,
+    "height": 900,
+    "bytes": 355398,
+    "sha256": "dc509f0363ccf25ca34e77334d441cf5861acfd4515319ffa4d727cd3b14084d"
+  },
+  {
+    "path": "docs/design/salesview-journey/journey-periodo-90dias.png",
+    "width": 1280,
+    "height": 1000,
+    "bytes": 168617,
+    "sha256": "d5b74bdab6f3f565ce84d15526e0a86b7388e3ae7535902ad3a8a3a4c401a68e"
+  },
+  {
+    "path": "docs/design/salesview-journey/journey-periodo-menu.png",
+    "width": 1280,
+    "height": 1000,
+    "bytes": 211483,
+    "sha256": "2ea6b2240d264197d4c4e16c3df2d29e02f26e85b3b4907cd673c490f6e7e4c1"
+  },
+  {
+    "path": "docs/design/salesview-journey/journey-prod.png",
+    "width": 1280,
+    "height": 900,
+    "bytes": 192436,
+    "sha256": "542c3ddb7740b244d641b9c582ae1433ea38b37384d73ad9645e63ec8b71f1d2"
+  },
+  {
+    "path": "docs/design/salesview-journey/journey-tab-restaurada.png",
+    "width": 1280,
+    "height": 900,
+    "bytes": 191078,
+    "sha256": "fddf903f85fa8147c18725e109f58d0ffb9d31877bfccdd36d41ffa90dd1e241"
+  }
+]

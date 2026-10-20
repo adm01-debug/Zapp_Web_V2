@@ -1,0 +1,160 @@
+# docs:
+#   gatilho: push
+#   prova: o placar do Talk X regenerado a partir dos dados atuais
+#   falha: o job fica vermelho e o placar nao e atualizado
+#   avisa: autor do push
+name: Talk X V4 placar regen (push)
+
+# Regenera docs/talkx/v4/STATUS.md quando a main anda e, se mudou, abre/atualiza
+# um PR. NUNCA empurra direto na main.
+#
+# Por que nao empurra: a main tem branch protection com status checks
+# obrigatorios, entao um push direto e recusado pelo servidor com
+#   remote: error: GH006: Protected branch update failed for refs/heads/main.
+#   remote: - 6 of 6 required status checks are expected.
+# Medido no run 37061271438 (02/10/2026): o commit do bot era criado e o push
+# rejeitado, deixando o job vermelho na main a cada mudanca de placar. O desenho
+# anterior assumia push direto e so funcionava antes da branch protection.
+#
+# Desenho atual, o mesmo do types-sync: o PR e aberto com o GITHUB_TOKEN; pela
+# politica anti-loop do GitHub um PR aberto com GITHUB_TOKEN nasce com os checks
+# do Actions em "action_required", e o ultimo passo os aprova sozinho com
+# actions:write. Provado em producao pelos PRs automation/types-sync.
+#
+# Por que o placar precisa disto: uma etapa (X<NNN>) commita o STATUS.md com a
+# contagem de origin/main ANTES de si mesma (ela ainda nao esta la). Quando a
+# etapa e mergeada, o arquivo fica 1 passo atras — e, sem isto, a main ficaria
+# com o placar defasado a cada merge.
+
+on:
+  push:
+    branches: [main]
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
+
+permissions:
+  contents: read
+
+jobs:
+  regen:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      # Obrigatorio para o create-pull-request criar o PR: sem esta permissao o
+      # GITHUB_TOKEN devolve "Resource not accessible by integration -
+      # .../pulls#create-a-pull-request" (medido no run 37068185925). O push do
+      # branch passa; o que falha e a criacao do PR.
+      pull-requests: write
+      # Necessario para o passo "Destravar os checks do PR do placar" aprovar os
+      # runs que nascem em action_required por terem sido disparados pelo
+      # GITHUB_TOKEN. Sem isto o PR fica parado esperando aprovacao manual.
+      actions: write
+    steps:
+      - name: Checkout (histórico completo)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Regenera STATUS.md
+        run: |
+          git fetch origin main --quiet
+          node scripts/talkx/v4-status.mjs
+
+      # Substitui o antigo "commit + push na main". O create-pull-request so
+      # cria/atualiza o PR quando ha diferenca em add-paths, entao o caso
+      # "STATUS.md ja atualizado" continua sendo no-op.
+      - name: Abrir ou atualizar PR do placar
+        id: pull-request
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        env:
+          HUSKY: '0'  # Evita que o hook pre-push do Husky bloqueie o push interno da action
+        with:
+          token: ${{ github.token }}
+          base: main
+          branch: automation/talkx-status
+          delete-branch: true
+          commit-message: 'chore(talkx): regenera STATUS.md (placar) [auto]'
+          title: 'chore(talkx): regenera STATUS.md (placar)'
+          body: |
+            Placar do Talk X V4 regenerado a partir da main.
+
+            - main de origem: `${{ github.sha }}`
+            - arquivo: `docs/talkx/v4/STATUS.md`
+
+            Revisão humana e checks da PR continuam obrigatórios.
+          add-paths: |
+            docs/talkx/v4/STATUS.md
+
+      # Mesmo mecanismo do types-sync: o PR nasce com os checks em
+      # action_required por ter sido aberto com GITHUB_TOKEN.
+      - name: Destravar os checks do PR do placar
+        if: steps.pull-request.outputs.pull-request-number != ''
+        continue-on-error: true
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          PR_HEAD_SHA: ${{ steps.pull-request.outputs.pull-request-head-sha }}
+        with:
+          script: |
+            const headSha = process.env.PR_HEAD_SHA;
+            if (!headSha) {
+              core.warning('create-pull-request nao devolveu o head sha; nada a destravar.');
+              return;
+            }
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            let pendentes = [];
+            // Os runs aparecem alguns segundos depois do push do PR.
+            for (let tentativa = 1; tentativa <= 6; tentativa += 1) {
+              const { data } = await github.rest.actions.listWorkflowRunsForRepo({
+                owner,
+                repo,
+                head_sha: headSha,
+                status: 'action_required',
+                per_page: 20,
+              });
+              pendentes = data.workflow_runs || [];
+              if (pendentes.length > 0) break;
+              await new Promise((resolve) => setTimeout(resolve, 10000));
+            }
+            if (pendentes.length === 0) {
+              core.info('Nenhum run aguardando aprovacao: ou os checks ja dispararam, ou nao ha nada a liberar.');
+              return;
+            }
+            const liberados = [];
+            const recusados = [];
+            for (const run of pendentes) {
+              try {
+                await github.rest.actions.approveWorkflowRun({ owner, repo, run_id: run.id });
+                liberados.push(run.name);
+              } catch (error) {
+                recusados.push(`${run.name} (${error.status})`);
+              }
+            }
+            const linhas = [
+              '### Checks do PR do placar',
+              `- head sha: \`${headSha}\``,
+              `- liberados: ${liberados.length > 0 ? liberados.join(', ') : 'nenhum'}`,
+            ];
+            if (recusados.length > 0) {
+              linhas.push(`- recusados pelo GITHUB_TOKEN: ${recusados.join(', ')}`);
+              linhas.push('- acao: aprovar os runs na aba Actions. Investigar antes de tratar como rotina.');
+            }
+            await core.summary.addRaw(linhas.join('\n')).write();
+            if (recusados.length > 0) {
+              core.warning(`Nao foi possivel liberar ${recusados.length} run(s) com o GITHUB_TOKEN.`);
+            }
+
+      - name: Job summary
+        if: always()
+        run: |
+          {
+            echo "## Talk X V4 placar regen — $(date -u '+%Y-%m-%d %H:%M UTC')"
+            echo
+            echo "| Item | Valor |"
+            echo "|---|---|"
+            echo "| main | \`${{ github.sha }}\` |"
+            echo "| PR | ${{ steps.pull-request.outputs.pull-request-number || 'n/a (placar ja atualizado)' }} |"
+          } >> "$GITHUB_STEP_SUMMARY"

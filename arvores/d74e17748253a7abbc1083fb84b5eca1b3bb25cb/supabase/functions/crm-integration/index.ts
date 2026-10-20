@@ -1,0 +1,840 @@
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.87.1';
+import {
+  enforceRateLimit, errorResponse, getClientIP, handleCors, isValidUUID, jsonResponse, requireAuth, requireEnv,
+} from '../_shared/validation.ts';
+import {
+  CRM_TABLE_ALLOWLIST, extractContact360Id, extractSidebarContactId, FILTER_OPERATORS, isExpectedExternalServerKey, isExpectedExternalUrl,
+  normalizePhone, parseSyncResult, validateMutation, validateRpc, validIdentifier,
+} from '../_shared/crm-integration-contract.ts';
+import { normalizeSentiment, type Sentiment } from '../_shared/ai-vocabulary.ts';
+
+const TIMEOUT_MS = 12_000;
+const MAX_REQUEST_BYTES = 64 * 1024;
+const MAX_RESPONSE_BYTES = 512_000;
+const MAX_BATCH_SIZE = 10;
+
+/**
+ * Sentimento no domínio do CRM EXTERNO (inglês): a documentação do CRM 360°
+ * (docs/CRM360_TECHNICAL_DOCS.md) fala 'positive/neutral/negative' (e
+ * 'critical' no topo). O banco continua canônico em pt-BR
+ * ('positivo'/'neutro'/'negativo'/'critico'); a tradução PT→EN acontece SÓ
+ * aqui, na fronteira de saída.
+ */
+const CRM_SENTIMENT_BY_CANONICAL: Readonly<Record<Sentiment, string>> = {
+  positivo: 'positive',
+  neutro: 'neutral',
+  negativo: 'negative',
+  critico: 'critical',
+};
+
+/**
+ * Traduz o sentimento cru do payload do outbox para o domínio EN do CRM.
+ *
+ *   - canônico pt-BR conhecido → token EN do CRM;
+ *   - ausência (`null`/`undefined`/`''`/só espaços) → `null`;
+ *   - fora do vocabulário (lixo no banco) → `null` + log estruturado; não
+ *     inventa valor e não derruba a chamada.
+ *
+ * Antes: `payload.sentiment || 'neutral'` — fabricava 'neutral' quando não
+ * havia sentimento E mandava pt-BR cru quando havia. `normalizeSentiment`
+ * (módulo canônico, IA-021) reconhece também o legado em inglês, então um
+ * 'neutral' já gravado no banco continua significando 'neutral' — mas nunca é
+ * criado a partir do vazio.
+ */
+export function sentimentForExternalCrm(raw: unknown): string | null {
+  const match = normalizeSentiment(raw);
+  if (match.value !== null) return CRM_SENTIMENT_BY_CANONICAL[match.value];
+  const ausente = raw === null || raw === undefined ||
+    (typeof raw === 'string' && raw.trim() === '');
+  if (!ausente) console.warn(JSON.stringify({ event: 'crm_sentiment_out_of_vocabulary', raw_value: raw }));
+  return null;
+}
+
+/**
+ * Monta os argumentos da RPC externa `sync_interaction_from_zapp` (11 parâmetros nomeados).
+ *
+ * `p_sentiment` é OMITIDO quando não há sentimento. A função vive no banco do CRM, fora
+ * deste repositório, e daqui não há como provar que ela aceita `NULL`: mandar `null`
+ * significaria sobrescrever a coluna com "sem valor" e ainda derrubaria a chamada se o
+ * parâmetro fosse `NOT NULL`. Omitindo, quem decide o que "não informado" significa é o
+ * próprio CRM (o default dele). Ausência continua nunca virando token inventado.
+ * Decisão do dono: card 20260930-193937-f9f4 (item 1) e ordem de 01/10 12h50.
+ */
+export function buildSyncInteractionArgs(
+  row: { normalized_phone: string | null; idempotency_key: string },
+  payload: Record<string, unknown>,
+): Record<string, unknown> {
+  const sentimento = sentimentForExternalCrm(payload.sentiment);
+  return {
+    p_phone: row.normalized_phone,
+    p_channel: payload.channel || 'whatsapp',
+    p_direction: payload.direction || 'inbound',
+    p_assunto: payload.assunto || null,
+    p_resumo: payload.resumo || null,
+    p_conteudo: null,
+    ...(sentimento === null ? {} : { p_sentiment: sentimento }),
+    p_message_count: payload.message_count || 0,
+    p_duration_seconds: payload.duration_seconds || null,
+    p_agent_name: payload.agent_name || null,
+    p_zapp_conversation_id: row.idempotency_key,
+  };
+}
+
+function timingSafeEqual(left: string | null, right: string | null): boolean {
+  if (left === null || right === null) return false;
+  const a = new TextEncoder().encode(left);
+  const b = new TextEncoder().encode(right);
+  let difference = a.length ^ b.length;
+  const length = Math.max(a.length, b.length);
+  for (let index = 0; index < length; index++) difference |= (a[index] || 0) ^ (b[index] || 0);
+  return difference === 0;
+}
+
+async function readBoundedJson(req: Request): Promise<Record<string, unknown>> {
+  const declared = Number(req.headers.get('content-length') || '0');
+  if (Number.isFinite(declared) && declared > MAX_REQUEST_BYTES) throw new Error('REQUEST_TOO_LARGE');
+  if (!req.body) throw new Error('INVALID_JSON');
+  const reader = req.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let bytes = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    bytes += value.byteLength;
+    if (bytes > MAX_REQUEST_BYTES) {
+      await reader.cancel();
+      throw new Error('REQUEST_TOO_LARGE');
+    }
+    chunks.push(value);
+  }
+  const merged = new Uint8Array(bytes);
+  let offset = 0;
+  for (const chunk of chunks) { merged.set(chunk, offset); offset += chunk.byteLength; }
+  const parsed = JSON.parse(new TextDecoder().decode(merged));
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('INVALID_JSON');
+  return parsed as Record<string, unknown>;
+}
+
+async function withTimeout<T>(operation: PromiseLike<T>): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      operation,
+      new Promise<T>((_, reject) => { timer = setTimeout(() => reject(new Error('CRM_TIMEOUT')), TIMEOUT_MS); }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
+type ContactLookupKind = '360' | 'intelligence' | 'sidebar';
+
+interface ContactLookupDependencies {
+  getContact: (contactId: string) => PromiseLike<{
+    data: { id: string; phone: string | null } | null;
+    error: { code?: string } | null;
+  }>;
+  getStableLink: (contactId: string) => PromiseLike<{
+    data: { external_contact_id: string; normalized_phone: string | null } | null;
+    error: { code?: string } | null;
+  }>;
+  callRpc: (rpc: string, params: { p_phone: string }) => PromiseLike<{
+    data: unknown;
+    error: { code?: string } | null;
+  }>;
+  now?: () => number;
+  logSidebar?: (entry: { event: 'crm_sidebar_lookup'; found: boolean; ms: number }) => void;
+}
+
+export type ContactLookupResolution =
+  | { ok: true; data: unknown }
+  | { ok: false; status: 400 | 404 | 409; error: string };
+
+/**
+ * Núcleo testável do lookup individual. Mantém validação, vínculo estável,
+ * limite de resposta e telemetria sem PII em um único caminho para os três
+ * tipos de consulta.
+ */
+export async function resolveContactLookup(
+  input: { contactId: unknown; lookup: unknown },
+  deps: ContactLookupDependencies,
+): Promise<ContactLookupResolution> {
+  if (!isValidUUID(input.contactId) || !['360', 'intelligence', 'sidebar'].includes(String(input.lookup))) {
+    return { ok: false, status: 400, error: 'Contact lookup is invalid' };
+  }
+
+  const contactId = input.contactId as string;
+  const lookup = input.lookup as ContactLookupKind;
+  const started = deps.now?.() ?? performance.now();
+  const { data: contact, error: contactError } = await deps.getContact(contactId);
+  if (contactError || !contact) return { ok: false, status: 404, error: 'Contact not found or not visible' };
+
+  const phone = normalizePhone(contact.phone);
+  if (!phone) return { ok: false, status: 409, error: 'Contact phone is invalid' };
+
+  const { data: stableLink, error: linkError } = await deps.getStableLink(contact.id);
+  if (linkError) throw new Error(`CRM_LINK_READ:${linkError.code || 'unknown'}`);
+  if (stableLink?.normalized_phone && stableLink.normalized_phone !== phone) {
+    return { ok: false, status: 409, error: 'Contact CRM identity requires reverification' };
+  }
+
+  const rpc = lookup === '360'
+    ? 'get_contact_360_by_phone'
+    : lookup === 'intelligence'
+      ? 'get_contact_intelligence_by_phone'
+      : 'get_contact_sidebar_by_phone';
+  const result = await withTimeout(deps.callRpc(rpc, { p_phone: phone }));
+  if (result.error) throw new Error(`CRM_RPC:${result.error.code || 'unknown'}`);
+
+  if (stableLink && (
+    (lookup === '360' && extractContact360Id(result.data) !== stableLink.external_contact_id) ||
+    (lookup === 'sidebar' && extractSidebarContactId(result.data) !== stableLink.external_contact_id)
+  )) {
+    return { ok: false, status: 409, error: 'Contact CRM identity mismatch' };
+  }
+
+  const serialized = JSON.stringify(result.data);
+  if (new TextEncoder().encode(serialized).byteLength > MAX_RESPONSE_BYTES) {
+    throw new Error('CRM_RESPONSE_TOO_LARGE');
+  }
+
+  if (lookup === 'sidebar') {
+    const found = typeof result.data === 'object' && result.data !== null &&
+      (result.data as { found?: unknown }).found === true;
+    deps.logSidebar?.({
+      event: 'crm_sidebar_lookup',
+      found,
+      ms: Math.round((deps.now?.() ?? performance.now()) - started),
+    });
+  }
+  return { ok: true, data: result.data };
+}
+
+interface OutboxRow {
+  id: string;
+  contact_id: string | null;
+  normalized_phone: string | null;
+  idempotency_key: string;
+  lease_token: string;
+  payload: Record<string, unknown>;
+}
+
+function nonEmptyText(value: unknown): string | null {
+  return typeof value === 'string' && value.trim() ? value.trim() : null;
+}
+
+function objectValue(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
+}
+
+function normalizeEmail(value: unknown): string | null {
+  const email = nonEmptyText(value)?.toLowerCase() || null;
+  return email && email.includes('@') ? email : null;
+}
+
+function validExternalId(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0 && value.trim().length <= 200;
+}
+
+export function externalParticipantEmail(
+  messages: Array<{ from_address: string | null; to_addresses: string[] | null; cc_addresses: string[] | null; direction: string | null }>,
+  accountEmail: string | null,
+): string | null {
+  const ownEmail = normalizeEmail(accountEmail);
+  // The query is ascending: retaining the first external participant prevents
+  // a later reply-all sender from silently changing the CRM context.
+  for (const message of messages) {
+    const sender = normalizeEmail(message.from_address);
+    if (message.direction === 'inbound' && sender && sender !== ownEmail) return sender;
+  }
+  for (const message of messages) {
+    if (message.direction === 'outbound') {
+      const recipient = [...(message.to_addresses || []), ...(message.cc_addresses || [])]
+        .map(normalizeEmail)
+        .find((email): email is string => Boolean(email && email !== ownEmail));
+      if (recipient) return recipient;
+    }
+  }
+  return null;
+}
+
+export function escapeIlikeExact(value: string): string {
+  return value.replace(/[\\%_]/g, '\\$&');
+}
+
+/** Keep the Edge projection aligned with the narrow Email runtime contract. */
+export function emailCompanySocials(rows: unknown[]): Array<{ platform: 'linkedin' | 'instagram'; url: string }> {
+  return rows.flatMap((row: unknown) => {
+    const social = objectValue(row);
+    const platform = nonEmptyText(social?.plataforma)?.toLowerCase();
+    const url = nonEmptyText(social?.url);
+    // The CRM can store other networks (for example Facebook), but returning
+    // one here would invalidate the entire client-side boundary guard.
+    return platform && url && (platform === 'linkedin' || platform === 'instagram') ? [{ platform, url }] : [];
+  });
+}
+
+export async function handleCRMIntegrationRequest(req: Request): Promise<Response> {
+  const cors = handleCors(req);
+  if (cors) return cors;
+  if (req.method !== 'POST') return errorResponse('Method not allowed', 405, req);
+
+  let serviceKey: string;
+  let supabaseUrl: string;
+  try {
+    serviceKey = requireEnv('SUPABASE_SERVICE_ROLE_KEY');
+    supabaseUrl = requireEnv('SUPABASE_URL');
+  } catch {
+    return errorResponse('CRM integration is not configured', 503, req);
+  }
+  const authHeader = req.headers.get('Authorization') || '';
+  const isServiceRequest = timingSafeEqual(authHeader, `Bearer ${serviceKey}`);
+  const cronSecret = Deno.env.get('CRON_SECRET');
+  const isCronRequest = Boolean(cronSecret && timingSafeEqual(req.headers.get('x-cron-secret'), cronSecret));
+  let userId: string | null = null;
+  if (!isServiceRequest && !isCronRequest) {
+    if (!authHeader.toLowerCase().startsWith('bearer ')) {
+      return errorResponse('Missing Authorization bearer token', 401, req);
+    }
+    const preAuthRate = await enforceRateLimit(`crm-preauth:${getClientIP(req)}`, 120, 60_000);
+    if (!preAuthRate.allowed) return errorResponse('Rate limit exceeded', 429, req);
+    const auth = await requireAuth(req);
+    if (auth instanceof Response) return auth;
+    userId = auth.userId;
+    const rate = await enforceRateLimit(`crm:${userId}:${getClientIP(req)}`, 60, 60_000);
+    if (!rate.allowed) return errorResponse('Rate limit exceeded', 429, req);
+  }
+
+  let body: Record<string, unknown>;
+  try {
+    body = await readBoundedJson(req);
+  } catch (error) {
+    return errorResponse(error instanceof Error && error.message === 'REQUEST_TOO_LARGE'
+      ? 'Request body is too large' : 'Invalid JSON body', error instanceof Error && error.message === 'REQUEST_TOO_LARGE' ? 413 : 400, req);
+  }
+  if (isCronRequest && body.action !== 'health' && body.action !== 'processOutbox') {
+    return errorResponse('Cron credential is not allowed for this action', 403, req);
+  }
+
+  let externalUrl: string;
+  let externalKey: string;
+  try {
+    externalUrl = requireEnv('EXTERNAL_SUPABASE_URL');
+    externalKey = requireEnv('EXTERNAL_SUPABASE_SERVICE_ROLE_KEY');
+  } catch {
+    return errorResponse('CRM integration is not configured', 503, req);
+  }
+  if (!isExpectedExternalUrl(externalUrl) || !isExpectedExternalServerKey(externalKey)) {
+    return errorResponse('External CRM configuration is invalid', 503, req);
+  }
+
+  const externalClient = createClient(externalUrl, externalKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: { fetch: (input, init) => fetch(input, { ...init, signal: AbortSignal.timeout(TIMEOUT_MS) }) },
+  });
+  const canonical = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
+  const canonicalUser = isServiceRequest || isCronRequest ? canonical : createClient(supabaseUrl, requireEnv('SUPABASE_ANON_KEY'), {
+    auth: { persistSession: false }, global: { headers: { Authorization: authHeader } },
+  });
+  const started = performance.now();
+
+  // This is deliberately a narrow, read-only projection. The generic `select`
+  // action remains administrator-only; Email callers receive only the company
+  // fields that their visible Gmail thread is allowed to expose.
+  const readEmailCompanyContext = async (
+    companyId: string,
+    linked: boolean,
+    resolution: 'stable_link' | 'phone' | 'email_exact',
+    participantEmail: string | null,
+    selectedExternalContactId: string | null = null,
+    canLink = false,
+  ) => {
+    const [companyResult, socialResult, addressResult, customerResult, supplierResult, carrierResult] = await Promise.all([
+      withTimeout(externalClient.from('companies').select('id,nome_crm,razao_social,nome_fantasia,website,ramo_atividade,logo_url,updated_at').eq('id', companyId).maybeSingle()),
+      withTimeout(externalClient.from('company_social_media').select('plataforma,url,is_active').eq('company_id', companyId).eq('is_active', true).limit(20)),
+      withTimeout(externalClient.from('company_addresses').select('cidade,estado,pais,is_primary').eq('company_id', companyId).order('is_primary', { ascending: false }).limit(1)),
+      withTimeout(externalClient.from('customers').select('sobre').eq('company_id', companyId).maybeSingle()),
+      withTimeout(externalClient.from('suppliers').select('id').eq('company_id', companyId).limit(1)),
+      withTimeout(externalClient.from('carriers').select('id').eq('company_id', companyId).limit(1)),
+    ]);
+    if (companyResult.error) throw new Error(`CRM_COMPANY:${companyResult.error.code || 'unknown'}`);
+    const company = objectValue(companyResult.data);
+    if (!company) return null;
+
+    const relationshipsKnown = !supplierResult.error && !carrierResult.error && !customerResult.error;
+    const relationships: string[] = [];
+    if (customerResult.data) relationships.push('cliente');
+    if ((supplierResult.data || []).length > 0) relationships.push('fornecedor');
+    if ((carrierResult.data || []).length > 0) relationships.push('transportadora');
+    const address = objectValue((addressResult.data || [])[0]);
+    const location = [address?.cidade, address?.estado, address?.pais]
+      .map(nonEmptyText).filter((part): part is string => Boolean(part)).join(', ') || null;
+    const socials = emailCompanySocials(socialResult.data || []);
+    const name = nonEmptyText(company.nome_fantasia) || nonEmptyText(company.nome_crm) || nonEmptyText(company.razao_social);
+    if (!name) return null;
+    return {
+      status: 'available',
+      company: {
+        id: companyId,
+        name,
+        legalName: nonEmptyText(company.razao_social),
+        website: nonEmptyText(company.website),
+        logoUrl: nonEmptyText(company.logo_url),
+        industry: nonEmptyText(company.ramo_atividade),
+        location,
+        about: nonEmptyText(objectValue(customerResult.data)?.sobre),
+        relationships,
+        relationshipsKnown,
+        socials,
+        socialsKnown: !socialResult.error,
+        aboutKnown: !customerResult.error,
+        updatedAt: nonEmptyText(company.updated_at),
+      },
+      source: { linked, consultedAt: new Date().toISOString(), resolution, participantEmail, selectedExternalContactId, canLink },
+    };
+  };
+
+  const userHasPermission = async (permission: string): Promise<boolean> => {
+    if (!userId) return false;
+    const { data, error } = await canonical.rpc('user_has_permission', {
+      _user_id: userId,
+      _permission_name: permission,
+    });
+    return !error && data === true;
+  };
+
+  const canManageEmailContactLink = async (): Promise<boolean> => {
+    return userHasPermission('crm.email_contact_link.manage');
+  };
+
+  // The browser gate is for UX only.  The Edge repeats the kill switch so a
+  // stale bundle or a crafted request cannot keep reading CRM data after the
+  // capability has been disabled.
+  const emailCrmCapabilityEnabled = async (): Promise<boolean> => {
+    const { data, error } = await canonical.from('feature_flags').select('enabled').eq('key', 'crm.integration').maybeSingle();
+    return !error && objectValue(data)?.enabled === true;
+  };
+
+  /**
+   * Exact e-mail is a discovery mechanism, never an authority. Keeping the
+   * candidates bounded and returning them lets the user choose explicitly
+   * instead of silently assigning whichever row happened to arrive first.
+   */
+  const findExactEmailCandidates = async (participantEmail: string) => {
+    const { data: rows, error } = await withTimeout(externalClient.from('contacts')
+      .select('id,company_id,email').ilike('email', escapeIlikeExact(participantEmail)).limit(3));
+    if (error) throw new Error(`CRM_EMAIL_LOOKUP:${error.code || 'unknown'}`);
+    const raw = (rows || []).flatMap((row: unknown) => {
+      const candidate = objectValue(row);
+      const externalContactId = nonEmptyText(candidate?.id);
+      return externalContactId && normalizeEmail(candidate?.email) === participantEmail
+        ? [{ externalContactId, companyId: nonEmptyText(candidate?.company_id) }]
+        : [];
+    });
+    const unique = [...new Map(raw.map(candidate => [candidate.externalContactId, candidate])).values()];
+    const names = await Promise.all(unique.map(async candidate => {
+      if (!candidate.companyId) return null;
+      const result = await withTimeout(externalClient.from('companies')
+        .select('nome_fantasia,nome_crm,razao_social').eq('id', candidate.companyId).maybeSingle());
+      if (result.error) return null;
+      const company = objectValue(result.data);
+      return nonEmptyText(company?.nome_fantasia) || nonEmptyText(company?.nome_crm) || nonEmptyText(company?.razao_social);
+    }));
+    return unique.map((candidate, index) => ({ ...candidate, companyName: names[index] }));
+  };
+
+  const processRows = async (rows: OutboxRow[]) => {
+    const results: Array<Record<string, unknown>> = [];
+    for (const row of rows) {
+      try {
+        if (!row.lease_token || !row.normalized_phone) throw new Error('CRM_INVALID_QUEUE_ROW');
+        if (!row.contact_id) throw new Error('CRM_CONTACT_DELETED');
+        const { data: stableLink, error: stableLinkError } = await canonical.from('crm_contact_links')
+          .select('external_contact_id').eq('zapp_contact_id', row.contact_id).maybeSingle();
+        if (stableLinkError) throw new Error(`CRM_LINK_READ:${stableLinkError.code || 'unknown'}`);
+        if (stableLink) {
+          // Prova a resolução por telefone antes da escrita. A comparação feita
+          // somente após sync_interaction_from_zapp detectava a troca tarde demais.
+          const identityLookup = await withTimeout(externalClient.rpc('get_contact_360_by_phone', {
+            p_phone: row.normalized_phone,
+          }));
+          if (identityLookup.error) throw new Error(`CRM_IDENTITY_LOOKUP:${identityLookup.error.code || 'unknown'}`);
+          if (extractContact360Id(identityLookup.data) !== stableLink.external_contact_id) {
+            throw new Error('CRM_IDENTITY_MISMATCH');
+          }
+        }
+        const payload = row.payload || {};
+        const result = await withTimeout(externalClient.rpc('sync_interaction_from_zapp', buildSyncInteractionArgs(row, payload)));
+        if (result.error) throw new Error(`CRM_SYNC:${result.error.code || 'unknown'}`);
+        const value = parseSyncResult(result.data);
+        if (stableLink && stableLink.external_contact_id !== value.contact_id) throw new Error('CRM_IDENTITY_MISMATCH');
+        const { error: linkError } = await canonical.rpc('upsert_crm_contact_link_guarded', {
+          p_zapp_contact_id: row.contact_id,
+          p_external_contact_id: value.contact_id,
+          p_external_company_id: typeof value.company_id === 'string' ? value.company_id : null,
+          p_normalized_phone: row.normalized_phone,
+        });
+        if (linkError) throw new Error(`CRM_LINK:${linkError.code || 'unknown'}`);
+        const { error: completeError } = await canonical.rpc('complete_crm_sync_outbox', {
+          p_id: row.id, p_lease_token: row.lease_token,
+          p_interaction_id: value.interaction_id,
+          p_contact_id: value.contact_id,
+          p_company_id: value.company_id,
+        });
+        if (completeError) throw new Error(`CRM_QUEUE_COMPLETE:${completeError.code || 'unknown'}`);
+        results.push({ id: row.id, ok: true, result: value });
+      } catch (error) {
+        const code = error instanceof Error ? error.message.split(':')[0] : 'CRM_UNKNOWN';
+        const { error: failError } = await canonical.rpc('fail_crm_sync_outbox', {
+          p_id: row.id, p_lease_token: row.lease_token, p_error_code: code,
+        });
+        if (failError) console.error(JSON.stringify({ event: 'crm_queue_fail_update', outbox_id: row.id, code: failError.code }));
+        results.push({ id: row.id, ok: false, error_code: code });
+      }
+    }
+    return results;
+  };
+
+  try {
+    const action = body.action;
+    let data: unknown;
+
+    if (action === 'emailContactContext') {
+      if (isServiceRequest || isCronRequest || !isValidUUID(body.accountId) || !isValidUUID(body.threadId) ||
+        (body.contactId !== undefined && !isValidUUID(body.contactId)) ||
+        (body.selectedExternalContactId !== undefined && !validExternalId(body.selectedExternalContactId))) {
+        return errorResponse('Email contact context is invalid', 400, req);
+      }
+      if (!await emailCrmCapabilityEnabled()) return errorResponse('CRM integration is disabled', 503, req);
+      const requestedContactId = typeof body.contactId === 'string' ? body.contactId : null;
+      const selectedExternalContactId = typeof body.selectedExternalContactId === 'string' ? body.selectedExternalContactId.trim() : null;
+      const [threadResult, accountResult] = await Promise.all([
+        canonicalUser.from('email_threads').select('id,gmail_account_id,contact_id').eq('id', body.threadId).maybeSingle(),
+        canonicalUser.from('gmail_accounts').select('id,email_address').eq('id', body.accountId).maybeSingle(),
+      ]);
+      const thread = threadResult.data;
+      const account = accountResult.data;
+      const threadContactId = typeof thread?.contact_id === 'string' ? thread.contact_id : null;
+      if (threadResult.error || accountResult.error || !thread || !account || thread.gmail_account_id !== body.accountId ||
+        (requestedContactId !== null && requestedContactId !== threadContactId)) {
+        return errorResponse('Email contact context is not visible', 404, req);
+      }
+      // The thread is authoritative. A browser-supplied contactId is only an
+      // assertion and cannot make an unrelated or hidden contact available.
+      const contactResult = threadContactId
+        ? await canonicalUser.from('contacts').select('id,phone').eq('id', threadContactId).maybeSingle()
+        : { data: null, error: null };
+      const contact = contactResult.data;
+      if (contactResult.error || (threadContactId !== null && !contact)) {
+        return errorResponse('Email contact context is not visible', 404, req);
+      }
+
+      const { data: messages, error: messagesError } = await canonicalUser.from('email_messages')
+        .select('from_address,to_addresses,cc_addresses,direction')
+        .eq('gmail_account_id', body.accountId).eq('thread_id', body.threadId)
+        .order('internal_date', { ascending: true }).limit(100);
+      if (messagesError) throw new Error(`EMAIL_MESSAGES_READ:${messagesError.code || 'unknown'}`);
+      const participantEmail = externalParticipantEmail(messages || [], nonEmptyText(account.email_address));
+
+      const stableResult = contact
+        ? await canonical.from('crm_contact_links').select('external_contact_id,normalized_phone').eq('zapp_contact_id', contact.id).maybeSingle()
+        : { data: null, error: null };
+      const stableLink = stableResult.data;
+      if (stableResult.error) throw new Error(`CRM_LINK_READ:${stableResult.error.code || 'unknown'}`);
+
+      let companyId: string | null = null;
+      let resolution: 'stable_link' | 'phone' | 'email_exact' | 'none' = 'none';
+      let resolvedExternalContactId: string | null = null;
+      const phone = contact ? normalizePhone(contact.phone) : null;
+      if (contact && stableLink?.external_contact_id) {
+        // A previously confirmed link is authoritative.  Do not let a recycled
+        // phone number or a changed message sender replace it.
+        if (phone && stableLink.normalized_phone && stableLink.normalized_phone !== phone) {
+          return errorResponse('Contact CRM identity requires reverification', 409, req);
+        }
+        const externalContact = await withTimeout(externalClient.from('contacts').select('id,company_id').eq('id', stableLink.external_contact_id).maybeSingle());
+        if (externalContact.error) throw new Error(`CRM_CONTACT:${externalContact.error.code || 'unknown'}`);
+        const external = objectValue(externalContact.data);
+        if (!external || nonEmptyText(external.id) !== stableLink.external_contact_id) {
+          return errorResponse('Contact CRM identity mismatch', 409, req);
+        }
+        companyId = nonEmptyText(external.company_id);
+        resolution = 'stable_link';
+      } else if (!stableLink && participantEmail) {
+        // A verified, explicit email identity wins over a heuristic phone
+        // lookup.  In particular, never render Company A after the user chose
+        // Company B merely because an old phone number still resolves to A.
+        const candidates = await findExactEmailCandidates(participantEmail);
+        const chosen = selectedExternalContactId
+          ? candidates.find(candidate => candidate.externalContactId === selectedExternalContactId)
+          : null;
+        if (selectedExternalContactId && !chosen) return errorResponse('The selected CRM company is no longer available', 409, req);
+        if (chosen) {
+          companyId = chosen.companyId;
+          resolution = 'email_exact';
+          resolvedExternalContactId = chosen.externalContactId;
+        } else if (candidates.length > 1) {
+          data = {
+            status: 'ambiguous', company: null, candidates,
+            source: { linked: false, consultedAt: new Date().toISOString(), resolution: 'email_exact', participantEmail, canLink: Boolean(contact) && await canManageEmailContactLink() },
+          };
+        } else if (candidates.length === 1) {
+          companyId = candidates[0].companyId;
+          resolution = 'email_exact';
+          resolvedExternalContactId = candidates[0].externalContactId;
+        } else if (contact && phone) {
+          const lookup = await withTimeout(externalClient.rpc('get_contact_360_by_phone', { p_phone: phone }));
+          if (lookup.error) throw new Error(`CRM_RPC:${lookup.error.code || 'unknown'}`);
+          const lookupCompany = objectValue(objectValue(lookup.data)?.company);
+          companyId = nonEmptyText(lookupCompany?.id);
+          resolution = 'phone';
+        }
+      } else if (!stableLink && contact && phone) {
+        const lookup = await withTimeout(externalClient.rpc('get_contact_360_by_phone', { p_phone: phone }));
+        if (lookup.error) throw new Error(`CRM_RPC:${lookup.error.code || 'unknown'}`);
+        const lookupCompany = objectValue(objectValue(lookup.data)?.company);
+        companyId = nonEmptyText(lookupCompany?.id);
+        resolution = 'phone';
+      }
+
+      if (!data) {
+        if (!companyId) {
+          data = { status: 'not_linked', company: null, source: { linked: Boolean(stableLink), consultedAt: new Date().toISOString(), resolution, participantEmail, selectedExternalContactId: resolvedExternalContactId } };
+        } else {
+          const context = await readEmailCompanyContext(companyId, Boolean(stableLink), resolution === 'none' ? 'email_exact' : resolution, participantEmail, resolvedExternalContactId, Boolean(contact && resolvedExternalContactId) && await canManageEmailContactLink());
+          data = context || { status: 'not_linked', company: null, source: { linked: Boolean(stableLink), consultedAt: new Date().toISOString(), resolution, participantEmail, selectedExternalContactId: resolvedExternalContactId } };
+        }
+      }
+    } else if (action === 'linkEmailContactCompany') {
+      if (isServiceRequest || isCronRequest || !isValidUUID(body.accountId) || !isValidUUID(body.threadId) || !validExternalId(body.externalContactId)) {
+        return errorResponse('CRM contact link is invalid', 400, req);
+      }
+      if (!await emailCrmCapabilityEnabled()) return errorResponse('CRM integration is disabled', 503, req);
+      if (!await canManageEmailContactLink()) return errorResponse('You do not have permission to link CRM companies', 403, req);
+      const [threadResult, accountResult] = await Promise.all([
+        canonicalUser.from('email_threads').select('id,gmail_account_id,contact_id').eq('id', body.threadId).maybeSingle(),
+        canonicalUser.from('gmail_accounts').select('id,email_address').eq('id', body.accountId).maybeSingle(),
+      ]);
+      const thread = threadResult.data;
+      const account = accountResult.data;
+      const contactId = typeof thread?.contact_id === 'string' ? thread.contact_id : null;
+      if (threadResult.error || accountResult.error || !thread || !account || thread.gmail_account_id !== body.accountId || !contactId) {
+        return errorResponse('Email contact context is not visible', 404, req);
+      }
+      const [{ data: contact, error: contactError }, { data: messages, error: messagesError }] = await Promise.all([
+        canonicalUser.from('contacts').select('id,phone').eq('id', contactId).maybeSingle(),
+        canonicalUser.from('email_messages').select('from_address,to_addresses,cc_addresses,direction').eq('gmail_account_id', body.accountId).eq('thread_id', body.threadId).order('internal_date', { ascending: true }).limit(100),
+      ]);
+      if (contactError || !contact || messagesError) return errorResponse('Email contact context is not visible', 404, req);
+      const participantEmail = externalParticipantEmail(messages || [], nonEmptyText(account.email_address));
+      if (!participantEmail) return errorResponse('External email participant is unavailable', 409, req);
+      const candidateResult = await withTimeout(externalClient.from('contacts').select('id,company_id,email').eq('id', body.externalContactId.trim()).maybeSingle());
+      if (candidateResult.error) throw new Error(`CRM_EMAIL_LOOKUP:${candidateResult.error.code || 'unknown'}`);
+      const candidate = objectValue(candidateResult.data);
+      const externalContactId = nonEmptyText(candidate?.id);
+      if (!externalContactId || normalizeEmail(candidate?.email) !== participantEmail) return errorResponse('The selected CRM company is no longer available', 409, req);
+      // `linked_by` references profiles.id, while requireAuth gives auth.users.id.
+      // Resolve the profile using the service client only after the request has
+      // passed both the named permission and all thread/contact visibility checks.
+      const { data: profile, error: profileError } = await canonical.from('profiles')
+        .select('id').eq('user_id', userId).maybeSingle();
+      const profileId = nonEmptyText(objectValue(profile)?.id);
+      if (profileError || !profileId) return errorResponse('Your profile is unavailable for CRM linking', 409, req);
+      const { error: linkError } = await canonical.rpc('link_email_crm_contact_guarded', {
+        p_zapp_contact_id: contact.id,
+        p_external_contact_id: externalContactId,
+        p_external_company_id: nonEmptyText(candidate?.company_id),
+        p_normalized_phone: normalizePhone(contact.phone),
+        p_linked_by: profileId,
+      });
+      if (linkError) return errorResponse('CRM contact link could not be saved', linkError.code === '23505' ? 409 : 502, req);
+      data = { linked: true };
+    } else if (action === 'contactLookup') {
+      if (isServiceRequest || isCronRequest) return errorResponse('Contact lookup is invalid', 400, req);
+      const lookup = await resolveContactLookup(
+        { contactId: body.contactId, lookup: body.lookup },
+        {
+          getContact: (contactId) => canonicalUser.from('contacts')
+            .select('id,phone').eq('id', contactId).maybeSingle(),
+          getStableLink: (contactId) => canonical.from('crm_contact_links')
+            .select('external_contact_id,normalized_phone').eq('zapp_contact_id', contactId).maybeSingle(),
+          callRpc: (rpc, params) => externalClient.rpc(rpc, params),
+          logSidebar: (entry) => console.warn(JSON.stringify(entry)),
+        },
+      );
+      if (!lookup.ok) return errorResponse(lookup.error, lookup.status, req);
+      data = lookup.data;
+    } else if (action === 'contactLookupBatch') {
+      if (isServiceRequest || isCronRequest || !Array.isArray(body.contactIds) || body.contactIds.length < 1 ||
+        body.contactIds.length > 100 || body.contactIds.some((id) => !isValidUUID(id))) {
+        return errorResponse('Contact batch is invalid', 400, req);
+      }
+      const contactIds = [...new Set(body.contactIds as string[])];
+      const { data: contacts, error: contactsError } = await canonicalUser.from('contacts')
+        .select('id,phone').in('id', contactIds);
+      if (contactsError) throw new Error(`CRM_CONTACTS:${contactsError.code || 'unknown'}`);
+      const { data: links, error: linksError } = await canonical.from('crm_contact_links')
+        .select('zapp_contact_id,normalized_phone').in('zapp_contact_id', contactIds);
+      if (linksError) throw new Error(`CRM_LINK_READ:${linksError.code || 'unknown'}`);
+      const linkedPhone = new Map((links || []).map((link) => [link.zapp_contact_id, link.normalized_phone]));
+      const phones = [...new Set((contacts || []).flatMap((contact) => {
+        const phone = normalizePhone(contact.phone);
+        const stablePhone = linkedPhone.get(contact.id);
+        return phone && (!stablePhone || stablePhone === phone) ? [phone] : [];
+      }))];
+      if (phones.length === 0) { data = {}; }
+      else {
+        const result = await withTimeout(externalClient.rpc('get_companies_by_phones_batch', { p_phones: phones }));
+        if (result.error) throw new Error(`CRM_RPC:${result.error.code || 'unknown'}`);
+        if (!result.data || typeof result.data !== 'object' || Array.isArray(result.data) || JSON.stringify(result.data).length > 512_000) {
+          throw new Error('CRM_INVALID_RESPONSE');
+        }
+        const allowedPhones = new Set(phones);
+        data = Object.fromEntries(Object.entries(result.data as Record<string, unknown>)
+          .filter(([phone]) => { const normalized = normalizePhone(phone); return normalized && allowedPhones.has(normalized); }));
+      }
+    } else if (action === 'rpc') {
+      const { data: isAdmin, error: adminError } = await canonical.rpc('is_admin_or_supervisor', { _user_id: userId });
+      if (adminError || !isAdmin) return errorResponse('Forbidden', 403, req);
+      const validation = validateRpc(body.rpc, body.params);
+      if (validation) return errorResponse(validation, 400, req);
+      const normalizedParams = { ...(body.params as Record<string, unknown>) };
+      if (typeof normalizedParams.p_phone === 'string') normalizedParams.p_phone = normalizePhone(normalizedParams.p_phone);
+      if (Array.isArray(normalizedParams.p_phones)) normalizedParams.p_phones = normalizedParams.p_phones.map(normalizePhone);
+      const result = await withTimeout(externalClient.rpc(body.rpc as string, normalizedParams));
+      if (result.error) throw new Error(`CRM_RPC:${result.error.code || 'unknown'}`);
+      data = result.data;
+    } else if (action === 'select') {
+      if (typeof body.table !== 'string' || !CRM_TABLE_ALLOWLIST.has(body.table)) return errorResponse('Table is not allowed', 400, req);
+      const safeRolesLookup = body.table === 'salespeople' && body.select === 'role';
+      if (safeRolesLookup && (body.filters !== undefined || body.order !== undefined || body.countMode !== undefined)) {
+        return errorResponse('Role lookup parameters are not allowed', 400, req);
+      }
+      if (safeRolesLookup) {
+        if (!await userHasPermission('view_contacts')) return errorResponse('Forbidden', 403, req);
+      } else {
+        const { data: isAdmin, error } = await canonical.rpc('is_admin_or_supervisor', { _user_id: userId });
+        if (error || !isAdmin) return errorResponse('Forbidden', 403, req);
+      }
+      if (body.select !== undefined && (typeof body.select !== 'string' || body.select.length > 1000)) return errorResponse('Select is invalid', 400, req);
+      let query = externalClient.from(body.table).select((body.select as string) || '*', {
+        count: body.countMode as 'exact' | 'planned' | 'estimated' | undefined,
+      });
+      if (body.filters !== undefined) {
+        if (!Array.isArray(body.filters) || body.filters.length > 12) return errorResponse('Filters are invalid', 400, req);
+        for (const raw of body.filters) {
+          const filter = raw as Record<string, unknown>;
+          if (!validIdentifier(filter.column) || typeof filter.operator !== 'string' || !FILTER_OPERATORS.has(filter.operator)) return errorResponse('Filter is invalid', 400, req);
+          if (filter.operator === 'in') {
+            if (!Array.isArray(filter.value) || filter.value.length < 1 || filter.value.length > 100 ||
+              filter.value.some((value) => value !== null && !['string', 'number', 'boolean'].includes(typeof value))) {
+              return errorResponse('Filter value is invalid', 400, req);
+            }
+            query = query.in(filter.column, filter.value);
+          } else {
+            if (filter.value !== null && !['string', 'number', 'boolean'].includes(typeof filter.value)) return errorResponse('Filter value is invalid', 400, req);
+            if (typeof filter.value === 'string' && filter.value.length > 500) return errorResponse('Filter value is too long', 400, req);
+            query = query.filter(filter.column, filter.operator, filter.value);
+          }
+        }
+      }
+      if (body.order !== undefined) {
+        const order = body.order as Record<string, unknown>;
+        if (!order || !validIdentifier(order.column)) return errorResponse('Order is invalid', 400, req);
+        query = query.order(order.column, { ascending: order.ascending !== false });
+      }
+      const limit = typeof body.limit === 'number' && Number.isInteger(body.limit) ? Math.min(Math.max(body.limit, 1), 500) : 50;
+      const offset = typeof body.offset === 'number' && Number.isInteger(body.offset) ? Math.min(Math.max(body.offset, 0), 100_000) : 0;
+      const result = await withTimeout(query.range(offset, offset + limit - 1));
+      if (result.error) throw new Error(`CRM_SELECT:${result.error.code || 'unknown'}`);
+      data = result.data || [];
+      const duration = Math.round(performance.now() - started);
+      return jsonResponse({ data, meta: { record_count: result.count ?? (data as unknown[]).length, duration_ms: duration, severity: duration > 3000 ? 'slow' : 'ok' } }, 200, req);
+    } else if (action === 'mutate') {
+      const mutationAction = body.mutationAction;
+      const validation = validateMutation(body.table, mutationAction, body.data, body.match);
+      if (validation) return errorResponse(validation, 400, req);
+      const { data: isAdmin, error } = await canonical.rpc('is_admin_or_supervisor', { _user_id: userId });
+      if (error || !isAdmin) return errorResponse('Forbidden', 403, req);
+      const query = mutationAction === 'insert'
+        ? externalClient.from(body.table as string).insert(body.data as Record<string, unknown>)
+        : externalClient.from(body.table as string).update(body.data as Record<string, unknown>).eq('id', (body.match as Record<string, unknown>).id);
+      const result = await withTimeout(query.select());
+      if (result.error) throw new Error(`CRM_MUTATION:${result.error.code || 'unknown'}`);
+      data = result.data || [];
+    } else if (action === 'enqueueSync') {
+      if (isServiceRequest || isCronRequest || !isValidUUID(body.contactId)) return errorResponse('Contact id is invalid', 400, req);
+      const { data: contact, error: contactError } = await canonicalUser.from('contacts')
+        .select('id,phone').eq('id', body.contactId).maybeSingle();
+      if (contactError || !contact) return errorResponse('Contact not found or not visible', 404, req);
+      const phone = normalizePhone(contact.phone);
+      if (!phone) return errorResponse('Contact phone is invalid', 409, req);
+      const { data: closure } = await canonicalUser.from('conversation_closures')
+        .select('id').eq('contact_id', contact.id).order('created_at', { ascending: false }).limit(1).maybeSingle();
+      if (!closure) return errorResponse('Resolve the conversation before syncing', 409, req);
+      const { data: queued, error: queueError } = await canonical.from('crm_sync_outbox').upsert({
+        closure_id: closure.id, contact_id: contact.id, idempotency_key: `closure:${closure.id}`,
+        normalized_phone: phone,
+      }, { onConflict: 'closure_id', ignoreDuplicates: true }).select('id').maybeSingle();
+      if (queueError) throw new Error(`CRM_QUEUE:${queueError.code || 'unknown'}`);
+      const { data: existing, error: existingError } = queued
+        ? { data: queued, error: null }
+        : await canonical.from('crm_sync_outbox')
+          .select('id,status,external_interaction_id,external_contact_id,external_company_id')
+          .eq('closure_id', closure.id).single();
+      if (existingError || !existing) throw new Error(`CRM_QUEUE:${existingError?.code || 'missing'}`);
+      const { data: claimed, error: claimError } = await canonical.rpc('claim_crm_sync_outbox_by_id', {
+        p_id: existing.id, p_worker: `edge:${crypto.randomUUID()}`,
+      });
+      if (claimError) throw new Error(`CRM_QUEUE:${claimError.code || 'unknown'}`);
+      const processed = await processRows((claimed || []) as OutboxRow[]);
+      const first = processed[0];
+      if (first?.ok) {
+        data = first.result as Record<string, unknown>;
+      } else if (!first && 'status' in existing && existing.status === 'succeeded') {
+        data = {
+          synced: true, reason: 'duplicate', interaction_id: existing.external_interaction_id,
+          contact_id: existing.external_contact_id, company_id: existing.external_company_id,
+        };
+      } else {
+        data = { synced: false, queued: true, reason: first?.error_code || 'already_queued' };
+      }
+    } else if (action === 'health') {
+      if (!isServiceRequest && !isCronRequest) {
+        const { data: isAdmin, error: adminError } = await canonical.rpc('is_admin_or_supervisor', { _user_id: userId });
+        if (adminError || !isAdmin) return errorResponse('Forbidden', 403, req);
+      }
+      const [externalHealth, queueHealth] = await Promise.all([
+        withTimeout(externalClient.rpc('get_contact_360_by_phone', { p_phone: '00000000' })),
+        canonical.rpc('get_crm_sync_health'),
+      ]);
+      if (externalHealth.error) throw new Error(`CRM_HEALTH:${externalHealth.error.code || 'unknown'}`);
+      if (queueHealth.error) throw new Error(`CRM_QUEUE_HEALTH:${queueHealth.error.code || 'unknown'}`);
+      data = { external_reachable: true, queue: queueHealth.data };
+    } else if (action === 'processOutbox') {
+      if (!isServiceRequest && !isCronRequest) {
+        const { data: isAdmin } = await canonical.rpc('is_admin_or_supervisor', { _user_id: userId });
+        if (!isAdmin) return errorResponse('Forbidden', 403, req);
+      }
+      const { data: claimed, error } = await canonical.rpc('claim_crm_sync_outbox', {
+        p_worker: `edge:${crypto.randomUUID()}`,
+        p_limit: typeof body.limit === 'number' ? Math.min(Math.max(Math.trunc(body.limit), 1), MAX_BATCH_SIZE) : MAX_BATCH_SIZE,
+      });
+      if (error) throw new Error(`CRM_QUEUE:${error.code || 'unknown'}`);
+      data = await processRows((claimed || []) as OutboxRow[]);
+    } else {
+      return errorResponse('Action is not allowed', 400, req);
+    }
+
+    const duration = Math.round(performance.now() - started);
+    console.warn(JSON.stringify({ event: 'crm_integration', action, user_id: userId, duration_ms: duration, ok: true }));
+    return jsonResponse({ data, meta: { record_count: Array.isArray(data) ? data.length : data == null ? 0 : 1, duration_ms: duration, severity: duration > 3000 ? 'slow' : 'ok' } }, 200, req);
+  } catch (error) {
+    const code = error instanceof Error ? error.message.split(':')[0] : 'CRM_UNKNOWN';
+    const status = code === 'CRM_TIMEOUT' ? 504 : 502;
+    console.error(JSON.stringify({ event: 'crm_integration', action: body.action, user_id: userId, code, ok: false }));
+    return errorResponse(code === 'CRM_TIMEOUT' ? 'External CRM timed out' : 'External CRM request failed', status, req);
+  }
+}
+
+if (import.meta.main) Deno.serve(handleCRMIntegrationRequest);

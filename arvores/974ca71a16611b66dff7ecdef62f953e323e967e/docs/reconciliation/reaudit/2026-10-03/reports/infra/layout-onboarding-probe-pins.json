@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "compiler": {
+    "path": "/workspace/scratch/8b95153002da/audit/tools/ast/node_modules/typescript/lib/typescript.js",
+    "sha256": "3ae902c92cc44dace175c0e69e13a4b0899f6983c6121d76b9ab8dd5795e7675"
+  },
+  "sources": [
+    {
+      "path": "src/components/onboarding/checklistSteps.ts",
+      "sha256": "554a022f5172c80cfc1ddb9c6c4dafddf89d7d799c1f9b36ddf5ef0dfd219813"
+    },
+    {
+      "path": "src/components/onboarding/OnboardingChecklist.tsx",
+      "sha256": "69a62b48b1d515ebf301e6538a1418dfb9075649a0933d56aeb7292e002bdb5b"
+    },
+    {
+      "path": "src/components/transitions/transitionConfig.ts",
+      "sha256": "856077f41ff388e078b4b67bfe1491045b808d2a0d1a212998e47c32e337cafc"
+    },
+    {
+      "path": "src/components/transitions/useTransitionPreferences.ts",
+      "sha256": "52c1d2762bdb214e6070424b05bf735386bdca313d32e36d593d673702660f10"
+    },
+    {
+      "path": "src/components/transitions/RouteTransition.tsx",
+      "sha256": "9a8a5b1dce73e8c1290f9ff71af7b73e00e9ae4cc7d4f1405d2d28145b0ba1d9"
+    },
+    {
+      "path": "src/components/transitions/transitionVariants.ts",
+      "sha256": "12f0553875ad2ad3e3e6b6e5ba48a4cb8397f544e3543010f4b8dec4927adceb"
+    },
+    {
+      "path": "src/components/theme/HighContrastToggle.tsx",
+      "sha256": "7b52b8272d32b9d5538c285bd98cafb4c5c7f37970562eb6539a43f209a2f9a9"
+    },
+    {
+      "path": "src/components/onboarding/TourOverlay.tsx",
+      "sha256": "e96f75433ceab7f93324a25573d89e614682935f8594e516d64a82f6096ef6f5"
+    },
+    {
+      "path": "src/components/onboarding/OnboardingTour.tsx",
+      "sha256": "066e3caa337f58ae0f87adad74073c1e64c68466aa47f8e5f1a25f75b2c1649b"
+    },
+    {
+      "path": "src/components/onboarding/defaultTourSteps.ts",
+      "sha256": "b7570face27ff498e26ea801e2bd09aaa3dfc752f03a94231258b51e825324c0"
+    },
+    {
+      "path": "src/services/navigation.service.ts",
+      "sha256": "8e128c5cc1aa208f96570c68295d6e4836ca1febed4d7d1e603f648d4c294d48"
+    }
+  ]
+}

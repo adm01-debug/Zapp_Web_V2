@@ -1,0 +1,2288 @@
+{
+  "schema_version": 2,
+  "baseline_main_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+  "resolved_plans": 62,
+  "plans": [
+    {
+      "plan_id": "docs--audits--plano_banco_unico_200_etapas_2026-09-24",
+      "path": "docs/audits/PLANO_BANCO_UNICO_200_ETAPAS_2026-09-24.md",
+      "title": "Plano de Banco Único — ZAPP Web V2 → Singu (Gestão de Clientes)",
+      "source_sha": "c745dd5fb678dcfd7567831a552be83a577635d1",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 200,
+      "observed_tasks": 206,
+      "missing_numbers": [],
+      "extraction_style": "numbered",
+      "authority": "ARCHITECTURE_DECISION_REQUIRED",
+      "evidence_refs": [],
+      "module": "Banco Único",
+      "successors": [],
+      "basis": "Propõe migração para o banco Singu e inclui premissas de self-hosted. A regra vigente mantém ZAPP Cloud como banco oficial e bancos externos em leitura. Evidência do outro repositório deve manter seu namespace; não assumir execução no Zapp.",
+      "evidence": [
+        {
+          "path": "CLAUDE.md",
+          "line_start": 1,
+          "line_end": 40,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/CLAUDE.md#L1-L40"
+        }
+      ],
+      "automatic_execution_authorized": false,
+      "record_id": "P001",
+      "task_file": "tasks/P001.json",
+      "status_counts": {
+        "PRODUCT_DECISION_REQUIRED": 178,
+        "NO_LONGER_APPLICABLE": 6,
+        "SUPERSEDED": 2,
+        "NEEDS_REVALIDATION": 20
+      },
+      "review_level_counts": {
+        "source task read; pinned consumer/DDL code inspected; associated PR metadata scoped to repository; no live production mutation or functional acceptance": 201,
+        "MODULE_RECONCILIATION_WITH_EXPLICIT_LIMITS": 5
+      }
+    },
+    {
+      "plan_id": "docs--audits--plano_contatos_100_etapas_2026-09-29",
+      "path": "docs/audits/PLANO_CONTATOS_100_ETAPAS_2026-09-29.md",
+      "title": "PLANO — Finalização do Módulo Contatos (100 etapas) — 2026-09-29",
+      "source_sha": "090ba2593e6375882290a8a0c77897c305311df0",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 100,
+      "observed_tasks": 100,
+      "missing_numbers": [],
+      "extraction_style": "checkbox",
+      "authority": "CURRENT_REFERENCE",
+      "evidence_refs": [],
+      "module": "Contatos",
+      "successors": [],
+      "basis": "Referência localizada e confrontada com evidências do baseline; um plano não concede autorização de execução.",
+      "evidence": [],
+      "automatic_execution_authorized": false,
+      "record_id": "P002",
+      "task_file": "tasks/P002.json",
+      "status_counts": {
+        "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE": 77,
+        "PARTIAL": 4,
+        "DONE_VERIFIED": 4,
+        "SUPERSEDED": 1,
+        "NO_LONGER_APPLICABLE": 2,
+        "NEEDS_REVALIDATION": 12
+      },
+      "review_level_counts": {
+        "documentary_reconciliation_and_source_path_resolution": 88,
+        "direct_contract_inspection": 12
+      }
+    },
+    {
+      "plan_id": "docs--audits--plano_correcoes_50_etapas_2026-09-16",
+      "path": "docs/audits/PLANO_CORRECOES_50_ETAPAS_2026-09-16.md",
+      "title": "Plano de Correções e Melhorias — 50 Etapas (2026-09-16)",
+      "source_sha": "d7228433858992a1fb0b8ab9f11c9a56dd44d279",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 50,
+      "observed_tasks": 50,
+      "missing_numbers": [],
+      "extraction_style": "heading",
+      "authority": "HISTORICAL_SUPERSEDED",
+      "evidence_refs": [],
+      "module": "Engenharia transversal",
+      "successors": [
+        "docs/audits/PLANO_MELHORIAS_50_ETAPAS_2026-09-20.md"
+      ],
+      "basis": "A linhagem posterior absorve o acompanhamento operacional. A classificação SUPERSEDED refere-se à versão do plano, não afirma que cada requisito foi implementado ou cancelado.",
+      "evidence": [
+        {
+          "path": "docs/audits/PLANO_MELHORIAS_50_ETAPAS_2026-09-20.md",
+          "line_start": 1,
+          "line_end": 15,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/audits/PLANO_MELHORIAS_50_ETAPAS_2026-09-20.md#L1-L15"
+        }
+      ],
+      "automatic_execution_authorized": false,
+      "record_id": "P003",
+      "task_file": "tasks/P003.json",
+      "status_counts": {
+        "SUPERSEDED": 50
+      },
+      "review_level_counts": {
+        "LINEAGE_AND_SOURCE_RECONCILIATION_ONLY": 50
+      }
+    },
+    {
+      "plan_id": "docs--audits--plano_github_actions_100_etapas_2026-09-26",
+      "path": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-09-26.md",
+      "title": "Auditoria exaustiva do GitHub Actions — plano de correção em 100 etapas",
+      "source_sha": "4e14ffb980fdee856279665052804a38e84904e9",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 100,
+      "observed_tasks": 100,
+      "missing_numbers": [],
+      "extraction_style": "checkbox",
+      "authority": "HISTORICAL_SUPERSEDED",
+      "evidence_refs": [],
+      "module": "CI",
+      "successors": [
+        "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md"
+      ],
+      "basis": "A linhagem posterior absorve o acompanhamento operacional. A classificação SUPERSEDED refere-se à versão do plano, não afirma que cada requisito foi implementado ou cancelado.",
+      "evidence": [
+        {
+          "path": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
+          "line_start": 1,
+          "line_end": 15,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md#L1-L15"
+        }
+      ],
+      "automatic_execution_authorized": false,
+      "record_id": "P004",
+      "task_file": "tasks/P004.json",
+      "status_counts": {
+        "SUPERSEDED": 100
+      },
+      "review_level_counts": {
+        "LINEAGE_AND_SOURCE_RECONCILIATION_ONLY": 100
+      }
+    },
+    {
+      "plan_id": "docs--audits--plano_github_actions_100_etapas_2026-09-27",
+      "path": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-09-27.md",
+      "title": "Auditoria exaustiva do GitHub Actions — plano de correção e melhorias em 100 etapas (v2)",
+      "source_sha": "9646f1c4a8a60211029071326041a4ce61459fd0",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 100,
+      "observed_tasks": 100,
+      "missing_numbers": [],
+      "extraction_style": "checkbox",
+      "authority": "HISTORICAL_SUPERSEDED",
+      "evidence_refs": [],
+      "module": "CI",
+      "successors": [
+        "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md"
+      ],
+      "basis": "A linhagem posterior absorve o acompanhamento operacional. A classificação SUPERSEDED refere-se à versão do plano, não afirma que cada requisito foi implementado ou cancelado.",
+      "evidence": [
+        {
+          "path": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
+          "line_start": 1,
+          "line_end": 15,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md#L1-L15"
+        }
+      ],
+      "automatic_execution_authorized": false,
+      "record_id": "P005",
+      "task_file": "tasks/P005.json",
+      "status_counts": {
+        "SUPERSEDED": 100
+      },
+      "review_level_counts": {
+        "LINEAGE_AND_SOURCE_RECONCILIATION_ONLY": 100
+      }
+    },
+    {
+      "plan_id": "docs--audits--plano_github_actions_100_etapas_2026-10-01",
+      "path": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
+      "title": "Auditoria exaustiva do GitHub Actions — plano de correção e melhorias em 100 etapas (v3)",
+      "source_sha": "cbf3e445ac446e00fcc0f407796173787dcaa426",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 100,
+      "observed_tasks": 100,
+      "missing_numbers": [],
+      "extraction_style": "checkbox",
+      "authority": "CURRENT_REFERENCE",
+      "evidence_refs": [],
+      "module": "CI",
+      "successors": [],
+      "basis": "Referência localizada e confrontada com evidências do baseline; um plano não concede autorização de execução.",
+      "evidence": [],
+      "automatic_execution_authorized": false,
+      "record_id": "P006",
+      "task_file": "tasks/P006.json",
+      "status_counts": {
+        "SUPERSEDED": 3,
+        "DONE_VERIFIED": 23,
+        "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE": 27,
+        "NEEDS_REVALIDATION": 11,
+        "PARTIAL": 11,
+        "PRODUCT_DECISION_REQUIRED": 8,
+        "NOT_IMPLEMENTED": 15,
+        "BLOCKED_TECHNICAL": 2
+      },
+      "review_level_counts": {
+        "task_reconciled_against_pinned_code_and_scoped_pr_metadata; runtime/config limits explicit": 100
+      }
+    },
+    {
+      "plan_id": "docs--audits--plano_ia_200_etapas_2026-09-29",
+      "path": "docs/audits/PLANO_IA_200_ETAPAS_2026-09-29.md",
+      "title": "Plano de correções e evolução da IA — ZAPP WEB V2",
+      "source_sha": "9abccb50754c857839ea2b8b5c96c1490c707a30",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 200,
+      "observed_tasks": 200,
+      "missing_numbers": [],
+      "extraction_style": "heading",
+      "authority": "CURRENT_REFERENCE",
+      "evidence_refs": [],
+      "module": "Engenharia transversal",
+      "successors": [],
+      "basis": "Referência localizada e confrontada com evidências do baseline; um plano não concede autorização de execução.",
+      "evidence": [],
+      "automatic_execution_authorized": false,
+      "record_id": "P007",
+      "task_file": "tasks/P007.json",
+      "status_counts": {
+        "NEEDS_REVALIDATION": 3,
+        "PARTIAL": 117,
+        "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE": 26,
+        "PRODUCT_DECISION_REQUIRED": 1,
+        "BLOCKED_EXTERNAL": 3,
+        "NOT_IMPLEMENTED": 1,
+        "UNKNOWN": 44,
+        "HUMAN_ACCEPTANCE": 4,
+        "OBSERVATION_WINDOW": 1
+      },
+      "review_level_counts": {
+        "targeted_static_source_review": 73,
+        "source_basis_and_gap_review": 127
+      }
+    },
+    {
+      "plan_id": "docs--audits--plano_melhorias_50_etapas_2026-09-20",
+      "path": "docs/audits/PLANO_MELHORIAS_50_ETAPAS_2026-09-20.md",
+      "title": "PLANO DE MELHORIAS E CORREÇÕES — 50 ETAPAS (2026-09-20)",
+      "source_sha": "ee7839fcf605bfdec48781f3b395816bd933b4d4",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 50,
+      "observed_tasks": 50,
+      "missing_numbers": [],
+      "extraction_style": "heading",
+      "authority": "CURRENT_REFERENCE",
+      "evidence_refs": [],
+      "module": "Engenharia transversal",
+      "successors": [],
+      "basis": "Referência localizada e confrontada com evidências do baseline; um plano não concede autorização de execução.",
+      "evidence": [],
+      "automatic_execution_authorized": false,
+      "record_id": "P008",
+      "task_file": "tasks/P008.json",
+      "status_counts": {
+        "DONE_VERIFIED": 15,
+        "NEEDS_REVALIDATION": 12,
+        "VALIDATED_FAIL": 4,
+        "PARTIAL": 12,
+        "NO_LONGER_APPLICABLE": 1,
+        "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE": 5,
+        "SUPERSEDED": 1
+      },
+      "review_level_counts": {
+        "REUSED_SEMANTIC_REVIEW": 15,
+        "DIRECT_SOURCE_CONTRACT_REVIEW": 26,
+        "BOUNDED_SOURCE_INVENTORY_REVIEW": 1,
+        "DOCUMENTARY_ONLY": 8
+      }
+    },
+    {
+      "plan_id": "docs--audits--plano_multi_conexao_evolution_go_50_etapas_2026-09-25",
+      "path": "docs/audits/PLANO_MULTI_CONEXAO_EVOLUTION_GO_50_ETAPAS_2026-09-25.md",
+      "title": "PLANO MULTI-CONEXÃO EVOLUTION GO — 50 ETAPAS (2026-09-25)",
+      "source_sha": "2ab0a17e8a5e1cfa3a45e8014d84037cd1ca320b",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 50,
+      "observed_tasks": 50,
+      "missing_numbers": [],
+      "extraction_style": "heading",
+      "authority": "CURRENT_REFERENCE",
+      "evidence_refs": [],
+      "module": "MultiConexão",
+      "successors": [],
+      "basis": "Referência localizada e confrontada com evidências do baseline; um plano não concede autorização de execução.",
+      "evidence": [],
+      "automatic_execution_authorized": false,
+      "record_id": "P009",
+      "task_file": "tasks/P009.json",
+      "status_counts": {
+        "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE": 10,
+        "NEEDS_REVALIDATION": 10,
+        "PRODUCT_DECISION_REQUIRED": 3,
+        "NOT_IMPLEMENTED": 10,
+        "PARTIAL": 11,
+        "BLOCKED_TECHNICAL": 5,
+        "VALIDATED_FAIL": 1
+      },
+      "review_level_counts": {
+        "source task read; pinned consumer/DDL code inspected; associated PR metadata scoped to repository; no live production mutation or functional acceptance": 50
+      }
+    },
+    {
+      "plan_id": "docs--audits--plano_remocao_etiquetas_100_etapas_2026-09-27",
+      "path": "docs/audits/PLANO_REMOCAO_ETIQUETAS_100_ETAPAS_2026-09-27.md",
+      "title": "Plano de remoção — módulo \"Etiquetas\" (`view=tags`) — 100 etapas",
+      "source_sha": "65845bfab92b9642b66386e31d6992524468f0b7",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 100,
+      "observed_tasks": 100,
+      "missing_numbers": [],
+      "extraction_style": "numbered",
+      "authority": "CURRENT_REFERENCE",
+      "evidence_refs": [],
+      "module": "Etiquetas",
+      "successors": [],
+      "basis": "Referência localizada e confrontada com evidências do baseline; um plano não concede autorização de execução.",
+      "evidence": [],
+      "automatic_execution_authorized": false,
+      "record_id": "P010",
+      "task_file": "tasks/P010.json",
+      "status_counts": {
+        "SUPERSEDED": 3,
+        "DONE_VERIFIED": 31,
+        "NEEDS_REVALIDATION": 31,
+        "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE": 9,
+        "NOT_IMPLEMENTED": 4,
+        "PRODUCT_DECISION_REQUIRED": 1,
+        "PARTIAL": 13,
+        "HUMAN_ACCEPTANCE": 6,
+        "NO_LONGER_APPLICABLE": 1,
+        "OBSERVATION_WINDOW": 1
+      },
+      "review_level_counts": {
+        "source task read; pinned consumer/DDL code inspected; associated PR metadata scoped to repository; no live production mutation or functional acceptance": 100
+      }
+    },
+    {
+      "plan_id": "docs--audits--plano_team_chat_finalizacao_100_etapas_2026-09-29",
+      "path": "docs/audits/PLANO_TEAM_CHAT_FINALIZACAO_100_ETAPAS_2026-09-29.md",
+      "title": "PLANO — Team Chat V2: finalização da implantação (100 etapas) — 2026-09-29",
+      "source_sha": "5f85071d7361f3099bb56300cba35924701ee28d",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 100,
+      "observed_tasks": 100,
+      "missing_numbers": [],
+      "extraction_style": "checkbox",
+      "authority": "OVERLAPPING_CURRENT_REFERENCES",
+      "evidence_refs": [],
+      "module": "Team Chat",
+      "successors": [
+        "docs/team-chat/PLANO_IMPLEMENTACAO_TEAM_CHAT_100.md"
+      ],
+      "basis": "Dois documentos de finalização datados de29/09 usam F01–F100 e TC-01–TC-100. O TC usa baseline posterior e diagnóstico ampliado, mas não declara explicitamente que substitui o F. Números iguais não são equivalência. Manter os dois e consolidar requisitos antes de qualquer missão funcional.",
+      "evidence": [
+        {
+          "path": "docs/audits/PLANO_TEAM_CHAT_FINALIZACAO_100_ETAPAS_2026-09-29.md",
+          "line_start": 1,
+          "line_end": 12,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/audits/PLANO_TEAM_CHAT_FINALIZACAO_100_ETAPAS_2026-09-29.md#L1-L12"
+        },
+        {
+          "path": "docs/team-chat/PLANO_IMPLEMENTACAO_TEAM_CHAT_100.md",
+          "line_start": 1,
+          "line_end": 12,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/team-chat/PLANO_IMPLEMENTACAO_TEAM_CHAT_100.md#L1-L12"
+        }
+      ],
+      "automatic_execution_authorized": false,
+      "record_id": "P011",
+      "task_file": "tasks/P011.json",
+      "status_counts": {
+        "NEEDS_REVALIDATION": 3,
+        "PARTIAL": 42,
+        "ACTIVE_REGRESSION": 3,
+        "NOT_IMPLEMENTED": 40,
+        "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE": 4,
+        "VALIDATED_FAIL": 4,
+        "PRODUCT_DECISION_REQUIRED": 1,
+        "OBSERVATION_WINDOW": 1,
+        "BLOCKED_EXTERNAL": 1,
+        "HUMAN_ACCEPTANCE": 1
+      },
+      "review_level_counts": {
+        "REPOSITORY_STATIC": 100
+      }
+    },
+    {
+      "plan_id": "docs--audits--plano_team_chat_remediacao_100_etapas_2026-09-28",
+      "path": "docs/audits/PLANO_TEAM_CHAT_REMEDIACAO_100_ETAPAS_2026-09-28.md",
+      "title": "PLANO — Team Chat V2: remediação e conclusão da paridade com o V3 (100 etapas)",
+      "source_sha": "b662c3893b7543fc0ff5fcdc2e1ee8c14c6c3241",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 100,
+      "observed_tasks": 100,
+      "missing_numbers": [],
+      "extraction_style": "checkbox",
+      "authority": "HISTORICAL_SUPERSEDED",
+      "evidence_refs": [],
+      "module": "Team Chat",
+      "successors": [
+        "docs/team-chat/PLANO_IMPLEMENTACAO_TEAM_CHAT_100.md"
+      ],
+      "basis": "A linhagem posterior absorve o acompanhamento operacional. A classificação SUPERSEDED refere-se à versão do plano, não afirma que cada requisito foi implementado ou cancelado.",
+      "evidence": [
+        {
+          "path": "docs/team-chat/PLANO_IMPLEMENTACAO_TEAM_CHAT_100.md",
+          "line_start": 1,
+          "line_end": 15,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/team-chat/PLANO_IMPLEMENTACAO_TEAM_CHAT_100.md#L1-L15"
+        }
+      ],
+      "automatic_execution_authorized": false,
+      "record_id": "P012",
+      "task_file": "tasks/P012.json",
+      "status_counts": {
+        "SUPERSEDED": 100
+      },
+      "review_level_counts": {
+        "LINEAGE_AND_SOURCE_RECONCILIATION_ONLY": 100
+      }
+    },
+    {
+      "plan_id": "docs--audits--plano_team_chat_v3_parity_100_etapas_2026-09-27",
+      "path": "docs/audits/PLANO_TEAM_CHAT_V3_PARITY_100_ETAPAS_2026-09-27.md",
+      "title": "PLANO — Team Chat: paridade de padrão e arquitetura com o Zapp Web V3 (100 etapas)",
+      "source_sha": "33a806c73ff232cbb51accb4eb8f0067a253c6e2",
+      "definition_ref": "a5fb09c",
+      "source_kind": "GIT",
+      "expected_tasks": 100,
+      "observed_tasks": 100,
+      "missing_numbers": [],
+      "extraction_style": "checkbox",
+      "authority": "HISTORICAL_SUPERSEDED",
+      "evidence_refs": [],
+      "module": "Team Chat",
+      "successors": [
+        "docs/team-chat/PLANO_IMPLEMENTACAO_TEAM_CHAT_100.md"
+      ],
+      "basis": "A linhagem posterior absorve o acompanhamento operacional. A classificação SUPERSEDED refere-se à versão do plano, não afirma que cada requisito foi implementado ou cancelado.",
+      "evidence": [
+        {
+          "path": "docs/team-chat/PLANO_IMPLEMENTACAO_TEAM_CHAT_100.md",
+          "line_start": 1,
+          "line_end": 15,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/team-chat/PLANO_IMPLEMENTACAO_TEAM_CHAT_100.md#L1-L15"
+        }
+      ],
+      "automatic_execution_authorized": false,
+      "record_id": "P013",
+      "task_file": "tasks/P013.json",
+      "status_counts": {
+        "SUPERSEDED": 100
+      },
+      "review_level_counts": {
+        "LINEAGE_AND_SOURCE_RECONCILIATION_ONLY": 100
+      }
+    },
+    {
+      "plan_id": "docs--catalogo--plano_finalizacao_catalogo_100",
+      "path": "docs/catalogo/PLANO_FINALIZACAO_CATALOGO_100.md",
+      "title": "PLANO — Catálogo: finalização da implantação (100 etapas, prefixo `CT-`)",
+      "source_sha": "3e6f4ef9105f94c74087b1e98afcc9e5821c8e46",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 100,
+      "observed_tasks": 100,
+      "missing_numbers": [],
+      "extraction_style": "checkbox",
+      "authority": "CURRENT_REFERENCE",
+      "evidence_refs": [],
+      "module": "Catálogo",
+      "successors": [],
+      "basis": "Referência localizada e confrontada com evidências do baseline; um plano não concede autorização de execução.",
+      "evidence": [],
+      "automatic_execution_authorized": false,
+      "record_id": "P014",
+      "task_file": "tasks/P014.json",
+      "status_counts": {
+        "NEEDS_REVALIDATION": 8,
+        "BLOCKED_EXTERNAL": 5,
+        "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE": 56,
+        "HUMAN_ACCEPTANCE": 10,
+        "DONE_VERIFIED": 11,
+        "VALIDATED_FAIL": 5,
+        "PARTIAL": 3,
+        "NOT_IMPLEMENTED": 1,
+        "PRODUCT_DECISION_REQUIRED": 1
+      },
+      "review_level_counts": {
+        "direct_contract_inspection": 46,
+        "documentary_reconciliation_and_source_path_resolution": 54
+      }
+    },
+    {
+      "plan_id": "docs--catalogo--plano_implementacao_catalogo_100",
+      "path": "docs/catalogo/PLANO_IMPLEMENTACAO_CATALOGO_100.md",
+      "title": "Catálogo · ZAPP Web V2 — Plano de Implementação em 100 Etapas",
+      "source_sha": "d1c43ac068739a406f461fbf75a7fe4e5999385f",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 100,
+      "observed_tasks": 100,
+      "missing_numbers": [],
+      "extraction_style": "heading",
+      "authority": "HISTORICAL_SUPERSEDED",
+      "evidence_refs": [],
+      "module": "Catálogo",
+      "successors": [
+        "docs/catalogo/PLANO_FINALIZACAO_CATALOGO_100.md"
+      ],
+      "basis": "A linhagem posterior absorve o acompanhamento operacional. A classificação SUPERSEDED refere-se à versão do plano, não afirma que cada requisito foi implementado ou cancelado.",
+      "evidence": [
+        {
+          "path": "docs/catalogo/PLANO_FINALIZACAO_CATALOGO_100.md",
+          "line_start": 1,
+          "line_end": 15,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/catalogo/PLANO_FINALIZACAO_CATALOGO_100.md#L1-L15"
+        }
+      ],
+      "automatic_execution_authorized": false,
+      "record_id": "P015",
+      "task_file": "tasks/P015.json",
+      "status_counts": {
+        "SUPERSEDED": 100
+      },
+      "review_level_counts": {
+        "LINEAGE_AND_SOURCE_RECONCILIATION_ONLY": 100
+      }
+    },
+    {
+      "plan_id": "docs--design--plano_coluna_header",
+      "path": "docs/design/PLANO_COLUNA_HEADER.md",
+      "title": "COLUNA DE CONVERSAS + CHAT HEADER — Zapp Web V2",
+      "source_sha": "21075775dda5f83a9f8626e695fcf5945636bcbe",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": null,
+      "observed_tasks": 2,
+      "missing_numbers": [],
+      "extraction_style": "phase_specification",
+      "authority": "HISTORICAL_DESIGN_REFERENCE",
+      "evidence_refs": [],
+      "module": "Engenharia transversal",
+      "successors": [
+        "docs/design/PLANO_INBOX_FIDELIDADE_CARVAO.md"
+      ],
+      "basis": "Decisões e entregas posteriores mudaram parte do desenho. Preservar como especificação histórica; requisitos remanescentes exigem comparação por significado com o componente atual, não execução integral do desenho antigo.",
+      "evidence": [
+        {
+          "path": "docs/design/PLANO_COLUNA_HEADER.md",
+          "line_start": 1,
+          "line_end": 6,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/design/PLANO_COLUNA_HEADER.md#L1-L6"
+        }
+      ],
+      "automatic_execution_authorized": false,
+      "record_id": "P016",
+      "task_file": "tasks/P016.json",
+      "status_counts": {
+        "NEEDS_REVALIDATION": 2
+      },
+      "review_level_counts": {
+        "LINEAGE_AND_SOURCE_RECONCILIATION_ONLY": 2
+      }
+    },
+    {
+      "plan_id": "docs--design--plano_correcao_layout_30_etapas",
+      "path": "docs/design/PLANO_CORRECAO_LAYOUT_30_ETAPAS.md",
+      "title": "Plano de correção de layout — 30 etapas",
+      "source_sha": "5a06a8e302cc1d8f2880669f1141bf243980d139",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 30,
+      "observed_tasks": 30,
+      "missing_numbers": [],
+      "extraction_style": "bold",
+      "authority": "CURRENT_REFERENCE",
+      "evidence_refs": [],
+      "module": "Layout",
+      "successors": [],
+      "basis": "Referência localizada e confrontada com evidências do baseline; um plano não concede autorização de execução.",
+      "evidence": [],
+      "automatic_execution_authorized": false,
+      "record_id": "P017",
+      "task_file": "tasks/P017.json",
+      "status_counts": {
+        "DONE_VERIFIED": 3,
+        "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE": 14,
+        "PARTIAL": 8,
+        "NOT_IMPLEMENTED": 1,
+        "SUPERSEDED": 2,
+        "VALIDATED_FAIL": 1,
+        "NEEDS_REVALIDATION": 1
+      },
+      "review_level_counts": {
+        "individual_requirement_and_group_source_inspection": 30
+      }
+    },
+    {
+      "plan_id": "docs--design--plano_email_navy_100_etapas_2026-10-02",
+      "path": "docs/design/PLANO_EMAIL_NAVY_100_ETAPAS_2026-10-02.md",
+      "title": "Plano de implementação Email NAVY em 100 etapas",
+      "source_sha": "7a9e41a63f44a974571dab1056a872a5b98efee1",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 100,
+      "observed_tasks": 100,
+      "missing_numbers": [],
+      "extraction_style": "heading",
+      "authority": "CURRENT_REFERENCE",
+      "evidence_refs": [],
+      "module": "Email",
+      "successors": [],
+      "basis": "Referência localizada e confrontada com evidências do baseline; um plano não concede autorização de execução.",
+      "evidence": [],
+      "automatic_execution_authorized": false,
+      "record_id": "P018",
+      "task_file": "tasks/P018.json",
+      "status_counts": {
+        "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE": 80,
+        "HUMAN_ACCEPTANCE": 3,
+        "PARTIAL": 8,
+        "SUPERSEDED": 2,
+        "VALIDATED_FAIL": 1,
+        "NEEDS_REVALIDATION": 6
+      },
+      "review_level_counts": {
+        "documentary_reconciliation_and_source_path_resolution": 86,
+        "direct_contract_inspection": 14
+      }
+    },
+    {
+      "plan_id": "docs--design--plano_email_sidebar_contato_50_etapas_2026-10-03",
+      "path": "docs/design/PLANO_EMAIL_SIDEBAR_CONTATO_50_ETAPAS_2026-10-03.md",
+      "title": "Email — plano do sidebar de contato e empresa em 50 etapas",
+      "source_sha": "29cb355332911f6fcbbd2ec352cdf874479b4328",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 50,
+      "observed_tasks": 50,
+      "missing_numbers": [],
+      "extraction_style": "checkbox",
+      "authority": "CURRENT_REFERENCE",
+      "evidence_refs": [],
+      "module": "Email",
+      "successors": [],
+      "basis": "Referência localizada e confrontada com evidências do baseline; um plano não concede autorização de execução.",
+      "evidence": [],
+      "automatic_execution_authorized": false,
+      "record_id": "P019",
+      "task_file": "tasks/P019.json",
+      "status_counts": {
+        "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE": 35,
+        "BLOCKED_EXTERNAL": 2,
+        "HUMAN_ACCEPTANCE": 2,
+        "PARTIAL": 3,
+        "NEEDS_REVALIDATION": 7,
+        "DONE_VERIFIED": 1
+      },
+      "review_level_counts": {
+        "documentary_reconciliation_and_source_path_resolution": 41,
+        "direct_contract_inspection": 9
+      }
+    },
+    {
+      "plan_id": "docs--design--plano_inbox_360_conversa",
+      "path": "docs/design/PLANO_INBOX_360_CONVERSA.md",
+      "title": "PROMPT DE EXECUÇÃO — INBOX 360°: ABAS DA CONVERSA + PAINEL DO CONTATO | ZAPP WEB V2",
+      "source_sha": "e06b0ed1e0295cc99cecd1411cd1931d56fe98e9",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": null,
+      "observed_tasks": 58,
+      "missing_numbers": [],
+      "extraction_style": "checkbox",
+      "authority": "HISTORICAL_DESIGN_REFERENCE",
+      "evidence_refs": [],
+      "module": "Engenharia transversal",
+      "successors": [
+        "docs/design/PLANO_SALESVIEW_JOURNEY_50_ETAPAS_2026-10-02.md",
+        "docs/design/PLANO_REDESIGN_ARQUIVOS_CHAT_PANEL_50_ETAPAS_2026-10-01.md"
+      ],
+      "basis": "Decisões e entregas posteriores mudaram parte do desenho. Preservar como especificação histórica; requisitos remanescentes exigem comparação por significado com o componente atual, não execução integral do desenho antigo.",
+      "evidence": [
+        {
+          "path": "docs/design/PLANO_INBOX_360_CONVERSA.md",
+          "line_start": 1,
+          "line_end": 6,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/design/PLANO_INBOX_360_CONVERSA.md#L1-L6"
+        }
+      ],
+      "automatic_execution_authorized": false,
+      "record_id": "P020",
+      "task_file": "tasks/P020.json",
+      "status_counts": {
+        "NEEDS_REVALIDATION": 58
+      },
+      "review_level_counts": {
+        "LINEAGE_AND_SOURCE_RECONCILIATION_ONLY": 58
+      }
+    },
+    {
+      "plan_id": "docs--design--plano_inbox_fidelidade_carvao",
+      "path": "docs/design/PLANO_INBOX_FIDELIDADE_CARVAO.md",
+      "title": "PROMPT DE EXECUÇÃO — INBOX \"FIDELIDADE CARVÃO\" | ZAPP WEB V2",
+      "source_sha": "52ae610b4879a407fc481da1cf13187821a84f79",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": null,
+      "observed_tasks": 58,
+      "missing_numbers": [],
+      "extraction_style": "checkbox",
+      "authority": "HISTORICAL_DESIGN_REFERENCE",
+      "evidence_refs": [],
+      "module": "Engenharia transversal",
+      "successors": [
+        "docs/design/PLANO_SALESVIEW_JOURNEY_50_ETAPAS_2026-10-02.md"
+      ],
+      "basis": "Decisões e entregas posteriores mudaram parte do desenho. Preservar como especificação histórica; requisitos remanescentes exigem comparação por significado com o componente atual, não execução integral do desenho antigo.",
+      "evidence": [
+        {
+          "path": "docs/design/PLANO_INBOX_FIDELIDADE_CARVAO.md",
+          "line_start": 1,
+          "line_end": 6,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/design/PLANO_INBOX_FIDELIDADE_CARVAO.md#L1-L6"
+        }
+      ],
+      "automatic_execution_authorized": false,
+      "record_id": "P021",
+      "task_file": "tasks/P021.json",
+      "status_counts": {
+        "NEEDS_REVALIDATION": 58
+      },
+      "review_level_counts": {
+        "LINEAGE_AND_SOURCE_RECONCILIATION_ONLY": 58
+      }
+    },
+    {
+      "plan_id": "docs--design--plano_melhorias_contatos_50_etapas_2026-09-27",
+      "path": "docs/design/PLANO_MELHORIAS_CONTATOS_50_ETAPAS_2026-09-27.md",
+      "title": "PLANO — Redesign Contatos + remoção de import/export CSV (50 etapas)",
+      "source_sha": "fcff1aafc87b099882f76d02f80b73308672276a",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 50,
+      "observed_tasks": 50,
+      "missing_numbers": [],
+      "extraction_style": "numbered",
+      "authority": "HISTORICAL_DESIGN_REFERENCE",
+      "evidence_refs": [],
+      "module": "Contatos",
+      "successors": [
+        "docs/audits/PLANO_CONTATOS_100_ETAPAS_2026-09-29.md"
+      ],
+      "basis": "Decisões e entregas posteriores mudaram parte do desenho. Preservar como especificação histórica; requisitos remanescentes exigem comparação por significado com o componente atual, não execução integral do desenho antigo.",
+      "evidence": [
+        {
+          "path": "docs/design/PLANO_MELHORIAS_CONTATOS_50_ETAPAS_2026-09-27.md",
+          "line_start": 1,
+          "line_end": 6,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/design/PLANO_MELHORIAS_CONTATOS_50_ETAPAS_2026-09-27.md#L1-L6"
+        }
+      ],
+      "automatic_execution_authorized": false,
+      "record_id": "P022",
+      "task_file": "tasks/P022.json",
+      "status_counts": {
+        "NEEDS_REVALIDATION": 50
+      },
+      "review_level_counts": {
+        "LINEAGE_AND_SOURCE_RECONCILIATION_ONLY": 50
+      }
+    },
+    {
+      "plan_id": "docs--design--plano_melhorias_telefonia_100_etapas",
+      "path": "docs/design/PLANO_MELHORIAS_TELEFONIA_100_ETAPAS.md",
+      "title": "PROMPT DE EXECUÇÃO — MELHORIAS DO MÓDULO TELEFONIA (`?view=voip`) | ZAPP WEB V2 — 100 ETAPAS",
+      "source_sha": "9bd4b615dbb5329fe6f6279a5c935f6008fd2230",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 100,
+      "observed_tasks": 100,
+      "missing_numbers": [],
+      "extraction_style": "checkbox",
+      "authority": "HISTORICAL_SUPERSEDED",
+      "evidence_refs": [],
+      "module": "Telefonia",
+      "successors": [
+        "docs/design/PLANO_TELEFONIA_FINALIZACAO_100_ETAPAS_2026-09-29.md"
+      ],
+      "basis": "A linhagem posterior absorve o acompanhamento operacional. A classificação SUPERSEDED refere-se à versão do plano, não afirma que cada requisito foi implementado ou cancelado.",
+      "evidence": [
+        {
+          "path": "docs/design/PLANO_TELEFONIA_FINALIZACAO_100_ETAPAS_2026-09-29.md",
+          "line_start": 1,
+          "line_end": 15,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/design/PLANO_TELEFONIA_FINALIZACAO_100_ETAPAS_2026-09-29.md#L1-L15"
+        }
+      ],
+      "automatic_execution_authorized": false,
+      "record_id": "P023",
+      "task_file": "tasks/P023.json",
+      "status_counts": {
+        "SUPERSEDED": 100
+      },
+      "review_level_counts": {
+        "LINEAGE_AND_SOURCE_RECONCILIATION_ONLY": 100
+      }
+    },
+    {
+      "plan_id": "docs--design--plano_painel_direito_tabbed",
+      "path": "docs/design/PLANO_PAINEL_DIREITO_TABBED.md",
+      "title": "PAINEL DIREITO COM 5 ABAS — Zapp Web V2",
+      "source_sha": "27e8a38f5f2f47916c523a614c0df05470fc34e8",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": null,
+      "observed_tasks": 20,
+      "missing_numbers": [],
+      "extraction_style": "checkbox",
+      "authority": "HISTORICAL_DESIGN_REFERENCE",
+      "evidence_refs": [],
+      "module": "Engenharia transversal",
+      "successors": [
+        "docs/design/PLANO_SALESVIEW_JOURNEY_50_ETAPAS_2026-10-02.md",
+        "docs/design/PLANO_SIDEBAR_CONTATO_3_SECOES_100_ETAPAS_2026-10-02.md"
+      ],
+      "basis": "Decisões e entregas posteriores mudaram parte do desenho. Preservar como especificação histórica; requisitos remanescentes exigem comparação por significado com o componente atual, não execução integral do desenho antigo.",
+      "evidence": [
+        {
+          "path": "docs/design/PLANO_PAINEL_DIREITO_TABBED.md",
+          "line_start": 1,
+          "line_end": 6,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/design/PLANO_PAINEL_DIREITO_TABBED.md#L1-L6"
+        }
+      ],
+      "automatic_execution_authorized": false,
+      "record_id": "P024",
+      "task_file": "tasks/P024.json",
+      "status_counts": {
+        "NEEDS_REVALIDATION": 20
+      },
+      "review_level_counts": {
+        "LINEAGE_AND_SOURCE_RECONCILIATION_ONLY": 20
+      }
+    },
+    {
+      "plan_id": "docs--design--plano_redesign_arquivos_chat_panel_50_etapas_2026-10-01",
+      "path": "docs/design/PLANO_REDESIGN_ARQUIVOS_CHAT_PANEL_50_ETAPAS_2026-10-01.md",
+      "title": "Arquivos do Chat Panel — Plano de redesign em 50 etapas (revisão do plano do Codex)",
+      "source_sha": "7719dbea3dabb53db18273f0db960c88e3cadcd6",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 50,
+      "observed_tasks": 50,
+      "missing_numbers": [],
+      "extraction_style": "bold",
+      "authority": "CURRENT_REFERENCE",
+      "evidence_refs": [],
+      "module": "Arquivos",
+      "successors": [],
+      "basis": "Referência localizada e confrontada com evidências do baseline; um plano não concede autorização de execução.",
+      "evidence": [],
+      "automatic_execution_authorized": false,
+      "record_id": "P025",
+      "task_file": "tasks/P025.json",
+      "status_counts": {
+        "NEEDS_REVALIDATION": 4,
+        "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE": 36,
+        "VALIDATED_FAIL": 2,
+        "ACTIVE_REGRESSION": 2,
+        "PARTIAL": 4,
+        "NOT_IMPLEMENTED": 2
+      },
+      "review_level_counts": {
+        "direct_contract_inspection": 14,
+        "documentary_reconciliation_and_source_path_resolution": 36
+      }
+    },
+    {
+      "plan_id": "docs--design--plano_redesign_contatos_navy_100_etapas",
+      "path": "docs/design/PLANO_REDESIGN_CONTATOS_NAVY_100_ETAPAS.md",
+      "title": "PROMPT DE EXECUÇÃO — REDESIGN \"NAVY PREMIUM\" DO MÓDULO CONTATOS | ZAPP WEB V2",
+      "source_sha": "bf62ee021d668c1d460bef3e4ef8505e9bf16eef",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 100,
+      "observed_tasks": 100,
+      "missing_numbers": [],
+      "extraction_style": "checkbox",
+      "authority": "HISTORICAL_DESIGN_REFERENCE",
+      "evidence_refs": [],
+      "module": "Contatos",
+      "successors": [
+        "docs/audits/PLANO_CONTATOS_100_ETAPAS_2026-09-29.md"
+      ],
+      "basis": "Decisões e entregas posteriores mudaram parte do desenho. Preservar como especificação histórica; requisitos remanescentes exigem comparação por significado com o componente atual, não execução integral do desenho antigo.",
+      "evidence": [
+        {
+          "path": "docs/design/PLANO_REDESIGN_CONTATOS_NAVY_100_ETAPAS.md",
+          "line_start": 1,
+          "line_end": 6,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/design/PLANO_REDESIGN_CONTATOS_NAVY_100_ETAPAS.md#L1-L6"
+        }
+      ],
+      "automatic_execution_authorized": false,
+      "record_id": "P026",
+      "task_file": "tasks/P026.json",
+      "status_counts": {
+        "NEEDS_REVALIDATION": 100
+      },
+      "review_level_counts": {
+        "LINEAGE_AND_SOURCE_RECONCILIATION_ONLY": 100
+      }
+    },
+    {
+      "plan_id": "docs--design--plano_redesign_dashboard_abas",
+      "path": "docs/design/PLANO_REDESIGN_DASHBOARD_ABAS.md",
+      "title": "PLANO — REDESIGN DAS 7 ABAS RESTANTES DO DASHBOARD | ZAPP WEB V2",
+      "source_sha": "45744af0ee8f66e494a01510e102ad2b977e8285",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": null,
+      "observed_tasks": 9,
+      "missing_numbers": [],
+      "extraction_style": "phase_specification",
+      "authority": "HISTORICAL_DESIGN_REFERENCE",
+      "evidence_refs": [],
+      "module": "Dashboard",
+      "successors": [
+        "external/Plano_Dashboard_100_Etapas_2026-09-30.md"
+      ],
+      "basis": "Decisões e entregas posteriores mudaram parte do desenho. Preservar como especificação histórica; requisitos remanescentes exigem comparação por significado com o componente atual, não execução integral do desenho antigo.",
+      "evidence": [
+        {
+          "path": "docs/design/PLANO_REDESIGN_DASHBOARD_ABAS.md",
+          "line_start": 1,
+          "line_end": 6,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/design/PLANO_REDESIGN_DASHBOARD_ABAS.md#L1-L6"
+        }
+      ],
+      "automatic_execution_authorized": false,
+      "record_id": "P027",
+      "task_file": "tasks/P027.json",
+      "status_counts": {
+        "NEEDS_REVALIDATION": 9
+      },
+      "review_level_counts": {
+        "LINEAGE_AND_SOURCE_RECONCILIATION_ONLY": 9
+      }
+    },
+    {
+      "plan_id": "docs--design--plano_redesign_dashboard_navy_100_etapas",
+      "path": "docs/design/PLANO_REDESIGN_DASHBOARD_NAVY_100_ETAPAS.md",
+      "title": "PROMPT DE EXECUÇÃO — REDESIGN \"NAVY OPERATIONAL\" DO MÓDULO DASHBOARD | ZAPP WEB V2",
+      "source_sha": "d5797f305dfe5220c230f771a1f883bfc0ed0d88",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 100,
+      "observed_tasks": 100,
+      "missing_numbers": [],
+      "extraction_style": "checkbox",
+      "authority": "HISTORICAL_DESIGN_REFERENCE",
+      "evidence_refs": [],
+      "module": "Dashboard",
+      "successors": [
+        "external/Plano_Dashboard_100_Etapas_2026-09-30.md"
+      ],
+      "basis": "Decisões e entregas posteriores mudaram parte do desenho. Preservar como especificação histórica; requisitos remanescentes exigem comparação por significado com o componente atual, não execução integral do desenho antigo.",
+      "evidence": [
+        {
+          "path": "docs/design/PLANO_REDESIGN_DASHBOARD_NAVY_100_ETAPAS.md",
+          "line_start": 1,
+          "line_end": 6,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/design/PLANO_REDESIGN_DASHBOARD_NAVY_100_ETAPAS.md#L1-L6"
+        }
+      ],
+      "automatic_execution_authorized": false,
+      "record_id": "P028",
+      "task_file": "tasks/P028.json",
+      "status_counts": {
+        "NEEDS_REVALIDATION": 100
+      },
+      "review_level_counts": {
+        "LINEAGE_AND_SOURCE_RECONCILIATION_ONLY": 100
+      }
+    },
+    {
+      "plan_id": "docs--design--plano_refinamento_talk_me_50_etapas_2026-09-30",
+      "path": "docs/design/PLANO_REFINAMENTO_TALK_ME_50_ETAPAS_2026-09-30.md",
+      "title": "TALK ME — Plano de refinamento visual e navegação em 50 etapas",
+      "source_sha": "021c801ec52ab6eef0a6dadeee54d7733f0d4104",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 50,
+      "observed_tasks": 50,
+      "missing_numbers": [],
+      "extraction_style": "heading",
+      "authority": "CURRENT_REFERENCE",
+      "evidence_refs": [],
+      "module": "Talk Me",
+      "successors": [],
+      "basis": "Referência localizada e confrontada com evidências do baseline; um plano não concede autorização de execução.",
+      "evidence": [],
+      "automatic_execution_authorized": false,
+      "record_id": "P029",
+      "task_file": "tasks/P029.json",
+      "status_counts": {
+        "DONE_VERIFIED": 5,
+        "NEEDS_REVALIDATION": 3,
+        "PARTIAL": 8,
+        "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE": 34
+      },
+      "review_level_counts": {
+        "MODULE_RECONCILIATION_WITH_EXPLICIT_LIMITS": 50
+      }
+    },
+    {
+      "plan_id": "docs--design--plano_salesview_journey_50_etapas_2026-10-02",
+      "path": "docs/design/PLANO_SALESVIEW_JOURNEY_50_ETAPAS_2026-10-02.md",
+      "title": "Inbox — Plano SalesView + Journey: 50 etapas",
+      "source_sha": "de06535442820ccb91bd33ef89cabd77104acb2f",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 50,
+      "observed_tasks": 50,
+      "missing_numbers": [],
+      "extraction_style": "bold",
+      "authority": "CURRENT_REFERENCE",
+      "evidence_refs": [],
+      "module": "SalesView/Journey",
+      "successors": [],
+      "basis": "Referência localizada e confrontada com evidências do baseline; um plano não concede autorização de execução.",
+      "evidence": [],
+      "automatic_execution_authorized": false,
+      "record_id": "P030",
+      "task_file": "tasks/P030.json",
+      "status_counts": {
+        "NEEDS_REVALIDATION": 7,
+        "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE": 11,
+        "DONE_VERIFIED": 15,
+        "PARTIAL": 14,
+        "SUPERSEDED": 1,
+        "HUMAN_ACCEPTANCE": 1,
+        "VALIDATED_FAIL": 1
+      },
+      "review_level_counts": {
+        "MODULE_RECONCILIATION_WITH_EXPLICIT_LIMITS": 50
+      }
+    },
+    {
+      "plan_id": "docs--design--plano_skins_opera_gx_100_etapas",
+      "path": "docs/design/PLANO_SKINS_OPERA_GX_100_ETAPAS.md",
+      "title": "PROMPT DE EXECUÇÃO — SISTEMA DE SKINS \"OPERA GX\" (paridade Promo Gifts V4) | ZAPP WEB V2",
+      "source_sha": "6bb9163104ace7555d04563ad66de78d1a1ad016",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 100,
+      "observed_tasks": 100,
+      "missing_numbers": [],
+      "extraction_style": "checkbox",
+      "authority": "CURRENT_REFERENCE",
+      "evidence_refs": [],
+      "module": "Skins",
+      "successors": [],
+      "basis": "Referência localizada e confrontada com evidências do baseline; um plano não concede autorização de execução.",
+      "evidence": [],
+      "automatic_execution_authorized": false,
+      "record_id": "P031",
+      "task_file": "tasks/P031.json",
+      "status_counts": {
+        "DONE_VERIFIED": 52,
+        "PARTIAL": 11,
+        "BLOCKED_EXTERNAL": 19,
+        "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE": 8,
+        "NEEDS_REVALIDATION": 6,
+        "VALIDATED_FAIL": 2,
+        "NO_LONGER_APPLICABLE": 2
+      },
+      "review_level_counts": {
+        "MODULE_RECONCILIATION_WITH_EXPLICIT_LIMITS": 100
+      }
+    },
+    {
+      "plan_id": "docs--design--plano_talk_me_100_etapas_2026-09-30",
+      "path": "docs/design/PLANO_TALK_ME_100_ETAPAS_2026-09-30.md",
+      "title": "TALK ME — Plano de implementação em 100 etapas",
+      "source_sha": "0b23b20b9024313ae876cc2bc9516483f562675e",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 100,
+      "observed_tasks": 100,
+      "missing_numbers": [],
+      "extraction_style": "heading",
+      "authority": "CURRENT_REFERENCE",
+      "evidence_refs": [],
+      "module": "Talk Me",
+      "successors": [],
+      "basis": "Referência localizada e confrontada com evidências do baseline; um plano não concede autorização de execução.",
+      "evidence": [],
+      "automatic_execution_authorized": false,
+      "record_id": "P032",
+      "task_file": "tasks/P032.json",
+      "status_counts": {
+        "DONE_VERIFIED": 17,
+        "HUMAN_ACCEPTANCE": 5,
+        "PARTIAL": 21,
+        "NEEDS_REVALIDATION": 4,
+        "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE": 51,
+        "SUPERSEDED": 1,
+        "OBSERVATION_WINDOW": 1
+      },
+      "review_level_counts": {
+        "MODULE_RECONCILIATION_WITH_EXPLICIT_LIMITS": 100
+      }
+    },
+    {
+      "plan_id": "docs--design--plano_tarefas_finalizacao_100_etapas",
+      "path": "docs/design/PLANO_TAREFAS_FINALIZACAO_100_ETAPAS.md",
+      "title": "PLANO DE FINALIZAÇÃO — TAREFAS + LEMBRETES + QUADRO KANBAN | ZAPP WEB V2 — 100 ETAPAS",
+      "source_sha": "795dbfb9e7894e14fbb8809618e1c4e884338a7c",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 100,
+      "observed_tasks": 100,
+      "missing_numbers": [],
+      "extraction_style": "checkbox",
+      "authority": "CURRENT_REFERENCE",
+      "evidence_refs": [],
+      "module": "Tarefas",
+      "successors": [],
+      "basis": "Referência localizada e confrontada com evidências do baseline; um plano não concede autorização de execução.",
+      "evidence": [],
+      "automatic_execution_authorized": false,
+      "record_id": "P033",
+      "task_file": "tasks/P033.json",
+      "status_counts": {
+        "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE": 87,
+        "NEEDS_REVALIDATION": 6,
+        "PARTIAL": 4,
+        "HUMAN_ACCEPTANCE": 2,
+        "DONE_VERIFIED": 1
+      },
+      "review_level_counts": {
+        "documentary_reconciliation_and_source_path_resolution": 92,
+        "direct_contract_inspection": 8
+      }
+    },
+    {
+      "plan_id": "docs--design--plano_tarefas_quadro_fusao_150_etapas",
+      "path": "docs/design/PLANO_TAREFAS_QUADRO_FUSAO_150_ETAPAS.md",
+      "title": "PROMPT DE EXECUÇÃO — FUSÃO TAREFAS + LEMBRETES E QUADRO KANBAN PESSOAL | ZAPP WEB V2 — 150 ETAPAS",
+      "source_sha": "ce2c32afa0c5e00eebb1539183eca089af8b7700",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 150,
+      "observed_tasks": 150,
+      "missing_numbers": [],
+      "extraction_style": "checkbox",
+      "authority": "HISTORICAL_SUPERSEDED",
+      "evidence_refs": [],
+      "module": "Tarefas",
+      "successors": [
+        "docs/design/PLANO_TAREFAS_FINALIZACAO_100_ETAPAS.md"
+      ],
+      "basis": "A linhagem posterior absorve o acompanhamento operacional. A classificação SUPERSEDED refere-se à versão do plano, não afirma que cada requisito foi implementado ou cancelado.",
+      "evidence": [
+        {
+          "path": "docs/design/PLANO_TAREFAS_FINALIZACAO_100_ETAPAS.md",
+          "line_start": 1,
+          "line_end": 15,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/design/PLANO_TAREFAS_FINALIZACAO_100_ETAPAS.md#L1-L15"
+        }
+      ],
+      "automatic_execution_authorized": false,
+      "record_id": "P034",
+      "task_file": "tasks/P034.json",
+      "status_counts": {
+        "SUPERSEDED": 150
+      },
+      "review_level_counts": {
+        "LINEAGE_AND_SOURCE_RECONCILIATION_ONLY": 150
+      }
+    },
+    {
+      "plan_id": "docs--design--plano_telefonia_finalizacao_100_etapas_2026-09-29",
+      "path": "docs/design/PLANO_TELEFONIA_FINALIZACAO_100_ETAPAS_2026-09-29.md",
+      "title": "PLANO — Telefonia (`?view=voip`): finalização da implantação (100 etapas) — 2026-09-29",
+      "source_sha": "a9fd397db86fe6783ed5aa464a34f4f870020ebf",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 100,
+      "observed_tasks": 100,
+      "missing_numbers": [],
+      "extraction_style": "checkbox",
+      "authority": "CURRENT_REFERENCE",
+      "evidence_refs": [],
+      "module": "Telefonia",
+      "successors": [],
+      "basis": "Referência localizada e confrontada com evidências do baseline; um plano não concede autorização de execução.",
+      "evidence": [],
+      "automatic_execution_authorized": false,
+      "record_id": "P035",
+      "task_file": "tasks/P035.json",
+      "status_counts": {
+        "DONE_VERIFIED": 4,
+        "NEEDS_REVALIDATION": 25,
+        "PARTIAL": 16,
+        "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE": 45,
+        "HUMAN_ACCEPTANCE": 2,
+        "BLOCKED_EXTERNAL": 1,
+        "ACTIVE_REGRESSION": 2,
+        "NOT_IMPLEMENTED": 5
+      },
+      "review_level_counts": {
+        "targeted_static_source_review": 100
+      }
+    },
+    {
+      "plan_id": "docs--mapa--plano_busca_searchbox_50_etapas",
+      "path": "docs/mapa/PLANO_BUSCA_SEARCHBOX_50_ETAPAS.md",
+      "title": "Busca de endereço no padrão do playground da Mapbox — Plano em 50 etapas",
+      "source_sha": "8ce1256328907bd7a639c13c43ad3ceacbffa35a",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 50,
+      "observed_tasks": 50,
+      "missing_numbers": [],
+      "extraction_style": "heading",
+      "authority": "HISTORICAL_SUPERSEDED",
+      "evidence_refs": [],
+      "module": "Mapa",
+      "successors": [
+        "docs/mapa/PLANO_FINALIZACAO_100_ETAPAS_2026-09-29.md"
+      ],
+      "basis": "A linhagem posterior absorve o acompanhamento operacional. A classificação SUPERSEDED refere-se à versão do plano, não afirma que cada requisito foi implementado ou cancelado.",
+      "evidence": [
+        {
+          "path": "docs/mapa/PLANO_FINALIZACAO_100_ETAPAS_2026-09-29.md",
+          "line_start": 1,
+          "line_end": 15,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/mapa/PLANO_FINALIZACAO_100_ETAPAS_2026-09-29.md#L1-L15"
+        }
+      ],
+      "automatic_execution_authorized": false,
+      "record_id": "P036",
+      "task_file": "tasks/P036.json",
+      "status_counts": {
+        "SUPERSEDED": 50
+      },
+      "review_level_counts": {
+        "LINEAGE_AND_SOURCE_RECONCILIATION_ONLY": 50
+      }
+    },
+    {
+      "plan_id": "docs--mapa--plano_finalizacao_100_etapas_2026-09-29",
+      "path": "docs/mapa/PLANO_FINALIZACAO_100_ETAPAS_2026-09-29.md",
+      "title": "Mapas / Search Box — Plano de finalização em 100 etapas",
+      "source_sha": "df3ea4c45d8b3f46ff7cc570c11ca8878e5dcbbb",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 100,
+      "observed_tasks": 100,
+      "missing_numbers": [],
+      "extraction_style": "heading",
+      "authority": "CURRENT_REFERENCE",
+      "evidence_refs": [],
+      "module": "Mapa",
+      "successors": [],
+      "basis": "Referência localizada e confrontada com evidências do baseline; um plano não concede autorização de execução.",
+      "evidence": [],
+      "automatic_execution_authorized": false,
+      "record_id": "P037",
+      "task_file": "tasks/P037.json",
+      "status_counts": {
+        "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE": 78,
+        "DONE_VERIFIED": 8,
+        "NO_LONGER_APPLICABLE": 1,
+        "HUMAN_ACCEPTANCE": 3,
+        "PARTIAL": 2,
+        "SUPERSEDED": 1,
+        "BLOCKED_EXTERNAL": 2,
+        "NEEDS_REVALIDATION": 5
+      },
+      "review_level_counts": {
+        "documentary_reconciliation_and_source_path_resolution": 82,
+        "direct_contract_inspection": 18
+      }
+    },
+    {
+      "plan_id": "docs--migration--plano",
+      "path": "docs/migration/PLANO.md",
+      "title": "Plano de implementação — ZAPP WEB V2 fresh install (100 etapas) — texto integral aprovado na sessão 1",
+      "source_sha": "d65797bc2b877bc51ce832b8ce15d0d6f37504d1",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 100,
+      "observed_tasks": 100,
+      "missing_numbers": [],
+      "extraction_style": "numbered",
+      "authority": "HISTORICAL_MIGRATION_PROGRAM",
+      "evidence_refs": [],
+      "module": "Migração",
+      "successors": [],
+      "basis": "Plano de instalação inicial. O sistema já possui operação e histórico posteriores; não repetir bootstrap, importações ou rotação com base neste documento.",
+      "evidence": [
+        {
+          "path": "docs/migration/PLANO.md",
+          "line_start": 1,
+          "line_end": 8,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/migration/PLANO.md#L1-L8"
+        }
+      ],
+      "automatic_execution_authorized": false,
+      "record_id": "P038",
+      "task_file": "tasks/P038.json",
+      "status_counts": {
+        "NEEDS_REVALIDATION": 100
+      },
+      "review_level_counts": {
+        "LINEAGE_AND_SOURCE_RECONCILIATION_ONLY": 100
+      }
+    },
+    {
+      "plan_id": "docs--multiplix--plano_finalizacao_multiplix_100_etapas_2026-09-29",
+      "path": "docs/multiplix/PLANO_FINALIZACAO_MULTIPLIX_100_ETAPAS_2026-09-29.md",
+      "title": "PLANO DE FINALIZAÇÃO — MULTIPLIX (ZAPP Web V2) · 100 etapas",
+      "source_sha": "2dadb23492a9f6e385d981b1997645dfac801b09",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 100,
+      "observed_tasks": 100,
+      "missing_numbers": [],
+      "extraction_style": "checkbox",
+      "authority": "CURRENT_REFERENCE",
+      "evidence_refs": [],
+      "module": "Multiplix",
+      "successors": [],
+      "basis": "Referência localizada e confrontada com evidências do baseline; um plano não concede autorização de execução.",
+      "evidence": [],
+      "automatic_execution_authorized": false,
+      "record_id": "P039",
+      "task_file": "tasks/P039.json",
+      "status_counts": {
+        "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE": 34,
+        "ACTIVE_REGRESSION": 5,
+        "PARTIAL": 30,
+        "NEEDS_REVALIDATION": 1,
+        "DONE_VERIFIED": 3,
+        "VALIDATED_FAIL": 5,
+        "BLOCKED_EXTERNAL": 5,
+        "NOT_IMPLEMENTED": 15,
+        "OBSERVATION_WINDOW": 1,
+        "HUMAN_ACCEPTANCE": 1
+      },
+      "review_level_counts": {
+        "MODULE_RECONCILIATION_WITH_EXPLICIT_LIMITS": 100
+      }
+    },
+    {
+      "plan_id": "docs--multiplix--plano_implementacao_multiplix_200_etapas_2026-09-26",
+      "path": "docs/multiplix/PLANO_IMPLEMENTACAO_MULTIPLIX_200_ETAPAS_2026-09-26.md",
+      "title": "PLANO DE IMPLEMENTAÇÃO — MULTIPLIX (ZAPP Web V2) · v1.1 REVISADO",
+      "source_sha": "e6555f769cf0f12f32702453c7d813b9bdfd9c4b",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 200,
+      "observed_tasks": 200,
+      "missing_numbers": [],
+      "extraction_style": "checkbox",
+      "authority": "HISTORICAL_SUPERSEDED",
+      "evidence_refs": [],
+      "module": "Multiplix",
+      "successors": [
+        "docs/multiplix/PLANO_FINALIZACAO_MULTIPLIX_100_ETAPAS_2026-09-29.md"
+      ],
+      "basis": "A linhagem posterior absorve o acompanhamento operacional. A classificação SUPERSEDED refere-se à versão do plano, não afirma que cada requisito foi implementado ou cancelado.",
+      "evidence": [
+        {
+          "path": "docs/multiplix/PLANO_FINALIZACAO_MULTIPLIX_100_ETAPAS_2026-09-29.md",
+          "line_start": 1,
+          "line_end": 15,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/multiplix/PLANO_FINALIZACAO_MULTIPLIX_100_ETAPAS_2026-09-29.md#L1-L15"
+        }
+      ],
+      "automatic_execution_authorized": false,
+      "record_id": "P040",
+      "task_file": "tasks/P040.json",
+      "status_counts": {
+        "SUPERSEDED": 200
+      },
+      "review_level_counts": {
+        "LINEAGE_AND_SOURCE_RECONCILIATION_ONLY": 200
+      }
+    },
+    {
+      "plan_id": "docs--plans--plano_100_etapas_paridade_v1_v3_2026-09-01",
+      "path": "docs/plans/PLANO_100_ETAPAS_PARIDADE_V1_V3_2026-09-01.md",
+      "title": "Plano de melhorias do ZAPP WEB V2 em 100 etapas — paridade com V1 e V3",
+      "source_sha": "4f9c0178bb1d9484652a5bf3707bb049d4798643",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 100,
+      "observed_tasks": 100,
+      "missing_numbers": [],
+      "extraction_style": "heading",
+      "authority": "CROSS_MODULE_REFERENCE_PROGRAM",
+      "evidence_refs": [],
+      "module": "Paridade V1/V3",
+      "successors": [],
+      "basis": "O próprio documento se declara complementar ao programa de engenharia100, sem consulta runtime. Não duplicar com planos posteriores por título semelhante.",
+      "evidence": [
+        {
+          "path": "docs/plans/PLANO_100_ETAPAS_PARIDADE_V1_V3_2026-09-01.md",
+          "line_start": 1,
+          "line_end": 18,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/plans/PLANO_100_ETAPAS_PARIDADE_V1_V3_2026-09-01.md#L1-L18"
+        }
+      ],
+      "automatic_execution_authorized": false,
+      "record_id": "P041",
+      "task_file": "tasks/P041.json",
+      "status_counts": {
+        "PARTIAL": 70,
+        "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE": 2,
+        "NOT_IMPLEMENTED": 21,
+        "PRODUCT_DECISION_REQUIRED": 6,
+        "ACTIVE_REGRESSION": 1
+      },
+      "review_level_counts": {
+        "DIRECT_CONTRACT_REVIEW": 23,
+        "REUSED_SEMANTIC_REVIEW": 23,
+        "BOUNDED_ARTIFACT_AND_CATALOG_REVIEW": 54
+      }
+    },
+    {
+      "plan_id": "docs--plans--plano_volume_midia_50_etapas_2026-09-27",
+      "path": "docs/plans/PLANO_VOLUME_MIDIA_50_ETAPAS_2026-09-27.md",
+      "title": "PLANO — CONTROLE DE VOLUME DE MÍDIA (ÁUDIOS E VÍDEOS DAS MENSAGENS) — 50 ETAPAS",
+      "source_sha": "a0bd73037f2e4a2016e6941c6999271520575de9",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 50,
+      "observed_tasks": 50,
+      "missing_numbers": [],
+      "extraction_style": "bold",
+      "authority": "CURRENT_REFERENCE",
+      "evidence_refs": [],
+      "module": "Mídia",
+      "successors": [],
+      "basis": "Referência localizada e confrontada com evidências do baseline; um plano não concede autorização de execução.",
+      "evidence": [],
+      "automatic_execution_authorized": false,
+      "record_id": "P042",
+      "task_file": "tasks/P042.json",
+      "status_counts": {
+        "DONE_VERIFIED": 19,
+        "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE": 23,
+        "PARTIAL": 3,
+        "VALIDATED_FAIL": 1,
+        "ACTIVE_REGRESSION": 3,
+        "NEEDS_REVALIDATION": 1
+      },
+      "review_level_counts": {
+        "MODULE_RECONCILIATION_WITH_EXPLICIT_LIMITS": 50
+      }
+    },
+    {
+      "plan_id": "docs--talkx--plano_implementacao_talkx_100",
+      "path": "docs/talkx/PLANO_IMPLEMENTACAO_TALKX_100.md",
+      "title": "Talk X · Campanhas — Plano de Implementação em 100 Etapas",
+      "source_sha": "b43b56a15b35bc6147325e06b1a7d46d6b33eb2b",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 100,
+      "observed_tasks": 100,
+      "missing_numbers": [],
+      "extraction_style": "heading",
+      "authority": "HISTORICAL_SUPERSEDED",
+      "evidence_refs": [],
+      "module": "Talk X",
+      "successors": [
+        "docs/talkx/PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md"
+      ],
+      "basis": "A linhagem posterior absorve o acompanhamento operacional. A classificação SUPERSEDED refere-se à versão do plano, não afirma que cada requisito foi implementado ou cancelado.",
+      "evidence": [
+        {
+          "path": "docs/talkx/PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md",
+          "line_start": 1,
+          "line_end": 15,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/talkx/PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md#L1-L15"
+        }
+      ],
+      "automatic_execution_authorized": false,
+      "record_id": "P043",
+      "task_file": "tasks/P043.json",
+      "status_counts": {
+        "SUPERSEDED": 100
+      },
+      "review_level_counts": {
+        "LINEAGE_AND_SOURCE_RECONCILIATION_ONLY": 100
+      }
+    },
+    {
+      "plan_id": "docs--talkx--plano_recuperacao_100_etapas_2026-09-11",
+      "path": "docs/talkx/PLANO_RECUPERACAO_100_ETAPAS_2026-09-11.md",
+      "title": "Campanhas / Talk X — plano de recuperação e implementação em 100 etapas",
+      "source_sha": "12ccab1f4407440d77123532d25e966f28b2ced0",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 100,
+      "observed_tasks": 100,
+      "missing_numbers": [],
+      "extraction_style": "heading",
+      "authority": "HISTORICAL_SUPERSEDED",
+      "evidence_refs": [],
+      "module": "Talk X",
+      "successors": [
+        "docs/talkx/PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md"
+      ],
+      "basis": "A linhagem posterior absorve o acompanhamento operacional. A classificação SUPERSEDED refere-se à versão do plano, não afirma que cada requisito foi implementado ou cancelado.",
+      "evidence": [
+        {
+          "path": "docs/talkx/PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md",
+          "line_start": 1,
+          "line_end": 15,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/talkx/PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md#L1-L15"
+        }
+      ],
+      "automatic_execution_authorized": false,
+      "record_id": "P044",
+      "task_file": "tasks/P044.json",
+      "status_counts": {
+        "SUPERSEDED": 100
+      },
+      "review_level_counts": {
+        "LINEAGE_AND_SOURCE_RECONCILIATION_ONLY": 100
+      }
+    },
+    {
+      "plan_id": "docs--talkx--plano_talkx_v3_100_etapas_2026-09-29",
+      "path": "docs/talkx/PLANO_TALKX_V3_100_ETAPAS_2026-09-29.md",
+      "title": "Talk X · Campanhas — Plano V3: 100 etapas para finalizar a implantação",
+      "source_sha": "ee6387dd16312e9b815e245fd4379a098caa2ae1",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 100,
+      "observed_tasks": 100,
+      "missing_numbers": [],
+      "extraction_style": "heading",
+      "authority": "HISTORICAL_SUPERSEDED",
+      "evidence_refs": [],
+      "module": "Talk X",
+      "successors": [
+        "docs/talkx/PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md"
+      ],
+      "basis": "A linhagem posterior absorve o acompanhamento operacional. A classificação SUPERSEDED refere-se à versão do plano, não afirma que cada requisito foi implementado ou cancelado.",
+      "evidence": [
+        {
+          "path": "docs/talkx/PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md",
+          "line_start": 1,
+          "line_end": 15,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/talkx/PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md#L1-L15"
+        }
+      ],
+      "automatic_execution_authorized": false,
+      "record_id": "P045",
+      "task_file": "tasks/P045.json",
+      "status_counts": {
+        "SUPERSEDED": 100
+      },
+      "review_level_counts": {
+        "LINEAGE_AND_SOURCE_RECONCILIATION_ONLY": 100
+      }
+    },
+    {
+      "plan_id": "docs--talkx--plano_talkx_v4_200_etapas_2026-10-01",
+      "path": "docs/talkx/PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md",
+      "title": "Talk X · Campanhas — Plano V4: 200 etapas para o módulo ter tudo o que as 17 imagens mostram",
+      "source_sha": "62a84a216c6347dd5d2788f661908ebe43b1c5e5",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 200,
+      "observed_tasks": 200,
+      "missing_numbers": [],
+      "extraction_style": "table",
+      "authority": "CURRENT_REFERENCE",
+      "evidence_refs": [],
+      "module": "Talk X",
+      "successors": [],
+      "basis": "Referência localizada e confrontada com evidências do baseline; um plano não concede autorização de execução.",
+      "evidence": [],
+      "automatic_execution_authorized": false,
+      "record_id": "P046",
+      "task_file": "tasks/P046.json",
+      "status_counts": {
+        "DONE_VERIFIED": 2,
+        "VALIDATED_FAIL": 1,
+        "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE": 28,
+        "PARTIAL": 114,
+        "NOT_IMPLEMENTED": 50,
+        "BLOCKED_EXTERNAL": 1,
+        "OBSERVATION_WINDOW": 2,
+        "HUMAN_ACCEPTANCE": 2
+      },
+      "review_level_counts": {
+        "MODULE_RECONCILIATION_WITH_EXPLICIT_LIMITS": 200
+      }
+    },
+    {
+      "plan_id": "docs--team-chat--plano_implementacao_team_chat_100",
+      "path": "docs/team-chat/PLANO_IMPLEMENTACAO_TEAM_CHAT_100.md",
+      "title": "PLANO — Team Chat V2: finalização da implantação (100 etapas, prefixo `TC-`)",
+      "source_sha": "13f4b2a41910bd6e3be1038a0bcc3927fb30bb0f",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 100,
+      "observed_tasks": 100,
+      "missing_numbers": [],
+      "extraction_style": "checkbox",
+      "authority": "OVERLAPPING_CURRENT_REFERENCES",
+      "evidence_refs": [],
+      "module": "Team Chat",
+      "successors": [
+        "docs/audits/PLANO_TEAM_CHAT_FINALIZACAO_100_ETAPAS_2026-09-29.md"
+      ],
+      "basis": "Dois documentos de finalização datados de29/09 usam F01–F100 e TC-01–TC-100. O TC usa baseline posterior e diagnóstico ampliado, mas não declara explicitamente que substitui o F. Números iguais não são equivalência. Manter os dois e consolidar requisitos antes de qualquer missão funcional.",
+      "evidence": [
+        {
+          "path": "docs/team-chat/PLANO_IMPLEMENTACAO_TEAM_CHAT_100.md",
+          "line_start": 1,
+          "line_end": 12,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/team-chat/PLANO_IMPLEMENTACAO_TEAM_CHAT_100.md#L1-L12"
+        },
+        {
+          "path": "docs/audits/PLANO_TEAM_CHAT_FINALIZACAO_100_ETAPAS_2026-09-29.md",
+          "line_start": 1,
+          "line_end": 12,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/audits/PLANO_TEAM_CHAT_FINALIZACAO_100_ETAPAS_2026-09-29.md#L1-L12"
+        }
+      ],
+      "automatic_execution_authorized": false,
+      "record_id": "P047",
+      "task_file": "tasks/P047.json",
+      "status_counts": {
+        "NEEDS_REVALIDATION": 5,
+        "PARTIAL": 42,
+        "NOT_IMPLEMENTED": 39,
+        "PRODUCT_DECISION_REQUIRED": 2,
+        "ACTIVE_REGRESSION": 3,
+        "VALIDATED_FAIL": 3,
+        "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE": 1,
+        "BLOCKED_EXTERNAL": 1,
+        "OBSERVATION_WINDOW": 1,
+        "HUMAN_ACCEPTANCE": 3
+      },
+      "review_level_counts": {
+        "REPOSITORY_STATIC": 100
+      }
+    },
+    {
+      "plan_id": "docs--tipografia--plano_auditoria_fontes_100_etapas_2026-09-24",
+      "path": "docs/tipografia/PLANO_AUDITORIA_FONTES_100_ETAPAS_2026-09-24.md",
+      "title": "Plano de auditoria de fontes e tamanhos — 100 etapas",
+      "source_sha": "0385b90a20543f7e8cbe30ea2e38820fcc49c9e0",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 100,
+      "observed_tasks": 100,
+      "missing_numbers": [],
+      "extraction_style": "numbered",
+      "authority": "CURRENT_REFERENCE",
+      "evidence_refs": [],
+      "module": "Tipografia",
+      "successors": [],
+      "basis": "Referência localizada e confrontada com evidências do baseline; um plano não concede autorização de execução.",
+      "evidence": [],
+      "automatic_execution_authorized": false,
+      "record_id": "P048",
+      "task_file": "tasks/P048.json",
+      "status_counts": {
+        "DONE_VERIFIED": 45,
+        "PARTIAL": 23,
+        "SUPERSEDED": 1,
+        "NEEDS_REVALIDATION": 13,
+        "NOT_IMPLEMENTED": 10,
+        "PRODUCT_DECISION_REQUIRED": 3,
+        "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE": 2,
+        "NO_LONGER_APPLICABLE": 3
+      },
+      "review_level_counts": {
+        "individual_requirement_and_group_source_inspection": 100
+      }
+    },
+    {
+      "plan_id": "docs--tipografia--plano_paridade_tipografica_zapp_promo",
+      "path": "docs/tipografia/PLANO_PARIDADE_TIPOGRAFICA_ZAPP_PROMO.md",
+      "title": "Plano — paridade tipográfica ZAPP Web V2 ↔ Promo Gifts V4",
+      "source_sha": "0b5a98a6a2e82d901829f0a5ee7c1991f3deda48",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": null,
+      "observed_tasks": 9,
+      "missing_numbers": [],
+      "extraction_style": "phase_specification",
+      "authority": "HISTORICAL_SUPERSEDED",
+      "evidence_refs": [],
+      "module": "Tipografia",
+      "successors": [
+        "docs/tipografia/PLANO_AUDITORIA_FONTES_100_ETAPAS_2026-09-24.md"
+      ],
+      "basis": "A linhagem posterior absorve o acompanhamento operacional. A classificação SUPERSEDED refere-se à versão do plano, não afirma que cada requisito foi implementado ou cancelado.",
+      "evidence": [
+        {
+          "path": "docs/tipografia/PLANO_AUDITORIA_FONTES_100_ETAPAS_2026-09-24.md",
+          "line_start": 1,
+          "line_end": 15,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/tipografia/PLANO_AUDITORIA_FONTES_100_ETAPAS_2026-09-24.md#L1-L15"
+        }
+      ],
+      "automatic_execution_authorized": false,
+      "record_id": "P049",
+      "task_file": "tasks/P049.json",
+      "status_counts": {
+        "SUPERSEDED": 9
+      },
+      "review_level_counts": {
+        "LINEAGE_AND_SOURCE_RECONCILIATION_ONLY": 9
+      }
+    },
+    {
+      "plan_id": "docs--tipografia--plano_tipografia_promo_gifts_50",
+      "path": "docs/tipografia/PLANO_TIPOGRAFIA_PROMO_GIFTS_50.md",
+      "title": "Tipografia do Zapp Web V2 igual à do Promo_Gifts_V4 — plano em 50 etapas",
+      "source_sha": "d2687945eb6f595466c63835c26dbabf031a65b6",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 50,
+      "observed_tasks": 50,
+      "missing_numbers": [],
+      "extraction_style": "numbered",
+      "authority": "HISTORICAL_SUPERSEDED",
+      "evidence_refs": [],
+      "module": "Tipografia",
+      "successors": [
+        "docs/tipografia/PLANO_AUDITORIA_FONTES_100_ETAPAS_2026-09-24.md"
+      ],
+      "basis": "A linhagem posterior absorve o acompanhamento operacional. A classificação SUPERSEDED refere-se à versão do plano, não afirma que cada requisito foi implementado ou cancelado.",
+      "evidence": [
+        {
+          "path": "docs/tipografia/PLANO_AUDITORIA_FONTES_100_ETAPAS_2026-09-24.md",
+          "line_start": 1,
+          "line_end": 15,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/tipografia/PLANO_AUDITORIA_FONTES_100_ETAPAS_2026-09-24.md#L1-L15"
+        }
+      ],
+      "automatic_execution_authorized": false,
+      "record_id": "P050",
+      "task_file": "tasks/P050.json",
+      "status_counts": {
+        "SUPERSEDED": 50
+      },
+      "review_level_counts": {
+        "LINEAGE_AND_SOURCE_RECONCILIATION_ONLY": 50
+      }
+    },
+    {
+      "plan_id": "docs--audits--plano_team_chat_conclusao_100_etapas_2026-09-29",
+      "path": "docs/audits/PLANO_TEAM_CHAT_CONCLUSAO_100_ETAPAS_2026-09-29.md",
+      "title": "PLANO — Team Chat V2: conclusão da implantação (100 etapas) — 2026-09-29",
+      "source_sha": "6ec308fc88e0222367f3d9a6fa64910cf4abe603",
+      "definition_ref": "0e283d06850a67739beee9cc623530619d9b2cad",
+      "source_kind": "OFF_MAIN_BRANCH",
+      "source_branch": "claude/confident-babbage-ivgmmn",
+      "expected_tasks": 100,
+      "observed_tasks": 100,
+      "missing_numbers": [],
+      "extraction_style": "checkbox",
+      "authority": "HISTORICAL_SUPERSEDED",
+      "evidence_refs": [
+        "https://github.com/adm01-debug/Zapp_Web_V2/blob/0e283d06850a67739beee9cc623530619d9b2cad/docs/audits/PLANO_TEAM_CHAT_CONCLUSAO_100_ETAPAS_2026-09-29.md"
+      ],
+      "module": "Team Chat",
+      "successors": [
+        "docs/team-chat/PLANO_IMPLEMENTACAO_TEAM_CHAT_100.md"
+      ],
+      "basis": "A linhagem posterior absorve o acompanhamento operacional. A classificação SUPERSEDED refere-se à versão do plano, não afirma que cada requisito foi implementado ou cancelado.",
+      "evidence": [
+        {
+          "path": "docs/team-chat/PLANO_IMPLEMENTACAO_TEAM_CHAT_100.md",
+          "line_start": 1,
+          "line_end": 15,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/team-chat/PLANO_IMPLEMENTACAO_TEAM_CHAT_100.md#L1-L15"
+        }
+      ],
+      "automatic_execution_authorized": false,
+      "record_id": "P051",
+      "task_file": "tasks/P051.json",
+      "status_counts": {
+        "SUPERSEDED": 100
+      },
+      "review_level_counts": {
+        "LINEAGE_AND_SOURCE_RECONCILIATION_ONLY": 100
+      }
+    },
+    {
+      "plan_id": "docs--design--plano_sidebar_contato_3_secoes_100_etapas_2026-10-02",
+      "path": "docs/design/PLANO_SIDEBAR_CONTATO_3_SECOES_100_ETAPAS_2026-10-02.md",
+      "title": "Sidebar \"Detalhes do Contato\" — redesign em 3 seções (100 etapas)",
+      "source_sha": "3f99a2a41de993ad1b2dd849066c2fca995769b1",
+      "definition_ref": "74783271e82c2e6ff9c095a4af2f3e5f7086d0cf",
+      "source_kind": "OFF_MAIN_BRANCH",
+      "source_branch": "claude/feat-sidebar-contato-3-secoes-261002-1510",
+      "expected_tasks": 100,
+      "observed_tasks": 100,
+      "missing_numbers": [],
+      "extraction_style": "numbered",
+      "authority": "OFF_MAIN_REFERENCE_WITH_SEPARATE_DELIVERIES",
+      "evidence_refs": [
+        "https://github.com/adm01-debug/Zapp_Web_V2/blob/74783271e82c2e6ff9c095a4af2f3e5f7086d0cf/docs/design/PLANO_SIDEBAR_CONTATO_3_SECOES_100_ETAPAS_2026-10-02.md"
+      ],
+      "module": "Sidebar do contato",
+      "successors": [],
+      "basis": "Referência localizada e confrontada com evidências do baseline; um plano não concede autorização de execução.",
+      "evidence": [],
+      "automatic_execution_authorized": false,
+      "record_id": "P052",
+      "task_file": "tasks/P052.json",
+      "status_counts": {
+        "NEEDS_REVALIDATION": 8,
+        "PRODUCT_DECISION_REQUIRED": 2,
+        "BLOCKED_EXTERNAL": 23,
+        "PARTIAL": 55,
+        "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE": 10,
+        "OBSERVATION_WINDOW": 1,
+        "BLOCKED_TECHNICAL": 1
+      },
+      "review_level_counts": {
+        "STATIC_CONTRACT_REVIEW": 100
+      }
+    },
+    {
+      "plan_id": "docs--plans--plano_contatos_cabecalho_botao_verde_50_etapas_2026-09-30",
+      "path": "docs/plans/PLANO_CONTATOS_CABECALHO_BOTAO_VERDE_50_ETAPAS_2026-09-30.md",
+      "title": "Plano em 50 etapas para simplificar o topo de Contatos e adicionar o botão verde pulsante",
+      "source_sha": "af68127397c9b2d2755db1ede34e4056a23e7b22",
+      "definition_ref": "9da991a72b155681934ab7d2a581736e8dff7366",
+      "source_kind": "OFF_MAIN_BRANCH",
+      "source_branch": "docs/plano-contatos-cabecalho-botao-50-etapas-2026-09-30",
+      "expected_tasks": 50,
+      "observed_tasks": 50,
+      "missing_numbers": [],
+      "extraction_style": "heading",
+      "authority": "OFF_MAIN_REFERENCE_WITH_SEPARATE_DELIVERIES",
+      "evidence_refs": [
+        "https://github.com/adm01-debug/Zapp_Web_V2/blob/9da991a72b155681934ab7d2a581736e8dff7366/docs/plans/PLANO_CONTATOS_CABECALHO_BOTAO_VERDE_50_ETAPAS_2026-09-30.md"
+      ],
+      "module": "Contatos",
+      "successors": [],
+      "basis": "Referência localizada e confrontada com evidências do baseline; um plano não concede autorização de execução.",
+      "evidence": [],
+      "automatic_execution_authorized": false,
+      "record_id": "P053",
+      "task_file": "tasks/P053.json",
+      "status_counts": {
+        "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE": 28,
+        "PARTIAL": 14,
+        "NEEDS_REVALIDATION": 8
+      },
+      "review_level_counts": {
+        "STATIC_CONTRACT_REVIEW": 50
+      }
+    },
+    {
+      "plan_id": "docs--plans--plano_ordem_banner_superior_20_etapas_2026-09-30",
+      "path": "docs/plans/PLANO_ORDEM_BANNER_SUPERIOR_20_ETAPAS_2026-09-30.md",
+      "title": "Plano em 20 etapas para reorganizar as abas superiores da conversa",
+      "source_sha": "0620fe4bcc47cbe365efad955325e8643e9f5f70",
+      "definition_ref": "7e37c3008f047f8370b3bb454d862b332228cba5",
+      "source_kind": "OFF_MAIN_BRANCH",
+      "source_branch": "docs/plano-ordem-banner-20-etapas-2026-09-30",
+      "expected_tasks": 20,
+      "observed_tasks": 20,
+      "missing_numbers": [],
+      "extraction_style": "heading",
+      "authority": "OFF_MAIN_REFERENCE_WITH_SEPARATE_DELIVERIES",
+      "evidence_refs": [
+        "https://github.com/adm01-debug/Zapp_Web_V2/blob/7e37c3008f047f8370b3bb454d862b332228cba5/docs/plans/PLANO_ORDEM_BANNER_SUPERIOR_20_ETAPAS_2026-09-30.md"
+      ],
+      "module": "Barra de abas",
+      "successors": [],
+      "basis": "Referência localizada e confrontada com evidências do baseline; um plano não concede autorização de execução.",
+      "evidence": [],
+      "automatic_execution_authorized": false,
+      "record_id": "P054",
+      "task_file": "tasks/P054.json",
+      "status_counts": {
+        "PARTIAL": 10,
+        "DONE_VERIFIED": 3,
+        "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE": 7
+      },
+      "review_level_counts": {
+        "STATIC_CONTRACT_REVIEW": 20
+      }
+    },
+    {
+      "plan_id": "docs--handoffs--handoff_cline_100_etapas_2026_08_30",
+      "path": "docs/handoffs/handoff_cline_100_etapas_2026_08_30.md",
+      "title": "Handoff operacional para o Cline — Zapp Web V2 em 100 etapas",
+      "source_sha": "4b15701f6aa6b1298fc0c10566b5a3008e342fe2",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 100,
+      "observed_tasks": 100,
+      "missing_numbers": [],
+      "extraction_style": "canonical_handoff_100",
+      "module": "Engenharia transversal",
+      "authority": "CROSS_MODULE_REFERENCE_PROGRAM",
+      "successors": [],
+      "basis": "Programa original100 permanece referência; o handoff corretivo preserva explicitamente IDs001–100 e é evidência/override, não um segundo plano100.",
+      "evidence": [
+        {
+          "path": "docs/handoffs/handoff_cline_execucao_corretiva_exaustiva_2026_08_30.md",
+          "line_start": 30,
+          "line_end": 42,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/handoffs/handoff_cline_execucao_corretiva_exaustiva_2026_08_30.md#L30-L42"
+        }
+      ],
+      "automatic_execution_authorized": false,
+      "record_id": "P055",
+      "task_file": "tasks/P055.json",
+      "status_counts": {
+        "NEEDS_REVALIDATION": 24,
+        "PARTIAL": 61,
+        "DONE_VERIFIED": 1,
+        "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE": 2,
+        "BLOCKED_EXTERNAL": 3,
+        "NOT_IMPLEMENTED": 1,
+        "ACTIVE_REGRESSION": 1,
+        "HUMAN_ACCEPTANCE": 2,
+        "VALIDATED_FAIL": 4,
+        "PRODUCT_DECISION_REQUIRED": 1
+      },
+      "review_level_counts": {
+        "DOCUMENTARY_ONLY": 19,
+        "REUSED_SEMANTIC_REVIEW": 48,
+        "DIRECT_CONTRACT_REVIEW": 25,
+        "BOUNDED_ARTIFACT_AND_CATALOG_REVIEW": 8
+      }
+    },
+    {
+      "plan_id": "docs--improvement_plan",
+      "path": "docs/IMPROVEMENT_PLAN.md",
+      "title": "🚀 Plano de Melhorias - WhatsApp CRM",
+      "source_sha": "6644d90d4df0ec48bae53b88eed452220633aa5e",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": null,
+      "observed_tasks": 79,
+      "missing_numbers": [],
+      "extraction_style": "historical_improvement_claims",
+      "module": "Engenharia transversal",
+      "authority": "HISTORICAL_BASELINE_CLAIMS",
+      "successors": [],
+      "basis": "Snapshot de12/06 declara73 entregas e6 metas abertas; os claims não constituem aceite atual. Planos e achados de agosto–outubro demonstram que100% do projeto não é uma conclusão sustentada.",
+      "evidence": [
+        {
+          "path": "docs/IMPROVEMENT_PLAN.md",
+          "line_start": 1,
+          "line_end": 21,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/IMPROVEMENT_PLAN.md#L1-L21"
+        }
+      ],
+      "automatic_execution_authorized": false,
+      "record_id": "P056",
+      "task_file": "tasks/P056.json",
+      "status_counts": {
+        "NEEDS_REVALIDATION": 79
+      },
+      "review_level_counts": {
+        "LINEAGE_AND_SOURCE_RECONCILIATION_ONLY": 79
+      }
+    },
+    {
+      "plan_id": "docs--audits--divida_lint_fatias_2026-09-29",
+      "path": "docs/audits/DIVIDA_LINT_FATIAS_2026-09-29.md",
+      "title": "Dívida de lint — mapa e plano de fatias",
+      "source_sha": "37c7f479cd9bb189885dba138a68c51888dd07d0",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": null,
+      "observed_tasks": 6,
+      "missing_numbers": [],
+      "extraction_style": "named_work_slices",
+      "module": "Qualidade",
+      "authority": "CURRENT_REFERENCE",
+      "successors": [],
+      "basis": "Seis fatias propostas; a tabela de15 regras é inventário de problemas, não15 tarefas adicionais. Números históricos do lint não são comparáveis diretamente à contagem AST de any.",
+      "evidence": [
+        {
+          "path": "docs/audits/DIVIDA_LINT_FATIAS_2026-09-29.md",
+          "line_start": 34,
+          "line_end": 65,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/audits/DIVIDA_LINT_FATIAS_2026-09-29.md#L34-L65"
+        }
+      ],
+      "automatic_execution_authorized": false,
+      "record_id": "P057",
+      "task_file": "tasks/P057.json",
+      "status_counts": {
+        "PARTIAL": 5,
+        "DONE_VERIFIED": 1
+      },
+      "review_level_counts": {
+        "DIRECT_SOURCE_CONTRACT_REVIEW": 5,
+        "REUSED_SEMANTIC_REVIEW": 1
+      }
+    },
+    {
+      "plan_id": "docs--audits--auditoria_migracao_db_2026-08-27",
+      "path": "docs/audits/AUDITORIA_MIGRACAO_DB_2026-08-27.md",
+      "title": "Auditoria de Migração de Banco de Dados — ZAPP WEB V2",
+      "source_sha": "079a1d7ad1da31232bef4e531151728760a093eb",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 100,
+      "observed_tasks": 100,
+      "missing_numbers": [],
+      "extraction_style": "embedded_database_100",
+      "module": "Migração",
+      "authority": "HISTORICAL_EMBEDDED_DATABASE_PROGRAM",
+      "successors": [],
+      "basis": "Programa100 embutido na auditoria histórica. Reconciliar com as definições e guards atuais; relatos de27–28/08 não são estado vivo e não autorizam repetição do DDL.",
+      "evidence": [
+        {
+          "path": "docs/audits/AUDITORIA_MIGRACAO_DB_2026-08-27.md",
+          "line_start": 1,
+          "line_end": 12,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/audits/AUDITORIA_MIGRACAO_DB_2026-08-27.md#L1-L12"
+        }
+      ],
+      "automatic_execution_authorized": false,
+      "record_id": "P058",
+      "task_file": "tasks/P058.json",
+      "status_counts": {
+        "DONE_VERIFIED": 5,
+        "NEEDS_REVALIDATION": 34,
+        "NO_LONGER_APPLICABLE": 4,
+        "PARTIAL": 24,
+        "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE": 21,
+        "SUPERSEDED": 7,
+        "PRODUCT_DECISION_REQUIRED": 4,
+        "NOT_IMPLEMENTED": 1
+      },
+      "review_level_counts": {
+        "EXACT_ARCHIVE_PATH_VERIFIED": 1,
+        "HISTORICAL_REQUIREMENT_WITH_CURRENT_REFERENCES_NO_RUNTIME_ACCEPTANCE": 34,
+        "EXPLICIT_CANCELLATION_AND_ARCHIVE_VERIFIED": 4,
+        "EXACT_MIGRATION_PATH_VERIFIED": 3,
+        "CURRENT_WORKFLOW_WIRING_VERIFIED": 2,
+        "TARGETED_STATIC_CONTRACT_REVIEW": 49,
+        "CURRENT_GUARD_WIRING_VERIFIED": 1,
+        "HISTORICAL_DECISION_OR_EXTERNAL_ACCEPTANCE_RECONCILIATION": 4,
+        "CURRENT_TOOLING_AND_SCHEDULE_WIRING_VERIFIED": 1,
+        "EXACT_EXPECTED_PATH_ABSENCE_VERIFIED": 1
+      }
+    },
+    {
+      "plan_id": "docs--audits--auditoria_migracao_db_2026-08-28",
+      "path": "docs/audits/AUDITORIA_MIGRACAO_DB_2026-08-28.md",
+      "title": "Auditoria Exaustiva de Migração de Banco de Dados — ZAPP WEB V2 (28/08/2026)",
+      "source_sha": "98cb341fd683a96c37d1062ed87013d8a0135626",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 100,
+      "observed_tasks": 100,
+      "missing_numbers": [],
+      "extraction_style": "embedded_database_100",
+      "module": "Migração",
+      "authority": "HISTORICAL_EMBEDDED_DATABASE_PROGRAM",
+      "successors": [],
+      "basis": "Programa100 embutido na auditoria histórica. Reconciliar com as definições e guards atuais; relatos de27–28/08 não são estado vivo e não autorizam repetição do DDL.",
+      "evidence": [
+        {
+          "path": "docs/audits/AUDITORIA_MIGRACAO_DB_2026-08-28.md",
+          "line_start": 1,
+          "line_end": 12,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/audits/AUDITORIA_MIGRACAO_DB_2026-08-28.md#L1-L12"
+        }
+      ],
+      "automatic_execution_authorized": false,
+      "record_id": "P059",
+      "task_file": "tasks/P059.json",
+      "status_counts": {
+        "HUMAN_ACCEPTANCE": 1,
+        "PRODUCT_DECISION_REQUIRED": 15,
+        "NEEDS_REVALIDATION": 51,
+        "NOT_IMPLEMENTED": 2,
+        "DONE_VERIFIED": 2,
+        "PARTIAL": 17,
+        "SUPERSEDED": 5,
+        "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE": 2,
+        "BLOCKED_EXTERNAL": 1,
+        "OBSERVATION_WINDOW": 4
+      },
+      "review_level_counts": {
+        "HISTORICAL_DECISION_OR_EXTERNAL_ACCEPTANCE_RECONCILIATION": 17,
+        "HISTORICAL_REQUIREMENT_WITH_CURRENT_REFERENCES_NO_RUNTIME_ACCEPTANCE": 40,
+        "EXACT_EXPECTED_PATH_ABSENCE_VERIFIED": 2,
+        "CURRENT_WORKFLOW_WIRING_VERIFIED": 1,
+        "TARGETED_STATIC_CONTRACT_REVIEW": 24,
+        "CURRENT_GUARD_WIRING_VERIFIED": 1,
+        "CURRENT_SYMBOL_TRIANGULATION_NO_FULL_MODULE_REVIEW": 11,
+        "DATED_OBSERVATION_REQUIREMENT_NOT_PERFORMED": 4
+      }
+    },
+    {
+      "plan_id": "docs--design--prompt_fases_2_12",
+      "path": "docs/design/PROMPT_FASES_2_12.md",
+      "title": "CONTINUACAO — Design System Promo Gifts no ZAPP WEB V2 (Fases 2-12)",
+      "source_sha": "6caeb40081239574c31c3a3b9a72ecacf09e7f5b",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": null,
+      "observed_tasks": 9,
+      "missing_numbers": [],
+      "extraction_style": "historical_phase_prompt",
+      "module": "Design System",
+      "authority": "HISTORICAL_DESIGN_REFERENCE",
+      "successors": [],
+      "basis": "Continuação histórica em9 unidades explícitas: fases2–9 e grupo10–12. O ledger registra divergências e entregas posteriores; não executar os cherry-picks antigos.",
+      "evidence": [
+        {
+          "path": "docs/design/DESIGN_SYSTEM_PROMO_GIFTS_STATUS.md",
+          "line_start": 1,
+          "line_end": 25,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/design/DESIGN_SYSTEM_PROMO_GIFTS_STATUS.md#L1-L25"
+        }
+      ],
+      "automatic_execution_authorized": false,
+      "record_id": "P060",
+      "task_file": "tasks/P060.json",
+      "status_counts": {
+        "NEEDS_REVALIDATION": 9
+      },
+      "review_level_counts": {
+        "LINEAGE_AND_SOURCE_RECONCILIATION_ONLY": 9
+      }
+    },
+    {
+      "plan_id": "docs--handoff_evolution_security_2026-04-12",
+      "path": "docs/HANDOFF_EVOLUTION_SECURITY_2026-04-12.md",
+      "title": "🔄 HANDOFF — ZAPP-WEB × Evolution API Security Improvements",
+      "source_sha": "2cf52ae27f103b01853642bc4548d9b15c8d9ae3",
+      "definition_ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+      "source_kind": "GIT",
+      "expected_tasks": 10,
+      "observed_tasks": 10,
+      "missing_numbers": [],
+      "extraction_style": "historical_security_10",
+      "module": "Evolution",
+      "authority": "HISTORICAL_BASELINE_CLAIMS",
+      "successors": [],
+      "basis": "Handoff histórico explicitamente marcado com referências de banco desatualizadas. As10 melhorias são preservadas como requisitos; não usar porcentagens, endpoints ou instruções de execução como estado/autoridade vigente.",
+      "evidence": [
+        {
+          "path": "docs/HANDOFF_EVOLUTION_SECURITY_2026-04-12.md",
+          "line_start": 1,
+          "line_end": 12,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/HANDOFF_EVOLUTION_SECURITY_2026-04-12.md#L1-L12"
+        }
+      ],
+      "automatic_execution_authorized": false,
+      "record_id": "P061",
+      "task_file": "tasks/P061.json",
+      "status_counts": {
+        "NEEDS_REVALIDATION": 10
+      },
+      "review_level_counts": {
+        "LINEAGE_AND_SOURCE_RECONCILIATION_ONLY": 10
+      }
+    },
+    {
+      "plan_id": "external--plano_dashboard_100_etapas_2026-09-30",
+      "path": "external/Plano_Dashboard_100_Etapas_2026-09-30.md",
+      "title": "Plano Dashboard — 100 etapas (documento externo de30/09)",
+      "source_sha256": "ac7fe70aba78f725c7d182bb50d9682c9eae48e090859f627d464d89650079e0",
+      "definition_ref": "external-document-sha256:ac7fe70aba78f725c7d182bb50d9682c9eae48e090859f627d464d89650079e0",
+      "source_kind": "EXTERNAL_USER_DOCUMENT",
+      "expected_tasks": 100,
+      "observed_tasks": 100,
+      "missing_numbers": [],
+      "extraction_style": "external_task_definitions",
+      "module": "Dashboard",
+      "authority": "CURRENT_EXTERNAL_REFERENCE",
+      "successors": [],
+      "basis": "Documento do usuário recuperado integralmente pelo nome; proveniência por SHA256. Não foi presumido como arquivo da main.",
+      "evidence": [],
+      "automatic_execution_authorized": false,
+      "record_id": "P062",
+      "task_file": "tasks/P062.json",
+      "status_counts": {
+        "NEEDS_REVALIDATION": 25,
+        "PARTIAL": 58,
+        "ACTIVE_REGRESSION": 7,
+        "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE": 5,
+        "PRODUCT_DECISION_REQUIRED": 1,
+        "NOT_IMPLEMENTED": 2,
+        "HUMAN_ACCEPTANCE": 2
+      },
+      "review_level_counts": {
+        "source_basis_and_gap_review": 26,
+        "targeted_static_source_review": 74
+      }
+    }
+  ],
+  "unresolved_source_references": [
+    {
+      "path": "claude/PLANO_DASHBOARD_50_ETAPAS.md",
+      "status": "SOURCE_NOT_RECOVERED",
+      "reason": "Referência do README não localizada no baseline nem no histórico acessível. Nenhuma das50 etapas foi inventada."
+    }
+  ],
+  "note": "Registro de fontes e linhagens; quantidade de etapas não é backlog e não é certificação de produção."
+}

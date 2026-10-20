@@ -1,0 +1,2772 @@
+{
+  "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "files": {
+    "src/hooks/chat/useChatKeyboardNavigation.ts": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "handleKeyDown",
+        "Ctrl Enter",
+        "input/Escape guards",
+        "arrows/jk/reply/react/focus/HomeEnd",
+        "listener cleanup",
+        "selection clamp",
+        "exitNavigationMode"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 147
+        }
+      ],
+      "remaining_gaps": [
+        "Corpo integral; somente export/barrel/testes encontrados nesta busca, sem consumidor ativo estabelecido. Zero mensagens produz índice -1 e modificadores podem interceptar teclas do editor; não promovidos a jornada ativa nem dead code. Sem eventos físicos de browser."
+      ]
+    },
+    "src/hooks/chat/useSavedFilters.ts": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "query/auth/entity scope",
+        "defaultFilter",
+        "save/update/delete/setDefault/share mutations",
+        "errors and returned mutate bindings"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 196
+        }
+      ],
+      "remaining_gaps": [
+        "Corpo integral; consumidor atual não estabelecido, apenas export e testes. Default escolhe entre próprios/compartilhados e usa duas escritas não atômicas; não presumir produto ativo ou ausência de limpeza global do cache na troca de usuário. Políticas de tabela não reconstruídas aqui."
+      ]
+    },
+    "src/hooks/chat/useFilesContainerColumns.ts": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "columnsCapacity",
+        "effectiveColumns",
+        "measure/rAF/ResizeObserver setup-cleanup",
+        "available/effective derivation"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 86
+        }
+      ],
+      "remaining_gaps": [
+        "Corpo integral com consumidor FilesTab previamente lido. Sem medida de layout real, SSR/ResizeObserver ausente ou substituição do elemento ref na mesma montagem. Guardas de largura finita e cancelamento rAF observados."
+      ]
+    },
+    "src/hooks/chat/useMessageTemplates.ts": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "fetchTemplates",
+        "addTemplate",
+        "updateTemplate",
+        "deleteTemplate",
+        "incrementUseCount"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 92
+        }
+      ],
+      "remaining_gaps": [
+        "Corpo integral e MessageTemplates rastreado. Escritas verificam error exceto contador; update/delete não verificam quantidade de linhas. Sem chamadas reais nem reconstrução de RLS; cache local separado de useQuickReplies e contagem concorrente permanecem limites."
+      ]
+    },
+    "src/hooks/chat/useQuickReplies.ts": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "query scope",
+        "favorites parse/save/toggle/reorder",
+        "create/update/delete",
+        "use count",
+        "search and ranking",
+        "favorite/recent/category derivations",
+        "compatibility mapping"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 314
+        }
+      ],
+      "remaining_gaps": [
+        "Corpo integral e Settings/ChatPanel rastreados. Favoritos guardam IDs globais no browser e não sincronizam instâncias. Não confundir favorito visível de template global com acesso a texto privado; resultado da consulta permanece submetido ao RLS. Reordenação fora dos limites e corrupção de JSON não reproduzidas."
+      ]
+    },
+    "src/components/inbox/QuickRepliesManager.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "handleSelect",
+        "handleCopy",
+        "displayed/grouped templates",
+        "compact/full UI",
+        "edit/create/delete wiring",
+        "persistent dialog"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 127
+        }
+      ],
+      "remaining_gaps": [
+        "Corpo integral. Dialog sempre montado sem key por template; estado inicial desatualizado será verificado em probe. Favoritas/Mais Usadas não aplicam searchQuery. Clipboard real e ACL de templates globais não executados."
+      ]
+    },
+    "src/components/inbox/quick-replies/QuickReplyDialog.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "form initializer",
+        "handleOpenChange",
+        "handleSubmit",
+        "all controlled fields and save/loading/close controls"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 87
+        }
+      ],
+      "remaining_gaps": [
+        "Corpo integral; estado não sincroniza editingTemplate apesar do comentário. Sem montagem DOM; integração do componente pai permite mudança de alvo sem remontagem."
+      ]
+    },
+    "src/components/inbox/quick-replies/QuickReplyCardList.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "loading/empty rendering",
+        "category grouping",
+        "template selection",
+        "favorite/copy/edit/delete event propagation"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 115
+        }
+      ],
+      "remaining_gaps": [
+        "Corpo integral; callbacks visíveis lidos com pai. Controles globais não distinguem proprietário neste componente; ACL efetiva de escrita delegada. Sem visual/a11y física."
+      ]
+    },
+    "src/components/inbox/MessageTemplates.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "open fetch effect",
+        "select/add/update handlers",
+        "local editor state",
+        "search/filter",
+        "list/edit/delete controls"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 138
+        }
+      ],
+      "remaining_gaps": [
+        "Corpo integral; diferente de QuickReplyDialog, edição usa o próprio template em estado. Duplo clique em salvar sem estado pending e refresh fora de ordem ficaram sem reprodução. Cache/contador reais não exercitados."
+      ]
+    },
+    "src/components/inbox/templates/TemplateEditorDialog.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "VariableInserter",
+        "TemplatePreview",
+        "editor state",
+        "insert at selection",
+        "handleSave",
+        "controlled fields",
+        "preview and footer"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 162
+        }
+      ],
+      "remaining_gaps": [
+        "Corpo integral. Inicialização por template sem ressincronização tem padrão semelhante a QuickReplyDialog, mas consumidor TemplatesWithVariables não foi estabelecido na rota ativa. Timer do cursor e DOM não exercitados."
+      ]
+    },
+    "src/components/inbox/TemplatesWithVariables.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "VariableHighlighter",
+        "search/category filters",
+        "handleUseTemplate",
+        "handleSave",
+        "cards and editor wiring"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 120
+        }
+      ],
+      "remaining_gaps": [
+        "Corpo integral; handleSave apenas log/toast, porém busca não estabeleceu consumidor ativo. Registro de limitação de integração, sem inferir dead code e sem adicionar finding de produto ativo só por existir componente."
+      ]
+    },
+    "src/components/inbox/template-utils.ts": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "replaceVariables",
+        "current greeting/date/protocol",
+        "default/custom merge",
+        "extractVariables"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 58
+        }
+      ],
+      "remaining_gaps": [
+        "Corpo integral. Protocolo aleatório e atendente padrão não se vinculam ao protocolo real; integração ativa não estabelecida aqui. Substituição com valores contendo sequências especiais e chaves custom regex não reproduzida."
+      ]
+    },
+    "src/hooks/chat/useConversationTabCounts.ts": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "RPC row/EMPTY mapping",
+        "query/error",
+        "keys/enable/stale return"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 60
+        }
+      ],
+      "remaining_gaps": [
+        "Corpo integral; RPC e contagens estão no domínio database. Comentário documenta abandono de reminders_pending, não deve ser reintroduzido como promessa atual. Falha mapeia counts para EMPTY no retorno, consumidor não recebe error."
+      ]
+    },
+    "src/hooks/chat/useRecommendedProducts.ts": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "query latest20 active",
+        "match interests in category",
+        "top3 fallback",
+        "query key/enabled"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 35
+        }
+      ],
+      "remaining_gaps": [
+        "Corpo integral; ranking se limita a vinte produtos. Consumidor AiTab ignora currency ao formatar/adicionar, contrato monetário será comparado com catálogo. Não houve catálogo real ou busca por produto externo."
+      ]
+    },
+    "src/hooks/chat/useNextBestAction.ts": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "analyzeAndSuggest",
+        "last message/time",
+        "pending tasks",
+        "SLA",
+        "memory",
+        "fallback upsell",
+        "priority sort",
+        "cancellation"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 153
+        }
+      ],
+      "remaining_gaps": [
+        "Corpo integral. IA-METRICS-001 anterior já cobre pending incompatível e quatro erros de leitura descartados; não recontado. Guarda cancelled cobre troca de contato. Ações são recomendações sem callback definido, não execução automática."
+      ]
+    },
+    "src/components/inbox/NextBestActionEngine.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "priority styles",
+        "loading",
+        "suggestion rendering and labels"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 64
+        }
+      ],
+      "remaining_gaps": [
+        "Corpo integral; cards não chamam action, mas função é de sugestão. Expectativa de execução de clique não afirmada sem contrato; núcleo IA-METRICS-001 anterior preservado."
+      ]
+    },
+    "src/hooks/chat/useConversationAnalyses.ts": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "mounted lifecycle",
+        "fetchAnalyses/query/error",
+        "saveAnalysis/auth/profile",
+        "latest",
+        "trend averages",
+        "refresh"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 136
+        }
+      ],
+      "remaining_gaps": [
+        "Corpo integral; mountedRef cobre unmount mas não gerações/contato in-place. Consumidores keyed devem ser conferidos antes de atribuir análise de outro contato. Erro não limpa após sucesso; não há paginação além das20 análises declaradas."
+      ]
+    },
+    "src/hooks/chat/useLatestAnalysis.ts": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "query key/enabled",
+        "latest order limit",
+        "error-null",
+        "return cast"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 42
+        }
+      ],
+      "remaining_gaps": [
+        "Corpo integral. Falha vira null sem erro propagado; consumidor AiTab exibe Sem análise ainda. Escala de invalidação/realtime do produtor não reconstruída aqui."
+      ]
+    },
+    "src/components/inbox/tabs/AiTab.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "hook wiring",
+        "message adapters",
+        "sentiment/status labels",
+        "suggestions/summary/objections cards",
+        "actions expansion",
+        "recommended products/add",
+        "risk display"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 190
+        }
+      ],
+      "remaining_gaps": [
+        "Corpo integral. Internos de geração já pertencem à auditoria IA; próprios adapters e callbacks foram lidos. Estados de query são incompletos em análise/produtos e moeda deve ser confrontada com cadastro real, sem rede."
+      ]
+    },
+    "src/components/inbox/VoiceChanger.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "stopPlayback",
+        "cleanup",
+        "handleConvert",
+        "handleConfirm",
+        "togglePlayback",
+        "popover/voice/result controls"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 237
+        }
+      ],
+      "remaining_gaps": [
+        "Corpo integral e consumidor AudioRecorder rastreado. Sem cleanup de unmount/abort; geração tardia e retenção do binding são mecanismos semelhantes a R2-INB-040/041, registrados para cruzamento sem supor teste físico. Fetch do blob em confirmar não é tratado."
+      ]
+    },
+    "src/components/inbox/VoiceChangerPicker.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "cleanup",
+        "startRecording",
+        "stopRecording",
+        "transformVoice",
+        "togglePlay",
+        "handleSend",
+        "voice/record/re-record/transform/send controls"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 310
+        }
+      ],
+      "remaining_gaps": [
+        "Corpo integral; captura usa mimeType fixo e cleanup apenas no fechamento explícito, sem efeito de unmount. Falhas/lacunas de cancelamento e envio antes do callback serão isoladas em probes; sem microfone, transformador ou upload real."
+      ]
+    },
+    "src/components/inbox/TextToAudioButton.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "cleanup",
+        "handleConvert",
+        "handleSendAudio",
+        "togglePlayback",
+        "hasText",
+        "voice/loading/result controls"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 260
+        }
+      ],
+      "remaining_gaps": [
+        "Corpo integral; callback void descarta conclusão assíncrona do envio e limpa blob. Geração pós-fechamento e binding de áudio correspondem aos mecanismos de lifecycle já registrados, sem nova observação física."
+      ]
+    },
+    "src/components/inbox/VoiceSelector.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "voice catalog/default",
+        "stopPreview",
+        "playPreview",
+        "Audio handlers",
+        "menu close/select/preview controls"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 213
+        }
+      ],
+      "remaining_gaps": [
+        "Corpo integral; parar não invalida fetch e onended referencia URL atual compartilhada. Dois pedidos podem coexistir por botões diferentes. Sem reprodução física; lifecycle paralelo a R2-INB-040/041, não afirma custo real ou escolha incorreta do voiceId."
+      ]
+    },
+    "src/components/inbox/AudioMessagePlayer.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "mounted lifecycle",
+        "useAudioPlayer binding",
+        "transcription channel",
+        "handleTranscribe",
+        "status indicator",
+        "seek/speed/volume/transcription rendering"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 192
+        }
+      ],
+      "remaining_gaps": [
+        "Corpo integral; props iniciais não se sincronizam salvo realtime, e resultado vazio sem fallback deixa processing. Backend da transcrição não foi aqui provado produzir esse resultado. Escrita extra da transcrição ignora error; sem duplicar backend do domínio IA."
+      ]
+    },
+    "src/components/inbox/AudioRecorder.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "recorder lifecycle",
+        "blob/playback/cancel/send",
+        "voice conversion replacement",
+        "waveform/timer",
+        "lock",
+        "final voice/send controls"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 282
+        }
+      ],
+      "remaining_gaps": [
+        "Complemento181–282 concluiu arquivo previamente1–180. R2-INB-008/022 preservados; UI final e consumidor VoiceChanger examinados. Sem MediaRecorder/gesture/autoplay reais."
+      ]
+    },
+    "src/components/inbox/search/GlobalSearchResults.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "getResultIcon",
+        "getResultStyle",
+        "getResultLabel",
+        "loading/results/empty",
+        "click/selection/time rendering"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 125
+        }
+      ],
+      "remaining_gaps": [
+        "Corpo integral; contador usa janela recebida do hook, não agregado global. Datas inválidas fora do contrato de SearchResult e scroll/foco de seleção não executados."
+      ]
+    },
+    "src/components/inbox/search/GlobalSearchFilters.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "CRM enable",
+        "type toggles",
+        "date selector",
+        "media toggles",
+        "clear controls"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 117
+        }
+      ],
+      "remaining_gaps": [
+        "Corpo integral; controles apenas encaminham callbacks do GlobalSearch já lido. R2-INB-019/020 permanecem no hook/pai. Sem Radix/DOM real."
+      ]
+    },
+    "src/components/inbox/chat/ChatSearchResultsList.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "result snippet/type",
+        "first5 rendering",
+        "selected index",
+        "onSelect",
+        "navigation hint"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 65
+        }
+      ],
+      "remaining_gaps": [
+        "Corpo integral; preview limita cinco mas informa navegar demais via teclado, cujo hook percorre conjunto. Não tratado como perda de todos os resultados; highlight distante do início fica sem contexto no snippet."
+      ]
+    },
+    "src/components/inbox/chat/ChatSearchFilters.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "DatePresetLabel",
+        "active/filter counts",
+        "date popover",
+        "clear/preset",
+        "custom calendars constraints"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 142
+        }
+      ],
+      "remaining_gaps": [
+        "Corpo integral. Alterar data inicial depois de final pode produzir período invertido; navegador/calendário e política de normalização não reproduzidos. Última interação já registrada em R2-INB-027."
+      ]
+    },
+    "src/components/inbox/InboxFilters.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "date presets",
+        "active counts",
+        "toggleStatus/toggleTag/clear",
+        "agent/staff/queue/type/tag/date wiring"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 316
+        }
+      ],
+      "remaining_gaps": [
+        "Corpo integral; filtros de contato usam FILTER_OPTIONS, problema isGroup isolado. Permissões do staff e queries de agentes/filas pertencem a outros domínios. Não confundir UI Mostrar todos com concessão de RLS."
+      ]
+    },
+    "src/components/inbox/ContactTypeFilter.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "isGroup",
+        "each FILTER_OPTIONS.match",
+        "computeStats",
+        "active dropdown",
+        "filterByContactType"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 229
+        }
+      ],
+      "remaining_gaps": [
+        "Corpo integral; regex é incompatível com a limpeza que o antecede. Sem tipos de JID arbitrários externos ao contrato e sem prova de cardinalidade de grupos em produção."
+      ]
+    },
+    "src/components/inbox/ConversationListSidebar.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "archive/transfer callbacks",
+        "visible target guards",
+        "search sync",
+        "bulk/status/filter controls",
+        "loading/empty/list wiring",
+        "keyed close/transfer mounts"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 307
+        }
+      ],
+      "remaining_gaps": [
+        "Corpo integral; 1–88 relido para reparar truncamento do lote. Target é desativado quando some da lista; callbacks assíncronos seguem contratos já classificados. Sem UI física/scroll duplo/estado de busca externo."
+      ]
+    },
+    "src/components/inbox/conversation-list/StatusChips.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "auth identity",
+        "counts",
+        "chip config",
+        "selection/count rendering"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 87
+        }
+      ],
+      "remaining_gaps": [
+        "Corpo integral; user.id difere do profileId canônico de assigned_to, e counts não aplicam flag FSM. Prova de identidade será delimitada; sem afirmar todas as instalações usam UUIDs diferentes ou flag habilitada."
+      ]
+    },
+    "src/components/inbox/SwipeableListItem.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "motion transforms",
+        "triggerHaptic",
+        "drag start/threshold/end",
+        "primary-secondary actions",
+        "disabled/hints/render"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 144
+        }
+      ],
+      "remaining_gaps": [
+        "Corpo integral; não há reset explícito de x, mas comportamento inercial depende de Framer/DOM e não foi afirmado como reprodução. Consumidor ativo não estabelecido só por export; defaults no-op não classificado como ação visível quebrada."
+      ]
+    },
+    "src/components/inbox/swipeActions.ts": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "default action objects",
+        "markRead/unread/archive/delete/pin/unpin/star/mute factories"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 48
+        }
+      ],
+      "remaining_gaps": [
+        "Corpo integral de factories; sem ações externas próprias. Defaults vazios só são defeito em integração que os exponha; não inferida aqui."
+      ]
+    },
+    "src/components/inbox/VirtualizedRealtimeList.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "safe data/time/grouping",
+        "virtualizer/density",
+        "visibility lifecycle",
+        "handleClick",
+        "ConversationRow",
+        "canonical sentiment/priority",
+        "assigned agent",
+        "SLA selection",
+        "badges",
+        "keyboard/action/snooze controls"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 622
+        }
+      ],
+      "remaining_gaps": [
+        "Corpo integral complementado211–622. R2-INB-028 preservado. Identidade do auth user é usada como profileId no badge de responsável; ausência de metadados de outro agente é também fronteira AUTH011. Limite SLA fixo5min deve cruzar root; sem layout/virtualizer físicos."
+      ]
+    },
+    "src/components/inbox/ForwardMessageDialog.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "props/contracts",
+        "hook binding",
+        "submit/result/progress",
+        "contact/group selections",
+        "retry/cancel wiring"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 302
+        }
+      ],
+      "remaining_gaps": [
+        "Complemento146–196 concluiu arquivo. Núcleo de arquivo e legacy forward já lidos em passes anteriores. Sem DOM e sem afirmar seleção duplicada por botão aninhado em checkbox não interativo."
+      ]
+    },
+    "src/components/inbox/FileUploader.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "queue/input/preview wiring",
+        "progress/stage",
+        "type limits",
+        "canSend warning",
+        "cancel/send enable/selection controls"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 235
+        }
+      ],
+      "remaining_gaps": [
+        "Complemento176–235 concluiu render e callbacks. Validações/rollback de useFileUploadLogic já possuem R2-INB-006/011; não foi feito upload real."
+      ]
+    },
+    "src/components/inbox/InteractiveMessageBuilder.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "type/validation state",
+        "handleSend",
+        "header/body/buttons/list sections editing",
+        "previews and final send"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 247
+        }
+      ],
+      "remaining_gaps": [
+        "Complemento180–247 concluiu render. R2-INB-003 permanece por handler consumidor sem transporte, sem atribuir deficiência a provider por inspeção do builder."
+      ]
+    },
+    "src/components/inbox/TransferDialog.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "queries/available agents",
+        "queue context",
+        "transfer/close",
+        "type/target selections",
+        "message and footer"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 335
+        }
+      ],
+      "remaining_gaps": [
+        "Complemento191–335 concluiu listas/controles; R2-INB-009 preservado. Sem ACL/availability em tempo real, capacidade de agente ou conexão viva."
+      ]
+    },
+    "src/components/inbox/CloseConversationDialog.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "reason/outcome/classification catalogs",
+        "clientRequestId lifecycle",
+        "RPC payload/error",
+        "cancellation/mounted guards",
+        "full form/footer"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 207
+        }
+      ],
+      "remaining_gaps": [
+        "Faixas1–58 e129–207 completam59–128 anterior. R2-DB-008 continua com database e exige reabertura API/admin, sem alegar reabertura automática da UI. Cancelar durante request não foi assumido desfazer commit remoto."
+      ]
+    },
+    "src/components/inbox/RealtimeInboxView.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "selection/deeplink",
+        "refresh and async mounts",
+        "global search",
+        "TalkMe callbacks",
+        "error/cache",
+        "keyed ChatPanel/details",
+        "PiP/empty flows"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 376
+        }
+      ],
+      "remaining_gaps": [
+        "Complementos223–234 e335–376 concluem arquivo. TalkMe/calls/mobile foram revisados por root. Suspense de detalhes e key por contato impedem alguns falsos positivos genéricos de resposta entre contatos."
+      ]
+    },
+    "src/components/inbox/ScheduleMessageDialog.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "schedule validation/date",
+        "upload attachment input",
+        "form/preview",
+        "clear and final action"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 206
+        }
+      ],
+      "remaining_gaps": [
+        "Complemento166–206 concluiu render. R2-INB-010 preservado e executor/versioned cron pertence a providers. Sem agendamento real."
+      ]
+    },
+    "src/components/inbox/LocationMessage.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "map container ref",
+        "mounted guard and token retry",
+        "Mapbox load/watchdog and cleanup",
+        "reverse geocoding cancellation",
+        "address/Maps/directions and live rendering"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 254
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral; callbacks de mapa e geocodificação inspecionados sem mapa/serviço real. Concorrência entre tentativas do token e expiração do indicador live não reproduzidas."
+      ]
+    },
+    "src/components/inbox/ReplyQuote.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "getMediaInfo",
+        "ReplyPreview media/sender/cancel",
+        "QuotedMessage fallback and click"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 152
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral; contrato de perda de reply ID já em INB-001. Thumbnail/scroll reais não exercitados."
+      ]
+    },
+    "src/components/inbox/InteractiveMessage.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "handleButtonClick URL/phone/reply",
+        "handleListItemClick",
+        "button icons",
+        "header/body/footer/buttons/list modal",
+        "ListResponseBadge",
+        "ButtonResponseBadge"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 268
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral; sem ativação de URL, ligação ou provedor. Validação de esquema de URL não é local; precondições de entrada não provadas para alegar exploração. Envio do builder já em INB-003."
+      ]
+    },
+    "src/components/inbox/chat/LinkPreviewCard.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "parsePreview field guards",
+        "host fallback",
+        "image failure visibility",
+        "anchor and content rendering"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 120
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral; contrato de entrada e navegação/CSP do browser não exercitados. Ausência de validação local de esquema não foi elevada a exploração."
+      ]
+    },
+    "src/components/inbox/LinkPreview.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "isSafeUrl",
+        "metadata memo",
+        "error/compact/full rendering",
+        "image fallback",
+        "TextWithLinks",
+        "escapeHtml and URL replacement"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 104
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral; escape de HTML e regex observados. URLs sobrepostas e estado de erro entre fontes não reproduzidos; consumidor ativo não estabelecido para todas as variantes."
+      ]
+    },
+    "src/components/inbox/linkPreviewUtils.ts": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "extractUrls",
+        "getLinkPreviewData",
+        "YouTube thumbnail parse",
+        "domain favicon",
+        "escapeHtml"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 61
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral de helpers; sem fetch externo e sem alegar abrangência exaustiva do parser de URLs."
+      ]
+    },
+    "src/components/inbox/chat/HighlightedText.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "normalizeText",
+        "buildIndexMap",
+        "match segmentation",
+        "mark rendering"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 123
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral incluindo normalização e mapa de índices. Sem suíte Unicode/DOM exaustiva; strings combinantes e substitutos lidos estaticamente."
+      ]
+    },
+    "src/components/inbox/tabs/FileThumb.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "useInView",
+        "ThumbSkeleton",
+        "ThumbFallback",
+        "ThumbImage signed/error refresh",
+        "MediaTile lazy metadata/duration",
+        "DocumentTile",
+        "renderThumb",
+        "FileThumb"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 204
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral; URL já assinada desativa resolver enquanto onError tenta refresh desse resolver vazio, candidato dirigido desta passagem. Sem HTTP/mídia real."
+      ]
+    },
+    "src/components/inbox/tabs/FileCard.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "selection and preview handlers",
+        "checkbox",
+        "metadata/sender density",
+        "menu and disabled individual forward"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 121
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral; encaminhamento individual está explicitamente desativado, mas encaminhamento múltiplo tem consumidor distinto. Não alegado envio ausente para toda a aba."
+      ]
+    },
+    "src/components/inbox/tabs/FileDetailPanel.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "FileDetailContent signed source",
+        "hasError and fallback",
+        "metadata",
+        "download permission and agent delete",
+        "FileDetailPanel wrapper"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 104
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral; candidato de erro A persistir ao selecionar B sem remontagem. Controle de download é affordance versionada, sem alegar barreira independente de Storage."
+      ]
+    },
+    "src/components/inbox/tabs/FileActionsMenu.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "menu download disabled state",
+        "agent-only delete forwarding"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 47
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral dos controles e callbacks. Nenhuma chamada Storage real; autorização efetiva delegada."
+      ]
+    },
+    "src/components/inbox/tabs/fileDisplay.ts": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "formatSize",
+        "TYPE_LABEL",
+        "formatMeta",
+        "formatDate",
+        "document family/badge",
+        "formatDuration"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 67
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral; metadados inválidos de serviço não reproduzidos e regras de arredondamento apenas inspecionadas."
+      ]
+    },
+    "src/components/inbox/tabs/FilesTableView.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "activeField and direction",
+        "nextSort",
+        "SortableHeader",
+        "responsive columns",
+        "selection/preview row handlers",
+        "actions"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 180
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral. Ordenação oferece o domínio declarado de quatro modos; ausência de size ascending não tratada como defeito. Sem layout real."
+      ]
+    },
+    "src/components/inbox/tabs/FilesListView.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "narrow density",
+        "row selection/preview",
+        "sender/meta",
+        "checkbox and actions"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 125
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral; controle de preview separado de seleção, encaminhamento individual desativado observado. Sem eventos físicos/medição de largura."
+      ]
+    },
+    "src/components/inbox/tabs/filesSort.ts": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "timeOf",
+        "sortFiles",
+        "filterFiles"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 59
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral incluindo cópia antes de ordenar, desconhecidos após tamanhos conhecidos, desempate por ID, busca e tipo. Sem dados vivos."
+      ]
+    },
+    "src/components/inbox/tabs/FilesSelectionBar.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "checked state",
+        "select all/clear",
+        "outside-filter count",
+        "forward capacity/reason",
+        "selection controls"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 108
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral. Falha anterior ADV-FILES-01/OTH-001 pertence à coleção usada no consumidor; não recontada como defeito deste componente informativo."
+      ]
+    },
+    "src/components/inbox/tabs/FilesColumnSelector.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "GridIcon",
+        "maxFits",
+        "move loop and wrapping",
+        "radio/key handlers"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 114
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral, incluindo guarda de opções que não cabem. Não executados foco/layout/a11y em browser."
+      ]
+    },
+    "src/components/inbox/tabs/FilesLayoutPopover.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "mode choices",
+        "columns picker visibility",
+        "controlled callbacks"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 102
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral de wiring, sem estado persistido local. Layout físico não exercitado."
+      ]
+    },
+    "src/components/inbox/tabs/FilesToolbar.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "sort labels",
+        "search and sort callbacks",
+        "selection badge",
+        "layout props"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 109
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral de controles e composição; visual responsivo não exercitado."
+      ]
+    },
+    "src/components/inbox/chat/messageUtils.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "formatMessageTime",
+        "date separator",
+        "getStatusIcon"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 79
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral incluindo status desconhecido e falho; datas inválidas de serviço não reproduzidas."
+      ]
+    },
+    "src/components/inbox/chat/ChatHeader.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "CRM feature gate",
+        "briefing/RFM/intelligence fallback",
+        "legacy badges",
+        "avatar/type/SLA/business hours/queue",
+        "search/call/AI/details/voice/shortcuts/menu"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 213
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral. Caminho ativo principal usa ChatPanelHeader; consumidor desta variante legada não estabelecido. Botões sem operação não foram recontados sem essa ponte."
+      ]
+    },
+    "src/components/inbox/chat/ChatHeaderToolbar.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "ToolButton",
+        "search/objection/university/assistant/summary/details controls"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 79
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral dos estados de loading/active e callbacks opcionais. Integrações de IA cobertas por outros domínios quando indicadas."
+      ]
+    },
+    "src/components/inbox/chat/ConversationTabs.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "tab definitions and counts",
+        "orders extension",
+        "reduced motion",
+        "controlled selection",
+        "responsive labels/trailing action"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 107
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral; sem teste físico de navegação por teclado/foco ou responsividade."
+      ]
+    },
+    "src/components/inbox/chat/PinnedConversationsStack.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "PinnedFace interaction and motion",
+        "visible six and overflow summary",
+        "selection callbacks"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 104
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral; +N é indicador enquanto demais conversas permanecem na lista. Não pressuposto requisito de torná-lo acionável."
+      ]
+    },
+    "src/components/inbox/resolveActiveTab.ts": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "resolveActiveTab preference/contact anchoring"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 34
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral da precedência entre preferência persistida e escolha da sessão, incluindo mudança de contato. Sem novo achado."
+      ]
+    },
+    "src/components/inbox/tabs/Crm360Tab.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "nextActionTaskKeyFor",
+        "keyed edit dialog and enriched loading",
+        "last interaction",
+        "stage advance",
+        "purchase/deal summaries",
+        "task creation",
+        "pipeline/interactions rendering"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 303
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral. IA-METRICS-001 já cobre heurística useNextBestAction. Chave de tarefa e hooks CRM/tarefas têm contratos analisados nos domínios responsáveis; não executados banco, navegação ou layout."
+      ]
+    },
+    "src/components/inbox/ConversationMemoryPanel.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "emptyMemory",
+        "loadMemory request generations/error/identity",
+        "add/remove",
+        "saveMemory",
+        "mount cleanup",
+        "all editing controls"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 252
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral. ContactAccordionSections110 e ContactDetailsResponsive keyed na View342 interrompem estado entre contatos; hipótese genérica late-save A→B não promovida. Escritas sem contagem, concorrência com geração externa e runtime do banco não executados."
+      ]
+    },
+    "src/components/inbox/LeadRiskScorePanel.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "loadData",
+        "loaded/mounted guards",
+        "save payload",
+        "score color",
+        "four controls"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 149
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral. Remontagem por contato evita a hipótese de A→B. Falha de leitura liberando defaults para gravação é candidato próprio dirigido. Sem banco vivo."
+      ]
+    },
+    "src/components/inbox/ContactPurchasesPanel.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "addPurchase",
+        "invalidation",
+        "totals",
+        "list/status mapping",
+        "dialog controls"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 134
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral e SalesViewTab consumidor. Sem pending/idempotência local e erro de INSERT sem feedback foram observados como limites, sem recontar genericamente todo CRUD. Nenhuma compra real criada."
+      ]
+    },
+    "src/components/inbox/NewConversationModal.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "hook bindings",
+        "onOpenChange/reset",
+        "search/new modes",
+        "connection selection",
+        "selection",
+        "send guards",
+        "cancel"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 127
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral; useNewConversation já revisado. Clique Cancelar difere de onOpenChange no reset; recuperação após fechamento depende do hook. Sem envio real/DOM."
+      ]
+    },
+    "src/components/inbox/RealtimeTranscription.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "useScribe callbacks",
+        "connection status effect",
+        "mount ref",
+        "handleStart token/connect",
+        "handleStop",
+        "UI states/transcripts"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 195
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral. Montagem condicional em ChatPanel com estado inicial false; a leitura de ações não estabeleceu um comando que abra esse estado. Fronteira @elevenlabs/react não executada: não afirmada captura física pós-desmontagem sem alcance e comportamento do SDK. Nenhum microfone/token real."
+      ]
+    },
+    "src/components/inbox/WhisperMode.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "query and sender enrichment",
+        "realtime subscribe/cleanup",
+        "mark read",
+        "unread count",
+        "sendWhisper target guard",
+        "supervisor controls"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 194
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral e montagem condicional ChatPanel284 rastreada. Se montado com essas props, targetAgentId ausente impede INSERT. Porém whisper inicia false e nenhuma ação lida o abre; contrato condicional/prova de limite, sem finding de jornada ativa. RLS de whisper não reconstruído; limite 20 e polling 10s observados."
+      ]
+    },
+    "src/components/inbox/MediaVolumeControl.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "disabled/support states",
+        "adjustBy current snapshot",
+        "useVolumeRocker wiring",
+        "icon/trigger",
+        "chevron/portal propagation",
+        "slider/footer"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 198
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral junto aos hooks de volume já revisados. Nenhum áudio/DOM físico; fallback de suporte e desativação são controles declarados, não prova de operação no dispositivo."
+      ]
+    },
+    "src/components/inbox/collaboration/InternalNotesPanel.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "query",
+        "addNoteMutation identity/errors/invalidation",
+        "renderNoteContent",
+        "loading/list/author",
+        "MentionInput submit"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 117
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral e consumidor RealtimeCollaboration/ContactActionButtons rastreado. Notas usam perfil resolvido corretamente. Limite50, falta de realtime local, query error UI e mention como texto observados; RLS/autor/nome têm contratos em Auth/DB."
+      ]
+    },
+    "src/components/inbox/collaboration/ViewersIndicator.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "useConversationViewers sync/track/cleanup",
+        "own key exclusion",
+        "rendering and typing badge"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 126
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral. Presença real, múltiplas abas, track tardio após cleanup e sinal is_typing sempre false nesta origem não exercitados. Não confundir esta chave auth real com INB-026 literal agent."
+      ]
+    },
+    "src/components/inbox/collaboration/MentionInput.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "agent query",
+        "handleInputChange",
+        "select mention",
+        "filteredAgents",
+        "keyboard and submit controls"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 86
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral. SELECT direto profiles limitado20 herda restrição de visibilidade AUTH011; menção grava nome como texto, sem afirmar identidade/notificação. Sem eventos físicos ou acessibilidade prática."
+      ]
+    },
+    "src/components/inbox/collaboration/HandoffDialog.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "agents query/open gate",
+        "handleSubmit async success/error/finally",
+        "form and controls"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 94
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral e pai RealtimeCollaboration rastreado. Pai resolve mesmo com SDK error; variante do contrato de falso sucesso em transferência INB-009 anotada fora dos 39 achados imutáveis."
+      ]
+    },
+    "src/components/inbox/RealtimeCollaboration.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "handleHandoff update/note author lookup",
+        "Viewers/Notes/Handoff composition"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 47
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral. Rota alcançada por ContactActionButtons178; update/insert descartam error. Variante de transferência INB-009 nas notas adicionais, sem repetir ID. Não houve transferência real."
+      ]
+    },
+    "src/components/inbox/QueuePositionNotifier.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "position query/latest row",
+        "queue enrichment",
+        "polling",
+        "badge/estimate"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 54
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral. Fronteira de produção de queue_positions e prazo pertence a Filas; erros viram ausência neste consumidor. Sem alegar completude de trabalhador de fila."
+      ]
+    },
+    "src/components/inbox/AgentReassignmentPanel.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "absent mutate30",
+        "overloaded mutate",
+        "loading/pending controls and descriptions"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 62
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral; consumidor WarRoomDashboard124 rastreado. Algoritmo/RPC de reatribuição revisto por domínio CRM/Filas, não duplicado aqui; nenhuma operação executada."
+      ]
+    },
+    "src/components/inbox/stickers/StickerManager.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "query",
+        "favorite/delete/category mutations",
+        "handleSend counter",
+        "filteredStickers/stats",
+        "category controls",
+        "preview/grid"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 191
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral. SELECT/mutations principais leem error, diferentes de INB-042. showRecent não entra no filtro e use_count builder não é aguardado; sem contador/persistência real. Caminho principal SettingsView e picker rastreado separadamente."
+      ]
+    },
+    "src/components/inbox/tabs/TasksTab.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "STATUS_GROUPS",
+        "GroupHeader",
+        "TaskGroup",
+        "TasksTab grouping/counts",
+        "toggleDone",
+        "QuickAdd and move/delete"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 169
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral: usa done corretamente, distinto do timeline INB-035. doingCount fornecido é escopo do contato; limite global/algoritmo pertence ao hook de tarefas revisado por outro domínio. Sem mover/criar tarefa."
+      ]
+    },
+    "src/components/inbox/SLAIndicator.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "SLAProgressRing",
+        "getPercent",
+        "SLAIndicator compact/full/first-response branches"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 161
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral; prazos/cálculo pertencem à revisão SLA de root. Sem timer/tempo real/UI. Nonfinite input permanece contrato da origem; não elevado por hipótese."
+      ]
+    },
+    "src/components/inbox/BusinessHoursBadge.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "useBusinessHoursCheck null/loading gate",
+        "open/closed badge"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 35
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral. Ausência de dado explicitamente oculta badge. Calendário/SQL sob revisão do domínio Filas/Business; nenhum serviço consultado."
+      ]
+    },
+    "src/components/inbox/summary/useSummaryTts.ts": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "effects stop on unmount/contact",
+        "startTtsPlayback",
+        "autoplay handlers/retry/dismiss"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 62
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral. Helper playTtsAudio e promessa stop já em INB-047; contrato não recontado. Sem dispositivo/autoplay físico; last text/cache e estado de geração apenas inspecionados."
+      ]
+    },
+    "src/components/inbox/summary/SummaryResult.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "TtsButton",
+        "full narration",
+        "summary/keyPoints/nextSteps rendering"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 96
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral; loading desativa ações de TTS. Estrutura de AnalysisData delegada ao producer/parser; não assumida validação por tipagem."
+      ]
+    },
+    "src/components/inbox/ai-tools/KeyPointsTab.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "key point/next step guards",
+        "narration callbacks",
+        "list rendering"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 75
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral. Parser e TTS revisados nos respectivos domínios; nenhuma geração de IA. Dados malformados não simulados nesta folha."
+      ]
+    },
+    "src/components/inbox/ai-tools/SentimentTab.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "sentiment/score fallback",
+        "estimated CSAT",
+        "agent metrics",
+        "churn",
+        "history bars and tooltip"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 140
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral. Null no score atual preservado como sem nota; histórico admite tipo numérico e não foi provada origem inválida. Validade semântica de estimativas/modelo pertence à IA."
+      ]
+    },
+    "src/components/inbox/ai-tools/SummaryTab.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "department/status/urgency/churn guards",
+        "relation",
+        "summary TTS",
+        "satisfaction/opportunity/topics"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 106
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral de todas as condições e callbacks. Não afirma precisão do modelo ou validação de esquema pelo componente; produtores/parsers em IA."
+      ]
+    },
+    "src/components/inbox/ai-tools/ToneSelector.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "TONE_OPTIONS",
+        "getTonePrompt",
+        "controlled radio buttons"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 52
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral. Domínio fechado de ToneKey pressuposto pelos consumidores; valor externo fora do enum não reproduzido. Sem navegação física/foco."
+      ]
+    },
+    "src/components/inbox/ai-tools/VisionIcon.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "memoized SVG/default className"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 36
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral do componente puramente visual; sem comportamento de dados ou serviço."
+      ]
+    },
+    "src/components/inbox/AISuggestions.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "generation identity effects",
+        "fetchSuggestions and post-await check",
+        "select",
+        "icon/label",
+        "loading/results controls"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 230
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral. Resposta sem schema e enhanced/draft de outros arquivos pertencem a Infra. InputExtraTools omite contactId, mas seu alcance ativo não foi estabelecido e endpoint aceita campo opcional. Não alegado erro obrigatório nem vazamento A→B."
+      ]
+    },
+    "src/components/inbox/chat/AIRewriteButton.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "tone definitions",
+        "handleRewrite",
+        "pending/error/empty guards",
+        "popover controls"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 135
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral. Resposta tardia sobre rascunho pertence ao achado IA de Infra, sem ID duplicado aqui. Sem invoke real."
+      ]
+    },
+    "src/components/inbox/chat/AIEnhanceButton.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "handleEnhance",
+        "original draft",
+        "handleUndo",
+        "pending/popover/tone controls"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 174
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral. Resposta e undo sobre rascunho mais novo repassados a Infra; falta de guard de geração não recontada neste domínio. Sem invoke real."
+      ]
+    },
+    "src/components/inbox/tabs/ContactStatsStrip.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "formatAvgResponse",
+        "ChangeBadge",
+        "loading",
+        "metric cells and null CSAT"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 100
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral. Metodologia/agregação em useContactStats pertence ao domínio CRM. Erro pode cair em defaults; sem métricas reais/avaliações."
+      ]
+    },
+    "src/components/inbox/tabs/CommercialSummaryStrip.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "formatCurrency",
+        "Tile",
+        "loading and summary mappings"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 38
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral. Regras de valores nulos/zero observadas, agregação e bases de cálculo delegadas à revisão CRM. Sem finanças de serviço."
+      ]
+    },
+    "src/components/inbox/tabs/OpenDealsList.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "optional limit",
+        "empty state",
+        "expected date/value/status rendering"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 60
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral com Crm360Tab/SalesViewTab. Limite3 é resumo explícito e existe consumidor sem corte; não confundido com paginação ausente em consulta."
+      ]
+    },
+    "src/components/inbox/tabs/SectionCard.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "tone mapping",
+        "SectionCard counts/actions/pill/link/headerRight"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 71
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral de folha visual e callbacks sem operação própria. Sem layout/acessibilidade físicos."
+      ]
+    },
+    "src/components/inbox/tabs/KpiStrip.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "tone mapping",
+        "dynamic grid cells/value/sublabel"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 56
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral. Layout de zero/muitas células não testado em browser; dados e labels fornecidos por pais."
+      ]
+    },
+    "src/components/inbox/tabs/SalesViewTab.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "CRM query",
+        "always mounted purchases",
+        "open deals loading/composition"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 46
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral; contato sem compra preserva botão de criação por composição. Sem consultas reais."
+      ]
+    },
+    "src/components/inbox/tabs/TabBanner.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "dismissed initializer",
+        "CTA",
+        "persistent dismiss callback"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 64
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral. Falha de localStorage e troca dinâmica de dismissKey não exercitadas; persistência por browser é o contrato declarado, não alegado vazamento pessoal."
+      ]
+    },
+    "src/components/inbox/ContactDetailsResponsive.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "mobile Sheet/onOpenChange",
+        "desktop panel"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 33
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral. View342 key por legacyConversation.id checado; impede transferência de draft entre contatos nesta montagem. Sem teste de media query/scroll físico."
+      ]
+    },
+    "src/components/inbox/AnalysisBadges.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "sentiment/urgency mappings",
+        "compact/full data guards"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 83
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral junto de useLatestAnalysis. Sem novo achado; erro/query e produtor sob seus contratos já revisados."
+      ]
+    },
+    "src/components/inbox/chat/RichTextToolbar.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "FORMAT_MAP",
+        "applyFormat selection/list/cursor timer",
+        "toolbar/toggle"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 119
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral. Cursor/foco/eventos não exercitados; timer não cancelado observado sem afirmar efeito entre montagens. Markdown WhatsApp é contrato de saída."
+      ]
+    },
+    "src/components/inbox/chat/InputExtraTools.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "presetContact memo",
+        "quick replies",
+        "suggestions/templates",
+        "recording/location/catalog/schedule callbacks"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 121
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral de wiring. contactId omitido em AISuggestions84, mas endpoint aceita campo opcional; nenhum invoke quebrado ou vazamento alegado. Consumidor ativo deste componente não estabelecido: ChatInputArea usa SecondaryToolbar/TertiaryTools. Sem declaração de dead code; demais contratos encaminhados a seus handlers."
+      ]
+    },
+    "src/components/inbox/chat/MarkdownPreview.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "formatWhatsAppText escape and replacement sequence",
+        "MarkdownPreview memo"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 45
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral. HTML é escapado antes de tags controladas. Sobreposição de formatação dentro de code blocks não reproduzida; nenhuma exploração alegada."
+      ]
+    },
+    "src/components/inbox/chat/ChatQuickRepliesPopover.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "visibility/replies guard",
+        "selection and close callbacks"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 70
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral. Componente controlado sem persistência/transporte; sem layout físico."
+      ]
+    },
+    "src/components/inbox/chat/InputPreviewBars.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "reply versus editing priority",
+        "cancel callbacks"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 52
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral. Preview local não é evidência de transporte de quote, já INB-001. Sem novo achado."
+      ]
+    },
+    "src/components/inbox/chat/QuickActionChips.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "Chip",
+        "quick reply popover",
+        "first50",
+        "attach/schedule/transfer/more wiring"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 99
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral. Recorte50 é menu de acesso rápido, existem demais rotas de templates; não afirmada indisponibilidade global. Sem operações reais."
+      ]
+    },
+    "src/components/inbox/interactive-builder/ButtonTypeHelpers.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "getButtonTypeIcon",
+        "getButtonTypeLabel"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 24
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral do domínio reply/url/phone. Tipo externo inválido não produzido na revisão."
+      ]
+    },
+    "src/components/inbox/interactive-builder/MessagePreview.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "empty guard",
+        "button/list previews",
+        "section summary"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 60
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral. Prévia limita duas seções explicitamente com +N e não afeta payload; INB-003 trata transporte ausente."
+      ]
+    },
+    "src/components/inbox/MessagePreview.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "emoji replacement",
+        "formatting pattern collection/segment building",
+        "render variants",
+        "useHasFormattableContent"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 179
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral. Sobreposição de regex pode duplicar segmentos; consumidor ativo dessa variante não estabelecido (builder usa outro arquivo). Não inferido dead code nem criado bug ativo sem ponte."
+      ]
+    },
+    "src/components/inbox/SentimentIndicator.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "score classifier",
+        "compact/full indicator",
+        "SentimentEmoji",
+        "SentimentBar"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 199
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral incluindo limiares/dados/animation. Valores inválidos fora do contrato não exercitados; origem e modelos não verificados aqui."
+      ]
+    },
+    "src/components/inbox/DeletedMessagePlaceholder.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "original content guard",
+        "sender/deletion states",
+        "original/empty display"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 78
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral. Preservação explícita do conteúdo é comportamento versionado, não inferida violação de privacidade. INB-014/023 cobrem caminhos anteriores ao placeholder."
+      ]
+    },
+    "src/components/inbox/MessageStatus.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "status mapping",
+        "fallback",
+        "tooltip/label rendering"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 70
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral. Status desconhecido cai em sent nesta variante, mas consumidor ativo com valor inválido não demonstrado. MessageBubble principal usa outro helper."
+      ]
+    },
+    "src/components/inbox/SpeedSelector.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "SPEED_OPTIONS",
+        "current fallback",
+        "selection callback"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 69
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral; velocidade da leitura TTS explícita. Fora do domínio fornecido não reproduzido."
+      ]
+    },
+    "src/components/inbox/TypingIndicator.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "getTypingText",
+        "default/bubble/minimal/avatar",
+        "TypingIndicatorCompact",
+        "TypingIndicatorInline"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 321
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral das variantes visuais/nome/condições. Presença real vem dos hooks e INB-026, não inferida do ponto verde decorativo deste indicador de digitação."
+      ]
+    },
+    "src/components/inbox/NewMessageIndicator.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "visibility/name/avatar/content",
+        "view/dismiss",
+        "animation-complete dismissal"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 174
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral. Tempo de saída depende de animação e não foi reproduzido com Framer/browser; controle de fila de notificações pertence ao pai."
+      ]
+    },
+    "src/components/inbox/InboxEmptyChat.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "empty layout and keyboard hints"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 55
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral de estado vazio. Hints de atalhos não provam listeners; conflitos já INB-017 e revisão PLAT de root."
+      ]
+    },
+    "src/components/inbox/chat/ChatDragOverlay.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "drag visibility and multiple-files hint"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 36
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral de overlay controlado. INB-011 distingue input nativo de drop; hint não foi tratado como prova de processamento."
+      ]
+    },
+    "src/components/inbox/chat/ChatWatermark.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "memoized decorative div"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 10
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral de folha visual; CSS/imagem não renderizados."
+      ]
+    },
+    "src/components/inbox/conversation-list/ConversationGroupHeader.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "default icon",
+        "label/count rendering"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 17
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral de folha visual. Contagem é fornecida pelo pai, sem agregação própria."
+      ]
+    },
+    "src/components/inbox/KeyboardShortcutsHelp.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "shortcut category/id filter",
+        "formatShortcut display",
+        "popover"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 90
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral. Personalização/registro de atalhos pertence a PLAT; sem repetir INB-017. Não executados eventos físicos."
+      ]
+    },
+    "src/components/inbox/MessageContextMenu.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "media/agent guards",
+        "reactions",
+        "reply/forward/copy/TTS",
+        "blocked download",
+        "favorite/pin/schedule/read/report/delete"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 239
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral de menu alternativo. Não foi estabelecido consumidor ativo desta variante; agendamentos usam callback sem prazo e callbacks opcionais não ocultam item. Não recontado como falha ativa sem ponte."
+      ]
+    },
+    "src/components/inbox/MessageReactions.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "MessageReactions grouping/author tooltip",
+        "handleReact",
+        "extended picker",
+        "QuickReactionBar hook/handleReact/pickers"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 284
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral completando 151–284 após prefixo anterior. INB-032 trata erro remoto; DB-019/autorias e UNIQUE de mensagem/contato são achados do domínio DB, sem duplicação. Sem evento físico de teclado."
+      ]
+    },
+    "src/pages/ChatPopup.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "mapToLegacyMessages",
+        "message/contact load and guards",
+        "audio callbacks",
+        "window close/maximize/minimize",
+        "loading/error states",
+        "ChatPanel consumer and window control UI"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 300
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral concluída com 210–269 nesta passagem; INB-004/022/023/024 preservados. Nenhum popup real, resize/close de browser ou provedor exercitado."
+      ]
+    },
+    "src/hooks/inbox/useRealtimeSentimentAlerts.ts": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "type/enabled/dedupe guard",
+        "normalized score",
+        "toast/action",
+        "quiet-hours sound",
+        "browser permission callback",
+        "authenticated realtime subscription and cleanup"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 118
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral e consumidor RealtimeSentimentAlertProvider rastreado. Permissão/notificação/DOM e entrega realtime não executados. Ação busca [value=\"ai\"] sem navegação por contato; destino exato repassado ao root, sem duplicar governança/IA. Resposta de permissão tardia não tem geração, observação do mesmo contrato de INB-045 sem novo ID."
+      ]
+    },
+    "src/hooks/inbox/useInboxUIState.ts": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "TAB_REDIRECTS and VALID_TABS",
+        "normalizeConversationTab",
+        "guarded persisted read",
+        "defaultShowDetails",
+        "state initializers",
+        "toggles and persisted setter"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 72
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral e consumidor useRealtimeInbox já integral. Reminders redireciona a tasks, valor desconhecido cai em chat, falha localStorage capturada. Preferência de aba é global ao browser, sem conteúdo de contato; não classificada como exposição entre usuários. Sem teste de layout/browser real."
+      ]
+    },
+    "src/hooks/inbox/useInboxFilterTags.ts": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "query key",
+        "contacts.tags fetch",
+        "distinct sort/name identity",
+        "staleTime",
+        "returned query"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 17
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral. Truncamento sem paginação já é TRA-011, não recontado. {error} é ignorado e vira lista vazia de sucesso; InboxFilters76/225 oculta a seção. Observação complementar documentada, sem novo ID. RLS e cardinalidade reais não consultadas."
+      ]
+    },
+    "src/hooks/realtime/useVisiblePolling.ts": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "refresh effect",
+        "visibility/online/enabled guards",
+        "pending coalescence",
+        "AbortController",
+        "catch/finally timer",
+        "manual follow-up",
+        "listeners cleanup",
+        "stable callback"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 50
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral, consumidores RateLimitLogs e ConnectionHealthPanel checam signal após await. Sem novo finding; cancelamento, coalescência e follow-up pós-mutation preservam o contrato lido. Testes de unmount/StrictMode/callback/enabled foram inspecionados, não executados. Nenhuma consulta real."
+      ]
+    },
+    "src/hooks/voice/retry.ts": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "isRetryableError",
+        "withRetry bounded attempts and exponential delay",
+        "friendlyErrorMessage branches"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 55
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral com processVoiceTranscript e useVoiceAgent como consumidores. Erros HTTP são convertidos em Error contendo status pelo processador. Abort é classificado como retryable; o consumidor revalida o sinal antes da próxima tentativa, portanto não foi alegada nova requisição após cancelamento. Não exercitada latência real nem todos os erros do browser."
+      ]
+    },
+    "src/hooks/voice/logVoiceCommand.ts": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "fire-and-forget wrapper",
+        "authenticated user/session lookup",
+        "raw POST headers/body",
+        "network exception catch"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 48
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral com useVoiceAgent110/136. POST não verifica response.ok; falha HTTP pode perder log silenciosamente. Registrado como limite de telemetria sem alegar que deveria bloquear UI, sem nova falha de ação confirmada. Autenticação/serviço de logs reais não chamados; nenhum token/endpoint de configuração impresso."
+      ]
+    },
+    "src/components/notifications/RealtimeSentimentAlertProvider.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "forwardRef provider",
+        "hook-only mount"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 12
+        }
+      ],
+      "remaining_gaps": [
+        "Componente integral sem UI; alcance via App verificado por busca e leitura targeted. Contratos internos no hook, sem presumir percepção de alerta em browser."
+      ]
+    },
+    "src/hooks/system/useRateLimitLogs.ts": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "calculateStats aggregates and sorting",
+        "fetchLogs signal+timeout",
+        "last good snapshot and loading",
+        "visible polling",
+        "return"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 97
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral para contrato de polling; domínio system/infra pertence a root. Contadores da janela de 100 não foram tratados como total operacional. Sem execução DB nem novo finding de métricas neste recorte."
+      ]
+    },
+    "src/hooks/voice/processTranscript.ts": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "request controller and timeout",
+        "HTTP status error",
+        "JSON fallback",
+        "finally clear timer"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 43
+        }
+      ],
+      "remaining_gaps": [
+        "Corpo integral lido como consumidor de retry; schema da resposta/backend pertence ao revisor providers. Fetch e leitura de corpo reais não executados. Declaração de type assertion não foi tratada como validação de schema."
+      ]
+    },
+    "src/components/diagnostics/ConnectionHealthPanel.tsx": {
+      "review_level": "targeted",
+      "reviewed_symbols": [
+        "fetchData async readers",
+        "AbortSignal timeout guard",
+        "manual health-check then refresh"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 25,
+          "line_end": 93
+        }
+      ],
+      "remaining_gaps": [
+        "Ponte targeted do polling; não reivindica o JSX ou demais corpos do painel. Nenhum health-check real."
+      ]
+    },
+    "src/components/settings/SettingsView.tsx": {
+      "review_level": "targeted",
+      "reviewed_symbols": [
+        "staff messages tab and QuickRepliesManager props",
+        "staff media tab and StickerManager props"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 128,
+          "line_end": 151
+        },
+        {
+          "line_start": 178,
+          "line_end": 199
+        }
+      ],
+      "remaining_gaps": [
+        "Consumidores de quick replies/mídia somente; não revisão integral de SettingsView."
+      ]
+    },
+    "src/integrations/supabase/types.ts": {
+      "review_level": "targeted",
+      "reviewed_symbols": [
+        "contacts assigned_to FK",
+        "profiles id/user_id fields"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 2305,
+          "line_end": 2324
+        },
+        {
+          "line_start": 6054,
+          "line_end": 6091
+        }
+      ],
+      "remaining_gaps": [
+        "Somente trechos de contrato de identidade; tipos gerados não atestam banco vivo."
+      ]
+    },
+    "src/components/inbox/contact-details/ContactActionButtons.tsx": {
+      "review_level": "targeted",
+      "reviewed_symbols": [
+        "transfer tile",
+        "Adicionar participante popover and RealtimeCollaboration consumer"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 150,
+          "line_end": 184
+        }
+      ],
+      "remaining_gaps": [
+        "Trecho de alcance do handoff; leitura integral deste arquivo pertence ao agente auth. Não promovido aqui por cobertura de outro agente."
+      ]
+    },
+    "src/components/inbox/contact-details/ContactAccordionSections.tsx": {
+      "review_level": "targeted",
+      "reviewed_symbols": [
+        "memory and scoring mounts"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 102,
+          "line_end": 117
+        }
+      ],
+      "remaining_gaps": [
+        "Trechos que estabelecem alcance/key; restante desse arquivo pertence ao agente auth."
+      ]
+    },
+    "src/hooks/inbox/useSentimentAlerts.ts": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "threshold/settings",
+        "checkAndTriggerAlert",
+        "RPC error handling",
+        "local dedupe/toast/action",
+        "sound and browser permission",
+        "getRecentAlerts"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 135
+        }
+      ],
+      "remaining_gaps": [
+        "Lido integralmente como contrato de alerta vizinho aos seis hooks. Navegação no toast fica em INB-064. RPC/IA/notification permissions reais não chamados; extensão de permissão tardia é mesmo mecanismo de INB-045, sem novo ID."
+      ]
+    },
+    "src/App.tsx": {
+      "review_level": "targeted",
+      "reviewed_symbols": [
+        "lazy realtime sentiment overlay",
+        "DeferredProviders",
+        "global overlays outside routes"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 19,
+          "line_end": 64
+        },
+        {
+          "line_start": 100,
+          "line_end": 147
+        }
+      ],
+      "remaining_gaps": [
+        "Apenas montagem/alcance dos alertas e trechos lidos; não revisão integral da aplicação."
+      ]
+    },
+    "src/pages/ViewRouter.tsx": {
+      "review_level": "targeted",
+      "reviewed_symbols": [
+        "VIEW_MAP distinct inbox/dashboard/sentiment",
+        "current view selection and mount"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 35,
+          "line_end": 64
+        },
+        {
+          "line_start": 118,
+          "line_end": 167
+        }
+      ],
+      "remaining_gaps": [
+        "Contrato de alcance de tela; roteamento/ACL completos pertencem à revisão root/auth."
+      ]
+    },
+    "src/components/dashboard/DashboardView.tsx": {
+      "review_level": "targeted",
+      "reviewed_symbols": [
+        "DASHBOARD_TABS and AGENT_TAB_VALUES",
+        "dynamic DashboardTabs mount"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 44,
+          "line_end": 65
+        },
+        {
+          "line_start": 150,
+          "line_end": 181
+        }
+      ],
+      "remaining_gaps": [
+        "Controle de precisão: existe produtor dinâmico ai no Dashboard. Não medido DOM emitido por Radix nem reauditoria de métricas."
+      ]
+    },
+    "src/components/dashboard/overview/DashboardTabs.tsx": {
+      "review_level": "semantic",
+      "reviewed_symbols": [
+        "tabs map",
+        "dynamic TabsTrigger values",
+        "active indicator",
+        "reduced motion"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 48
+        }
+      ],
+      "remaining_gaps": [
+        "Leitura integral para verificar produtor dinâmico de value; não browser/DOM real. Layout visual pertence ao root."
+      ]
+    },
+    "src/components/inbox/AIConversationAssistant.tsx": {
+      "review_level": "targeted",
+      "reviewed_symbols": [
+        "alert hook consumer",
+        "generation guards",
+        "refetch guard",
+        "valid analysis triggers sentiment alert"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 40,
+          "line_end": 108
+        },
+        {
+          "line_start": 133,
+          "line_end": 195
+        }
+      ],
+      "remaining_gaps": [
+        "Trechos complementares da jornada de alerta. Leitura integral e contratos centrais deste painel pertencem a Grill/Infra; não reivindicados por este registro."
+      ]
+    },
+    "docs/COMPLETE_SYSTEM_FEATURES.md": {
+      "review_level": "targeted",
+      "reviewed_symbols": [
+        "catalog rows for inbox/audio and sentiment notifications"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 84,
+          "line_end": 192
+        },
+        {
+          "line_start": 432,
+          "line_end": 445
+        }
+      ],
+      "remaining_gaps": [
+        "Promessas documentais cruzadas com implementações; checkmark não é prova funcional. Linhas 432–445 lidas nesta passagem para o vínculo 20.11."
+      ]
+    },
+    "src/components/inbox/chat/ChatToolPanels.tsx": {
+      "review_level": "targeted",
+      "reviewed_symbols": [
+        "Visão activeTool conditional mount",
+        "AIConversationAssistant props and ToolPanel close"
+      ],
+      "reviewed_ranges": [
+        {
+          "line_start": 20,
+          "line_end": 44
+        }
+      ],
+      "remaining_gaps": [
+        "Ponte de alcance do alerta lida nesta passagem; painéis IA restantes têm revisão própria/delegada. Não se atribui leitura integral apenas por import."
+      ]
+    }
+  }
+}

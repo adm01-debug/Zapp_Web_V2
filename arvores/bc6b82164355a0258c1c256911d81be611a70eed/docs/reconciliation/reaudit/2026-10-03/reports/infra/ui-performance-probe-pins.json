@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "compiler": {
+    "path": "/workspace/scratch/8b95153002da/audit/tools/ast/node_modules/typescript/lib/typescript.js",
+    "sha256": "3ae902c92cc44dace175c0e69e13a4b0899f6983c6121d76b9ab8dd5795e7675"
+  },
+  "sources": [
+    {
+      "path": "src/components/ui/command-palette.tsx",
+      "sha256": "cc46e105039b75d50a41f784b83287453b7165c616b6b9d0b3ec9987e6f3fa7c"
+    },
+    {
+      "path": "src/components/ui/command-palette-data.tsx",
+      "sha256": "5abe68e6324949e730211977509079358132b9c97bc31982c1e94984dcbc8cf5"
+    },
+    {
+      "path": "src/components/keyboard/CommandPaletteHost.tsx",
+      "sha256": "34609b36fb8616345b10f2b49f26bfeafaf03f70cb5090eb99b3b44cf3f30f97"
+    },
+    {
+      "path": "src/hooks/integrations/useCatalogQuickSearch.ts",
+      "sha256": "6e015b754e5e3f4d12867f3f7f864b37a2bd4447c29c8499805ba8a4942b2dc7"
+    },
+    {
+      "path": "src/hooks/system/useDebounce.ts",
+      "sha256": "e1a8716e995f6732963fd06d57df463dde9325aa55a96bfa29a2e9c7a24daba4"
+    },
+    {
+      "path": "src/components/keyboard/GlobalKeyboardProvider.tsx",
+      "sha256": "16dcf2e44b55d936320e7da0d4677482b952e0d952840483632274d735feb020"
+    },
+    {
+      "path": "src/components/ui/progress.tsx",
+      "sha256": "bdc4847f05de3aea1276966e0df9b4a293297f0ca7d7b430a1cb16cf5626728f"
+    }
+  ]
+}

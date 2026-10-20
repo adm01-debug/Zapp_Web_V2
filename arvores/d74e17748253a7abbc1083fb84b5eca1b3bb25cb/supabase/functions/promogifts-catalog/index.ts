@@ -1,0 +1,529 @@
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { z } from "https://esm.sh/zod@3.23.8";
+import { getCorsHeaders, handleCors, Logger, markDegraded, degradedCounters } from "../_shared/validation.ts";
+
+const jsonRes = (body: unknown, status = 200, req?: Request) => {
+  // CT-19 — a degradacao viaja no cabecalho quando acontece: fail-open silencioso ja
+  // mascarou uma medicao inteira (o log tinha o erro, a resposta era 200 e eu li 200
+  // como "esta tudo certo"). Sem degradacao marcada, nenhum cabecalho novo aparece.
+  const contadores = degradedCounters();
+  const degradado: Record<string, string> = Object.keys(contadores).length
+    ? { "x-degraded": Object.entries(contadores).map(([motivo, total]) => `${motivo}=${total}`).join(";") }
+    : {};
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...(req ? getCorsHeaders(req) : getCorsHeaders()), "Content-Type": "application/json", ...degradado },
+  });
+};
+
+// ─── Input Schemas ────────────────────────────────────────────
+const ALLOWED_ORDER_FIELDS = ["name", "sale_price", "stock_quantity", "brand", "created_at", "sku", "order_count"] as const;
+
+/**
+ * OTH-004 (#53) — ordenação determinística da listagem/exportação.
+ *
+ * A chave pedida (`order_by`/`ascending`) continua PRIMÁRIA; `id` ASC entra
+ * como desempate único no fim. Sem ele, vários produtos empatados na chave
+ * primária (nome repetido é o caso comum) não têm ordem garantida pelo
+ * Postgres: duas execuções podem devolvê-los em ordens diferentes e o
+ * `.range()` passa a OMITIR ids numa página e REPETIR em outra. Quando a
+ * própria chave primária já é `id`, a cláusula não é duplicada.
+ */
+export function buildProductOrderClauses(
+  order_by: string,
+  ascending: boolean,
+): Array<{ column: string; ascending: boolean }> {
+  const clausulas = [{ column: order_by, ascending }];
+  if (order_by !== "id") clausulas.push({ column: "id", ascending: true });
+  return clausulas;
+}
+
+/**
+ * Equivalente em JS do unaccent() do Postgres, para casar com o gatilho
+ * products_search_vector_update (que aplica unaccent() ANTES do
+ * to_tsvector): sem isso, buscar "açucareiro" gera o léxico 'açucareir',
+ * que não bate com o 'acucareir' armazenado no vetor. Confirmado via SQL
+ * direto contra o banco: websearch_to_tsquery('portuguese','açucareiro')
+ * e a versão sem acento produzem lexemas diferentes.
+ */
+function stripDiacritics(input: string): string {
+  return input.normalize("NFD").replace(/[̀-ͯ]/g, "");
+}
+
+// E36-2: color/material aceitam 1 valor (compat com chamadores antigos)
+// ou array (multi-seleção real — OR entre os valores). Antes só string
+// era aceito, o que obrigava o client a aplicar o filtro multi-valor
+// localmente e a exibir total/paginação incorretos com 2+ selecionados.
+const ColorOrMaterialValue = z.union([z.string().max(60), z.array(z.string().max(60)).min(1).max(20)]);
+
+const ListProductsSchema = z.object({
+  search: z.string().max(200).optional(),
+  category_id: z.string().uuid().optional(),
+  supplier_id: z.string().uuid().optional(),
+  limit: z.number().int().min(1).max(100).default(50),
+  offset: z.number().int().min(0).default(0),
+  order_by: z.enum(ALLOWED_ORDER_FIELDS).default("name"),
+  ascending: z.boolean().default(true),
+  only_active: z.boolean().default(true),
+  only_in_stock: z.boolean().default(false),
+  compact: z.boolean().default(false),
+  // E22 — filtros avançados
+  is_featured: z.boolean().optional(),
+  is_new: z.boolean().optional(),
+  is_bestseller: z.boolean().optional(),
+  is_kit: z.boolean().optional(),
+  allows_personalization: z.boolean().optional(),
+  low_stock: z.boolean().optional(), // 1 <= stock_quantity <= 10
+  price_min: z.number().min(0).optional(),
+  price_max: z.number().min(0).optional(),
+  color: ColorOrMaterialValue.optional(),
+  material: ColorOrMaterialValue.optional(),
+  has_engraving: z.boolean().optional(),
+}).default({});
+
+const GetProductSchema = z.object({
+  product_id: z.string().uuid("product_id must be a valid UUID"),
+});
+
+const ActionSchema = z.object({
+  action: z.enum(["list_products", "get_product", "list_categories", "list_suppliers", "catalog_stats", "bootstrap"]),
+  params: z.record(z.unknown()).optional().default({}),
+});
+
+/** CT-19 — união derivada do schema. O mapa de cotas por ação usa este tipo,
+ * então incluir uma ação nova no enum sem definir sua cota quebra o typecheck
+ * (fail-closed: ação nova nunca cai no fallback por acidente). */
+type CatalogAction = z.infer<typeof ActionSchema>["action"];
+
+function sanitizeSearch(input: string): string {
+  // Vírgula é o separador de cláusulas do OR-expr do PostgREST (.or("a,b"));
+  // um valor com vírgula literal quebra o parsing da expressão (ver
+  // buildTagOrExpr) — precisa ser removida junto com o resto do charset.
+  // Aspa dupla removida por auditoria adversarial (2026-09-25): o valor
+  // sanitizado só é seguro dentro de JSON.stringify([v]) por acidente de
+  // ordem de chamada (o stringify escapa a aspa depois) — sem isso aqui,
+  // qualquer reuso futuro de sanitizeSearch fora desse padrão específico
+  // vira vetor de quebra de estrutura.
+  return input.replace(/[%_."\\(),]/g, "").trim().slice(0, 100);
+}
+
+/** websearch_to_tsquery aceita frases/aspas/operadores; só limita tamanho. */
+function sanitizeFtsQuery(input: string): string {
+  return input.trim().slice(0, 100);
+}
+
+/**
+ * Monta o OR-expr do PostgREST para filtrar colors/materials (jsonb array
+ * que guarda string ou {nome}) por 1+ valores (E36-2 — substitui o
+ * if(color)/if(material) escalar único). Cada valor vira 2 cláusulas
+ * (string pura e {nome}), todas OR'd entre si: casa se a coluna contém
+ * QUALQUER um dos valores selecionados, em QUALQUER um dos dois formatos.
+ * contains (.cs.) evita ilike direto em jsonb (Postgres rejeita sem cast).
+ */
+export function buildTagOrExpr(column: "colors" | "materials", values: string[]): string | null {
+  const clauses = values
+    .map((v) => sanitizeSearch(v))
+    .filter((v) => v.length > 0)
+    .flatMap((v) => [`${column}.cs.${JSON.stringify([v])}`, `${column}.cs.${JSON.stringify([{ nome: v }])}`]);
+  return clauses.length > 0 ? clauses.join(",") : null;
+}
+
+const PRODUCT_RELATIONS = `categories:category_id(id, name, slug, parent_id, full_path_readable),
+  suppliers:supplier_id(id, name)`;
+
+// Payload do card (grade/lista): só o que a UI mostra por item.
+const PRODUCT_FIELDS_COMPACT = `id, name, short_description, sku, sale_price, suggested_price,
+  stock_quantity, primary_image_url, primary_image_fallback_url, colors, brand, min_quantity,
+  is_kit, is_active, is_stockout, allows_personalization, lead_time_days,
+  is_featured, is_new, is_bestseller, is_on_sale, is_closeout,
+  is_featured_expires_at, is_new_expires_at, is_bestseller_expires_at,
+  category_id, supplier_id, slug, created_at, last_sync_at,
+  ${PRODUCT_RELATIONS}`;
+
+// Payload completo (detalhe, envio e list_products sem compact).
+const PRODUCT_FIELDS = `id, name, description, short_description, sku, sale_price, suggested_price,
+  stock_quantity, primary_image_url, primary_image_fallback_url, images, colors, color_swatches,
+  materials, tags, brand, origin_country, min_quantity,
+  dimensions_display, weight_g, combined_sizes, product_type, is_kit, is_active,
+  is_stockout, allows_personalization, lead_time_days, supply_mode,
+  is_featured, is_new, is_bestseller, is_on_sale, is_closeout, has_gift_box,
+  is_featured_expires_at, is_new_expires_at, is_bestseller_expires_at,
+  engraving_type, engraving_description, main_category_id,
+  order_count, view_count, created_at, updated_at, last_sync_at,
+  category_id, supplier_id, slug, capacity_ml, ncm_code,
+  ${PRODUCT_RELATIONS}`;
+
+// E24 — cache em memória do isolate (curto: 60s), evita bater no banco a
+// cada abertura da tela. Isolates reciclam periodicamente; pior caso é
+// só um cache-miss extra, sem risco de dado defasado por muito tempo.
+let catalogStatsCache: { data: unknown; expiresAt: number } | null = null;
+const CATALOG_STATS_TTL_MS = 60_000;
+
+// CT-19: o contador NAO mora mais aqui. Ele e uma linha por (usuario, acao) na tabela
+// public.catalog_rate_limits, checada atomicamente pela funcao catalog_rate_limit_hit.
+// O Map em memoria por isolate nao limitava sob concorrencia (medido: 61, 120 e 300
+// chamadas paralelas em producao -> zero 429).
+// CT-77: exportado para o teste de rate limit derivar o limite do próprio
+// módulo em vez de fixar o número.
+// CT-19: RATE_LIMIT virou o TETO GLOBAL, usado como fallback quando a ação não
+// é conhecida (corpo inválido/malformado). O limite efetivo está por ação, em
+// ACTION_RATE_LIMITS.
+export const RATE_LIMIT = 60;
+export const RATE_WINDOW_MS = 60_000;
+
+/**
+ * CT-19 (E26.3) — limite POR AÇÃO. `list_products` é a ação que abre a tela e
+ * refaz a consulta a cada busca/página, por isso 120/min (o dobro das demais);
+ * as outras 5 ações ficam no teto global de 60/min. O `Record` é ancorado no
+ * enum do ActionSchema — ação nova sem cota falha no typecheck em vez de cair
+ * silenciosamente no fallback.
+ */
+export const ACTION_RATE_LIMITS: Record<CatalogAction, number> = {
+  list_products: 120,
+  get_product: RATE_LIMIT,
+  list_categories: RATE_LIMIT,
+  list_suppliers: RATE_LIMIT,
+  catalog_stats: RATE_LIMIT,
+  bootstrap: RATE_LIMIT,
+};
+
+/**
+ * CT-19 — cota por usuário E por ação: cada ação tem o próprio balde, então uma
+ * rajada de `list_products` não consome (nem afrouxa) a cota de `bootstrap`.
+ * `action = null` (corpo inválido/malformado) cai no teto global como fallback:
+ * preserva o comportamento antigo e não abre bypass a requisição inválida.
+ */
+async function checkRateLimit(
+  client: SupabaseClient,
+  userId: string,
+  action: CatalogAction | null,
+  log: Logger,
+): Promise<boolean> {
+  const limit = action ? ACTION_RATE_LIMITS[action] : RATE_LIMIT;
+  const { data, error } = await client.rpc("catalog_rate_limit_hit", {
+    p_user: userId,
+    p_action: action ?? "global",
+    p_limit: limit,
+    p_window_ms: RATE_WINDOW_MS,
+  });
+  if (error) {
+    // CT-19 — falha ABERTA de proposito: se o contador compartilhado estiver
+    // indisponivel, o catalogo continua servindo (o limite e protecao, nao caminho
+    // critico). O erro fica registrado para nao passar em silencio — e o contador de
+    // degradacao viaja no cabecalho `x-degraded`, para que a proxima medicao nao leia
+    // um 200 e conclua que o limitador esta funcionando.
+    log.error("Rate limit store unavailable", {
+      error: error.message,
+      action: action ?? "global",
+    });
+    markDegraded("rate_limit_store_unavailable");
+    return true;
+  }
+  return data === true;
+}
+
+interface ExternalDatabaseError {
+  code?: string;
+  message?: string;
+}
+
+function externalDatabaseErrorResponse(error: ExternalDatabaseError, req: Request, log: Logger) {
+  log.error("External catalog query failed", {
+    code: error.code || "UNKNOWN",
+    message: error.message || "Unknown external database error",
+  });
+  const permissionFailure = error.code === "42501";
+  return jsonRes({
+    error: permissionFailure
+      ? "Catalog credentials are not authorized for the requested resource"
+      : "Catalog database is temporarily unavailable",
+    code: permissionFailure ? "CATALOG_CREDENTIALS_INVALID" : "CATALOG_UPSTREAM_ERROR",
+  }, 503, req);
+}
+
+/** Client do catálogo externo. CT-77: extraído para o seam de teste aceitar um
+ * client injetado; `null` = secrets ausentes → 503 CATALOG_NOT_CONFIGURED. */
+function createExternalCatalogClient(url: string | undefined, key: string | undefined): SupabaseClient | null {
+  if (!url || !key) return null;
+  return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+}
+
+/**
+ * CT-77 — seam de injeção para os testes Deno. Em produção `deps` não é
+ * passado e os dois clientes continuam sendo criados como antes (o handler
+ * segue recebendo só `req`); os testes passam clientes falsos para exercitar
+ * as 6 ações sem tocar no banco nem nos secrets.
+ */
+export interface CatalogHandlerDeps {
+  /** Substitui o client autenticado (auth.getUser) usado só para validar o JWT. */
+  localClient?: SupabaseClient;
+  /** Substitui o client do catálogo externo (PROMOGIFTS_*). */
+  extClient?: SupabaseClient;
+}
+
+export async function promogiftsCatalogHandler(
+  req: Request,
+  deps: CatalogHandlerDeps = {},
+): Promise<Response> {
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+
+  const log = new Logger("promogifts-catalog");
+
+  try {
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return jsonRes({ error: "Unauthorized" }, 401, req);
+    }
+
+    const localClient = deps.localClient ?? createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const { data: userData, error: userErr } = await localClient.auth.getUser();
+    if (userErr || !userData?.user) {
+      return jsonRes({ error: "Unauthorized" }, 401, req);
+    }
+
+    // CT-19 — a cota é POR AÇÃO (list_products 120/min; demais 60/min), então a
+    // ação precisa ser conhecida ANTES de checar o limite. O corpo é lido e
+    // validado aqui (antes era lido só depois do 503 de configuração) e a cota
+    // só é cobrada em seguida — daí a inversão da ordem antiga, que checava o
+    // teto fixo de 60/min antes de saber qual ação estava sendo chamada.
+    // Corpo inválido/malformado continua consumindo cota (agora no teto global
+    // RATE_LIMIT, como fallback) e devolve o mesmo 400/500 de antes.
+    let action: CatalogAction | null = null;
+    let params: Record<string, unknown> = {};
+    let bodyResponse: Response | null = null;
+
+    try {
+      const bodyParse = ActionSchema.safeParse(await req.json());
+      if (bodyParse.success) {
+        action = bodyParse.data.action;
+        params = bodyParse.data.params;
+      } else {
+        bodyResponse = jsonRes({ error: "Invalid request", details: bodyParse.error.flatten().fieldErrors }, 400, req);
+      }
+    } catch (err) {
+      log.error("Error", { error: err instanceof Error ? err.message : String(err) });
+      bodyResponse = jsonRes({ error: "Internal catalog error", code: "CATALOG_INTERNAL_ERROR" }, 500, req);
+    }
+
+    if (!(await checkRateLimit(localClient, userData.user.id, action, log))) {
+      return jsonRes({ error: "Too many requests. Try again in 1 minute." }, 429, req);
+    }
+
+    const extUrl = Deno.env.get("PROMOGIFTS_SUPABASE_URL");
+    // Catalog tables deliberately deny the external anon role. This function
+    // is already protected by the canonical user's JWT, rate-limited and
+    // read-only, so the cross-project credential belongs only in Edge secrets.
+    const extKey = Deno.env.get("PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY");
+    // CT-77 — quando o client externo é injetado (testes), os secrets deixam de
+    // ser exigidos; sem injeção o caminho abaixo é idêntico ao de produção.
+    const extClient = deps.extClient ?? createExternalCatalogClient(extUrl, extKey);
+    if (!extClient) {
+      return jsonRes({
+        error: "External DB not configured",
+        code: "CATALOG_NOT_CONFIGURED",
+      }, 503, req);
+    }
+
+    // CT-19 — o corpo já foi lido/validado acima (antes do rate limit, para a
+    // cota ser por ação). Requisição sem ação conhecida: devolve o 400 de
+    // schema ou o 500 de JSON malformado, depois do 503 de configuração, para
+    // não alterar o comportamento de ambiente sem secrets.
+    if (action === null || bodyResponse) {
+      return bodyResponse ?? jsonRes({ error: "Invalid request" }, 400, req);
+    }
+    const startTime = performance.now();
+
+    if (action === "list_products") {
+      const paramsParse = ListProductsSchema.safeParse(params);
+      if (!paramsParse.success) {
+        return jsonRes({ error: "Invalid parameters", details: paramsParse.error.flatten().fieldErrors }, 400, req);
+      }
+      const {
+        search, category_id, supplier_id, limit, offset, order_by, ascending, only_active, only_in_stock, compact,
+        is_featured, is_new, is_bestseller, is_kit, allows_personalization, low_stock,
+        price_min, price_max, color, material, has_engraving,
+      } = paramsParse.data;
+
+      // Categoria + descendentes: path e um caminho materializado por
+      // uuid ("/pai/filho/"); o proprio id ja e prefixo do path dos filhos.
+      // Resolvido uma unica vez antes de montar a query, pra reusar o mesmo
+      // filtro na consulta paginada e na contagem de fallback do PGRST103
+      // abaixo, sem repetir a subconsulta de categorias.
+      let categoryIds: string[] | null = null;
+      if (category_id) {
+        const { data: cat } = await extClient.from("categories").select("path").eq("id", category_id).maybeSingle();
+        if (cat?.path) {
+          const { data: descendants } = await extClient.from("categories").select("id").like("path", `${cat.path}%`);
+          categoryIds = (descendants || []).map((d: { id: string }) => d.id);
+        }
+      }
+
+      const buildProductsQuery = (selectExpr: string, headOnly = false) => {
+        let q = extClient.from("products").select(selectExpr, { count: "exact", head: headOnly });
+        if (only_active) q = q.eq("is_active", true);
+        if (only_in_stock) q = q.eq("is_stockout", false);
+        if (supplier_id) q = q.eq("supplier_id", supplier_id);
+        if (category_id) {
+          q = categoryIds && categoryIds.length > 0 ? q.in("category_id", categoryIds) : q.eq("category_id", category_id);
+        }
+        if (is_featured) q = q.eq("is_featured", true);
+        if (is_new) q = q.eq("is_new", true);
+        if (is_bestseller) q = q.eq("is_bestseller", true);
+        if (is_kit) q = q.eq("is_kit", true);
+        if (allows_personalization) q = q.eq("allows_personalization", true);
+        if (low_stock) q = q.gte("stock_quantity", 1).lte("stock_quantity", 10);
+        if (price_min != null) q = q.gte("sale_price", price_min);
+        if (price_max != null) q = q.lte("sale_price", price_max);
+        if (has_engraving) q = q.not("engraving_type", "is", null);
+        if (color) {
+          const orExpr = buildTagOrExpr("colors", Array.isArray(color) ? color : [color]);
+          if (orExpr) q = q.or(orExpr);
+        }
+        if (material) {
+          const orExpr = buildTagOrExpr("materials", Array.isArray(material) ? material : [material]);
+          if (orExpr) q = q.or(orExpr);
+        }
+        if (search) {
+          // FTS real (search_vector, 100% preenchido — trigger BEFORE INSERT
+          // OR UPDATE garante isso sempre; sem fallback ilike necessário).
+          // unaccent() aplicado ao termo pra casar com o vetor (o gatilho
+          // tambem aplica unaccent() antes do to_tsvector).
+          const safe = sanitizeFtsQuery(search);
+          if (safe.length > 0) {
+            q = q.textSearch("search_vector", stripDiacritics(safe), { type: "websearch", config: "portuguese" });
+          }
+        }
+        return q;
+      };
+
+      // NOTA: "relevance" (ordenar por ts_rank_cd) exigiria uma RPC dedicada
+      // no banco externo — o PostgREST não ordena por rank num select comum.
+      // Fora do escopo desta etapa; order_by continua nas colunas reais.
+      // OTH-004 (#53): ordenação estável. A chave pedida continua primária e
+      // `id` ASC entra como desempate único (ver buildProductOrderClauses);
+      // sem ele o `.range()` omite/repite produtos empatados entre páginas.
+      let listQuery = buildProductsQuery((compact ? PRODUCT_FIELDS_COMPACT : PRODUCT_FIELDS) as string);
+      for (const clausula of buildProductOrderClauses(order_by, ascending)) {
+        listQuery = listQuery.order(clausula.column, { ascending: clausula.ascending });
+      }
+      const query = listQuery.range(offset, offset + limit - 1);
+
+      const { data, error, count } = await query;
+      if (error) {
+        if (error.code === "PGRST103") {
+          // offset alem do total de linhas que o filtro atual retorna (pagina
+          // que ja nao existe, ou o filtro reduziu o resultado pra menos que
+          // offset+limit). O PostgREST responde com erro de range em vez de
+          // uma pagina vazia -- sem este tratamento cai no 503 generico de
+          // externalDatabaseErrorResponse logo abaixo, mesmo o catalogo
+          // estando saudavel. Refaz como contagem-only (head, sem range) pra
+          // devolver o total real numa pagina vazia com 200.
+          const { count: total } = await buildProductsQuery("id", true);
+          const duration = Math.round(performance.now() - startTime);
+          return jsonRes({ data: [], meta: { total: total ?? 0, duration_ms: duration } }, 200, req);
+        }
+        return externalDatabaseErrorResponse(error, req, log);
+      }
+      const duration = Math.round(performance.now() - startTime);
+      return jsonRes({ data, meta: { total: count, duration_ms: duration } }, 200, req);
+    }
+
+    if (action === "get_product") {
+      const paramsParse = GetProductSchema.safeParse(params);
+      if (!paramsParse.success) {
+        return jsonRes({ error: "Invalid parameters", details: paramsParse.error.flatten().fieldErrors }, 400, req);
+      }
+      const { product_id } = paramsParse.data;
+      const { data: product, error: productErr } = await extClient
+        .from("products").select(PRODUCT_FIELDS).eq("id", product_id).maybeSingle();
+      if (productErr) return externalDatabaseErrorResponse(productErr, req, log);
+      if (!product) return jsonRes({ error: "Product not found" }, 404, req);
+
+      const { data: variants, error: varErr } = await extClient
+        .from("product_variants").select("*").eq("product_id", product_id).eq("is_active", true).order("color_name");
+      if (varErr) return externalDatabaseErrorResponse(varErr, req, log);
+
+      const duration = Math.round(performance.now() - startTime);
+      return jsonRes({ data: { ...product, variants: variants || [] }, meta: { duration_ms: duration } }, 200, req);
+    }
+
+    // E25 selects reusados pelas ações list_categories/list_suppliers e
+    // pelo bootstrap (E26), pra nao duplicar a string de campos.
+    const CATEGORY_FIELDS = "id, name, slug, parent_id, level, path, full_path_readable, icon, color_hex, image_url, products_count, display_order";
+    const SUPPLIER_FIELDS = "id, name, trading_name, logo_url, is_product_supplier, low_stock_threshold";
+
+    if (action === "list_categories") {
+      const { data, error } = await extClient
+        .from("categories")
+        .select(CATEGORY_FIELDS)
+        .eq("is_active", true)
+        .is("deleted_at", null)
+        .order("display_order", { ascending: true })
+        .order("name", { ascending: true });
+      if (error) return externalDatabaseErrorResponse(error, req, log);
+      return jsonRes({ data }, 200, req);
+    }
+
+    if (action === "list_suppliers") {
+      const { data, error } = await extClient
+        .from("suppliers")
+        .select(SUPPLIER_FIELDS)
+        .eq("active", true)
+        .order("name", { ascending: true });
+      if (error) return externalDatabaseErrorResponse(error, req, log);
+      return jsonRes({ data }, 200, req);
+    }
+
+    if (action === "bootstrap") {
+      // E26: categorias + fornecedores + stats numa chamada só (reduz de
+      // 4 pra 2 chamadas por abertura da tela, junto com list_products).
+      if (catalogStatsCache && catalogStatsCache.expiresAt > Date.now()) {
+        const [{ data: categories, error: catErr }, { data: suppliers, error: supErr }] = await Promise.all([
+          extClient.from("categories").select(CATEGORY_FIELDS).eq("is_active", true).is("deleted_at", null)
+            .order("display_order", { ascending: true }).order("name", { ascending: true }),
+          extClient.from("suppliers").select(SUPPLIER_FIELDS).eq("active", true).order("name", { ascending: true }),
+        ]);
+        if (catErr) return externalDatabaseErrorResponse(catErr, req, log);
+        if (supErr) return externalDatabaseErrorResponse(supErr, req, log);
+        return jsonRes({ data: { categories, suppliers, stats: catalogStatsCache.data }, meta: { cached: true } }, 200, req);
+      }
+      const [{ data: categories, error: catErr }, { data: suppliers, error: supErr }, { data: stats, error: statsErr }] = await Promise.all([
+        extClient.from("categories").select(CATEGORY_FIELDS).eq("is_active", true).is("deleted_at", null)
+          .order("display_order", { ascending: true }).order("name", { ascending: true }),
+        extClient.from("suppliers").select(SUPPLIER_FIELDS).eq("active", true).order("name", { ascending: true }),
+        extClient.rpc("zapp_catalog_stats"),
+      ]);
+      if (catErr) return externalDatabaseErrorResponse(catErr, req, log);
+      if (supErr) return externalDatabaseErrorResponse(supErr, req, log);
+      if (statsErr) return externalDatabaseErrorResponse(statsErr, req, log);
+      catalogStatsCache = { data: stats, expiresAt: Date.now() + CATALOG_STATS_TTL_MS };
+      return jsonRes({ data: { categories, suppliers, stats }, meta: { cached: false } }, 200, req);
+    }
+
+    if (action === "catalog_stats") {
+      if (catalogStatsCache && catalogStatsCache.expiresAt > Date.now()) {
+        return jsonRes({ data: catalogStatsCache.data, meta: { cached: true } }, 200, req);
+      }
+      const { data, error } = await extClient.rpc("zapp_catalog_stats");
+      if (error) return externalDatabaseErrorResponse(error, req, log);
+      catalogStatsCache = { data, expiresAt: Date.now() + CATALOG_STATS_TTL_MS };
+      return jsonRes({ data, meta: { cached: false } }, 200, req);
+    }
+
+    return jsonRes({ error: "Invalid action" }, 400, req);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    log.error("Error", { error: msg });
+    return jsonRes({ error: "Internal catalog error", code: "CATALOG_INTERNAL_ERROR" }, 500, req);
+  }
+}
+
+// O handler aceita um 2º parâmetro opcional de injeção (CT-77); o wrapper
+// explícito evita que Deno.serve passe ServeHandlerInfo no lugar de `deps`.
+if (import.meta.main) Deno.serve((req) => promogiftsCatalogHandler(req));

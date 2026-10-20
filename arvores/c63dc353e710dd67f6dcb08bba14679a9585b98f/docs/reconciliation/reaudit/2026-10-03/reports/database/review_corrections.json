@@ -1,0 +1,12 @@
+{
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "corrections": [
+    {
+      "function": "public.sanitize_reset_request()",
+      "previous_note": "Corpo integral: trigger de INSERT exige auth.uid e substitui user_id, status e campos de revisão/token antes de persistir. Não se atribui esse saneamento a UPDATE administrativo.",
+      "corrected_note": "Corpo integral corrigido após cruzamento DDL: somente se auth.uid() não NULL, limpa reset_token/token_expires_at/reviewed_by/reviewed_at/rejection_reason/status; não exige UID nem sobrescreve user_id. reset_token foi removido posteriormente, mas o trigger permanece, causando campo inexistente no INSERT autenticado. Candidato confirmado com consumidor ForgotPassword e separado de AUTH006/007; nenhum SQL executado.",
+      "reason": "Releitura do corpo após seguir DROP COLUMN na passagem de DDL; a nota anterior superestimava o saneamento e não cruzava o rowtype final.",
+      "runtime_tested": false
+    }
+  ]
+}

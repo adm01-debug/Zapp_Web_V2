@@ -1,0 +1,55 @@
+{
+  "estadoPos429": {
+    "erroTitulo": true,
+    "causa429": true,
+    "pausaTexto": null,
+    "retryButton": 1,
+    "opcoesNaLista": 0
+  },
+  "estadoAposClicarRetry": {
+    "erroTitulo": false,
+    "causa429": false,
+    "pausaTexto": "Sugestões pausadas por 57 s — a busca por Enter continua funcionando.",
+    "retryButton": 0,
+    "opcoesNaLista": 0
+  },
+  "suggestRequestsAposRetryDuranteBackoff": 1,
+  "suggestRequestsAntesDoRetry": 1,
+  "contador": [
+    {
+      "t": "+0s",
+      "pausaTexto": "Sugestões pausadas por 57 s — a busca por Enter continua funcionando.",
+      "retryButton": 0,
+      "suggestRequests": 1
+    },
+    {
+      "t": "+20s",
+      "pausaTexto": "Sugestões pausadas por 37 s — a busca por Enter continua funcionando.",
+      "retryButton": 0,
+      "suggestRequests": 1
+    },
+    {
+      "t": "+42s",
+      "pausaTexto": "Sugestões pausadas por 15 s — a busca por Enter continua funcionando.",
+      "retryButton": 0,
+      "suggestRequests": 1
+    },
+    {
+      "t": "+63s",
+      "pausaTexto": "Sugestões pausadas por 0 s — a busca por Enter continua funcionando.",
+      "retryButton": 0,
+      "suggestRequests": 1
+    },
+    {
+      "t": "+75s",
+      "pausaTexto": "Sugestões pausadas por 0 s — a busca por Enter continua funcionando.",
+      "retryButton": 0,
+      "suggestRequests": 1
+    }
+  ],
+  "voltaAoDigitar": {
+    "pausa": null,
+    "suggestRequests": 2
+  },
+  "totalSuggestRequests": 2
+}
