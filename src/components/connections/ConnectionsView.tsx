@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { motion, StaggeredList, StaggeredItem } from '@/components/ui/motion';
+import { useReducedMotion } from 'framer-motion';
 import { FloatingParticles } from '@/components/dashboard/FloatingParticles';
 import { AuroraBorealis } from '@/components/effects/AuroraBorealis';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -28,6 +29,7 @@ import { useConnectionsManager } from '@/hooks/inbox/useConnectionsManager';
 const MULTI_CONNECTION_LOCKED_MESSAGE = 'Múltiplas conexões ainda não estão habilitadas neste sistema';
 
 export function ConnectionsView() {
+  const reduzido = useReducedMotion() ?? false;
   const {
     connections, loading,
     isAddDialogOpen, setIsAddDialogOpen,
@@ -106,7 +108,7 @@ export function ConnectionsView() {
 
   return (
     <div className="space-y-6 relative bg-background w-full min-w-0">
-      <AuroraBorealis /><FloatingParticles />
+      {!reduzido && <AuroraBorealis />} {!reduzido && <FloatingParticles />}
       
       <PageHeader title="Conexões WhatsApp" subtitle="Gerencie múltiplas conexões WhatsApp via Evolution API"
         breadcrumbs={[{ label: 'Configurações' }, { label: 'Conexões' }]}

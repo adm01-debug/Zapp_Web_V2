@@ -258,6 +258,14 @@ jobs:
           # Fail-closed: versao sem contrato aborta com exit 2 -- nunca vira "nada a verificar".
           RUNTIME=$(node scripts/db-audit/run-runtime-contract.mjs "$TARGET_VERSION")
           printf '%s\n' "$RUNTIME"
+          # W28/E64: a prova reutilizável valida o mesmo payload e produz o
+          # hash composto (runtime + arquivo + commit), evitando que o apply
+          # dependa apenas de uma cópia inline da regra.
+          CONFIRMATION_HASH="$(RUNTIME_JSON="$RUNTIME" node scripts/db-audit/validate-runtime-proof.mjs)"
+          if [ "$APPLY" = "true" ] && [ "$CONFIRMATION_HASH" != "$CONFIRM_RUNTIME_SHA256" ]; then
+            echo "::error::Confirmacao recusada pelo validador externo; runtime, arquivo ou commit mudaram."
+            exit 1
+          fi
           RUNTIME_JSON="$RUNTIME" node --input-type=module <<'NODE'
           const proof = JSON.parse(process.env.RUNTIME_JSON);
           const common = proof.server_major === 17
