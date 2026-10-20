@@ -1,0 +1,16 @@
+PROJETO=Zapp_Web_V2
+SLUG=apagar-mensagem-rpc-preserva-texto
+ID=26101304039317
+BRANCH=v2/apagar-mensagem-rpc-preserva-texto-26101304039317
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/apagar-mensagem-rpc-preserva-texto-26101304039317
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-13T04:03:28-03:00
+KANBAN=t_cfa99af7
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/apagar-mensagem-rpc-preserva-texto-26101304039317/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-13
+DB_LOCAL=v2-26101304039317
+APLICADA_LOCAL=20261013230001_delete_message_rpc.sql sha=5f487c6fbf2d68cd
+PRONTO_SHA=59d554b0fa0deada00f84d14be606b5691bc7fc5

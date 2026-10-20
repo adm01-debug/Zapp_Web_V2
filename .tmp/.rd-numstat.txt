@@ -1,0 +1,2 @@
+101	0	supabase/migrations/20261013230001_delete_message_rpc.sql
+421	0	supabase/tests/delete_message_rpc.sql
