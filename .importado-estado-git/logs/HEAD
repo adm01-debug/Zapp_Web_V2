@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 d723a9010796f1ea4aea5270d881da2974328ba4 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792115150 -0300	
+d723a9010796f1ea4aea5270d881da2974328ba4 d723a9010796f1ea4aea5270d881da2974328ba4 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792115152 -0300	reset: moving to HEAD
+d723a9010796f1ea4aea5270d881da2974328ba4 06c6b8cd6073b36f4f00f21d43a2b081c006b3bd Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792117178 -0300	commit: fix(inbox): voz do Voice Changer sobe no bucket privado do audio gravado
+06c6b8cd6073b36f4f00f21d43a2b081c006b3bd 2645dc37fda158cc3bc1bf7c73b9aef8d9b56584 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792117898 -0300	commit: test(banco): prova da policy do audio do Voice Changer no bucket privado
+2645dc37fda158cc3bc1bf7c73b9aef8d9b56584 d723a9010796f1ea4aea5270d881da2974328ba4 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792117943 -0300	reset: moving to HEAD~2
+d723a9010796f1ea4aea5270d881da2974328ba4 39cefad7eb16eaeaf8eb8f7b713baaf3b73c6ad2 Hermes Semisenior <hermes-semisenior@promobrindes.local> 1792117943 -0300	commit: fix(inbox): voz do Voice Changer sobe no bucket privado do audio gravado

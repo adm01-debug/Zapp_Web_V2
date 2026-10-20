@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=audio-voz-bucket-privado
+ID=26101522455c4c
+BRANCH=v2/audio-voz-bucket-privado-26101522455c4c
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-voz-bucket-privado-26101522455c4c
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-15T22:45:52-03:00
+KANBAN=t_6c5eb46e
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-voz-bucket-privado-26101522455c4c/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-15
+DB_LOCAL=v2-26101522455c4c
+PRONTO_SHA=39cefad7eb16eaeaf8eb8f7b713baaf3b73c6ad2

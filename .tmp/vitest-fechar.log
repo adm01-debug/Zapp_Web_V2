@@ -1,0 +1,10 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-voz-bucket-privado-26101522455c4c
+
+·························
+
+ Test Files  5 passed (5)
+      Tests  25 passed (25)
+   Start at  23:34:31
+   Duration  4.43s (transform 1.52s, setup 1.33s, import 3.19s, tests 3.10s, environment 4.61s)
+

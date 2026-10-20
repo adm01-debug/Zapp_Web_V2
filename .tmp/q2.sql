@@ -1,0 +1,1 @@
+select string_agg(column_name||case when is_nullable='NO' then ' NOTNULL' else '' end||coalesce(' default:'||left(column_default,25),''), ' | ') from information_schema.columns where table_schema='public' and table_name='profiles'; select count(*) from auth.instances; select id from auth.instances limit 1;

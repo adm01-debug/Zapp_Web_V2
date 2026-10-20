@@ -1,0 +1,1 @@
+select count(*) from public.contacts; select count(*) from public.profiles; select string_agg(column_name||coalesce(' d:'||column_default,'')||case when is_nullable='NO' then ' NOTNULL' end, ' | ') from information_schema.columns where table_schema='public' and table_name='contacts' and is_nullable='NO';

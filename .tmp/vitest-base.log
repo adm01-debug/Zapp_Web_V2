@@ -1,0 +1,993 @@
+
+ RUN  v4.1.11 /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audio-voz-bucket-privado-26101522455c4c/.tmp/prova-base
+
+····xxx·xx······xxxxx····
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/inbox/__tests__/VoiceChangerPicker.preview-send.test.tsx > VoiceChangerPicker — prévia preservada quando o envio falha (#350) > entrega o áudio transformado como Blob e não toca em bucket nenhum
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ src/components/inbox/__tests__/VoiceChangerPicker.preview-send.test.tsx:217:29
+    215|     });
+    216|
+    217|     expect(onSendAudioBlob).toHaveBeenCalledTimes(1);
+       |                             ^
+    218|     const blob = onSendAudioBlob.mock.calls[0][0] as Blob;
+    219|     expect(blob).toBeInstanceOf(Blob);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  src/components/inbox/__tests__/VoiceChangerPicker.preview-send.test.tsx > VoiceChangerPicker — prévia preservada quando o envio falha (#350) > mantém popover aberto, toast de erro e prévia para retry quando onSendAudioBlob rejeita
+AssertionError: expected "vi.fn()" to be called with arguments: [ Any<Blob> ]
+
+Number of calls: 0
+
+ ❯ src/components/inbox/__tests__/VoiceChangerPicker.preview-send.test.tsx:236:29
+    234|     });
+    235|
+    236|     expect(onSendAudioBlob).toHaveBeenCalledWith(expect.any(Blob));
+       |                             ^
+    237|     // O popover continua aberto...
+    238|     expect(popoverState.open).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  src/components/inbox/__tests__/VoiceChangerPicker.preview-send.test.tsx > VoiceChangerPicker — prévia preservada quando o envio falha (#350) > trata devolver `false` (contrato do caminho do áudio gravado) como falha
+AssertionError: expected "vi.fn()" to be called with arguments: [ Any<Blob> ]
+
+Number of calls: 0
+
+ ❯ src/components/inbox/__tests__/VoiceChangerPicker.preview-send.test.tsx:255:29
+    253|     });
+    254|
+    255|     expect(onSendAudioBlob).toHaveBeenCalledWith(expect.any(Blob));
+       |                             ^
+    256|     expect(popoverState.open).toBe(true);
+    257|     expect(screen.getByText('Enviar')).toBeInTheDocument();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  src/components/inbox/__tests__/VoiceChangerPicker.preview-send.test.tsx > VoiceChangerPicker — prévia preservada quando o envio falha (#350) > só fecha o popover e limpa a prévia DEPOIS de o envio assíncrono resolver
+AssertionError: expected "vi.fn()" to be called with arguments: [ Any<Blob> ]
+
+Number of calls: 0
+
+ ❯ src/components/inbox/__tests__/VoiceChangerPicker.preview-send.test.tsx:294:29
+    292|
+    293|     // Envio pendente: nada foi fechado nem limpo ainda.
+    294|     expect(onSendAudioBlob).toHaveBeenCalledWith(expect.any(Blob));
+       |                             ^
+    295|     expect(popoverState.open).toBe(true);
+    296|     expect(screen.getByText('Enviar')).toBeInTheDocument();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  src/components/inbox/__tests__/VoiceChangerPicker.preview-send.test.tsx > VoiceChangerPicker — prévia preservada quando o envio falha (#350) > aceita onSendAudioBlob síncrono (void) e fecha o popover no sucesso
+AssertionError: expected "vi.fn()" to be called with arguments: [ Any<Blob> ]
+
+Number of calls: 0
+
+ ❯ src/components/inbox/__tests__/VoiceChangerPicker.preview-send.test.tsx:316:29
+    314|     });
+    315|
+    316|     expect(onSendAudioBlob).toHaveBeenCalledWith(expect.any(Blob));
+       |                             ^
+    317|     expect(popoverState.open).toBe(false);
+    318|     expect(screen.queryByText('Enviar')).not.toBeInTheDocument();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  src/components/inbox/__tests__/VoiceChangerPicker.preview-send.test.tsx > VoiceChangerPicker — fiação do envio privado e guard do caminho antigo > inbox: VoiceChangerPicker recebe o caminho do áudio gravado (onAudioSend)
+AssertionError: expected 'import { useMemo } from \'react\';\ni…' to match /<VoiceChangerPicker onSendAudioBlob=…/>
+
+- Expected:
+/<VoiceChangerPicker onSendAudioBlob=\{onAudioSend\} \/>/
+
++ Received:
+"import { useMemo } from 'react';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { AIRewriteButton } from './AIRewriteButton';
+import { RichTextToggle } from './RichTextToolbar';
+import { StickerPicker } from '../StickerPicker';
+import { AudioMemePicker } from '../AudioMemePicker';
+import { VoiceChangerPicker } from '../VoiceChangerPicker';
+import { VoiceDictationButton } from '@/components/mobile/VoiceDictationButton';
+import { TextToAudioButton } from '../TextToAudioButton';
+import { AISuggestions } from '../AISuggestions';
+import { MessageTemplates } from '../MessageTemplates';
+import { AdvancedMessageMenu } from '../AdvancedMessageMenu';
+import { ExternalProductCatalog } from '@/components/catalog/ExternalProductCatalog';
+import type { ContactResult } from '@/components/catalog/useSendProduct';
+import { Message } from '@/types/chat';
+import { Package, Layers, MapPin, Clock, Zap, PenTool, Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+type QuickReplyItem = { id: string; title: string; shortcut: string; content: string; category: string };
+
+interface SecondaryToolbarProps {
+  inputRef: React.RefObject<HTMLTextAreaElement | null>;
+  inputValue: string;
+  showRichToolbar: boolean;
+  onToggleRichToolbar: () => void;
+  isRecordingAudio: boolean;
+  onSendSticker: (url: string) => void;
+  /** Pode ser assíncrono e falhar por rejeição: o VoiceChangerPicker usa isso
+      para só descartar a prévia da voz transformada depois do sucesso (#350). */
+  onSendAudioMeme: (url: string) => void | Promise<void>;
+  onOpenCatalog?: () => void;
+  onAudioSend: (blob: Blob) => void;
+  contactName?: string;
+  onVoiceDictation: (text: string) => void;
+}
+
+/** Ferramentas secundárias — vivem dentro do popover \"⋯ Mais\" (fase 3, redesign
+    carvão). FileUploader e CustomEmojiPicker saíram daqui: viraram ícones fixos
+    na linha do input (ver ChatInputArea) para não duplicar o input de arquivo. */
+export function SecondaryToolbar({
+  inputRef, inputValue, showRichToolbar, onToggleRichToolbar, isRecordingAudio,
+  onSendSticker, onSendAudioMeme, onOpenCatalog, onAudioSend,
+  contactName, onVoiceDictation,
+}: SecondaryToolbarProps) {
+  const handleRewrite = (newText: string) => {
+    const el = inputRef.current;
+    if (!el) return;
+    const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value')?.set;
+    if (nativeSetter) {
+      nativeSetter.call(el, newText);
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  };
+
+  return (
+    <div className=\"flex items-center gap-0.5 shrink-0 flex-wrap\">
+      <AIRewriteButton inputValue={inputValue} onRewrite={handleRewrite} contactName={contactName} />
+      <StickerPicker onSendSticker={onSendSticker} />
+      <AudioMemePicker onSendAudio={onSendAudioMeme} />
+      <VoiceChangerPicker onSendAudio={onSendAudioMeme} />
+      {onOpenCatalog && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant=\"ghost\"
+              size=\"icon\"
+              className=\"w-8 h-8 text-muted-foreground hover:text-primary transition-colors\"
+              onClick={onOpenCatalog}
+              aria-label=\"Catálogo de produtos\"
+            >
+              <Package className=\"w-4 h-4\" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side=\"top\">Catálogo de Produtos</TooltipContent>
+        </Tooltip>
+      )}
+      <RichTextToggle active={showRichToolbar} onToggle={onToggleRichToolbar} />
+      <VoiceDictationButton onTranscript={onVoiceDictation} disabled={isRecordingAudio} />
+      <TextToAudioButton inputValue={inputValue} onAudioReady={onAudioSend} />
+    </div>
+  );
+}
+
+interface TertiaryToolsMenuProps {
+  contactId: string;
+  instanceName?: string;
+  contactPhone: string;
+  contactName: string;
+  messages: Message[];
+  quickReplies: QuickReplyItem[];
+  onOpenInteractiveBuilder: () => void;
+  onOpenLocationPicker: () => void;
+  onOpenSchedule: () => void;
+  onSelectSuggestion: (text: string) => void;
+  onSelectTemplate: (text: string) => void;
+  onQuickReply: (reply: QuickReplyItem) => void;
+  signatureEnabled?: boolean;
+  signatureName?: string;
+  onToggleSignature?: () => void;
+  onPollSent?: (poll: { name: string; options: string[]; selectableCount: number }) => void;
+  onContactSent?: (contactName: string) => void;
+}
+
+export function TertiaryToolsMenu({
+  contactId, instanceName, contactPhone, contactName, messages, quickReplies,
+  onOpenInteractiveBuilder, onOpenLocationPicker, onOpenSchedule,
+  onSelectSuggestion, onSelectTemplate, onQuickReply,
+  signatureEnabled, signatureName, onToggleSignature, onPollSent, onContactSent,
+}: TertiaryToolsMenuProps) {
+  // CT-14 — o catálogo do chat envia pelo SendProductDialog com o contato da conversa.
+  const presetContact = useMemo<ContactResult | null>(
+    () => (contactId ? { id: contactId, name: contactName, phone: contactPhone, avatar_url: null } : null),
+    [contactId, contactName, contactPhone],
+  );
+  const quickRepliesList = useMemo(() => (
+    quickReplies.slice(0, 50).map((reply) => (
+      <Button
+        key={reply.id}
+        variant=\"ghost\"
+        size=\"sm\"
+        className=\"justify-start gap-2 text-xs w-full text-muted-foreground hover:text-foreground\"
+        onClick={() => onQuickReply(reply)}
+      >
+        <Zap className=\"w-3.5 h-3.5 text-primary shrink-0\" />
+        <span className=\"font-mono text-primary/80\">/{reply.shortcut}</span>
+        <span className=\"truncate\">{reply.content}</span>
+      </Button>
+    ))
+  ), [quickReplies, onQuickReply]);
+
+  return (
+    <div className=\"flex flex-col gap-1\">
+      <Button variant=\"ghost\" size=\"sm\" className=\"justify-start gap-2 text-muted-foreground hover:text-foreground\" onClick={onOpenInteractiveBuilder} aria-label=\"Mensagem interativa\">
+        <Layers className=\"w-4 h-4\" /> Mensagem Interativa
+      </Button>
+      <Button variant=\"ghost\" size=\"sm\" className=\"justify-start gap-2 text-muted-foreground hover:text-foreground\" onClick={onOpenLocationPicker} aria-label=\"Enviar localização\">
+        <MapPin className=\"w-4 h-4\" /> Localização
+      </Button>
+      <Button variant=\"ghost\" size=\"sm\" className=\"justify-start gap-2 text-muted-foreground hover:text-foreground\" onClick={onOpenSchedule} aria-label=\"Agendar mensagem\">
+        <Clock className=\"w-4 h-4\" /> Agendar
+      </Button>
+      <ExternalProductCatalog
+        presetContact={presetContact}
+        trigger={
+          <Button variant=\"ghost\" size=\"sm\" className=\"justify-start gap-2 text-muted-foreground hover:text-foreground w-full\" aria-label=\"Catálogo de produtos\">
+            <Package className=\"w-4 h-4\" /> Catálogo
+          </Button>
+        }
+      />
+      <AdvancedMessageMenu contactId={contactId} instanceName={instanceName || ''} recipientNumber={contactPhone} onPollSent={onPollSent} onContactSent={onContactSent} />
+      <AISuggestions
+        messages={messages.map(m => ({ id: m.id, content: m.content, sender: m.sender, timestamp: m.timestamp }))}
+        contactName={contactName}
+        onSelectSuggestion={onSelectSuggestion}
+      />
+      <MessageTemplates onSelectTemplate={onSelectTemplate} />
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button variant=\"ghost\" size=\"sm\" className=\"justify-start gap-2 text-muted-foreground hover:text-foreground w-full\" aria-label=\"Respostas rápidas\">
+            <Zap className=\"w-4 h-4\" /> Respostas Rápidas
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className=\"w-72 p-0 bg-popover border-border\" align=\"start\" side=\"top\">
+          <div className=\"p-3 border-b border-border\">
+            <h4 className=\"font-medium text-sm text-foreground\">Respostas Rápidas</h4>
+          </div>
+          <div className=\"max-h-64 overflow-y-auto p-2 space-y-1\">{quickRepliesList}</div>
+        </PopoverContent>
+      </Popover>
+      {onToggleSignature && (
+        <>
+          <div className=\"border-t border-border/50 my-1\" />
+          <Button
+            variant=\"ghost\"
+            size=\"sm\"
+            className={cn(\"justify-start gap-2 w-full\", signatureEnabled ? \"text-primary hover:text-primary\" : \"text-muted-foreground hover:text-foreground\")}
+            onClick={onToggleSignature}
+            aria-label={signatureEnabled ? \"Desativar assinatura\" : \"Ativar assinatura\"}
+          >
+            <PenTool className=\"w-4 h-4\" />
+            {signatureEnabled ? `Assinatura: ${signatureName || 'Ativa'}` : 'Assinar mensagens'}
+            {signatureEnabled && <Check className=\"w-3.5 h-3.5 ml-auto\" />}
+          </Button>
+        </>
+      )}
+    </div>
+  );
+}
+"
+
+ ❯ src/components/inbox/__tests__/VoiceChangerPicker.preview-send.test.tsx:336:19
+    334|   ])('%s: VoiceChangerPicker recebe o caminho do áudio gravado (onAudi…
+    335|     const fonte = ler(arquivo);
+    336|     expect(fonte).toMatch(/<VoiceChangerPicker onSendAudioBlob=\{onAud…
+       |                   ^
+    337|     // O meme continua no handler dele — o áudio do cliente não volta …
+    338|     expect(fonte).toMatch(/<AudioMemePicker onSendAudio=\{onSendAudioM…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  src/components/inbox/__tests__/VoiceChangerPicker.preview-send.test.tsx > VoiceChangerPicker — fiação do envio privado e guard do caminho antigo > chat interno: VoiceChangerPicker recebe o caminho do áudio gravado (onAudioSend)
+AssertionError: expected 'import { useRef, useState, useCallbac…' to match /<VoiceChangerPicker onSendAudioBlob=…/>
+
+- Expected:
+/<VoiceChangerPicker onSendAudioBlob=\{onAudioSend\} \/>/
+
++ Received:
+"import { useRef, useState, useCallback, useEffect, useMemo } from 'react';
+import { useTeamChatDraft } from '@/hooks/chat/useTeamChatDraft';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
+import { AnimatePresence, motion } from 'framer-motion';
+import { RichTextToolbar, RichTextToggle } from '@/components/inbox/chat/RichTextToolbar';
+import { AIRewriteButton } from '@/components/inbox/chat/AIRewriteButton';
+import { TextToAudioButton } from '@/components/inbox/TextToAudioButton';
+import { MentionAutocomplete, useMentions } from '@/components/inbox/chat/MentionAutocomplete';
+import { MarkdownPreview } from '@/components/inbox/chat/MarkdownPreview';
+import { StickerPicker } from '@/components/inbox/StickerPicker';
+import { AudioMemePicker } from '@/components/inbox/AudioMemePicker';
+import { VoiceChangerPicker } from '@/components/inbox/VoiceChangerPicker';
+import { CustomEmojiPicker } from '@/components/inbox/CustomEmojiPicker';
+import { AudioRecorder } from '@/components/inbox/AudioRecorder';
+import { VoiceDictationButton } from '@/components/mobile/VoiceDictationButton';
+import { TeamFileUploader } from './TeamFileUploader';
+import { useIsMobile } from '@/hooks/ui/use-mobile';
+import { TeamMessage } from '@/hooks/chat/useTeamChat';
+import { Send, Mic, Reply, X, Loader2, Plus } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+
+interface TeamChatInputAreaProps {
+  conversationId: string;
+  text: string;
+  setText: (text: string) => void;
+  replyTo: TeamMessage | null;
+  isRecordingAudio: boolean;
+  isPending: boolean;
+  onSend: () => void;
+  onCancelReply: () => void;
+  onRecordToggle: () => void;
+  onAudioSend: (blob: Blob) => void;
+  onSendSticker: (url: string) => void;
+  onSendAudioMeme: (url: string) => void;
+  onSendCustomEmoji: (url: string) => void;
+  onFileSent: (mediaUrl: string, mediaType: string, fileName: string) => void;
+}
+
+export function TeamChatInputArea({
+  conversationId, text, setText, replyTo, isRecordingAudio, isPending,
+  onSend, onCancelReply, onRecordToggle, onAudioSend, onSendSticker,
+  onSendAudioMeme, onSendCustomEmoji, onFileSent,
+}: TeamChatInputAreaProps) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [showRichToolbar, setShowRichToolbar] = useState(false);
+  const [showMarkdownPreview, setShowMarkdownPreview] = useState(false);
+  const [sendAnimation, setSendAnimation] = useState(false);
+  const isMobile = useIsMobile();
+
+  const draft = useTeamChatDraft({ conversationId, text, setText, onFileSent });
+  const { isOpen: mentionOpen, cursorPos: mentionCursorPos, checkForMention, handleSelect: handleMentionSelect, close: closeMention } = useMentions(textareaRef);
+
+  // Auto-grow textarea
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
+  }, [text]);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendWithAnimation(); }
+  };
+
+  const handleSendWithAnimation = useCallback(() => {
+    if (!draft.hasText || draft.isOverLimit || isPending) return;
+    setSendAnimation(true);
+    draft.clearDraft();
+    if (isMobile && navigator.vibrate) navigator.vibrate(50);
+    onSend();
+    setTimeout(() => setSendAnimation(false), 400);
+  }, [draft.hasText, draft.isOverLimit, isPending, isMobile, onSend, draft.clearDraft]);
+
+  const handleVoiceDictation = useCallback((transcript: string) => {
+    setText(text ? `${text} ${transcript}` : transcript);
+    textareaRef.current?.focus();
+  }, [text, setText]);
+
+  const secondaryTools = (
+    <>
+      <AIRewriteButton inputValue={text} onRewrite={(newText) => setText(newText)} />
+      <StickerPicker onSendSticker={onSendSticker} />
+      <AudioMemePicker onSendAudio={onSendAudioMeme} />
+      <VoiceChangerPicker onSendAudio={onSendAudioMeme} />
+      <CustomEmojiPicker onSendEmoji={onSendCustomEmoji} />
+      <RichTextToggle active={showRichToolbar} onToggle={() => setShowRichToolbar(!showRichToolbar)} />
+      <VoiceDictationButton onTranscript={handleVoiceDictation} disabled={isRecordingAudio} />
+    </>
+  );
+
+  return (
+    <>
+      <AnimatePresence>
+        {replyTo && (
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className=\"px-3 pt-2 bg-card border-t border-border\">
+            <div className=\"flex items-center gap-2 p-2 rounded-lg bg-muted/50 border-l-2 border-primary\">
+              <Reply className=\"w-3.5 h-3.5 text-muted-foreground shrink-0\" />
+              <div className=\"flex-1 min-w-0\">
+                <p className=\"text-3xs font-medium text-primary\">{replyTo.sender?.name || 'Você'}</p>
+                <p className=\"text-xs text-muted-foreground truncate\">{replyTo.content || 'Mídia'}</p>
+              </div>
+              <Button size=\"icon\" variant=\"ghost\" className=\"h-5 w-5 shrink-0\" onClick={onCancelReply} aria-label=\"Cancelar resposta\"><X className=\"w-3 h-3\" /></Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <RichTextToolbar inputRef={textareaRef} inputValue={text} onInputChange={setText} visible={showRichToolbar} onToggle={() => setShowRichToolbar(!showRichToolbar)} />
+
+      <div className={cn(\"px-4 py-3 border-t border-border bg-card\", isMobile && \"px-2.5 py-2 safe-area-bottom\")}>
+        <AnimatePresence>{isRecordingAudio && <div className=\"mb-3\"><AudioRecorder onSend={onAudioSend} onCancel={() => onRecordToggle()} /></div>}</AnimatePresence>
+
+        <AnimatePresence>
+          {showMarkdownPreview && draft.hasText && showRichToolbar && (
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className=\"mb-1 px-3 py-2 border border-border/50 rounded-lg bg-muted/30 text-sm max-h-[100px] overflow-y-auto\">
+              <MarkdownPreview text={text} className=\"text-foreground leading-relaxed\" />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <div className=\"flex items-end gap-1.5\" role=\"toolbar\" aria-label=\"Barra de mensagem\">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant=\"ghost\" size=\"icon\" className={cn(\"text-muted-foreground hover:text-foreground hover:bg-muted shrink-0 touch-manipulation\", isMobile ? \"w-10 h-10\" : \"w-9 h-9\")} aria-label=\"Mais opções\">
+                <Plus className=\"w-[18px] h-[18px]\" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className=\"w-56 p-2 bg-popover border-border\" align=\"start\" side=\"top\">
+              <div className=\"flex flex-col gap-1\"><TeamFileUploader conversationId={conversationId} onFileSent={onFileSent} /></div>
+            </PopoverContent>
+          </Popover>
+
+          <div className=\"flex-1 min-w-0 relative\">
+            <MentionAutocomplete inputValue={text} cursorPosition={mentionCursorPos} onSelect={handleMentionSelect} onClose={closeMention} isOpen={mentionOpen} />
+            <textarea ref={textareaRef} value={text}
+              onChange={(e) => { setText(e.target.value); checkForMention(e.target.value, e.target.selectionStart ?? 0); }}
+              onKeyDown={handleKeyDown} onPaste={draft.handlePaste}
+              onClick={(e) => { const t = e.target as HTMLTextAreaElement; checkForMention(t.value, t.selectionStart ?? 0); }}
+              placeholder=\"Digite uma mensagem... (/ para comandos, @ para mencionar)\" rows={1}
+              className={cn(\"w-full bg-transparent border border-border/50 rounded-xl outline-none text-sm text-foreground placeholder:text-muted-foreground resize-none transition-all focus:border-primary/50 focus:ring-1 focus:ring-primary/20\",
+                isMobile ? \"px-3 py-2.5 text-base min-h-[42px] max-h-[200px]\" : \"px-3 py-2 min-h-[40px] max-h-[200px]\",
+                draft.isOverLimit && \"border-destructive/50 focus:border-destructive focus:ring-destructive/20\")}
+              aria-label=\"Digite sua mensagem\" aria-describedby={draft.charCount > 0 ? \"team-char-counter\" : undefined}
+            />
+            {draft.charCount > 100 && (
+              <span id=\"team-char-counter\" className={cn(\"absolute bottom-1 right-2 text-3xs select-none pointer-events-none\",
+                draft.isOverLimit ? \"text-destructive font-medium\" : draft.isNearLimit ? \"text-warning\" : \"text-muted-foreground/50\")}>
+                {draft.charCount}/{draft.CHAR_LIMIT}
+              </span>
+            )}
+          </div>
+
+          <div className=\"flex items-center gap-1.5 shrink-0\">
+            <Tooltip><TooltipTrigger asChild>
+              <Button onClick={handleSendWithAnimation} disabled={!draft.hasText || draft.isOverLimit || isPending} size=\"icon\"
+                aria-label=\"Enviar mensagem\"
+                className={cn(\"rounded-full shrink-0 disabled:opacity-40 touch-manipulation active:scale-95 transition-all bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25\",
+                  isMobile ? \"w-11 h-11\" : \"w-10 h-10\", sendAnimation && \"motion-safe:animate-pulse\")}>
+                {isPending ? <Loader2 className=\"w-[18px] h-[18px] animate-spin\" /> : <Send className=\"w-[18px] h-[18px]\" />}
+              </Button>
+            </TooltipTrigger><TooltipContent side=\"top\">Enviar (Enter)</TooltipContent></Tooltip>
+
+            <Tooltip><TooltipTrigger asChild>
+              <Button size=\"icon\" className={cn(\"shrink-0 touch-manipulation active:scale-95 rounded-full transition-all\",
+                isMobile ? \"w-11 h-11\" : \"w-10 h-10\",
+                isRecordingAudio ? \"bg-destructive text-destructive-foreground shadow-lg shadow-destructive/30\" : \"bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/30\")}
+                onClick={onRecordToggle}
+                aria-label={isRecordingAudio ? \"Parar gravação\" : \"Gravar áudio\"}>
+                <Mic className={cn(\"w-5 h-5\", isRecordingAudio && \"motion-safe:animate-pulse\")} />
+              </Button>
+            </TooltipTrigger><TooltipContent side=\"top\">{isRecordingAudio ? 'Parar gravação' : 'Gravar áudio'}</TooltipContent></Tooltip>
+          </div>
+
+          {!isMobile && (
+            <div className=\"flex items-center gap-0.5 shrink-0\">
+              {secondaryTools}
+              <TextToAudioButton inputValue={text} onAudioReady={onAudioSend} />
+            </div>
+          )}
+          {isMobile && <div className=\"flex items-center gap-0.5 shrink-0\"><TeamFileUploader conversationId={conversationId} onFileSent={onFileSent} /></div>}
+        </div>
+
+        {isMobile && (
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}
+            className=\"flex items-center gap-1 mt-1.5 overflow-x-auto scrollbar-none pb-0.5\" role=\"toolbar\" aria-label=\"Ferramentas de formatação\">
+            {secondaryTools}
+          </motion.div>
+        )}
+      </div>
+    </>
+  );
+}
+"
+
+ ❯ src/components/inbox/__tests__/VoiceChangerPicker.preview-send.test.tsx:336:19
+    334|   ])('%s: VoiceChangerPicker recebe o caminho do áudio gravado (onAudi…
+    335|     const fonte = ler(arquivo);
+    336|     expect(fonte).toMatch(/<VoiceChangerPicker onSendAudioBlob=\{onAud…
+       |                   ^
+    337|     // O meme continua no handler dele — o áudio do cliente não volta …
+    338|     expect(fonte).toMatch(/<AudioMemePicker onSendAudio=\{onSendAudioM…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  src/components/inbox/__tests__/VoiceChangerPicker.preview-send.test.tsx > VoiceChangerPicker — fiação do envio privado e guard do caminho antigo > nenhum arquivo de src sobe a voz do cliente em audio-memes/voice-changer
+AssertionError: expected 'import { useState, useRef, useCallbac…' not to match /getPublicUrl\(/
+
+- Expected:
+/getPublicUrl\(/
+
++ Received:
+"import { useState, useRef, useCallback, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { Mic, MicOff, Loader2, Play, Pause, Send, X, Wand2, AlertCircle } from 'lucide-react';
+import { toast } from 'sonner';
+import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from '@/integrations/supabase/client';
+import { attachMediaVolume } from '@/lib/mediaVolumeElement';
+import { zappTransition } from '@/lib/motion';
+
+/** Aviso único quando o navegador recusa a reprodução por gesto/autoplay. */
+const PLAYBACK_BLOCKED = 'O navegador bloqueou a reprodução. Toque no botão de novo.';
+
+const VOICE_PRESETS = [
+  // Masculinas
+  { id: 'grave', emoji: '🎤', label: 'Grave', cat: 'masc' },
+  { id: 'roger', emoji: '🎙️', label: 'Narrador', cat: 'masc' },
+  { id: 'animado', emoji: '🤩', label: 'Animado', cat: 'masc' },
+  { id: 'misterioso', emoji: '🕵️', label: 'Misterioso', cat: 'masc' },
+  { id: 'brian', emoji: '🧔', label: 'Brian', cat: 'masc' },
+  { id: 'bill', emoji: '👴', label: 'Bill', cat: 'masc' },
+  { id: 'eric', emoji: '😎', label: 'Eric', cat: 'masc' },
+  { id: 'will', emoji: '🤠', label: 'Will', cat: 'masc' },
+  { id: 'callum', emoji: '🎩', label: 'Callum', cat: 'masc' },
+  { id: 'charlie', emoji: '🧑', label: 'Charlie', cat: 'masc' },
+  // Femininas
+  { id: 'feminina', emoji: '👩', label: 'Sarah', cat: 'fem' },
+  { id: 'laura', emoji: '💃', label: 'Laura', cat: 'fem' },
+  { id: 'alice', emoji: '👱‍♀️', label: 'Alice', cat: 'fem' },
+  { id: 'matilda', emoji: '👩‍🦰', label: 'Matilda', cat: 'fem' },
+  { id: 'jessica', emoji: '💁‍♀️', label: 'Jessica', cat: 'fem' },
+  { id: 'lily', emoji: '🌸', label: 'Lily', cat: 'fem' },
+  // Neutras/Especiais
+  { id: 'river', emoji: '🌊', label: 'River', cat: 'special' },
+  { id: 'robo', emoji: '🤖', label: 'Robô', cat: 'special' },
+  { id: 'glitch', emoji: '👾', label: 'Glitch', cat: 'special' },
+  // Temáticas
+  { id: 'santa', emoji: '🎅', label: 'Papai Noel', cat: 'theme' },
+  { id: 'mrs_claus', emoji: '🤶', label: 'Mamãe Noel', cat: 'theme' },
+  { id: 'elf', emoji: '🧝', label: 'Elfo', cat: 'theme' },
+  { id: 'reindeer', emoji: '🦌', label: 'Rena', cat: 'theme' },
+] as const;
+
+interface VoiceChangerPickerProps {
+  /** Pode ser síncrono ou assíncrono: o popover só fecha depois que o envio da
+      mensagem confirma o sucesso. */
+  onSendAudio: (audioUrl: string) => void | Promise<void>;
+  disabled?: boolean;
+}
+
+export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPickerProps) {
+  const [open, setOpen] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [selectedVoice, setSelectedVoice] = useState('grave');
+  const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
+  const [transformedUrl, setTransformedUrl] = useState<string | null>(null);
+  const [isTransforming, setIsTransforming] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlayLoading, setIsPlayLoading] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [transformError, setTransformError] = useState<string | null>(null);
+
+  const reduceMotion = useReducedMotion() ?? false;
+
+  // Com movimento reduzido nada se desloca: a entrada só muda opacidade. Sem
+  // redução, entra com deslocamento curto.
+  const entrada = (deslocamento: number) =>
+    reduceMotion
+      ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } }
+      : { initial: { opacity: 0, y: deslocamento }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: deslocamento } };
+
+  // Erro inline: mola curta (180–260 ms); com redução, só um fade.
+  const entradaErro = reduceMotion
+    ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 }, transition: zappTransition.fast }
+    : {
+        initial: { opacity: 0, y: -6 },
+        animate: { opacity: 1, y: 0 },
+        exit: { opacity: 0, y: -6 },
+        transition: { type: 'spring' as const, duration: 0.22, bounce: 0.2 },
+      };
+
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const mountedRef = useRef(true);
+  const openRef = useRef(false);
+
+  const releaseCapture = useCallback(() => {
+    const recorder = mediaRecorderRef.current;
+    if (recorder) {
+      recorder.ondataavailable = null;
+      recorder.onstop = null;
+      if (recorder.state !== 'inactive') recorder.stop();
+      mediaRecorderRef.current = null;
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(t => t.stop());
+      streamRef.current = null;
+    }
+  }, []);
+
+  const cleanup = useCallback(() => {
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    releaseCapture();
+    if (transformedUrl) URL.revokeObjectURL(transformedUrl);
+    setRecordedBlob(null);
+    setTransformedUrl(null);
+    setIsRecording(false);
+    setIsPlaying(false);
+    setIsPlayLoading(false);
+    setIsTransforming(false);
+    setIsSending(false);
+    setTransformError(null);
+    chunksRef.current = [];
+  }, [transformedUrl, releaseCapture]);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      releaseCapture();
+    };
+  }, [releaseCapture]);
+
+  useEffect(() => {
+    openRef.current = open;
+  }, [open]);
+
+  const startRecording = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // getUserMedia é assíncrono: o popover pode ter fechado (ou o componente
+      // desmontado) enquanto a permissão estava pendente. Nesse caso o stream
+      // concedido é devolvido imediatamente e a captura não inicia.
+      if (!mountedRef.current || !openRef.current) {
+        stream.getTracks().forEach(t => t.stop());
+        return;
+      }
+      streamRef.current = stream;
+      const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      chunksRef.current = [];
+
+      recorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
+      recorder.onstop = () => {
+        if (mediaRecorderRef.current !== recorder) return;
+        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        setRecordedBlob(blob);
+        stream.getTracks().forEach(t => t.stop());
+        streamRef.current = null;
+        mediaRecorderRef.current = null;
+      };
+
+      recorder.start();
+      mediaRecorderRef.current = recorder;
+      setIsRecording(true);
+      setTransformedUrl(null);
+    } catch {
+      toast.error('Não foi possível acessar o microfone');
+    }
+  }, []);
+
+  const stopRecording = useCallback(() => {
+    if (mediaRecorderRef.current?.state === 'recording') {
+      mediaRecorderRef.current.stop();
+    }
+    setIsRecording(false);
+  }, []);
+
+  const transformVoice = useCallback(async () => {
+    if (!recordedBlob) return;
+    setIsTransforming(true);
+    setTransformError(null);
+    if (transformedUrl) { URL.revokeObjectURL(transformedUrl); setTransformedUrl(null); }
+
+    try {
+      const formData = new FormData();
+      formData.append('audio', recordedBlob, 'recording.webm');
+      formData.append('voice_preset', selectedVoice);
+
+      const { data: { session } } = await supabase.auth.getSession();
+
+      const response = await fetch(
+        `${SUPABASE_URL}/functions/v1/voice-changer`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session?.access_token || SUPABASE_ANON_KEY}`,
+            'apikey': SUPABASE_ANON_KEY,
+          },
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errData.error || `Error ${response.status}`);
+      }
+
+      const audioBlob = await response.blob();
+      const url = URL.createObjectURL(audioBlob);
+      setTransformedUrl(url);
+      toast.success('Voz transformada! 🎭');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'desconhecido';
+      // Aviso inline (com \"Tentar de novo\") além do toast: o usuário não perde
+      // a gravação e recupera o fluxo sem regravar.
+      setTransformError(msg);
+      toast.error(`Erro ao transformar voz: ${msg}`);
+    } finally {
+      setIsTransforming(false);
+    }
+  }, [recordedBlob, selectedVoice, transformedUrl]);
+
+  const togglePlay = useCallback(async () => {
+    if (!transformedUrl || isPlayLoading) return;
+    if (isPlaying && audioRef.current) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+      return;
+    }
+    setIsPlayLoading(true);
+    const audio = new Audio(transformedUrl);
+    // E36 — prévia de voice changer é mídia de conversa: respeita o volume global.
+    const detachMediaVolume = attachMediaVolume(audio);
+    audio.onended = () => { detachMediaVolume(); setIsPlaying(false); };
+    audioRef.current = audio;
+    try {
+      await audio.play();
+      if (!mountedRef.current) return;
+      setIsPlaying(true);
+    } catch {
+      // Reprodução recusada: não deixa o botão preso em \"Pausar\".
+      detachMediaVolume();
+      audioRef.current = null;
+      if (mountedRef.current) setIsPlaying(false);
+      toast.error(PLAYBACK_BLOCKED);
+    } finally {
+      if (mountedRef.current) setIsPlayLoading(false);
+    }
+  }, [transformedUrl, isPlaying, isPlayLoading]);
+
+  const handleSend = useCallback(async () => {
+    if (!transformedUrl || isSending) return;
+    setIsSending(true);
+    try {
+      const response = await fetch(transformedUrl);
+      const blob = await response.blob();
+      const path = `voice-changer/${Date.now()}_${crypto.randomUUID()}.mp3`;
+      const { error: uploadError } = await supabase.storage
+        .from('audio-memes')
+        .upload(path, blob, { contentType: 'audio/mpeg', cacheControl: '31536000' });
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage.from('audio-memes').getPublicUrl(path);
+      // O envio da mensagem pode ser síncrono ou assíncrono e pode falhar. Só
+      // fecha o popover e limpa a prévia DEPOIS da confirmação de sucesso —
+      // assim uma falha preserva `transformedUrl` para o usuário tentar de novo.
+      await onSendAudio(urlData.publicUrl);
+      setOpen(false);
+      cleanup();
+      toast.success('Áudio enviado! 🎤');
+    } catch {
+      toast.error('Erro ao enviar áudio');
+    } finally {
+      setIsSending(false);
+    }
+  }, [transformedUrl, isSending, onSendAudio, cleanup]);
+
+  return (
+    <Tooltip>
+      <Popover open={open} onOpenChange={(v) => { openRef.current = v; setOpen(v); if (!v) cleanup(); }}>
+        <TooltipTrigger asChild>
+          <PopoverTrigger asChild>
+            <Button variant=\"ghost\" size=\"icon\" className=\"w-9 h-9 text-muted-foreground hover:text-foreground hover:bg-muted shrink-0\" disabled={disabled} aria-label=\"Voice Changer\">
+              <Wand2 className=\"w-[18px] h-[18px]\" />
+            </Button>
+          </PopoverTrigger>
+        </TooltipTrigger>
+        <TooltipContent side=\"top\">Voice Changer</TooltipContent>
+
+        <PopoverContent className=\"w-[min(320px,calc(100vw_-_1rem))] p-0 bg-popover border-border\" align=\"end\" side=\"top\" sideOffset={8}>
+          {/* Header */}
+          <div className=\"flex items-center gap-2 px-3 py-2.5 border-b border-border\">
+            <Wand2 className=\"w-4 h-4 text-primary\" />
+            <h4 className=\"text-sm font-semibold text-foreground\">Voice Changer</h4>
+            <span className=\"text-3xs text-muted-foreground ml-auto\">Powered by ElevenLabs</span>
+          </div>
+
+          <div className=\"p-3 space-y-3\">
+            {/* Voice Selection */}
+             <div>
+              <p className=\"text-xs text-muted-foreground mb-2\">Escolha a voz:</p>
+              <div className=\"max-h-[180px] overflow-y-auto pr-1\">
+                <div className=\"grid grid-cols-5 gap-1\">
+                  {VOICE_PRESETS.map(v => (
+                    <button
+                      key={v.id}
+                      onClick={() => setSelectedVoice(v.id)}
+                      className={cn(
+                        'flex flex-col items-center gap-0.5 p-1.5 rounded-lg text-center transition-colors border',
+                        selectedVoice === v.id
+                          ? 'border-primary bg-primary/10 text-primary'
+                          : 'border-transparent hover:bg-muted text-muted-foreground'
+                      )}
+                    >
+                      <span className=\"text-base\">{v.emoji}</span>
+                      <span className=\"text-[9px] font-medium leading-tight truncate w-full\">{v.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Recording Area */}
+            <div className=\"flex flex-col items-center gap-2 py-2\">
+              <AnimatePresence mode=\"wait\">
+                {!recordedBlob && !isRecording && (
+                  <motion.div key=\"idle\" {...entrada(6)}>
+                    <Button
+                      onClick={startRecording}
+                      size=\"lg\"
+                      className=\"rounded-full w-16 h-16 bg-primary hover:bg-primary/90\"
+                    >
+                      <Mic className=\"w-7 h-7\" />
+                    </Button>
+                    <p className=\"text-2xs text-muted-foreground text-center mt-1.5\">Toque para gravar</p>
+                  </motion.div>
+                )}
+
+                {isRecording && (
+                  <motion.div key=\"recording\" {...entrada(6)} className=\"flex flex-col items-center\">
+                    <motion.div
+                      animate={reduceMotion ? undefined : { scale: [1, 1.1, 1] }}
+                      transition={reduceMotion ? undefined : { repeat: Infinity, duration: 1.2 }}
+                    >
+                      <Button
+                        onClick={stopRecording}
+                        size=\"lg\"
+                        variant=\"destructive\"
+                        className=\"rounded-full w-16 h-16\"
+                      >
+                        <MicOff className=\"w-7 h-7\" />
+                      </Button>
+                    </motion.div>
+                    <div className=\"flex items-center gap-1.5 mt-2\">
+                      <motion.div
+                        animate={reduceMotion ? undefined : { opacity: [0.4, 1, 0.4] }}
+                        transition={reduceMotion ? undefined : { repeat: Infinity, duration: 1 }}
+                        className=\"w-2 h-2 rounded-full bg-destructive\"
+                      />
+                      <span className=\"text-xs text-destructive font-medium\">Gravando...</span>
+                    </div>
+                  </motion.div>
+                )}
+
+                {recordedBlob && !isRecording && (
+                  <motion.div key=\"recorded\" {...entrada(10)} className=\"w-full space-y-2\">
+                    <div className=\"flex items-center justify-center gap-2\">
+                      <Button variant=\"outline\" size=\"sm\" className=\"h-10\" onClick={() => { setRecordedBlob(null); setTransformedUrl(null); setTransformError(null); }}>
+                        <X className=\"w-3.5 h-3.5 mr-1\" />Regravar
+                      </Button>
+                      <Button
+                        size=\"sm\"
+                        onClick={() => void transformVoice()}
+                        disabled={isTransforming}
+                        className=\"bg-primary h-10\"
+                      >
+                        {isTransforming ? <Loader2 className=\"w-3.5 h-3.5 mr-1 animate-spin\" /> : <Wand2 className=\"w-3.5 h-3.5 mr-1\" />}
+                        {isTransforming ? 'Transformando...' : 'Transformar voz'}
+                      </Button>
+                    </div>
+
+                    {/* Erro de transformação inline: aviso curto + motivo detalhado no tooltip */}
+                    <AnimatePresence initial={false}>
+                      {transformError && (
+                        <motion.div
+                          key=\"transform-error\"
+                          data-testid=\"voz-erro-transformacao\"
+                          role=\"alert\"
+                          {...entradaErro}
+                          className=\"flex items-center gap-2 px-1\"
+                        >
+                          <AlertCircle className=\"w-4 h-4 text-destructive shrink-0\" aria-hidden=\"true\" />
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className=\"text-xs text-destructive flex-1 cursor-help truncate\">
+                                Falha ao transformar a voz
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent side=\"top\" variant=\"error\">{transformError}</TooltipContent>
+                          </Tooltip>
+                          <Button
+                            size=\"sm\"
+                            variant=\"outline\"
+                            className=\"h-10 text-xs border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive\"
+                            onClick={() => void transformVoice()}
+                            disabled={isTransforming}
+                          >
+                            Tentar de novo
+                          </Button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    {transformedUrl && (
+                      <motion.div {...entrada(5)} className=\"flex items-center justify-center gap-2 pt-1\">
+                        {/* Largura fixa: alternar play/pausa/carregando não muda o layout */}
+                        <Button
+                          variant=\"outline\"
+                          size=\"sm\"
+                          className=\"h-10 w-28 justify-center\"
+                          aria-label={isPlayLoading ? 'Carregando prévia' : isPlaying ? 'Pausar prévia' : 'Ouvir prévia'}
+                          onClick={() => void togglePlay()}
+                          disabled={isPlayLoading}
+                        >
+                          {isPlayLoading ? <Loader2 className=\"w-3.5 h-3.5 mr-1 motion-safe:animate-spin\" /> : isPlaying ? <Pause className=\"w-3.5 h-3.5 mr-1\" /> : <Play className=\"w-3.5 h-3.5 mr-1\" />}
+                          {isPlayLoading ? 'Carregando' : isPlaying ? 'Pausar' : 'Ouvir'}
+                        </Button>
+                        <Button size=\"sm\" onClick={() => void handleSend()} disabled={isSending} className=\"bg-primary hover:bg-primary/90 h-10\">
+                          {isSending ? <Loader2 className=\"w-3.5 h-3.5 mr-1 animate-spin\" /> : <Send className=\"w-3.5 h-3.5 mr-1\" />}
+                          Enviar
+                        </Button>
+                      </motion.div>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+
+          <div className=\"px-3 py-1.5 border-t border-border/30\">
+            <p className=\"text-3xs text-muted-foreground text-center\">
+              Grave → Escolha a voz → Transforme → Envie 🎭
+            </p>
+          </div>
+        </PopoverContent>
+      </Popover>
+    </Tooltip>
+  );
+}
+"
+
+ ❯ src/components/inbox/__tests__/VoiceChangerPicker.preview-send.test.tsx:348:25
+    346|     ]) {
+    347|       const fonte = ler(arquivo);
+    348|       expect(fonte).not.toMatch(/getPublicUrl\(/);
+       |                         ^
+    349|       expect(fonte).not.toMatch(/from\('audio-memes'\)/);
+    350|       expect(fonte).not.toMatch(/['"`]voice-changer\//);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  src/components/inbox/__tests__/useChatMediaSending.audio-meme-falha.test.ts > handleSendAudioMeme sinaliza a falha do envio (#350) > envio falhando: a prévia continua em tela e o popover permanece aberto
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ src/components/inbox/__tests__/useChatMediaSending.audio-meme-falha.test.ts:367:29
+    365|     });
+    366|
+    367|     expect(onSendAudioBlob).toHaveBeenCalledTimes(1);
+       |                             ^
+    368|     expect(onSendAudioBlob.mock.calls[0][0]).toBeInstanceOf(Blob);
+    369|     // O upload do caminho privado (bucket + pasta do contato) é do áu…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  src/components/inbox/__tests__/useChatMediaSending.audio-meme-falha.test.ts > handleSendAudioMeme sinaliza a falha do envio (#350) > envio confirmado: o popover fecha e a prévia sai de tela
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ src/components/inbox/__tests__/useChatMediaSending.audio-meme-falha.test.ts:390:29
+    388|     });
+    389|
+    390|     expect(onSendAudioBlob).toHaveBeenCalledTimes(1);
+       |                             ^
+    391|     expect(onSendAudioBlob.mock.calls[0][0]).toBeInstanceOf(Blob);
+    392|     expect(estado.popoverAberto).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  2 failed | 3 passed (5)
+      Tests  10 failed | 15 passed (25)
+   Start at  23:34:39
+   Duration  4.99s (transform 1.88s, setup 1.76s, import 3.00s, tests 3.76s, environment 5.04s)
+

@@ -1,0 +1,9 @@
+29	16	src/components/inbox/VoiceChangerPicker.tsx
+1	1	src/components/inbox/__tests__/VoiceChangerPicker.falhas.test.tsx
+95	20	src/components/inbox/__tests__/VoiceChangerPicker.preview-send.test.tsx
+1	1	src/components/inbox/__tests__/VoiceChangerPicker.reduced-motion.test.tsx
+5	5	src/components/inbox/__tests__/VoiceChangerPicker.test.tsx
+31	24	src/components/inbox/__tests__/useChatMediaSending.audio-meme-falha.test.ts
+7	4	src/components/inbox/chat/ChatInputToolbars.tsx
+4	2	src/components/team-chat/TeamChatInputArea.tsx
+125	0	supabase/tests/voice_changer_audio_bucket.sql

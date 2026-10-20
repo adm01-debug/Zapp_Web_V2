@@ -1,0 +1,7 @@
+On branch v2/audio-voz-bucket-privado-26101522455c4c
+nothing to commit, working tree clean
+AVISOS DO JUIZ MANTIDOS (seguem para o revisor):
+  1. Você mexeu em arquivo que o cartão não lista em 'ARQUIVOS QUE PODE TOCAR': src/components/inbox/chat/ChatInputToolbars.tsx, src/components/team-chat/TeamChatInputArea.tsx, supabase/tests/voice_changer_audio_bucket.sql. Reverta (achado fora do escopo vira comentário no cartão) ou explique no relato por que foi indispensável.
+FECHADO (modo V2, local): v2/audio-voz-bucket-privado-26101522455c4c @ 39cefad7e — verificação: zapp-verify --rapido. Na fila do integrador: /home/joaquim_ataides/hermes-workspaces/.v2-fila/26101522455c4c.json
+Nada foi enviado ao GitHub. Termine o cartão com kanban_complete.
+SAIDA=0
