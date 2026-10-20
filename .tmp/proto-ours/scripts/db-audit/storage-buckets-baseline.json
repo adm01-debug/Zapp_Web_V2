@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "buckets": [
+    {
+      "id": "avatars",
+      "name": "avatars",
+      "public": true,
+      "file_size_limit": 5242880,
+      "allowed_mime_types": ["image/jpeg", "image/png", "image/webp", "image/gif"]
+    },
+    {
+      "id": "audio-memes",
+      "name": "audio-memes",
+      "public": true
+    },
+    {
+      "id": "audio-messages",
+      "name": "audio-messages",
+      "public": false
+    },
+    {
+      "id": "custom-emojis",
+      "name": "custom-emojis",
+      "public": true,
+      "file_size_limit": 512000,
+      "allowed_mime_types": ["image/png", "image/webp", "image/gif", "image/jpeg", "image/svg+xml"]
+    },
+    {
+      "id": "stickers",
+      "name": "stickers",
+      "public": true
+    },
+    {
+      "id": "team-chat-files",
+      "name": "team-chat-files",
+      "public": false,
+      "file_size_limit": 52428800
+    },
+    {
+      "id": "whatsapp-media",
+      "name": "whatsapp-media",
+      "public": false
+    },
+    {
+      "id": "multiplix-voice",
+      "name": "multiplix-voice",
+      "public": false
+    }
+  ]
+}

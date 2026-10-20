@@ -1,0 +1,309 @@
+import { useState } from 'react';
+import { Droppable, Draggable } from '@hello-pangea/dnd';
+import { Check, Info } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { WorkItemCard }         from '../shared/WorkItemCard';
+import { BoardColumnSkeleton } from '../shared/BoardColumnSkeleton';
+import { QuickAdd }             from '../shared/QuickAdd';
+import type { WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
+import type { WorkItemInput }   from '@/hooks/tasks/useMyWorkItems';
+import { WIP_LIMITS, KANBAN_COLUMNS } from '@/hooks/tasks/workItem.types';
+import { splitDoneByRecency }   from '@/hooks/tasks/workItemAggregates';
+import { formatWorkItemDate }   from '@/hooks/tasks/workItemFormat';
+import type { WorkItemCardActions } from '../shared/cardActions';
+import { usePressaoLonga } from '../shared/pointerMedia';
+
+interface Props extends WorkItemCardActions {
+  status: WorkItemStatus;
+  items: WorkItem[];
+  isLoading: boolean;
+  doingCount: number;
+  /** Etapa 52 (B8): coluna de origem do arrasto em curso (null = nenhum). */
+  dragSourceStatus: WorkItemStatus | null;
+  /** Etapa 81: ponteiro grosso desliga o arrasto — quem move é o `MoveToMenu`. */
+  dragDisabled?: boolean;
+  /** Etapa 094: pressão longa compartilhada pelo trilho; ao armar, todos os alvos aceitam drop. */
+  pressaoArrasto?: ReturnType<typeof usePressaoLonga>;
+  /** Etapa 83: drop recusado por limite cheio dá um tranco curto na coluna de destino. */
+  shake?: boolean;
+  onOpen: (item: WorkItem) => void;
+  onMoveTo: (item: WorkItem, to: WorkItemStatus) => void;
+  onDelete: (item: WorkItem) => void;
+  onCreate?: (input: WorkItemInput) => Promise<void>;
+}
+
+export function BoardColumn({
+  status, items, isLoading, doingCount, dragSourceStatus, dragDisabled = false, pressaoArrasto, shake = false, onOpen, onMoveTo, onDelete, onCreate,
+  onOpenContact, onRequestWaitingReason, onComplete, onReopen, onSnooze, onClearReminder, onOpenReminder,
+}: Props) {
+  const col   = KANBAN_COLUMNS.find(c => c.status === status)!;
+  const limit = WIP_LIMITS[status];
+  const hardFull  = limit.hard != null && doingCount >= limit.hard;
+  const softOver  = limit.soft != null && items.length > limit.soft;
+  // Etapa 082: o segmento visível nunca passa do teto — quem estourou o limite
+  // (dado real > hard) continua pintando a barra CHEIA, não uma barra maior.
+  const preenchidos = limit.hard != null ? Math.min(doingCount, limit.hard) : 0;
+  // Etapa 094: no toque o arrasto só pega depois de uma pressão longa (a lib de
+  // DnD respeita `isDragDisabled` na hora de levantar o cartão, então o swipe
+  // continua sendo rolagem até a coluna estar armada).
+  const pressaoLocal = usePressaoLonga();
+  const pressao = pressaoArrasto ?? pressaoLocal;
+  const arrastoBloqueado = dragDisabled && !pressao.armado;
+  // Etapa 52 (B8): a coluna cheia continua aceitando o que veio dela mesma
+  // (reorganizar dentro de "Fazendo" com 3/3), e recusa o que vem de fora.
+  // Etapa 094: depois da pressão longa no toque, a coluna volta a aceitar a
+  // soltura; antes `dragDisabled` mantinha o Droppable desligado até o fim.
+  const isDropDisabled = arrastoBloqueado || (hardFull && dragSourceStatus !== status);
+
+  // Etapa 096: com um arrasto em curso, a coluna Aguardando se realça em âmbar —
+  // no toque isso só começa depois da pressão longa armar o arrasto.
+  const realceEspera = (!dragDisabled || pressao.armado) && dragSourceStatus != null && status === 'waiting';
+  // Etapa 095: a dica do alvo mostra a contagem do destino DEPOIS do drop (com o
+  // teto do limite duro, nunca "4 de 3").
+  const dicaSolta = limit.hard != null
+    ? `Solte para mover para ${col.label} (${Math.min(doingCount + 1, limit.hard)} de ${limit.hard})`
+    : `Solte para mover para ${col.label}`;
+
+  // Etapa 51 (B5): a coluna Concluído mostra os 7 dias e revela o resto da janela
+  // de 30 dias no rodapé "Ver até 30 dias →" (filtro local, sem query nova).
+  const [showOlderDone, setShowOlderDone] = useState(false);
+  // Etapa 093: o ⁙ do cabeçalho do Concluído recolhe/expande a coluna (o
+  // conteúdo sai do DOM e a coluna deixa de dividir a largura do trilho).
+  const [colapsada, setColapsada] = useState(false);
+  const doneSplit = status === 'done' ? splitDoneByRecency(items) : null;
+  const visibleItems = doneSplit
+    ? (showOlderDone ? [...doneSplit.recent, ...doneSplit.older] : doneSplit.recent)
+    : items;
+
+  const headerCount = limit.hard
+    ? `${doingCount}/${limit.hard}`
+    : visibleItems.length > 0 ? String(visibleItems.length) : '';
+
+  return (
+    // Etapa 099: a coluna deixou de ser item de flexbox do carrossel e virou
+    // ITEM DE GRELHA. O trilho decide quantas caem por linha (`grid-cols-1` na
+    // tela estreita, 2/3/5 em md/lg/xl) e a coluna só impõe o piso:
+    //   • `md:min-w-[200px]` — o mesmo piso legível da E16, que cabe nas 2
+    //     faixas de 768px e nas 3 de 1024px (conta no teste da etapa 099);
+    //   • `xl:min-w-0` — a partir de 1280px quem manda é a faixa `minmax(0,1fr)`
+    //     da grelha: as cinco colunas aparecem sem rolagem horizontal (5×200+48
+    //     não caberia em 1280 com a sidebar aberta: 5 faixas dão ~180px cada).
+    <div
+      data-board-column={status}
+      {...(realceEspera ? { 'data-testid': 'board-waiting-emphasis' } : {})}
+      className={[
+        'flex flex-col min-w-0 md:min-w-[200px] xl:min-w-0 h-full min-h-0 rounded-[14px] border bg-card overflow-hidden',
+        // Etapa 093: recolhida, a coluna para de dividir a largura e fica só com
+        // o cabeçalho — `w-full` respeita a faixa que a grelha deu a ela (nada
+        // de largura fixa, que estouraria a faixa de ~180px do `xl`).
+        colapsada ? 'w-full' : '',
+        // Etapa 83: recusa por limite cheio — a BORDA muda sempre (o aviso não
+        // depende de animação); o tranco curto só existe sem movimento reduzido.
+        shake ? 'border-destructive motion-safe:animate-wiggle' : 'border-border/70',
+        // Etapa 096: âmbar por dentro da borda, sem trocar a cor da coluna.
+        realceEspera ? 'ring-2 ring-inset ring-warning/60' : '',
+      ].join(' ')}
+    >
+      {/* cabeçalho sticky */}
+      <div className={[
+        'flex items-center gap-2 min-w-0 px-3 py-2 border-b border-border/50 bg-card/95 backdrop-blur',
+        hardFull ? 'text-destructive' : softOver ? 'text-warning' : 'text-foreground',
+        hardFull ? 'ring-1 ring-destructive/40' : '',
+      ].join(' ')}>
+        <span className="min-w-0 shrink-0 truncate text-[13px] font-semibold">{col.label}</span>
+        {/* Etapa 080: o subtítulo curto fica à vista; a política longa continua no tooltip do ⓘ. */}
+        <span className="min-w-0 flex-1 truncate text-[11px] text-muted-foreground">{col.subtitle}</span>
+        {headerCount && (
+          <span className={`shrink-0 text-xs font-bold tabular-nums ${hardFull ? 'text-destructive' : ''}`}>
+            {headerCount}
+          </span>
+        )}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button type="button" className="min-h-[24px] min-w-[24px] max-md:min-h-[44px] max-md:min-w-[44px] rounded flex items-center justify-center hover:bg-muted" aria-label="Política da coluna">
+              <Info className="h-3.5 w-3.5 text-muted-foreground" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="max-w-[220px] text-xs">
+            {col.policy}
+          </TooltipContent>
+        </Tooltip>
+        {/* Etapas 092/093: o ícone ⁙ do cabeçalho do Concluído recolhe/expande a
+            coluna (o plano não define outras ações de menu para ele). */}
+        {status === 'done' && (
+          <button
+            type="button"
+            data-testid="board-collapse-done"
+            aria-expanded={!colapsada}
+            aria-label={colapsada ? 'Expandir coluna Concluído' : 'Recolher coluna Concluído'}
+            onClick={() => setColapsada(c => !c)}
+            className="shrink-0 min-h-10 min-w-10 rounded flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            <span aria-hidden="true">⁙</span>
+          </button>
+        )}
+      </div>
+
+      {/* Etapa 082: barra de progresso segmentada do limite — azul (primária) até
+          encher, destrutiva quando cheia. Um segmento por vaga do limite duro. */}
+      {limit.hard != null && (
+        <div className="px-3 pt-2" data-testid={`col-limit-bar-${status}`}>
+          <div
+            className="flex gap-1"
+            role="progressbar"
+            aria-label={`Limite de ${col.label}`}
+            aria-valuemin={0}
+            aria-valuemax={limit.hard}
+            aria-valuenow={preenchidos}
+          >
+            {Array.from({ length: limit.hard }, (_, i) => (
+              <span
+                key={i}
+                className={`h-1.5 flex-1 rounded-full ${i < preenchidos ? (hardFull ? 'bg-destructive' : 'bg-primary') : 'bg-muted'}`}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Etapa 093: recolhida, a coluna mostra só o cabeçalho (o corpo sai do DOM). */}
+      {!colapsada && (<>
+
+      {/* cards */}
+      <Droppable droppableId={status} isDropDisabled={isDropDisabled}>
+        {(provided, snapshot) => (
+          <div
+            ref={provided.innerRef}
+            {...provided.droppableProps}
+            onPointerDown={pressao.aoPressionar}
+            onPointerUp={pressao.aoSoltar}
+            onPointerCancel={pressao.aoSoltar}
+            className={`flex-1 min-w-0 overflow-y-auto p-2 space-y-1.5 min-h-[80px] ${snapshot.isDraggingOver ? 'bg-primary/5 ring-2 ring-inset ring-primary' : ''}`}
+          >
+            {/* Etapa 094: no toque a coluna precisa avisar que o arrasto pede
+                pressão longa — sem isso o gesto morre na rolagem. */}
+            {dragDisabled && (
+              <p
+                data-testid="board-longpress-hint"
+                className="px-1 pb-1 text-[11px] text-muted-foreground"
+              >
+                {pressao.armado ? 'Arraste o cartão' : 'Pressione e segure para arrastar'}
+              </p>
+            )}
+            {/* Etapa 095: alvo de soltura — a coluna em foco ganha a borda primary
+                (o ring) e a dica diz para onde e como a contagem fica. */}
+            {snapshot.isDraggingOver && (
+              <p
+                data-testid="board-drop-target"
+                className="rounded-lg border border-primary/40 bg-primary/10 px-2 py-1 text-[11px] font-medium text-foreground"
+              >
+                {dicaSolta}
+              </p>
+            )}
+            {isLoading && <BoardColumnSkeleton />}
+            {/* Fase F (auditoria): com concluídas de 8 a 30 dias atrás do rodapé a
+                coluna NÃO está vazia — antes ela mostrava "Coluna vazia" e o
+                "Ver até 30 dias →" ao mesmo tempo. */}
+            {!isLoading && visibleItems.length === 0 && (doneSplit?.older.length ?? 0) === 0 && (
+              /* Etapa 103: microcopy única do vazio por coluna + a política da
+                 coluna (a mesma da KANBAN_COLUMNS). A peça veio para cá porque
+                 a lista de arquivos do cartão não inclui o TasksEmptyState. */
+              <div data-testid="board-column-empty" className="flex flex-col items-center gap-2 py-8 text-center">
+                <p className="text-xs text-muted-foreground italic">Nada aqui. Arraste uma tarefa ou capture acima</p>
+                <p className="text-xs text-muted-foreground/70">{col.policy}</p>
+              </div>
+            )}
+            {!isLoading && visibleItems.map((item, index) => (
+              <Draggable key={item.id} draggableId={item.id} index={index} isDragDisabled={arrastoBloqueado}>
+                {(drag, snap) => (
+                  // Etapa 094: o cartao levantado ganha o overlay elevado
+                  // (`--shadow-lg`) — a sombra do card comum continua sendo a dele.
+                  <div
+                    ref={drag.innerRef}
+                    {...drag.draggableProps}
+                    {...(snap.isDragging ? { 'data-testid': 'drag-overlay' } : {})}
+                    className={snap.isDragging ? 'rounded-[14px] shadow-[var(--shadow-lg)]' : ''}
+                  >
+                    {/* Etapa 092: no Concluído, cada cartão traz o check verde e a
+                        data da conclusão (a mesma regra de dia do módulo). */}
+                    {status === 'done' && (
+                      <div data-testid="done-stamp" className="flex items-center gap-1 px-1 pb-1 text-[11px]">
+                        <Check className="h-3 w-3 shrink-0 text-success" aria-hidden="true" />
+                        <span className="text-muted-foreground">
+                          {formatWorkItemDate(item.completed_at, { format: 'day' }) ?? 'Concluída'}
+                        </span>
+                      </div>
+                    )}
+                    <WorkItemCard
+                      item={item}
+                      mode="board"
+                      isDragging={snap.isDragging}
+                      dragHandleProps={drag.dragHandleProps ?? undefined}
+                      onOpen={() => onOpen(item)}
+                      onMoveTo={(to) => onMoveTo(item, to)}
+                      onDelete={() => onDelete(item)}
+                      contactName={item.contact?.name ?? undefined}
+                      onOpenContact={onOpenContact ? () => onOpenContact(item) : undefined}
+                      onRequestWaitingReason={onRequestWaitingReason ? () => onRequestWaitingReason(item) : undefined}
+                      doingCount={doingCount}
+                      onComplete={onComplete ? () => onComplete(item) : undefined}
+                      onReopen={onReopen ? () => onReopen(item) : undefined}
+                      onSnooze={onSnooze ? (minutes) => onSnooze(item, minutes) : undefined}
+                      onClearReminder={onClearReminder ? () => onClearReminder(item) : undefined}
+                      onOpenReminder={onOpenReminder ? () => onOpenReminder(item) : undefined}
+                    />
+                  </div>
+                )}
+              </Draggable>
+            ))}
+            {/* Etapa 094: o lugar da soltura vira um rasgo tracejado enquanto o
+                arrasto esta por cima. */}
+            <div
+              data-testid="board-drop-placeholder"
+              className={snapshot.isDraggingOver ? 'rounded-[14px] border-2 border-dashed border-primary/60 p-1' : ''}
+            >
+              {provided.placeholder}
+            </div>
+          </div>
+        )}
+      </Droppable>
+
+      {/* Etapa 092: rodapé do Concluído — revela o resto da janela de 30 dias. */}
+      {!isLoading && doneSplit && doneSplit.older.length > 0 && (
+        <div className="border-t border-border/50 p-2">
+          <button
+            type="button"
+            data-testid="board-done-older"
+            onClick={() => setShowOlderDone(s => !s)}
+            className="w-full min-h-10 rounded-lg border border-dashed border-border/70 px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
+          >
+            {showOlderDone ? 'Ver menos' : 'Ver até 30 dias →'}
+          </button>
+        </div>
+      )}
+
+      {/* Etapa 091: só a Caixa de entrada captura (D19). O cartão tracejado fica
+          no FIM da coluna, com o QuickAdd compacto da faixa. */}
+      {status === 'backlog' && onCreate && (
+        <div data-testid="capture-card" className="border-t border-border/50 p-2">
+          <div className="rounded-xl border border-dashed border-border/70 bg-card/50 p-2">
+            <QuickAdd onAdd={onCreate} defaultStatus="backlog" compact placeholder="Capturar tarefa…" />
+            <p className="px-1 pt-1 text-[11px] text-muted-foreground">Pressione Enter para criar</p>
+          </div>
+        </div>
+      )}
+
+      {/* Etapa 082: rodapé do limite — a regra em palavras, não só o número. */}
+      {limit.hard != null && (
+        <div
+          data-testid={`col-limit-footer-${status}`}
+          className="flex items-center gap-1.5 border-t border-border/50 px-3 py-2 text-[11px] text-muted-foreground"
+        >
+          <Info className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          <span>Seu limite é de {limit.hard} tarefas em execução.</span>
+        </div>
+      )}
+      </>)}
+    </div>
+  );
+}

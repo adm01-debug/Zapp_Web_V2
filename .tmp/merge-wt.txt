@@ -1,0 +1,1877 @@
+802a0d8b018d0e12db92d4b27ce7175ceafa6622
+.github/toolchain.json
+.github/workflows/ci.yml
+.github/workflows/db-guard.yml
+.github/workflows/db-live-guard.yml
+.github/workflows/deploy-functions.yml
+.github/workflows/types-sync.yml
+.tmp/evidencia-git-grep.txt
+.tmp/verify.log
+ESTADO.md
+FEATURE_REGISTRY.md
+docs/COMPLETE_SYSTEM_FEATURES.md
+docs/DB-INVENTORY.md
+docs/adr/README.md
+docs/audits/RECONCILIACAO_CARTOES_PARIDADE_V3_2026-10-11.md
+docs/audits/edge-functions-authz-coverage.md
+docs/ia/IA-010-ambiente-de-ensaio.md
+docs/multiplix/CHANGELOG_MULTIPLIX.md
+docs/plans/PLANO_PARIDADE_V3_30_ETAPAS_2026-10-11.md
+docs/talkx/v4/DESEMPENHO.md
+e2e/a11y-config-admin.spec.ts
+e2e/a11y-tarefas-dashboard.spec.ts
+e2e/navegacao-modulos.spec.ts
+e2e/talkx-visual.spec.ts
+e2e/telefonia.spec.ts
+playwright.config.ts
+scripts/ci/check-test-inventory.mjs
+scripts/ci/docs-estado-registry-convention.unit.mjs
+scripts/ci/eslint-baseline.json
+scripts/ci/lint-ratchet.unit.mjs
+scripts/ci/slo-docs-honesty.unit.mjs
+scripts/ci/workflow-contracts.unit.mjs
+scripts/db-audit/known-violations.json
+scripts/db-audit/login_gate_rpc.test.sh
+scripts/db-audit/pg-cron-jobs-baseline.json
+scripts/db-audit/talkx-e27-replay-divergence.test.sh
+scripts/db-audit/team-chat-department-transfer-guards.test.sh
+scripts/db-audit/team-receipts-reactions-conversation-id.test.sh
+scripts/db-audit/wa-tag-and-status-authorization.test.sh
+src/App.tsx
+src/__tests__/multiplix-changelog-registry.test.ts
+src/adapters/__tests__/evolutionAdapter.test.ts
+src/adapters/evolutionAdapter.ts
+src/components/__tests__/Y29_gateDownloadOutros.test.tsx
+src/components/__tests__/y17Selos.contraste.test.tsx
+src/components/admin/AIUsageDashboard.tsx
+src/components/admin/AdminView.tsx
+src/components/admin/CrisisRoom.tsx
+src/components/admin/ForceLogoutButton.tsx
+src/components/admin/MediaMigrationTool.tsx
+src/components/admin/__tests__/AdminView.a11y.test.tsx
+src/components/admin/__tests__/AdminView.section-error-boundary.test.tsx
+src/components/admin/__tests__/AdminView.servicosGoogle.test.tsx
+src/components/admin/__tests__/CrisisRoom.metricas.test.tsx
+src/components/admin/__tests__/useAdminDataColumns.test.ts
+src/components/admin/useAdminData.ts
+src/components/agents/AgentsView.tsx
+src/components/agents/InviteAgentDialog.tsx
+src/components/agents/__tests__/AgentsView.actions.test.tsx
+src/components/agents/__tests__/AgentsView.capacidade.test.tsx
+src/components/agents/__tests__/AgentsView.pendencias.test.tsx
+src/components/agents/__tests__/InviteAgentDialog.test.tsx
+src/components/ai/AutoTicketClassifier.tsx
+src/components/ai/__tests__/AutoTicketClassifier.test.tsx
+src/components/alerts/EvolutionDisconnectBanner.tsx
+src/components/alerts/__tests__/EvolutionDisconnectBanner.behavior.test.tsx
+src/components/alerts/__tests__/EvolutionDisconnectBanner.janela-manutencao.test.tsx
+src/components/auth/HeroBenefits.tsx
+src/components/auth/ReauthDialog.tsx
+src/components/auth/__tests__/HeroBenefits.test.tsx
+src/components/calls/IncomingCallAlert.tsx
+src/components/campaigns/CampaignABTesting.tsx
+src/components/campaigns/CampaignCreateDialog.tsx
+src/components/campaigns/CampaignsView.tsx
+src/components/catalog/ExternalProductManagement.tsx
+src/components/catalog/WhatsAppTemplatesManager.tsx
+src/components/catalog/__tests__/CT57_historicoAlem500.test.tsx
+src/components/catalog/__tests__/ExternalProductManagementN058.test.tsx
+src/components/catalog/__tests__/Y29_gateDownload.test.tsx
+src/components/catalog/__tests__/Y29_gateDownloadManagement.test.tsx
+src/components/catalog/__tests__/catalogExport.test.ts
+src/components/catalog/catalogExport.ts
+src/components/chatbot/ChatbotFlowEditor.tsx
+src/components/chatbot/ChatbotFlowsView.tsx
+src/components/connections/ConnectionCard.tsx
+src/components/connections/ConnectionDisconnectDialog.tsx
+src/components/connections/ConnectionsView.tsx
+src/components/connections/InstanceSettingsDialog.tsx
+src/components/connections/InstanceSettingsTabContent.tsx
+src/components/connections/NumberReputationMonitor.tsx
+src/components/connections/__tests__/BusinessHoursDialog.aria-labels.test.tsx
+src/components/connections/__tests__/ConnectionsView.sync-historico.test.tsx
+src/components/connections/__tests__/ConnectionsView.trava-multiconexao.test.tsx
+src/components/connections/__tests__/InstanceSettingsDialog.config-perfil.test.tsx
+src/components/connections/__tests__/InstanceSettingsTabContent.aria-labels.test.tsx
+src/components/connections/__tests__/NumberReputationMonitor.test.tsx
+src/components/contacts/ContactActivityTimeline.tsx
+src/components/contacts/ContactNotes.tsx
+src/components/contacts/ContactsView.tsx
+src/components/contacts/__tests__/ContactNotes.excluirNota.test.tsx
+src/components/dashboard/DashboardView.tsx
+src/components/dashboard/SentimentHelpers.tsx
+src/components/dashboard/__tests__/ActivityHeatmap.test.tsx
+src/components/dashboard/__tests__/ConversationHeatmap.test.tsx
+src/components/dashboard/__tests__/DashboardView.test.tsx
+src/components/dashboard/__tests__/SentimentAlertsDashboard.a11y.test.tsx
+src/components/dashboard/__tests__/SentimentHelpers.vocabulario.test.tsx
+src/components/dashboard/war-room/WarRoomQueueRow.tsx
+src/components/diagnostics/DiagnosticsView.tsx
+src/components/diagnostics/__tests__/DiagnosticsView.health.test.tsx
+src/components/docs/__tests__/SystemFeaturesView.test.tsx
+src/components/docs/featuresSectionsData.ts
+src/components/email/EmailChatInbox.tsx
+src/components/errors/ErrorBoundary.tsx
+src/components/gamification/AchievementsSystem.tsx
+src/components/gamification/TrainingMiniGames.tsx
+src/components/gamification/__tests__/AchievementsSystem.test.tsx
+src/components/gamification/__tests__/TrainingMiniGames.speed-typing.test.tsx
+src/components/gmail/GmailInboxView.tsx
+src/components/gmail/__tests__/GmailInboxView.test.tsx
+src/components/groups/__tests__/GroupsView.broadcast.test.tsx
+src/components/groups/__tests__/GroupsView.test.tsx
+src/components/inbox/AudioRecorder.tsx
+src/components/inbox/BulkActionsToolbar.tsx
+src/components/inbox/CRMAutoSync.tsx
+src/components/inbox/ChatPanel.tsx
+src/components/inbox/CloseConversationDialog.tsx
+src/components/inbox/ContactDetails.tsx
+src/components/inbox/ContactPurchasesPanel.tsx
+src/components/inbox/ConversationListSidebar.tsx
+src/components/inbox/FileUploader.tsx
+src/components/inbox/GlobalSearch.tsx
+src/components/inbox/ImagePreview.tsx
+src/components/inbox/InboxEmptyChat.tsx
+src/components/inbox/MediaPreview.tsx
+src/components/inbox/MessageTemplates.tsx
+src/components/inbox/NewConversationModal.tsx
+src/components/inbox/RealtimeCollaboration.tsx
+src/components/inbox/RealtimeInboxView.tsx
+src/components/inbox/TransferDialog.tsx
+src/components/inbox/VideoFullscreen.tsx
+src/components/inbox/VirtualizedRealtimeList.tsx
+src/components/inbox/VoiceChangerPicker.tsx
+src/components/inbox/WhisperMode.tsx
+src/components/inbox/__tests__/CRMAutoSync.fsm.test.tsx
+src/components/inbox/__tests__/ChatPanel.atalhos-busca.test.tsx
+src/components/inbox/__tests__/ChatTransferContract.test.tsx
+src/components/inbox/__tests__/CloseConversationDialog.test.tsx
+src/components/inbox/__tests__/ContactDetails.mobile-iniciais-sentimento.test.tsx
+src/components/inbox/__tests__/ContactDetails.quickActions.test.tsx
+src/components/inbox/__tests__/ConversationTabs.test.tsx
+src/components/inbox/__tests__/DocumentPreviewDownloadPermission.r2-inb-031.test.tsx
+src/components/inbox/__tests__/ImagePreviewVideoFullscreen.aria.test.tsx
+src/components/inbox/__tests__/InboxEmptyChat.atalhos.test.tsx
+src/components/inbox/__tests__/InboxFilters.nomes-seletores.test.tsx
+src/components/inbox/__tests__/NewConversationModal.accessible-name.test.tsx
+src/components/inbox/__tests__/QuickReplyCardList.test.tsx
+src/components/inbox/__tests__/ScheduleMessageDialog.test.tsx
+src/components/inbox/__tests__/StatusChips.contrasteChipAtendendo.test.tsx
+src/components/inbox/__tests__/StatusChips.identidade-profile.test.tsx
+src/components/inbox/__tests__/TextToAudioButton.preview-send.test.tsx
+src/components/inbox/__tests__/TransferDialog.test.tsx
+src/components/inbox/__tests__/VideoIosFallback.test.tsx
+src/components/inbox/__tests__/VoiceChangerPicker.falhas.test.tsx
+src/components/inbox/__tests__/VoiceChangerPicker.preview-send.test.tsx
+src/components/inbox/__tests__/VoiceChangerPicker.reduced-motion.test.tsx
+src/components/inbox/__tests__/VoiceChangerPicker.test.tsx
+src/components/inbox/__tests__/linkPreviewUtils.test.ts
+src/components/inbox/__tests__/localDay.localInstantFromDayAndTime.test.ts
+src/components/inbox/__tests__/template-utils.test.ts
+src/components/inbox/__tests__/useChatMediaSending.audio-meme-falha.test.ts
+src/components/inbox/__tests__/useFileUploadLogic.test.tsx
+src/components/inbox/__tests__/useGlobalSearchData.curingas.test.tsx
+src/components/inbox/__tests__/useInteractiveMessage.test.ts
+src/components/inbox/chat/ChatInputToolbars.tsx
+src/components/inbox/chat/ChatMessagesArea.tsx
+src/components/inbox/chat/ChatPanelHeader.tsx
+src/components/inbox/chat/MessageBubble.tsx
+src/components/inbox/chat/MessageHoverToolbar.tsx
+src/components/inbox/chat/MessageSendHistorySheet.tsx
+src/components/inbox/chat/__tests__/MessageSendHistorySheet.test.tsx
+src/components/inbox/chat/__tests__/menus-r2-inb-021.test.tsx
+src/components/inbox/chat/__tests__/useChatPanelHandlers.sem-falso-sucesso.test.tsx
+src/components/inbox/chat/__tests__/useChatPanelHandlers.sussurro.test.tsx
+src/components/inbox/chat/useChatPanelHandlers.ts
+src/components/inbox/collaboration/HandoffDialog.tsx
+src/components/inbox/collaboration/__tests__/HandoffDialog.test.tsx
+src/components/inbox/collaboration/__tests__/InternalNotesPanel.test.tsx
+src/components/inbox/collaboration/__tests__/RealtimeCollaboration.handoff.test.tsx
+src/components/inbox/contact-details/__tests__/ContactActionButtons.test.tsx
+src/components/inbox/contact-details/__tests__/ContactDetails.inteligencia.test.tsx
+src/components/inbox/contact-details/sidebar/__tests__/sidebarSections.test.ts
+src/components/inbox/contact-details/sidebar/sidebarSections.ts
+src/components/inbox/conversation-list/StatusChips.tsx
+src/components/inbox/interactive-builder/useInteractiveMessage.ts
+src/components/inbox/slash-commands/slashCommandsData.ts
+src/components/inbox/summary/SummaryResult.tsx
+src/components/inbox/tabs/JourneyTab.tsx
+src/components/inbox/tabs/NotesTab.error-save.test.tsx
+src/components/inbox/tabs/journey/JourneyEventCard.tsx
+src/components/inbox/tabs/journey/__tests__/JourneyEventCard.test.tsx
+src/components/inbox/useChatMediaSending.ts
+src/components/inbox/useFileUploadLogic.ts
+src/components/integrations/GmailIntegrationCard.tsx
+src/components/integrations/GoogleCalendarIntegration.tsx
+src/components/layout/Sidebar.tsx
+src/components/layout/SidebarNavItem.tsx
+src/components/layout/__tests__/Sidebar.test.tsx
+src/components/layout/__tests__/SidebarNavItem.a11y.test.tsx
+src/components/layout/__tests__/idsMortosNaNavegacao.test.tsx
+src/components/leaderboard/Leaderboard.tsx
+src/components/mobile/MobileDrawerMenu.tsx
+src/components/mobile/MobileShell.tsx
+src/components/mobile/__tests__/MobileHeader.titulos.test.tsx
+src/components/mobile/__tests__/MobileShell.notificacoes.test.tsx
+src/components/mobile/__tests__/MobileShellSearch.test.tsx
+src/components/mobile/__tests__/VoiceDictationButton.session.test.tsx
+src/components/monitoring/hooks/types.ts
+src/components/monitoring/hooks/useEvolutionMonitoring.ts
+src/components/monitoring/hooks/useMonitoringData.ts
+src/components/multiplix/MultiplixView.tsx
+src/components/multiplix/__tests__/MultiplixView.disparos-recentes.test.tsx
+src/components/multiplix/__tests__/fundacaoVisual.test.tsx
+src/components/notifications/__tests__/NotificationSettingsPanel.a11y.test.tsx
+src/components/notifications/__tests__/NotificationSettingsPanel.restaurar.test.tsx
+src/components/notifications/__tests__/NotificationSettingsPanel.sons.a11y.test.tsx
+src/components/payments/PaymentLinksView.tsx
+src/components/queues/QueueCard.tsx
+src/components/queues/QueuesComparisonDashboard.tsx
+src/components/queues/SLADashboard.tsx
+src/components/queues/__tests__/QueuesComparisonDashboard.a11y.test.tsx
+src/components/queues/__tests__/QueuesView.test.tsx
+src/components/queues/__tests__/SLADashboard.redundancia.test.tsx
+src/components/reports/AbandonmentRate.tsx
+src/components/reports/AdvancedReportsView.tsx
+src/components/reports/ConversationHeatmap.tsx
+src/components/reports/PeriodComparison.tsx
+src/components/reports/ReportCharts.tsx
+src/components/reports/__tests__/AdvancedReportsView.periodComparison.test.tsx
+src/components/reports/__tests__/ReportCharts.descricao-textual.test.tsx
+src/components/reports/__tests__/useReportsData.integrity.test.tsx
+src/components/reports/useReportsData.ts
+src/components/security/AuditLogDashboard.tsx
+src/components/security/PasswordResetRequestsPanel.tsx
+src/components/security/RateLimitRealtimeAlerts.tsx
+src/components/security/SecurityOverview.tsx
+src/components/security/SecuritySettingsPanel.tsx
+src/components/security/__tests__/AuditLogDashboard.test.tsx
+src/components/security/__tests__/GeoBlockingPanel.a11y.test.tsx
+src/components/security/__tests__/RateLimitRealtimeAlerts.test.tsx
+src/components/security/__tests__/SecurityOverview.a11y.test.tsx
+src/components/security/__tests__/SecurityOverview.hierarchy.test.tsx
+src/components/security/__tests__/SecurityOverview.medicao.test.tsx
+src/components/security/__tests__/SecuritySettingsPanel.medicao.test.tsx
+src/components/security/__tests__/SecurityView.a11y.test.tsx
+src/components/settings/AIAutoTagsConfig.tsx
+src/components/settings/AppearanceSettings.tsx
+src/components/settings/AvatarUpload.tsx
+src/components/settings/IntegrationKeysSection.tsx
+src/components/settings/SettingsView.tsx
+src/components/settings/SkillBasedRoutingSettings.tsx
+src/components/settings/SoundCustomizationPanel.tsx
+src/components/settings/__tests__/AppearanceSettings.a11y.test.tsx
+src/components/settings/__tests__/GlobalSettingsSection.sem-consumidor.test.tsx
+src/components/settings/__tests__/IntegrationKeysSection.sem-consumidor.test.tsx
+src/components/settings/__tests__/MediaLibraryAdmin.orphan-cleanup.test.tsx
+src/components/settings/__tests__/SettingsView.test.tsx
+src/components/settings/__tests__/SkillBasedRoutingSettings.skills-assign.test.tsx
+src/components/settings/ai-providers/AIProviderHealthPanel.tsx
+src/components/settings/ai-providers/__tests__/AIProviderHealthPanel.escopo-e-erro.test.tsx
+src/components/settings/media-library/AIGenerateDialog.tsx
+src/components/settings/media-library/useMediaUpload.ts
+src/components/talkx/TalkXCampaignPaused.tsx
+src/components/talkx/TalkXCampaignRunning.tsx
+src/components/talkx/TalkXCampaignScheduled.tsx
+src/components/talkx/TalkXCampaignWizard.tsx
+src/components/talkx/TalkXHelp.tsx
+src/components/talkx/TalkXLiveMonitor.tsx
+src/components/talkx/TalkXOverview.tsx
+src/components/talkx/TalkXScheduleTimeline.tsx
+src/components/talkx/TalkXSegments.tsx
+src/components/talkx/TalkXSuppression.tsx
+src/components/talkx/TalkXTemplateEditor.tsx
+src/components/talkx/TalkXTemplates.tsx
+src/components/talkx/TalkXView.tsx
+src/components/talkx/TalkXWizardDelivery.tsx
+src/components/talkx/__tests__/TalkXA11yNomePapel.test.tsx
+src/components/talkx/__tests__/TalkXCampaignPaused.test.tsx
+src/components/talkx/__tests__/TalkXCampaignRunning.states.test.tsx
+src/components/talkx/__tests__/TalkXCampaignScheduled.calendario.test.tsx
+src/components/talkx/__tests__/TalkXCampaignScheduled.test.tsx
+src/components/talkx/__tests__/TalkXCampaignWizard.layout.test.tsx
+src/components/talkx/__tests__/TalkXHealthCard.test.tsx
+src/components/talkx/__tests__/TalkXLiveMonitor.kpiRow.test.tsx
+src/components/talkx/__tests__/TalkXLiveMonitor.lifecycle.test.tsx
+src/components/talkx/__tests__/TalkXLiveMonitor.states.test.tsx
+src/components/talkx/__tests__/TalkXOverview.comparativo.test.tsx
+src/components/talkx/__tests__/TalkXOverview.filters.test.tsx
+src/components/talkx/__tests__/TalkXOverview.states.test.tsx
+src/components/talkx/__tests__/TalkXPaginacao.tamanhoPagina.test.tsx
+src/components/talkx/__tests__/TalkXScheduleTimeline.test.tsx
+src/components/talkx/__tests__/TalkXSegments.route.test.tsx
+src/components/talkx/__tests__/TalkXSuppression.actions.test.tsx
+src/components/talkx/__tests__/TalkXSuppression.add.test.tsx
+src/components/talkx/__tests__/TalkXSuppression.authoring.test.tsx
+src/components/talkx/__tests__/TalkXSuppression.editReasonVazio.test.tsx
+src/components/talkx/__tests__/TalkXSuppression.phoneOnly.test.tsx
+src/components/talkx/__tests__/TalkXSuppression.search.test.tsx
+src/components/talkx/__tests__/TalkXSuppression.searchServer.test.tsx
+src/components/talkx/__tests__/TalkXSuppressionReasons.test.tsx
+src/components/talkx/__tests__/TalkXTemplateEditor.painelMenor.test.tsx
+src/components/talkx/__tests__/TalkXVariablesGrammar.test.tsx
+src/components/talkx/__tests__/TalkXView.carregamento.test.tsx
+src/components/talkx/__tests__/TalkXView.route.test.tsx
+src/components/talkx/__tests__/TalkXView.section-error-boundary.test.tsx
+src/components/talkx/__tests__/TalkXWizardDelivery.confirmacao.test.tsx
+src/components/talkx/__tests__/TalkXWizardDelivery.recomendacoes-cta.test.tsx
+src/components/talkx/__tests__/TalkXWizardReview.resumo.test.tsx
+src/components/talkx/__tests__/talkxRoute.test.ts
+src/components/talkx/__tests__/useCampaignEditor.test.tsx
+src/components/talkx/__tests__/useCampaignRowActions.test.tsx
+src/components/talkx/help/TalkXHelpCenter.tsx
+src/components/talkx/kit/__tests__/talkxStates.matrix.test.tsx
+src/components/talkx/segments/RuleRow.tsx
+src/components/talkx/segments/TalkXSegmentBuilder.tsx
+src/components/talkx/segments/segmentBuilderReducer.ts
+src/components/talkx/talkxRoute.ts
+src/components/talkx/tracking/talkxKeyMetrics.ts
+src/components/talkx/tracking/talkxSentSummary.ts
+src/components/talkx/useCampaignRowActions.tsx
+src/components/tasks/__tests__/TasksBoardMode.a11y.test.tsx
+src/components/tasks/__tests__/WorkItemSheet.test.tsx
+src/components/tasks/__tests__/contratosVisiveis.test.tsx
+src/components/tasks/__tests__/quadroArrastarTecladoRolagem.test.tsx
+src/components/tasks/__tests__/quadroLarguraFocoContraste.test.tsx
+src/components/tasks/board/BoardColumn.tsx
+src/components/tasks/board/TasksBoardMode.tsx
+src/components/tasks/shared/NewTaskDialog.tsx
+src/components/tasks/shared/WorkItemSheet.tsx
+src/components/team-chat/TeamConversationList.tsx
+src/components/team-chat/TeamPerformancePanel.tsx
+src/components/team-chat/__tests__/team-chat-notifications-mount.test.ts
+src/components/ui/VolumeTriggerButton.tsx
+src/components/ui/__tests__/command-palette-acoes.test.tsx
+src/components/ui/__tests__/command-palette.busca-antiga.test.tsx
+src/components/ui/__tests__/emoji-picker.test.tsx
+src/components/ui/__tests__/message-reactions.test.tsx
+src/components/ui/__tests__/primitivos-a11y-pt.test.tsx
+src/components/ui/command-palette.tsx
+src/components/ui/emoji-picker.tsx
+src/components/ui/empty-state-illustrations.tsx
+src/components/ui/message-reactions.tsx
+src/components/ui/pagination.tsx
+src/components/ui/sidebar/sidebar-primitives.tsx
+src/components/ui/skip-link.tsx
+src/components/wallet/__tests__/ClientWalletView.test.tsx
+src/components/whatsapp-flows/__tests__/WhatsAppFlowsBuilder.deleteFlow.test.tsx
+src/features/talk-me/TalkMeView.tsx
+src/features/talk-me/__tests__/TalkMeView.test.tsx
+src/hooks/__tests__/helpers/alertBehaviorTestKit.ts
+src/hooks/__tests__/useAgents.presence.test.tsx
+src/hooks/__tests__/useAgents.test.tsx
+src/hooks/__tests__/useBulkActions.removido.test.ts
+src/hooks/__tests__/useCSAT.test.tsx
+src/hooks/__tests__/useCustomShortcuts.instancias.test.tsx
+src/hooks/__tests__/useGlobalSettings.zero-linhas.test.tsx
+src/hooks/__tests__/useGoalNotifications.goal-types.test.ts
+src/hooks/__tests__/useReauthentication.test.tsx
+src/hooks/__tests__/useSentimentAlerts.test.ts
+src/hooks/__tests__/useTheme.test.tsx
+src/hooks/__tests__/useTranscriptionNotifications.desativacao.test.ts
+src/hooks/__tests__/useUrlFilters.test.tsx
+src/hooks/__tests__/useUserSettings.test.tsx
+src/hooks/__tests__/useWarRoomAlerts.test.tsx
+src/hooks/admin/__tests__/useSupervisorQueue.test.tsx
+src/hooks/admin/useSupervisorQueue.ts
+src/hooks/analytics/__tests__/sentiment-vocabulario.test.tsx
+src/hooks/analytics/__tests__/useGoalNotifications.dia-local.test.tsx
+src/hooks/analytics/__tests__/useGoalsDashboard.test.tsx
+src/hooks/analytics/useGoalNotifications.ts
+src/hooks/analytics/useRealtimeDashboard.ts
+src/hooks/analytics/useRecentSentimentAlerts.ts
+src/hooks/auth/__tests__/useAuthForm.passkey.test.tsx
+src/hooks/auth/useAuth.tsx
+src/hooks/auth/useAuthForm.ts
+src/hooks/auth/useReauthentication.ts
+src/hooks/business/__tests__/useBusinessHoursCheck.test.tsx
+src/hooks/business/__tests__/useWarRoomData.test.tsx
+src/hooks/business/useWarRoomData.ts
+src/hooks/chat/__tests__/paridade06-envio.pendentes.test.ts
+src/hooks/chat/__tests__/useConversationActions.test.ts
+src/hooks/chat/__tests__/useNextBestAction.test.tsx
+src/hooks/chat/__tests__/useScheduledReports.test.tsx
+src/hooks/chat/__tests__/useTeamChatNotifications.nome-e-clique.test.tsx
+src/hooks/chat/useConversationHistoryTimeline.ts
+src/hooks/chat/useMessages.ts
+src/hooks/chat/useNextBestAction.ts
+src/hooks/chat/useRealtimeMessages.ts
+src/hooks/chat/useTeamChatDraft.ts
+src/hooks/chat/useTeamChatNotifications.ts
+src/hooks/chat/useTypingPresence.ts
+src/hooks/chat/useWhisperCount.ts
+src/hooks/communication/__tests__/mediaVolume.players.test.tsx
+src/hooks/communication/__tests__/useAudioMemes.fechamento.test.tsx
+src/hooks/communication/__tests__/useAudioMemes.mediaVolumeBindings.test.tsx
+src/hooks/communication/__tests__/useAudioMemes.mutacoes.test.tsx
+src/hooks/communication/useAudioMemes.ts
+src/hooks/communication/useAudioRecorder.ts
+src/hooks/communication/useTextToSpeech.ts
+src/hooks/communication/useTranscriptionNotifications.ts
+src/hooks/crm/useAgents.ts
+src/hooks/dashboard/useDashboardKpi.ts
+src/hooks/evolution/__tests__/useEvolutionMessaging.test.ts
+src/hooks/gamification/__tests__/useLeaderboard.test.tsx
+src/hooks/gamification/useAgentGamification.ts
+src/hooks/groups/actions.ts
+src/hooks/inbox/__tests__/chipCounts.test.ts
+src/hooks/inbox/__tests__/useInboxBulkActions.test.ts
+src/hooks/inbox/__tests__/useInboxFilters.dia-local.test.tsx
+src/hooks/inbox/__tests__/useRealtimeInbox.sendAudio.test.tsx
+src/hooks/inbox/chipCounts.ts
+src/hooks/inbox/useInboxBulkActions.ts
+src/hooks/inbox/useInboxFilterTags.ts
+src/hooks/inbox/useInboxFilters.ts
+src/hooks/inbox/useRealtimeInbox.ts
+src/hooks/inbox/useSentimentAlerts.ts
+src/hooks/integrations/__tests__/useEvolutionApi.payloads.test.ts
+src/hooks/integrations/__tests__/useGmail.threadListQuery.test.tsx
+src/hooks/integrations/__tests__/useMultiplixReplies.test.tsx
+src/hooks/integrations/__tests__/useTalkXTemplates.test.ts
+src/hooks/integrations/useCatalogSendHistory.ts
+src/hooks/integrations/useCustomEmojis.ts
+src/hooks/integrations/useGmail.ts
+src/hooks/integrations/useMultiplixDispatches.ts
+src/hooks/integrations/useMultiplixReplies.ts
+src/hooks/integrations/useTalkX.ts
+src/hooks/integrations/useTalkXResumeChecklist.ts
+src/hooks/integrations/useTalkXSegments.ts
+src/hooks/integrations/useTalkXSuppression.ts
+src/hooks/integrations/useTalkXTemplateStats.ts
+src/hooks/payments/usePaymentLinks.ts
+src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx
+src/hooks/realtime/messageSender.ts
+src/hooks/realtime/realtimeUtils.ts
+src/hooks/realtime/useRealtimeNotifications.ts
+src/hooks/realtime/useSupabaseRealtime.ts
+src/hooks/sla/__tests__/useContactSlaTimeline.test.tsx
+src/hooks/sla/useContactSlaTimeline.ts
+src/hooks/sla/useSLANotifications.ts
+src/hooks/system/__tests__/useDiagnosticsData.test.ts
+src/hooks/system/__tests__/useGeoBlocking.test.ts
+src/hooks/system/__tests__/useSecurityPushNotifications.test.ts
+src/hooks/system/__tests__/useSupabaseConnectivity.test.ts
+src/hooks/system/useDiagnosticsData.ts
+src/hooks/system/useGlobalSettings.ts
+src/hooks/system/useSupabaseConnectivity.ts
+src/hooks/system/useUserRole.ts
+src/hooks/system/useUserSettings.ts
+src/hooks/tasks/__tests__/workItemAggregates.test.ts
+src/hooks/tasks/workItem.types.ts
+src/hooks/team-chat/README.md
+src/hooks/team-chat/__tests__/useTeamMemberDetails.profiles-rpc.test.tsx
+src/hooks/team-chat/__tests__/useTeamMessages.test.tsx
+src/hooks/team-chat/queryKeys.ts
+src/hooks/team-chat/teamChatTypes.ts
+src/hooks/team-chat/useTeamChatMembers.ts
+src/hooks/team-chat/useTeamConversations.ts
+src/hooks/team-chat/useTeamMemberDetails.ts
+src/hooks/team-chat/useTeamMessages.ts
+src/hooks/ui/__tests__/useDocumentTitle.test.tsx
+src/hooks/ui/useGlobalKeyboardShortcuts.ts
+src/hooks/ui/useVolumeRocker.ts
+src/integrations/supabase/types.ts
+src/lib/__tests__/emailThreadQuery.test.ts
+src/lib/__tests__/offlineQueue.test.ts
+src/lib/__tests__/realtimeTopic.canais-fixos.test.tsx
+src/lib/__tests__/slaTimeline.test.ts
+src/lib/avisoDispositivo.ts
+src/lib/emailThreadQuery.ts
+src/lib/journey/__tests__/mappers.test.ts
+src/lib/journey/mappers.ts
+src/lib/offlineQueue.ts
+src/lib/serverLogin.ts
+src/lib/slaTimeline.ts
+src/pages/ChatPopup.tsx
+src/pages/ResetPassword.tsx
+src/pages/__tests__/ChatPopup.rolagem-mensagem-nova.test.tsx
+src/pages/__tests__/Index.keyboard-dashboard-view.test.tsx
+src/pages/__tests__/QueuesComparisonSLA.landmarks.test.tsx
+src/pages/__tests__/ResetPassword.acessivel.test.tsx
+src/pages/__tests__/ResetPassword.redirect-cancelavel.test.tsx
+src/providers/AppProviders.tsx
+src/services/__tests__/auth.service.signIn.test.ts
+src/services/__tests__/outbound-message.service.test.ts
+src/services/auth.service.ts
+src/services/navigation.service.ts
+src/services/outbound-message.service.ts
+src/styles/utilities.css
+supabase/config.toml
+supabase/functions/_shared/__tests__/ai-feature-flags.test.ts
+supabase/functions/_shared/__tests__/consumo-pago-no-ledger.test.ts
+supabase/functions/_shared/__tests__/evolution-control-authz.test.ts
+supabase/functions/_shared/__tests__/evolution-webhook-event-coverage.test.ts
+supabase/functions/_shared/ai-feature-flags.ts
+supabase/functions/_shared/evolution-api-proxy.ts
+supabase/functions/_shared/evolution-control-authz.ts
+supabase/functions/_shared/evolution-webhook-handlers.ts
+supabase/functions/_shared/evolution-webhook-messages.ts
+supabase/functions/_shared/gmail-helpers.ts
+supabase/functions/_shared/schemas.ts
+supabase/functions/_shared/validation.ts
+supabase/functions/ai-kb-ingest/index.test.ts
+supabase/functions/ai-proxy/index.test.ts
+supabase/functions/ai-suggest-reply/index.test.ts
+supabase/functions/ai-suggest-reply/index.ts
+supabase/functions/ai-transcribe-audio/index.test.ts
+supabase/functions/ai-transcribe-audio/index.ts
+supabase/functions/approve-password-reset/index.test.ts
+supabase/functions/approve-password-reset/index.ts
+supabase/functions/auth-login/index.test.ts
+supabase/functions/auth-login/index.ts
+supabase/functions/classify-audio-meme/index.test.ts
+supabase/functions/classify-emoji/index.test.ts
+supabase/functions/classify-sticker/index.test.ts
+supabase/functions/connection-health-check/index.test.ts
+supabase/functions/connection-health-check/index.ts
+supabase/functions/create-user/index.test.ts
+supabase/functions/create-user/index.ts
+supabase/functions/crm-integration/index.test.ts
+supabase/functions/detect-new-device/index.test.ts
+supabase/functions/detect-new-device/index.ts
+supabase/functions/elevenlabs-dialogue/index.test.ts
+supabase/functions/elevenlabs-sfx/index.test.ts
+supabase/functions/elevenlabs-sfx/index.ts
+supabase/functions/elevenlabs-sts/index.test.ts
+supabase/functions/elevenlabs-sts/index.ts
+supabase/functions/elevenlabs-voice-design/index.test.ts
+supabase/functions/evolution-api/index.test.ts
+supabase/functions/evolution-api/index.ts
+supabase/functions/evolution-api/session-flavor-routes.test.ts
+supabase/functions/evolution-webhook/index.ts
+supabase/functions/fetch-link-preview/index.test.ts
+supabase/functions/gmail-cron-sync/index.ts
+supabase/functions/gmail-oauth/index.test.ts
+supabase/functions/gmail-oauth/index.ts
+supabase/functions/gmail-send/index.ts
+supabase/functions/gmail-sync/index.ts
+supabase/functions/gmail-webhook/index.ts
+supabase/functions/message-delivery/index.test.ts
+supabase/functions/multiplix-audience/index.test.ts
+supabase/functions/multiplix-send/index.ts
+supabase/functions/multiplix-voices/index.test.ts
+supabase/functions/recover-message-media/index.test.ts
+supabase/functions/recover-message-media/index.ts
+supabase/functions/revoke-auth-sessions/index.test.ts
+supabase/functions/revoke-auth-sessions/index.ts
+supabase/functions/send-email/index.test.ts
+supabase/functions/send-email/index.ts
+supabase/functions/send-scheduled-report/index.test.ts
+supabase/functions/send-scheduled-report/index.ts
+supabase/functions/talkx-link/index.ts
+supabase/functions/talkx-report/index.test.ts
+supabase/functions/talkx-scheduler/index.test.ts
+supabase/functions/talkx-send/_test-utils.ts
+supabase/functions/talkx-send/index.test.ts
+supabase/functions/talkx-send/index.ts
+supabase/functions/talkx-send/n118-send-weekdays-wiring.test.ts
+supabase/functions/voice-changer/index.test.ts
+supabase/functions/voice-changer/index.ts
+supabase/functions/webauthn/index.test.ts
+supabase/functions/webauthn/index.ts
+supabase/functions/webhook-diagnostic/index.ts
+supabase/migrations/20261006180831_login_gate_rpc.sql
+supabase/migrations/20261006222024_team_receipts_reactions_conversation_id_forced.sql
+supabase/schema-manifest.json
+supabase/tests/r2_db_022_provenance_trigger.sql
+supabase/tests/transfer_conversation_atomicidade.sql
+tests/contracts/etiquetas-remocao-residuos.contract.test.ts
+tests/contracts/requireauth-network-policy.contract.test.ts
+
+Auto-merging .github/toolchain.json
+CONFLICT (add/add): Merge conflict in .github/toolchain.json
+Auto-merging .github/workflows/ci.yml
+CONFLICT (content): Merge conflict in .github/workflows/ci.yml
+Auto-merging .github/workflows/db-guard.yml
+CONFLICT (content): Merge conflict in .github/workflows/db-guard.yml
+Auto-merging .github/workflows/db-live-guard.yml
+CONFLICT (content): Merge conflict in .github/workflows/db-live-guard.yml
+Auto-merging .github/workflows/deploy-functions.yml
+CONFLICT (content): Merge conflict in .github/workflows/deploy-functions.yml
+Auto-merging .github/workflows/types-sync.yml
+CONFLICT (content): Merge conflict in .github/workflows/types-sync.yml
+Auto-merging .gitignore
+Auto-merging .tmp/evidencia-git-grep.txt
+CONFLICT (add/add): Merge conflict in .tmp/evidencia-git-grep.txt
+Auto-merging .tmp/verify.log
+CONFLICT (add/add): Merge conflict in .tmp/verify.log
+Auto-merging ESTADO.md
+CONFLICT (add/add): Merge conflict in ESTADO.md
+Auto-merging FEATURE_REGISTRY.md
+CONFLICT (add/add): Merge conflict in FEATURE_REGISTRY.md
+Auto-merging bun.lock
+Auto-merging docs/COMPLETE_SYSTEM_FEATURES.md
+CONFLICT (content): Merge conflict in docs/COMPLETE_SYSTEM_FEATURES.md
+Auto-merging docs/DB-INVENTORY.md
+CONFLICT (add/add): Merge conflict in docs/DB-INVENTORY.md
+Auto-merging docs/MIGRATIONS.md
+Auto-merging docs/adr/README.md
+CONFLICT (content): Merge conflict in docs/adr/README.md
+Auto-merging docs/audits/RECONCILIACAO_CARTOES_PARIDADE_V3_2026-10-11.md
+CONFLICT (add/add): Merge conflict in docs/audits/RECONCILIACAO_CARTOES_PARIDADE_V3_2026-10-11.md
+Auto-merging docs/audits/edge-functions-authz-coverage.md
+CONFLICT (add/add): Merge conflict in docs/audits/edge-functions-authz-coverage.md
+Auto-merging docs/dashboard/README.md
+Auto-merging docs/ia/IA-007-reuso-infraestrutura.md
+Auto-merging docs/ia/IA-010-ambiente-de-ensaio.md
+CONFLICT (content): Merge conflict in docs/ia/IA-010-ambiente-de-ensaio.md
+Auto-merging docs/multiplix/CHANGELOG_MULTIPLIX.md
+CONFLICT (add/add): Merge conflict in docs/multiplix/CHANGELOG_MULTIPLIX.md
+Auto-merging docs/plans/PLANO_PARIDADE_V3_30_ETAPAS_2026-10-11.md
+CONFLICT (add/add): Merge conflict in docs/plans/PLANO_PARIDADE_V3_30_ETAPAS_2026-10-11.md
+Auto-merging docs/talkx/v4/DESEMPENHO.md
+CONFLICT (add/add): Merge conflict in docs/talkx/v4/DESEMPENHO.md
+Auto-merging e2e/a11y-config-admin.spec.ts
+CONFLICT (add/add): Merge conflict in e2e/a11y-config-admin.spec.ts
+Auto-merging e2e/a11y-tarefas-dashboard.spec.ts
+CONFLICT (add/add): Merge conflict in e2e/a11y-tarefas-dashboard.spec.ts
+Auto-merging e2e/navegacao-modulos.spec.ts
+CONFLICT (add/add): Merge conflict in e2e/navegacao-modulos.spec.ts
+Auto-merging e2e/talkx-visual.spec.ts
+CONFLICT (content): Merge conflict in e2e/talkx-visual.spec.ts
+Auto-merging e2e/telefonia.spec.ts
+CONFLICT (add/add): Merge conflict in e2e/telefonia.spec.ts
+Auto-merging package.json
+Auto-merging playwright.config.ts
+CONFLICT (content): Merge conflict in playwright.config.ts
+Auto-merging scripts/ci/actions-kpi.mjs
+Auto-merging scripts/ci/actions-kpi.unit.mjs
+Auto-merging scripts/ci/allowed-actions.json
+Auto-merging scripts/ci/check-test-inventory.mjs
+CONFLICT (content): Merge conflict in scripts/ci/check-test-inventory.mjs
+Auto-merging scripts/ci/deno-reproducibility.unit.mjs
+Auto-merging scripts/ci/docs-estado-registry-convention.unit.mjs
+CONFLICT (add/add): Merge conflict in scripts/ci/docs-estado-registry-convention.unit.mjs
+Auto-merging scripts/ci/eslint-baseline.json
+CONFLICT (content): Merge conflict in scripts/ci/eslint-baseline.json
+Auto-merging scripts/ci/lint-ratchet.unit.mjs
+CONFLICT (content): Merge conflict in scripts/ci/lint-ratchet.unit.mjs
+Auto-merging scripts/ci/slo-docs-honesty.unit.mjs
+CONFLICT (add/add): Merge conflict in scripts/ci/slo-docs-honesty.unit.mjs
+Auto-merging scripts/ci/workflow-contracts.unit.mjs
+CONFLICT (content): Merge conflict in scripts/ci/workflow-contracts.unit.mjs
+Auto-merging scripts/db-audit/grants-baseline.json
+Auto-merging scripts/db-audit/known-violations.json
+CONFLICT (content): Merge conflict in scripts/db-audit/known-violations.json
+Auto-merging scripts/db-audit/login_gate_rpc.test.sh
+CONFLICT (add/add): Merge conflict in scripts/db-audit/login_gate_rpc.test.sh
+Auto-merging scripts/db-audit/pg-cron-jobs-baseline.json
+CONFLICT (add/add): Merge conflict in scripts/db-audit/pg-cron-jobs-baseline.json
+Auto-merging scripts/db-audit/supabase-usage-guard.mjs
+CONFLICT (add/add): Merge conflict in scripts/db-audit/talkx-e27-replay-divergence.test.sh
+Auto-merging scripts/db-audit/team-chat-department-transfer-guards.test.sh
+CONFLICT (add/add): Merge conflict in scripts/db-audit/team-chat-department-transfer-guards.test.sh
+Auto-merging scripts/db-audit/team-receipts-reactions-conversation-id.test.sh
+CONFLICT (add/add): Merge conflict in scripts/db-audit/team-receipts-reactions-conversation-id.test.sh
+Auto-merging scripts/db-audit/wa-tag-and-status-authorization.test.sh
+CONFLICT (content): Merge conflict in scripts/db-audit/wa-tag-and-status-authorization.test.sh
+Auto-merging scripts/edge-deploy/redigir-log.unit.mjs
+Auto-merging scripts/edge-deploy/secrets-scope.mjs
+Auto-merging scripts/edge-deploy/secrets-scope.unit.mjs
+Auto-merging src/App.tsx
+CONFLICT (content): Merge conflict in src/App.tsx
+Auto-merging src/__tests__/multiplix-changelog-registry.test.ts
+CONFLICT (add/add): Merge conflict in src/__tests__/multiplix-changelog-registry.test.ts
+Auto-merging src/adapters/__tests__/evolutionAdapter.test.ts
+CONFLICT (content): Merge conflict in src/adapters/__tests__/evolutionAdapter.test.ts
+Auto-merging src/adapters/evolutionAdapter.ts
+CONFLICT (content): Merge conflict in src/adapters/evolutionAdapter.ts
+Auto-merging src/components/CommandPalette.tsx
+Auto-merging src/components/__tests__/Y29_gateDownloadOutros.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/__tests__/Y29_gateDownloadOutros.test.tsx
+Auto-merging src/components/__tests__/y17Selos.contraste.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/__tests__/y17Selos.contraste.test.tsx
+Auto-merging src/components/admin/AIUsageDashboard.tsx
+CONFLICT (content): Merge conflict in src/components/admin/AIUsageDashboard.tsx
+Auto-merging src/components/admin/AdminUsersTable.tsx
+Auto-merging src/components/admin/AdminView.tsx
+CONFLICT (content): Merge conflict in src/components/admin/AdminView.tsx
+Auto-merging src/components/admin/CrisisRoom.tsx
+CONFLICT (content): Merge conflict in src/components/admin/CrisisRoom.tsx
+Auto-merging src/components/admin/ForceLogoutButton.tsx
+CONFLICT (content): Merge conflict in src/components/admin/ForceLogoutButton.tsx
+Auto-merging src/components/admin/MediaMigrationTool.tsx
+CONFLICT (content): Merge conflict in src/components/admin/MediaMigrationTool.tsx
+Auto-merging src/components/admin/__tests__/AdminView.a11y.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/admin/__tests__/AdminView.a11y.test.tsx
+Auto-merging src/components/admin/__tests__/AdminView.section-error-boundary.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/admin/__tests__/AdminView.section-error-boundary.test.tsx
+Auto-merging src/components/admin/__tests__/AdminView.servicosGoogle.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/admin/__tests__/AdminView.servicosGoogle.test.tsx
+Auto-merging src/components/admin/__tests__/CrisisRoom.metricas.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/admin/__tests__/CrisisRoom.metricas.test.tsx
+Auto-merging src/components/admin/__tests__/useAdminDataColumns.test.ts
+CONFLICT (add/add): Merge conflict in src/components/admin/__tests__/useAdminDataColumns.test.ts
+Auto-merging src/components/admin/useAdminData.ts
+CONFLICT (content): Merge conflict in src/components/admin/useAdminData.ts
+Auto-merging src/components/agents/AgentsView.tsx
+CONFLICT (content): Merge conflict in src/components/agents/AgentsView.tsx
+Auto-merging src/components/agents/InviteAgentDialog.tsx
+CONFLICT (content): Merge conflict in src/components/agents/InviteAgentDialog.tsx
+Auto-merging src/components/agents/__tests__/AgentsView.actions.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/agents/__tests__/AgentsView.actions.test.tsx
+Auto-merging src/components/agents/__tests__/AgentsView.capacidade.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/agents/__tests__/AgentsView.capacidade.test.tsx
+Auto-merging src/components/agents/__tests__/AgentsView.pendencias.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/agents/__tests__/AgentsView.pendencias.test.tsx
+Auto-merging src/components/agents/__tests__/InviteAgentDialog.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/agents/__tests__/InviteAgentDialog.test.tsx
+Auto-merging src/components/ai/AutoTicketClassifier.tsx
+CONFLICT (content): Merge conflict in src/components/ai/AutoTicketClassifier.tsx
+Auto-merging src/components/ai/__tests__/AutoTicketClassifier.test.tsx
+CONFLICT (content): Merge conflict in src/components/ai/__tests__/AutoTicketClassifier.test.tsx
+Auto-merging src/components/alerts/EvolutionDisconnectBanner.tsx
+CONFLICT (content): Merge conflict in src/components/alerts/EvolutionDisconnectBanner.tsx
+Auto-merging src/components/alerts/__tests__/EvolutionDisconnectBanner.behavior.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/alerts/__tests__/EvolutionDisconnectBanner.behavior.test.tsx
+Auto-merging src/components/alerts/__tests__/EvolutionDisconnectBanner.janela-manutencao.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/alerts/__tests__/EvolutionDisconnectBanner.janela-manutencao.test.tsx
+Auto-merging src/components/auth/HeroBenefits.tsx
+CONFLICT (content): Merge conflict in src/components/auth/HeroBenefits.tsx
+Auto-merging src/components/auth/ReauthDialog.tsx
+CONFLICT (content): Merge conflict in src/components/auth/ReauthDialog.tsx
+Auto-merging src/components/auth/__tests__/HeroBenefits.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/auth/__tests__/HeroBenefits.test.tsx
+Auto-merging src/components/automations/AutomationsManager.tsx
+Auto-merging src/components/calls/IncomingCallAlert.tsx
+CONFLICT (content): Merge conflict in src/components/calls/IncomingCallAlert.tsx
+CONFLICT (modify/delete): src/components/campaigns/CampaignABTesting.tsx deleted in a9b4d6c6fb35625e8a4794895f733ce696201b28 and modified in d723a9010796f1ea4aea5270d881da2974328ba4.  Version d723a9010796f1ea4aea5270d881da2974328ba4 of src/components/campaigns/CampaignABTesting.tsx left in tree.
+CONFLICT (modify/delete): src/components/campaigns/CampaignCreateDialog.tsx deleted in a9b4d6c6fb35625e8a4794895f733ce696201b28 and modified in d723a9010796f1ea4aea5270d881da2974328ba4.  Version d723a9010796f1ea4aea5270d881da2974328ba4 of src/components/campaigns/CampaignCreateDialog.tsx left in tree.
+CONFLICT (modify/delete): src/components/campaigns/CampaignsView.tsx deleted in a9b4d6c6fb35625e8a4794895f733ce696201b28 and modified in d723a9010796f1ea4aea5270d881da2974328ba4.  Version d723a9010796f1ea4aea5270d881da2974328ba4 of src/components/campaigns/CampaignsView.tsx left in tree.
+Auto-merging src/components/catalog/CatalogBulkSendDialog.tsx
+Auto-merging src/components/catalog/ExternalProductManagement.tsx
+CONFLICT (content): Merge conflict in src/components/catalog/ExternalProductManagement.tsx
+Auto-merging src/components/catalog/WhatsAppTemplatesManager.tsx
+CONFLICT (content): Merge conflict in src/components/catalog/WhatsAppTemplatesManager.tsx
+Auto-merging src/components/catalog/__tests__/CT55_57_management.test.tsx
+Auto-merging src/components/catalog/__tests__/CT57_historicoAlem500.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/catalog/__tests__/CT57_historicoAlem500.test.tsx
+Auto-merging src/components/catalog/__tests__/ExternalProductManagementN058.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/catalog/__tests__/ExternalProductManagementN058.test.tsx
+Auto-merging src/components/catalog/__tests__/Y29_gateDownload.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/catalog/__tests__/Y29_gateDownload.test.tsx
+Auto-merging src/components/catalog/__tests__/Y29_gateDownloadManagement.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/catalog/__tests__/Y29_gateDownloadManagement.test.tsx
+Auto-merging src/components/catalog/__tests__/catalogExport.test.ts
+CONFLICT (content): Merge conflict in src/components/catalog/__tests__/catalogExport.test.ts
+Auto-merging src/components/catalog/catalogExport.ts
+CONFLICT (content): Merge conflict in src/components/catalog/catalogExport.ts
+Auto-merging src/components/chatbot/ChatbotFlowEditor.tsx
+CONFLICT (content): Merge conflict in src/components/chatbot/ChatbotFlowEditor.tsx
+Auto-merging src/components/chatbot/ChatbotFlowsView.tsx
+CONFLICT (content): Merge conflict in src/components/chatbot/ChatbotFlowsView.tsx
+Auto-merging src/components/connections/BusinessHoursDialog.tsx
+Auto-merging src/components/connections/ConnectionCard.tsx
+CONFLICT (content): Merge conflict in src/components/connections/ConnectionCard.tsx
+Auto-merging src/components/connections/ConnectionDisconnectDialog.tsx
+CONFLICT (add/add): Merge conflict in src/components/connections/ConnectionDisconnectDialog.tsx
+Auto-merging src/components/connections/ConnectionsView.tsx
+CONFLICT (content): Merge conflict in src/components/connections/ConnectionsView.tsx
+Auto-merging src/components/connections/InstanceSettingsDialog.tsx
+CONFLICT (content): Merge conflict in src/components/connections/InstanceSettingsDialog.tsx
+Auto-merging src/components/connections/InstanceSettingsTabContent.tsx
+CONFLICT (content): Merge conflict in src/components/connections/InstanceSettingsTabContent.tsx
+Auto-merging src/components/connections/NumberReputationMonitor.tsx
+CONFLICT (content): Merge conflict in src/components/connections/NumberReputationMonitor.tsx
+Auto-merging src/components/connections/__tests__/BusinessHoursDialog.aria-labels.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/connections/__tests__/BusinessHoursDialog.aria-labels.test.tsx
+Auto-merging src/components/connections/__tests__/ConnectionsView.sync-historico.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/connections/__tests__/ConnectionsView.sync-historico.test.tsx
+Auto-merging src/components/connections/__tests__/ConnectionsView.trava-multiconexao.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/connections/__tests__/ConnectionsView.trava-multiconexao.test.tsx
+Auto-merging src/components/connections/__tests__/InstanceSettingsDialog.config-perfil.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/connections/__tests__/InstanceSettingsDialog.config-perfil.test.tsx
+Auto-merging src/components/connections/__tests__/InstanceSettingsTabContent.aria-labels.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/connections/__tests__/InstanceSettingsTabContent.aria-labels.test.tsx
+Auto-merging src/components/connections/__tests__/NumberReputationMonitor.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/connections/__tests__/NumberReputationMonitor.test.tsx
+Auto-merging src/components/contacts/ContactActivityTimeline.tsx
+CONFLICT (content): Merge conflict in src/components/contacts/ContactActivityTimeline.tsx
+Auto-merging src/components/contacts/ContactNotes.tsx
+CONFLICT (content): Merge conflict in src/components/contacts/ContactNotes.tsx
+Auto-merging src/components/contacts/ContactRegionMap.tsx
+Auto-merging src/components/contacts/ContactsView.tsx
+CONFLICT (content): Merge conflict in src/components/contacts/ContactsView.tsx
+Auto-merging src/components/contacts/__tests__/ContactNotes.excluirNota.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/contacts/__tests__/ContactNotes.excluirNota.test.tsx
+Auto-merging src/components/contacts/__tests__/ContactRegionMap.test.tsx
+Auto-merging src/components/crm360/CRM360ExplorerView.tsx
+Auto-merging src/components/dashboard/ActivityHeatmap.tsx
+Auto-merging src/components/dashboard/AgentPerformancePanel.tsx
+Auto-merging src/components/dashboard/ConversationHeatmap.tsx
+Auto-merging src/components/dashboard/DashboardView.tsx
+CONFLICT (content): Merge conflict in src/components/dashboard/DashboardView.tsx
+Auto-merging src/components/dashboard/SatisfactionMetrics.tsx
+Auto-merging src/components/dashboard/SentimentAlertsDashboard.tsx
+Auto-merging src/components/dashboard/SentimentHelpers.tsx
+CONFLICT (content): Merge conflict in src/components/dashboard/SentimentHelpers.tsx
+Auto-merging src/components/dashboard/SentimentTabContent.tsx
+Auto-merging src/components/dashboard/SentimentTrendChart.tsx
+Auto-merging src/components/dashboard/WarRoomDashboard.tsx
+Auto-merging src/components/dashboard/__tests__/ActivityHeatmap.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/dashboard/__tests__/ActivityHeatmap.test.tsx
+Auto-merging src/components/dashboard/__tests__/ConversationHeatmap.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/dashboard/__tests__/ConversationHeatmap.test.tsx
+Auto-merging src/components/dashboard/__tests__/DashboardView.test.tsx
+CONFLICT (content): Merge conflict in src/components/dashboard/__tests__/DashboardView.test.tsx
+Auto-merging src/components/dashboard/__tests__/SentimentAlertsDashboard.a11y.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/dashboard/__tests__/SentimentAlertsDashboard.a11y.test.tsx
+Auto-merging src/components/dashboard/__tests__/SentimentHelpers.vocabulario.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/dashboard/__tests__/SentimentHelpers.vocabulario.test.tsx
+Auto-merging src/components/dashboard/overview/DashboardKpiCard.tsx
+Auto-merging src/components/dashboard/overview/SentimentTrendCard.tsx
+Auto-merging src/components/dashboard/sla/SLASummaryCard.tsx
+Auto-merging src/components/dashboard/war-room/WarRoomAlertRow.tsx
+Auto-merging src/components/dashboard/war-room/WarRoomQueueRow.tsx
+CONFLICT (content): Merge conflict in src/components/dashboard/war-room/WarRoomQueueRow.tsx
+Auto-merging src/components/diagnostics/DiagnosticsView.tsx
+CONFLICT (content): Merge conflict in src/components/diagnostics/DiagnosticsView.tsx
+Auto-merging src/components/diagnostics/__tests__/DiagnosticsView.health.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/diagnostics/__tests__/DiagnosticsView.health.test.tsx
+Auto-merging src/components/docs/SystemFeaturesView.tsx
+Auto-merging src/components/docs/__tests__/SystemFeaturesView.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/docs/__tests__/SystemFeaturesView.test.tsx
+Auto-merging src/components/docs/featuresSectionsData.ts
+CONFLICT (content): Merge conflict in src/components/docs/featuresSectionsData.ts
+Auto-merging src/components/email/EmailChatInbox.tsx
+CONFLICT (content): Merge conflict in src/components/email/EmailChatInbox.tsx
+Auto-merging src/components/email/EmailChatThread.tsx
+Auto-merging src/components/errors/ErrorBoundary.tsx
+CONFLICT (content): Merge conflict in src/components/errors/ErrorBoundary.tsx
+Auto-merging src/components/gamification/AchievementsSystem.tsx
+CONFLICT (content): Merge conflict in src/components/gamification/AchievementsSystem.tsx
+Auto-merging src/components/gamification/TrainingMiniGames.tsx
+CONFLICT (content): Merge conflict in src/components/gamification/TrainingMiniGames.tsx
+Auto-merging src/components/gamification/__tests__/AchievementsSystem.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/gamification/__tests__/AchievementsSystem.test.tsx
+Auto-merging src/components/gamification/__tests__/TrainingMiniGames.speed-typing.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/gamification/__tests__/TrainingMiniGames.speed-typing.test.tsx
+Auto-merging src/components/gmail/GmailInboxView.tsx
+CONFLICT (content): Merge conflict in src/components/gmail/GmailInboxView.tsx
+Auto-merging src/components/gmail/__tests__/GmailInboxView.test.tsx
+CONFLICT (content): Merge conflict in src/components/gmail/__tests__/GmailInboxView.test.tsx
+Auto-merging src/components/groups/GroupsView.tsx
+Auto-merging src/components/groups/__tests__/GroupsView.broadcast.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/groups/__tests__/GroupsView.broadcast.test.tsx
+Auto-merging src/components/groups/__tests__/GroupsView.test.tsx
+CONFLICT (content): Merge conflict in src/components/groups/__tests__/GroupsView.test.tsx
+Auto-merging src/components/inbox/AISuggestions.tsx
+Auto-merging src/components/inbox/AudioMemePicker.tsx
+Auto-merging src/components/inbox/AudioMessagePlayer.tsx
+Auto-merging src/components/inbox/AudioRecorder.tsx
+CONFLICT (content): Merge conflict in src/components/inbox/AudioRecorder.tsx
+Auto-merging src/components/inbox/BulkActionsToolbar.tsx
+CONFLICT (content): Merge conflict in src/components/inbox/BulkActionsToolbar.tsx
+Auto-merging src/components/inbox/CRMAutoSync.tsx
+CONFLICT (content): Merge conflict in src/components/inbox/CRMAutoSync.tsx
+Auto-merging src/components/inbox/ChatPanel.tsx
+CONFLICT (content): Merge conflict in src/components/inbox/ChatPanel.tsx
+Auto-merging src/components/inbox/CloseConversationDialog.tsx
+CONFLICT (content): Merge conflict in src/components/inbox/CloseConversationDialog.tsx
+Auto-merging src/components/inbox/ContactDetails.tsx
+CONFLICT (content): Merge conflict in src/components/inbox/ContactDetails.tsx
+Auto-merging src/components/inbox/ContactPurchasesPanel.tsx
+CONFLICT (content): Merge conflict in src/components/inbox/ContactPurchasesPanel.tsx
+Auto-merging src/components/inbox/ContactTypeFilter.tsx
+Auto-merging src/components/inbox/ConversationListSidebar.tsx
+CONFLICT (content): Merge conflict in src/components/inbox/ConversationListSidebar.tsx
+Auto-merging src/components/inbox/FileUploader.tsx
+CONFLICT (content): Merge conflict in src/components/inbox/FileUploader.tsx
+Auto-merging src/components/inbox/GlobalSearch.tsx
+CONFLICT (content): Merge conflict in src/components/inbox/GlobalSearch.tsx
+Auto-merging src/components/inbox/ImagePreview.tsx
+CONFLICT (content): Merge conflict in src/components/inbox/ImagePreview.tsx
+Auto-merging src/components/inbox/InboxEmptyChat.tsx
+CONFLICT (content): Merge conflict in src/components/inbox/InboxEmptyChat.tsx
+Auto-merging src/components/inbox/InboxFilters.tsx
+Auto-merging src/components/inbox/InteractiveMessage.tsx
+Auto-merging src/components/inbox/InteractiveMessageBuilder.tsx
+Auto-merging src/components/inbox/MediaPreview.tsx
+CONFLICT (content): Merge conflict in src/components/inbox/MediaPreview.tsx
+Auto-merging src/components/inbox/MessageContextActions.tsx
+Auto-merging src/components/inbox/MessageReactions.tsx
+Auto-merging src/components/inbox/MessageTemplates.tsx
+CONFLICT (content): Merge conflict in src/components/inbox/MessageTemplates.tsx
+Auto-merging src/components/inbox/NewConversationModal.tsx
+CONFLICT (content): Merge conflict in src/components/inbox/NewConversationModal.tsx
+Auto-merging src/components/inbox/NextBestActionEngine.tsx
+Auto-merging src/components/inbox/QuickRepliesManager.tsx
+Auto-merging src/components/inbox/RealtimeCollaboration.tsx
+CONFLICT (content): Merge conflict in src/components/inbox/RealtimeCollaboration.tsx
+Auto-merging src/components/inbox/RealtimeInboxView.tsx
+CONFLICT (content): Merge conflict in src/components/inbox/RealtimeInboxView.tsx
+Auto-merging src/components/inbox/TextToAudioButton.tsx
+Auto-merging src/components/inbox/TextToSpeechButton.tsx
+Auto-merging src/components/inbox/TransferDialog.tsx
+CONFLICT (content): Merge conflict in src/components/inbox/TransferDialog.tsx
+Auto-merging src/components/inbox/VideoFullscreen.tsx
+CONFLICT (content): Merge conflict in src/components/inbox/VideoFullscreen.tsx
+Auto-merging src/components/inbox/VirtualizedRealtimeList.tsx
+CONFLICT (content): Merge conflict in src/components/inbox/VirtualizedRealtimeList.tsx
+Auto-merging src/components/inbox/VoiceChangerPicker.tsx
+CONFLICT (content): Merge conflict in src/components/inbox/VoiceChangerPicker.tsx
+Auto-merging src/components/inbox/WhisperMode.tsx
+CONFLICT (content): Merge conflict in src/components/inbox/WhisperMode.tsx
+Auto-merging src/components/inbox/__tests__/CRMAutoSync.fsm.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/inbox/__tests__/CRMAutoSync.fsm.test.tsx
+Auto-merging src/components/inbox/__tests__/ChatPanel.atalhos-busca.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/inbox/__tests__/ChatPanel.atalhos-busca.test.tsx
+Auto-merging src/components/inbox/__tests__/ChatTransferContract.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/inbox/__tests__/ChatTransferContract.test.tsx
+Auto-merging src/components/inbox/__tests__/CloseConversationDialog.test.tsx
+CONFLICT (content): Merge conflict in src/components/inbox/__tests__/CloseConversationDialog.test.tsx
+Auto-merging src/components/inbox/__tests__/ContactDetails.mobile-iniciais-sentimento.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/inbox/__tests__/ContactDetails.mobile-iniciais-sentimento.test.tsx
+Auto-merging src/components/inbox/__tests__/ContactDetails.quickActions.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/inbox/__tests__/ContactDetails.quickActions.test.tsx
+Auto-merging src/components/inbox/__tests__/ConversationTabs.test.tsx
+CONFLICT (content): Merge conflict in src/components/inbox/__tests__/ConversationTabs.test.tsx
+Auto-merging src/components/inbox/__tests__/DocumentPreviewDownloadPermission.r2-inb-031.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/inbox/__tests__/DocumentPreviewDownloadPermission.r2-inb-031.test.tsx
+Auto-merging src/components/inbox/__tests__/ImagePreviewVideoFullscreen.aria.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/inbox/__tests__/ImagePreviewVideoFullscreen.aria.test.tsx
+Auto-merging src/components/inbox/__tests__/InboxEmptyChat.atalhos.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/inbox/__tests__/InboxEmptyChat.atalhos.test.tsx
+Auto-merging src/components/inbox/__tests__/InboxFilters.nomes-seletores.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/inbox/__tests__/InboxFilters.nomes-seletores.test.tsx
+Auto-merging src/components/inbox/__tests__/NewConversationModal.accessible-name.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/inbox/__tests__/NewConversationModal.accessible-name.test.tsx
+Auto-merging src/components/inbox/__tests__/QuickReplyCardList.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/inbox/__tests__/QuickReplyCardList.test.tsx
+Auto-merging src/components/inbox/__tests__/ScheduleMessageDialog.test.tsx
+CONFLICT (content): Merge conflict in src/components/inbox/__tests__/ScheduleMessageDialog.test.tsx
+Auto-merging src/components/inbox/__tests__/StatusChips.contrasteChipAtendendo.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/inbox/__tests__/StatusChips.contrasteChipAtendendo.test.tsx
+Auto-merging src/components/inbox/__tests__/StatusChips.identidade-profile.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/inbox/__tests__/StatusChips.identidade-profile.test.tsx
+Auto-merging src/components/inbox/__tests__/TextToAudioButton.preview-send.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/inbox/__tests__/TextToAudioButton.preview-send.test.tsx
+Auto-merging src/components/inbox/__tests__/TransferDialog.test.tsx
+CONFLICT (content): Merge conflict in src/components/inbox/__tests__/TransferDialog.test.tsx
+Auto-merging src/components/inbox/__tests__/VideoIosFallback.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/inbox/__tests__/VideoIosFallback.test.tsx
+Auto-merging src/components/inbox/__tests__/VoiceChangerPicker.falhas.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/inbox/__tests__/VoiceChangerPicker.falhas.test.tsx
+Auto-merging src/components/inbox/__tests__/VoiceChangerPicker.preview-send.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/inbox/__tests__/VoiceChangerPicker.preview-send.test.tsx
+Auto-merging src/components/inbox/__tests__/VoiceChangerPicker.reduced-motion.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/inbox/__tests__/VoiceChangerPicker.reduced-motion.test.tsx
+Auto-merging src/components/inbox/__tests__/VoiceChangerPicker.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/inbox/__tests__/VoiceChangerPicker.test.tsx
+Auto-merging src/components/inbox/__tests__/linkPreviewUtils.test.ts
+CONFLICT (add/add): Merge conflict in src/components/inbox/__tests__/linkPreviewUtils.test.ts
+Auto-merging src/components/inbox/__tests__/localDay.localInstantFromDayAndTime.test.ts
+CONFLICT (add/add): Merge conflict in src/components/inbox/__tests__/localDay.localInstantFromDayAndTime.test.ts
+Auto-merging src/components/inbox/__tests__/template-utils.test.ts
+CONFLICT (add/add): Merge conflict in src/components/inbox/__tests__/template-utils.test.ts
+Auto-merging src/components/inbox/__tests__/useChatMediaSending.audio-meme-falha.test.ts
+CONFLICT (add/add): Merge conflict in src/components/inbox/__tests__/useChatMediaSending.audio-meme-falha.test.ts
+Auto-merging src/components/inbox/__tests__/useFileUploadLogic.test.tsx
+CONFLICT (content): Merge conflict in src/components/inbox/__tests__/useFileUploadLogic.test.tsx
+Auto-merging src/components/inbox/__tests__/useGlobalSearchData.curingas.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/inbox/__tests__/useGlobalSearchData.curingas.test.tsx
+Auto-merging src/components/inbox/__tests__/useInteractiveMessage.test.ts
+CONFLICT (add/add): Merge conflict in src/components/inbox/__tests__/useInteractiveMessage.test.ts
+Auto-merging src/components/inbox/ai-tools/SentimentTab.tsx
+Auto-merging src/components/inbox/chat/ChatDialogs.tsx
+Auto-merging src/components/inbox/chat/ChatInputArea.tsx
+Auto-merging src/components/inbox/chat/ChatInputToolbars.tsx
+CONFLICT (content): Merge conflict in src/components/inbox/chat/ChatInputToolbars.tsx
+Auto-merging src/components/inbox/chat/ChatMessageInput.tsx
+Auto-merging src/components/inbox/chat/ChatMessagesArea.tsx
+CONFLICT (content): Merge conflict in src/components/inbox/chat/ChatMessagesArea.tsx
+Auto-merging src/components/inbox/chat/ChatPanelHeader.tsx
+CONFLICT (content): Merge conflict in src/components/inbox/chat/ChatPanelHeader.tsx
+Auto-merging src/components/inbox/chat/MessageBubble.tsx
+CONFLICT (content): Merge conflict in src/components/inbox/chat/MessageBubble.tsx
+Auto-merging src/components/inbox/chat/MessageHoverToolbar.tsx
+CONFLICT (content): Merge conflict in src/components/inbox/chat/MessageHoverToolbar.tsx
+Auto-merging src/components/inbox/chat/MessageSendHistorySheet.tsx
+CONFLICT (add/add): Merge conflict in src/components/inbox/chat/MessageSendHistorySheet.tsx
+Auto-merging src/components/inbox/chat/__tests__/MessageSendHistorySheet.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/inbox/chat/__tests__/MessageSendHistorySheet.test.tsx
+Auto-merging src/components/inbox/chat/__tests__/menus-r2-inb-021.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/inbox/chat/__tests__/menus-r2-inb-021.test.tsx
+Auto-merging src/components/inbox/chat/__tests__/useChatPanelHandlers.sem-falso-sucesso.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/inbox/chat/__tests__/useChatPanelHandlers.sem-falso-sucesso.test.tsx
+Auto-merging src/components/inbox/chat/__tests__/useChatPanelHandlers.sussurro.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/inbox/chat/__tests__/useChatPanelHandlers.sussurro.test.tsx
+Auto-merging src/components/inbox/chat/useChatPanelHandlers.ts
+CONFLICT (content): Merge conflict in src/components/inbox/chat/useChatPanelHandlers.ts
+Auto-merging src/components/inbox/collaboration/HandoffDialog.tsx
+CONFLICT (content): Merge conflict in src/components/inbox/collaboration/HandoffDialog.tsx
+Auto-merging src/components/inbox/collaboration/InternalNotesPanel.tsx
+Auto-merging src/components/inbox/collaboration/MentionInput.tsx
+Auto-merging src/components/inbox/collaboration/__tests__/HandoffDialog.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/inbox/collaboration/__tests__/HandoffDialog.test.tsx
+Auto-merging src/components/inbox/collaboration/__tests__/InternalNotesPanel.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/inbox/collaboration/__tests__/InternalNotesPanel.test.tsx
+Auto-merging src/components/inbox/collaboration/__tests__/RealtimeCollaboration.handoff.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/inbox/collaboration/__tests__/RealtimeCollaboration.handoff.test.tsx
+Auto-merging src/components/inbox/contact-details/ContactActionButtons.tsx
+Auto-merging src/components/inbox/contact-details/__tests__/ContactActionButtons.test.tsx
+CONFLICT (content): Merge conflict in src/components/inbox/contact-details/__tests__/ContactActionButtons.test.tsx
+Auto-merging src/components/inbox/contact-details/__tests__/ContactDetails.inteligencia.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/inbox/contact-details/__tests__/ContactDetails.inteligencia.test.tsx
+Auto-merging src/components/inbox/contact-details/sidebar/__tests__/sidebarSections.test.ts
+CONFLICT (content): Merge conflict in src/components/inbox/contact-details/sidebar/__tests__/sidebarSections.test.ts
+Auto-merging src/components/inbox/contact-details/sidebar/sidebarSections.ts
+CONFLICT (content): Merge conflict in src/components/inbox/contact-details/sidebar/sidebarSections.ts
+Auto-merging src/components/inbox/conversation-list/StatusChips.tsx
+CONFLICT (content): Merge conflict in src/components/inbox/conversation-list/StatusChips.tsx
+Auto-merging src/components/inbox/interactive-builder/useInteractiveMessage.ts
+CONFLICT (content): Merge conflict in src/components/inbox/interactive-builder/useInteractiveMessage.ts
+Auto-merging src/components/inbox/slash-commands/slashCommandsData.ts
+CONFLICT (content): Merge conflict in src/components/inbox/slash-commands/slashCommandsData.ts
+Auto-merging src/components/inbox/summary/SummaryResult.tsx
+CONFLICT (content): Merge conflict in src/components/inbox/summary/SummaryResult.tsx
+Auto-merging src/components/inbox/tabs/JourneyTab.tsx
+CONFLICT (content): Merge conflict in src/components/inbox/tabs/JourneyTab.tsx
+Auto-merging src/components/inbox/tabs/NotesTab.error-save.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/inbox/tabs/NotesTab.error-save.test.tsx
+Auto-merging src/components/inbox/tabs/NotesTab.tsx
+Auto-merging src/components/inbox/tabs/__tests__/JourneyTab.test.tsx
+Auto-merging src/components/inbox/tabs/journey/JourneyEventCard.tsx
+CONFLICT (add/add): Merge conflict in src/components/inbox/tabs/journey/JourneyEventCard.tsx
+Auto-merging src/components/inbox/tabs/journey/__tests__/JourneyEventCard.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/inbox/tabs/journey/__tests__/JourneyEventCard.test.tsx
+Auto-merging src/components/inbox/useChatMediaSending.ts
+CONFLICT (content): Merge conflict in src/components/inbox/useChatMediaSending.ts
+Auto-merging src/components/inbox/useFileUploadLogic.ts
+CONFLICT (content): Merge conflict in src/components/inbox/useFileUploadLogic.ts
+Auto-merging src/components/inbox/useGlobalSearchData.ts
+Auto-merging src/components/integrations/GmailIntegrationCard.tsx
+CONFLICT (content): Merge conflict in src/components/integrations/GmailIntegrationCard.tsx
+Auto-merging src/components/integrations/GoogleCalendarIntegration.tsx
+CONFLICT (content): Merge conflict in src/components/integrations/GoogleCalendarIntegration.tsx
+Auto-merging src/components/integrations/N8nIntegrationView.tsx
+Auto-merging src/components/integrations/SentryIntegrationView.tsx
+Auto-merging src/components/layout/AppShell.tsx
+Auto-merging src/components/layout/Sidebar.tsx
+CONFLICT (content): Merge conflict in src/components/layout/Sidebar.tsx
+Auto-merging src/components/layout/SidebarNavItem.tsx
+CONFLICT (content): Merge conflict in src/components/layout/SidebarNavItem.tsx
+Auto-merging src/components/layout/__tests__/Sidebar.test.tsx
+CONFLICT (content): Merge conflict in src/components/layout/__tests__/Sidebar.test.tsx
+Auto-merging src/components/layout/__tests__/SidebarNavItem.a11y.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/layout/__tests__/SidebarNavItem.a11y.test.tsx
+Auto-merging src/components/layout/__tests__/idsMortosNaNavegacao.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/layout/__tests__/idsMortosNaNavegacao.test.tsx
+Auto-merging src/components/leaderboard/Leaderboard.tsx
+CONFLICT (content): Merge conflict in src/components/leaderboard/Leaderboard.tsx
+Auto-merging src/components/mobile/MobileDrawerMenu.tsx
+CONFLICT (content): Merge conflict in src/components/mobile/MobileDrawerMenu.tsx
+Auto-merging src/components/mobile/MobileHeader.tsx
+Auto-merging src/components/mobile/MobileShell.tsx
+CONFLICT (content): Merge conflict in src/components/mobile/MobileShell.tsx
+Auto-merging src/components/mobile/__tests__/MobileHeader.titulos.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/mobile/__tests__/MobileHeader.titulos.test.tsx
+Auto-merging src/components/mobile/__tests__/MobileShell.notificacoes.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/mobile/__tests__/MobileShell.notificacoes.test.tsx
+Auto-merging src/components/mobile/__tests__/MobileShellSearch.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/mobile/__tests__/MobileShellSearch.test.tsx
+Auto-merging src/components/mobile/__tests__/VoiceDictationButton.session.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/mobile/__tests__/VoiceDictationButton.session.test.tsx
+Auto-merging src/components/monitoring/EvolutionMonitoringDashboard.tsx
+Auto-merging src/components/monitoring/hooks/types.ts
+CONFLICT (content): Merge conflict in src/components/monitoring/hooks/types.ts
+Auto-merging src/components/monitoring/hooks/useEvolutionMonitoring.ts
+CONFLICT (content): Merge conflict in src/components/monitoring/hooks/useEvolutionMonitoring.ts
+Auto-merging src/components/monitoring/hooks/useMonitoringData.ts
+CONFLICT (content): Merge conflict in src/components/monitoring/hooks/useMonitoringData.ts
+Auto-merging src/components/multiplix/MultiplixView.tsx
+CONFLICT (content): Merge conflict in src/components/multiplix/MultiplixView.tsx
+Auto-merging src/components/multiplix/__tests__/MultiplixView.disparos-recentes.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/multiplix/__tests__/MultiplixView.disparos-recentes.test.tsx
+Auto-merging src/components/multiplix/__tests__/fundacaoVisual.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/multiplix/__tests__/fundacaoVisual.test.tsx
+Auto-merging src/components/notifications/NotificationSettingsPanel.tsx
+Auto-merging src/components/notifications/NotificationTypeCards.tsx
+Auto-merging src/components/notifications/__tests__/NotificationSettingsPanel.a11y.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/notifications/__tests__/NotificationSettingsPanel.a11y.test.tsx
+Auto-merging src/components/notifications/__tests__/NotificationSettingsPanel.restaurar.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/notifications/__tests__/NotificationSettingsPanel.restaurar.test.tsx
+Auto-merging src/components/notifications/__tests__/NotificationSettingsPanel.sons.a11y.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/notifications/__tests__/NotificationSettingsPanel.sons.a11y.test.tsx
+Auto-merging src/components/nps/NPSDashboard.tsx
+Auto-merging src/components/onboarding/OnboardingChecklist.tsx
+CONFLICT (modify/delete): src/components/payments/PaymentLinksView.tsx deleted in d723a9010796f1ea4aea5270d881da2974328ba4 and modified in a9b4d6c6fb35625e8a4794895f733ce696201b28.  Version a9b4d6c6fb35625e8a4794895f733ce696201b28 of src/components/payments/PaymentLinksView.tsx left in tree.
+Auto-merging src/components/queues/QueueAlertsDisplay.tsx
+Auto-merging src/components/queues/QueueCard.tsx
+CONFLICT (content): Merge conflict in src/components/queues/QueueCard.tsx
+Auto-merging src/components/queues/QueuesComparisonDashboard.tsx
+CONFLICT (content): Merge conflict in src/components/queues/QueuesComparisonDashboard.tsx
+Auto-merging src/components/queues/QueuesView.tsx
+Auto-merging src/components/queues/SLADashboard.tsx
+CONFLICT (content): Merge conflict in src/components/queues/SLADashboard.tsx
+Auto-merging src/components/queues/SLAMetricCards.tsx
+Auto-merging src/components/queues/__tests__/QueuesComparisonDashboard.a11y.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/queues/__tests__/QueuesComparisonDashboard.a11y.test.tsx
+Auto-merging src/components/queues/__tests__/QueuesView.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/queues/__tests__/QueuesView.test.tsx
+Auto-merging src/components/queues/__tests__/SLADashboard.redundancia.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/queues/__tests__/SLADashboard.redundancia.test.tsx
+Auto-merging src/components/reports/AbandonmentRate.tsx
+CONFLICT (content): Merge conflict in src/components/reports/AbandonmentRate.tsx
+Auto-merging src/components/reports/AdvancedReportsView.tsx
+CONFLICT (content): Merge conflict in src/components/reports/AdvancedReportsView.tsx
+Auto-merging src/components/reports/ConversationHeatmap.tsx
+CONFLICT (content): Merge conflict in src/components/reports/ConversationHeatmap.tsx
+Auto-merging src/components/reports/PeriodComparison.tsx
+CONFLICT (content): Merge conflict in src/components/reports/PeriodComparison.tsx
+Auto-merging src/components/reports/ReportCharts.tsx
+CONFLICT (content): Merge conflict in src/components/reports/ReportCharts.tsx
+Auto-merging src/components/reports/__tests__/AdvancedReportsView.periodComparison.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/reports/__tests__/AdvancedReportsView.periodComparison.test.tsx
+Auto-merging src/components/reports/__tests__/ReportCharts.descricao-textual.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/reports/__tests__/ReportCharts.descricao-textual.test.tsx
+Auto-merging src/components/reports/__tests__/useReportsData.integrity.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/reports/__tests__/useReportsData.integrity.test.tsx
+Auto-merging src/components/reports/useReportsData.ts
+CONFLICT (content): Merge conflict in src/components/reports/useReportsData.ts
+Auto-merging src/components/security/AuditLogDashboard.tsx
+CONFLICT (content): Merge conflict in src/components/security/AuditLogDashboard.tsx
+Auto-merging src/components/security/GeoBlockingPanel.tsx
+Auto-merging src/components/security/PasswordResetRequestsPanel.tsx
+CONFLICT (content): Merge conflict in src/components/security/PasswordResetRequestsPanel.tsx
+Auto-merging src/components/security/RateLimitRealtimeAlerts.tsx
+CONFLICT (content): Merge conflict in src/components/security/RateLimitRealtimeAlerts.tsx
+Auto-merging src/components/security/SecurityOverview.tsx
+CONFLICT (content): Merge conflict in src/components/security/SecurityOverview.tsx
+Auto-merging src/components/security/SecuritySettingsPanel.tsx
+CONFLICT (content): Merge conflict in src/components/security/SecuritySettingsPanel.tsx
+Auto-merging src/components/security/SecurityView.tsx
+Auto-merging src/components/security/__tests__/AuditLogDashboard.test.tsx
+CONFLICT (content): Merge conflict in src/components/security/__tests__/AuditLogDashboard.test.tsx
+Auto-merging src/components/security/__tests__/GeoBlockingPanel.a11y.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/security/__tests__/GeoBlockingPanel.a11y.test.tsx
+Auto-merging src/components/security/__tests__/RateLimitRealtimeAlerts.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/security/__tests__/RateLimitRealtimeAlerts.test.tsx
+Auto-merging src/components/security/__tests__/SecurityOverview.a11y.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/security/__tests__/SecurityOverview.a11y.test.tsx
+Auto-merging src/components/security/__tests__/SecurityOverview.hierarchy.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/security/__tests__/SecurityOverview.hierarchy.test.tsx
+Auto-merging src/components/security/__tests__/SecurityOverview.medicao.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/security/__tests__/SecurityOverview.medicao.test.tsx
+Auto-merging src/components/security/__tests__/SecuritySettingsPanel.medicao.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/security/__tests__/SecuritySettingsPanel.medicao.test.tsx
+Auto-merging src/components/security/__tests__/SecurityView.a11y.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/security/__tests__/SecurityView.a11y.test.tsx
+CONFLICT (modify/delete): src/components/settings/AIAutoTagsConfig.tsx deleted in a9b4d6c6fb35625e8a4794895f733ce696201b28 and modified in d723a9010796f1ea4aea5270d881da2974328ba4.  Version d723a9010796f1ea4aea5270d881da2974328ba4 of src/components/settings/AIAutoTagsConfig.tsx left in tree.
+Auto-merging src/components/settings/AppearanceSettings.tsx
+CONFLICT (content): Merge conflict in src/components/settings/AppearanceSettings.tsx
+Auto-merging src/components/settings/AvatarUpload.tsx
+CONFLICT (content): Merge conflict in src/components/settings/AvatarUpload.tsx
+Auto-merging src/components/settings/IntegrationKeysSection.tsx
+CONFLICT (content): Merge conflict in src/components/settings/IntegrationKeysSection.tsx
+Auto-merging src/components/settings/KeyboardShortcutsSettings.tsx
+Auto-merging src/components/settings/SettingsView.tsx
+CONFLICT (content): Merge conflict in src/components/settings/SettingsView.tsx
+Auto-merging src/components/settings/SkillBasedRoutingSettings.tsx
+CONFLICT (content): Merge conflict in src/components/settings/SkillBasedRoutingSettings.tsx
+Auto-merging src/components/settings/SoundCustomizationPanel.tsx
+CONFLICT (content): Merge conflict in src/components/settings/SoundCustomizationPanel.tsx
+Auto-merging src/components/settings/__tests__/AppearanceSettings.a11y.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/settings/__tests__/AppearanceSettings.a11y.test.tsx
+Auto-merging src/components/settings/__tests__/GlobalSettingsSection.sem-consumidor.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/settings/__tests__/GlobalSettingsSection.sem-consumidor.test.tsx
+Auto-merging src/components/settings/__tests__/IntegrationKeysSection.sem-consumidor.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/settings/__tests__/IntegrationKeysSection.sem-consumidor.test.tsx
+Auto-merging src/components/settings/__tests__/KeyboardShortcutsSettings.test.tsx
+Auto-merging src/components/settings/__tests__/MediaLibraryAdmin.orphan-cleanup.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/settings/__tests__/MediaLibraryAdmin.orphan-cleanup.test.tsx
+Auto-merging src/components/settings/__tests__/SettingsView.test.tsx
+CONFLICT (content): Merge conflict in src/components/settings/__tests__/SettingsView.test.tsx
+Auto-merging src/components/settings/__tests__/SkillBasedRoutingSettings.skills-assign.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/settings/__tests__/SkillBasedRoutingSettings.skills-assign.test.tsx
+Auto-merging src/components/settings/ai-providers/AIProviderHealthPanel.tsx
+CONFLICT (content): Merge conflict in src/components/settings/ai-providers/AIProviderHealthPanel.tsx
+Auto-merging src/components/settings/ai-providers/__tests__/AIProviderHealthPanel.escopo-e-erro.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/settings/ai-providers/__tests__/AIProviderHealthPanel.escopo-e-erro.test.tsx
+Auto-merging src/components/settings/media-library/AIGenerateDialog.tsx
+CONFLICT (content): Merge conflict in src/components/settings/media-library/AIGenerateDialog.tsx
+Auto-merging src/components/settings/media-library/useMediaLibrary.ts
+Auto-merging src/components/settings/media-library/useMediaUpload.ts
+CONFLICT (content): Merge conflict in src/components/settings/media-library/useMediaUpload.ts
+Auto-merging src/components/sla/SLAHistoryDashboard.tsx
+Auto-merging src/components/talkx/TalkXCampaignPaused.tsx
+CONFLICT (add/add): Merge conflict in src/components/talkx/TalkXCampaignPaused.tsx
+Auto-merging src/components/talkx/TalkXCampaignRunning.tsx
+CONFLICT (content): Merge conflict in src/components/talkx/TalkXCampaignRunning.tsx
+Auto-merging src/components/talkx/TalkXCampaignScheduled.tsx
+CONFLICT (content): Merge conflict in src/components/talkx/TalkXCampaignScheduled.tsx
+Auto-merging src/components/talkx/TalkXCampaignWizard.tsx
+CONFLICT (content): Merge conflict in src/components/talkx/TalkXCampaignWizard.tsx
+CONFLICT (modify/delete): src/components/talkx/TalkXHelp.tsx deleted in d723a9010796f1ea4aea5270d881da2974328ba4 and modified in a9b4d6c6fb35625e8a4794895f733ce696201b28.  Version a9b4d6c6fb35625e8a4794895f733ce696201b28 of src/components/talkx/TalkXHelp.tsx left in tree.
+Auto-merging src/components/talkx/TalkXLiveMonitor.tsx
+CONFLICT (content): Merge conflict in src/components/talkx/TalkXLiveMonitor.tsx
+Auto-merging src/components/talkx/TalkXOverview.tsx
+CONFLICT (content): Merge conflict in src/components/talkx/TalkXOverview.tsx
+Auto-merging src/components/talkx/TalkXScheduleTimeline.tsx
+CONFLICT (add/add): Merge conflict in src/components/talkx/TalkXScheduleTimeline.tsx
+Auto-merging src/components/talkx/TalkXSegments.tsx
+CONFLICT (content): Merge conflict in src/components/talkx/TalkXSegments.tsx
+Auto-merging src/components/talkx/TalkXSuppression.tsx
+CONFLICT (content): Merge conflict in src/components/talkx/TalkXSuppression.tsx
+Auto-merging src/components/talkx/TalkXTemplateEditor.tsx
+CONFLICT (content): Merge conflict in src/components/talkx/TalkXTemplateEditor.tsx
+Auto-merging src/components/talkx/TalkXTemplates.tsx
+CONFLICT (content): Merge conflict in src/components/talkx/TalkXTemplates.tsx
+Auto-merging src/components/talkx/TalkXView.tsx
+CONFLICT (content): Merge conflict in src/components/talkx/TalkXView.tsx
+Auto-merging src/components/talkx/TalkXWizardDelivery.tsx
+CONFLICT (content): Merge conflict in src/components/talkx/TalkXWizardDelivery.tsx
+Auto-merging src/components/talkx/__tests__/TalkXA11yNomePapel.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/talkx/__tests__/TalkXA11yNomePapel.test.tsx
+Auto-merging src/components/talkx/__tests__/TalkXCampaignPaused.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/talkx/__tests__/TalkXCampaignPaused.test.tsx
+Auto-merging src/components/talkx/__tests__/TalkXCampaignRunning.states.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/talkx/__tests__/TalkXCampaignRunning.states.test.tsx
+Auto-merging src/components/talkx/__tests__/TalkXCampaignScheduled.calendario.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/talkx/__tests__/TalkXCampaignScheduled.calendario.test.tsx
+Auto-merging src/components/talkx/__tests__/TalkXCampaignScheduled.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/talkx/__tests__/TalkXCampaignScheduled.test.tsx
+Auto-merging src/components/talkx/__tests__/TalkXCampaignWizard.layout.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/talkx/__tests__/TalkXCampaignWizard.layout.test.tsx
+Auto-merging src/components/talkx/__tests__/TalkXHealthCard.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/talkx/__tests__/TalkXHealthCard.test.tsx
+Auto-merging src/components/talkx/__tests__/TalkXLiveMonitor.kpiRow.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/talkx/__tests__/TalkXLiveMonitor.kpiRow.test.tsx
+Auto-merging src/components/talkx/__tests__/TalkXLiveMonitor.lifecycle.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/talkx/__tests__/TalkXLiveMonitor.lifecycle.test.tsx
+Auto-merging src/components/talkx/__tests__/TalkXLiveMonitor.states.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/talkx/__tests__/TalkXLiveMonitor.states.test.tsx
+Auto-merging src/components/talkx/__tests__/TalkXOverview.comparativo.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/talkx/__tests__/TalkXOverview.comparativo.test.tsx
+Auto-merging src/components/talkx/__tests__/TalkXOverview.filters.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/talkx/__tests__/TalkXOverview.filters.test.tsx
+Auto-merging src/components/talkx/__tests__/TalkXOverview.states.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/talkx/__tests__/TalkXOverview.states.test.tsx
+Auto-merging src/components/talkx/__tests__/TalkXPaginacao.tamanhoPagina.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/talkx/__tests__/TalkXPaginacao.tamanhoPagina.test.tsx
+Auto-merging src/components/talkx/__tests__/TalkXScheduleTimeline.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/talkx/__tests__/TalkXScheduleTimeline.test.tsx
+Auto-merging src/components/talkx/__tests__/TalkXSegments.route.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/talkx/__tests__/TalkXSegments.route.test.tsx
+Auto-merging src/components/talkx/__tests__/TalkXSuppression.actions.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/talkx/__tests__/TalkXSuppression.actions.test.tsx
+Auto-merging src/components/talkx/__tests__/TalkXSuppression.add.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/talkx/__tests__/TalkXSuppression.add.test.tsx
+Auto-merging src/components/talkx/__tests__/TalkXSuppression.authoring.test.tsx
+CONFLICT (content): Merge conflict in src/components/talkx/__tests__/TalkXSuppression.authoring.test.tsx
+Auto-merging src/components/talkx/__tests__/TalkXSuppression.editReasonVazio.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/talkx/__tests__/TalkXSuppression.editReasonVazio.test.tsx
+Auto-merging src/components/talkx/__tests__/TalkXSuppression.phoneOnly.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/talkx/__tests__/TalkXSuppression.phoneOnly.test.tsx
+Auto-merging src/components/talkx/__tests__/TalkXSuppression.search.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/talkx/__tests__/TalkXSuppression.search.test.tsx
+Auto-merging src/components/talkx/__tests__/TalkXSuppression.searchServer.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/talkx/__tests__/TalkXSuppression.searchServer.test.tsx
+Auto-merging src/components/talkx/__tests__/TalkXSuppressionReasons.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/talkx/__tests__/TalkXSuppressionReasons.test.tsx
+Auto-merging src/components/talkx/__tests__/TalkXTemplateEditor.painelMenor.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/talkx/__tests__/TalkXTemplateEditor.painelMenor.test.tsx
+Auto-merging src/components/talkx/__tests__/TalkXVariablesGrammar.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/talkx/__tests__/TalkXVariablesGrammar.test.tsx
+Auto-merging src/components/talkx/__tests__/TalkXView.carregamento.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/talkx/__tests__/TalkXView.carregamento.test.tsx
+Auto-merging src/components/talkx/__tests__/TalkXView.route.test.tsx
+CONFLICT (content): Merge conflict in src/components/talkx/__tests__/TalkXView.route.test.tsx
+Auto-merging src/components/talkx/__tests__/TalkXView.section-error-boundary.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/talkx/__tests__/TalkXView.section-error-boundary.test.tsx
+Auto-merging src/components/talkx/__tests__/TalkXWizardDelivery.confirmacao.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/talkx/__tests__/TalkXWizardDelivery.confirmacao.test.tsx
+Auto-merging src/components/talkx/__tests__/TalkXWizardDelivery.recomendacoes-cta.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/talkx/__tests__/TalkXWizardDelivery.recomendacoes-cta.test.tsx
+Auto-merging src/components/talkx/__tests__/TalkXWizardReview.resumo.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/talkx/__tests__/TalkXWizardReview.resumo.test.tsx
+Auto-merging src/components/talkx/__tests__/talkxRoute.test.ts
+CONFLICT (add/add): Merge conflict in src/components/talkx/__tests__/talkxRoute.test.ts
+Auto-merging src/components/talkx/__tests__/useCampaignEditor.test.tsx
+CONFLICT (content): Merge conflict in src/components/talkx/__tests__/useCampaignEditor.test.tsx
+Auto-merging src/components/talkx/__tests__/useCampaignRowActions.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/talkx/__tests__/useCampaignRowActions.test.tsx
+Auto-merging src/components/talkx/help/TalkXHelpCenter.tsx
+CONFLICT (add/add): Merge conflict in src/components/talkx/help/TalkXHelpCenter.tsx
+Auto-merging src/components/talkx/kit/__tests__/barrel.test.ts
+Auto-merging src/components/talkx/kit/__tests__/talkxStates.matrix.test.tsx
+CONFLICT (content): Merge conflict in src/components/talkx/kit/__tests__/talkxStates.matrix.test.tsx
+Auto-merging src/components/talkx/kit/primitives.tsx
+Auto-merging src/components/talkx/segments/RuleRow.tsx
+CONFLICT (add/add): Merge conflict in src/components/talkx/segments/RuleRow.tsx
+Auto-merging src/components/talkx/segments/TalkXSegmentBuilder.tsx
+CONFLICT (add/add): Merge conflict in src/components/talkx/segments/TalkXSegmentBuilder.tsx
+Auto-merging src/components/talkx/segments/segmentBuilderReducer.ts
+CONFLICT (add/add): Merge conflict in src/components/talkx/segments/segmentBuilderReducer.ts
+Auto-merging src/components/talkx/talkxRoute.ts
+CONFLICT (add/add): Merge conflict in src/components/talkx/talkxRoute.ts
+Auto-merging src/components/talkx/tracking/talkxKeyMetrics.ts
+CONFLICT (add/add): Merge conflict in src/components/talkx/tracking/talkxKeyMetrics.ts
+Auto-merging src/components/talkx/tracking/talkxSentSummary.ts
+CONFLICT (add/add): Merge conflict in src/components/talkx/tracking/talkxSentSummary.ts
+Auto-merging src/components/talkx/useCampaignEditor.ts
+Auto-merging src/components/talkx/useCampaignRowActions.tsx
+CONFLICT (add/add): Merge conflict in src/components/talkx/useCampaignRowActions.tsx
+Auto-merging src/components/tasks/TasksModule.tsx
+Auto-merging src/components/tasks/__tests__/TasksBoardMode.a11y.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/tasks/__tests__/TasksBoardMode.a11y.test.tsx
+Auto-merging src/components/tasks/__tests__/WorkItemSheet.test.tsx
+CONFLICT (content): Merge conflict in src/components/tasks/__tests__/WorkItemSheet.test.tsx
+Auto-merging src/components/tasks/__tests__/contratosVisiveis.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/tasks/__tests__/contratosVisiveis.test.tsx
+Auto-merging src/components/tasks/__tests__/quadroArrastarTecladoRolagem.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/tasks/__tests__/quadroArrastarTecladoRolagem.test.tsx
+Auto-merging src/components/tasks/__tests__/quadroLarguraFocoContraste.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/tasks/__tests__/quadroLarguraFocoContraste.test.tsx
+Auto-merging src/components/tasks/__tests__/taskComponents.test.tsx
+Auto-merging src/components/tasks/board/BoardColumn.tsx
+CONFLICT (content): Merge conflict in src/components/tasks/board/BoardColumn.tsx
+Auto-merging src/components/tasks/board/TasksBoardMode.tsx
+CONFLICT (content): Merge conflict in src/components/tasks/board/TasksBoardMode.tsx
+Auto-merging src/components/tasks/shared/NewTaskDialog.tsx
+CONFLICT (add/add): Merge conflict in src/components/tasks/shared/NewTaskDialog.tsx
+Auto-merging src/components/tasks/shared/WorkItemSheet.tsx
+CONFLICT (content): Merge conflict in src/components/tasks/shared/WorkItemSheet.tsx
+Auto-merging src/components/team-chat/TeamChatInputArea.tsx
+Auto-merging src/components/team-chat/TeamChatPanel.tsx
+Auto-merging src/components/team-chat/TeamChatView.tsx
+Auto-merging src/components/team-chat/TeamConversationList.tsx
+CONFLICT (content): Merge conflict in src/components/team-chat/TeamConversationList.tsx
+Auto-merging src/components/team-chat/TeamMemberDetails.tsx
+Auto-merging src/components/team-chat/TeamPerformancePanel.tsx
+CONFLICT (content): Merge conflict in src/components/team-chat/TeamPerformancePanel.tsx
+Auto-merging src/components/team-chat/__tests__/team-chat-notifications-mount.test.ts
+CONFLICT (add/add): Merge conflict in src/components/team-chat/__tests__/team-chat-notifications-mount.test.ts
+Auto-merging src/components/team-chat/useTeamChatPanel.ts
+Auto-merging src/components/theme/HighContrastToggle.tsx
+Auto-merging src/components/ui/VolumeTriggerButton.tsx
+CONFLICT (content): Merge conflict in src/components/ui/VolumeTriggerButton.tsx
+Auto-merging src/components/ui/__tests__/command-palette-acoes.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/ui/__tests__/command-palette-acoes.test.tsx
+Auto-merging src/components/ui/__tests__/command-palette.busca-antiga.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/ui/__tests__/command-palette.busca-antiga.test.tsx
+Auto-merging src/components/ui/__tests__/emoji-picker.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/ui/__tests__/emoji-picker.test.tsx
+Auto-merging src/components/ui/__tests__/message-reactions.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/ui/__tests__/message-reactions.test.tsx
+Auto-merging src/components/ui/__tests__/primitivos-a11y-pt.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/ui/__tests__/primitivos-a11y-pt.test.tsx
+Auto-merging src/components/ui/button.tsx
+Auto-merging src/components/ui/chart.tsx
+Auto-merging src/components/ui/command-palette.tsx
+CONFLICT (content): Merge conflict in src/components/ui/command-palette.tsx
+Auto-merging src/components/ui/dialog.tsx
+Auto-merging src/components/ui/emoji-picker.tsx
+CONFLICT (content): Merge conflict in src/components/ui/emoji-picker.tsx
+Auto-merging src/components/ui/empty-state-illustrations.tsx
+CONFLICT (content): Merge conflict in src/components/ui/empty-state-illustrations.tsx
+Auto-merging src/components/ui/message-reactions.tsx
+CONFLICT (content): Merge conflict in src/components/ui/message-reactions.tsx
+Auto-merging src/components/ui/mobile-components.tsx
+CONFLICT (modify/delete): src/components/ui/pagination.tsx deleted in a9b4d6c6fb35625e8a4794895f733ce696201b28 and modified in d723a9010796f1ea4aea5270d881da2974328ba4.  Version d723a9010796f1ea4aea5270d881da2974328ba4 of src/components/ui/pagination.tsx left in tree.
+Auto-merging src/components/ui/sheet.tsx
+CONFLICT (modify/delete): src/components/ui/sidebar/sidebar-primitives.tsx deleted in a9b4d6c6fb35625e8a4794895f733ce696201b28 and modified in d723a9010796f1ea4aea5270d881da2974328ba4.  Version d723a9010796f1ea4aea5270d881da2974328ba4 of src/components/ui/sidebar/sidebar-primitives.tsx left in tree.
+Auto-merging src/components/ui/skip-link.tsx
+CONFLICT (content): Merge conflict in src/components/ui/skip-link.tsx
+Auto-merging src/components/wallet/ClientWalletView.tsx
+Auto-merging src/components/wallet/__tests__/ClientWalletView.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/wallet/__tests__/ClientWalletView.test.tsx
+Auto-merging src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx
+Auto-merging src/components/whatsapp-flows/__tests__/WhatsAppFlowsBuilder.deleteFlow.test.tsx
+CONFLICT (add/add): Merge conflict in src/components/whatsapp-flows/__tests__/WhatsAppFlowsBuilder.deleteFlow.test.tsx
+Auto-merging src/features/talk-me/TalkMeView.tsx
+CONFLICT (content): Merge conflict in src/features/talk-me/TalkMeView.tsx
+Auto-merging src/features/talk-me/__tests__/TalkMeView.test.tsx
+CONFLICT (content): Merge conflict in src/features/talk-me/__tests__/TalkMeView.test.tsx
+Auto-merging src/features/talk-me/__tests__/useTalkMeQueue.test.tsx
+Auto-merging src/features/talk-me/types.ts
+Auto-merging src/features/talk-me/useTalkMeQueue.ts
+Auto-merging src/hooks/__tests__/helpers/alertBehaviorTestKit.ts
+CONFLICT (content): Merge conflict in src/hooks/__tests__/helpers/alertBehaviorTestKit.ts
+Auto-merging src/hooks/__tests__/useAgentGamification.test.tsx
+Auto-merging src/hooks/__tests__/useAgents.presence.test.tsx
+CONFLICT (content): Merge conflict in src/hooks/__tests__/useAgents.presence.test.tsx
+Auto-merging src/hooks/__tests__/useAgents.test.tsx
+CONFLICT (content): Merge conflict in src/hooks/__tests__/useAgents.test.tsx
+Auto-merging src/hooks/__tests__/useBulkActions.removido.test.ts
+CONFLICT (add/add): Merge conflict in src/hooks/__tests__/useBulkActions.removido.test.ts
+Auto-merging src/hooks/__tests__/useCSAT.test.tsx
+CONFLICT (content): Merge conflict in src/hooks/__tests__/useCSAT.test.tsx
+Auto-merging src/hooks/__tests__/useCustomShortcuts.instancias.test.tsx
+CONFLICT (add/add): Merge conflict in src/hooks/__tests__/useCustomShortcuts.instancias.test.tsx
+Auto-merging src/hooks/__tests__/useGlobalSettings.zero-linhas.test.tsx
+CONFLICT (add/add): Merge conflict in src/hooks/__tests__/useGlobalSettings.zero-linhas.test.tsx
+Auto-merging src/hooks/__tests__/useGoalNotifications.goal-types.test.ts
+CONFLICT (add/add): Merge conflict in src/hooks/__tests__/useGoalNotifications.goal-types.test.ts
+Auto-merging src/hooks/__tests__/useReauthentication.test.tsx
+CONFLICT (content): Merge conflict in src/hooks/__tests__/useReauthentication.test.tsx
+Auto-merging src/hooks/__tests__/useSentimentAlerts.test.ts
+CONFLICT (content): Merge conflict in src/hooks/__tests__/useSentimentAlerts.test.ts
+Auto-merging src/hooks/__tests__/useTheme.test.tsx
+CONFLICT (content): Merge conflict in src/hooks/__tests__/useTheme.test.tsx
+Auto-merging src/hooks/__tests__/useTranscriptionNotifications.desativacao.test.ts
+CONFLICT (add/add): Merge conflict in src/hooks/__tests__/useTranscriptionNotifications.desativacao.test.ts
+Auto-merging src/hooks/__tests__/useUrlFilters.test.tsx
+CONFLICT (content): Merge conflict in src/hooks/__tests__/useUrlFilters.test.tsx
+Auto-merging src/hooks/__tests__/useUserSettings.test.tsx
+CONFLICT (content): Merge conflict in src/hooks/__tests__/useUserSettings.test.tsx
+Auto-merging src/hooks/__tests__/useWarRoomAlerts.test.tsx
+CONFLICT (content): Merge conflict in src/hooks/__tests__/useWarRoomAlerts.test.tsx
+Auto-merging src/hooks/__tests__/useWarRoomAlertsMute.behavior.test.tsx
+Auto-merging src/hooks/admin/__tests__/useSupervisorQueue.test.tsx
+CONFLICT (add/add): Merge conflict in src/hooks/admin/__tests__/useSupervisorQueue.test.tsx
+Auto-merging src/hooks/admin/useSupervisorQueue.ts
+CONFLICT (add/add): Merge conflict in src/hooks/admin/useSupervisorQueue.ts
+Auto-merging src/hooks/analytics/__tests__/sentiment-vocabulario.test.tsx
+CONFLICT (add/add): Merge conflict in src/hooks/analytics/__tests__/sentiment-vocabulario.test.tsx
+Auto-merging src/hooks/analytics/__tests__/useGoalNotifications.dia-local.test.tsx
+CONFLICT (add/add): Merge conflict in src/hooks/analytics/__tests__/useGoalNotifications.dia-local.test.tsx
+Auto-merging src/hooks/analytics/__tests__/useGoalsDashboard.test.tsx
+CONFLICT (add/add): Merge conflict in src/hooks/analytics/__tests__/useGoalsDashboard.test.tsx
+Auto-merging src/hooks/analytics/useAIUsageDashboard.ts
+Auto-merging src/hooks/analytics/useGoalNotifications.ts
+CONFLICT (content): Merge conflict in src/hooks/analytics/useGoalNotifications.ts
+Auto-merging src/hooks/analytics/useRealtimeDashboard.ts
+CONFLICT (content): Merge conflict in src/hooks/analytics/useRealtimeDashboard.ts
+Auto-merging src/hooks/analytics/useRecentSentimentAlerts.ts
+CONFLICT (content): Merge conflict in src/hooks/analytics/useRecentSentimentAlerts.ts
+Auto-merging src/hooks/auth/__tests__/useAuthForm.passkey.test.tsx
+CONFLICT (add/add): Merge conflict in src/hooks/auth/__tests__/useAuthForm.passkey.test.tsx
+Auto-merging src/hooks/auth/__tests__/useAuthForm.senha.test.tsx
+Auto-merging src/hooks/auth/useAuth.tsx
+CONFLICT (content): Merge conflict in src/hooks/auth/useAuth.tsx
+Auto-merging src/hooks/auth/useAuthForm.ts
+CONFLICT (content): Merge conflict in src/hooks/auth/useAuthForm.ts
+Auto-merging src/hooks/auth/useReauthentication.ts
+CONFLICT (content): Merge conflict in src/hooks/auth/useReauthentication.ts
+Auto-merging src/hooks/business/__tests__/useBusinessHoursCheck.test.tsx
+CONFLICT (add/add): Merge conflict in src/hooks/business/__tests__/useBusinessHoursCheck.test.tsx
+Auto-merging src/hooks/business/__tests__/useWarRoomData.test.tsx
+CONFLICT (add/add): Merge conflict in src/hooks/business/__tests__/useWarRoomData.test.tsx
+Auto-merging src/hooks/business/useBusinessHoursCheck.ts
+Auto-merging src/hooks/business/useCSAT.ts
+Auto-merging src/hooks/business/useNPSSurveys.ts
+Auto-merging src/hooks/business/useQueueGoals.ts
+Auto-merging src/hooks/business/useWarRoomAlerts.ts
+Auto-merging src/hooks/business/useWarRoomData.ts
+CONFLICT (content): Merge conflict in src/hooks/business/useWarRoomData.ts
+Auto-merging src/hooks/chat/__tests__/paridade06-envio.pendentes.test.ts
+CONFLICT (add/add): Merge conflict in src/hooks/chat/__tests__/paridade06-envio.pendentes.test.ts
+Auto-merging src/hooks/chat/__tests__/useConversationActions.test.ts
+CONFLICT (content): Merge conflict in src/hooks/chat/__tests__/useConversationActions.test.ts
+Auto-merging src/hooks/chat/__tests__/useNextBestAction.test.tsx
+CONFLICT (add/add): Merge conflict in src/hooks/chat/__tests__/useNextBestAction.test.tsx
+Auto-merging src/hooks/chat/__tests__/useScheduledReports.test.tsx
+CONFLICT (add/add): Merge conflict in src/hooks/chat/__tests__/useScheduledReports.test.tsx
+Auto-merging src/hooks/chat/__tests__/useTeamChatNotifications.nome-e-clique.test.tsx
+CONFLICT (add/add): Merge conflict in src/hooks/chat/__tests__/useTeamChatNotifications.nome-e-clique.test.tsx
+Auto-merging src/hooks/chat/useConversationActions.ts
+Auto-merging src/hooks/chat/useConversationHistoryTimeline.ts
+CONFLICT (content): Merge conflict in src/hooks/chat/useConversationHistoryTimeline.ts
+Auto-merging src/hooks/chat/useForwardMessage.ts
+Auto-merging src/hooks/chat/useMessages.ts
+CONFLICT (content): Merge conflict in src/hooks/chat/useMessages.ts
+Auto-merging src/hooks/chat/useNextBestAction.ts
+CONFLICT (content): Merge conflict in src/hooks/chat/useNextBestAction.ts
+Auto-merging src/hooks/chat/useRealtimeMessages.ts
+CONFLICT (content): Merge conflict in src/hooks/chat/useRealtimeMessages.ts
+Auto-merging src/hooks/chat/useTeamChatDraft.ts
+CONFLICT (content): Merge conflict in src/hooks/chat/useTeamChatDraft.ts
+Auto-merging src/hooks/chat/useTeamChatNotifications.ts
+CONFLICT (content): Merge conflict in src/hooks/chat/useTeamChatNotifications.ts
+Auto-merging src/hooks/chat/useTypingPresence.ts
+CONFLICT (content): Merge conflict in src/hooks/chat/useTypingPresence.ts
+Auto-merging src/hooks/chat/useWhisperCount.ts
+CONFLICT (add/add): Merge conflict in src/hooks/chat/useWhisperCount.ts
+Auto-merging src/hooks/communication/__tests__/mediaVolume.players.test.tsx
+CONFLICT (add/add): Merge conflict in src/hooks/communication/__tests__/mediaVolume.players.test.tsx
+Auto-merging src/hooks/communication/__tests__/useAudioMemes.fechamento.test.tsx
+CONFLICT (add/add): Merge conflict in src/hooks/communication/__tests__/useAudioMemes.fechamento.test.tsx
+Auto-merging src/hooks/communication/__tests__/useAudioMemes.mediaVolumeBindings.test.tsx
+CONFLICT (add/add): Merge conflict in src/hooks/communication/__tests__/useAudioMemes.mediaVolumeBindings.test.tsx
+Auto-merging src/hooks/communication/__tests__/useAudioMemes.mutacoes.test.tsx
+CONFLICT (add/add): Merge conflict in src/hooks/communication/__tests__/useAudioMemes.mutacoes.test.tsx
+Auto-merging src/hooks/communication/useAudioMemes.ts
+CONFLICT (content): Merge conflict in src/hooks/communication/useAudioMemes.ts
+Auto-merging src/hooks/communication/useAudioRecorder.ts
+CONFLICT (content): Merge conflict in src/hooks/communication/useAudioRecorder.ts
+Auto-merging src/hooks/communication/useSpeechToText.ts
+Auto-merging src/hooks/communication/useTextToSpeech.ts
+CONFLICT (content): Merge conflict in src/hooks/communication/useTextToSpeech.ts
+Auto-merging src/hooks/communication/useTranscriptionNotifications.ts
+CONFLICT (content): Merge conflict in src/hooks/communication/useTranscriptionNotifications.ts
+Auto-merging src/hooks/communication/useVoiceAgent.ts
+Auto-merging src/hooks/crm/useAgents.ts
+CONFLICT (content): Merge conflict in src/hooks/crm/useAgents.ts
+Auto-merging src/hooks/dashboard/useDashboardKpi.ts
+CONFLICT (content): Merge conflict in src/hooks/dashboard/useDashboardKpi.ts
+Auto-merging src/hooks/dashboard/useDashboardStats.ts
+Auto-merging src/hooks/dashboard/useTodayHourlyVolume.ts
+Auto-merging src/hooks/evolution/__tests__/useEvolutionMessaging.test.ts
+CONFLICT (add/add): Merge conflict in src/hooks/evolution/__tests__/useEvolutionMessaging.test.ts
+Auto-merging src/hooks/gamification/__tests__/useLeaderboard.test.tsx
+CONFLICT (add/add): Merge conflict in src/hooks/gamification/__tests__/useLeaderboard.test.tsx
+Auto-merging src/hooks/gamification/index.ts
+Auto-merging src/hooks/gamification/useAgentGamification.ts
+CONFLICT (content): Merge conflict in src/hooks/gamification/useAgentGamification.ts
+Auto-merging src/hooks/gamification/useLeaderboard.ts
+Auto-merging src/hooks/groups/actions.ts
+CONFLICT (content): Merge conflict in src/hooks/groups/actions.ts
+Auto-merging src/hooks/inbox/__tests__/chipCounts.test.ts
+CONFLICT (add/add): Merge conflict in src/hooks/inbox/__tests__/chipCounts.test.ts
+Auto-merging src/hooks/inbox/__tests__/useInboxBulkActions.test.ts
+CONFLICT (add/add): Merge conflict in src/hooks/inbox/__tests__/useInboxBulkActions.test.ts
+Auto-merging src/hooks/inbox/__tests__/useInboxFilters.dia-local.test.tsx
+CONFLICT (content): Merge conflict in src/hooks/inbox/__tests__/useInboxFilters.dia-local.test.tsx
+Auto-merging src/hooks/inbox/__tests__/useRealtimeInbox.sendAudio.test.tsx
+CONFLICT (add/add): Merge conflict in src/hooks/inbox/__tests__/useRealtimeInbox.sendAudio.test.tsx
+Auto-merging src/hooks/inbox/chipCounts.ts
+CONFLICT (add/add): Merge conflict in src/hooks/inbox/chipCounts.ts
+Auto-merging src/hooks/inbox/useConnectionsManager.ts
+Auto-merging src/hooks/inbox/useInboxBulkActions.ts
+CONFLICT (content): Merge conflict in src/hooks/inbox/useInboxBulkActions.ts
+CONFLICT (modify/delete): src/hooks/inbox/useInboxFilterTags.ts deleted in a9b4d6c6fb35625e8a4794895f733ce696201b28 and modified in d723a9010796f1ea4aea5270d881da2974328ba4.  Version d723a9010796f1ea4aea5270d881da2974328ba4 of src/hooks/inbox/useInboxFilterTags.ts left in tree.
+Auto-merging src/hooks/inbox/useInboxFilters.ts
+CONFLICT (content): Merge conflict in src/hooks/inbox/useInboxFilters.ts
+Auto-merging src/hooks/inbox/useRealtimeInbox.ts
+CONFLICT (content): Merge conflict in src/hooks/inbox/useRealtimeInbox.ts
+Auto-merging src/hooks/inbox/useRealtimeSentimentAlerts.ts
+Auto-merging src/hooks/inbox/useSentimentAlerts.ts
+CONFLICT (content): Merge conflict in src/hooks/inbox/useSentimentAlerts.ts
+Auto-merging src/hooks/integrations/__tests__/useEvolutionApi.payloads.test.ts
+CONFLICT (add/add): Merge conflict in src/hooks/integrations/__tests__/useEvolutionApi.payloads.test.ts
+Auto-merging src/hooks/integrations/__tests__/useGmail.test.ts
+Auto-merging src/hooks/integrations/__tests__/useGmail.threadListQuery.test.tsx
+CONFLICT (add/add): Merge conflict in src/hooks/integrations/__tests__/useGmail.threadListQuery.test.tsx
+Auto-merging src/hooks/integrations/__tests__/useMultiplixDispatches.edge.test.tsx
+Auto-merging src/hooks/integrations/__tests__/useMultiplixReplies.test.tsx
+CONFLICT (add/add): Merge conflict in src/hooks/integrations/__tests__/useMultiplixReplies.test.tsx
+Auto-merging src/hooks/integrations/__tests__/useTalkXSegments.test.ts
+Auto-merging src/hooks/integrations/__tests__/useTalkXTemplates.test.ts
+CONFLICT (add/add): Merge conflict in src/hooks/integrations/__tests__/useTalkXTemplates.test.ts
+Auto-merging src/hooks/integrations/useCatalogSendHistory.ts
+CONFLICT (content): Merge conflict in src/hooks/integrations/useCatalogSendHistory.ts
+Auto-merging src/hooks/integrations/useCustomEmojis.ts
+CONFLICT (content): Merge conflict in src/hooks/integrations/useCustomEmojis.ts
+Auto-merging src/hooks/integrations/useExternalCatalog.ts
+Auto-merging src/hooks/integrations/useGmail.ts
+CONFLICT (content): Merge conflict in src/hooks/integrations/useGmail.ts
+Auto-merging src/hooks/integrations/useMultiplixDispatches.ts
+CONFLICT (content): Merge conflict in src/hooks/integrations/useMultiplixDispatches.ts
+Auto-merging src/hooks/integrations/useMultiplixReplies.ts
+CONFLICT (add/add): Merge conflict in src/hooks/integrations/useMultiplixReplies.ts
+Auto-merging src/hooks/integrations/useTalkX.ts
+CONFLICT (content): Merge conflict in src/hooks/integrations/useTalkX.ts
+Auto-merging src/hooks/integrations/useTalkXResumeChecklist.ts
+CONFLICT (add/add): Merge conflict in src/hooks/integrations/useTalkXResumeChecklist.ts
+Auto-merging src/hooks/integrations/useTalkXSegments.ts
+CONFLICT (content): Merge conflict in src/hooks/integrations/useTalkXSegments.ts
+Auto-merging src/hooks/integrations/useTalkXSuppression.ts
+CONFLICT (content): Merge conflict in src/hooks/integrations/useTalkXSuppression.ts
+Auto-merging src/hooks/integrations/useTalkXTemplateStats.ts
+CONFLICT (add/add): Merge conflict in src/hooks/integrations/useTalkXTemplateStats.ts
+Auto-merging src/hooks/integrations/useTalkXTemplates.ts
+CONFLICT (modify/delete): src/hooks/payments/usePaymentLinks.ts deleted in d723a9010796f1ea4aea5270d881da2974328ba4 and modified in a9b4d6c6fb35625e8a4794895f733ce696201b28.  Version a9b4d6c6fb35625e8a4794895f733ce696201b28 of src/hooks/payments/usePaymentLinks.ts left in tree.
+Auto-merging src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx
+CONFLICT (add/add): Merge conflict in src/hooks/realtime/__tests__/useMessageUpdateBatcher.test.tsx
+Auto-merging src/hooks/realtime/messageSender.ts
+CONFLICT (content): Merge conflict in src/hooks/realtime/messageSender.ts
+Auto-merging src/hooks/realtime/realtimeUtils.ts
+CONFLICT (content): Merge conflict in src/hooks/realtime/realtimeUtils.ts
+Auto-merging src/hooks/realtime/useRealtimeNotifications.ts
+CONFLICT (content): Merge conflict in src/hooks/realtime/useRealtimeNotifications.ts
+Auto-merging src/hooks/realtime/useSupabaseRealtime.ts
+CONFLICT (content): Merge conflict in src/hooks/realtime/useSupabaseRealtime.ts
+Auto-merging src/hooks/shortcuts/defaultShortcuts.ts
+Auto-merging src/hooks/sla/__tests__/useContactSlaTimeline.test.tsx
+CONFLICT (add/add): Merge conflict in src/hooks/sla/__tests__/useContactSlaTimeline.test.tsx
+Auto-merging src/hooks/sla/index.ts
+Auto-merging src/hooks/sla/useContactSlaTimeline.ts
+CONFLICT (add/add): Merge conflict in src/hooks/sla/useContactSlaTimeline.ts
+Auto-merging src/hooks/sla/useSLANotifications.ts
+CONFLICT (content): Merge conflict in src/hooks/sla/useSLANotifications.ts
+Auto-merging src/hooks/system/__tests__/useDiagnosticsData.test.ts
+CONFLICT (add/add): Merge conflict in src/hooks/system/__tests__/useDiagnosticsData.test.ts
+Auto-merging src/hooks/system/__tests__/useGeoBlocking.test.ts
+CONFLICT (add/add): Merge conflict in src/hooks/system/__tests__/useGeoBlocking.test.ts
+Auto-merging src/hooks/system/__tests__/useSecurityPushNotifications.test.ts
+CONFLICT (add/add): Merge conflict in src/hooks/system/__tests__/useSecurityPushNotifications.test.ts
+Auto-merging src/hooks/system/__tests__/useSupabaseConnectivity.test.ts
+CONFLICT (add/add): Merge conflict in src/hooks/system/__tests__/useSupabaseConnectivity.test.ts
+Auto-merging src/hooks/system/useDiagnosticsData.ts
+CONFLICT (content): Merge conflict in src/hooks/system/useDiagnosticsData.ts
+Auto-merging src/hooks/system/useGlobalSettings.ts
+CONFLICT (content): Merge conflict in src/hooks/system/useGlobalSettings.ts
+Auto-merging src/hooks/system/useSupabaseConnectivity.ts
+CONFLICT (add/add): Merge conflict in src/hooks/system/useSupabaseConnectivity.ts
+Auto-merging src/hooks/system/useUrlFilters.ts
+Auto-merging src/hooks/system/useUserRole.ts
+CONFLICT (content): Merge conflict in src/hooks/system/useUserRole.ts
+Auto-merging src/hooks/system/useUserSettings.ts
+CONFLICT (content): Merge conflict in src/hooks/system/useUserSettings.ts
+Auto-merging src/hooks/tasks/__tests__/workItemAggregates.test.ts
+CONFLICT (content): Merge conflict in src/hooks/tasks/__tests__/workItemAggregates.test.ts
+Auto-merging src/hooks/tasks/workItem.types.ts
+CONFLICT (content): Merge conflict in src/hooks/tasks/workItem.types.ts
+Auto-merging src/hooks/tasks/workItemAggregates.ts
+Auto-merging src/hooks/team-chat/README.md
+CONFLICT (add/add): Merge conflict in src/hooks/team-chat/README.md
+Auto-merging src/hooks/team-chat/__tests__/useTeamMemberDetails.profiles-rpc.test.tsx
+CONFLICT (add/add): Merge conflict in src/hooks/team-chat/__tests__/useTeamMemberDetails.profiles-rpc.test.tsx
+Auto-merging src/hooks/team-chat/__tests__/useTeamMessages.test.tsx
+CONFLICT (content): Merge conflict in src/hooks/team-chat/__tests__/useTeamMessages.test.tsx
+Auto-merging src/hooks/team-chat/queryKeys.ts
+CONFLICT (add/add): Merge conflict in src/hooks/team-chat/queryKeys.ts
+Auto-merging src/hooks/team-chat/teamChatTypes.ts
+CONFLICT (content): Merge conflict in src/hooks/team-chat/teamChatTypes.ts
+Auto-merging src/hooks/team-chat/useTeamChatMembers.ts
+CONFLICT (content): Merge conflict in src/hooks/team-chat/useTeamChatMembers.ts
+Auto-merging src/hooks/team-chat/useTeamChatMutations.ts
+Auto-merging src/hooks/team-chat/useTeamConversations.ts
+CONFLICT (content): Merge conflict in src/hooks/team-chat/useTeamConversations.ts
+Auto-merging src/hooks/team-chat/useTeamMemberDetails.ts
+CONFLICT (content): Merge conflict in src/hooks/team-chat/useTeamMemberDetails.ts
+Auto-merging src/hooks/team-chat/useTeamMessages.ts
+CONFLICT (content): Merge conflict in src/hooks/team-chat/useTeamMessages.ts
+Auto-merging src/hooks/ui/__tests__/useDocumentTitle.test.tsx
+CONFLICT (add/add): Merge conflict in src/hooks/ui/__tests__/useDocumentTitle.test.tsx
+Auto-merging src/hooks/ui/useDeviceDetection.ts
+Auto-merging src/hooks/ui/useGlobalKeyboardShortcuts.ts
+CONFLICT (content): Merge conflict in src/hooks/ui/useGlobalKeyboardShortcuts.ts
+Auto-merging src/hooks/ui/useScreenProtection.ts
+Auto-merging src/hooks/ui/useTheme.ts
+Auto-merging src/hooks/ui/useVolumeRocker.ts
+CONFLICT (content): Merge conflict in src/hooks/ui/useVolumeRocker.ts
+Auto-merging src/integrations/supabase/types.ts
+CONFLICT (content): Merge conflict in src/integrations/supabase/types.ts
+Auto-merging src/lib/__tests__/emailThreadQuery.test.ts
+CONFLICT (add/add): Merge conflict in src/lib/__tests__/emailThreadQuery.test.ts
+Auto-merging src/lib/__tests__/offlineQueue.test.ts
+CONFLICT (add/add): Merge conflict in src/lib/__tests__/offlineQueue.test.ts
+Auto-merging src/lib/__tests__/realtimeTopic.canais-fixos.test.tsx
+CONFLICT (add/add): Merge conflict in src/lib/__tests__/realtimeTopic.canais-fixos.test.tsx
+Auto-merging src/lib/__tests__/serverLogin.test.ts
+Auto-merging src/lib/__tests__/slaTimeline.test.ts
+CONFLICT (add/add): Merge conflict in src/lib/__tests__/slaTimeline.test.ts
+Auto-merging src/lib/avisoDispositivo.ts
+CONFLICT (add/add): Merge conflict in src/lib/avisoDispositivo.ts
+Auto-merging src/lib/emailThreadQuery.ts
+CONFLICT (add/add): Merge conflict in src/lib/emailThreadQuery.ts
+Auto-merging src/lib/journey/__tests__/mappers.test.ts
+CONFLICT (add/add): Merge conflict in src/lib/journey/__tests__/mappers.test.ts
+Auto-merging src/lib/journey/mappers.ts
+CONFLICT (add/add): Merge conflict in src/lib/journey/mappers.ts
+Auto-merging src/lib/localDay.ts
+Auto-merging src/lib/offlineQueue.ts
+CONFLICT (add/add): Merge conflict in src/lib/offlineQueue.ts
+Auto-merging src/lib/serverLogin.ts
+CONFLICT (content): Merge conflict in src/lib/serverLogin.ts
+Auto-merging src/lib/slaTimeline.ts
+CONFLICT (add/add): Merge conflict in src/lib/slaTimeline.ts
+Auto-merging src/pages/Auth.tsx
+Auto-merging src/pages/ChatPopup.tsx
+CONFLICT (content): Merge conflict in src/pages/ChatPopup.tsx
+Auto-merging src/pages/Index.tsx
+Auto-merging src/pages/ResetPassword.tsx
+CONFLICT (content): Merge conflict in src/pages/ResetPassword.tsx
+Auto-merging src/pages/ViewRouter.tsx
+Auto-merging src/pages/__tests__/ChatPopup.rolagem-mensagem-nova.test.tsx
+CONFLICT (add/add): Merge conflict in src/pages/__tests__/ChatPopup.rolagem-mensagem-nova.test.tsx
+Auto-merging src/pages/__tests__/Index.keyboard-dashboard-view.test.tsx
+CONFLICT (add/add): Merge conflict in src/pages/__tests__/Index.keyboard-dashboard-view.test.tsx
+Auto-merging src/pages/__tests__/QueuesComparisonSLA.landmarks.test.tsx
+CONFLICT (add/add): Merge conflict in src/pages/__tests__/QueuesComparisonSLA.landmarks.test.tsx
+Auto-merging src/pages/__tests__/ResetPassword.acessivel.test.tsx
+CONFLICT (add/add): Merge conflict in src/pages/__tests__/ResetPassword.acessivel.test.tsx
+Auto-merging src/pages/__tests__/ResetPassword.redirect-cancelavel.test.tsx
+CONFLICT (add/add): Merge conflict in src/pages/__tests__/ResetPassword.redirect-cancelavel.test.tsx
+Auto-merging src/pages/admin/RateLimitDashboard.tsx
+Auto-merging src/pages/lazyViews.ts
+Auto-merging src/providers/AppProviders.tsx
+CONFLICT (content): Merge conflict in src/providers/AppProviders.tsx
+Auto-merging src/services/__tests__/auth.service.signIn.test.ts
+CONFLICT (content): Merge conflict in src/services/__tests__/auth.service.signIn.test.ts
+Auto-merging src/services/__tests__/navigation.service.test.ts
+Auto-merging src/services/__tests__/outbound-message.service.test.ts
+CONFLICT (content): Merge conflict in src/services/__tests__/outbound-message.service.test.ts
+Auto-merging src/services/auth.service.ts
+CONFLICT (content): Merge conflict in src/services/auth.service.ts
+Auto-merging src/services/contact.service.ts
+Auto-merging src/services/navigation.service.ts
+CONFLICT (content): Merge conflict in src/services/navigation.service.ts
+Auto-merging src/services/outbound-message.service.ts
+CONFLICT (content): Merge conflict in src/services/outbound-message.service.ts
+Auto-merging src/services/realtime.service.ts
+Auto-merging src/styles/utilities.css
+CONFLICT (content): Merge conflict in src/styles/utilities.css
+Auto-merging src/types/chat.ts
+Auto-merging supabase/config.toml
+CONFLICT (content): Merge conflict in supabase/config.toml
+Auto-merging supabase/deployment-manifest.json
+Auto-merging supabase/functions/_shared/__tests__/ai-feature-flags.test.ts
+CONFLICT (add/add): Merge conflict in supabase/functions/_shared/__tests__/ai-feature-flags.test.ts
+Auto-merging supabase/functions/_shared/__tests__/consumo-pago-no-ledger.test.ts
+CONFLICT (add/add): Merge conflict in supabase/functions/_shared/__tests__/consumo-pago-no-ledger.test.ts
+Auto-merging supabase/functions/_shared/__tests__/evolution-control-authz.test.ts
+CONFLICT (add/add): Merge conflict in supabase/functions/_shared/__tests__/evolution-control-authz.test.ts
+Auto-merging supabase/functions/_shared/__tests__/evolution-webhook-event-coverage.test.ts
+CONFLICT (add/add): Merge conflict in supabase/functions/_shared/__tests__/evolution-webhook-event-coverage.test.ts
+Auto-merging supabase/functions/_shared/ai-feature-flags.ts
+CONFLICT (add/add): Merge conflict in supabase/functions/_shared/ai-feature-flags.ts
+Auto-merging supabase/functions/_shared/evolution-api-proxy.ts
+CONFLICT (content): Merge conflict in supabase/functions/_shared/evolution-api-proxy.ts
+Auto-merging supabase/functions/_shared/evolution-control-authz.ts
+CONFLICT (add/add): Merge conflict in supabase/functions/_shared/evolution-control-authz.ts
+Auto-merging supabase/functions/_shared/evolution-webhook-handlers.ts
+CONFLICT (content): Merge conflict in supabase/functions/_shared/evolution-webhook-handlers.ts
+Auto-merging supabase/functions/_shared/evolution-webhook-messages.ts
+CONFLICT (content): Merge conflict in supabase/functions/_shared/evolution-webhook-messages.ts
+Auto-merging supabase/functions/_shared/gmail-helpers.ts
+CONFLICT (content): Merge conflict in supabase/functions/_shared/gmail-helpers.ts
+Auto-merging supabase/functions/_shared/schemas.ts
+CONFLICT (content): Merge conflict in supabase/functions/_shared/schemas.ts
+Auto-merging supabase/functions/_shared/validation.ts
+CONFLICT (content): Merge conflict in supabase/functions/_shared/validation.ts
+Auto-merging supabase/functions/ai-kb-ingest/index.test.ts
+CONFLICT (add/add): Merge conflict in supabase/functions/ai-kb-ingest/index.test.ts
+Auto-merging supabase/functions/ai-proxy/index.test.ts
+CONFLICT (add/add): Merge conflict in supabase/functions/ai-proxy/index.test.ts
+Auto-merging supabase/functions/ai-suggest-reply/index.test.ts
+CONFLICT (add/add): Merge conflict in supabase/functions/ai-suggest-reply/index.test.ts
+Auto-merging supabase/functions/ai-suggest-reply/index.ts
+CONFLICT (content): Merge conflict in supabase/functions/ai-suggest-reply/index.ts
+Auto-merging supabase/functions/ai-transcribe-audio/index.test.ts
+CONFLICT (add/add): Merge conflict in supabase/functions/ai-transcribe-audio/index.test.ts
+Auto-merging supabase/functions/ai-transcribe-audio/index.ts
+CONFLICT (content): Merge conflict in supabase/functions/ai-transcribe-audio/index.ts
+Auto-merging supabase/functions/approve-password-reset/index.test.ts
+CONFLICT (add/add): Merge conflict in supabase/functions/approve-password-reset/index.test.ts
+Auto-merging supabase/functions/approve-password-reset/index.ts
+CONFLICT (content): Merge conflict in supabase/functions/approve-password-reset/index.ts
+Auto-merging supabase/functions/auth-login/index.test.ts
+CONFLICT (add/add): Merge conflict in supabase/functions/auth-login/index.test.ts
+Auto-merging supabase/functions/auth-login/index.ts
+CONFLICT (content): Merge conflict in supabase/functions/auth-login/index.ts
+Auto-merging supabase/functions/classify-audio-meme/index.test.ts
+CONFLICT (add/add): Merge conflict in supabase/functions/classify-audio-meme/index.test.ts
+Auto-merging supabase/functions/classify-emoji/index.test.ts
+CONFLICT (add/add): Merge conflict in supabase/functions/classify-emoji/index.test.ts
+Auto-merging supabase/functions/classify-sticker/index.test.ts
+CONFLICT (add/add): Merge conflict in supabase/functions/classify-sticker/index.test.ts
+Auto-merging supabase/functions/connection-health-check/index.test.ts
+CONFLICT (add/add): Merge conflict in supabase/functions/connection-health-check/index.test.ts
+Auto-merging supabase/functions/connection-health-check/index.ts
+CONFLICT (content): Merge conflict in supabase/functions/connection-health-check/index.ts
+Auto-merging supabase/functions/create-user/index.test.ts
+CONFLICT (add/add): Merge conflict in supabase/functions/create-user/index.test.ts
+Auto-merging supabase/functions/create-user/index.ts
+CONFLICT (content): Merge conflict in supabase/functions/create-user/index.ts
+Auto-merging supabase/functions/crm-integration/index.test.ts
+CONFLICT (content): Merge conflict in supabase/functions/crm-integration/index.test.ts
+Auto-merging supabase/functions/crm-integration/index.ts
+Auto-merging supabase/functions/detect-new-device/index.test.ts
+CONFLICT (add/add): Merge conflict in supabase/functions/detect-new-device/index.test.ts
+Auto-merging supabase/functions/detect-new-device/index.ts
+CONFLICT (content): Merge conflict in supabase/functions/detect-new-device/index.ts
+Auto-merging supabase/functions/elevenlabs-dialogue/index.test.ts
+CONFLICT (add/add): Merge conflict in supabase/functions/elevenlabs-dialogue/index.test.ts
+Auto-merging supabase/functions/elevenlabs-sfx/index.test.ts
+CONFLICT (add/add): Merge conflict in supabase/functions/elevenlabs-sfx/index.test.ts
+Auto-merging supabase/functions/elevenlabs-sfx/index.ts
+CONFLICT (content): Merge conflict in supabase/functions/elevenlabs-sfx/index.ts
+Auto-merging supabase/functions/elevenlabs-sts/index.test.ts
+CONFLICT (add/add): Merge conflict in supabase/functions/elevenlabs-sts/index.test.ts
+Auto-merging supabase/functions/elevenlabs-sts/index.ts
+CONFLICT (content): Merge conflict in supabase/functions/elevenlabs-sts/index.ts
+Auto-merging supabase/functions/elevenlabs-voice-design/index.test.ts
+CONFLICT (add/add): Merge conflict in supabase/functions/elevenlabs-voice-design/index.test.ts
+Auto-merging supabase/functions/evolution-api/index.test.ts
+CONFLICT (add/add): Merge conflict in supabase/functions/evolution-api/index.test.ts
+Auto-merging supabase/functions/evolution-api/index.ts
+CONFLICT (content): Merge conflict in supabase/functions/evolution-api/index.ts
+Auto-merging supabase/functions/evolution-api/session-flavor-routes.test.ts
+CONFLICT (add/add): Merge conflict in supabase/functions/evolution-api/session-flavor-routes.test.ts
+Auto-merging supabase/functions/evolution-webhook/index.ts
+CONFLICT (content): Merge conflict in supabase/functions/evolution-webhook/index.ts
+Auto-merging supabase/functions/fetch-link-preview/index.test.ts
+CONFLICT (add/add): Merge conflict in supabase/functions/fetch-link-preview/index.test.ts
+Auto-merging supabase/functions/gmail-cron-sync/index.ts
+CONFLICT (content): Merge conflict in supabase/functions/gmail-cron-sync/index.ts
+Auto-merging supabase/functions/gmail-oauth/index.test.ts
+CONFLICT (add/add): Merge conflict in supabase/functions/gmail-oauth/index.test.ts
+Auto-merging supabase/functions/gmail-oauth/index.ts
+CONFLICT (content): Merge conflict in supabase/functions/gmail-oauth/index.ts
+Auto-merging supabase/functions/gmail-send/index.ts
+CONFLICT (content): Merge conflict in supabase/functions/gmail-send/index.ts
+Auto-merging supabase/functions/gmail-sync/index.ts
+CONFLICT (content): Merge conflict in supabase/functions/gmail-sync/index.ts
+Auto-merging supabase/functions/gmail-webhook/index.ts
+CONFLICT (content): Merge conflict in supabase/functions/gmail-webhook/index.ts
+Auto-merging supabase/functions/message-delivery/index.test.ts
+CONFLICT (content): Merge conflict in supabase/functions/message-delivery/index.test.ts
+Auto-merging supabase/functions/multiplix-audience/index.test.ts
+CONFLICT (content): Merge conflict in supabase/functions/multiplix-audience/index.test.ts
+Auto-merging supabase/functions/multiplix-send/index.test.ts
+Auto-merging supabase/functions/multiplix-send/index.ts
+CONFLICT (content): Merge conflict in supabase/functions/multiplix-send/index.ts
+Auto-merging supabase/functions/multiplix-voices/index.test.ts
+CONFLICT (content): Merge conflict in supabase/functions/multiplix-voices/index.test.ts
+Auto-merging supabase/functions/recover-message-media/index.test.ts
+CONFLICT (add/add): Merge conflict in supabase/functions/recover-message-media/index.test.ts
+Auto-merging supabase/functions/recover-message-media/index.ts
+CONFLICT (add/add): Merge conflict in supabase/functions/recover-message-media/index.ts
+Auto-merging supabase/functions/revoke-auth-sessions/index.test.ts
+CONFLICT (add/add): Merge conflict in supabase/functions/revoke-auth-sessions/index.test.ts
+Auto-merging supabase/functions/revoke-auth-sessions/index.ts
+CONFLICT (add/add): Merge conflict in supabase/functions/revoke-auth-sessions/index.ts
+Auto-merging supabase/functions/send-email/index.test.ts
+CONFLICT (add/add): Merge conflict in supabase/functions/send-email/index.test.ts
+Auto-merging supabase/functions/send-email/index.ts
+CONFLICT (content): Merge conflict in supabase/functions/send-email/index.ts
+Auto-merging supabase/functions/send-scheduled-report/index.test.ts
+CONFLICT (add/add): Merge conflict in supabase/functions/send-scheduled-report/index.test.ts
+Auto-merging supabase/functions/send-scheduled-report/index.ts
+CONFLICT (content): Merge conflict in supabase/functions/send-scheduled-report/index.ts
+Auto-merging supabase/functions/talkx-link/index.test.ts
+Auto-merging supabase/functions/talkx-link/index.ts
+CONFLICT (content): Merge conflict in supabase/functions/talkx-link/index.ts
+Auto-merging supabase/functions/talkx-report/index.test.ts
+CONFLICT (content): Merge conflict in supabase/functions/talkx-report/index.test.ts
+Auto-merging supabase/functions/talkx-report/index.ts
+Auto-merging supabase/functions/talkx-scheduler/index.test.ts
+CONFLICT (content): Merge conflict in supabase/functions/talkx-scheduler/index.test.ts
+Auto-merging supabase/functions/talkx-scheduler/index.ts
+Auto-merging supabase/functions/talkx-send/_test-utils.ts
+CONFLICT (content): Merge conflict in supabase/functions/talkx-send/_test-utils.ts
+Auto-merging supabase/functions/talkx-send/index.test.ts
+CONFLICT (content): Merge conflict in supabase/functions/talkx-send/index.test.ts
+Auto-merging supabase/functions/talkx-send/index.ts
+CONFLICT (content): Merge conflict in supabase/functions/talkx-send/index.ts
+Auto-merging supabase/functions/talkx-send/n118-send-weekdays-wiring.test.ts
+CONFLICT (add/add): Merge conflict in supabase/functions/talkx-send/n118-send-weekdays-wiring.test.ts
+Auto-merging supabase/functions/talkx-send/process-recipient.ts
+Auto-merging supabase/functions/voice-changer/index.test.ts
+CONFLICT (add/add): Merge conflict in supabase/functions/voice-changer/index.test.ts
+Auto-merging supabase/functions/voice-changer/index.ts
+CONFLICT (content): Merge conflict in supabase/functions/voice-changer/index.ts
+Auto-merging supabase/functions/webauthn/index.test.ts
+CONFLICT (add/add): Merge conflict in supabase/functions/webauthn/index.test.ts
+Auto-merging supabase/functions/webauthn/index.ts
+CONFLICT (content): Merge conflict in supabase/functions/webauthn/index.ts
+Auto-merging supabase/functions/webhook-diagnostic/index.ts
+CONFLICT (content): Merge conflict in supabase/functions/webhook-diagnostic/index.ts
+Auto-merging supabase/migrations/20261006180831_login_gate_rpc.sql
+CONFLICT (add/add): Merge conflict in supabase/migrations/20261006180831_login_gate_rpc.sql
+Auto-merging supabase/migrations/20261006222024_team_receipts_reactions_conversation_id_forced.sql
+CONFLICT (add/add): Merge conflict in supabase/migrations/20261006222024_team_receipts_reactions_conversation_id_forced.sql
+Auto-merging supabase/schema-manifest.json
+CONFLICT (content): Merge conflict in supabase/schema-manifest.json
+Auto-merging supabase/tests/r2_db_022_provenance_trigger.sql
+CONFLICT (add/add): Merge conflict in supabase/tests/r2_db_022_provenance_trigger.sql
+Auto-merging supabase/tests/transfer_conversation_atomicidade.sql
+CONFLICT (add/add): Merge conflict in supabase/tests/transfer_conversation_atomicidade.sql
+Auto-merging tests/contracts/_adv_vocabulary-consumers-gaps.test.ts
+Auto-merging tests/contracts/etiquetas-remocao-residuos.contract.test.ts
+CONFLICT (add/add): Merge conflict in tests/contracts/etiquetas-remocao-residuos.contract.test.ts
+Auto-merging tests/contracts/requireauth-network-policy.contract.test.ts
+CONFLICT (add/add): Merge conflict in tests/contracts/requireauth-network-policy.contract.test.ts

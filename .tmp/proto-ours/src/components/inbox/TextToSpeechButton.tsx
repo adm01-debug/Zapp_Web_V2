@@ -1,0 +1,82 @@
+import { Volume2, VolumeX, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
+import { HOVER_REVEAL_TAP } from './hoverActions';
+
+interface TextToSpeechButtonProps {
+  messageId: string;
+  text: string;
+  isLoading: boolean;
+  isPlaying: boolean;
+  currentMessageId: string | null;
+  onSpeak: (text: string, messageId: string) => void;
+  onStop: () => void;
+  className?: string;
+}
+
+export function TextToSpeechButton({
+  messageId,
+  text,
+  isLoading,
+  isPlaying,
+  currentMessageId,
+  onSpeak,
+  onStop,
+  className,
+}: TextToSpeechButtonProps) {
+  const isThisPlaying = isPlaying && currentMessageId === messageId;
+  const isThisLoading = isLoading && currentMessageId === messageId;
+
+  // R2-INB-040 — carregando ESTA mensagem o botão cancela a geração em curso; sem isso
+  // o clique chamava `speak` de novo e o mesmo texto ia duas vezes para a síntese.
+  const handleClick = () => {
+    if (isThisPlaying || isThisLoading) {
+      onStop();
+    } else {
+      onSpeak(text, messageId);
+    }
+  };
+
+  const label = isThisPlaying ? 'Parar leitura' : isThisLoading ? 'Cancelar leitura' : 'Ouvir mensagem';
+
+  // Don't show for empty or media-only messages
+  const cleanText = text
+    .replace(/\[.*?\]/g, '')
+    .replace(/https?:\/\/\S+/g, '')
+    .trim();
+  
+  if (!cleanText) {
+    return null;
+  }
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={label}
+          className={cn(
+            `h-6 w-6 ${HOVER_REVEAL_TAP} transition-opacity`,
+            (isThisPlaying || isThisLoading) && "opacity-100",
+            className
+          )}
+          onClick={handleClick}
+          disabled={isLoading && currentMessageId !== messageId}
+        >
+          {isThisLoading ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+          ) : isThisPlaying ? (
+            <VolumeX className="h-3.5 w-3.5 text-primary" />
+          ) : (
+            <Volume2 className="h-3.5 w-3.5 text-muted-foreground" />
+          )}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side="top">
+        {isThisPlaying ? 'Parar' : isThisLoading ? 'Cancelar' : 'Ouvir mensagem'}
+      </TooltipContent>
+    </Tooltip>
+  );
+}

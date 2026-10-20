@@ -1,0 +1,786 @@
+{
+  "schema_version": 1,
+  "reviewer": "reaudit_infra",
+  "reviewed_area": "root queues/sla/governance",
+  "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "reviewed_findings_path": "/workspace/scratch/f8f9b9cbce53/reaudit/reports/root/findings.json",
+  "reviewed_findings_sha256": "ded8f9e71db313654a2f1f6554300d12c4742f796fa4f6925d918f7b08857af6",
+  "reviewed_probe_source_sha256": "1a59e700601d64b85538810f37e26357e42a71e6f5c93c0c37ab98c4d64bd061",
+  "reviewed_integrity_sha256": "b1a772a2698b193cb0abb3d7c445d4e35ca1b259618d0cebcb6f302f69d30fc4",
+  "summary": {
+    "findings": 12,
+    "accepted": 7,
+    "narrowed": 5,
+    "rejected": 0,
+    "root_probes_rerun": 6
+  },
+  "reviews": [
+    {
+      "id": "R2-GOV-001",
+      "disposition": "accepted",
+      "basis": "Confirmados seis cabeçalhos TAREFA no prompt CRM e quatro no de Inteligência. Os dois paths aparecem uma vez no SOURCE_CATALOG e não aparecem no PLAN_REGISTRY nem nos arquivos tasks. O limite de que não são automaticamente dez tarefas novas é correto.",
+      "requested_correction": "",
+      "independent_evidence": [
+        {
+          "path": "docs/PROMPT_LOVABLE_CRM360_INTEGRATION.md",
+          "line_start": 44,
+          "line_end": 120,
+          "sha256": "a9160fe5c2518e0f6cf65863656348dd7568e80c3694249b59d6dfaffb6fcd1d",
+          "git_blob_sha": "24b469fe10429f1d29f0f63fd0e5908988c057a0",
+          "reason": "Seis tarefas históricas"
+        },
+        {
+          "path": "docs/PROMPT_LOVABLE_INTELLIGENCE_PANEL.md",
+          "line_start": 25,
+          "line_end": 61,
+          "sha256": "c666da6491af556d1d31bd959ebd939492742df8a0effd0c959db63ed9f1323f",
+          "git_blob_sha": "a81f50f87747f3f3ae302441de527abfa36c2835",
+          "reason": "Quatro tarefas históricas"
+        }
+      ]
+    },
+    {
+      "id": "R2-GOV-002",
+      "disposition": "narrowed",
+      "basis": "A divergência é confirmada. Há349 linhas de status✅; o subtotal70 do parser omite public/sw.js em duas linhas. Contagem independente dos paths literais src/public/supabase:72 referências inexistentes em72 linhas,69 paths únicos. O JSON global trata public/sw.js como NON_FILE_REFERENCE apesar de ser path de arquivo.",
+      "requested_correction": "Corrigir o parser para public/ e publicar unidades explícitas:72 referências/69 paths únicos. Manter o catálogo como alegação histórica sem inferir funcionalidade removida a partir de path renomeado.",
+      "independent_evidence": [
+        {
+          "path": "docs/COMPLETE_SYSTEM_FEATURES.md",
+          "line_start": 430,
+          "line_end": 446,
+          "sha256": "11d9ce78373773f51ae40a2d88c1f923ae4cfe133b107af5684904c1aac3d8f6",
+          "git_blob_sha": "13d9b928a05e8e6757e303f03c6a26dad5a16487",
+          "reason": "Push/SW e referência literal public/sw.js"
+        },
+        {
+          "path": "docs/COMPLETE_SYSTEM_FEATURES.md",
+          "line_start": 558,
+          "line_end": 562,
+          "sha256": "11d9ce78373773f51ae40a2d88c1f923ae4cfe133b107af5684904c1aac3d8f6",
+          "git_blob_sha": "13d9b928a05e8e6757e303f03c6a26dad5a16487",
+          "reason": "Segunda referência ao mesmo path"
+        },
+        {
+          "path": "src/config/service_worker.ts",
+          "line_start": 1,
+          "line_end": 8,
+          "sha256": "f18cfcea2d5c6ccf54be8b94e9810736b95b66cb354a7181e992058b2614d964",
+          "git_blob_sha": "9ba5876187a170437c792a4d3d59bd33724ea5c9",
+          "reason": "Capacidades explicitamente desligadas"
+        },
+        {
+          "path": "src/hooks/system/useServiceWorker.ts",
+          "line_start": 14,
+          "line_end": 43,
+          "sha256": "03b9e972ff49c4ea43a36f034bd56fa92c6664b1262c15b025819e0e293ace33",
+          "git_blob_sha": "3f048903dabf53bcf464d00dae56964a117483ee",
+          "reason": "Remove registros antigos no fluxo ativo"
+        }
+      ]
+    },
+    {
+      "id": "R2-QUE-001",
+      "disposition": "narrowed",
+      "basis": "Estimativas fixas e ausência de eventos de resolução confirmadas no fluxo ativo. ROOT-P01 recebe dez contatos no total, todos atribuídos; o percentual é resolvidos/total. ROOT-P06 tem50 contatos e10 atribuídos, portanto sete resolvidos não equivalem a70% do total nesse caso.",
+      "requested_correction": "Qualificar o exemplo70% como dez contatos no total, todos atribuídos. A descoberta permanece.",
+      "independent_evidence": [
+        {
+          "path": "src/pages/QueueDetails.tsx",
+          "line_start": 48,
+          "line_end": 63,
+          "sha256": "52453c4ab5d682a10e7de45b7e145415e1c0184db5f79ebbd78ab74eff706b92",
+          "git_blob_sha": "ada4a637f6022648abf8f979b2967b5f7a8646cb",
+          "reason": "Métricas locais da amostra"
+        },
+        {
+          "path": "src/hooks/business/useQueueAnalytics.ts",
+          "line_start": 183,
+          "line_end": 210,
+          "sha256": "d6a5c21c396f62b4f0c3e37a13edbcf8b1fa2b71cfe70082608c88544cd34921",
+          "git_blob_sha": "7a492b4b78f0bf6efcc8d4a30441d77083b79110",
+          "reason": "Denominador usa total"
+        },
+        {
+          "path": "src/components/queues/QueueCharts.tsx",
+          "line_start": 81,
+          "line_end": 90,
+          "sha256": "2908a3e6671a5adc870d4796152e79a893e0f037ba75ca366313b47ca8e3a09f",
+          "git_blob_sha": "fc5dc13627f2953aaa9a5f977aae7717d8b65031",
+          "reason": "Percentual mostrado ao usuário"
+        },
+        {
+          "path": "src/routes/AppRoutes.tsx",
+          "line_start": 66,
+          "line_end": 72,
+          "sha256": "30c6f9981e0f9b86c37154eba2f87e24e2e2f7720259e95da1899c49fbf11da3",
+          "git_blob_sha": "005f7a1a35bfb4cb98161784c7047a4edbc9dc22",
+          "reason": "Rota ativa"
+        }
+      ]
+    },
+    {
+      "id": "R2-QUE-002",
+      "disposition": "accepted",
+      "basis": "waiting_count é sobrescrito com0 no hook. Em QueuesView, ambos os alertas dependem de contagem positiva para thresholds normais válidos, e a taxa mistura membros com contatos. As metas adicionais estão persistidas, mas não aparecem na avaliação local. Não foi inferida ausência de monitor externo.",
+      "requested_correction": "",
+      "independent_evidence": [
+        {
+          "path": "src/hooks/business/useQueues.ts",
+          "line_start": 44,
+          "line_end": 63,
+          "sha256": "893f32a0ad97f15525bb928a3b3dbdc2ed4f9a81bb0be89ec14c108e412571d5",
+          "git_blob_sha": "251695c217187bcdb23ba363d3b7e0159d026f64",
+          "reason": "Estado construído pelo hook"
+        },
+        {
+          "path": "src/components/queues/QueuesView.tsx",
+          "line_start": 31,
+          "line_end": 48,
+          "sha256": "b42475bbe6aac417a0257f93eaa4a10b92d716a6c9e86da52a4c2c68cca9afc8",
+          "git_blob_sha": "d6a0d70afa81595201159e8eb7bba6f04d9bf597",
+          "reason": "Único avaliador local de alertas"
+        },
+        {
+          "path": "src/components/queues/QueueCard.tsx",
+          "line_start": 53,
+          "line_end": 60,
+          "sha256": "0acbd1a3c74eb6c228a4bd72d96c29c36c923d5cb5fe7f3eb7ac8ade4f7e5dc5",
+          "git_blob_sha": "b8a91692e8bd950e98de2937795c6cfe441a5ecd",
+          "reason": "Contagem exibida"
+        }
+      ]
+    },
+    {
+      "id": "R2-QUE-003",
+      "disposition": "accepted",
+      "basis": "Confirmados limite50 e uso do comprimento da página como total. Num fetch bem-sucedido com50 contatos há três consultas iniciais, cem consultas de mensagens e até cinquenta de perfis:103–153 chamadas Supabase, sem contar os gráficos. Analytics/comparação não paginam; o limite real do servidor permanece uma precondição, não foi medido.",
+      "requested_correction": "",
+      "independent_evidence": [
+        {
+          "path": "src/pages/QueueDetails.tsx",
+          "line_start": 41,
+          "line_end": 63,
+          "sha256": "52453c4ab5d682a10e7de45b7e145415e1c0184db5f79ebbd78ab74eff706b92",
+          "git_blob_sha": "ada4a637f6022648abf8f979b2967b5f7a8646cb",
+          "reason": "Consultas por contato e total"
+        },
+        {
+          "path": "src/hooks/business/useQueueAnalytics.ts",
+          "line_start": 217,
+          "line_end": 247,
+          "sha256": "d6a5c21c396f62b4f0c3e37a13edbcf8b1fa2b71cfe70082608c88544cd34921",
+          "git_blob_sha": "7a492b4b78f0bf6efcc8d4a30441d77083b79110",
+          "reason": "Consultas sem continuação"
+        },
+        {
+          "path": "src/hooks/business/useQueuesComparison.ts",
+          "line_start": 54,
+          "line_end": 84,
+          "sha256": "aca58814b58d39bf0eff480ccf4856971f4abc2cc5251dff08120cb09e26327a",
+          "git_blob_sha": "45d7b93db8f133abccd16247ccbb5bdfb95a8b3d",
+          "reason": "Comparação sem continuação"
+        }
+      ]
+    },
+    {
+      "id": "R2-QUE-004",
+      "disposition": "accepted",
+      "basis": "O algoritmo e ROOT-P02 confirmam overlap. O preset real30d usa days−1, portanto produz trinta datas civis, não31; o estado do probe é alcançável pelo seletor. A ressalva sobre date-fns/DST é apropriada.",
+      "requested_correction": "",
+      "independent_evidence": [
+        {
+          "path": "src/hooks/business/useQueueAnalytics.ts",
+          "line_start": 74,
+          "line_end": 121,
+          "sha256": "d6a5c21c396f62b4f0c3e37a13edbcf8b1fa2b71cfe70082608c88544cd34921",
+          "git_blob_sha": "7a492b4b78f0bf6efcc8d4a30441d77083b79110",
+          "reason": "Buckets sobrepostos"
+        },
+        {
+          "path": "src/components/queues/PeriodSelector.tsx",
+          "line_start": 48,
+          "line_end": 59,
+          "sha256": "db0cec40117b29a9aeab673d7803ba12e28c9954c5c949017f076ea0478e131d",
+          "git_blob_sha": "0458d000f41a9c153ef58677497cbc6231c0c6e4",
+          "reason": "Preset30d alcança o intervalo"
+        },
+        {
+          "path": "src/components/queues/QueueCharts.tsx",
+          "line_start": 23,
+          "line_end": 27,
+          "sha256": "2908a3e6671a5adc870d4796152e79a893e0f037ba75ca366313b47ca8e3a09f",
+          "git_blob_sha": "fc5dc13627f2953aaa9a5f977aae7717d8b65031",
+          "reason": "Range encaminhado ao hook"
+        }
+      ]
+    },
+    {
+      "id": "R2-QUE-005",
+      "disposition": "accepted",
+      "basis": "saveGoal captura erro e resolve, enquanto handleSave fecha após await. O probe3 só prova a promessa resolvida; a conclusão de fechamento vem da leitura do consumidor, já declarada em probe-results.json. Ao reabrir, o useEffect também reconstrói o formulário a partir de goals antigos/default.",
+      "requested_correction": "",
+      "independent_evidence": [
+        {
+          "path": "src/hooks/business/useQueueGoals.ts",
+          "line_start": 68,
+          "line_end": 104,
+          "sha256": "155c274e24e9d6259e36ed4d611e1e6a2199c1dfe6d8062070debc9ab3ea780f",
+          "git_blob_sha": "2ffbbc81541d01bc31b23497659622e4b417dfdb",
+          "reason": "Erro não é propagado"
+        },
+        {
+          "path": "src/components/queues/QueueGoalsDialog.tsx",
+          "line_start": 36,
+          "line_end": 61,
+          "sha256": "8fb34080b6d199ed0a9554580ecd6a598fd5753792b47de78128c8e1fe4e759b",
+          "git_blob_sha": "f82d9ee4c2e1853581e0369ba3e55d9b3f44902a",
+          "reason": "Rascunho reidratado e fechamento"
+        }
+      ]
+    },
+    {
+      "id": "R2-QUE-006",
+      "disposition": "accepted",
+      "basis": "Os controles Editar e Configurar não têm callback e os componentes estão ligados à navegação ativa. updateQueue existir no hook não conecta estes controles.",
+      "requested_correction": "",
+      "independent_evidence": [
+        {
+          "path": "src/components/queues/QueueCard.tsx",
+          "line_start": 39,
+          "line_end": 47,
+          "sha256": "0acbd1a3c74eb6c228a4bd72d96c29c36c923d5cb5fe7f3eb7ac8ade4f7e5dc5",
+          "git_blob_sha": "b8a91692e8bd950e98de2937795c6cfe441a5ecd",
+          "reason": "Editar sem callback"
+        },
+        {
+          "path": "src/pages/QueueDetails.tsx",
+          "line_start": 95,
+          "line_end": 102,
+          "sha256": "52453c4ab5d682a10e7de45b7e145415e1c0184db5f79ebbd78ab74eff706b92",
+          "git_blob_sha": "ada4a637f6022648abf8f979b2967b5f7a8646cb",
+          "reason": "Configurar sem callback"
+        },
+        {
+          "path": "src/components/queues/QueuesView.tsx",
+          "line_start": 82,
+          "line_end": 101,
+          "sha256": "b42475bbe6aac417a0257f93eaa4a10b92d716a6c9e86da52a4c2c68cca9afc8",
+          "git_blob_sha": "d6a0d70afa81595201159e8eb7bba6f04d9bf597",
+          "reason": "Consumidor do card/dialog"
+        }
+      ]
+    },
+    {
+      "id": "R2-SLA-001",
+      "disposition": "narrowed",
+      "basis": "As fórmulas são incompatíveis na presença de registros pendentes, e nenhuma amostra retorna100. ROOT-P04 passa, mas seu único registro breached também tem first_response_at=null; o escritor versionado de primeira resposta grava breached junto com timestamp de resposta. A mesma divergência0%/90% é demonstrável com um registro respondido fora do prazo mais nove pendentes.",
+      "requested_correction": "Ajustar a fixture para o registro violado ter primeira resposta válida tardia e explicitar linhas pendentes/abertas como precondição. Não promover a população sintética a estado observado de produção.",
+      "independent_evidence": [
+        {
+          "path": "src/hooks/sla/useSLAMetrics.ts",
+          "line_start": 41,
+          "line_end": 74,
+          "sha256": "9a7146816f3b3e0daeebc85a710ccc1e468ffbe2c861847501f197fb4bec77ef",
+          "git_blob_sha": "1838a91f296f4db476bd1341909e41baaba003f4",
+          "reason": "Elegibilidade do denominador"
+        },
+        {
+          "path": "src/hooks/sla/useSLAHistory.ts",
+          "line_start": 87,
+          "line_end": 116,
+          "sha256": "1f00ee0980912734580704fe1023c87a163acb45c299366d16ad6a69494e9d49",
+          "git_blob_sha": "8a186811316ec3a3d51ed2edcab2ed6f00e12137",
+          "reason": "Pendentes entram como não violados"
+        },
+        {
+          "path": "supabase/migrations/20260903233000_sla_base_only_valid_messages.sql",
+          "line_start": 46,
+          "line_end": 55,
+          "sha256": "188eccdafe76b451f09838e0d1d1021e68ab72d2a858453d0e29a4dea5e23e26",
+          "git_blob_sha": "9167d9d7ee0a1f454425b532157ae32e703f146f",
+          "reason": "Escritor grava resposta e breach juntos"
+        }
+      ]
+    },
+    {
+      "id": "R2-SLA-002",
+      "disposition": "accepted",
+      "basis": "Todos aplica365dias e o histórico7d subtrai sete dias antes de incluir os dois extremos. ROOT-P05 executa getStartDate real; ROOT-P04 registra oito datas. Rótulos e consumidor foram conferidos.",
+      "requested_correction": "",
+      "independent_evidence": [
+        {
+          "path": "src/hooks/sla/useSLAMetrics.ts",
+          "line_start": 31,
+          "line_end": 38,
+          "sha256": "9a7146816f3b3e0daeebc85a710ccc1e468ffbe2c861847501f197fb4bec77ef",
+          "git_blob_sha": "1838a91f296f4db476bd1341909e41baaba003f4",
+          "reason": "Limite365"
+        },
+        {
+          "path": "src/hooks/sla/useSLAHistory.ts",
+          "line_start": 60,
+          "line_end": 83,
+          "sha256": "1f00ee0980912734580704fe1023c87a163acb45c299366d16ad6a69494e9d49",
+          "git_blob_sha": "8a186811316ec3a3d51ed2edcab2ed6f00e12137",
+          "reason": "Janela inclusiva"
+        },
+        {
+          "path": "src/components/queues/SLADashboard.tsx",
+          "line_start": 55,
+          "line_end": 60,
+          "sha256": "932e01bc6f3218078351e023b39e5c3fc105cf2ee8b26fa3598c22f9cab2f68a",
+          "git_blob_sha": "7fb86035427d04b1f513111af4a6f5ba9e8d6fca",
+          "reason": "Rótulo Todos"
+        }
+      ]
+    },
+    {
+      "id": "R2-SLA-003",
+      "disposition": "narrowed",
+      "basis": "A fonte confirma promessa de regras granulares, persistência, resolver sem consumidor localizado, indicadores com5 e última definição versionada com5min. A evidência anterior53–61 do manager começa depois da promessa, que está em50–52.",
+      "requested_correction": "Mudar a referência para50–52 e usar última definição versionada localizada em lugar de função vigente do banco, a menos que o snapshot canônico seja explicitamente ligado à implementação. Manter a fronteira entre UI ativa e implementação do resolver isolado.",
+      "independent_evidence": [
+        {
+          "path": "src/components/settings/SLARulesManager.tsx",
+          "line_start": 48,
+          "line_end": 53,
+          "sha256": "3e7721c1eae900c7cc62f8eff91df4acceb48cd007641e7036d9df2397be5f83",
+          "git_blob_sha": "9efa78915b810ef317760fbdec035cd5d6fed5c3",
+          "reason": "Promessa correta"
+        },
+        {
+          "path": "src/hooks/sla/useSLARules.ts",
+          "line_start": 67,
+          "line_end": 86,
+          "sha256": "6db1b98121c57ba5c9484c4a3b8d0672c14a72b09a2821271603978fd2bcf971",
+          "git_blob_sha": "2f80ff49fbea2056bfae33c127d3486687df0400",
+          "reason": "Payload gravado"
+        },
+        {
+          "path": "src/hooks/sla/useApplicableSLA.ts",
+          "line_start": 97,
+          "line_end": 134,
+          "sha256": "97ae29377c7d168fe1af0bb8c1ed3307fe9349b55c581dc72d2ac7b2d927aa31",
+          "git_blob_sha": "f1dcb4a76435fa17635132c51398442544b16edf",
+          "reason": "Resolver isolado"
+        },
+        {
+          "path": "src/components/inbox/chat/ChatPanelHeader.tsx",
+          "line_start": 128,
+          "line_end": 132,
+          "sha256": "ac181fef6c9ae1a92aa6832edf4c4f0dea7b4c5cab769487b32ce6114ea63a88",
+          "git_blob_sha": "85a91bc0d65773de1fb5e8db5d96a706cd6198f1",
+          "reason": "Indicador fixo"
+        },
+        {
+          "path": "src/components/inbox/VirtualizedRealtimeList.tsx",
+          "line_start": 518,
+          "line_end": 524,
+          "sha256": "328ab8f3942f8c13976eed34ab1548fa55a3ab9e0719ec99fca9179caa69f752",
+          "git_blob_sha": "b3915f3134da36acc8bf2f84dc1a671416a1d6eb",
+          "reason": "Segundo indicador"
+        },
+        {
+          "path": "supabase/migrations/20260903233000_sla_base_only_valid_messages.sql",
+          "line_start": 46,
+          "line_end": 55,
+          "sha256": "188eccdafe76b451f09838e0d1d1021e68ab72d2a858453d0e29a4dea5e23e26",
+          "git_blob_sha": "9167d9d7ee0a1f454425b532157ae32e703f146f",
+          "reason": "Definição versionada"
+        }
+      ]
+    },
+    {
+      "id": "R2-SLA-004",
+      "disposition": "narrowed",
+      "basis": "Fórmula e condição de atraso confirmadas. Enqueue cria a mensagem sending, o provedor é chamado depois e complete_outbound_message confirma sent, mantendo created_at; trigger usa NEW.created_at. Contudo a migration declara deliberadamente uso de created_at para evitar drift. O defeito de semântica exige definir se SLA mede composição/enqueue, envio efetivo ou recibo do provedor; chegada tardia do webhook não deve ser assumida como timestamp correto.",
+      "requested_correction": "Descrever como conflito de contrato de evento/timestamp com efeito condicional, sem atribuir incidente observado. Adicionar produtor sending e consumidor complete à evidência; decisão do evento canônico precede correção.",
+      "independent_evidence": [
+        {
+          "path": "supabase/migrations/20260903225000_sla_first_response_v2.sql",
+          "line_start": 2,
+          "line_end": 11,
+          "sha256": "f433b18474ea7b4a2ff7a3743f7f06c9942ac8dd5502cfed799936a87b62cf18",
+          "git_blob_sha": "d609c6de2265c8a88909ba7e15c8c2a0d807e83f",
+          "reason": "Intenção histórica do timestamp"
+        },
+        {
+          "path": "supabase/migrations/20260903225000_sla_first_response_v2.sql",
+          "line_start": 109,
+          "line_end": 135,
+          "sha256": "f433b18474ea7b4a2ff7a3743f7f06c9942ac8dd5502cfed799936a87b62cf18",
+          "git_blob_sha": "d609c6de2265c8a88909ba7e15c8c2a0d807e83f",
+          "reason": "Trigger envia created_at"
+        },
+        {
+          "path": "supabase/migrations/20260909250000_allow_location_in_atomic_outbound_delivery.sql",
+          "line_start": 113,
+          "line_end": 120,
+          "sha256": "ba64d74319cae401531ac8b4bab35b04bdbb12ae319e193d69def2ac1b2b8571",
+          "git_blob_sha": "a0800f4e8b49cc88043ea34c03b15429f122e48d",
+          "reason": "Mensagem criada antes de enviar"
+        },
+        {
+          "path": "supabase/functions/message-delivery/index.ts",
+          "line_start": 300,
+          "line_end": 331,
+          "sha256": "1f777336f5628c1bb7303707bb49186b2b732a6492f09c9183fdc49aae7f0474",
+          "git_blob_sha": "3ea09632f199ef1399e434cea861fbd039c8b622",
+          "reason": "Envio e confirmação posteriores"
+        },
+        {
+          "path": "src/services/outbound-message.service.ts",
+          "line_start": 102,
+          "line_end": 137,
+          "sha256": "5dd3f526205086e33880468e15154d701c5590cb0914f84907b2938619a0387d",
+          "git_blob_sha": "a328efc57530103d0e3fc0c2256420032db982ae",
+          "reason": "Cadeia ativa do browser"
+        }
+      ]
+    }
+  ],
+  "root_evidence_hash_range_checks": [
+    {
+      "finding": "R2-GOV-001",
+      "path": "docs/PROMPT_LOVABLE_CRM360_INTEGRATION.md",
+      "range_valid": true,
+      "blob_matches": true
+    },
+    {
+      "finding": "R2-GOV-001",
+      "path": "docs/PROMPT_LOVABLE_INTELLIGENCE_PANEL.md",
+      "range_valid": true,
+      "blob_matches": true
+    },
+    {
+      "finding": "R2-GOV-002",
+      "path": "docs/COMPLETE_SYSTEM_FEATURES.md",
+      "range_valid": true,
+      "blob_matches": true
+    },
+    {
+      "finding": "R2-GOV-002",
+      "path": "docs/COMPLETE_SYSTEM_FEATURES.md",
+      "range_valid": true,
+      "blob_matches": true
+    },
+    {
+      "finding": "R2-GOV-002",
+      "path": "src/config/service_worker.ts",
+      "range_valid": true,
+      "blob_matches": true
+    },
+    {
+      "finding": "R2-GOV-002",
+      "path": "src/hooks/system/useServiceWorker.ts",
+      "range_valid": true,
+      "blob_matches": true
+    },
+    {
+      "finding": "R2-QUE-001",
+      "path": "src/pages/QueueDetails.tsx",
+      "range_valid": true,
+      "blob_matches": true
+    },
+    {
+      "finding": "R2-QUE-001",
+      "path": "src/pages/queue-details/QueueMetricsCards.tsx",
+      "range_valid": true,
+      "blob_matches": true
+    },
+    {
+      "finding": "R2-QUE-001",
+      "path": "src/hooks/business/useQueueAnalytics.ts",
+      "range_valid": true,
+      "blob_matches": true
+    },
+    {
+      "finding": "R2-QUE-001",
+      "path": "src/hooks/business/useQueueAnalytics.ts",
+      "range_valid": true,
+      "blob_matches": true
+    },
+    {
+      "finding": "R2-QUE-001",
+      "path": "src/components/queues/QueueCharts.tsx",
+      "range_valid": true,
+      "blob_matches": true
+    },
+    {
+      "finding": "R2-QUE-002",
+      "path": "src/hooks/business/useQueues.ts",
+      "range_valid": true,
+      "blob_matches": true
+    },
+    {
+      "finding": "R2-QUE-002",
+      "path": "src/components/queues/QueuesView.tsx",
+      "range_valid": true,
+      "blob_matches": true
+    },
+    {
+      "finding": "R2-QUE-002",
+      "path": "src/components/queues/QueueCard.tsx",
+      "range_valid": true,
+      "blob_matches": true
+    },
+    {
+      "finding": "R2-QUE-002",
+      "path": "src/components/queues/QueueGoalsDialog.tsx",
+      "range_valid": true,
+      "blob_matches": true
+    },
+    {
+      "finding": "R2-QUE-002",
+      "path": "src/components/queues/QueueGoalsDialog.tsx",
+      "range_valid": true,
+      "blob_matches": true
+    },
+    {
+      "finding": "R2-QUE-003",
+      "path": "src/pages/QueueDetails.tsx",
+      "range_valid": true,
+      "blob_matches": true
+    },
+    {
+      "finding": "R2-QUE-003",
+      "path": "src/hooks/business/useQueueAnalytics.ts",
+      "range_valid": true,
+      "blob_matches": true
+    },
+    {
+      "finding": "R2-QUE-003",
+      "path": "src/hooks/business/useQueuesComparison.ts",
+      "range_valid": true,
+      "blob_matches": true
+    },
+    {
+      "finding": "R2-QUE-003",
+      "path": "src/pages/queue-details/QueueMetricsCards.tsx",
+      "range_valid": true,
+      "blob_matches": true
+    },
+    {
+      "finding": "R2-QUE-004",
+      "path": "src/hooks/business/useQueueAnalytics.ts",
+      "range_valid": true,
+      "blob_matches": true
+    },
+    {
+      "finding": "R2-QUE-005",
+      "path": "src/hooks/business/useQueueGoals.ts",
+      "range_valid": true,
+      "blob_matches": true
+    },
+    {
+      "finding": "R2-QUE-005",
+      "path": "src/components/queues/QueueGoalsDialog.tsx",
+      "range_valid": true,
+      "blob_matches": true
+    },
+    {
+      "finding": "R2-QUE-006",
+      "path": "src/components/queues/QueueCard.tsx",
+      "range_valid": true,
+      "blob_matches": true
+    },
+    {
+      "finding": "R2-QUE-006",
+      "path": "src/pages/QueueDetails.tsx",
+      "range_valid": true,
+      "blob_matches": true
+    },
+    {
+      "finding": "R2-QUE-006",
+      "path": "src/hooks/business/useQueues.ts",
+      "range_valid": true,
+      "blob_matches": true
+    },
+    {
+      "finding": "R2-SLA-001",
+      "path": "src/hooks/sla/useSLAMetrics.ts",
+      "range_valid": true,
+      "blob_matches": true
+    },
+    {
+      "finding": "R2-SLA-001",
+      "path": "src/hooks/sla/useSLAHistory.ts",
+      "range_valid": true,
+      "blob_matches": true
+    },
+    {
+      "finding": "R2-SLA-001",
+      "path": "src/components/queues/SLADashboard.tsx",
+      "range_valid": true,
+      "blob_matches": true
+    },
+    {
+      "finding": "R2-SLA-002",
+      "path": "src/hooks/sla/useSLAMetrics.ts",
+      "range_valid": true,
+      "blob_matches": true
+    },
+    {
+      "finding": "R2-SLA-002",
+      "path": "src/components/queues/SLADashboard.tsx",
+      "range_valid": true,
+      "blob_matches": true
+    },
+    {
+      "finding": "R2-SLA-002",
+      "path": "src/hooks/sla/useSLAHistory.ts",
+      "range_valid": true,
+      "blob_matches": true
+    },
+    {
+      "finding": "R2-SLA-003",
+      "path": "src/components/settings/SLARulesManager.tsx",
+      "range_valid": true,
+      "blob_matches": true
+    },
+    {
+      "finding": "R2-SLA-003",
+      "path": "src/hooks/sla/useSLARules.ts",
+      "range_valid": true,
+      "blob_matches": true
+    },
+    {
+      "finding": "R2-SLA-003",
+      "path": "src/hooks/sla/useApplicableSLA.ts",
+      "range_valid": true,
+      "blob_matches": true
+    },
+    {
+      "finding": "R2-SLA-003",
+      "path": "src/components/inbox/chat/ChatPanelHeader.tsx",
+      "range_valid": true,
+      "blob_matches": true
+    },
+    {
+      "finding": "R2-SLA-003",
+      "path": "src/components/inbox/VirtualizedRealtimeList.tsx",
+      "range_valid": true,
+      "blob_matches": true
+    },
+    {
+      "finding": "R2-SLA-003",
+      "path": "supabase/migrations/20260903233000_sla_base_only_valid_messages.sql",
+      "range_valid": true,
+      "blob_matches": true
+    },
+    {
+      "finding": "R2-SLA-004",
+      "path": "supabase/migrations/20260903225000_sla_first_response_v2.sql",
+      "range_valid": true,
+      "blob_matches": true
+    },
+    {
+      "finding": "R2-SLA-004",
+      "path": "supabase/migrations/20260903233000_sla_base_only_valid_messages.sql",
+      "range_valid": true,
+      "blob_matches": true
+    }
+  ],
+  "probe_reviews": [
+    {
+      "id": "ROOT-P01",
+      "independently_rerun": true,
+      "exit_code": 0,
+      "status": "PASS",
+      "observed": {
+        "actually_resolved": 0,
+        "reported_resolved_percentage": 70,
+        "input_assigned": 10
+      },
+      "same_as_published": true,
+      "limit": "Prova offline de nó de fonte; sem inferência de execução remota."
+    },
+    {
+      "id": "ROOT-P02",
+      "independently_rerun": true,
+      "exit_code": 0,
+      "status": "PASS",
+      "observed": {
+        "input_messages": 1,
+        "summed_messages": 2,
+        "overlapping_bucket_dates": [
+          "2026-09-28",
+          "2026-09-30"
+        ]
+      },
+      "same_as_published": true,
+      "limit": "Prova offline de nó de fonte; sem inferência de execução remota."
+    },
+    {
+      "id": "ROOT-P03",
+      "independently_rerun": true,
+      "exit_code": 0,
+      "status": "PASS",
+      "observed": {
+        "rejected_update": true,
+        "promise_rejected": false,
+        "consumer_can_close": true,
+        "toast_titles": [
+          "Erro ao salvar metas"
+        ]
+      },
+      "same_as_published": true,
+      "limit": "Fonte real extraída e dependências sintéticas; não é fluxo renderizado ou banco."
+    },
+    {
+      "id": "ROOT-P04",
+      "independently_rerun": true,
+      "exit_code": 0,
+      "status": "PASS",
+      "observed": {
+        "same_rows": 10,
+        "pending_without_breach": 9,
+        "breached": 1,
+        "metrics_rate": 0,
+        "history_rate": 90,
+        "history_days_for_7d": 8
+      },
+      "same_as_published": true,
+      "limit": "Prova offline de nó de fonte; sem inferência de execução remota."
+    },
+    {
+      "id": "ROOT-P05",
+      "independently_rerun": true,
+      "exit_code": 0,
+      "status": "PASS",
+      "observed": {
+        "label": "Todos",
+        "actual_days": 365,
+        "lower_bound": "2025-10-03T12:00:00.000Z"
+      },
+      "same_as_published": true,
+      "limit": "Prova offline de nó de fonte; sem inferência de execução remota."
+    },
+    {
+      "id": "ROOT-P06",
+      "independently_rerun": true,
+      "exit_code": 0,
+      "status": "PASS",
+      "observed": {
+        "input_contacts": 50,
+        "assigned": 10,
+        "computed_without_response_or_resolution_events": {
+          "totalContacts": 50,
+          "assignedContacts": 10,
+          "waitingContacts": 40,
+          "avgResponseTime": "~3 min",
+          "resolvedToday": 7
+        }
+      },
+      "same_as_published": true,
+      "limit": "Prova offline de nó de fonte; sem inferência de execução remota."
+    }
+  ],
+  "notes": [
+    "Nenhum achado rejeitado integralmente; narrowed identifica correção de unidade, alcance, fixture ou contrato, não invalida mecanismo local.",
+    "Root foi informado das correções durante a revisão; artefatos root podem ter sido atualizados posteriormente.",
+    "Replay independente adicionou negação de fetch antes do harness; nenhuma rede/SQL/browser foi usada.",
+    "GOV002 contagem independente é de referências literais nas349 linhas✅; não mede funcionalidades ausentes."
+  ]
+}

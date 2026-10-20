@@ -1,0 +1,104 @@
+import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, enforceRateLimit } from "../_shared/validation.ts";
+import { ElevenLabsSFXSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
+import { logAiUsageDetached } from "../_shared/ai-usage.ts";
+import { buildElevenLabsRequest, voiceAiDisabledResponse } from "./request.ts";
+import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
+
+// `import.meta.main` (mesmo padrão de `elevenlabs-sts`): o handler pode ser
+// importado por teste sem subir o servidor.
+export async function handleElevenLabsSfx(req: Request): Promise<Response> {
+  const cors = handleCors(req);
+  if (cors) return cors;
+
+  const log = new Logger("elevenlabs-sfx");
+
+  // JWT ja e validado pelo gateway (verify_jwt=true); aqui o usuario vira a
+  // chave do rate limit persistente — cota paga (ElevenLabs/Mapbox) por usuario.
+  const auth = await requireAuth(req);
+  if (auth instanceof Response) return auth;
+  const rl = await enforceRateLimit(`elevenlabs-sfx:${auth.userId}`, 10, 60_000);
+  if (!rl.allowed) return errorResponse("Rate limit exceeded", 429, req);
+
+  try {
+    const parsed = parseBody(ElevenLabsSFXSchema, await req.json());
+    if (!parsed.success) return validationErrorResponse(parsed, req);
+
+    const { prompt, duration, mode } = parsed.data;
+
+    // IA-009 / SL-010b (decisão do cartão t_98090b40): kill switch de voz/áudio
+    // lido no SERVIDOR antes de tocar o provedor pago (ver `request.ts`).
+    const aiOff = await voiceAiDisabledResponse(req);
+    if (aiOff) {
+      log.warn("IA de voz desativada por flag — provedor nao chamado");
+      return aiOff;
+    }
+
+    const ELEVENLABS_API_KEY = requireEnv("ELEVENLABS_API_KEY");
+
+    const isMusic = mode === "music";
+    const spec = buildElevenLabsRequest({ prompt, duration, mode });
+
+    // LGPD (doc 07, mesmo achado do log de voz corrigido no `voice-agent`): o
+    // log registra só METADADOS do pedido — tamanho do prompt e um identificador
+    // curto da requisição —, NUNCA o texto digitado pelo usuário. O prompt pode
+    // conter dado pessoal e os logs de Edge ficam retidos fora do nosso controle
+    // de purga. O `Logger` já carimba o `rid` próprio na linha.
+    log.info("Generating audio", {
+      mode: isMusic ? "music" : "sfx",
+      prompt_length: prompt.length,
+      request_id: crypto.randomUUID().slice(0, 8),
+      seconds: duration || (isMusic ? 15 : 5),
+    });
+
+    const iniciadoEm = Date.now();
+    const response = await fetch(spec.url, {
+      method: "POST",
+      headers: {
+        "xi-api-key": ELEVENLABS_API_KEY,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(spec.body),
+    });
+
+    // SL-013 / IA-003 B6 — geração paga de efeito/música sem linha no ledger é
+    // consumo invisível no relatório de custo. Unidade cobrada = REQUISIÇÃO
+    // (uma por geração); o provedor não devolve tokens, então as colunas de
+    // token ficam NULL com `usage_unknown: true` (IA-053).
+    await logAiUsageDetached({
+      functionName: "elevenlabs-sfx",
+      userId: auth.userId,
+      model: null,
+      durationMs: Date.now() - iniciadoEm,
+      status: response.ok ? "success" : "error",
+      errorMessage: response.ok ? null : `ElevenLabs HTTP ${response.status}`,
+      usageUnknown: true,
+      metadata: {
+        provider: "elevenlabs",
+        endpoint: isMusic ? "/v1/music" : "/v1/sound-generation",
+        billing_unit: "request",
+        billing_quantity: 1,
+        requested_seconds: duration || (isMusic ? 15 : 5),
+        http_status: response.status,
+      },
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      log.error(`API error ${response.status}`, { detail: errText.substring(0, 300) });
+      return errorResponse(`ElevenLabs API error: ${response.status}`, response.status, req);
+    }
+
+    const audioBuffer = await response.arrayBuffer();
+    const audioBase64 = base64Encode(audioBuffer);
+
+    log.done(200, { bytes: audioBuffer.byteLength });
+    return jsonResponse({ audioContent: audioBase64 }, 200, req);
+  } catch (err: unknown) {
+    log.error("Unhandled error", { error: err instanceof Error ? err.message : String(err) });
+    return errorResponse("Internal server error", 500, req);
+  }
+}
+
+if (import.meta.main) {
+  Deno.serve(handleElevenLabsSfx);
+}

@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "compiler": {
+    "path": "/workspace/scratch/8b95153002da/audit/tools/ast/node_modules/typescript/lib/typescript.js",
+    "sha256": "3ae902c92cc44dace175c0e69e13a4b0899f6983c6121d76b9ab8dd5795e7675"
+  },
+  "sources": [
+    {
+      "path": "src/components/errors/ErrorBoundary.tsx",
+      "sha256": "fecb028508cd26cc018163f3a21c18093761ffc4fc07eb780ec8b9c940bd18ca"
+    },
+    {
+      "path": "src/pages/AdminTelemetriaPage.tsx",
+      "sha256": "a84e4f28ce99e418b6d2dc4c8f83960e1bb003fb04ceabd175f20bffb453d65d"
+    },
+    {
+      "path": "src/pages/admin-telemetria/TelemetryTable.tsx",
+      "sha256": "351510648414af0ce45528db1ed08ec743d02894d50e0899083481b885eab0b4"
+    },
+    {
+      "path": "src/pages/admin-telemetria/telemetryUtils.tsx",
+      "sha256": "566b087d0f34ae9afad23181d16ea044d7c120f56f2f1b569a9b43e7f2eb8188"
+    }
+  ]
+}

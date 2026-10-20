@@ -1,0 +1,1346 @@
+{
+  "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+  "f_plan": "docs/audits/PLANO_TEAM_CHAT_FINALIZACAO_100_ETAPAS_2026-09-29.md",
+  "tc_plan": "docs/team-chat/PLANO_IMPLEMENTACAO_TEAM_CHAT_100.md",
+  "mapping": [
+    {
+      "tc_step": "TC-01",
+      "tc_source_line": 55,
+      "related_f_steps": [
+        "F01"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "NEEDS_REVALIDATION",
+      "f_statuses": {
+        "F01": "NEEDS_REVALIDATION"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-02",
+      "tc_source_line": 58,
+      "related_f_steps": [
+        "F02"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "PARTIAL",
+      "f_statuses": {
+        "F02": "PARTIAL"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-03",
+      "tc_source_line": 63,
+      "related_f_steps": [
+        "F02"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "PARTIAL",
+      "f_statuses": {
+        "F02": "PARTIAL"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-04",
+      "tc_source_line": 66,
+      "related_f_steps": [
+        "F03",
+        "F05"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "NEEDS_REVALIDATION",
+      "f_statuses": {
+        "F03": "PARTIAL",
+        "F05": "NEEDS_REVALIDATION"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-05",
+      "tc_source_line": 70,
+      "related_f_steps": [
+        "F04"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "NEEDS_REVALIDATION",
+      "f_statuses": {
+        "F04": "NEEDS_REVALIDATION"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-06",
+      "tc_source_line": 74,
+      "related_f_steps": [
+        "F05"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "NEEDS_REVALIDATION",
+      "f_statuses": {
+        "F05": "NEEDS_REVALIDATION"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-07",
+      "tc_source_line": 76,
+      "related_f_steps": [
+        "F14"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "NOT_IMPLEMENTED",
+      "f_statuses": {
+        "F14": "NOT_IMPLEMENTED"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-08",
+      "tc_source_line": 81,
+      "related_f_steps": [
+        "F24"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "PRODUCT_DECISION_REQUIRED",
+      "f_statuses": {
+        "F24": "NOT_IMPLEMENTED"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-09",
+      "tc_source_line": 87,
+      "related_f_steps": [
+        "F21"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "PARTIAL",
+      "f_statuses": {
+        "F21": "PARTIAL"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-10",
+      "tc_source_line": 93,
+      "related_f_steps": [
+        "F22",
+        "F23"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "NOT_IMPLEMENTED",
+      "f_statuses": {
+        "F22": "NOT_IMPLEMENTED",
+        "F23": "NOT_IMPLEMENTED"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-11",
+      "tc_source_line": 101,
+      "related_f_steps": [
+        "F32"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "PARTIAL",
+      "f_statuses": {
+        "F32": "PARTIAL"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-12",
+      "tc_source_line": 106,
+      "related_f_steps": [
+        "F06"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "ACTIVE_REGRESSION",
+      "f_statuses": {
+        "F06": "ACTIVE_REGRESSION"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-13",
+      "tc_source_line": 113,
+      "related_f_steps": [
+        "F10"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "PRODUCT_DECISION_REQUIRED",
+      "f_statuses": {
+        "F10": "PARTIAL"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-14",
+      "tc_source_line": 117,
+      "related_f_steps": [
+        "F08",
+        "F31"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "PARTIAL",
+      "f_statuses": {
+        "F08": "PARTIAL",
+        "F31": "PARTIAL"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-15",
+      "tc_source_line": 120,
+      "related_f_steps": [
+        "F08",
+        "F38"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "NOT_IMPLEMENTED",
+      "f_statuses": {
+        "F08": "PARTIAL",
+        "F38": "NOT_IMPLEMENTED"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-16",
+      "tc_source_line": 123,
+      "related_f_steps": [
+        "F31"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "PARTIAL",
+      "f_statuses": {
+        "F31": "PARTIAL"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-17",
+      "tc_source_line": 125,
+      "related_f_steps": [
+        "F17"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "PARTIAL",
+      "f_statuses": {
+        "F17": "PARTIAL"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-18",
+      "tc_source_line": 129,
+      "related_f_steps": [
+        "F09"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "NOT_IMPLEMENTED",
+      "f_statuses": {
+        "F09": "PARTIAL"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-19",
+      "tc_source_line": 132,
+      "related_f_steps": [
+        "F78"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "NOT_IMPLEMENTED",
+      "f_statuses": {
+        "F78": "NOT_IMPLEMENTED"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-20",
+      "tc_source_line": 135,
+      "related_f_steps": [
+        "F11"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "PARTIAL",
+      "f_statuses": {
+        "F11": "PARTIAL"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-21",
+      "tc_source_line": 140,
+      "related_f_steps": [
+        "F10"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "PARTIAL",
+      "f_statuses": {
+        "F10": "PARTIAL"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-22",
+      "tc_source_line": 144,
+      "related_f_steps": [
+        "F11",
+        "F14"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "PARTIAL",
+      "f_statuses": {
+        "F11": "PARTIAL",
+        "F14": "NOT_IMPLEMENTED"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-23",
+      "tc_source_line": 155,
+      "related_f_steps": [
+        "F07"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "NOT_IMPLEMENTED",
+      "f_statuses": {
+        "F07": "ACTIVE_REGRESSION"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-24",
+      "tc_source_line": 157,
+      "related_f_steps": [
+        "F07"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "ACTIVE_REGRESSION",
+      "f_statuses": {
+        "F07": "ACTIVE_REGRESSION"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-25",
+      "tc_source_line": 162,
+      "related_f_steps": [
+        "F29",
+        "F33"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "ACTIVE_REGRESSION",
+      "f_statuses": {
+        "F29": "ACTIVE_REGRESSION",
+        "F33": "PARTIAL"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-26",
+      "tc_source_line": 169,
+      "related_f_steps": [
+        "F32"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "NOT_IMPLEMENTED",
+      "f_statuses": {
+        "F32": "PARTIAL"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-27",
+      "tc_source_line": 172,
+      "related_f_steps": [
+        "F18"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "PARTIAL",
+      "f_statuses": {
+        "F18": "PARTIAL"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-28",
+      "tc_source_line": 175,
+      "related_f_steps": [
+        "F15",
+        "F16"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "PARTIAL",
+      "f_statuses": {
+        "F15": "PARTIAL",
+        "F16": "PARTIAL"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-29",
+      "tc_source_line": 178,
+      "related_f_steps": [
+        "F19"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "PARTIAL",
+      "f_statuses": {
+        "F19": "PARTIAL"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-30",
+      "tc_source_line": 182,
+      "related_f_steps": [
+        "F36"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "NOT_IMPLEMENTED",
+      "f_statuses": {
+        "F36": "NOT_IMPLEMENTED"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-31",
+      "tc_source_line": 189,
+      "related_f_steps": [
+        "F37"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "PARTIAL",
+      "f_statuses": {
+        "F37": "PARTIAL"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-32",
+      "tc_source_line": 197,
+      "related_f_steps": [
+        "F39"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "PARTIAL",
+      "f_statuses": {
+        "F39": "PARTIAL"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-33",
+      "tc_source_line": 202,
+      "related_f_steps": [
+        "F40"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "PARTIAL",
+      "f_statuses": {
+        "F40": "PARTIAL"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-34",
+      "tc_source_line": 205,
+      "related_f_steps": [
+        "F41"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "NOT_IMPLEMENTED",
+      "f_statuses": {
+        "F41": "NOT_IMPLEMENTED"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-35",
+      "tc_source_line": 208,
+      "related_f_steps": [
+        "F42"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "PARTIAL",
+      "f_statuses": {
+        "F42": "PARTIAL"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-36",
+      "tc_source_line": 211,
+      "related_f_steps": [
+        "F44"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "PARTIAL",
+      "f_statuses": {
+        "F44": "PARTIAL"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-37",
+      "tc_source_line": 214,
+      "related_f_steps": [
+        "F43"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "PARTIAL",
+      "f_statuses": {
+        "F43": "PARTIAL"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-38",
+      "tc_source_line": 217,
+      "related_f_steps": [
+        "F46"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "VALIDATED_FAIL",
+      "f_statuses": {
+        "F46": "VALIDATED_FAIL"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-39",
+      "tc_source_line": 221,
+      "related_f_steps": [
+        "F45"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "PARTIAL",
+      "f_statuses": {
+        "F45": "PARTIAL"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-40",
+      "tc_source_line": 225,
+      "related_f_steps": [
+        "F47"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "NOT_IMPLEMENTED",
+      "f_statuses": {
+        "F47": "NOT_IMPLEMENTED"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-41",
+      "tc_source_line": 227,
+      "related_f_steps": [
+        "F47"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "NOT_IMPLEMENTED",
+      "f_statuses": {
+        "F47": "NOT_IMPLEMENTED"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-42",
+      "tc_source_line": 230,
+      "related_f_steps": [
+        "F19",
+        "F34"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE",
+      "f_statuses": {
+        "F19": "PARTIAL",
+        "F34": "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-43",
+      "tc_source_line": 233,
+      "related_f_steps": [
+        "F48",
+        "F95"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "BLOCKED_EXTERNAL",
+      "f_statuses": {
+        "F48": "NOT_IMPLEMENTED",
+        "F95": "OBSERVATION_WINDOW"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-44",
+      "tc_source_line": 236,
+      "related_f_steps": [
+        "F48"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "NOT_IMPLEMENTED",
+      "f_statuses": {
+        "F48": "NOT_IMPLEMENTED"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-45",
+      "tc_source_line": 243,
+      "related_f_steps": [
+        "F52"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "NOT_IMPLEMENTED",
+      "f_statuses": {
+        "F52": "NOT_IMPLEMENTED"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-46",
+      "tc_source_line": 247,
+      "related_f_steps": [
+        "F51"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "PARTIAL",
+      "f_statuses": {
+        "F51": "PARTIAL"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-47",
+      "tc_source_line": 251,
+      "related_f_steps": [
+        "F53"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "NOT_IMPLEMENTED",
+      "f_statuses": {
+        "F53": "NOT_IMPLEMENTED"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-48",
+      "tc_source_line": 255,
+      "related_f_steps": [
+        "F54"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "NOT_IMPLEMENTED",
+      "f_statuses": {
+        "F54": "NOT_IMPLEMENTED"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-49",
+      "tc_source_line": 260,
+      "related_f_steps": [
+        "F55"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "NOT_IMPLEMENTED",
+      "f_statuses": {
+        "F55": "NOT_IMPLEMENTED"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-50",
+      "tc_source_line": 263,
+      "related_f_steps": [
+        "F56"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "NOT_IMPLEMENTED",
+      "f_statuses": {
+        "F56": "NOT_IMPLEMENTED"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-51",
+      "tc_source_line": 268,
+      "related_f_steps": [
+        "F57"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "PARTIAL",
+      "f_statuses": {
+        "F57": "PARTIAL"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-52",
+      "tc_source_line": 271,
+      "related_f_steps": [
+        "F58"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "PARTIAL",
+      "f_statuses": {
+        "F58": "PARTIAL"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-53",
+      "tc_source_line": 277,
+      "related_f_steps": [
+        "F59"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "NOT_IMPLEMENTED",
+      "f_statuses": {
+        "F59": "NOT_IMPLEMENTED"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-54",
+      "tc_source_line": 279,
+      "related_f_steps": [
+        "F60"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "NOT_IMPLEMENTED",
+      "f_statuses": {
+        "F60": "NOT_IMPLEMENTED"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-55",
+      "tc_source_line": 281,
+      "related_f_steps": [
+        "F50",
+        "F61"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "PARTIAL",
+      "f_statuses": {
+        "F50": "NOT_IMPLEMENTED",
+        "F61": "PARTIAL"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-56",
+      "tc_source_line": 285,
+      "related_f_steps": [
+        "F63"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "NOT_IMPLEMENTED",
+      "f_statuses": {
+        "F63": "NOT_IMPLEMENTED"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-57",
+      "tc_source_line": 291,
+      "related_f_steps": [
+        "F64"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "NOT_IMPLEMENTED",
+      "f_statuses": {
+        "F64": "NOT_IMPLEMENTED"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-58",
+      "tc_source_line": 294,
+      "related_f_steps": [
+        "F65"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "PARTIAL",
+      "f_statuses": {
+        "F65": "PARTIAL"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-59",
+      "tc_source_line": 297,
+      "related_f_steps": [
+        "F66",
+        "F74"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "PARTIAL",
+      "f_statuses": {
+        "F66": "NOT_IMPLEMENTED",
+        "F74": "PARTIAL"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-60",
+      "tc_source_line": 301,
+      "related_f_steps": [
+        "F67"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "PARTIAL",
+      "f_statuses": {
+        "F67": "PARTIAL"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-61",
+      "tc_source_line": 304,
+      "related_f_steps": [
+        "F64",
+        "F68"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "NOT_IMPLEMENTED",
+      "f_statuses": {
+        "F64": "NOT_IMPLEMENTED",
+        "F68": "NOT_IMPLEMENTED"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-62",
+      "tc_source_line": 308,
+      "related_f_steps": [
+        "F69"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "PARTIAL",
+      "f_statuses": {
+        "F69": "PARTIAL"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-63",
+      "tc_source_line": 310,
+      "related_f_steps": [
+        "F70"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "PARTIAL",
+      "f_statuses": {
+        "F70": "PARTIAL"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-64",
+      "tc_source_line": 313,
+      "related_f_steps": [
+        "F71"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "PARTIAL",
+      "f_statuses": {
+        "F71": "PARTIAL"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-65",
+      "tc_source_line": 315,
+      "related_f_steps": [
+        "F72"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "NOT_IMPLEMENTED",
+      "f_statuses": {
+        "F72": "NOT_IMPLEMENTED"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-66",
+      "tc_source_line": 317,
+      "related_f_steps": [
+        "F73"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "NOT_IMPLEMENTED",
+      "f_statuses": {
+        "F73": "NOT_IMPLEMENTED"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-67",
+      "tc_source_line": 320,
+      "related_f_steps": [
+        "F75"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "PARTIAL",
+      "f_statuses": {
+        "F75": "PARTIAL"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-68",
+      "tc_source_line": 323,
+      "related_f_steps": [
+        "F87"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "NOT_IMPLEMENTED",
+      "f_statuses": {
+        "F87": "NOT_IMPLEMENTED"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-69",
+      "tc_source_line": 329,
+      "related_f_steps": [
+        "F62",
+        "F81"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "PARTIAL",
+      "f_statuses": {
+        "F62": "VALIDATED_FAIL",
+        "F81": "NOT_IMPLEMENTED"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-70",
+      "tc_source_line": 333,
+      "related_f_steps": [
+        "F77"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "VALIDATED_FAIL",
+      "f_statuses": {
+        "F77": "VALIDATED_FAIL"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-71",
+      "tc_source_line": 336,
+      "related_f_steps": [
+        "F76"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "PARTIAL",
+      "f_statuses": {
+        "F76": "PARTIAL"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-72",
+      "tc_source_line": 339,
+      "related_f_steps": [
+        "F79"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "NOT_IMPLEMENTED",
+      "f_statuses": {
+        "F79": "NOT_IMPLEMENTED"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-73",
+      "tc_source_line": 343,
+      "related_f_steps": [
+        "F70",
+        "F80"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "NOT_IMPLEMENTED",
+      "f_statuses": {
+        "F70": "PARTIAL",
+        "F80": "NOT_IMPLEMENTED"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-74",
+      "tc_source_line": 346,
+      "related_f_steps": [
+        "F78"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "NOT_IMPLEMENTED",
+      "f_statuses": {
+        "F78": "NOT_IMPLEMENTED"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-75",
+      "tc_source_line": 348,
+      "related_f_steps": [
+        "F82"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "NOT_IMPLEMENTED",
+      "f_statuses": {
+        "F82": "NOT_IMPLEMENTED"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-76",
+      "tc_source_line": 353,
+      "related_f_steps": [
+        "F83"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "NOT_IMPLEMENTED",
+      "f_statuses": {
+        "F83": "NOT_IMPLEMENTED"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-77",
+      "tc_source_line": 355,
+      "related_f_steps": [
+        "F84"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "PARTIAL",
+      "f_statuses": {
+        "F84": "PARTIAL"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-78",
+      "tc_source_line": 359,
+      "related_f_steps": [
+        "F85"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "PARTIAL",
+      "f_statuses": {
+        "F85": "PARTIAL"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-79",
+      "tc_source_line": 361,
+      "related_f_steps": [
+        "F86"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "PARTIAL",
+      "f_statuses": {
+        "F86": "PARTIAL"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-80",
+      "tc_source_line": 363,
+      "related_f_steps": [
+        "F87"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "NOT_IMPLEMENTED",
+      "f_statuses": {
+        "F87": "NOT_IMPLEMENTED"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-81",
+      "tc_source_line": 365,
+      "related_f_steps": [
+        "F88"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "PARTIAL",
+      "f_statuses": {
+        "F88": "PARTIAL"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-82",
+      "tc_source_line": 368,
+      "related_f_steps": [
+        "F88",
+        "F100"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "NOT_IMPLEMENTED",
+      "f_statuses": {
+        "F88": "PARTIAL",
+        "F100": "NOT_IMPLEMENTED"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-83",
+      "tc_source_line": 373,
+      "related_f_steps": [
+        "F89"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "PARTIAL",
+      "f_statuses": {
+        "F89": "PARTIAL"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-84",
+      "tc_source_line": 376,
+      "related_f_steps": [
+        "F90"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "VALIDATED_FAIL",
+      "f_statuses": {
+        "F90": "VALIDATED_FAIL"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-85",
+      "tc_source_line": 379,
+      "related_f_steps": [
+        "F91"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "NOT_IMPLEMENTED",
+      "f_statuses": {
+        "F91": "NOT_IMPLEMENTED"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-86",
+      "tc_source_line": 381,
+      "related_f_steps": [
+        "F92"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "PARTIAL",
+      "f_statuses": {
+        "F92": "PARTIAL"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-87",
+      "tc_source_line": 384,
+      "related_f_steps": [
+        "F93"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "PARTIAL",
+      "f_statuses": {
+        "F93": "PARTIAL"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-88",
+      "tc_source_line": 386,
+      "related_f_steps": [
+        "F94"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "NOT_IMPLEMENTED",
+      "f_statuses": {
+        "F94": "NOT_IMPLEMENTED"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-89",
+      "tc_source_line": 389,
+      "related_f_steps": [
+        "F21"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "PARTIAL",
+      "f_statuses": {
+        "F21": "PARTIAL"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-90",
+      "tc_source_line": 391,
+      "related_f_steps": [
+        "F96"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "NOT_IMPLEMENTED",
+      "f_statuses": {
+        "F96": "NOT_IMPLEMENTED"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-91",
+      "tc_source_line": 393,
+      "related_f_steps": [
+        "F95"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "OBSERVATION_WINDOW",
+      "f_statuses": {
+        "F95": "OBSERVATION_WINDOW"
+      },
+      "independent_assessment": false
+    },
+    {
+      "tc_step": "TC-92",
+      "tc_source_line": 395,
+      "related_f_steps": [
+        "F94",
+        "F98"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "NOT_IMPLEMENTED",
+      "f_statuses": {
+        "F94": "NOT_IMPLEMENTED",
+        "F98": "PARTIAL"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-93",
+      "tc_source_line": 399,
+      "related_f_steps": [
+        "F99"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "NEEDS_REVALIDATION",
+      "f_statuses": {
+        "F99": "HUMAN_ACCEPTANCE"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-94",
+      "tc_source_line": 401,
+      "related_f_steps": [
+        "F99"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "HUMAN_ACCEPTANCE",
+      "f_statuses": {
+        "F99": "HUMAN_ACCEPTANCE"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-95",
+      "tc_source_line": 404,
+      "related_f_steps": [
+        "F99"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "HUMAN_ACCEPTANCE",
+      "f_statuses": {
+        "F99": "HUMAN_ACCEPTANCE"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-96",
+      "tc_source_line": 406,
+      "related_f_steps": [
+        "F99"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "HUMAN_ACCEPTANCE",
+      "f_statuses": {
+        "F99": "HUMAN_ACCEPTANCE"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-97",
+      "tc_source_line": 408,
+      "related_f_steps": [
+        "F98"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "PARTIAL",
+      "f_statuses": {
+        "F98": "PARTIAL"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-98",
+      "tc_source_line": 410,
+      "related_f_steps": [
+        "F25",
+        "F100"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "NOT_IMPLEMENTED",
+      "f_statuses": {
+        "F25": "NOT_IMPLEMENTED",
+        "F100": "NOT_IMPLEMENTED"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-99",
+      "tc_source_line": 413,
+      "related_f_steps": [
+        "F100"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "NOT_IMPLEMENTED",
+      "f_statuses": {
+        "F100": "NOT_IMPLEMENTED"
+      },
+      "independent_assessment": true
+    },
+    {
+      "tc_step": "TC-100",
+      "tc_source_line": 416,
+      "related_f_steps": [
+        "F100"
+      ],
+      "relation": "RELATED_SCOPE_NOT_IDENTITY",
+      "tc_status": "NOT_IMPLEMENTED",
+      "f_statuses": {
+        "F100": "NOT_IMPLEMENTED"
+      },
+      "independent_assessment": true
+    }
+  ],
+  "unique_implementation_task_count": "NOT_SUMMED; product/governance reconciliation required",
+  "notes": [
+    "TC-19 and TC-74 concern the same futureDROP at preparation/apply gates, not two separate functions.",
+    "TC-13 versus F10 and TC-37 versus F43 explicitly disagree on RPC contracts."
+  ]
+}

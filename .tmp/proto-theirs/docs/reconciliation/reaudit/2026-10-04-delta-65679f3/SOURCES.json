@@ -1,0 +1,192 @@
+{
+  "schema_version": 1,
+  "sources": {
+    "validator": {
+      "repository": "adm01-debug/Zapp_Web_V2",
+      "path": "docs/reconciliation/reproduce/validate_package.py",
+      "ref": "dc2d19ee5bd018e1aebaf6c66211657218bc6b51",
+      "git_blob_sha": "51f0856032f5c17bc1d6e39ae534e680a15a4abe",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/dc2d19ee5bd018e1aebaf6c66211657218bc6b51/docs/reconciliation/reproduce/validate_package.py",
+      "local_bytes_verified": true
+    },
+    "old_manifest": {
+      "repository": "adm01-debug/Zapp_Web_V2",
+      "path": "docs/reconciliation/evidence/ARTIFACT_MANIFEST.json",
+      "ref": "dc2d19ee5bd018e1aebaf6c66211657218bc6b51",
+      "git_blob_sha": "5c58c0fca1690c70bd06c8bbd91d3dae17c00100",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/dc2d19ee5bd018e1aebaf6c66211657218bc6b51/docs/reconciliation/evidence/ARTIFACT_MANIFEST.json",
+      "local_bytes_verified": false
+    },
+    "reproduction_readme": {
+      "repository": "adm01-debug/Zapp_Web_V2",
+      "path": "docs/reconciliation/reproduce/README.md",
+      "ref": "dc2d19ee5bd018e1aebaf6c66211657218bc6b51",
+      "git_blob_sha": "b7f7d4b4f9d2a748334f3f02170af33bde2eb288",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/dc2d19ee5bd018e1aebaf6c66211657218bc6b51/docs/reconciliation/reproduce/README.md",
+      "local_bytes_verified": false
+    },
+    "retry": {
+      "repository": "adm01-debug/Zapp_Web_V2",
+      "path": "supabase/migrations/20261003222707_talkx_retry_resolve.sql",
+      "ref": "65679f38d400f7edc6a071f68554dd3b0372f03f",
+      "git_blob_sha": "d116f386a0938a5fb7d292fcee178b6f47f39929",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/65679f38d400f7edc6a071f68554dd3b0372f03f/supabase/migrations/20261003222707_talkx_retry_resolve.sql",
+      "local_bytes_verified": false
+    },
+    "retention": {
+      "repository": "adm01-debug/Zapp_Web_V2",
+      "path": "supabase/migrations/20261003232707_talkx_lgpd_consentimento_expurgo.sql",
+      "ref": "65679f38d400f7edc6a071f68554dd3b0372f03f",
+      "git_blob_sha": "bf4aecc2f5c0b74e3e624c0458182bc85f64973f",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/65679f38d400f7edc6a071f68554dd3b0372f03f/supabase/migrations/20261003232707_talkx_lgpd_consentimento_expurgo.sql",
+      "local_bytes_verified": false
+    },
+    "health": {
+      "repository": "adm01-debug/Zapp_Web_V2",
+      "path": "supabase/migrations/20261003242707_talkx_log_saude_alertas.sql",
+      "ref": "65679f38d400f7edc6a071f68554dd3b0372f03f",
+      "git_blob_sha": "940524087b66e4c16a410c89c43a8414fc4ceccb",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/65679f38d400f7edc6a071f68554dd3b0372f03f/supabase/migrations/20261003242707_talkx_log_saude_alertas.sql",
+      "local_bytes_verified": false
+    },
+    "claim": {
+      "repository": "adm01-debug/Zapp_Web_V2",
+      "path": "supabase/migrations/20261003202707_talkx_counters_checklist_duplicate.sql",
+      "ref": "65679f38d400f7edc6a071f68554dd3b0372f03f",
+      "git_blob_sha": "af6939a2d66dc2e6fe3904188a5ca857f4c31619",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/65679f38d400f7edc6a071f68554dd3b0372f03f/supabase/migrations/20261003202707_talkx_counters_checklist_duplicate.sql",
+      "local_bytes_verified": false
+    },
+    "send": {
+      "repository": "adm01-debug/Zapp_Web_V2",
+      "path": "supabase/functions/talkx-send/index.ts",
+      "ref": "65679f38d400f7edc6a071f68554dd3b0372f03f",
+      "git_blob_sha": "da9c7b9e517ece6ec34a648dc98340a94bc61bef",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/65679f38d400f7edc6a071f68554dd3b0372f03f/supabase/functions/talkx-send/index.ts",
+      "local_bytes_verified": false
+    },
+    "recipient": {
+      "repository": "adm01-debug/Zapp_Web_V2",
+      "path": "supabase/functions/talkx-send/process-recipient.ts",
+      "ref": "65679f38d400f7edc6a071f68554dd3b0372f03f",
+      "git_blob_sha": "d6c1b319e5668e25a23297ee9bc1685997185404",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/65679f38d400f7edc6a071f68554dd3b0372f03f/supabase/functions/talkx-send/process-recipient.ts",
+      "local_bytes_verified": false
+    },
+    "workflow": {
+      "repository": "adm01-debug/Zapp_Web_V2",
+      "path": "docs/talkx/n8n/talkx-alerts.json",
+      "ref": "65679f38d400f7edc6a071f68554dd3b0372f03f",
+      "git_blob_sha": "7f9ed9262388684df17dac843030e996c8449502",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/65679f38d400f7edc6a071f68554dd3b0372f03f/docs/talkx/n8n/talkx-alerts.json",
+      "local_bytes_verified": false
+    },
+    "n8n_http": {
+      "repository": "n8n-io/n8n",
+      "path": "packages/nodes-base/nodes/HttpRequest/V3/HttpRequestV3.node.ts",
+      "ref": "e8b9821f4a9a7ee634d394ada7b695bdebfafa86",
+      "git_blob_sha": "ba07d803c1e38b3724b6b57b3fa418eef8816761",
+      "url": "https://github.com/n8n-io/n8n/blob/e8b9821f4a9a7ee634d394ada7b695bdebfafa86/packages/nodes-base/nodes/HttpRequest/V3/HttpRequestV3.node.ts",
+      "local_bytes_verified": false
+    },
+    "settings": {
+      "repository": "adm01-debug/Zapp_Web_V2",
+      "path": "src/components/talkx/TalkXSettings.tsx",
+      "ref": "65679f38d400f7edc6a071f68554dd3b0372f03f",
+      "git_blob_sha": "533642c41bc63273b9e7dfe6683bd05cdba90001",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/65679f38d400f7edc6a071f68554dd3b0372f03f/src/components/talkx/TalkXSettings.tsx",
+      "local_bytes_verified": false
+    },
+    "settings_test": {
+      "repository": "adm01-debug/Zapp_Web_V2",
+      "path": "src/components/talkx/__tests__/TalkXSettings.states.test.tsx",
+      "ref": "65679f38d400f7edc6a071f68554dd3b0372f03f",
+      "git_blob_sha": "740bc43d6e59eadfd2c257842a59d31045043883",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/65679f38d400f7edc6a071f68554dd3b0372f03f/src/components/talkx/__tests__/TalkXSettings.states.test.tsx",
+      "local_bytes_verified": false
+    },
+    "settings_hook": {
+      "repository": "adm01-debug/Zapp_Web_V2",
+      "path": "src/hooks/integrations/useTalkXSettings.ts",
+      "ref": "65679f38d400f7edc6a071f68554dd3b0372f03f",
+      "git_blob_sha": "314bca2b40bf89e62c999943e8528e77ffbc9de8",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/65679f38d400f7edc6a071f68554dd3b0372f03f/src/hooks/integrations/useTalkXSettings.ts",
+      "local_bytes_verified": false
+    },
+    "retry_test": {
+      "repository": "adm01-debug/Zapp_Web_V2",
+      "path": "scripts/db-audit/talkx-retry-resolve.test.sh",
+      "ref": "65679f38d400f7edc6a071f68554dd3b0372f03f",
+      "git_blob_sha": "f98f888765bc4cba62e1982ce6e12437d0eb8d52",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/65679f38d400f7edc6a071f68554dd3b0372f03f/scripts/db-audit/talkx-retry-resolve.test.sh",
+      "local_bytes_verified": false
+    },
+    "retention_test": {
+      "repository": "adm01-debug/Zapp_Web_V2",
+      "path": "scripts/db-audit/talkx-lgpd.test.sh",
+      "ref": "65679f38d400f7edc6a071f68554dd3b0372f03f",
+      "git_blob_sha": "f7c251db290a2cbef6261380de06c67b57d3e10c",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/65679f38d400f7edc6a071f68554dd3b0372f03f/scripts/db-audit/talkx-lgpd.test.sh",
+      "local_bytes_verified": false
+    },
+    "health_test": {
+      "repository": "adm01-debug/Zapp_Web_V2",
+      "path": "scripts/db-audit/talkx-engine-health.test.sh",
+      "ref": "65679f38d400f7edc6a071f68554dd3b0372f03f",
+      "git_blob_sha": "ce15bddfa03df551289299305e86e0425f8a47c8",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/65679f38d400f7edc6a071f68554dd3b0372f03f/scripts/db-audit/talkx-engine-health.test.sh",
+      "local_bytes_verified": false
+    },
+    "delivery_log_test": {
+      "repository": "adm01-debug/Zapp_Web_V2",
+      "path": "supabase/functions/talkx-send/x033-delivery-log.test.ts",
+      "ref": "65679f38d400f7edc6a071f68554dd3b0372f03f",
+      "git_blob_sha": "538ea09559f578061b9d57ea0ad64e2661bcc03d",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/65679f38d400f7edc6a071f68554dd3b0372f03f/supabase/functions/talkx-send/x033-delivery-log.test.ts",
+      "local_bytes_verified": false
+    },
+    "register_deployment": {
+      "repository": "adm01-debug/Zapp_Web_V2",
+      "path": "scripts/edge-deploy/register-deployment.mjs",
+      "ref": "65679f38d400f7edc6a071f68554dd3b0372f03f",
+      "git_blob_sha": "abbc4300dee03138c164873b7d00a3539d09a5a5",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/65679f38d400f7edc6a071f68554dd3b0372f03f/scripts/edge-deploy/register-deployment.mjs",
+      "local_bytes_verified": true
+    },
+    "deployment_record": {
+      "repository": "adm01-debug/Zapp_Web_V2",
+      "path": "scripts/edge-deploy/deployment-record.mjs",
+      "ref": "65679f38d400f7edc6a071f68554dd3b0372f03f",
+      "git_blob_sha": "f22b809a64e73f940c2220809ee07392ed9cb33d",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/65679f38d400f7edc6a071f68554dd3b0372f03f/scripts/edge-deploy/deployment-record.mjs",
+      "local_bytes_verified": true
+    },
+    "log_injection_test": {
+      "repository": "adm01-debug/Zapp_Web_V2",
+      "path": "scripts/edge-deploy/log-injection.unit.mjs",
+      "ref": "65679f38d400f7edc6a071f68554dd3b0372f03f",
+      "git_blob_sha": "8743be77762b2e6cca334d2079e9de85a5944b0f",
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/65679f38d400f7edc6a071f68554dd3b0372f03f/scripts/edge-deploy/log-injection.unit.mjs",
+      "local_bytes_verified": true
+    }
+  },
+  "primary_platform_references": [
+    {
+      "url": "https://supabase.com/docs/guides/storage/schema/design",
+      "supports": "Metadados de Storage versus objeto físico; operações via API."
+    },
+    {
+      "url": "https://supabase.com/docs/guides/storage/management/delete-objects",
+      "supports": "Remoção física via Storage API, não SQL."
+    },
+    {
+      "url": "https://www.postgresql.org/docs/17/arrays.html",
+      "supports": "Dimensão declarada não restringe arrays; array_length versus cardinality."
+    },
+    {
+      "url": "https://www.postgresql.org/docs/17/plpgsql-control-structures.html",
+      "supports": "Tratamento de exceção e rollback do bloco; sem commit independente de last_purge_at."
+    }
+  ],
+  "note": "Blobs identificam as fontes retornadas pelo conector; somente as quatro fontes marcadas tiveram seus bytes integralmente verificados e executados localmente."
+}

@@ -1,0 +1,744 @@
+{
+  "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+  "current_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "files": [
+    {
+      "path": "AGENTS.md",
+      "current_blob_sha": "e6f6f6f47c251d07862c033a3c74952cea5de6ef",
+      "baseline_blob_sha": "e6f6f6f47c251d07862c033a3c74952cea5de6ef",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "docs/COMPLETE_SYSTEM_FEATURES.md",
+      "current_blob_sha": "13d9b928a05e8e6757e303f03c6a26dad5a16487",
+      "baseline_blob_sha": "13d9b928a05e8e6757e303f03c6a26dad5a16487",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "docs/mapa/PLANO_BUSCA_SEARCHBOX_50_ETAPAS.md",
+      "current_blob_sha": "8ce1256328907bd7a639c13c43ad3ceacbffa35a",
+      "baseline_blob_sha": "8ce1256328907bd7a639c13c43ad3ceacbffa35a",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/adapters/inboxAdapter.ts",
+      "current_blob_sha": "f1af7f3f6957dbad7090951c02f30420563c1565",
+      "baseline_blob_sha": "f1af7f3f6957dbad7090951c02f30420563c1565",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/AdvancedMessageMenu.tsx",
+      "current_blob_sha": "1405321dc66372c9ebf239668c2f7ac5407b3918",
+      "baseline_blob_sha": "1405321dc66372c9ebf239668c2f7ac5407b3918",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/AudioMessagePlayer.tsx",
+      "current_blob_sha": "c11637e5515e301a5f5acf6b47469c5bc7969b38",
+      "baseline_blob_sha": "c11637e5515e301a5f5acf6b47469c5bc7969b38",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/AudioRecorder.tsx",
+      "current_blob_sha": "6690c7a1bc23e14251d9d78b26523f4670df65f5",
+      "baseline_blob_sha": "6690c7a1bc23e14251d9d78b26523f4670df65f5",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/BulkActionsToolbar.tsx",
+      "current_blob_sha": "00c19c95ac6a54d4cc8fc6950edea3005c24aa60",
+      "baseline_blob_sha": "00c19c95ac6a54d4cc8fc6950edea3005c24aa60",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/ChatPanel.tsx",
+      "current_blob_sha": "f2561bc99f053782ac17f2769ea34fe262d9d8f8",
+      "baseline_blob_sha": "f2561bc99f053782ac17f2769ea34fe262d9d8f8",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/CloseConversationDialog.tsx",
+      "current_blob_sha": "3685c34ce83467dab4165b95b4bff4f5a96f9221",
+      "baseline_blob_sha": "3685c34ce83467dab4165b95b4bff4f5a96f9221",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/ConversationListSidebar.tsx",
+      "current_blob_sha": "4f54f1e9dd47cc023ad29dba8804602a8b4594e5",
+      "baseline_blob_sha": "4f54f1e9dd47cc023ad29dba8804602a8b4594e5",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/ConversationTimeline.tsx",
+      "current_blob_sha": "42aedaaad987410840d60d3355e4f598a1bc54b4",
+      "baseline_blob_sha": "42aedaaad987410840d60d3355e4f598a1bc54b4",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/FileUploader.tsx",
+      "current_blob_sha": "b5c8d3dde234f9dd8940254958989db890f95b99",
+      "baseline_blob_sha": "b5c8d3dde234f9dd8940254958989db890f95b99",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/ForwardMessageDialog.tsx",
+      "current_blob_sha": "3fec40733d538a5d963737755814f28489a3c0e7",
+      "baseline_blob_sha": "3fec40733d538a5d963737755814f28489a3c0e7",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/GlobalSearch.tsx",
+      "current_blob_sha": "3364ad19aec7daf91cea810f117fc0705a6076d1",
+      "baseline_blob_sha": "3364ad19aec7daf91cea810f117fc0705a6076d1",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/ImagePreview.tsx",
+      "current_blob_sha": "76de00c8dede81c06fa8ff859c2f2cef06dc7a4c",
+      "baseline_blob_sha": "76de00c8dede81c06fa8ff859c2f2cef06dc7a4c",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/InteractiveMessageBuilder.tsx",
+      "current_blob_sha": "b757acc44b4d22765eb022c8d7058928b90df893",
+      "baseline_blob_sha": "b757acc44b4d22765eb022c8d7058928b90df893",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/LocationPicker.tsx",
+      "current_blob_sha": "17cf9e4cf47cd28618d98a6ba6b586c488459ab8",
+      "baseline_blob_sha": "17cf9e4cf47cd28618d98a6ba6b586c488459ab8",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/MediaPreview.tsx",
+      "current_blob_sha": "6c4d6e70322b59ce25752a552f19fa5d4197a8b8",
+      "baseline_blob_sha": "6c4d6e70322b59ce25752a552f19fa5d4197a8b8",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/MessageContextActions.tsx",
+      "current_blob_sha": "bb710fa3ceed6eb7d2bbd2b3747287830cf38c1f",
+      "baseline_blob_sha": "bb710fa3ceed6eb7d2bbd2b3747287830cf38c1f",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/MessageReactions.tsx",
+      "current_blob_sha": "b2f0ce7679c8cc084a9b1017d7958b965822cd77",
+      "baseline_blob_sha": "b2f0ce7679c8cc084a9b1017d7958b965822cd77",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/RealtimeInboxView.tsx",
+      "current_blob_sha": "3d6dacf92511e917426345a7f390dbe408d1ce1b",
+      "baseline_blob_sha": "3d6dacf92511e917426345a7f390dbe408d1ce1b",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/ScheduleMessageDialog.tsx",
+      "current_blob_sha": "c888205672230e8a41e6766d7878211edf6db7f9",
+      "baseline_blob_sha": "c888205672230e8a41e6766d7878211edf6db7f9",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/SlashCommands.tsx",
+      "current_blob_sha": "b43e521edcbb2922b5d767a30b4a26835b7c7a9c",
+      "baseline_blob_sha": "b43e521edcbb2922b5d767a30b4a26835b7c7a9c",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/TransferDialog.tsx",
+      "current_blob_sha": "bea5653b01d3051d32a0847be085fb0a008e790e",
+      "baseline_blob_sha": "bea5653b01d3051d32a0847be085fb0a008e790e",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/VideoFullscreen.tsx",
+      "current_blob_sha": "adb9d81a210933dd9131c66501b742c5233ffcfd",
+      "baseline_blob_sha": "adb9d81a210933dd9131c66501b742c5233ffcfd",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/VirtualizedRealtimeList.tsx",
+      "current_blob_sha": "b3915f3134da36acc8bf2f84dc1a671416a1d6eb",
+      "baseline_blob_sha": "b3915f3134da36acc8bf2f84dc1a671416a1d6eb",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/__tests__/AudioRecorder.test.tsx",
+      "current_blob_sha": "3cb5dc88b38621dbe3536dd35a75019405c65005",
+      "baseline_blob_sha": "3cb5dc88b38621dbe3536dd35a75019405c65005",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/__tests__/ImagePreviewDownload.test.tsx",
+      "current_blob_sha": "d02a8697fab8aa176b61c62bda936d6f1287826d",
+      "baseline_blob_sha": "d02a8697fab8aa176b61c62bda936d6f1287826d",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/__tests__/LocationPicker.test.tsx",
+      "current_blob_sha": "bf3f90ddfc6dd3e478836d9a3a9e5e780aebfc56",
+      "baseline_blob_sha": "bf3f90ddfc6dd3e478836d9a3a9e5e780aebfc56",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/__tests__/ScheduleMessageDialog.test.tsx",
+      "current_blob_sha": "45ac1d44e998e461f43fed94849c78362f3dc4ee",
+      "baseline_blob_sha": "45ac1d44e998e461f43fed94849c78362f3dc4ee",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/__tests__/useFileUploadLogic.test.tsx",
+      "current_blob_sha": "49d05220efc7fa5d0649126e6f66a26052768cd7",
+      "baseline_blob_sha": "49d05220efc7fa5d0649126e6f66a26052768cd7",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/chat/ChatAssignedBar.tsx",
+      "current_blob_sha": "f6bda71d6e636def164346828cc15f09c6fb8b3a",
+      "baseline_blob_sha": "f6bda71d6e636def164346828cc15f09c6fb8b3a",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/chat/ChatDialogs.tsx",
+      "current_blob_sha": "c8c8ecb996e40bee4e7034f6955c331e45cbe2f2",
+      "baseline_blob_sha": "c8c8ecb996e40bee4e7034f6955c331e45cbe2f2",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/chat/ChatInputArea.tsx",
+      "current_blob_sha": "5bdbf7cbfea12de98d1afb06e51d190b75313c80",
+      "baseline_blob_sha": "5bdbf7cbfea12de98d1afb06e51d190b75313c80",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/chat/ChatInputToolbars.tsx",
+      "current_blob_sha": "574d864f2b373d7ff3c932b8b355d267d8c0cd6c",
+      "baseline_blob_sha": "574d864f2b373d7ff3c932b8b355d267d8c0cd6c",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/chat/ChatMessageInput.tsx",
+      "current_blob_sha": "950a7dd0484edfd6852334fbba6f655530902f20",
+      "baseline_blob_sha": "950a7dd0484edfd6852334fbba6f655530902f20",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/chat/ChatMessagesArea.tsx",
+      "current_blob_sha": "955d8557e8c2cdd4b9a0df49ea936ab1dd5763a4",
+      "baseline_blob_sha": "955d8557e8c2cdd4b9a0df49ea936ab1dd5763a4",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/chat/ChatPanelHeader.tsx",
+      "current_blob_sha": "85a91bc0d65773de1fb5e8db5d96a706cd6198f1",
+      "baseline_blob_sha": "85a91bc0d65773de1fb5e8db5d96a706cd6198f1",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/chat/ChatSearchBar.tsx",
+      "current_blob_sha": "0beff864d31f07d1e4272fb7bd70f5dfebaf786f",
+      "baseline_blob_sha": "0beff864d31f07d1e4272fb7bd70f5dfebaf786f",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/chat/ConversationTabContent.tsx",
+      "current_blob_sha": "bd077b3c1c296dfc877f6152e15a927b1b6a5a0a",
+      "baseline_blob_sha": "bd077b3c1c296dfc877f6152e15a927b1b6a5a0a",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/chat/MentionAutocomplete.tsx",
+      "current_blob_sha": "553373a2d3a1281a1395971f16eb3dc6d12c0fbf",
+      "baseline_blob_sha": "553373a2d3a1281a1395971f16eb3dc6d12c0fbf",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/chat/MessageBubble.tsx",
+      "current_blob_sha": "c18dd32e97ebbea0e252914a81481ee0c14d7147",
+      "baseline_blob_sha": "c18dd32e97ebbea0e252914a81481ee0c14d7147",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/chat/MessageHoverToolbar.tsx",
+      "current_blob_sha": "8eb6d284602e804426c8b7d0d9f71e0581173f41",
+      "baseline_blob_sha": "8eb6d284602e804426c8b7d0d9f71e0581173f41",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/chat/useChatInputLogic.ts",
+      "current_blob_sha": "bfc4b3d4c6be9c2763f6ed6bc7673f12bbcd649d",
+      "baseline_blob_sha": "bfc4b3d4c6be9c2763f6ed6bc7673f12bbcd649d",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/chat/useChatPanelHandlers.ts",
+      "current_blob_sha": "2aee00c55c477c48c92e13a7cabf62f3bd513da9",
+      "baseline_blob_sha": "2aee00c55c477c48c92e13a7cabf62f3bd513da9",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/interactive-builder/useInteractiveMessage.ts",
+      "current_blob_sha": "45922a0f0782f1be4a30e7f9512980ad7894b0ed",
+      "baseline_blob_sha": "45922a0f0782f1be4a30e7f9512980ad7894b0ed",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/location-picker/SuggestionList.tsx",
+      "current_blob_sha": "8b0144dd9b56ba95155e2cb33c763dc94f4cd537",
+      "baseline_blob_sha": "8b0144dd9b56ba95155e2cb33c763dc94f4cd537",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/location-picker/__tests__/useAddressAutocomplete.test.tsx",
+      "current_blob_sha": "ae2281005efe9356414cf659edc41d1d41adf192",
+      "baseline_blob_sha": "ae2281005efe9356414cf659edc41d1d41adf192",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/location-picker/__tests__/useLocationPicker.test.tsx",
+      "current_blob_sha": "a4a1523d9c72d1c983f5ba8e18476e4ab94b80ab",
+      "baseline_blob_sha": "a4a1523d9c72d1c983f5ba8e18476e4ab94b80ab",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/location-picker/searchErrors.ts",
+      "current_blob_sha": "4ea982b20ecb3f831867bf183429aa521c1e72ae",
+      "baseline_blob_sha": "4ea982b20ecb3f831867bf183429aa521c1e72ae",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/location-picker/useAddressAutocomplete.ts",
+      "current_blob_sha": "71a4e7d5928b2cf7a9b3038cf99309975a946183",
+      "baseline_blob_sha": "71a4e7d5928b2cf7a9b3038cf99309975a946183",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/location-picker/useLocationPicker.ts",
+      "current_blob_sha": "33b12ea9d573a36442e404ea8220f494d38036a3",
+      "baseline_blob_sha": "33b12ea9d573a36442e404ea8220f494d38036a3",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/media-gallery/MediaPreviewDialog.tsx",
+      "current_blob_sha": "5ad958a20c1d4523e3b121a6419074f7578a7b43",
+      "baseline_blob_sha": "5ad958a20c1d4523e3b121a6419074f7578a7b43",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/media-gallery/mediaUtils.ts",
+      "current_blob_sha": "981dacf45c0ea7aacc83f8cf3c3a81298e83b099",
+      "baseline_blob_sha": "981dacf45c0ea7aacc83f8cf3c3a81298e83b099",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/tabs/FilesContent.tsx",
+      "current_blob_sha": "fcdebf2087617aa3987bea89de7088179b0eedad",
+      "baseline_blob_sha": "fcdebf2087617aa3987bea89de7088179b0eedad",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/tabs/FilesTab.tsx",
+      "current_blob_sha": "de1d14e73e67927d6503cc87c4ac58cd3b507872",
+      "baseline_blob_sha": "de1d14e73e67927d6503cc87c4ac58cd3b507872",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/tabs/JourneyTab.tsx",
+      "current_blob_sha": "5ec1a6846d091c70205f3c69ce80b8b08484912b",
+      "baseline_blob_sha": "5ec1a6846d091c70205f3c69ce80b8b08484912b",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/tabs/TasksTab.tsx",
+      "current_blob_sha": "93f3ae6d353a572dcc9f2819c7a3b00300b11793",
+      "baseline_blob_sha": "93f3ae6d353a572dcc9f2819c7a3b00300b11793",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/tabs/__tests__/JourneyTab.test.tsx",
+      "current_blob_sha": "e09f13bf003ea8b32ec424ac9b967f34786ee773",
+      "baseline_blob_sha": "e09f13bf003ea8b32ec424ac9b967f34786ee773",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/useChatMediaSending.ts",
+      "current_blob_sha": "0971cdcf93610ede183103e7cc195f5582689052",
+      "baseline_blob_sha": "0971cdcf93610ede183103e7cc195f5582689052",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/useFileUploadLogic.ts",
+      "current_blob_sha": "af489a0f3136df5d5316ed2b2a409795ba457304",
+      "baseline_blob_sha": "af489a0f3136df5d5316ed2b2a409795ba457304",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/components/inbox/useGlobalSearchData.ts",
+      "current_blob_sha": "0d2ec01515522c34a811013da0c2703d5fee4e6c",
+      "baseline_blob_sha": "0d2ec01515522c34a811013da0c2703d5fee4e6c",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/__tests__/useAudioRecorder.test.ts",
+      "current_blob_sha": "ccbe6915b3cbf33f493dbfdb422647a6a521102d",
+      "baseline_blob_sha": "ccbe6915b3cbf33f493dbfdb422647a6a521102d",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/__tests__/useMessageReactions.test.tsx",
+      "current_blob_sha": "d03dc5113b9701fc0dda82c4ae4c47b34f25a1cd",
+      "baseline_blob_sha": "d03dc5113b9701fc0dda82c4ae4c47b34f25a1cd",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/__tests__/useMessages.test.tsx",
+      "current_blob_sha": "6d68ed2b12ef9f1664ba45de647b60fd1a906f42",
+      "baseline_blob_sha": "6d68ed2b12ef9f1664ba45de647b60fd1a906f42",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/__tests__/useResolvedStorageUrl.test.tsx",
+      "current_blob_sha": "d71a267bd8f01874fa42390df3e3a7eb5889eb22",
+      "baseline_blob_sha": "d71a267bd8f01874fa42390df3e3a7eb5889eb22",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/chat/__tests__/useConversationHistoryTimeline.test.ts",
+      "current_blob_sha": "09a85cd06b184ace5ac33875477fb07a0b4ea3fb",
+      "baseline_blob_sha": "09a85cd06b184ace5ac33875477fb07a0b4ea3fb",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/chat/__tests__/useFilesActions.test.tsx",
+      "current_blob_sha": "31f68ea5cd9b2d670b248bb253e7d3648f3c6490",
+      "baseline_blob_sha": "31f68ea5cd9b2d670b248bb253e7d3648f3c6490",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/chat/useChatSearch.ts",
+      "current_blob_sha": "f5854ca4a4fe5374588c3fb4062dd965fc2454d9",
+      "baseline_blob_sha": "f5854ca4a4fe5374588c3fb4062dd965fc2454d9",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/chat/useContactMedia.ts",
+      "current_blob_sha": "dd62b290ce7572ee7cc76e3b0b2019402fc02942",
+      "baseline_blob_sha": "dd62b290ce7572ee7cc76e3b0b2019402fc02942",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/chat/useContactMediaCounts.ts",
+      "current_blob_sha": "332d8e529d6ca6585179b57042d6872940c44075",
+      "baseline_blob_sha": "332d8e529d6ca6585179b57042d6872940c44075",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/chat/useConversationActions.ts",
+      "current_blob_sha": "e2197ee8ea0014c088f0ae54be0eaa9895917ede",
+      "baseline_blob_sha": "e2197ee8ea0014c088f0ae54be0eaa9895917ede",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/chat/useConversationHistoryTimeline.ts",
+      "current_blob_sha": "4d790869c2237aa1ee99d482f95405a3a064c161",
+      "baseline_blob_sha": "4d790869c2237aa1ee99d482f95405a3a064c161",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/chat/useFilesActions.ts",
+      "current_blob_sha": "a2d998e3addc76706f29318bc6d8784912a0468b",
+      "baseline_blob_sha": "a2d998e3addc76706f29318bc6d8784912a0468b",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/chat/useFilesInfiniteScroll.ts",
+      "current_blob_sha": "4456f726dcd47f53f3e96d52385bb676dadbc756",
+      "baseline_blob_sha": "4456f726dcd47f53f3e96d52385bb676dadbc756",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/chat/useFilesSelection.ts",
+      "current_blob_sha": "201957903653fbf9c6a3f2dbf5dd64190ac86f53",
+      "baseline_blob_sha": "201957903653fbf9c6a3f2dbf5dd64190ac86f53",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/chat/useFilesViewState.ts",
+      "current_blob_sha": "6d2e0a9b0e0ca75c2ea67b32d13f0539c7d0e64f",
+      "baseline_blob_sha": "6d2e0a9b0e0ca75c2ea67b32d13f0539c7d0e64f",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/chat/useForwardMedia.ts",
+      "current_blob_sha": "72696d66e0aa8f8e1114d5742aa9e9fdd2eeb63d",
+      "baseline_blob_sha": "72696d66e0aa8f8e1114d5742aa9e9fdd2eeb63d",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/chat/useForwardMessage.ts",
+      "current_blob_sha": "4112f141c796c19343cd3856188edbb8098dc1e0",
+      "baseline_blob_sha": "4112f141c796c19343cd3856188edbb8098dc1e0",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/chat/useMessageReactions.ts",
+      "current_blob_sha": "e891b4b6f299ccaba746b8d5332546ddac2c7b78",
+      "baseline_blob_sha": "e891b4b6f299ccaba746b8d5332546ddac2c7b78",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/chat/useMessageSignature.ts",
+      "current_blob_sha": "e968bbed653ad68b4c0ecf35fbfb0a53a374e30b",
+      "baseline_blob_sha": "e968bbed653ad68b4c0ecf35fbfb0a53a374e30b",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/chat/useMessageStatus.ts",
+      "current_blob_sha": "e2f9bb846680767e05336a6e825443bbb950d2a8",
+      "baseline_blob_sha": "e2f9bb846680767e05336a6e825443bbb950d2a8",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/chat/useMessages.ts",
+      "current_blob_sha": "8cff663272e7a2ad435e7deaf7a89c1a4c668e56",
+      "baseline_blob_sha": "8cff663272e7a2ad435e7deaf7a89c1a4c668e56",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/chat/useNewConversation.ts",
+      "current_blob_sha": "4fba48dd086b547ec22bb5ebe66087cd45ae7ce2",
+      "baseline_blob_sha": "4fba48dd086b547ec22bb5ebe66087cd45ae7ce2",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/chat/useRealtimeMessages.ts",
+      "current_blob_sha": "b5dc702c078893767a550f56093e4708679e43c9",
+      "baseline_blob_sha": "b5dc702c078893767a550f56093e4708679e43c9",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/chat/useScheduledMessages.ts",
+      "current_blob_sha": "68fa21fd6d09f821beef4ba9842e0f28c87b478b",
+      "baseline_blob_sha": "68fa21fd6d09f821beef4ba9842e0f28c87b478b",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/chat/useTypingPresence.ts",
+      "current_blob_sha": "3888be830b95aed8b3ff71d80800d7d2570d79f9",
+      "baseline_blob_sha": "3888be830b95aed8b3ff71d80800d7d2570d79f9",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/communication/useAudioPlayer.ts",
+      "current_blob_sha": "bc25ebeb46da5fcc80f0d682d93130ff689361a6",
+      "baseline_blob_sha": "bc25ebeb46da5fcc80f0d682d93130ff689361a6",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/communication/useAudioRecorder.ts",
+      "current_blob_sha": "5d8a02dc8a1e53b8577aacb7508dc27f4bece3ae",
+      "baseline_blob_sha": "5d8a02dc8a1e53b8577aacb7508dc27f4bece3ae",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/evolution/useEvolutionApiCore.ts",
+      "current_blob_sha": "d69297f848b4cceb2793b202feaf77da96ffbf8a",
+      "baseline_blob_sha": "d69297f848b4cceb2793b202feaf77da96ffbf8a",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/evolution/useEvolutionMessaging.ts",
+      "current_blob_sha": "fc6c95c32cc303fcfe2b6eb4270fb81491fa06e0",
+      "baseline_blob_sha": "fc6c95c32cc303fcfe2b6eb4270fb81491fa06e0",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/inbox/useAutoCloseConversations.ts",
+      "current_blob_sha": "e932a7cda769f4021f58d638f73af6a653404d38",
+      "baseline_blob_sha": "e932a7cda769f4021f58d638f73af6a653404d38",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/inbox/useBulkActions.ts",
+      "current_blob_sha": "1f4eca079feca9ce2c396e1f18abd6add15b66dc",
+      "baseline_blob_sha": "1f4eca079feca9ce2c396e1f18abd6add15b66dc",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/inbox/useInboxBulkActions.ts",
+      "current_blob_sha": "e367da296db645080bb69a62096897453061a02f",
+      "baseline_blob_sha": "e367da296db645080bb69a62096897453061a02f",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/inbox/useInboxFilters.ts",
+      "current_blob_sha": "cc80d5db7b34aca33a10460213b6d87176bebf6b",
+      "baseline_blob_sha": "cc80d5db7b34aca33a10460213b6d87176bebf6b",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/inbox/useRealtimeInbox.ts",
+      "current_blob_sha": "6e98d0c5044c047886c0c57227d4f9dd4cd3cc5b",
+      "baseline_blob_sha": "6e98d0c5044c047886c0c57227d4f9dd4cd3cc5b",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/integrations/useEvolutionApi.ts",
+      "current_blob_sha": "427998653287bc36b5ec4c72ca3a8f8b33ef5468",
+      "baseline_blob_sha": "427998653287bc36b5ec4c72ca3a8f8b33ef5468",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/reactions/types.ts",
+      "current_blob_sha": "cc26fe416239974be563074c66029c5c7df388e8",
+      "baseline_blob_sha": "cc26fe416239974be563074c66029c5c7df388e8",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/reactions/useBatchReactions.ts",
+      "current_blob_sha": "8f9b71013546b3ca25132c68a4c1d087d52b6f9d",
+      "baseline_blob_sha": "8f9b71013546b3ca25132c68a4c1d087d52b6f9d",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/reactions/useReactionMutations.ts",
+      "current_blob_sha": "68ea31a3ddeb91ad12c44b7b43787e6121d28379",
+      "baseline_blob_sha": "68ea31a3ddeb91ad12c44b7b43787e6121d28379",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/realtime/messageSender.ts",
+      "current_blob_sha": "4e1b99ee91c393ffa0dd184430e0e26a52cc9ed5",
+      "baseline_blob_sha": "4e1b99ee91c393ffa0dd184430e0e26a52cc9ed5",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/realtime/realtimeUtils.ts",
+      "current_blob_sha": "91f68d605c8bbf3dc0769e098e57ab36fc7f45a7",
+      "baseline_blob_sha": "91f68d605c8bbf3dc0769e098e57ab36fc7f45a7",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/realtime/useMessageUpdateBatcher.ts",
+      "current_blob_sha": "418c624c937eccde39ee4da2f413143fbe8dd25f",
+      "baseline_blob_sha": "418c624c937eccde39ee4da2f413143fbe8dd25f",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/realtime/useRealtimeNotifications.ts",
+      "current_blob_sha": "408174af1e23336ed41e9e75b99513a77e8052e1",
+      "baseline_blob_sha": "408174af1e23336ed41e9e75b99513a77e8052e1",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/realtime/useSupabaseRealtime.ts",
+      "current_blob_sha": "e46800141cb2c12f93c756643f44c60e1aa47fca",
+      "baseline_blob_sha": "e46800141cb2c12f93c756643f44c60e1aa47fca",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/storage/useResolvedStorageUrl.ts",
+      "current_blob_sha": "fa8a58242a22ce01eecb47bd3e6736d859e98c3f",
+      "baseline_blob_sha": "fa8a58242a22ce01eecb47bd3e6736d859e98c3f",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/system/useDownloadPermission.ts",
+      "current_blob_sha": "0c1c6a36db0f658dedad8376aed764addc961134",
+      "baseline_blob_sha": "0c1c6a36db0f658dedad8376aed764addc961134",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/system/useOfflineCache.ts",
+      "current_blob_sha": "c1984e76f25b69f5aab57a7da0d38a229b4184a6",
+      "baseline_blob_sha": "c1984e76f25b69f5aab57a7da0d38a229b4184a6",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/system/useUndoableAction.ts",
+      "current_blob_sha": "526cf33b6b64ac9e003e200809ce0ecb991f2f85",
+      "baseline_blob_sha": "526cf33b6b64ac9e003e200809ce0ecb991f2f85",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/tasks/useMyWorkItems.ts",
+      "current_blob_sha": "30c53078791bcb04ec2651b3bb701a884b488069",
+      "baseline_blob_sha": "30c53078791bcb04ec2651b3bb701a884b488069",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/tasks/workItem.types.ts",
+      "current_blob_sha": "04bc5b0e475bef89b6656f45134a9421986b0087",
+      "baseline_blob_sha": "04bc5b0e475bef89b6656f45134a9421986b0087",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/tasks/workItemMachine.ts",
+      "current_blob_sha": "266de050ae37b87f7a1b63a0698d87dd6314d2e7",
+      "baseline_blob_sha": "266de050ae37b87f7a1b63a0698d87dd6314d2e7",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/ui/useGlobalSearchShortcut.ts",
+      "current_blob_sha": "a88d9102273dd7df9ea9e60ef5536bb21e386176",
+      "baseline_blob_sha": "a88d9102273dd7df9ea9e60ef5536bb21e386176",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/hooks/ui/useScreenProtection.ts",
+      "current_blob_sha": "dc79822454ddbcf1b8aadb395ece80bc32689b9d",
+      "baseline_blob_sha": "dc79822454ddbcf1b8aadb395ece80bc32689b9d",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/lib/localDay.ts",
+      "current_blob_sha": "6bb3e363d6004707db4be23e5c24c0b1cd9f5343",
+      "baseline_blob_sha": "6bb3e363d6004707db4be23e5c24c0b1cd9f5343",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/lib/mapboxGeocode.ts",
+      "current_blob_sha": "f5d0516bfc9556394a5559d110eed96afafe65df",
+      "baseline_blob_sha": "f5d0516bfc9556394a5559d110eed96afafe65df",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/lib/storage_object_reference.ts",
+      "current_blob_sha": "7edf9e17f861b96f90f2d346132b1e1557a0f97c",
+      "baseline_blob_sha": "7edf9e17f861b96f90f2d346132b1e1557a0f97c",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/lib/storage_object_upload.ts",
+      "current_blob_sha": "1945625b0d173202c91d559739e2c45ecf820c43",
+      "baseline_blob_sha": "1945625b0d173202c91d559739e2c45ecf820c43",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/pages/ChatPopup.tsx",
+      "current_blob_sha": "cb665a32970cf4f0582c46d3866b88725a41bf2d",
+      "baseline_blob_sha": "cb665a32970cf4f0582c46d3866b88725a41bf2d",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/services/chat.service.ts",
+      "current_blob_sha": "70a69d19defffac347d37d7001b8876e9f5b8b68",
+      "baseline_blob_sha": "70a69d19defffac347d37d7001b8876e9f5b8b68",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/services/outbound-message.service.ts",
+      "current_blob_sha": "a328efc57530103d0e3fc0c2256420032db982ae",
+      "baseline_blob_sha": "a328efc57530103d0e3fc0c2256420032db982ae",
+      "identical_to_baseline": true
+    },
+    {
+      "path": "src/services/realtime.service.ts",
+      "current_blob_sha": "a9ea1fbe585827e7a9ffaf918d7c9994797e52dc",
+      "baseline_blob_sha": "a9ea1fbe585827e7a9ffaf918d7c9994797e52dc",
+      "identical_to_baseline": true
+    }
+  ]
+}

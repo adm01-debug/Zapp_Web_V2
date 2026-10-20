@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=arvore-integracao-merge-simulado
+ID=2610171013b714
+BRANCH=v2/arvore-integracao-merge-simulado-2610171013b714
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/arvore-integracao-merge-simulado-2610171013b714
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-17T10:14:00-03:00
+KANBAN=t_38d66333
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/arvore-integracao-merge-simulado-2610171013b714/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-17
+DB_LOCAL=v2-2610171013b714
+PRONTO_SHA=c4639378b01a92eb285992a5bc041cca23e4e525

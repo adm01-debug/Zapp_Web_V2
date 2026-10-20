@@ -1,0 +1,6 @@
+interface:
+  display_name: "Zapp Web V2"
+  short_description: "Repo-specific patterns and workflows for zapp-web-v2"
+  default_prompt: "Use the zapp-web-v2 repo skill to follow existing architecture, testing, and workflow conventions."
+policy:
+  allow_implicit_invocation: true
