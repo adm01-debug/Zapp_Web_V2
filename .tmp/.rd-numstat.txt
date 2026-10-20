@@ -1,0 +1,2 @@
+189	0	supabase/migrations/20261013042745_audit_admin_changes.sql
+334	0	supabase/tests/audit_admin_changes.sql
