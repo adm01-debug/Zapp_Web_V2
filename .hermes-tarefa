@@ -1,0 +1,15 @@
+PROJETO=Zapp_Web_V2
+SLUG=auditoria-notificacoes-lembrete
+ID=26101114351690
+BRANCH=v2/auditoria-notificacoes-lembrete-26101114351690
+BASE=main
+ADOTADO=
+WORKSPACE=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auditoria-notificacoes-lembrete-26101114351690
+DB_REF=tnnnlkbymytvtqngbbqh
+INICIO=2026-10-11T14:35:38-03:00
+KANBAN=t_f2ba20a8
+TMPDIR=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auditoria-notificacoes-lembrete-26101114351690/.tmp
+MODO=V2
+BASE_DIA=dia/2026-10-11
+DB_LOCAL=v2-26101114351690
+PRONTO_SHA=d08a525f2a6ac8433198180f3717ae517e291ca8

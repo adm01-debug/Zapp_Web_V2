@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 03f0d125196fd64fcead481fac4ef4e4da678000 Hermes Senior <hermes-senior@promobrindes.local> 1791740137 -0300	
+03f0d125196fd64fcead481fac4ef4e4da678000 03f0d125196fd64fcead481fac4ef4e4da678000 Hermes Senior <hermes-senior@promobrindes.local> 1791740138 -0300	reset: moving to HEAD
+03f0d125196fd64fcead481fac4ef4e4da678000 5c6b4c68c1670c5dd8623452348cb4789fc26177 Hermes Senior <hermes-senior@promobrindes.local> 1791740433 -0300	commit: docs(tarefas): auditoria de leitura das notificacoes de lembrete contra o fluxo novo
+5c6b4c68c1670c5dd8623452348cb4789fc26177 d08a525f2a6ac8433198180f3717ae517e291ca8 Hermes Senior <hermes-senior@promobrindes.local> 1791740504 -0300	commit: chore: destrack o artefato de relato em .tmp (ignorado pelo gitignore)
